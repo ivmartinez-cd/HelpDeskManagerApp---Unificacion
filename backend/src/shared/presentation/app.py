@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from src.modules.auth.presentation.admin_permissions_router import (
     router as admin_permissions_router,
 )
+from src.modules.auth.presentation.admin_users_router import router as admin_users_router
 from src.modules.auth.presentation.auth_router import router as auth_router
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.logging_config import configure_logging
@@ -21,6 +22,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(auth_router)
     app.include_router(admin_permissions_router)
+    app.include_router(admin_users_router)
     return app
 
 

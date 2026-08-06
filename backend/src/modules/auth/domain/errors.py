@@ -1,4 +1,10 @@
-from src.shared.domain.errors import ApplicationError, UnauthorizedError, ValidationError
+from src.shared.domain.errors import (
+    ApplicationError,
+    BusinessRuleViolationError,
+    NotFoundError,
+    UnauthorizedError,
+    ValidationError,
+)
 
 
 class InvalidEmailError(ValidationError):
@@ -84,6 +90,34 @@ class TokenAlreadyUsedError(ApplicationError):
 
     def __init__(self) -> None:
         super().__init__("Este token ya fue usado")
+
+
+class UserNotFoundError(NotFoundError):
+    default_code = "USER_NOT_FOUND"
+
+    def __init__(self) -> None:
+        super().__init__("Usuario no encontrado")
+
+
+class EmailAlreadyRegisteredError(BusinessRuleViolationError):
+    default_code = "EMAIL_ALREADY_REGISTERED"
+
+    def __init__(self) -> None:
+        super().__init__("Ya existe un usuario con ese email")
+
+
+class LastSuperadminError(BusinessRuleViolationError):
+    default_code = "LAST_SUPERADMIN"
+
+    def __init__(self) -> None:
+        super().__init__("No podés desactivar al último superadmin activo")
+
+
+class CannotDemoteSelfError(BusinessRuleViolationError):
+    default_code = "CANNOT_DEMOTE_SELF"
+
+    def __init__(self) -> None:
+        super().__init__("No podés quitarte tu propio permiso de administración")
 
 
 class ForbiddenError(ApplicationError):

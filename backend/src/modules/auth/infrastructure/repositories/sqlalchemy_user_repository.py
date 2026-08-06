@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.domain.entities.user import User
@@ -36,6 +36,34 @@ class SqlAlchemyUserRepository:
             raise LookupError(f"User {user.id} no existe")
         _apply_changes(model, user)
         await self._session.flush()
+
+    async def list_page(
+        self, *, page: int, size: int, query: str | None
+    ) -> tuple[list[User], int]:
+        filters = []
+        if query:
+            like = f"%{query}%"
+            filters.append(or_(AppUser.email.ilike(like), AppUser.full_name.ilike(like)))
+        total = await self._session.scalar(
+            select(func.count()).select_from(AppUser).where(*filters)
+        )
+        stmt = (
+            select(AppUser)
+            .where(*filters)
+            .order_by(AppUser.full_name)
+            .offset((page - 1) * size)
+            .limit(size)
+        )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_entity(row) for row in rows], total or 0
+
+    async def count_active_superadmins(self) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(AppUser)
+            .where(AppUser.is_superadmin.is_(True), AppUser.is_active.is_(True))
+        )
+        return (await self._session.execute(stmt)).scalar_one()
 
 
 def _to_entity(model: AppUser) -> User:
