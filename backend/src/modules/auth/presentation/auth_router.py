@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request, Response, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.commands import LoginCommand
@@ -8,16 +8,32 @@ from src.modules.auth.application.use_cases.authenticate_user import (
     AuthenticateUser,
     AuthenticateUserDependencies,
 )
+from src.modules.auth.application.use_cases.change_password import (
+    ChangePassword,
+    ChangePasswordDependencies,
+)
+from src.modules.auth.application.use_cases.request_password_reset import (
+    RequestPasswordReset,
+    RequestPasswordResetDependencies,
+)
+from src.modules.auth.application.use_cases.reset_password import (
+    ResetPassword,
+    ResetPasswordDependencies,
+)
 from src.modules.auth.application.use_cases.revoke_session import (
     RevokeSession,
     RevokeSessionDependencies,
 )
 from src.modules.auth.infrastructure.argon2_password_hasher import Argon2PasswordHasher
+from src.modules.auth.infrastructure.mailer_factory import get_mailer
 from src.modules.auth.infrastructure.repositories.sqlalchemy_login_attempt_repository import (
     SqlAlchemyLoginAttemptRepository,
 )
 from src.modules.auth.infrastructure.repositories.sqlalchemy_permission_repository import (
     SqlAlchemyPermissionRepository,
+)
+from src.modules.auth.infrastructure.repositories.sqlalchemy_reset_token_repository import (
+    SqlAlchemyResetTokenRepository,
 )
 from src.modules.auth.infrastructure.repositories.sqlalchemy_session_repository import (
     SqlAlchemySessionRepository,
@@ -83,3 +99,73 @@ async def logout(
         )
         await RevokeSession(deps).execute(token)
     clear_session_cookies(response)
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+_FORGOT_PASSWORD_MESSAGE = (
+    "Si el email existe, vas a recibir instrucciones para restablecer tu contraseña."
+)
+
+
+@router.post("/password/forgot", status_code=status.HTTP_202_ACCEPTED)
+async def forgot_password(
+    payload: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)
+) -> dict[str, str]:
+    settings = get_settings()
+    deps = RequestPasswordResetDependencies(
+        users=SqlAlchemyUserRepository(db),
+        reset_tokens=SqlAlchemyResetTokenRepository(db),
+        tokens=SecureTokenGenerator(),
+        mailer=get_mailer(),
+        frontend_url=settings.frontend_url,
+    )
+    await RequestPasswordReset(deps).execute(payload.email)
+    return {"message": _FORGOT_PASSWORD_MESSAGE}
+
+
+class ResetPasswordRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    token: str
+    new_password: str = Field(alias="newPassword")
+
+
+@router.post("/password/reset", status_code=status.HTTP_204_NO_CONTENT)
+async def reset_password(payload: ResetPasswordRequest, db: AsyncSession = Depends(get_db)) -> None:
+    deps = ResetPasswordDependencies(
+        users=SqlAlchemyUserRepository(db),
+        reset_tokens=SqlAlchemyResetTokenRepository(db),
+        sessions=SqlAlchemySessionRepository(db),
+        hasher=Argon2PasswordHasher(),
+        tokens=SecureTokenGenerator(),
+    )
+    await ResetPassword(deps).execute(raw_token=payload.token, new_password=payload.new_password)
+
+
+class ChangePasswordRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    current_password: str = Field(alias="currentPassword")
+    new_password: str = Field(alias="newPassword")
+
+
+@router.post("/password/change", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(
+    payload: ChangePasswordRequest,
+    identity: Identity = Depends(get_current_identity),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    deps = ChangePasswordDependencies(
+        users=SqlAlchemyUserRepository(db),
+        sessions=SqlAlchemySessionRepository(db),
+        hasher=Argon2PasswordHasher(),
+    )
+    await ChangePassword(deps).execute(
+        user_id=identity.user.id,
+        current_password=payload.current_password,
+        new_password=payload.new_password,
+        keep_session_id=identity.session_id,
+    )

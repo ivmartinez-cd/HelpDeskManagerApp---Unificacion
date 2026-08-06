@@ -62,6 +62,30 @@ class TooManyAttemptsError(ApplicationError):
         )
 
 
+class TokenInvalidError(ApplicationError):
+    http_status = 400
+    default_code = "TOKEN_INVALID"
+
+    def __init__(self) -> None:
+        super().__init__("Token inválido")
+
+
+class TokenExpiredError(ApplicationError):
+    http_status = 400
+    default_code = "TOKEN_EXPIRED"
+
+    def __init__(self) -> None:
+        super().__init__("Token vencido")
+
+
+class TokenAlreadyUsedError(ApplicationError):
+    http_status = 400
+    default_code = "TOKEN_ALREADY_USED"
+
+    def __init__(self) -> None:
+        super().__init__("Este token ya fue usado")
+
+
 class ForbiddenError(ApplicationError):
     """Fail-closed: la ausencia de grant o un módulo deshabilitado dan este
     mismo error. `is_superadmin` evita el chequeo de grant (bootstrap: el

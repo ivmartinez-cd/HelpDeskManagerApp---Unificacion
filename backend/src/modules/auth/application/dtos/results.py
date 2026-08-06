@@ -18,8 +18,13 @@ class UserView:
 
 @dataclass(frozen=True, slots=True)
 class Identity:
+    """`session_id` no se expone en ningún response JSON (ver
+    IdentityResponse) — existe para que change-password pueda revocar
+    "las demás" sesiones sin tocar la que originó el request."""
+
     user: UserView
     permissions: frozenset[PermissionView]
+    session_id: uuid.UUID
 
 
 @dataclass(frozen=True, slots=True)

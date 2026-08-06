@@ -42,9 +42,10 @@ class AuthenticateUser:
     async def execute(self, command: LoginCommand) -> AuthenticatedSession:
         await self._guard_rate_limit(command.email)
         user = await self._verify_credentials(command)
-        token = await self._open_session(user.id)
+        session, token = await self._open_session(user.id)
         permissions = await self._deps.permissions.get_for_user(user.id)
-        return AuthenticatedSession(identity=to_identity(user, permissions), session_token=token)
+        identity = to_identity(user, permissions, session_id=session.id)
+        return AuthenticatedSession(identity=identity, session_token=token)
 
     async def _guard_rate_limit(self, email: str) -> None:
         since = datetime.now(UTC) - _LOCKOUT_WINDOW
@@ -70,7 +71,7 @@ class AuthenticateUser:
             raise AccountDisabledError()
         return user
 
-    async def _open_session(self, user_id: uuid.UUID) -> str:
+    async def _open_session(self, user_id: uuid.UUID) -> tuple[Session, str]:
         token = self._deps.tokens.generate()
         now = datetime.now(UTC)
         session = Session(
@@ -82,4 +83,4 @@ class AuthenticateUser:
             last_seen_at=now,
         )
         await self._deps.sessions.add(session)
-        return token
+        return session, token

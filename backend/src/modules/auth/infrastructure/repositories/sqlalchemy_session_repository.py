@@ -30,12 +30,13 @@ class SqlAlchemySessionRepository:
         model.revoked_at = session.revoked_at
         await self._session.flush()
 
-    async def revoke_all_for_user(self, user_id: uuid.UUID, *, at: datetime) -> None:
-        stmt = (
-            update(UserSession)
-            .where(UserSession.user_id == user_id, UserSession.revoked_at.is_(None))
-            .values(revoked_at=at)
-        )
+    async def revoke_all_for_user(
+        self, user_id: uuid.UUID, *, at: datetime, except_session_id: uuid.UUID | None = None
+    ) -> None:
+        conditions = [UserSession.user_id == user_id, UserSession.revoked_at.is_(None)]
+        if except_session_id is not None:
+            conditions.append(UserSession.id != except_session_id)
+        stmt = update(UserSession).where(*conditions).values(revoked_at=at)
         await self._session.execute(stmt)
         await self._session.flush()
 

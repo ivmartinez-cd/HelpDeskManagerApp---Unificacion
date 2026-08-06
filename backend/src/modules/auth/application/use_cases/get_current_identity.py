@@ -40,7 +40,7 @@ class GetCurrentIdentity:
             raise NotAuthenticatedError()
         await self._extend_if_stale(session, now)
         permissions = await self._deps.permissions.get_for_user(user.id)
-        return to_identity(user, permissions)
+        return to_identity(user, permissions, session_id=session.id)
 
     async def _extend_if_stale(self, session: Session, now: datetime) -> None:
         """Vencimiento deslizante: solo escribe si pasó más de una hora desde
