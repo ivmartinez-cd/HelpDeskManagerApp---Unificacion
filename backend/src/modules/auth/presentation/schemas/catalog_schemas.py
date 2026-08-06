@@ -1,15 +1,17 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.modules.auth.domain.value_objects.module_catalog_entry import ModuleCatalogEntry
 
 
 class ModuleCatalogResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     key: str
     label: str
     route: str
     icon: str
-    sort_order: int
-    is_enabled: bool
+    sort_order: int = Field(serialization_alias="sortOrder")
+    is_enabled: bool = Field(serialization_alias="isEnabled")
 
     @classmethod
     def from_domain(cls, entry: ModuleCatalogEntry) -> "ModuleCatalogResponse":

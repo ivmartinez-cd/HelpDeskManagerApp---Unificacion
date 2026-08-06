@@ -2,7 +2,12 @@ from fastapi import Response
 
 from src.shared.infrastructure.config.settings import get_settings
 
-_SESSION_PATH = "/api"
+# Path=/ para las dos, no solo /api: el proxy.ts del frontend (Etapa 12)
+# necesita leer hdm_session en CUALQUIER ruta (ej. "/") para decidir si
+# redirige a /login — con Path=/api el browser ni la manda ahí. httpOnly ya
+# la esconde del JS de la página; acotar el Path no sumaba seguridad real,
+# solo rompía el caso de uso del proxy.
+_SESSION_PATH = "/"
 _CSRF_PATH = "/"
 _MAX_AGE_SECONDS = 7 * 24 * 3600
 

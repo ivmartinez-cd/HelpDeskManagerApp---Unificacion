@@ -17,6 +17,15 @@ export interface IdentityResponse {
   permissions: PermissionSummary[];
 }
 
+export interface ModuleSummary {
+  key: string;
+  label: string;
+  route: string;
+  icon: string;
+  sortOrder: number;
+  isEnabled: boolean;
+}
+
 export interface LoginPayload {
   email: string;
   password: string;
@@ -26,5 +35,6 @@ export const authApi = {
   login: (payload: LoginPayload) =>
     httpClient.post<IdentityResponse>("/api/auth/login", payload),
   me: () => httpClient.get<IdentityResponse>("/api/auth/me"),
+  modules: () => httpClient.get<ModuleSummary[]>("/api/auth/modules"),
   logout: () => httpClient.post<void>("/api/auth/logout"),
 };

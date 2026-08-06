@@ -12,6 +12,10 @@ from src.modules.auth.application.use_cases.change_password import (
     ChangePassword,
     ChangePasswordDependencies,
 )
+from src.modules.auth.application.use_cases.list_visible_modules import (
+    ListVisibleModules,
+    ListVisibleModulesDependencies,
+)
 from src.modules.auth.application.use_cases.request_password_reset import (
     RequestPasswordReset,
     RequestPasswordResetDependencies,
@@ -29,6 +33,9 @@ from src.modules.auth.infrastructure.mailer_factory import get_mailer
 from src.modules.auth.infrastructure.repositories.sqlalchemy_login_attempt_repository import (
     SqlAlchemyLoginAttemptRepository,
 )
+from src.modules.auth.infrastructure.repositories.sqlalchemy_module_catalog_repository import (
+    SqlAlchemyModuleCatalogRepository,
+)
 from src.modules.auth.infrastructure.repositories.sqlalchemy_permission_repository import (
     SqlAlchemyPermissionRepository,
 )
@@ -44,6 +51,7 @@ from src.modules.auth.infrastructure.repositories.sqlalchemy_user_repository imp
 from src.modules.auth.infrastructure.secure_token_generator import SecureTokenGenerator
 from src.modules.auth.presentation.cookies import clear_session_cookies, set_session_cookies
 from src.modules.auth.presentation.dependencies.identity import get_current_identity
+from src.modules.auth.presentation.schemas.catalog_schemas import ModuleCatalogResponse
 from src.modules.auth.presentation.schemas.identity_schemas import IdentityResponse
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_db
@@ -86,6 +94,24 @@ async def login(
 @router.get("/me")
 async def me(identity: Identity = Depends(get_current_identity)) -> IdentityResponse:
     return IdentityResponse.from_domain(identity)
+
+
+@router.get("/modules")
+async def my_modules(
+    identity: Identity = Depends(get_current_identity),
+    db: AsyncSession = Depends(get_db),
+) -> list[ModuleCatalogResponse]:
+    """Arma el sidebar: a diferencia de /admin/catalog/modules (que requiere
+    admin:manage y expone todo el catálogo para editar la matriz), esto es
+    para cualquier usuario autenticado y ya viene filtrado a lo que puede ver."""
+    deps = ListVisibleModulesDependencies(
+        catalog=SqlAlchemyModuleCatalogRepository(db),
+        permissions=SqlAlchemyPermissionRepository(db),
+    )
+    entries = await ListVisibleModules(deps).execute(
+        user_id=identity.user.id, is_superadmin=identity.user.is_superadmin
+    )
+    return [ModuleCatalogResponse.from_domain(entry) for entry in entries]
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
