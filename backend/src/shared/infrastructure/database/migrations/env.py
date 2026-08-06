@@ -6,6 +6,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from src.shared.infrastructure.config.settings import get_settings
+from src.shared.infrastructure.database import model_registry  # noqa: F401
 from src.shared.infrastructure.database.base import Base
 from src.shared.infrastructure.database.engine import get_engine
 
