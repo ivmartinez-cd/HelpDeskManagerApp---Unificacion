@@ -1,0 +1,15 @@
+[importlinter]
+root_package = src
+include_external_packages = True
+
+[importlinter:contract:auth-domain-no-frameworks]
+name = El dominio de auth no importa frameworks
+type = forbidden
+source_modules =
+    src.modules.auth.domain
+forbidden_modules =
+    fastapi
+    sqlalchemy
+    pydantic
+    argon2
+    alembic

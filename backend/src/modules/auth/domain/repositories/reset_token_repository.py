@@ -1,0 +1,9 @@
+import uuid
+from datetime import datetime
+from typing import Protocol
+
+
+class ResetTokenRepository(Protocol):
+    async def add(self, user_id: uuid.UUID, token_hash: bytes, *, expires_at: datetime) -> None: ...
+    async def get_valid_user_id(self, token_hash: bytes, *, at: datetime) -> uuid.UUID | None: ...
+    async def mark_used(self, token_hash: bytes, *, at: datetime) -> None: ...
