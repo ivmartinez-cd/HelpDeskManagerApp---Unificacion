@@ -8,12 +8,18 @@ class AppError(Exception):
     default_code: ClassVar[str] = "INTERNAL_ERROR"
 
     def __init__(
-        self, message: str, *, code: str | None = None, details: object | None = None
+        self,
+        message: str,
+        *,
+        code: str | None = None,
+        details: object | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         super().__init__(message)
         self.message = message
         self.code = code or self.default_code
         self.details = details
+        self.headers = headers
 
 
 class DomainError(AppError):

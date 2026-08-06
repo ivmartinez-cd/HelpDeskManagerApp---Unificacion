@@ -22,9 +22,9 @@ class Argon2PasswordHasher:
     def hash(self, raw: RawPassword) -> PasswordHash:
         return PasswordHash(self._hasher.hash(raw.value))
 
-    def verify(self, raw: RawPassword, stored: PasswordHash) -> bool:
+    def verify(self, candidate: str, stored: PasswordHash) -> bool:
         try:
-            return self._hasher.verify(stored.value, raw.value)
+            return self._hasher.verify(stored.value, candidate)
         except VerifyMismatchError:
             return False
 

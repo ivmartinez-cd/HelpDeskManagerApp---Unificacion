@@ -31,7 +31,7 @@ async def _handle_app_error(request: Request, exc: AppError) -> JSONResponse:
         extra={"request_id": _request_id(request), "code": exc.code},
     )
     content = _envelope(exc.message, exc.code, exc.details)
-    return JSONResponse(status_code=exc.http_status, content=content)
+    return JSONResponse(status_code=exc.http_status, content=content, headers=exc.headers)
 
 
 async def _handle_validation_error(

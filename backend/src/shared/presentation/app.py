@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from src.modules.auth.presentation.auth_router import router as auth_router
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.logging_config import configure_logging
 from src.shared.presentation.errors.handlers import register_exception_handlers
@@ -15,6 +16,7 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestIdMiddleware)
     register_exception_handlers(app)
     app.include_router(health_router)
+    app.include_router(auth_router)
     return app
 
 

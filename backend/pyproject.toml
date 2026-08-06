@@ -13,6 +13,7 @@ dependencies = [
     "pydantic-settings==2.14.2",
     "argon2-cffi==25.1.0",
     "python-multipart==0.0.32",
+    "email-validator==2.3.0",
 ]
 
 [dependency-groups]

@@ -11,14 +11,24 @@ def test_hash_then_verify_round_trips() -> None:
 
     hashed = hasher.hash(raw)
 
-    assert hasher.verify(raw, hashed) is True
+    assert hasher.verify(raw.value, hashed) is True
 
 
 def test_verify_rejects_the_wrong_password() -> None:
     hasher = Argon2PasswordHasher()
     hashed = hasher.hash(RawPassword("ValidPass123!"))
 
-    assert hasher.verify(RawPassword("OtroPass456!"), hashed) is False
+    assert hasher.verify("OtroPass456!", hashed) is False
+
+
+def test_verify_does_not_enforce_password_strength_on_the_candidate() -> None:
+    """Un login con un hash preexistente de una política más vieja (o
+    simplemente un typo) no debe fallar con WEAK_PASSWORD — eso lo valida
+    RawPassword solo al *crear* un password, no al verificar uno."""
+    hasher = Argon2PasswordHasher()
+    hashed = hasher.hash(RawPassword("ValidPass123!"))
+
+    assert hasher.verify("short", hashed) is False
 
 
 def test_needs_rehash_is_false_for_a_hash_made_with_current_settings() -> None:

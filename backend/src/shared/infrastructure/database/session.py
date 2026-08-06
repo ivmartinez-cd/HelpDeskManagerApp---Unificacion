@@ -12,6 +12,10 @@ def get_sessionmaker() -> async_sessionmaker[AsyncSession]:
 
 
 async def get_db() -> AsyncIterator[AsyncSession]:
+    """El límite de transacción vive acá, no en cada repositorio: si el
+    endpoint (y todo lo que haga con esta sesión) termina sin excepción, se
+    comitea una sola vez; si algo lanza, `async with` hace rollback solo."""
     session_factory = get_sessionmaker()
     async with session_factory() as session:
         yield session
+        await session.commit()
