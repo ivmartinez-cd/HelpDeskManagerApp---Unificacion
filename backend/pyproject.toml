@@ -40,6 +40,14 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "N"]
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path"]
+
+[tool.ruff.lint.per-file-ignores]
+# Alembic genera este boilerplate (op/sa) aunque una migración concreta no
+# los use todavía; no vale la pena mantenerlo a mano archivo por archivo.
+"src/shared/infrastructure/database/migrations/versions/*.py" = ["F401", "I001"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true

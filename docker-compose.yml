@@ -1,0 +1,23 @@
+name: helpdesk-manager
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: helpdesk-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-helpdesk}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME}
+      POSTGRES_DB: ${POSTGRES_DB:-helpdesk}
+    ports:
+      - "${DB_PORT:-5439}:5432"
+    volumes:
+      - helpdesk_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-helpdesk}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  helpdesk_db_data:
