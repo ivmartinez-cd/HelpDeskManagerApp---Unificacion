@@ -60,3 +60,18 @@ class TooManyAttemptsError(ApplicationError):
             "Demasiados intentos, esperá antes de volver a intentar",
             headers={"Retry-After": str(retry_after_seconds)},
         )
+
+
+class ForbiddenError(ApplicationError):
+    """Fail-closed: la ausencia de grant o un módulo deshabilitado dan este
+    mismo error. `is_superadmin` evita el chequeo de grant (bootstrap: el
+    primer superadmin no tiene una sola fila en permission_grant y aun así
+    necesita poder entrar a /admin para cargar la matriz de todos los
+    demás), pero NO evita el chequeo de is_enabled — ese es un gate de
+    despliegue ("¿este módulo ya está migrado?"), no de delegación."""
+
+    http_status = 403
+    default_code = "FORBIDDEN"
+
+    def __init__(self) -> None:
+        super().__init__("No tenés permiso para esta acción")

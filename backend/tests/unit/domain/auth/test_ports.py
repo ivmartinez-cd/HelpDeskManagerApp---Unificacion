@@ -5,6 +5,9 @@ Etapa 6, cuando se escriben los adaptadores concretos)."""
 from src.modules.auth.domain.repositories.login_attempt_repository import (
     LoginAttemptRepository,
 )
+from src.modules.auth.domain.repositories.module_catalog_repository import (
+    ModuleCatalogRepository,
+)
 from src.modules.auth.domain.repositories.permission_repository import PermissionRepository
 from src.modules.auth.domain.repositories.reset_token_repository import ResetTokenRepository
 from src.modules.auth.domain.repositories.session_repository import SessionRepository
@@ -20,6 +23,7 @@ _PORTS = (
     PermissionRepository,
     ResetTokenRepository,
     LoginAttemptRepository,
+    ModuleCatalogRepository,
     PasswordHasher,
     SessionTokenGenerator,
     Mailer,
