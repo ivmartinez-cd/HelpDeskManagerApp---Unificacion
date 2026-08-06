@@ -8,6 +8,10 @@ from src.modules.auth.application.use_cases.get_user_permissions import (
     GetUserPermissions,
     GetUserPermissionsDependencies,
 )
+from src.modules.auth.application.use_cases.list_action_catalog import (
+    ListActionCatalog,
+    ListActionCatalogDependencies,
+)
 from src.modules.auth.application.use_cases.list_module_catalog import (
     ListModuleCatalog,
     ListModuleCatalogDependencies,
@@ -27,7 +31,10 @@ from src.modules.auth.infrastructure.repositories.sqlalchemy_permission_reposito
     SqlAlchemyPermissionRepository,
 )
 from src.modules.auth.presentation.dependencies.permissions import require_permission
-from src.modules.auth.presentation.schemas.catalog_schemas import ModuleCatalogResponse
+from src.modules.auth.presentation.schemas.catalog_schemas import (
+    ActionCatalogResponse,
+    ModuleCatalogResponse,
+)
 from src.modules.auth.presentation.schemas.permission_schemas import (
     PermissionsResponse,
     ReplacePermissionsRequest,
@@ -47,6 +54,16 @@ async def list_modules(
     deps = ListModuleCatalogDependencies(catalog=SqlAlchemyModuleCatalogRepository(db))
     entries = await ListModuleCatalog(deps).execute()
     return [ModuleCatalogResponse.from_domain(entry) for entry in entries]
+
+
+@router.get("/catalog/actions")
+async def list_actions(
+    _: Identity = _require_manage_admin,
+    db: AsyncSession = Depends(get_db),
+) -> list[ActionCatalogResponse]:
+    deps = ListActionCatalogDependencies(catalog=SqlAlchemyModuleCatalogRepository(db))
+    entries = await ListActionCatalog(deps).execute()
+    return [ActionCatalogResponse.from_domain(entry) for entry in entries]
 
 
 @router.get("/users/{user_id}/permissions")

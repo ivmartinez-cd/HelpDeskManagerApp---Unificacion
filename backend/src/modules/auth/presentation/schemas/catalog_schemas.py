@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.modules.auth.domain.value_objects.action_catalog_entry import ActionCatalogEntry
 from src.modules.auth.domain.value_objects.module_catalog_entry import ModuleCatalogEntry
 
 
@@ -12,6 +13,7 @@ class ModuleCatalogResponse(BaseModel):
     icon: str
     sort_order: int = Field(serialization_alias="sortOrder")
     is_enabled: bool = Field(serialization_alias="isEnabled")
+    actions: list[str]
 
     @classmethod
     def from_domain(cls, entry: ModuleCatalogEntry) -> "ModuleCatalogResponse":
@@ -22,4 +24,14 @@ class ModuleCatalogResponse(BaseModel):
             icon=entry.icon,
             sort_order=entry.sort_order,
             is_enabled=entry.is_enabled,
+            actions=sorted(action.value for action in entry.actions),
         )
+
+
+class ActionCatalogResponse(BaseModel):
+    key: str
+    label: str
+
+    @classmethod
+    def from_domain(cls, entry: ActionCatalogEntry) -> "ActionCatalogResponse":
+        return cls(key=entry.key.value, label=entry.label)

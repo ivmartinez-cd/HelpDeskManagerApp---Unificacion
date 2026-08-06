@@ -50,6 +50,18 @@ async def list_users(
     return PaginatedUsersResponse(items=items, total=total, page=page, size=size)
 
 
+@router.get("/{user_id}")
+async def get_user(
+    user_id: uuid.UUID,
+    _: Identity = _require_manage_admin,
+    db: AsyncSession = Depends(get_db),
+) -> AdminUserResponse:
+    user = await SqlAlchemyUserRepository(db).get_by_id(user_id)
+    if user is None:
+        raise UserNotFoundError()
+    return AdminUserResponse.from_domain(user)
+
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_user(
     payload: CreateUserRequest,
