@@ -10,6 +10,7 @@ class Session:
 
     id: uuid.UUID
     user_id: uuid.UUID
+    token_hash: bytes
     issued_at: datetime
     expires_at: datetime
     last_seen_at: datetime

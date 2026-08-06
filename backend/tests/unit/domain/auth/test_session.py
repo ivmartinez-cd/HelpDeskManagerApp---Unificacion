@@ -11,6 +11,7 @@ def _build_session() -> Session:
     return Session(
         id=uuid.uuid4(),
         user_id=uuid.uuid4(),
+        token_hash=b"fake-hash",
         issued_at=_ISSUED,
         expires_at=_EXPIRES,
         last_seen_at=_ISSUED,
@@ -40,12 +41,12 @@ def test_is_not_active_once_revoked_even_if_not_expired() -> None:
 def test_equality_is_based_on_identity() -> None:
     shared_id = uuid.uuid4()
     a = Session(
-        id=shared_id, user_id=uuid.uuid4(), issued_at=_ISSUED, expires_at=_EXPIRES,
-        last_seen_at=_ISSUED,
+        id=shared_id, user_id=uuid.uuid4(), token_hash=b"a", issued_at=_ISSUED,
+        expires_at=_EXPIRES, last_seen_at=_ISSUED,
     )
     b = Session(
-        id=shared_id, user_id=uuid.uuid4(), issued_at=_ISSUED, expires_at=_EXPIRES,
-        last_seen_at=_ISSUED,
+        id=shared_id, user_id=uuid.uuid4(), token_hash=b"b", issued_at=_ISSUED,
+        expires_at=_EXPIRES, last_seen_at=_ISSUED,
     )
 
     assert a == b
