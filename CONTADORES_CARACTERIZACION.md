@@ -16,7 +16,8 @@ a propósito por necesitar credenciales reales y más deliberación, no por falt
 - Catálogo de permisos actualizado: migración `5c08ab6175a0` agrega el módulo `contadores`
   (`is_enabled=False` — se activa cuando estén las 8 herramientas + UI).
 
-### Lógica de negocio (Fase 3, paso 3) — 5/8 herramientas
+### Lógica de negocio (Fase 3, paso 3) — 5/8 herramientas de exportación
+
 Cada una domain → application → infrastructure → presentation, endpoint propio, gateada con
 `require_permission(EXPORT)`, validada contra tests de caracterización (mismos números que la
 app vieja) + al menos un test end-to-end con archivo real:
@@ -29,9 +30,29 @@ app vieja) + al menos un test end-to-end con archivo real:
 | Estimación en 0 | `POST /api/contadores/en0` | `estimation_zero_builder.py` |
 | Suma Fija | `POST /api/contadores/suma-fija` | `fixed_sum_builder.py` |
 
-Inventario completo de archivos: `backend/src/modules/contadores/` (domain/application/
-infrastructure/presentation completos para estas 5). Tests: `backend/tests/unit/domain/
-contadores/` y `backend/tests/integration/infrastructure/contadores/`.
+### Gestión de clientes FTP (Fase 3, paso 3 — completado 2026-08-07)
+
+CRUD completo + endpoint de descarga/proceso de DB3 vía FTP, portado de la app vieja:
+
+| Endpoint | Descripción |
+|---|---|
+| `GET    /api/contadores/ftp/clients` | Lista todos los clientes |
+| `POST   /api/contadores/ftp/clients` | Crea un cliente |
+| `GET    /api/contadores/ftp/clients/{id}` | Obtiene un cliente por ID |
+| `PUT    /api/contadores/ftp/clients/{id}` | Actualiza un cliente |
+| `DELETE /api/contadores/ftp/clients/{id}` | Elimina un cliente |
+| `POST   /api/contadores/ftp/clients/{id}/process` | Descarga DB3 vía FTP y genera CSV |
+
+Todos los endpoints usan `require_permission(EXPORT)`.
+
+**Arquitectura del puerto FTP:**
+- `domain/repositories/ftp_db3_downloader.py` — `Protocol` (puerto de dominio), sin `ftplib` en domain.
+- `infrastructure/ftp/ftplib_db3_downloader.py` — adaptador concreto (Adapter Pattern).
+- El endpoint `/process` reutiliza internamente `RunDb3ExportUseCase` — no duplica lógica CSV.
+- `password` nunca se loguea. Passwords en texto plano = decisión consciente documentada en
+  `FtpClient` (mismo diseño que la app vieja; cambiar requiere decisión explícita).
+
+**Tests:** 132/132 passing (16 tests nuevos).
 
 ### Corrección de arquitectura (ADR-007)
 `ModuleKey`/`ActionKey`/`Permission` se movieron de `auth.domain` a `shared/domain/
@@ -44,7 +65,7 @@ excepción de import-linter **acotada a la capa `presentation`**, documentada en
 ### Verificación (correr esto primero al retomar)
 ```bash
 cd backend
-uv run pytest tests/ -q                 # debe dar 116 passed
+uv run pytest tests/ -q                 # debe dar 132 passed
 uv run ruff check src tests scripts     # All checks passed
 uv run mypy src                         # Success: no issues found
 uv run lint-imports                     # 4 contracts kept, 0 broken
@@ -54,7 +75,7 @@ test (`docker compose -f docker-compose.test.yml up -d`).
 
 ## ❌ Falta para terminar Contadores
 
-### 1. Tres herramientas sin portar: SDS, ERS, gestión de clientes FTP
+### 1. Dos herramientas sin portar: SDS, ERS
 No son "más de lo mismo" — cada una tiene una decisión previa a tomar, no solo código:
 
 - **SDS (HP):** credenciales (`SDS_API_KEY`/`SDS_API_SECRET`) están **hardcodeadas en texto
@@ -64,13 +85,6 @@ No son "más de lo mismo" — cada una tiene una decisión previa a tomar, no so
   (`ers_token_refresher.py`), verificado en vivo que funciona (~7.5s). Decisión pendiente: ¿se
   porta el subproceso tal cual, o se integra como una tarea async dentro del proceso FastAPI?
   Cualquier timeout debe ser holgado (≥15s).
-- **FTP:** hay 231 clientes reales en la DB ya migrada, pero **nunca se probó la conexión FTP
-  en vivo** (requiere autorización explícita aparte, no cubierta hasta ahora — ver nota de
-  seguridad más abajo). El repo/CRUD de `FtpClient` ya existe
-  (`domain/repositories/ftp_client_repository.py` +
-  `infrastructure/repositories/sqlalchemy_ftp_client_repository.py`), falta portar la
-  *conexión* FTP real + descarga de DB3 (`ftp_db3.py` en la app vieja) y los endpoints de
-  gestión de clientes (alta/baja/edición — hoy CRUD ya probado en tests, falta exponer routers).
 
 ### 2. Otros pendientes del checklist de Fase 3 (Contadores), sin tocar todavía
 - [ ] Portar la UI a Next.js dentro de `(modules)/contadores/` — nada de frontend hecho aún.
@@ -83,6 +97,8 @@ No son "más de lo mismo" — cada una tiene una decisión previa a tomar, no so
 - El dashboard de KPIs con celdas coloreadas y las hojas "Leyenda"/"Validación" de la
   Proyección vieja no se portaron (polish visual, no reglas de negocio).
 - No hay test e2e por navegador del flujo completo de auth todavía (Fase 2, no bloquea Fase 3).
+- El endpoint `/process` de FTP **no se probó contra FTP en vivo** (requiere autorización
+  explícita + credenciales reales de clientes). Tests de integración usan stub de FTP.
 
 ## Estado del entorno (para no perder el hilo)
 
@@ -98,9 +114,12 @@ No son "más de lo mismo" — cada una tiene una decisión previa a tomar, no so
 y con las migraciones de Contadores aplicadas. `docker-compose.test.yml` es el que levanta la
 segunda si hace falta reiniciarla.
 
-**Nada quedó sin commitear intencionalmente que deba preocupar** — no se corrió `git commit` en
-ningún momento de esta sesión (no se pidió). Revisar `git status` en
-`HelpDeskManager-Unificacion/` al retomar antes de asumir el estado del working tree.
+**Working tree limpio (commits hechos al pausar, 2026-08-07):**
+- `2d7dc53` — trabajo de Fase 2 (self-service forgot/reset/change-password) que ya estaba
+  suelto desde antes de esta sesión.
+- `d234964` — todo lo de Contadores + el refactor de ADR-007, hecho hoy.
+
+`git log --oneline -5` en `HelpDeskManager-Unificacion/` para confirmar al retomar.
 
 ---
 

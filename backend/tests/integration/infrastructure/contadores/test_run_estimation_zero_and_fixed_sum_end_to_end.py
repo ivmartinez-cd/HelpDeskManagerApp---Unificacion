@@ -40,7 +40,8 @@ def test_estimation_zero_end_to_end_with_real_csv(tmp_path) -> None:
 
     csv_path = use_case.execute(request)
 
-    content = open(csv_path, encoding="utf-8").read()
+    with open(csv_path, encoding="utf-8") as f:
+        content = f.read()
     assert "SER100;07/08/2026;14;10;1500;;0;;" in content
     assert "SER101;07/08/2026;14;;0;20;300;;" in content
     assert "SER102" not in content
@@ -66,6 +67,7 @@ def test_fixed_sum_end_to_end_with_real_xlsx(tmp_path) -> None:
     csv_paths = use_case.execute(request)
 
     assert len(csv_paths) == 1
-    content = open(csv_paths[0], encoding="utf-8").read()
+    with open(csv_paths[0], encoding="utf-8") as f:
+        content = f.read()
     assert "SERA;Activa en Cliente;500;07/08/2026;14;10;1500" in content
     assert "SERD;Activa en Cliente;1;07/08/2026;14;10;1" in content

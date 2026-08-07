@@ -5,6 +5,7 @@ from src.modules.auth.presentation.admin_permissions_router import (
 )
 from src.modules.auth.presentation.admin_users_router import router as admin_users_router
 from src.modules.auth.presentation.auth_router import router as auth_router
+from src.modules.contadores.presentation.ftp_clients_router import router as ftp_clients_router
 from src.modules.contadores.presentation.proyeccion_router import router as proyeccion_router
 from src.modules.contadores.presentation.tools_router import router as contadores_tools_router
 from src.shared.infrastructure.config.settings import get_settings
@@ -27,6 +28,7 @@ def create_app() -> FastAPI:
     app.include_router(admin_users_router)
     app.include_router(proyeccion_router)
     app.include_router(contadores_tools_router)
+    app.include_router(ftp_clients_router)
     return app
 
 

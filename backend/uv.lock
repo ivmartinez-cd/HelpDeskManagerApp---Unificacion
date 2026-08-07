@@ -367,7 +367,7 @@ dev = [
     { name = "pytest-asyncio", specifier = "==1.4.0" },
     { name = "pytest-cov", specifier = "==7.1.0" },
     { name = "ruff", specifier = "==0.16.1" },
-    { name = "types-openpyxl", specifier = ">=3.1.5.20260807" },
+    { name = "types-openpyxl", specifier = "==3.1.5.20260807" },
 ]
 
 [[package]]
