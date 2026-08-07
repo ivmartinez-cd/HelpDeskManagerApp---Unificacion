@@ -1,6 +1,7 @@
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Literal
 
 from src.modules.auth.domain.entities.password_reset_token import PasswordResetToken
 from src.modules.auth.domain.repositories.reset_token_repository import ResetTokenRepository
@@ -10,6 +11,18 @@ from src.modules.auth.domain.services.session_token_generator import SessionToke
 from src.modules.auth.domain.value_objects.email import Email
 
 _TOKEN_TTL = timedelta(minutes=30)
+
+ResetPurpose = Literal["activation", "reset"]
+
+_SUBJECTS: dict[ResetPurpose, str] = {
+    "activation": "Activá tu cuenta — HelpDesk Manager",
+    "reset": "Restablecer tu contraseña — HelpDesk Manager",
+}
+_BODIES: dict[ResetPurpose, str] = {
+    "activation": "Usá este link para activar tu cuenta y elegir tu contraseña "
+    "(vence en 30 minutos): {link}",
+    "reset": "Usá este link para restablecer tu contraseña (vence en 30 minutos): {link}",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,7 +43,7 @@ class RequestPasswordReset:
     def __init__(self, deps: RequestPasswordResetDependencies) -> None:
         self._deps = deps
 
-    async def execute(self, email: str) -> None:
+    async def execute(self, email: str, *, purpose: ResetPurpose = "reset") -> None:
         user = await self._deps.users.get_by_email(Email(email))
         if user is None:
             return
@@ -44,8 +57,10 @@ class RequestPasswordReset:
             )
         )
         link = f"{self._deps.frontend_url}/reset-password?token={token}"
+        if purpose == "activation":
+            link += "&new=1"
         await self._deps.mailer.send(
             to=user.email.value,
-            subject="Restablecer tu contraseña — HelpDesk Manager",
-            body=f"Usá este link para restablecer tu contraseña (vence en 30 minutos): {link}",
+            subject=_SUBJECTS[purpose],
+            body=_BODIES[purpose].format(link=link),
         )

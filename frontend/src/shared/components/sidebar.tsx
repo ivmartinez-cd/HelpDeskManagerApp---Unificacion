@@ -3,10 +3,11 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Menu } from "lucide-react";
+import { KeyRound, LogOut, Menu } from "lucide-react";
 import { HelpDeskLogo } from "@/shared/components/helpdesk-logo";
 import { resolveIcon } from "@/shared/components/icon-registry";
 import { cn } from "@/shared/utils/cn";
+import { ChangePasswordModal } from "@/features/auth/components/change-password-modal";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useSession } from "@/services/session-provider";
 
@@ -15,6 +16,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
   const { logout, loading } = useLogout();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
   const isActive = (route: string) => pathname === route || pathname.startsWith(`${route}/`);
 
@@ -76,14 +78,26 @@ export function Sidebar({ children }: { children: ReactNode }) {
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-2.5">
-            <div className="hidden text-right sm:block">
+            <button
+              onClick={() => setChangePasswordOpen(true)}
+              className="hidden rounded-xl px-2 py-1 text-right transition-colors hover:bg-muted sm:block"
+              title="Cambiar contraseña"
+            >
               <p className="text-xs font-black leading-none text-foreground uppercase tracking-tight">
                 {user.fullName}
               </p>
               <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
                 {user.isSuperadmin ? "Superadmin" : "Usuario"}
               </p>
-            </div>
+            </button>
+            <button
+              onClick={() => setChangePasswordOpen(true)}
+              className="rounded-xl p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-150 sm:hidden"
+              title="Cambiar contraseña"
+              aria-label="Cambiar contraseña"
+            >
+              <KeyRound className="h-4 w-4" />
+            </button>
             <button
               onClick={() => logout()}
               disabled={loading}
@@ -98,6 +112,11 @@ export function Sidebar({ children }: { children: ReactNode }) {
 
         <div className="relative flex-1 overflow-y-auto thin-scrollbar">{children}</div>
       </div>
+
+      <ChangePasswordModal
+        isOpen={changePasswordOpen}
+        onClose={() => setChangePasswordOpen(false)}
+      />
     </div>
   );
 }

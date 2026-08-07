@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // Next.js 16 renombró "middleware" a "proxy" — ver AGENTS.md/node_modules/next/dist/docs.
 const SESSION_COOKIE_NAME = "hdm_session";
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

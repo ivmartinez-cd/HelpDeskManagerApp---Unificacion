@@ -8,6 +8,7 @@ from src.modules.auth.application.use_cases.create_user import CreateUser, Creat
 from src.modules.auth.application.use_cases.request_password_reset import (
     RequestPasswordReset,
     RequestPasswordResetDependencies,
+    ResetPurpose,
 )
 from src.modules.auth.application.use_cases.update_user import UpdateUser, UpdateUserDependencies
 from src.modules.auth.domain.errors import UserNotFoundError
@@ -72,7 +73,7 @@ async def create_user(
         users=SqlAlchemyUserRepository(db), hasher=Argon2PasswordHasher()
     )
     user = await CreateUser(deps).execute(email=payload.email, full_name=payload.full_name)
-    await _send_activation_link(db, user_email=user.email.value)
+    await _send_password_link(db, user_email=user.email.value, purpose="activation")
     return AdminUserResponse.from_domain(user)
 
 
@@ -99,11 +100,13 @@ async def trigger_password_reset(
     user = await SqlAlchemyUserRepository(db).get_by_id(user_id)
     if user is None:
         raise UserNotFoundError()
-    await _send_activation_link(db, user_email=user.email.value)
+    await _send_password_link(db, user_email=user.email.value, purpose="reset")
     return {"message": "Se envió un link para restablecer la contraseña."}
 
 
-async def _send_activation_link(db: AsyncSession, *, user_email: str) -> None:
+async def _send_password_link(
+    db: AsyncSession, *, user_email: str, purpose: ResetPurpose
+) -> None:
     settings = get_settings()
     deps = RequestPasswordResetDependencies(
         users=SqlAlchemyUserRepository(db),
@@ -112,4 +115,4 @@ async def _send_activation_link(db: AsyncSession, *, user_email: str) -> None:
         mailer=get_mailer(),
         frontend_url=settings.frontend_url,
     )
-    await RequestPasswordReset(deps).execute(user_email)
+    await RequestPasswordReset(deps).execute(user_email, purpose=purpose)
