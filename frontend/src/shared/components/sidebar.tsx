@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { KeyRound, LogOut, Menu } from "lucide-react";
+import { ThemeToggle } from "@/shared/components/theme-toggle";
 import { HelpDeskLogo } from "@/shared/components/helpdesk-logo";
 import { resolveIcon } from "@/shared/components/icon-registry";
 import { cn } from "@/shared/utils/cn";
@@ -98,6 +99,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
             >
               <KeyRound className="h-4 w-4" />
             </button>
+            <ThemeToggle />
             <button
               onClick={() => logout()}
               disabled={loading}
