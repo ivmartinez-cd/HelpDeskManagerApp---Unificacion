@@ -1,8 +1,8 @@
 # Estado al pausar (2026-08-07, noche) — retomar desde acá
 
-**Resumen en una línea:** Contadores tiene su modelo de datos y **5 de 8 herramientas**
+**Resumen en una línea:** Contadores tiene su modelo de datos y **6 de 8 herramientas**
 reescritas de punta a punta en `HelpDeskManager-Unificacion/backend/src/modules/contadores/`,
-con 116/116 tests pasando. Faltan 3 (SDS, ERS, gestión de clientes FTP) — dejadas para después
+con 132/132 tests pasando. Faltan 2 (SDS, ERS) — dejadas para después
 a propósito por necesitar credenciales reales y más deliberación, no por falta de tiempo bruto.
 
 ## ✅ Hecho y verificado
