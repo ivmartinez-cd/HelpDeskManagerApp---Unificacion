@@ -5,6 +5,8 @@ from src.modules.auth.presentation.admin_permissions_router import (
 )
 from src.modules.auth.presentation.admin_users_router import router as admin_users_router
 from src.modules.auth.presentation.auth_router import router as auth_router
+from src.modules.contadores.presentation.proyeccion_router import router as proyeccion_router
+from src.modules.contadores.presentation.tools_router import router as contadores_tools_router
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.logging_config import configure_logging
 from src.shared.presentation.errors.handlers import register_exception_handlers
@@ -23,6 +25,8 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(admin_permissions_router)
     app.include_router(admin_users_router)
+    app.include_router(proyeccion_router)
+    app.include_router(contadores_tools_router)
     return app
 
 

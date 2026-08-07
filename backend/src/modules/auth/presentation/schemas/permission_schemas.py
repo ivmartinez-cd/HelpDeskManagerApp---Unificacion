@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
-from src.modules.auth.domain.value_objects.action_key import ActionKey
-from src.modules.auth.domain.value_objects.module_key import ModuleKey
-from src.modules.auth.domain.value_objects.permission import Permission
 from src.modules.auth.domain.value_objects.permission_set import PermissionSet
+from src.shared.domain.value_objects.action_key import ActionKey
+from src.shared.domain.value_objects.module_key import ModuleKey
+from src.shared.domain.value_objects.permission import Permission
 
 
 class PermissionItem(BaseModel):

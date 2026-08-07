@@ -2,10 +2,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.domain.value_objects.action_catalog_entry import ActionCatalogEntry
-from src.modules.auth.domain.value_objects.action_key import ActionKey
 from src.modules.auth.domain.value_objects.module_catalog_entry import ModuleCatalogEntry
-from src.modules.auth.domain.value_objects.module_key import ModuleKey
 from src.modules.auth.infrastructure.models.permission_models import Action, Module, ModuleAction
+from src.shared.domain.value_objects.action_key import ActionKey
+from src.shared.domain.value_objects.module_key import ModuleKey
 
 
 class SqlAlchemyModuleCatalogRepository:

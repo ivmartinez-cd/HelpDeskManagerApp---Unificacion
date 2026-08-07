@@ -3,11 +3,11 @@ import uuid
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.auth.domain.value_objects.action_key import ActionKey
-from src.modules.auth.domain.value_objects.module_key import ModuleKey
-from src.modules.auth.domain.value_objects.permission import Permission
 from src.modules.auth.domain.value_objects.permission_set import PermissionSet
 from src.modules.auth.infrastructure.models.permission_models import PermissionGrant
+from src.shared.domain.value_objects.action_key import ActionKey
+from src.shared.domain.value_objects.module_key import ModuleKey
+from src.shared.domain.value_objects.permission import Permission
 
 
 class SqlAlchemyPermissionRepository:

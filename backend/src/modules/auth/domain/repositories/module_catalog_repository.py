@@ -2,7 +2,7 @@ from typing import Protocol
 
 from src.modules.auth.domain.value_objects.action_catalog_entry import ActionCatalogEntry
 from src.modules.auth.domain.value_objects.module_catalog_entry import ModuleCatalogEntry
-from src.modules.auth.domain.value_objects.module_key import ModuleKey
+from src.shared.domain.value_objects.module_key import ModuleKey
 
 
 class ModuleCatalogRepository(Protocol):

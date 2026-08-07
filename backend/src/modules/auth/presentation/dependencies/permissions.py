@@ -5,11 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity, PermissionView
 from src.modules.auth.domain.errors import ForbiddenError
-from src.modules.auth.domain.value_objects.permission import Permission
 from src.modules.auth.infrastructure.repositories.sqlalchemy_module_catalog_repository import (
     SqlAlchemyModuleCatalogRepository,
 )
 from src.modules.auth.presentation.dependencies.identity import get_current_identity
+from src.shared.domain.value_objects.permission import Permission
 from src.shared.infrastructure.database.session import get_db
 
 

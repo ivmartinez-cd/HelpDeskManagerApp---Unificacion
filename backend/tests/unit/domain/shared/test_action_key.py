@@ -1,7 +1,7 @@
 import pytest
 
-from src.modules.auth.domain.errors import InvalidActionKeyError
-from src.modules.auth.domain.value_objects.action_key import ActionKey
+from src.shared.domain.errors import InvalidActionKeyError
+from src.shared.domain.value_objects.action_key import ActionKey
 
 
 def test_accepts_a_well_formed_key() -> None:

@@ -65,3 +65,20 @@ class DatabaseError(InfrastructureError):
 class ExternalServiceError(InfrastructureError):
     http_status: ClassVar[int] = 502
     default_code: ClassVar[str] = "EXTERNAL_SERVICE_ERROR"
+
+
+class InvalidModuleKeyError(ValidationError):
+    """`ModuleKey`/`ActionKey` viven en shared (ver ADR-007): todo módulo de
+    negocio los usa para declarar sus propios permisos, no son de auth."""
+
+    default_code: ClassVar[str] = "INVALID_MODULE_KEY"
+
+    def __init__(self, raw_value: str) -> None:
+        super().__init__(f"Clave de módulo inválida: {raw_value!r}")
+
+
+class InvalidActionKeyError(ValidationError):
+    default_code: ClassVar[str] = "INVALID_ACTION_KEY"
+
+    def __init__(self, raw_value: str) -> None:
+        super().__init__(f"Clave de acción inválida: {raw_value!r}")

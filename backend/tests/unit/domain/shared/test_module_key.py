@@ -1,7 +1,7 @@
 import pytest
 
-from src.modules.auth.domain.errors import InvalidModuleKeyError
-from src.modules.auth.domain.value_objects.module_key import ModuleKey
+from src.shared.domain.errors import InvalidModuleKeyError
+from src.shared.domain.value_objects.module_key import ModuleKey
 
 
 def test_accepts_a_well_formed_key() -> None:

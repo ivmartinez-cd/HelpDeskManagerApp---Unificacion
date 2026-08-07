@@ -1,7 +1,7 @@
 import uuid
 
 from src.modules.auth.domain.value_objects.department_scope import DepartmentScope, GlobalScope
-from src.modules.auth.domain.value_objects.module_key import ModuleKey
+from src.shared.domain.value_objects.module_key import ModuleKey
 
 
 class GlobalScopePolicy:

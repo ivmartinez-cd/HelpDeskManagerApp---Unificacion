@@ -2,8 +2,8 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.auth.domain.value_objects.permission import Permission
 from src.modules.auth.infrastructure.models.permission_models import PermissionAudit
+from src.shared.domain.value_objects.permission import Permission
 
 
 class SqlAlchemyPermissionAuditRepository:

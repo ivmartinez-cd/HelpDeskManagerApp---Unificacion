@@ -32,10 +32,20 @@ ejecución no iniciada.**
 | **Liquidacion-Prestadores** | Next.js 14 (App Router) + TS | FastAPI + SQLAlchemy | SQLite | No embebido | Docker Compose local | No — CORS abierto |
 | **Printer-Logs-Analyzer** | React + Vite + Zustand | FastAPI, sin ORM (`psycopg2` + migraciones SQL propias) | Postgres 17 (ya vive en la VM del padre) | **APScheduler** — sync c/30min + 2 cron diarios, en producción hoy | Frontend Vercel, backend en la misma VM que el padre (puerto 8082) | `x-api-key` simple |
 | **STC Cloud** | React 19 + Vite + Recharts | Node/Fastify + TS | Postgres 16 + TimescaleDB + Redis/BullMQ | `heartbeatMonitor` (barrido c/5min) + `alertWorker` (BullMQ) + agente Windows nativo (SNMP) | Docker Compose prod, nginx propio | Sí — JWT + refresh, rate limiting, secretos AES |
+| ↳ **Contadores** (módulo del padre, no es app aparte) | Next.js 15, dentro de `(modules)/contadores/` del padre | FastAPI del padre — sin separar en router propio, vive en `main.py` (~250 de sus 790 líneas) | Postgres del padre (Neon hoy) vía SQLAlchemy — configs de clientes FTP/SDS/ERS | Ninguno periódico — todo on-demand, salvo el subproceso Playwright bajo demanda que renueva el token de ERS (ya listado en la fila de arriba) | Misma VM/deploy que el padre | Ninguna propia — hereda el auth del padre |
 
 El módulo "STC" que ya existe en el sidebar del padre **no es STC Cloud** — es una utilidad
 desechable de parseo de IPs, sin relación de código con el Fastify de STC Cloud. Se elimina/
 reemplaza cuando entra el STC Cloud real (Fase por-app, más abajo).
+
+**Nota (2026-08-07):** el diagnóstico original no incluía los módulos de negocio que ya viven
+*dentro* del padre HelpDeskManager-Web (se lo trató solo como shell/auth). "Contadores" es uno
+real y no trivial (~2200 líneas entre `proyeccion_contadores.py`, `sds_api.py`, `ers_api.py` y
+los endpoints de `main.py`): 8 herramientas (descarga SDS/ERS/FTP, procesar DB3, estimación en
+0, suma fija, proyección con algoritmo propio, calculadora manual). Se agrega al diagnóstico y
+al orden de migración de Fase 0 (ver checklist). Puede haber otros módulos del padre en la
+misma situación (ej. `recursos/`, mencionado en `UI_UX_ROADMAP.md`) — no auditados todavía, no
+asumir que están cubiertos.
 
 ### Riesgos de negocio que hay que portar fiel, no reinventar
 - **SDSInsumos:** idempotencia de pedidos SOAP (`persistNewSupply` + verificación posterior
@@ -48,8 +58,17 @@ reemplaza cuando entra el STC Cloud real (Fase por-app, más abajo).
 - **Printer-Logs-Analyzer:** scheduler compartiendo DB con contenedores ya en producción.
 - **STC Cloud:** agente Windows con URL de backend fija — el contrato de API no puede romperse
   sin coordinar el rollout de agentes ya instalados en campo.
+- **Contadores:** el algoritmo de proyección (`proyeccion_contadores.py`, detección de reset de
+  contador, ventana de tendencia reciente, umbral mínimo de consumo) genera el CSV que alimenta
+  **SiGes** (sistema de facturación) — un error de proyección impacta directo en lo que se
+  factura a un cliente, mismo nivel de riesgo que el motor de reglas de
+  Liquidacion-Prestadores. La integración con ERS (Epson) no tiene API oficial: autentica
+  scrapeando el portal vía un subproceso Playwright que persiste token + cookies de Incapsula a
+  un archivo (`ers_token.json`) — punto frágil a preservar o mejorar, no a romper. Las
+  credenciales de HP SDS están **hardcodeadas en texto plano** en `sds_api.py` (API key y
+  secret) — al migrar hay que moverlas a variables de entorno, no portarlas tal cual.
 
-Estos 5 puntos son la razón por la que la reescritura se hace con **tests de caracterización**
+Estos 6 puntos son la razón por la que la reescritura se hace con **tests de caracterización**
 antes de tocar cada módulo (ver Fase 3).
 
 ---
@@ -165,9 +184,15 @@ en `.claude.json` global y de proyecto; sin `.mcp.json` en ninguno de los 6 repo
 - [x] **Deploy objetivo:** todo (frontend + backend + DB) en Portainer / red corporativa,
       proxy inverso con dominio local, sin exposición pública — se abandona Vercel/Neon (ver
       §2 "Deploy" y "Base de datos").
-- [ ] Confirmar **orden de migración de los módulos de negocio** una vez que el auth esté en
-      pie (propuesta previa, a re-confirmar: Liquidacion-Prestadores → Printer-Logs-Analyzer
-      → SDSInsumos → VacaSync → STC Cloud, de menor a mayor riesgo).
+- [x] **Orden de migración de los módulos de negocio** (confirmado 2026-08-07, una vez el auth
+      esté en pie): **Contadores → Liquidacion-Prestadores → Printer-Logs-Analyzer →
+      SDSInsumos → VacaSync → STC Cloud.** Contadores va primero pese a alimentar facturación
+      (mismo riesgo que Liquidacion-Prestadores) porque es el de menor esfuerzo de migración:
+      no tiene DB externa que consolidar ni deploy propio que apagar — ya vive en el FastAPI
+      del padre, solo hay que reubicarlo a la nueva estructura de capas. Sirve como piloto de
+      bajo riesgo *operativo* del patrón de migración, aunque su lógica de negocio (algoritmo
+      de proyección) sí requiere tests de caracterización serios antes de tocarla (ver §1,
+      riesgos de negocio).
 - [ ] Qué hacer con el módulo "STC" dummy actual del padre (eliminar antes de traer STC
       Cloud real).
 
@@ -193,24 +218,43 @@ en `.claude.json` global y de proyecto; sin `.mcp.json` en ninguno de los 6 repo
       parque-impresoras — confirmar si es la misma integración HP Insight.
 
 ### Fase 2 — Fundaciones del monolito (arranca por auth, no por un módulo de negocio)
-- [ ] Definir el esqueleto de capas (`domain/application/infrastructure/presentation`) del
-      nuevo backend FastAPI, con un módulo vacío por dominio (`insumos`, `liquidaciones`,
-      `vacaciones`, `parque-impresoras`, `stc`) y un módulo real desde el día uno: `auth`.
-- [ ] Leer la pantalla/flujo de login de VacaSync (`Calendario web/frontend`, JWT
-      access+refresh, bcrypt) y portar su UI a Next.js como base del login unificado —
-      adaptar, no clonar 1:1 (acá el modelo de permisos es distinto, ver abajo).
-- [ ] Diseñar el schema de permisos: tabla usuario × módulo (× acción) editable, más la
-      pantalla de administración para que el admin dé/quite acceso sin tocar código.
-- [ ] Implementar el backend de auth (JWT + refresh, hash de password, endpoints de gestión
-      de usuarios/permisos) en el módulo `auth` del monolito.
-- [ ] Diseñar y migrar el schema de Postgres consolidado (empezar por las tablas que ya son
-      Postgres — VacaSync/Prisma y Printer-Logs-Analyzer — y sumar Timescale como extensión).
-- [ ] Rediseñar `frontend/src/components/sidebar.tsx`: de lista plana a grupos colapsables,
-      con las 5 entradas de negocio ocultas/deshabilitadas hasta que cada módulo esté migrado,
-      y visibilidad de cada entrada condicionada a los permisos del usuario logueado.
-- [ ] Probar el auth de punta a punta (login, refresh, admin editando permisos de otro
-      usuario, un usuario sin acceso a un módulo no lo ve en el sidebar) antes de arrancar
-      con el primer módulo de negocio.
+- [x] Esqueleto de capas (`domain/application/infrastructure/presentation`) del nuevo backend
+      FastAPI, con módulo real `auth` (completo: entidades, value objects, repositorios,
+      casos de uso, routers) y módulos vacíos por dominio (`insumos`, `liquidaciones`,
+      `vacaciones`, `parque_impresoras`, `stc`) — confirmado leyendo
+      `backend/src/modules/*` (2026-08-07). **Falta** módulo `contadores` (se crea al arrancar
+      Fase 3 de este módulo).
+- [x] Login portado a Next.js (`login-form.tsx`, `auth-split-layout.tsx`) + flujo de
+      forgot/reset password (`(auth)/forgot-password/`, `(auth)/reset-password/`,
+      `use-password-reset.ts`) + change-password modal — más completo que el alcance
+      original (que solo pedía portar el login).
+- [x] Schema de permisos usuario × módulo (× acción) editable: `permission_repository`,
+      `module_catalog_repository`, `well_known_permissions.py`, `admin_permissions_router.py`
+      + pantalla de administración (commit `20b634b`).
+- [x] Backend de auth completo: JWT/sesión (`session_token_generator`, `sqlalchemy_session_repository`),
+      hash con Argon2 (no bcrypt como VacaSync — mejora, no regresión), reset de password con
+      token + mailer (SMTP real), `admin_users_router.py` para gestión de usuarios.
+- [ ] Diseñar y migrar el schema de Postgres consolidado con datos reales de VacaSync/
+      Printer-Logs-Analyzer — confirmado (2026-08-07, revisando `alembic/versions/`): las
+      migraciones existentes son solo del schema de auth (`baseline`, `auth_schema`,
+      `seed_catalog`, `rename_admin_module_label`). Todavía no hay migración de datos de
+      VacaSync/Printer-Logs-Analyzer. Sigue abierto, sin corregir.
+- [x] Sidebar rediseñado (`shared/components/sidebar.tsx`): renderiza `modules` desde
+      `useSession()` — ya es permission-driven, no lista plana hardcodeada (commit `19bff67`).
+- [x] **Corrección (2026-08-07): sí hay suite de tests de auth, y pasa al 100%.** Dije antes
+      que no había tests — fue un error mío, un `find` con `maxdepth 3` no llegó a
+      `tests/integration/infrastructure/auth/` ni a `tests/unit/domain/auth/`. Corrida real:
+      `pytest tests/` → **61 passed** (tests de dominio: value objects/entities de auth —
+      `email`, `raw_password`, `permission_set`, `session`, `user`, etc. — más tests de
+      infraestructura: Argon2, generador de tokens, repositorios SQLAlchemy de
+      user/session/login_attempt). Los 10 tests de integración fallaban en el primer intento
+      por `ConnectionRefusedError` — no es un test roto, es que requieren el Postgres de test
+      dedicado (`docker-compose.test.yml`, contenedor `helpdesk-db-test`, puerto 5440) y no
+      estaba levantado; al levantarlo (`docker compose -f docker-compose.test.yml up -d`)
+      pasaron los 61/61. Lo que sigue sin existir es un test de **punta a punta** de la UI
+      (login real por navegador → admin edita permisos de otro usuario → ese usuario no ve el
+      módulo en el sidebar) — los 61 tests son unitarios/de integración de infraestructura, no
+      e2e. Eso no bloquea arrancar Fase 3 de Contadores.
 
 ### Fase 3 — Por módulo (repetir en el orden de Fase 0, uno a la vez)
 - [ ] **Tests de caracterización primero:** correr la app vieja (skill `run`), capturar
@@ -229,6 +273,52 @@ en `.claude.json` global y de proyecto; sin `.mcp.json` en ninguno de los 6 repo
       observación sin discrepancias.
 - [ ] Actualizar `PROJECT_CONTEXT.md` del padre.
 
+#### Fase 3 — Contadores (primer módulo, en curso — 2026-08-07)
+- [x] **Tests de caracterización:** corrida la app vieja en vivo (backend local puerto 8011,
+      contra la Neon real de producción, confirmada por `docker inspect` en la VM — solo
+      lectura, sin tocar endpoints que escriben en la DB; FTP no probado en vivo, requiere
+      autorización aparte por los 231 clientes reales). Cubiertas las 8 herramientas: SDS, ERS
+      (incluida la renovación forzada de token vía Playwright, ~7.5s), DB3, en0, suma fija,
+      calculadora, y el algoritmo de proyección (8 tests nuevos en
+      `HelpDeskManager-Web/backend/tests/test_proyeccion_caracterizacion.py`, más el existente
+      `test_proyeccion.py` — 9/9 pasan). Hallazgos y comportamientos no obvios (incluidos
+      posibles bugs a decidir si se preservan) documentados en
+      `CONTADORES_CARACTERIZACION.md` (esta carpeta) — leer antes de reescribir el módulo.
+- [x] **Modelo de datos portado (2026-08-07), con datos reales.** Creado
+      `backend/src/modules/contadores/` (domain: entities `FtpClient`/`MeterClientConfig`,
+      value object `MeterSource`, repos `Protocol`; infrastructure: modelos SQLAlchemy con PK
+      UUID + repos concretos). Migración Alembic `fc502aa52749` (reversible, verificado
+      downgrade+upgrade) aplicada al Postgres consolidado (`helpdesk-db`, puerto 5439). 18 tests
+      nuevos (unit + integración), 79/79 pasan en total. `ruff`/`mypy`/`import-linter` limpios —
+      se agregaron contratos `contadores-domain-no-frameworks` y `modules-are-independent` a
+      `.importlinter` (antes solo existía el de auth). Datos reales copiados desde Neon con
+      `scripts/migrate_contadores_data_from_neon.py`: **231 filas de `ftp_clients` + 5 de
+      `meter_client_configs`** verificadas en la DB nueva. `resource_links` NO se portó — es
+      del módulo `recursos/`, no de Contadores (ver nota de §1 sobre gap no auditado).
+- [~] Reescribir domain/application/infrastructure — **5 de 8 herramientas completas
+      (2026-08-07): Proyección, Calculadora manual, DB3→CSV, Estimación en 0, Suma Fija.**
+      Todas de punta a punta (domain → application → infrastructure → presentation), cada una
+      gateada con `require_permission(EXPORT)`, endpoints:
+      `POST /api/contadores/{proyeccion,calc,db3,en0,suma-fija}`. Validadas contra tests de
+      caracterización (mismos números que la app vieja) + tests end-to-end con archivos reales
+      (Excel/CSV/SQLite). **116/116 tests, `ruff`/`mypy`/`import-linter` limpios.**
+      Faltan 3: SDS, ERS (integraciones externas HP/Epson), gestión de clientes FTP — quedan
+      para después por requerir manejo de credenciales/red externa, más deliberación.
+      **Corrección (2026-08-07):** los dos "bugs" documentados antes (shift de en0, `dias_est`
+      negativo de la calculadora) resultaron ser falsos positivos — comparé contra código
+      muerto (`csv_en0.py`, `estimador_manual.py`) que `main.py` ni siquiera importa; la
+      implementación real (`counters_tools.py`) es más simple y su comportamiento es correcto.
+      También confirmado código muerto: `ejecutar_autoestimacion` (importada, nunca llamada).
+      Detalle en `CONTADORES_CARACTERIZACION.md`.
+      **Simplificado a propósito (YAGNI):** el dashboard de KPIs con celdas coloreadas y la hoja
+      "Leyenda"/"Validación" de la app vieja no se portaron — son polish visual, no reglas de
+      negocio; el Excel nuevo tiene hojas Proyección/Auditoría/Resumen con datos correctos.
+- [ ] Portar la UI a Next.js dentro de `(modules)/contadores/`.
+- [ ] Prueba end-to-end con Playwright.
+- [ ] Correr en paralelo con la app vieja antes de apagarla.
+- [ ] Apagar el módulo Contadores de la app vieja.
+- [ ] Actualizar `PROJECT_CONTEXT.md` del padre.
+
 ### Fase 4 — STC Cloud (caso especial, va último)
 - [ ] Migrar `heartbeatMonitor` y `alertWorker` (BullMQ → outbox Postgres + APScheduler,
       según decisión de §2) manteniendo el contrato de API que consume el agente Windows.
@@ -239,7 +329,7 @@ en `.claude.json` global y de proyecto; sin `.mcp.json` en ninguno de los 6 repo
 - [ ] El resto del checklist de Fase 3 aplica igual (caracterización, paralelo, cutover).
 
 ### Fase 5 — QA final y despliegue
-- [ ] Suite Playwright completa sobre los 5 módulos ya migrados, en claro/oscuro,
+- [ ] Suite Playwright completa sobre los 6 módulos ya migrados, en claro/oscuro,
       desktop/mobile.
 - [ ] Confirmar que no queda ningún contenedor/DB de las apps viejas corriendo en la VM.
 - [ ] Auditoría de que el auth unificado cubre todos los endpoints (nada quedó con CORS
@@ -259,3 +349,9 @@ en `.claude.json` global y de proyecto; sin `.mcp.json` en ninguno de los 6 repo
 - `Calendario web/.agents/AGENTS.md` — reglas de aislamiento sectorial y cálculo de saldos.
 - `Printer-Logs-Analyzer/CLAUDE.md` y `docs/deploy.md` — patrón APScheduler ya en producción.
 - `STC cloud/SECURITY_AUDIT.md` — manejo de secretos y JWT del portal/agente.
+- `HelpDeskManager-Web/backend/services/proyeccion_contadores.py` (algoritmo de proyección),
+  `sds_api.py`/`ers_api.py` (integraciones HP SDS / Epson ERS), `backend/main.py` (endpoints
+  `/api/contadores`, `/api/sds`, `/api/ers`, `/api/ftp`, `/api/tools`) — módulo Contadores.
+- `docs/adr/007-vocabulario-de-permisos-en-shared-excepcion-de-presentation.md` — por qué
+  `ModuleKey`/`ActionKey`/`Permission` viven en `shared/` pero `require_permission` sigue en
+  `auth`, con la excepción de import-linter acotada a la capa `presentation`.

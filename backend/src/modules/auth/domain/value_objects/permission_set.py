@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from src.modules.auth.domain.value_objects.module_key import ModuleKey
-from src.modules.auth.domain.value_objects.permission import Permission
+from src.shared.domain.value_objects.module_key import ModuleKey
+from src.shared.domain.value_objects.permission import Permission
 
 
 @dataclass(frozen=True, slots=True)

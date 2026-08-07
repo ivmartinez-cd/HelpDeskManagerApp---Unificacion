@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     smtp_pass: SecretStr = SecretStr("")
     smtp_from: str = "HelpDesk Manager <no-reply@cdsa.com.ar>"
 
+    contadores_output_dir: str = "var/contadores/outputs"
+
 
 @lru_cache
 def get_settings() -> Settings:

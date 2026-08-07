@@ -1,7 +1,7 @@
 import uuid
 from typing import Protocol
 
-from src.modules.auth.domain.value_objects.permission import Permission
+from src.shared.domain.value_objects.permission import Permission
 
 
 class PermissionAuditRepository(Protocol):

@@ -18,20 +18,6 @@ class WeakPasswordError(ValidationError):
     default_code = "WEAK_PASSWORD"
 
 
-class InvalidModuleKeyError(ValidationError):
-    default_code = "INVALID_MODULE_KEY"
-
-    def __init__(self, raw_value: str) -> None:
-        super().__init__(f"Clave de módulo inválida: {raw_value!r}")
-
-
-class InvalidActionKeyError(ValidationError):
-    default_code = "INVALID_ACTION_KEY"
-
-    def __init__(self, raw_value: str) -> None:
-        super().__init__(f"Clave de acción inválida: {raw_value!r}")
-
-
 class InvalidCredentialsError(UnauthorizedError):
     """Mismo error para email inexistente y password incorrecto — no hay
     forma de distinguirlos desde afuera (anti-enumeración)."""
