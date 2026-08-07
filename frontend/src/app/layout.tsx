@@ -35,8 +35,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${outfit.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full bg-background text-foreground transition-colors duration-300">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+      <body
+        className="min-h-full bg-background text-foreground transition-colors duration-300"
+        suppressHydrationWarning
+      >
+        <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
           <a
             href="#main-content"
             className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-6 focus:py-3 focus:bg-accent focus:text-accent-foreground focus:rounded-xl focus:font-bold focus:shadow-2xl focus:outline-none transition-all"

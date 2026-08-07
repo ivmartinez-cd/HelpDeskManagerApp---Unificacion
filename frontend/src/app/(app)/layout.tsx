@@ -5,7 +5,7 @@ import type { IdentityResponse, ModuleSummary } from "@/features/auth/api/auth-a
 import { Sidebar } from "@/shared/components/sidebar";
 import { SessionProvider } from "@/services/session-provider";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8010";
+const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:8012";
 
 async function fetchFromBackend<T>(path: string, cookieHeader: string): Promise<T | null> {
   const response = await fetch(`${BACKEND_URL}${path}`, {
