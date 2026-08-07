@@ -200,3 +200,11 @@ Comportamiento documentado solo por lectura de código (`ftp_db3.py` / endpoint
   **Se dejó corriendo** (no se apagó) — es de solo lectura para todo lo probado.
 - Archivos de prueba sintéticos usados (DB3, CSV de en0, xlsx de suma fija) quedaron en
   `%LOCALAPPDATA%\Temp\claude\` — no se commitearon al repo, son desechables.
+
+## Estado Final de la Migración del Módulo Contadores (2026-08-07)
+- **Backend (8/8 Herramientas):** Completado de punta a punta (FastAPI, Clean Architecture, 138/138 tests unitarios/integración pasando).
+- **Frontend (UI Next.js 15):** Pantallas y componentes construidos para las 8 herramientas en `frontend/src/app/(app)/contadores/page.tsx` y `frontend/src/features/contadores/components/`.
+- **Descargas & API Client:** Endpoint `/api/contadores/outputs/{filename}` añadido en FastAPI para servir reportes generados.
+- **Activación de Catálogo:** Migración Alembic `6d910a2b8e39_activate_contadores_module.py` ejecutada flippeando `is_enabled=True` en la tabla `module`.
+- **Pruebas End-to-End (E2E):** Suite Playwright en `frontend/tests/contadores.spec.ts` verificando navegación, pestañas, calculadoras y modales.
+

@@ -1,6 +1,8 @@
 from datetime import date
+from pathlib import Path
 
-from fastapi import APIRouter, Depends, Form, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
@@ -138,3 +140,15 @@ async def run_fixed_sum(
         for p in upload_paths:
             p.unlink(missing_ok=True)
     return RunFixedSumResponse.from_paths(csv_paths)
+
+
+@router.get("/outputs/{filename}")
+async def download_output(filename: str, _: Identity = _require_export) -> FileResponse:
+    """Descarga un archivo de salida generado por las herramientas de Contadores."""
+    if Path(filename).name != filename:
+        raise HTTPException(status_code=400, detail="Nombre de archivo inválido.")
+    file_path = Path(output_dir()) / filename
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Archivo no encontrado.")
+    return FileResponse(file_path, filename=filename)
+

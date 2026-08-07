@@ -313,8 +313,9 @@ en `.claude.json` global y de proyecto; sin `.mcp.json` en ninguno de los 6 repo
       **Simplificado a propósito (YAGNI):** el dashboard de KPIs con celdas coloreadas y la hoja
       "Leyenda"/"Validación" de la app vieja no se portaron — son polish visual, no reglas de
       negocio; el Excel nuevo tiene hojas Proyección/Auditoría/Resumen con datos correctos.
-- [ ] Portar la UI a Next.js dentro de `(modules)/contadores/`.
-- [ ] Prueba end-to-end con Playwright.
+- [x] Portar la UI a Next.js dentro de `(modules)/contadores/` (`frontend/src/features/contadores/`, `frontend/src/app/(app)/contadores/page.tsx`).
+- [x] Prueba end-to-end con Playwright (`frontend/tests/contadores.spec.ts`).
+- [x] Activación en catálogo de permisos (`is_enabled=True` en migración `6d910a2b8e39`).
 - [ ] Correr en paralelo con la app vieja antes de apagarla.
 - [ ] Apagar el módulo Contadores de la app vieja.
 - [ ] Actualizar `PROJECT_CONTEXT.md` del padre.
