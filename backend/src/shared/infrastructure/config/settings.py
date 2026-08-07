@@ -43,6 +43,12 @@ class Settings(BaseSettings):
     sds_base_url: str = "https://hp-sds-latam.insightportal.net/PortalAPI"
     sds_timeout_seconds: float = 20.0
 
+    epson_ers_username: str = "insumos@canaldirecto.com.ar"
+    epson_ers_password: SecretStr = SecretStr("C@nal3160")
+    epson_ers_base_url: str = "https://www.remote-services.epson.com/prod"
+    epson_ers_token_file: str = "var/contadores/ers_token.json"
+    epson_ers_timeout_seconds: float = 15.0
+
 
 @lru_cache
 def get_settings() -> Settings:
