@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.modules.auth.presentation.admin_permissions_router import (
     router as admin_permissions_router,
@@ -22,6 +23,23 @@ def create_app() -> FastAPI:
     configure_logging(level="DEBUG" if settings.environment == "development" else "INFO")
 
     app = FastAPI(title="HelpDesk Manager API", version="0.1.0")
+
+    origins = list(filter(None, {
+        settings.cors_origin,
+        settings.frontend_url,
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3010",
+        "http://127.0.0.1:3010",
+    }))
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.add_middleware(RequestIdMiddleware)
     register_exception_handlers(app)
     app.include_router(health_router)
