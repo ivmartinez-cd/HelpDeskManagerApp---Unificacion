@@ -1,9 +1,9 @@
 # Estado al pausar (2026-08-07, noche) — retomar desde acá
 
-**Resumen en una línea:** Contadores tiene su modelo de datos y **6 de 8 herramientas**
+**Resumen en una línea:** Contadores tiene su modelo de datos y **7 de 8 herramientas**
 reescritas de punta a punta en `HelpDeskManager-Unificacion/backend/src/modules/contadores/`,
-con 132/132 tests pasando. Faltan 2 (SDS, ERS) — dejadas para después
-a propósito por necesitar credenciales reales y más deliberación, no por falta de tiempo bruto.
+con 135/135 tests pasando. Falta 1 (ERS) — dejada para después
+a propósito por necesitar integración con Playwright, no por falta de tiempo bruto.
 
 ## ✅ Hecho y verificado
 
@@ -43,16 +43,19 @@ CRUD completo + endpoint de descarga/proceso de DB3 vía FTP, portado de la app 
 | `DELETE /api/contadores/ftp/clients/{id}` | Elimina un cliente |
 | `POST   /api/contadores/ftp/clients/{id}/process` | Descarga DB3 vía FTP y genera CSV |
 
-Todos los endpoints usan `require_permission(EXPORT)`.
+### Integración SDS / HP SDS (Fase 3, paso 3 — completado 2026-08-07)
 
-**Arquitectura del puerto FTP:**
-- `domain/repositories/ftp_db3_downloader.py` — `Protocol` (puerto de dominio), sin `ftplib` en domain.
-- `infrastructure/ftp/ftplib_db3_downloader.py` — adaptador concreto (Adapter Pattern).
-- El endpoint `/process` reutiliza internamente `RunDb3ExportUseCase` — no duplica lógica CSV.
-- `password` nunca se loguea. Passwords en texto plano = decisión consciente documentada en
-  `FtpClient` (mismo diseño que la app vieja; cambiar requiere decisión explícita).
+Consulta de clientes activos + configuración `suma_color` + exportación de contadores a CSV:
 
-**Tests:** 132/132 passing (16 tests nuevos).
+| Endpoint | Descripción |
+|---|---|
+| `GET    /api/contadores/sds/clients` | Lista clientes activos de HP SDS con su suma_color guardada |
+| `PUT    /api/contadores/sds/clients/{customer_id}/config` | Guarda/actualiza preferencia suma_color |
+| `POST   /api/contadores/sds/process` | Descarga contadores SDS y exporta a CSV |
+
+Credenciales configurables en `Settings` (`sds_api_key`, `sds_api_secret`, `sds_base_url`).
+
+**Tests:** 135/135 passing (3 tests nuevos para SDS).
 
 ### Corrección de arquitectura (ADR-007)
 `ModuleKey`/`ActionKey`/`Permission` se movieron de `auth.domain` a `shared/domain/
@@ -65,7 +68,7 @@ excepción de import-linter **acotada a la capa `presentation`**, documentada en
 ### Verificación (correr esto primero al retomar)
 ```bash
 cd backend
-uv run pytest tests/ -q                 # debe dar 132 passed
+uv run pytest tests/ -q                 # debe dar 135 passed
 uv run ruff check src tests scripts     # All checks passed
 uv run mypy src                         # Success: no issues found
 uv run lint-imports                     # 4 contracts kept, 0 broken
@@ -75,12 +78,7 @@ test (`docker compose -f docker-compose.test.yml up -d`).
 
 ## ❌ Falta para terminar Contadores
 
-### 1. Dos herramientas sin portar: SDS, ERS
-No son "más de lo mismo" — cada una tiene una decisión previa a tomar, no solo código:
-
-- **SDS (HP):** credenciales (`SDS_API_KEY`/`SDS_API_SECRET`) están **hardcodeadas en texto
-  plano** en `HelpDeskManager-Web/backend/services/sds_api.py` — hay que decidir dónde viven
-  las nuevas (`.env` del monolito nuevo, ¿o un secret manager?) antes de portar el cliente HTTP.
+### 1. Una herramienta sin portar: ERS
 - **ERS (Epson):** no tiene API oficial — el login es scraping vía **subproceso Playwright**
   (`ers_token_refresher.py`), verificado en vivo que funciona (~7.5s). Decisión pendiente: ¿se
   porta el subproceso tal cual, o se integra como una tarea async dentro del proceso FastAPI?

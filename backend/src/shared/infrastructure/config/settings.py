@@ -36,6 +36,13 @@ class Settings(BaseSettings):
 
     contadores_output_dir: str = "var/contadores/outputs"
 
+    sds_api_key: str = "2bc8f5eaae344c46814190bffd40060d"
+    sds_api_secret: SecretStr = SecretStr(
+        "0iIxVYcz5lH8sTjl6c6B89uvyQ4qyl2bojRPv155onzqkqpANt6culpITUBldR8a"
+    )
+    sds_base_url: str = "https://hp-sds-latam.insightportal.net/PortalAPI"
+    sds_timeout_seconds: float = 20.0
+
 
 @lru_cache
 def get_settings() -> Settings:
