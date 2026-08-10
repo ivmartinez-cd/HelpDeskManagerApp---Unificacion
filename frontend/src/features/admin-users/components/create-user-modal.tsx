@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Modal } from "@/shared/components/ui/modal";
-import { Input } from "@/shared/components/ui/input";
-import { Button } from "@/shared/components/ui/button";
+import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -31,15 +30,12 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
   }
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title="Nuevo usuario"
-      subtitle="Se envía un link de activación por email"
-      maxWidth="max-w-md"
-    >
+    <BrandModal isOpen={isOpen} onClose={handleClose} title="Nuevo usuario">
+      <p className="mb-5 font-body text-xs text-[#9a9a9a]">
+        Se envía un link de activación por email.
+      </p>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
+        <BrandInput
           id="new-user-email"
           label="Email"
           type="email"
@@ -49,7 +45,7 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
           autoComplete="off"
           required
         />
-        <Input
+        <BrandInput
           id="new-user-full-name"
           label="Nombre completo"
           type="text"
@@ -60,14 +56,14 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
           required
         />
         <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={handleClose}>
+          <BrandButton type="button" variant="outline" onClick={handleClose}>
             Cancelar
-          </Button>
-          <Button type="submit" loading={submitting}>
+          </BrandButton>
+          <BrandButton type="submit" loading={submitting}>
             Crear usuario
-          </Button>
+          </BrandButton>
         </div>
       </form>
-    </Modal>
+    </BrandModal>
   );
 }

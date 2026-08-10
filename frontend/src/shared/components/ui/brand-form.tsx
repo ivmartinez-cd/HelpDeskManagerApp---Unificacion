@@ -158,6 +158,31 @@ export function BrandSkeleton({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded-[8px] bg-black/[0.06]", className)} />;
 }
 
+interface BrandBadgeProps {
+  variant?: "neutral" | "accent" | "success" | "danger";
+  children: ReactNode;
+}
+
+const brandBadgeVariants: Record<NonNullable<BrandBadgeProps["variant"]>, string> = {
+  neutral: "bg-black/[0.06] text-brand-charcoal",
+  accent: "bg-brand-orange/10 text-brand-orange",
+  success: "bg-[#16a34a]/10 text-[#16a34a]",
+  danger: "bg-[#dc2626]/10 text-[#dc2626]",
+};
+
+export function BrandBadge({ variant = "neutral", children }: BrandBadgeProps) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-1 font-body text-[10px] font-bold uppercase tracking-wide",
+        brandBadgeVariants[variant],
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 interface BrandResultPanelProps {
   title: string;
   children: ReactNode;

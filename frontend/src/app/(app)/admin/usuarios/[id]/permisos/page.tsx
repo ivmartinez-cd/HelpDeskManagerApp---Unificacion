@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { adminUsersApi, type AdminUser } from "@/features/admin-users/api/admin-users-api";
 import { useUserPermissions } from "@/features/admin-permissions/hooks/use-user-permissions";
-import { Button } from "@/shared/components/ui/button";
+import { BrandButton } from "@/shared/components/ui/brand-form";
 import { ApiError } from "@/services/http-client";
 import { toast } from "sonner";
 
@@ -32,7 +32,7 @@ export default function UserPermissionsPage({ params }: PageProps) {
     <div className="p-6 lg:p-10">
       <Link
         href="/admin/usuarios"
-        className="mb-4 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+        className="mb-4 inline-flex items-center gap-1.5 font-body text-xs font-bold uppercase tracking-wide text-[#8a8a8a] hover:text-brand-charcoal"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Usuarios
@@ -40,27 +40,27 @@ export default function UserPermissionsPage({ params }: PageProps) {
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black uppercase tracking-tight">Permisos</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="font-heading text-2xl font-extrabold text-brand-charcoal">Permisos</h1>
+          <p className="mt-1 font-body text-sm text-[#8a8a8a]">
             {targetUser ? `${targetUser.fullName} · ${targetUser.email}` : "Cargando usuario…"}
           </p>
         </div>
-        <Button onClick={() => void save()} loading={saving} disabled={!dirty}>
+        <BrandButton onClick={() => void save()} loading={saving} disabled={!dirty}>
           Guardar cambios
-        </Button>
+        </BrandButton>
       </div>
 
       {targetUser?.isSuperadmin && (
-        <p className="mb-4 rounded-xl bg-accent/10 px-4 py-3 text-xs font-bold uppercase tracking-wide text-accent">
+        <p className="mb-4 rounded-[10px] bg-brand-orange/10 px-4 py-3 font-body text-xs font-bold uppercase tracking-wide text-brand-orange">
           Este usuario es superadmin: ya tiene acceso a todo, sin importar esta grilla.
         </p>
       )}
 
       {!loading && (
-        <div className="overflow-x-auto rounded-2xl border border-black/10 dark:border-white/10 bg-card">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-[12px] border border-black/[0.08] bg-white">
+          <table className="w-full text-left font-body text-sm">
             <thead>
-              <tr className="border-b border-black/10 dark:border-white/10 text-xs font-black uppercase tracking-wide text-muted-foreground">
+              <tr className="border-b border-black/[0.08] text-[11px] font-bold uppercase tracking-wide text-[#7a7a7a]">
                 <th className="px-4 py-3">Módulo</th>
                 <th className="px-4 py-3">Alcance</th>
                 {actions.map((action) => (
@@ -72,14 +72,11 @@ export default function UserPermissionsPage({ params }: PageProps) {
             </thead>
             <tbody>
               {modules.map((module) => (
-                <tr
-                  key={module.key}
-                  className="border-b border-black/5 dark:border-white/5 last:border-0"
-                >
+                <tr key={module.key} className="border-b border-black/[0.05] last:border-0">
                   <td className="px-4 py-3">
-                    <p className="font-bold">{module.label}</p>
+                    <p className="font-semibold text-brand-charcoal">{module.label}</p>
                     {!module.isEnabled && (
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">
                         Módulo aún no habilitado
                       </p>
                     )}
@@ -88,7 +85,7 @@ export default function UserPermissionsPage({ params }: PageProps) {
                     <select
                       disabled
                       title="El alcance por sector se activa cuando se migre el módulo de vacaciones"
-                      className="rounded-lg border border-black/10 dark:border-white/10 bg-background px-2 py-1 text-xs text-muted-foreground disabled:opacity-50"
+                      className="rounded-[8px] border border-black/[0.14] bg-white px-2 py-1 text-xs text-[#9a9a9a] disabled:opacity-50"
                     >
                       <option>Global</option>
                     </select>
@@ -100,14 +97,14 @@ export default function UserPermissionsPage({ params }: PageProps) {
                         {applicable ? (
                           <input
                             type="checkbox"
-                            className="h-4 w-4 accent-[var(--accent)]"
+                            className="h-4 w-4 accent-brand-orange"
                             checked={isGranted(module.key, action.key)}
                             disabled={targetUser?.isSuperadmin}
                             onChange={() => toggle(module.key, action.key)}
                             aria-label={`${module.label} · ${action.label}`}
                           />
                         ) : (
-                          <span className="text-muted-foreground/30">—</span>
+                          <span className="text-[#c9c9c9]">—</span>
                         )}
                       </td>
                     );
