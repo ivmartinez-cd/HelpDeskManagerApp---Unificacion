@@ -21,3 +21,12 @@ class SupplyCacheRepository(Protocol):
     async def get_by_serial(self, serial: str, limit: int = 20) -> list[CachedSupply]:
         """Últimas entradas para el serial (case-insensitive), supply_id DESC."""
         ...
+
+    async def find_active_by_serial(self, serial: str) -> CachedSupply | None:
+        """El supply activo más reciente de la serie (excluye Entregado/Anulado/
+        Cancelado) — insumo del bloqueo 2 de /load."""
+        ...
+
+    async def get_status(self, supply_id: int) -> str | None:
+        """Estado cacheado de un supply por su ID numérico (None si no está en cache)."""
+        ...

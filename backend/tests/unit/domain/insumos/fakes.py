@@ -97,3 +97,14 @@ class FakeSupplyCacheRepository:
             raise self.get_error
         matching = [e for e in self.entries if e.serial.upper() == serial.upper()]
         return sorted(matching, key=lambda e: e.supply_id, reverse=True)[:limit]
+
+    async def find_active_by_serial(self, serial: str) -> CachedSupply | None:
+        active = [
+            e
+            for e in await self.get_by_serial(serial)
+            if e.estado not in ("Entregado", "Anulado", "Cancelado")
+        ]
+        return active[0] if active else None
+
+    async def get_status(self, supply_id: int) -> str | None:
+        return next((e.estado for e in self.entries if e.supply_id == supply_id), None)

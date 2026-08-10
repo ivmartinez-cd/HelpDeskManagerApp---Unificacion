@@ -11,10 +11,15 @@ from sqlalchemy import case, func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.insumos.domain.value_objects import cd_state
 from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply
 from src.modules.insumos.infrastructure.models.supply_serial_cache_model import (
     SupplySerialCacheModel,
 )
+
+# Mismo conjunto que el WHERE del legacy (find_active_supply_by_serial): un pedido
+# Entregado tampoco es "activo" a los fines del bloqueo anti-duplicado.
+_TERMINAL_STATES = tuple(cd_state.INACTIVE_STATES)
 
 
 class SqlAlchemySupplyCacheRepository:
@@ -69,15 +74,33 @@ class SqlAlchemySupplyCacheRepository:
             .limit(limit)
         )
         rows = (await self._session.execute(stmt)).scalars().all()
-        return [
-            CachedSupply(
-                supply_id=row.supply_id,
-                serial=row.serial,
-                estado=row.estado or "",
-                empresa_id=row.empresa_id or "",
-                fecha=row.fecha,
-                sku=row.sku or "",
-                description=row.description or "",
+        return [_to_entity(row) for row in rows]
+
+    async def find_active_by_serial(self, serial: str) -> CachedSupply | None:
+        stmt = (
+            select(SupplySerialCacheModel)
+            .where(
+                func.lower(SupplySerialCacheModel.serial) == serial.lower(),
+                SupplySerialCacheModel.estado.notin_(_TERMINAL_STATES),
             )
-            for row in rows
-        ]
+            .order_by(SupplySerialCacheModel.supply_id.desc())
+            .limit(1)
+        )
+        row = (await self._session.execute(stmt)).scalar_one_or_none()
+        return _to_entity(row) if row else None
+
+    async def get_status(self, supply_id: int) -> str | None:
+        row = await self._session.get(SupplySerialCacheModel, supply_id)
+        return row.estado if row else None
+
+
+def _to_entity(row: SupplySerialCacheModel) -> CachedSupply:
+    return CachedSupply(
+        supply_id=row.supply_id,
+        serial=row.serial,
+        estado=row.estado or "",
+        empresa_id=row.empresa_id or "",
+        fecha=row.fecha,
+        sku=row.sku or "",
+        description=row.description or "",
+    )

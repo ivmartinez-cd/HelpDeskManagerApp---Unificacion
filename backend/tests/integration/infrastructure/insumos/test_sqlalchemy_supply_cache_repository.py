@@ -80,3 +80,35 @@ async def test_upsert_lista_vacia_no_falla(db_session: AsyncSession) -> None:
     repo = SqlAlchemySupplyCacheRepository(db_session)
     await repo.upsert([])
     assert await repo.get_by_serial("SERIE1") == []
+
+
+async def test_find_active_by_serial_ignora_estados_terminales(db_session: AsyncSession) -> None:
+    """Entregado tampoco es "activo": es cierre exitoso, no bloquea una carga nueva."""
+    repo = SqlAlchemySupplyCacheRepository(db_session)
+    await repo.upsert(
+        [
+            _entry(111, estado="Pendiente"),
+            _entry(222, estado="Entregado"),
+            _entry(333, estado="Anulado"),
+        ]
+    )
+
+    active = await repo.find_active_by_serial("serie1")
+
+    assert active is not None
+    assert active.supply_id == 111
+
+
+async def test_find_active_by_serial_sin_activos_devuelve_none(db_session: AsyncSession) -> None:
+    repo = SqlAlchemySupplyCacheRepository(db_session)
+    await repo.upsert([_entry(222, estado="Entregado")])
+
+    assert await repo.find_active_by_serial("SERIE1") is None
+
+
+async def test_get_status(db_session: AsyncSession) -> None:
+    repo = SqlAlchemySupplyCacheRepository(db_session)
+    await repo.upsert([_entry(111, estado="Despachado")])
+
+    assert await repo.get_status(111) == "Despachado"
+    assert await repo.get_status(999) is None
