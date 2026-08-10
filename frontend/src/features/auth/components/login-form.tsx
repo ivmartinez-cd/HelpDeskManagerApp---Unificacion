@@ -87,7 +87,7 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-1.5 flex items-center justify-center gap-2 rounded-[10px] bg-brand-orange px-[18px] py-3 font-body text-sm font-bold text-white transition-colors hover:bg-brand-orange-hover disabled:opacity-50"
+          className="mt-1.5 flex items-center justify-center gap-2 rounded-[8px] bg-brand-orange px-[18px] py-3 font-body text-sm font-bold text-white transition-colors hover:bg-brand-orange-hover disabled:opacity-50"
         >
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           Ingresar
