@@ -4,11 +4,14 @@ import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Download, Sigma } from "lucide-react";
 import { contadoresApi, type FixedSumResponse } from "../api/contadores-api";
-import { Card, CardHeader, CardBody } from "@/shared/components/ui/card";
-import { FileInput } from "@/shared/components/ui/file-input";
-import { Input } from "@/shared/components/ui/input";
-import { Button, buttonClasses } from "@/shared/components/ui/button";
-import { StatCard } from "@/shared/components/ui/stat-card";
+import {
+  BrandButton,
+  BrandFileInput,
+  BrandInput,
+  BrandResultPanel,
+  BrandStatTile,
+  brandButtonClasses,
+} from "@/shared/components/ui/brand-form";
 
 export function SumaFijaTool() {
   const [files, setFiles] = useState<FileList | null>(null);
@@ -47,76 +50,68 @@ export function SumaFijaTool() {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader title="Procesamiento de Suma Fija en Excel" icon={Sigma} />
-        <CardBody>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid gap-5 md:grid-cols-3">
-              <FileInput
-                id="suma-fija-files"
-                label="Archivos Excel (.xlsx)"
-                accept=".xlsx"
-                multiple
-                onChange={(e) => setFiles(e.target.files)}
-                required
-              />
-              <Input
-                id="suma-fija-fecha"
-                label="Fecha de Lectura"
-                type="date"
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-                required
-              />
-              <Input
-                id="suma-fija-hojas"
-                label="Hojas a Sumar"
-                type="number"
-                min="1"
-                value={hojas}
-                onChange={(e) => setHojas(e.target.value === "" ? "" : Number(e.target.value))}
-                placeholder="Ej: 500"
-                required
-              />
-            </div>
+    <div className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div className="grid gap-5 md:grid-cols-3">
+          <BrandFileInput
+            id="suma-fija-files"
+            label="Archivos Excel (.xlsx)"
+            accept=".xlsx"
+            multiple
+            onChange={(e) => setFiles(e.target.files)}
+            required
+          />
+          <BrandInput
+            id="suma-fija-fecha"
+            label="Fecha de Lectura"
+            type="date"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            required
+          />
+          <BrandInput
+            id="suma-fija-hojas"
+            label="Hojas a Sumar"
+            type="number"
+            min="1"
+            value={hojas}
+            onChange={(e) => setHojas(e.target.value === "" ? "" : Number(e.target.value))}
+            placeholder="Ej: 500"
+            required
+          />
+        </div>
 
-            <Button type="submit" loading={loading}>
-              <Sigma className="h-4 w-4" />
-              Procesar Suma Fija
-            </Button>
-          </form>
-        </CardBody>
-      </Card>
+        <BrandButton type="submit" loading={loading} className="self-start">
+          <Sigma className="h-4 w-4" />
+          Procesar Suma Fija
+        </BrandButton>
+      </form>
 
       {result && (
-        <Card>
-          <CardHeader title="Resultado del Procesamiento" />
-          <CardBody className="space-y-6">
-            <div className="max-w-xs">
-              <StatCard label="Total Filas Generadas" value={result.total_rows} />
-            </div>
+        <BrandResultPanel title="Resultado del Procesamiento">
+          <div className="max-w-xs">
+            <BrandStatTile label="Total Filas Generadas" value={result.total_rows} />
+          </div>
 
-            <div className="space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Archivos CSV Generados ({result.csv_filenames.length}):
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {result.csv_filenames.map((fname) => (
-                  <a
-                    key={fname}
-                    href={contadoresApi.getOutputUrl(fname)}
-                    download={fname}
-                    className={buttonClasses({ variant: "success", size: "sm" })}
-                  >
-                    <Download className="h-4 w-4" />
-                    Descargar {fname}
-                  </a>
-                ))}
-              </div>
+          <div className="mt-6 flex flex-col gap-3">
+            <p className="font-body text-xs font-bold uppercase tracking-wider text-[#7a7a7a]">
+              Archivos CSV Generados ({result.csv_filenames.length}):
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {result.csv_filenames.map((fname) => (
+                <a
+                  key={fname}
+                  href={contadoresApi.getOutputUrl(fname)}
+                  download={fname}
+                  className={brandButtonClasses({ variant: "primary", size: "sm" })}
+                >
+                  <Download className="h-4 w-4" />
+                  Descargar {fname}
+                </a>
+              ))}
             </div>
-          </CardBody>
-        </Card>
+          </div>
+        </BrandResultPanel>
       )}
     </div>
   );

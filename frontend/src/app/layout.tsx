@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Outfit, Montserrat, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "@/shared/components/theme-provider";
@@ -8,6 +8,20 @@ import { Toaster } from "sonner";
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
+});
+
+// Tipografía de marca Canal Directo (manual de marca), usada hoy en las
+// pantallas de auth — ver globals.css `--font-heading` / `--font-body`.
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+});
+
+const sourceSans = Source_Sans_3({
+  variable: "--font-source-sans",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -34,7 +48,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${outfit.variable} h-full antialiased`} suppressHydrationWarning>
+    <html
+      lang="es"
+      className={`${outfit.variable} ${montserrat.variable} ${sourceSans.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
       <body
         className="min-h-full bg-background text-foreground transition-colors duration-300"
         suppressHydrationWarning

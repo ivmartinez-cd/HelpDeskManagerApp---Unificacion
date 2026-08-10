@@ -1,21 +1,41 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { toast } from "sonner";
 import {
   contadoresApi,
   type CreateFtpClientPayload,
   type FtpClient,
 } from "../api/contadores-api";
-import { Modal } from "@/shared/components/ui/modal";
-import { Input } from "@/shared/components/ui/input";
-import { Button } from "@/shared/components/ui/button";
+import { BrandModal } from "@/shared/components/ui/brand-modal";
 
 interface Props {
   isOpen: boolean;
   client: FtpClient | null;
   onClose: () => void;
   onSuccess: () => void;
+}
+
+interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+}
+
+function Field({ label, id, ...props }: FieldProps) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label
+        htmlFor={id}
+        className="font-body text-[11px] font-bold uppercase tracking-wide text-[#7a7a7a]"
+      >
+        {label}
+      </label>
+      <input
+        id={id}
+        {...props}
+        className="rounded-[8px] border border-black/[0.14] px-[14px] py-[9px] font-body text-sm text-brand-charcoal outline-none focus:ring-2 focus:ring-brand-orange/40"
+      />
+    </div>
+  );
 }
 
 export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
@@ -81,15 +101,15 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
   };
 
   return (
-    <Modal
+    <BrandModal
       isOpen={isOpen}
       onClose={onClose}
       title={client ? "Editar Cliente FTP" : "Nuevo Cliente FTP"}
-      maxWidth="max-w-lg"
+      widthPx={520}
       error={error}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Field
           id="ftp-client-name"
           label="Nombre del Cliente"
           type="text"
@@ -99,9 +119,9 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
           required
         />
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="sm:col-span-2">
-            <Input
+        <div className="grid grid-cols-3 gap-3">
+          <div className="col-span-2">
+            <Field
               id="ftp-client-host"
               label="Servidor (Host / IP)"
               type="text"
@@ -111,7 +131,7 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
               required
             />
           </div>
-          <Input
+          <Field
             id="ftp-client-port"
             label="Puerto"
             type="number"
@@ -121,8 +141,8 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
           />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Input
+        <div className="grid grid-cols-2 gap-3">
+          <Field
             id="ftp-client-username"
             label="Usuario FTP"
             type="text"
@@ -130,9 +150,9 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
             onChange={(e) => setUsername(e.target.value)}
             required
           />
-          <Input
+          <Field
             id="ftp-client-password"
-            label={`Contraseña ${client ? "(Dejar en blanco para conservar)" : ""}`}
+            label={`Contraseña ${client ? "(dejar en blanco para conservar)" : ""}`}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -140,7 +160,7 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
           />
         </div>
 
-        <Input
+        <Field
           id="ftp-client-remote-dir"
           label="Directorio Remoto"
           type="text"
@@ -151,14 +171,22 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
         />
 
         <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={onClose}>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-[8px] border border-black/[0.14] px-4 py-2 font-body text-sm font-bold text-brand-charcoal transition-colors hover:bg-black/5"
+          >
             Cancelar
-          </Button>
-          <Button type="submit" loading={loading}>
-            Guardar
-          </Button>
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-[8px] bg-brand-orange px-4 py-2 font-body text-sm font-bold text-white transition-colors hover:bg-brand-orange-hover disabled:opacity-50"
+          >
+            {loading ? "Guardando..." : "Guardar"}
+          </button>
         </div>
       </form>
-    </Modal>
+    </BrandModal>
   );
 }

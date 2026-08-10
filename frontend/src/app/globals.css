@@ -14,6 +14,20 @@
 @theme {
   --font-sans: 'RNS Sanz', 'Inter', system-ui, sans-serif;
   --font-display: var(--font-outfit);
+  --font-heading: var(--font-montserrat), 'Montserrat', sans-serif;
+  --font-body: var(--font-source-sans), 'Source Sans Pro', sans-serif;
+
+  /* Colores institucionales exactos de "Manual de marca.pdf" (Canal
+     Directo). Usar SIEMPRE la línea Institucional — nunca DaaS (#662D91),
+     Soluciones de Digitalización (#E32D91) ni Digital Signage (#3DB1CA).
+     Hoy solo consumidos por las pantallas de auth (ver design handoff
+     "Portal mesa de ayuda corporativo_1"); no reemplazan --accent todavía. */
+  --color-brand-orange: #f7941d;
+  --color-brand-orange-hover: #d97e0f;
+  --color-brand-charcoal: #232323;
+  --color-brand-gray: #58595b;
+  --color-brand-surface: #fafaf8;
+  --color-brand-muted: #b5b5b5;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

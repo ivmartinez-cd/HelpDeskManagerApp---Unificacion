@@ -2,20 +2,16 @@
 
 import { useId, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import {
-  ChartColumn,
-  ChevronDown,
-  ChevronUp,
-  Download,
-  FileSpreadsheet,
-  Sparkles,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, Download, FileSpreadsheet, Sparkles } from "lucide-react";
 import { contadoresApi, type ProyeccionResponse } from "../api/contadores-api";
-import { Card, CardHeader, CardBody } from "@/shared/components/ui/card";
-import { FileInput } from "@/shared/components/ui/file-input";
-import { Input } from "@/shared/components/ui/input";
-import { Button, buttonClasses } from "@/shared/components/ui/button";
-import { StatCard } from "@/shared/components/ui/stat-card";
+import {
+  BrandButton,
+  BrandFileInput,
+  BrandInput,
+  BrandResultPanel,
+  BrandStatTile,
+  brandButtonClasses,
+} from "@/shared/components/ui/brand-form";
 
 export function ProyeccionTool() {
   const [file, setFile] = useState<File | null>(null);
@@ -65,133 +61,125 @@ export function ProyeccionTool() {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader title="Proyección de Contadores" icon={ChartColumn} />
-        <CardBody>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid gap-5 md:grid-cols-2">
-              <FileInput
-                id="proyeccion-file"
-                label="Archivo Excel de Contadores (.xlsx)"
-                accept=".xlsx"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                required
+    <div className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div className="grid gap-5 md:grid-cols-2">
+          <BrandFileInput
+            id="proyeccion-file"
+            label="Archivo Excel de Contadores (.xlsx)"
+            accept=".xlsx"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            required
+          />
+          <BrandInput
+            id="proyeccion-fecha-toma"
+            label="Fecha de Toma para Proyección"
+            type="date"
+            value={fechaToma}
+            onChange={(e) => setFechaToma(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="rounded-[10px] border border-black/[0.1] bg-black/[0.02] p-4">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            aria-expanded={showAdvanced}
+            aria-controls={advancedPanelId}
+            className="flex w-full items-center justify-between font-body text-xs font-bold uppercase tracking-wider text-brand-charcoal"
+          >
+            <span>Parámetros del Algoritmo de Proyección</span>
+            {showAdvanced ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </button>
+
+          {showAdvanced && (
+            <div
+              id={advancedPanelId}
+              className="mt-4 grid gap-4 border-t border-black/[0.08] pt-4 sm:grid-cols-2 lg:grid-cols-3"
+            >
+              <BrandInput
+                id="proyeccion-tolerancia-dias"
+                label="Tolerancia de días (Días)"
+                type="number"
+                value={toleranciaDias}
+                onChange={(e) => setToleranciaDias(Number(e.target.value))}
               />
-              <Input
-                id="proyeccion-fecha-toma"
-                label="Fecha de Toma para Proyección"
-                type="date"
-                value={fechaToma}
-                onChange={(e) => setFechaToma(e.target.value)}
-                required
+              <BrandInput
+                id="proyeccion-min-dias-intervalo"
+                label="Mínimo días intervalo"
+                type="number"
+                value={minDiasIntervalo}
+                onChange={(e) => setMinDiasIntervalo(Number(e.target.value))}
+              />
+              <BrandInput
+                id="proyeccion-ventana-reciente"
+                label="Ventana reciente (Días)"
+                type="number"
+                value={ventanaRecienteDias}
+                onChange={(e) => setVentanaRecienteDias(Number(e.target.value))}
+              />
+              <BrandInput
+                id="proyeccion-umbral-consumo"
+                label="Umbral mínimo consumo (/día)"
+                type="number"
+                step="0.01"
+                value={umbralMinimoConsumo}
+                onChange={(e) => setUmbralMinimoConsumo(Number(e.target.value))}
+              />
+              <BrandInput
+                id="proyeccion-max-antiguedad"
+                label="Máx. antigüedad lectura (Días)"
+                type="number"
+                value={maxAntiguedadLecturaDias}
+                onChange={(e) => setMaxAntiguedadLecturaDias(Number(e.target.value))}
               />
             </div>
+          )}
+        </div>
 
-            <div className="rounded-xl border border-black/10 dark:border-white/10 bg-muted/30 p-4">
-              <button
-                type="button"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                aria-expanded={showAdvanced}
-                aria-controls={advancedPanelId}
-                className="flex w-full items-center justify-between text-xs font-bold uppercase tracking-wider text-foreground"
-              >
-                <span>Parámetros del Algoritmo de Proyección</span>
-                {showAdvanced ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </button>
-
-              {showAdvanced && (
-                <div
-                  id={advancedPanelId}
-                  className="mt-4 grid gap-4 border-t border-black/10 dark:border-white/10 pt-4 sm:grid-cols-2 lg:grid-cols-3"
-                >
-                  <Input
-                    id="proyeccion-tolerancia-dias"
-                    label="Tolerancia de días (Días)"
-                    type="number"
-                    value={toleranciaDias}
-                    onChange={(e) => setToleranciaDias(Number(e.target.value))}
-                  />
-                  <Input
-                    id="proyeccion-min-dias-intervalo"
-                    label="Mínimo días intervalo"
-                    type="number"
-                    value={minDiasIntervalo}
-                    onChange={(e) => setMinDiasIntervalo(Number(e.target.value))}
-                  />
-                  <Input
-                    id="proyeccion-ventana-reciente"
-                    label="Ventana reciente (Días)"
-                    type="number"
-                    value={ventanaRecienteDias}
-                    onChange={(e) => setVentanaRecienteDias(Number(e.target.value))}
-                  />
-                  <Input
-                    id="proyeccion-umbral-consumo"
-                    label="Umbral mínimo consumo (/día)"
-                    type="number"
-                    step="0.01"
-                    value={umbralMinimoConsumo}
-                    onChange={(e) => setUmbralMinimoConsumo(Number(e.target.value))}
-                  />
-                  <Input
-                    id="proyeccion-max-antiguedad"
-                    label="Máx. antigüedad lectura (Días)"
-                    type="number"
-                    value={maxAntiguedadLecturaDias}
-                    onChange={(e) => setMaxAntiguedadLecturaDias(Number(e.target.value))}
-                  />
-                </div>
-              )}
-            </div>
-
-            <Button type="submit" loading={loading}>
-              <Sparkles className="h-4 w-4" />
-              Ejecutar Proyección
-            </Button>
-          </form>
-        </CardBody>
-      </Card>
+        <BrandButton type="submit" loading={loading} className="self-start">
+          <Sparkles className="h-4 w-4" />
+          Ejecutar Proyección
+        </BrandButton>
+      </form>
 
       {result && (
-        <Card>
-          <CardHeader title="Resultados de Proyección" icon={ChartColumn} />
-          <CardBody className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Total Series" value={result.total_series} />
-              <StatCard label="Proyectadas" value={result.series_proyectadas} tone="success" />
-              <StatCard label="Reales" value={result.series_reales} tone="info" />
-              <StatCard
-                label="Sin Datos / Insuficiente"
-                value={result.series_sin_datos}
-                tone="warning"
-              />
-            </div>
+        <BrandResultPanel title="Resultados de Proyección">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <BrandStatTile label="Total Series" value={result.total_series} />
+            <BrandStatTile
+              label="Proyectadas"
+              value={result.series_proyectadas}
+              tone="highlight"
+            />
+            <BrandStatTile label="Reales" value={result.series_reales} />
+            <BrandStatTile label="Sin Datos / Insuficiente" value={result.series_sin_datos} />
+          </div>
 
-            <div className="flex flex-wrap gap-3 border-t border-black/10 dark:border-white/10 pt-4">
-              <a
-                href={contadoresApi.getOutputUrl(result.xlsx_filename)}
-                download={result.xlsx_filename}
-                className={buttonClasses({ variant: "success" })}
-              >
-                <FileSpreadsheet className="h-4 w-4" />
-                Descargar Reporte Excel Completo (.xlsx)
-              </a>
-              <a
-                href={contadoresApi.getOutputUrl(result.csv_filename)}
-                download={result.csv_filename}
-                className={buttonClasses({ variant: "outline" })}
-              >
-                <Download className="h-4 w-4" />
-                Descargar CSV para SiGes (.csv)
-              </a>
-            </div>
-          </CardBody>
-        </Card>
+          <div className="mt-6 flex flex-wrap gap-3 border-t border-black/[0.08] pt-4">
+            <a
+              href={contadoresApi.getOutputUrl(result.xlsx_filename)}
+              download={result.xlsx_filename}
+              className={brandButtonClasses({ variant: "primary" })}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Descargar Reporte Excel Completo (.xlsx)
+            </a>
+            <a
+              href={contadoresApi.getOutputUrl(result.csv_filename)}
+              download={result.csv_filename}
+              className={brandButtonClasses({ variant: "outline" })}
+            >
+              <Download className="h-4 w-4" />
+              Descargar CSV para SiGes (.csv)
+            </a>
+          </div>
+        </BrandResultPanel>
       )}
     </div>
   );

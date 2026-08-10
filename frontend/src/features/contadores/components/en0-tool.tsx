@@ -4,11 +4,14 @@ import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Download, FileSpreadsheet } from "lucide-react";
 import { contadoresApi, type EstimationZeroResponse } from "../api/contadores-api";
-import { Card, CardHeader, CardBody } from "@/shared/components/ui/card";
-import { FileInput } from "@/shared/components/ui/file-input";
-import { Input } from "@/shared/components/ui/input";
-import { Button, buttonClasses } from "@/shared/components/ui/button";
-import { StatCard } from "@/shared/components/ui/stat-card";
+import {
+  BrandButton,
+  BrandFileInput,
+  BrandInput,
+  BrandResultPanel,
+  BrandStatTile,
+  brandButtonClasses,
+} from "@/shared/components/ui/brand-form";
 
 export function En0Tool() {
   const [file, setFile] = useState<File | null>(null);
@@ -45,64 +48,56 @@ export function En0Tool() {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader title="Procesamiento de Estimación en 0 (Falta Contador)" icon={FileSpreadsheet} />
-        <CardBody>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid gap-5 md:grid-cols-3">
-              <FileInput
-                id="en0-file"
-                label="Archivo CSV / Falta Contador"
-                accept=".csv,.txt"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                required
-              />
-              <Input
-                id="en0-cliente"
-                label="Nombre del Cliente"
-                type="text"
-                value={cliente}
-                onChange={(e) => setCliente(e.target.value)}
-                placeholder="Ej: BANCO DE CORRIENTES"
-                required
-              />
-              <Input
-                id="en0-fecha"
-                label="Fecha de Lectura"
-                type="date"
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-                required
-              />
-            </div>
+    <div className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div className="grid gap-5 md:grid-cols-3">
+          <BrandFileInput
+            id="en0-file"
+            label="Archivo CSV / Falta Contador"
+            accept=".csv,.txt"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            required
+          />
+          <BrandInput
+            id="en0-cliente"
+            label="Nombre del Cliente"
+            type="text"
+            value={cliente}
+            onChange={(e) => setCliente(e.target.value)}
+            placeholder="Ej: BANCO DE CORRIENTES"
+            required
+          />
+          <BrandInput
+            id="en0-fecha"
+            label="Fecha de Lectura"
+            type="date"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            required
+          />
+        </div>
 
-            <Button type="submit" loading={loading}>
-              <FileSpreadsheet className="h-4 w-4" />
-              Procesar Estimación en 0
-            </Button>
-          </form>
-        </CardBody>
-      </Card>
+        <BrandButton type="submit" loading={loading} className="self-start">
+          <FileSpreadsheet className="h-4 w-4" />
+          Procesar Estimación en 0
+        </BrandButton>
+      </form>
 
       {result && (
-        <Card>
-          <CardHeader title="Resultado del Procesamiento" />
-          <CardBody className="space-y-6">
-            <div className="max-w-xs">
-              <StatCard label="Total Filas Generadas" value={result.total_rows} />
-            </div>
+        <BrandResultPanel title="Resultado del Procesamiento">
+          <div className="max-w-xs">
+            <BrandStatTile label="Total Filas Generadas" value={result.total_rows} />
+          </div>
 
-            <a
-              href={contadoresApi.getOutputUrl(result.csv_filename)}
-              download={result.csv_filename}
-              className={buttonClasses({ variant: "success" })}
-            >
-              <Download className="h-4 w-4" />
-              Descargar Archivo CSV Resultado (.csv)
-            </a>
-          </CardBody>
-        </Card>
+          <a
+            href={contadoresApi.getOutputUrl(result.csv_filename)}
+            download={result.csv_filename}
+            className={`${brandButtonClasses({ variant: "primary" })} mt-6`}
+          >
+            <Download className="h-4 w-4" />
+            Descargar Archivo CSV Resultado (.csv)
+          </a>
+        </BrandResultPanel>
       )}
     </div>
   );

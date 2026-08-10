@@ -17,12 +17,17 @@ export interface ManualEstimationRequest {
   fecha_estimacion: string;
 }
 
+/** Nombres tal como los serializa el backend real (`ManualEstimationResponse`
+ * en `manual_estimation_schemas.py`, camelCase vía `serialization_alias`) —
+ * NO los nombres que tenía este archivo antes (`dias_muestra`/
+ * `consumo_muestra`/etc.), que nunca coincidieron con ningún backend real y
+ * hacían crashear el panel de resultado de la Calculadora en cada uso. */
 export interface ManualEstimationResponse {
-  dias_muestra: number;
-  consumo_muestra: number;
-  consumo_diario: number;
-  dias_estimados: number;
-  contador_estimado: number;
+  impDia: number;
+  impMes: number;
+  diasEst: number;
+  impEst: number;
+  contEst: number;
 }
 
 export interface Db3ExportResponse {

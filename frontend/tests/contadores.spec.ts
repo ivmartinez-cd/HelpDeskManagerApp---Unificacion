@@ -47,51 +47,61 @@ test.describe("Módulo de Contadores - Interfaz y Herramientas", () => {
     });
   });
 
-  test("debe cargar la página principal de contadores con las 8 pestañas de herramientas", async ({
+  test("debe mostrar el hub Centro de Contadores con las 8 herramientas al entrar sin ?tool=", async ({
     page,
   }) => {
     await page.goto("/contadores");
 
-    await expect(page.getByRole("heading", { name: "Módulo de Contadores" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Centro de Contadores" })).toBeVisible();
 
-    // Pestañas
-    await expect(page.getByRole("link", { name: "Proyección" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Calculadora" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "DB3 a CSV" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Estimación en 0" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Suma Fija" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Clientes FTP" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "HP SDS" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Epson ERS" })).toBeVisible();
+    // Cards del hub (título orientado a la acción, ver ToolDef.navLabel)
+    await expect(page.getByRole("heading", { name: "Proyección Contadores" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Calculadora" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Procesar DB3" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Estimación en 0" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Suma Fija" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Descarga FTP" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Descargar SDS" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Descargar ERS" })).toBeVisible();
   });
 
-  test("debe permitir cambiar entre pestañas de herramientas", async ({ page }) => {
-    await page.goto("/contadores");
+  test("debe abrir el modal de una herramienta al entrar con ?tool= válido, sobre el hub", async ({
+    page,
+  }) => {
+    await page.goto("/contadores?tool=proyeccion");
 
-    // Click en Calculadora
-    await page.getByRole("link", { name: "Calculadora" }).click();
-    await expect(page.getByRole("heading", { name: "Datos para la Estimación Manual" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Proyección Contadores" })).toBeVisible();
+    // El hub sigue montado detrás del modal.
+    await expect(page.getByRole("heading", { name: "Centro de Contadores" })).toBeVisible();
+  });
 
-    // Click en DB3 a CSV
-    await page.getByRole("link", { name: "DB3 a CSV" }).click();
-    await expect(page.getByRole("heading", { name: "Consolidación de Archivos DB3 a CSV" })).toBeVisible();
+  test("debe cerrar el modal de una herramienta con Escape y volver al hub", async ({ page }) => {
+    await page.goto("/contadores?tool=calc");
 
-    // Click en Clientes FTP
-    await page.getByRole("link", { name: "Clientes FTP" }).click();
-    await expect(page.getByRole("button", { name: "Nuevo Cliente FTP" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Calculadora" })).toBeVisible();
+
+    await page.keyboard.press("Escape");
+
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page).toHaveURL("/contadores");
   });
 
   test("debe calcular una estimación manual correctamente en la Calculadora", async ({ page }) => {
+    // Nombres tal como los serializa el backend real (ver
+    // manual_estimation_schemas.py, serialization_alias camelCase) — el
+    // mock viejo usaba nombres snake_case que el backend nunca devolvió,
+    // lo que ocultaba un crash real del panel de resultado (ver
+    // ManualEstimationResponse en contadores-api.ts).
     await page.route("**/api/contadores/calc", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          dias_muestra: 10,
-          consumo_muestra: 5000,
-          consumo_diario: 500,
-          dias_estimados: 5,
-          contador_estimado: 17500,
+          impDia: 12.5,
+          impMes: 375,
+          diasEst: 5,
+          impEst: 62,
+          contEst: 562,
         }),
       });
     });
@@ -106,12 +116,14 @@ test.describe("Módulo de Contadores - Interfaz y Herramientas", () => {
 
     await page.getByRole("button", { name: "Calcular Estimación" }).click();
 
-    await expect(page.getByText("17.500")).toBeVisible();
-    await expect(page.getByText("10 días")).toBeVisible();
-    await expect(page.getByText("500.00 / día")).toBeVisible();
+    await expect(page.getByText("562")).toBeVisible();
+    await expect(page.getByText("5 días")).toBeVisible();
+    await expect(page.getByText("12.50 / día")).toBeVisible();
   });
 
-  test("debe listar clientes FTP y abrir modal para nuevo cliente", async ({ page }) => {
+  test("debe elegir un cliente FTP en el modal de descarga y abrir la gestión de clientes", async ({
+    page,
+  }) => {
     await page.route("**/api/contadores/ftp/clients", async (route) => {
       await route.fulfill({
         status: 200,
@@ -133,10 +145,17 @@ test.describe("Módulo de Contadores - Interfaz y Herramientas", () => {
 
     await page.goto("/contadores?tool=ftp");
 
+    // Modal combinado: selector de cliente + fecha + procesar.
+    await expect(page.getByRole("dialog", { name: "Descarga FTP" })).toBeVisible();
+    await expect(page.getByRole("option", { name: "CLIENTE TEST" })).toBeAttached();
+
+    // "Gestionar clientes" abre un segundo modal con la lista completa.
+    await page.getByRole("button", { name: "Gestionar clientes" }).click();
+    await expect(page.getByRole("dialog", { name: "Clientes FTP" })).toBeVisible();
     await expect(page.getByText("CLIENTE TEST")).toBeVisible();
     await expect(page.getByText("ftp.test.com:21")).toBeVisible();
 
-    await page.getByRole("button", { name: "Nuevo Cliente FTP" }).click();
+    await page.getByRole("button", { name: "Nuevo" }).click();
     await expect(page.getByRole("heading", { name: "Nuevo Cliente FTP" })).toBeVisible();
   });
 });
