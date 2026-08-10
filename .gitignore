@@ -3,6 +3,9 @@
 .env.production
 *.env.local
 
+# Runtime output (contains real client data — never commit)
+backend/var/
+
 # Python
 __pycache__/
 *.pyc

@@ -63,7 +63,10 @@ def _sync_refresh_ers_token(token_file_path: str, cfg: Settings) -> dict[str, An
         )
         page.click(submit_selector)
 
-        for _ in range(30):
+        # El login pasa por el desafío anti-bot de Incapsula antes de dejar pasar la
+        # request autenticada: en un datacenter (Docker) puede demorar ~45s, muy por
+        # encima de los <10s típicos desde una IP residencial/de oficina.
+        for _ in range(180):
             if captured_token:
                 break
             time.sleep(0.5)
