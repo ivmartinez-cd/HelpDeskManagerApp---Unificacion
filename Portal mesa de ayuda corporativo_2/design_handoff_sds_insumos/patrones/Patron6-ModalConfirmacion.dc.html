@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}*{box-sizing:border-box}</style>
+</helmet>
+<div style="background:#FAFAF8;min-height:100vh;padding:32px 36px;font-family:'Source Sans Pro',sans-serif;color:#232323">
+  <div style="margin-bottom:24px">
+    <span style="font:800 20px 'Montserrat',sans-serif">Modal de confirmación — 3 variantes</span>
+    <span style="font:13px 'Source Sans Pro',sans-serif;color:#8a8a8a;margin-left:12px">Patrón 6</span>
+  </div>
+
+  <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+
+    <div style="background:#fff;border-radius:16px;border:1px solid rgba(0,0,0,.08);padding:28px;width:380px;display:flex;flex-direction:column;gap:18px;box-shadow:0 4px 24px rgba(0,0,0,.07)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font:800 17px 'Montserrat',sans-serif;color:#232323">Confirmar descarga SDS</span>
+        <span style="font:18px sans-serif;color:#9a9a9a;cursor:pointer" style-hover="color:#232323">✕</span>
+      </div>
+      <div style="font:14px 'Source Sans Pro',sans-serif;color:#4b4b4b;line-height:1.55">Se solicitarán los contadores de <strong>Banco Nación</strong> al servidor HP SDS. Fecha de corte: <strong>10/08/2026</strong>.</div>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button style="flex:1;font:600 14px 'Source Sans Pro',sans-serif;padding:11px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;color:#58595B;cursor:pointer">Cancelar</button>
+        <button style="flex:1;font:700 14px 'Source Sans Pro',sans-serif;padding:11px;border-radius:8px;border:none;background:#F7941D;color:#fff;cursor:pointer">⭳ Descargar</button>
+      </div>
+      <div style="font:11px 'Source Sans Pro',sans-serif;color:#b5b5b5;text-align:center">Variante simple (SDS, ERS, FTP…)</div>
+    </div>
+
+    <div style="background:#fff;border-radius:16px;border:1px solid rgba(0,0,0,.08);padding:28px;width:380px;display:flex;flex-direction:column;gap:18px;box-shadow:0 4px 24px rgba(0,0,0,.07)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font:800 17px 'Montserrat',sans-serif;color:#232323">Resetear estimaciones</span>
+        <span style="font:18px sans-serif;color:#9a9a9a;cursor:pointer">✕</span>
+      </div>
+      <div style="display:flex;gap:14px;padding:14px;border-radius:10px;background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.3)">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(234,179,8,.15);display:flex;align-items:center;justify-content:center;flex:none;font:18px sans-serif">⚠️</div>
+        <div style="font:13.5px 'Source Sans Pro',sans-serif;color:#92400e;line-height:1.55">Esta acción reemplazará los contadores de <strong>14 equipos</strong> con el último valor conocido. No se puede deshacer.</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button style="flex:1;font:600 14px 'Source Sans Pro',sans-serif;padding:11px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;color:#58595B;cursor:pointer">Cancelar</button>
+        <button style="flex:1;font:700 14px 'Source Sans Pro',sans-serif;padding:11px;border-radius:8px;border:none;background:#eab308;color:#fff;cursor:pointer">Confirmar reset</button>
+      </div>
+      <div style="font:11px 'Source Sans Pro',sans-serif;color:#b5b5b5;text-align:center">Variante warning — Estimación en 0, Suma Fija</div>
+    </div>
+
+    <div style="background:#fff;border-radius:16px;border:1px solid rgba(0,0,0,.08);padding:28px;width:380px;display:flex;flex-direction:column;gap:18px;box-shadow:0 4px 24px rgba(0,0,0,.07)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font:800 17px 'Montserrat',sans-serif;color:#232323">Eliminar configuración</span>
+        <span style="font:18px sans-serif;color:#9a9a9a;cursor:pointer">✕</span>
+      </div>
+      <div style="display:flex;gap:14px;padding:14px;border-radius:10px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25)">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;flex:none;font:18px sans-serif">🗑️</div>
+        <div style="font:13.5px 'Source Sans Pro',sans-serif;color:#991b1b;line-height:1.55">Estás por eliminar el cliente <strong>Mapfre Seguros</strong> y todos sus equipos y configuraciones. Esta acción es <strong>irreversible</strong>.</div>
+      </div>
+      <input placeholder="Escribí ELIMINAR para confirmar" style="padding:10px 12px;border-radius:8px;border:1.5px solid rgba(239,68,68,.4);font:14px 'Source Sans Pro',sans-serif;color:#232323">
+      <div style="display:flex;gap:10px">
+        <button style="flex:1;font:600 14px 'Source Sans Pro',sans-serif;padding:11px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;color:#58595B;cursor:pointer">Cancelar</button>
+        <button style="flex:1;font:700 14px 'Source Sans Pro',sans-serif;padding:11px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer">Eliminar</button>
+      </div>
+      <div style="font:11px 'Source Sans Pro',sans-serif;color:#b5b5b5;text-align:center">Variante destructiva — eliminación irreversible</div>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

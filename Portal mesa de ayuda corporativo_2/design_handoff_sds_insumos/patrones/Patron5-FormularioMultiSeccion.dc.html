@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}*{box-sizing:border-box}input,select,textarea{outline:none}input:focus,select:focus,textarea:focus{border-color:#F7941D!important}</style>
+</helmet>
+<div style="display:flex;background:#FAFAF8;min-height:100vh;font-family:'Source Sans Pro',sans-serif;color:#232323">
+
+  <div style="width:220px;flex:none;position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid rgba(0,0,0,.07);background:#fff;padding:24px 0">
+    <div style="padding:0 20px;margin-bottom:20px">
+      <span style="font:800 15px 'Montserrat',sans-serif;color:#232323">Configuración</span>
+      <div style="font:12px 'Source Sans Pro',sans-serif;color:#9a9a9a;margin-top:2px">7 secciones</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1px">
+      <sc-for list="{{ navItems }}" as="nav" hint-placeholder-count="7">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;border-left:3px solid {{ nav.accent }};background:{{ nav.bg }}">
+          <span style="font:{{ nav.weight }} 13.5px 'Source Sans Pro',sans-serif;color:{{ nav.color }}">{{ nav.label }}</span>
+          <sc-if value="{{ nav.done }}" hint-placeholder-val="{{ false }}">
+            <span style="width:16px;height:16px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;font:700 10px sans-serif;color:#fff;margin-left:auto">✓</span>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="flex:1;padding:36px;max-width:720px">
+    <div style="margin-bottom:28px">
+      <span style="font:800 22px 'Montserrat',sans-serif">Configuración del cliente</span>
+      <div style="font:14px 'Source Sans Pro',sans-serif;color:#8a8a8a;margin-top:4px">Banco Nación · Casa Central</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <sc-for list="{{ sections }}" as="sec" hint-placeholder-count="7">
+      <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.07);overflow:hidden">
+        <div onClick="{{ sec.toggle }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:16px 20px;background:{{ sec.headerBg }}">
+          <span style="font:700 15px 'Montserrat',sans-serif;color:{{ sec.headerColor }};flex:1">{{ sec.title }}</span>
+          <sc-if value="{{ sec.hasBadge }}" hint-placeholder-val="{{ false }}">
+            <span style="font:600 11.5px 'Source Sans Pro',sans-serif;padding:2px 10px;border-radius:12px;background:rgba(247,148,29,.1);color:#F7941D">{{ sec.badge }}</span>
+          </sc-if>
+          <span style="font:11px sans-serif;color:#b5b5b5;transform:{{ sec.chevron }};display:inline-block;transition:transform .2s">▼</span>
+        </div>
+        <sc-if value="{{ sec.open }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:20px;border-top:1px solid rgba(0,0,0,.06);display:flex;flex-direction:column;gap:16px">
+          <sc-for list="{{ sec.fields }}" as="f" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between">
+                <label style="font:600 13px 'Source Sans Pro',sans-serif;color:#4b4b4b">{{ f.label }}</label>
+                <sc-if value="{{ f.hasHint }}" hint-placeholder-val="{{ false }}">
+                  <span style="font:12px 'Source Sans Pro',sans-serif;color:#9a9a9a">{{ f.hint }}</span>
+                </sc-if>
+              </div>
+              <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ false }}">
+                <select style="padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,.15);font:14px 'Source Sans Pro',sans-serif;background:#fff;color:#232323"><option>{{ f.placeholder }}</option></select>
+              </sc-if>
+              <sc-if value="{{ f.isTextarea }}" hint-placeholder-val="{{ false }}">
+                <textarea rows="3" placeholder="{{ f.placeholder }}" style="padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,.15);font:14px 'Source Sans Pro',sans-serif;resize:vertical"></textarea>
+              </sc-if>
+              <sc-if value="{{ f.isInput }}" hint-placeholder-val="{{ true }}">
+                <input placeholder="{{ f.placeholder }}" style="padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,.15);font:14px 'Source Sans Pro',sans-serif">
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+      </div>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:24px">
+      <button style="font:600 14px 'Source Sans Pro',sans-serif;padding:11px 20px;border-radius:8px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#58595B;cursor:pointer">Cancelar</button>
+      <button style="font:700 14px 'Source Sans Pro',sans-serif;padding:11px 24px;border-radius:8px;border:none;background:#F7941D;color:#fff;cursor:pointer">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { open: { 0: true } };
+  renderVals() {
+    const secs = [
+      { title: 'Datos generales', badge: null, done: true, fields: [
+        { label: 'Razón social', placeholder: 'Banco de la Nación Argentina', isInput: true, isSelect: false, isTextarea: false, hasHint: false, hint: '' },
+        { label: 'CUIT', placeholder: '30-00000-0', isInput: true, isSelect: false, isTextarea: false, hasHint: true, hint: 'Sin guiones' },
+        { label: 'Tipo de contrato', placeholder: 'MPS Estándar', isInput: false, isSelect: true, isTextarea: false, hasHint: false, hint: '' },
+      ]},
+      { title: 'Contactos', badge: '3 contactos', done: true, fields: [
+        { label: 'Referente principal', placeholder: 'nombre@dominio.com', isInput: true, isSelect: false, isTextarea: false, hasHint: false, hint: '' },
+        { label: 'Teléfono', placeholder: '+54 11 0000-0000', isInput: true, isSelect: false, isTextarea: false, hasHint: false, hint: '' },
+      ]},
+      { title: 'Equipos y sucursales', badge: '14 equipos', done: false, fields: [
+        { label: 'Sucursal principal', placeholder: 'Casa Central — Av. Rivadavia 325', isInput: true, isSelect: false, isTextarea: false, hasHint: false, hint: '' },
+      ]},
+      { title: 'Configuración SDS', badge: null, done: false, fields: [
+        { label: 'URL del colector', placeholder: 'https://...', isInput: true, isSelect: false, isTextarea: false, hasHint: false, hint: '' },
+        { label: 'Intervalo de lectura', placeholder: 'Cada 24 horas', isInput: false, isSelect: true, isTextarea: false, hasHint: false, hint: '' },
+      ]},
+      { title: 'Umbrales de alerta', badge: null, done: false, fields: [
+        { label: 'Tóner crítico (%)', placeholder: '10', isInput: true, isSelect: false, isTextarea: false, hasHint: true, hint: 'Se dispara el workflow de reposición' },
+        { label: 'Tóner advertencia (%)', placeholder: '25', isInput: true, isSelect: false, isTextarea: false, hasHint: false, hint: '' },
+      ]},
+      { title: 'Facturación', badge: null, done: false, fields: [
+        { label: 'Centro de costo', placeholder: 'CC-032', isInput: true, isSelect: false, isTextarea: false, hasHint: false, hint: '' },
+        { label: 'Modalidad', placeholder: 'Por impresión', isInput: false, isSelect: true, isTextarea: false, hasHint: false, hint: '' },
+      ]},
+      { title: 'Notas internas', badge: null, done: false, fields: [
+        { label: 'Observaciones', placeholder: 'Condiciones especiales, horarios de acceso, etc.', isInput: false, isSelect: false, isTextarea: true, hasHint: false, hint: '' },
+      ]},
+    ];
+    const { open } = this.state;
+    const sections = secs.map((s, i) => ({
+      ...s,
+      open: !!open[i],
+      chevron: open[i] ? 'rotate(180deg)' : 'rotate(0deg)',
+      headerBg: open[i] ? 'rgba(247,148,29,.04)' : '#fff',
+      headerColor: open[i] ? '#F7941D' : '#232323',
+      hasBadge: !!s.badge,
+      toggle: () => this.setState(st => ({ open: { ...st.open, [i]: !st.open[i] } })),
+    }));
+    const navItems = secs.map((s, i) => ({
+      label: s.title,
+      accent: open[i] ? '#F7941D' : 'transparent',
+      bg: open[i] ? 'rgba(247,148,29,.06)' : 'transparent',
+      color: open[i] ? '#F7941D' : '#4b4b4b',
+      weight: open[i] ? 700 : 400,
+      done: s.done,
+    }));
+    return { sections, navItems };
+  }
+}
+
+</script>
+</body>
+</html>

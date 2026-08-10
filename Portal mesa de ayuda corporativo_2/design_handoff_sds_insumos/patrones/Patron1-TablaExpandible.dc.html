@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}*{box-sizing:border-box}</style>
+</helmet>
+<div style="background:#FAFAF8;min-height:100vh;padding:32px 36px;font-family:'Source Sans Pro',sans-serif;color:#232323">
+  <div style="margin-bottom:20px">
+    <span style="font:800 20px 'Montserrat',sans-serif">Dashboard — Tabla de clientes expandible</span>
+    <span style="font:13px 'Source Sans Pro',sans-serif;color:#8a8a8a;margin-left:12px">Patrón 1</span>
+  </div>
+
+  <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);overflow:hidden">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 120px;padding:10px 16px;background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,.07)">
+      <span style="font:600 11px 'Source Sans Pro',sans-serif;color:#9a9a9a;text-transform:uppercase;letter-spacing:.05em">Cliente</span>
+      <span style="font:600 11px 'Source Sans Pro',sans-serif;color:#9a9a9a;text-transform:uppercase;letter-spacing:.05em">Equipos</span>
+      <span style="font:600 11px 'Source Sans Pro',sans-serif;color:#9a9a9a;text-transform:uppercase;letter-spacing:.05em">Solicitudes</span>
+      <span style="font:600 11px 'Source Sans Pro',sans-serif;color:#9a9a9a;text-transform:uppercase;letter-spacing:.05em">Estado</span>
+      <span style="font:600 11px 'Source Sans Pro',sans-serif;color:#9a9a9a;text-transform:uppercase;letter-spacing:.05em">Acciones</span>
+    </div>
+
+    <sc-for list="{{ rows }}" as="row" hint-placeholder-count="4">
+      <div style="border-bottom:1px solid rgba(0,0,0,.05)">
+        <div onClick="{{ row.toggle }}" style="cursor:pointer;display:grid;grid-template-columns:2fr 1fr 1fr 1fr 120px;padding:14px 16px;align-items:center" style-hover="background:rgba(0,0,0,.015)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font:13px 'Source Sans Pro',sans-serif;color:#b5b5b5;transition:transform .2s;display:inline-block;transform:{{ row.chevron }}">▶</span>
+            <div style="width:32px;height:32px;border-radius:8px;background:{{ row.color }};display:flex;align-items:center;justify-content:center;font:700 12px 'Montserrat',sans-serif;color:#fff;flex:none">{{ row.initials }}</div>
+            <div>
+              <div style="font:600 14px 'Source Sans Pro',sans-serif;color:#232323">{{ row.name }}</div>
+              <div style="font:12px 'Source Sans Pro',sans-serif;color:#9a9a9a">{{ row.branch }}</div>
+            </div>
+          </div>
+          <span style="font:14px 'Source Sans Pro',sans-serif;color:#4b4b4b">{{ row.equipos }} equipos</span>
+          <span style="font:14px 'Source Sans Pro',sans-serif;color:#4b4b4b">{{ row.solicitudes }}</span>
+          <div><span style="padding:3px 10px;border-radius:20px;font:600 12px 'Source Sans Pro',sans-serif;background:{{ row.stateBg }};color:{{ row.stateColor }}">{{ row.state }}</span></div>
+          <div style="display:flex;gap:8px">
+            <button style="font:600 12px 'Source Sans Pro',sans-serif;padding:5px 10px;border-radius:6px;border:1px solid rgba(247,148,29,.4);background:transparent;color:#F7941D;cursor:pointer">SDS</button>
+            <button style="font:600 12px 'Source Sans Pro',sans-serif;padding:5px 10px;border-radius:6px;border:1px solid rgba(0,0,0,.1);background:transparent;color:#58595B;cursor:pointer">···</button>
+          </div>
+        </div>
+
+        <sc-if value="{{ row.open }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FAFAF8;border-top:1px solid rgba(0,0,0,.05);padding:0 16px 12px 58px">
+          <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 80px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.06)">
+            <span style="font:600 11px 'Source Sans Pro',sans-serif;color:#b5b5b5;text-transform:uppercase;letter-spacing:.04em">Equipo / Modelo</span>
+            <span style="font:600 11px 'Source Sans Pro',sans-serif;color:#b5b5b5;text-transform:uppercase;letter-spacing:.04em">Tóner</span>
+            <span style="font:600 11px 'Source Sans Pro',sans-serif;color:#b5b5b5;text-transform:uppercase;letter-spacing:.04em">Última lectura</span>
+            <span style="font:600 11px 'Source Sans Pro',sans-serif;color:#b5b5b5;text-transform:uppercase;letter-spacing:.04em">Solicitud</span>
+            <span></span>
+          </div>
+          <sc-for list="{{ row.items }}" as="item" hint-placeholder-count="3">
+          <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 80px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.04);align-items:center">
+            <div>
+              <div style="font:600 13.5px 'Source Sans Pro',sans-serif;color:#232323">{{ item.model }}</div>
+              <div style="font:12px 'Source Sans Pro',sans-serif;color:#9a9a9a">{{ item.serial }}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;padding-right:16px">
+              <div style="display:flex;justify-content:space-between">
+                <span style="font:12px 'Source Sans Pro',sans-serif;color:{{ item.tonerColor }}">{{ item.toner }}%</span>
+              </div>
+              <div style="height:6px;background:#eee;border-radius:4px;overflow:hidden">
+                <div style="height:100%;width:{{ item.toner }}%;background:{{ item.tonerColor }};border-radius:4px;transition:width .4s"></div>
+              </div>
+            </div>
+            <span style="font:13px 'Source Sans Pro',sans-serif;color:#6b6b6b">{{ item.lastRead }}</span>
+            <span style="padding:3px 9px;border-radius:20px;font:600 11.5px 'Source Sans Pro',sans-serif;background:{{ item.reqBg }};color:{{ item.reqColor }};width:fit-content">{{ item.req }}</span>
+            <button style="font:600 11.5px 'Source Sans Pro',sans-serif;padding:4px 8px;border-radius:6px;border:none;background:rgba(247,148,29,.1);color:#F7941D;cursor:pointer">Ver</button>
+          </div>
+          </sc-for>
+        </div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    open: { 0: true, 1: false, 2: false }
+  };
+  renderVals() {
+    const { open } = this.state;
+    const data = [
+      { name: 'Banco Nación', branch: 'Casa Central', initials: 'BN', color: '#F7941D', equipos: 14, solicitudes: 3, state: 'Activo', stateBg: 'rgba(247,148,29,.12)', stateColor: '#F7941D',
+        items: [
+          { model: 'HP LaserJet Pro M404', serial: 'SN-00312', toner: 72, tonerColor: '#22c55e', lastRead: '10/08/2026', req: 'OK', reqBg: 'rgba(34,197,94,.1)', reqColor: '#16a34a' },
+          { model: 'Epson WorkForce Pro', serial: 'SN-00298', toner: 18, tonerColor: '#F7941D', lastRead: '10/08/2026', req: 'Reponer', reqBg: 'rgba(247,148,29,.12)', reqColor: '#F7941D' },
+          { model: 'Canon imageRUNNER', serial: 'SN-00401', toner: 5, tonerColor: '#ef4444', lastRead: '09/08/2026', req: 'Urgente', reqBg: 'rgba(239,68,68,.1)', reqColor: '#dc2626' },
+        ]
+      },
+      { name: 'Mapfre Seguros', branch: 'Sucursal Belgrano', initials: 'MS', color: '#58595B', equipos: 8, solicitudes: 1, state: 'Atención', stateBg: 'rgba(239,68,68,.1)', stateColor: '#dc2626',
+        items: [
+          { model: 'HP Color LaserJet', serial: 'SN-00512', toner: 45, tonerColor: '#eab308', lastRead: '08/08/2026', req: 'Seguimiento', reqBg: 'rgba(234,179,8,.1)', reqColor: '#a16207' },
+          { model: 'Samsung Xpress', serial: 'SN-00488', toner: 62, tonerColor: '#22c55e', lastRead: '10/08/2026', req: 'OK', reqBg: 'rgba(34,197,94,.1)', reqColor: '#16a34a' },
+        ]
+      },
+      { name: 'OSDE', branch: 'Sucursal Rosario', initials: 'OS', color: '#3A3A3C', equipos: 22, solicitudes: 0, state: 'OK', stateBg: 'rgba(34,197,94,.1)', stateColor: '#16a34a',
+        items: []
+      },
+    ];
+    const rows = data.map((d, i) => ({
+      ...d,
+      open: !!open[i],
+      chevron: open[i] ? 'rotate(90deg)' : 'rotate(0deg)',
+      toggle: () => this.setState(s => ({ open: { ...s.open, [i]: !s.open[i] } })),
+    }));
+    return { rows };
+  }
+}
+
+</script>
+</body>
+</html>
