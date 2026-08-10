@@ -16,3 +16,4 @@ class PendingValidation:
     initial_percent_left: float | None = None
     diagnosis_headline: str | None = None
     diagnosis_detail: str | None = None
+    swap_note: str | None = None

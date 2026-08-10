@@ -24,3 +24,9 @@ class RequestValidationRepository(Protocol):
     async def get_pending_ids(self, hp_request_ids: Sequence[int]) -> set[int]:
         """Subset de los ids con validación todavía PENDING (badge "Validando")."""
         ...
+
+    async def get_pending_batch(
+        self, hp_request_ids: Sequence[int]
+    ) -> dict[int, PendingValidation]:
+        """Las validaciones PENDING completas para estos ids (badge + tooltip)."""
+        ...

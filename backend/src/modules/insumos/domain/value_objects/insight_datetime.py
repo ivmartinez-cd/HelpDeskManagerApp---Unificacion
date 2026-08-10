@@ -40,6 +40,21 @@ def insight_iso_to_argentina_date(raw: str | None) -> date | None:
     return parsed.astimezone(_ARGENTINA).date()
 
 
+def days_since_contact(last_contact: str | None) -> int | None:
+    """Días completos desde `lastContact` (ISO UTC de Insight) hasta hoy, en día
+    argentino. None si no hay dato o el formato es inesperado — no adivinar antigüedad."""
+    if not last_contact:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(last_contact).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=_UTC)
+    contact_local = parsed.astimezone(_ARGENTINA)
+    return (datetime.now(_ARGENTINA).date() - contact_local.date()).days
+
+
 def format_arg_datetime(iso_utc: str) -> str:
     """Convierte un timestamp UTC de Insight ('...Z') a hora Argentina, "dd/mm HH:MM".
 

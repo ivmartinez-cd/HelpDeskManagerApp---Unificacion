@@ -17,9 +17,15 @@ from src.modules.insumos.application.use_cases.get_dashboard import (
     GetDashboard,
     GetDashboardPorts,
 )
+from src.modules.insumos.application.use_cases.list_requests import (
+    ListRequests,
+    ListRequestsConfig,
+    ListRequestsPorts,
+)
 from src.modules.insumos.application.use_cases.load_order import LoadOrder
 from src.modules.insumos.domain.services.claimed_order_creation import ClaimedOrderCreation
 from src.modules.insumos.domain.services.order_creation import CanalDirectoOrderCreation
+from src.modules.insumos.domain.services.supply_lookup import CanalDirectoSupplyLookup
 from src.modules.insumos.domain.services.supply_request_matching import SupplyMatchResolver
 from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
@@ -101,6 +107,31 @@ def build_get_dashboard(session: AsyncSession) -> GetDashboard:
         audit=SqlAlchemyOrderAuditRepository(session),
     )
     return GetDashboard(ports)
+
+
+def build_list_requests(session: AsyncSession) -> ListRequests:
+    settings = get_settings()
+    wsayc = get_wsayc_gateway()
+    supply_cache = SqlAlchemySupplyCacheRepository(session)
+    order_settings = _order_settings(settings)
+    dashboard_ports = GetDashboardPorts(
+        insight=get_insight_gateway(),
+        wsayc=wsayc,
+        processed=SqlAlchemyProcessedRequestRepository(session),
+        supply_cache=supply_cache,
+        customers=SqlAlchemyCustomerConfigRepository(session),
+        settings=SqlAlchemyInsumosSettingsRepository(session),
+        audit=SqlAlchemyOrderAuditRepository(session),
+    )
+    ports = ListRequestsPorts(
+        dashboard=dashboard_ports,
+        validations=SqlAlchemyRequestValidationRepository(session),
+        supply_lookup=CanalDirectoSupplyLookup(wsayc, supply_cache, order_settings),
+    )
+    config = ListRequestsConfig(
+        order_settings=order_settings, insight_base_url=settings.insight_base_url
+    )
+    return ListRequests(ports, config)
 
 
 def build_load_order(session: AsyncSession) -> LoadOrder:

@@ -299,6 +299,14 @@ class FakeRequestValidationRepository:
     async def get_swap_note(self, hp_request_id: int) -> str | None:
         return self.swap_notes.get(hp_request_id)
 
+    async def get_pending_ids(self, hp_request_ids: list[int]) -> set[int]:
+        return {rid for rid in hp_request_ids if rid in self.pending}
+
+    async def get_pending_batch(
+        self, hp_request_ids: list[int]
+    ) -> dict[int, PendingValidation]:
+        return {rid: self.pending[rid] for rid in hp_request_ids if rid in self.pending}
+
 
 class FakeZoneContactRepository:
     def __init__(self) -> None:
