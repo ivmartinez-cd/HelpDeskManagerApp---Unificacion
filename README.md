@@ -14,12 +14,24 @@ vive en `C:\Users\imartinez.CDSA\.claude\plans\idempotent-pondering-graham.md`.
 
 ## Setup rápido
 
+Todo en Docker (DB + backend + frontend, con hot-reload vía volúmenes — recomendado para
+desarrollo local):
+
 ```bash
 cp .env.example .env
+docker compose up -d --build
+```
+
+Frontend en `http://localhost:3000`, backend en `http://localhost:8012`. Los cambios de código
+se reflejan sin rebuildear la imagen.
+
+Alternativa sin Docker para backend/frontend (solo la DB containerizada):
+
+```bash
 cd backend && uv sync --frozen
 docker compose up -d db
 uv run alembic upgrade head
-uv run uvicorn src.shared.presentation.app:app --reload
+uv run uvicorn src.shared.presentation.app:app --reload --port 8012
 ```
 
 ```bash

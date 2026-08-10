@@ -19,5 +19,45 @@ services:
       timeout: 5s
       retries: 10
 
+  backend:
+    build: ./backend
+    container_name: helpdesk-manager-backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Dentro de la red de Docker el host es el nombre del servicio ("db"), no
+      # "localhost", y el puerto es el interno del contenedor (5432), no el
+      # publicado al host (DB_PORT/5439).
+      DATABASE_URL: postgresql://${POSTGRES_USER:-helpdesk}:${POSTGRES_PASSWORD:-CHANGE_ME}@db:5432/${POSTGRES_DB:-helpdesk}
+    ports:
+      - "8012:8012"
+    volumes:
+      - ./backend:/app
+      - backend_venv:/app/.venv
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: helpdesk-manager-frontend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # El rewrite de next.config.ts y el fetch server-side de app/(app)/layout.tsx
+      # corren dentro de este contenedor: "127.0.0.1" no resuelve al backend acá.
+      BACKEND_URL: http://backend:8012
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_next_cache:/app/.next
+    depends_on:
+      - backend
+
 volumes:
   helpdesk_db_data:
+  backend_venv:
+  frontend_node_modules:
+  frontend_next_cache:
