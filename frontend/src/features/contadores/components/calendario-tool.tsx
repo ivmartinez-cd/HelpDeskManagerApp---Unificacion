@@ -46,20 +46,35 @@ function getMonthNameCapitalized(dateStr: string): string {
     const year = parseInt(parts[0], 10);
     const month = parseInt(parts[1], 10) - 1;
     const d = new Date(year, month, 1);
-    const name = d.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
-    return name.charAt(0).toUpperCase() + name.slice(1);
+    const monthName = d.toLocaleDateString("es-AR", { month: "long" });
+    const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+    return `${capitalizedMonth} ${year}`;
   }
   return dateStr;
+}
+
+function formatPillText(evt: CalendarEvent): string {
+  let raw = cleanTitle(evt.title);
+  if (!raw) {
+    raw = evt.cliente ? `(Facturación) ${evt.cliente}` : "Facturación";
+  } else {
+    // Normalizar [Facturación] o [Facturación]: a (Facturación)
+    raw = raw.replace(/^\[(.*?)\]\s*:?\s*/, "($1) ");
+    if (!raw.startsWith("(") && evt.string_tipo_evento) {
+      raw = `(${evt.string_tipo_evento}) ${raw}`;
+    }
+  }
+  return raw;
 }
 
 function getEventPillStyle(evt: CalendarEvent): string {
   const tipo = (evt.string_tipo_evento || "").toLowerCase();
   const title = (evt.title || "").toLowerCase();
 
-  if (tipo.includes("facturaci") || title.includes("(facturaci")) {
+  if (tipo.includes("facturaci") || title.includes("facturaci")) {
     return "bg-[#ff9000] text-white hover:bg-[#e07f00]";
   }
-  if (tipo.includes("vencimiento") || title.includes("(vencimiento")) {
+  if (tipo.includes("vencimiento") || title.includes("vencimiento")) {
     return "bg-[#d90077] text-white hover:bg-[#b80065]";
   }
   return "bg-[#343a40] text-white hover:bg-[#212529]";
@@ -220,24 +235,28 @@ export function CalendarioTool() {
             {currentMonthTitle}
           </h2>
 
-          <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
-            <button
-              onClick={handlePrevMonth}
-              className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              title="Mes Anterior"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              onClick={handleNextMonth}
-              className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              title="Mes Siguiente"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+          {/* Navigation Controls: < > Oval Pill + Hoy Button */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5 rounded-full border border-border bg-card px-1.5 py-0.5 shadow-2xs">
+              <button
+                onClick={handlePrevMonth}
+                className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                title="Mes Anterior"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={handleNextMonth}
+                className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                title="Mes Siguiente"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
             <button
               onClick={handleToday}
-              className="ml-1 rounded px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-muted transition-colors border border-border"
+              className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-2xs hover:bg-muted transition-colors"
             >
               Hoy
             </button>
@@ -384,14 +403,14 @@ export function CalendarioTool() {
                   <div className="flex flex-col gap-1 overflow-y-auto max-h-[140px] pr-0.5 scrollbar-thin">
                     {dayEvents.map((evt, evtIdx) => {
                       const pillStyle = getEventPillStyle(evt);
-                      const displayLabel = cleanTitle(evt.title) || evt.cliente || "Facturación";
+                      const displayLabel = formatPillText(evt);
 
                       return (
                         <div
                           key={`${evt.id}-${cell.dateStr}-${evtIdx}`}
                           onClick={() => setSelectedEvent(evt)}
                           title={displayLabel}
-                          className={`group cursor-pointer rounded-md px-2 py-1 text-[11px] font-bold leading-tight shadow-2xs transition-all ${pillStyle}`}
+                          className={`group cursor-pointer rounded-full px-2.5 py-1 text-[11px] font-semibold leading-tight shadow-2xs transition-all ${pillStyle}`}
                         >
                           <div className="truncate">{displayLabel}</div>
                         </div>
