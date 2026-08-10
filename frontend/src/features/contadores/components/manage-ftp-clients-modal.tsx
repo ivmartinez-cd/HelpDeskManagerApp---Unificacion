@@ -93,9 +93,7 @@ export function ManageFtpClientsModal({ isOpen, onClose }: Props) {
                       <td className="px-3 py-2.5 font-semibold text-brand-charcoal">
                         {client.name}
                       </td>
-                      <td className="px-3 py-2.5 text-[#6b6b6b]">
-                        {client.host}:{client.port}
-                      </td>
+                      <td className="px-3 py-2.5 text-[#6b6b6b]">{client.host}</td>
                       <td className="px-3 py-2.5">
                         <div className="flex items-center justify-end gap-1">
                           <button

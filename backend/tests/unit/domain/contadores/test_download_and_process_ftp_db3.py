@@ -130,7 +130,21 @@ async def test_generates_csv_from_ftp_download(tmp_path) -> None:
     assert os.path.isfile(result.csv_path)
 
 
-async def test_temp_db3_is_deleted_after_successful_process(tmp_path) -> None:
+async def test_merged_db3_is_kept_in_output_dir_after_successful_process(tmp_path) -> None:
+    """El DB3 (ya fusionado si había varios archivos del mismo día) queda
+    disponible para descarga en output_dir junto al CSV — antes se borraba."""
+    client = _make_client()
+    stub = StubFtpDb3Downloader()
+    uc, req = _make_use_case(client, stub, str(tmp_path))
+
+    result = await uc.execute(req)
+
+    assert result.db3_path.endswith(".db3")
+    assert os.path.isfile(result.db3_path)
+    assert os.path.dirname(result.db3_path) == str(tmp_path)
+
+
+async def test_temp_db3_is_moved_out_of_tempdir_after_successful_process(tmp_path) -> None:
     client = _make_client()
     stub = StubFtpDb3Downloader()
     uc, req = _make_use_case(client, stub, str(tmp_path))
@@ -138,7 +152,10 @@ async def test_temp_db3_is_deleted_after_successful_process(tmp_path) -> None:
     await uc.execute(req)
 
     downloaded_path = stub.called_with[0]["dest_path"]
-    assert not os.path.isfile(downloaded_path), "El temporal .db3 debe borrarse tras procesar"
+    assert not os.path.isfile(downloaded_path), (
+        "El temporal .db3 debe dejar de existir en su ruta original tras procesar "
+        "(se mueve a output_dir, no se copia)"
+    )
 
 
 async def test_temp_db3_is_deleted_even_when_ftp_download_fails(tmp_path) -> None:

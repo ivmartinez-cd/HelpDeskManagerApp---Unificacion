@@ -6,6 +6,7 @@ import {
   contadoresApi,
   type CreateFtpClientPayload,
   type FtpClient,
+  type UpdateFtpClientPayload,
 } from "../api/contadores-api";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 
@@ -41,10 +42,10 @@ function Field({ label, id, ...props }: FieldProps) {
 export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
   const [name, setName] = useState(client?.name ?? "");
   const [host, setHost] = useState(client?.host ?? "");
-  const [port, setPort] = useState<number>(client?.port || 21);
-  const [username, setUsername] = useState(client?.username ?? "");
+  const [user, setUser] = useState(client?.user ?? "");
   const [password, setPassword] = useState("");
-  const [remoteDir, setRemoteDir] = useState(client?.remote_dir || "/");
+  const [path, setPath] = useState(client?.path || "/");
+  const [pattern, setPattern] = useState(client?.pattern || "PrinterMonitorClient.db3.*");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,10 +57,10 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
     setPrevClient(client);
     setName(client?.name ?? "");
     setHost(client?.host ?? "");
-    setPort(client?.port || 21);
-    setUsername(client?.username ?? "");
+    setUser(client?.user ?? "");
     setPassword("");
-    setRemoteDir(client?.remote_dir || "/");
+    setPath(client?.path || "/");
+    setPattern(client?.pattern || "PrinterMonitorClient.db3.*");
     setError(null);
   }
 
@@ -70,24 +71,13 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
 
     try {
       if (client) {
-        await contadoresApi.updateFtpClient(client.id, {
-          name,
-          host,
-          port,
-          username,
-          password: password || undefined,
-          remote_dir: remoteDir,
-        });
+        // password vacío = "conservar la actual" (ver UpdateFtpClientPayload).
+        const payload: UpdateFtpClientPayload = { name, host, user, path, pattern };
+        if (password) payload.password = password;
+        await contadoresApi.updateFtpClient(client.id, payload);
         toast.success("Cliente FTP actualizado correctamente");
       } else {
-        const payload: CreateFtpClientPayload = {
-          name,
-          host,
-          port,
-          username,
-          password,
-          remote_dir: remoteDir,
-        };
+        const payload: CreateFtpClientPayload = { name, host, user, password, path, pattern };
         await contadoresApi.createFtpClient(payload);
         toast.success("Cliente FTP creado correctamente");
       }
@@ -119,35 +109,23 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
           required
         />
 
-        <div className="grid grid-cols-3 gap-3">
-          <div className="col-span-2">
-            <Field
-              id="ftp-client-host"
-              label="Servidor (Host / IP)"
-              type="text"
-              value={host}
-              onChange={(e) => setHost(e.target.value)}
-              placeholder="Ej: ftp.cliente.com.ar"
-              required
-            />
-          </div>
-          <Field
-            id="ftp-client-port"
-            label="Puerto"
-            type="number"
-            value={port}
-            onChange={(e) => setPort(Number(e.target.value))}
-            required
-          />
-        </div>
+        <Field
+          id="ftp-client-host"
+          label="Servidor (Host / IP)"
+          type="text"
+          value={host}
+          onChange={(e) => setHost(e.target.value)}
+          placeholder="Ej: ftp.cliente.com.ar"
+          required
+        />
 
         <div className="grid grid-cols-2 gap-3">
           <Field
-            id="ftp-client-username"
+            id="ftp-client-user"
             label="Usuario FTP"
             type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={user}
+            onChange={(e) => setUser(e.target.value)}
             required
           />
           <Field
@@ -160,15 +138,26 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
           />
         </div>
 
-        <Field
-          id="ftp-client-remote-dir"
-          label="Directorio Remoto"
-          type="text"
-          value={remoteDir}
-          onChange={(e) => setRemoteDir(e.target.value)}
-          placeholder="Ej: /"
-          required
-        />
+        <div className="grid grid-cols-2 gap-3">
+          <Field
+            id="ftp-client-path"
+            label="Directorio Remoto"
+            type="text"
+            value={path}
+            onChange={(e) => setPath(e.target.value)}
+            placeholder="Ej: /"
+            required
+          />
+          <Field
+            id="ftp-client-pattern"
+            label="Patrón de Archivos"
+            type="text"
+            value={pattern}
+            onChange={(e) => setPattern(e.target.value)}
+            placeholder="Ej: PrinterMonitorClient.db3.*"
+            required
+          />
+        </div>
 
         <div className="flex justify-end gap-3 pt-2">
           <button

@@ -23,7 +23,8 @@ class UpdateFtpClientUseCase:
         client.name = request.name
         client.host = request.host
         client.user = request.user
-        client.password = request.password
+        if request.password:
+            client.password = request.password
         client.path = request.path
         client.pattern = request.pattern
 

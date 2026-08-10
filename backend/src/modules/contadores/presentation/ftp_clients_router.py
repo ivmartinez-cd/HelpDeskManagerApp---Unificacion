@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
@@ -57,6 +57,10 @@ async def create_ftp_client(
     db: AsyncSession = Depends(get_db),
 ) -> FtpClientOut:
     """Crea un nuevo cliente FTP."""
+    if not body.password:
+        raise HTTPException(
+            status_code=400, detail="La contraseña es obligatoria para crear un cliente FTP."
+        )
     repo = SqlAlchemyFtpClientRepository(db)
     request = _to_app_request(body)
     result = await CreateFtpClientUseCase(repo).execute(request)
@@ -109,7 +113,8 @@ async def process_ftp_client(
 ) -> ProcessFtpClientResponse:
     """Descarga el DB3 más reciente del cliente vía FTP y genera el CSV de exportación.
 
-    El archivo temporal de DB3 se borra automáticamente tras el procesamiento.
+    El DB3 descargado (fusionado si había varios archivos del mismo día) se
+    guarda en `output_dir` junto al CSV y queda disponible para descarga.
     """
     repo = SqlAlchemyFtpClientRepository(db)
     downloader = FtplibDb3Downloader()

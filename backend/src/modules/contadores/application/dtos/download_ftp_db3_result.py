@@ -6,6 +6,7 @@ class DownloadFtpDb3Result:
     """Output del use case de descarga y procesamiento de DB3 vía FTP."""
 
     csv_path: str
+    db3_path: str
     client_name: str
     remote_filename: str
     row_count: int

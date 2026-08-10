@@ -21,6 +21,10 @@ class CreateFtpClientUseCase:
         if existing is not None:
             raise DuplicateFtpClientNameError(request.name)
 
+        # El router ya valida que password no sea None antes de crear el
+        # use case (ver ftp_clients_router.create_ftp_client) — acá solo lo
+        # confirmamos para el type checker.
+        assert request.password is not None
         client = FtpClient(
             id=uuid.uuid4(),
             name=request.name,

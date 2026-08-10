@@ -1,8 +1,10 @@
 import contextlib
 import os
 import re
+import shutil
 import tempfile
 import uuid
+from pathlib import Path
 
 from src.modules.contadores.application.dtos.download_ftp_db3_request import DownloadFtpDb3Request
 from src.modules.contadores.application.dtos.download_ftp_db3_result import DownloadFtpDb3Result
@@ -21,9 +23,14 @@ class DownloadAndProcessFtpDb3UseCase:
 
     Flujo:
     1. Obtiene el FtpClient de la DB (404 si no existe).
-    2. Descarga el DB3 a un temporal.
+    2. Descarga el DB3 a un temporal (si había varios archivos del mismo día,
+       ya llega acá fusionado en un único SQLite — ver ftplib_db3_downloader).
     3. Delega el procesamiento a RunDb3ExportUseCase.
-    4. Borra el temporal (incluso si el procesamiento falla).
+    4. Mueve el DB3 (ya fusionado) a `output_dir` para que quede descargable
+       junto al CSV — antes se borraba, pero el merge es justamente el
+       trabajo pesado que hace este flujo y perderlo obligaba a re-descargar
+       del FTP para auditarlo.
+    5. Si algo falla antes del paso 4, borra el temporal.
     """
 
     def __init__(
@@ -61,12 +68,17 @@ class DownloadAndProcessFtpDb3UseCase:
                 fecha_maxima=request.fecha_maxima,
             )
             export_result = self._db3_use_case.execute(export_request)
+
+            Path(request.output_dir).mkdir(parents=True, exist_ok=True)
+            db3_path = str(Path(request.output_dir) / f"{safe_name}_FTP.db3")
+            shutil.move(dest_path, db3_path)
         finally:
             with contextlib.suppress(OSError):
                 os.remove(dest_path)
 
         return DownloadFtpDb3Result(
             csv_path=export_result.csv_path,
+            db3_path=db3_path,
             client_name=client.name,
             remote_filename=remote_filename,
             row_count=export_result.row_count,
