@@ -20,6 +20,11 @@ function getInitials(fullName: string): string {
 
 export function Sidebar({ children }: { children: ReactNode }) {
   const { user, modules } = useSession();
+  // Configuración es un módulo más para el backend (sort_order en la tabla
+  // Module), pero en la nav siempre tiene que quedar al final del todo.
+  const sortedModules = [...modules].sort((a, b) =>
+    a.key === "admin" ? 1 : b.key === "admin" ? -1 : 0,
+  );
   const { logout, loading } = useLogout();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -149,7 +154,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
               </p>
             )}
 
-            {modules.map((module) => {
+            {sortedModules.map((module) => {
               const active = isActive(module.route);
               const isContadores = module.key === "contadores";
               const contadoresExpanded = contadoresExpandedOverride ?? active;
