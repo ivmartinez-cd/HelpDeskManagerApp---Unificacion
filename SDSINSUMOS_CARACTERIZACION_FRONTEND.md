@@ -59,6 +59,23 @@ Acción recomendada para la próxima sesión: pedir al usuario un handoff nuevo 
 con captura o export real de las 8 pantallas, o al menos una decisión explícita sobre el celeste
 `--sds-blue` antes de tocar componentes.
 
+### Resuelto (2026-08-10) — handoff entregado y decisiones cerradas
+
+El handoff existe: `Portal mesa de ayuda corporativo_2/design_handoff_sds_insumos/` (README +
+6 patrones `.dc.html`). Prohíbe explícitamente el celeste `#00a4e4` y el violeta `#662D91`.
+Decisiones tomadas con el usuario en sesión:
+
+1. **Patrones sí, contenido real**: los 6 patrones visuales y tokens del handoff son el design
+   system del módulo, pero el contenido de cada pantalla sale de la funcionalidad real del
+   legacy SDSInsumos (este documento, secciones 1+). Las pantallas del README del handoff
+   mezclan herramientas de Contadores (modales "Descargar SDS/ERS/FTP", "Estimación en 0",
+   "Suma Fija", config por cliente con Facturación) que NO se construyen en insumos — Contadores
+   ya tiene su propia UI migrada.
+2. **Magenta `#E32D91` afuera**: aunque el handoff lo lista como "acento puntual" (marcas de
+   reposición en el Patrón 2), se reemplaza por naranja/gris — consistente con el precedente
+   `feedback_brand_purity_canal_directo`. Paleta permitida: Institucional (`#F7941D`/`#58595B`),
+   charcoal `#3A3A3C`, y semánticos rojo/amarillo/verde.
+
 ---
 
 ## 1. Inventario de pantallas
