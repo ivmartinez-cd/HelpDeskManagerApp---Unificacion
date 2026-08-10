@@ -1,8 +1,19 @@
-"""Fakes compartidos de los puertos de insumos para tests unitarios de dominio."""
+"""Fakes compartidos de los puertos de insumos para tests unitarios."""
 
+from src.modules.insumos.domain.entities.audit_record import (
+    EVENT_CREATED,
+    AuditRecord,
+)
+from src.modules.insumos.domain.entities.processed_request import (
+    STATUS_CREATED,
+    ProcessedRequest,
+)
+from src.modules.insumos.domain.repositories.insight_gateway import JsonDict
 from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply, CdMachine, CdSupply
 from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
+from src.modules.insumos.domain.value_objects.pending_validation import PendingValidation
+from src.modules.insumos.domain.value_objects.zone_contacts import ZoneContacts
 
 HAPPY_MACHINE = CdMachine(
     familia_id="255", familia_name="HP E50145/52645", empresa_id="8", sucursal_id="13840"
@@ -108,3 +119,138 @@ class FakeSupplyCacheRepository:
 
     async def get_status(self, supply_id: int) -> str | None:
         return next((e.estado for e in self.entries if e.supply_id == supply_id), None)
+
+
+class FakeOrderClaimRepository:
+    def __init__(self) -> None:
+        self._claimed: set[tuple[str, str]] = set()
+        self.released: list[tuple[str, str]] = []
+
+    async def try_claim(self, device_serial: str, sku: str) -> bool:
+        key = (device_serial, sku)
+        if key in self._claimed:
+            return False
+        self._claimed.add(key)
+        return True
+
+    async def release(self, device_serial: str, sku: str) -> None:
+        self._claimed.discard((device_serial, sku))
+        self.released.append((device_serial, sku))
+
+
+class FakeProcessedRequestRepository:
+    """En memoria; el "hoy" no filtra por fecha — todo lo insertado cuenta como de hoy
+    (los cortes reales de día argentino se prueban en integración)."""
+
+    def __init__(self) -> None:
+        self.rows: dict[int, ProcessedRequest] = {}
+
+    async def get(self, hp_request_id: int) -> ProcessedRequest | None:
+        return self.rows.get(hp_request_id)
+
+    async def mark_processed(self, request: ProcessedRequest) -> None:
+        self.rows[request.hp_request_id] = request
+
+    async def mark_cancelled(self, hp_request_id: int) -> None:
+        row = self.rows[hp_request_id]
+        self.rows[hp_request_id] = ProcessedRequest(
+            hp_request_id=row.hp_request_id,
+            status="CANCELLED",
+            device_serial=row.device_serial,
+            sku=row.sku,
+            internal_order_id=row.internal_order_id,
+        )
+
+    async def get_today_order_for(self, device_serial: str, sku: str) -> ProcessedRequest | None:
+        return next(
+            (
+                r
+                for r in self.rows.values()
+                if r.device_serial == device_serial
+                and r.sku == sku
+                and r.status == STATUS_CREATED
+            ),
+            None,
+        )
+
+    async def get_created_by_serial(self, device_serial: str) -> list[ProcessedRequest]:
+        return [
+            r
+            for r in self.rows.values()
+            if r.device_serial.upper() == device_serial.upper() and r.status == STATUS_CREATED
+        ]
+
+
+class FakeOrderAuditRepository:
+    def __init__(self) -> None:
+        self.records: list[AuditRecord] = []
+
+    async def record(self, entry: AuditRecord) -> None:
+        self.records.append(entry)
+
+    async def count_created_today(self, hp_request_id: int) -> int:
+        return len(
+            [
+                r
+                for r in self.records
+                if r.event == EVENT_CREATED
+                and r.hp_request_id == hp_request_id
+                and not r.dry_run
+            ]
+        )
+
+
+class FakeRequestValidationRepository:
+    def __init__(self) -> None:
+        self.pending: dict[int, PendingValidation] = {}
+        self.swap_notes: dict[int, str] = {}
+
+    async def get_pending(self, hp_request_id: int) -> PendingValidation | None:
+        return self.pending.get(hp_request_id)
+
+    async def get_swap_note(self, hp_request_id: int) -> str | None:
+        return self.swap_notes.get(hp_request_id)
+
+
+class FakeZoneContactRepository:
+    def __init__(self) -> None:
+        self.zones: dict[tuple[int, str], ZoneContacts] = {}
+
+    async def get(self, customer_id: int, zone: str) -> ZoneContacts | None:
+        return self.zones.get((customer_id, zone))
+
+
+class FakeInsightGateway:
+    """Solo los métodos que usa LoadOrder; el resto no existe a propósito."""
+
+    def __init__(self) -> None:
+        self.consumable_requests: list[JsonDict] = []
+        self.requests_error: Exception | None = None
+        self.devices_by_id: dict[int, JsonDict] = {}
+        self.updates: list[JsonDict] = []
+
+    async def get_consumable_requests(
+        self,
+        customer_id: int,
+        workflow_status: str = "OUTSTANDING",
+        from_date: str | None = None,
+        to_date: str | None = None,
+    ) -> list[JsonDict]:
+        if self.requests_error is not None:
+            raise self.requests_error
+        return self.consumable_requests
+
+    async def get_device_by_id(self, device_id: int) -> JsonDict:
+        return self.devices_by_id.get(device_id, {})
+
+    async def update_consumable_request(
+        self,
+        request_id: int,
+        external_ref: str | None = None,
+        status_update: str | None = None,
+        comment: str | None = None,
+    ) -> JsonDict:
+        self.updates.append(
+            {"request_id": request_id, "externalRef": external_ref, "statusUpdate": status_update}
+        )
+        return {"ok": True}
