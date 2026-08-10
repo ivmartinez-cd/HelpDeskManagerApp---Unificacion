@@ -41,3 +41,38 @@ source_modules =
     src.modules.auth
 forbidden_modules =
     src.modules.contadores
+
+[importlinter:contract:insumos-domain-no-frameworks]
+name = El dominio de insumos no importa frameworks
+type = forbidden
+source_modules =
+    src.modules.insumos.domain
+forbidden_modules =
+    fastapi
+    sqlalchemy
+    pydantic
+    alembic
+
+[importlinter:contract:insumos-domain-app-independent-from-auth]
+name = El domain/application de insumos no depende de auth (ver ADR-007)
+type = forbidden
+source_modules =
+    src.modules.insumos.domain
+    src.modules.insumos.application
+forbidden_modules =
+    src.modules.auth
+
+[importlinter:contract:auth-independent-from-insumos]
+name = auth no depende de insumos (dirección única de la excepción del ADR-007)
+type = forbidden
+source_modules =
+    src.modules.auth
+forbidden_modules =
+    src.modules.insumos
+
+[importlinter:contract:contadores-independent-from-insumos]
+name = Contadores e Insumos son módulos de negocio independientes entre sí
+type = independence
+modules =
+    src.modules.contadores
+    src.modules.insumos
