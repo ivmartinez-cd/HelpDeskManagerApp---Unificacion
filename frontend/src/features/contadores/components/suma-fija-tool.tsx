@@ -9,7 +9,6 @@ import {
   BrandFileInput,
   BrandInput,
   BrandResultPanel,
-  BrandStatTile,
   brandButtonClasses,
 } from "@/shared/components/ui/brand-form";
 
@@ -89,16 +88,12 @@ export function SumaFijaTool() {
 
       {result && (
         <BrandResultPanel title="Resultado del Procesamiento">
-          <div className="max-w-xs">
-            <BrandStatTile label="Total Filas Generadas" value={result.total_rows} />
-          </div>
-
-          <div className="mt-6 flex flex-col gap-3">
+          <div className="flex flex-col gap-3">
             <p className="font-body text-xs font-bold uppercase tracking-wider text-[#7a7a7a]">
-              Archivos CSV Generados ({result.csv_filenames.length}):
+              Archivos CSV Generados ({result.files.length}):
             </p>
             <div className="flex flex-wrap gap-3">
-              {result.csv_filenames.map((fname) => (
+              {result.files.map((fname) => (
                 <a
                   key={fname}
                   href={contadoresApi.getOutputUrl(fname)}

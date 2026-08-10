@@ -24,7 +24,11 @@ class CsvFaltaContadorReader:
             serie_col = _find_column(header, _SERIE_ALIASES)
             contador_col = _find_column(header, _CONTADOR_ALIASES)
             tipo_col = _find_column(header, ("Tipo",))
-            return [_parse_row(row, tipo_col, serie_col, contador_col) for row in reader]
+            nombre_clase_col = _find_optional_column(header, ("NombreClase",))
+            return [
+                _parse_row(row, tipo_col, serie_col, contador_col, nombre_clase_col)
+                for row in reader
+            ]
 
 
 def _sniff_delimiter(sample: str) -> str:
@@ -42,13 +46,29 @@ def _find_column(header: Sequence[str], aliases: tuple[str, ...]) -> str:
     raise MissingColumnError(aliases[0])
 
 
+def _find_optional_column(header: Sequence[str], aliases: tuple[str, ...]) -> str | None:
+    stripped = {h.strip(): h for h in header}
+    for alias in aliases:
+        if alias in stripped:
+            return stripped[alias]
+    return None
+
+
 def _parse_row(
-    row: dict[str, str], tipo_col: str, serie_col: str, contador_col: str
+    row: dict[str, str],
+    tipo_col: str,
+    serie_col: str,
+    contador_col: str,
+    nombre_clase_col: str | None,
 ) -> FaltaContadorSourceRow:
-    nombre_clase = row.get("NombreClase")
+    # Igual que `counters_tools.py`: cuando la columna NombreClase existe pero
+    # el valor de esta fila viene vacío/None, se trata como "no Color" (va a
+    # CLASE_10), no como "columna ausente" (que deja ambas columnas vacías).
+    # Por eso acá nunca devolvemos None si la columna existe en el header.
+    nombre_clase = (row.get(nombre_clase_col) or "").strip() if nombre_clase_col else None
     return FaltaContadorSourceRow(
         tipo=row.get(tipo_col, ""),
         serie=row.get(serie_col, ""),
         contador=int(float(row.get(contador_col) or 0)),
-        nombre_clase=nombre_clase.strip() if nombre_clase else None,
+        nombre_clase=nombre_clase,
     )

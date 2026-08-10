@@ -9,7 +9,6 @@ import {
   BrandFileInput,
   BrandInput,
   BrandResultPanel,
-  BrandStatTile,
   brandButtonClasses,
 } from "@/shared/components/ui/brand-form";
 
@@ -85,14 +84,10 @@ export function En0Tool() {
 
       {result && (
         <BrandResultPanel title="Resultado del Procesamiento">
-          <div className="max-w-xs">
-            <BrandStatTile label="Total Filas Generadas" value={result.total_rows} />
-          </div>
-
           <a
-            href={contadoresApi.getOutputUrl(result.csv_filename)}
-            download={result.csv_filename}
-            className={`${brandButtonClasses({ variant: "primary" })} mt-6`}
+            href={contadoresApi.getOutputUrl(result.file)}
+            download={result.file}
+            className={brandButtonClasses({ variant: "primary" })}
           >
             <Download className="h-4 w-4" />
             Descargar Archivo CSV Resultado (.csv)

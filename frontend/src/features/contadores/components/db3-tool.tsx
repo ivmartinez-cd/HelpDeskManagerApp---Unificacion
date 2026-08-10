@@ -79,20 +79,21 @@ export function Db3Tool() {
 
       {result && (
         <BrandResultPanel title="Resultado de Consolidación">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <BrandStatTile label="Total Filas Generadas" value={result.total_rows} />
-            <BrandStatTile label="Clase 10 (Mono)" value={result.counterclass_10_count} />
-            <BrandStatTile
-              label="Clase 20 (Color)"
-              value={result.counterclass_20_count}
-              tone="highlight"
-            />
-            <BrandStatTile label="Clase 40 (Duplicados)" value={result.counterclass_40_count} />
+          <div className="max-w-xs">
+            <BrandStatTile label="Total Filas Generadas" value={result.rowCount} />
           </div>
 
+          {result.warnings.length > 0 && (
+            <ul className="mt-4 flex flex-col gap-1 rounded-[10px] border border-amber-500/20 bg-amber-500/5 p-3 font-body text-xs text-amber-700">
+              {result.warnings.map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </ul>
+          )}
+
           <a
-            href={contadoresApi.getOutputUrl(result.csv_filename)}
-            download={result.csv_filename}
+            href={contadoresApi.getOutputUrl(result.csvFile)}
+            download={result.csvFile}
             className={`${brandButtonClasses({ variant: "primary" })} mt-6`}
           >
             <Download className="h-4 w-4" />

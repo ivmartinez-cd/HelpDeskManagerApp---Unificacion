@@ -16,12 +16,6 @@ from src.modules.contadores.application.use_cases.run_estimation_zero import (
     RunEstimationZeroUseCase,
 )
 from src.modules.contadores.application.use_cases.run_fixed_sum import RunFixedSumUseCase
-from src.modules.contadores.domain.services.manual_estimation_calculator import (
-    calculate_manual_estimation,
-)
-from src.modules.contadores.domain.value_objects.manual_estimation_input import (
-    ManualEstimationInput,
-)
 from src.modules.contadores.domain.well_known_permissions import EXPORT
 from src.modules.contadores.infrastructure.csv.csv_db3_writer import CsvDb3Writer
 from src.modules.contadores.infrastructure.csv.csv_estimation_zero_writer import (
@@ -38,10 +32,6 @@ from src.modules.contadores.infrastructure.sqlite.sqlite3_db3_file_reader import
     Sqlite3Db3FileReader,
 )
 from src.modules.contadores.presentation.schemas.db3_schemas import RunDb3ExportResponse
-from src.modules.contadores.presentation.schemas.manual_estimation_schemas import (
-    ManualEstimationRequest,
-    ManualEstimationResponse,
-)
 from src.modules.contadores.presentation.schemas.tools_schemas import (
     RunEstimationZeroResponse,
     RunFixedSumResponse,
@@ -51,21 +41,6 @@ from src.modules.contadores.presentation.upload_storage import output_dir, save_
 router = APIRouter(prefix="/api/contadores", tags=["contadores"])
 
 _require_export = Depends(require_permission(EXPORT))
-
-
-@router.post("/calc")
-async def run_manual_estimation(
-    body: ManualEstimationRequest, _: Identity = _require_export
-) -> ManualEstimationResponse:
-    data = ManualEstimationInput(
-        contador_inicial=body.contador_inicial,
-        contador_final=body.contador_final,
-        fecha_inicial=body.fecha_inicial,
-        fecha_final=body.fecha_final,
-        fecha_estimacion=body.fecha_estimacion,
-    )
-    result = calculate_manual_estimation(data)
-    return ManualEstimationResponse.from_domain(result)
 
 
 @router.post("/db3")
@@ -100,7 +75,7 @@ def _db3_base_name(files: list[UploadFile]) -> str:
 @router.post("/en0")
 async def run_estimation_zero(
     file: UploadFile,
-    fecha: str = Form(...),
+    fecha: date = Form(...),
     cliente: str = Form(...),
     _: Identity = _require_export,
 ) -> RunEstimationZeroResponse:
@@ -109,7 +84,7 @@ async def run_estimation_zero(
         request = RunEstimationZeroRequest(
             file_path=str(upload_path),
             cliente=cliente,
-            fecha_nueva=fecha,
+            fecha_nueva=fecha.strftime("%d/%m/%Y"),
             output_dir=output_dir(),
         )
         use_case = RunEstimationZeroUseCase(CsvFaltaContadorReader(), CsvEstimationZeroWriter())
@@ -122,7 +97,7 @@ async def run_estimation_zero(
 @router.post("/suma-fija")
 async def run_fixed_sum(
     files: list[UploadFile],
-    fecha: str = Form(...),
+    fecha: date = Form(...),
     hojas: int = Form(...),
     _: Identity = _require_export,
 ) -> RunFixedSumResponse:
@@ -130,7 +105,7 @@ async def run_fixed_sum(
     try:
         request = RunFixedSumRequest(
             file_paths=[str(p) for p in upload_paths],
-            fecha=fecha,
+            fecha=fecha.strftime("%d/%m/%Y"),
             hojas_a_sumar=hojas,
             output_dir=output_dir(),
         )

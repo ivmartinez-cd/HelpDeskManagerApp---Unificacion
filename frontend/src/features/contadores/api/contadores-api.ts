@@ -1,85 +1,75 @@
 import { httpClient } from "@/services/http-client";
 
-export interface ProyeccionResponse {
-  xlsx_filename: string;
-  csv_filename: string;
-  total_series: number;
-  series_proyectadas: number;
-  series_sin_datos: number;
-  series_reales: number;
-}
-
-export interface ManualEstimationRequest {
-  contador_inicial: number;
-  contador_final: number;
-  fecha_inicial: string;
-  fecha_final: string;
-  fecha_estimacion: string;
-}
-
-/** Nombres tal como los serializa el backend real (`ManualEstimationResponse`
- * en `manual_estimation_schemas.py`, camelCase vía `serialization_alias`) —
- * NO los nombres que tenía este archivo antes (`dias_muestra`/
- * `consumo_muestra`/etc.), que nunca coincidieron con ningún backend real y
- * hacían crashear el panel de resultado de la Calculadora en cada uso. */
-export interface ManualEstimationResponse {
-  impDia: number;
-  impMes: number;
-  diasEst: number;
-  impEst: number;
-  contEst: number;
-}
-
+/** Nombres tal como los serializa el backend real (`RunDb3ExportResponse` en
+ * `db3_schemas.py`, camelCase vía `serialization_alias`) — este tipo tenía
+ * campos que ese backend nunca devolvió (`csv_filename`, `total_rows`,
+ * conteos por clase), rompía "Procesar DB3" pidiendo
+ * `/outputs/undefined`. */
 export interface Db3ExportResponse {
-  csv_filename: string;
-  total_rows: number;
-  counterclass_40_count: number;
-  counterclass_10_count: number;
-  counterclass_20_count: number;
+  csvFile: string;
+  rowCount: number;
+  warnings: string[];
 }
 
+/** Ídem `RunEstimationZeroResponse` en `tools_schemas.py`: el backend (y la
+ * app vieja) nunca calculan un total de filas para esta herramienta. */
 export interface EstimationZeroResponse {
-  csv_filename: string;
-  total_rows: number;
+  file: string;
 }
 
+/** Ídem `RunFixedSumResponse` en `tools_schemas.py`: un CSV por archivo de
+ * entrada, sin conteo de filas (tampoco lo tenía la app vieja). */
 export interface FixedSumResponse {
-  csv_filenames: string[];
-  total_rows: number;
+  files: string[];
 }
 
+/** Nombres tal como los serializa el backend real (`FtpClientOut` en
+ * `ftp_client_schemas.py`) — este tipo tenía campos inventados
+ * (`port`, `username`, `remote_dir`, `created_at`, `updated_at`) que ese
+ * backend nunca devolvió, rompía el CRUD completo de clientes FTP: el
+ * usuario y la ruta remota quedaban vacíos al editar, y el host se mostraba
+ * como "host:undefined" en el listado. */
 export interface FtpClient {
   id: string;
   name: string;
   host: string;
-  port: number;
-  username: string;
-  remote_dir: string;
-  created_at: string;
-  updated_at: string;
+  user: string;
+  path: string;
+  pattern: string;
 }
 
+/** `FtpClientIn` en `ftp_client_schemas.py` exige `user`/`password` (ambos
+ * requeridos) y usa `path`/`pattern` con default en el backend, no en el
+ * cliente — se mandan siempre explícitos acá para no depender del default. */
 export interface CreateFtpClientPayload {
   name: string;
   host: string;
-  port?: number;
-  username: string;
-  password?: string;
-  remote_dir?: string;
+  user: string;
+  password: string;
+  path: string;
+  pattern: string;
 }
 
+/** A diferencia de crear, acá `password` es opcional: como `FtpClientOut`
+ * (GET) nunca devuelve la contraseña guardada (por seguridad), no hay forma
+ * de precargarla y reenviarla tal cual al editar. Omitir el campo le dice
+ * al backend "conservá la actual". */
 export interface UpdateFtpClientPayload {
-  name?: string;
-  host?: string;
-  port?: number;
-  username?: string;
+  name: string;
+  host: string;
+  user: string;
   password?: string;
-  remote_dir?: string;
+  path: string;
+  pattern: string;
 }
 
 export interface ProcessFtpClientResponse {
+  client_name: string;
+  remote_filename: string;
   csv_filename: string;
-  total_rows: number;
+  db3_filename: string;
+  row_count: number;
+  warnings: string[];
 }
 
 export interface SdsClient {
@@ -115,14 +105,6 @@ export interface ProcessErsResponse {
 }
 
 export const contadoresApi = {
-  // Proyección
-  runProyeccion: (formData: FormData) =>
-    httpClient.postForm<ProyeccionResponse>("/api/contadores/proyeccion", formData),
-
-  // Calculadora manual
-  runManualEstimation: (payload: ManualEstimationRequest) =>
-    httpClient.post<ManualEstimationResponse>("/api/contadores/calc", payload),
-
   // DB3 a CSV
   runDb3Export: (formData: FormData) =>
     httpClient.postForm<Db3ExportResponse>("/api/contadores/db3", formData),

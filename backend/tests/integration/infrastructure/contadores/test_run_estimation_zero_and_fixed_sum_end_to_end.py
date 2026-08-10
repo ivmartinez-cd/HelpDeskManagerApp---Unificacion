@@ -47,6 +47,34 @@ def test_estimation_zero_end_to_end_with_real_csv(tmp_path) -> None:
     assert "SER102" not in content
 
 
+def test_estimation_zero_blank_nombre_clase_with_column_present_goes_to_clase_10(
+    tmp_path,
+) -> None:
+    # A diferencia de cuando falta la columna NombreClase por completo (que
+    # deja ambas columnas vacías), acá la columna existe pero el valor de
+    # esta fila viene vacío: counters_tools.py trata eso como "no Color" y lo
+    # manda a CLASE_10 (comportamiento verificado contra el legacy).
+    input_path = tmp_path / "en0_blank_clase.csv"
+    input_path.write_text(
+        "Nro_serie,Tipo,NombreClase,ImpreContadorAnterior\n" "SER200,FALTA CONTADOR,,700\n",
+        encoding="utf-8",
+    )
+
+    use_case = RunEstimationZeroUseCase(CsvFaltaContadorReader(), CsvEstimationZeroWriter())
+    request = RunEstimationZeroRequest(
+        file_path=str(input_path),
+        cliente="ClienteTest",
+        fecha_nueva="07/08/2026",
+        output_dir=str(tmp_path / "out"),
+    )
+
+    csv_path = use_case.execute(request)
+
+    with open(csv_path, encoding="utf-8") as f:
+        content = f.read()
+    assert "SER200;07/08/2026;14;10;700;;0;;" in content
+
+
 def test_fixed_sum_end_to_end_with_real_xlsx(tmp_path) -> None:
     input_path = tmp_path / "suma_muestra.xlsx"
     wb = Workbook()

@@ -9,14 +9,14 @@ const CARD_COLOR: Record<ToolKey, { badge: string; fg: string }> = {
   en0: { badge: "bg-brand-orange/[0.12]", fg: "text-brand-orange" },
   "suma-fija": { badge: "bg-brand-orange/[0.12]", fg: "text-brand-orange" },
   proyeccion: { badge: "bg-brand-charcoal/[0.1]", fg: "text-brand-charcoal" },
-  calc: { badge: "bg-brand-gray/[0.12]", fg: "text-brand-gray" },
 };
 
 /** Hub "Centro de Contadores" — landing del módulo cuando se entra por el
  * nav de arriba, sin `?tool=`. Cada card navega a la herramienta real
- * (`/contadores?tool=<key>`, ver contadores/page.tsx); las 8 herramientas
- * (incl. Descargar SDS) ya son funcionales, así que no se reimplementa el
- * modal simplificado del handoff — ver README del design handoff. */
+ * (`/contadores?tool=<key>`, ver contadores/page.tsx); 6 de las 7 herramientas
+ * son funcionales (Proyección quedó con la card visible pero sin lógica
+ * detrás, ver `tool.disabled` en tool-catalog.ts), así que no se reimplementa
+ * el modal simplificado del handoff — ver README del design handoff. */
 export function ContadoresHub() {
   return (
     <div className="flex flex-col gap-6 px-9 py-8">
@@ -33,6 +33,30 @@ export function ContadoresHub() {
         {TOOLS.map((tool) => {
           const Icon = tool.icon;
           const color = CARD_COLOR[tool.key];
+
+          if (tool.disabled) {
+            return (
+              <div
+                key={tool.key}
+                title="No disponible"
+                className="flex cursor-not-allowed flex-col gap-2.5 rounded-[12px] border border-black/[0.06] bg-white p-5 opacity-50"
+              >
+                <span
+                  className={`flex h-9 w-9 items-center justify-center rounded-[9px] ${color.badge} ${color.fg}`}
+                >
+                  <Icon className="h-4 w-4" />
+                </span>
+                <h2 className="font-heading text-[14.5px] font-bold text-brand-charcoal">
+                  {tool.navLabel ?? tool.label}
+                </h2>
+                <span className="font-body text-[13px] text-[#8a8a8a]">{tool.description}</span>
+                <span className="mt-0.5 font-body text-[12.5px] font-bold text-[#9a9a9a]">
+                  No disponible
+                </span>
+              </div>
+            );
+          }
+
           return (
             <Link
               key={tool.key}

@@ -1,5 +1,4 @@
 import {
-  Calculator,
   ChartColumn,
   Database,
   FileSpreadsheet,
@@ -10,7 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type ToolKey = "proyeccion" | "calc" | "db3" | "en0" | "suma-fija" | "ftp" | "sds" | "ers";
+export type ToolKey = "proyeccion" | "db3" | "en0" | "suma-fija" | "ftp" | "sds" | "ers";
 
 export interface ToolDef {
   key: ToolKey;
@@ -21,9 +20,13 @@ export interface ToolDef {
   navLabel?: string;
   icon: LucideIcon;
   description: string;
+  /** La card queda visible en el hub pero sin lógica detrás (sin backend,
+   * sin modal funcional) — usado para Proyección, cuya lógica se dio de
+   * baja a propósito sin sacar la card del catálogo. */
+  disabled?: boolean;
 }
 
-/** Catálogo único de las 8 herramientas de Contadores — fuente de verdad
+/** Catálogo único de las 7 herramientas de Contadores — fuente de verdad
  * para el hub "Centro de Contadores" y para tool-launcher-modal.tsx. */
 export const TOOLS: ToolDef[] = [
   {
@@ -32,12 +35,7 @@ export const TOOLS: ToolDef[] = [
     navLabel: "Proyección Contadores",
     icon: ChartColumn,
     description: "Proyecta lecturas de contadores y genera archivos para SiGes.",
-  },
-  {
-    key: "calc",
-    label: "Calculadora",
-    icon: Calculator,
-    description: "Calcula estimaciones manuales de lectura y consumo diario.",
+    disabled: true,
   },
   {
     key: "db3",
