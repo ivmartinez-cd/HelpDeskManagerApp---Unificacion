@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // El default de Next (proxy interno httpxy) corta cualquier rewrite a
+    // los 30s. El login de Epson ERS vía Playwright (ver
+    // playwright_ers_token_refresher.py) puede superar eso: solo el desafío
+    // anti-bot de Incapsula demora ~45s desde un datacenter, y el token
+    // puede tardar hasta 90s en aparecer — sin este override, Next mata la
+    // conexión antes de que el backend responda y el usuario ve "Error de
+    // Red" aunque el backend nunca haya fallado.
+    proxyTimeout: 180_000,
+  },
   async rewrites() {
     let backendUrl = process.env.BACKEND_URL || "http://127.0.0.1:8012";
     backendUrl = backendUrl

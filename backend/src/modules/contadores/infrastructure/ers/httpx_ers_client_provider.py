@@ -10,8 +10,8 @@ from typing import Any, cast
 import httpx
 
 from src.modules.contadores.domain.entities.ers_client import ErsClient
-from src.modules.contadores.infrastructure.ers.playwright_ers_token_refresher import (
-    refresh_ers_token_with_playwright,
+from src.modules.contadores.infrastructure.ers.httpx_ers_token_refresher import (
+    refresh_ers_token,
 )
 from src.shared.domain.errors import ExternalServiceError
 from src.shared.infrastructure.config.settings import Settings, get_settings
@@ -289,7 +289,7 @@ class HttpxErsClientProvider:
                     return cast(dict[str, Any], json.load(f))
             except Exception:
                 pass
-        return await refresh_ers_token_with_playwright(
+        return await refresh_ers_token(
             token_file_path=str(file_path), settings=self._settings
         )
 
