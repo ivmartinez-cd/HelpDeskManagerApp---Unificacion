@@ -1,4 +1,5 @@
 import { httpClient } from "@/services/http-client";
+import type { GetCalendarEventsResponse } from "../types/calendario";
 
 /** Nombres tal como los serializa el backend real (`RunDb3ExportResponse` en
  * `db3_schemas.py`, camelCase vía `serialization_alias`) — este tipo tenía
@@ -104,6 +105,18 @@ export interface ProcessErsResponse {
   customer_name: string;
 }
 
+/** Envelope de paginación del backend (`Page[T]`, ver
+ * shared/presentation/schemas/pagination.py) — estos catálogos se piden
+ * completos en una sola página grande para alimentar un combobox con
+ * búsqueda en vivo, así que acá se desenvuelve `.items` para que el resto
+ * del frontend siga viendo un array plano como antes. */
+interface Page<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+}
+
 export const contadoresApi = {
   // DB3 a CSV
   runDb3Export: (formData: FormData) =>
@@ -118,7 +131,10 @@ export const contadoresApi = {
     httpClient.postForm<FixedSumResponse>("/api/contadores/suma-fija", formData),
 
   // Clientes FTP
-  listFtpClients: () => httpClient.get<FtpClient[]>("/api/contadores/ftp/clients"),
+  listFtpClients: () =>
+    httpClient
+      .get<Page<FtpClient>>("/api/contadores/ftp/clients")
+      .then((page) => page.items),
   getFtpClient: (id: string) => httpClient.get<FtpClient>(`/api/contadores/ftp/clients/${id}`),
   createFtpClient: (payload: CreateFtpClientPayload) =>
     httpClient.post<FtpClient>("/api/contadores/ftp/clients", payload),
@@ -133,14 +149,20 @@ export const contadoresApi = {
     ),
 
   // HP SDS
-  listSdsClients: () => httpClient.get<SdsClient[]>("/api/contadores/sds/clients"),
+  listSdsClients: () =>
+    httpClient
+      .get<Page<SdsClient>>("/api/contadores/sds/clients")
+      .then((page) => page.items),
   updateSdsConfig: (id: string, payload: UpdateSdsConfigPayload) =>
     httpClient.put<SdsClient>(`/api/contadores/sds/clients/${id}/config`, payload),
   processSds: (payload: { customer_id: string; customer_name: string; fecha_maxima: string }) =>
     httpClient.post<ProcessSdsResponse>("/api/contadores/sds/process", payload),
 
   // Epson ERS
-  listErsClients: () => httpClient.get<ErsClient[]>("/api/contadores/ers/clients"),
+  listErsClients: () =>
+    httpClient
+      .get<Page<ErsClient>>("/api/contadores/ers/clients")
+      .then((page) => page.items),
   updateErsConfig: (id: string, payload: UpdateErsConfigPayload) =>
     httpClient.put<ErsClient>(`/api/contadores/ers/clients/${id}/config`, payload),
   processErs: (payload: { customer_id: string; customer_name: string; fecha_maxima: string }) =>
@@ -148,4 +170,19 @@ export const contadoresApi = {
 
   // Download Output File
   getOutputUrl: (filename: string) => `/api/contadores/outputs/${encodeURIComponent(filename)}`,
+
+  // Calendario de Planificación
+  getCalendarioEvents: (params: { start: string; end: string; operador_id?: string }) => {
+    const searchParams = new URLSearchParams({
+      start: params.start,
+      end: params.end,
+    });
+    if (params.operador_id) {
+      searchParams.set("operador_id", params.operador_id);
+    }
+    return httpClient.get<GetCalendarEventsResponse>(
+      `/api/contadores/calendario?${searchParams.toString()}`,
+    );
+  },
 };
+

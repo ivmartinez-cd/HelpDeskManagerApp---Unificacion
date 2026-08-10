@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
@@ -24,22 +24,31 @@ from src.modules.contadores.presentation.schemas.sds_schemas import (
 )
 from src.modules.contadores.presentation.upload_storage import output_dir
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/contadores/sds", tags=["contadores-sds"])
 
 _require_export = Depends(require_permission(EXPORT))
+# El catálogo de clientes SDS lo trae completo la API del proveedor (no
+# soporta paginar aguas arriba) para alimentar un combobox con búsqueda en
+# vivo en el frontend — el default cubre ese catálogo completo en una sola
+# página sin dejar de cumplir el contrato de paginación (ARCHITECTURE_GUIDE
+# §11); un `size` explícito más chico sigue funcionando si hiciera falta.
+_MAX_PAGE_SIZE = 2000
 
 
-@router.get("/clients", response_model=list[SdsClientOut])
+@router.get("/clients", response_model=Page[SdsClientOut])
 async def list_sds_clients(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=1000, ge=1, le=_MAX_PAGE_SIZE),
     _: Identity = _require_export,
     db: AsyncSession = Depends(get_db),
-) -> list[SdsClientOut]:
+) -> Page[SdsClientOut]:
     """Obtiene la lista de clientes activos desde la API de SDS con su configuración suma_color."""
     config_repo = meter_config_repo_mod.SqlAlchemyMeterClientConfigRepository(db)
     sds_provider = HttpxSdsClientProvider()
     results = await ListSdsClientsUseCase(sds_provider, config_repo).execute()
-    return [SdsClientOut.from_result(r) for r in results]
+    return Page.of([SdsClientOut.from_result(r) for r in results], page=page, size=size)
 
 
 @router.put("/clients/{customer_id}/config", response_model=SdsClientOut)

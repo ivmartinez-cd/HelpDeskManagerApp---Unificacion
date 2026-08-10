@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
@@ -33,21 +33,29 @@ from src.modules.contadores.presentation.schemas.ftp_client_schemas import (
 )
 from src.modules.contadores.presentation.upload_storage import output_dir
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/contadores/ftp", tags=["contadores-ftp"])
 
 _require_export = Depends(require_permission(EXPORT))
+# Ver el mismo comentario en sds_router.py: el frontend carga todo el
+# catálogo en un combobox con búsqueda en vivo, no una tabla paginada — el
+# default grande cubre eso sin dejar de cumplir el contrato de paginación
+# (hay ~230 clientes FTP reales, ver INTEGRACION_APPS_PLAN.md).
+_MAX_PAGE_SIZE = 2000
 
 
-@router.get("/clients", response_model=list[FtpClientOut])
+@router.get("/clients", response_model=Page[FtpClientOut])
 async def list_ftp_clients(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=1000, ge=1, le=_MAX_PAGE_SIZE),
     _: Identity = _require_export,
     db: AsyncSession = Depends(get_db),
-) -> list[FtpClientOut]:
+) -> Page[FtpClientOut]:
     """Lista todos los clientes FTP ordenados por nombre."""
     repo = SqlAlchemyFtpClientRepository(db)
     results = await ListFtpClientsUseCase(repo).execute()
-    return [FtpClientOut.from_result(r) for r in results]
+    return Page.of([FtpClientOut.from_result(r) for r in results], page=page, size=size)
 
 
 @router.post("/clients", response_model=FtpClientOut, status_code=201)

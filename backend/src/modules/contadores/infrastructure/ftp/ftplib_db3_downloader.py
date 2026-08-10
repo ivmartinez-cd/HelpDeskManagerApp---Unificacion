@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import contextlib
 import fnmatch
+import logging
 import os
 import re
 import sqlite3
@@ -21,6 +22,8 @@ from pathlib import Path
 
 from src.modules.contadores.domain.entities.ftp_client import FtpClient
 from src.shared.domain.errors import ExternalServiceError
+
+logger = logging.getLogger(__name__)
 
 
 class FtplibDb3Downloader:
@@ -119,7 +122,12 @@ def _download_and_merge(ftp: FTP, remote_files: list[str], dest_path: str) -> st
                 local_paths.append(local)
             else:
                 _safe_remove(local)
-        except Exception:
+        except Exception as exc:
+            logger.warning(
+                "No se pudo descargar/validar un archivo DB3 del FTP, se descarta y sigue",
+                extra={"remote_file": remote},
+                exc_info=exc,
+            )
             _safe_remove(local)
 
     try:
@@ -158,7 +166,12 @@ def _is_sqlite3_valid(path: str) -> bool:
         result = conn.execute("PRAGMA integrity_check(1);").fetchone()
         conn.close()
         return bool(result == ("ok",))
-    except Exception:
+    except Exception as exc:
+        logger.debug(
+            "Archivo DB3 descartado por no ser un SQLite3 válido",
+            extra={"path": path},
+            exc_info=exc,
+        )
         return False
 
 

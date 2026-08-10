@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import csv
+import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
@@ -11,6 +12,8 @@ import httpx
 from src.modules.contadores.domain.entities.sds_client import SdsClient
 from src.shared.domain.errors import ExternalServiceError
 from src.shared.infrastructure.config.settings import Settings, get_settings
+
+logger = logging.getLogger(__name__)
 
 
 class HttpxSdsClientProvider:
@@ -84,7 +87,12 @@ class HttpxSdsClientProvider:
                 if min_dt and device_dt < min_dt:
                     continue
                 fecha = device_dt.strftime("%d/%m/%Y")
-            except Exception:
+            except Exception as exc:
+                logger.debug(
+                    "No se pudo parsear la fecha de un contador SDS, uso el valor crudo",
+                    extra={"customer_id": customer_id, "raw_date": raw_date},
+                    exc_info=exc,
+                )
                 fecha = raw_date
 
             engine_cycles = int(device.get("engineCycles") or 0)
@@ -214,7 +222,12 @@ class HttpxSdsClientProvider:
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.get(url, headers=headers, params=params)
-        except Exception:
+        except Exception as exc:
+            logger.warning(
+                "No se pudo obtener el mapa de números de serie SDS",
+                extra={"customer_id": customer_id},
+                exc_info=exc,
+            )
             return {}
 
         if response.status_code == 200:
@@ -245,5 +258,10 @@ def _calculate_min_date(max_date: str) -> datetime | None:
         else:
             max_dt = datetime.fromisoformat(date_part)
         return max_dt - timedelta(days=30)
-    except Exception:
+    except Exception as exc:
+        logger.warning(
+            "No se pudo calcular la fecha mínima SDS, no se va a filtrar por fecha",
+            extra={"max_date": max_date},
+            exc_info=exc,
+        )
         return None

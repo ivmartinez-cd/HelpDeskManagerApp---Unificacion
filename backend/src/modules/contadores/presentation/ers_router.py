@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
@@ -24,22 +24,28 @@ from src.modules.contadores.presentation.schemas.ers_schemas import (
 )
 from src.modules.contadores.presentation.upload_storage import output_dir
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/contadores/ers", tags=["contadores-ers"])
 
 _require_export = Depends(require_permission(EXPORT))
+# Ver el mismo comentario en sds_router.py: catálogo chico que trae completo
+# el proveedor externo, paginado igual para cumplir el contrato.
+_MAX_PAGE_SIZE = 2000
 
 
-@router.get("/clients", response_model=list[ErsClientOut])
+@router.get("/clients", response_model=Page[ErsClientOut])
 async def list_ers_clients(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=1000, ge=1, le=_MAX_PAGE_SIZE),
     _: Identity = _require_export,
     db: AsyncSession = Depends(get_db),
-) -> list[ErsClientOut]:
+) -> Page[ErsClientOut]:
     """Obtiene la lista de grupos de dispositivos desde ERS con su configuración suma_color."""
     config_repo = meter_config_repo_mod.SqlAlchemyMeterClientConfigRepository(db)
     ers_provider = HttpxErsClientProvider()
     results = await ListErsClientsUseCase(ers_provider, config_repo).execute()
-    return [ErsClientOut.from_result(r) for r in results]
+    return Page.of([ErsClientOut.from_result(r) for r in results], page=page, size=size)
 
 
 @router.put("/clients/{customer_id}/config", response_model=ErsClientOut)
