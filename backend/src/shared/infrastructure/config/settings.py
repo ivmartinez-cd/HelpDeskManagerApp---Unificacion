@@ -50,6 +50,26 @@ class Settings(BaseSettings):
     insight_base_url: str = "https://hp-sds-latam.insightportal.net/PortalAPI"
     insight_api_key: str = ""
     insight_api_secret: SecretStr = SecretStr("")
+    # INSIGHT_STATUS_ON_ORDER: nótese ACTION, no ACTIONED (bug corregido en el legacy).
+    insight_mark_actioned: bool = False
+    insight_status_on_order: str = "ACTION"
+
+    # Canal Directo (pedidos SOAP wsAyC + contactos globales de fallback).
+    cd_base_url: str = "https://webagentes.canaldirecto.com.ar"
+    cd_origen_id: str = "3"  # 3 = Interno — el objetivo entero de usar el SOAP
+    cd_motivo_id: str = "1"
+    cd_solicitante_apellido: str = ""
+    cd_solicitante_nombre: str = ""
+    cd_solicitante_telefono: str = ""
+    cd_solicitante_email: str = ""
+    cd_solicitante_sector: str = ""
+    cd_destinatario_apellido: str = ""
+    cd_destinatario_nombre: str = ""
+    cd_destinatario_telefono: str = ""
+    cd_destinatario_email: str = ""
+    cd_destinatario_sector: str = ""
+
+    app_timezone: str = "America/Argentina/Buenos_Aires"
 
     epson_ers_username: str = "insumos@canaldirecto.com.ar"
     epson_ers_password: SecretStr = SecretStr("C@nal3160")
