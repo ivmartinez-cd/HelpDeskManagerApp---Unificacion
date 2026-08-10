@@ -43,6 +43,14 @@ class Settings(BaseSettings):
     sds_base_url: str = "https://hp-sds-latam.insightportal.net/PortalAPI"
     sds_timeout_seconds: float = 20.0
 
+    # Módulo insumos — misma Insight Portal API que sds_* de contadores (misma base
+    # URL; la pregunta abierta de Fase 1 sobre si eran la misma integración quedó
+    # confirmada), pero cada módulo mantiene su propio bloque de config y su propio
+    # cliente: los módulos de negocio son independientes entre sí (import-linter).
+    insight_base_url: str = "https://hp-sds-latam.insightportal.net/PortalAPI"
+    insight_api_key: str = ""
+    insight_api_secret: SecretStr = SecretStr("")
+
     epson_ers_username: str = "insumos@canaldirecto.com.ar"
     epson_ers_password: SecretStr = SecretStr("C@nal3160")
     epson_ers_base_url: str = "https://www.remote-services.epson.com/prod"

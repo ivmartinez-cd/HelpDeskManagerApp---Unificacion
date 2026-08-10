@@ -96,6 +96,19 @@ class ConsultaDePedidosNoDisponibleError(ExternalServiceError):
         )
 
 
+class RespuestaInesperadaDeInsightError(ExternalServiceError):
+    """Un endpoint de listado de Insight devolvió un objeto suelto en vez de un array —
+    nunca observado en producción, pero mejor fallar claro acá que iterar mal en
+    silencio aguas abajo."""
+
+    default_code = "RESPUESTA_INESPERADA_DE_INSIGHT"
+
+    def __init__(self, path: str, payload: object) -> None:
+        super().__init__(
+            f"Insight API devolvió un objeto en vez de una lista para {path}: {payload!r}"
+        )
+
+
 class OrderAlreadyInProgressError(BusinessRuleViolationError):
     """Ya hay un pedido en curso para esta serie+sku — reemplaza la garantía
     que daba `KeyedLock.acquire((serial, sku))` en la app legacy (un lock en
