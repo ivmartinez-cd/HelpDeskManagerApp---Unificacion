@@ -186,7 +186,10 @@ class HttpxSdsClientProvider:
         self, token: str, customer_id: str, max_date: str
     ) -> list[dict[str, Any]]:
         url = f"{self._settings.sds_base_url}/api/devices/meters/latestbydate/{customer_id}"
-        params = {"maxReadDateTimeLocal": max_date, "includeExtendedMeters": "true"}
+        params = {
+            "maxReadDateTimeLocal": _to_max_read_datetime_local(max_date),
+            "includeExtendedMeters": "true",
+        }
         headers = {"Authorization": token, "Accept": "application/json"}
         timeout = httpx.Timeout(self._settings.sds_timeout_seconds)
 
@@ -222,6 +225,15 @@ class HttpxSdsClientProvider:
                 if "deviceId" in d
             }
         return {}
+
+
+def _to_max_read_datetime_local(max_date: str) -> str:
+    """La API de HP Insight exige `maxReadDateTimeLocal` en formato exacto
+    `yyyy-MM-ddTHH:mm:ss` (400 Bad Request con cualquier otra cosa, incluida una fecha
+    sin hora). El frontend manda solo la fecha (`<input type="date">`), así que se le
+    agrega el final del día para incluir todas las lecturas de esa fecha."""
+    date_part = max_date.split("T")[0]
+    return f"{date_part}T23:59:59"
 
 
 def _calculate_min_date(max_date: str) -> datetime | None:
