@@ -5,6 +5,7 @@ negocio del legacy: `date(created_at, 'localtime')`), nunca el día UTC ni la zo
 servidor. La implementación vive en infrastructure/repositories/.
 """
 
+from collections.abc import Sequence
 from typing import Protocol
 
 from src.modules.insumos.domain.entities.processed_request import ProcessedRequest
@@ -30,4 +31,27 @@ class ProcessedRequestRepository(Protocol):
     async def get_created_by_serial(self, device_serial: str) -> list[ProcessedRequest]:
         """Órdenes CREATED de la serie (case-insensitive), más recientes primero —
         el `own_orders` del matching anti-duplicados."""
+        ...
+
+    async def get_processed_ids(self, hp_request_ids: Sequence[int]) -> set[int]:
+        """Subset de los ids que ya tienen pedido CREATED."""
+        ...
+
+    async def get_supply_ids(self, hp_request_ids: Sequence[int]) -> dict[int, int]:
+        """{hp_request_id: supply_id numérico} de pedidos reales CREATED (excluye
+        DRYRUN y los no parseables)."""
+        ...
+
+    async def get_today_processed_ids(self, hp_request_ids: Sequence[int]) -> set[int]:
+        """Subset cuyo pedido fue creado HOY (día argentino)."""
+        ...
+
+    async def count_processed_today(self) -> int:
+        """Pedidos CREATED de hoy (día argentino) — el tile "cargados hoy"."""
+        ...
+
+    async def get_created_by_serials(
+        self, device_serials: Sequence[str]
+    ) -> dict[str, list[ProcessedRequest]]:
+        """Versión batch de get_created_by_serial (keyed serial.upper()) — anti N+1."""
         ...

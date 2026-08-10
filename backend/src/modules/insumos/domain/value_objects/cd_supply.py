@@ -29,6 +29,7 @@ class CdSupply:
     reference: str = ""  # NroIncidenteCliente — la clave de idempotencia
     estado: str = ""
     fecha: str = ""
+    empresa_id: str = ""
     nro_serie_solicitud: str = ""
     nro_serie: str = ""
     sku: str = ""  # NroArticulo

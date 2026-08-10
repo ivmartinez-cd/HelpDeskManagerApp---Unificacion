@@ -4,7 +4,7 @@ Es exactamente la clase de bug ya sufrido al migrar Contadores (formato exigido 
 replicar el string exacto, no asumir que cualquier ISO 8601 sirve.
 """
 
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 _UTC = ZoneInfo("UTC")
@@ -24,6 +24,20 @@ def today_range_utc(tz_name: str, reference: datetime | None = None) -> tuple[st
 
 def _to_iso(value: datetime) -> str:
     return value.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def insight_iso_to_argentina_date(raw: str | None) -> date | None:
+    """Día calendario argentino de un timestamp ISO de Insight (naive = UTC) — port del
+    cd_date de api_helpers, en date real en vez de string DD/MM/YYYY."""
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=_UTC)
+    return parsed.astimezone(_ARGENTINA).date()
 
 
 def format_arg_datetime(iso_utc: str) -> str:

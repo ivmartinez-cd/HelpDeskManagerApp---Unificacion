@@ -70,6 +70,10 @@ class Settings(BaseSettings):
     cd_destinatario_sector: str = ""
 
     app_timezone: str = "America/Argentina/Buenos_Aires"
+    # Cadencia del poller de insumos; el dashboard la publica como refreshMinutes.
+    # El legacy defaulteaba 120 en código pero el .env recomienda 60 (SDS lee niveles
+    # cada 1 hora, KB HP 30000040938).
+    poll_interval_minutes: int = 60
 
     epson_ers_username: str = "insumos@canaldirecto.com.ar"
     epson_ers_password: SecretStr = SecretStr("C@nal3160")

@@ -30,3 +30,21 @@ class SupplyCacheRepository(Protocol):
     async def get_status(self, supply_id: int) -> str | None:
         """Estado cacheado de un supply por su ID numérico (None si no está en cache)."""
         ...
+
+    async def get_statuses_batch(self, supply_ids: Sequence[int]) -> dict[int, str]:
+        """{supply_id: estado} para los que están en cache — una sola query."""
+        ...
+
+    async def get_recently_cached_ids(
+        self, supply_ids: Sequence[int], within_seconds: int
+    ) -> set[int]:
+        """Subset cacheado hace menos de `within_seconds` — TTL para no re-verificar
+        por SOAP en cada carga del dashboard."""
+        ...
+
+    async def get_noncancelled_by_serials(
+        self, serials: Sequence[str]
+    ) -> dict[str, list[CachedSupply]]:
+        """Entradas no Anuladas/Canceladas por serie (keyed serial.upper(), supply_id
+        DESC) — una sola query para todas las series pendientes (anti N+1)."""
+        ...

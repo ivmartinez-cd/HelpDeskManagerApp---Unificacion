@@ -46,6 +46,17 @@ def parse_supply_by_id(raw: str | None) -> CdSupply | None:
     return None
 
 
+def parse_incident_by_id(raw: str | None) -> CdSupply | None:
+    """Los incidentes ('{"Incident": {...}}') comparten los campos que consumimos
+    (id/Estado) — se mapean a la misma vista CdSupply."""
+    parsed = safe_parse(raw)
+    if isinstance(parsed, dict) and isinstance(parsed.get("Incident"), dict):
+        return supply_from_dict(parsed["Incident"])
+    if isinstance(parsed, dict) and parsed:
+        return supply_from_dict(parsed)
+    return None
+
+
 def parse_top_supplies(raw: str | None) -> list[CdSupply]:
     parsed = safe_parse(raw)
     if not isinstance(parsed, list):
@@ -96,6 +107,7 @@ def supply_from_dict(data: dict[str, object]) -> CdSupply:
         reference=_text(data, "NroIncidenteCliente"),
         estado=_text(data, "Estado"),
         fecha=_text(data, "Fecha"),
+        empresa_id=_text(data, "empresa_id"),
         nro_serie_solicitud=_text(data, "NroSerieSolicitud"),
         nro_serie=_text(data, "NroSerie"),
         sku=_text(data, "NroArticulo"),

@@ -1,5 +1,7 @@
 """Implementación Postgres (solo lectura) del puerto RequestValidationRepository."""
 
+from collections.abc import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,3 +37,12 @@ class SqlAlchemyRequestValidationRepository:
     async def get_swap_note(self, hp_request_id: int) -> str | None:
         row = await self._session.get(RequestValidationModel, hp_request_id)
         return row.swap_note if row else None
+
+    async def get_pending_ids(self, hp_request_ids: Sequence[int]) -> set[int]:
+        if not hp_request_ids:
+            return set()
+        stmt = select(RequestValidationModel.hp_request_id).where(
+            RequestValidationModel.hp_request_id.in_(hp_request_ids),
+            RequestValidationModel.status == VALIDATION_PENDING,
+        )
+        return set((await self._session.execute(stmt)).scalars().all())

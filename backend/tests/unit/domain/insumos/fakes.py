@@ -4,6 +4,7 @@ from src.modules.insumos.domain.entities.audit_record import (
     EVENT_CREATED,
     AuditRecord,
 )
+from src.modules.insumos.domain.entities.customer_config import CustomerConfig
 from src.modules.insumos.domain.entities.processed_request import (
     STATUS_CREATED,
     ProcessedRequest,
@@ -64,6 +65,8 @@ class FakeWsAycGateway:
         self.supplies_for_empresa: list[CdSupply] = []
         self.description = "HP E50145/52645 - Toner"
         self.description_calls: list[int] = []
+        self.incidents_by_id: dict[int, CdSupply] = {}
+        self.incident_calls: list[int] = []
 
     async def get_machine_by_serial(self, serial: str) -> CdMachine | None:
         if self.machine_error is not None:
@@ -85,6 +88,10 @@ class FakeWsAycGateway:
             return self.supplies_by_id.get(supply_id)
         return self.default_supply
 
+    async def fetch_incident_by_id(self, incident_id: int) -> CdSupply | None:
+        self.incident_calls.append(incident_id)
+        return self.incidents_by_id.get(incident_id)
+
     async def get_supply_description(self, supply_id: int) -> str:
         self.description_calls.append(supply_id)
         return self.description
@@ -99,6 +106,7 @@ class FakeSupplyCacheRepository:
     def __init__(self) -> None:
         self.entries: list[CachedSupply] = []
         self.get_error: Exception | None = None
+        self.recently_cached: set[int] = set()
 
     async def upsert(self, entries: list[CachedSupply]) -> None:
         self.entries.extend(entries)
@@ -119,6 +127,48 @@ class FakeSupplyCacheRepository:
 
     async def get_status(self, supply_id: int) -> str | None:
         return next((e.estado for e in self.entries if e.supply_id == supply_id), None)
+
+    async def get_statuses_batch(self, supply_ids: list[int]) -> dict[int, str]:
+        return {
+            e.supply_id: e.estado
+            for e in self.entries
+            if e.supply_id in set(supply_ids) and e.estado
+        }
+
+    async def get_recently_cached_ids(
+        self, supply_ids: list[int], within_seconds: int
+    ) -> set[int]:
+        return self.recently_cached & set(supply_ids)
+
+    async def get_noncancelled_by_serials(
+        self, serials: list[str]
+    ) -> dict[str, list[CachedSupply]]:
+        result: dict[str, list[CachedSupply]] = {}
+        for serial in serials:
+            rows = [
+                e
+                for e in await self.get_by_serial(serial, limit=1000)
+                if e.estado not in ("Anulado", "Cancelado")
+            ]
+            if rows:
+                result[serial.upper()] = rows
+        return result
+
+
+class FakeCustomerConfigRepository:
+    def __init__(self) -> None:
+        self.customers: list[CustomerConfig] = []
+
+    async def list_enabled(self) -> list[CustomerConfig]:
+        return [c for c in self.customers if c.enabled]
+
+
+class FakeInsumosSettingsRepository:
+    def __init__(self) -> None:
+        self.raw: dict[str, str] = {}
+
+    async def get_all(self) -> dict[str, str]:
+        return dict(self.raw)
 
 
 class FakeOrderClaimRepository:
@@ -180,6 +230,44 @@ class FakeProcessedRequestRepository:
             if r.device_serial.upper() == device_serial.upper() and r.status == STATUS_CREATED
         ]
 
+    async def get_processed_ids(self, hp_request_ids: list[int]) -> set[int]:
+        return {
+            rid
+            for rid in hp_request_ids
+            if rid in self.rows and self.rows[rid].status == STATUS_CREATED
+        }
+
+    async def get_supply_ids(self, hp_request_ids: list[int]) -> dict[int, int]:
+        result: dict[int, int] = {}
+        for rid in hp_request_ids:
+            row = self.rows.get(rid)
+            if row is None or row.status != STATUS_CREATED:
+                continue
+            if row.internal_order_id.startswith("DRYRUN"):
+                continue
+            try:
+                result[rid] = int(row.internal_order_id.split("-")[0])
+            except (ValueError, IndexError):
+                continue
+        return result
+
+    async def get_today_processed_ids(self, hp_request_ids: list[int]) -> set[int]:
+        # En el fake todo lo insertado cuenta como "de hoy".
+        return await self.get_processed_ids(hp_request_ids)
+
+    async def count_processed_today(self) -> int:
+        return len([r for r in self.rows.values() if r.status == STATUS_CREATED])
+
+    async def get_created_by_serials(
+        self, device_serials: list[str]
+    ) -> dict[str, list[ProcessedRequest]]:
+        result: dict[str, list[ProcessedRequest]] = {}
+        for serial in device_serials:
+            rows = await self.get_created_by_serial(serial)
+            if rows:
+                result[serial.upper()] = rows
+        return result
+
 
 class FakeOrderAuditRepository:
     def __init__(self) -> None:
@@ -225,7 +313,10 @@ class FakeInsightGateway:
 
     def __init__(self) -> None:
         self.consumable_requests: list[JsonDict] = []
+        # Si está seteado, cada cliente tiene su propia lista (tests de dashboard).
+        self.requests_by_customer: dict[int, list[JsonDict]] | None = None
         self.requests_error: Exception | None = None
+        self.errors_by_customer: dict[int, Exception] = {}
         self.devices_by_id: dict[int, JsonDict] = {}
         self.updates: list[JsonDict] = []
 
@@ -238,6 +329,10 @@ class FakeInsightGateway:
     ) -> list[JsonDict]:
         if self.requests_error is not None:
             raise self.requests_error
+        if customer_id in self.errors_by_customer:
+            raise self.errors_by_customer[customer_id]
+        if self.requests_by_customer is not None:
+            return self.requests_by_customer.get(customer_id, [])
         return self.consumable_requests
 
     async def get_device_by_id(self, device_id: int) -> JsonDict:

@@ -45,6 +45,11 @@ class WsAycGateway(Protocol):
         """
         ...
 
+    async def fetch_incident_by_id(self, incident_id: int) -> CdSupply | None:
+        """Como fetch_supply_by_id pero para incidentes de ST (kits de mantenimiento) —
+        None si no existe o hay error (se loguea allá)."""
+        ...
+
     async def get_supply_description(self, supply_id: int) -> str:
         """Descripción real del consumible (campo "Insumo" del primer Detail).
 

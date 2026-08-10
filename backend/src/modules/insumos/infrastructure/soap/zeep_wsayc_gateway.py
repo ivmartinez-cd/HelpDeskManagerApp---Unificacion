@@ -86,6 +86,16 @@ class ZeepWsAycGateway:
             logger.warning("SOAP getSupplyById(%d) falló", supply_id, exc_info=exc)
             return None
 
+    async def fetch_incident_by_id(self, incident_id: int) -> CdSupply | None:
+        try:
+            raw = await asyncio.to_thread(
+                lambda: self._service().getIncidentById(id=str(incident_id))
+            )
+            return parsing.parse_incident_by_id(raw)
+        except Exception as exc:
+            logger.warning("SOAP getIncidentById(%d) falló", incident_id, exc_info=exc)
+            return None
+
     async def get_supply_description(self, supply_id: int) -> str:
         try:
             raw = await asyncio.to_thread(

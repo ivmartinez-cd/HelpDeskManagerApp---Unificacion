@@ -7,7 +7,7 @@ valor nuevo no es vacío (el scan trae menos datos que la creación y no debe bo
 
 from collections.abc import Sequence
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -92,6 +92,47 @@ class SqlAlchemySupplyCacheRepository:
     async def get_status(self, supply_id: int) -> str | None:
         row = await self._session.get(SupplySerialCacheModel, supply_id)
         return row.estado if row else None
+
+    async def get_statuses_batch(self, supply_ids: Sequence[int]) -> dict[int, str]:
+        if not supply_ids:
+            return {}
+        stmt = select(SupplySerialCacheModel.supply_id, SupplySerialCacheModel.estado).where(
+            SupplySerialCacheModel.supply_id.in_(supply_ids),
+            SupplySerialCacheModel.estado.is_not(None),
+        )
+        rows = (await self._session.execute(stmt)).all()
+        return {supply_id: estado for supply_id, estado in rows}
+
+    async def get_recently_cached_ids(
+        self, supply_ids: Sequence[int], within_seconds: int
+    ) -> set[int]:
+        if not supply_ids:
+            return set()
+        cutoff = func.now() - text(f"interval '{int(within_seconds)} seconds'")
+        stmt = select(SupplySerialCacheModel.supply_id).where(
+            SupplySerialCacheModel.supply_id.in_(supply_ids),
+            SupplySerialCacheModel.cached_at >= cutoff,
+        )
+        return set((await self._session.execute(stmt)).scalars().all())
+
+    async def get_noncancelled_by_serials(
+        self, serials: Sequence[str]
+    ) -> dict[str, list[CachedSupply]]:
+        if not serials:
+            return {}
+        stmt = (
+            select(SupplySerialCacheModel)
+            .where(
+                func.upper(SupplySerialCacheModel.serial).in_([s.upper() for s in serials]),
+                SupplySerialCacheModel.estado.notin_((cd_state.ANULADO, cd_state.CANCELADO)),
+            )
+            .order_by(SupplySerialCacheModel.supply_id.desc())
+        )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        result: dict[str, list[CachedSupply]] = {}
+        for row in rows:
+            result.setdefault(row.serial.upper(), []).append(_to_entity(row))
+        return result
 
 
 def _to_entity(row: SupplySerialCacheModel) -> CachedSupply:

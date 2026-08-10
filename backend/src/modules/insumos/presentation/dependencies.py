@@ -13,6 +13,10 @@ from src.modules.insumos.application.use_cases._load_order_context import (
     LoadOrderConfig,
     LoadOrderPorts,
 )
+from src.modules.insumos.application.use_cases.get_dashboard import (
+    GetDashboard,
+    GetDashboardPorts,
+)
 from src.modules.insumos.application.use_cases.load_order import LoadOrder
 from src.modules.insumos.domain.services.claimed_order_creation import ClaimedOrderCreation
 from src.modules.insumos.domain.services.order_creation import CanalDirectoOrderCreation
@@ -20,6 +24,12 @@ from src.modules.insumos.domain.services.supply_request_matching import SupplyMa
 from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
 from src.modules.insumos.infrastructure.insight.httpx_insight_gateway import HttpxInsightGateway
+from src.modules.insumos.infrastructure.repositories.sqlalchemy_customer_config_repository import (  # noqa: E501
+    SqlAlchemyCustomerConfigRepository,
+)
+from src.modules.insumos.infrastructure.repositories.sqlalchemy_insumos_settings_repository import (  # noqa: E501
+    SqlAlchemyInsumosSettingsRepository,
+)
 from src.modules.insumos.infrastructure.repositories.sqlalchemy_order_audit_repository import (
     SqlAlchemyOrderAuditRepository,
 )
@@ -77,6 +87,20 @@ def _order_settings(settings: Settings) -> CanalDirectoOrderSettings:
         motivo_id=settings.cd_motivo_id,
         portal_base_url=settings.cd_base_url,
     )
+
+
+def build_get_dashboard(session: AsyncSession) -> GetDashboard:
+    supply_cache = SqlAlchemySupplyCacheRepository(session)
+    ports = GetDashboardPorts(
+        insight=get_insight_gateway(),
+        wsayc=get_wsayc_gateway(),
+        processed=SqlAlchemyProcessedRequestRepository(session),
+        supply_cache=supply_cache,
+        customers=SqlAlchemyCustomerConfigRepository(session),
+        settings=SqlAlchemyInsumosSettingsRepository(session),
+        audit=SqlAlchemyOrderAuditRepository(session),
+    )
+    return GetDashboard(ports)
 
 
 def build_load_order(session: AsyncSession) -> LoadOrder:

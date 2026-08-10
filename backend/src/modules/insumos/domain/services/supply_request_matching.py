@@ -6,11 +6,15 @@ el pedido de OTRO consumible (ej. Toner Cyan 441448-7 — bug real 971496).
 """
 
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
+from datetime import date
 
 from src.modules.insumos.domain.entities.processed_request import ProcessedRequest
 from src.modules.insumos.domain.repositories.supply_cache_repository import SupplyCacheRepository
 from src.modules.insumos.domain.repositories.wsayc_gateway import WsAycGateway
+from src.modules.insumos.domain.value_objects import cd_state
+from src.modules.insumos.domain.value_objects.cd_datetime import CD_TIMEZONE
 from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply
 
 _COLOR_KEYWORDS = {
@@ -27,6 +31,30 @@ _SKU_COLOR_PATTERNS = (
     ("magenta", (r"\bclt-m\d", r"\bm\d{3}[a-z]?\b", r"[-_\s]m[0-9-\s$]")),
     ("yellow", (r"\bclt-y\d", r"\by\d{3}[a-z]?\b", r"[-_\s]y[0-9-\s$]")),
 )
+
+
+def match_active_supply(supplies: Sequence[CachedSupply]) -> CachedSupply | None:
+    """Supply activo (no entregado) más reciente de una lista ya ordenada por supply_id
+    DESC y sin Anulado/Cancelado (get_noncancelled_by_serials)."""
+    return next((s for s in supplies if s.estado != cd_state.ENTREGADO), None)
+
+
+def match_supply_for_request(
+    supplies: Sequence[CachedSupply], request_day: date | None
+) -> CachedSupply | None:
+    """Supply más reciente creado en o después del día (argentino) de la solicitud —
+    port de match_supply_for_request (la comparación DD/MM/YYYY sortable del legacy,
+    ahora sobre TIMESTAMPTZ real)."""
+    if request_day is None:
+        return None
+    return next(
+        (
+            s
+            for s in supplies
+            if s.fecha is not None and s.fecha.astimezone(CD_TIMEZONE).date() >= request_day
+        ),
+        None,
+    )
 
 
 def extract_color_from_text(text: str | None) -> str | None:

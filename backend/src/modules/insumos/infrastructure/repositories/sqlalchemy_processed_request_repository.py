@@ -1,5 +1,7 @@
 """Implementación Postgres del puerto ProcessedRequestRepository."""
 
+from collections.abc import Sequence
+
 from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -81,6 +83,72 @@ class SqlAlchemyProcessedRequestRepository:
         )
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
+
+    async def get_processed_ids(self, hp_request_ids: Sequence[int]) -> set[int]:
+        if not hp_request_ids:
+            return set()
+        stmt = select(ProcessedRequestModel.hp_request_id).where(
+            ProcessedRequestModel.hp_request_id.in_(hp_request_ids),
+            ProcessedRequestModel.status == STATUS_CREATED,
+        )
+        return set((await self._session.execute(stmt)).scalars().all())
+
+    async def get_supply_ids(self, hp_request_ids: Sequence[int]) -> dict[int, int]:
+        if not hp_request_ids:
+            return {}
+        stmt = select(
+            ProcessedRequestModel.hp_request_id, ProcessedRequestModel.internal_order_id
+        ).where(
+            ProcessedRequestModel.hp_request_id.in_(hp_request_ids),
+            ProcessedRequestModel.status == STATUS_CREATED,
+            ProcessedRequestModel.internal_order_id.not_like("DRYRUN%"),
+        )
+        rows = (await self._session.execute(stmt)).all()
+        result: dict[int, int] = {}
+        for hp_request_id, internal_order_id in rows:
+            try:
+                result[hp_request_id] = int(str(internal_order_id).split("-")[0])
+            except (ValueError, IndexError):
+                continue
+        return result
+
+    async def get_today_processed_ids(self, hp_request_ids: Sequence[int]) -> set[int]:
+        if not hp_request_ids:
+            return set()
+        stmt = select(ProcessedRequestModel.hp_request_id).where(
+            ProcessedRequestModel.hp_request_id.in_(hp_request_ids),
+            ProcessedRequestModel.status == STATUS_CREATED,
+            is_today_argentina(ProcessedRequestModel.created_at),
+        )
+        return set((await self._session.execute(stmt)).scalars().all())
+
+    async def count_processed_today(self) -> int:
+        stmt = select(func.count()).where(
+            ProcessedRequestModel.status == STATUS_CREATED,
+            is_today_argentina(ProcessedRequestModel.created_at),
+        )
+        return (await self._session.execute(stmt)).scalar_one()
+
+    async def get_created_by_serials(
+        self, device_serials: Sequence[str]
+    ) -> dict[str, list[ProcessedRequest]]:
+        if not device_serials:
+            return {}
+        stmt = (
+            select(ProcessedRequestModel)
+            .where(
+                func.upper(ProcessedRequestModel.device_serial).in_(
+                    [s.upper() for s in device_serials]
+                ),
+                ProcessedRequestModel.status == STATUS_CREATED,
+            )
+            .order_by(ProcessedRequestModel.created_at.desc())
+        )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        result: dict[str, list[ProcessedRequest]] = {}
+        for row in rows:
+            result.setdefault((row.device_serial or "").upper(), []).append(_to_entity(row))
+        return result
 
 
 def _to_entity(row: ProcessedRequestModel) -> ProcessedRequest:
