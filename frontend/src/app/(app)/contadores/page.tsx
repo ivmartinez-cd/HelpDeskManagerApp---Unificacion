@@ -1,10 +1,10 @@
 "use client";
 
 import { Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import {
   ContadoresHeader,
+  TOOLS,
   type ToolKey,
 } from "@/features/contadores/components/contadores-header";
 import { ProyeccionTool } from "@/features/contadores/components/proyeccion-tool";
@@ -15,19 +15,22 @@ import { SumaFijaTool } from "@/features/contadores/components/suma-fija-tool";
 import { FtpClientsTool } from "@/features/contadores/components/ftp-clients-tool";
 import { SdsTool } from "@/features/contadores/components/sds-tool";
 import { ErsTool } from "@/features/contadores/components/ers-tool";
+import { Spinner } from "@/shared/components/ui/spinner";
+
+const DEFAULT_TOOL: ToolKey = "proyeccion";
+
+function isToolKey(value: string | null): value is ToolKey {
+  return TOOLS.some((tool) => tool.key === value);
+}
 
 function ContadoresContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const activeTool = (searchParams.get("tool") as ToolKey) || "proyeccion";
-
-  const handleSelectTool = (key: ToolKey) => {
-    router.push(`/contadores?tool=${key}`);
-  };
+  const requestedTool = searchParams.get("tool");
+  const activeTool = isToolKey(requestedTool) ? requestedTool : DEFAULT_TOOL;
 
   return (
     <div className="min-h-full bg-background pb-12">
-      <ContadoresHeader activeTool={activeTool} onSelectTool={handleSelectTool} />
+      <ContadoresHeader activeTool={activeTool} />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {activeTool === "proyeccion" && <ProyeccionTool />}
@@ -48,7 +51,7 @@ export default function ContadoresPage() {
     <Suspense
       fallback={
         <div className="flex h-64 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Spinner />
         </div>
       }
     >

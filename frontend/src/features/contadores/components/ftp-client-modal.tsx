@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { Loader2, X } from "lucide-react";
 import {
   contadoresApi,
   type CreateFtpClientPayload,
   type FtpClient,
 } from "../api/contadores-api";
+import { Modal } from "@/shared/components/ui/modal";
+import { Input } from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
 
 interface Props {
   isOpen: boolean;
@@ -24,6 +26,7 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
   const [password, setPassword] = useState("");
   const [remoteDir, setRemoteDir] = useState(client?.remote_dir || "/");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [prevClient, setPrevClient] = useState<FtpClient | null>(client);
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
@@ -37,13 +40,13 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
     setUsername(client?.username ?? "");
     setPassword("");
     setRemoteDir(client?.remote_dir || "/");
+    setError(null);
   }
 
-  if (!isOpen) return null;
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       if (client) {
@@ -71,131 +74,91 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
       onSuccess();
       onClose();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Error al guardar cliente FTP";
-      toast.error(message);
+      setError(err instanceof Error ? err.message : "Error al guardar cliente FTP");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4">
-        <div className="flex items-center justify-between border-b border-border pb-3">
-          <h2 className="text-lg font-bold text-foreground">
-            {client ? "Editar Cliente FTP" : "Nuevo Cliente FTP"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            <X className="h-5 w-5" />
-          </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={client ? "Editar Cliente FTP" : "Nuevo Cliente FTP"}
+      maxWidth="max-w-lg"
+      error={error}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          id="ftp-client-name"
+          label="Nombre del Cliente"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Ej: CLIENTE CENTRO"
+          required
+        />
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="sm:col-span-2">
+            <Input
+              id="ftp-client-host"
+              label="Servidor (Host / IP)"
+              type="text"
+              value={host}
+              onChange={(e) => setHost(e.target.value)}
+              placeholder="Ej: ftp.cliente.com.ar"
+              required
+            />
+          </div>
+          <Input
+            id="ftp-client-port"
+            label="Puerto"
+            type="number"
+            value={port}
+            onChange={(e) => setPort(Number(e.target.value))}
+            required
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-              Nombre del Cliente
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ej: CLIENTE CENTRO"
-              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-              required
-            />
-          </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input
+            id="ftp-client-username"
+            label="Usuario FTP"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+          <Input
+            id="ftp-client-password"
+            label={`Contraseña ${client ? "(Dejar en blanco para conservar)" : ""}`}
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required={!client}
+          />
+        </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                Servidor (Host / IP)
-              </label>
-              <input
-                type="text"
-                value={host}
-                onChange={(e) => setHost(e.target.value)}
-                placeholder="Ej: ftp.cliente.com.ar"
-                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                Puerto
-              </label>
-              <input
-                type="number"
-                value={port}
-                onChange={(e) => setPort(Number(e.target.value))}
-                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-                required
-              />
-            </div>
-          </div>
+        <Input
+          id="ftp-client-remote-dir"
+          label="Directorio Remoto"
+          type="text"
+          value={remoteDir}
+          onChange={(e) => setRemoteDir(e.target.value)}
+          placeholder="Ej: /"
+          required
+        />
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                Usuario FTP
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                Contraseña {client && "(Dejar en blanco para conservar)"}
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-                required={!client}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-              Directorio Remoto
-            </label>
-            <input
-              type="text"
-              value={remoteDir}
-              onChange={(e) => setRemoteDir(e.target.value)}
-              placeholder="Ej: /"
-              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
-              required
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-3 border-t border-border">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl px-4 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-xs font-bold text-primary-foreground shadow-md hover:bg-primary/90 disabled:opacity-50"
-            >
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Guardar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex justify-end gap-3 pt-2">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" loading={loading}>
+            Guardar
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

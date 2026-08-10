@@ -55,29 +55,29 @@ test.describe("Módulo de Contadores - Interfaz y Herramientas", () => {
     await expect(page.getByRole("heading", { name: "Módulo de Contadores" })).toBeVisible();
 
     // Pestañas
-    await expect(page.getByRole("button", { name: "Proyección" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Calculadora" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "DB3 a CSV" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Estimación en 0" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Suma Fija" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Clientes FTP" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "HP SDS" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Epson ERS" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Proyección" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Calculadora" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "DB3 a CSV" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Estimación en 0" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Suma Fija" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Clientes FTP" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "HP SDS" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Epson ERS" })).toBeVisible();
   });
 
   test("debe permitir cambiar entre pestañas de herramientas", async ({ page }) => {
     await page.goto("/contadores");
 
     // Click en Calculadora
-    await page.getByRole("button", { name: "Calculadora" }).click();
+    await page.getByRole("link", { name: "Calculadora" }).click();
     await expect(page.getByRole("heading", { name: "Datos para la Estimación Manual" })).toBeVisible();
 
     // Click en DB3 a CSV
-    await page.getByRole("button", { name: "DB3 a CSV" }).click();
+    await page.getByRole("link", { name: "DB3 a CSV" }).click();
     await expect(page.getByRole("heading", { name: "Consolidación de Archivos DB3 a CSV" })).toBeVisible();
 
     // Click en Clientes FTP
-    await page.getByRole("button", { name: "Clientes FTP" }).click();
+    await page.getByRole("link", { name: "Clientes FTP" }).click();
     await expect(page.getByRole("button", { name: "Nuevo Cliente FTP" })).toBeVisible();
   });
 
@@ -100,9 +100,9 @@ test.describe("Módulo de Contadores - Interfaz y Herramientas", () => {
 
     await page.getByPlaceholder("Ej: 10000").fill("10000");
     await page.getByPlaceholder("Ej: 15000").fill("15000");
-    await page.locator('input[type="date"]').nth(0).fill("2026-01-01");
-    await page.locator('input[type="date"]').nth(1).fill("2026-01-11");
-    await page.locator('input[type="date"]').nth(2).fill("2026-01-16");
+    await page.getByLabel("Fecha Lectura Inicial").fill("2026-01-01");
+    await page.getByLabel("Fecha Lectura Final").fill("2026-01-11");
+    await page.getByLabel("Fecha Objetivo de Estimación").fill("2026-01-16");
 
     await page.getByRole("button", { name: "Calcular Estimación" }).click();
 

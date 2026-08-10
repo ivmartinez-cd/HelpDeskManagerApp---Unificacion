@@ -1,13 +1,13 @@
 import { forwardRef, useId, type InputHTMLAttributes } from "react";
 import { cn } from "@/shared/utils/cn";
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface FileInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
   label?: string;
   hint?: string;
   error?: string;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
+export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
   ({ className, label, hint, error, id, ...props }, ref) => {
     const generatedId = useId();
     const inputId = id ?? generatedId;
@@ -28,10 +28,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           id={inputId}
+          type="file"
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
-            "w-full rounded-xl border border-black/10 dark:border-white/10 bg-background px-3 py-2 text-sm outline-none transition-colors focus:ring-2 focus:ring-accent/40",
+            "w-full rounded-xl border border-black/10 dark:border-white/10 bg-background px-3 py-2 text-sm outline-none transition-colors file:mr-4 file:rounded-lg file:border-0 file:bg-muted file:px-3 file:py-1 file:text-xs file:font-semibold file:uppercase file:tracking-wide hover:file:bg-muted/80 focus:ring-2 focus:ring-accent/40",
             error && "border-destructive",
             className,
           )}
@@ -51,4 +52,4 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     );
   },
 );
-Input.displayName = "Input";
+FileInput.displayName = "FileInput";

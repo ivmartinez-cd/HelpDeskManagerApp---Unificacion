@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { X, AlertTriangle } from "lucide-react";
 
 interface ModalProps {
@@ -26,6 +26,7 @@ export function Modal({
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
+  const titleId = useId();
 
   useEffect(() => {
     if (isOpen) {
@@ -70,7 +71,7 @@ export function Modal({
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
+        aria-labelledby={titleId}
         className={`relative w-full ${maxWidth} max-h-[90vh] bg-card border border-black/5 dark:border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col focus:outline-none animate-fade-in`}
       >
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent/10 blur-3xl rounded-full" />
@@ -78,7 +79,7 @@ export function Modal({
         <div className="flex items-center justify-between p-8 pb-4 relative z-10">
           <div>
             <h2
-              id="modal-title"
+              id={titleId}
               className="text-3xl font-black tracking-tighter uppercase leading-none"
             >
               {title}

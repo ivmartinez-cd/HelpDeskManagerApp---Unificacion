@@ -1,66 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import {
-  Download,
-  Edit2,
-  FolderSync,
-  Loader2,
-  Plus,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { Download, FolderSync, Plus, SquarePen, Trash2 } from "lucide-react";
 import { contadoresApi, type FtpClient } from "../api/contadores-api";
+import { useFtpClients } from "../hooks/use-ftp-clients";
 import { FtpClientModal } from "./ftp-client-modal";
 import { ProcessClientModal } from "./process-client-modal";
+import { Input } from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
+import { Card } from "@/shared/components/ui/card";
+import { EmptyState } from "@/shared/components/ui/empty-state";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export function FtpClientsTool() {
-  const [clients, setClients] = useState<FtpClient[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { clients, loading, refetch } = useFtpClients();
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Modal states
   const [createEditOpen, setCreateEditOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<FtpClient | null>(null);
 
   const [processOpen, setProcessOpen] = useState(false);
   const [processingClient, setProcessingClient] = useState<FtpClient | null>(null);
-
-  const fetchClients = async () => {
-    setLoading(true);
-    try {
-      const data = await contadoresApi.listFtpClients();
-      setClients(data);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Error al cargar clientes FTP";
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    let active = true;
-    contadoresApi
-      .listFtpClients()
-      .then((data) => {
-        if (active) {
-          setClients(data);
-          setLoading(false);
-        }
-      })
-      .catch((err: unknown) => {
-        if (active) {
-          const message = err instanceof Error ? err.message : "Error al cargar clientes FTP";
-          toast.error(message);
-          setLoading(false);
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const handleDelete = async (client: FtpClient) => {
     if (!confirm(`¿Estás seguro de eliminar el cliente FTP "${client.name}"?`)) {
@@ -69,7 +30,7 @@ export function FtpClientsTool() {
     try {
       await contadoresApi.deleteFtpClient(client.id);
       toast.success(`Cliente "${client.name}" eliminado`);
-      fetchClients();
+      refetch();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Error al eliminar cliente";
       toast.error(message);
@@ -86,56 +47,62 @@ export function FtpClientsTool() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar por nombre, servidor o usuario..."
-            className="w-full rounded-xl border border-input bg-background pl-9 pr-3 py-2 text-sm"
-          />
-        </div>
+        <Input
+          id="ftp-search"
+          aria-label="Buscar clientes FTP"
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Buscar por nombre, servidor o usuario..."
+          className="max-w-md"
+        />
 
-        <button
+        <Button
           onClick={() => {
             setEditingClient(null);
             setCreateEditOpen(true);
           }}
-          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 transition-all shrink-0"
+          className="shrink-0"
         >
           <Plus className="h-4 w-4" />
           Nuevo Cliente FTP
-        </button>
+        </Button>
       </div>
 
       {loading ? (
-        <div className="flex h-48 items-center justify-center rounded-2xl border border-border bg-card">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <div className="space-y-2">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
         </div>
       ) : filteredClients.length === 0 ? (
-        <div className="flex h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-6 text-center">
-          <FolderSync className="h-10 w-10 text-muted-foreground/40 mb-2" />
-          <p className="text-sm font-medium text-muted-foreground">
-            No se encontraron clientes FTP
-          </p>
-        </div>
+        <EmptyState icon={FolderSync} title="No se encontraron clientes FTP" />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <Card>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-border bg-muted/40 uppercase tracking-wider text-muted-foreground font-bold">
+              <thead className="border-b border-black/10 dark:border-white/10 bg-muted/40 font-bold uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-3">Nombre del Cliente</th>
-                  <th className="px-4 py-3">Servidor / Host</th>
-                  <th className="px-4 py-3">Usuario</th>
-                  <th className="px-4 py-3">Directorio</th>
-                  <th className="px-4 py-3 text-right">Acciones</th>
+                  <th scope="col" className="px-4 py-3">
+                    Nombre del Cliente
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Servidor / Host
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Usuario
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Directorio
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-black/10 dark:divide-white/10">
                 {filteredClients.map((client) => (
-                  <tr key={client.id} className="hover:bg-muted/30 transition-colors">
+                  <tr key={client.id} className="transition-colors hover:bg-muted/30">
                     <td className="px-4 py-3 font-semibold text-foreground">{client.name}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {client.host}:{client.port}
@@ -145,29 +112,34 @@ export function FtpClientsTool() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
+                          type="button"
                           onClick={() => {
                             setProcessingClient(client);
                             setProcessOpen(true);
                           }}
-                          className="flex items-center gap-1 rounded-lg bg-emerald-500/10 px-2.5 py-1 text-emerald-600 dark:text-emerald-400 font-semibold hover:bg-emerald-500/20 transition-all"
-                          title="Descargar y Procesar DB3"
+                          className="flex items-center gap-1 rounded-lg bg-success/10 px-2.5 py-1 font-semibold text-success transition-all hover:bg-success/20"
+                          aria-label={`Descargar y procesar DB3 de ${client.name}`}
                         >
                           <Download className="h-3.5 w-3.5" />
                           Procesar DB3
                         </button>
                         <button
+                          type="button"
                           onClick={() => {
                             setEditingClient(client);
                             setCreateEditOpen(true);
                           }}
                           className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          aria-label={`Editar ${client.name}`}
                           title="Editar"
                         >
-                          <Edit2 className="h-4 w-4" />
+                          <SquarePen className="h-4 w-4" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleDelete(client)}
                           className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          aria-label={`Eliminar ${client.name}`}
                           title="Eliminar"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -179,18 +151,16 @@ export function FtpClientsTool() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
-      {/* Modal CRUD */}
       <FtpClientModal
         isOpen={createEditOpen}
         client={editingClient}
         onClose={() => setCreateEditOpen(false)}
-        onSuccess={fetchClients}
+        onSuccess={refetch}
       />
 
-      {/* Modal Procesar */}
       {processingClient && (
         <ProcessClientModal
           isOpen={processOpen}

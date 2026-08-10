@@ -4,7 +4,7 @@ import { type ButtonHTMLAttributes } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
-type Variant = "primary" | "outline" | "ghost" | "danger";
+type Variant = "primary" | "outline" | "ghost" | "danger" | "success";
 type Size = "sm" | "md" | "icon";
 
 const variants: Record<Variant, string> = {
@@ -13,6 +13,7 @@ const variants: Record<Variant, string> = {
     "border border-black/10 dark:border-white/10 bg-card hover:bg-black/5 dark:hover:bg-white/5",
   ghost: "hover:bg-black/5 dark:hover:bg-white/5",
   danger: "bg-destructive text-destructive-foreground hover:opacity-90",
+  success: "bg-success text-success-foreground hover:opacity-90 shadow-md shadow-success/20",
 };
 
 const sizes: Record<Size, string> = {
@@ -20,6 +21,24 @@ const sizes: Record<Size, string> = {
   md: "h-10 px-4 text-sm",
   icon: "h-9 w-9",
 };
+
+const base =
+  "inline-flex items-center justify-center gap-2 rounded-xl font-bold uppercase tracking-wide transition-colors disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
+interface ButtonClassesOptions {
+  variant?: Variant;
+  size?: Size;
+  className?: string;
+}
+
+/** Same classes the <Button> renders — for elements that can't be a <button> (e.g. <a download>). */
+export function buttonClasses({
+  variant = "primary",
+  size = "md",
+  className,
+}: ButtonClassesOptions = {}) {
+  return cn(base, variants[variant], sizes[size], className);
+}
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
@@ -38,12 +57,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-xl font-bold uppercase tracking-wide transition-colors disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        variants[variant],
-        sizes[size],
-        className,
-      )}
+      className={buttonClasses({ variant, size, className })}
       disabled={disabled || loading}
       {...props}
     >

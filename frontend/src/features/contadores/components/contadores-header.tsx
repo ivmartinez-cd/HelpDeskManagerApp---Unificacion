@@ -1,14 +1,14 @@
-"use client";
-
+import Link from "next/link";
 import {
-  BarChart3,
   Calculator,
+  ChartColumn,
   Database,
   FileSpreadsheet,
-  FileSpreadsheetIcon,
   FolderSync,
   Printer,
   Radio,
+  Sigma,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
@@ -25,8 +25,7 @@ export type ToolKey =
 interface ToolDef {
   key: ToolKey;
   label: string;
-  shortLabel: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   description: string;
 }
 
@@ -34,56 +33,48 @@ export const TOOLS: ToolDef[] = [
   {
     key: "proyeccion",
     label: "Proyección",
-    shortLabel: "Proyección",
-    icon: BarChart3,
+    icon: ChartColumn,
     description: "Proyecta lecturas de contadores y genera archivos para SiGes.",
   },
   {
     key: "calc",
     label: "Calculadora",
-    shortLabel: "Calculadora",
     icon: Calculator,
     description: "Calcula estimaciones manuales de lectura y consumo diario.",
   },
   {
     key: "db3",
     label: "DB3 a CSV",
-    shortLabel: "DB3 -> CSV",
     icon: Database,
     description: "Consolida bases de datos SQLite (.db3) de impresoras a CSV.",
   },
   {
     key: "en0",
     label: "Estimación en 0",
-    shortLabel: "Estimación 0",
     icon: FileSpreadsheet,
     description: "Procesa planillas de Falta Contador asignando categorías.",
   },
   {
     key: "suma-fija",
     label: "Suma Fija",
-    shortLabel: "Suma Fija",
-    icon: FileSpreadsheetIcon,
+    icon: Sigma,
     description: "Calcula lecturas fijas sumando hojas según el estado del equipo.",
   },
   {
     key: "ftp",
     label: "Clientes FTP",
-    shortLabel: "FTP",
     icon: FolderSync,
     description: "Gestión de servidores FTP de clientes y descarga automática de DB3.",
   },
   {
     key: "sds",
     label: "HP SDS",
-    shortLabel: "HP SDS",
     icon: Printer,
     description: "Integración con HP SDS LATAM para lectura de contadores.",
   },
   {
     key: "ers",
     label: "Epson ERS",
-    shortLabel: "Epson ERS",
     icon: Radio,
     description: "Integración con Epson Remote Services (ERS) para telemetría.",
   },
@@ -91,46 +82,46 @@ export const TOOLS: ToolDef[] = [
 
 interface Props {
   activeTool: ToolKey;
-  onSelectTool: (key: ToolKey) => void;
 }
 
-export function ContadoresHeader({ activeTool, onSelectTool }: Props) {
+export function ContadoresHeader({ activeTool }: Props) {
   const currentDef = TOOLS.find((t) => t.key === activeTool) ?? TOOLS[0];
 
   return (
-    <div className="border-b border-border bg-card/60 backdrop-blur">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Módulo de Contadores
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">{currentDef.description}</p>
-          </div>
-        </div>
+    <div className="relative overflow-hidden border-b border-black/10 dark:border-white/10 bg-card/60 backdrop-blur">
+      <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
 
-        {/* Tabs de herramientas */}
-        <div className="mt-6 flex overflow-x-auto thin-scrollbar space-x-1 rounded-2xl bg-muted/60 p-1.5 border border-border/50">
+      <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <h1 className="text-2xl font-black uppercase tracking-tighter text-foreground sm:text-3xl">
+          Módulo de Contadores
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">{currentDef.description}</p>
+
+        <nav
+          aria-label="Herramientas de contadores"
+          className="mt-6 flex space-x-1 overflow-x-auto rounded-2xl border border-black/10 dark:border-white/10 bg-muted/60 p-1.5 thin-scrollbar"
+        >
           {TOOLS.map((tool) => {
             const Icon = tool.icon;
             const isSelected = activeTool === tool.key;
             return (
-              <button
+              <Link
                 key={tool.key}
-                onClick={() => onSelectTool(tool.key)}
+                href={`/contadores?tool=${tool.key}`}
+                aria-current={isSelected ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-semibold transition-all duration-150 shrink-0",
+                  "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-semibold transition-all duration-150",
                   isSelected
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                    ? "bg-accent text-accent-foreground shadow-md shadow-accent/25"
                     : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 <span>{tool.label}</span>
-              </button>
+              </Link>
             );
           })}
-        </div>
+        </nav>
       </div>
     </div>
   );
