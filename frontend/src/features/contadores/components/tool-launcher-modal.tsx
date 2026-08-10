@@ -1,6 +1,7 @@
 "use client";
 
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { CalendarioTool } from "./calendario-tool";
 import { ClientPickerProcessModal } from "./client-picker-process-modal";
 import { Db3Tool } from "./db3-tool";
 import { En0Tool } from "./en0-tool";
@@ -15,6 +16,7 @@ const SIMPLE_WIDTH: Partial<Record<ToolKey, number>> = {
   db3: 640,
   en0: 640,
   "suma-fija": 640,
+  calendario: 1000,
 };
 
 interface Props {
@@ -22,13 +24,6 @@ interface Props {
   onClose: () => void;
 }
 
-/** Decide, a partir de `?tool=`, qué modal mostrar sobre el hub "Centro de
- * Contadores" — las 3 herramientas de formulario simple entran directo acá;
- * SDS/ERS/FTP (que necesitan elegir un cliente primero) delegan en
- * client-picker-process-modal.tsx. Proyección quedó con la card visible en
- * el hub pero sin lógica (`tool.disabled`, ver tool-catalog.ts) — la card ya
- * no es un `Link` así que esto solo cubre a quien escriba `?tool=proyeccion`
- * a mano. */
 export function ToolLauncherModal({ tool, onClose }: Props) {
   if (!isToolKey(tool)) return null;
 
@@ -46,9 +41,11 @@ export function ToolLauncherModal({ tool, onClose }: Props) {
       title={def.navLabel ?? def.label}
       widthPx={SIMPLE_WIDTH[tool] ?? 640}
     >
+      {tool === "calendario" && <CalendarioTool />}
       {tool === "db3" && <Db3Tool />}
       {tool === "en0" && <En0Tool />}
       {tool === "suma-fija" && <SumaFijaTool />}
     </BrandModal>
   );
 }
+

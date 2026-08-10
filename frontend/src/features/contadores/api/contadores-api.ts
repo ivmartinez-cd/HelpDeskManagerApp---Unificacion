@@ -172,10 +172,16 @@ export const contadoresApi = {
   getOutputUrl: (filename: string) => `/api/contadores/outputs/${encodeURIComponent(filename)}`,
 
   // Calendario de Planificación
-  getCalendarioEvents: (params: { start: string; end: string; operador_id?: string }) => {
+  getCalendarioEvents: (params: {
+    start: string;
+    end: string;
+    operador_id?: string;
+    solo_facturacion?: boolean;
+  }) => {
     const searchParams = new URLSearchParams({
       start: params.start,
       end: params.end,
+      solo_facturacion: String(params.solo_facturacion ?? true),
     });
     if (params.operador_id) {
       searchParams.set("operador_id", params.operador_id);
@@ -185,4 +191,5 @@ export const contadoresApi = {
     );
   },
 };
+
 

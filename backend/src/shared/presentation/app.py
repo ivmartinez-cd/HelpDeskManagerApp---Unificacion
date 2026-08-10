@@ -6,6 +6,9 @@ from src.modules.auth.presentation.admin_permissions_router import (
 )
 from src.modules.auth.presentation.admin_users_router import router as admin_users_router
 from src.modules.auth.presentation.auth_router import router as auth_router
+from src.modules.contadores.presentation.calendario_router import (
+    router as calendario_router,
+)
 from src.modules.contadores.presentation.ers_router import router as ers_router
 from src.modules.contadores.presentation.ftp_clients_router import router as ftp_clients_router
 from src.modules.contadores.presentation.sds_router import router as sds_router
@@ -49,7 +52,9 @@ def create_app() -> FastAPI:
     app.include_router(ftp_clients_router)
     app.include_router(sds_router)
     app.include_router(ers_router)
+    app.include_router(calendario_router)
     return app
+
 
 
 app = create_app()

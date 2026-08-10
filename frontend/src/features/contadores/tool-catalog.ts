@@ -1,4 +1,5 @@
 import {
+  Calendar,
   ChartColumn,
   Database,
   FileSpreadsheet,
@@ -9,7 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type ToolKey = "proyeccion" | "db3" | "en0" | "suma-fija" | "ftp" | "sds" | "ers";
+export type ToolKey = "proyeccion" | "db3" | "en0" | "suma-fija" | "ftp" | "sds" | "ers" | "calendario";
 
 export interface ToolDef {
   key: ToolKey;
@@ -26,9 +27,16 @@ export interface ToolDef {
   disabled?: boolean;
 }
 
-/** Catálogo único de las 7 herramientas de Contadores — fuente de verdad
+/** Catálogo único de las herramientas de Contadores — fuente de verdad
  * para el hub "Centro de Contadores" y para tool-launcher-modal.tsx. */
 export const TOOLS: ToolDef[] = [
+  {
+    key: "calendario",
+    label: "Calendario de Planificación",
+    navLabel: "Calendario de Rutas",
+    icon: Calendar,
+    description: "Visualiza la agenda de clientes y visitas de tomadores de contadores por operador.",
+  },
   {
     key: "proyeccion",
     label: "Proyección",
@@ -37,6 +45,7 @@ export const TOOLS: ToolDef[] = [
     description: "Proyecta lecturas de contadores y genera archivos para SiGes.",
     disabled: true,
   },
+
   {
     key: "db3",
     label: "DB3 a CSV",

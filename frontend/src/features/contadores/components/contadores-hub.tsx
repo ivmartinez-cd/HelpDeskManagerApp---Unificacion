@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TOOLS, type ToolKey } from "@/features/contadores/tool-catalog";
 
 const CARD_COLOR: Record<ToolKey, { badge: string; fg: string }> = {
+  calendario: { badge: "bg-brand-orange/[0.12]", fg: "text-brand-orange" },
   sds: { badge: "bg-brand-orange/[0.12]", fg: "text-brand-orange" },
   ers: { badge: "bg-brand-orange/[0.12]", fg: "text-brand-orange" },
   ftp: { badge: "bg-brand-charcoal/[0.1]", fg: "text-brand-charcoal" },
@@ -10,6 +11,7 @@ const CARD_COLOR: Record<ToolKey, { badge: string; fg: string }> = {
   "suma-fija": { badge: "bg-brand-orange/[0.12]", fg: "text-brand-orange" },
   proyeccion: { badge: "bg-brand-charcoal/[0.1]", fg: "text-brand-charcoal" },
 };
+
 
 /** Hub "Centro de Contadores" — landing del módulo cuando se entra por el
  * nav de arriba, sin `?tool=`. Cada card navega a la herramienta real
