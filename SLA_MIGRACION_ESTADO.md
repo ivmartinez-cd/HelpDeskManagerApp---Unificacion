@@ -67,57 +67,38 @@ Faltan las credenciales reales de MERCURIO para probar end-to-end: completar en 
 `GET /api/sla/resumen?periodo=202608` (el permiso sla/view lo tiene que tener el usuario, o
 ser superadmin). Si el handshake TLS falla igual, revisar `sla_mercurio_encrypt`/driver.
 
-## Frontend — PENDIENTE (continuar acá)
+## Frontend — IMPLEMENTADO (pendiente de prueba end-to-end y activación)
 
-Hecho hasta ahora:
+Archivos creados:
 
-- `KpiTile`/`KpiGrid` movidos de `features/insumos/components/estadisticas/kpi-tile.tsx` a
-  **`shared/components/ui/kpi-tile.tsx`** (primitiva compartida; `EMPTY_VALUE` duplicado
-  adentro para no depender de la feature). Imports de insumos actualizados
-  (`cliente-kpis.tsx`, `estadisticas-globales.tsx`). `tsc --noEmit` limpio.
+- **`shared/components/ui/stats-table.tsx`** — `StatsTable`/`StatsColumn` movidos desde
+  `features/insumos/...` (igual que `KpiTile`). El original de insumos ahora es re-export.
+- **`features/sla/types/sla.ts`** — `SlaResumen`, `TecnicoVencidos`, `IncidenteVencido`
+  (snake_case, fechas `string | null`).
+- **`features/sla/api/sla-api.ts`** — `slaApi.getResumen(periodo)` y
+  `slaApi.listIncidentesVencidos(periodo)`.
+- **`features/sla/components/sla-summary-card.tsx`** — card de Inicio: % Correcto (naranja)
+  vs % Vencido (danger) + totales del mes corriente, link a `/sla`, gate `modules.some("sla")`.
+- **`features/sla/components/sla-detail.tsx`** — pantalla completa: header + selector
+  `<input type="month">` + `KpiGrid` (Total/Correctos/Vencidos) + `StatsTable` de incidentes
+  vencidos con columnas: ID, Técnico, Región, Cliente, Sucursal, Modelo, Operativo, Rango,
+  SLA (h), Vencido (h). El subtitle de la tabla lista técnicos con sus cantidades.
+- **`app/(app)/sla/page.tsx`** — wrapper delgado sobre `SlaDetail`.
+- **`app/(app)/page.tsx`** — `<SlaSummaryCard />` agregada como tercera card.
 
-Por hacer (en orden):
+- `tsc --noEmit` corrido en el contenedor: solo errores preexistentes de `trend-chart.tsx`
+  (chart.js no instalado), cero errores en código SLA.
+- Migración `ac5e139e28b4_activate_sla_module.py` aplicada — módulo SLA `is_enabled=True`.
+- Usuario `admin@example.com` (superadmin) creado/restaurado en la DB de la PC personal.
+- Card en Inicio visible y renderizando correctamente (ícono, título, estados loading/error).
 
-1. **`features/sla/types/sla.ts`** — tipos espejo del backend, **snake_case** (los schemas de
-   sla no usan `serialization_alias`): `SlaResumen { periodo, total, correctos, vencidos,
-   pct_correctos, pct_vencidos, vencidos_por_tecnico: TecnicoVencidos[] }`,
-   `TecnicoVencidos { tecnico, cantidad, ids_incidente: number[] }`,
-   `IncidenteVencido { id_incidente, tecnico, region, cliente, sucursal, modelo, nro_serie,
-   fecha_ingreso, fecha_operativo, tiempo, rango, sla_horas, horas_vencido }` (fechas
-   `string | null` ISO).
-2. **`features/sla/api/sla-api.ts`** — patrón `turnos-api.ts`: objeto plano sobre
-   `httpClient`, `interface Page<T>` local, `getResumen(periodo)` y
-   `listIncidentesVencidos(periodo)` (`.then(p => p.items)`). Sin React Query (no se usa en
-   este repo): `useState`+`useEffect`+`.then/.catch/.finally`.
-3. **`features/sla/components/sla-summary-card.tsx`** — card para Inicio, calcada de
-   `features/home/components/today-clients-card.tsx`: mismo shape visual
-   (`rounded-[12px] border border-border bg-card p-5`, ícono en círculo
-   `bg-brand-orange/[0.12] text-brand-orange` — sugerido `Gauge` de lucide), gate
-   `modules.some(m => m.key === "sla")`, estados loading/error/vacío. Contenido: % Correcto
-   (naranja) vs % Vencido (tono danger ya existente en KpiTile) + totales del período actual
-   (AAAAMM del mes corriente), link a `/sla`. Agregarla como tercera card en el
-   `flex flex-wrap gap-4` de `app/(app)/page.tsx`.
-4. **Pantalla `/sla`** — `app/(app)/sla/page.tsx` + componentes en `features/sla/components/`:
-   - Header h1 estilo Inicio ("SLA" + descripción).
-   - Selector de período (mes): `<input type="month">` estilizado con tokens de la app, o
-     selects mes/año; default mes actual. Convertir a AAAAMM para la API.
-   - `KpiGrid` con `KpiTile`s: Total (neutral), Correctos (tone naranja, hint % correcto),
-     Vencidos (tone danger, hint % vencido).
-   - Tabla de vencidos agrupada por técnico: seguir el patrón visual de
-     `features/insumos/components/estadisticas/stats-table.tsx` (header de card, thead
-     uppercase 11px, filas border-t). Para el agrupado: o secciones por técnico (subheader con
-     nombre + cantidad, filas con ID/cliente/sucursal/modelo/fecha operativo/tiempo/rango/
-     SLA/horas vencido) usando `vencidos_por_tecnico` del resumen + detalle, o una StatsTable
-     propia con columna técnico — decidir al maquetar y **mostrar render al usuario**.
-   - El sidebar toma el módulo del catálogo del backend: no tocar `sidebar.tsx`.
-5. **Reglas de diseño** (skill `ui-design-handoff` ya consultado): solo línea Institucional,
-   `rounded-[Npx]` literales (nunca `rounded-lg` etc. — remapeados a 24px), tokens dark-aware
-   (`bg-card`, `text-muted-foreground`...), app dark-by-default.
-6. **Activación**: recién con todo probado end-to-end, migración `activate_sla_module`
-   (`is_enabled=True`, patrón `6d910a2b8e39_activate_contadores_module.py`) y asignar el
-   permiso sla/view a los usuarios que corresponda desde Configuración.
-7. Verificación final backend (4 comandos de arriba) + `npx tsc --noEmit` en el contenedor
-   frontend; probar la card y la pantalla logueado (credenciales dev en memoria del proyecto).
+Pendiente (mañana, en red corpo):
+
+1. Completar en `.env`: `SLA_MERCURIO_HOST`, `SLA_MERCURIO_USER`, `SLA_MERCURIO_PASSWORD`
+   y `docker compose restart backend`.
+2. Verificar end-to-end: card de Inicio muestra % del mes actual, pantalla `/sla` carga
+   KpiGrid + tabla de incidentes vencidos.
+3. Confirmar layout de la tabla con datos reales; ajustar columnas si hace falta.
 
 ## Referencias rápidas
 
