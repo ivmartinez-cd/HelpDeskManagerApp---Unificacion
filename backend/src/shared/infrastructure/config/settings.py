@@ -118,6 +118,10 @@ class Settings(BaseSettings):
     # vía login Symfony estándar — reemplaza el cookie pegado a mano que vencía.
     gestion_session_file: str = "var/contadores/gestion_session.json"
 
+    # Desactiva todos los jobs de fondo (útil en CI/test o cuando se corren
+    # múltiples instancias y solo una debe ejecutar los jobs).
+    disable_background_jobs: bool = False
+
 
 @lru_cache
 def get_settings() -> Settings:

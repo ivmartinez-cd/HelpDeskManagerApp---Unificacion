@@ -10,10 +10,20 @@ from collections.abc import Sequence
 from datetime import datetime
 from typing import Protocol
 
-from src.modules.insumos.domain.entities.request_alert import RequestAlert
+from src.modules.insumos.domain.entities.request_alert import AlertPendingEntry, RequestAlert
 
 
 class RequestAlertRepository(Protocol):
+    async def sync_pending(self, pending: list[AlertPendingEntry]) -> None:
+        """Upserta las alertas de solicitudes pendientes y resuelve las que ya no están.
+
+        El upsert nunca pisa state/escalated_at/acknowledged_at de una alerta activa
+        (TRIGGERED/ESCALATED/ACKNOWLEDGED) — solo refresca metadata. Si estaba RESOLVED
+        y el mismo pedido vuelve a aparecer pendiente, se reabre como TRIGGERED con
+        first_seen_at renovado. Las alertas que ya no están en `pending` pasan a RESOLVED.
+        """
+        ...
+
     async def escalate_due(self, cutoff: datetime) -> int:
         """Pasa a ESCALATED las TRIGGERED cuyo `requested_at` sea anterior o igual al
         corte y devuelve cuántas. Las que no tienen `requested_at` nunca escalan: sin

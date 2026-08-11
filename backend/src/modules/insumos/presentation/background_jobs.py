@@ -1,0 +1,170 @@
+"""Jobs de fondo del módulo insumos — asyncio.create_task, sin APScheduler.
+
+Notas de diseño:
+- El backup de BD del legacy (SQLite) no tiene equivalente 1:1 en Postgres; ese
+  job se omite conscientemente. Postgres corre con su propia infraestructura de
+  backup (pg_dump, streaming replication, etc.).
+- El autoload automático (maybe_auto_load del poller legacy) no está portado aún:
+  las piezas de dominio existen pero la orchestración del lote no está completa.
+  Mientras tanto el poller solo sincroniza inventario.
+- DISABLE_BACKGROUND_JOBS=true desactiva todos los jobs (útil en CI o cuando se
+  corren múltiples instancias y solo una debe ejecutar los jobs).
+"""
+
+import asyncio
+import logging
+from datetime import UTC, datetime, timedelta
+from typing import Protocol
+
+from src.modules.insumos.application.jobs.poller_alerts import PollerAlerts
+from src.modules.insumos.application.use_cases.pending_order_alert import (
+    build_pending_alert_mail,
+    find_orders_due_for_alert,
+)
+from src.modules.insumos.domain.value_objects.insumos_settings import (
+    logistics_recipients,
+    settings_from_raw,
+)
+from src.modules.insumos.infrastructure.repositories.sqlalchemy_insumos_settings_repository import (  # noqa: E501
+    SqlAlchemyInsumosSettingsRepository,
+)
+from src.modules.insumos.infrastructure.repositories.sqlalchemy_pending_order_notification_repository import (  # noqa: E501
+    SqlAlchemyPendingOrderNotificationRepository,
+)
+from src.modules.insumos.presentation.dependencies.alerts import build_sync_pending_alerts
+from src.modules.insumos.presentation.dependencies.new_devices import build_sync_new_devices
+from src.modules.insumos.presentation.dependencies.offline_devices import (
+    build_verify_offline_devices,
+)
+from src.modules.insumos.presentation.dependencies.requests import build_list_pending_orders
+from src.shared.infrastructure.database.session import get_sessionmaker
+
+logger = logging.getLogger(__name__)
+
+# Equipos offline: sin límite real — el job procesa todo lo pendiente cada vez.
+_OFFLINE_VERIFY_LIMIT = 500
+# Hora UTC en que corren los jobs diarios.
+_OFFLINE_CHECK_HOUR_UTC = 3
+_PENDING_ALERT_HOUR_UTC = 7
+
+
+class _Mailer(Protocol):
+    async def send(self, *, to: str, subject: str, body: str) -> None: ...
+
+
+def seconds_until_next_hour(hour: int) -> float:
+    """Segundos hasta la próxima ocurrencia de `hour:00` UTC."""
+    now = datetime.now(UTC)
+    target = now.replace(hour=hour, minute=0, second=0, microsecond=0)
+    if target <= now:
+        target += timedelta(days=1)
+    return (target - now).total_seconds()
+
+
+async def background_poller_task(
+    poller_alerts: PollerAlerts, interval_minutes: int
+) -> None:
+    logger.info("poller: iniciando (intervalo %d min)", interval_minutes)
+    while True:
+        try:
+            factory = get_sessionmaker()
+            async with factory() as session:
+                result = await build_sync_new_devices(session).execute()
+                await session.commit()
+            await poller_alerts.record_success()
+            logger.info(
+                "poller: sync OK — %d nuevos equipos, %d podados",
+                len(result.new_device_ids),
+                result.pruned,
+            )
+        except Exception as exc:
+            logger.error("poller: ciclo fallido", exc_info=exc)
+            await poller_alerts.record_failure(str(exc))
+        await asyncio.sleep(interval_minutes * 60)
+
+
+async def background_offline_check_task() -> None:
+    logger.info("offline_check: iniciando (diario @ %02d:00 UTC)", _OFFLINE_CHECK_HOUR_UTC)
+    while True:
+        await asyncio.sleep(seconds_until_next_hour(_OFFLINE_CHECK_HOUR_UTC))
+        try:
+            factory = get_sessionmaker()
+            async with factory() as session:
+                use_case = await build_verify_offline_devices(session)
+                result = await use_case.execute(limit=_OFFLINE_VERIFY_LIMIT)
+                await session.commit()
+            logger.info(
+                "offline_check: OK — checked=%d remaining=%d errores=%d",
+                result.checked,
+                result.remaining,
+                result.errores,
+            )
+        except Exception as exc:
+            logger.error("offline_check: ciclo fallido", exc_info=exc)
+
+
+async def background_alert_task(interval_minutes: int = 15) -> None:
+    logger.info("alert_sync: iniciando (intervalo %d min)", interval_minutes)
+    while True:
+        try:
+            factory = get_sessionmaker()
+            async with factory() as session:
+                count = await build_sync_pending_alerts(session).execute()
+                await session.commit()
+            logger.debug("alert_sync: OK — %d solicitudes pendientes", count)
+        except Exception as exc:
+            logger.error("alert_sync: ciclo fallido", exc_info=exc)
+        await asyncio.sleep(interval_minutes * 60)
+
+
+async def background_pending_alert_task(mailer: _Mailer) -> None:
+    logger.info("pending_alert: iniciando (diario @ %02d:00 UTC)", _PENDING_ALERT_HOUR_UTC)
+    while True:
+        await asyncio.sleep(seconds_until_next_hour(_PENDING_ALERT_HOUR_UTC))
+        try:
+            await _run_pending_alert_cycle(mailer)
+        except Exception as exc:
+            logger.error("pending_alert: ciclo fallido", exc_info=exc)
+
+
+async def _run_pending_alert_cycle(mailer: _Mailer) -> None:
+    factory = get_sessionmaker()
+    async with factory() as session:
+        raw_settings = await SqlAlchemyInsumosSettingsRepository(session).get_all()
+        settings = settings_from_raw(raw_settings)
+        recipients = logistics_recipients(settings)
+        if not recipients:
+            logger.debug("pending_alert: sin destinatarios configurados, se omite")
+            return
+        rows = await build_list_pending_orders(session).execute(
+            customer_id=None, include_delivered=False
+        )
+        hp_ids = [r.hp_request_id for r in rows]
+        already_notified = await SqlAlchemyPendingOrderNotificationRepository(
+            session
+        ).get_notified_ids(hp_ids)
+        due = find_orders_due_for_alert(rows, settings.threshold_critical, already_notified)
+        if not due:
+            return
+        subject, body = build_pending_alert_mail(due, settings.threshold_critical)
+        for recipient in recipients:
+            try:
+                await mailer.send(to=recipient, subject=subject, body=body)
+            except Exception as exc:
+                logger.error(
+                    "pending_alert: no se pudo enviar mail a %s", recipient, exc_info=exc
+                )
+        await SqlAlchemyPendingOrderNotificationRepository(session).mark_notified(
+            [r.hp_request_id for r in due]
+        )
+        await session.commit()
+    logger.info("pending_alert: %d pedido(s) notificados", len(due))
+
+
+def start_background_jobs(mailer: _Mailer, poller_alerts: PollerAlerts, interval_minutes: int) -> list[asyncio.Task[None]]:  # noqa: E501
+    return [
+        asyncio.create_task(background_poller_task(poller_alerts, interval_minutes)),
+        asyncio.create_task(background_offline_check_task()),
+        asyncio.create_task(background_alert_task()),
+        asyncio.create_task(background_pending_alert_task(mailer)),
+    ]

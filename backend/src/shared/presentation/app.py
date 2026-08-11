@@ -1,3 +1,8 @@
+import asyncio
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -36,12 +41,52 @@ from src.shared.presentation.errors.handlers import register_exception_handlers
 from src.shared.presentation.health.router import router as health_router
 from src.shared.presentation.middlewares.request_id import RequestIdMiddleware
 
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    settings = get_settings()
+    tasks: list[asyncio.Task[None]] = []
+    if not settings.disable_background_jobs:
+        from src.modules.auth.infrastructure.mailer_factory import get_mailer
+        from src.modules.insumos.application.jobs.poller_alerts import PollerAlerts
+        from src.modules.insumos.domain.value_objects.insumos_settings import (
+            logistics_recipients,
+            settings_from_raw,
+        )
+        from src.modules.insumos.infrastructure.repositories.sqlalchemy_insumos_settings_repository import (  # noqa: E501
+            SqlAlchemyInsumosSettingsRepository,
+        )
+        from src.modules.insumos.presentation.background_jobs import start_background_jobs
+        from src.shared.infrastructure.database.session import get_sessionmaker
+
+        factory = get_sessionmaker()
+        async with factory() as session:
+            raw = await SqlAlchemyInsumosSettingsRepository(session).get_all()
+        insumos_settings = settings_from_raw(raw)
+        mailer = get_mailer()
+        poller_alerts = PollerAlerts(
+            mailer=mailer,
+            recipients=logistics_recipients(insumos_settings),
+        )
+        tasks = start_background_jobs(mailer, poller_alerts, settings.poll_interval_minutes)
+        logger.info("background_jobs: %d job(s) iniciados", len(tasks))
+    try:
+        yield
+    finally:
+        for task in tasks:
+            task.cancel()
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+            logger.info("background_jobs: %d job(s) cancelados", len(tasks))
+
 
 def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging(level="DEBUG" if settings.environment == "development" else "INFO")
 
-    app = FastAPI(title="HelpDesk Manager API", version="0.1.0")
+    app = FastAPI(title="HelpDesk Manager API", version="0.1.0", lifespan=_lifespan)
 
     origins = list(filter(None, {
         settings.cors_origin,
@@ -82,8 +127,6 @@ def create_app() -> FastAPI:
     app.include_router(turnos_router)
     app.include_router(sla_router)
     return app
-
-
 
 
 app = create_app()

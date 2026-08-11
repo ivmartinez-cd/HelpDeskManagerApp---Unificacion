@@ -3,13 +3,16 @@
 from collections.abc import Sequence
 from datetime import datetime
 
-from sqlalchemy import func, select, update
+from sqlalchemy import case, func, null, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.insumos.domain.entities.request_alert import (
     STATE_ACKNOWLEDGED,
     STATE_ESCALATED,
+    STATE_RESOLVED,
     STATE_TRIGGERED,
+    AlertPendingEntry,
     RequestAlert,
 )
 from src.modules.insumos.infrastructure.models.request_alert_model import RequestAlertModel
@@ -18,6 +21,74 @@ from src.modules.insumos.infrastructure.models.request_alert_model import Reques
 class SqlAlchemyRequestAlertRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+
+    async def sync_pending(self, pending: list[AlertPendingEntry]) -> None:
+        if pending:
+            rows = [
+                {
+                    "hp_request_id": e.hp_request_id,
+                    "customer_id": e.customer_id,
+                    "customer_name": e.customer_name,
+                    "device_serial": e.device_serial,
+                    "sku": e.sku,
+                    "description": e.description,
+                    "requested_at": e.requested_at,
+                    "state": STATE_TRIGGERED,
+                    "updated_at": func.now(),
+                }
+                for e in pending
+            ]
+            stmt = pg_insert(RequestAlertModel).values(rows)
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["hp_request_id"],
+                set_={
+                    "customer_id": stmt.excluded.customer_id,
+                    "customer_name": stmt.excluded.customer_name,
+                    "device_serial": stmt.excluded.device_serial,
+                    "sku": stmt.excluded.sku,
+                    "description": stmt.excluded.description,
+                    "requested_at": stmt.excluded.requested_at,
+                    "updated_at": func.now(),
+                    "state": case(
+                        (RequestAlertModel.state == STATE_RESOLVED, STATE_TRIGGERED),
+                        else_=RequestAlertModel.state,
+                    ),
+                    "first_seen_at": case(
+                        (RequestAlertModel.state == STATE_RESOLVED, func.now()),
+                        else_=RequestAlertModel.first_seen_at,
+                    ),
+                    "escalated_at": case(
+                        (RequestAlertModel.state == STATE_RESOLVED, null()),
+                        else_=RequestAlertModel.escalated_at,
+                    ),
+                    "acknowledged_at": case(
+                        (RequestAlertModel.state == STATE_RESOLVED, null()),
+                        else_=RequestAlertModel.acknowledged_at,
+                    ),
+                    "resolved_at": case(
+                        (RequestAlertModel.state == STATE_RESOLVED, null()),
+                        else_=RequestAlertModel.resolved_at,
+                    ),
+                },
+            )
+            await self._session.execute(stmt)
+        pending_ids = {e.hp_request_id for e in pending}
+        active_ids = set(
+            (
+                await self._session.scalars(
+                    select(RequestAlertModel.hp_request_id).where(
+                        RequestAlertModel.state != STATE_RESOLVED
+                    )
+                )
+            ).all()
+        )
+        to_resolve = active_ids - pending_ids
+        if to_resolve:
+            await self._session.execute(
+                update(RequestAlertModel)
+                .where(RequestAlertModel.hp_request_id.in_(to_resolve))
+                .values(state=STATE_RESOLVED, resolved_at=func.now(), updated_at=func.now())
+            )
 
     async def escalate_due(self, cutoff: datetime) -> int:
         stmt = (

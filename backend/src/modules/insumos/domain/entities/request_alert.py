@@ -16,6 +16,19 @@ STATE_RESOLVED = "RESOLVED"
 
 
 @dataclass(frozen=True)
+class AlertPendingEntry:
+    """Solicitud pendiente para sync_pending — se upsertea en request_alerts."""
+
+    hp_request_id: int
+    customer_id: int
+    customer_name: str
+    device_serial: str
+    sku: str
+    description: str
+    requested_at: datetime | None
+
+
+@dataclass(frozen=True)
 class RequestAlert:
     hp_request_id: int
     customer_id: int | None
