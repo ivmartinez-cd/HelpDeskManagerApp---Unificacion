@@ -22,6 +22,7 @@ from src.modules.insumos.application.use_cases.get_dashboard import (
     GetDashboard,
     GetDashboardPorts,
 )
+from src.modules.insumos.application.use_cases.list_audit import ListAudit, ListAuditPorts
 from src.modules.insumos.application.use_cases.list_requests import (
     ListRequests,
     ListRequestsConfig,
@@ -182,6 +183,14 @@ def build_load_order(session: AsyncSession) -> LoadOrder:
         insight_status_on_order=settings.insight_status_on_order,
     )
     return LoadOrder(ports, config)
+
+
+def build_list_audit(session: AsyncSession) -> ListAudit:
+    ports = ListAuditPorts(
+        audit=SqlAlchemyOrderAuditRepository(session),
+        insight=get_insight_gateway(),
+    )
+    return ListAudit(ports, _order_settings(get_settings()))
 
 
 def build_cancel_order(session: AsyncSession) -> CancelOrder:

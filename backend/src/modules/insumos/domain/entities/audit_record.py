@@ -36,3 +36,24 @@ class AuditRecord:
     initial_percent_left: int | None = None
     initial_days_left: int | None = None
     initial_pages_left: int | None = None
+
+
+@dataclass(frozen=True)
+class StoredAuditRecord(AuditRecord):
+    """Un evento ya persistido, tal como lo lee el Historial (con id y timestamp)."""
+
+    audit_id: int = 0
+    created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class AuditSnapshot:
+    """Backfill de device_id/initial_* para una fila grabada sin esa captura (filas
+    anteriores a que order_audit la guardara) — se persiste al resolverla en vivo
+    contra Insight para no repetir ese lookup en cada GET siguiente."""
+
+    audit_id: int
+    device_id: int
+    initial_percent_left: int | None = None
+    initial_days_left: int | None = None
+    initial_pages_left: int | None = None

@@ -1,10 +1,13 @@
 """Fakes compartidos de los puertos de insumos para tests unitarios."""
 
+from dataclasses import asdict, replace
 from datetime import UTC, datetime, timedelta
 
 from src.modules.insumos.domain.entities.audit_record import (
     EVENT_CREATED,
     AuditRecord,
+    AuditSnapshot,
+    StoredAuditRecord,
 )
 from src.modules.insumos.domain.entities.customer_config import CustomerConfig
 from src.modules.insumos.domain.entities.processed_request import (
@@ -300,9 +303,18 @@ class FakeProcessedRequestRepository:
 class FakeOrderAuditRepository:
     def __init__(self) -> None:
         self.records: list[AuditRecord] = []
+        self.stored: list[StoredAuditRecord] = []
+        self.backfills: list[AuditSnapshot] = []
 
     async def record(self, entry: AuditRecord) -> None:
         self.records.append(entry)
+        self.stored.append(
+            StoredAuditRecord(
+                audit_id=len(self.stored) + 1,
+                created_at=datetime.now(UTC),
+                **asdict(entry),
+            )
+        )
 
     async def count_created_today(self, hp_request_id: int) -> int:
         return len(
@@ -314,6 +326,25 @@ class FakeOrderAuditRepository:
                 and not r.dry_run
             ]
         )
+
+    async def list_latest(self, limit: int, offset: int = 0) -> list[StoredAuditRecord]:
+        latest_first = list(reversed(self.stored))
+        return latest_first[offset : offset + limit]
+
+    async def count(self) -> int:
+        return len(self.stored)
+
+    async def backfill_snapshots(self, updates: list[AuditSnapshot]) -> None:
+        self.backfills.extend(updates)
+        for entry in updates:
+            index = entry.audit_id - 1
+            self.stored[index] = replace(
+                self.stored[index],
+                device_id=entry.device_id,
+                initial_percent_left=entry.initial_percent_left,
+                initial_days_left=entry.initial_days_left,
+                initial_pages_left=entry.initial_pages_left,
+            )
 
 
 class FakeRequestValidationRepository:
@@ -401,6 +432,8 @@ class FakeInsightGateway:
         self.consumable_requests: list[JsonDict] = []
         # Si está seteado, cada cliente tiene su propia lista (tests de dashboard).
         self.requests_by_customer: dict[int, list[JsonDict]] | None = None
+        # Solicitudes ya resueltas (workflow_status="ACTIONED") por cliente.
+        self.actioned_by_customer: dict[int, list[JsonDict]] = {}
         self.requests_error: Exception | None = None
         self.errors_by_customer: dict[int, Exception] = {}
         self.devices_by_id: dict[int, JsonDict] = {}
@@ -422,6 +455,8 @@ class FakeInsightGateway:
             raise self.requests_error
         if customer_id in self.errors_by_customer:
             raise self.errors_by_customer[customer_id]
+        if workflow_status == "ACTIONED":
+            return self.actioned_by_customer.get(customer_id, [])
         if self.requests_by_customer is not None:
             return self.requests_by_customer.get(customer_id, [])
         return self.consumable_requests

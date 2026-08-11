@@ -12,6 +12,7 @@ from src.modules.insumos.presentation.dependencies import (
     build_cancel_order,
     build_dismiss_request,
     build_get_dashboard,
+    build_list_audit,
     build_list_requests,
     build_load_order,
     build_reconcile_order,
@@ -23,6 +24,7 @@ from src.modules.insumos.presentation.schemas.action_schemas import (
     ReconcileRequestBody,
     ReconcileResponse,
 )
+from src.modules.insumos.presentation.schemas.audit_schemas import AuditRowOut
 from src.modules.insumos.presentation.schemas.dashboard_schemas import DashboardResponse
 from src.modules.insumos.presentation.schemas.load_schemas import LoadRequestBody, LoadResponse
 from src.modules.insumos.presentation.schemas.request_row_schemas import RequestRowOut
@@ -62,6 +64,21 @@ async def list_requests(
     (mismo criterio que los catálogos de contadores) — el contrato sigue paginado."""
     rows = await build_list_requests(db).execute(customer_id)
     return Page.of([RequestRowOut.from_row(r) for r in rows], page=page, size=size)
+
+
+@router.get("/audit", response_model=Page[AuditRowOut])
+async def list_audit(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=100, ge=1, le=1000),
+    _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db),
+) -> Page[AuditRowOut]:
+    """Historial permanente de eventos (pedidos y acciones del sistema), más
+    reciente primero. Paginado en SQL — la tabla nunca se poda."""
+    rows, total = await build_list_audit(db).execute(page=page, size=size)
+    return Page(
+        items=[AuditRowOut.from_row(r) for r in rows], total=total, page=page, size=size
+    )
 
 
 @router.post("/requests/{request_id}/load", response_model=LoadResponse)
