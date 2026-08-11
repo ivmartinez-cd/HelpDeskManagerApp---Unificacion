@@ -1,7 +1,25 @@
-/** SCAFFOLD — Historial de Insumos (`/insumos/historial`).
+"use client";
+
+import { Suspense } from "react";
+import { HistorialView } from "@/features/insumos/components/historial/historial-view";
+import { Spinner } from "@/shared/components/ui/spinner";
+
+/** Historial de Insumos (`/insumos/historial`).
  *
- * Placeholder de la fundación: reemplazar por la pantalla real
- * (`/api/insumos/audit`, `/orders/pending`, `/mail-log`, `/alerts`). */
+ * La pantalla lee la pestaña activa de `?tab=` con `useSearchParams()`, que
+ * obliga a un límite de Suspense arriba (mismo patrón que
+ * `app/(app)/contadores/page.tsx`): sin él, Next no puede prerenderizar la
+ * ruta. */
 export default function InsumosHistorialPage() {
-  return <div className="px-9 py-8">Historial de Insumos</div>;
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-64 items-center justify-center">
+          <Spinner />
+        </div>
+      }
+    >
+      <HistorialView />
+    </Suspense>
+  );
 }

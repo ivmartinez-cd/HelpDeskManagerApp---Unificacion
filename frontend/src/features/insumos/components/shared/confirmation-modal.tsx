@@ -34,6 +34,11 @@ interface ConfirmationModalProps {
   /** Label del botón primario. */
   confirmLabel?: string;
   cancelLabel?: string;
+  /** Oculta el botón secundario y deja solo el primario. Para los modales que
+   * no confirman nada y solo se cierran (p.ej. el log completo del Historial,
+   * que el handoff define explícitamente "sin acción secundaria, solo
+   * Cerrar"). Default `false`: el modal sigue teniendo Cancelar + Confirmar. */
+  hideCancel?: boolean;
   /** Palabra que hay que tipear en la variante destructiva. Default `ELIMINAR`. */
   confirmText?: string;
   /** Deshabilita el botón primario y muestra spinner mientras corre la acción. */
@@ -72,6 +77,7 @@ export function ConfirmationModal({
   children,
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
+  hideCancel = false,
   confirmText = "ELIMINAR",
   loading = false,
   error = null,
@@ -138,17 +144,19 @@ export function ConfirmationModal({
         )}
 
         <div className="flex gap-2.5">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className={brandButtonClasses({
-              variant: "outline",
-              className: "flex-1 rounded-[8px] py-[11px]",
-            })}
-          >
-            {cancelLabel}
-          </button>
+          {!hideCancel && (
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className={brandButtonClasses({
+                variant: "outline",
+                className: "flex-1 rounded-[8px] py-[11px]",
+              })}
+            >
+              {cancelLabel}
+            </button>
+          )}
           <button
             type="button"
             onClick={onConfirm}
