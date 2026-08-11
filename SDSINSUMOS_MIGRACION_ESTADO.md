@@ -1,6 +1,7 @@
 # Migración SDSInsumos — estado y próximo paso
 
-Actualizado: 2026-08-11 (Estadísticas, Mail log, Config GET/PUT y Equipos nuevos portados).
+Actualizado: 2026-08-11 (Estadísticas, Mail log, Config GET/PUT, Equipos nuevos y
+Alertas portados).
 
 ## Portado hasta ahora (backend)
 
@@ -23,6 +24,7 @@ Con `a0189fe`, el router de solicitudes del legacy (`routers/requests/` completo
 | Mail log lectura (`mail_log.py`) | `GET /api/insumos/mail-log` (Page[T]) | `7f5de6d` |
 | Config GET/PUT (`config.py`, sin `maybe_auto_load`) | `GET`/`PUT /api/insumos/config` | `704f7f7` |
 | Equipos nuevos (`new_devices.py` + `device_sync.py`) | `/api/insumos/new-devices` (4 endpoints) | `28cbd22` |
+| Alertas endpoints (`alerts.py`, sin el job de escalado) | `GET /api/insumos/alerts`, `POST /alerts/ack` | `b069eb8` |
 
 `a0189fe` además cerró un gap: el upsert del cache ahora graba `supply_status_history`
 (primer avistaje de cada estado), como el legacy.
@@ -34,7 +36,9 @@ Con `a0189fe`, el router de solicitudes del legacy (`routers/requests/` completo
   que lo motivaba.
 - Clientes (`routers/customers.py`, 12 endpoints; incluye scraping del PortalWeb de SDS
   con login humano — el cliente de portal NO está portado)
-- Alertas (`routers/alerts.py` + job de escalado)
+- Job de escalado de alertas (`PollerAlerts`) + siembra de `request_alerts`
+  (`sync_pending_alerts`) + resolución automática al cargar (`resolve_alert`) — los
+  endpoints ya están portados; sin estos tres la tabla no se llena sola
 - Mailer SMTP para insumos (múltiples destinatarios + adjuntos) — el endpoint de
   lectura de `mail_log` ya está portado; falta el envío, que pertenece a los jobs
   de fondo
