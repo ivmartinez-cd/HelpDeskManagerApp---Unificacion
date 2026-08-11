@@ -48,8 +48,13 @@ class Settings(BaseSettings):
     # confirmada), pero cada módulo mantiene su propio bloque de config y su propio
     # cliente: los módulos de negocio son independientes entre sí (import-linter).
     insight_base_url: str = "https://hp-sds-latam.insightportal.net/PortalAPI"
-    insight_api_key: str = ""
-    insight_api_secret: SecretStr = SecretStr("")
+    # Mismo par que sds_api_key/sds_api_secret (contadores) — confirmado en vivo
+    # (2026-08-11) que autentica: es la misma Insight Portal API para ambos módulos,
+    # cada uno con su propio campo de config por la independencia entre módulos.
+    insight_api_key: str = "2bc8f5eaae344c46814190bffd40060d"
+    insight_api_secret: SecretStr = SecretStr(
+        "0iIxVYcz5lH8sTjl6c6B89uvyQ4qyl2bojRPv155onzqkqpANt6culpITUBldR8a"
+    )
     # INSIGHT_STATUS_ON_ORDER: nótese ACTION, no ACTIONED (bug corregido en el legacy).
     insight_mark_actioned: bool = False
     insight_status_on_order: str = "ACTION"
