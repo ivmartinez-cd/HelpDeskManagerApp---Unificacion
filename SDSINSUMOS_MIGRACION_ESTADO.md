@@ -8,13 +8,10 @@ Estadísticas, Mail log, Config GET/PUT, Equipos nuevos, Alertas y Equipos Offli
 
 ## Qué resta hacer, en orden
 
-1. **Clientes** (`routers/customers.py`, 13 endpoints) — comparte el cliente de
-   scraping del PortalWeb (`HttpxSdsPortalGateway`) con Equipos Offline (ya portado);
-   ese cliente ya existe, falta portear los endpoints de Clientes.
-2. **5 jobs de fondo** (poller, autocarga, backup, chequeo offline, alertas,
-   aviso de pedidos por vencer) — primer precedente de scheduler del monorepo,
-   depende de que 1 ya esté portado y de Equipos Offline (ya completo).
-3. **Frontend de Clientes y Equipos offline** — sin pantalla todavía (ver
+1. **5 jobs de fondo** (poller, autocarga, backup, chequeo offline, alertas,
+   aviso de pedidos por vencer) — primer precedente de scheduler del monorepo;
+   todos los módulos que orquesta ya están portados.
+2. **Frontend de Clientes y Equipos offline** — sin pantalla todavía (ver
    `SDSINSUMOS_CARACTERIZACION_FRONTEND.md` para el relevamiento del legacy Vue de
    esas dos vistas).
 
@@ -49,7 +46,8 @@ Con `a0189fe`, el router de solicitudes del legacy (`routers/requests/` completo
 | Config GET/PUT (`config.py`, sin `maybe_auto_load`) | `GET`/`PUT /api/insumos/config` | `704f7f7` |
 | Equipos nuevos (`new_devices.py` + `device_sync.py`) | `/api/insumos/new-devices` (4 endpoints) | `28cbd22` |
 | Alertas endpoints (`alerts.py`, sin el job de escalado) | `GET /api/insumos/alerts`, `POST /alerts/ack` | `b069eb8` |
-| Equipos offline (`offline_devices.py`: 6 endpoints, advisory lock Postgres, portal gateway `httpx`, SOAP verify loop, outage detection, canal directo classify) | `/api/insumos/offline-devices` (list/outages/summary/verify/dismiss/delete) | pendiente commit |
+| Equipos offline (`offline_devices.py`: 6 endpoints, advisory lock Postgres, portal gateway `httpx`, SOAP verify loop, outage detection, canal directo classify) | `/api/insumos/offline-devices` (list/outages/summary/verify/dismiss/delete) | `291f93e` |
+| Clientes (`customers.py`: 13 endpoints, CRUD zone contacts, importación desde PortalWeb + wsAyC, sync desde Insight) | `/api/insumos/customers` (list/patch/bulk-toggle/contacts CRUD/seed/import-from-supply/sds-contacts/zones/zone-contacts-import preview+apply) + `/sync-customers` | `0fa4186` |
 
 `a0189fe` además cerró un gap: el upsert del cache ahora graba `supply_status_history`
 (primer avistaje de cada estado), como el legacy.
@@ -218,11 +216,9 @@ nuevos + device_sync (6) → Alertas (3) → Equipos offline (7) → Clientes/sc
 como una decisión de infraestructura única a tomar antes de encarar cualquiera de los
 dos.
 
-**Ejecutado hasta 2026-08-11: 4, 5, 2, 6, 3, 7 completos** (ver tabla "Portado hasta
-ahora" arriba). Restan **1 → 8** en ese orden — ver "Qué resta hacer" al principio
-de este documento para el detalle actualizado. El cliente de scraping del PortalWeb
-(`HttpxSdsPortalGateway`) ya existe (construido en #7); para #1 (Clientes) solo falta
-portear los endpoints, que reutilizan ese gateway.
+**Ejecutado hasta 2026-08-11: 4, 5, 2, 6, 3, 7, 1 completos** (ver tabla "Portado hasta
+ahora" arriba). Resta **8 (5 jobs de fondo)** — ver "Qué resta hacer" al principio
+de este documento.
 
 Justificación: primero los módulos autocontenidos de bajo riesgo que no requieren
 infraestructura nueva (4, 5, 2-parcial) para consolidar el patrón sobre tablas que ya
