@@ -25,12 +25,22 @@ interface Props {
   setStartDate: (value: string) => void;
   endDate: string;
   setEndDate: (value: string) => void;
-  operadorId: string;
-  setOperadorId: (value: string) => void;
-  soloFacturacion: boolean;
-  setSoloFacturacion: (value: boolean) => void;
   onApplyFilters: () => void;
   loading: boolean;
+  syncing: boolean;
+  onSync: () => void;
+  lastSyncedAt: string | null;
+}
+
+function formatLastSynced(iso: string | null): string {
+  if (!iso) return "Nunca sincronizado";
+  const date = new Date(iso);
+  return `Última sincronización: ${date.toLocaleString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
 }
 
 export function CalendarioHeader({
@@ -48,12 +58,11 @@ export function CalendarioHeader({
   setStartDate,
   endDate,
   setEndDate,
-  operadorId,
-  setOperadorId,
-  soloFacturacion,
-  setSoloFacturacion,
   onApplyFilters,
   loading,
+  syncing,
+  onSync,
+  lastSyncedAt,
 }: Props) {
   return (
     <>
@@ -112,6 +121,17 @@ export function CalendarioHeader({
             Filtros
           </button>
 
+          {/* Sync button */}
+          <button
+            onClick={onSync}
+            disabled={syncing}
+            title={formatLastSynced(lastSyncedAt)}
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 text-muted-foreground ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Sincronizando..." : "Sincronizar"}
+          </button>
+
           {/* Export button */}
           <button
             onClick={onExportCsv}
@@ -123,6 +143,10 @@ export function CalendarioHeader({
           </button>
         </div>
       </div>
+
+      <p className="-mt-2 text-right text-[11px] text-muted-foreground">
+        {formatLastSynced(lastSyncedAt)}
+      </p>
 
       {/* Expandable Filter Panel */}
       {showFilterPanel && (
@@ -143,27 +167,6 @@ export function CalendarioHeader({
             onChange={(e) => setEndDate(e.target.value)}
             className="w-36 text-xs"
           />
-          <div className="w-32">
-            <BrandInput
-              id="operador-id"
-              label="Operador ID"
-              placeholder="Ej: 318"
-              value={operadorId}
-              onChange={(e) => setOperadorId(e.target.value)}
-              className="text-xs"
-            />
-          </div>
-          <div className="flex items-center gap-2 pt-5">
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-foreground">
-              <input
-                type="checkbox"
-                checked={soloFacturacion}
-                onChange={(e) => setSoloFacturacion(e.target.checked)}
-                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
-              />
-              Solo Facturación
-            </label>
-          </div>
           <div className="pt-5 ml-auto flex items-center gap-2">
             <BrandButton variant="outline" size="sm" onClick={onApplyFilters} disabled={loading}>
               <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />

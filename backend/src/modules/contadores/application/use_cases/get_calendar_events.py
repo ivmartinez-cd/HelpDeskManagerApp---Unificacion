@@ -2,21 +2,30 @@ from src.modules.contadores.application.dtos.get_calendar_events_request import 
     GetCalendarEventsRequest,
 )
 from src.modules.contadores.domain.entities.calendar_event import CalendarEvent
-from src.modules.contadores.domain.ports.calendar_port import CalendarPort
+from src.modules.contadores.domain.repositories.calendar_event_repository import (
+    CalendarEventRepository,
+)
 
 
 class GetCalendarEventsUseCase:
-    """Caso de uso para obtener los eventos del calendario de planificación."""
+    """Lee la copia local (sincronizada aparte, ver SyncCalendarEventsUseCase).
+    Superadmin ve todos los operadores; el resto ve solo lo que matchea su
+    propio full_name contra el catálogo de operadores de Gestión — sin match,
+    no ve eventos (no hay a qué operador filtrar)."""
 
-    def __init__(self, calendar_port: CalendarPort) -> None:
-        self._calendar_port = calendar_port
+    def __init__(self, repository: CalendarEventRepository) -> None:
+        self._repository = repository
 
     async def execute(self, request: GetCalendarEventsRequest) -> list[CalendarEvent]:
-        return await self._calendar_port.get_events(
+        operador_id = None
+        if not request.is_superadmin:
+            operador = await self._repository.find_operador_by_nombre(request.full_name)
+            if operador is None:
+                return []
+            operador_id = operador.id
+
+        return await self._repository.list_events(
             start_date=request.start_date,
             end_date=request.end_date,
-            operador_id=request.operador_id,
-            tipo_evento=request.tipo_evento,
-            solo_facturacion=request.solo_facturacion,
+            operador_id=operador_id,
         )
-

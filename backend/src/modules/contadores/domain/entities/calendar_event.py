@@ -8,6 +8,7 @@ class CalendarEvent:
     id: str
     title: str
     start: str
+    operador_id: str | None = None
     all_day: bool = True
     background_color: str | None = None
     border_color: str | None = None

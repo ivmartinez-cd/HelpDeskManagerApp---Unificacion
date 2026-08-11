@@ -1,11 +1,13 @@
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
 import httpx
 
 from src.modules.contadores.domain.entities.calendar_event import CalendarEvent
+from src.modules.contadores.domain.entities.operador import Operador
 from src.modules.contadores.domain.ports.calendar_port import CalendarPort
 from src.modules.contadores.infrastructure.gestion.gestion_session_refresher import (
     refresh_gestion_session,
@@ -16,10 +18,19 @@ from src.shared.infrastructure.config.settings import get_settings
 logger = logging.getLogger(__name__)
 
 _REDIRECT_STATUS_CODES = (301, 302, 303)
+# Gestión no expone un endpoint de datos para el catálogo de operadores de
+# facturación — se scrapea el <select> del filtro de /planificacion/ver.
+_OPERADOR_SELECT_RE = re.compile(
+    r'<select id="planificacion_filter_operador_facturacion"[^>]*>(.*?)</select>',
+    re.IGNORECASE | re.DOTALL,
+)
+_OPERADOR_OPTION_RE = re.compile(r'<option value="([^"]*)"[^>]*>([^<]*)</option>')
 
 
 class GestionPlanificacionClient(CalendarPort):
-    """Cliente HTTP que consume la planificación desde la web de gestión (ajax-by-rango).
+    """Cliente HTTP que consume la planificación desde la web de gestión:
+    eventos (ajax-by-rango) y catálogo de operadores (scrapeado de
+    /planificacion/ver).
 
     La sesión (PHPSESSID) se renueva sola vía login Symfony cuando falta o
     vence (redirect a /login) — ver gestion_session_refresher.py. `cookie`
@@ -47,9 +58,23 @@ class GestionPlanificacionClient(CalendarPort):
         solo_facturacion: bool = True,
     ) -> list[CalendarEvent]:
         params = self._build_params(start_date, end_date, operador_id, tipo_evento)
-        cookie = self._explicit_cookie or await self._ensure_cookie()
-        data = await self._fetch(params, cookie)
-        return self._parse_events(data, solo_facturacion)
+        response = await self._get(
+            "/planificacion/ajax-by-rango",
+            params=params,
+            extra_headers={
+                "Accept": "application/json, text/javascript, */*; q=0.01",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        )
+        try:
+            data = list(response.json())
+        except Exception as exc:
+            raise ExternalServiceError(f"Respuesta inválida de gestión: {exc}") from exc
+        return self._parse_events(data, operador_id, solo_facturacion)
+
+    async def get_operadores(self) -> list[Operador]:
+        response = await self._get("/planificacion/ver")
+        return self._parse_operadores(response.text)
 
     def _build_params(
         self,
@@ -98,42 +123,52 @@ class GestionPlanificacionClient(CalendarPort):
             )
             return None
 
-    async def _fetch(
-        self, params: dict[str, str | list[str]], cookie: str
-    ) -> list[dict[str, Any]]:
+    async def _get(
+        self,
+        path: str,
+        *,
+        params: dict[str, str | list[str]] | None = None,
+        extra_headers: dict[str, str] | None = None,
+    ) -> httpx.Response:
+        cookie = self._explicit_cookie or await self._ensure_cookie()
         async with httpx.AsyncClient(timeout=self._timeout, follow_redirects=False) as client:
-            response = await self._request(client, params, cookie)
+            response = await self._request(client, path, params, cookie, extra_headers)
             if response.status_code in _REDIRECT_STATUS_CODES and not self._explicit_cookie:
                 cookie = await self._ensure_cookie(force_refresh=True)
-                response = await self._request(client, params, cookie)
+                response = await self._request(client, path, params, cookie, extra_headers)
             try:
                 response.raise_for_status()
-                return list(response.json())
+                return response
             except Exception as exc:
                 raise ExternalServiceError(
                     f"Error al consultar el servicio de gestión: {exc}"
                 ) from exc
 
     async def _request(
-        self, client: httpx.AsyncClient, params: dict[str, str | list[str]], cookie: str
+        self,
+        client: httpx.AsyncClient,
+        path: str,
+        params: dict[str, str | list[str]] | None,
+        cookie: str,
+        extra_headers: dict[str, str] | None,
     ) -> httpx.Response:
         headers = {
-            "Accept": "application/json, text/javascript, */*; q=0.01",
             "Cookie": cookie,
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "X-Requested-With": "XMLHttpRequest",
+            **(extra_headers or {}),
         }
         try:
-            return await client.get(
-                f"{self._base_url}/planificacion/ajax-by-rango", params=params, headers=headers
-            )
+            return await client.get(f"{self._base_url}{path}", params=params, headers=headers)
         except Exception as exc:
             raise ExternalServiceError(
                 f"Error al consultar el servicio de gestión: {exc}"
             ) from exc
 
     def _parse_events(
-        self, data: list[dict[str, Any]], solo_facturacion: bool
+        self,
+        data: list[dict[str, Any]],
+        operador_id: str | None,
+        solo_facturacion: bool,
     ) -> list[CalendarEvent]:
         events: list[CalendarEvent] = []
         for item in data:
@@ -143,10 +178,10 @@ class GestionPlanificacionClient(CalendarPort):
                 "Facturaci" in string_tipo or "(Facturaci" in title_text
             ):
                 continue
-            events.append(self._to_event(item))
+            events.append(self._to_event(item, operador_id))
         return events
 
-    def _to_event(self, item: dict[str, Any]) -> CalendarEvent:
+    def _to_event(self, item: dict[str, Any], operador_id: str | None) -> CalendarEvent:
         raw_id = item.get("id")
         if isinstance(raw_id, list):
             event_id = str(raw_id[0]) if raw_id else ""
@@ -157,6 +192,9 @@ class GestionPlanificacionClient(CalendarPort):
             id=event_id,
             title=item.get("title", ""),
             start=item.get("start", ""),
+            # Los eventos de facturación traen su operador (username) en la
+            # propia respuesta; el parámetro del filtro queda como fallback.
+            operador_id=item.get("operador") or operador_id,
             all_day=item.get("allDay", True),
             background_color=item.get("backgroundColor"),
             border_color=item.get("borderColor"),
@@ -177,3 +215,17 @@ class GestionPlanificacionClient(CalendarPort):
             costo_seguro=item.get("costo_seguro"),
             costo_recambio=item.get("costo_recambio"),
         )
+
+    def _parse_operadores(self, html: str) -> list[Operador]:
+        match = _OPERADOR_SELECT_RE.search(html)
+        if not match:
+            raise ExternalServiceError(
+                "No se encontró el selector de operadores en /planificacion/ver de "
+                "Gestión (¿cambió el formulario?)."
+            )
+        operadores: list[Operador] = []
+        for value, label in _OPERADOR_OPTION_RE.findall(match.group(1)):
+            if not value:
+                continue
+            operadores.append(Operador(id=value, nombre=label.strip()))
+        return operadores

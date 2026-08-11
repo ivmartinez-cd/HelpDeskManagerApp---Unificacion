@@ -46,21 +46,19 @@ export function CalendarioTool() {
     setStartDate,
     endDate,
     setEndDate,
-    operadorId,
-    setOperadorId,
-    soloFacturacion,
-    setSoloFacturacion,
     events,
     loading,
     error,
     selectedEvent,
     setSelectedEvent,
     refetch,
+    syncing,
+    syncError,
+    lastSyncedAt,
+    sync,
   } = useCalendarioEvents({
     initialStart: defaultDates.startStr,
     initialEnd: defaultDates.endStr,
-    initialOperadorId: "318",
-    initialSoloFacturacion: true,
   });
 
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -165,13 +163,18 @@ export function CalendarioTool() {
         setStartDate={setStartDate}
         endDate={endDate}
         setEndDate={setEndDate}
-        operadorId={operadorId}
-        setOperadorId={setOperadorId}
-        soloFacturacion={soloFacturacion}
-        setSoloFacturacion={setSoloFacturacion}
         onApplyFilters={refetch}
         loading={loading}
+        syncing={syncing}
+        onSync={sync}
+        lastSyncedAt={lastSyncedAt}
       />
+
+      {syncError && (
+        <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-xs text-destructive">
+          {syncError}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex h-96 items-center justify-center rounded-xl border border-border bg-card">

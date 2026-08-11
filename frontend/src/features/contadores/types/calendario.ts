@@ -2,6 +2,7 @@ export interface CalendarEvent {
   id: string;
   title: string;
   start: string;
+  operador_id?: string | null;
   all_day: boolean;
   background_color?: string | null;
   border_color?: string | null;
@@ -26,5 +27,23 @@ export interface CalendarEvent {
 export interface CalendarFilterParams {
   start: string;
   end: string;
-  operador_id?: string;
+}
+
+export interface MiOperador {
+  operador_id: string | null;
+  nombre: string | null;
+  color: string | null;
+}
+
+export interface SyncStatus {
+  last_synced_at: string | null;
+  total_events: number;
+}
+
+export interface SyncCalendarioResult {
+  operadores_count: number;
+  events_count: number;
+  range_start: string;
+  range_end: string;
+  synced_at: string;
 }

@@ -1,5 +1,5 @@
 import { httpClient } from "@/services/http-client";
-import type { CalendarEvent } from "../types/calendario";
+import type { CalendarEvent, MiOperador, SyncCalendarioResult, SyncStatus } from "../types/calendario";
 
 /** Nombres tal como los serializa el backend real (`RunDb3ExportResponse` en
  * `db3_schemas.py`, camelCase vía `serialization_alias`) — este tipo tenía
@@ -171,26 +171,22 @@ export const contadoresApi = {
   // Download Output File
   getOutputUrl: (filename: string) => `/api/contadores/outputs/${encodeURIComponent(filename)}`,
 
-  // Calendario de Planificación
-  getCalendarioEvents: (params: {
-    start: string;
-    end: string;
-    operador_id?: string;
-    solo_facturacion?: boolean;
-  }) => {
+  // Calendario de Planificación — siempre lee de la copia local (ver
+  // /calendario/sync); el operador se resuelve solo del lado del backend
+  // según quién inició sesión.
+  getCalendarioEvents: (params: { start: string; end: string }) => {
     const searchParams = new URLSearchParams({
       start: params.start,
       end: params.end,
-      solo_facturacion: String(params.solo_facturacion ?? true),
+      size: "500",
     });
-    if (params.operador_id) {
-      searchParams.set("operador_id", params.operador_id);
-    }
-    searchParams.set("size", "500");
     return httpClient.get<Page<CalendarEvent>>(
       `/api/contadores/calendario?${searchParams.toString()}`,
     );
   },
+  getMiOperador: () => httpClient.get<MiOperador>("/api/contadores/calendario/mi-operador"),
+  getSyncStatus: () => httpClient.get<SyncStatus>("/api/contadores/calendario/sync/status"),
+  syncCalendario: () => httpClient.post<SyncCalendarioResult>("/api/contadores/calendario/sync"),
 };
 
 

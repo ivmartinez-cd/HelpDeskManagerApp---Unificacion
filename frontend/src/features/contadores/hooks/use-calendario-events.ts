@@ -7,36 +7,25 @@ import type { CalendarEvent } from "../types/calendario";
 interface UseCalendarioEventsOptions {
   initialStart: string;
   initialEnd: string;
-  initialOperadorId?: string;
-  initialSoloFacturacion?: boolean;
 }
 
-export function useCalendarioEvents({
-  initialStart,
-  initialEnd,
-  initialOperadorId = "318",
-  initialSoloFacturacion = true,
-}: UseCalendarioEventsOptions) {
+export function useCalendarioEvents({ initialStart, initialEnd }: UseCalendarioEventsOptions) {
   const [startDate, setStartDate] = useState<string>(initialStart);
   const [endDate, setEndDate] = useState<string>(initialEnd);
-  const [operadorId, setOperadorId] = useState<string>(initialOperadorId);
-  const [soloFacturacion, setSoloFacturacion] = useState<boolean>(initialSoloFacturacion);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [syncing, setSyncing] = useState<boolean>(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await contadoresApi.getCalendarioEvents({
-        start: startDate,
-        end: endDate,
-        operador_id: operadorId || undefined,
-        solo_facturacion: soloFacturacion,
-      });
+      const response = await contadoresApi.getCalendarioEvents({ start: startDate, end: endDate });
       setEvents(response.items);
       setTotal(response.total);
     } catch (err: unknown) {
@@ -45,8 +34,7 @@ export function useCalendarioEvents({
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate, operadorId, soloFacturacion]);
-
+  }, [startDate, endDate]);
 
   useEffect(() => {
     // fetch-on-mount/on-filter-change; `fetchEvents` flips `loading`
@@ -55,15 +43,33 @@ export function useCalendarioEvents({
     void fetchEvents();
   }, [fetchEvents]);
 
+  useEffect(() => {
+    contadoresApi
+      .getSyncStatus()
+      .then((status) => setLastSyncedAt(status.last_synced_at))
+      .catch((err: unknown) => console.error("Error al consultar el estado de sync:", err));
+  }, []);
+
+  const sync = useCallback(async () => {
+    setSyncing(true);
+    setSyncError(null);
+    try {
+      const result = await contadoresApi.syncCalendario();
+      setLastSyncedAt(result.synced_at);
+      await fetchEvents();
+    } catch (err: unknown) {
+      console.error("Error al sincronizar el calendario:", err);
+      setSyncError(err instanceof Error ? err.message : "Error al sincronizar con Gestión.");
+    } finally {
+      setSyncing(false);
+    }
+  }, [fetchEvents]);
+
   return {
     startDate,
     setStartDate,
     endDate,
     setEndDate,
-    operadorId,
-    setOperadorId,
-    soloFacturacion,
-    setSoloFacturacion,
     events,
     total,
     loading,
@@ -71,5 +77,9 @@ export function useCalendarioEvents({
     selectedEvent,
     setSelectedEvent,
     refetch: fetchEvents,
+    syncing,
+    syncError,
+    lastSyncedAt,
+    sync,
   };
 }
