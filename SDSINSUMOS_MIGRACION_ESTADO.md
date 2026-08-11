@@ -1,6 +1,6 @@
 # Migración SDSInsumos — estado y próximo paso
 
-Actualizado: 2026-08-11 (Estadísticas portadas).
+Actualizado: 2026-08-11 (Estadísticas y Mail log portados).
 
 ## Portado hasta ahora (backend)
 
@@ -20,6 +20,7 @@ Con `a0189fe`, el router de solicitudes del legacy (`routers/requests/` completo
 | Detalle equipo/consumible (5 reads de `query.py`) | `GET /api/insumos/devices/...` | `e35f454` |
 | `GET /orders/pending` (`pending_orders.py`) | `GET /api/insumos/orders/pending` | `a0189fe` |
 | Estadísticas (`estadisticas.py` + `business_hours.py`) | `GET /api/insumos/estadisticas` y `/estadisticas/clientes/{id}` | `2412c4a` |
+| Mail log lectura (`mail_log.py`) | `GET /api/insumos/mail-log` (Page[T]) | `7f5de6d` |
 
 `a0189fe` además cerró un gap: el upsert del cache ahora graba `supply_status_history`
 (primer avistaje de cada estado), como el legacy.
@@ -33,7 +34,9 @@ Con `a0189fe`, el router de solicitudes del legacy (`routers/requests/` completo
   con login humano — el cliente de portal NO está portado)
 - Configuración (`routers/config.py`, GET/PUT con validaciones encadenadas)
 - Alertas (`routers/alerts.py` + job de escalado)
-- Mail log (`routers/mail_log.py`) + mailer
+- Mailer SMTP para insumos (múltiples destinatarios + adjuntos) — el endpoint de
+  lectura de `mail_log` ya está portado; falta el envío, que pertenece a los jobs
+  de fondo
 - Equipos nuevos (`routers/new_devices.py` + `device_sync.py`)
 - Equipos offline (`routers/offline_devices.py` — verify rate-limited, delete
   irreversible gateado por `SDS_DELETE_DRY_RUN`)
