@@ -44,16 +44,16 @@ class Settings(BaseSettings):
     sds_timeout_seconds: float = 20.0
 
     # Módulo insumos — misma Insight Portal API que sds_* de contadores (misma base
-    # URL; la pregunta abierta de Fase 1 sobre si eran la misma integración quedó
-    # confirmada), pero cada módulo mantiene su propio bloque de config y su propio
-    # cliente: los módulos de negocio son independientes entre sí (import-linter).
+    # URL y mismo flujo de login), pero **cliente de API registrado aparte**: probado
+    # en vivo (2026-08-11) que el par de contadores SÍ autentica, pero el par propio de
+    # SDSInsumos (rescatado de su .env real, no el .env.example) es el correcto para
+    # este módulo — cada app parece tener su propio client id/secret contra el mismo
+    # backend HP. Cada módulo mantiene su propio bloque de config y su propio cliente
+    # de todas formas por la independencia entre módulos de negocio (import-linter).
     insight_base_url: str = "https://hp-sds-latam.insightportal.net/PortalAPI"
-    # Mismo par que sds_api_key/sds_api_secret (contadores) — confirmado en vivo
-    # (2026-08-11) que autentica: es la misma Insight Portal API para ambos módulos,
-    # cada uno con su propio campo de config por la independencia entre módulos.
-    insight_api_key: str = "2bc8f5eaae344c46814190bffd40060d"
+    insight_api_key: str = "cbcf148472e74e868c44199f507aa2f7"
     insight_api_secret: SecretStr = SecretStr(
-        "0iIxVYcz5lH8sTjl6c6B89uvyQ4qyl2bojRPv155onzqkqpANt6culpITUBldR8a"
+        "Ra5tjX4UbZNbpRMzVGKrN1KcBsLDJFOYvJzWNwqk5ukbdlxrJthO7NxqthNSM4Yr"
     )
     # INSIGHT_STATUS_ON_ORDER: nótese ACTION, no ACTIONED (bug corregido en el legacy).
     insight_mark_actioned: bool = False
