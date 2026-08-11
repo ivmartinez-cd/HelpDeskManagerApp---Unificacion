@@ -54,6 +54,8 @@ class CdSupply:
     nro_serie: str = ""
     sku: str = ""  # NroArticulo
     descripcion: str = ""
+    sucursal: str = ""  # "Sucursal" — se usa como nombre de zona en import-from-supply
+    sector: str = ""   # "Sector" — se copia a sol_sector/dest_sector
     solicitante_nombre: str = ""  # "Solicitante" (nombre completo, sin separar apellido)
     solicitante_telefono: str = ""
     solicitante_email: str = ""

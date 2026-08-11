@@ -14,10 +14,12 @@ import logging
 
 import httpx
 
+from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.infrastructure.portal.portal_parsing import (
     MAX_HTML_BYTES,
     extract_csrf_token,
     is_delete_success,
+    parse_delivery_location_contact,
 )
 from src.shared.domain.errors import ExternalServiceError
 
@@ -79,6 +81,34 @@ class HttpxSdsPortalGateway:
         session_expired = "/PortalWeb/login" in str(resp.url)
         html_content = resp.text[:MAX_HTML_BYTES]
         return extract_csrf_token(html_content), session_expired
+
+    async def ensure_login(self) -> None:
+        """Pre-calienta la sesión antes de disparar lookups en paralelo."""
+        await self._ensure_login()
+
+    async def get_delivery_location_contact(
+        self, customer_id: int, location_id: int
+    ) -> ContactInfo | None:
+        """Contacto cargado en la delivery location, o None si no tiene ninguno.
+
+        Lanza ExternalServiceError si la location no existe o el parsing falla.
+        """
+        await self._ensure_login()
+        url = (
+            f"{self._base_url}/PortalWeb/customers/{customer_id}"
+            f"/delivery-locations/{location_id}"
+        )
+        resp = await self._client.get(url)
+        if resp.status_code == 404:
+            raise ExternalServiceError(
+                f"Delivery location {location_id} (cliente {customer_id}) no existe"
+            )
+        resp.raise_for_status()
+        html_content = resp.text[:MAX_HTML_BYTES]
+        try:
+            return parse_delivery_location_contact(html_content, location_id)
+        except ValueError as exc:
+            raise ExternalServiceError(str(exc)) from exc
 
     async def delete_device(self, device_id: int) -> None:
         await self._ensure_login()

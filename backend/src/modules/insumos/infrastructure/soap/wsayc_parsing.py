@@ -139,6 +139,8 @@ def supply_from_dict(data: dict[str, object]) -> CdSupply:
         nro_serie=_text(data, "NroSerie"),
         sku=_text(data, "NroArticulo"),
         descripcion=_text(data, "Descripcion"),
+        sucursal=_text(data, "Sucursal"),
+        sector=_text(data, "Sector"),
         solicitante_nombre=_text(data, "Solicitante"),
         solicitante_telefono=_text(data, "TelefonoSolicitante"),
         solicitante_email=_text(data, "EmailSolicitante"),
