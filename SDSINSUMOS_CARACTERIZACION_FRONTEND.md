@@ -61,8 +61,9 @@ con captura o export real de las 8 pantallas, o al menos una decisión explícit
 
 ### Resuelto (2026-08-10) — handoff entregado y decisiones cerradas
 
-El handoff existe: `Portal mesa de ayuda corporativo_2/design_handoff_sds_insumos/` (README +
-6 patrones `.dc.html`). Prohíbe explícitamente el celeste `#00a4e4` y el violeta `#662D91`.
+El handoff existe: `design_handoff_sds_insumos/` (README +
+6 patrones `.dc.html`; reubicado a la raíz del repo el 2026-08-11, antes vivía anidado en
+`Portal mesa de ayuda corporativo_2/`). Prohíbe explícitamente el celeste `#00a4e4` y el violeta `#662D91`.
 Decisiones tomadas con el usuario en sesión:
 
 1. **Patrones sí, contenido real**: los 6 patrones visuales y tokens del handoff son el design

@@ -207,7 +207,7 @@ Otras piezas a portar del mismo camino, ya extraídas del código real:
   (ver punto 2 arriba).
 - Para UI: no inventar patrones sin mockup existente (regla dura de esta sesión). El handoff
   del diseñador para Insumos ya está commiteado en
-  `Portal mesa de ayuda corporativo_2/design_handoff_sds_insumos/`. **Pendiente sin resolver**:
+  `design_handoff_sds_insumos/` (reubicado a la raíz del repo el 2026-08-11). **Pendiente sin resolver**:
   el Patrón 2 (gráfico de tendencia) del handoff reintroduce magenta `#E32D91`, que viola la
   regla de pureza de marca de esta app (solo línea Institucional: naranja `#F7941D` / gris
   `#58595B`, ni siquiera como acento puntual, con la única excepción de semaforización de

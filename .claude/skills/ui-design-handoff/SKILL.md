@@ -17,13 +17,13 @@ Contadores' business logic.
 ## 1. Find (or request) the handoff before writing any component
 
 Design handoffs live in folders at the repo root named `design_handoff_<something>/` (e.g.
-`Portal mesa de ayuda corporativo_1/design_handoff_mesa_de_ayuda/`), each with a `README.md`
+`design_handoff_mesa_de_ayuda/`), each with a `README.md`
 describing screens/tokens/interactions plus the original static `.dc.html` reference files and
 an `assets/` folder with the real exported PNGs/logos. Before touching UI for a module:
 
 1. Search the repo root for a `design_handoff_*` (or similarly named) folder that matches the
    module you're building. If more than one candidate exists for the same app (this has happened
-   — a duplicate upload with an extra `_1` suffix), diff them; the more complete one usually has
+   before — a duplicate upload with an extra suffix), diff them; the more complete one usually has
    more screens documented.
 2. Read that folder's `README.md` in full — tokens, screen-by-screen layout, interactions,
    assets — before writing or editing a single component. Skimming it leads to exactly the kind
