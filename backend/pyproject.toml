@@ -17,6 +17,10 @@ dependencies = [
     "openpyxl==3.1.5",
     "httpx==0.28.1",
     "playwright>=1.62.0",
+    "zeep==4.3.3",
+    # Windows no trae base de zonas horarias del sistema (zoneinfo la necesita para
+    # America/Argentina/Buenos_Aires); en Linux es redundante pero inocuo.
+    "tzdata==2026.3",
 ]
 
 [dependency-groups]
@@ -61,6 +65,12 @@ mypy_path = "src"
 [[tool.mypy.overrides]]
 module = "src.modules.*.domain.*"
 disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+# zeep no publica stubs ni py.typed — el adapter lo aísla detrás del puerto WsAycGateway.
+module = "zeep.*"
+ignore_missing_imports = true
+follow_imports = "skip"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
