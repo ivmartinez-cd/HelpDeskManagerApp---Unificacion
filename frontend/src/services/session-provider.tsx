@@ -21,6 +21,7 @@ interface SessionProviderProps {
 
 export function SessionProvider({ user, permissions, modules, children }: SessionProviderProps) {
   function can(module: string, action: string): boolean {
+    if (user.isSuperadmin) return true;
     return permissions.some((p) => p.module === module && p.action === action);
   }
 

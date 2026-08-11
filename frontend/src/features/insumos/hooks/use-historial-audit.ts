@@ -89,6 +89,7 @@ export function useHistorialAudit(): HistorialAuditState {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial, mismo patrón que use-admin-users
     void reload();
   }, [reload]);
 
