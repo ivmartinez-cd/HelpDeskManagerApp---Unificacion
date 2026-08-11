@@ -1,7 +1,7 @@
 # Migración SDSInsumos — estado y próximo paso
 
-Actualizado: 2026-08-11 (Estadísticas, Mail log, Config GET/PUT, Equipos nuevos y
-Alertas portados).
+Actualizado: 2026-08-11 (frontend: fundación + 5 pantallas portadas, sobre el backend
+ya portado de Estadísticas, Mail log, Config GET/PUT, Equipos nuevos y Alertas).
 
 ## Portado hasta ahora (backend)
 
@@ -50,8 +50,44 @@ Con `a0189fe`, el router de solicitudes del legacy (`routers/requests/` completo
   chequeo offline, alertas, aviso de pedidos por vencer (`find_orders_due_for_alert` y
   el mail a logística quedaron explícitamente diferidos en `a0189fe`)
 
-Después del backend: todo el frontend (preparar handoff de diseño primero — ver skill
-`ui-design-handoff`).
+## Portado hasta ahora (frontend)
+
+Handoff `design_handoff_sds_insumos/` (ya aprobado el 2026-08-10) + caracterización del
+legacy Vue en `SDSINSUMOS_CARACTERIZACION_FRONTEND.md`. Solo se construyó UI para las
+pantallas cuyo backend ya está portado (arriba) — **Clientes y Equipos Offline no tienen
+pantalla todavía**, no tiene backend que consumir.
+
+| Pantalla | Ruta | Commit |
+|---|---|---|
+| Fundación (API client, tipos, primitivos Patrón 1/2/4/6, routing, submenú sidebar) | — | `a2c5d3b` |
+| Dashboard (tabla expandible, 5 modales de conflicto, countdown, detalle de consumible, alertas) | `/insumos` | `fb6c0d9` |
+| Estadísticas (global + detalle de cliente, modo impresión) | `/insumos/estadisticas` | `5394b9b` |
+| Equipos Nuevos + Configuración (6 secciones reales, no las 7 del handoff) | `/insumos/equipos-nuevos`, `/insumos/configuracion` | `561d033` |
+| Historial (5 pestañas) | `/insumos/historial` | `7a8a1c6` |
+| Fix `can()` para superadmin (bug preexistente en `session-provider.tsx`, no específico de insumos) | — | `86c1a42` |
+
+Construido con 1 agente de fundación + 4 agentes en paralelo (uno por pantalla), cada
+uno verificado con `tsc --noEmit`, `eslint` y una pasada real en navegador (Playwright,
+sesión autenticada) contra el backend real. La base de datos de desarrollo está vacía
+(sin pedidos/auditoría/clientes) — las pantallas están verificadas contra el backend
+real mostrando su estado vacío, no contra datos de producción.
+
+Decisiones/gaps a tener en cuenta:
+- El handoff describe "9 pantallas" que en realidad mezclan contenido de Contadores
+  (SDS/ERS/FTP, "Estimación en 0", etc.) — se usó solo el sistema visual (6 patrones)
+  con el contenido real de insumos, no esas 9 pantallas literales.
+- `GET /audit` no tiene filtro server-side por tipo de evento ni rango — Historial trae
+  bloques de 500 y filtra/pagina client-side. Si el volumen crece, conviene agregar
+  filtro real al endpoint.
+- Alertas no tienen pantalla propia ni bell en el sidebar — quedaron como sección
+  colapsable dentro del Dashboard, con severidad derivada de la antigüedad de la
+  solicitud (el backend no expone un nivel explícito).
+- Chart.js 4.5 + react-chartjs-2 son dependencias nuevas (el handoff pedía Chart.js,
+  no ApexCharts como el legacy Vue).
+- Sort de tablas con persistencia en `localStorage`: solo en Equipos Nuevos. Historial
+  no lo tiene (fuera de alcance de esa ronda).
+- Notificaciones de escritorio (Web Notifications API) del Dashboard/Configuración
+  legacy no se portaron — quedan fuera de alcance.
 
 ## Decisión 2026-08-11: scan incremental descartado por ahora
 
