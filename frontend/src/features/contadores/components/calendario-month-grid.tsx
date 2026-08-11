@@ -1,6 +1,11 @@
 "use client";
 
-import { formatPillText, getEventPillStyle, WEEKDAYS } from "../utils/calendario-format";
+import {
+  formatPillText,
+  getEventPillClassName,
+  getEventPillInlineStyle,
+  WEEKDAYS,
+} from "../utils/calendario-format";
 import type { CalendarEvent } from "../types/calendario";
 
 export interface GridDay {
@@ -63,7 +68,8 @@ export function CalendarioMonthGrid({ gridDays, eventsByDayMap, onSelectEvent }:
               {/* Day Events Pills List */}
               <div className="flex flex-col gap-1 overflow-y-auto max-h-[140px] pr-0.5 scrollbar-thin">
                 {dayEvents.map((evt, evtIdx) => {
-                  const pillStyle = getEventPillStyle(evt);
+                  const pillClassName = getEventPillClassName(evt);
+                  const pillStyle = getEventPillInlineStyle(evt);
                   const displayLabel = formatPillText(evt);
 
                   return (
@@ -71,7 +77,8 @@ export function CalendarioMonthGrid({ gridDays, eventsByDayMap, onSelectEvent }:
                       key={`${evt.id}-${cell.dateStr}-${evtIdx}`}
                       onClick={() => onSelectEvent(evt)}
                       title={displayLabel}
-                      className={`group cursor-pointer rounded-full px-2.5 py-1 text-[11px] font-semibold leading-tight shadow-2xs transition-all ${pillStyle}`}
+                      style={pillStyle}
+                      className={`group cursor-pointer rounded-full px-2.5 py-1 text-[11px] font-semibold leading-tight shadow-2xs transition-all ${pillClassName}`}
                     >
                       <div className="truncate">{displayLabel}</div>
                     </div>

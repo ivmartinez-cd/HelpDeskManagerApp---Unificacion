@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { CalendarEvent } from "../types/calendario";
 
 export function formatDateLocal(d: Date): string {
@@ -52,9 +53,14 @@ export function formatPillText(evt: CalendarEvent): string {
   return raw;
 }
 
-// Solo línea Institucional Canal Directo (naranja/gris), diferenciada por
-// tono y opacidad — sin colores nuevos.
-export function getEventPillStyle(evt: CalendarEvent): string {
+// El color por evento viene de Gestión (background_color/border_color, uno
+// por operador/tomador) y se respeta tal cual. Sin ese dato, se cae a la
+// línea Institucional Canal Directo (naranja/gris) por tipo de evento.
+export function getEventPillClassName(evt: CalendarEvent): string {
+  if (evt.background_color) {
+    return "text-white border border-black/10 hover:brightness-95";
+  }
+
   const tipo = (evt.string_tipo_evento || "").toLowerCase();
   const title = (evt.title || "").toLowerCase();
 
@@ -65,6 +71,14 @@ export function getEventPillStyle(evt: CalendarEvent): string {
     return "bg-brand-gray text-white hover:bg-brand-charcoal";
   }
   return "bg-brand-gray/50 text-white hover:bg-brand-gray/70";
+}
+
+export function getEventPillInlineStyle(evt: CalendarEvent): CSSProperties | undefined {
+  if (!evt.background_color) return undefined;
+  return {
+    backgroundColor: evt.background_color,
+    borderColor: evt.border_color || evt.background_color,
+  };
 }
 
 export const WEEKDAYS = ["LUN", "MAR", "MIÉR", "JUEV", "VIER", "SÁB", "DOM"];
