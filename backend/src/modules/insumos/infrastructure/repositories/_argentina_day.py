@@ -5,14 +5,18 @@ Equivalente Postgres del `date(created_at, 'localtime')` del legacy, pero explí
 zona horaria del servidor/contenedor (caracterización §6.2).
 """
 
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import ColumnElement, SQLColumnExpression, func
 
 _ARGENTINA_TZ = "America/Argentina/Buenos_Aires"
 
 
+def argentina_day(column: SQLColumnExpression[datetime]) -> ColumnElement[date]:
+    """El día calendario argentino de un timestamptz — el "día" de las estadísticas."""
+    return func.date(func.timezone(_ARGENTINA_TZ, column))
+
+
 def is_today_argentina(column: SQLColumnExpression[datetime]) -> ColumnElement[bool]:
-    local_day = func.date(func.timezone(_ARGENTINA_TZ, column))
     today = func.date(func.timezone(_ARGENTINA_TZ, func.now()))
-    return local_day == today
+    return argentina_day(column) == today

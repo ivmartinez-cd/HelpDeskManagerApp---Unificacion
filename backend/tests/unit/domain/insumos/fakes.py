@@ -1,7 +1,7 @@
 """Fakes compartidos de los puertos de insumos para tests unitarios."""
 
 from dataclasses import asdict, replace
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from src.modules.insumos.domain.entities.audit_record import (
     EVENT_CREATED,
@@ -16,6 +16,17 @@ from src.modules.insumos.domain.entities.processed_request import (
     ProcessedRequest,
 )
 from src.modules.insumos.domain.repositories.insight_gateway import JsonDict
+from src.modules.insumos.domain.value_objects.audit_statistics import (
+    CustomerActivity,
+    DailyEventCount,
+    DeviceCount,
+    DispatchRow,
+    FailureReasonCount,
+    FulfillmentRow,
+    RecentFailure,
+    SkuCount,
+    SourceSplit,
+)
 from src.modules.insumos.domain.value_objects.cd_supply import (
     CachedSupply,
     CdIncident,
@@ -553,3 +564,86 @@ class FakeInsightGateway:
             }
         )
         return {"ok": True}
+
+
+class FakeAuditStatisticsRepository:
+    """Agregados pre-sembrados por atributo: la traducción a SQL se verifica en
+    integración, acá interesa qué hace el caso de uso con lo que le devuelven.
+    `totals_by_range` es un dict a propósito — deja aseverar que el período previo se
+    consultó con el rango exacto y no con el actual."""
+
+    def __init__(self) -> None:
+        self.earliest: date | None = None
+        self.names: dict[int, str] = {}
+        self.counts: list[DailyEventCount] = []
+        self.totals_by_range: dict[tuple[date, date], dict[str, int]] = {}
+        self.customers: list[CustomerActivity] = []
+        self.skus: list[SkuCount] = []
+        self.devices: list[DeviceCount] = []
+        self.reasons: list[FailureReasonCount] = []
+        self.failures: list[RecentFailure] = []
+        self.split = SourceSplit(auto=0, total=0)
+        self.fulfillment: list[FulfillmentRow] = []
+        self.dispatch: list[DispatchRow] = []
+        self.totals_calls: list[tuple[date, date, int | None]] = []
+
+    async def earliest_day(self) -> date | None:
+        return self.earliest
+
+    async def customer_name(self, customer_id: int) -> str | None:
+        return self.names.get(customer_id)
+
+    async def daily_counts(
+        self, start: date, end: date, *, customer_id: int | None = None
+    ) -> list[DailyEventCount]:
+        return list(self.counts)
+
+    async def event_totals(
+        self, start: date, end: date, *, customer_id: int | None = None
+    ) -> dict[str, int]:
+        self.totals_calls.append((start, end, customer_id))
+        return dict(self.totals_by_range.get((start, end), {}))
+
+    async def customer_activity(self, start: date, end: date) -> list[CustomerActivity]:
+        return list(self.customers)
+
+    async def top_skus(
+        self, start: date, end: date, *, customer_id: int | None = None
+    ) -> list[SkuCount]:
+        return list(self.skus)
+
+    async def top_devices(
+        self, start: date, end: date, customer_id: int, limit: int
+    ) -> list[DeviceCount]:
+        return self.devices[:limit]
+
+    async def failure_reasons(
+        self, start: date, end: date, customer_id: int, limit: int
+    ) -> list[FailureReasonCount]:
+        return self.reasons[:limit]
+
+    async def recent_failures(
+        self, start: date, end: date, customer_id: int, limit: int
+    ) -> list[RecentFailure]:
+        return self.failures[:limit]
+
+    async def source_split(self, start: date, end: date, customer_id: int) -> SourceSplit:
+        return self.split
+
+    async def fulfillment_rows(
+        self, start: date, end: date, customer_id: int
+    ) -> list[FulfillmentRow]:
+        return list(self.fulfillment)
+
+    async def dispatch_rows(
+        self, start: date, end: date, customer_id: int
+    ) -> list[DispatchRow]:
+        return list(self.dispatch)
+
+
+class FakeKnownDeviceRepository:
+    def __init__(self) -> None:
+        self.monitored: dict[int, int] = {}
+
+    async def count_monitored_by_customer(self) -> dict[int, int]:
+        return dict(self.monitored)

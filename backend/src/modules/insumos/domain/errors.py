@@ -1,4 +1,19 @@
-from src.shared.domain.errors import BusinessRuleViolationError, ExternalServiceError
+from typing import ClassVar
+
+from src.shared.domain.errors import (
+    BusinessRuleViolationError,
+    ExternalServiceError,
+    ValidationError,
+)
+
+
+class RangoDeEstadisticasInvalidoError(ValidationError):
+    """Rango de fechas incoherente en /estadisticas. 422 (y no el 400 default de
+    ValidationError) para preservar el contrato del legacy, que devolvía 422 tanto
+    para el formato de fecha como para el rango invertido."""
+
+    http_status: ClassVar[int] = 422
+    default_code: ClassVar[str] = "RANGO_DE_ESTADISTICAS_INVALIDO"
 
 
 class SerieNoActivaEnCanalDirectoError(BusinessRuleViolationError):

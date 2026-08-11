@@ -15,6 +15,9 @@ from src.modules.contadores.presentation.sds_router import router as sds_router
 from src.modules.contadores.presentation.tools_router import router as contadores_tools_router
 from src.modules.insumos.presentation.devices_router import router as insumos_devices_router
 from src.modules.insumos.presentation.requests_router import router as insumos_requests_router
+from src.modules.insumos.presentation.statistics_router import (
+    router as insumos_statistics_router,
+)
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.logging_config import configure_logging
 from src.shared.presentation.errors.handlers import register_exception_handlers
@@ -57,6 +60,7 @@ def create_app() -> FastAPI:
     app.include_router(calendario_router)
     app.include_router(insumos_requests_router)
     app.include_router(insumos_devices_router)
+    app.include_router(insumos_statistics_router)
     return app
 
 
