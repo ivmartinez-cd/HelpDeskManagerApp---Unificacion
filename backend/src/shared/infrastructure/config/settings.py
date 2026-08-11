@@ -82,8 +82,12 @@ class Settings(BaseSettings):
     epson_ers_timeout_seconds: float = 15.0
 
     gestion_web_base_url: str = "http://gestion.cdsa.com.ar"
-    gestion_web_cookie: SecretStr = SecretStr("")
+    gestion_web_username: str = ""
+    gestion_web_password: SecretStr = SecretStr("")
     gestion_web_timeout_seconds: float = 15.0
+    # Sesión (PHPSESSID) renovada automáticamente por gestion_session_refresher
+    # vía login Symfony estándar — reemplaza el cookie pegado a mano que vencía.
+    gestion_session_file: str = "var/contadores/gestion_session.json"
 
 
 @lru_cache
