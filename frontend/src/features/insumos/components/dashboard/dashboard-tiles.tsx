@@ -1,0 +1,86 @@
+import { cn } from "@/shared/utils/cn";
+import type { DashboardResponse } from "../../types";
+
+/** Fila de tiles KPI del Dashboard. Los 7 valores salen tal cual de
+ * `GET /api/insumos/dashboard`: `totals.{pending,critical,urgent,warning,good,
+ * loaded}` + `loadedToday`, con los umbrales de días en la etiqueta.
+ *
+ * Colores: semáforo rojo/amarillo/verde para severidad y naranja Institucional
+ * para lo accionable. "Con pedido" iba en celeste `#00a4e4` en el legacy —
+ * color PROHIBIDO por el handoff, reemplazado por el gris MPS `#58595B`.
+ */
+
+interface Tile {
+  label: string;
+  value: number;
+  color: string;
+  /** Resalta el tile con borde y fondo tintados (solo "Pendientes" con cola). */
+  highlight?: boolean;
+}
+
+function tilesFor(dashboard: DashboardResponse): Tile[] {
+  const { totals, thresholds, loadedToday } = dashboard;
+  const pending = totals.pending ?? 0;
+  return [
+    { label: "Pendientes", value: pending, color: "#F7941D", highlight: pending > 0 },
+    { label: `Críticos ≤${thresholds.critical}d`, value: totals.critical ?? 0, color: "#ef4444" },
+    { label: `Urgentes ≤${thresholds.urgent}d`, value: totals.urgent ?? 0, color: "#F7941D" },
+    { label: `Atención ≤${thresholds.warning}d`, value: totals.warning ?? 0, color: "#eab308" },
+    { label: "OK", value: totals.good ?? 0, color: "#22c55e" },
+    { label: "Con pedido", value: totals.loaded ?? 0, color: "#58595B" },
+    { label: "Cargados hoy", value: loadedToday, color: "#F7941D" },
+  ];
+}
+
+interface DashboardTilesProps {
+  dashboard: DashboardResponse | null;
+  loading: boolean;
+}
+
+export function DashboardTiles({ dashboard, loading }: DashboardTilesProps) {
+  if (!dashboard) {
+    return (
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+        {Array.from({ length: 7 }, (_, index) => (
+          <div
+            key={index}
+            className="h-[76px] animate-pulse rounded-[12px] border border-border bg-muted/60"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "grid grid-cols-2 gap-3 transition-opacity sm:grid-cols-4 xl:grid-cols-7",
+        loading && "opacity-70",
+      )}
+    >
+      {tilesFor(dashboard).map((tile) => (
+        <div
+          key={tile.label}
+          className="rounded-[12px] border bg-card px-4 py-3"
+          style={{
+            borderColor: tile.highlight ? tile.color : undefined,
+            background: tile.highlight ? `${tile.color}14` : undefined,
+          }}
+        >
+          <p
+            className="font-body text-[11px] font-bold uppercase tracking-wide"
+            style={{ color: tile.highlight ? tile.color : undefined }}
+          >
+            {tile.label}
+          </p>
+          <p
+            className="mt-1 font-heading text-[22px] font-extrabold leading-none tabular-nums"
+            style={{ color: tile.color }}
+          >
+            {tile.value}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
