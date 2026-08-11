@@ -1,5 +1,12 @@
 import { httpClient } from "@/services/http-client";
-import type { CalendarEvent, MiOperador, SyncCalendarioResult, SyncStatus } from "../types/calendario";
+import type {
+  CalendarEvent,
+  CalendarFilterParams,
+  MiOperador,
+  Operador,
+  SyncCalendarioResult,
+  SyncStatus,
+} from "../types/calendario";
 
 /** Nombres tal como los serializa el backend real (`RunDb3ExportResponse` en
  * `db3_schemas.py`, camelCase vía `serialization_alias`) — este tipo tenía
@@ -174,17 +181,26 @@ export const contadoresApi = {
   // Calendario de Planificación — siempre lee de la copia local (ver
   // /calendario/sync); el operador se resuelve solo del lado del backend
   // según quién inició sesión.
-  getCalendarioEvents: (params: { start: string; end: string }) => {
+  getCalendarioEvents: (params: CalendarFilterParams) => {
     const searchParams = new URLSearchParams({
       start: params.start,
       end: params.end,
       size: "500",
     });
+    if (params.operador_id) {
+      searchParams.set("operador_id", params.operador_id);
+    }
     return httpClient.get<Page<CalendarEvent>>(
       `/api/contadores/calendario?${searchParams.toString()}`,
     );
   },
   getMiOperador: () => httpClient.get<MiOperador>("/api/contadores/calendario/mi-operador"),
+  // Catálogo de operadores para el filtro de superadmin (ver
+  // GetCalendarEventsUseCase — un usuario regular no puede elegir operador).
+  listCalendarioOperadores: () =>
+    httpClient
+      .get<Page<Operador>>("/api/contadores/calendario/operadores")
+      .then((page) => page.items),
   getSyncStatus: () => httpClient.get<SyncStatus>("/api/contadores/calendario/sync/status"),
   syncCalendario: () => httpClient.post<SyncCalendarioResult>("/api/contadores/calendario/sync"),
 };

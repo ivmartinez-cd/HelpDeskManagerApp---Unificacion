@@ -42,6 +42,28 @@ async def test_superadmin_sees_all_operadores() -> None:
 
 
 @pytest.mark.asyncio
+async def test_superadmin_filters_by_requested_operador() -> None:
+    mock_repo = AsyncMock()
+    mock_repo.list_events.return_value = []
+
+    use_case = GetCalendarEventsUseCase(mock_repo)
+    request = GetCalendarEventsRequest(
+        start_date="2026-08-01",
+        end_date="2026-08-31",
+        is_superadmin=True,
+        full_name="Ivan Martinez",
+        operador_id="vipaez",
+    )
+
+    await use_case.execute(request)
+
+    mock_repo.find_operador_by_nombre.assert_not_awaited()
+    mock_repo.list_events.assert_awaited_once_with(
+        start_date="2026-08-01", end_date="2026-08-31", operador_id="vipaez"
+    )
+
+
+@pytest.mark.asyncio
 async def test_regular_user_filters_by_matched_operador() -> None:
     mock_repo = AsyncMock()
     mock_repo.find_operador_by_nombre.return_value = Operador(id="749", nombre="Ivan Martinez")
@@ -58,6 +80,30 @@ async def test_regular_user_filters_by_matched_operador() -> None:
     await use_case.execute(request)
 
     mock_repo.find_operador_by_nombre.assert_awaited_once_with("Ivan Martinez")
+    mock_repo.list_events.assert_awaited_once_with(
+        start_date="2026-08-01", end_date="2026-08-31", operador_id="749"
+    )
+
+
+@pytest.mark.asyncio
+async def test_regular_user_cannot_use_operador_filter_to_see_others() -> None:
+    """Un operador_id en el request de un usuario no-superadmin se ignora —
+    solo puede ver el suyo propio, nunca el de otra persona."""
+    mock_repo = AsyncMock()
+    mock_repo.find_operador_by_nombre.return_value = Operador(id="749", nombre="Ivan Martinez")
+    mock_repo.list_events.return_value = []
+
+    use_case = GetCalendarEventsUseCase(mock_repo)
+    request = GetCalendarEventsRequest(
+        start_date="2026-08-01",
+        end_date="2026-08-31",
+        is_superadmin=False,
+        full_name="Ivan Martinez",
+        operador_id="vipaez",
+    )
+
+    await use_case.execute(request)
+
     mock_repo.list_events.assert_awaited_once_with(
         start_date="2026-08-01", end_date="2026-08-31", operador_id="749"
     )

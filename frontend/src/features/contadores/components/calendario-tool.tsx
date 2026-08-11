@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSession } from "@/services/session-provider";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useCalendarioEvents } from "../hooks/use-calendario-events";
 import { cleanTitle, formatDateLocal, getMonthDateRange, getMonthNameCapitalized } from "../utils/calendario-format";
@@ -40,12 +41,16 @@ function buildGridDays(startDate: string): GridDay[] {
 }
 
 export function CalendarioTool() {
+  const { user } = useSession();
   const defaultDates = useMemo(() => getMonthDateRange(0), []);
   const {
     startDate,
     setStartDate,
     endDate,
     setEndDate,
+    operadorId,
+    setOperadorId,
+    operadores,
     events,
     loading,
     error,
@@ -59,6 +64,7 @@ export function CalendarioTool() {
   } = useCalendarioEvents({
     initialStart: defaultDates.startStr,
     initialEnd: defaultDates.endStr,
+    canFilterByOperador: user.isSuperadmin,
   });
 
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -163,6 +169,10 @@ export function CalendarioTool() {
         setStartDate={setStartDate}
         endDate={endDate}
         setEndDate={setEndDate}
+        showOperadorFilter={user.isSuperadmin}
+        operadorId={operadorId}
+        setOperadorId={setOperadorId}
+        operadores={operadores}
         onApplyFilters={refetch}
         loading={loading}
         syncing={syncing}

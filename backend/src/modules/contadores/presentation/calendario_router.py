@@ -25,6 +25,7 @@ from src.modules.contadores.infrastructure.repositories.sqlalchemy_calendario_re
 from src.modules.contadores.presentation.schemas.calendario_schemas import (
     CalendarEventSchema,
     MiOperadorResponse,
+    OperadorSchema,
     SyncCalendarioResponse,
     SyncStatusResponse,
 )
@@ -55,6 +56,9 @@ _SYNC_TIMEOUT_SECONDS = 45.0
 async def get_calendario_events(
     start: str = Query(..., description="Fecha de inicio (YYYY-MM-DD)"),
     end: str = Query(..., description="Fecha de fin (YYYY-MM-DD)"),
+    operador_id: str | None = Query(
+        default=None, description="Solo superadmin: filtra por un operador puntual"
+    ),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=500, ge=1, le=_MAX_PAGE_SIZE),
     identity: Identity = _require_view,
@@ -66,10 +70,24 @@ async def get_calendario_events(
         end_date=end,
         is_superadmin=identity.user.is_superadmin,
         full_name=identity.user.full_name,
+        operador_id=operador_id,
     )
     events = await GetCalendarEventsUseCase(repo).execute(request)
     schema_events = [CalendarEventSchema.model_validate(e) for e in events]
     return Page.of(schema_events, page=page, size=size)
+
+
+@router.get("/calendario/operadores", response_model=Page[OperadorSchema])
+async def get_calendario_operadores(
+    _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db),
+) -> Page[OperadorSchema]:
+    """Catálogo local de operadores para alimentar el combobox de filtro del
+    Calendario (solo superadmin lo usa — ver GetCalendarEventsUseCase)."""
+    repo = SqlAlchemyCalendarEventRepository(db)
+    operadores = await repo.list_operadores()
+    schema_operadores = [OperadorSchema.model_validate(o) for o in operadores]
+    return Page.of(schema_operadores, page=1, size=_MAX_PAGE_SIZE)
 
 
 @router.get("/calendario/mi-operador", response_model=MiOperadorResponse)

@@ -27,11 +27,18 @@ export interface CalendarEvent {
 export interface CalendarFilterParams {
   start: string;
   end: string;
+  operador_id?: string | null;
 }
 
 export interface MiOperador {
   operador_id: string | null;
   nombre: string | null;
+  color: string | null;
+}
+
+export interface Operador {
+  id: string;
+  nombre: string;
   color: string | null;
 }
 

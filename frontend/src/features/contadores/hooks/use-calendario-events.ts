@@ -2,16 +2,25 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { contadoresApi } from "../api/contadores-api";
-import type { CalendarEvent } from "../types/calendario";
+import type { CalendarEvent, Operador } from "../types/calendario";
 
 interface UseCalendarioEventsOptions {
   initialStart: string;
   initialEnd: string;
+  /** Solo superadmin puede elegir un operador puntual — ver
+   * GetCalendarEventsUseCase, que ignora este filtro para el resto. */
+  canFilterByOperador: boolean;
 }
 
-export function useCalendarioEvents({ initialStart, initialEnd }: UseCalendarioEventsOptions) {
+export function useCalendarioEvents({
+  initialStart,
+  initialEnd,
+  canFilterByOperador,
+}: UseCalendarioEventsOptions) {
   const [startDate, setStartDate] = useState<string>(initialStart);
   const [endDate, setEndDate] = useState<string>(initialEnd);
+  const [operadorId, setOperadorId] = useState<string | null>(null);
+  const [operadores, setOperadores] = useState<Operador[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -25,7 +34,11 @@ export function useCalendarioEvents({ initialStart, initialEnd }: UseCalendarioE
     setLoading(true);
     setError(null);
     try {
-      const response = await contadoresApi.getCalendarioEvents({ start: startDate, end: endDate });
+      const response = await contadoresApi.getCalendarioEvents({
+        start: startDate,
+        end: endDate,
+        operador_id: canFilterByOperador ? operadorId : null,
+      });
       setEvents(response.items);
       setTotal(response.total);
     } catch (err: unknown) {
@@ -34,7 +47,7 @@ export function useCalendarioEvents({ initialStart, initialEnd }: UseCalendarioE
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, operadorId, canFilterByOperador]);
 
   useEffect(() => {
     // fetch-on-mount/on-filter-change; `fetchEvents` flips `loading`
@@ -49,6 +62,14 @@ export function useCalendarioEvents({ initialStart, initialEnd }: UseCalendarioE
       .then((status) => setLastSyncedAt(status.last_synced_at))
       .catch((err: unknown) => console.error("Error al consultar el estado de sync:", err));
   }, []);
+
+  useEffect(() => {
+    if (!canFilterByOperador) return;
+    contadoresApi
+      .listCalendarioOperadores()
+      .then(setOperadores)
+      .catch((err: unknown) => console.error("Error al cargar el catálogo de operadores:", err));
+  }, [canFilterByOperador]);
 
   const sync = useCallback(async () => {
     setSyncing(true);
@@ -70,6 +91,9 @@ export function useCalendarioEvents({ initialStart, initialEnd }: UseCalendarioE
     setStartDate,
     endDate,
     setEndDate,
+    operadorId,
+    setOperadorId,
+    operadores,
     events,
     total,
     loading,

@@ -9,16 +9,19 @@ from src.modules.contadores.domain.repositories.calendar_event_repository import
 
 class GetCalendarEventsUseCase:
     """Lee la copia local (sincronizada aparte, ver SyncCalendarEventsUseCase).
-    Superadmin ve todos los operadores; el resto ve solo lo que matchea su
+    Superadmin ve todos los operadores por default, y puede filtrar por uno
+    puntual vía `request.operador_id`; el resto ve solo lo que matchea su
     propio full_name contra el catálogo de operadores de Gestión — sin match,
-    no ve eventos (no hay a qué operador filtrar)."""
+    no ve eventos (no hay a qué operador filtrar), y no puede pedir el
+    operador de otra persona vía el filtro."""
 
     def __init__(self, repository: CalendarEventRepository) -> None:
         self._repository = repository
 
     async def execute(self, request: GetCalendarEventsRequest) -> list[CalendarEvent]:
-        operador_id = None
-        if not request.is_superadmin:
+        if request.is_superadmin:
+            operador_id = request.operador_id
+        else:
             operador = await self._repository.find_operador_by_nombre(request.full_name)
             if operador is None:
                 return []

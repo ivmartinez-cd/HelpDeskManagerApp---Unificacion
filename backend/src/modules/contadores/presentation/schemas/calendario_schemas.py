@@ -31,6 +31,14 @@ class CalendarEventSchema(BaseModel):
     costo_recambio: str | None = None
 
 
+class OperadorSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    nombre: str
+    color: str | None = None
+
+
 class SyncCalendarioResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

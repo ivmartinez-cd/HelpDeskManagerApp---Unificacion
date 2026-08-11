@@ -9,6 +9,7 @@ import {
   Search,
 } from "lucide-react";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
+import type { Operador } from "../types/calendario";
 
 interface Props {
   currentMonthTitle: string;
@@ -25,6 +26,10 @@ interface Props {
   setStartDate: (value: string) => void;
   endDate: string;
   setEndDate: (value: string) => void;
+  showOperadorFilter: boolean;
+  operadorId: string | null;
+  setOperadorId: (value: string | null) => void;
+  operadores: Operador[];
   onApplyFilters: () => void;
   loading: boolean;
   syncing: boolean;
@@ -58,6 +63,10 @@ export function CalendarioHeader({
   setStartDate,
   endDate,
   setEndDate,
+  showOperadorFilter,
+  operadorId,
+  setOperadorId,
+  operadores,
   onApplyFilters,
   loading,
   syncing,
@@ -167,6 +176,29 @@ export function CalendarioHeader({
             onChange={(e) => setEndDate(e.target.value)}
             className="w-36 text-xs"
           />
+          {showOperadorFilter && (
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="operador-filter"
+                className="font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground"
+              >
+                Operador de facturación
+              </label>
+              <select
+                id="operador-filter"
+                value={operadorId ?? ""}
+                onChange={(e) => setOperadorId(e.target.value || null)}
+                className="w-48 rounded-[8px] border border-border bg-card px-[14px] py-[9px] font-body text-sm text-foreground outline-none focus:ring-2 focus:ring-brand-orange/40"
+              >
+                <option value="">Todos los operadores</option>
+                {operadores.map((op) => (
+                  <option key={op.id} value={op.id}>
+                    {op.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="pt-5 ml-auto flex items-center gap-2">
             <BrandButton variant="outline" size="sm" onClick={onApplyFilters} disabled={loading}>
               <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
