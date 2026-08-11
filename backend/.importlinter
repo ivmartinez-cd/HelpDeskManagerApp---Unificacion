@@ -97,3 +97,23 @@ source_modules =
 forbidden_modules =
     src.modules.auth
 
+[importlinter:contract:sla-domain-no-frameworks]
+name = El dominio de sla no importa frameworks
+type = forbidden
+source_modules =
+    src.modules.sla.domain
+forbidden_modules =
+    fastapi
+    sqlalchemy
+    pydantic
+    alembic
+
+[importlinter:contract:sla-domain-app-independent-from-auth]
+name = El domain/application de sla no depende de auth
+type = forbidden
+source_modules =
+    src.modules.sla.domain
+    src.modules.sla.application
+forbidden_modules =
+    src.modules.auth
+

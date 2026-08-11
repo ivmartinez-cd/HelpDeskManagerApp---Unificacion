@@ -1,5 +1,5 @@
 import { EMPTY_VALUE, formatNumber, formatPercent, formatPlainDate } from "../../utils/format";
-import { KpiGrid, KpiTile } from "./kpi-tile";
+import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import type { CustomerDetailResponse } from "../../types";
 
 /** Tiles KPI del detalle de cliente. Todos los números vienen del backend,

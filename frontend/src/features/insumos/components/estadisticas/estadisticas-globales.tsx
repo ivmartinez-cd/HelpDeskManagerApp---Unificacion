@@ -16,7 +16,7 @@ import {
   formatNumber,
   formatPlainDate,
 } from "../../utils/format";
-import { KpiGrid, KpiTile } from "./kpi-tile";
+import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import { StatsTable, type StatsColumn } from "./stats-table";
 import type { CustomerStat, EstadisticasResponse, SkuStat } from "../../types";
 

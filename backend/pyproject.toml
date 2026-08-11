@@ -21,6 +21,7 @@ dependencies = [
     # Windows no trae base de zonas horarias del sistema (zoneinfo la necesita para
     # America/Argentina/Buenos_Aires); en Linux es redundante pero inocuo.
     "tzdata==2026.3",
+    "pyodbc==5.2.0",
 ]
 
 [dependency-groups]
@@ -71,6 +72,12 @@ disallow_untyped_defs = true
 module = "zeep.*"
 ignore_missing_imports = true
 follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+# pyodbc no publica py.typed y types-pyodbc no existe en PyPI — el adapter lo
+# aísla detrás del puerto SlaQueryGateway.
+module = "pyodbc.*"
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

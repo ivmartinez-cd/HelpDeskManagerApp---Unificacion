@@ -86,6 +86,22 @@ class Settings(BaseSettings):
     epson_ers_token_file: str = "var/contadores/ers_token.json"
     epson_ers_timeout_seconds: float = 15.0
 
+    # Módulo sla — consulta en vivo a la base Siges del SQL Server MERCURIO.
+    # Sin host configurado los endpoints de sla responden 502 con mensaje claro
+    # (ver get_sla_query_gateway); el default vacío evita romper el arranque de
+    # los demás módulos en entornos sin acceso a esa red. `host` admite
+    # "SERVIDOR,puerto" si no es el 1433 default.
+    sla_mercurio_host: str = ""
+    sla_mercurio_database: str = "Siges"
+    sla_mercurio_user: str = ""
+    sla_mercurio_password: SecretStr = SecretStr("")
+    sla_mercurio_driver: str = "{ODBC Driver 18 for SQL Server}"
+    # SQL Server legacy sin certificado confiable: el driver 18 encripta por
+    # default y el handshake falla; apagado replica el comportamiento del
+    # driver 17 con el que se consultaba esta base hasta ahora.
+    sla_mercurio_encrypt: bool = False
+    sla_mercurio_timeout_seconds: float = 30.0
+
     gestion_web_base_url: str = "http://gestion.cdsa.com.ar"
     gestion_web_username: str = ""
     gestion_web_password: SecretStr = SecretStr("")

@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import { EMPTY_VALUE } from "../../utils/format";
+
+/** Lo que se muestra cuando el dato no vino (mismo criterio que el
+ * EMPTY_VALUE de utils/format de insumos, duplicado acá para que la primitiva
+ * compartida no dependa de una feature). */
+const EMPTY_VALUE = "—";
 
 /** Tile KPI de las pantallas de Estadísticas (Patrón 2 del handoff: número
  * Montserrat 800 22px en el color de la métrica, sobre superficie de card).
