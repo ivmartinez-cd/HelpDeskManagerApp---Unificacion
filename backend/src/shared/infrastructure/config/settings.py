@@ -102,6 +102,14 @@ class Settings(BaseSettings):
     sla_mercurio_encrypt: bool = False
     sla_mercurio_timeout_seconds: float = 30.0
 
+    # PortalWeb de SDS Insight — scraping para baja de equipos offline.
+    # sds_delete_dry_run=True por default: la baja real es irreversible. Solo cambiar a
+    # False con una decisión explícita (no hay entorno de prueba HP para validar).
+    sds_portal_base_url: str = "https://hp-sds-latam.insightportal.net"
+    sds_portal_username: str = ""
+    sds_portal_password: SecretStr = SecretStr("")
+    sds_delete_dry_run: bool = True
+
     gestion_web_base_url: str = "http://gestion.cdsa.com.ar"
     gestion_web_username: str = ""
     gestion_web_password: SecretStr = SecretStr("")

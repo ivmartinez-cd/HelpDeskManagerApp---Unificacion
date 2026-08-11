@@ -14,8 +14,17 @@ from zoneinfo import ZoneInfo
 from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
 from src.modules.insumos.infrastructure.insight.httpx_insight_gateway import HttpxInsightGateway
+from src.modules.insumos.infrastructure.locks.postgres_advisory_lock import (
+    OFFLINE_DELETE_LOCK_KEY,
+    OFFLINE_VERIFY_LOCK_KEY,
+    PostgresAdvisoryLock,
+)
+from src.modules.insumos.infrastructure.portal.httpx_sds_portal_gateway import (
+    HttpxSdsPortalGateway,
+)
 from src.modules.insumos.infrastructure.soap.zeep_wsayc_gateway import ZeepWsAycGateway
 from src.shared.infrastructure.config.settings import Settings, get_settings
+from src.shared.infrastructure.database.engine import get_engine
 
 
 @lru_cache
@@ -38,6 +47,26 @@ def get_insight_gateway() -> HttpxInsightGateway:
         settings.insight_api_key,
         settings.insight_api_secret.get_secret_value(),
     )
+
+
+@lru_cache
+def get_sds_portal_gateway() -> HttpxSdsPortalGateway:
+    settings = get_settings()
+    return HttpxSdsPortalGateway(
+        base_url=settings.sds_portal_base_url,
+        username=settings.sds_portal_username,
+        password=settings.sds_portal_password.get_secret_value(),
+    )
+
+
+@lru_cache
+def get_offline_verify_lock() -> PostgresAdvisoryLock:
+    return PostgresAdvisoryLock(get_engine(), OFFLINE_VERIFY_LOCK_KEY)
+
+
+@lru_cache
+def get_offline_delete_lock() -> PostgresAdvisoryLock:
+    return PostgresAdvisoryLock(get_engine(), OFFLINE_DELETE_LOCK_KEY)
 
 
 def order_settings(settings: Settings) -> CanalDirectoOrderSettings:

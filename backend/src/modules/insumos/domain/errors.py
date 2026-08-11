@@ -124,6 +124,26 @@ class RespuestaInesperadaDeInsightError(ExternalServiceError):
         )
 
 
+class OfflineCheckInProgressError(BusinessRuleViolationError):
+    """Ya hay una verificación de equipos offline en curso (advisory lock tomado) — el
+    caller no debe reintentar; la verificación en progreso terminará sola."""
+
+    default_code = "OFFLINE_CHECK_IN_PROGRESS"
+
+    def __init__(self) -> None:
+        super().__init__("Ya hay una verificación de equipos offline en curso")
+
+
+class DeleteInProgressError(BusinessRuleViolationError):
+    """La baja masiva de equipos offline ya está en curso (advisory lock tomado) — el
+    caller no debe reintentar; la operación en progreso terminará sola."""
+
+    default_code = "DELETE_IN_PROGRESS"
+
+    def __init__(self) -> None:
+        super().__init__("Ya hay una baja de equipos offline en curso")
+
+
 class OrderAlreadyInProgressError(BusinessRuleViolationError):
     """Ya hay un pedido en curso para esta serie+sku — reemplaza la garantía
     que daba `KeyedLock.acquire((serial, sku))` en la app legacy (un lock en

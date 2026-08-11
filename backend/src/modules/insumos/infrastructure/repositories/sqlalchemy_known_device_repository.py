@@ -2,6 +2,7 @@
 
 from collections.abc import Sequence
 from dataclasses import asdict
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import ColumnElement, case, delete, func, select, update
 from sqlalchemy.dialects.postgresql import Insert, insert
@@ -11,6 +12,10 @@ from src.modules.insumos.domain.entities.known_device import (
     MONITORED_STATUSES,
     DeviceInventoryEntry,
     KnownDevice,
+)
+from src.modules.insumos.domain.value_objects.offline_device import (
+    DeviceLocationUpdate,
+    OfflineDevice,
 )
 from src.modules.insumos.infrastructure.models.customer_config_model import (
     CustomerConfigModel,
@@ -92,6 +97,59 @@ class SqlAlchemyKnownDeviceRepository:
         )
         return len((await self._session.execute(stmt)).scalars().all())
 
+    async def list_offline(self, older_than_hours: int) -> list[OfflineDevice]:
+        cutoff = datetime.now(UTC) - timedelta(hours=older_than_hours)
+        # LEFT JOIN — no filtra por CustomerConfigModel.enabled (caso Santander)
+        stmt = (
+            select(KnownDeviceModel, CustomerConfigModel.name)
+            .outerjoin(
+                CustomerConfigModel,
+                CustomerConfigModel.customer_id == KnownDeviceModel.customer_id,
+            )
+            .where(
+                KnownDeviceModel.last_contact.isnot(None),
+                KnownDeviceModel.last_contact < cutoff,
+            )
+            .order_by(KnownDeviceModel.last_contact.asc())
+        )
+        rows = (await self._session.execute(stmt)).all()
+        return [_to_offline_device(device, customer_name) for device, customer_name in rows]
+
+    async def set_device_locations(
+        self, entries: Sequence[DeviceLocationUpdate]
+    ) -> None:
+        if not entries:
+            return
+        for entry in entries:
+            stmt = (
+                update(KnownDeviceModel)
+                .where(KnownDeviceModel.device_id == entry.device_id)
+                .values(
+                    cd_status=entry.cd_status,
+                    cd_detail=entry.cd_detail,
+                    cd_checked_at=func.now(),
+                    updated_at=func.now(),
+                )
+            )
+            await self._session.execute(stmt)
+
+    async def set_offline_dismissed(self, device_id: int, dismissed: bool) -> bool:
+        stmt = (
+            update(KnownDeviceModel)
+            .where(KnownDeviceModel.device_id == device_id)
+            .values(offline_dismissed=dismissed, updated_at=func.now())
+            .returning(KnownDeviceModel.device_id)
+        )
+        return (await self._session.execute(stmt)).scalars().first() is not None
+
+    async def delete_device(self, device_id: int) -> bool:
+        stmt = (
+            delete(KnownDeviceModel)
+            .where(KnownDeviceModel.device_id == device_id)
+            .returning(KnownDeviceModel.device_id)
+        )
+        return (await self._session.execute(stmt)).scalars().first() is not None
+
     async def _existing_ids(self, device_ids: Sequence[int]) -> set[int]:
         stmt = select(KnownDeviceModel.device_id).where(
             KnownDeviceModel.device_id.in_(device_ids)
@@ -132,6 +190,23 @@ def _cleared_if(
     condition: ColumnElement[bool], column: object, empty: object
 ) -> ColumnElement[object]:
     return case((condition, empty), else_=column)
+
+
+def _to_offline_device(row: KnownDeviceModel, customer_name: str | None) -> OfflineDevice:
+    return OfflineDevice(
+        device_id=row.device_id,
+        customer_id=row.customer_id,
+        customer_name=customer_name or "",
+        serial=row.serial,
+        model=row.model,
+        zone=row.zone,
+        last_contact=row.last_contact,
+        monitor_name=row.monitor_name,
+        cd_status=row.cd_status,
+        cd_detail=row.cd_detail,
+        cd_checked_at=row.cd_checked_at,
+        offline_dismissed=row.offline_dismissed,
+    )
 
 
 def _to_entity(row: KnownDeviceModel, customer_name: str) -> KnownDevice:

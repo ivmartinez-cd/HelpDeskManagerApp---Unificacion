@@ -22,6 +22,15 @@ from src.modules.insumos.presentation.dependencies.new_devices import (
     build_list_new_devices,
     build_sync_new_devices,
 )
+from src.modules.insumos.presentation.dependencies.offline_devices import (
+    build_count_offline_candidates,
+    build_delete_offline_devices,
+    build_dismiss_offline_device,
+    build_list_offline_devices,
+    build_list_offline_outages,
+    build_sync_monitor_status,
+    build_verify_offline_devices,
+)
 from src.modules.insumos.presentation.dependencies.requests import (
     build_cancel_order,
     build_dismiss_request,
@@ -45,6 +54,13 @@ from src.modules.insumos.presentation.dependencies.statistics import (
 __all__ = [
     "build_acknowledge_alerts",
     "build_list_alerts",
+    "build_count_offline_candidates",
+    "build_delete_offline_devices",
+    "build_dismiss_offline_device",
+    "build_list_offline_devices",
+    "build_list_offline_outages",
+    "build_sync_monitor_status",
+    "build_verify_offline_devices",
     "build_count_new_devices",
     "build_dismiss_new_device",
     "build_list_new_devices",

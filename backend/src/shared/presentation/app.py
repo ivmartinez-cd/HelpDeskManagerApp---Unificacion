@@ -20,6 +20,9 @@ from src.modules.insumos.presentation.mail_log_router import router as insumos_m
 from src.modules.insumos.presentation.new_devices_router import (
     router as insumos_new_devices_router,
 )
+from src.modules.insumos.presentation.offline_devices_router import (
+    router as insumos_offline_devices_router,
+)
 from src.modules.insumos.presentation.requests_router import router as insumos_requests_router
 from src.modules.insumos.presentation.statistics_router import (
     router as insumos_statistics_router,
@@ -72,6 +75,7 @@ def create_app() -> FastAPI:
     app.include_router(insumos_mail_log_router)
     app.include_router(insumos_config_router)
     app.include_router(insumos_new_devices_router)
+    app.include_router(insumos_offline_devices_router)
     app.include_router(insumos_alerts_router)
     app.include_router(turnos_router)
     app.include_router(sla_router)

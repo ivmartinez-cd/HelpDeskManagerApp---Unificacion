@@ -1,29 +1,22 @@
 # Migración SDSInsumos — estado y próximo paso
 
-Actualizado: 2026-08-11 (dry-run verificado end-to-end + fix de credenciales de
-Insight API + DB de dev sembrada con backup real de producción — ver abajo).
+Actualizado: 2026-08-11 (Equipos Offline portado completo — dominio + infra +
+presentación; suite verde: lint-imports 12/12, ruff clean, mypy 0 errors, 519
+tests pasan — ver abajo para verificación anterior del dry-run de solicitudes).
 Frontend: fundación + 5 pantallas ya portadas, sobre el backend ya portado de
-Estadísticas, Mail log, Config GET/PUT, Equipos nuevos y Alertas.
+Estadísticas, Mail log, Config GET/PUT, Equipos nuevos, Alertas y Equipos Offline.
 
 ## Qué resta hacer, en orden
 
-1. **Equipos offline** (`routers/offline_devices.py`) — el módulo de mayor riesgo
-   que queda: verify rate-limited contra SOAP, heurística de agrupación no trivial,
-   y una baja **irreversible** de equipos (gateada por `SDS_DELETE_DRY_RUN`, que
-   necesita el mismo rediseño de lock global identificado para el scan incremental
-   descartado). Requiere el cliente de scraping del PortalWeb (punto siguiente).
-   **Plan de implementación ya diseñado y aprobado en
-   `SDSINSUMOS_EQUIPOS_OFFLINE_PLAN.md`** (2026-08-11): decisiones tomadas, trampas
-   relevadas, orden de pasos y plan de verificación. Falta ejecutarlo.
-2. **Clientes** (`routers/customers.py`, 13 endpoints) — comparte el cliente de
-   scraping del PortalWeb con Equipos offline; conviene decidirlo una sola vez para
-   ambos (ver nota abajo, ya no bloqueado por falta de credenciales).
-3. **5 jobs de fondo** (poller, autocarga, backup, chequeo offline, alertas,
+1. **Clientes** (`routers/customers.py`, 13 endpoints) — comparte el cliente de
+   scraping del PortalWeb (`HttpxSdsPortalGateway`) con Equipos Offline (ya portado);
+   ese cliente ya existe, falta portear los endpoints de Clientes.
+2. **5 jobs de fondo** (poller, autocarga, backup, chequeo offline, alertas,
    aviso de pedidos por vencer) — primer precedente de scheduler del monorepo,
-   depende de que 1 y 2 ya estén portados.
-4. **Frontend de Clientes y Equipos offline** — sin pantalla todavía porque su
-   backend no existe (ver `SDSINSUMOS_CARACTERIZACION_FRONTEND.md` para el
-   relevamiento del legacy Vue de esas dos vistas, ya hecho).
+   depende de que 1 ya esté portado y de Equipos Offline (ya completo).
+3. **Frontend de Clientes y Equipos offline** — sin pantalla todavía (ver
+   `SDSINSUMOS_CARACTERIZACION_FRONTEND.md` para el relevamiento del legacy Vue de
+   esas dos vistas).
 
 **Ya no es un bloqueo**: las credenciales del login humano del PortalWeb SDS
 (`SDS_PORTAL_USERNAME`/`SDS_PORTAL_PASSWORD` en `.env`, cargadas 2026-08-11) están
@@ -56,6 +49,7 @@ Con `a0189fe`, el router de solicitudes del legacy (`routers/requests/` completo
 | Config GET/PUT (`config.py`, sin `maybe_auto_load`) | `GET`/`PUT /api/insumos/config` | `704f7f7` |
 | Equipos nuevos (`new_devices.py` + `device_sync.py`) | `/api/insumos/new-devices` (4 endpoints) | `28cbd22` |
 | Alertas endpoints (`alerts.py`, sin el job de escalado) | `GET /api/insumos/alerts`, `POST /alerts/ack` | `b069eb8` |
+| Equipos offline (`offline_devices.py`: 6 endpoints, advisory lock Postgres, portal gateway `httpx`, SOAP verify loop, outage detection, canal directo classify) | `/api/insumos/offline-devices` (list/outages/summary/verify/dismiss/delete) | pendiente commit |
 
 `a0189fe` además cerró un gap: el upsert del cache ahora graba `supply_status_history`
 (primer avistaje de cada estado), como el legacy.
@@ -98,8 +92,6 @@ Con `a0189fe`, el router de solicitudes del legacy (`routers/requests/` completo
 - Mailer SMTP para insumos (múltiples destinatarios + adjuntos) — el endpoint de
   lectura de `mail_log` ya está portado; falta el envío, que pertenece a los jobs
   de fondo
-- Equipos offline (`routers/offline_devices.py` — verify rate-limited, delete
-  irreversible gateado por `SDS_DELETE_DRY_RUN`)
 - `maybe_auto_load` (vive en `routers/config.py` del legacy pero pertenece al poller,
   ver punto siguiente)
 - **5 jobs de fondo** (`main.py`): poller + autocarga (`maybe_auto_load`), backup,
@@ -226,10 +218,11 @@ nuevos + device_sync (6) → Alertas (3) → Equipos offline (7) → Clientes/sc
 como una decisión de infraestructura única a tomar antes de encarar cualquiera de los
 dos.
 
-**Ejecutado hasta 2026-08-11: 4, 5, 2, 6, 3 completos** (ver tabla "Portado hasta
-ahora" arriba). Restan **7 → 1 → 8** en ese orden — ver "Qué resta hacer" al principio
-de este documento para el detalle actualizado (las credenciales del scraping de
-portal, el único bloqueo real que quedaba para 1 y 7, ya están disponibles).
+**Ejecutado hasta 2026-08-11: 4, 5, 2, 6, 3, 7 completos** (ver tabla "Portado hasta
+ahora" arriba). Restan **1 → 8** en ese orden — ver "Qué resta hacer" al principio
+de este documento para el detalle actualizado. El cliente de scraping del PortalWeb
+(`HttpxSdsPortalGateway`) ya existe (construido en #7); para #1 (Clientes) solo falta
+portear los endpoints, que reutilizan ese gateway.
 
 Justificación: primero los módulos autocontenidos de bajo riesgo que no requieren
 infraestructura nueva (4, 5, 2-parcial) para consolidar el patrón sobre tablas que ya

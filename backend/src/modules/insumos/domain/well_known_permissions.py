@@ -10,3 +10,5 @@ CREATE = Permission(ModuleKey("insumos"), ActionKey("create"))
 # alto vuelve elegible casi toda la cola pendiente): es "update", no "view". El legacy
 # exponía este PUT sin autenticación — hallazgo #2 de su SEGURIDAD_PENDIENTE.md.
 UPDATE = Permission(ModuleKey("insumos"), ActionKey("update"))
+# Borrar un equipo del catálogo y del portal SDS — irreversible. Ver ADR-008.
+DELETE = Permission(ModuleKey("insumos"), ActionKey("delete"))

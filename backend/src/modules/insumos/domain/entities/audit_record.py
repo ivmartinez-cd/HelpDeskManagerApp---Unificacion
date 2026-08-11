@@ -13,6 +13,7 @@ EVENT_DISMISSED = "DISMISSED"
 # Descarte automático de la ventana de validación 0% (falsa alarma de sensor) — a
 # diferencia de DISMISSED (descarte manual del operador).
 EVENT_AUTO_DISMISSED = "AUTO_DISMISSED"
+EVENT_DEVICE_DELETED = "DEVICE_DELETED"
 
 ORDER_TYPE_SUPPLY = "supply"
 ORDER_TYPE_INCIDENT = "incident"

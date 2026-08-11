@@ -7,6 +7,10 @@ from src.modules.insumos.domain.entities.known_device import (
     DeviceInventoryEntry,
     KnownDevice,
 )
+from src.modules.insumos.domain.value_objects.offline_device import (
+    DeviceLocationUpdate,
+    OfflineDevice,
+)
 
 
 class KnownDeviceRepository(Protocol):
@@ -49,4 +53,35 @@ class KnownDeviceRepository(Protocol):
         completo y exitoso: con uno parcial podaría equipos válidos por un error
         transitorio de red. Sin esto quedaban huérfanos para siempre en Equipos
         Offline — medido en producción el 2026-07-31."""
+        ...
+
+    async def list_offline(self, older_than_hours: int) -> list[OfflineDevice]:
+        """Equipos cuyo last_contact tiene más de older_than_hours horas.
+
+        LEFT JOIN a customer_config para traer el nombre del cliente. NO filtra
+        por customers_config.enabled — ese flag gobierna la autocarga de pedidos,
+        no el inventario (caso Santander: habilitado=False, 861 equipos offline
+        que igual hay que auditar)."""
+        ...
+
+    async def set_device_locations(
+        self, entries: Sequence[DeviceLocationUpdate]
+    ) -> None:
+        """Actualiza cd_status, cd_detail y cd_checked_at = now() para cada entry.
+
+        cd_checked_at se pisa siempre, incluso si cd_status == ERROR: evita que el
+        equipo queme el presupuesto del wsAyC en el lote siguiente sin esperar el
+        intervalo de re-chequeo."""
+        ...
+
+    async def set_offline_dismissed(self, device_id: int, dismissed: bool) -> bool:
+        """Marca/desmarca el equipo en la vista de Equipos Offline. Columna separada de
+        `dismissed` (Equipos Sin Registrar) — son pantallas con criterios distintos.
+        Devuelve False si el equipo no existe."""
+        ...
+
+    async def delete_device(self, device_id: int) -> bool:
+        """Elimina el equipo del inventario local. Devuelve False si no existía.
+        La baja en el PortalWeb (operación irreversible) ocurre antes — esta baja
+        local es el paso final del flujo de delete_offline_devices."""
         ...

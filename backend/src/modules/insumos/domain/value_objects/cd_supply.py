@@ -12,8 +12,11 @@ class CdMachine:
     familia_id: str
     familia_name: str = ""
     empresa_id: str = ""
+    empresa_name: str = ""   # razón social — clasificación de offline usa este, no empresa_id
     sucursal_id: str = ""
+    sucursal_name: str = ""  # nombre de sucursal para el detalle de offline
     machine_id: str = ""  # id interno de CD — clave para getMachineIncidents
+    estado: str = ""  # Estado del equipo en Canal Directo (para detalle de offline)
 
 
 @dataclass(frozen=True)
