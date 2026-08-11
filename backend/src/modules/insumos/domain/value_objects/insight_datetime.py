@@ -55,6 +55,17 @@ def days_since_contact(last_contact: str | None) -> int | None:
     return (datetime.now(_ARGENTINA).date() - contact_local.date()).days
 
 
+def parse_insight_utc(raw: str | None) -> datetime | None:
+    """`requested`/`statusDate` son ISO-Z UTC verificado de Insight; cualquier otra
+    cosa se descarta (mejor None que una fecha con huso adivinado — caracterización §7)."""
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
 def format_arg_datetime(iso_utc: str) -> str:
     """Convierte un timestamp UTC de Insight ('...Z') a hora Argentina, "dd/mm HH:MM".
 

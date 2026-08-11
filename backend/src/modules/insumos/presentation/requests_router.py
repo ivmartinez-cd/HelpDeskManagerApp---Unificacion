@@ -1,4 +1,4 @@
-"""POST /api/insumos/requests/{request_id}/load — creación de pedidos en Canal Directo."""
+"""Endpoints de solicitudes: dashboard, listado y acciones (load/cancel/dismiss/reconcile)."""
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,11 +6,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.insumos.application.dtos.load_order import LoadOrderCommand
+from src.modules.insumos.application.dtos.request_actions import DismissCommand, ReconcileCommand
 from src.modules.insumos.domain.well_known_permissions import CREATE, VIEW
 from src.modules.insumos.presentation.dependencies import (
+    build_cancel_order,
+    build_dismiss_request,
     build_get_dashboard,
     build_list_requests,
     build_load_order,
+    build_reconcile_order,
+)
+from src.modules.insumos.presentation.schemas.action_schemas import (
+    CancelResponse,
+    DismissRequestBody,
+    DismissResponse,
+    ReconcileRequestBody,
+    ReconcileResponse,
 )
 from src.modules.insumos.presentation.schemas.dashboard_schemas import DashboardResponse
 from src.modules.insumos.presentation.schemas.load_schemas import LoadRequestBody, LoadResponse
@@ -73,3 +84,52 @@ async def load_request(
     )
     result = await build_load_order(db).execute(command)
     return LoadResponse.from_result(result)
+
+
+@router.post("/requests/{request_id}/cancel", response_model=CancelResponse)
+async def cancel_request(
+    request_id: int,
+    _: Identity = _require_create,
+    db: AsyncSession = Depends(get_db),
+) -> CancelResponse:
+    """Anula en Canal Directo el pedido asociado y libera el registro local.
+    Responde 200 siempre; errores de negocio como ok=false + error."""
+    result = await build_cancel_order(db).execute(request_id)
+    return CancelResponse.from_result(result)
+
+
+@router.post("/requests/{request_id}/dismiss", response_model=DismissResponse)
+async def dismiss_request(
+    request_id: int,
+    body: DismissRequestBody,
+    _: Identity = _require_create,
+    db: AsyncSession = Depends(get_db),
+) -> DismissResponse:
+    """Descarta la solicitud directamente en HP SDS (status_update=DELETE)."""
+    command = DismissCommand(
+        hp_request_id=request_id,
+        customer_id=body.customer_id,
+        customer_name=body.customer_name,
+        device_serial=body.serial,
+        sku=body.sku,
+    )
+    result = await build_dismiss_request(db).execute(command)
+    return DismissResponse.from_result(result)
+
+
+@router.post("/requests/{request_id}/reconcile", response_model=ReconcileResponse)
+async def reconcile_request(
+    request_id: int,
+    body: ReconcileRequestBody,
+    _: Identity = _require_create,
+    db: AsyncSession = Depends(get_db),
+) -> ReconcileResponse:
+    """Vincula un pedido que ya existe en Canal Directo pero que la app no registró
+    como propio (verificación post-creación fallida). Nunca crea un pedido nuevo."""
+    command = ReconcileCommand(
+        hp_request_id=request_id,
+        customer_id=body.customer_id,
+        customer_name=body.customer_name,
+    )
+    result = await build_reconcile_order(db).execute(command)
+    return ReconcileResponse.from_result(result)

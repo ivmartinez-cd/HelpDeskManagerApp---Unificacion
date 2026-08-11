@@ -12,7 +12,6 @@ Pendiente de pasos posteriores de la migración (explícito, no olvidado):
 """
 
 import logging
-from datetime import datetime
 
 from src.modules.insumos.application.dtos.load_order import (
     CONFLICT_AMBIGUOUS_INSUMO,
@@ -41,6 +40,7 @@ from src.modules.insumos.domain.errors import (
 from src.modules.insumos.domain.repositories.insight_gateway import JsonDict
 from src.modules.insumos.domain.services.maintenance_kit import is_maintenance_kit
 from src.modules.insumos.domain.services.stale_replacement import is_stale_replaced
+from src.modules.insumos.domain.value_objects.insight_datetime import parse_insight_utc
 from src.modules.insumos.domain.value_objects.order_reference import order_reference
 from src.modules.insumos.domain.value_objects.order_request import (
     ContactInfo,
@@ -268,7 +268,7 @@ class LoadOrder:
                     sku=resolved.sku,
                     detail=detail,
                     dry_run=command.dry_run,
-                    hp_request_time=_parse_insight_iso(resolved.requested),
+                    hp_request_time=parse_insight_utc(resolved.requested),
                     description=resolved.description,
                 )
             )
@@ -359,7 +359,7 @@ def _audit_created(
         internal_order_id=order_id,
         detail=detail,
         dry_run=command.dry_run,
-        hp_request_time=_parse_insight_iso(resolved.requested),
+        hp_request_time=parse_insight_utc(resolved.requested),
         description=resolved.description,
         device_id=resolved.device_id,
         initial_percent_left=_rounded(resolved.percent_left),
@@ -370,14 +370,3 @@ def _audit_created(
 
 def _rounded(value: float | None) -> int | None:
     return round(value) if value is not None else None
-
-
-def _parse_insight_iso(raw: str | None) -> datetime | None:
-    """`requested` es ISO-Z UTC verificado de Insight; cualquier otra cosa se descarta
-    (mejor NULL que una fecha con huso adivinado — caracterización §7)."""
-    if not raw:
-        return None
-    try:
-        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-    except ValueError:
-        return None

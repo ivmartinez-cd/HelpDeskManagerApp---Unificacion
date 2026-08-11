@@ -80,6 +80,10 @@ class FakeWsAycGateway:
         self.incidents_by_id: dict[int, CdSupply] = {}
         self.incident_calls: list[int] = []
         self.machine_incidents: list[CdIncident] = []
+        self.void_supply_result = True
+        self.void_incident_result = True
+        self.voided_supplies: list[int] = []
+        self.voided_incidents: list[int] = []
 
     async def get_machine_by_serial(self, serial: str) -> CdMachine | None:
         if self.machine_error is not None:
@@ -116,6 +120,14 @@ class FakeWsAycGateway:
         self, empresa_id: str, sucursal_id: str = "", top: str = "200"
     ) -> list[CdSupply]:
         return self.supplies_for_empresa
+
+    async def void_supply(self, supply_id: int) -> bool:
+        self.voided_supplies.append(supply_id)
+        return self.void_supply_result
+
+    async def void_incident(self, incident_id: int) -> bool:
+        self.voided_incidents.append(incident_id)
+        return self.void_incident_result
 
 
 class FakeSupplyCacheRepository:

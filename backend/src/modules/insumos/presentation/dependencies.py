@@ -13,6 +13,11 @@ from src.modules.insumos.application.use_cases._load_order_context import (
     LoadOrderConfig,
     LoadOrderPorts,
 )
+from src.modules.insumos.application.use_cases.cancel_order import CancelOrder, CancelOrderPorts
+from src.modules.insumos.application.use_cases.dismiss_request import (
+    DismissRequest,
+    DismissRequestPorts,
+)
 from src.modules.insumos.application.use_cases.get_dashboard import (
     GetDashboard,
     GetDashboardPorts,
@@ -23,6 +28,11 @@ from src.modules.insumos.application.use_cases.list_requests import (
     ListRequestsPorts,
 )
 from src.modules.insumos.application.use_cases.load_order import LoadOrder
+from src.modules.insumos.application.use_cases.reconcile_order import (
+    ReconcileOrder,
+    ReconcileOrderConfig,
+    ReconcileOrderPorts,
+)
 from src.modules.insumos.application.use_cases.validation_window import (
     ValidationWindow,
     ValidationWindowPorts,
@@ -172,3 +182,45 @@ def build_load_order(session: AsyncSession) -> LoadOrder:
         insight_status_on_order=settings.insight_status_on_order,
     )
     return LoadOrder(ports, config)
+
+
+def build_cancel_order(session: AsyncSession) -> CancelOrder:
+    return CancelOrder(
+        CancelOrderPorts(
+            wsayc=get_wsayc_gateway(),
+            processed=SqlAlchemyProcessedRequestRepository(session),
+            supply_cache=SqlAlchemySupplyCacheRepository(session),
+            audit=SqlAlchemyOrderAuditRepository(session),
+        )
+    )
+
+
+def build_dismiss_request(session: AsyncSession) -> DismissRequest:
+    return DismissRequest(
+        DismissRequestPorts(
+            insight=get_insight_gateway(),
+            processed=SqlAlchemyProcessedRequestRepository(session),
+            audit=SqlAlchemyOrderAuditRepository(session),
+        )
+    )
+
+
+def build_reconcile_order(session: AsyncSession) -> ReconcileOrder:
+    settings = get_settings()
+    wsayc = get_wsayc_gateway()
+    order_settings = _order_settings(settings)
+    ports = ReconcileOrderPorts(
+        insight=get_insight_gateway(),
+        processed=SqlAlchemyProcessedRequestRepository(session),
+        audit=SqlAlchemyOrderAuditRepository(session),
+        supply_lookup=CanalDirectoSupplyLookup(
+            wsayc, SqlAlchemySupplyCacheRepository(session), order_settings
+        ),
+        claimed_creation=ClaimedOrderCreation(SqlAlchemyOrderClaimRepository(session)),
+    )
+    config = ReconcileOrderConfig(
+        order_settings=order_settings,
+        insight_mark_actioned=settings.insight_mark_actioned,
+        insight_status_on_order=settings.insight_status_on_order,
+    )
+    return ReconcileOrder(ports, config)

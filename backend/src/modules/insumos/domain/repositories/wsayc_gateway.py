@@ -72,3 +72,15 @@ class WsAycGateway(Protocol):
     ) -> list[CdSupply]:
         """Supplies visibles en getTopSupplies (excluye origen Interno). [] ante error."""
         ...
+
+    async def void_supply(self, supply_id: int) -> bool:
+        """Anula (cancela) un supply. El servicio SIEMPRE responde "true" sin importar
+        el payload —no distingue "anulado" de "ID inexistente ignorado"—, así que True
+        solo confirma que la llamada SOAP no falló. El caller DEBE reconsultar con
+        fetch_supply_by_id y verificar que el estado cambió a Anulado/Cancelado."""
+        ...
+
+    async def void_incident(self, incident_id: int) -> bool:
+        """Como void_supply pero para incidentes de ST (kits de mantenimiento) —
+        misma trampa: True no garantiza la anulación, reconsultar siempre."""
+        ...

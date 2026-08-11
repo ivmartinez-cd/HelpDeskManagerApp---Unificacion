@@ -124,6 +124,30 @@ class ZeepWsAycGateway:
             logger.warning("SOAP getSupplyDetails(%s) falló", supply_id, exc_info=exc)
             return ""
 
+    async def void_supply(self, supply_id: int) -> bool:
+        try:
+            raw = await asyncio.to_thread(
+                lambda: self._service().voidSupply(
+                    Datos=json.dumps({"Supply": {"id": str(supply_id)}})
+                )
+            )
+            return str(raw).strip().lower() == "true"
+        except Exception as exc:
+            logger.error("SOAP voidSupply(%d) falló", supply_id, exc_info=exc)
+            return False
+
+    async def void_incident(self, incident_id: int) -> bool:
+        try:
+            raw = await asyncio.to_thread(
+                lambda: self._service().voidIncident(
+                    Datos=json.dumps({"Incident": {"id": str(incident_id)}})
+                )
+            )
+            return str(raw).strip().lower() == "true"
+        except Exception as exc:
+            logger.error("SOAP voidIncident(%d) falló", incident_id, exc_info=exc)
+            return False
+
     async def get_supplies_for_empresa(
         self, empresa_id: str, sucursal_id: str = "", top: str = "200"
     ) -> list[CdSupply]:
