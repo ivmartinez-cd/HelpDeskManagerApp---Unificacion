@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.insumos.domain.entities.processed_request import (
     STATUS_CANCELLED,
     STATUS_CREATED,
+    ProcessedInitialSnapshot,
     ProcessedRequest,
 )
 from src.modules.insumos.infrastructure.models.processed_request_model import (
@@ -149,6 +150,36 @@ class SqlAlchemyProcessedRequestRepository:
         for row in rows:
             result.setdefault((row.device_serial or "").upper(), []).append(_to_entity(row))
         return result
+
+
+    async def get_all_created(self, customer_id: int | None = None) -> list[ProcessedRequest]:
+        stmt = (
+            select(ProcessedRequestModel)
+            .where(ProcessedRequestModel.status == STATUS_CREATED)
+            .order_by(ProcessedRequestModel.created_at.desc())
+        )
+        if customer_id is not None:
+            stmt = stmt.where(ProcessedRequestModel.customer_id == customer_id)
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_entity(row) for row in rows]
+
+    async def backfill_initial_snapshot(
+        self, updates: Sequence[ProcessedInitialSnapshot]
+    ) -> None:
+        for entry in updates:
+            stmt = (
+                update(ProcessedRequestModel)
+                .where(ProcessedRequestModel.hp_request_id == entry.hp_request_id)
+                .values(
+                    initial_percent_left=entry.initial_percent_left,
+                    initial_days_left=entry.initial_days_left,
+                    initial_pages_left=entry.initial_pages_left,
+                    updated_at=func.now(),
+                )
+            )
+            await self._session.execute(stmt)
+        if updates:
+            await self._session.flush()
 
 
 def _to_entity(row: ProcessedRequestModel) -> ProcessedRequest:

@@ -37,6 +37,10 @@ from src.modules.insumos.application.use_cases.get_device_supplies import (
     GetDeviceSuppliesPorts,
 )
 from src.modules.insumos.application.use_cases.list_audit import ListAudit, ListAuditPorts
+from src.modules.insumos.application.use_cases.list_pending_orders import (
+    ListPendingOrders,
+    ListPendingOrdersPorts,
+)
 from src.modules.insumos.application.use_cases.list_requests import (
     ListRequests,
     ListRequestsConfig,
@@ -226,6 +230,18 @@ def build_dismiss_request(session: AsyncSession) -> DismissRequest:
             audit=SqlAlchemyOrderAuditRepository(session),
         )
     )
+
+
+def build_list_pending_orders(session: AsyncSession) -> ListPendingOrders:
+    ports = ListPendingOrdersPorts(
+        insight=get_insight_gateway(),
+        wsayc=get_wsayc_gateway(),
+        processed=SqlAlchemyProcessedRequestRepository(session),
+        supply_cache=SqlAlchemySupplyCacheRepository(session),
+        customers=SqlAlchemyCustomerConfigRepository(session),
+        settings=SqlAlchemyInsumosSettingsRepository(session),
+    )
+    return ListPendingOrders(ports, _order_settings(get_settings()))
 
 
 def build_get_device_supplies(session: AsyncSession) -> GetDeviceSupplies:

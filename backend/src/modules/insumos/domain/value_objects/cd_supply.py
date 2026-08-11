@@ -74,6 +74,18 @@ class CachedSupply:
 
 
 @dataclass(frozen=True)
+class SupplyStatusEvent:
+    """Un estado del pedido en CD y cuándo la app lo detectó por primera vez.
+
+    No es el momento exacto de la transición real en CD (no lo expone) — es "cuándo
+    lo notamos", con la granularidad del poller y de las visitas a la UI (tabla
+    supply_status_history)."""
+
+    estado: str
+    first_seen_at: datetime
+
+
+@dataclass(frozen=True)
 class ActiveSupplyView:
     """Pedido activo tal como lo consumen los bloqueos anti-duplicado y el frontend."""
 

@@ -13,6 +13,7 @@ from src.modules.insumos.presentation.dependencies import (
     build_dismiss_request,
     build_get_dashboard,
     build_list_audit,
+    build_list_pending_orders,
     build_list_requests,
     build_load_order,
     build_reconcile_order,
@@ -27,6 +28,7 @@ from src.modules.insumos.presentation.schemas.action_schemas import (
 from src.modules.insumos.presentation.schemas.audit_schemas import AuditRowOut
 from src.modules.insumos.presentation.schemas.dashboard_schemas import DashboardResponse
 from src.modules.insumos.presentation.schemas.load_schemas import LoadRequestBody, LoadResponse
+from src.modules.insumos.presentation.schemas.pending_order_schemas import PendingOrderRowOut
 from src.modules.insumos.presentation.schemas.request_row_schemas import RequestRowOut
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_db
@@ -64,6 +66,22 @@ async def list_requests(
     (mismo criterio que los catálogos de contadores) — el contrato sigue paginado."""
     rows = await build_list_requests(db).execute(customer_id)
     return Page.of([RequestRowOut.from_row(r) for r in rows], page=page, size=size)
+
+
+@router.get("/orders/pending", response_model=Page[PendingOrderRowOut])
+async def list_pending_orders(
+    customer_id: int | None = Query(default=None, alias="customerId"),
+    include_delivered: bool = Query(default=False, alias="includeDelivered"),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=500, ge=1, le=500),
+    _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db),
+) -> Page[PendingOrderRowOut]:
+    """Pedidos propios que siguen circulando en Canal Directo (seguimiento día a día),
+    más viejos primero. Mismo criterio de `size` generoso que /requests: la pestaña
+    muestra todo y filtra client-side — el contrato sigue paginado."""
+    rows = await build_list_pending_orders(db).execute(customer_id, include_delivered)
+    return Page.of([PendingOrderRowOut.from_row(r) for r in rows], page=page, size=size)
 
 
 @router.get("/audit", response_model=Page[AuditRowOut])

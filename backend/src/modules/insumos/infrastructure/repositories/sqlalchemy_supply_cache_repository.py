@@ -12,9 +12,12 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.insumos.domain.value_objects import cd_state
-from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply
+from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply, SupplyStatusEvent
 from src.modules.insumos.infrastructure.models.supply_serial_cache_model import (
     SupplySerialCacheModel,
+)
+from src.modules.insumos.infrastructure.models.supply_status_history_model import (
+    SupplyStatusHistoryModel,
 )
 
 # Mismo conjunto que el WHERE del legacy (find_active_supply_by_serial): un pedido
@@ -64,7 +67,45 @@ class SqlAlchemySupplyCacheRepository:
             },
         )
         await self._session.execute(stmt)
+        await self._record_status_history(entries)
         await self._session.flush()
+
+    async def _record_status_history(self, entries: Sequence[CachedSupply]) -> None:
+        """Primer avistaje de cada estado distinto — dedup por (supply_id, estado):
+        re-escanear el mismo supply mil veces no agrega filas. Sin whitelist: un
+        estado real desconocido no debe perderse en silencio (ver cd_state.py)."""
+        # Dedup previo en memoria: un INSERT con la misma (supply_id, estado) dos veces
+        # rompería el ON CONFLICT dentro del mismo statement.
+        unique = {(e.supply_id, e.estado) for e in entries if e.estado.strip()}
+        if not unique:
+            return
+        history = [{"supply_id": sid, "estado": estado} for sid, estado in sorted(unique)]
+        stmt = pg_insert(SupplyStatusHistoryModel).values(history)
+        await self._session.execute(
+            stmt.on_conflict_do_nothing(index_elements=["supply_id", "estado"])
+        )
+
+    async def get_status_history_batch(
+        self, supply_ids: Sequence[int]
+    ) -> dict[int, list[SupplyStatusEvent]]:
+        if not supply_ids:
+            return {}
+        stmt = (
+            select(SupplyStatusHistoryModel)
+            .where(SupplyStatusHistoryModel.supply_id.in_(supply_ids))
+            .order_by(
+                SupplyStatusHistoryModel.supply_id,
+                SupplyStatusHistoryModel.first_seen_at.asc(),
+                SupplyStatusHistoryModel.id.asc(),
+            )
+        )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        result: dict[int, list[SupplyStatusEvent]] = {}
+        for row in rows:
+            result.setdefault(row.supply_id, []).append(
+                SupplyStatusEvent(estado=row.estado, first_seen_at=row.first_seen_at)
+            )
+        return result
 
     async def get_by_serial(self, serial: str, limit: int = 20) -> list[CachedSupply]:
         stmt = (

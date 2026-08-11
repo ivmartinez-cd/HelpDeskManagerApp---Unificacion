@@ -9,3 +9,8 @@ class CustomerConfigRepository(Protocol):
     async def list_enabled(self) -> list[CustomerConfig]:
         """Clientes habilitados para monitoreo, en el orden del padrón."""
         ...
+
+    async def get_names(self) -> dict[int, str]:
+        """{customer_id: nombre} de TODO el padrón, habilitado o no — un pedido en
+        tránsito de un cliente deshabilitado después no debe quedar sin nombre."""
+        ...

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.insumos.domain.entities.processed_request import (
     STATUS_CANCELLED,
     STATUS_CREATED,
+    ProcessedInitialSnapshot,
     ProcessedRequest,
 )
 from src.modules.insumos.infrastructure.models.processed_request_model import (
@@ -98,3 +99,39 @@ async def test_get_created_by_serial_es_case_insensitive(db_session: AsyncSessio
 
     assert len(rows) == 2
     assert all(r.status == STATUS_CREATED for r in rows)
+
+
+async def test_get_all_created_filtra_por_cliente_y_status(db_session: AsyncSession) -> None:
+    repo = SqlAlchemyProcessedRequestRepository(db_session)
+    await repo.mark_processed(_request(974325))
+    await repo.mark_processed(_request(974326, customer_id=9, internal_order_id="441771-1"))
+    await repo.mark_processed(_request(974327, status=STATUS_CANCELLED))
+
+    todos = await repo.get_all_created()
+    del_cliente = await repo.get_all_created(customer_id=9)
+
+    assert {r.hp_request_id for r in todos} == {974325, 974326}
+    assert [r.hp_request_id for r in del_cliente] == [974326]
+
+
+async def test_backfill_initial_snapshot_completa_filas_existentes(
+    db_session: AsyncSession,
+) -> None:
+    repo = SqlAlchemyProcessedRequestRepository(db_session)
+    await repo.mark_processed(_request(initial_percent_left=None, initial_days_left=None))
+
+    await repo.backfill_initial_snapshot(
+        [
+            ProcessedInitialSnapshot(
+                hp_request_id=974325,
+                initial_percent_left=9,
+                initial_days_left=3,
+                initial_pages_left=None,
+            )
+        ]
+    )
+
+    row = await repo.get(974325)
+    assert row is not None
+    assert row.initial_percent_left == 9
+    assert row.initial_days_left == 3

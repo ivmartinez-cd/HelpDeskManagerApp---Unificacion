@@ -8,7 +8,10 @@ servidor. La implementación vive en infrastructure/repositories/.
 from collections.abc import Sequence
 from typing import Protocol
 
-from src.modules.insumos.domain.entities.processed_request import ProcessedRequest
+from src.modules.insumos.domain.entities.processed_request import (
+    ProcessedInitialSnapshot,
+    ProcessedRequest,
+)
 
 
 class ProcessedRequestRepository(Protocol):
@@ -54,4 +57,15 @@ class ProcessedRequestRepository(Protocol):
         self, device_serials: Sequence[str]
     ) -> dict[str, list[ProcessedRequest]]:
         """Versión batch de get_created_by_serial (keyed serial.upper()) — anti N+1."""
+        ...
+
+    async def get_all_created(self, customer_id: int | None = None) -> list[ProcessedRequest]:
+        """Todas las órdenes CREATED (opcionalmente de un cliente), más recientes
+        primero — la base del seguimiento de pedidos pendientes."""
+        ...
+
+    async def backfill_initial_snapshot(
+        self, updates: Sequence[ProcessedInitialSnapshot]
+    ) -> None:
+        """Completa initial_* en filas ya existentes (ver ProcessedInitialSnapshot)."""
         ...

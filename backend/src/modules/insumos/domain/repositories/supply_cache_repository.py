@@ -8,14 +8,18 @@ hasta que el scan los confirme.
 from collections.abc import Sequence
 from typing import Protocol
 
-from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply
+from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply, SupplyStatusEvent
 
 
 class SupplyCacheRepository(Protocol):
     async def upsert(self, entries: Sequence[CachedSupply]) -> None:
         """Inserta/actualiza por supply_id. Ante conflicto: serial/estado/fecha se pisan
         siempre; empresa_id/sku/description solo si el valor nuevo no es vacío (mismo
-        criterio que el legacy — el scan puede traer menos datos que la creación)."""
+        criterio que el legacy — el scan puede traer menos datos que la creación).
+
+        Además registra en supply_status_history el primer avistaje de cada estado
+        distinto (dedup por (supply_id, estado)) — sin whitelist: un estado real
+        desconocido no debe perderse en silencio (ver cd_state.py)."""
         ...
 
     async def get_by_serial(self, serial: str, limit: int = 20) -> list[CachedSupply]:
@@ -47,4 +51,11 @@ class SupplyCacheRepository(Protocol):
     ) -> dict[str, list[CachedSupply]]:
         """Entradas no Anuladas/Canceladas por serie (keyed serial.upper(), supply_id
         DESC) — una sola query para todas las series pendientes (anti N+1)."""
+        ...
+
+    async def get_status_history_batch(
+        self, supply_ids: Sequence[int]
+    ) -> dict[int, list[SupplyStatusEvent]]:
+        """{supply_id: eventos en orden cronológico} desde supply_status_history —
+        una sola query para todos los IDs, nunca un loop por fila."""
         ...

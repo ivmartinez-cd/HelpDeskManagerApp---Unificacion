@@ -112,3 +112,31 @@ async def test_get_status(db_session: AsyncSession) -> None:
 
     assert await repo.get_status(111) == "Despachado"
     assert await repo.get_status(999) is None
+
+
+async def test_upsert_registra_primer_avistaje_de_cada_estado(db_session: AsyncSession) -> None:
+    """El historial de transiciones se graba en el upsert, dedup por (supply_id,
+    estado): re-escanear el mismo estado mil veces no agrega filas."""
+    repo = SqlAlchemySupplyCacheRepository(db_session)
+    await repo.upsert([_entry(111, estado="Pendiente")])
+    await repo.upsert([_entry(111, estado="Pendiente")])  # repetido: no suma
+    await repo.upsert([_entry(111, estado="Despachado"), _entry(222, estado="Pendiente")])
+
+    history = await repo.get_status_history_batch([111, 222, 999])
+
+    assert [e.estado for e in history[111]] == ["Pendiente", "Despachado"]
+    assert [e.estado for e in history[222]] == ["Pendiente"]
+    assert 999 not in history
+    assert history[111][0].first_seen_at <= history[111][1].first_seen_at
+
+
+async def test_estado_vacio_no_genera_historial(db_session: AsyncSession) -> None:
+    repo = SqlAlchemySupplyCacheRepository(db_session)
+    await repo.upsert([_entry(111, estado="")])
+
+    assert await repo.get_status_history_batch([111]) == {}
+
+
+async def test_get_status_history_batch_lista_vacia(db_session: AsyncSession) -> None:
+    repo = SqlAlchemySupplyCacheRepository(db_session)
+    assert await repo.get_status_history_batch([]) == {}

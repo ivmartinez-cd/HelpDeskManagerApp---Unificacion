@@ -12,6 +12,7 @@ from src.modules.insumos.domain.entities.audit_record import (
 from src.modules.insumos.domain.entities.customer_config import CustomerConfig
 from src.modules.insumos.domain.entities.processed_request import (
     STATUS_CREATED,
+    ProcessedInitialSnapshot,
     ProcessedRequest,
 )
 from src.modules.insumos.domain.repositories.insight_gateway import JsonDict
@@ -20,6 +21,7 @@ from src.modules.insumos.domain.value_objects.cd_supply import (
     CdIncident,
     CdMachine,
     CdSupply,
+    SupplyStatusEvent,
 )
 from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
@@ -142,6 +144,7 @@ class FakeSupplyCacheRepository:
         self.entries: list[CachedSupply] = []
         self.get_error: Exception | None = None
         self.recently_cached: set[int] = set()
+        self.status_history: dict[int, list[SupplyStatusEvent]] = {}
 
     async def upsert(self, entries: list[CachedSupply]) -> None:
         self.entries.extend(entries)
@@ -189,6 +192,11 @@ class FakeSupplyCacheRepository:
                 result[serial.upper()] = rows
         return result
 
+    async def get_status_history_batch(
+        self, supply_ids: list[int]
+    ) -> dict[int, list[SupplyStatusEvent]]:
+        return {sid: self.status_history[sid] for sid in supply_ids if sid in self.status_history}
+
 
 class FakeCustomerConfigRepository:
     def __init__(self) -> None:
@@ -196,6 +204,9 @@ class FakeCustomerConfigRepository:
 
     async def list_enabled(self) -> list[CustomerConfig]:
         return [c for c in self.customers if c.enabled]
+
+    async def get_names(self) -> dict[int, str]:
+        return {c.customer_id: c.name for c in self.customers}
 
 
 class FakeInsumosSettingsRepository:
@@ -302,6 +313,28 @@ class FakeProcessedRequestRepository:
             if rows:
                 result[serial.upper()] = rows
         return result
+
+    async def get_all_created(self, customer_id: int | None = None) -> list[ProcessedRequest]:
+        return [
+            r
+            for r in self.rows.values()
+            if r.status == STATUS_CREATED
+            and (customer_id is None or r.customer_id == customer_id)
+        ]
+
+    async def backfill_initial_snapshot(
+        self, updates: list[ProcessedInitialSnapshot]
+    ) -> None:
+        for entry in updates:
+            row = self.rows.get(entry.hp_request_id)
+            if row is None:
+                continue
+            self.rows[entry.hp_request_id] = replace(
+                row,
+                initial_percent_left=entry.initial_percent_left,
+                initial_days_left=entry.initial_days_left,
+                initial_pages_left=entry.initial_pages_left,
+            )
 
 
 class FakeOrderAuditRepository:
