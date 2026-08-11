@@ -16,7 +16,7 @@ from typing import Any
 from zeep import Client
 from zeep.transports import Transport
 
-from src.modules.insumos.domain.value_objects.cd_supply import CdMachine, CdSupply
+from src.modules.insumos.domain.value_objects.cd_supply import CdIncident, CdMachine, CdSupply
 from src.modules.insumos.domain.value_objects.serial_number import clean_serial
 from src.modules.insumos.infrastructure.soap import wsayc_parsing as parsing
 
@@ -56,6 +56,24 @@ class ZeepWsAycGateway:
             lambda: self._service().getMachineBySerial(SerialNumber=cleaned)
         )
         return parsing.parse_machine(raw)
+
+    async def get_machine_incidents(self, machine_id: str, top: int = 3) -> list[CdIncident]:
+        try:
+            raw = await asyncio.to_thread(
+                lambda: self._service().getMachineIncidents(
+                    IdMaquina=machine_id,
+                    IdEmpresa="",
+                    IdSucursal="",
+                    IdSector="",
+                    top=str(top),
+                    estado="",
+                    tipo="",
+                )
+            )
+            return parsing.parse_incidents(raw)
+        except Exception as exc:
+            logger.warning("SOAP getMachineIncidents(maquina=%s) falló", machine_id, exc_info=exc)
+            return []
 
     async def get_article_parts(self, familia_id: str) -> dict[str, str]:
         try:

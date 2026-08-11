@@ -7,7 +7,7 @@ uniformes a propósito: cada caller necesita una semántica distinta.
 
 from typing import Protocol
 
-from src.modules.insumos.domain.value_objects.cd_supply import CdMachine, CdSupply
+from src.modules.insumos.domain.value_objects.cd_supply import CdIncident, CdMachine, CdSupply
 
 
 class WsAycGateway(Protocol):
@@ -18,6 +18,15 @@ class WsAycGateway(Protocol):
         necesita distinguir "confirmado sin asignar" de "no se pudo consultar".
         El adapter limpia el serial (clean_serial) antes de consultar: el match de CD
         es exacto y un punto/espacio de más da un falso "sin asignar".
+        """
+        ...
+
+    async def get_machine_incidents(self, machine_id: str, top: int = 3) -> list[CdIncident]:
+        """Últimos ST técnicos del equipo, abiertos y cerrados, más reciente primero
+        (getMachineIncidents sin filtro de estado/tipo).
+
+        [] si no hay incidentes o hay un error (se loguea allá) — lo consume el
+        diagnóstico de la ventana de validación 0%, que es best-effort por diseño.
         """
         ...
 

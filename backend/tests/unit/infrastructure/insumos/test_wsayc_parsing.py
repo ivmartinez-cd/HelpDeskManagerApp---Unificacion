@@ -30,6 +30,39 @@ def test_parse_machine_sin_familia_mapea_familia_vacia() -> None:
     assert machine.familia_id == ""
 
 
+def test_parse_machine_trae_el_id_interno() -> None:
+    """El id interno de CD es la clave de getMachineIncidents (diagnóstico de la
+    ventana de validación 0%)."""
+    machine = parsing.parse_machine('{"Machine": {"id": "51497", "familia_id": "255"}}')
+    assert machine is not None
+    assert machine.machine_id == "51497"
+
+
+# --- parse_incidents -------------------------------------------------------------------
+
+
+def test_parse_incidents_lista_con_fallbacks() -> None:
+    raw = (
+        '[{"Incident": {"id": "841863", "NroIncidente": "841863", "Estado": "Cerrado", '
+        '"FechaCierre": "04/08/2026 13:42:00", "Tecnico": "CD - Ignacio SIGUEN"}}, '
+        '{"Incident": {"id": "841900", "Estado": "En Curso", "VisitaA": "Mesa de ayuda"}}]'
+    )
+    incidents = parsing.parse_incidents(raw)
+    assert [i.numero for i in incidents] == ["841863", "841900"]  # NroIncidente o id
+    assert incidents[0].estado == "Cerrado"
+    assert incidents[0].fecha_cierre == "04/08/2026 13:42:00"
+    assert incidents[0].tecnico == "CD - Ignacio SIGUEN"
+    assert incidents[1].tecnico == "Mesa de ayuda"  # VisitaA como fallback
+
+
+def test_parse_incidents_dict_suelto_y_basura() -> None:
+    suelto = parsing.parse_incidents('{"Incident": {"id": "1", "Estado": "Cerrado"}}')
+    assert len(suelto) == 1 and suelto[0].numero == "1"
+    assert parsing.parse_incidents("[]") == []
+    assert parsing.parse_incidents("no-json") == []
+    assert parsing.parse_incidents(None) == []
+
+
 # --- parse_supply_by_id ----------------------------------------------------------------
 
 

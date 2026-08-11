@@ -1,5 +1,7 @@
 """Fakes compartidos de los puertos de insumos para tests unitarios."""
 
+from datetime import UTC, datetime, timedelta
+
 from src.modules.insumos.domain.entities.audit_record import (
     EVENT_CREATED,
     AuditRecord,
@@ -10,10 +12,20 @@ from src.modules.insumos.domain.entities.processed_request import (
     ProcessedRequest,
 )
 from src.modules.insumos.domain.repositories.insight_gateway import JsonDict
-from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply, CdMachine, CdSupply
+from src.modules.insumos.domain.value_objects.cd_supply import (
+    CachedSupply,
+    CdIncident,
+    CdMachine,
+    CdSupply,
+)
 from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
-from src.modules.insumos.domain.value_objects.pending_validation import PendingValidation
+from src.modules.insumos.domain.value_objects.pending_validation import (
+    VALIDATION_PENDING,
+    PendingValidation,
+    PendingValidationWork,
+    ValidationStart,
+)
 from src.modules.insumos.domain.value_objects.zone_contacts import ZoneContacts
 
 HAPPY_MACHINE = CdMachine(
@@ -67,11 +79,15 @@ class FakeWsAycGateway:
         self.description_calls: list[int] = []
         self.incidents_by_id: dict[int, CdSupply] = {}
         self.incident_calls: list[int] = []
+        self.machine_incidents: list[CdIncident] = []
 
     async def get_machine_by_serial(self, serial: str) -> CdMachine | None:
         if self.machine_error is not None:
             raise self.machine_error
         return self.machine
+
+    async def get_machine_incidents(self, machine_id: str, top: int = 3) -> list[CdIncident]:
+        return self.machine_incidents
 
     async def get_article_parts(self, familia_id: str) -> dict[str, str]:
         return self.article_parts
@@ -289,9 +305,18 @@ class FakeOrderAuditRepository:
 
 
 class FakeRequestValidationRepository:
+    """Lectura + escritura en memoria. La semántica fina del UPSERT (no reiniciar el
+    reloj, no pisar un status resuelto) se prueba en integración contra Postgres —
+    acá alcanza con el contrato que consumen los casos de uso."""
+
     def __init__(self) -> None:
         self.pending: dict[int, PendingValidation] = {}
         self.swap_notes: dict[int, str] = {}
+        self.statuses: dict[int, str] = {}
+        self.diagnosed: set[int] = set()
+        self.starts: list[ValidationStart] = []
+        self.work: dict[int, PendingValidationWork] = {}
+        self.resolved: list[tuple[int, str]] = []
 
     async def get_pending(self, hp_request_id: int) -> PendingValidation | None:
         return self.pending.get(hp_request_id)
@@ -306,6 +331,47 @@ class FakeRequestValidationRepository:
         self, hp_request_ids: list[int]
     ) -> dict[int, PendingValidation]:
         return {rid: self.pending[rid] for rid in hp_request_ids if rid in self.pending}
+
+    async def is_diagnosed(self, hp_request_id: int) -> bool:
+        return hp_request_id in self.diagnosed
+
+    async def start(self, data: ValidationStart) -> None:
+        self.starts.append(data)
+        self.diagnosed.add(data.hp_request_id)
+        if data.swap_note:
+            self.swap_notes[data.hp_request_id] = data.swap_note
+        if data.hp_request_id in self.statuses:
+            return  # la fila ya existía: no reinicia el reloj ni pisa el status
+        self.statuses[data.hp_request_id] = VALIDATION_PENDING
+        self.pending[data.hp_request_id] = PendingValidation(
+            hp_request_id=data.hp_request_id,
+            deadline_at=datetime.now(UTC) + timedelta(minutes=data.deadline_minutes),
+            initial_percent_left=data.initial_percent_left,
+            diagnosis_headline=data.diagnosis_headline,
+            diagnosis_detail=data.diagnosis_detail,
+            swap_note=data.swap_note,
+        )
+        self.work[data.hp_request_id] = PendingValidationWork(
+            hp_request_id=data.hp_request_id,
+            customer_id=data.customer_id,
+            device_id=data.device_id,
+            device_serial=data.device_serial,
+            sku=data.sku,
+            initial_percent_left=data.initial_percent_left,
+            is_due=data.deadline_minutes <= 0,
+        )
+
+    async def resolve(self, hp_request_id: int, status: str) -> bool:
+        if self.statuses.get(hp_request_id) != VALIDATION_PENDING:
+            return False
+        self.statuses[hp_request_id] = status
+        self.pending.pop(hp_request_id, None)
+        self.work.pop(hp_request_id, None)
+        self.resolved.append((hp_request_id, status))
+        return True
+
+    async def get_all_pending(self) -> list[PendingValidationWork]:
+        return list(self.work.values())
 
 
 class FakeZoneContactRepository:
@@ -327,6 +393,11 @@ class FakeInsightGateway:
         self.errors_by_customer: dict[int, Exception] = {}
         self.devices_by_id: dict[int, JsonDict] = {}
         self.updates: list[JsonDict] = []
+        self.update_error: Exception | None = None
+        self.consumables_by_device: dict[int, list[JsonDict]] = {}
+        self.consumables_error: Exception | None = None
+        self.history_by_device: dict[int, list[JsonDict]] = {}
+        self.history_error: Exception | None = None
 
     async def get_consumable_requests(
         self,
@@ -346,6 +417,22 @@ class FakeInsightGateway:
     async def get_device_by_id(self, device_id: int) -> JsonDict:
         return self.devices_by_id.get(device_id, {})
 
+    async def get_device_consumables(self, device_id: int) -> list[JsonDict]:
+        if self.consumables_error is not None:
+            raise self.consumables_error
+        return self.consumables_by_device.get(device_id, [])
+
+    async def get_consumable_history(
+        self,
+        device_id: int,
+        consumable_index: int,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> list[JsonDict]:
+        if self.history_error is not None:
+            raise self.history_error
+        return self.history_by_device.get(device_id, [])
+
     async def update_consumable_request(
         self,
         request_id: int,
@@ -353,7 +440,14 @@ class FakeInsightGateway:
         status_update: str | None = None,
         comment: str | None = None,
     ) -> JsonDict:
+        if self.update_error is not None:
+            raise self.update_error
         self.updates.append(
-            {"request_id": request_id, "externalRef": external_ref, "statusUpdate": status_update}
+            {
+                "request_id": request_id,
+                "externalRef": external_ref,
+                "statusUpdate": status_update,
+                "comment": comment,
+            }
         )
         return {"ok": True}

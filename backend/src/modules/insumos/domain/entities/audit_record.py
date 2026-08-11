@@ -10,6 +10,9 @@ EVENT_FAILED = "FAILED"
 EVENT_RELEASED = "RELEASED"
 EVENT_CANCELLED = "CANCELLED"
 EVENT_DISMISSED = "DISMISSED"
+# Descarte automático de la ventana de validación 0% (falsa alarma de sensor) — a
+# diferencia de DISMISSED (descarte manual del operador).
+EVENT_AUTO_DISMISSED = "AUTO_DISMISSED"
 
 ORDER_TYPE_SUPPLY = "supply"
 ORDER_TYPE_INCIDENT = "incident"

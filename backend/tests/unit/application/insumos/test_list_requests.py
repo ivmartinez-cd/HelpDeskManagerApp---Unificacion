@@ -9,6 +9,10 @@ from src.modules.insumos.application.use_cases.list_requests import (
     ListRequestsConfig,
     ListRequestsPorts,
 )
+from src.modules.insumos.application.use_cases.validation_window import (
+    ValidationWindow,
+    ValidationWindowPorts,
+)
 from src.modules.insumos.domain.entities.audit_record import EVENT_RELEASED
 from src.modules.insumos.domain.entities.customer_config import CustomerConfig
 from src.modules.insumos.domain.entities.processed_request import (
@@ -17,6 +21,7 @@ from src.modules.insumos.domain.entities.processed_request import (
 )
 from src.modules.insumos.domain.repositories.insight_gateway import JsonDict
 from src.modules.insumos.domain.services.supply_lookup import CanalDirectoSupplyLookup
+from src.modules.insumos.domain.services.validation_diagnosis import ValidationDiagnosis
 from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply, CdSupply
 from src.modules.insumos.domain.value_objects.pending_validation import PendingValidation
 from tests.unit.domain.insumos.fakes import (
@@ -37,6 +42,7 @@ def _insight_request(
     days_left: int = 5,
     sku: str = "CF230A",
     description: str = "Cartucho negro HP 30A",
+    percent_left: float = 5.0,
 ) -> JsonDict:
     return {
         "id": request_id,
@@ -46,7 +52,7 @@ def _insight_request(
             "sku": sku,
             "description": description,
             "daysLeft": days_left,
-            "percentLeft": 5.0,
+            "percentLeft": percent_left,
             "pagesLeft": 120,
             "index": 0,
             "reorderPart": {"type": "TONER"},
@@ -86,10 +92,19 @@ class World:
             settings=self.settings_repo,
             audit=self.audit,
         )
+        self.window = ValidationWindow(
+            ValidationWindowPorts(
+                insight=self.insight,  # type: ignore[arg-type]
+                validations=self.validations,
+                audit=self.audit,
+                diagnosis=ValidationDiagnosis(self.insight, self.wsayc),  # type: ignore[arg-type]
+            )
+        )
         ports = ListRequestsPorts(
             dashboard=dashboard_ports,
             validations=self.validations,
             supply_lookup=CanalDirectoSupplyLookup(self.wsayc, self.supply_cache, order_settings),
+            validation_window=self.window,
         )
         config = ListRequestsConfig(
             order_settings=order_settings,
@@ -235,6 +250,81 @@ async def test_validacion_pendiente_marca_la_fila() -> None:
     assert row.validation_deadline == "2026-08-10T20:00:00Z"
     assert row.validation_swap_note == "Cambio de insumo"
     assert row.validation_diagnosis_headline == "Posible falla de sensor"
+
+
+async def test_solicitud_elegible_en_cero_entra_en_validando() -> None:
+    """Caso real MXBCQ7C03T: una solicitud elegible que llega en 0% exacto arranca su
+    ventana de validación al verse en el dashboard — la fila sale marcada "Validando"
+    con el diagnóstico ya calculado, sin esperar al poller."""
+    world = World()
+    world.insight.requests_by_customer = {
+        8: [_insight_request(1, days_left=0, percent_left=0)]
+    }
+
+    rows = await world.use_case.execute(customer_id=8)
+
+    assert len(world.validations.starts) == 1
+    start = world.validations.starts[0]
+    assert start.hp_request_id == 1
+    assert start.device_serial == "SERIE1"
+    assert start.initial_percent_left == 0
+    assert start.deadline_minutes == 360  # validation_window_hours default (6hs)
+    row = rows[0]
+    assert row.validation_pending is True
+    assert row.validation_diagnosis_headline == "Sin antecedentes claros — validar manualmente"
+
+
+async def test_solicitud_elegible_no_cero_no_entra_en_validacion() -> None:
+    """Nivel bajo pero no cero es una alerta legítima de HP SDS — no se valida."""
+    world = World()
+    world.insight.requests_by_customer = {8: [_insight_request(1, days_left=2)]}
+
+    rows = await world.use_case.execute(customer_id=8)
+
+    assert world.validations.starts == []
+    assert rows[0].validation_pending is False
+
+
+async def test_solicitud_en_cero_ya_cargada_no_entra_en_validacion() -> None:
+    world = World()
+    world.insight.requests_by_customer = {
+        8: [_insight_request(1, days_left=0, percent_left=0)]
+    }
+    await world.processed.mark_processed(
+        ProcessedRequest(hp_request_id=1, device_serial="SERIE1", sku="CF230A",
+                         internal_order_id="441000-1")
+    )
+
+    await world.use_case.execute(customer_id=8)
+
+    assert world.validations.starts == []
+
+
+async def test_abrir_la_pantalla_resuelve_las_pendientes_contra_el_nivel_en_vivo() -> None:
+    """resolve_pending corre ANTES de armar las filas: una validación cuya lectura en
+    vivo ya se recuperó se descarta en el momento (AUTO_DISMISSED + DELETE en HP SDS)
+    y la fila deja de mostrarse como "Validando"."""
+    world = World()
+    world.insight.requests_by_customer = {
+        8: [_insight_request(1, days_left=0, percent_left=0)]
+    }
+    world.insight.consumables_by_device[7] = [{"sku": "CF230A", "percentLeft": 87, "index": 0}]
+    # Ventana ya abierta por una vista anterior (larga: ni cerca de vencer).
+    await world.window.start_pending(
+        _insight_request(1, days_left=0, percent_left=0),
+        device_id=7,
+        customer_id=8,
+        device_serial="SERIE1",
+        deadline_minutes=360,
+    )
+    assert 1 in world.validations.pending
+
+    rows = await world.use_case.execute(customer_id=8)
+
+    assert world.validations.resolved == [(1, "DISMISSED")]
+    assert rows[0].validation_pending is False
+    dismissed = [r for r in world.audit.records if r.event == "AUTO_DISMISSED"]
+    assert len(dismissed) == 1
 
 
 async def test_error_de_un_cliente_no_rompe_el_listado_global() -> None:

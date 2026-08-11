@@ -7,7 +7,7 @@ ID existe y '[]' cuando no; los escalares (persistNewSupply) vienen como JSON es
 
 import json
 
-from src.modules.insumos.domain.value_objects.cd_supply import CdMachine, CdSupply
+from src.modules.insumos.domain.value_objects.cd_supply import CdIncident, CdMachine, CdSupply
 
 
 def safe_parse(raw: str | None) -> object:
@@ -34,6 +34,33 @@ def parse_machine(raw: str | None) -> CdMachine | None:
         familia_name=_text(machine, "Familia"),
         empresa_id=_text(machine, "empresa_id"),
         sucursal_id=_text(machine, "sucursal_id"),
+        machine_id=_text(machine, "id"),
+    )
+
+
+def parse_incidents(raw: str | None) -> list[CdIncident]:
+    """getMachineIncidents devuelve [{"Incident": {...}}, ...] (o un dict suelto si
+    hay uno solo) — [] para cualquier otra cosa."""
+    parsed = safe_parse(raw)
+    if isinstance(parsed, dict):
+        parsed = [parsed]
+    if not isinstance(parsed, list):
+        return []
+    return [
+        _incident_from_dict(item["Incident"])
+        for item in parsed
+        if isinstance(item, dict) and isinstance(item.get("Incident"), dict)
+    ]
+
+
+def _incident_from_dict(data: dict[str, object]) -> CdIncident:
+    return CdIncident(
+        numero=_text(data, "NroIncidente") or _text(data, "id"),
+        estado=_text(data, "Estado"),
+        fecha=_text(data, "Fecha"),
+        fecha_cierre=_text(data, "FechaCierre"),
+        tecnico=_text(data, "Tecnico") or _text(data, "VisitaA"),
+        motivo=_text(data, "Motivo"),
     )
 
 

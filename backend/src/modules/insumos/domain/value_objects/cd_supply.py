@@ -13,6 +13,23 @@ class CdMachine:
     familia_name: str = ""
     empresa_id: str = ""
     sucursal_id: str = ""
+    machine_id: str = ""  # id interno de CD — clave para getMachineIncidents
+
+
+@dataclass(frozen=True)
+class CdIncident:
+    """Un ST técnico visto por getMachineIncidents — evidencia informativa del
+    diagnóstico de la ventana de validación 0% (nunca decide nada por sí solo).
+
+    Las fechas quedan en el formato crudo de CD ("DD/MM/YYYY HH:MM:SS", ya en hora
+    Argentina) — se parsean con parse_cd_datetime donde se consumen."""
+
+    numero: str  # NroIncidente (o id si no viene)
+    estado: str = ""
+    fecha: str = ""
+    fecha_cierre: str = ""
+    tecnico: str = ""  # Tecnico, o VisitaA como fallback
+    motivo: str = ""
 
 
 @dataclass(frozen=True)

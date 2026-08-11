@@ -23,10 +23,15 @@ from src.modules.insumos.application.use_cases.list_requests import (
     ListRequestsPorts,
 )
 from src.modules.insumos.application.use_cases.load_order import LoadOrder
+from src.modules.insumos.application.use_cases.validation_window import (
+    ValidationWindow,
+    ValidationWindowPorts,
+)
 from src.modules.insumos.domain.services.claimed_order_creation import ClaimedOrderCreation
 from src.modules.insumos.domain.services.order_creation import CanalDirectoOrderCreation
 from src.modules.insumos.domain.services.supply_lookup import CanalDirectoSupplyLookup
 from src.modules.insumos.domain.services.supply_request_matching import SupplyMatchResolver
+from src.modules.insumos.domain.services.validation_diagnosis import ValidationDiagnosis
 from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
 from src.modules.insumos.infrastructure.insight.httpx_insight_gateway import HttpxInsightGateway
@@ -123,10 +128,20 @@ def build_list_requests(session: AsyncSession) -> ListRequests:
         settings=SqlAlchemyInsumosSettingsRepository(session),
         audit=SqlAlchemyOrderAuditRepository(session),
     )
+    insight = get_insight_gateway()
+    validations = SqlAlchemyRequestValidationRepository(session)
     ports = ListRequestsPorts(
         dashboard=dashboard_ports,
-        validations=SqlAlchemyRequestValidationRepository(session),
+        validations=validations,
         supply_lookup=CanalDirectoSupplyLookup(wsayc, supply_cache, order_settings),
+        validation_window=ValidationWindow(
+            ValidationWindowPorts(
+                insight=insight,
+                validations=validations,
+                audit=SqlAlchemyOrderAuditRepository(session),
+                diagnosis=ValidationDiagnosis(insight, wsayc),
+            )
+        ),
     )
     config = ListRequestsConfig(
         order_settings=order_settings, insight_base_url=settings.insight_base_url
