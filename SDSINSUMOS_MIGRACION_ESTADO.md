@@ -1,17 +1,14 @@
 # Migración SDSInsumos — estado y próximo paso
 
-Actualizado: 2026-08-11 (Equipos Offline portado completo — dominio + infra +
-presentación; suite verde: lint-imports 12/12, ruff clean, mypy 0 errors, 519
-tests pasan — ver abajo para verificación anterior del dry-run de solicitudes).
+Actualizado: 2026-08-11 (Jobs de fondo portados — 4 asyncio.Task en lifespan
+FastAPI: poller, offline check, alert sync, pedidos pendientes; suite verde:
+lint-imports 12/12, ruff clean, mypy 0 errors, 519 tests pasan).
 Frontend: fundación + 5 pantallas ya portadas, sobre el backend ya portado de
 Estadísticas, Mail log, Config GET/PUT, Equipos nuevos, Alertas y Equipos Offline.
 
 ## Qué resta hacer, en orden
 
-1. **5 jobs de fondo** (poller, autocarga, backup, chequeo offline, alertas,
-   aviso de pedidos por vencer) — primer precedente de scheduler del monorepo;
-   todos los módulos que orquesta ya están portados.
-2. **Frontend de Clientes y Equipos offline** — sin pantalla todavía (ver
+1. **Frontend de Clientes y Equipos offline** — sin pantalla todavía (ver
    `SDSINSUMOS_CARACTERIZACION_FRONTEND.md` para el relevamiento del legacy Vue de
    esas dos vistas).
 
@@ -48,6 +45,7 @@ Con `a0189fe`, el router de solicitudes del legacy (`routers/requests/` completo
 | Alertas endpoints (`alerts.py`, sin el job de escalado) | `GET /api/insumos/alerts`, `POST /alerts/ack` | `b069eb8` |
 | Equipos offline (`offline_devices.py`: 6 endpoints, advisory lock Postgres, portal gateway `httpx`, SOAP verify loop, outage detection, canal directo classify) | `/api/insumos/offline-devices` (list/outages/summary/verify/dismiss/delete) | `291f93e` |
 | Clientes (`customers.py`: 13 endpoints, CRUD zone contacts, importación desde PortalWeb + wsAyC, sync desde Insight) | `/api/insumos/customers` (list/patch/bulk-toggle/contacts CRUD/seed/import-from-supply/sds-contacts/zones/zone-contacts-import preview+apply) + `/sync-customers` | `0fa4186` |
+| 5 jobs de fondo (`main.py`): poller + PollerAlerts, offline check 03:00 UTC, alert sync c/15 min (upsert request_alerts + escalado), pedidos pendientes 07:00 UTC; backup SQLite omitido; maybe_auto_load pendiente | 4 `asyncio.Task` en lifespan FastAPI; `DISABLE_BACKGROUND_JOBS=true` para CI/multi-instancia | `ff8a493` |
 
 `a0189fe` además cerró un gap: el upsert del cache ahora graba `supply_status_history`
 (primer avistaje de cada estado), como el legacy.
@@ -216,9 +214,9 @@ nuevos + device_sync (6) → Alertas (3) → Equipos offline (7) → Clientes/sc
 como una decisión de infraestructura única a tomar antes de encarar cualquiera de los
 dos.
 
-**Ejecutado hasta 2026-08-11: 4, 5, 2, 6, 3, 7, 1 completos** (ver tabla "Portado hasta
-ahora" arriba). Resta **8 (5 jobs de fondo)** — ver "Qué resta hacer" al principio
-de este documento.
+**Ejecutado hasta 2026-08-11: 4, 5, 2, 6, 3, 7, 1, 8 completos** (ver tabla "Portado hasta
+ahora" arriba). Resta **frontend de Clientes y Equipos Offline** — ver "Qué resta hacer"
+al principio de este documento.
 
 Justificación: primero los módulos autocontenidos de bajo riesgo que no requieren
 infraestructura nueva (4, 5, 2-parcial) para consolidar el patrón sobre tablas que ya
