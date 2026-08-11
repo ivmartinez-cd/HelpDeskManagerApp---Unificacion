@@ -66,3 +66,18 @@ def settings_from_raw(raw: Mapping[str, str]) -> InsumosSettings:
         logistics_mail_to=raw.get("logistics_mail_to", ""),
         **ints,
     )
+
+
+def settings_to_raw(settings: InsumosSettings) -> dict[str, str]:
+    """Inversa de settings_from_raw — app_settings es key-value de strings."""
+    raw = {key: str(getattr(settings, key)) for key in _INT_KEYS}
+    raw["autoload_enabled"] = "1" if settings.autoload_enabled else "0"
+    raw["alert_work_hours_enabled"] = "1" if settings.alert_work_hours_enabled else "0"
+    raw["logistics_mail_to"] = settings.logistics_mail_to
+    return raw
+
+
+def logistics_recipients(settings: InsumosSettings) -> list[str]:
+    """La lista de destinatarios se guarda como CSV en una sola key; el valor vacío
+    tiene que dar [] y no [""]."""
+    return [email for email in settings.logistics_mail_to.split(",") if email]

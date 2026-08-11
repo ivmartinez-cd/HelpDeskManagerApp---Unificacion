@@ -228,6 +228,9 @@ class FakeInsumosSettingsRepository:
     async def get_all(self) -> dict[str, str]:
         return dict(self.raw)
 
+    async def set_all(self, values: dict[str, str]) -> None:
+        self.raw.update(values)
+
 
 class FakeOrderClaimRepository:
     def __init__(self) -> None:

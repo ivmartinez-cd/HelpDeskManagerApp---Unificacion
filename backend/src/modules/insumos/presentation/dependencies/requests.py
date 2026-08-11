@@ -1,8 +1,4 @@
-"""Factories del módulo insumos: un `build_*` por caso de uso.
-
-Las piezas compartidas (singletons de gateways, settings de pedido, zona horaria)
-viven en `wiring.py`.
-"""
+"""Factories de solicitudes, pedidos y equipos (un `build_*` por caso de uso)."""
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,10 +21,6 @@ from src.modules.insumos.application.use_cases.get_consumable_history import (
 from src.modules.insumos.application.use_cases.get_consumable_request_history import (
     GetConsumableRequestHistory,
 )
-from src.modules.insumos.application.use_cases.get_customer_statistics import (
-    GetCustomerStatistics,
-    GetCustomerStatisticsPorts,
-)
 from src.modules.insumos.application.use_cases.get_dashboard import (
     GetDashboard,
     GetDashboardPorts,
@@ -37,15 +29,7 @@ from src.modules.insumos.application.use_cases.get_device_supplies import (
     GetDeviceSupplies,
     GetDeviceSuppliesPorts,
 )
-from src.modules.insumos.application.use_cases.get_statistics_overview import (
-    GetStatisticsOverview,
-    GetStatisticsOverviewPorts,
-)
 from src.modules.insumos.application.use_cases.list_audit import ListAudit, ListAuditPorts
-from src.modules.insumos.application.use_cases.list_mail_log import (
-    ListMailLog,
-    ListMailLogPorts,
-)
 from src.modules.insumos.application.use_cases.list_pending_orders import (
     ListPendingOrders,
     ListPendingOrdersPorts,
@@ -70,20 +54,11 @@ from src.modules.insumos.domain.services.order_creation import CanalDirectoOrder
 from src.modules.insumos.domain.services.supply_lookup import CanalDirectoSupplyLookup
 from src.modules.insumos.domain.services.supply_request_matching import SupplyMatchResolver
 from src.modules.insumos.domain.services.validation_diagnosis import ValidationDiagnosis
-from src.modules.insumos.infrastructure.repositories.sqlalchemy_audit_statistics_repository import (  # noqa: E501
-    SqlAlchemyAuditStatisticsRepository,
-)
 from src.modules.insumos.infrastructure.repositories.sqlalchemy_customer_config_repository import (  # noqa: E501
     SqlAlchemyCustomerConfigRepository,
 )
 from src.modules.insumos.infrastructure.repositories.sqlalchemy_insumos_settings_repository import (  # noqa: E501
     SqlAlchemyInsumosSettingsRepository,
-)
-from src.modules.insumos.infrastructure.repositories.sqlalchemy_known_device_repository import (  # noqa: E501
-    SqlAlchemyKnownDeviceRepository,
-)
-from src.modules.insumos.infrastructure.repositories.sqlalchemy_mail_log_repository import (
-    SqlAlchemyMailLogRepository,
 )
 from src.modules.insumos.infrastructure.repositories.sqlalchemy_order_audit_repository import (
     SqlAlchemyOrderAuditRepository,
@@ -104,7 +79,6 @@ from src.modules.insumos.infrastructure.repositories.sqlalchemy_zone_contact_rep
     SqlAlchemyZoneContactRepository,
 )
 from src.modules.insumos.presentation.wiring import (
-    app_timezone,
     get_insight_gateway,
     get_wsayc_gateway,
     order_settings,
@@ -192,26 +166,6 @@ def build_list_audit(session: AsyncSession) -> ListAudit:
         insight=get_insight_gateway(),
     )
     return ListAudit(ports, order_settings(get_settings()))
-
-
-def build_get_statistics_overview(session: AsyncSession) -> GetStatisticsOverview:
-    ports = GetStatisticsOverviewPorts(stats=SqlAlchemyAuditStatisticsRepository(session))
-    return GetStatisticsOverview(ports, app_timezone())
-
-
-def build_get_customer_statistics(session: AsyncSession) -> GetCustomerStatistics:
-    ports = GetCustomerStatisticsPorts(
-        stats=SqlAlchemyAuditStatisticsRepository(session),
-        customers=SqlAlchemyCustomerConfigRepository(session),
-        devices=SqlAlchemyKnownDeviceRepository(session),
-        supply_cache=SqlAlchemySupplyCacheRepository(session),
-        settings=SqlAlchemyInsumosSettingsRepository(session),
-    )
-    return GetCustomerStatistics(ports, app_timezone())
-
-
-def build_list_mail_log(session: AsyncSession) -> ListMailLog:
-    return ListMailLog(ListMailLogPorts(mail_log=SqlAlchemyMailLogRepository(session)))
 
 
 def build_cancel_order(session: AsyncSession) -> CancelOrder:
