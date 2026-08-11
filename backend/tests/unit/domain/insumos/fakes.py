@@ -79,6 +79,8 @@ class FakeWsAycGateway:
         self.fetch_calls: list[int] = []
         self.supplies_for_empresa: list[CdSupply] = []
         self.description = "HP E50145/52645 - Toner"
+        # Si está seteado, get_supply_description responde por ID ("" si no está).
+        self.descriptions_by_id: dict[int, str] | None = None
         self.description_calls: list[int] = []
         self.incidents_by_id: dict[int, CdSupply] = {}
         self.incident_calls: list[int] = []
@@ -117,6 +119,8 @@ class FakeWsAycGateway:
 
     async def get_supply_description(self, supply_id: int) -> str:
         self.description_calls.append(supply_id)
+        if self.descriptions_by_id is not None:
+            return self.descriptions_by_id.get(supply_id, "")
         return self.description
 
     async def get_supplies_for_empresa(
@@ -443,6 +447,10 @@ class FakeInsightGateway:
         self.consumables_error: Exception | None = None
         self.history_by_device: dict[int, list[JsonDict]] = {}
         self.history_error: Exception | None = None
+        # Si está seteado, cada workflowStatus tiene su propia lista (historial del modal).
+        self.requests_by_status: dict[str, list[JsonDict]] | None = None
+        self.alerts_by_device: dict[int, list[JsonDict]] = {}
+        self.alerts_error: Exception | None = None
 
     async def get_consumable_requests(
         self,
@@ -455,6 +463,8 @@ class FakeInsightGateway:
             raise self.requests_error
         if customer_id in self.errors_by_customer:
             raise self.errors_by_customer[customer_id]
+        if self.requests_by_status is not None:
+            return self.requests_by_status.get(workflow_status, [])
         if workflow_status == "ACTIONED":
             return self.actioned_by_customer.get(customer_id, [])
         if self.requests_by_customer is not None:
@@ -479,6 +489,18 @@ class FakeInsightGateway:
         if self.history_error is not None:
             raise self.history_error
         return self.history_by_device.get(device_id, [])
+
+    async def get_device_alerts_history(
+        self,
+        device_id: int,
+        alert_classes: list[str] | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        max_results: int | None = None,
+    ) -> list[JsonDict]:
+        if self.alerts_error is not None:
+            raise self.alerts_error
+        return self.alerts_by_device.get(device_id, [])
 
     async def update_consumable_request(
         self,

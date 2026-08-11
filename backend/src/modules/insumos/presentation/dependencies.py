@@ -18,9 +18,23 @@ from src.modules.insumos.application.use_cases.dismiss_request import (
     DismissRequest,
     DismissRequestPorts,
 )
+from src.modules.insumos.application.use_cases.get_availability_windows import (
+    GetAvailabilityWindows,
+)
+from src.modules.insumos.application.use_cases.get_consumable_detail import GetConsumableDetail
+from src.modules.insumos.application.use_cases.get_consumable_history import (
+    GetConsumableHistory,
+)
+from src.modules.insumos.application.use_cases.get_consumable_request_history import (
+    GetConsumableRequestHistory,
+)
 from src.modules.insumos.application.use_cases.get_dashboard import (
     GetDashboard,
     GetDashboardPorts,
+)
+from src.modules.insumos.application.use_cases.get_device_supplies import (
+    GetDeviceSupplies,
+    GetDeviceSuppliesPorts,
 )
 from src.modules.insumos.application.use_cases.list_audit import ListAudit, ListAuditPorts
 from src.modules.insumos.application.use_cases.list_requests import (
@@ -212,6 +226,31 @@ def build_dismiss_request(session: AsyncSession) -> DismissRequest:
             audit=SqlAlchemyOrderAuditRepository(session),
         )
     )
+
+
+def build_get_device_supplies(session: AsyncSession) -> GetDeviceSupplies:
+    ports = GetDeviceSuppliesPorts(
+        wsayc=get_wsayc_gateway(),
+        supply_cache=SqlAlchemySupplyCacheRepository(session),
+        processed=SqlAlchemyProcessedRequestRepository(session),
+    )
+    return GetDeviceSupplies(ports, _order_settings(get_settings()))
+
+
+def build_get_consumable_history() -> GetConsumableHistory:
+    return GetConsumableHistory(get_insight_gateway())
+
+
+def build_get_consumable_request_history() -> GetConsumableRequestHistory:
+    return GetConsumableRequestHistory(get_insight_gateway())
+
+
+def build_get_availability_windows() -> GetAvailabilityWindows:
+    return GetAvailabilityWindows(get_insight_gateway())
+
+
+def build_get_consumable_detail() -> GetConsumableDetail:
+    return GetConsumableDetail(get_insight_gateway())
 
 
 def build_reconcile_order(session: AsyncSession) -> ReconcileOrder:
