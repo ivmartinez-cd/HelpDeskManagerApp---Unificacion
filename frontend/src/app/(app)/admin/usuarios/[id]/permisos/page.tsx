@@ -32,7 +32,7 @@ export default function UserPermissionsPage({ params }: PageProps) {
     <div className="p-6 lg:p-10">
       <Link
         href="/admin/usuarios"
-        className="mb-4 inline-flex items-center gap-1.5 font-body text-xs font-bold uppercase tracking-wide text-[#8a8a8a] hover:text-brand-charcoal"
+        className="mb-4 inline-flex items-center gap-1.5 font-body text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Usuarios
@@ -40,8 +40,8 @@ export default function UserPermissionsPage({ params }: PageProps) {
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl font-extrabold text-brand-charcoal">Permisos</h1>
-          <p className="mt-1 font-body text-sm text-[#8a8a8a]">
+          <h1 className="font-heading text-2xl font-extrabold text-foreground">Permisos</h1>
+          <p className="mt-1 font-body text-sm text-muted-foreground">
             {targetUser ? `${targetUser.fullName} · ${targetUser.email}` : "Cargando usuario…"}
           </p>
         </div>
@@ -57,10 +57,10 @@ export default function UserPermissionsPage({ params }: PageProps) {
       )}
 
       {!loading && (
-        <div className="overflow-x-auto rounded-[12px] border border-black/[0.08] bg-white">
+        <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
           <table className="w-full text-left font-body text-sm">
             <thead>
-              <tr className="border-b border-black/[0.08] text-[11px] font-bold uppercase tracking-wide text-[#7a7a7a]">
+              <tr className="border-b border-border text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-3">Módulo</th>
                 <th className="px-4 py-3">Alcance</th>
                 {actions.map((action) => (
@@ -72,11 +72,11 @@ export default function UserPermissionsPage({ params }: PageProps) {
             </thead>
             <tbody>
               {modules.map((module) => (
-                <tr key={module.key} className="border-b border-black/[0.05] last:border-0">
+                <tr key={module.key} className="border-b border-border last:border-0">
                   <td className="px-4 py-3">
-                    <p className="font-semibold text-brand-charcoal">{module.label}</p>
+                    <p className="font-semibold text-foreground">{module.label}</p>
                     {!module.isEnabled && (
-                      <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
                         Módulo aún no habilitado
                       </p>
                     )}
@@ -85,7 +85,7 @@ export default function UserPermissionsPage({ params }: PageProps) {
                     <select
                       disabled
                       title="El alcance por sector se activa cuando se migre el módulo de vacaciones"
-                      className="rounded-[8px] border border-black/[0.14] bg-white px-2 py-1 text-xs text-[#9a9a9a] disabled:opacity-50"
+                      className="rounded-[8px] border border-border bg-card px-2 py-1 text-xs text-muted-foreground disabled:opacity-50"
                     >
                       <option>Global</option>
                     </select>
@@ -104,7 +104,7 @@ export default function UserPermissionsPage({ params }: PageProps) {
                             aria-label={`${module.label} · ${action.label}`}
                           />
                         ) : (
-                          <span className="text-[#c9c9c9]">—</span>
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </td>
                     );

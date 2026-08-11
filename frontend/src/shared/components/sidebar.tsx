@@ -51,10 +51,10 @@ export function Sidebar({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen w-full flex-col">
-      <header className="flex h-16 flex-none items-center justify-between border-b border-black/[0.08] bg-white px-3 sm:px-4 lg:px-7">
+      <header className="flex h-16 flex-none items-center justify-between border-b border-border bg-card px-3 sm:px-4 lg:px-7">
         <div className="flex min-w-0 items-center gap-2 sm:gap-4">
           <button
-            className="flex-none rounded-[8px] p-2 text-brand-charcoal hover:bg-black/5 lg:hidden"
+            className="flex-none rounded-[8px] p-2 text-foreground hover:bg-muted lg:hidden"
             onClick={() => setMobileOpen(true)}
             aria-label="Abrir menú"
           >
@@ -72,8 +72,8 @@ export function Sidebar({ children }: { children: ReactNode }) {
             alt="Canal Directo"
             className="hidden h-[34px] w-auto flex-none object-contain sm:block"
           />
-          <div className="hidden h-[22px] w-px bg-black/10 sm:block" />
-          <span className="hidden font-heading text-[13px] font-bold tracking-[.06em] text-brand-gray sm:block">
+          <div className="hidden h-[22px] w-px bg-border sm:block" />
+          <span className="hidden font-heading text-[13px] font-bold tracking-[.06em] text-muted-foreground sm:block">
             MESA DE AYUDA
           </span>
         </div>
@@ -83,26 +83,26 @@ export function Sidebar({ children }: { children: ReactNode }) {
             disabled
             placeholder="Buscador próximamente..."
             aria-label="Buscar (próximamente)"
-            className="w-full rounded-[8px] border border-black/[0.12] bg-brand-surface px-[14px] py-[9px] font-body text-sm text-brand-charcoal outline-none placeholder:text-[#a8a8a8] disabled:cursor-not-allowed disabled:opacity-70"
+            className="w-full rounded-[8px] border border-border bg-muted px-[14px] py-[9px] font-body text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-70"
           />
         </div>
 
         <div className="flex flex-none items-center gap-1 sm:gap-3">
-          <Bell className="hidden h-5 w-5 text-[#8a8a8c] sm:block" aria-hidden="true" />
-          <div className="hidden h-[22px] w-px bg-black/10 sm:block" />
+          <Bell className="hidden h-5 w-5 text-muted-foreground sm:block" aria-hidden="true" />
+          <div className="hidden h-[22px] w-px bg-border sm:block" />
           <button
             onClick={() => setChangePasswordOpen(true)}
-            className="flex items-center gap-2.5 rounded-[8px] px-1.5 py-1 transition-colors hover:bg-black/5"
+            className="flex items-center gap-2.5 rounded-[8px] px-1.5 py-1 transition-colors hover:bg-muted"
             title="Cambiar contraseña"
           >
             <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-brand-gray font-heading text-[13px] font-bold text-white">
               {getInitials(user.fullName)}
             </span>
             <span className="hidden flex-col items-start leading-[1.25] sm:flex">
-              <span className="font-body text-[13px] font-semibold text-brand-charcoal">
+              <span className="font-body text-[13px] font-semibold text-foreground">
                 {user.fullName}
               </span>
-              <span className="font-body text-xs text-[#9a9a9a]">
+              <span className="font-body text-xs text-muted-foreground">
                 {user.isSuperadmin ? "Superadmin" : "Usuario"}
               </span>
             </span>
@@ -111,7 +111,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
           <button
             onClick={() => logout()}
             disabled={loading}
-            className="rounded-[8px] p-2 text-[#8a8a8c] hover:bg-black/5 hover:text-brand-charcoal disabled:opacity-50"
+            className="rounded-[8px] p-2 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
             title="Cerrar sesión"
             aria-label="Cerrar sesión"
           >
@@ -123,7 +123,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
       <div className="flex min-h-0 flex-1">
         <aside
           className={cn(
-            "fixed inset-y-16 left-0 z-40 flex w-56 -translate-x-full transform flex-col overflow-y-auto thin-scrollbar border-r border-black/[0.08] bg-white p-3 transition-transform lg:static lg:inset-y-0 lg:translate-x-0",
+            "fixed inset-y-16 left-0 z-40 flex w-56 -translate-x-full transform flex-col overflow-y-auto thin-scrollbar border-r border-border bg-card p-3 transition-transform lg:static lg:inset-y-0 lg:translate-x-0",
             mobileOpen && "translate-x-0",
           )}
         >
@@ -136,20 +136,20 @@ export function Sidebar({ children }: { children: ReactNode }) {
                 "flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 font-body text-sm no-underline transition-colors",
                 isHome
                   ? "bg-brand-orange/[0.12] font-semibold text-brand-orange"
-                  : "text-[#4b4b4b] hover:bg-black/[0.03]",
+                  : "text-muted-foreground hover:bg-muted",
               )}
             >
               <span
                 className={cn(
                   "h-[7px] w-[7px] flex-none rounded-full",
-                  isHome ? "bg-brand-orange" : "bg-[#d8d8d8]",
+                  isHome ? "bg-brand-orange" : "bg-muted-foreground/40",
                 )}
               />
               Inicio
             </Link>
 
             {modules.length === 0 && (
-              <p className="px-3 py-4 font-body text-xs text-[#9a9a9a]">
+              <p className="px-3 py-4 font-body text-xs text-muted-foreground">
                 Todavía no tenés módulos habilitados.
               </p>
             )}
@@ -165,7 +165,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
                       "flex items-center rounded-[8px] transition-colors",
                       active
                         ? "bg-brand-orange/[0.12] font-semibold text-brand-orange"
-                        : "text-[#4b4b4b] hover:bg-black/[0.03]",
+                        : "text-muted-foreground hover:bg-muted",
                     )}
                   >
                     <Link
@@ -177,7 +177,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
                       <span
                         className={cn(
                           "h-[7px] w-[7px] flex-none rounded-full",
-                          active ? "bg-brand-orange" : "bg-[#d8d8d8]",
+                          active ? "bg-brand-orange" : "bg-muted-foreground/40",
                         )}
                       />
                       {module.label}
@@ -192,7 +192,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
                             ? "Colapsar submenú de Contadores"
                             : "Expandir submenú de Contadores"
                         }
-                        className="flex-none rounded-[6px] p-2 text-[#b5b5b5] hover:text-brand-charcoal"
+                        className="flex-none rounded-[6px] p-2 text-muted-foreground hover:text-foreground"
                       >
                         <ChevronDown
                           className={cn(
@@ -211,8 +211,8 @@ export function Sidebar({ children }: { children: ReactNode }) {
             })}
           </nav>
 
-          <div className="mt-auto border-t border-black/[0.06] px-3 pb-1 pt-3">
-            <span className="font-body text-[11px] text-brand-muted">
+          <div className="mt-auto border-t border-border px-3 pb-1 pt-3">
+            <span className="font-body text-[11px] text-muted-foreground">
               Portal interno · Canal Directo
             </span>
           </div>
@@ -222,7 +222,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
           <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={closeMobile} />
         )}
 
-        <main className="relative min-h-0 flex-1 overflow-y-auto thin-scrollbar bg-brand-surface">
+        <main className="relative min-h-0 flex-1 overflow-y-auto thin-scrollbar bg-background">
           {children}
         </main>
       </div>

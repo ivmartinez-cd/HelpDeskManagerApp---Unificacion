@@ -15,11 +15,15 @@ interface BrandModalProps {
 }
 
 /** Modal con el chrome de marca del design handoff (overlay oscuro, card
- * blanca 16px de radio, título Montserrat) — misma mecánica de
- * accesibilidad que `shared/components/ui/modal.tsx` (focus trap, Escape,
- * aria-modal), pero con la identidad visual de Canal Directo en vez del
- * design system genérico. Usado por las herramientas de Contadores desde
- * que se migraron a modales (ver contadores-hub.tsx). */
+ * 16px de radio, título Montserrat) — misma mecánica de accesibilidad que
+ * `shared/components/ui/modal.tsx` (focus trap, Escape, aria-modal), pero
+ * con la identidad visual de Canal Directo en vez del design system
+ * genérico. Usado por las herramientas de Contadores desde que se
+ * migraron a modales (ver contadores-hub.tsx).
+ *
+ * La card usa tokens dark-aware (`bg-card`/`text-foreground`), no colores
+ * fijos: el handoff pedía "card blanca" asumiendo tema claro único, pero
+ * ahora responde al toggle de tema como el resto de la app. */
 export function BrandModal({ isOpen, onClose, title, children, widthPx = 480, error }: BrandModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
@@ -70,19 +74,19 @@ export function BrandModal({ isOpen, onClose, title, children, widthPx = 480, er
         aria-labelledby={titleId}
         onClick={(e) => e.stopPropagation()}
         style={{ width: widthPx, boxShadow: "0 20px 60px rgba(0,0,0,.25)" }}
-        className="flex max-h-[90vh] w-full max-w-[92vw] flex-col overflow-hidden rounded-[16px] bg-white focus:outline-none"
+        className="flex max-h-[90vh] w-full max-w-[92vw] flex-col overflow-hidden rounded-[16px] bg-card focus:outline-none"
       >
         <div className="flex items-center justify-between px-[30px] pt-7 pb-2">
           <h2
             id={titleId}
-            className="font-heading text-[20px] font-extrabold tracking-[.01em] text-brand-charcoal"
+            className="font-heading text-[20px] font-extrabold tracking-[.01em] text-foreground"
           >
             {title}
           </h2>
           <button
             onClick={onClose}
             aria-label="Cerrar modal"
-            className="rounded-[8px] p-1.5 text-[#9a9a9a] transition-colors hover:bg-black/5 hover:text-brand-charcoal"
+            className="rounded-[8px] p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <X className="h-5 w-5" />
           </button>

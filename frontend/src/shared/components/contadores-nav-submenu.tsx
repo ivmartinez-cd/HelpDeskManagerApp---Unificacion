@@ -23,7 +23,7 @@ export function ContadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }
           "rounded-[6px] px-2 py-1.5 font-body text-[13px] no-underline transition-colors",
           isCalendarioActive
             ? "bg-brand-orange/[0.08] font-bold text-brand-orange"
-            : "text-[#7a7a7a] hover:text-brand-charcoal hover:bg-black/[0.04]",
+            : "text-muted-foreground hover:text-foreground hover:bg-muted",
         )}
       >
         Calendario
@@ -35,7 +35,7 @@ export function ContadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }
           "rounded-[6px] px-2 py-1.5 font-body text-[13px] no-underline transition-colors",
           isAutomatizacionActive
             ? "bg-brand-orange/[0.08] font-bold text-brand-orange"
-            : "text-[#7a7a7a] hover:text-brand-charcoal hover:bg-black/[0.04]",
+            : "text-muted-foreground hover:text-foreground hover:bg-muted",
         )}
       >
         Automatización

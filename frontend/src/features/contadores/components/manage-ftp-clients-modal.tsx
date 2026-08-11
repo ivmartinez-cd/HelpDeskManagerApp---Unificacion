@@ -52,7 +52,7 @@ export function ManageFtpClientsModal({ isOpen, onClose }: Props) {
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nombre o servidor..."
               aria-label="Buscar cliente FTP"
-              className="flex-1 rounded-[8px] border border-black/[0.14] px-[14px] py-[9px] font-body text-sm text-brand-charcoal outline-none focus:ring-2 focus:ring-brand-orange/40"
+              className="flex-1 rounded-[8px] border border-border px-[14px] py-[9px] font-body text-sm text-foreground outline-none focus:ring-2 focus:ring-brand-orange/40"
             />
             <button
               type="button"
@@ -74,26 +74,26 @@ export function ManageFtpClientsModal({ isOpen, onClose }: Props) {
               <BrandSkeleton className="h-10 w-full" />
             </div>
           ) : filtered.length === 0 ? (
-            <p className="py-6 text-center font-body text-sm text-[#9a9a9a]">
+            <p className="py-6 text-center font-body text-sm text-muted-foreground">
               No se encontraron clientes.
             </p>
           ) : (
-            <div className="max-h-[50vh] overflow-y-auto thin-scrollbar rounded-[10px] border border-black/[0.08]">
+            <div className="max-h-[50vh] overflow-y-auto thin-scrollbar rounded-[10px] border border-border">
               <table className="w-full text-left font-body text-[13px]">
-                <thead className="sticky top-0 border-b border-black/[0.08] bg-brand-surface text-[11px] font-bold uppercase tracking-wide text-[#7a7a7a]">
+                <thead className="sticky top-0 border-b border-border bg-muted text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                   <tr>
                     <th className="px-3 py-2.5">Cliente</th>
                     <th className="px-3 py-2.5">Servidor</th>
                     <th className="px-3 py-2.5 text-right">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-black/[0.06]">
+                <tbody className="divide-y divide-border">
                   {filtered.map((client) => (
                     <tr key={client.id}>
-                      <td className="px-3 py-2.5 font-semibold text-brand-charcoal">
+                      <td className="px-3 py-2.5 font-semibold text-foreground">
                         {client.name}
                       </td>
-                      <td className="px-3 py-2.5 text-[#6b6b6b]">{client.host}</td>
+                      <td className="px-3 py-2.5 text-muted-foreground">{client.host}</td>
                       <td className="px-3 py-2.5">
                         <div className="flex items-center justify-end gap-1">
                           <button
@@ -104,7 +104,7 @@ export function ManageFtpClientsModal({ isOpen, onClose }: Props) {
                             }}
                             aria-label={`Editar ${client.name}`}
                             title="Editar"
-                            className="rounded-[6px] p-1.5 text-[#9a9a9a] hover:bg-black/5 hover:text-brand-charcoal"
+                            className="rounded-[6px] p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
                           >
                             <SquarePen className="h-4 w-4" />
                           </button>
@@ -113,7 +113,7 @@ export function ManageFtpClientsModal({ isOpen, onClose }: Props) {
                             onClick={() => handleDelete(client)}
                             aria-label={`Eliminar ${client.name}`}
                             title="Eliminar"
-                            className="rounded-[6px] p-1.5 text-[#9a9a9a] hover:bg-destructive/10 hover:text-destructive"
+                            className="rounded-[6px] p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>

@@ -31,8 +31,8 @@ export default function AdminUsersPage() {
     <div className="p-6 lg:p-10">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl font-extrabold text-brand-charcoal">Usuarios</h1>
-          <p className="mt-1 font-body text-sm text-[#8a8a8a]">
+          <h1 className="font-heading text-2xl font-extrabold text-foreground">Usuarios</h1>
+          <p className="mt-1 font-body text-sm text-muted-foreground">
             {total} usuario{total === 1 ? "" : "s"} registrado{total === 1 ? "" : "s"}.
           </p>
         </div>
@@ -54,10 +54,10 @@ export default function AdminUsersPage() {
       {!loading && items.length === 0 ? (
         <BrandEmptyState icon={Shield} title="No se encontraron usuarios." />
       ) : (
-        <div className="overflow-x-auto rounded-[12px] border border-black/[0.08] bg-white">
+        <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
           <table className="w-full text-left font-body text-sm">
             <thead>
-              <tr className="border-b border-black/[0.08] text-[11px] font-bold uppercase tracking-wide text-[#7a7a7a]">
+              <tr className="border-b border-border text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-3">Usuario</th>
                 <th className="px-4 py-3">Rol</th>
                 <th className="px-4 py-3">Estado</th>
@@ -66,10 +66,10 @@ export default function AdminUsersPage() {
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-b border-black/[0.05] last:border-0">
+                <tr key={item.id} className="border-b border-border last:border-0">
                   <td className="px-4 py-3">
-                    <p className="font-semibold text-brand-charcoal">{item.fullName}</p>
-                    <p className="text-xs text-[#9a9a9a]">{item.email}</p>
+                    <p className="font-semibold text-foreground">{item.fullName}</p>
+                    <p className="text-xs text-muted-foreground">{item.email}</p>
                   </td>
                   <td className="px-4 py-3">
                     <BrandBadge variant={item.isSuperadmin ? "accent" : "neutral"}>
@@ -86,14 +86,14 @@ export default function AdminUsersPage() {
                       <Link
                         href={`/admin/usuarios/${item.id}/permisos`}
                         title="Permisos"
-                        className="rounded-[8px] border border-black/[0.14] p-2 text-brand-charcoal transition-colors hover:bg-black/5"
+                        className="rounded-[8px] border border-border p-2 text-foreground transition-colors hover:bg-muted"
                       >
                         <Sliders className="h-4 w-4" />
                       </Link>
                       <button
                         type="button"
                         title="Enviar link de restablecimiento"
-                        className="rounded-[8px] border border-black/[0.14] p-2 text-brand-charcoal transition-colors hover:bg-black/5"
+                        className="rounded-[8px] border border-border p-2 text-foreground transition-colors hover:bg-muted"
                         onClick={() => void triggerPasswordReset(item)}
                       >
                         <KeyRound className="h-4 w-4" />
@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
                         type="button"
                         title={item.isActive ? "Desactivar" : "Activar"}
                         disabled={item.id === currentUser.id}
-                        className="rounded-[8px] border border-black/[0.14] p-2 text-brand-charcoal transition-colors hover:bg-black/5 disabled:opacity-40"
+                        className="rounded-[8px] border border-border p-2 text-foreground transition-colors hover:bg-muted disabled:opacity-40"
                         onClick={() => void toggleActive(item)}
                       >
                         {item.isActive ? (
@@ -130,7 +130,7 @@ export default function AdminUsersPage() {
           >
             Anterior
           </BrandButton>
-          <span className="text-[#8a8a8a]">
+          <span className="text-muted-foreground">
             Página {page} de {totalPages}
           </span>
           <BrandButton

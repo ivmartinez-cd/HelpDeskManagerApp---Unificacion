@@ -89,7 +89,7 @@ export function SumaFijaTool() {
       {result && (
         <BrandResultPanel title="Resultado del Procesamiento">
           <div className="flex flex-col gap-3">
-            <p className="font-body text-xs font-bold uppercase tracking-wider text-[#7a7a7a]">
+            <p className="font-body text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Archivos CSV Generados ({result.files.length}):
             </p>
             <div className="flex flex-wrap gap-3">

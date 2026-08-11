@@ -4,7 +4,7 @@ import { cn } from "@/shared/utils/cn";
 type Variant = "neutral" | "success" | "danger" | "accent" | "warning" | "info";
 
 const variants: Record<Variant, string> = {
-  neutral: "bg-black/5 dark:bg-white/10 text-muted-foreground",
+  neutral: "bg-muted text-muted-foreground",
   success: "bg-success/10 text-success",
   danger: "bg-destructive/10 text-destructive",
   accent: "bg-accent/10 text-accent",

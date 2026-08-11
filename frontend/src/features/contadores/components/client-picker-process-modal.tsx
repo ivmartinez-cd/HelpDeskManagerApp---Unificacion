@@ -60,7 +60,7 @@ const CONFIG: Record<PickerClientType, TypeConfig> = {
 };
 
 const selectClass =
-  "w-full rounded-[10px] border border-black/[0.14] bg-white px-[14px] py-[11px] font-body text-sm text-brand-charcoal outline-none focus:ring-2 focus:ring-brand-orange/40 disabled:opacity-60";
+  "w-full rounded-[10px] border border-border bg-card px-[14px] py-[11px] font-body text-sm text-foreground outline-none focus:ring-2 focus:ring-brand-orange/40 disabled:opacity-60";
 
 /** Reemplaza al `<select>` nativo: el navegador decide de qué lado abre la
  * lista de opciones según el espacio disponible (y en estos modales elegía
@@ -130,19 +130,19 @@ function ClientSelect({
         aria-label={ariaLabel}
         className={cn(selectClass, "flex items-center justify-between gap-2 text-left")}
       >
-        <span className={cn("truncate", !selected && "text-[#a8a8a8]")}>
+        <span className={cn("truncate", !selected && "text-muted-foreground")}>
           {loading ? "Cargando clientes..." : (selected?.name ?? placeholder)}
         </span>
         <ChevronDown
           className={cn(
-            "h-4 w-4 flex-none text-[#9a9a9a] transition-transform",
+            "h-4 w-4 flex-none text-muted-foreground transition-transform",
             open && "rotate-180",
           )}
         />
       </button>
       {open && (
-        <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-20 flex flex-col overflow-hidden rounded-[10px] border border-black/[0.12] bg-white shadow-lg">
-          <div className="border-b border-black/[0.08] p-1.5">
+        <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-20 flex flex-col overflow-hidden rounded-[10px] border border-border bg-card shadow-lg">
+          <div className="border-b border-border p-1.5">
             <input
               ref={searchRef}
               type="text"
@@ -159,12 +159,12 @@ function ClientSelect({
               }}
               placeholder="Buscar cliente..."
               aria-label={`Buscar en ${ariaLabel}`}
-              className="w-full rounded-[6px] border border-black/[0.12] px-2.5 py-1.5 font-body text-sm text-brand-charcoal outline-none focus:ring-2 focus:ring-brand-orange/40"
+              className="w-full rounded-[6px] border border-border px-2.5 py-1.5 font-body text-sm text-foreground outline-none focus:ring-2 focus:ring-brand-orange/40"
             />
           </div>
           <ul role="listbox" aria-label={ariaLabel} className="max-h-56 overflow-y-auto thin-scrollbar py-1">
             {filtered.length === 0 ? (
-              <li className="px-[14px] py-2 font-body text-sm text-[#9a9a9a]">
+              <li className="px-[14px] py-2 font-body text-sm text-muted-foreground">
                 {options.length === 0 ? "Sin clientes disponibles." : "Sin resultados."}
               </li>
             ) : (
@@ -180,7 +180,7 @@ function ClientSelect({
                       "block w-full truncate px-[14px] py-2 text-left font-body text-sm",
                       option.id === value
                         ? "bg-brand-orange/10 font-semibold text-brand-orange"
-                        : "text-brand-charcoal hover:bg-black/[0.03]",
+                        : "text-foreground hover:bg-muted/50",
                     )}
                   >
                     {option.name}
@@ -281,7 +281,7 @@ export function ClientPickerProcessModal({ isOpen, type, onClose }: Props) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span className="font-body text-[11px] font-bold uppercase tracking-wide text-[#7a7a7a]">
+              <span className="font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                 {config.clientLabel}
               </span>
               <button
@@ -307,7 +307,7 @@ export function ClientPickerProcessModal({ isOpen, type, onClose }: Props) {
                   onClick={() => setQuickAddOpen(true)}
                   aria-label="Nuevo cliente FTP"
                   title="Nuevo cliente FTP"
-                  className="flex h-10 w-10 flex-none items-center justify-center rounded-full border border-[#c8c8c8] text-[#9a9a9a] hover:border-brand-orange hover:text-brand-orange"
+                  className="flex h-10 w-10 flex-none items-center justify-center rounded-full border border-border text-muted-foreground hover:border-brand-orange hover:text-brand-orange"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
@@ -316,7 +316,7 @@ export function ClientPickerProcessModal({ isOpen, type, onClose }: Props) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className="font-body text-[11px] font-bold uppercase tracking-wide text-[#7a7a7a]">
+            <span className="font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
               Fecha máxima de proceso
             </span>
             <input
@@ -324,7 +324,7 @@ export function ClientPickerProcessModal({ isOpen, type, onClose }: Props) {
               value={fechaMaxima}
               onChange={(e) => setFechaMaxima(e.target.value)}
               required
-              className="rounded-[10px] border border-black/[0.14] px-[14px] py-[11px] font-body text-[14.5px] text-brand-charcoal outline-none focus:ring-2 focus:ring-brand-orange/40"
+              className="rounded-[10px] border border-border px-[14px] py-[11px] font-body text-[14.5px] text-foreground outline-none focus:ring-2 focus:ring-brand-orange/40"
             />
           </div>
 

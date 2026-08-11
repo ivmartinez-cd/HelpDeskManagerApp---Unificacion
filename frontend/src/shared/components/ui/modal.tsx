@@ -72,7 +72,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`relative w-full ${maxWidth} max-h-[90vh] bg-card border border-black/5 dark:border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col focus:outline-none animate-fade-in`}
+        className={`relative w-full ${maxWidth} max-h-[90vh] bg-card border border-border rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col focus:outline-none animate-fade-in`}
       >
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent/10 blur-3xl rounded-full" />
 
@@ -94,7 +94,7 @@ export function Modal({
             <button
               onClick={onClose}
               aria-label="Cerrar modal"
-              className="p-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-2xl transition-colors"
+              className="p-3 hover:bg-muted rounded-2xl transition-colors"
             >
               <X className="h-6 w-6" />
             </button>

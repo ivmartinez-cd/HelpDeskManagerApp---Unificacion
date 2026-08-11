@@ -31,7 +31,7 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
 
   return (
     <BrandModal isOpen={isOpen} onClose={handleClose} title="Nuevo usuario">
-      <p className="mb-5 font-body text-xs text-[#9a9a9a]">
+      <p className="mb-5 font-body text-xs text-muted-foreground">
         Se envía un link de activación por email.
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">

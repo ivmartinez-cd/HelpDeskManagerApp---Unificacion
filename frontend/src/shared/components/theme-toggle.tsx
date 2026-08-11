@@ -5,10 +5,12 @@ import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Evita hidratación SSR/CSR mismatch
+  // Evita hidratación SSR/CSR mismatch (el tema real solo se conoce en el
+  // cliente, vía localStorage/prefers-color-scheme).
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
 

@@ -73,7 +73,7 @@ export function ManageMeterClientsModal({ isOpen, type, onClose }: Props) {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar cliente..."
           aria-label="Buscar cliente"
-          className="rounded-[8px] border border-black/[0.14] px-[14px] py-[9px] font-body text-sm text-brand-charcoal outline-none focus:ring-2 focus:ring-brand-orange/40"
+          className="rounded-[8px] border border-border px-[14px] py-[9px] font-body text-sm text-foreground outline-none focus:ring-2 focus:ring-brand-orange/40"
         />
 
         {loading ? (
@@ -83,22 +83,22 @@ export function ManageMeterClientsModal({ isOpen, type, onClose }: Props) {
             <BrandSkeleton className="h-10 w-full" />
           </div>
         ) : filtered.length === 0 ? (
-          <p className="py-6 text-center font-body text-sm text-[#9a9a9a]">
+          <p className="py-6 text-center font-body text-sm text-muted-foreground">
             No se encontraron clientes.
           </p>
         ) : (
-          <div className="max-h-[50vh] overflow-y-auto thin-scrollbar rounded-[10px] border border-black/[0.08]">
+          <div className="max-h-[50vh] overflow-y-auto thin-scrollbar rounded-[10px] border border-border">
             <table className="w-full text-left font-body text-[13px]">
-              <thead className="sticky top-0 border-b border-black/[0.08] bg-brand-surface text-[11px] font-bold uppercase tracking-wide text-[#7a7a7a]">
+              <thead className="sticky top-0 border-b border-border bg-muted text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2.5">Cliente</th>
                   <th className="px-3 py-2.5">Suma Color</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/[0.06]">
+              <tbody className="divide-y divide-border">
                 {filtered.map((client) => (
                   <tr key={client.id}>
-                    <td className="px-3 py-2.5 font-semibold text-brand-charcoal">{client.name}</td>
+                    <td className="px-3 py-2.5 font-semibold text-foreground">{client.name}</td>
                     <td className="px-3 py-2.5">
                       <Switch
                         checked={client.suma_color}

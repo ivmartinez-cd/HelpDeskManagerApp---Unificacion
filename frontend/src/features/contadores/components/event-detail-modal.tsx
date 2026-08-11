@@ -42,8 +42,8 @@ export function EventDetailModal({ event, onClose }: Props) {
       title={displayTitle}
       widthPx={640}
     >
-      <div className="flex flex-col gap-5 py-2">
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
+      <div className="flex flex-col gap-5 py-2 font-body">
+        <div className="rounded-lg border border-border bg-muted p-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <span className="inline-block h-2.5 w-2.5 rounded-full bg-brand-orange" />
             <span>{cleanHeaderTitle}</span>
@@ -56,7 +56,7 @@ export function EventDetailModal({ event, onClose }: Props) {
         <div className="grid gap-4 md:grid-cols-2">
           {event.cliente && (
             <div className="flex items-start gap-3">
-              <User className="mt-0.5 h-4 w-4 text-primary shrink-0" />
+              <User className="mt-0.5 h-4 w-4 text-brand-orange shrink-0" />
               <div>
                 <p className="text-xs text-muted-foreground font-medium">Cliente</p>
                 <p className="text-sm font-semibold text-foreground">{event.cliente}</p>
@@ -66,7 +66,7 @@ export function EventDetailModal({ event, onClose }: Props) {
 
           {event.start && (
             <div className="flex items-start gap-3">
-              <Calendar className="mt-0.5 h-4 w-4 text-primary shrink-0" />
+              <Calendar className="mt-0.5 h-4 w-4 text-brand-orange shrink-0" />
               <div>
                 <p className="text-xs text-muted-foreground font-medium">Fecha Programada</p>
                 <p className="text-sm font-semibold text-foreground">
@@ -78,10 +78,10 @@ export function EventDetailModal({ event, onClose }: Props) {
 
           {event.string_tipo_evento && (
             <div className="flex items-start gap-3">
-              <FileText className="mt-0.5 h-4 w-4 text-primary shrink-0" />
+              <FileText className="mt-0.5 h-4 w-4 text-brand-orange shrink-0" />
               <div>
                 <p className="text-xs text-muted-foreground font-medium">Tipo de Evento</p>
-                <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                <span className="inline-flex items-center rounded-md bg-brand-orange/10 px-2 py-0.5 text-xs font-medium text-brand-orange">
                   {event.string_tipo_evento}
                 </span>
               </div>
@@ -100,7 +100,7 @@ export function EventDetailModal({ event, onClose }: Props) {
 
           {event.sucursal_entrega && (
             <div className="flex items-start gap-3">
-              <MapPin className="mt-0.5 h-4 w-4 text-primary shrink-0" />
+              <MapPin className="mt-0.5 h-4 w-4 text-brand-orange shrink-0" />
               <div>
                 <p className="text-xs text-muted-foreground font-medium">Sucursal de Entrega</p>
                 <p className="text-sm text-foreground">{event.sucursal_entrega}</p>
@@ -110,7 +110,7 @@ export function EventDetailModal({ event, onClose }: Props) {
 
           {event.sucursal_despacho && (
             <div className="flex items-start gap-3">
-              <Truck className="mt-0.5 h-4 w-4 text-primary shrink-0" />
+              <Truck className="mt-0.5 h-4 w-4 text-brand-orange shrink-0" />
               <div>
                 <p className="text-xs text-muted-foreground font-medium">Sucursal Despacho</p>
                 <p className="text-sm text-foreground">{event.sucursal_despacho}</p>
@@ -130,7 +130,7 @@ export function EventDetailModal({ event, onClose }: Props) {
 
           {event.bultos !== undefined && event.bultos !== null && (
             <div className="flex items-start gap-3">
-              <Package className="mt-0.5 h-4 w-4 text-primary shrink-0" />
+              <Package className="mt-0.5 h-4 w-4 text-brand-orange shrink-0" />
               <div>
                 <p className="text-xs text-muted-foreground font-medium">Bultos / Items</p>
                 <p className="text-sm font-semibold text-foreground">{event.bultos}</p>
@@ -140,7 +140,7 @@ export function EventDetailModal({ event, onClose }: Props) {
         </div>
 
         {event.content_tooltip && (
-          <div className="mt-2 rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground">
+          <div className="mt-2 rounded-lg border border-border bg-muted p-3 text-xs text-muted-foreground">
             <p className="font-medium text-foreground mb-1">Información Adicional:</p>
             <div
               className="prose prose-xs max-w-none text-muted-foreground"

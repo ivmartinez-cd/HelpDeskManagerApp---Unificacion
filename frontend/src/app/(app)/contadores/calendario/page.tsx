@@ -6,10 +6,10 @@ export default function CalendarioPage() {
   return (
     <div className="flex flex-col gap-6 px-9 py-8">
       <div className="flex flex-col gap-1.5">
-        <h1 className="font-heading text-[25px] font-extrabold text-brand-charcoal">
+        <h1 className="font-heading text-[25px] font-extrabold text-foreground">
           Calendario de Planificación
         </h1>
-        <p className="font-body text-sm text-[#8a8a8a]">
+        <p className="font-body text-sm text-muted-foreground">
           Agenda de clientes y recorridas de tomadores de contadores por operador
         </p>
       </div>
