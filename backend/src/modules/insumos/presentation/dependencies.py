@@ -42,6 +42,10 @@ from src.modules.insumos.application.use_cases.get_statistics_overview import (
     GetStatisticsOverviewPorts,
 )
 from src.modules.insumos.application.use_cases.list_audit import ListAudit, ListAuditPorts
+from src.modules.insumos.application.use_cases.list_mail_log import (
+    ListMailLog,
+    ListMailLogPorts,
+)
 from src.modules.insumos.application.use_cases.list_pending_orders import (
     ListPendingOrders,
     ListPendingOrdersPorts,
@@ -77,6 +81,9 @@ from src.modules.insumos.infrastructure.repositories.sqlalchemy_insumos_settings
 )
 from src.modules.insumos.infrastructure.repositories.sqlalchemy_known_device_repository import (  # noqa: E501
     SqlAlchemyKnownDeviceRepository,
+)
+from src.modules.insumos.infrastructure.repositories.sqlalchemy_mail_log_repository import (
+    SqlAlchemyMailLogRepository,
 )
 from src.modules.insumos.infrastructure.repositories.sqlalchemy_order_audit_repository import (
     SqlAlchemyOrderAuditRepository,
@@ -201,6 +208,10 @@ def build_get_customer_statistics(session: AsyncSession) -> GetCustomerStatistic
         settings=SqlAlchemyInsumosSettingsRepository(session),
     )
     return GetCustomerStatistics(ports, app_timezone())
+
+
+def build_list_mail_log(session: AsyncSession) -> ListMailLog:
+    return ListMailLog(ListMailLogPorts(mail_log=SqlAlchemyMailLogRepository(session)))
 
 
 def build_cancel_order(session: AsyncSession) -> CancelOrder:

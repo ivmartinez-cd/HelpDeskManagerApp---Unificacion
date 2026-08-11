@@ -34,6 +34,7 @@ from src.modules.insumos.domain.value_objects.cd_supply import (
     CdSupply,
     SupplyStatusEvent,
 )
+from src.modules.insumos.domain.value_objects.mail_log_entry import MailLogEntry
 from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
 from src.modules.insumos.domain.value_objects.pending_validation import (
@@ -647,3 +648,30 @@ class FakeKnownDeviceRepository:
 
     async def count_monitored_by_customer(self) -> dict[int, int]:
         return dict(self.monitored)
+
+
+class FakeMailLogRepository:
+    """Orden de inserción = orden cronológico; el listado devuelve el inverso."""
+
+    def __init__(self) -> None:
+        self.entries: list[MailLogEntry] = []
+
+    def add(self, kind: str, subject: str, success: bool = True) -> MailLogEntry:
+        entry = MailLogEntry(
+            entry_id=len(self.entries) + 1,
+            kind=kind,
+            recipients="logistica@example.com",
+            subject=subject,
+            success=success,
+            error=None if success else "SMTP timeout",
+            sent_at=datetime.now(UTC),
+        )
+        self.entries.append(entry)
+        return entry
+
+    async def list_latest(self, limit: int, offset: int = 0) -> list[MailLogEntry]:
+        latest_first = list(reversed(self.entries))
+        return latest_first[offset : offset + limit]
+
+    async def count(self) -> int:
+        return len(self.entries)

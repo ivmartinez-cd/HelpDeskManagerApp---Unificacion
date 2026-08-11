@@ -14,6 +14,7 @@ from src.modules.contadores.presentation.ftp_clients_router import router as ftp
 from src.modules.contadores.presentation.sds_router import router as sds_router
 from src.modules.contadores.presentation.tools_router import router as contadores_tools_router
 from src.modules.insumos.presentation.devices_router import router as insumos_devices_router
+from src.modules.insumos.presentation.mail_log_router import router as insumos_mail_log_router
 from src.modules.insumos.presentation.requests_router import router as insumos_requests_router
 from src.modules.insumos.presentation.statistics_router import (
     router as insumos_statistics_router,
@@ -61,6 +62,7 @@ def create_app() -> FastAPI:
     app.include_router(insumos_requests_router)
     app.include_router(insumos_devices_router)
     app.include_router(insumos_statistics_router)
+    app.include_router(insumos_mail_log_router)
     return app
 
 
