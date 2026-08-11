@@ -1,7 +1,35 @@
 # Migración SDSInsumos — estado y próximo paso
 
-Actualizado: 2026-08-11 (frontend: fundación + 5 pantallas portadas, sobre el backend
-ya portado de Estadísticas, Mail log, Config GET/PUT, Equipos nuevos y Alertas).
+Actualizado: 2026-08-11 (dry-run verificado end-to-end + fix de credenciales de
+Insight API + DB de dev sembrada con backup real de producción — ver abajo).
+Frontend: fundación + 5 pantallas ya portadas, sobre el backend ya portado de
+Estadísticas, Mail log, Config GET/PUT, Equipos nuevos y Alertas.
+
+## Qué resta hacer, en orden
+
+1. **Equipos offline** (`routers/offline_devices.py`) — el módulo de mayor riesgo
+   que queda: verify rate-limited contra SOAP, heurística de agrupación no trivial,
+   y una baja **irreversible** de equipos (gateada por `SDS_DELETE_DRY_RUN`, que
+   necesita el mismo rediseño de lock global identificado para el scan incremental
+   descartado). Requiere el cliente de scraping del PortalWeb (punto siguiente).
+2. **Clientes** (`routers/customers.py`, 13 endpoints) — comparte el cliente de
+   scraping del PortalWeb con Equipos offline; conviene decidirlo una sola vez para
+   ambos (ver nota abajo, ya no bloqueado por falta de credenciales).
+3. **5 jobs de fondo** (poller, autocarga, backup, chequeo offline, alertas,
+   aviso de pedidos por vencer) — primer precedente de scheduler del monorepo,
+   depende de que 1 y 2 ya estén portados.
+4. **Frontend de Clientes y Equipos offline** — sin pantalla todavía porque su
+   backend no existe (ver `SDSINSUMOS_CARACTERIZACION_FRONTEND.md` para el
+   relevamiento del legacy Vue de esas dos vistas, ya hecho).
+
+**Ya no es un bloqueo**: las credenciales del login humano del PortalWeb SDS
+(`SDS_PORTAL_USERNAME`/`SDS_PORTAL_PASSWORD` en `.env`, cargadas 2026-08-11) están
+disponibles — falta la decisión de **cómo** implementar el cliente de scraping
+(mismo mecanismo que el legacy `SdsPortalWebClient`: cookie `JSESSIONID` + HTML por
+regex), no las credenciales en sí.
+
+Ver el análisis comparativo completo más abajo (tamaño, riesgo, dependencias) para
+el detalle de cada punto.
 
 ## Portado hasta ahora (backend)
 
@@ -29,13 +57,38 @@ Con `a0189fe`, el router de solicitudes del legacy (`routers/requests/` completo
 `a0189fe` además cerró un gap: el upsert del cache ahora graba `supply_status_history`
 (primer avistaje de cada estado), como el legacy.
 
+## Verificación 2026-08-11: dry-run, credenciales de Insight, datos reales
+
+- **Dry-run verificado end-to-end**: `dryRun` en `POST /requests/{id}/load` (salta
+  bloqueos 2 y 3, nunca toca el SOAP, se audita con `dry_run=true`, excluido de
+  Estadísticas) y en `GET /devices/{serial}/supplies` (vestigial, solo logea) están
+  portados y funcionalmente equivalentes al legacy — arquitectura distinta (ifs
+  puntuales en vez de un cliente SOAP intercambiable por duck-typing), mismo
+  comportamiento observable. Se agregaron 2 tests que faltaban (bypass real de los
+  bloqueos 2/3 en dry-run, no solo el camino sin conflictos) — commit `e0b9ca6`.
+  `SDS_DELETE_DRY_RUN` (baja de equipos offline) sigue sin portar: no hay nada de
+  `offline_devices.py` para aplicarlo todavía.
+- **Bug real de credenciales corregido** (commits `55d0b9f`, `15d41d6`):
+  `insight_api_key`/`insight_api_secret` quedaban en `""` (default vacío + línea en
+  blanco en `.env` pisando cualquier otro default) — toda llamada a Insight desde
+  insumos daba 403 sin importar dry-run. El par real y propio de SDSInsumos (no el
+  de contadores, que también autentica pero es un client id/secret distinto
+  registrado del lado de HP) estaba en el `.env` real del repo legacy. Con esto,
+  `/dashboard`, `/load` y `/orders/pending` resuelven contra Insight real en
+  ~0.5-1s en vez de degradar 10-35s reintentando login fallido.
+- **DB de dev sembrada con backup real de producción** (`state_20260811-060000.db`,
+  13 tablas migradas 1:1 — 5169 `known_devices`, 559 `order_audit`, 31030
+  `supply_serial_cache`, etc.). El script de import fue un one-off de sesión, no
+  quedó en el repo — si hace falta repetirlo, el mapeo es mecánico columna a
+  columna contra los modelos de `backend/src/modules/insumos/infrastructure/models/`.
+
 ## Pendiente (backend)
 
 - ~~Scan incremental~~ (`supply_scanner.py` + `routers/scan.py`) — **descartado por ahora**
   (decisión 2026-08-11, ver abajo). No portar hasta que se resuelva la razón de negocio
   que lo motivaba.
 - Clientes (`routers/customers.py`, 12 endpoints; incluye scraping del PortalWeb de SDS
-  con login humano — el cliente de portal NO está portado)
+  con login humano — credenciales ya disponibles en `.env`, falta portar el cliente)
 - Job de escalado de alertas (`PollerAlerts`) + siembra de `request_alerts`
   (`sync_pending_alerts`) + resolución automática al cargar (`resolve_alert`) — los
   endpoints ya están portados; sin estos tres la tabla no se llena sola
@@ -169,6 +222,11 @@ nuevos + device_sync (6) → Alertas (3) → Equipos offline (7) → Clientes/sc
 (1) → Jobs de fondo (8)**, dejando el scraping del PortalWeb (compartido por #1 y #7)
 como una decisión de infraestructura única a tomar antes de encarar cualquiera de los
 dos.
+
+**Ejecutado hasta 2026-08-11: 4, 5, 2, 6, 3 completos** (ver tabla "Portado hasta
+ahora" arriba). Restan **7 → 1 → 8** en ese orden — ver "Qué resta hacer" al principio
+de este documento para el detalle actualizado (las credenciales del scraping de
+portal, el único bloqueo real que quedaba para 1 y 7, ya están disponibles).
 
 Justificación: primero los módulos autocontenidos de bajo riesgo que no requieren
 infraestructura nueva (4, 5, 2-parcial) para consolidar el patrón sobre tablas que ya
