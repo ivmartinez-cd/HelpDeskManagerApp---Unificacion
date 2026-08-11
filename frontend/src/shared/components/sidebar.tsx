@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Bell, ChevronDown, LogOut, Menu } from "lucide-react";
 import { ThemeToggle } from "@/shared/components/theme-toggle";
 import { ContadoresNavSubmenu } from "@/shared/components/contadores-nav-submenu";
+import { InsumosNavSubmenu } from "@/shared/components/insumos-nav-submenu";
 import { cn } from "@/shared/utils/cn";
 import { ChangePasswordModal } from "@/features/auth/components/change-password-modal";
 import { useLogout } from "@/features/auth/hooks/use-logout";
@@ -29,20 +30,19 @@ export function Sidebar({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
-  // `null` = sin override manual todavía, seguí el estado activo (auto-abierto
-  // al entrar a la página). Una vez que el usuario clickea el chevron, pasa a
-  // mandar su elección explícita en vez de la ruta actual — pero solo hasta
-  // la próxima navegación real (ver resync de abajo): si no, colapsar el
-  // chevron y después clickear "Contadores" para entrar dejaba el submenú
-  // escondido en la propia página activa, aunque el chevron mostrara
-  // "colapsado" — un desincronismo real detectado al verificar el fix.
-  const [contadoresExpandedOverride, setContadoresExpandedOverride] = useState<boolean | null>(
-    null,
-  );
+  // Overrides manuales del chevron por módulo (`module.key`). Sin entrada =
+  // sin override todavía: seguí el estado activo (auto-abierto al entrar a la
+  // página). Una vez que el usuario clickea el chevron, pasa a mandar su
+  // elección explícita en vez de la ruta actual — pero solo hasta la próxima
+  // navegación real (ver resync de abajo): si no, colapsar el chevron y
+  // después clickear el módulo para entrar dejaba el submenú escondido en la
+  // propia página activa, aunque el chevron mostrara "colapsado" — un
+  // desincronismo real detectado al verificar el fix.
+  const [submenuOverride, setSubmenuOverride] = useState<Record<string, boolean>>({});
   const [prevPathname, setPrevPathname] = useState(pathname);
   if (pathname !== prevPathname) {
     setPrevPathname(pathname);
-    setContadoresExpandedOverride(null);
+    setSubmenuOverride({});
   }
 
   const isActive = (route: string) => pathname === route || pathname.startsWith(`${route}/`);
@@ -157,7 +157,12 @@ export function Sidebar({ children }: { children: ReactNode }) {
             {sortedModules.map((module) => {
               const active = isActive(module.route);
               const isContadores = module.key === "contadores";
-              const contadoresExpanded = contadoresExpandedOverride ?? active;
+              const isInsumos = module.key === "insumos";
+              // Los dos únicos módulos con submenú por ahora. Contadores entra
+              // por el Calendario (su `route` apunta al hub de herramientas);
+              // Insumos entra por su propia `route`, que ES el Dashboard.
+              const hasSubmenu = isContadores || isInsumos;
+              const submenuExpanded = submenuOverride[module.key] ?? active;
               return (
                 <div key={module.key} className="flex flex-col">
                   <div
@@ -182,30 +187,36 @@ export function Sidebar({ children }: { children: ReactNode }) {
                       />
                       {module.label}
                     </Link>
-                    {isContadores && (
+                    {hasSubmenu && (
                       <button
                         type="button"
-                        onClick={() => setContadoresExpandedOverride(!contadoresExpanded)}
-                        aria-expanded={contadoresExpanded}
+                        onClick={() =>
+                          setSubmenuOverride((prev) => ({
+                            ...prev,
+                            [module.key]: !submenuExpanded,
+                          }))
+                        }
+                        aria-expanded={submenuExpanded}
                         aria-label={
-                          contadoresExpanded
-                            ? "Colapsar submenú de Contadores"
-                            : "Expandir submenú de Contadores"
+                          submenuExpanded
+                            ? `Colapsar submenú de ${module.label}`
+                            : `Expandir submenú de ${module.label}`
                         }
                         className="flex-none rounded-[6px] p-2 text-muted-foreground hover:text-foreground"
                       >
                         <ChevronDown
                           className={cn(
                             "h-3.5 w-3.5 transition-transform",
-                            !contadoresExpanded && "-rotate-90",
+                            !submenuExpanded && "-rotate-90",
                           )}
                         />
                       </button>
                     )}
                   </div>
-                  {isContadores && contadoresExpanded && (
+                  {isContadores && submenuExpanded && (
                     <ContadoresNavSubmenu onNavigate={closeMobile} />
                   )}
+                  {isInsumos && submenuExpanded && <InsumosNavSubmenu onNavigate={closeMobile} />}
                 </div>
               );
             })}
