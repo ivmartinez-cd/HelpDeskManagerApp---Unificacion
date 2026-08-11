@@ -24,6 +24,7 @@ from src.modules.insumos.presentation.requests_router import router as insumos_r
 from src.modules.insumos.presentation.statistics_router import (
     router as insumos_statistics_router,
 )
+from src.modules.turnos.presentation.turnos_router import router as turnos_router
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.logging_config import configure_logging
 from src.shared.presentation.errors.handlers import register_exception_handlers
@@ -71,7 +72,9 @@ def create_app() -> FastAPI:
     app.include_router(insumos_config_router)
     app.include_router(insumos_new_devices_router)
     app.include_router(insumos_alerts_router)
+    app.include_router(turnos_router)
     return app
+
 
 
 

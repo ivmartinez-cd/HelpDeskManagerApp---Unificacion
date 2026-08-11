@@ -1,0 +1,80 @@
+export interface OperatorShift {
+  userId: string;
+  userName: string;
+  color?: string | null;
+}
+
+export interface ResolvedShift {
+  slotId: string;
+  casillaId: string;
+  casillaNombre: string;
+  casillaColor?: string | null;
+  horaInicio: string;
+  horaFin: string;
+  diaSemana: number;
+  operadores: OperatorShift[];
+  isCurrent: boolean;
+  isNext: boolean;
+}
+
+export interface Casilla {
+  id: string;
+  nombre: string;
+  color?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface Asignacion {
+  id: string;
+  slotId: string;
+  userId: string;
+  userName?: string | null;
+  vigenteDesde: string;
+  vigenteHasta?: string | null;
+}
+
+export interface Slot {
+  id: string;
+  casillaId: string;
+  horaInicio: string;
+  horaFin: string;
+  diaSemana: number;
+  sortOrder: number;
+  asignaciones: Asignacion[];
+}
+
+export interface CreateCasillaPayload {
+  nombre: string;
+  color?: string | null;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export interface CreateSlotPayload {
+  casillaId: string;
+  horaInicio: string;
+  horaFin: string;
+  diaSemana: number;
+  sortOrder?: number;
+}
+
+// Solo `nombre` es editable en una casilla existente -- color/sortOrder/isActive
+// los preserva el backend desde el registro actual (ver UpdateCasillaCommand).
+export interface UpdateCasillaPayload {
+  nombre: string;
+}
+
+// Sin sortOrder -- el backend lo preserva desde el registro actual (ver
+// UpdateSlotCommand).
+export interface UpdateSlotPayload {
+  casillaId: string;
+  horaInicio: string;
+  horaFin: string;
+  diaSemana: number;
+}
+
+export interface UserOption {
+  id: string;
+  fullName: string;
+}
