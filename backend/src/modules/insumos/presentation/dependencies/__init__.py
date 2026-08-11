@@ -5,6 +5,10 @@ punto de importación sigue siendo único (`presentation.dependencies`). Las pie
 compartidas (gateways, settings de pedido, zona horaria) viven en `wiring.py`.
 """
 
+from src.modules.insumos.presentation.dependencies.alerts import (
+    build_acknowledge_alerts,
+    build_list_alerts,
+)
 from src.modules.insumos.presentation.dependencies.config import (
     build_get_insumos_config,
     build_save_insumos_config,
@@ -39,6 +43,8 @@ from src.modules.insumos.presentation.dependencies.statistics import (
 )
 
 __all__ = [
+    "build_acknowledge_alerts",
+    "build_list_alerts",
     "build_count_new_devices",
     "build_dismiss_new_device",
     "build_list_new_devices",

@@ -20,6 +20,12 @@ from src.modules.insumos.domain.entities.processed_request import (
     ProcessedInitialSnapshot,
     ProcessedRequest,
 )
+from src.modules.insumos.domain.entities.request_alert import (
+    STATE_ACKNOWLEDGED,
+    STATE_ESCALATED,
+    STATE_TRIGGERED,
+    RequestAlert,
+)
 from src.modules.insumos.domain.repositories.insight_gateway import JsonDict
 from src.modules.insumos.domain.value_objects.audit_statistics import (
     CustomerActivity,
@@ -780,3 +786,58 @@ class FakeMailLogRepository:
 
     async def count(self) -> int:
         return len(self.entries)
+
+
+class FakeRequestAlertRepository:
+    """Alertas en memoria con su estado; el `now` de las transiciones no importa acá
+    (los cortes reales se prueban en integración)."""
+
+    def __init__(self) -> None:
+        self.alerts: dict[int, RequestAlert] = {}
+        self.states: dict[int, str] = {}
+        self.escalate_calls: list[datetime] = []
+
+    def add(self, hp_request_id: int, state: str, requested_at: datetime | None) -> None:
+        self.alerts[hp_request_id] = RequestAlert(
+            hp_request_id=hp_request_id,
+            customer_id=8,
+            customer_name="Cliente Test",
+            device_serial=f"SERIE{hp_request_id}",
+            sku="CF230A",
+            description="Toner negro",
+            requested_at=requested_at,
+            first_seen_at=datetime.now(UTC),
+            escalated_at=datetime.now(UTC) if state == STATE_ESCALATED else None,
+        )
+        self.states[hp_request_id] = state
+
+    async def escalate_due(self, cutoff: datetime) -> int:
+        self.escalate_calls.append(cutoff)
+        escalated = 0
+        for hp_request_id, alert in self.alerts.items():
+            if self.states[hp_request_id] != STATE_TRIGGERED:
+                continue
+            if alert.requested_at is None or alert.requested_at > cutoff:
+                continue
+            self.states[hp_request_id] = STATE_ESCALATED
+            self.alerts[hp_request_id] = replace(alert, escalated_at=datetime.now(UTC))
+            escalated += 1
+        return escalated
+
+    async def list_escalated(self) -> list[RequestAlert]:
+        escalated = [
+            alert
+            for hp_request_id, alert in self.alerts.items()
+            if self.states[hp_request_id] == STATE_ESCALATED
+        ]
+        return sorted(escalated, key=lambda a: a.hp_request_id)
+
+    async def acknowledge(self, hp_request_ids: list[int]) -> int:
+        acknowledged = [
+            hp_request_id
+            for hp_request_id in hp_request_ids
+            if self.states.get(hp_request_id) == STATE_ESCALATED
+        ]
+        for hp_request_id in acknowledged:
+            self.states[hp_request_id] = STATE_ACKNOWLEDGED
+        return len(acknowledged)
