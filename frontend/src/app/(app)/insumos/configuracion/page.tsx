@@ -1,7 +1,10 @@
-/** SCAFFOLD — Configuración de Insumos (`/insumos/configuracion`).
- *
- * Placeholder de la fundación: reemplazar por la pantalla real
- * (`GET`/`PUT /api/insumos/config`, formulario multi-sección Patrón 5). */
+import { ConfiguracionView } from "@/features/insumos/components/configuracion";
+
+export const metadata = { title: "Configuración · Insumos" };
+
+/** `/insumos/configuracion` — parámetros de operación
+ * (`GET`/`PUT /api/insumos/config`) en el formulario multi-sección del
+ * Patrón 5. Toda la interacción vive en el componente cliente. */
 export default function InsumosConfiguracionPage() {
-  return <div className="px-9 py-8">Configuración de Insumos</div>;
+  return <ConfiguracionView />;
 }
