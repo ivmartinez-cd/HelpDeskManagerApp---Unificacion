@@ -26,8 +26,3 @@ class CalendarEventSchema(BaseModel):
     bultos: int | float | None = None
     costo_seguro: str | None = None
     costo_recambio: str | None = None
-
-
-class GetCalendarEventsResponse(BaseModel):
-    events: list[CalendarEventSchema]
-    total: int

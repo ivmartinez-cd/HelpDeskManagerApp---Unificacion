@@ -23,11 +23,6 @@ export interface CalendarEvent {
   costo_recambio?: string | null;
 }
 
-export interface GetCalendarEventsResponse {
-  events: CalendarEvent[];
-  total: number;
-}
-
 export interface CalendarFilterParams {
   start: string;
   end: string;

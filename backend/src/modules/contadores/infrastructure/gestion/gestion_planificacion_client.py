@@ -1,12 +1,9 @@
-import logging
-
 import httpx
 
 from src.modules.contadores.domain.entities.calendar_event import CalendarEvent
 from src.modules.contadores.domain.ports.calendar_port import CalendarPort
+from src.shared.domain.errors import ExternalServiceError
 from src.shared.infrastructure.config.settings import get_settings
-
-logger = logging.getLogger(__name__)
 
 
 class GestionPlanificacionClient(CalendarPort):
@@ -20,7 +17,7 @@ class GestionPlanificacionClient(CalendarPort):
     ) -> None:
         settings = get_settings()
         self._base_url = (base_url or settings.gestion_web_base_url).rstrip("/")
-        self._cookie = cookie or settings.gestion_web_cookie
+        self._cookie = cookie or settings.gestion_web_cookie.get_secret_value()
         self._timeout = timeout or settings.gestion_web_timeout_seconds
 
     async def get_events(
@@ -60,9 +57,10 @@ class GestionPlanificacionClient(CalendarPort):
                 response = await client.get(url, params=params, headers=headers)
                 response.raise_for_status()
                 data = response.json()
-            except Exception as e:
-                logger.error("Error al consultar planificación en gestión: %s", e)
-                raise RuntimeError(f"Error al consultar el servicio de gestión: {e}") from e
+            except Exception as exc:
+                raise ExternalServiceError(
+                    f"Error al consultar el servicio de gestión: {exc}"
+                ) from exc
 
         events: list[CalendarEvent] = []
         for item in data:

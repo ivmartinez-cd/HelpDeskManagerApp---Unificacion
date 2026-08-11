@@ -1,5 +1,5 @@
 import { httpClient } from "@/services/http-client";
-import type { GetCalendarEventsResponse } from "../types/calendario";
+import type { CalendarEvent } from "../types/calendario";
 
 /** Nombres tal como los serializa el backend real (`RunDb3ExportResponse` en
  * `db3_schemas.py`, camelCase vía `serialization_alias`) — este tipo tenía
@@ -186,7 +186,8 @@ export const contadoresApi = {
     if (params.operador_id) {
       searchParams.set("operador_id", params.operador_id);
     }
-    return httpClient.get<GetCalendarEventsResponse>(
+    searchParams.set("size", "500");
+    return httpClient.get<Page<CalendarEvent>>(
       `/api/contadores/calendario?${searchParams.toString()}`,
     );
   },

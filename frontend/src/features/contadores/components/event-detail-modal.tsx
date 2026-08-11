@@ -45,7 +45,7 @@ export function EventDetailModal({ event, onClose }: Props) {
       <div className="flex flex-col gap-5 py-2">
         <div className="rounded-lg border border-border bg-muted/30 p-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-brand-orange" />
             <span>{cleanHeaderTitle}</span>
           </div>
           {event.tittle_tooltip && (

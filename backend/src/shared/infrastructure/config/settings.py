@@ -82,7 +82,7 @@ class Settings(BaseSettings):
     epson_ers_timeout_seconds: float = 15.0
 
     gestion_web_base_url: str = "http://gestion.cdsa.com.ar"
-    gestion_web_cookie: str = "theme=dark; PHPSESSID=qbh2u9c1klna8ue552hsit31sm"
+    gestion_web_cookie: SecretStr = SecretStr("")
     gestion_web_timeout_seconds: float = 15.0
 
 

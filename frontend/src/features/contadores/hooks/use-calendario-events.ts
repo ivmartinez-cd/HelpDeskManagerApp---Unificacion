@@ -37,7 +37,7 @@ export function useCalendarioEvents({
         operador_id: operadorId || undefined,
         solo_facturacion: soloFacturacion,
       });
-      setEvents(response.events);
+      setEvents(response.items);
       setTotal(response.total);
     } catch (err: unknown) {
       console.error("Error al cargar eventos del calendario:", err);
@@ -49,7 +49,10 @@ export function useCalendarioEvents({
 
 
   useEffect(() => {
-    fetchEvents();
+    // fetch-on-mount/on-filter-change; `fetchEvents` flips `loading`
+    // synchronously on purpose so the grid doesn't render stale events.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchEvents();
   }, [fetchEvents]);
 
   return {
