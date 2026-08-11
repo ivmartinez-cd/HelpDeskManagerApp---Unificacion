@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, ChevronDown, LogOut, Menu } from "lucide-react";
@@ -11,6 +11,10 @@ import { cn } from "@/shared/utils/cn";
 import { ChangePasswordModal } from "@/features/auth/components/change-password-modal";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useSession } from "@/services/session-provider";
+// El avatar toma el color de operador de Gestión igual que las píldoras del
+// Calendario (ver calendario-format.ts) — mismo caso aparte de la regla de
+// marca única, ya acordado con el usuario.
+import { contadoresApi } from "@/features/contadores/api/contadores-api";
 
 function getInitials(fullName: string): string {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
@@ -44,6 +48,16 @@ export function Sidebar({ children }: { children: ReactNode }) {
     setPrevPathname(pathname);
     setSubmenuOverride({});
   }
+
+  const [avatarColor, setAvatarColor] = useState<string | null>(null);
+  const hasContadores = modules.some((m) => m.key === "contadores");
+  useEffect(() => {
+    if (!hasContadores) return;
+    contadoresApi
+      .getMiOperador()
+      .then((mi) => setAvatarColor(mi.color))
+      .catch((err: unknown) => console.error("Error al resolver el operador del usuario:", err));
+  }, [hasContadores]);
 
   const isActive = (route: string) => pathname === route || pathname.startsWith(`${route}/`);
   const closeMobile = () => setMobileOpen(false);
@@ -95,7 +109,13 @@ export function Sidebar({ children }: { children: ReactNode }) {
             className="flex items-center gap-2.5 rounded-[8px] px-1.5 py-1 transition-colors hover:bg-muted"
             title="Cambiar contraseña"
           >
-            <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-brand-gray font-heading text-[13px] font-bold text-white">
+            <span
+              style={avatarColor ? { backgroundColor: avatarColor } : undefined}
+              className={cn(
+                "flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full font-heading text-[13px] font-bold text-white",
+                !avatarColor && "bg-brand-gray",
+              )}
+            >
               {getInitials(user.fullName)}
             </span>
             <span className="hidden flex-col items-start leading-[1.25] sm:flex">

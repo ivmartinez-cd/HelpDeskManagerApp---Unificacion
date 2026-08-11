@@ -1,3 +1,4 @@
+import { TodayClientsCard } from "@/features/home/components/today-clients-card";
 import { ShiftDashboardCard } from "@/features/turnos/components/shift-dashboard-card";
 
 export const metadata = {
@@ -16,6 +17,7 @@ export default function HomePage() {
 
       <div className="flex flex-wrap gap-4">
         <ShiftDashboardCard />
+        <TodayClientsCard />
       </div>
     </div>
   );

@@ -12,7 +12,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: 'RNS Sanz', 'Inter', system-ui, sans-serif;
+  /* RNS Sanz no está en "Manual de marca.pdf" (solo Montserrat/Source Sans
+     Pro) y su hinting se ve mal en texto chico en Windows — el body pasa a
+     Source Sans Pro (Cuerpo), la tipografía de cuerpo real del manual.
+     Las @font-face de arriba quedan sin uso por ahora, no se borran por si
+     hace falta un acento puntual más adelante. */
+  --font-sans: var(--font-source-sans), 'Source Sans Pro', system-ui, sans-serif;
   --font-display: var(--font-outfit);
   --font-heading: var(--font-montserrat), 'Montserrat', sans-serif;
   --font-body: var(--font-source-sans), 'Source Sans Pro', sans-serif;
