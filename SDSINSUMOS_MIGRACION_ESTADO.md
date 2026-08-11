@@ -12,6 +12,9 @@ Estadísticas, Mail log, Config GET/PUT, Equipos nuevos y Alertas.
    y una baja **irreversible** de equipos (gateada por `SDS_DELETE_DRY_RUN`, que
    necesita el mismo rediseño de lock global identificado para el scan incremental
    descartado). Requiere el cliente de scraping del PortalWeb (punto siguiente).
+   **Plan de implementación ya diseñado y aprobado en
+   `SDSINSUMOS_EQUIPOS_OFFLINE_PLAN.md`** (2026-08-11): decisiones tomadas, trampas
+   relevadas, orden de pasos y plan de verificación. Falta ejecutarlo.
 2. **Clientes** (`routers/customers.py`, 13 endpoints) — comparte el cliente de
    scraping del PortalWeb con Equipos offline; conviene decidirlo una sola vez para
    ambos (ver nota abajo, ya no bloqueado por falta de credenciales).
