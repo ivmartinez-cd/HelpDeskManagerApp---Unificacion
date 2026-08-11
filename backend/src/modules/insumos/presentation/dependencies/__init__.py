@@ -12,6 +12,12 @@ from src.modules.insumos.presentation.dependencies.config import (
 from src.modules.insumos.presentation.dependencies.mail_log import (
     build_list_mail_log,
 )
+from src.modules.insumos.presentation.dependencies.new_devices import (
+    build_count_new_devices,
+    build_dismiss_new_device,
+    build_list_new_devices,
+    build_sync_new_devices,
+)
 from src.modules.insumos.presentation.dependencies.requests import (
     build_cancel_order,
     build_dismiss_request,
@@ -33,6 +39,10 @@ from src.modules.insumos.presentation.dependencies.statistics import (
 )
 
 __all__ = [
+    "build_count_new_devices",
+    "build_dismiss_new_device",
+    "build_list_new_devices",
+    "build_sync_new_devices",
     "build_cancel_order",
     "build_dismiss_request",
     "build_get_availability_windows",

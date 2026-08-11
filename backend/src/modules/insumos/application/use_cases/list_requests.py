@@ -39,6 +39,7 @@ from src.modules.insumos.domain.value_objects.insumos_settings import (
     settings_from_raw,
 )
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
+from src.modules.insumos.domain.value_objects.portal_urls import device_portal_url
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +194,7 @@ class ListRequests:
             days_left=days_left,
             pages_left=consumable.get("pagesLeft"),
             consumable_index=consumable.get("index"),
-            consumable_url=_device_portal_url(
+            consumable_url=device_portal_url(
                 self._config.insight_base_url, int(request["deviceId"])
             ),
             time=_safe_local_time(request.get("requested")),
@@ -246,10 +247,3 @@ def _safe_local_time(iso_utc: object) -> str:
         return format_arg_datetime(str(iso_utc))
     except ValueError:
         return ""
-
-
-def _device_portal_url(insight_base_url: str, device_id: int) -> str:
-    """Ficha del equipo en el PortalWeb (hermano de PortalAPI en el mismo host) — el
-    deep-link al consumible puntual no funciona fuera del JS del portal (legacy)."""
-    base = insight_base_url.rstrip("/").removesuffix("/PortalAPI") + "/PortalWeb"
-    return f"{base}/devices/{device_id}"

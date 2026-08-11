@@ -10,6 +10,11 @@ from src.modules.insumos.domain.entities.audit_record import (
     StoredAuditRecord,
 )
 from src.modules.insumos.domain.entities.customer_config import CustomerConfig
+from src.modules.insumos.domain.entities.known_device import (
+    MONITORED_STATUSES,
+    DeviceInventoryEntry,
+    KnownDevice,
+)
 from src.modules.insumos.domain.entities.processed_request import (
     STATUS_CREATED,
     ProcessedInitialSnapshot,
@@ -219,6 +224,16 @@ class FakeCustomerConfigRepository:
 
     async def get_names(self) -> dict[int, str]:
         return {c.customer_id: c.name for c in self.customers}
+
+    async def sync_discovered(self, customers: list[CustomerConfig]) -> None:
+        by_id = {c.customer_id: c for c in self.customers}
+        for incoming in customers:
+            existing = by_id.get(incoming.customer_id)
+            # El `enabled` de un cliente ya registrado nunca se pisa.
+            by_id[incoming.customer_id] = (
+                replace(existing, name=incoming.name) if existing else incoming
+            )
+        self.customers = list(by_id.values())
 
 
 class FakeInsumosSettingsRepository:
@@ -499,6 +514,20 @@ class FakeInsightGateway:
         self.requests_by_status: dict[str, list[JsonDict]] | None = None
         self.alerts_by_device: dict[int, list[JsonDict]] = {}
         self.alerts_error: Exception | None = None
+        self.customers: list[JsonDict] = []
+        self.customers_error: Exception | None = None
+        self.inventory_by_customer: dict[int, list[JsonDict]] = {}
+        self.inventory_errors: dict[int, Exception] = {}
+
+    async def get_customers(self) -> list[JsonDict]:
+        if self.customers_error is not None:
+            raise self.customers_error
+        return list(self.customers)
+
+    async def get_devices(self, customer_id: int) -> list[JsonDict]:
+        if customer_id in self.inventory_errors:
+            raise self.inventory_errors[customer_id]
+        return list(self.inventory_by_customer.get(customer_id, []))
 
     async def get_consumable_requests(
         self,
@@ -646,11 +675,84 @@ class FakeAuditStatisticsRepository:
 
 
 class FakeKnownDeviceRepository:
+    """Inventario en memoria. `enabled_customers` modela el INNER JOIN con
+    customers_config que hace el listado de pendientes."""
+
     def __init__(self) -> None:
         self.monitored: dict[int, int] = {}
+        self.devices: dict[int, KnownDevice] = {}
+        self.enabled_customers: set[int] = set()
+        self.pruned: list[tuple[int, tuple[int, ...]]] = []
+
+    def add(self, device_id: int, **overrides: object) -> KnownDevice:
+        base: dict[str, object] = {
+            "device_id": device_id,
+            "customer_id": 8,
+            "customer_name": "Cliente Test",
+            "serial": f"SERIE{device_id}",
+            "model": "HP E50145",
+            "zone": "Sucursal",
+            "ip_address": "10.0.0.1",
+            "monitor_status": "N",
+            "discovery_date": None,
+            "last_contact": None,
+            "first_seen_at": datetime.now(UTC),
+            "dismissed": False,
+        }
+        base.update(overrides)
+        device = KnownDevice(**base)  # type: ignore[arg-type]
+        self.devices[device_id] = device
+        self.enabled_customers.add(device.customer_id)
+        return device
 
     async def count_monitored_by_customer(self) -> dict[int, int]:
         return dict(self.monitored)
+
+    async def list_pending(self) -> list[KnownDevice]:
+        pending = [
+            d
+            for d in self.devices.values()
+            if d.monitor_status not in MONITORED_STATUSES
+            and d.customer_id in self.enabled_customers
+        ]
+        return sorted(pending, key=lambda d: d.device_id, reverse=True)
+
+    async def count_pending(self) -> int:
+        return len([d for d in await self.list_pending() if not d.dismissed])
+
+    async def set_dismissed(self, device_id: int, dismissed: bool) -> bool:
+        device = self.devices.get(device_id)
+        if device is None:
+            return False
+        self.devices[device_id] = replace(device, dismissed=dismissed)
+        return True
+
+    async def upsert(self, entries: list[DeviceInventoryEntry]) -> list[int]:
+        new_ids = [e.device_id for e in entries if e.device_id not in self.devices]
+        for entry in entries:
+            self.add(
+                entry.device_id,
+                customer_id=entry.customer_id,
+                serial=entry.serial,
+                model=entry.model,
+                zone=entry.zone,
+                ip_address=entry.ip_address,
+                monitor_status=entry.monitor_status,
+                discovery_date=entry.discovery_date,
+                last_contact=entry.last_contact,
+            )
+        return new_ids
+
+    async def prune_missing(self, customer_id: int, present_device_ids: list[int]) -> int:
+        self.pruned.append((customer_id, tuple(present_device_ids)))
+        stale = [
+            device_id
+            for device_id, device in self.devices.items()
+            if device.customer_id == customer_id and device_id not in present_device_ids
+        ]
+        for device_id in stale:
+            del self.devices[device_id]
+        return len(stale)
 
 
 class FakeMailLogRepository:
