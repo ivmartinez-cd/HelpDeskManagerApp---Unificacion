@@ -309,6 +309,28 @@ async def test_pedido_activo_de_otro_color_no_bloquea() -> None:
     assert result.ok
 
 
+async def test_dry_run_saltea_bloqueo_de_pedido_activo() -> None:
+    """A diferencia de forceOverride, dry_run sí saltea este bloqueo (nunca toca SOAP,
+    así que no hay riesgo real de duplicar el pedido activo)."""
+    world = World()
+    await world.supply_cache.upsert(
+        [
+            CachedSupply(
+                supply_id=441500,
+                serial="SERIE1",
+                estado="Pendiente",
+                description="Cartucho negro HP 30A",
+            )
+        ]
+    )
+
+    result = await world.use_case.execute(_command(dry_run=True))
+
+    assert result.ok
+    assert result.order_id == f"DRYRUN-SDS-{_REQUEST_ID}"
+    assert world.wsayc.persisted_payloads == []
+
+
 # --- bloqueo 3: tope diario (nunca bypasseable) ----------------------------------------
 
 
@@ -321,6 +343,20 @@ async def test_tope_diario_bloquea_incluso_con_force_override() -> None:
 
     assert not result.ok
     assert result.error is not None and "3 veces hoy" in result.error
+
+
+async def test_dry_run_saltea_tope_diario() -> None:
+    """El tope cuenta cargas reales (`count_created_today` ignora filas dry-run, ver
+    test de integración del repo) — permitir dry-run acá es consistente, no un agujero:
+    nunca va a sumar al contador que el propio bloqueo mira."""
+    world = World()
+    for _ in range(3):
+        await world.audit.record(AuditRecord(event=EVENT_CREATED, hp_request_id=_REQUEST_ID))
+
+    result = await world.use_case.execute(_command(dry_run=True))
+
+    assert result.ok
+    assert result.order_id == f"DRYRUN-SDS-{_REQUEST_ID}"
 
 
 # --- errores de creación ---------------------------------------------------------------
