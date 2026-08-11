@@ -169,7 +169,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
                     )}
                   >
                     <Link
-                      href={module.route}
+                      href={isContadores ? "/contadores/calendario" : module.route}
                       onClick={closeMobile}
                       aria-current={active ? "page" : undefined}
                       className="flex flex-1 items-center gap-2.5 px-3 py-2.5 font-body text-sm no-underline"
