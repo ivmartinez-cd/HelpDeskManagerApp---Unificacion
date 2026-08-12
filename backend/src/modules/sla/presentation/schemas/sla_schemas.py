@@ -7,6 +7,7 @@ class TecnicoVencidosSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     tecnico: str
+    id_tecnico: int
     cantidad: int
     ids_incidente: list[int]
 
@@ -32,6 +33,7 @@ class IncidenteVencidoSchema(BaseModel):
 
     id_incidente: int
     tecnico: str
+    id_tecnico: int
     region: str
     cliente: str
     sucursal: str

@@ -1,5 +1,6 @@
 export interface TecnicoVencidos {
   tecnico: string;
+  id_tecnico: number;
   cantidad: number;
   ids_incidente: number[];
 }
@@ -18,6 +19,7 @@ export interface SlaResumen {
 export interface IncidenteVencido {
   id_incidente: number;
   tecnico: string;
+  id_tecnico: number;
   region: string;
   cliente: string;
   sucursal: string;

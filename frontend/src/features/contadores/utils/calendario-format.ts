@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { mutedColor } from "@/shared/utils/muted-color";
 import type { CalendarEvent } from "../types/calendario";
 
 export function formatDateLocal(d: Date): string {
@@ -71,16 +72,6 @@ export function getEventPillClassName(evt: CalendarEvent): string {
     return "bg-brand-gray text-white hover:bg-brand-charcoal";
   }
   return "bg-brand-gray/50 text-white hover:bg-brand-gray/70";
-}
-
-// Los colores que manda Gestión son directos de operador/tomador, pensados
-// para un fondo claro — sobre el tema oscuro de esta app quedan demasiado
-// saturados/neón (feedback del usuario, 2026-08-12). Se atenúan mezclando
-// con negro en oklch (más parejo perceptualmente que mezclar en sRGB) en vez
-// de un CSS `filter` sobre el pill entero, que también opacaría el texto
-// blanco encima.
-function mutedColor(hex: string): string {
-  return `color-mix(in oklch, ${hex} 70%, black)`;
 }
 
 export function getEventPillInlineStyle(evt: CalendarEvent): CSSProperties | undefined {

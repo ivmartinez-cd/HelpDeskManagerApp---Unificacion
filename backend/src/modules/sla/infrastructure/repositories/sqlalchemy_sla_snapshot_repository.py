@@ -37,6 +37,7 @@ def _incidente_to_json(i: IncidenteSla) -> dict[str, object]:
         "nro_serie": i.nro_serie,
         "modelo": i.modelo,
         "tecnico": i.tecnico,
+        "id_tecnico": i.id_tecnico,
         "region": i.region,
         "fecha_operativo": i.fecha_operativo.isoformat() if i.fecha_operativo else None,
         "periodo": i.periodo,
@@ -61,6 +62,7 @@ def _json_to_incidente(d: dict[str, object]) -> IncidenteSla:
         nro_serie=d["nro_serie"],  # type: ignore[arg-type]
         modelo=d["modelo"],  # type: ignore[arg-type]
         tecnico=d["tecnico"],  # type: ignore[arg-type]
+        id_tecnico=d["id_tecnico"],  # type: ignore[arg-type]
         region=d["region"],  # type: ignore[arg-type]
         fecha_operativo=datetime.fromisoformat(fecha_operativo) if fecha_operativo else None,  # type: ignore[arg-type]
         periodo=d["periodo"],  # type: ignore[arg-type]
@@ -95,7 +97,12 @@ def _snapshot_to_values(snapshot: SlaSnapshot) -> dict[str, object]:
         "pct_correctos": snapshot.pct_correctos,
         "pct_vencidos": snapshot.pct_vencidos,
         "vencidos_por_tecnico": [
-            {"tecnico": t.tecnico, "cantidad": t.cantidad, "ids_incidente": t.ids_incidente}
+            {
+                "tecnico": t.tecnico,
+                "id_tecnico": t.id_tecnico,
+                "cantidad": t.cantidad,
+                "ids_incidente": t.ids_incidente,
+            }
             for t in snapshot.vencidos_por_tecnico
         ],
         "incidentes_vencidos": [_incidente_to_json(i) for i in snapshot.incidentes_vencidos],

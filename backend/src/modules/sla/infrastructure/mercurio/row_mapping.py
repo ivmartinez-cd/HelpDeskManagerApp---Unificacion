@@ -30,6 +30,7 @@ def map_row(row: Any) -> IncidenteSla:
         nro_serie=_texto(row.Nro_Serie),
         modelo=_texto(row.Modelo),
         tecnico=_texto(row.Tecnico),
+        id_tecnico=_entero(row.IdTecnico),
         region=_texto(row.REGION),
         fecha_operativo=row.FechaOperativo,
         periodo=_entero(row.Periodo),

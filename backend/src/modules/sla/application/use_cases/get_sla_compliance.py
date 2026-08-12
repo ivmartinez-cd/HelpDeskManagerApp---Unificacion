@@ -29,7 +29,10 @@ class GetSlaCompliance:
             pct_vencidos=snapshot.pct_vencidos,
             vencidos_por_tecnico=[
                 TecnicoVencidosDTO(
-                    tecnico=t.tecnico, cantidad=t.cantidad, ids_incidente=t.ids_incidente
+                    tecnico=t.tecnico,
+                    id_tecnico=t.id_tecnico,
+                    cantidad=t.cantidad,
+                    ids_incidente=t.ids_incidente,
                 )
                 for t in snapshot.vencidos_por_tecnico
             ],

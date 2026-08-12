@@ -1,4 +1,10 @@
-import { useId, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
+import {
+  useId,
+  type ButtonHTMLAttributes,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type SelectHTMLAttributes,
+} from "react";
 import { Loader2, type LucideIcon } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
@@ -39,6 +45,34 @@ export function BrandInput({ label, hint, id, className, ...props }: BrandInputP
           className,
         )}
       />
+      {hint && <p className="font-body text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+interface BrandSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  label: string;
+  hint?: string;
+}
+
+export function BrandSelect({ label, hint, id, className, children, ...props }: BrandSelectProps) {
+  const generatedId = useId();
+  const selectId = id ?? generatedId;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={selectId} className={brandFieldLabelClass}>
+        {label}
+      </label>
+      <select
+        id={selectId}
+        {...props}
+        className={cn(
+          "rounded-[8px] border border-border bg-card px-[14px] py-[9px] font-body text-sm text-foreground outline-none focus:ring-2 focus:ring-brand-orange/40",
+          className,
+        )}
+      >
+        {children}
+      </select>
       {hint && <p className="font-body text-xs text-muted-foreground">{hint}</p>}
     </div>
   );

@@ -2,13 +2,24 @@
 
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
-import { slaApi } from "../api/sla-api";
+import { slaApi, type FiltroOperador } from "../api/sla-api";
 import type { IncidenteVencido, SlaResumen } from "../types/sla";
+import { prestadoresApi } from "@/features/prestadores/api/prestadores-api";
+import type { OperadorOption } from "@/features/prestadores/types/prestadores";
 import { useSession } from "@/services/session-provider";
-import { BrandButton } from "@/shared/components/ui/brand-form";
+import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import { StatsTable, type StatsColumn } from "@/shared/components/ui/stats-table";
 import { Spinner } from "@/shared/components/ui/spinner";
+
+const MIS_PST = "__mis_pst__";
+const TODOS = "__todos__";
+
+function scopeToFiltro(scope: string): FiltroOperador | undefined {
+  if (scope === MIS_PST) return undefined;
+  if (scope === TODOS) return { todos: true };
+  return { operadorId: scope };
+}
 
 function formatUpdatedAt(iso: string): string {
   const date = new Date(iso);
@@ -78,19 +89,24 @@ const incidenteColumns: StatsColumn<IncidenteVencido>[] = [
 export function SlaDetail() {
   const { user, can } = useSession();
   const canUpdate = user.isSuperadmin || can("sla", "update");
+  const canVerOperadores = user.isSuperadmin || can("prestadores", "view");
 
   const [monthValue, setMonthValue] = useState<string>(currentMonthValue());
+  const [scope, setScope] = useState<string>(MIS_PST);
+  const [operadores, setOperadores] = useState<OperadorOption[]>([]);
   const [resumen, setResumen] = useState<SlaResumen | null>(null);
   const [incidentes, setIncidentes] = useState<IncidenteVencido[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Resetear datos al cambiar de período — "ajustar estado durante el render"
-  // en vez de dentro del efecto (mismo patrón que confirmation-modal.tsx).
-  const [prevMonthValue, setPrevMonthValue] = useState(monthValue);
-  if (monthValue !== prevMonthValue) {
-    setPrevMonthValue(monthValue);
+  // Resetear datos al cambiar de período o de operador — "ajustar estado
+  // durante el render" en vez de dentro del efecto (mismo patrón que
+  // confirmation-modal.tsx).
+  const [prevKey, setPrevKey] = useState(`${monthValue}|${scope}`);
+  const currentKey = `${monthValue}|${scope}`;
+  if (currentKey !== prevKey) {
+    setPrevKey(currentKey);
     setLoading(true);
     setError(null);
     setResumen(null);
@@ -98,9 +114,15 @@ export function SlaDetail() {
   }
 
   useEffect(() => {
+    if (!canVerOperadores) return;
+    prestadoresApi.listOperadores().then(setOperadores).catch(() => setOperadores([]));
+  }, [canVerOperadores]);
+
+  useEffect(() => {
     let active = true;
     const periodo = monthValueToPeriodo(monthValue);
-    Promise.all([slaApi.getResumen(periodo), slaApi.listIncidentesVencidos(periodo)])
+    const filtro = scopeToFiltro(scope);
+    Promise.all([slaApi.getResumen(periodo), slaApi.listIncidentesVencidos(periodo, filtro)])
       .then(([res, inc]) => {
         if (!active) return;
         setResumen(res);
@@ -117,15 +139,18 @@ export function SlaDetail() {
     return () => {
       active = false;
     };
-  }, [monthValue]);
+  }, [monthValue, scope]);
 
   const handleRefresh = () => {
     const periodo = monthValueToPeriodo(monthValue);
+    const filtro = scopeToFiltro(scope);
     setRefreshing(true);
     setError(null);
     slaApi
       .refreshResumen(periodo)
-      .then(() => Promise.all([slaApi.getResumen(periodo), slaApi.listIncidentesVencidos(periodo)]))
+      .then(() =>
+        Promise.all([slaApi.getResumen(periodo), slaApi.listIncidentesVencidos(periodo, filtro)]),
+      )
       .then(([res, inc]) => {
         setResumen(res);
         setIncidentes(inc);
@@ -158,6 +183,21 @@ export function SlaDetail() {
               className="rounded-[8px] border border-border bg-card px-3 py-1.5 font-body text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand-orange/60"
             />
           </label>
+          <BrandSelect
+            label="Vencidos de"
+            value={scope}
+            onChange={(e) => setScope(e.target.value)}
+            className="min-w-[180px]"
+          >
+            <option value={MIS_PST}>Mis PST</option>
+            <option value={TODOS}>Todos</option>
+            {canVerOperadores &&
+              operadores.map((op) => (
+                <option key={op.id} value={op.id}>
+                  {op.fullName}
+                </option>
+              ))}
+          </BrandSelect>
           <div className="flex flex-col items-end gap-1">
             <BrandButton
               onClick={handleRefresh}

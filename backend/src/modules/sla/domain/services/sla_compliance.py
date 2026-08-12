@@ -10,12 +10,22 @@ def _pct(parte: int, total: int) -> float:
 
 
 def _agrupar_por_tecnico(vencidos: list[IncidenteSla]) -> list[TecnicoVencidos]:
-    ids_por_tecnico: dict[str, list[int]] = defaultdict(list)
+    # Se agrupa por id_tecnico (la identidad real en Siges), no por el nombre
+    # -- dos técnicos nunca deberían compartir Den_Comercial, pero el id es la
+    # clave confiable y es la que necesita el filtro por operador.
+    ids_incidente_por_tecnico: dict[int, list[int]] = defaultdict(list)
+    nombre_por_id: dict[int, str] = {}
     for incidente in vencidos:
-        ids_por_tecnico[incidente.tecnico].append(incidente.id_incidente)
+        ids_incidente_por_tecnico[incidente.id_tecnico].append(incidente.id_incidente)
+        nombre_por_id[incidente.id_tecnico] = incidente.tecnico
     grupos = [
-        TecnicoVencidos(tecnico=tecnico, cantidad=len(ids), ids_incidente=ids)
-        for tecnico, ids in ids_por_tecnico.items()
+        TecnicoVencidos(
+            tecnico=nombre_por_id[id_tecnico],
+            id_tecnico=id_tecnico,
+            cantidad=len(ids),
+            ids_incidente=ids,
+        )
+        for id_tecnico, ids in ids_incidente_por_tecnico.items()
     ]
     return sorted(grupos, key=lambda g: (-g.cantidad, g.tecnico))
 

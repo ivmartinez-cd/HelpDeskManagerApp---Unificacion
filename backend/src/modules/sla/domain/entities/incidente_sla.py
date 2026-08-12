@@ -21,6 +21,7 @@ class IncidenteSla:
     nro_serie: str
     modelo: str
     tecnico: str
+    id_tecnico: int
     region: str
     fecha_operativo: datetime | None
     periodo: int

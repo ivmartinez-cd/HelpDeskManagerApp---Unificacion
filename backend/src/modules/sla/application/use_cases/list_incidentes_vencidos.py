@@ -8,6 +8,7 @@ def _to_dto(incidente: IncidenteSla) -> IncidenteVencidoDTO:
     return IncidenteVencidoDTO(
         id_incidente=incidente.id_incidente,
         tecnico=incidente.tecnico,
+        id_tecnico=incidente.id_tecnico,
         region=incidente.region,
         cliente=incidente.cliente,
         sucursal=incidente.sucursal,
@@ -30,6 +31,16 @@ class ListIncidentesVencidos:
         self._repo = repo
         self._refresher = refresher
 
-    async def execute(self, periodo: int) -> list[IncidenteVencidoDTO]:
+    async def execute(
+        self, periodo: int, *, siges_ids_filtro: list[int] | None = None
+    ) -> list[IncidenteVencidoDTO]:
+        """`siges_ids_filtro=None` trae todos los vencidos del período;
+        con una lista (aunque esté vacía) filtra a esos `id_tecnico`
+        exclusivamente -- lo resuelve la capa de presentación a partir del
+        operador logueado, este caso de uso no sabe nada de operadores."""
         snapshot = await self._repo.get(periodo) or await self._refresher.execute(periodo)
-        return [_to_dto(i) for i in snapshot.incidentes_vencidos]
+        incidentes = snapshot.incidentes_vencidos
+        if siges_ids_filtro is not None:
+            filtro = set(siges_ids_filtro)
+            incidentes = [i for i in incidentes if i.id_tecnico in filtro]
+        return [_to_dto(i) for i in incidentes]

@@ -21,20 +21,8 @@ from src.modules.sla.infrastructure.repositories.sqlalchemy_sla_snapshot_reposit
     SqlAlchemySlaSnapshotRepository,
 )
 from src.shared.domain.errors import ExternalServiceError
-from src.shared.infrastructure.config.settings import Settings, get_settings
-
-
-def _connection_string(settings: Settings) -> str:
-    encrypt = "yes" if settings.sla_mercurio_encrypt else "no"
-    return (
-        f"DRIVER={settings.sla_mercurio_driver};"
-        f"SERVER={settings.sla_mercurio_host};"
-        f"DATABASE={settings.sla_mercurio_database};"
-        f"UID={settings.sla_mercurio_user};"
-        f"PWD={settings.sla_mercurio_password.get_secret_value()};"
-        f"Encrypt={encrypt};"
-        "TrustServerCertificate=yes"
-    )
+from src.shared.infrastructure.config.settings import get_settings
+from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
 
 
 @lru_cache
@@ -45,7 +33,7 @@ def get_sla_query_gateway() -> PyodbcSlaQueryGateway:
             "La conexión a Siges (MERCURIO) no está configurada — falta SLA_MERCURIO_HOST"
         )
     return PyodbcSlaQueryGateway(
-        _connection_string(settings), settings.sla_mercurio_timeout_seconds
+        build_mercurio_connection_string(settings), settings.sla_mercurio_timeout_seconds
     )
 
 

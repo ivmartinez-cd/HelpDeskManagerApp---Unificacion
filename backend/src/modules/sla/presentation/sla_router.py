@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -5,6 +7,9 @@ from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.sla.application.dtos.sla_dtos import GetSlaComplianceRequest
 from src.modules.sla.domain.well_known_permissions import UPDATE, VIEW
+from src.modules.sla.infrastructure.repositories.sqlalchemy_prestador_lookup import (
+    SqlAlchemyPrestadorLookup,
+)
 from src.modules.sla.presentation.dependencies import (
     build_get_sla_compliance,
     build_list_incidentes_vencidos,
@@ -45,16 +50,45 @@ async def get_resumen(
 @router.get("/incidentes-vencidos", response_model=Page[IncidenteVencidoSchema])
 async def list_incidentes_vencidos(
     periodo: int = _periodo,
+    todos: bool = Query(
+        default=False, description="Ignora el filtro por operador y trae todos los vencidos"
+    ),
+    operador_id: uuid.UUID | None = Query(
+        default=None,
+        alias="operadorId",
+        description="Ver los PST de otro operador en vez de los propios",
+    ),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_MAX_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
-    _: Identity = _require_view,
+    identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
 ) -> Page[IncidenteVencidoSchema]:
     """Detalle de los incidentes vencidos del período, para la tabla agrupada
-    por técnico de la pantalla de SLA."""
-    dtos = await build_list_incidentes_vencidos(db).execute(periodo)
+    por técnico de la pantalla de SLA.
+
+    Por default filtra a los PST del operador logueado (`prestador.
+    operador_id`) — si no tiene ninguno asignado (ej. un admin sin cartera
+    propia), se ve todo sin filtrar, porque forzar una vista vacía no sirve
+    de nada. `todos=true` saltea el filtro explícitamente; `operadorId`
+    permite mirar la cartera de otro operador puntual."""
+    siges_ids_filtro = await _resolver_filtro_operador(db, identity, todos, operador_id)
+    dtos = await build_list_incidentes_vencidos(db).execute(
+        periodo, siges_ids_filtro=siges_ids_filtro
+    )
     items = [IncidenteVencidoSchema.model_validate(d) for d in dtos]
     return Page.of(items, page=page, size=size)
+
+
+async def _resolver_filtro_operador(
+    db: AsyncSession, identity: Identity, todos: bool, operador_id: uuid.UUID | None
+) -> list[int] | None:
+    if todos:
+        return None
+    lookup = SqlAlchemyPrestadorLookup(db)
+    if operador_id is not None:
+        return await lookup.get_siges_ids_por_operador(operador_id)
+    propios = await lookup.get_siges_ids_por_operador(identity.user.id)
+    return propios or None
 
 
 @router.post("/actualizar", response_model=SlaResumenResponse)

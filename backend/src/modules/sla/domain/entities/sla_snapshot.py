@@ -6,9 +6,13 @@ from src.modules.sla.domain.entities.incidente_sla import IncidenteSla
 
 @dataclass(frozen=True, slots=True)
 class TecnicoVencidos:
-    """Un grupo del desglose de vencidos por técnico/PST."""
+    """Un grupo del desglose de vencidos por técnico/PST. `id_tecnico` es el
+    `ID_Empresa` real de Siges (mismo id que usa el módulo prestadores para
+    identificar un PST) — permite filtrar por operador sin depender de que el
+    nombre coincida como texto."""
 
     tecnico: str
+    id_tecnico: int
     cantidad: int
     ids_incidente: list[int]
 

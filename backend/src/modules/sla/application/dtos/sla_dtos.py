@@ -13,6 +13,7 @@ class TecnicoVencidosDTO:
     igual que el desglose de la tabla dinámica de Excel que se reemplaza."""
 
     tecnico: str
+    id_tecnico: int
     cantidad: int
     ids_incidente: list[int]
 
@@ -33,6 +34,7 @@ class SlaComplianceResult:
 class IncidenteVencidoDTO:
     id_incidente: int
     tecnico: str
+    id_tecnico: int
     region: str
     cliente: str
     sucursal: str

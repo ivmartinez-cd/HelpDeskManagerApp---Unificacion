@@ -18,6 +18,7 @@ def _row(**overrides: Any) -> SimpleNamespace:
         "Nro_Serie": "XYZ123",
         "Modelo": "HP LaserJet",
         "Tecnico": "CD - Nicolás MON",
+        "IdTecnico": 501,
         "REGION": "LOCAL",
         "FechaOperativo": datetime(2026, 8, 4, 15, 30),
         "Periodo": 202608,
@@ -37,6 +38,7 @@ def test_mapea_una_fila_completa() -> None:
     assert incidente.id_incidente == 1234
     assert incidente.cliente == "Cliente SA"
     assert incidente.tecnico == "CD - Nicolás MON"
+    assert incidente.id_tecnico == 501
     assert incidente.region == "LOCAL"
     assert incidente.periodo == 202608
     assert incidente.sla_horas == 24

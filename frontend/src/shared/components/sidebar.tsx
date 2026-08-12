@@ -11,13 +11,7 @@ import { cn } from "@/shared/utils/cn";
 import { ChangePasswordModal } from "@/features/auth/components/change-password-modal";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useSession } from "@/services/session-provider";
-
-function getInitials(fullName: string): string {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return (first + last).toUpperCase();
-}
+import { UserAvatar } from "@/shared/components/ui/user-avatar";
 
 export function Sidebar({ children }: { children: ReactNode }) {
   const { user, modules } = useSession();
@@ -95,15 +89,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
             className="flex items-center gap-2.5 rounded-[8px] px-1.5 py-1 transition-colors hover:bg-muted"
             title="Cambiar contraseña"
           >
-            <span
-              style={user.color ? { backgroundColor: user.color } : undefined}
-              className={cn(
-                "flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full font-heading text-[13px] font-bold text-white",
-                !user.color && "bg-brand-gray",
-              )}
-            >
-              {getInitials(user.fullName)}
-            </span>
+            <UserAvatar fullName={user.fullName} color={user.color} />
             <span className="hidden flex-col items-start leading-[1.25] sm:flex">
               <span className="font-body text-[13px] font-semibold text-foreground">
                 {user.fullName}
