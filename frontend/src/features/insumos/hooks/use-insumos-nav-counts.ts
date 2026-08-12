@@ -6,7 +6,7 @@ import { insumosApi } from "../api/insumos-api";
 /** Contadores de los badges del submenú de Insumos (Solicitudes/Equipos
  * offline). Pide solo lo mínimo de cada endpoint — `totals` del dashboard y
  * `candidateCount` de `/offline-devices/summary` (mismo endpoint que consulta
- * `TheSidebar` cada 5 min en el legacy, ver SDSINSUMOS_CARACTERIZACION_FRONTEND.md)
+ * `TheSidebar` cada 5 min en el legacy, ver docs/sdsinsumos/SDSINSUMOS_CARACTERIZACION_FRONTEND.md)
  * — para no duplicar el fetch pesado de `useDashboardData`/`useOfflineDevices`,
  * que traen mucho más de lo que necesita un badge del sidebar. */
 

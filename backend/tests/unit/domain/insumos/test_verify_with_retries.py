@@ -15,7 +15,7 @@ async def test_confirms_on_first_try() -> None:
 
 async def test_replicates_real_incident_confirms_on_third_attempt() -> None:
     """Pedido real 443017/SDS-974325 (2026-08-03, ver
-    SDSINSUMOS_CARACTERIZACION_BACKEND.md §3.2): la primera verificación no
+    docs/sdsinsumos/SDSINSUMOS_CARACTERIZACION_BACKEND.md §3.2): la primera verificación no
     vio el pedido recién creado por lag de lectura de Canal Directo, recién
     se confirmó unos segundos después."""
     attempts = [False, False, True]

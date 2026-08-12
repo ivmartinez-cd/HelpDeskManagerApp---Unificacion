@@ -5,8 +5,8 @@ Revises: 6d910a2b8e39
 Create Date: 2026-08-10 19:26:48.496958
 
 Migra el modelo de datos de SDSInsumos (legacy: SQLite, sin ORM, sin FKs) a Postgres. Detalle
-completo con citas archivo:línea del legacy en SDSINSUMOS_CARACTERIZACION_BACKEND.md (raíz del
-repo). Notas de esta migración:
+completo con citas archivo:línea del legacy en docs/sdsinsumos/SDSINSUMOS_CARACTERIZACION_BACKEND.md.
+Notas de esta migración:
 
 - PKs son IDs externos numéricos (de HP Insight / Canal Directo), no identidades que genera la
   app — van como BIGINT, no UUID (a diferencia de ftp_clients/meter_client_configs).
