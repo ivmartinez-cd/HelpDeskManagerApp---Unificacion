@@ -99,7 +99,11 @@ class SqlAlchemyKnownDeviceRepository:
 
     async def list_offline(self, older_than_hours: int) -> list[OfflineDevice]:
         cutoff = datetime.now(UTC) - timedelta(hours=older_than_hours)
-        # LEFT JOIN — no filtra por CustomerConfigModel.enabled (caso Santander)
+        # LEFT JOIN — no filtra por CustomerConfigModel.enabled (caso Santander).
+        # monitor_status == 'Y' sí filtra (equivalente al legacy, ver
+        # sds_autoloader/db/devices.py::list_offline_devices): un equipo dado de baja del
+        # monitoreo en SDS (X/J/I) ya no genera avisos de offline ni ensucia la detección
+        # de caídas masivas, aunque su fila siga en known_devices con last_contact viejo.
         stmt = (
             select(KnownDeviceModel, CustomerConfigModel.name)
             .outerjoin(
@@ -107,6 +111,7 @@ class SqlAlchemyKnownDeviceRepository:
                 CustomerConfigModel.customer_id == KnownDeviceModel.customer_id,
             )
             .where(
+                KnownDeviceModel.monitor_status == MONITORED,
                 KnownDeviceModel.last_contact.isnot(None),
                 KnownDeviceModel.last_contact < cutoff,
             )
