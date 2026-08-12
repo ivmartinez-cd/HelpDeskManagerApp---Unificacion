@@ -46,19 +46,33 @@ contenedor Docker de la app legacy sin permiso**. El trabajo de port corre contr
    - `test_parser_recibe_contenido_y_nombre_de_archivo` — el parser recibe exactamente lo que llega del endpoint.
    - `FakeLiquidacionFileParser` agregado a `tests/unit/domain/liquidaciones/fakes.py`.
 
+8. **Tests de dominio de funciones puras de parsing** — 66 tests en
+   `tests/unit/domain/liquidaciones/test_importacion_parsing.py`:
+   - `TestParseMonto` (12): enteros, decimales argentinos (`1.500,00`), prefijo `$`,
+     vacíos, `nan`, valores ilegibles, y documentación del comportamiento con floats.
+   - `TestParseFecha` (9): formatos `yyyymmdd`, `dd/mm/yyyy`, `yyyy-mm-dd`, `dd/mm/yy`,
+     `dd-mm-yyyy`, `None`, vacío, `nan`, ilegible.
+   - `TestMapearColumnas` (6): nombres exactos, variantes, columna desconocida,
+     lista vacía, alias `cliente→empresa`, `precio km→costo_km`.
+   - `TestExtraerNumeroLiquidacion` (4): patrón `N-N`, guion bajo normalizado, sin patrón,
+     case-insensitive.
+   - `TestExtraerTipoLiquidacion` (6): regular, preco, cc, centro_civico, deposito, bodega.
+   - `TestExtraerPeriodo` (5): desde fechas de incidentes, más frecuente gana, fallback a
+     nombre de archivo, enero sube año, sin datos.
+   - `TestNormalizarTipoServicio` (12): todos los tipos + vacío + desconocido +
+     precedencia instalación sobre correctivo.
+   - `TestConstruirIncidenteImportado` (8): happy path, extracción de patrón del número,
+     filas `nan`/encabezado repetido/vacías → `None`, pasa_it=NO, rubro vacío→Impresoras,
+     separador de miles.
+   - `TestArmarResultadoImportacion` (4): resultado completo, filtro de filas inválidas,
+     lista vacía, período derivado de fechas.
+
 Verificado en este corte: `ruff check` (limpio), `mypy` (sin issues), `pytest
-tests/unit/domain/liquidaciones tests/unit/application/liquidaciones` (31/31).
+tests/unit/domain/liquidaciones tests/unit/application/liquidaciones` (97/97).
 
 ## Pendiente
 
-1. **Tests de dominio de las funciones puras de parsing** — sin pandas:
-   `construir_incidente_importado`, `armar_resultado_importacion`, `mapear_columnas`,
-   `extraer_numero_liquidacion`/`extraer_tipo_liquidacion`/`extraer_periodo`,
-   `parse_monto`/`parse_fecha`. Van en `tests/unit/domain/liquidaciones/`, idealmente
-   como caracterización contra los mismos casos que ya se usaron para verificar el
-   parser contra el legacy (nombres de archivo reales, filas con montos con
-   separador de miles, fechas en los formatos que exporta el sistema fuente).
-2. **Smoke test del endpoint de importación con un archivo real** — el resto de los
+1. **Smoke test del endpoint de importación con un archivo real** — el resto de los
    endpoints ya se probaron con requests HTTP reales contra el contenedor; falta
    hacer lo mismo con `POST /api/liquidaciones/importar` con un `.xls`
    (HTML-con-extensión-.xls) real de ejemplo, no solo verificación estática.
@@ -74,6 +88,5 @@ tests/unit/domain/liquidaciones tests/unit/application/liquidaciones` (31/31).
 
 ## Próximo paso sugerido
 
-Tests de dominio de las funciones puras de parsing (punto 1 de pendientes), o arrancar
-el frontend de liquidaciones usando el handoff `Handoff Liquidacion Prestadores.md`.
-El smoke test del endpoint (punto 2) requiere Docker corriendo y un `.xls` real de ejemplo.
+Arrancar el frontend de liquidaciones usando el handoff `Handoff Liquidacion Prestadores.md`.
+El smoke test del endpoint (pendiente 1) requiere Docker corriendo y un `.xls` real de ejemplo.
