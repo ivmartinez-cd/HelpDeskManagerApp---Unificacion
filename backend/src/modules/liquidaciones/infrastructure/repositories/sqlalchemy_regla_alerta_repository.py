@@ -1,0 +1,36 @@
+"""Implementación Postgres del puerto ReglaAlertaRepository (tabla reglas_alerta)."""
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.modules.liquidaciones.domain.entities.regla_alerta import ReglaAlerta
+from src.modules.liquidaciones.infrastructure.models.regla_alerta_model import ReglaAlertaModel
+
+
+class SqlAlchemyReglaAlertaRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def list_activas(self) -> dict[str, ReglaAlerta]:
+        stmt = select(ReglaAlertaModel).where(ReglaAlertaModel.activa.is_(True))
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return {row.codigo: _to_entity(row) for row in rows}
+
+    async def list_all(self) -> list[ReglaAlerta]:
+        stmt = select(ReglaAlertaModel).order_by(ReglaAlertaModel.codigo)
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_entity(row) for row in rows]
+
+
+def _to_entity(row: ReglaAlertaModel) -> ReglaAlerta:
+    return ReglaAlerta(
+        id=row.id,
+        codigo=row.codigo,
+        nombre=row.nombre,
+        descripcion=row.descripcion,
+        activa=row.activa,
+        riesgo_base=row.riesgo_base,
+        configuracion=row.configuracion,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+    )
