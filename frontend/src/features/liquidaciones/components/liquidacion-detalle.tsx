@@ -7,12 +7,12 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type {
   Alerta,
+  EstadoLiquidacion,
   Incidente,
   LiquidacionDetalle,
   Observacion,
   PrestadorLiquidacion,
 } from "../types/liquidaciones";
-import { EstadoBadge } from "./estado-badge";
 
 function formatARS(n: number) {
   return n.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
@@ -189,11 +189,30 @@ function ObservacionRow({ obs }: { obs: Observacion }) {
   );
 }
 
+const ESTADOS: EstadoLiquidacion[] = [
+  "abierta",
+  "preliquidada",
+  "recibida",
+  "observada",
+  "aprobada",
+  "cerrada",
+];
+
+const ESTADO_LABELS: Record<EstadoLiquidacion, string> = {
+  abierta: "Abierta",
+  preliquidada: "Preliquidada",
+  recibida: "Recibida",
+  observada: "Observada",
+  aprobada: "Aprobada",
+  cerrada: "Cerrada",
+};
+
 export function LiquidacionDetalleView({ id }: { id: string }) {
   const [detalle, setDetalle] = useState<LiquidacionDetalle | null>(null);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [reanalizing, setReanalizing] = useState(false);
+  const [updatingEstado, setUpdatingEstado] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
@@ -221,6 +240,17 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
       await load();
     } finally {
       setReanalizing(false);
+    }
+  };
+
+  const handleUpdateEstado = async (nuevoEstado: EstadoLiquidacion) => {
+    if (!detalle) return;
+    setUpdatingEstado(true);
+    try {
+      const updated = await liquidacionesApi.updateEstado(id, nuevoEstado);
+      setDetalle({ ...detalle, liquidacion: updated });
+    } finally {
+      setUpdatingEstado(false);
     }
   };
 
@@ -293,7 +323,18 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
                 {liquidacion.tipoLiquidacion}
               </span>
               <span>·</span>
-              <EstadoBadge estado={liquidacion.estado} />
+              <select
+                value={liquidacion.estado}
+                disabled={updatingEstado}
+                onChange={(e) => void handleUpdateEstado(e.target.value as EstadoLiquidacion)}
+                className="rounded-[8px] border border-white/10 bg-white/5 px-2 py-1 font-body text-xs text-foreground outline-none focus:border-brand-orange/50 disabled:opacity-50"
+              >
+                {ESTADOS.map((e) => (
+                  <option key={e} value={e}>
+                    {ESTADO_LABELS[e]}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex items-center gap-8 pt-1">
               <div className="flex flex-col">

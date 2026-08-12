@@ -58,13 +58,18 @@ class SqlAlchemyLiquidacionRepository:
         await self._session.refresh(model)
         return _to_entity(model)
 
-    async def update_estado(self, liquidacion_id: UUID, estado: str) -> None:
+    async def update_estado(self, liquidacion_id: UUID, estado: str) -> Liquidacion | None:
+        row = await self._session.get(LiquidacionModel, liquidacion_id)
+        if row is None:
+            return None
         stmt = (
             update(LiquidacionModel)
             .where(LiquidacionModel.id == liquidacion_id)
             .values(estado=estado)
         )
         await self._session.execute(stmt)
+        await self._session.refresh(row)
+        return _to_entity(row)
 
     async def update_total_alertas(self, liquidacion_id: UUID, total_alertas: int) -> None:
         stmt = (

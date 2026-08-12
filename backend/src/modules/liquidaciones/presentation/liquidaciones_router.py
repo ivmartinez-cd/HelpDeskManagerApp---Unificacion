@@ -30,6 +30,7 @@ from src.modules.liquidaciones.presentation.schemas.liquidacion_detalle_schemas 
     LiquidacionDetalleOut,
 )
 from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import (
+    EstadoIn,
     LiquidacionOut,
     PrestadorLiquidacionOut,
 )
@@ -82,6 +83,21 @@ async def importar_liquidacion(
         prestador_id=prestador_id, contenido=contenido, nombre_archivo=file.filename or ""
     )
     return ImportarLiquidacionOut.from_dto(resultado)
+
+
+@router.patch("/{liquidacion_id}/estado", response_model=LiquidacionOut)
+async def update_estado_liquidacion(
+    liquidacion_id: UUID,
+    body: EstadoIn,
+    _: Identity = _require_update,
+    db: AsyncSession = Depends(get_db),
+) -> LiquidacionOut:
+    updated = await SqlAlchemyLiquidacionRepository(db).update_estado(
+        liquidacion_id, body.estado
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Liquidación no encontrada")
+    return LiquidacionOut.from_entity(updated)
 
 
 @router.delete("/{liquidacion_id}", status_code=204)

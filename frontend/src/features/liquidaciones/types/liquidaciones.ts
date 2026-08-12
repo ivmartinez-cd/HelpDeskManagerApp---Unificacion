@@ -1,4 +1,10 @@
-export type EstadoLiquidacion = "abierta" | "recibida" | "aprobada" | "cerrada";
+export type EstadoLiquidacion =
+  | "abierta"
+  | "preliquidada"
+  | "recibida"
+  | "observada"
+  | "aprobada"
+  | "cerrada";
 
 export interface PrestadorLiquidacion {
   id: string;

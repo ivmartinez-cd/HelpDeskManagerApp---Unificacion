@@ -74,7 +74,11 @@ export function LiquidacionesDashboard() {
 
   const prestadorMap = Object.fromEntries(prestadores.map((p) => [p.id, p]));
   const pendientes = liquidaciones.filter(
-    (l) => l.estado === "abierta" || l.estado === "recibida",
+    (l) =>
+      l.estado === "abierta" ||
+      l.estado === "preliquidada" ||
+      l.estado === "recibida" ||
+      l.estado === "observada",
   ).length;
   const totalIncidentes = liquidaciones.reduce((s, l) => s + l.totalIncidentes, 0);
   const totalImporte = liquidaciones.reduce((s, l) => s + l.totalImporte, 0);

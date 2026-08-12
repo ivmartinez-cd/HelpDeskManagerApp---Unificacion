@@ -1,5 +1,6 @@
 import { httpClient } from "@/services/http-client";
 import type {
+  EstadoLiquidacion,
   ImportarLiquidacionResult,
   Liquidacion,
   LiquidacionDetalle,
@@ -35,6 +36,9 @@ export const liquidacionesApi = {
   },
 
   delete: (id: string) => httpClient.delete<void>(`/api/liquidaciones/${id}`),
+
+  updateEstado: (id: string, estado: EstadoLiquidacion) =>
+    httpClient.patch<Liquidacion>(`/api/liquidaciones/${id}/estado`, { estado }),
 
   reanalyze: (id: string) =>
     httpClient.post<{ totalIncidentes: number; totalAlertas: number; totalObservaciones: number }>(

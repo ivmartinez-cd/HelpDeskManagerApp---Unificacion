@@ -21,7 +21,9 @@ function formatFecha(iso: string) {
 const ESTADOS: { value: string; label: string }[] = [
   { value: "", label: "-- Todos --" },
   { value: "abierta", label: "Abierta" },
+  { value: "preliquidada", label: "Preliquidada" },
   { value: "recibida", label: "Recibida" },
+  { value: "observada", label: "Observada" },
   { value: "aprobada", label: "Aprobada" },
   { value: "cerrada", label: "Cerrada" },
 ];

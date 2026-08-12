@@ -4,11 +4,20 @@ snake_case en Python, camelCase en el wire (mismo patrón que turnos/sla)."""
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
+
+ESTADOS_VALIDOS = Literal[
+    "abierta", "preliquidada", "recibida", "observada", "aprobada", "cerrada"
+]
+
+
+class EstadoIn(BaseModel):
+    estado: ESTADOS_VALIDOS
 
 
 class PrestadorLiquidacionOut(BaseModel):
