@@ -13,15 +13,50 @@ from src.modules.liquidaciones.domain.entities.alerta import Alerta
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
 from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
 from src.modules.liquidaciones.domain.entities.observacion import Observacion
+from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.regla_alerta import ReglaAlerta
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
+from src.modules.liquidaciones.domain.value_objects.incidente_importado import (
+    IncidenteImportado,
+)
 from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado import (
     AlertaGenerada,
     IncidenteEvaluado,
     ObservacionGenerada,
 )
+
+
+class FakePrestadorRepository:
+    def __init__(self, rows: dict[UUID, Prestador] | None = None) -> None:
+        self.rows = rows or {}
+
+    async def get_by_id(self, prestador_id: UUID) -> Prestador | None:
+        return self.rows.get(prestador_id)
+
+    async def get_by_nombre_corto(self, nombre_corto: str) -> Prestador | None:
+        return next((p for p in self.rows.values() if p.nombre_corto == nombre_corto), None)
+
+    async def list_all(self, *, solo_activos: bool = False) -> list[Prestador]:
+        rows = self.rows.values()
+        return [p for p in rows if not solo_activos or p.activo]
+
+    async def create(
+        self, *, nombre: str, nombre_corto: str, cuit: str | None, region: str | None
+    ) -> Prestador:
+        row = Prestador(
+            id=uuid.uuid4(),
+            nombre=nombre,
+            nombre_corto=nombre_corto,
+            cuit=cuit,
+            region=region,
+            activo=True,
+            created_at=datetime(2026, 1, 1),
+            updated_at=datetime(2026, 1, 1),
+        )
+        self.rows[row.id] = row
+        return row
 
 
 class FakeLiquidacionRepository:
@@ -42,6 +77,8 @@ class FakeLiquidacionRepository:
         periodo: str,
         tipo_liquidacion: str,
         nombre_archivo: str | None,
+        total_incidentes: int,
+        total_importe: float,
     ) -> Liquidacion:
         row = Liquidacion(
             id=uuid.uuid4(),
@@ -52,9 +89,9 @@ class FakeLiquidacionRepository:
             nombre_archivo=nombre_archivo,
             fecha_importacion=datetime(2026, 1, 1),
             estado="abierta",
-            total_incidentes=0,
+            total_incidentes=total_incidentes,
             total_alertas=0,
-            total_importe=0.0,
+            total_importe=total_importe,
         )
         self.rows[row.id] = row
         return row
@@ -81,6 +118,37 @@ class FakeIncidenteRepository:
 
     async def list_by_prestador(self, prestador_id: UUID) -> list[Incidente]:
         return list(self.rows.values())
+
+    async def bulk_create(
+        self, liquidacion_id: UUID, incidentes: Sequence[IncidenteImportado]
+    ) -> list[Incidente]:
+        creados = [
+            Incidente(
+                id=uuid.uuid4(),
+                liquidacion_id=liquidacion_id,
+                numero_incidente=i.numero_incidente,
+                rubro=i.rubro,
+                tipo=i.tipo,
+                empresa_nombre=i.empresa_nombre,
+                sucursal_nombre=i.sucursal_nombre,
+                nro_serie=i.nro_serie,
+                fecha_cierre=i.fecha_cierre,
+                costo_servicio_cobrado=i.costo_servicio_cobrado,
+                cant_km_cobrado=i.cant_km_cobrado,
+                costo_km_cobrado=i.costo_km_cobrado,
+                total_viaje_cobrado=i.total_viaje_cobrado,
+                costo_total_cobrado=i.costo_total_cobrado,
+                pasa_it=i.pasa_it,
+                costo_servicio_esperado=None,
+                cant_km_esperado=None,
+                costo_km_esperado=None,
+                estado_validacion="pendiente",
+            )
+            for i in incidentes
+        ]
+        for row in creados:
+            self.rows[row.id] = row
+        return creados
 
     async def apply_evaluacion(self, resultados: Sequence[IncidenteEvaluado]) -> None:
         self.evaluaciones_aplicadas.extend(resultados)

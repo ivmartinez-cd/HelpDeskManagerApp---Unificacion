@@ -87,6 +87,4 @@ class ReanalizarLiquidacion:
         await self._ports.observaciones.replace_for_liquidacion(
             liquidacion_id, resultado.observaciones
         )
-        await self._ports.liquidaciones.update_total_alertas(
-            liquidacion_id, len(resultado.alertas)
-        )
+        await self._ports.liquidaciones.update_total_alertas(liquidacion_id, len(resultado.alertas))

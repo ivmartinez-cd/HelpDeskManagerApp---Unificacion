@@ -1,7 +1,7 @@
 from typing import ClassVar
 from uuid import UUID
 
-from src.shared.domain.errors import NotFoundError
+from src.shared.domain.errors import NotFoundError, ValidationError
 
 
 class LiquidacionNoEncontradaError(NotFoundError):
@@ -9,3 +9,20 @@ class LiquidacionNoEncontradaError(NotFoundError):
 
     def __init__(self, liquidacion_id: UUID) -> None:
         super().__init__(f"Liquidación no encontrada: {liquidacion_id}")
+
+
+class PrestadorNoEncontradoError(NotFoundError):
+    default_code: ClassVar[str] = "PRESTADOR_NO_ENCONTRADO"
+
+    def __init__(self, prestador_id: UUID) -> None:
+        super().__init__(f"Prestador no encontrado: {prestador_id}")
+
+
+class ArchivoLiquidacionInvalidoError(ValidationError):
+    """El archivo no se pudo leer como tabla, o ninguna tabla tiene una columna de
+    incidente reconocible — mismo `ValueError` que el legacy convertía en 400."""
+
+    default_code: ClassVar[str] = "ARCHIVO_LIQUIDACION_INVALIDO"
+
+    def __init__(self, detalle: str) -> None:
+        super().__init__(f"No se pudo leer el archivo de liquidación: {detalle}")

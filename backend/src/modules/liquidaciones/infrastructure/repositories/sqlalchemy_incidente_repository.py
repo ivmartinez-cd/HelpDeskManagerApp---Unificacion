@@ -1,5 +1,6 @@
 """Implementación Postgres del puerto IncidenteRepository (tabla incidentes)."""
 
+import uuid
 from collections.abc import Sequence
 from uuid import UUID
 
@@ -7,6 +8,9 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
+from src.modules.liquidaciones.domain.value_objects.incidente_importado import (
+    IncidenteImportado,
+)
 from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado import (
     IncidenteEvaluado,
 )
@@ -32,6 +36,18 @@ class SqlAlchemyIncidenteRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
+    async def bulk_create(
+        self, liquidacion_id: UUID, incidentes: Sequence[IncidenteImportado]
+    ) -> list[Incidente]:
+        if not incidentes:
+            return []
+        modelos = [_a_model(liquidacion_id, i) for i in incidentes]
+        self._session.add_all(modelos)
+        await self._session.flush()
+        for modelo in modelos:
+            await self._session.refresh(modelo)
+        return [_to_entity(m) for m in modelos]
+
     async def apply_evaluacion(self, resultados: Sequence[IncidenteEvaluado]) -> None:
         for r in resultados:
             stmt = (
@@ -45,6 +61,26 @@ class SqlAlchemyIncidenteRepository:
                 )
             )
             await self._session.execute(stmt)
+
+
+def _a_model(liquidacion_id: UUID, incidente: IncidenteImportado) -> IncidenteModel:
+    return IncidenteModel(
+        id=uuid.uuid4(),
+        liquidacion_id=liquidacion_id,
+        numero_incidente=incidente.numero_incidente,
+        rubro=incidente.rubro,
+        tipo=incidente.tipo,
+        empresa_nombre=incidente.empresa_nombre,
+        sucursal_nombre=incidente.sucursal_nombre,
+        nro_serie=incidente.nro_serie,
+        fecha_cierre=incidente.fecha_cierre,
+        costo_servicio_cobrado=incidente.costo_servicio_cobrado,
+        cant_km_cobrado=incidente.cant_km_cobrado,
+        costo_km_cobrado=incidente.costo_km_cobrado,
+        total_viaje_cobrado=incidente.total_viaje_cobrado,
+        costo_total_cobrado=incidente.costo_total_cobrado,
+        pasa_it=incidente.pasa_it,
+    )
 
 
 def _to_entity(row: IncidenteModel) -> Incidente:

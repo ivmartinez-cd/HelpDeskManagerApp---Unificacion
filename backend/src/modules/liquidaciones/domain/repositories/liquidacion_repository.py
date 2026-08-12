@@ -19,10 +19,14 @@ class LiquidacionRepository(Protocol):
         periodo: str,
         tipo_liquidacion: str,
         nombre_archivo: str | None,
+        total_incidentes: int,
+        total_importe: float,
     ) -> Liquidacion:
-        """Genera el `id` (UUID) internamente. `estado`/totales arrancan en sus
-        defaults de la tabla (`abierta`, todo en 0) — se actualizan recién al correr
-        el motor de reglas."""
+        """Genera el `id` (UUID) internamente. `estado` arranca en su default
+        (`abierta`) — `total_incidentes`/`total_importe` los pasa el caller porque ya
+        se conocen del parseo del archivo (no hace falta un segundo `UPDATE` después
+        de insertar los incidentes, a diferencia del legacy). `total_alertas` arranca
+        en 0 — lo fija recién `update_total_alertas` al correr el motor de reglas."""
         ...
 
     async def update_estado(self, liquidacion_id: UUID, estado: str) -> None: ...

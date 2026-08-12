@@ -7,6 +7,10 @@ from src.modules.liquidaciones.application.use_cases.get_liquidacion_detalle imp
     GetLiquidacionDetalle,
     GetLiquidacionDetallePorts,
 )
+from src.modules.liquidaciones.application.use_cases.importar_liquidacion import (
+    ImportarLiquidacion,
+    ImportarLiquidacionPorts,
+)
 from src.modules.liquidaciones.application.use_cases.list_liquidaciones import (
     ListLiquidaciones,
     ListLiquidacionesPorts,
@@ -14,6 +18,9 @@ from src.modules.liquidaciones.application.use_cases.list_liquidaciones import (
 from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion import (
     ReanalizarLiquidacion,
     ReanalizarLiquidacionPorts,
+)
+from src.modules.liquidaciones.infrastructure.importers.pandas_liquidacion_file_parser import (
+    PandasLiquidacionFileParser,
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_alerta_repository import (
     SqlAlchemyAlertaRepository,
@@ -26,6 +33,9 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_liquidacio
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_observacion_repository import (  # noqa: E501
     SqlAlchemyObservacionRepository,
+)
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
+    SqlAlchemyPrestadorRepository,
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_regla_alerta_repository import (  # noqa: E501
     SqlAlchemyReglaAlertaRepository,
@@ -69,5 +79,17 @@ def build_reanalizar_liquidacion(session: AsyncSession) -> ReanalizarLiquidacion
             tablas_km=SqlAlchemyTablaKmRepository(session),
             spsts=SqlAlchemySpstRepository(session),
             tarifarios=SqlAlchemyTarifarioRepository(session),
+        )
+    )
+
+
+def build_importar_liquidacion(session: AsyncSession) -> ImportarLiquidacion:
+    return ImportarLiquidacion(
+        ImportarLiquidacionPorts(
+            parser=PandasLiquidacionFileParser(),
+            prestadores=SqlAlchemyPrestadorRepository(session),
+            liquidaciones=SqlAlchemyLiquidacionRepository(session),
+            incidentes=SqlAlchemyIncidenteRepository(session),
+            reanalizar=build_reanalizar_liquidacion(session),
         )
     )

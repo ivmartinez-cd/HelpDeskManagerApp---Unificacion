@@ -1,20 +1,26 @@
-"""Endpoints de liquidaciones — listado, detalle y reanálisis. La importación
-(CSV/Excel, que es lo único que hoy puede crear una liquidación) todavía no se portó
-— hasta que exista, estos endpoints solo son alcanzables contra datos sembrados a
-mano o por una migración de datos futura."""
+"""Endpoints de liquidaciones — listado, importación, detalle y reanálisis.
+
+`/importar` está registrado ANTES de `/{liquidacion_id}` a propósito: FastAPI matchea
+rutas en orden de registro, y si `/{liquidacion_id}` fuera primero, un POST a
+`/importar` intentaría parsear "importar" como UUID y devolvería 422 en vez de llegar
+al handler correcto."""
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
-from src.modules.liquidaciones.domain.well_known_permissions import UPDATE, VIEW
+from src.modules.liquidaciones.domain.well_known_permissions import CREATE, UPDATE, VIEW
 from src.modules.liquidaciones.presentation.dependencies import (
     build_get_liquidacion_detalle,
+    build_importar_liquidacion,
     build_list_liquidaciones,
     build_reanalizar_liquidacion,
+)
+from src.modules.liquidaciones.presentation.schemas.importar_liquidacion_schemas import (
+    ImportarLiquidacionOut,
 )
 from src.modules.liquidaciones.presentation.schemas.liquidacion_detalle_schemas import (
     LiquidacionDetalleOut,
@@ -30,6 +36,7 @@ router = APIRouter(prefix="/api/liquidaciones", tags=["liquidaciones"])
 
 _require_view = Depends(require_permission(VIEW))
 _require_update = Depends(require_permission(UPDATE))
+_require_create = Depends(require_permission(CREATE))
 
 
 @router.get("", response_model=Page[LiquidacionOut])
@@ -44,6 +51,20 @@ async def list_liquidaciones(
     return Page.of(
         [LiquidacionOut.from_entity(item) for item in liquidaciones], page=page, size=size
     )
+
+
+@router.post("/importar", response_model=ImportarLiquidacionOut, status_code=201)
+async def importar_liquidacion(
+    file: UploadFile = File(...),
+    prestador_id: UUID = Form(alias="prestadorId"),
+    _: Identity = _require_create,
+    db: AsyncSession = Depends(get_db),
+) -> ImportarLiquidacionOut:
+    contenido = await file.read()
+    resultado = await build_importar_liquidacion(db).execute(
+        prestador_id=prestador_id, contenido=contenido, nombre_archivo=file.filename or ""
+    )
+    return ImportarLiquidacionOut.from_dto(resultado)
 
 
 @router.get("/{liquidacion_id}", response_model=LiquidacionDetalleOut)

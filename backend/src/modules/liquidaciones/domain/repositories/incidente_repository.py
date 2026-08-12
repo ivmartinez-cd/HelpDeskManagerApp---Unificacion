@@ -1,14 +1,13 @@
-"""Puerto de incidentes cobrados dentro de una liquidación (incidentes).
-
-Sin `create`/`bulk_create` todavía: la importación de incidentes desde CSV (que es
-quien los crearía) es un caso de uso que no se portó en esta ronda — agregar el método
-recién cuando haya un caller real que valide la forma del payload, no antes."""
+"""Puerto de incidentes cobrados dentro de una liquidación (incidentes)."""
 
 from collections.abc import Sequence
 from typing import Protocol
 from uuid import UUID
 
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
+from src.modules.liquidaciones.domain.value_objects.incidente_importado import (
+    IncidenteImportado,
+)
 from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado import (
     IncidenteEvaluado,
 )
@@ -21,6 +20,14 @@ class IncidenteRepository(Protocol):
         """Todos los incidentes de TODAS las liquidaciones del prestador — ALT003
         (viático duplicado) y ALT004 (servicio duplicado) comparan contra el
         histórico completo, no solo contra la liquidación que se está evaluando."""
+        ...
+
+    async def bulk_create(
+        self, liquidacion_id: UUID, incidentes: Sequence[IncidenteImportado]
+    ) -> list[Incidente]:
+        """Crea los incidentes recién parseados de una liquidación — `estado_validacion`
+        arranca en "pendiente" y los `*_esperado` en `None`, los fija recién el motor
+        de reglas al reanalizar (`apply_evaluacion`), igual que al importar."""
         ...
 
     async def apply_evaluacion(self, resultados: Sequence[IncidenteEvaluado]) -> None:

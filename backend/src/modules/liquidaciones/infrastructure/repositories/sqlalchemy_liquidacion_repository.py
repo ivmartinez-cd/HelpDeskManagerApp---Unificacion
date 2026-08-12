@@ -35,6 +35,8 @@ class SqlAlchemyLiquidacionRepository:
         periodo: str,
         tipo_liquidacion: str,
         nombre_archivo: str | None,
+        total_incidentes: int,
+        total_importe: float,
     ) -> Liquidacion:
         model = LiquidacionModel(
             id=uuid.uuid4(),
@@ -43,6 +45,8 @@ class SqlAlchemyLiquidacionRepository:
             periodo=periodo,
             tipo_liquidacion=tipo_liquidacion,
             nombre_archivo=nombre_archivo,
+            total_incidentes=total_incidentes,
+            total_importe=total_importe,
         )
         self._session.add(model)
         await self._session.flush()
