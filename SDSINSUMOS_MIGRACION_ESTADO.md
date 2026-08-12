@@ -1,8 +1,41 @@
 # Migración SDSInsumos — estado y próximo paso
 
-Actualizado: 2026-08-12 (Frontend de Equipos Offline portado — 6 secciones
-colapsables, selección múltiple + baja masiva, banner outages 3 niveles; tsc + eslint
-limpios en el contenedor Docker). Backend 100% completo. Frontend 100% completo.
+Actualizado: 2026-08-12 (cierre de gaps de Clientes — import-from-supply,
+zone-contacts-import —, mail dispatch con sesión propia para jobs de fondo — ADR-010 —,
+resumen de auditoría en Historial, submenú de navegación con badges, notificaciones de
+escritorio). Verificado en verde: lint-imports, ruff, mypy, 584 unit + 58 integración
+(backend), tsc + eslint (frontend, 106 archivos de insumos).
+
+**No está 100% completo.** Comparación exhaustiva legacy vs puerto (2026-08-12, este
+chequeo) encontró 5 gaps reales que no estaban documentados o quedaron mal registrados:
+
+1. **Bug real, no decisión consciente** — `background_jobs.py::_find_pending_alert`
+   (línea 208) usa `settings.threshold_critical` (default 3 días) en vez de
+   `threshold_urgent` (default 7 días, que es lo que usa el legacy en `main.py:272`) para
+   decidir qué pedidos avisar a logística. Además el job pasó de correr cada
+   `alert_check_minutes` (~15 min, legacy `main.py:252`) a una vez por día a hora fija
+   (`background_pending_alert_task`, `_PENDING_ALERT_HOUR_UTC`). Con
+   `DISABLE_BACKGROUND_JOBS=true` no tiene efecto hoy, pero si se reactiva tal cual el
+   aviso a logística sale mucho más tarde y con mucha menos frecuencia que en producción.
+   **Pendiente decisión del usuario**: ¿corregir threshold+frecuencia antes de reactivar
+   jobs, o es un cambio de comportamiento aceptado?
+2. **Scan incremental de supplies** (`/api/supply-scan/status`, `/api/supply-scan/run`,
+   paso dentro del ciclo del poller) — sigue sin portar, backend y frontend. Coincide con
+   la decisión ya tomada de posponerlo (ver "Decisión 2026-08-11" más abajo), no es una
+   sorpresa.
+3. Modal "¿Cómo funciona?" de Equipos Offline (texto explicativo del proceso de
+   verificación/baja) — no tiene equivalente, solo quedan descripciones de una línea por
+   sección.
+4. Botón "Copiar del solicitante" en el formulario de contacto por zona de Clientes
+   (`contact-form.tsx`) — desapareció, regresión de UI menor.
+5. `/api/health` no tiene el chequeo específico de Insight/Canal Directo que tenía el
+   legacy — solo status+DB genérico. Detalle de observabilidad, no de negocio.
+
+Corrección a una nota previa de este documento: las notificaciones de escritorio **sí**
+están portadas (toggle funcional en Configuración + integradas al Dashboard,
+`use-desktop-notifications.ts`/`use-alert-notifications.ts`) — lo que falta es el panel
+de diagnóstico de permisos que tenía el legacy (botón "Probar notificación", estado del
+permiso, links a Configuración de Windows), no la funcionalidad en sí.
 
 ## Bug del poller (límite de parámetros de asyncpg) — FIXEADO 2026-08-12
 
@@ -30,22 +63,13 @@ decisión explícita del usuario.
 
 ## Qué resta hacer, en orden
 
-1. **Gaps que quedaron fuera de alcance en el frontend de Clientes** (baja prioridad):
-   - `import-from-supply` — autofill de contacto desde un número de pedido de supply
-     (endpoint `POST /customers/{id}/contacts/import-from-supply` existe en el backend,
-     no tiene botón en la UI todavía).
-   - `zone-contacts-import` preview/apply — importación masiva de contactos desde SDS
-     (era parte de ConfiguracionView en el legacy; endpoints en el backend, no
-     implementado en el frontend de Configuración ni de Clientes).
-
-**Ya no es un bloqueo**: las credenciales del login humano del PortalWeb SDS
-(`SDS_PORTAL_USERNAME`/`SDS_PORTAL_PASSWORD` en `.env`, cargadas 2026-08-11) están
-disponibles — falta la decisión de **cómo** implementar el cliente de scraping
-(mismo mecanismo que el legacy `SdsPortalWebClient`: cookie `JSESSIONID` + HTML por
-regex), no las credenciales en sí.
+Los dos gaps de Clientes que estaban acá (`import-from-supply`, `zone-contacts-import`
+preview/apply) se cerraron el 2026-08-12 — ver los 5 gaps reales listados arriba en su
+lugar (el más importante es el bug de threshold/frecuencia del aviso de pedidos por
+vencer).
 
 Ver el análisis comparativo completo más abajo (tamaño, riesgo, dependencias) para
-el detalle de cada punto.
+contexto histórico de cómo se llegó hasta acá.
 
 ## Portado hasta ahora (backend)
 
