@@ -9,6 +9,10 @@ from src.modules.insumos.presentation.dependencies.alerts import (
     build_acknowledge_alerts,
     build_list_alerts,
 )
+from src.modules.insumos.presentation.dependencies.audit import (
+    build_get_audit_summary,
+    build_list_audit,
+)
 from src.modules.insumos.presentation.dependencies.config import (
     build_get_insumos_config,
     build_save_insumos_config,
@@ -55,7 +59,6 @@ from src.modules.insumos.presentation.dependencies.requests import (
     build_get_consumable_request_history,
     build_get_dashboard,
     build_get_device_supplies,
-    build_list_audit,
     build_list_pending_orders,
     build_list_requests,
     build_load_order,
@@ -79,6 +82,7 @@ __all__ = [
     "build_dismiss_new_device",
     "build_dismiss_offline_device",
     "build_dismiss_request",
+    "build_get_audit_summary",
     "build_get_availability_windows",
     "build_get_consumable_detail",
     "build_get_consumable_history",

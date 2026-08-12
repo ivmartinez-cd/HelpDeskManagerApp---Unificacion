@@ -1,10 +1,13 @@
 """Fakes compartidos de los puertos de insumos para tests unitarios."""
 
+from collections.abc import Sequence
 from dataclasses import asdict, replace
 from datetime import UTC, date, datetime, timedelta
 
 from src.modules.insumos.domain.entities.audit_record import (
+    EVENT_CANCELLED,
     EVENT_CREATED,
+    EVENT_RELEASED,
     AuditRecord,
     AuditSnapshot,
     StoredAuditRecord,
@@ -27,6 +30,7 @@ from src.modules.insumos.domain.entities.request_alert import (
     RequestAlert,
 )
 from src.modules.insumos.domain.repositories.insight_gateway import JsonDict
+from src.modules.insumos.domain.value_objects.audit_history import AuditClosures, AuditFilters
 from src.modules.insumos.domain.value_objects.audit_statistics import (
     CustomerActivity,
     DailyEventCount,
@@ -45,7 +49,11 @@ from src.modules.insumos.domain.value_objects.cd_supply import (
     CdSupply,
     SupplyStatusEvent,
 )
-from src.modules.insumos.domain.value_objects.mail_log_entry import MailLogEntry
+from src.modules.insumos.domain.value_objects.mail_log_entry import (
+    MailLogEntry,
+    MailLogRecord,
+    MailMessage,
+)
 from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
 from src.modules.insumos.domain.value_objects.pending_validation import (
@@ -379,11 +387,38 @@ class FakeProcessedRequestRepository:
             )
 
 
+def _matches_audit_filters(record: StoredAuditRecord, filters: AuditFilters) -> bool:
+    """Filtrado en memoria equivalente a `_conditions` del adaptador SQL — sin
+    reproducir el escape de LIKE (esa fidelidad fina se cubre en integración)."""
+    if filters.events is not None and record.event not in filters.events:
+        return False
+    if record.created_at is not None:
+        day = record.created_at.date()
+        if filters.start_day is not None and day < filters.start_day:
+            return False
+        if filters.end_day is not None and day > filters.end_day:
+            return False
+    if filters.search:
+        term = filters.search.lower()
+        haystack = (
+            record.customer_name,
+            record.device_serial,
+            record.sku,
+            record.description,
+            record.internal_order_id,
+            record.detail,
+        )
+        if not any(term in (value or "").lower() for value in haystack):
+            return False
+    return True
+
+
 class FakeOrderAuditRepository:
     def __init__(self) -> None:
         self.records: list[AuditRecord] = []
         self.stored: list[StoredAuditRecord] = []
         self.backfills: list[AuditSnapshot] = []
+        self.closures_for_calls: list[Sequence[int]] = []
 
     async def record(self, entry: AuditRecord) -> None:
         self.records.append(entry)
@@ -406,12 +441,39 @@ class FakeOrderAuditRepository:
             ]
         )
 
-    async def list_latest(self, limit: int, offset: int = 0) -> list[StoredAuditRecord]:
-        latest_first = list(reversed(self.stored))
-        return latest_first[offset : offset + limit]
+    async def list_page(
+        self, filters: AuditFilters, limit: int, offset: int
+    ) -> list[StoredAuditRecord]:
+        matched = [r for r in reversed(self.stored) if _matches_audit_filters(r, filters)]
+        return matched[offset : offset + limit]
 
-    async def count(self) -> int:
-        return len(self.stored)
+    async def count(self, filters: AuditFilters) -> int:
+        return len([r for r in self.stored if _matches_audit_filters(r, filters)])
+
+    async def count_by_event(self, filters: AuditFilters) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for record in self.stored:
+            if _matches_audit_filters(record, filters):
+                counts[record.event] = counts.get(record.event, 0) + 1
+        return counts
+
+    async def closures_for(self, hp_request_ids: Sequence[int]) -> AuditClosures:
+        self.closures_for_calls.append(hp_request_ids)
+        ids = set(hp_request_ids)
+        last_created: dict[int, int] = {}
+        last_closed: dict[int, int] = {}
+        for record in self.stored:
+            if record.hp_request_id is None or record.hp_request_id not in ids:
+                continue
+            if record.event == EVENT_CREATED:
+                last_created[record.hp_request_id] = max(
+                    last_created.get(record.hp_request_id, 0), record.audit_id
+                )
+            elif record.event in (EVENT_CANCELLED, EVENT_RELEASED):
+                last_closed[record.hp_request_id] = max(
+                    last_closed.get(record.hp_request_id, 0), record.audit_id
+                )
+        return AuditClosures(last_created=last_created, last_closed=last_closed)
 
     async def backfill_snapshots(self, updates: list[AuditSnapshot]) -> None:
         self.backfills.extend(updates)
@@ -772,6 +834,7 @@ class FakeMailLogRepository:
 
     def __init__(self) -> None:
         self.entries: list[MailLogEntry] = []
+        self.records: list[MailLogRecord] = []
 
     def add(self, kind: str, subject: str, success: bool = True) -> MailLogEntry:
         entry = MailLogEntry(
@@ -792,6 +855,38 @@ class FakeMailLogRepository:
 
     async def count(self) -> int:
         return len(self.entries)
+
+    async def record(self, entry: MailLogRecord) -> None:
+        self.records.append(entry)
+
+
+class FakeMailer:
+    """Manda de a uno, como el `Mailer` real. `fail_for` son direcciones que
+    deben fallar (levanta una excepción genérica, como haría un timeout de SMTP)."""
+
+    def __init__(self) -> None:
+        self.sent: list[tuple[str, str, str]] = []
+        self.fail_for: set[str] = set()
+
+    async def send(self, *, to: str, subject: str, body: str) -> None:
+        if to in self.fail_for:
+            raise RuntimeError(f"SMTP timeout enviando a {to}")
+        self.sent.append((to, subject, body))
+
+
+class FakeMailDispatcher:
+    """Registra los MailMessage despachados. `should_raise` simula que el
+    dispatcher real revienta — para probar que quien lo llama no propaga
+    (contrato de MailDispatcher.dispatch: nunca propaga)."""
+
+    def __init__(self) -> None:
+        self.dispatched: list[MailMessage] = []
+        self.should_raise = False
+
+    async def dispatch(self, message: MailMessage) -> None:
+        if self.should_raise:
+            raise RuntimeError("mail_dispatch: fallo simulado")
+        self.dispatched.append(message)
 
 
 class FakeRequestAlertRepository:

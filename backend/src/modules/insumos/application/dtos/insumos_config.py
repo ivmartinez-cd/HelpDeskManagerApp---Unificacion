@@ -7,18 +7,22 @@ from src.modules.insumos.domain.value_objects.insumos_settings import InsumosSet
 
 @dataclass(frozen=True)
 class ConfigView:
-    """`logistics_mail_to` viaja como lista aunque se persista como CSV en una key."""
+    """`logistics_mail_to`/`ops_alert_mail_to` viajan como lista aunque se
+    persistan como CSV en una key cada uno."""
 
     settings: InsumosSettings
     logistics_mail_to: list[str]
+    ops_alert_mail_to: list[str]
 
 
 @dataclass(frozen=True)
 class SaveConfigCommand:
-    """El `logistics_mail_to` de `settings` se ignora: la lista manda."""
+    """El `logistics_mail_to`/`ops_alert_mail_to` de `settings` se ignoran: la
+    lista manda."""
 
     settings: InsumosSettings
     logistics_mail_to: list[str]
+    ops_alert_mail_to: list[str]
 
 
 @dataclass(frozen=True)

@@ -31,6 +31,7 @@ class ConfigResponse(BaseModel):
     alert_work_hour_start: int = Field(serialization_alias="alertWorkHourStart")
     alert_work_hour_end: int = Field(serialization_alias="alertWorkHourEnd")
     logistics_mail_to: list[str] = Field(serialization_alias="logisticsMailTo")
+    ops_alert_mail_to: list[str] = Field(serialization_alias="opsAlertMailTo")
 
     @classmethod
     def from_view(cls, view: ConfigView) -> "ConfigResponse":
@@ -53,6 +54,7 @@ class ConfigResponse(BaseModel):
             alert_work_hour_start=settings.alert_work_hour_start,
             alert_work_hour_end=settings.alert_work_hour_end,
             logistics_mail_to=view.logistics_mail_to,
+            ops_alert_mail_to=view.ops_alert_mail_to,
         )
 
 
@@ -79,12 +81,14 @@ class ConfigRequestBody(BaseModel):
     alert_work_hour_start: int = Field(default=8, alias="alertWorkHourStart")
     alert_work_hour_end: int = Field(default=18, alias="alertWorkHourEnd")
     logistics_mail_to: list[str] = Field(default_factory=list, alias="logisticsMailTo")
+    ops_alert_mail_to: list[str] = Field(default_factory=list, alias="opsAlertMailTo")
 
     def to_command(self) -> SaveConfigCommand:
-        fields = self.model_dump(exclude={"logistics_mail_to"})
+        fields = self.model_dump(exclude={"logistics_mail_to", "ops_alert_mail_to"})
         return SaveConfigCommand(
             settings=InsumosSettings(**fields),
             logistics_mail_to=self.logistics_mail_to,
+            ops_alert_mail_to=self.ops_alert_mail_to,
         )
 
 

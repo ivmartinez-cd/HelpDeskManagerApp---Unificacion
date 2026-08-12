@@ -16,6 +16,15 @@ class RangoDeEstadisticasInvalidoError(ValidationError):
     default_code: ClassVar[str] = "RANGO_DE_ESTADISTICAS_INVALIDO"
 
 
+class FiltroDeHistorialInvalidoError(ValidationError):
+    """Filtro inválido en /audit o /audit/summary: rango de fechas invertido o un
+    valor de evento fuera de KNOWN_EVENTS. 422, mismo criterio que
+    RangoDeEstadisticasInvalidoError."""
+
+    http_status: ClassVar[int] = 422
+    default_code: ClassVar[str] = "FILTRO_DE_HISTORIAL_INVALIDO"
+
+
 class SerieNoActivaEnCanalDirectoError(BusinessRuleViolationError):
     """getMachineBySerial no resolvió la familia de consumibles: la serie no existe
     en Canal Directo o el modelo no tiene familia asignada (típico: equipo dado de

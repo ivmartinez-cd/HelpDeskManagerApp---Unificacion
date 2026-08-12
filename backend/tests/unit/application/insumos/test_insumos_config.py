@@ -21,10 +21,21 @@ class World:
         self.get = GetInsumosConfig(GetInsumosConfigPorts(settings=self.settings))  # type: ignore[arg-type]
         self.save = SaveInsumosConfig(SaveInsumosConfigPorts(settings=self.settings))  # type: ignore[arg-type]
 
-    async def save_valid(self, emails: list[str] | None = None, **overrides: object) -> object:
+    async def save_valid(
+        self,
+        emails: list[str] | None = None,
+        ops_emails: list[str] | None = None,
+        **overrides: object,
+    ) -> object:
         command = SaveConfigCommand(
             settings=replace(InsumosSettings(), **overrides),  # type: ignore[arg-type]
             logistics_mail_to=emails or [],
+            # ops_alert_mail_to es obligatorio (validate_settings lo exige no
+            # vacío) — default a un valor válido para no confundir los tests
+            # que ejercitan otra cosa con este error nuevo. `is None` y no
+            # `or`: `ops_emails=[]` tiene que viajar vacío de verdad (lo
+            # ejercita test_sin_destinatario_de_alertas_tecnicas_no_graba_nada).
+            ops_alert_mail_to=["ops@example.com"] if ops_emails is None else ops_emails,
         )
         return await self.save.execute(command)
 
@@ -36,6 +47,7 @@ async def test_sin_nada_grabado_se_devuelven_los_defaults_de_negocio() -> None:
 
     assert view.settings == InsumosSettings()
     assert view.logistics_mail_to == []
+    assert view.ops_alert_mail_to == ["imartinez@canaldirecto.com.ar"]
 
 
 async def test_un_valor_corrupto_no_rompe_la_pantalla_de_configuracion() -> None:
@@ -92,6 +104,27 @@ async def test_un_mail_invalido_frena_el_guardado_entero() -> None:
     world = World()
 
     result = await world.save_valid(emails=["a@example.com", "roto"])
+
+    assert result.ok is False  # type: ignore[attr-defined]
+    assert world.settings.raw == {}
+
+
+async def test_ops_alert_mail_to_se_persiste_separado_de_logistica() -> None:
+    world = World()
+    await world.save_valid(emails=["logistica@example.com"], ops_emails=["ops@example.com"])
+
+    view = await world.get.execute()
+
+    assert view.logistics_mail_to == ["logistica@example.com"]
+    assert view.ops_alert_mail_to == ["ops@example.com"]
+
+
+async def test_sin_destinatario_de_alertas_tecnicas_no_graba_nada() -> None:
+    """Resguardo directo del incidente real del 2026-08-12 (ver CLAUDE.md): no
+    se puede dejar la config sin nadie que reciba una falla del poller."""
+    world = World()
+
+    result = await world.save_valid(ops_emails=[])
 
     assert result.ok is False  # type: ignore[attr-defined]
     assert world.settings.raw == {}

@@ -8,11 +8,14 @@ para no repetir el lookup en cada GET. Si Insight ya no sabe nada de ella (caso
 normal con el tiempo), la fila queda como está — no se inventa un valor.
 """
 
-import asyncio
-import logging
 from dataclasses import dataclass
 
+from src.modules.insumos.application.dtos.audit_query import ListAuditQuery, to_filters
 from src.modules.insumos.application.dtos.audit_rows import AuditRow
+from src.modules.insumos.application.use_cases._audit_enrichment import (
+    fetch_tracked_for,
+    needs_enrichment,
+)
 from src.modules.insumos.domain.entities.audit_record import (
     ORDER_TYPE_INCIDENT,
     AuditSnapshot,
@@ -20,9 +23,9 @@ from src.modules.insumos.domain.entities.audit_record import (
 )
 from src.modules.insumos.domain.repositories.insight_gateway import InsightGateway, JsonDict
 from src.modules.insumos.domain.repositories.order_audit_repository import OrderAuditRepository
+from src.modules.insumos.domain.services.audit_history_rules import action_for
+from src.modules.insumos.domain.value_objects.audit_history import AuditClosures
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
-
-logger = logging.getLogger(__name__)
 
 _DRYRUN_PREFIX = "DRYRUN-"
 
@@ -38,64 +41,30 @@ class ListAudit:
         self._ports = ports
         self._order_settings = order_settings
 
-    async def execute(self, page: int, size: int) -> tuple[list[AuditRow], int]:
+    async def execute(self, query: ListAuditQuery) -> tuple[list[AuditRow], int]:
         """(filas de la página, total) — más reciente primero."""
-        total = await self._ports.audit.count()
-        records = await self._ports.audit.list_latest(limit=size, offset=(page - 1) * size)
-        tracked = await self._fetch_tracked_for(records)
+        filters = to_filters(query)
+        total = await self._ports.audit.count(filters)
+        offset = (query.page - 1) * query.size
+        records = await self._ports.audit.list_page(filters, query.size, offset)
+        closures = await self._ports.audit.closures_for(
+            [r.hp_request_id for r in records if r.hp_request_id is not None]
+        )
+        tracked = await fetch_tracked_for(self._ports.insight, records)
         rows: list[AuditRow] = []
         backfill: list[AuditSnapshot] = []
         for record in records:
-            rows.append(self._row_from(record, tracked, backfill))
+            rows.append(self._row_from(record, tracked, backfill, closures))
         if backfill:
             await self._ports.audit.backfill_snapshots(backfill)
         return rows, total
-
-    async def _fetch_tracked_for(
-        self, records: list[StoredAuditRecord]
-    ) -> dict[int, JsonDict]:
-        """Solicitudes que Insight todavía trackea, solo para los clientes de las
-        filas que necesitan reparación — {hp_request_id: request}."""
-        customer_ids = sorted(
-            {
-                record.customer_id
-                for record in records
-                if _needs_enrichment(record) and record.customer_id is not None
-            }
-        )
-        if not customer_ids:
-            return {}
-        batches = await asyncio.gather(*(self._fetch_tracked(cid) for cid in customer_ids))
-        by_request: dict[int, JsonDict] = {}
-        for batch in batches:
-            for request in batch:
-                by_request.setdefault(int(request["id"]), request)
-        return by_request
-
-    async def _fetch_tracked(self, customer_id: int) -> list[JsonDict]:
-        """Mejor esfuerzo: ACTIONED + OUTSTANDING de un cliente; [] si Insight falla
-        (la fila queda con "—" como hasta ahora, se reintenta en el próximo GET)."""
-        try:
-            actioned = await self._ports.insight.get_consumable_requests(
-                customer_id, workflow_status="ACTIONED"
-            )
-            outstanding = await self._ports.insight.get_consumable_requests(
-                customer_id, workflow_status="OUTSTANDING"
-            )
-            return actioned + outstanding
-        except Exception as exc:
-            logger.warning(
-                "list_audit: no se pudo refrescar telemetría de Insight (cliente %s)",
-                customer_id,
-                exc_info=exc,
-            )
-            return []
 
     def _row_from(
         self,
         record: StoredAuditRecord,
         tracked: dict[int, JsonDict],
         backfill: list[AuditSnapshot],
+        closures: AuditClosures,
     ) -> AuditRow:
         device_id = record.device_id
         percent, days, pages = (
@@ -105,7 +74,7 @@ class ListAudit:
         )
         insight_request = (
             tracked.get(record.hp_request_id)
-            if _needs_enrichment(record) and record.hp_request_id is not None
+            if needs_enrichment(record) and record.hp_request_id is not None
             else None
         )
         if insight_request is not None:
@@ -146,6 +115,7 @@ class ListAudit:
             initial_days_left=days,
             initial_pages_left=pages,
             supply_url=self._supply_url_for(record.order_type, record.internal_order_id),
+            action=action_for(record, closures),
         )
 
     def _supply_url_for(self, order_type: str, internal_order_id: str | None) -> str | None:
@@ -159,11 +129,3 @@ class ListAudit:
         except (ValueError, IndexError):
             return None
         return self._order_settings.supply_web_url(supply_id)
-
-
-def _needs_enrichment(record: StoredAuditRecord) -> bool:
-    return (
-        record.hp_request_id is not None
-        and record.customer_id is not None
-        and record.device_id is None
-    )

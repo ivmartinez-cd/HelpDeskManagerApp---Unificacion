@@ -28,6 +28,7 @@ class AuditRowOut(BaseModel):
     initial_pages_left: int | None = None
     supply_url: str | None = None
     created_at: datetime | None = None
+    action: str | None = None
 
     @classmethod
     def from_row(cls, row: AuditRow) -> "AuditRowOut":
@@ -51,4 +52,5 @@ class AuditRowOut(BaseModel):
             initial_pages_left=row.initial_pages_left,
             supply_url=row.supply_url,
             created_at=row.created_at,
+            action=row.action,
         )

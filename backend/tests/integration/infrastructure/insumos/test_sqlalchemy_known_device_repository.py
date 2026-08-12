@@ -71,6 +71,22 @@ async def test_list_offline_excluye_equipos_con_contacto_reciente(
     assert [d.device_id for d in offline] == [1]
 
 
+async def test_upsert_supera_el_limite_de_parametros_de_asyncpg(
+    db_session: AsyncSession,
+) -> None:
+    """Regresión (2026-08-12): el poller sincroniza el inventario completo (5169 equipos
+    reales × 10 columnas) en un solo INSERT ... VALUES y superaba el límite duro de
+    32767 parámetros bind de asyncpg. 3300 filas alcanzan para cruzarlo sin chunking."""
+    repo = SqlAlchemyKnownDeviceRepository(db_session)
+    entries = [_entry(device_id) for device_id in range(1, 3301)]
+
+    new_ids = await repo.upsert(entries)
+
+    assert len(new_ids) == 3300
+    # Segundo sync sin cambios: ninguno es nuevo, y el update masivo también va en lotes.
+    assert await repo.upsert(entries) == []
+
+
 async def test_list_offline_incluye_clientes_sin_customers_config(
     db_session: AsyncSession,
 ) -> None:

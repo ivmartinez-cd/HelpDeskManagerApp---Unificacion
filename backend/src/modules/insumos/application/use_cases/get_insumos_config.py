@@ -13,6 +13,7 @@ from src.modules.insumos.domain.repositories.insumos_settings_repository import 
 )
 from src.modules.insumos.domain.value_objects.insumos_settings import (
     logistics_recipients,
+    ops_alert_recipients,
     settings_from_raw,
 )
 
@@ -29,5 +30,7 @@ class GetInsumosConfig:
     async def execute(self) -> ConfigView:
         settings = settings_from_raw(await self._ports.settings.get_all())
         return ConfigView(
-            settings=settings, logistics_mail_to=logistics_recipients(settings)
+            settings=settings,
+            logistics_mail_to=logistics_recipients(settings),
+            ops_alert_mail_to=ops_alert_recipients(settings),
         )

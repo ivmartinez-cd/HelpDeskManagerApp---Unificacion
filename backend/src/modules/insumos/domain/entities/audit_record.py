@@ -18,6 +18,16 @@ EVENT_DEVICE_DELETED = "DEVICE_DELETED"
 ORDER_TYPE_SUPPLY = "supply"
 ORDER_TYPE_INCIDENT = "incident"
 
+KNOWN_EVENTS: tuple[str, ...] = (
+    EVENT_CREATED,
+    EVENT_FAILED,
+    EVENT_RELEASED,
+    EVENT_CANCELLED,
+    EVENT_DISMISSED,
+    EVENT_AUTO_DISMISSED,
+    EVENT_DEVICE_DELETED,
+)
+
 
 @dataclass(frozen=True)
 class AuditRecord:

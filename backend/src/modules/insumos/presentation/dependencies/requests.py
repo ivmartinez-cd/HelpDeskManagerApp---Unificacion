@@ -33,7 +33,6 @@ from src.modules.insumos.application.use_cases.get_device_supplies import (
     GetDeviceSupplies,
     GetDeviceSuppliesPorts,
 )
-from src.modules.insumos.application.use_cases.list_audit import ListAudit, ListAuditPorts
 from src.modules.insumos.application.use_cases.list_pending_orders import (
     ListPendingOrders,
     ListPendingOrdersPorts,
@@ -174,14 +173,6 @@ def build_auto_load_requests(session: AsyncSession) -> AutoLoadRequests:
         settings=SqlAlchemyInsumosSettingsRepository(session),
     )
     return AutoLoadRequests(ports, max_orders_per_cycle=settings.autoload_max_orders_per_cycle)
-
-
-def build_list_audit(session: AsyncSession) -> ListAudit:
-    ports = ListAuditPorts(
-        audit=SqlAlchemyOrderAuditRepository(session),
-        insight=get_insight_gateway(),
-    )
-    return ListAudit(ports, order_settings(get_settings()))
 
 
 def build_cancel_order(session: AsyncSession) -> CancelOrder:

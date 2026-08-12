@@ -31,9 +31,14 @@ class SaveInsumosConfig:
 
     async def execute(self, command: SaveConfigCommand) -> SaveConfigResult:
         emails = [email.strip() for email in command.logistics_mail_to if email.strip()]
-        error = validate_settings(command.settings, emails)
+        ops_emails = [email.strip() for email in command.ops_alert_mail_to if email.strip()]
+        error = validate_settings(command.settings, emails, ops_emails)
         if error is not None:
             return SaveConfigResult(ok=False, error=error)
-        settings = replace(command.settings, logistics_mail_to=",".join(emails))
+        settings = replace(
+            command.settings,
+            logistics_mail_to=",".join(emails),
+            ops_alert_mail_to=",".join(ops_emails),
+        )
         await self._ports.settings.set_all(settings_to_raw(settings))
         return SaveConfigResult(ok=True)

@@ -3,6 +3,7 @@
 from collections.abc import Sequence
 from dataclasses import asdict
 from datetime import UTC, datetime, timedelta
+from itertools import batched
 
 from sqlalchemy import ColumnElement, case, delete, func, select, update
 from sqlalchemy.dialects.postgresql import Insert, insert
@@ -23,6 +24,11 @@ from src.modules.insumos.infrastructure.models.customer_config_model import (
 from src.modules.insumos.infrastructure.models.known_device_model import KnownDeviceModel
 
 MONITORED = "Y"
+
+# asyncpg tiene un límite duro de 32767 parámetros bind por query. El inventario real
+# completo (5169 equipos × 10 columnas en el upsert) lo supera, así que toda operación
+# sobre el set completo va en lotes: 1000 filas × 10 columnas = 10000 parámetros.
+BATCH_ROWS = 1000
 
 
 class SqlAlchemyKnownDeviceRepository:
@@ -76,12 +82,13 @@ class SqlAlchemyKnownDeviceRepository:
         if not entries:
             return []
         known = await self._existing_ids([entry.device_id for entry in entries])
-        stmt = insert(KnownDeviceModel).values([asdict(entry) for entry in entries])
-        await self._session.execute(
-            stmt.on_conflict_do_update(
-                index_elements=[KnownDeviceModel.device_id], set_=_refresh_values(stmt)
+        for batch in batched(entries, BATCH_ROWS):
+            stmt = insert(KnownDeviceModel).values([asdict(entry) for entry in batch])
+            await self._session.execute(
+                stmt.on_conflict_do_update(
+                    index_elements=[KnownDeviceModel.device_id], set_=_refresh_values(stmt)
+                )
             )
-        )
         return [entry.device_id for entry in entries if entry.device_id not in known]
 
     async def prune_missing(
@@ -156,10 +163,13 @@ class SqlAlchemyKnownDeviceRepository:
         return (await self._session.execute(stmt)).scalars().first() is not None
 
     async def _existing_ids(self, device_ids: Sequence[int]) -> set[int]:
-        stmt = select(KnownDeviceModel.device_id).where(
-            KnownDeviceModel.device_id.in_(device_ids)
-        )
-        return set((await self._session.execute(stmt)).scalars().all())
+        known: set[int] = set()
+        for batch in batched(device_ids, BATCH_ROWS):
+            stmt = select(KnownDeviceModel.device_id).where(
+                KnownDeviceModel.device_id.in_(batch)
+            )
+            known.update((await self._session.execute(stmt)).scalars().all())
+        return known
 
 
 def _pending_filters() -> tuple[ColumnElement[bool], ...]:

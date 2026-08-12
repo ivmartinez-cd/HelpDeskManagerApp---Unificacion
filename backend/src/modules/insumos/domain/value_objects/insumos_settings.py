@@ -29,6 +29,13 @@ class InsumosSettings:
     alert_work_hour_start: int = 8
     alert_work_hour_end: int = 18
     logistics_mail_to: str = ""
+    # Separado a propósito de logistics_mail_to: eso es negocio (avisos de
+    # despacho para logística), esto es técnico (el poller de fondo dejó de
+    # responder / se recuperó) — nunca deben ir a la misma bandeja. Default
+    # no vacío para que un ambiente recién levantado nunca pierda este aviso
+    # en silencio. Incidente real 2026-08-12 (ver CLAUDE.md, "Modo test
+    # obligatorio"): una alerta de falla del poller salió a logistics_mail_to.
+    ops_alert_mail_to: str = "imartinez@canaldirecto.com.ar"
 
 
 _INT_KEYS = (
@@ -64,6 +71,11 @@ def settings_from_raw(raw: Mapping[str, str]) -> InsumosSettings:
         autoload_enabled=raw.get("autoload_enabled", "0") == "1",
         alert_work_hours_enabled=raw.get("alert_work_hours_enabled", "1") == "1",
         logistics_mail_to=raw.get("logistics_mail_to", ""),
+        # A diferencia de logistics_mail_to (vacío = "no se envían avisos" es
+        # una configuración válida), acá el ausente cae en el default de
+        # negocio, no en "": un ambiente sin esta key en app_settings todavía
+        # tiene que poder avisar una falla real.
+        ops_alert_mail_to=raw.get("ops_alert_mail_to", defaults.ops_alert_mail_to),
         **ints,
     )
 
@@ -74,6 +86,7 @@ def settings_to_raw(settings: InsumosSettings) -> dict[str, str]:
     raw["autoload_enabled"] = "1" if settings.autoload_enabled else "0"
     raw["alert_work_hours_enabled"] = "1" if settings.alert_work_hours_enabled else "0"
     raw["logistics_mail_to"] = settings.logistics_mail_to
+    raw["ops_alert_mail_to"] = settings.ops_alert_mail_to
     return raw
 
 
@@ -81,3 +94,10 @@ def logistics_recipients(settings: InsumosSettings) -> list[str]:
     """La lista de destinatarios se guarda como CSV en una sola key; el valor vacío
     tiene que dar [] y no [""]."""
     return [email for email in settings.logistics_mail_to.split(",") if email]
+
+
+def ops_alert_recipients(settings: InsumosSettings) -> list[str]:
+    """Destinatarios de las alertas técnicas (poller caído/recuperado) — ver
+    el comentario de `ops_alert_mail_to` en InsumosSettings. NUNCA usar
+    logistics_recipients() para esto."""
+    return [email for email in settings.ops_alert_mail_to.split(",") if email]

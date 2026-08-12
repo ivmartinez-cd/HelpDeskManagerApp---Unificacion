@@ -3,7 +3,10 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.insumos.domain.value_objects.mail_log_entry import MailLogEntry
+from src.modules.insumos.domain.value_objects.mail_log_entry import (
+    MailLogEntry,
+    MailLogRecord,
+)
 from src.modules.insumos.infrastructure.models.mail_log_model import MailLogModel
 
 
@@ -21,6 +24,18 @@ class SqlAlchemyMailLogRepository:
     async def count(self) -> int:
         stmt = select(func.count()).select_from(MailLogModel)
         return (await self._session.execute(stmt)).scalar_one()
+
+    async def record(self, entry: MailLogRecord) -> None:
+        self._session.add(
+            MailLogModel(
+                kind=entry.kind,
+                recipients=entry.recipients,
+                subject=entry.subject,
+                success=entry.success,
+                error=entry.error,
+            )
+        )
+        await self._session.flush()
 
 
 def _to_entry(row: MailLogModel) -> MailLogEntry:

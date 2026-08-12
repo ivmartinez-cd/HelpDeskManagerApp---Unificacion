@@ -25,3 +25,4 @@ class AuditRow:
     initial_days_left: int | None = None
     initial_pages_left: int | None = None
     supply_url: str | None = None
+    action: str | None = None

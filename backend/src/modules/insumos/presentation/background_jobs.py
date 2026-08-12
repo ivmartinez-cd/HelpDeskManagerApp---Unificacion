@@ -14,20 +14,32 @@ Notas de diseño:
 
 import asyncio
 import logging
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Protocol
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.modules.insumos.application.dtos.pending_orders import PendingOrderRow
+from src.modules.insumos.application.jobs.mail_delivery import send_mail_to_all
 from src.modules.insumos.application.jobs.poller_alerts import PollerAlerts
 from src.modules.insumos.application.use_cases.pending_order_alert import (
     build_pending_alert_mail,
     find_orders_due_for_alert,
 )
+from src.modules.insumos.domain.repositories.mailer import Mailer
 from src.modules.insumos.domain.value_objects.insumos_settings import (
     logistics_recipients,
     settings_from_raw,
 )
+from src.modules.insumos.domain.value_objects.mail_log_entry import (
+    KIND_PENDING_ORDER_ALERT,
+    MailMessage,
+)
 from src.modules.insumos.infrastructure.repositories.sqlalchemy_insumos_settings_repository import (  # noqa: E501
     SqlAlchemyInsumosSettingsRepository,
+)
+from src.modules.insumos.infrastructure.repositories.sqlalchemy_mail_log_repository import (
+    SqlAlchemyMailLogRepository,
 )
 from src.modules.insumos.infrastructure.repositories.sqlalchemy_pending_order_notification_repository import (  # noqa: E501
     SqlAlchemyPendingOrderNotificationRepository,
@@ -50,10 +62,6 @@ _OFFLINE_VERIFY_LIMIT = 500
 # Hora UTC en que corren los jobs diarios.
 _OFFLINE_CHECK_HOUR_UTC = 3
 _PENDING_ALERT_HOUR_UTC = 7
-
-
-class _Mailer(Protocol):
-    async def send(self, *, to: str, subject: str, body: str) -> None: ...
 
 
 def seconds_until_next_hour(hour: int) -> float:
@@ -144,7 +152,7 @@ async def background_alert_task(interval_minutes: int = 15) -> None:
         await asyncio.sleep(interval_minutes * 60)
 
 
-async def background_pending_alert_task(mailer: _Mailer) -> None:
+async def background_pending_alert_task(mailer: Mailer) -> None:
     logger.info("pending_alert: iniciando (diario @ %02d:00 UTC)", _PENDING_ALERT_HOUR_UTC)
     while True:
         await asyncio.sleep(seconds_until_next_hour(_PENDING_ALERT_HOUR_UTC))
@@ -154,41 +162,69 @@ async def background_pending_alert_task(mailer: _Mailer) -> None:
             logger.error("pending_alert: ciclo fallido", exc_info=exc)
 
 
-async def _run_pending_alert_cycle(mailer: _Mailer) -> None:
+@dataclass(frozen=True)
+class _PendingAlert:
+    recipients: list[str]
+    rows: list[PendingOrderRow]
+    threshold_days: int
+
+
+async def _send_pending_alert(
+    session: AsyncSession, mailer: Mailer, alert: _PendingAlert
+) -> None:
+    subject, body = build_pending_alert_mail(alert.rows, alert.threshold_days)
+    delivery = await send_mail_to_all(
+        mailer,
+        alert.recipients,
+        MailMessage(kind=KIND_PENDING_ORDER_ALERT, subject=subject, body=body),
+    )
+    await SqlAlchemyMailLogRepository(session).record(delivery.log)
+    if delivery.delivered == 0:
+        # ARREGLO DE BUG: el legacy no marcaba si el envío fallaba — marcarlo
+        # igual perdía el aviso para siempre. Se reintenta en el ciclo siguiente.
+        logger.error(
+            "pending_alert: ningún destinatario recibió el aviso — %s", delivery.log.error
+        )
+        return
+    await SqlAlchemyPendingOrderNotificationRepository(session).mark_notified(
+        [r.hp_request_id for r in alert.rows]
+    )
+
+
+async def _find_pending_alert(session: AsyncSession) -> _PendingAlert | None:
+    raw_settings = await SqlAlchemyInsumosSettingsRepository(session).get_all()
+    settings = settings_from_raw(raw_settings)
+    recipients = logistics_recipients(settings)
+    if not recipients:
+        logger.debug("pending_alert: sin destinatarios configurados, se omite")
+        return None
+    rows = await build_list_pending_orders(session).execute(
+        customer_id=None, include_delivered=False
+    )
+    hp_ids = [r.hp_request_id for r in rows]
+    already_notified = await SqlAlchemyPendingOrderNotificationRepository(
+        session
+    ).get_notified_ids(hp_ids)
+    due = find_orders_due_for_alert(rows, settings.threshold_critical, already_notified)
+    if not due:
+        return None
+    return _PendingAlert(
+        recipients=recipients, rows=due, threshold_days=settings.threshold_critical
+    )
+
+
+async def _run_pending_alert_cycle(mailer: Mailer) -> None:
     factory = get_sessionmaker()
     async with factory() as session:
-        raw_settings = await SqlAlchemyInsumosSettingsRepository(session).get_all()
-        settings = settings_from_raw(raw_settings)
-        recipients = logistics_recipients(settings)
-        if not recipients:
-            logger.debug("pending_alert: sin destinatarios configurados, se omite")
+        alert = await _find_pending_alert(session)
+        if alert is None:
             return
-        rows = await build_list_pending_orders(session).execute(
-            customer_id=None, include_delivered=False
-        )
-        hp_ids = [r.hp_request_id for r in rows]
-        already_notified = await SqlAlchemyPendingOrderNotificationRepository(
-            session
-        ).get_notified_ids(hp_ids)
-        due = find_orders_due_for_alert(rows, settings.threshold_critical, already_notified)
-        if not due:
-            return
-        subject, body = build_pending_alert_mail(due, settings.threshold_critical)
-        for recipient in recipients:
-            try:
-                await mailer.send(to=recipient, subject=subject, body=body)
-            except Exception as exc:
-                logger.error(
-                    "pending_alert: no se pudo enviar mail a %s", recipient, exc_info=exc
-                )
-        await SqlAlchemyPendingOrderNotificationRepository(session).mark_notified(
-            [r.hp_request_id for r in due]
-        )
+        await _send_pending_alert(session, mailer, alert)
         await session.commit()
-    logger.info("pending_alert: %d pedido(s) notificados", len(due))
+    logger.info("pending_alert: %d pedido(s) considerados", len(alert.rows))
 
 
-def start_background_jobs(mailer: _Mailer, poller_alerts: PollerAlerts, interval_minutes: int) -> list[asyncio.Task[None]]:  # noqa: E501
+def start_background_jobs(mailer: Mailer, poller_alerts: PollerAlerts, interval_minutes: int) -> list[asyncio.Task[None]]:  # noqa: E501
     return [
         asyncio.create_task(background_poller_task(poller_alerts, interval_minutes)),
         asyncio.create_task(background_offline_check_task()),

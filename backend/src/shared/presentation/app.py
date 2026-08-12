@@ -22,6 +22,7 @@ from src.modules.contadores.presentation.ftp_clients_router import router as ftp
 from src.modules.contadores.presentation.sds_router import router as sds_router
 from src.modules.contadores.presentation.tools_router import router as contadores_tools_router
 from src.modules.insumos.presentation.alerts_router import router as insumos_alerts_router
+from src.modules.insumos.presentation.audit_router import router as insumos_audit_router
 from src.modules.insumos.presentation.config_router import router as insumos_config_router
 from src.modules.insumos.presentation.customers_router import router as insumos_customers_router
 from src.modules.insumos.presentation.devices_router import router as insumos_devices_router
@@ -67,25 +68,11 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     if not settings.disable_background_jobs:
         from src.modules.auth.infrastructure.mailer_factory import get_mailer
         from src.modules.insumos.application.jobs.poller_alerts import PollerAlerts
-        from src.modules.insumos.domain.value_objects.insumos_settings import (
-            logistics_recipients,
-            settings_from_raw,
-        )
-        from src.modules.insumos.infrastructure.repositories.sqlalchemy_insumos_settings_repository import (  # noqa: E501
-            SqlAlchemyInsumosSettingsRepository,
-        )
         from src.modules.insumos.presentation.background_jobs import start_background_jobs
-        from src.shared.infrastructure.database.session import get_sessionmaker
+        from src.modules.insumos.presentation.mail_dispatch import LoggedMailDispatcher
 
-        factory = get_sessionmaker()
-        async with factory() as session:
-            raw = await SqlAlchemyInsumosSettingsRepository(session).get_all()
-        insumos_settings = settings_from_raw(raw)
         mailer = get_mailer()
-        poller_alerts = PollerAlerts(
-            mailer=mailer,
-            recipients=logistics_recipients(insumos_settings),
-        )
+        poller_alerts = PollerAlerts(LoggedMailDispatcher(mailer))
         from src.modules.sla.presentation.background_jobs import start_sla_background_jobs
 
         tasks = start_background_jobs(mailer, poller_alerts, settings.poll_interval_minutes)
@@ -137,6 +124,7 @@ def create_app() -> FastAPI:
     app.include_router(calendario_router)
     app.include_router(insumos_customers_router)
     app.include_router(insumos_requests_router)
+    app.include_router(insumos_audit_router)
     app.include_router(insumos_devices_router)
     app.include_router(insumos_statistics_router)
     app.include_router(insumos_mail_log_router)

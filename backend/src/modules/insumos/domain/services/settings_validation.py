@@ -26,13 +26,16 @@ _HOURS_IN_MONTH = 24 * 30
 _MINUTES_IN_DAY = 24 * 60
 
 
-def validate_settings(settings: InsumosSettings, logistics_emails: Iterable[str]) -> str | None:
+def validate_settings(
+    settings: InsumosSettings, logistics_emails: Iterable[str], ops_alert_emails: Iterable[str]
+) -> str | None:
     checks = (
         _validate_thresholds(settings),
         _validate_autoload(settings),
         _validate_offline(settings),
         _validate_alerts(settings),
         _validate_emails(logistics_emails),
+        _validate_ops_alert_emails(ops_alert_emails),
     )
     return next((error for error in checks if error is not None), None)
 
@@ -97,4 +100,17 @@ def _validate_emails(logistics_emails: Iterable[str]) -> str | None:
     invalid = [email for email in logistics_emails if not _EMAIL_RE.match(email)]
     if invalid:
         return f"Email(s) inválido(s) en logística: {', '.join(invalid)}"
+    return None
+
+
+def _validate_ops_alert_emails(ops_alert_emails: Iterable[str]) -> str | None:
+    """A diferencia de logística, este campo NUNCA puede quedar vacío: sin un
+    destinatario, una falla real del sistema no le llega a nadie. Resguardo
+    directo del incidente real del 2026-08-12 (ver CLAUDE.md)."""
+    emails = list(ops_alert_emails)
+    if not emails:
+        return "Tiene que haber al menos un email de alertas técnicas (poller caído/recuperado)."
+    invalid = [email for email in emails if not _EMAIL_RE.match(email)]
+    if invalid:
+        return f"Email(s) inválido(s) en alertas técnicas: {', '.join(invalid)}"
     return None
