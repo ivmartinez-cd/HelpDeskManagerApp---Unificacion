@@ -15,10 +15,27 @@ class SqlAlchemyTarifarioRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
+    async def get_by_id(self, tarifario_id: UUID) -> Tarifario | None:
+        row = await self._session.get(TarifarioModel, tarifario_id)
+        return _to_entity(row) if row else None
+
     async def list_by_prestador(self, prestador_id: UUID) -> list[Tarifario]:
         stmt = select(TarifarioModel).where(TarifarioModel.prestador_id == prestador_id)
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
+
+    async def list_all(self) -> list[Tarifario]:
+        stmt = select(TarifarioModel)
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_entity(row) for row in rows]
+
+    async def delete(self, tarifario_id: UUID) -> bool:
+        row = await self._session.get(TarifarioModel, tarifario_id)
+        if not row:
+            return False
+        await self._session.delete(row)
+        await self._session.flush()
+        return True
 
     async def create(
         self,

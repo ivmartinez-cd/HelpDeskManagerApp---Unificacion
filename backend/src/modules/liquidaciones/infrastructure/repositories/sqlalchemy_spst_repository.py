@@ -19,7 +19,16 @@ class SqlAlchemySpstRepository:
         return _to_entity(row) if row else None
 
     async def list_by_prestador(self, prestador_id: UUID) -> list[Spst]:
-        stmt = select(SpstModel).where(SpstModel.prestador_id == prestador_id)
+        stmt = select(SpstModel).where(SpstModel.prestador_id == prestador_id).order_by(SpstModel.nombre)
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_entity(row) for row in rows]
+
+    async def list_all(self, *, prestador_id: UUID | None = None, solo_activos: bool = False) -> list[Spst]:
+        stmt = select(SpstModel).order_by(SpstModel.nombre)
+        if prestador_id is not None:
+            stmt = stmt.where(SpstModel.prestador_id == prestador_id)
+        if solo_activos:
+            stmt = stmt.where(SpstModel.activo.is_(True))
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
@@ -46,6 +55,37 @@ class SqlAlchemySpstRepository:
         await self._session.flush()
         await self._session.refresh(model)
         return _to_entity(model)
+
+    async def update(
+        self,
+        spst_id: UUID,
+        *,
+        nombre: str,
+        domicilio: str | None,
+        localidad: str | None,
+        provincia: str | None,
+        zona: str | None,
+    ) -> Spst | None:
+        row = await self._session.get(SpstModel, spst_id)
+        if not row:
+            return None
+        row.nombre = nombre
+        row.domicilio = domicilio
+        row.localidad = localidad
+        row.provincia = provincia
+        row.zona = zona
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
+    async def toggle_activo(self, spst_id: UUID, *, activo: bool) -> Spst | None:
+        row = await self._session.get(SpstModel, spst_id)
+        if not row:
+            return None
+        row.activo = activo
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
 
 
 def _to_entity(row: SpstModel) -> Spst:

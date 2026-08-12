@@ -20,6 +20,8 @@ class PrestadorLiquidacionOut(BaseModel):
     cuit: str | None
     region: str | None
     activo: bool
+    created_at: datetime = Field(serialization_alias="createdAt")
+    updated_at: datetime = Field(serialization_alias="updatedAt")
 
     @classmethod
     def from_entity(cls, e: Prestador) -> "PrestadorLiquidacionOut":
@@ -30,6 +32,8 @@ class PrestadorLiquidacionOut(BaseModel):
             cuit=e.cuit,
             region=e.region,
             activo=e.activo,
+            created_at=e.created_at,
+            updated_at=e.updated_at,
         )
 
 

@@ -7,6 +7,51 @@ export interface PrestadorLiquidacion {
   cuit: string | null;
   region: string | null;
   activo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Spst {
+  id: string;
+  prestadorId: string;
+  nombre: string;
+  domicilio: string | null;
+  localidad: string | null;
+  provincia: string | null;
+  zona: string | null;
+  activo: boolean;
+  createdAt: string;
+}
+
+export interface Tarifario {
+  id: string;
+  prestadorId: string;
+  tipoServicio: string;
+  zona: string | null;
+  costoServicio: number;
+  costoKm: number;
+  vigenciaDesde: string;
+  vigenciaHasta: string | null;
+  createdAt: string;
+}
+
+export interface TablaKm {
+  id: string;
+  prestadorId: string;
+  spstId: string | null;
+  empresaNombre: string;
+  sucursalNombre: string;
+  observaciones: string | null;
+  domicilioCliente: string | null;
+  localidadCliente: string | null;
+  provinciaCliente: string | null;
+  kmsRecorrido: number;
+  umbralViatico: number;
+  aplicaViatico: boolean;
+  kmsAFacturar: number;
+  urlMaps: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Liquidacion {

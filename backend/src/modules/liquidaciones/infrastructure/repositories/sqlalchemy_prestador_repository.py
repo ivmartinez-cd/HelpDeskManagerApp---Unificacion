@@ -1,6 +1,7 @@
 """Implementación Postgres del puerto PrestadorRepository (tabla prestadores)."""
 
 import uuid
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import select
@@ -44,6 +45,37 @@ class SqlAlchemyPrestadorRepository:
         await self._session.flush()
         await self._session.refresh(model)
         return _to_entity(model)
+
+    async def update(
+        self,
+        prestador_id: UUID,
+        *,
+        nombre: str,
+        nombre_corto: str,
+        cuit: str | None,
+        region: str | None,
+    ) -> Prestador | None:
+        row = await self._session.get(LiquidacionPrestadorModel, prestador_id)
+        if not row:
+            return None
+        row.nombre = nombre
+        row.nombre_corto = nombre_corto
+        row.cuit = cuit
+        row.region = region
+        row.updated_at = datetime.now(timezone.utc)
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
+    async def toggle_activo(self, prestador_id: UUID, *, activo: bool) -> Prestador | None:
+        row = await self._session.get(LiquidacionPrestadorModel, prestador_id)
+        if not row:
+            return None
+        row.activo = activo
+        row.updated_at = datetime.now(timezone.utc)
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
 
 
 def _to_entity(row: LiquidacionPrestadorModel) -> Prestador:

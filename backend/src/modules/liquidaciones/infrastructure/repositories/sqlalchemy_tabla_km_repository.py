@@ -3,7 +3,7 @@
 import uuid
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
@@ -14,10 +14,44 @@ class SqlAlchemyTablaKmRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
+    async def get_by_id(self, tabla_km_id: UUID) -> TablaKm | None:
+        row = await self._session.get(TablaKmModel, tabla_km_id)
+        return _to_entity(row) if row else None
+
     async def list_by_prestador(self, prestador_id: UUID) -> list[TablaKm]:
         stmt = select(TablaKmModel).where(TablaKmModel.prestador_id == prestador_id)
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
+
+    async def list_all(
+        self,
+        *,
+        prestador_id: UUID | None = None,
+        q: str | None = None,
+    ) -> list[TablaKm]:
+        stmt = select(TablaKmModel).order_by(
+            TablaKmModel.empresa_nombre, TablaKmModel.sucursal_nombre
+        )
+        if prestador_id is not None:
+            stmt = stmt.where(TablaKmModel.prestador_id == prestador_id)
+        if q:
+            pattern = f"%{q.lower()}%"
+            stmt = stmt.where(
+                or_(
+                    func.lower(TablaKmModel.empresa_nombre).like(pattern),
+                    func.lower(TablaKmModel.sucursal_nombre).like(pattern),
+                )
+            )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_entity(row) for row in rows]
+
+    async def delete(self, tabla_km_id: UUID) -> bool:
+        row = await self._session.get(TablaKmModel, tabla_km_id)
+        if not row:
+            return False
+        await self._session.delete(row)
+        await self._session.flush()
+        return True
 
     async def create(
         self,

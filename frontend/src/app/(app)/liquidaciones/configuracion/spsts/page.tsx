@@ -1,10 +1,5 @@
-"use client";
+import { SpstsConfig } from "@/features/liquidaciones/components/spsts-config";
 
-export default function SPSTsConfigPage() {
-  return (
-    <div className="flex flex-col gap-5 p-6">
-      <h1 className="font-heading text-xl font-extrabold text-foreground">SPSTs</h1>
-      <p className="font-body text-sm text-muted-foreground">Próximamente.</p>
-    </div>
-  );
+export default function SpstsConfigPage() {
+  return <SpstsConfig />;
 }

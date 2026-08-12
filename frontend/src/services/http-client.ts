@@ -66,4 +66,16 @@ export const httpClient = {
   put: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "PUT", body: body ? JSON.stringify(body) : undefined }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  /** Descarga un archivo del servidor y lo guarda localmente vía blob URL. */
+  downloadFile: async (path: string, filename: string): Promise<void> => {
+    const res = await fetch(path, { credentials: "include" });
+    if (!res.ok) throw new ApiError(res.status, { message: "Error al descargar", code: "DOWNLOAD_ERROR" });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 };

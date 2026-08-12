@@ -38,6 +38,9 @@ from src.modules.insumos.presentation.requests_router import router as insumos_r
 from src.modules.insumos.presentation.statistics_router import (
     router as insumos_statistics_router,
 )
+from src.modules.liquidaciones.presentation.config_router import (
+    router as liquidaciones_config_router,
+)
 from src.modules.liquidaciones.presentation.liquidaciones_router import (
     router as liquidaciones_router,
 )
@@ -144,6 +147,7 @@ def create_app() -> FastAPI:
     app.include_router(sla_router)
     app.include_router(prestadores_router)
     app.include_router(liquidaciones_router)
+    app.include_router(liquidaciones_config_router)
     return app
 
 
