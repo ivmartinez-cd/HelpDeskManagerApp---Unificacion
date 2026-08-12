@@ -1,17 +1,12 @@
 # Migración SDSInsumos — estado y próximo paso
 
-Actualizado: 2026-08-11 (Frontend de Clientes portado — toggle de monitoreo,
-bulk enable/disable, ContactsModal CRUD de zonas, sección SDS piloto; tsc + eslint
-limpios). Backend 100% completo.
+Actualizado: 2026-08-12 (Frontend de Equipos Offline portado — 6 secciones
+colapsables, selección múltiple + baja masiva, banner outages 3 niveles; tsc + eslint
+limpios en el contenedor Docker). Backend 100% completo. Frontend 100% completo.
 
 ## Qué resta hacer, en orden
 
-1. **Frontend de Equipos Offline** — sin pantalla todavía (ver
-   `SDSINSUMOS_CARACTERIZACION_FRONTEND.md` §1.3 y §3.3 para el relevamiento del legacy
-   Vue; es la pantalla más compleja del frontend: 6 secciones colapsables por estado,
-   selección múltiple con baja masiva, banner de caídas de colector con 3 niveles).
-
-2. **Gaps que quedaron fuera de alcance en el frontend de Clientes** (baja prioridad):
+1. **Gaps que quedaron fuera de alcance en el frontend de Clientes** (baja prioridad):
    - `import-from-supply` — autofill de contacto desde un número de pedido de supply
      (endpoint `POST /customers/{id}/contacts/import-from-supply` existe en el backend,
      no tiene botón en la UI todavía).
@@ -104,7 +99,7 @@ Con `a0189fe`, el router de solicitudes del legacy (`routers/requests/` completo
 ## Portado hasta ahora (frontend)
 
 Handoff `design_handoff_sds_insumos/` (ya aprobado el 2026-08-10) + caracterización del
-legacy Vue en `SDSINSUMOS_CARACTERIZACION_FRONTEND.md`. Resta solo **Equipos Offline**.
+legacy Vue en `SDSINSUMOS_CARACTERIZACION_FRONTEND.md`. **Todas las pantallas portadas.**
 
 | Pantalla | Ruta | Commit |
 |---|---|---|
@@ -115,6 +110,7 @@ legacy Vue en `SDSINSUMOS_CARACTERIZACION_FRONTEND.md`. Resta solo **Equipos Off
 | Historial (5 pestañas) | `/insumos/historial` | `7a8a1c6` |
 | Fix `can()` para superadmin (bug preexistente en `session-provider.tsx`, no específico de insumos) | — | `86c1a42` |
 | Clientes (toggle individual + bulk, ContactsModal CRUD zonas, sección SDS piloto) | `/insumos/clientes` | `17f63ba` |
+| Equipos Offline (6 secciones colapsables por veredicto CD, selección múltiple + baja masiva `deletable`, banner de outages con 3 niveles de certeza) | `/insumos/equipos-offline` | pendiente push |
 
 Construido con 1 agente de fundación + 4 agentes en paralelo (uno por pantalla), cada
 uno verificado con `tsc --noEmit`, `eslint` y una pasada real en navegador (Playwright,

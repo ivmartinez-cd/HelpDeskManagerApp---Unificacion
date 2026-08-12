@@ -11,6 +11,8 @@ import type {
   CustomerDetailResponse,
   CustomerRow,
   DashboardResponse,
+  DeleteOfflinePayload,
+  DeleteOfflineResponse,
   DeviceSuppliesResponse,
   DismissDeviceResponse,
   DismissRequestPayload,
@@ -22,8 +24,12 @@ import type {
   LoadRequestPayload,
   LoadResponse,
   MailLogRow,
+  MassOutageRow,
   NewDeviceRow,
   NewDevicesSummary,
+  OfflineDismissResponse,
+  OfflineDeviceRow,
+  OfflineSummary,
   PendingOrderRow,
   ReconcileRequestPayload,
   ReconcileResponse,
@@ -32,6 +38,8 @@ import type {
   SdsContactRow,
   SyncCustomersResponse,
   SyncNewDevicesResponse,
+  VerifyOfflinePayload,
+  VerifyOfflineResponse,
   ZoneContactRow,
 } from "../types";
 
@@ -189,6 +197,31 @@ export const insumosApi = {
   /** Fuerza el sync del inventario contra Insight (lo mismo que hace el
    * poller). Devuelve solo el resultado: la lista se vuelve a pedir aparte. */
   syncNewDevices: () => httpClient.post<SyncNewDevicesResponse>(`${BASE}/new-devices/sync`),
+
+  // --------------------------------------------------------- Equipos offline
+  /** Equipos sin reportar +72hs con veredicto de CD, más antiguo primero. */
+  listOfflineDevices: (params: { customerId?: number } & PageParams = {}) =>
+    httpClient.get<Page<OfflineDeviceRow>>(`${BASE}/offline-devices${toQuery({ ...params })}`),
+
+  /** Caídas de colector y salidas masivas detectadas en el inventario actual. */
+  listOfflineOutages: (params: PageParams = {}) =>
+    httpClient.get<Page<MassOutageRow>>(`${BASE}/offline-devices/outages${toQuery({ ...params })}`),
+
+  /** Contador de candidatos a baja — el badge de la barra lateral. */
+  getOfflineSummary: () => httpClient.get<OfflineSummary>(`${BASE}/offline-devices/summary`),
+
+  /** Verifica hasta `limit` equipos pendientes contra Canal Directo (SOAP).
+   * Responde 409 si ya hay una verificación en curso. */
+  verifyOfflineDevices: (payload: VerifyOfflinePayload) =>
+    httpClient.post<VerifyOfflineResponse>(`${BASE}/offline-devices/verify`, payload),
+
+  /** Marca o desmarca un equipo offline como descartado de la vista. */
+  setOfflineDismissed: (deviceId: number, dismissed: boolean) =>
+    httpClient.patch<OfflineDismissResponse>(`${BASE}/offline-devices/${deviceId}`, { dismissed }),
+
+  /** Da de baja los equipos seleccionados en el PortalWeb de SDS (solo `deletable`). */
+  deleteOfflineDevices: (payload: DeleteOfflinePayload) =>
+    httpClient.post<DeleteOfflineResponse>(`${BASE}/offline-devices/delete`, payload),
 
   // ------------------------------------------------------------------ Alertas
   /** Alertas escaladas sin reconocer, la más antigua primero. El `total` del

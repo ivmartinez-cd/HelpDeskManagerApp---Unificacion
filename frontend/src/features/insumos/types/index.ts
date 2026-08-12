@@ -9,4 +9,5 @@ export * from "./dashboard";
 export * from "./devices";
 export * from "./estadisticas";
 export * from "./new-devices";
+export * from "./offline-devices";
 export * from "./requests";

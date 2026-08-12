@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/insumos", label: "Dashboard", exact: true },
   { href: "/insumos/clientes", label: "Clientes", exact: false },
   { href: "/insumos/equipos-nuevos", label: "Equipos Nuevos", exact: false },
+  { href: "/insumos/equipos-offline", label: "Equipos Offline", exact: false },
   { href: "/insumos/historial", label: "Historial", exact: false },
   // Prefijo, no exacto: el detalle de cliente
   // (/insumos/estadisticas/clientes/:id) tiene que dejar Estadísticas activo.
