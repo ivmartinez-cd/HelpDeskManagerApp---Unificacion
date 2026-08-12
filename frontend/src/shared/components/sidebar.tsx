@@ -7,6 +7,7 @@ import { Bell, ChevronDown, LogOut, Menu } from "lucide-react";
 import { ThemeToggle } from "@/shared/components/theme-toggle";
 import { ContadoresNavSubmenu } from "@/shared/components/contadores-nav-submenu";
 import { InsumosNavSubmenu } from "@/shared/components/insumos-nav-submenu";
+import { LiquidacionesNavSubmenu } from "@/shared/components/liquidaciones-nav-submenu";
 import { cn } from "@/shared/utils/cn";
 import { ChangePasswordModal } from "@/features/auth/components/change-password-modal";
 import { useLogout } from "@/features/auth/hooks/use-logout";
@@ -150,10 +151,8 @@ export function Sidebar({ children }: { children: ReactNode }) {
               const active = isActive(module.route);
               const isContadores = module.key === "contadores";
               const isInsumos = module.key === "insumos";
-              // Los dos únicos módulos con submenú por ahora. Contadores entra
-              // por el Calendario (su `route` apunta al hub de herramientas);
-              // Insumos entra por su propia `route`, que ES el Dashboard.
-              const hasSubmenu = isContadores || isInsumos;
+              const isLiquidaciones = module.key === "liquidaciones";
+              const hasSubmenu = isContadores || isInsumos || isLiquidaciones;
               const submenuExpanded = submenuOverride[module.key] ?? active;
               return (
                 <div key={module.key} className="flex flex-col">
@@ -209,6 +208,9 @@ export function Sidebar({ children }: { children: ReactNode }) {
                     <ContadoresNavSubmenu onNavigate={closeMobile} />
                   )}
                   {isInsumos && submenuExpanded && <InsumosNavSubmenu onNavigate={closeMobile} />}
+                  {isLiquidaciones && submenuExpanded && (
+                    <LiquidacionesNavSubmenu onNavigate={closeMobile} />
+                  )}
                 </div>
               );
             })}
