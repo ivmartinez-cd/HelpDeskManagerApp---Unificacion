@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from src.shared.infrastructure.database.base import Base
 
 
-class PrestadorModel(Base):
+class LiquidacionPrestadorModel(Base):
     __tablename__ = "prestadores"
 
     id: Mapped[uuid.UUID] = mapped_column(

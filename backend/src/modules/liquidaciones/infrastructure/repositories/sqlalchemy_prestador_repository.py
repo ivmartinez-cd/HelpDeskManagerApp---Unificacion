@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
-from src.modules.liquidaciones.infrastructure.models.prestador_model import PrestadorModel
+from src.modules.liquidaciones.infrastructure.models.prestador_model import LiquidacionPrestadorModel
 
 
 class SqlAlchemyPrestadorRepository:
@@ -15,25 +15,25 @@ class SqlAlchemyPrestadorRepository:
         self._session = session
 
     async def get_by_id(self, prestador_id: UUID) -> Prestador | None:
-        row = await self._session.get(PrestadorModel, prestador_id)
+        row = await self._session.get(LiquidacionPrestadorModel, prestador_id)
         return _to_entity(row) if row else None
 
     async def get_by_nombre_corto(self, nombre_corto: str) -> Prestador | None:
-        stmt = select(PrestadorModel).where(PrestadorModel.nombre_corto == nombre_corto)
+        stmt = select(LiquidacionPrestadorModel).where(LiquidacionPrestadorModel.nombre_corto == nombre_corto)
         row = (await self._session.execute(stmt)).scalar_one_or_none()
         return _to_entity(row) if row else None
 
     async def list_all(self, *, solo_activos: bool = False) -> list[Prestador]:
-        stmt = select(PrestadorModel).order_by(PrestadorModel.nombre)
+        stmt = select(LiquidacionPrestadorModel).order_by(LiquidacionPrestadorModel.nombre)
         if solo_activos:
-            stmt = stmt.where(PrestadorModel.activo.is_(True))
+            stmt = stmt.where(LiquidacionPrestadorModel.activo.is_(True))
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
     async def create(
         self, *, nombre: str, nombre_corto: str, cuit: str | None, region: str | None
     ) -> Prestador:
-        model = PrestadorModel(
+        model = LiquidacionPrestadorModel(
             id=uuid.uuid4(),
             nombre=nombre,
             nombre_corto=nombre_corto,
@@ -46,7 +46,7 @@ class SqlAlchemyPrestadorRepository:
         return _to_entity(model)
 
 
-def _to_entity(row: PrestadorModel) -> Prestador:
+def _to_entity(row: LiquidacionPrestadorModel) -> Prestador:
     return Prestador(
         id=row.id,
         nombre=row.nombre,
