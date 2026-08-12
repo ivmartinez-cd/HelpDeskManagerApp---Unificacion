@@ -57,17 +57,11 @@ class SqlAlchemyLiquidacionRepository:
         )
         await self._session.execute(stmt)
 
-    async def update_totales(
-        self, liquidacion_id: UUID, total_incidentes: int, total_alertas: int, total_importe: float
-    ) -> None:
+    async def update_total_alertas(self, liquidacion_id: UUID, total_alertas: int) -> None:
         stmt = (
             update(LiquidacionModel)
             .where(LiquidacionModel.id == liquidacion_id)
-            .values(
-                total_incidentes=total_incidentes,
-                total_alertas=total_alertas,
-                total_importe=total_importe,
-            )
+            .values(total_alertas=total_alertas)
         )
         await self._session.execute(stmt)
 

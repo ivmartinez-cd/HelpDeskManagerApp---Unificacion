@@ -27,12 +27,12 @@ class LiquidacionRepository(Protocol):
 
     async def update_estado(self, liquidacion_id: UUID, estado: str) -> None: ...
 
-    async def update_totales(
-        self, liquidacion_id: UUID, total_incidentes: int, total_alertas: int, total_importe: float
-    ) -> None:
-        """Se recalculan después de cada corrida del motor de reglas (import o
-        reanalyze) — mismos 3 campos que actualizaba el legacy al final de
-        `ejecutar_motor`."""
+    async def update_total_alertas(self, liquidacion_id: UUID, total_alertas: int) -> None:
+        """El único campo que `ejecutar_motor` del legacy tocaba al final de una
+        corrida (import o reanalyze) — `total_incidentes`/`total_importe` se fijan al
+        importar y no se recalculan acá, confirmado leyendo `motor_reglas.py` y el
+        router `POST /liquidaciones/{id}/reanalize` (wrapper fino, sin otros efectos:
+        no toca `estado` ni el resto de los totales)."""
         ...
 
     async def delete(self, liquidacion_id: UUID) -> None: ...
