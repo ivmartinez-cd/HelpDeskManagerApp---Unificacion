@@ -3,13 +3,13 @@ import type {
   AcknowledgeResponse,
   AlertRow,
   AuditRow,
+  AuditSummaryResponse,
   AvailabilityWindowsResponse,
   CancelResponse,
   ConsumableDetail,
   ConsumableHistoryResponse,
   ConsumableRequestHistoryResponse,
   CustomerDetailResponse,
-  CustomerRow,
   DashboardResponse,
   DeleteOfflinePayload,
   DeleteOfflineResponse,
@@ -35,50 +35,46 @@ import type {
   ReconcileResponse,
   RequestRow,
   SaveConfigResponse,
-  SdsContactRow,
-  SyncCustomersResponse,
   SyncNewDevicesResponse,
   VerifyOfflinePayload,
   VerifyOfflineResponse,
-  ZoneContactRow,
 } from "../types";
+import { BASE, toQuery } from "./insumos-api-base";
+import type { Page, PageParams } from "./insumos-api-base";
+import { insumosCustomersApi } from "./insumos-customers-api";
 
-/** Envelope de paginación del backend (`Page[T]` en
- * `shared/presentation/schemas/pagination.py`). Se declara local a este
- * archivo, igual que en `features/contadores/api/contadores-api.ts` — no hay
- * un tipo compartido y no se quiere acoplar features entre sí.
- *
- * A diferencia de contadores, acá NO se desenvuelve `.items` en el cliente:
- * varias tablas de insumos necesitan el `total` (el de `/alerts` es
- * directamente el contador de escaladas), así que los métodos de listado
- * devuelven el `Page<T>` completo. */
-export interface Page<T> {
-  items: T[];
-  total: number;
+export type { Page, PageParams } from "./insumos-api-base";
+
+/** Filtros que acepta `GET /api/insumos/audit` además de `page`/`size` — los
+ * mismos que `GET /api/insumos/audit/summary` (que ignora `scope`: siempre
+ * cuenta todo). `event` es un query param repetible (`?event=A&event=B`), así
+ * que `toQuery` (que solo arma pares escalares) no alcanza para armarlo. */
+interface AuditFilterParams {
+  event?: string[];
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+}
+
+interface AuditListParams extends AuditFilterParams {
   page: number;
   size: number;
+  scope?: "orders" | "system" | "all";
 }
 
-/** Parámetros de paginación de cualquier listado del módulo. Todos los
- * endpoints tienen un `size` default generoso (500 en las tablas que filtran
- * client-side, 100 en las paginadas en SQL): omitirlos es lo normal. */
-export interface PageParams {
-  page?: number;
-  size?: number;
-}
-
-/** Arma un querystring salteando `undefined`/`null` (mandar `?days=undefined`
- * rompe la validación de FastAPI). Devuelve "" o "?a=1&b=2". */
-function toQuery(params: Record<string, string | number | boolean | undefined | null>): string {
-  const search = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== null) search.set(key, String(value));
-  }
+/** Arma el querystring de `/audit` y `/audit/summary`: los campos escalares
+ * van por `toQuery` de siempre, y `event` (0 o más valores) se agrega a mano
+ * repitiendo la clave — es la única forma de mandar una lista con
+ * `URLSearchParams`. */
+function auditQuery(params: AuditListParams | AuditFilterParams): string {
+  const { event, ...scalarParams } = params;
+  const base = toQuery({ ...scalarParams });
+  if (!event || event.length === 0) return base;
+  const search = new URLSearchParams(base.startsWith("?") ? base.slice(1) : base);
+  for (const value of event) search.append("event", value);
   const qs = search.toString();
   return qs ? `?${qs}` : "";
 }
-
-const BASE = "/api/insumos";
 
 /**
  * Todos los endpoints reales de `/api/insumos/*`, agrupados en un objeto —
@@ -87,9 +83,17 @@ const BASE = "/api/insumos";
  * `../types/*` para el detalle de cada schema.
  *
  * OJO con las cuatro acciones sobre solicitudes (`load`/`cancel`/`dismiss`/
- * `reconcile`) y con `saveConfig`: responden **200 aunque fallen**, con el
- * error de negocio en el body (`ok: false` + `error`). `httpClient` no tira
+ * `reconcile`), con `saveConfig` y con los tres endpoints de importación de
+ * contactos (`importContactsFromSupply`, `previewZoneContactsImport`,
+ * `applyZoneContactsImport`): responden **200 aunque fallen**, con el error
+ * de negocio en el body (`ok: false` + `error`). `httpClient` no tira
  * `ApiError` en esos casos — hay que chequear `response.ok` a mano.
+ *
+ * Los métodos de Clientes (`listCustomers`, `getContacts`, etc.) viven en
+ * `./insumos-customers-api` y se componen acá con spread — es un solo
+ * archivo el que se pasaba de las 300 líneas del `ARCHITECTURE_GUIDE.md`,
+ * no un cambio de superficie: `insumosApi.getContacts(...)` sigue andando
+ * igual que siempre.
  */
 export const insumosApi = {
   // ---------------------------------------------------------------- Dashboard
@@ -125,9 +129,15 @@ export const insumosApi = {
   ) => httpClient.get<Page<PendingOrderRow>>(`${BASE}/orders/pending${toQuery({ ...params })}`),
 
   // ----------------------------------------------------------------- Historial
-  /** Historial permanente de eventos, más reciente primero (paginado en SQL). */
-  listAudit: (params: PageParams = {}) =>
-    httpClient.get<Page<AuditRow>>(`${BASE}/audit${toQuery({ ...params })}`),
+  /** Historial permanente de eventos, más reciente primero — filtrado,
+   * scopeado (`orders`/`system`/`all`) y paginado enteramente en SQL. */
+  listAudit: (params: AuditListParams) =>
+    httpClient.get<Page<AuditRow>>(`${BASE}/audit${auditQuery(params)}`),
+
+  /** Conteo de eventos por pestaña (`orders`/`system`/`all`), con los mismos
+   * filtros que `listAudit` salvo `scope` (el backend siempre cuenta todo). */
+  getAuditSummary: (params: AuditFilterParams = {}) =>
+    httpClient.get<AuditSummaryResponse>(`${BASE}/audit/summary${auditQuery(params)}`),
 
   /** Últimos mails enviados o intentados por la app (paginado en SQL). */
   listMailLog: (params: PageParams = {}) =>
@@ -234,35 +244,5 @@ export const insumosApi = {
     httpClient.post<AcknowledgeResponse>(`${BASE}/alerts/ack`, { hpRequestIds }),
 
   // ------------------------------------------------------------------ Clientes
-  /** Todos los clientes de Insight con su flag de monitoreo. */
-  listCustomers: () => httpClient.get<CustomerRow[]>(`${BASE}/customers`),
-
-  /** Habilita o deshabilita el monitoreo de un cliente. */
-  toggleCustomer: (customerId: number, enabled: boolean) =>
-    httpClient.patch<{ ok: boolean }>(`${BASE}/customers/${customerId}`, { enabled }),
-
-  /** Habilita o deshabilita TODOS los clientes de una vez. */
-  bulkToggleCustomers: (enabled: boolean) =>
-    httpClient.post<{ ok: boolean }>(`${BASE}/customers/bulk-toggle`, { enabled }),
-
-  /** Sincroniza la lista de clientes desde Insight (lo mismo que hace el poller). */
-  syncCustomers: () => httpClient.post<SyncCustomersResponse>(`${BASE}/sync-customers`),
-
-  /** Contactos por zona de un cliente. */
-  getContacts: (customerId: number) =>
-    httpClient.get<ZoneContactRow[]>(`${BASE}/customers/${customerId}/contacts`),
-
-  /** Crea o actualiza los contactos de una zona (upsert por `zone`). */
-  putContact: (customerId: number, body: ZoneContactRow) =>
-    httpClient.put<{ ok: boolean }>(`${BASE}/customers/${customerId}/contacts`, body),
-
-  /** Elimina todos los contactos de una zona. La zona va en el querystring. */
-  deleteContact: (customerId: number, zone: string) =>
-    httpClient.delete<{ ok: boolean }>(
-      `${BASE}/customers/${customerId}/contacts${toQuery({ zone })}`,
-    ),
-
-  /** Contactos detectados en el PortalWeb SDS (solo lectura, piloto). */
-  getSdsContacts: (customerId: number) =>
-    httpClient.get<SdsContactRow[]>(`${BASE}/customers/${customerId}/sds-contacts`),
+  ...insumosCustomersApi,
 };

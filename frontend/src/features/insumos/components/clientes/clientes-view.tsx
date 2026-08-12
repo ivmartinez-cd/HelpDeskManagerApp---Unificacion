@@ -173,6 +173,7 @@ export function ClientesView() {
         onContactsChanged={(id, hasContacts) => {
           markHasContacts(id, hasContacts);
         }}
+        canUpdate={canUpdate}
       />
     </div>
   );

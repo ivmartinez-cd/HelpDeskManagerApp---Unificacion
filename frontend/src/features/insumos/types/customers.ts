@@ -43,3 +43,49 @@ export interface SyncCustomersResponse {
   ok: boolean;
   count: number;
 }
+
+/** `ImportContactsResponse`: resultado de importar el contacto de una zona
+ * desde un pedido de supply (SOAP HP SDS, upsert directo sin preview). */
+export interface ImportFromSupplyResponse {
+  ok: boolean;
+  zone?: string | null;
+  row?: ZoneContactRow | null;
+  error?: string | null;
+}
+
+/** `ZoneContactPreviewRowOut`: una fila del preview de importación masiva
+ * desde el PortalWeb de SDS, con el valor entrante y el actual en paralelo
+ * para poder armar una tabla-diff. */
+export interface ZoneContactPreviewRow {
+  zone: string;
+  apellido: string;
+  nombre: string;
+  email: string;
+  telefono: string;
+  already_configured: boolean;
+  error: string | null;
+  current_apellido: string;
+  current_nombre: string;
+  current_email: string;
+  current_telefono: string;
+}
+
+export interface ZoneContactPreviewResponse {
+  ok: boolean;
+  rows: ZoneContactPreviewRow[];
+  error?: string | null;
+}
+
+/** `ZoneContactApplyRowIn`: fila seleccionada para aplicar. `overwrite` va en
+ * `true` cuando la zona ya estaba configurada (no hay checkbox separado en la
+ * UI — seleccionar una fila `already_configured` implica pisarla). */
+export interface ZoneContactApplyRow {
+  zone: string;
+  overwrite: boolean;
+}
+
+export interface ZoneContactApplyResponse {
+  ok: boolean;
+  applied: number;
+  error?: string | null;
+}
