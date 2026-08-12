@@ -1,7 +1,7 @@
 "use client";
 
 import { Edit2, Plus, Trash2, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { turnosApi } from "../../api/turnos-api";
 import type { Casilla, Slot, UserOption } from "../../types/turnos";
 import { Button } from "@/shared/components/ui/button";
@@ -39,7 +39,7 @@ export function CasillasManager() {
   const [horaFin, setHoraFin] = useState("11:00");
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [cList, sList, uList] = await Promise.all([
@@ -50,19 +50,20 @@ export function CasillasManager() {
       setCasillas(cList);
       setSlots(sList);
       setUsers(uList);
-      if (cList.length > 0 && !selectedCasillaId) {
-        setSelectedCasillaId(cList[0].id);
-      }
+      // Forma funcional: si ya hay una casilla seleccionada, la conserva;
+      // si no, auto-selecciona la primera. No cierra sobre selectedCasillaId.
+      setSelectedCasillaId((prev) => prev ?? (cList[0]?.id ?? null));
     } catch (err) {
       console.error("Error al cargar datos de turnos:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadData();
+  }, [loadData]);
 
   const handleSaveCasilla = async (e: React.FormEvent) => {
     e.preventDefault();

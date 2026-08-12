@@ -71,22 +71,37 @@ export function SlaDetail() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Resetear datos al cambiar de período — "ajustar estado durante el render"
+  // en vez de dentro del efecto (mismo patrón que confirmation-modal.tsx).
+  const [prevMonthValue, setPrevMonthValue] = useState(monthValue);
+  if (monthValue !== prevMonthValue) {
+    setPrevMonthValue(monthValue);
     setLoading(true);
     setError(null);
     setResumen(null);
     setIncidentes([]);
+  }
+
+  useEffect(() => {
+    let active = true;
     const periodo = monthValueToPeriodo(monthValue);
     Promise.all([slaApi.getResumen(periodo), slaApi.listIncidentesVencidos(periodo)])
       .then(([res, inc]) => {
+        if (!active) return;
         setResumen(res);
         setIncidentes(inc);
       })
       .catch((err: unknown) => {
+        if (!active) return;
         console.error("Error al cargar datos SLA:", err);
         setError(err instanceof Error ? err.message : "No se pudieron cargar los datos SLA.");
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [monthValue]);
 
   return (

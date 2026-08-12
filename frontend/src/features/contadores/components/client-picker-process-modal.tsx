@@ -86,6 +86,15 @@ function ClientSelect({
   const containerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
+  // Resetear búsqueda al abrir — patrón "ajustar estado durante el render"
+  // (igual que confirmation-modal.tsx) para no llamar setState dentro de un
+  // efecto y disparar un render adicional innecesario.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setSearch("");
+  }
+
   useEffect(() => {
     if (!open) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -98,13 +107,11 @@ function ClientSelect({
   }, [open]);
 
   useEffect(() => {
-    if (open) {
-      setSearch("");
-      // Sin el timeout el foco compite con el que BrandModal le pone al
-      // primer elemento enfocable del modal al abrirse.
-      const timer = setTimeout(() => searchRef.current?.focus(), 0);
-      return () => clearTimeout(timer);
-    }
+    if (!open) return;
+    // Sin el timeout el foco compite con el que BrandModal le pone al
+    // primer elemento enfocable del modal al abrirse.
+    const timer = setTimeout(() => searchRef.current?.focus(), 0);
+    return () => clearTimeout(timer);
   }, [open]);
 
   const selected = options.find((o) => o.id === value);

@@ -26,14 +26,13 @@ export function TodayClientsCard() {
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [operadores, setOperadores] = useState<Operador[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  // `loading` arranca en true solo cuando hay que cargar: si canView es false
+  // el componente no renderiza nada y no hay estado de carga que gestionar.
+  const [loading, setLoading] = useState<boolean>(canView);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!canView) {
-      setLoading(false);
-      return;
-    }
+    if (!canView) return;
     const today = formatDateLocal(new Date());
     contadoresApi
       .getCalendarioEvents({ start: today, end: today })

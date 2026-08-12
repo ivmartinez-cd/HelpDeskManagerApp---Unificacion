@@ -20,14 +20,11 @@ export function SlaSummaryCard() {
   const canView = modules.some((m) => m.key === "sla");
 
   const [resumen, setResumen] = useState<SlaResumen | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(canView);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!canView) {
-      setLoading(false);
-      return;
-    }
+    if (!canView) return;
     slaApi
       .getResumen(currentPeriodo())
       .then(setResumen)
