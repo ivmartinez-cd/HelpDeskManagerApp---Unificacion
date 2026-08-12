@@ -9,6 +9,7 @@ import type {
   ConsumableHistoryResponse,
   ConsumableRequestHistoryResponse,
   CustomerDetailResponse,
+  CustomerRow,
   DashboardResponse,
   DeviceSuppliesResponse,
   DismissDeviceResponse,
@@ -28,7 +29,10 @@ import type {
   ReconcileResponse,
   RequestRow,
   SaveConfigResponse,
+  SdsContactRow,
+  SyncCustomersResponse,
   SyncNewDevicesResponse,
+  ZoneContactRow,
 } from "../types";
 
 /** Envelope de paginación del backend (`Page[T]` en
@@ -195,4 +199,37 @@ export const insumosApi = {
   /** Reconoce a mano una o varias alertas escaladas. */
   acknowledgeAlerts: (hpRequestIds: number[]) =>
     httpClient.post<AcknowledgeResponse>(`${BASE}/alerts/ack`, { hpRequestIds }),
+
+  // ------------------------------------------------------------------ Clientes
+  /** Todos los clientes de Insight con su flag de monitoreo. */
+  listCustomers: () => httpClient.get<CustomerRow[]>(`${BASE}/customers`),
+
+  /** Habilita o deshabilita el monitoreo de un cliente. */
+  toggleCustomer: (customerId: number, enabled: boolean) =>
+    httpClient.patch<{ ok: boolean }>(`${BASE}/customers/${customerId}`, { enabled }),
+
+  /** Habilita o deshabilita TODOS los clientes de una vez. */
+  bulkToggleCustomers: (enabled: boolean) =>
+    httpClient.post<{ ok: boolean }>(`${BASE}/customers/bulk-toggle`, { enabled }),
+
+  /** Sincroniza la lista de clientes desde Insight (lo mismo que hace el poller). */
+  syncCustomers: () => httpClient.post<SyncCustomersResponse>(`${BASE}/sync-customers`),
+
+  /** Contactos por zona de un cliente. */
+  getContacts: (customerId: number) =>
+    httpClient.get<ZoneContactRow[]>(`${BASE}/customers/${customerId}/contacts`),
+
+  /** Crea o actualiza los contactos de una zona (upsert por `zone`). */
+  putContact: (customerId: number, body: ZoneContactRow) =>
+    httpClient.put<{ ok: boolean }>(`${BASE}/customers/${customerId}/contacts`, body),
+
+  /** Elimina todos los contactos de una zona. La zona va en el querystring. */
+  deleteContact: (customerId: number, zone: string) =>
+    httpClient.delete<{ ok: boolean }>(
+      `${BASE}/customers/${customerId}/contacts${toQuery({ zone })}`,
+    ),
+
+  /** Contactos detectados en el PortalWeb SDS (solo lectura, piloto). */
+  getSdsContacts: (customerId: number) =>
+    httpClient.get<SdsContactRow[]>(`${BASE}/customers/${customerId}/sds-contacts`),
 };

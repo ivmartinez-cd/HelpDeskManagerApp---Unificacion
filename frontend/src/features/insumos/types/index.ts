@@ -4,6 +4,7 @@ export * from "./alerts";
 export * from "./audit";
 export * from "./common";
 export * from "./config";
+export * from "./customers";
 export * from "./dashboard";
 export * from "./devices";
 export * from "./estadisticas";

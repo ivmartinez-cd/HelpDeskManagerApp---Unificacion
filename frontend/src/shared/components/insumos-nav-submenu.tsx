@@ -6,12 +6,10 @@ import { cn } from "@/shared/utils/cn";
 
 /** Submenú de Insumos en la barra lateral — misma forma que
  * `contadores-nav-submenu.tsx`, pero acá cada entrada es una ruta de archivo
- * propia (no hay `?tool=`): el módulo no tiene hub, `/insumos` ES el Dashboard.
- *
- * NO se listan Clientes ni Equipos Offline: esos módulos del backend todavía
- * no están portados, no tienen pantalla que abrir. */
+ * propia (no hay `?tool=`): el módulo no tiene hub, `/insumos` ES el Dashboard. */
 const LINKS = [
   { href: "/insumos", label: "Dashboard", exact: true },
+  { href: "/insumos/clientes", label: "Clientes", exact: false },
   { href: "/insumos/equipos-nuevos", label: "Equipos Nuevos", exact: false },
   { href: "/insumos/historial", label: "Historial", exact: false },
   // Prefijo, no exacto: el detalle de cliente
