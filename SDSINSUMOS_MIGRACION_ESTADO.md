@@ -1,16 +1,23 @@
 # Migración SDSInsumos — estado y próximo paso
 
-Actualizado: 2026-08-11 (Jobs de fondo portados — 4 asyncio.Task en lifespan
-FastAPI: poller, offline check, alert sync, pedidos pendientes; suite verde:
-lint-imports 12/12, ruff clean, mypy 0 errors, 519 tests pasan).
-Frontend: fundación + 5 pantallas ya portadas, sobre el backend ya portado de
-Estadísticas, Mail log, Config GET/PUT, Equipos nuevos, Alertas y Equipos Offline.
+Actualizado: 2026-08-11 (Frontend de Clientes portado — toggle de monitoreo,
+bulk enable/disable, ContactsModal CRUD de zonas, sección SDS piloto; tsc + eslint
+limpios). Backend 100% completo.
 
 ## Qué resta hacer, en orden
 
-1. **Frontend de Clientes y Equipos offline** — sin pantalla todavía (ver
-   `SDSINSUMOS_CARACTERIZACION_FRONTEND.md` para el relevamiento del legacy Vue de
-   esas dos vistas).
+1. **Frontend de Equipos Offline** — sin pantalla todavía (ver
+   `SDSINSUMOS_CARACTERIZACION_FRONTEND.md` §1.3 y §3.3 para el relevamiento del legacy
+   Vue; es la pantalla más compleja del frontend: 6 secciones colapsables por estado,
+   selección múltiple con baja masiva, banner de caídas de colector con 3 niveles).
+
+2. **Gaps que quedaron fuera de alcance en el frontend de Clientes** (baja prioridad):
+   - `import-from-supply` — autofill de contacto desde un número de pedido de supply
+     (endpoint `POST /customers/{id}/contacts/import-from-supply` existe en el backend,
+     no tiene botón en la UI todavía).
+   - `zone-contacts-import` preview/apply — importación masiva de contactos desde SDS
+     (era parte de ConfiguracionView en el legacy; endpoints en el backend, no
+     implementado en el frontend de Configuración ni de Clientes).
 
 **Ya no es un bloqueo**: las credenciales del login humano del PortalWeb SDS
 (`SDS_PORTAL_USERNAME`/`SDS_PORTAL_PASSWORD` en `.env`, cargadas 2026-08-11) están
@@ -97,9 +104,7 @@ Con `a0189fe`, el router de solicitudes del legacy (`routers/requests/` completo
 ## Portado hasta ahora (frontend)
 
 Handoff `design_handoff_sds_insumos/` (ya aprobado el 2026-08-10) + caracterización del
-legacy Vue en `SDSINSUMOS_CARACTERIZACION_FRONTEND.md`. Solo se construyó UI para las
-pantallas cuyo backend ya está portado (arriba) — **Clientes y Equipos Offline no tienen
-pantalla todavía**, no tiene backend que consumir.
+legacy Vue en `SDSINSUMOS_CARACTERIZACION_FRONTEND.md`. Resta solo **Equipos Offline**.
 
 | Pantalla | Ruta | Commit |
 |---|---|---|
@@ -109,6 +114,7 @@ pantalla todavía**, no tiene backend que consumir.
 | Equipos Nuevos + Configuración (6 secciones reales, no las 7 del handoff) | `/insumos/equipos-nuevos`, `/insumos/configuracion` | `561d033` |
 | Historial (5 pestañas) | `/insumos/historial` | `7a8a1c6` |
 | Fix `can()` para superadmin (bug preexistente en `session-provider.tsx`, no específico de insumos) | — | `86c1a42` |
+| Clientes (toggle individual + bulk, ContactsModal CRUD zonas, sección SDS piloto) | `/insumos/clientes` | `17f63ba` |
 
 Construido con 1 agente de fundación + 4 agentes en paralelo (uno por pantalla), cada
 uno verificado con `tsc --noEmit`, `eslint` y una pasada real en navegador (Playwright,
