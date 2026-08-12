@@ -1,26 +1,18 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ChevronsUpDown, ExternalLink, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ExternalLink, Eye, EyeOff, Loader2 } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import { StatusBadge } from "../shared";
+import { SortableHeader, StatusBadge, type SortableColumn } from "../shared";
 import { formatArgDateTime } from "../../utils/format";
 import type { SortState } from "../../hooks/use-table-sort";
 import type { NewDeviceRow } from "../../types";
 import { toneForMonitorStatus, type NewDeviceSortKey } from "./new-devices-utils";
 
-/** Tabla de Equipos Nuevos. No existe un componente de tabla ordenable
- * genérico en el proyecto, así que es `<table>` + Tailwind, con el estado de
- * orden inyectado desde afuera (`useTableSort`). */
+/** Tabla de Equipos Nuevos, con el estado de orden inyectado desde afuera
+ * (`useTableSort`) y el header ordenable compartido con las demás tablas del
+ * módulo (`SortableHeader`). */
 
-interface Column {
-  key: NewDeviceSortKey;
-  label: string;
-  /** Columnas que se esconden en pantallas chicas para que la tabla no
-   * necesite scroll horizontal siempre. */
-  className?: string;
-}
-
-const COLUMNS: readonly Column[] = [
+const COLUMNS: readonly SortableColumn<NewDeviceSortKey>[] = [
   { key: "model", label: "Modelo" },
   { key: "serial", label: "N° de serie" },
   { key: "customerName", label: "Cliente" },
@@ -112,38 +104,6 @@ export function NewDevicesTable({
   );
 }
 
-function SortableHeader({
-  column,
-  sort,
-  onToggleSort,
-}: {
-  column: Column;
-  sort: SortState<NewDeviceSortKey>;
-  onToggleSort: (key: NewDeviceSortKey) => void;
-}) {
-  const active = sort.key === column.key;
-  const Icon = !active ? ChevronsUpDown : sort.direction === "asc" ? ArrowUp : ArrowDown;
-  return (
-    <th
-      scope="col"
-      aria-sort={active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}
-      className={cn("px-4 py-3", column.className)}
-    >
-      <button
-        type="button"
-        onClick={() => onToggleSort(column.key)}
-        className={cn(
-          "inline-flex items-center gap-1 uppercase tracking-wide transition-colors hover:text-foreground",
-          active && "text-brand-orange",
-        )}
-      >
-        {column.label}
-        <Icon className={cn("h-3 w-3", !active && "opacity-40")} aria-hidden="true" />
-      </button>
-    </th>
-  );
-}
-
 function RowActions({
   row,
   canUpdate,
@@ -156,7 +116,7 @@ function RowActions({
   onToggleDismissed: (device: NewDeviceRow, dismissed: boolean) => void;
 }) {
   const iconButtonClass =
-    "rounded-[8px] border border-border p-2 text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40";
+    "cursor-pointer rounded-[8px] border border-border p-2 text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-40";
   return (
     <div className="flex items-center justify-end gap-1.5">
       {row.registrationUrl && (

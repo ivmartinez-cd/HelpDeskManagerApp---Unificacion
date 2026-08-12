@@ -23,7 +23,7 @@ interface HistorialPaginationProps {
 }
 
 const navButtonClass =
-  "flex items-center gap-1 rounded-[8px] border border-border px-2.5 py-1.5 font-body text-xs font-semibold text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40";
+  "flex cursor-pointer items-center gap-1 rounded-[8px] border border-border px-2.5 py-1.5 font-body text-xs font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-40";
 
 export function HistorialPagination({
   page,

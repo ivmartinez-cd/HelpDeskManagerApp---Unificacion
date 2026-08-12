@@ -1,34 +1,36 @@
 "use client";
 
 import { ExternalLink, Loader2 } from "lucide-react";
-import { StatusBadge } from "../shared";
+import { SortableHeader, StatusBadge } from "../shared";
+import type { SortState } from "../../hooks/use-table-sort";
 import type { AuditRow } from "../../types";
 import { EMPTY_VALUE, formatArgDateTime } from "../../utils/format";
+import { type AuditSortKey } from "./audit-sort";
 import { eventLabel, eventTone, sdsDeviceUrl, type RowAction } from "./audit-events";
 
 /** Tabla plana del historial de auditoría — la comparten las pestañas "Solo
  * Pedidos", "Acciones del Sistema" y "Todos los Registros" (mismas columnas
  * que el legacy; lo único que cambia entre pestañas es qué filas entran).
  *
- * La tabla no decide nada: recibe las filas ya filtradas y paginadas y una
- * función `actionFor` con la acción disponible por fila (ver
- * `audit-events.rowAction`). */
+ * La tabla no decide nada: recibe las filas ya filtradas (por el backend) y
+ * ordenadas (client-side, ver `audit-panel.tsx`). La acción disponible por
+ * fila (`row.action`) también la calcula el backend contra toda la tabla. */
 
-const COLUMNS = [
-  "Evento",
-  "F. Solicitud",
-  "F. Carga",
-  "Cliente",
-  "Serie",
-  "SKU",
-  "Insumo",
-  "% al cargar",
-  "Días rest.",
-  "Págs. rest.",
-  "Pedido CD",
-  "Detalle",
-  "Acción",
-] as const;
+const COLUMNS: readonly { key: AuditSortKey | null; label: string }[] = [
+  { key: "event", label: "Evento" },
+  { key: "hp_request_time", label: "F. Solicitud" },
+  { key: "created_at", label: "F. Carga" },
+  { key: "customer_name", label: "Cliente" },
+  { key: "device_serial", label: "Serie" },
+  { key: "sku", label: "SKU" },
+  { key: "description", label: "Insumo" },
+  { key: "initial_percent_left", label: "% al cargar" },
+  { key: "initial_days_left", label: "Días rest." },
+  { key: "initial_pages_left", label: "Págs. rest." },
+  { key: "internal_order_id", label: "Pedido CD" },
+  { key: null, label: "Detalle" },
+  { key: null, label: "Acción" },
+];
 
 const thClass =
   "whitespace-nowrap px-3 py-2.5 text-left font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground";
@@ -38,7 +40,6 @@ const mutedClass = "font-body text-[12px] text-muted-foreground";
 
 interface AuditTableProps {
   rows: AuditRow[];
-  actionFor: (row: AuditRow) => RowAction;
   /** El usuario tiene permiso para anular/vincular. */
   canAct: boolean;
   /** `hp_request_id` de la fila con una acción en vuelo. */
@@ -47,28 +48,41 @@ interface AuditTableProps {
   onReconcile: (row: AuditRow) => void;
   onDetail: (row: AuditRow) => void;
   loading: boolean;
+  sort: SortState<AuditSortKey>;
+  onToggleSort: (key: AuditSortKey) => void;
 }
 
 export function AuditTable({
   rows,
-  actionFor,
   canAct,
   busyRequestId,
   onCancel,
   onReconcile,
   onDetail,
   loading,
+  sort,
+  onToggleSort,
 }: AuditTableProps) {
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-border bg-muted/40">
-            {COLUMNS.map((column) => (
-              <th key={column} scope="col" className={thClass}>
-                {column}
-              </th>
-            ))}
+            {COLUMNS.map((column) =>
+              column.key !== null ? (
+                <SortableHeader
+                  key={column.key}
+                  column={{ key: column.key, label: column.label }}
+                  sort={sort}
+                  onToggleSort={onToggleSort}
+                  thClassName={thClass}
+                />
+              ) : (
+                <th key={column.label} scope="col" className={thClass}>
+                  {column.label}
+                </th>
+              ),
+            )}
           </tr>
         </thead>
         <tbody>
@@ -84,7 +98,7 @@ export function AuditTable({
           )}
 
           {rows.map((row) => {
-            const action = actionFor(row);
+            const action: RowAction = row.action ?? null;
             const busy = busyRequestId !== null && busyRequestId === row.hp_request_id;
             const deviceUrl = sdsDeviceUrl(row.device_id);
             return (
@@ -145,7 +159,7 @@ export function AuditTable({
                   <button
                     type="button"
                     onClick={() => onDetail(row)}
-                    className="rounded-[8px] border border-border px-2.5 py-1 font-body text-[12px] font-semibold text-foreground transition-colors hover:bg-muted"
+                    className="cursor-pointer rounded-[8px] border border-border px-2.5 py-1 font-body text-[12px] font-semibold text-foreground transition-colors hover:bg-muted"
                   >
                     Detalles
                   </button>
@@ -190,8 +204,8 @@ function RowActionCell({ action, busy, onCancel, onReconcile }: RowActionCellPro
       }
       className={
         isCancel
-          ? "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[8px] bg-[#eab308] px-2.5 py-1 font-body text-[12px] font-bold text-white transition-colors hover:bg-[#ca9a04] disabled:pointer-events-none disabled:opacity-50"
-          : "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[8px] border border-border px-2.5 py-1 font-body text-[12px] font-semibold text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+          ? "inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[8px] bg-[#eab308] px-2.5 py-1 font-body text-[12px] font-bold text-white transition-colors hover:bg-[#ca9a04] disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50"
+          : "inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[8px] border border-border px-2.5 py-1 font-body text-[12px] font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50"
       }
     >
       {busy && <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />}

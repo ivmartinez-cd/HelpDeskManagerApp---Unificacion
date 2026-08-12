@@ -28,10 +28,14 @@ export type NumericConfigKey =
 
 export type BooleanConfigKey = "autoloadEnabled" | "alertWorkHoursEnabled";
 
-export type ConfigFieldKey = NumericConfigKey | BooleanConfigKey | "logisticsMailTo";
+/** Los dos campos de "un mail por línea" — mismo tipo de control, distinta key. */
+export type EmailsConfigKey = "logisticsMailTo" | "opsAlertMailTo";
+
+export type ConfigFieldKey = NumericConfigKey | BooleanConfigKey | EmailsConfigKey;
 
 export type ConfigFormState = Record<NumericConfigKey, string> &
-  Record<BooleanConfigKey, boolean> & { logisticsMailTo: string };
+  Record<BooleanConfigKey, boolean> &
+  Record<EmailsConfigKey, string>;
 
 export const NUMERIC_CONFIG_KEYS: readonly NumericConfigKey[] = [
   "thresholdCritical",
@@ -59,6 +63,7 @@ export function toFormState(config: InsumosConfig): ConfigFormState {
     autoloadEnabled: config.autoloadEnabled,
     alertWorkHoursEnabled: config.alertWorkHoursEnabled,
     logisticsMailTo: config.logisticsMailTo.join("\n"),
+    opsAlertMailTo: config.opsAlertMailTo.join("\n"),
   };
 }
 
@@ -90,6 +95,7 @@ export function toPayload(form: ConfigFormState): InsumosConfigPayload {
     autoloadEnabled: form.autoloadEnabled,
     alertWorkHoursEnabled: form.alertWorkHoursEnabled,
     logisticsMailTo: parseEmails(form.logisticsMailTo),
+    opsAlertMailTo: parseEmails(form.opsAlertMailTo),
   };
 }
 

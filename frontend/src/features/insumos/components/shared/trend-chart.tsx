@@ -217,7 +217,7 @@ export function TrendChart({
                     onClick={() => onPeriodChange?.(period.key)}
                     aria-pressed={active}
                     className={cn(
-                      "rounded-[6px] px-3 py-1.5 font-body text-xs font-semibold transition-colors",
+                      "cursor-pointer rounded-[6px] px-3 py-1.5 font-body text-xs font-semibold transition-colors",
                       active
                         ? "bg-brand-orange text-white"
                         : "border border-brand-orange/30 text-brand-orange hover:bg-brand-orange/10",

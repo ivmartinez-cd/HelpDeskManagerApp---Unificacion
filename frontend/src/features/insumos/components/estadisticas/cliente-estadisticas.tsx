@@ -89,7 +89,7 @@ export function ClienteEstadisticas({ id }: { id: string }) {
             type="button"
             onClick={() => window.print()}
             disabled={!data}
-            className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3.5 py-2.5 font-body text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-[8px] border border-border bg-card px-3.5 py-2.5 font-body text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Printer className="h-4 w-4 flex-none text-brand-orange" aria-hidden="true" />
             Imprimir reporte

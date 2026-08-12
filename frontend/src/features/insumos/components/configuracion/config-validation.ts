@@ -40,6 +40,7 @@ export function validateConfigForm(form: ConfigFormState): ConfigErrors {
   applyThresholdOrder(form, errors);
   applyWorkHourOrder(form, errors);
   applyEmails(form, errors);
+  applyOpsAlertEmails(form, errors);
 
   return errors;
 }
@@ -73,6 +74,22 @@ function applyEmails(form: ConfigFormState, errors: ConfigErrors): void {
   const invalid = parseEmails(form.logisticsMailTo).filter((email) => !EMAIL_RE.test(email));
   if (invalid.length > 0) {
     errors.logisticsMailTo = `Email(s) inválido(s) en logística: ${invalid.join(", ")}`;
+  }
+}
+
+/** A diferencia de logística, este campo nunca puede quedar vacío — sin un
+ * destinatario, una falla real del sistema no le llega a nadie. Mismo
+ * resguardo que `settings_validation._validate_ops_alert_emails` en el
+ * backend (incidente real 2026-08-12, ver CLAUDE.md). */
+function applyOpsAlertEmails(form: ConfigFormState, errors: ConfigErrors): void {
+  const emails = parseEmails(form.opsAlertMailTo);
+  if (emails.length === 0) {
+    errors.opsAlertMailTo = "Tiene que haber al menos un email de alertas técnicas.";
+    return;
+  }
+  const invalid = emails.filter((email) => !EMAIL_RE.test(email));
+  if (invalid.length > 0) {
+    errors.opsAlertMailTo = `Email(s) inválido(s) en alertas técnicas: ${invalid.join(", ")}`;
   }
 }
 

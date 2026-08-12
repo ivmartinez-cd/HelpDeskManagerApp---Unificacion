@@ -96,7 +96,7 @@ export function CustomerRequestsPanel({
               type="button"
               disabled={batchRunning || selectedCount === 0}
               onClick={() => void actions.loadSelected(customerId, customer.name)}
-              className="inline-flex items-center gap-1.5 rounded-[8px] bg-brand-orange px-3 py-1.5 font-body text-xs font-bold text-white transition-colors hover:bg-brand-orange-hover disabled:opacity-50"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-[8px] bg-brand-orange px-3 py-1.5 font-body text-xs font-bold text-white transition-colors hover:bg-brand-orange-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               {batchRunning && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
               {batchRunning && progress
@@ -107,7 +107,7 @@ export function CustomerRequestsPanel({
               type="button"
               disabled={batchRunning || selectedCount === 0}
               onClick={() => actions.openBatchDismiss(customerId, customer.name)}
-              className="rounded-[8px] border border-[rgba(239,68,68,.35)] px-3 py-1.5 font-body text-xs font-bold text-[#dc2626] transition-colors hover:bg-[rgba(239,68,68,.08)] disabled:opacity-50 dark:text-[#f87171]"
+              className="cursor-pointer rounded-[8px] border border-[rgba(239,68,68,.35)] px-3 py-1.5 font-body text-xs font-bold text-[#dc2626] transition-colors hover:bg-[rgba(239,68,68,.08)] disabled:cursor-not-allowed disabled:opacity-50 dark:text-[#f87171]"
             >
               Descartar seleccionados ({selectedCount})
             </button>

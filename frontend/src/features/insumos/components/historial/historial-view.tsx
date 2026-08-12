@@ -7,10 +7,11 @@ import { cn } from "@/shared/utils/cn";
 import { useSession } from "@/services/session-provider";
 import type { DateRange } from "../../types";
 import { formatArgTime } from "../../utils/format";
-import { useHistorialAudit } from "../../hooks/use-historial-audit";
+import { useDebouncedValue } from "../../hooks/use-debounced-value";
+import { useHistorialAudit, type AuditQuery } from "../../hooks/use-historial-audit";
 import { useHistorialMailLog } from "../../hooks/use-historial-mail-log";
 import { useHistorialPendingOrders } from "../../hooks/use-historial-pending-orders";
-import { isSystemEvent } from "./audit-events";
+import { EVENT_FILTER_ALL } from "./audit-events";
 import { AuditPanel } from "./audit-panel";
 import { HistorialFilters } from "./historial-filters";
 import { MailLogPanel } from "./mail-log-panel";
@@ -29,13 +30,19 @@ import {
  * - La pestaña activa vive en `?tab=` y se escribe con `router.replace` (no
  *   `push`): cambiar de pestaña no es navegación, no tiene que ensuciar el
  *   botón "atrás" del navegador.
- * - El historial de auditoría se pide siempre al montar, porque alimenta los
- *   contadores de tres pestañas. El log de mails es lazy y los pedidos
- *   pendientes (el endpoint más caro) solo se piden y se pollean con su
- *   pestaña a la vista.
+ * - El historial de auditoría se pide siempre (con `scope="all"` fuera de sus
+ *   tres pestañas), porque `audit.counts` alimenta los contadores de las tres
+ *   pestañas de auditoría sin importar cuál está a la vista. El log de mails
+ *   es lazy y los pedidos pendientes (el endpoint más caro) solo se piden y
+ *   se pollean con su pestaña a la vista.
+ * - Esta pantalla es la dueña de todo el estado de filtros de auditoría
+ *   (`eventFilter`, `page`, `size`, más `search`/`range` que ya tenía) y arma
+ *   el `AuditQuery` para `useHistorialAudit` — `AuditPanel` es un consumidor,
+ *   no un dueño, de ese estado.
  */
 
 const PENDING_STATUS = "Pendiente";
+const PAGE_SIZES = [25, 50, 100] as const;
 
 export function HistorialView() {
   const router = useRouter();
@@ -54,7 +61,46 @@ export function HistorialView() {
   const [range, setRange] = useState<DateRange | null>(null);
   const [includeDelivered, setIncludeDelivered] = useState(false);
 
-  const audit = useHistorialAudit();
+  // Estado de filtros de la tabla de auditoría (pestañas Solo Pedidos /
+  // Acciones del Sistema / Todos): `search`/`range` son compartidos con la
+  // pestaña Pendientes, pero `eventFilter`/`page`/`size` son propios de acá.
+  const [eventFilter, setEventFilter] = useState(EVENT_FILTER_ALL);
+  const [page, setPage] = useState(1);
+  const [size, setSize] = useState<number>(PAGE_SIZES[0]);
+
+  // La búsqueda que llega al backend va debounceada — el input (`search`) se
+  // actualiza en cada tecla para que se sienta inmediato, pero el fetch se
+  // retrasa 350ms. Solo aplica a la tabla de auditoría: Pendientes y Mails
+  // siguen filtrando client-side sobre `search` crudo.
+  const debouncedSearch = useDebouncedValue(search, 350);
+
+  // Scope del audit fetch: el tab activo si es una de las tres pestañas de
+  // auditoría, o "all" en cualquier otra (Pendientes/Mails) — así
+  // `audit.counts` sigue alimentando los tres badges aunque ninguna esté a
+  // la vista.
+  const auditScope: AuditQuery["scope"] = isAuditTab(tab)
+    ? (tab as AuditQuery["scope"])
+    : "all";
+
+  // Volver a página 1 cuando cambia cualquier filtro que afecte qué trae el
+  // backend (ajuste de estado durante el render, no un efecto). El orden de
+  // columnas queda afuera a propósito: es client-side sobre la página ya
+  // traída, cambiarlo no cambia qué página pedir.
+  const auditFilterKey = `${auditScope}/${eventFilter}/${debouncedSearch}/${range?.startDate ?? ""}-${range?.endDate ?? ""}/${size}`;
+  const [prevAuditFilterKey, setPrevAuditFilterKey] = useState(auditFilterKey);
+  if (auditFilterKey !== prevAuditFilterKey) {
+    setPrevAuditFilterKey(auditFilterKey);
+    setPage(1);
+  }
+
+  const audit = useHistorialAudit({
+    scope: auditScope,
+    eventFilter,
+    search: debouncedSearch,
+    range,
+    page,
+    size,
+  });
   const pending = useHistorialPendingOrders({ active: tab === "pendientes", includeDelivered });
   const mailLog = useHistorialMailLog(tab === "mails");
 
@@ -75,12 +121,12 @@ export function HistorialView() {
   const counts = useMemo(
     () => ({
       pendientes: pending.orders.filter((order) => order.supplyStatus === PENDING_STATUS).length,
-      orders: audit.rows.filter((row) => !isSystemEvent(row)).length,
-      system: audit.rows.filter(isSystemEvent).length,
-      all: audit.total,
+      orders: audit.counts.orders,
+      system: audit.counts.system,
+      all: audit.counts.all,
       mails: mailLog.loaded ? mailLog.total : null,
     }),
-    [pending.orders, audit.rows, audit.total, mailLog.loaded, mailLog.total],
+    [pending.orders, audit.counts, mailLog.loaded, mailLog.total],
   );
 
   const refreshing =
@@ -111,7 +157,7 @@ export function HistorialView() {
           type="button"
           onClick={refresh}
           disabled={refreshing}
-          className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3.5 py-2.5 font-body text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex cursor-pointer items-center gap-2 rounded-[8px] border border-border bg-card px-3.5 py-2.5 font-body text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50"
         >
           <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} aria-hidden="true" />
           Actualizar
@@ -164,12 +210,18 @@ export function HistorialView() {
 
       {isAuditTab(tab) && (
         <AuditPanel
-          tab={tab as "orders" | "system" | "all"}
           audit={audit}
+          eventFilter={eventFilter}
+          onEventFilterChange={setEventFilter}
           search={search}
           onSearchChange={setSearch}
           range={range}
           onRangeChange={setRange}
+          page={page}
+          onPageChange={setPage}
+          size={size}
+          onSizeChange={setSize}
+          sizes={PAGE_SIZES}
           canAct={canAct}
         />
       )}

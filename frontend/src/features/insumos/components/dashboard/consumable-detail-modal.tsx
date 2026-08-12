@@ -3,10 +3,11 @@
 import { useMemo, type ReactNode } from "react";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { brandButtonClasses } from "@/shared/components/ui/brand-form";
-import { TonerBar, TrendChart, type TrendAnnotation } from "../shared";
+import { StatusBadge, TrendChart, tonerLevelColor, type TrendAnnotation } from "../shared";
 import { useConsumableDetail } from "../../hooks/use-consumable-detail";
 import type { ConsumableHistoryPoint, RequestRow } from "../../types";
 import { EMPTY_VALUE, formatArgDateTime, formatPlainDate } from "../../utils/format";
+import { toneForRequestStatus, toneForSupplyStatus } from "./consumable-status-tones";
 
 /** Detalle de un consumible: el componente más caro del legacy
  * (`ConsumableDetailModal.vue`, 799 líneas con ApexCharts).
@@ -85,6 +86,58 @@ function Note({ children }: { children: ReactNode }) {
   return <p className="font-body text-xs text-muted-foreground">{children}</p>;
 }
 
+function StatBlock({
+  label,
+  value,
+  size = "normal",
+}: {
+  label: string;
+  value: ReactNode;
+  size?: "normal" | "large";
+}) {
+  return (
+    <div>
+      <p className="font-body text-[11px] text-muted-foreground">{label}</p>
+      <p
+        className={
+          size === "large"
+            ? "mt-0.5 font-heading text-2xl font-extrabold text-brand-orange"
+            : "mt-0.5 font-body text-[12.5px] font-bold text-foreground"
+        }
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+const LEGEND_ITEMS = [
+  { swatch: <span className="h-2 w-2 rounded-full bg-[#ef4444]" />, label: "Solicitud actual" },
+  {
+    swatch: <span className="h-2 w-2 rounded-full bg-[#F7941D]" />,
+    label: "Otras solicitudes",
+  },
+] as const;
+
+function ChartLegend({ showNoContact }: { showNoContact: boolean }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-body text-[11px] text-muted-foreground">
+      {LEGEND_ITEMS.map((item) => (
+        <span key={item.label} className="inline-flex items-center gap-1.5">
+          {item.swatch}
+          {item.label}
+        </span>
+      ))}
+      {showNoContact && (
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-[2px] bg-[#a16207] dark:bg-[#eab308]" />
+          Sin contacto
+        </span>
+      )}
+    </div>
+  );
+}
+
 /** Índice del punto del gráfico más cercano (hacia atrás) a una fecha dada. */
 function indexForDate(points: ConsumableHistoryPoint[], iso: string | null | undefined): number {
   if (!iso || points.length === 0) return -1;
@@ -144,14 +197,9 @@ export function ConsumableDetailModal({ row, onClose }: ConsumableDetailModalPro
   return (
     <BrandModal isOpen onClose={onClose} title={row.description} widthPx={1080}>
       <div className="flex flex-col gap-5">
-        <div className="flex flex-wrap items-center gap-4">
-          <span className="font-mono text-[13px] text-muted-foreground">
-            {row.serial} · {row.sku} · {row.store || EMPTY_VALUE}
-          </span>
-          <div className="min-w-[220px] flex-1">
-            <TonerBar percent={row.percentLeft} size="lg" showValue />
-          </div>
-        </div>
+        <p className="-mt-2 font-mono text-[13px] text-muted-foreground">
+          {row.serial} · <span className="text-brand-orange">{row.sku}</span>
+        </p>
 
         <div className="grid gap-5 lg:grid-cols-[minmax(240px,1fr)_minmax(320px,2fr)_minmax(200px,1fr)]">
           <section>
@@ -166,6 +214,7 @@ export function ConsumableDetailModal({ row, onClose }: ConsumableDetailModalPro
               <InfoList
                 rows={[
                   { term: "Cliente", detail: row.customerName ?? EMPTY_VALUE },
+                  { term: "Sucursal", detail: row.store || EMPTY_VALUE },
                   { term: "Modelo", detail: detail.data?.model || EMPTY_VALUE },
                   { term: "Tipo", detail: labelled(TYPE_LABELS, detail.data?.type) },
                   { term: "Color", detail: labelled(COLOUR_LABELS, detail.data?.colour) },
@@ -189,6 +238,17 @@ export function ConsumableDetailModal({ row, onClose }: ConsumableDetailModalPro
                     detail: detail.data?.reorderYield ?? "Desconocido",
                   },
                   { term: "Capacidad", detail: detail.data?.capacity ?? EMPTY_VALUE },
+                  {
+                    term: "Nivel actual",
+                    detail:
+                      row.percentLeft !== null && row.percentLeft !== undefined ? (
+                        <span style={{ color: tonerLevelColor(row.percentLeft) }}>
+                          {Math.round(row.percentLeft)}%
+                        </span>
+                      ) : (
+                        EMPTY_VALUE
+                      ),
+                  },
                   { term: "Días restantes", detail: row.daysLeft },
                   { term: "Páginas restantes", detail: row.pagesLeft ?? EMPTY_VALUE },
                   { term: "Última lectura", detail: formatArgDateTime(detail.data?.lastRead) },
@@ -220,10 +280,9 @@ export function ConsumableDetailModal({ row, onClose }: ConsumableDetailModalPro
                   formatValue={(value) => `${Math.round(value)}%`}
                   className="border-0 bg-transparent p-0"
                 />
-                <p className="mt-2 font-body text-[11px] text-muted-foreground">
-                  Punto rojo: solicitud actual · punto naranja: otras solicitudes del mismo
-                  consumible.
-                </p>
+                <div className="mt-2">
+                  <ChartLegend showNoContact={windows.length > 0} />
+                </div>
                 {windows.length > 0 && (
                   <div className="mt-2 flex flex-col gap-1">
                     <p className="font-body text-[11px] font-bold text-muted-foreground">
@@ -250,21 +309,25 @@ export function ConsumableDetailModal({ row, onClose }: ConsumableDetailModalPro
             ) : detail.loading ? (
               <Note>Cargando…</Note>
             ) : (
-              <>
-                <InfoList
-                  rows={[
-                    { term: "Lectura inicial", detail: formatArgDateTime(detail.data?.firstRead) },
-                    { term: "Días monitoreado", detail: detail.data?.daysMonitored ?? EMPTY_VALUE },
-                    {
-                      term: "Ciclos monitoreados",
-                      detail: detail.data?.engineCyclesMonitored ?? EMPTY_VALUE,
-                    },
-                  ]}
+              <div className="flex flex-col gap-3">
+                <StatBlock
+                  label="Fecha de lectura inicial"
+                  value={formatArgDateTime(detail.data?.firstRead)}
                 />
-                <p className="mt-2 font-body text-[11px] text-muted-foreground">
+                <StatBlock
+                  label="Días en"
+                  value={detail.data?.daysMonitored ?? EMPTY_VALUE}
+                  size="large"
+                />
+                <StatBlock
+                  label="Ciclos de trabajo en"
+                  value={detail.data?.engineCyclesMonitored ?? EMPTY_VALUE}
+                  size="large"
+                />
+                <p className="rounded-[10px] border border-border bg-muted/40 p-3 font-body text-[11px] text-muted-foreground">
                   Nivel inicial y % utilizado no están disponibles fuera del portal HP.
                 </p>
-              </>
+              </div>
             )}
           </section>
         </div>
@@ -299,12 +362,23 @@ export function ConsumableDetailModal({ row, onClose }: ConsumableDetailModalPro
                       </td>
                       <td className="px-2 py-1.5 font-mono">{item.requestId}</td>
                       <td className="px-2 py-1.5">{labelled(REASON_LABELS, item.reason)}</td>
-                      <td className="px-2 py-1.5">
+                      <td
+                        className="px-2 py-1.5 font-semibold"
+                        style={
+                          item.requestedLevel !== null && item.requestedLevel !== undefined
+                            ? { color: tonerLevelColor(item.requestedLevel) }
+                            : undefined
+                        }
+                      >
                         {item.requestedLevel !== null && item.requestedLevel !== undefined
                           ? `${item.requestedLevel}%`
                           : EMPTY_VALUE}
                       </td>
-                      <td className="px-2 py-1.5">{item.statusLabel}</td>
+                      <td className="px-2 py-1.5">
+                        <StatusBadge tone={toneForRequestStatus(item.status)}>
+                          {item.statusLabel}
+                        </StatusBadge>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -348,12 +422,16 @@ export function ConsumableDetailModal({ row, onClose }: ConsumableDetailModalPro
                             href={supply.supplyUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-brand-orange underline underline-offset-2"
+                            className="cursor-pointer underline-offset-2 hover:underline"
                           >
-                            {supply.estado}
+                            <StatusBadge tone={toneForSupplyStatus(supply.estado)}>
+                              {supply.estado}
+                            </StatusBadge>
                           </a>
                         ) : (
-                          supply.estado
+                          <StatusBadge tone={toneForSupplyStatus(supply.estado)}>
+                            {supply.estado}
+                          </StatusBadge>
                         )}
                       </td>
                     </tr>

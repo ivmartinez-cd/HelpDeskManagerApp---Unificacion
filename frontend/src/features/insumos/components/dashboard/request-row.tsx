@@ -101,7 +101,7 @@ export function RequestRow({
               type="button"
               onClick={onOpenDetail}
               title="Ver detalle de este consumible"
-              className="flex w-[104px] items-center gap-1.5"
+              className="flex w-[104px] cursor-pointer items-center gap-1.5"
             >
               <TonerBar percent={row.percentLeft} showValue className="w-full" />
             </button>
@@ -171,7 +171,7 @@ export function RequestRow({
                 <button
                   type="button"
                   onClick={() => setDiagnosisOpen((open) => !open)}
-                  className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-brand-orange"
+                  className="inline-flex cursor-pointer items-center gap-0.5 text-[10px] font-semibold text-brand-orange"
                 >
                   <ChevronRight
                     className={`h-2.5 w-2.5 transition-transform ${diagnosisOpen ? "rotate-90" : ""}`}
@@ -185,7 +185,7 @@ export function RequestRow({
                   <button
                     type="button"
                     onClick={onValidationOverride}
-                    className="text-[11px] font-semibold text-brand-orange underline underline-offset-2"
+                    className="cursor-pointer text-[11px] font-semibold text-brand-orange underline underline-offset-2"
                   >
                     Cargar igual
                   </button>
@@ -194,7 +194,7 @@ export function RequestRow({
                     type="button"
                     onClick={onDismiss}
                     disabled={batchRunning}
-                    className="text-[11px] font-semibold text-[#dc2626] underline underline-offset-2 disabled:opacity-50 dark:text-[#f87171]"
+                    className="cursor-pointer text-[11px] font-semibold text-[#dc2626] underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:text-[#f87171]"
                   >
                     Descartar
                   </button>
@@ -210,7 +210,7 @@ export function RequestRow({
                     type="button"
                     onClick={onLoad}
                     disabled={loading || batchRunning}
-                    className="inline-flex items-center gap-1 rounded-[6px] bg-brand-orange px-2 py-1 text-[10px] font-bold text-white transition-colors hover:bg-brand-orange-hover disabled:opacity-50"
+                    className="inline-flex cursor-pointer items-center gap-1 rounded-[6px] bg-brand-orange px-2 py-1 text-[10px] font-bold text-white transition-colors hover:bg-brand-orange-hover disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {loading && <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />}
                     {loading ? "Cargando…" : "Cargar"}
@@ -219,7 +219,7 @@ export function RequestRow({
                     type="button"
                     onClick={onDismiss}
                     disabled={loading || batchRunning}
-                    className="rounded-[6px] border border-[rgba(239,68,68,.35)] px-2 py-1 text-[10px] font-bold text-[#dc2626] transition-colors hover:bg-[rgba(239,68,68,.08)] disabled:opacity-50 dark:text-[#f87171]"
+                    className="cursor-pointer rounded-[6px] border border-[rgba(239,68,68,.35)] px-2 py-1 text-[10px] font-bold text-[#dc2626] transition-colors hover:bg-[rgba(239,68,68,.08)] disabled:cursor-not-allowed disabled:opacity-50 dark:text-[#f87171]"
                   >
                     Descartar
                   </button>
@@ -235,7 +235,7 @@ export function RequestRow({
           <button
             type="button"
             onClick={onOpenDetail}
-            className="rounded-[6px] bg-brand-orange/10 px-2 py-1 text-[11px] font-bold text-brand-orange transition-colors hover:bg-brand-orange/20"
+            className="cursor-pointer rounded-[6px] bg-brand-orange/10 px-2 py-1 text-[11px] font-bold text-brand-orange transition-colors hover:bg-brand-orange/20"
           >
             Ver
           </button>

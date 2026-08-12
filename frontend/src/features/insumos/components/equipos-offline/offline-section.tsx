@@ -52,7 +52,7 @@ export function OfflineSection({
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          "flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-muted/40",
+          "flex w-full cursor-pointer items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-muted/40",
           isOutageSection && "border-l-4 border-l-[#ef4444]",
           isBodegaSection && "border-l-4 border-l-[#eab308]",
         )}

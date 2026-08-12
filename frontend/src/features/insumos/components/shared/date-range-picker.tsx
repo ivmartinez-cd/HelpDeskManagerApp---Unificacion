@@ -195,7 +195,7 @@ export function DateRangePicker({
             onClick={() => applyPreset(key)}
             aria-pressed={preset === key}
             className={cn(
-              "rounded-[8px] px-3 py-2 text-left font-body text-sm transition-colors",
+              "cursor-pointer rounded-[8px] px-3 py-2 text-left font-body text-sm transition-colors",
               preset === key
                 ? "border-l-[3px] border-brand-orange bg-brand-orange/10 font-bold text-brand-orange"
                 : "text-foreground hover:bg-brand-orange/[.06]",
@@ -240,14 +240,14 @@ export function DateRangePicker({
             <button
               type="button"
               onClick={handleClear}
-              className="rounded-[8px] border border-border px-4 py-2.5 font-body text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-muted"
+              className="cursor-pointer rounded-[8px] border border-border px-4 py-2.5 font-body text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-muted"
             >
               Limpiar
             </button>
             <button
               type="button"
               onClick={handleApply}
-              className="rounded-[8px] bg-brand-orange px-4 py-2.5 font-body text-[13px] font-bold text-white transition-colors hover:bg-brand-orange-hover"
+              className="cursor-pointer rounded-[8px] bg-brand-orange px-4 py-2.5 font-body text-[13px] font-bold text-white transition-colors hover:bg-brand-orange-hover"
             >
               Aplicar
             </button>
@@ -304,7 +304,7 @@ function MonthGrid({
             type="button"
             onClick={onPrev}
             aria-label="Mes anterior"
-            className="rounded-[6px] p-1 text-muted-foreground hover:text-brand-orange"
+            className="cursor-pointer rounded-[6px] p-1 text-muted-foreground hover:text-brand-orange"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -317,7 +317,7 @@ function MonthGrid({
             type="button"
             onClick={onNext}
             aria-label="Mes siguiente"
-            className="rounded-[6px] p-1 text-muted-foreground hover:text-brand-orange"
+            className="cursor-pointer rounded-[6px] p-1 text-muted-foreground hover:text-brand-orange"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -368,7 +368,7 @@ function MonthGrid({
               }}
               className={cn(
                 "flex h-9 w-9 items-center justify-center font-body text-[13px] transition-colors",
-                disabled && "cursor-not-allowed text-muted-foreground/40",
+                disabled ? "cursor-not-allowed text-muted-foreground/40" : "cursor-pointer",
                 !disabled && !isStart && !isEnd && !inRange && "text-foreground hover:bg-muted",
                 inRange && "bg-brand-orange/[.12] text-brand-orange",
                 (isStart || isEnd) && "bg-brand-orange font-bold text-white",
@@ -428,7 +428,7 @@ export function DateRangePickerPopover({
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
         className={cn(
-          "flex items-center gap-2 rounded-[8px] border border-border bg-card px-3.5 py-2.5 font-body text-sm transition-colors hover:bg-muted",
+          "flex cursor-pointer items-center gap-2 rounded-[8px] border border-border bg-card px-3.5 py-2.5 font-body text-sm transition-colors hover:bg-muted",
           value ? "font-semibold text-foreground" : "text-muted-foreground",
         )}
       >

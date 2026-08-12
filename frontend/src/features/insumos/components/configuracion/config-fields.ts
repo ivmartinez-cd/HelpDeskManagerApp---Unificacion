@@ -2,7 +2,7 @@ import type { BooleanConfigKey, ConfigFieldKey, NumericConfigKey } from "./confi
 
 /** Metadata de los campos reales de `GET/PUT /api/insumos/config` — no hay
  * campos inventados acá: la lista es exactamente la de `ConfigResponse` del
- * backend (17 campos).
+ * backend (18 campos).
  *
  * `min`/`max` y `rangeError` replican **literalmente** las validaciones de
  * `domain/services/settings_validation.py`, con el mismo mensaje en español
@@ -39,7 +39,7 @@ export interface BooleanFieldSpec {
 
 export interface EmailsFieldSpec {
   kind: "emails";
-  key: "logisticsMailTo";
+  key: "logisticsMailTo" | "opsAlertMailTo";
   label: string;
   hint?: string;
 }
@@ -267,6 +267,20 @@ export const CONFIG_SECTIONS: readonly ConfigSectionSpec[] = [
         key: "logisticsMailTo",
         label: "Emails de logística",
         hint: "Vacío = no se envían avisos",
+      },
+    ],
+  },
+  {
+    id: "alertas_tecnicas",
+    title: "Alertas técnicas",
+    description:
+      "A quién avisa el poller de fondo si deja de responder o se recupera. Separado a propósito de logística: es una alerta técnica del sistema, no un aviso de negocio — nunca debe ir a la misma bandeja.",
+    fields: [
+      {
+        kind: "emails",
+        key: "opsAlertMailTo",
+        label: "Emails de alertas técnicas",
+        hint: "Requerido — no puede quedar vacío",
       },
     ],
   },

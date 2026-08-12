@@ -1,20 +1,14 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ChevronsUpDown, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import { StatusBadge, type StatusTone } from "../shared";
+import { SortableHeader, StatusBadge, type SortableColumn, type StatusTone } from "../shared";
 import { formatArgDateTime } from "../../utils/format";
 import type { SortState } from "../../hooks/use-table-sort";
 import type { OfflineDeviceRow } from "../../types";
 import type { OfflineSortKey } from "./offline-utils";
 
-interface Column {
-  key: OfflineSortKey;
-  label: string;
-  className?: string;
-}
-
-const COLUMNS: readonly Column[] = [
+const COLUMNS: readonly SortableColumn<OfflineSortKey>[] = [
   { key: "model", label: "Modelo" },
   { key: "serial", label: "N° de serie" },
   { key: "customerName", label: "Cliente" },
@@ -135,38 +129,6 @@ export function OfflineDevicesTable({
   );
 }
 
-function SortableHeader({
-  column,
-  sort,
-  onToggleSort,
-}: {
-  column: Column;
-  sort: SortState<OfflineSortKey>;
-  onToggleSort: (key: OfflineSortKey) => void;
-}) {
-  const active = sort.key === column.key;
-  const Icon = !active ? ChevronsUpDown : sort.direction === "asc" ? ArrowUp : ArrowDown;
-  return (
-    <th
-      scope="col"
-      aria-sort={active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}
-      className={cn("px-4 py-3", column.className)}
-    >
-      <button
-        type="button"
-        onClick={() => onToggleSort(column.key)}
-        className={cn(
-          "inline-flex items-center gap-1 uppercase tracking-wide transition-colors hover:text-foreground",
-          active && "text-brand-orange",
-        )}
-      >
-        {column.label}
-        <Icon className={cn("h-3 w-3", !active && "opacity-40")} aria-hidden="true" />
-      </button>
-    </th>
-  );
-}
-
 function OfflineRow({
   row,
   canUpdate,
@@ -186,7 +148,7 @@ function OfflineRow({
 }) {
   const selectable = row.deletable && !row.inMassOutage;
   const iconButtonClass =
-    "rounded-[8px] border border-border p-2 text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40";
+    "cursor-pointer rounded-[8px] border border-border p-2 text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-40";
 
   return (
     <tr

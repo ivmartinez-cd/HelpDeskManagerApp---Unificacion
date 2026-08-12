@@ -42,7 +42,7 @@ export function ConfigSectionCard({
         onClick={onToggle}
         aria-expanded={open}
         className={cn(
-          "flex w-full items-center gap-3 px-5 py-4 text-left transition-colors",
+          "flex w-full cursor-pointer items-center gap-3 px-5 py-4 text-left transition-colors",
           open ? "bg-brand-orange/5" : "hover:bg-muted/50",
         )}
       >
@@ -90,10 +90,10 @@ export function ConfigSectionCard({
                 <EmailsField
                   key={field.key}
                   spec={field}
-                  value={form.logisticsMailTo}
-                  error={errors.logisticsMailTo}
+                  value={form[field.key]}
+                  error={errors[field.key]}
                   disabled={disabled}
-                  onChange={(value) => onChange("logisticsMailTo", value)}
+                  onChange={(value) => onChange(field.key, value)}
                 />
               );
             }

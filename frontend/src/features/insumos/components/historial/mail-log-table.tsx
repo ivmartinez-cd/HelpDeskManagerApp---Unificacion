@@ -129,7 +129,7 @@ export function MailLogTable({ rows, loading, onDetail }: MailLogTableProps) {
                 <button
                   type="button"
                   onClick={() => onDetail(row)}
-                  className="rounded-[8px] border border-border px-2.5 py-1 font-body text-[12px] font-semibold text-foreground transition-colors hover:bg-muted"
+                  className="cursor-pointer rounded-[8px] border border-border px-2.5 py-1 font-body text-[12px] font-semibold text-foreground transition-colors hover:bg-muted"
                 >
                   Detalles
                 </button>

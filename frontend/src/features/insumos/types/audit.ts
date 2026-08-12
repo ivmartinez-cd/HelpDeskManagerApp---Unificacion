@@ -29,6 +29,33 @@ export interface AuditRow {
   initial_pages_left?: number | null;
   supply_url?: string | null;
   created_at?: string | null;
+  /** Acción que ofrece la fila, ya resuelta por el backend contra toda la
+   * tabla (`audit_router.py`) — el frontend ya no recalcula esto mirando
+   * `allRows` cargadas en el cliente. */
+  action?: "cancel" | "reconcile" | null;
+}
+
+/** Acción de fila del historial de auditoría. Vive acá (y no en
+ * `audit-events.ts`, que lo re-exporta) porque es parte del contrato del
+ * campo `AuditRow.action`. */
+export type RowAction = "cancel" | "reconcile" | null;
+
+/** Contadores de las tres pestañas de auditoría (`orders`/`system`/`all`),
+ * calculados por el backend contra el total filtrado — no contra lo cargado
+ * en el cliente. */
+export interface AuditTabCounts {
+  orders: number;
+  system: number;
+  all: number;
+}
+
+/** `GET /api/insumos/audit/summary`. Snake_case a propósito, como el resto de
+ * este archivo: viaja tal cual del backend, sin `serialization_alias`. */
+export interface AuditSummaryResponse {
+  by_event: Record<string, number>;
+  orders: number;
+  system: number;
+  total: number;
 }
 
 export interface MailLogRow {

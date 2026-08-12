@@ -10,8 +10,11 @@ import { EVENT_FILTER_OPTIONS } from "./audit-events";
  * evento (solo en las pestañas de auditoría) + rango de fechas (Patrón 4 en su
  * variante popover) + los controles propios de cada pestaña (`children`).
  *
- * Todos los filtros son client-side: ninguno de los tres endpoints del
- * Historial acepta filtros por query param (ver `use-historial-audit.ts`). */
+ * Este componente es puramente de presentación — no decide dónde se aplican
+ * los filtros. En las tres pestañas de auditoría (Solo Pedidos / Acciones del
+ * Sistema / Todos) los filtra `GET /api/insumos/audit` en SQL (ver
+ * `use-historial-audit.ts`); en Pendientes y Mails siguen siendo client-side
+ * sobre lo ya cargado, porque esos endpoints no aceptan esos query params. */
 
 interface HistorialFiltersProps {
   search: string;

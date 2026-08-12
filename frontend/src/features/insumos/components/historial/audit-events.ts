@@ -10,11 +10,16 @@
  * DISMISSED, AUTO_DISMISSED. `DEVICE_DELETED` es del legacy (baja de equipo
  * offline) y todavía no lo emite ningún caso de uso portado: se mantiene
  * mapeado para no romper cuando se porte Equipos Offline.
+ *
+ * El filtrado (evento, rango, búsqueda, scope orders/system) y la acción por
+ * fila ya NO se calculan acá: los resuelve `GET /api/insumos/audit` en SQL,
+ * `action` viaja en cada `AuditRow`. Este archivo se queda solo con lo que
+ * sigue siendo puramente de presentación (etiquetas, tonos, el vocabulario
+ * del `<select>` de eventos).
  */
 
-import type { AuditRow, DateRange } from "../../types";
+import type { AuditRow } from "../../types";
 import type { StatusTone } from "../shared";
-import { toArgDateKey } from "../../utils/format";
 
 export const EVENT_CREATED = "CREATED";
 export const EVENT_FAILED = "FAILED";
@@ -23,25 +28,6 @@ export const EVENT_CANCELLED = "CANCELLED";
 export const EVENT_DISMISSED = "DISMISSED";
 export const EVENT_AUTO_DISMISSED = "AUTO_DISMISSED";
 export const EVENT_DEVICE_DELETED = "DEVICE_DELETED";
-
-export const ORDER_TYPE_SUPPLY = "supply";
-
-/** Eventos que genera la app sola (poller, ventana de validación, baja de
- * equipos), sin que nadie apriete un botón — la pestaña "Acciones del
- * Sistema".
- *
- * DESVÍO CONSCIENTE DEL LEGACY: allá "sistema" era exactamente
- * `event === 'DEVICE_DELETED'` y todo el resto caía en "Solo Pedidos". Ese
- * evento no existe todavía en el backend portado, así que ese criterio dejaba
- * la pestaña permanentemente vacía. RELEASED (lo emite el poller cuando la
- * solicitud desapareció de SDS, ver `_request_association.py`) y
- * AUTO_DISMISSED (falsa alarma de sensor, ver `validation_window.py`) son
- * automáticos por definición, así que van acá. */
-const SYSTEM_EVENTS = new Set([EVENT_RELEASED, EVENT_AUTO_DISMISSED, EVENT_DEVICE_DELETED]);
-
-export function isSystemEvent(row: AuditRow): boolean {
-  return SYSTEM_EVENTS.has(row.event);
-}
 
 const EVENT_LABELS: Record<string, string> = {
   [EVENT_CREATED]: "Creado",
@@ -95,75 +81,19 @@ export const EVENT_FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: EVENT_DEVICE_DELETED, label: "Equipo eliminado" },
 ];
 
-export function matchesEventFilter(row: AuditRow, value: string): boolean {
-  if (value === EVENT_FILTER_ALL) return true;
-  if (value === EVENT_FILTER_RELEASED_CANCELLED) {
-    return row.event === EVENT_RELEASED || row.event === EVENT_CANCELLED;
-  }
-  return row.event === value;
+/** Traduce el valor del `<select>` de eventos al query param `event` del
+ * backend (lista, porque el combinado "Anulado / liberado" no existe como
+ * clave única del lado del servidor). `undefined` = no mandar el filtro. */
+export function eventFilterToParam(value: string): string[] | undefined {
+  if (value === EVENT_FILTER_ALL) return undefined;
+  if (value === EVENT_FILTER_RELEASED_CANCELLED) return [EVENT_RELEASED, EVENT_CANCELLED];
+  return [value];
 }
 
-/** Búsqueda libre sobre las mismas 6 columnas que el legacy. `term` ya viene
- * en minúsculas y sin espacios de los extremos. */
-export function matchesSearch(row: AuditRow, term: string): boolean {
-  if (!term) return true;
-  const haystack = [
-    row.customer_name,
-    row.device_serial,
-    row.sku,
-    row.description,
-    row.internal_order_id,
-    row.detail,
-  ];
-  return haystack.some((field) => (field ?? "").toLowerCase().includes(term));
-}
-
-/** Rango de fechas sobre la **fecha de carga** (`created_at`), comparando
- * claves `YYYY-MM-DD` del día calendario argentino — no restas de
- * milisegundos, que corren de día según el huso del navegador. */
-export function matchesRange(row: AuditRow, range: DateRange | null): boolean {
-  if (!range) return true;
-  if (!row.created_at) return false;
-  const date = new Date(row.created_at);
-  if (Number.isNaN(date.getTime())) return false;
-  const key = toArgDateKey(date);
-  return key >= range.startDate && key <= range.endDate;
-}
-
-export type RowAction = "cancel" | "reconcile" | null;
-
-/** Qué acción ofrece la fila, si alguna. Las dos reglas miran el resto del
- * historial (`allRows`), porque lo que define si un pedido sigue vivo no es la
- * fila sino que no exista después un evento que lo cierre.
- *
- * - **Anular**: la fila creó un pedido real (CREATED, no simulación) y nada
- *   posterior lo anuló ni lo liberó.
- * - **Vincular**: la creación falló (FAILED) sobre un pedido de insumos, pero
- *   Canal Directo pudo haberlo creado igual (ver `_verify_created` del cliente
- *   SOAP) y todavía no hay un CREATED para esa solicitud.
- *
- * OJO: `allRows` es lo que la pantalla tiene cargado, no la tabla entera — con
- * el historial parcialmente cargado la regla puede ofrecer "Anular" sobre algo
- * ya anulado en una página que no se trajo. El backend responde `ok:false` en
- * ese caso, así que el peor escenario es un toast de error. */
-export function rowAction(row: AuditRow, allRows: readonly AuditRow[]): RowAction {
-  if (row.dry_run || !row.hp_request_id) return null;
-  if (row.event === EVENT_CREATED) {
-    const closed = allRows.some(
-      (other) =>
-        other.hp_request_id === row.hp_request_id &&
-        (other.event === EVENT_CANCELLED || other.event === EVENT_RELEASED),
-    );
-    return closed ? null : "cancel";
-  }
-  if (row.event === EVENT_FAILED && row.order_type === ORDER_TYPE_SUPPLY && row.customer_id) {
-    const created = allRows.some(
-      (other) => other.hp_request_id === row.hp_request_id && other.event === EVENT_CREATED,
-    );
-    return created ? null : "reconcile";
-  }
-  return null;
-}
+/** Re-exportado acá porque `audit-table.tsx` y otros consumidores del vocabulario
+ * de eventos ya importaban `RowAction` desde este archivo antes de que se
+ * mudara a `types/audit.ts` (ahora es parte del contrato de `AuditRow`). */
+export type { RowAction } from "../../types";
 
 /** URL del equipo en el portal de HP SDS — el mismo link que el legacy pone en
  * la columna Serie. */

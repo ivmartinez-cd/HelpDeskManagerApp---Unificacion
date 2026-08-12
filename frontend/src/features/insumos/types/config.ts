@@ -32,6 +32,10 @@ export interface InsumosConfig {
   alertWorkHourStart: number;
   alertWorkHourEnd: number;
   logisticsMailTo: string[];
+  /** Destinatarios de alertas TÉCNICAS (poller de fondo caído/recuperado) —
+   * separado a propósito de logisticsMailTo, que es negocio (avisos de
+   * despacho). Nunca debe quedar vacío: ver settings_validation.py. */
+  opsAlertMailTo: string[];
 }
 
 /** `ConfigRequestBody`: el formulario manda el objeto completo, pero todos los

@@ -162,7 +162,7 @@ export function ConfirmationModal({
             onClick={onConfirm}
             disabled={!confirmEnabled}
             className={cn(
-              "flex flex-1 items-center justify-center gap-2 rounded-[8px] py-[11px] font-body text-sm font-bold transition-colors disabled:pointer-events-none disabled:opacity-50",
+              "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-[8px] py-[11px] font-body text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50",
               variantButtonClasses[variant],
             )}
           >

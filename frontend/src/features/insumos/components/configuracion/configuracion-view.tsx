@@ -10,6 +10,7 @@ import type { InsumosConfig } from "../../types";
 import { ConfigNav } from "./config-nav";
 import { ConfigSectionCard } from "./config-section-card";
 import { CONFIG_SECTIONS, SECTION_BY_FIELD } from "./config-fields";
+import { PreferencesCard } from "./preferences-card";
 import {
   isDirty,
   toFormState,
@@ -26,6 +27,11 @@ import { hasErrors, validateConfigForm, type ConfigErrors } from "./config-valid
  * La validación client-side replica los rangos del backend para marcar el
  * campo culpable; si algo se escapa igual, el PUT vuelve con `{ok:false,error}`
  * (200, no excepción) y ese texto se muestra tal cual arriba del formulario. */
+
+// Además de las 6 secciones del formulario, el sidebar y el observer de
+// scroll también siguen a "Preferencias del navegador" (`preferences-card.tsx`),
+// que no tiene campos de `ConfigResponse` y por eso no vive en `CONFIG_SECTIONS`.
+const NAV_SECTIONS = [...CONFIG_SECTIONS, { id: "preferencias", title: "Preferencias del navegador" }];
 
 function sectionIdOf(key: ConfigFieldKey): string {
   return SECTION_BY_FIELD[key];
@@ -102,7 +108,7 @@ export function ConfiguracionView() {
   // viewport, así que funciona igual sin conocer ese contenedor.
   useEffect(() => {
     if (!form) return;
-    const elements = CONFIG_SECTIONS.map((section) =>
+    const elements = NAV_SECTIONS.map((section) =>
       document.getElementById(`config-section-${section.id}`),
     ).filter((element): element is HTMLElement => element !== null);
     if (elements.length === 0) return;
@@ -160,7 +166,7 @@ export function ConfiguracionView() {
   return (
     <div className="flex gap-8 p-6 lg:p-10">
       <ConfigNav
-        sections={CONFIG_SECTIONS}
+        sections={NAV_SECTIONS}
         activeId={activeId}
         errorCountBySection={errorCountBySection}
         onSelect={goToSection}
@@ -210,6 +216,8 @@ export function ConfiguracionView() {
               onChange={handleChange}
             />
           ))}
+
+          <PreferencesCard />
         </div>
 
         <div className="sticky bottom-0 -mx-1 mt-6 flex items-center justify-end gap-3 border-t border-border bg-background px-1 py-4">

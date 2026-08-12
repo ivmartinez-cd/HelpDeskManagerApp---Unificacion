@@ -1,20 +1,20 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ConfirmationModal } from "../shared";
 import type { AuditRow, DateRange } from "../../types";
 import { EMPTY_VALUE, formatArgDateTime, formatNumber } from "../../utils/format";
+import { compareSortValues, useTableSort } from "../../hooks/use-table-sort";
 import type { HistorialAuditState } from "../../hooks/use-historial-audit";
 import { useHistorialAuditActions } from "../../hooks/use-historial-audit-actions";
 import {
-  EVENT_FILTER_ALL,
-  eventLabel,
-  isSystemEvent,
-  matchesEventFilter,
-  matchesRange,
-  matchesSearch,
-  rowAction,
-} from "./audit-events";
+  AUDIT_DESC_FIRST,
+  AUDIT_SORT_KEYS,
+  AUDIT_SORT_STORAGE_KEY,
+  auditSortValue,
+  type AuditSortKey,
+} from "./audit-sort";
+import { eventLabel } from "./audit-events";
 import { AuditTable } from "./audit-table";
 import { HistorialFilters } from "./historial-filters";
 import { HistorialPagination } from "./historial-pagination";
@@ -22,21 +22,29 @@ import { LogDetailModal, type LogDetailField } from "./log-detail-modal";
 
 /** Contenido de las tres pestañas que comparten la tabla de auditoría.
  *
- * Los filtros (pestaña, tipo de evento, rango, texto) y la paginación son
- * client-side sobre las filas ya traídas: `GET /api/insumos/audit` solo acepta
- * `page`/`size`. La ventana cargada crece con "Cargar más" y el total real del
- * envelope se muestra siempre, así que el operador ve sin ambigüedad sobre
- * cuánto historial está filtrando. */
-
-const PAGE_SIZES = [25, 50, 100] as const;
+ * El filtrado (evento, rango, búsqueda, scope), la paginación y los
+ * contadores de pestañas ya son responsabilidad de `HistorialView` +
+ * `useHistorialAudit` (que le pega a `GET /api/insumos/audit` con todos esos
+ * filtros como query params). Este componente solo:
+ *  - ordena client-side las filas de la página YA traída (`audit-sort.ts`,
+ *    el backend no soporta `order_by`);
+ *  - controla el modal de detalle y las dos acciones condicionales
+ *    (anular/vincular, vía `useHistorialAuditActions`).
+ */
 
 interface AuditPanelProps {
-  tab: "orders" | "system" | "all";
   audit: HistorialAuditState;
+  eventFilter: string;
+  onEventFilterChange: (value: string) => void;
   search: string;
   onSearchChange: (value: string) => void;
   range: DateRange | null;
   onRangeChange: (range: DateRange | null) => void;
+  page: number;
+  onPageChange: (page: number) => void;
+  size: number;
+  onSizeChange: (size: number) => void;
+  sizes: readonly number[];
   /** El usuario puede anular/vincular (permiso `insumos:create`). */
   canAct: boolean;
 }
@@ -57,54 +65,44 @@ function detailFields(row: AuditRow): LogDetailField[] {
 }
 
 export function AuditPanel({
-  tab,
   audit,
+  eventFilter,
+  onEventFilterChange,
   search,
   onSearchChange,
   range,
   onRangeChange,
+  page,
+  onPageChange,
+  size,
+  onSizeChange,
+  sizes,
   canAct,
 }: AuditPanelProps) {
-  const [eventFilter, setEventFilter] = useState(EVENT_FILTER_ALL);
-  const [size, setSize] = useState<number>(PAGE_SIZES[0]);
-  const [page, setPage] = useState(1);
   const [detailRow, setDetailRow] = useState<AuditRow | null>(null);
 
   const actions = useHistorialAuditActions(audit.reload);
 
-  // Volver a la página 1 cuando cambia cualquier filtro (ajuste de estado
-  // durante el render, no un efecto).
-  const filterKey = `${tab}/${eventFilter}/${search}/${range?.startDate ?? ""}-${range?.endDate ?? ""}/${size}`;
-  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
-  if (filterKey !== prevFilterKey) {
-    setPrevFilterKey(filterKey);
-    setPage(1);
-  }
+  const { sort, toggleSort } = useTableSort<AuditSortKey>({
+    initial: { key: "created_at", direction: "desc" }, // el orden actual del backend
+    keys: AUDIT_SORT_KEYS,
+    descFirstKeys: AUDIT_DESC_FIRST,
+    storageKey: AUDIT_SORT_STORAGE_KEY,
+  });
 
-  const scoped = useMemo(() => {
-    if (tab === "all") return audit.rows;
-    if (tab === "system") return audit.rows.filter(isSystemEvent);
-    return audit.rows.filter((row) => !isSystemEvent(row));
-  }, [audit.rows, tab]);
-
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return scoped.filter(
-      (row) =>
-        matchesEventFilter(row, eventFilter) &&
-        matchesRange(row, range) &&
-        matchesSearch(row, term),
-    );
-  }, [scoped, eventFilter, range, search]);
-
-  const pageCount = Math.max(1, Math.ceil(filtered.length / size));
-  const safePage = Math.min(page, pageCount);
-  const visible = filtered.slice((safePage - 1) * size, safePage * size);
-
-  const actionFor = useCallback(
-    (row: AuditRow) => rowAction(row, audit.rows),
-    [audit.rows],
+  // Orden client-side sobre la página que ya trajo el backend — no cambia
+  // qué página se pide, solo cómo se muestra.
+  const sortedRows = useMemo(
+    () =>
+      [...audit.rows].sort((a, b) =>
+        compareSortValues(auditSortValue(a, sort.key), auditSortValue(b, sort.key), sort.direction),
+      ),
+    [audit.rows, sort],
   );
+
+  const pageCount = Math.max(1, Math.ceil(audit.total / size));
+  const from = audit.total === 0 ? 0 : (page - 1) * size + 1;
+  const to = Math.min(page * size, audit.total);
 
   const pendingAction = actions.pending;
 
@@ -115,54 +113,36 @@ export function AuditPanel({
         onSearchChange={onSearchChange}
         searchPlaceholder="Buscar cliente, serie, SKU, pedido…"
         eventFilter={eventFilter}
-        onEventFilterChange={setEventFilter}
+        onEventFilterChange={onEventFilterChange}
         range={range}
         onRangeChange={onRangeChange}
-        summary={
-          <>
-            {formatNumber(filtered.length)} evento(s) filtrados sobre{" "}
-            {formatNumber(audit.rows.length)} cargados de {formatNumber(audit.total)}
-          </>
-        }
+        summary={<>{formatNumber(audit.total)} evento(s)</>}
       />
 
       <AuditTable
-        rows={visible}
-        actionFor={actionFor}
+        rows={sortedRows}
         canAct={canAct}
         busyRequestId={actions.busyRequestId}
         onCancel={(row) => actions.ask(row, "cancel")}
         onReconcile={(row) => actions.ask(row, "reconcile")}
         onDetail={setDetailRow}
         loading={audit.loading}
+        sort={sort}
+        onToggleSort={toggleSort}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <HistorialPagination
-          page={safePage}
-          pageCount={pageCount}
-          from={filtered.length === 0 ? 0 : (safePage - 1) * size + 1}
-          to={Math.min(safePage * size, filtered.length)}
-          total={filtered.length}
-          size={size}
-          sizes={PAGE_SIZES}
-          onPageChange={setPage}
-          onSizeChange={setSize}
-          noun="eventos"
-        />
-        {audit.hasMore && (
-          <button
-            type="button"
-            onClick={() => void audit.loadMore()}
-            disabled={audit.loadingMore}
-            className="rounded-[8px] border border-border px-3.5 py-2 font-body text-xs font-bold text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
-          >
-            {audit.loadingMore
-              ? "Cargando…"
-              : `Cargar más (faltan ${formatNumber(audit.total - audit.rows.length)})`}
-          </button>
-        )}
-      </div>
+      <HistorialPagination
+        page={page}
+        pageCount={pageCount}
+        from={from}
+        to={to}
+        total={audit.total}
+        size={size}
+        sizes={sizes}
+        onPageChange={onPageChange}
+        onSizeChange={onSizeChange}
+        noun="eventos"
+      />
 
       <LogDetailModal
         isOpen={detailRow !== null}

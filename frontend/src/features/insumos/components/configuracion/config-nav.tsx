@@ -2,17 +2,25 @@
 
 import { Check } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import type { ConfigSectionSpec } from "./config-fields";
 
 /** Sidebar sticky de navegación por sección del Patrón 5.
  *
  * Sección activa: borde izquierdo naranja de 3px + fondo tintado + texto en
  * negrita naranja. Sección completada (sin errores de validación): checkmark
  * circular verde a la derecha. Si tiene errores, el checkmark se reemplaza por
- * un punto rojo. */
+ * un punto rojo.
+ *
+ * `sections` se tipa suelto (solo `id`/`title`) a propósito: además de las 6
+ * secciones de `CONFIG_SECTIONS` (con `fields`), el nav también lista
+ * "Preferencias del navegador", que no tiene campos de formulario. */
+
+interface ConfigNavSection {
+  id: string;
+  title: string;
+}
 
 interface ConfigNavProps {
-  sections: readonly ConfigSectionSpec[];
+  sections: readonly ConfigNavSection[];
   activeId: string;
   errorCountBySection: Readonly<Record<string, number>>;
   onSelect: (sectionId: string) => void;
@@ -46,7 +54,7 @@ export function ConfigNav({
                 onClick={() => onSelect(section.id)}
                 aria-current={active ? "true" : undefined}
                 className={cn(
-                  "flex w-full items-center gap-2 border-l-[3px] px-[17px] py-2.5 text-left font-body text-[13.5px] transition-colors",
+                  "flex w-full cursor-pointer items-center gap-2 border-l-[3px] px-[17px] py-2.5 text-left font-body text-[13.5px] transition-colors",
                   active
                     ? "border-brand-orange bg-brand-orange/[.06] font-bold text-brand-orange"
                     : "border-transparent text-muted-foreground hover:bg-muted/50",

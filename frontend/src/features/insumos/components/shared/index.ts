@@ -10,6 +10,7 @@ export {
   rangeForPreset,
   type DateRangePresetKey,
 } from "./date-range-picker";
+export { SortableHeader, type SortableColumn } from "./sortable-header";
 export { StatusBadge, toneForStatusKey, type StatusTone } from "./status-badge";
 export { TonerBar, tonerLevelColor, type TonerBarSize } from "./toner-bar";
 export {
