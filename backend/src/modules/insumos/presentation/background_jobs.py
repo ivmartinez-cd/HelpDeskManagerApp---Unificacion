@@ -59,9 +59,8 @@ logger = logging.getLogger(__name__)
 
 # Equipos offline: sin límite real — el job procesa todo lo pendiente cada vez.
 _OFFLINE_VERIFY_LIMIT = 500
-# Hora UTC en que corren los jobs diarios.
+# Hora UTC en que corre el job diario de equipos offline.
 _OFFLINE_CHECK_HOUR_UTC = 3
-_PENDING_ALERT_HOUR_UTC = 7
 
 
 def seconds_until_next_hour(hour: int) -> float:
@@ -152,14 +151,14 @@ async def background_alert_task(interval_minutes: int = 15) -> None:
         await asyncio.sleep(interval_minutes * 60)
 
 
-async def background_pending_alert_task(mailer: Mailer) -> None:
-    logger.info("pending_alert: iniciando (diario @ %02d:00 UTC)", _PENDING_ALERT_HOUR_UTC)
+async def background_pending_alert_task(mailer: Mailer, interval_minutes: int = 15) -> None:
+    logger.info("pending_alert: iniciando (intervalo %d min)", interval_minutes)
     while True:
-        await asyncio.sleep(seconds_until_next_hour(_PENDING_ALERT_HOUR_UTC))
         try:
             await _run_pending_alert_cycle(mailer)
         except Exception as exc:
             logger.error("pending_alert: ciclo fallido", exc_info=exc)
+        await asyncio.sleep(interval_minutes * 60)
 
 
 @dataclass(frozen=True)
@@ -205,11 +204,11 @@ async def _find_pending_alert(session: AsyncSession) -> _PendingAlert | None:
     already_notified = await SqlAlchemyPendingOrderNotificationRepository(
         session
     ).get_notified_ids(hp_ids)
-    due = find_orders_due_for_alert(rows, settings.threshold_critical, already_notified)
+    due = find_orders_due_for_alert(rows, settings.threshold_urgent, already_notified)
     if not due:
         return None
     return _PendingAlert(
-        recipients=recipients, rows=due, threshold_days=settings.threshold_critical
+        recipients=recipients, rows=due, threshold_days=settings.threshold_urgent
     )
 
 
