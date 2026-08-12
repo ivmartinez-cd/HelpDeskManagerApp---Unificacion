@@ -20,6 +20,7 @@ from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
 from src.modules.liquidaciones.domain.value_objects.incidente_importado import (
     IncidenteImportado,
+    ResultadoImportacion,
 )
 from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado import (
     AlertaGenerada,
@@ -348,3 +349,15 @@ class FakeTarifarioRepository:
         )
         self.rows.append(row)
         return row
+
+
+class FakeLiquidacionFileParser:
+    """Devuelve un `ResultadoImportacion` fijo sin pasar por pandas/lxml."""
+
+    def __init__(self, resultado: ResultadoImportacion) -> None:
+        self.resultado = resultado
+        self.calls: list[tuple[bytes, str]] = []
+
+    def parse(self, contenido: bytes, nombre_archivo: str) -> ResultadoImportacion:
+        self.calls.append((contenido, nombre_archivo))
+        return self.resultado
