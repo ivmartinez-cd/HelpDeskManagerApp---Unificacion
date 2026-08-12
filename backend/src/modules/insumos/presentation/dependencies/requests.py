@@ -6,6 +6,10 @@ from src.modules.insumos.application.use_cases._load_order_context import (
     LoadOrderConfig,
     LoadOrderPorts,
 )
+from src.modules.insumos.application.use_cases.auto_load_requests import (
+    AutoLoadPorts,
+    AutoLoadRequests,
+)
 from src.modules.insumos.application.use_cases.cancel_order import CancelOrder, CancelOrderPorts
 from src.modules.insumos.application.use_cases.dismiss_request import (
     DismissRequest,
@@ -50,6 +54,7 @@ from src.modules.insumos.application.use_cases.validation_window import (
     ValidationWindowPorts,
 )
 from src.modules.insumos.domain.services.claimed_order_creation import ClaimedOrderCreation
+from src.modules.insumos.domain.services.incident_creation import CanalDirectoIncidentCreation
 from src.modules.insumos.domain.services.order_creation import CanalDirectoOrderCreation
 from src.modules.insumos.domain.services.supply_lookup import CanalDirectoSupplyLookup
 from src.modules.insumos.domain.services.supply_request_matching import SupplyMatchResolver
@@ -149,6 +154,7 @@ def build_load_order(session: AsyncSession) -> LoadOrder:
         supply_cache=supply_cache,
         claimed_creation=ClaimedOrderCreation(SqlAlchemyOrderClaimRepository(session)),
         order_creation=CanalDirectoOrderCreation(wsayc, supply_cache, cd_settings),
+        incident_creation=CanalDirectoIncidentCreation(wsayc, cd_settings),
         match_resolver=SupplyMatchResolver(wsayc, supply_cache),
     )
     config = LoadOrderConfig(
@@ -158,6 +164,16 @@ def build_load_order(session: AsyncSession) -> LoadOrder:
         insight_status_on_order=settings.insight_status_on_order,
     )
     return LoadOrder(ports, config)
+
+
+def build_auto_load_requests(session: AsyncSession) -> AutoLoadRequests:
+    settings = get_settings()
+    ports = AutoLoadPorts(
+        list_requests=build_list_requests(session),
+        load_order=build_load_order(session),
+        settings=SqlAlchemyInsumosSettingsRepository(session),
+    )
+    return AutoLoadRequests(ports, max_orders_per_cycle=settings.autoload_max_orders_per_cycle)
 
 
 def build_list_audit(session: AsyncSession) -> ListAudit:

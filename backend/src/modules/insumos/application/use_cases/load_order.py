@@ -2,12 +2,11 @@
 
 Port del load_request del legacy: re-deriva TODO del lado del servidor contra Insight
 (nunca confía en el body), corre los bloqueos 0-3 dentro del claim serie+sku y crea el
-pedido con la verificación post-creación obligatoria. Responde siempre con un
-LoadOrderResult (el contrato "200 siempre" lo serializa presentation).
+pedido (o el incidente, si es kit de mantenimiento) con la verificación post-creación
+obligatoria. Responde siempre con un LoadOrderResult (el contrato "200 siempre" lo
+serializa presentation).
 
 Pendiente de pasos posteriores de la migración (explícito, no olvidado):
-- Kits de mantenimiento → incidente Pre-Correctivo (falta portar el cliente de
-  incidentes, que scrapea el portal): por ahora se responde un error claro.
 - request_alerts.resolve al crear (falta portar el módulo de alertas).
 """
 
@@ -25,6 +24,7 @@ from src.modules.insumos.application.use_cases._load_order_blockers import LoadO
 from src.modules.insumos.application.use_cases._load_order_builders import (
     build_audit_created,
     build_audit_failed,
+    build_incident_request,
     build_order_request,
     build_processed_request,
     resolve_from_insight,
@@ -34,11 +34,13 @@ from src.modules.insumos.application.use_cases._load_order_context import (
     LoadOrderConfig,
     LoadOrderPorts,
 )
+from src.modules.insumos.domain.entities.audit_record import ORDER_TYPE_INCIDENT
 from src.modules.insumos.domain.errors import (
     InsumoAmbiguoError,
     OrderAlreadyInProgressError,
     SerieNoActivaEnCanalDirectoError,
 )
+from src.modules.insumos.domain.value_objects.incident_request import IncidentRequest
 from src.modules.insumos.domain.value_objects.order_request import OrderRequest
 from src.modules.insumos.domain.value_objects.zone_contacts import ZoneContacts
 
@@ -75,11 +77,7 @@ class LoadOrder:
         if blocked is not None:
             return blocked
         if resolved.is_maintenance_kit:
-            return failure(
-                "Esta solicitud es un kit de mantenimiento: va como incidente "
-                "Pre-Correctivo, que todavía no está portado al monolito. Cargala desde "
-                "la app legacy de SDSInsumos."
-            )
+            return await self._create_incident_and_record(command, resolved)
         try:
             return await self._create_and_record(command, resolved)
         except SerieNoActivaEnCanalDirectoError:
@@ -159,6 +157,43 @@ class LoadOrder:
             logger.info("[DRY RUN] se crearía el pedido %s -> %s", order_id, order)
             return order_id
         return await self._ports.order_creation.create_order(order)
+
+    async def _create_incident_and_record(
+        self, command: LoadOrderCommand, resolved: ResolvedRequest
+    ) -> LoadOrderResult:
+        """Kit de mantenimiento: crea un incidente (tipo Correctivo, ver docstring de
+        incident_creation.py) en vez de un pedido — sin resolución de familia/insumo ni
+        siembra de supply_cache, y sin marcar Insight actioned (el legacy tampoco lo
+        hace para incidentes)."""
+        try:
+            zona = await self._resolve_zone_contacts(command.customer_id, resolved.store_name)
+            incident = build_incident_request(command, resolved, zona)
+            incident_id = await self._create_incident(command, incident)
+            if not incident_id.startswith(_DRYRUN_PREFIX):
+                await self._ports.processed.mark_processed(
+                    build_processed_request(command, resolved, incident_id)
+                )
+            await self._ports.audit.record(
+                build_audit_created(
+                    command,
+                    resolved,
+                    incident_id,
+                    detail="Pre-Correctivo (kit de mantenimiento)",
+                    order_type=ORDER_TYPE_INCIDENT,
+                )
+            )
+            return success(incident_id, None, resolved.warn)
+        except Exception:
+            return await self._handle_creation_failed(command, resolved)
+
+    async def _create_incident(
+        self, command: LoadOrderCommand, incident: IncidentRequest
+    ) -> str:
+        if command.dry_run:
+            incident_id = f"{_DRYRUN_PREFIX}{incident.reference}"
+            logger.info("[DRY RUN] se crearía el incidente %s -> %s", incident_id, incident)
+            return incident_id
+        return await self._ports.incident_creation.create_incident(incident)
 
     async def _resolve_zone_contacts(self, customer_id: int, zone: str) -> ZoneContacts | None:
         zona = await self._ports.zone_contacts.get(customer_id, zone)

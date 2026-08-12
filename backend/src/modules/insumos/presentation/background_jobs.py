@@ -4,9 +4,10 @@ Notas de diseño:
 - El backup de BD del legacy (SQLite) no tiene equivalente 1:1 en Postgres; ese
   job se omite conscientemente. Postgres corre con su propia infraestructura de
   backup (pg_dump, streaming replication, etc.).
-- El autoload automático (maybe_auto_load del poller legacy) no está portado aún:
-  las piezas de dominio existen pero la orchestración del lote no está completa.
-  Mientras tanto el poller solo sincroniza inventario.
+- La auto-carga (maybe_auto_load del legacy, ver AutoLoadRequests) corre en el mismo
+  ciclo del poller, después del sync de inventario — mismo orden que el legacy — pero
+  con su propio try/except: un fallo de auto-carga no debe ocultar si el sync de
+  inventario funcionó, y viceversa.
 - DISABLE_BACKGROUND_JOBS=true desactiva todos los jobs (útil en CI o cuando se
   corren múltiples instancias y solo una debe ejecutar los jobs).
 """
@@ -36,7 +37,10 @@ from src.modules.insumos.presentation.dependencies.new_devices import build_sync
 from src.modules.insumos.presentation.dependencies.offline_devices import (
     build_verify_offline_devices,
 )
-from src.modules.insumos.presentation.dependencies.requests import build_list_pending_orders
+from src.modules.insumos.presentation.dependencies.requests import (
+    build_auto_load_requests,
+    build_list_pending_orders,
+)
 from src.shared.infrastructure.database.session import get_sessionmaker
 
 logger = logging.getLogger(__name__)
@@ -66,21 +70,44 @@ async def background_poller_task(
 ) -> None:
     logger.info("poller: iniciando (intervalo %d min)", interval_minutes)
     while True:
-        try:
-            factory = get_sessionmaker()
-            async with factory() as session:
-                result = await build_sync_new_devices(session).execute()
-                await session.commit()
-            await poller_alerts.record_success()
-            logger.info(
-                "poller: sync OK — %d nuevos equipos, %d podados",
-                len(result.new_device_ids),
-                result.pruned,
-            )
-        except Exception as exc:
-            logger.error("poller: ciclo fallido", exc_info=exc)
-            await poller_alerts.record_failure(str(exc))
+        await _run_sync_cycle(poller_alerts)
+        await _run_autoload_cycle()
         await asyncio.sleep(interval_minutes * 60)
+
+
+async def _run_sync_cycle(poller_alerts: PollerAlerts) -> None:
+    try:
+        factory = get_sessionmaker()
+        async with factory() as session:
+            result = await build_sync_new_devices(session).execute()
+            await session.commit()
+        await poller_alerts.record_success()
+        logger.info(
+            "poller: sync OK — %d nuevos equipos, %d podados",
+            len(result.new_device_ids),
+            result.pruned,
+        )
+    except Exception as exc:
+        logger.error("poller: ciclo de sync fallido", exc_info=exc)
+        await poller_alerts.record_failure(str(exc))
+
+
+async def _run_autoload_cycle() -> None:
+    """Auto-carga (maybe_auto_load del legacy) — try/except propio: un fallo acá no
+    debe ocultar si el sync de inventario funcionó (ver _run_sync_cycle)."""
+    try:
+        factory = get_sessionmaker()
+        async with factory() as session:
+            result = await build_auto_load_requests(session).execute()
+            await session.commit()
+        logger.info(
+            "poller: auto_load OK — considerados=%d creados=%d saltados=%d",
+            result.considered,
+            result.created,
+            result.skipped,
+        )
+    except Exception as exc:
+        logger.error("poller: ciclo de auto_load fallido", exc_info=exc)
 
 
 async def background_offline_check_task() -> None:

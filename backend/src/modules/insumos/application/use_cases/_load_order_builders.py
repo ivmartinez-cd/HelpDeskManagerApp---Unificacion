@@ -15,12 +15,14 @@ from src.modules.insumos.application.use_cases._load_order_context import (
 from src.modules.insumos.domain.entities.audit_record import (
     EVENT_CREATED,
     EVENT_FAILED,
+    ORDER_TYPE_SUPPLY,
     AuditRecord,
 )
 from src.modules.insumos.domain.entities.processed_request import ProcessedRequest
 from src.modules.insumos.domain.repositories.insight_gateway import InsightGateway, JsonDict
 from src.modules.insumos.domain.services.maintenance_kit import is_maintenance_kit
 from src.modules.insumos.domain.services.stale_replacement import is_stale_replaced
+from src.modules.insumos.domain.value_objects.incident_request import IncidentRequest
 from src.modules.insumos.domain.value_objects.insight_datetime import parse_insight_utc
 from src.modules.insumos.domain.value_objects.order_reference import order_reference
 from src.modules.insumos.domain.value_objects.order_request import (
@@ -142,6 +144,22 @@ def build_order_request(
     )
 
 
+def build_incident_request(
+    command: LoadOrderCommand, resolved: ResolvedRequest, zona: ZoneContacts | None
+) -> IncidentRequest:
+    solicitante, destinatario = _order_contacts(zona)
+    return IncidentRequest(
+        device_serial=resolved.device_serial,
+        reference=order_reference(command.hp_request_id),
+        falla=f"Kit de mantenimiento solicitado por SDS: {resolved.description}"
+        if resolved.description
+        else "Kit de mantenimiento (solicitud SDS)",
+        origen_id="",  # "" = usar el default de CanalDirectoOrderSettings
+        solicitante=solicitante,
+        destinatario=destinatario,
+    )
+
+
 def build_detalle(resolved: ResolvedRequest, observaciones: str) -> str:
     parts = []
     if resolved.percent_left is not None:
@@ -179,6 +197,7 @@ def build_audit_created(
     resolved: ResolvedRequest,
     order_id: str,
     detail: str | None,
+    order_type: str = ORDER_TYPE_SUPPLY,
 ) -> AuditRecord:
     return AuditRecord(
         event=EVENT_CREATED,
@@ -193,6 +212,7 @@ def build_audit_created(
         hp_request_time=parse_insight_utc(resolved.requested),
         description=resolved.description,
         device_id=resolved.device_id,
+        order_type=order_type,
         initial_percent_left=rounded(resolved.percent_left),
         initial_days_left=resolved.days_left,
         initial_pages_left=resolved.pages_left,

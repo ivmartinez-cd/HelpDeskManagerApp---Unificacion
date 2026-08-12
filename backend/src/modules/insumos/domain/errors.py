@@ -98,6 +98,35 @@ class PedidoNoVerificadoError(ExternalServiceError):
         )
 
 
+class IncidenteNoConfirmadoError(ExternalServiceError):
+    """persistNewIncident no devolvió un ID válido — el incidente puede o no existir."""
+
+    default_code = "INCIDENTE_NO_CONFIRMADO"
+
+    def __init__(self, device_serial: str) -> None:
+        super().__init__(
+            f"Canal Directo no confirmó la creación del incidente para la serie "
+            f"{device_serial} (persistNewIncident no devolvió un ID válido, revisar "
+            "manualmente antes de reintentar)"
+        )
+
+
+class IncidenteNoVerificadoError(ExternalServiceError):
+    """La verificación post-creación (getIncidentById + NroIncidenteCliente) no
+    confirmó que el ID devuelto sea nuestro incidente — NO se marca procesado y NUNCA
+    se reintenta automáticamente; el operador decide, mismo criterio que
+    PedidoNoVerificadoError."""
+
+    default_code = "INCIDENTE_NO_VERIFICADO"
+
+    def __init__(self, incident_id: int, device_serial: str) -> None:
+        super().__init__(
+            f"No se pudo verificar el incidente {incident_id} recién creado para la "
+            f"serie {device_serial} (la referencia no coincide o el incidente no "
+            "aparece — revisar manualmente antes de reintentar)"
+        )
+
+
 class ConsultaDePedidosNoDisponibleError(ExternalServiceError):
     """Fallaron TODAS las fuentes de pedidos existentes (cache local y getTopSupplies) —
     con fail-closed activo (autocarga) esto pospone la creación en vez de arriesgar

@@ -92,6 +92,13 @@ class ZeepWsAycGateway:
         raw = await asyncio.to_thread(lambda: self._service().persistNewSupply(Datos=datos))
         return parsing.parse_persist_response(raw)
 
+    async def persist_new_incident(self, payload: dict[str, object]) -> int:
+        # Sin try/except y sin reintento, mismo motivo que persist_new_supply: es la
+        # operación que crea el incidente real.
+        datos = json.dumps(payload)
+        raw = await asyncio.to_thread(lambda: self._service().persistNewIncident(Datos=datos))
+        return parsing.parse_persist_response(raw)
+
     async def fetch_supply_by_id(self, supply_id: int) -> CdSupply | None:
         try:
             # Ojo: el parámetro del WSDL se llama `id` (no IdSupply) — pasarlo mal lanza

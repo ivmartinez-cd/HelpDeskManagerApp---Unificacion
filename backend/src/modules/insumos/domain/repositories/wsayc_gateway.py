@@ -47,6 +47,17 @@ class WsAycGateway(Protocol):
         """
         ...
 
+    async def persist_new_incident(self, payload: dict[str, object]) -> int:
+        """Crea el incidente real (Correctivo, tipo 101 — persistNewIncident no admite
+        Pre-Correctivo, ver ADR/investigación de la migración). Devuelve el ID
+        informado, o 0 si el servicio no confirmó.
+
+        NUNCA se reintenta (mismo motivo que persist_new_supply): reintentar arriesga
+        un incidente duplicado real. El caller DEBE verificar releyendo con
+        fetch_incident_by_id.
+        """
+        ...
+
     async def fetch_supply_by_id(self, supply_id: int) -> CdSupply | None:
         """None si el ID no existe ("[]") o si hubo un error (se loguea allá).
 

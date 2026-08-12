@@ -14,6 +14,7 @@ from src.modules.insumos.domain.repositories.request_validation_repository impor
 from src.modules.insumos.domain.repositories.supply_cache_repository import SupplyCacheRepository
 from src.modules.insumos.domain.repositories.zone_contact_repository import ZoneContactRepository
 from src.modules.insumos.domain.services.claimed_order_creation import ClaimedOrderCreation
+from src.modules.insumos.domain.services.incident_creation import CanalDirectoIncidentCreation
 from src.modules.insumos.domain.services.order_creation import CanalDirectoOrderCreation
 from src.modules.insumos.domain.services.supply_request_matching import SupplyMatchResolver
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
@@ -29,6 +30,7 @@ class LoadOrderPorts:
     supply_cache: SupplyCacheRepository
     claimed_creation: ClaimedOrderCreation
     order_creation: CanalDirectoOrderCreation
+    incident_creation: CanalDirectoIncidentCreation
     match_resolver: SupplyMatchResolver
 
 

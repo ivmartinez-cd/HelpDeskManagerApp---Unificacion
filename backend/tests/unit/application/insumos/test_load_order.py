@@ -22,6 +22,7 @@ from src.modules.insumos.application.use_cases.load_order import LoadOrder
 from src.modules.insumos.domain.entities.audit_record import (
     EVENT_CREATED,
     EVENT_FAILED,
+    ORDER_TYPE_INCIDENT,
     AuditRecord,
 )
 from src.modules.insumos.domain.entities.processed_request import (
@@ -29,6 +30,7 @@ from src.modules.insumos.domain.entities.processed_request import (
     ProcessedRequest,
 )
 from src.modules.insumos.domain.services.claimed_order_creation import ClaimedOrderCreation
+from src.modules.insumos.domain.services.incident_creation import CanalDirectoIncidentCreation
 from src.modules.insumos.domain.services.order_creation import CanalDirectoOrderCreation
 from src.modules.insumos.domain.services.supply_request_matching import SupplyMatchResolver
 from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply, CdSupply
@@ -86,11 +88,16 @@ class World:
         self.wsayc.default_supply = CdSupply(
             supply_id=441770, reference=f"SDS-{_REQUEST_ID}", fecha="31/07/2026 10:00:00"
         )
+        # Idem para el incidente de kit de mantenimiento (test_kit_de_mantenimiento_*).
+        self.wsayc.incidents_by_id[self.wsayc.persist_incident_result] = CdSupply(
+            supply_id=self.wsayc.persist_incident_result, reference=f"SDS-{_REQUEST_ID}"
+        )
 
         cfg = settings()
         order_creation = CanalDirectoOrderCreation(
             self.wsayc, self.supply_cache, cfg, verify_delays=(0,)
         )
+        incident_creation = CanalDirectoIncidentCreation(self.wsayc, cfg, verify_delays=(0,))
         ports = LoadOrderPorts(
             insight=self.insight,  # type: ignore[arg-type]
             processed=self.processed,
@@ -100,6 +107,7 @@ class World:
             supply_cache=self.supply_cache,
             claimed_creation=ClaimedOrderCreation(self.claims),
             order_creation=order_creation,
+            incident_creation=incident_creation,
             match_resolver=SupplyMatchResolver(self.wsayc, self.supply_cache),
         )
         self.use_case = LoadOrder(ports, LoadOrderConfig(order_settings=cfg))
@@ -390,9 +398,9 @@ async def test_insumo_ambiguo_devuelve_opciones_para_el_operador() -> None:
     ]
 
 
-async def test_kit_de_mantenimiento_devuelve_error_explicito() -> None:
-    """Los kits van como incidente Pre-Correctivo — hasta portar ese cliente, el caso
-    de uso responde un error claro en vez de crear un supply INCORRECTO en silencio."""
+async def test_kit_de_mantenimiento_crea_incidente_via_soap() -> None:
+    """Los kits de mantenimiento van como incidente (persistNewIncident, tipo 101
+    Correctivo — ver docstring de incident_creation.py) en vez de pedido de insumo."""
     world = World()
     world.insight.consumable_requests[0]["consumable"]["reorderPart"] = {
         "type": "MAINTENANCE_KIT"
@@ -400,9 +408,62 @@ async def test_kit_de_mantenimiento_devuelve_error_explicito() -> None:
 
     result = await world.use_case.execute(_command())
 
+    assert result.ok
+    assert result.order_id == str(world.wsayc.persist_incident_result)
+    assert result.supply_url is None  # los incidentes no tienen URL de vista propia
+    assert world.wsayc.persisted_payloads == []  # nunca tocó persistNewSupply
+    assert len(world.wsayc.persisted_incident_payloads) == 1
+    payload = world.wsayc.persisted_incident_payloads[0]["Incident"]
+    assert payload["NroSerie"] == "SERIE1"
+    assert payload["NroIncidenteCliente"] == f"SDS-{_REQUEST_ID}"
+    assert payload["Ingreso"] != "guardia"
+    processed = world.processed.rows[_REQUEST_ID]
+    assert processed.internal_order_id == str(world.wsayc.persist_incident_result)
+    created = [r for r in world.audit.records if r.event == EVENT_CREATED]
+    assert created[0].order_type == ORDER_TYPE_INCIDENT
+    assert created[0].detail == "Pre-Correctivo (kit de mantenimiento)"
+
+
+async def test_kit_de_mantenimiento_dry_run_no_persiste() -> None:
+    world = World()
+    world.insight.consumable_requests[0]["consumable"]["reorderPart"] = {
+        "type": "MAINTENANCE_KIT"
+    }
+
+    result = await world.use_case.execute(_command(dry_run=True))
+
+    assert result.ok
+    assert result.order_id == f"DRYRUN-SDS-{_REQUEST_ID}"
+    assert world.wsayc.persisted_incident_payloads == []
+    assert _REQUEST_ID not in world.processed.rows
+
+
+async def test_kit_de_mantenimiento_no_confirmado_audita_failed() -> None:
+    world = World()
+    world.insight.consumable_requests[0]["consumable"]["reorderPart"] = {
+        "type": "MAINTENANCE_KIT"
+    }
+    world.wsayc.persist_incident_result = 0  # persistNewIncident no confirmó
+
+    result = await world.use_case.execute(_command())
+
     assert not result.ok
-    assert result.error is not None and "kit de mantenimiento" in result.error
-    assert world.wsayc.persisted_payloads == []
+    assert _REQUEST_ID not in world.processed.rows
+    failed = [r for r in world.audit.records if r.event == EVENT_FAILED]
+    assert len(failed) == 1
+
+
+async def test_kit_de_mantenimiento_no_verificado_no_marca_procesado() -> None:
+    world = World()
+    world.insight.consumable_requests[0]["consumable"]["reorderPart"] = {
+        "type": "MAINTENANCE_KIT"
+    }
+    world.wsayc.incidents_by_id.clear()  # la relectura post-creación no lo encuentra
+
+    result = await world.use_case.execute(_command())
+
+    assert not result.ok
+    assert _REQUEST_ID not in world.processed.rows
 
 
 async def test_claim_tomado_devuelve_error_de_negocio() -> None:

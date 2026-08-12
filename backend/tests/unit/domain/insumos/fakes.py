@@ -96,6 +96,8 @@ class FakeWsAycGateway:
         self.article_parts: dict[str, str] = {"3729": "HP E50145/52645 - Toner"}
         self.persist_result = 441770
         self.persisted_payloads: list[dict[str, object]] = []
+        self.persist_incident_result = 840020
+        self.persisted_incident_payloads: list[dict[str, object]] = []
         # fetch_supply_by_id: primero consume supply_reads en orden; si se agotó, usa
         # supplies_by_id (keyed) o default_supply.
         self.supply_reads: list[CdSupply | None] = []
@@ -137,6 +139,10 @@ class FakeWsAycGateway:
         if self.supplies_by_id is not None:
             return self.supplies_by_id.get(supply_id)
         return self.default_supply
+
+    async def persist_new_incident(self, payload: dict[str, object]) -> int:
+        self.persisted_incident_payloads.append(payload)
+        return self.persist_incident_result
 
     async def fetch_incident_by_id(self, incident_id: int) -> CdSupply | None:
         self.incident_calls.append(incident_id)

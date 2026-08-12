@@ -79,6 +79,11 @@ class Settings(BaseSettings):
     # El legacy defaulteaba 120 en código pero el .env recomienda 60 (SDS lee niveles
     # cada 1 hora, KB HP 30000040938).
     poll_interval_minutes: int = 60
+    # Válvula de seguridad económica de la auto-carga: tope de pedidos/incidentes
+    # reales por ciclo del poller, ante datos anómalos de SDS. A diferencia de
+    # autoload_enabled/max_days/min_percent (settings de UI en app_settings), esto es
+    # una válvula operativa — mismo criterio que el legacy (AUTOLOAD_MAX_ORDERS_PER_CYCLE).
+    autoload_max_orders_per_cycle: int = 10
 
     epson_ers_username: str = "insumos@canaldirecto.com.ar"
     epson_ers_password: SecretStr = SecretStr("C@nal3160")
