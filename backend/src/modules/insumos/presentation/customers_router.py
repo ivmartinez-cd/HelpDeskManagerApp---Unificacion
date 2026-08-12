@@ -1,5 +1,7 @@
 """Endpoints del módulo Clientes: lista, toggle, contactos por zona, importación."""
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,6 +45,8 @@ from src.modules.insumos.presentation.schemas.customer_schemas import (
 from src.modules.insumos.presentation.wiring import get_insight_gateway
 from src.shared.domain.errors import ExternalServiceError
 from src.shared.infrastructure.database.session import get_db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/insumos", tags=["insumos"])
 
@@ -196,6 +200,7 @@ async def preview_zone_contacts_import(
     try:
         rows = await build_preview_zone_contacts_import(db).execute(customer_id)
     except Exception:
+        logger.exception("preview_zone_contacts_import: falló para cliente %s", customer_id)
         return ZoneContactPreviewResponse(
             ok=False,
             error=(
@@ -222,6 +227,7 @@ async def apply_zone_contacts_import(
     try:
         applied = await build_apply_zone_contacts_import(db).execute(customer_id, requested)
     except Exception:
+        logger.exception("apply_zone_contacts_import: falló para cliente %s", customer_id)
         return ZoneContactApplyResponse(
             ok=False,
             error=(
