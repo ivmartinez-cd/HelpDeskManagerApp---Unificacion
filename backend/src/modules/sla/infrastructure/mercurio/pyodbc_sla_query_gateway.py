@@ -43,7 +43,7 @@ class PyodbcSlaQueryGateway:
                 exc_info=exc,
             )
             raise ExternalServiceError(
-                "No se pudo consultar la base Siges (MERCURIO)"
+                f"No se pudo consultar la base Siges (MERCURIO): {exc}"
             ) from exc
         return [map_row(row) for row in rows]
 
