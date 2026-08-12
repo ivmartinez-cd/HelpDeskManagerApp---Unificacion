@@ -84,7 +84,7 @@ export function BrandModal({ isOpen, onClose, title, children, widthPx = 480, er
           <button
             onClick={onClose}
             aria-label="Cerrar modal"
-            className="rounded-[8px] p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="cursor-pointer rounded-[8px] p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <X className="h-5 w-5" />
           </button>

@@ -83,7 +83,7 @@ export function brandButtonClasses({
   className,
 }: BrandButtonClassesOptions = {}) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-[10px] font-body font-bold transition-colors disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex cursor-pointer items-center justify-center gap-2 rounded-[10px] font-body font-bold transition-colors disabled:opacity-50 disabled:pointer-events-none";
   const variants = {
     primary: "bg-brand-orange text-white hover:bg-brand-orange-hover",
     outline: "border border-border text-foreground hover:bg-muted",

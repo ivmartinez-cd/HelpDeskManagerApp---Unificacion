@@ -86,7 +86,7 @@ function AlertRowItem({
         <button
           type="button"
           onClick={onAck}
-          className="rounded-[6px] border border-border px-2.5 py-1 font-body text-[11px] font-bold text-foreground transition-colors hover:bg-muted"
+          className="cursor-pointer rounded-[6px] border border-border px-2.5 py-1 font-body text-[11px] font-bold text-foreground transition-colors hover:bg-muted"
         >
           Reconocer
         </button>
@@ -140,7 +140,7 @@ function SeverityGroup({
               onAck(alerts.map((alert) => alert.hpRequestId));
             }}
             className={cn(
-              "rounded-[6px] border bg-card px-3 py-1 font-body text-xs font-bold transition-colors hover:bg-muted",
+              "cursor-pointer rounded-[6px] border bg-card px-3 py-1 font-body text-xs font-bold transition-colors hover:bg-muted",
               severity === "critical" ? "border-[#ef4444] text-[#dc2626]" : "border-border text-foreground",
             )}
           >
@@ -189,7 +189,7 @@ export function AlertsSection({ state, canAck }: AlertsSectionProps) {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex items-center gap-2 self-start font-heading text-sm font-bold text-foreground"
+        className="flex cursor-pointer items-center gap-2 self-start font-heading text-sm font-bold text-foreground"
       >
         <ChevronRight
           className={cn("h-4 w-4 transition-transform", open && "rotate-90")}
