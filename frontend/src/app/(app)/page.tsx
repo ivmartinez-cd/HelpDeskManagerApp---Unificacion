@@ -16,8 +16,14 @@ export default function HomePage() {
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-4">
-        <ShiftDashboardCard />
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+        {/* Turnos Insumos + Turnos ST son tiles compactos de altura fija por
+            contenido (franjas horarias del día) — se apilan en su propia
+            columna en vez de estirarse a la altura de Clientes/SLA, que son
+            widgets más "densos" y crecen con datos reales. */}
+        <div className="flex flex-col gap-4">
+          <ShiftDashboardCard />
+        </div>
         <TodayClientsCard />
         <SlaSummaryCard />
       </div>

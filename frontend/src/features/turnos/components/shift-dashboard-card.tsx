@@ -31,7 +31,7 @@ export function ShiftDashboardCard() {
 
   if (loading) {
     return (
-      <div className="flex w-full max-w-sm items-center justify-center rounded-[12px] border border-border bg-card p-6 min-h-[160px]">
+      <div className="flex w-full items-center justify-center rounded-[12px] border border-border bg-card p-6 min-h-[160px]">
         <Spinner />
       </div>
     );
@@ -39,7 +39,7 @@ export function ShiftDashboardCard() {
 
   if (error) {
     return (
-      <div className="flex w-full max-w-sm items-center gap-3 rounded-[12px] border border-destructive/20 bg-destructive/5 p-5 text-destructive">
+      <div className="flex w-full items-center gap-3 rounded-[12px] border border-destructive/20 bg-destructive/5 p-5 text-destructive">
         <ShieldAlert className="h-5 w-5 shrink-0" />
         <span className="font-body text-sm">{error}</span>
       </div>
@@ -48,7 +48,7 @@ export function ShiftDashboardCard() {
 
   if (shifts.length === 0) {
     return (
-      <div className="flex w-full max-w-sm flex-col gap-3 rounded-[12px] border border-border bg-card p-5">
+      <div className="flex w-full flex-col gap-3 rounded-[12px] border border-border bg-card p-5">
         <div className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-[9px] bg-brand-orange/[0.12] text-brand-orange">
             <Users className="h-4 w-4" />
@@ -92,7 +92,7 @@ export function ShiftDashboardCard() {
       {groups.map((grp) => (
         <div
           key={grp.casillaNombre}
-          className="flex w-full max-w-sm flex-col gap-3 rounded-[12px] border border-border bg-card p-5"
+          className="flex w-full flex-col gap-3 rounded-[12px] border border-border bg-card p-5"
         >
           {/* Header de Casilla */}
           <div className="flex items-center gap-2.5 border-b border-border/60 pb-2.5">

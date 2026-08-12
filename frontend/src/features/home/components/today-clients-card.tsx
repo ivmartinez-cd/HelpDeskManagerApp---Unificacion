@@ -58,7 +58,7 @@ export function TodayClientsCard() {
   if (!canView) return null;
 
   return (
-    <div className="flex w-full max-w-sm flex-col gap-3 rounded-[12px] border border-border bg-card p-5">
+    <div className="flex w-full flex-col gap-3 rounded-[12px] border border-border bg-card p-5">
       <div className="flex items-center gap-2.5">
         <span className="flex h-9 w-9 items-center justify-center rounded-[9px] bg-brand-orange/[0.12] text-brand-orange">
           <CalendarCheck2 className="h-4 w-4" />
@@ -82,7 +82,7 @@ export function TodayClientsCard() {
           No hay clientes planificados para hoy.
         </span>
       ) : (
-        <ul className="flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+        <ul className="flex max-h-96 flex-col gap-1.5 overflow-y-auto">
           {events.map((evt) => {
             const operadorNombre = evt.operador_id ? operadorNombreById.get(evt.operador_id) : null;
             return (
