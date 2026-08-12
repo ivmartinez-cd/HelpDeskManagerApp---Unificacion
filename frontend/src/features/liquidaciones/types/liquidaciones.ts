@@ -81,3 +81,49 @@ export interface ImportarLiquidacionResult {
   totalAlertas: number;
   totalObservaciones: number;
 }
+
+export interface Incidente {
+  id: string;
+  numeroIncidente: string;
+  tipo: string;
+  empresaNombre: string | null;
+  sucursalNombre: string | null;
+  fechaCierre: string | null;
+  costoServicioCobrado: number;
+  cantKmCobrado: number;
+  costoTotalCobrado: number;
+  costoServicioEsperado: number | null;
+  cantKmEsperado: number | null;
+  estadoValidacion: string;
+}
+
+export interface Alerta {
+  id: string;
+  incidenteId: string;
+  tipoAlerta: string;
+  descripcion: string | null;
+  datosContexto: Record<string, unknown> | null;
+  riesgo: number;
+  estado: string;
+  fechaGeneracion: string;
+}
+
+export interface Observacion {
+  id: string;
+  tipoObservacion: string;
+  severidad: string;
+  titulo: string;
+  descripcion: string | null;
+  montoCobrado: number;
+  montoEsperado: number;
+  diferencia: number;
+  estado: string;
+  fechaGeneracion: string;
+}
+
+export interface LiquidacionDetalle {
+  liquidacion: Liquidacion;
+  incidentes: Incidente[];
+  alertas: Alerta[];
+  observaciones: Observacion[];
+}

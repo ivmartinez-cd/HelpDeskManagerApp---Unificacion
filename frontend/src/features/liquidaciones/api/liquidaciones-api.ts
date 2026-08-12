@@ -2,6 +2,7 @@ import { httpClient } from "@/services/http-client";
 import type {
   ImportarLiquidacionResult,
   Liquidacion,
+  LiquidacionDetalle,
   LiquidacionPage,
   PrestadorLiquidacion,
   Spst,
@@ -24,7 +25,7 @@ export const liquidacionesApi = {
     return httpClient.get<LiquidacionPage>(`/api/liquidaciones?${qs}`);
   },
 
-  get: (id: string) => httpClient.get<Liquidacion>(`/api/liquidaciones/${id}`),
+  get: (id: string) => httpClient.get<LiquidacionDetalle>(`/api/liquidaciones/${id}`),
 
   importar: (prestadorId: string, file: File) => {
     const fd = new FormData();

@@ -1,14 +1,16 @@
 """Implementación Postgres del puerto PrestadorRepository (tabla prestadores)."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
-from src.modules.liquidaciones.infrastructure.models.prestador_model import LiquidacionPrestadorModel
+from src.modules.liquidaciones.infrastructure.models.prestador_model import (
+    LiquidacionPrestadorModel,
+)
 
 
 class SqlAlchemyPrestadorRepository:
@@ -20,7 +22,9 @@ class SqlAlchemyPrestadorRepository:
         return _to_entity(row) if row else None
 
     async def get_by_nombre_corto(self, nombre_corto: str) -> Prestador | None:
-        stmt = select(LiquidacionPrestadorModel).where(LiquidacionPrestadorModel.nombre_corto == nombre_corto)
+        stmt = select(LiquidacionPrestadorModel).where(
+            LiquidacionPrestadorModel.nombre_corto == nombre_corto
+        )
         row = (await self._session.execute(stmt)).scalar_one_or_none()
         return _to_entity(row) if row else None
 
@@ -62,7 +66,7 @@ class SqlAlchemyPrestadorRepository:
         row.nombre_corto = nombre_corto
         row.cuit = cuit
         row.region = region
-        row.updated_at = datetime.now(timezone.utc)
+        row.updated_at = datetime.now(UTC)
         await self._session.flush()
         await self._session.refresh(row)
         return _to_entity(row)
@@ -72,7 +76,7 @@ class SqlAlchemyPrestadorRepository:
         if not row:
             return None
         row.activo = activo
-        row.updated_at = datetime.now(timezone.utc)
+        row.updated_at = datetime.now(UTC)
         await self._session.flush()
         await self._session.refresh(row)
         return _to_entity(row)

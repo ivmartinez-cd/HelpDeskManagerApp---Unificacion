@@ -19,11 +19,17 @@ class SqlAlchemySpstRepository:
         return _to_entity(row) if row else None
 
     async def list_by_prestador(self, prestador_id: UUID) -> list[Spst]:
-        stmt = select(SpstModel).where(SpstModel.prestador_id == prestador_id).order_by(SpstModel.nombre)
+        stmt = (
+            select(SpstModel)
+            .where(SpstModel.prestador_id == prestador_id)
+            .order_by(SpstModel.nombre)
+        )
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
-    async def list_all(self, *, prestador_id: UUID | None = None, solo_activos: bool = False) -> list[Spst]:
+    async def list_all(
+        self, *, prestador_id: UUID | None = None, solo_activos: bool = False
+    ) -> list[Spst]:
         stmt = select(SpstModel).order_by(SpstModel.nombre)
         if prestador_id is not None:
             stmt = stmt.where(SpstModel.prestador_id == prestador_id)

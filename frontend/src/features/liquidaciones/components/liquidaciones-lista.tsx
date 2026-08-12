@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
@@ -162,9 +163,12 @@ export function LiquidacionesLista() {
                         style={{ borderColor: "rgba(255,255,255,.07)" }}
                       >
                         <td className={tdCls}>
-                          <span className="font-body text-sm text-brand-orange">
-                            {liq.nombreArchivo ?? "—"}
-                          </span>
+                          <Link
+                            href={`/liquidaciones/${liq.id}`}
+                            className="font-body text-sm text-brand-orange hover:underline"
+                          >
+                            {liq.nombreArchivo ?? `Liquidación ${liq.periodo}`}
+                          </Link>
                         </td>
                         <td className={tdCls} style={{ color: "#e0e0e0" }}>
                           {pst ? `${pst.region ?? pst.nombreCorto} — ${pst.nombre}` : "—"}
