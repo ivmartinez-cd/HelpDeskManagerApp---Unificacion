@@ -12,6 +12,7 @@ class UserResponse(BaseModel):
     email: str
     full_name: str = Field(serialization_alias="fullName")
     is_superadmin: bool = Field(serialization_alias="isSuperadmin")
+    color: str | None = None
 
 
 class PermissionResponse(BaseModel):
@@ -32,6 +33,7 @@ class IdentityResponse(BaseModel):
             email=identity.user.email,
             full_name=identity.user.full_name,
             is_superadmin=identity.user.is_superadmin,
+            color=identity.user.color,
         )
         permissions = [
             PermissionResponse(module=p.module, action=p.action) for p in identity.permissions

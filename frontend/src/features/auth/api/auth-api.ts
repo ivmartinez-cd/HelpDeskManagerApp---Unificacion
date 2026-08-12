@@ -5,6 +5,7 @@ export interface UserSummary {
   email: string;
   fullName: string;
   isSuperadmin: boolean;
+  color: string | null;
 }
 
 export interface PermissionSummary {

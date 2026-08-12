@@ -12,6 +12,7 @@ def to_identity(user: User, permissions: PermissionSet, *, session_id: uuid.UUID
             email=user.email.value,
             full_name=user.full_name,
             is_superadmin=user.is_superadmin,
+            color=user.color,
         ),
         permissions=frozenset(
             PermissionView(module=p.module.value, action=p.action.value)

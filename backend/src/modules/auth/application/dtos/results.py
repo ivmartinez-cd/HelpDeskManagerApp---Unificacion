@@ -14,6 +14,7 @@ class UserView:
     email: str
     full_name: str
     is_superadmin: bool
+    color: str | None
 
 
 @dataclass(frozen=True, slots=True)
