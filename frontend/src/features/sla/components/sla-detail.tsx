@@ -201,13 +201,13 @@ export function SlaDetail() {
               label="Correctos"
               value={resumen.correctos.toLocaleString("es-AR")}
               tone="orange"
-              hint={`${resumen.pct_correctos.toLocaleString("es-AR", { maximumFractionDigits: 1 })}% del período`}
+              hint={`${resumen.pct_correctos.toLocaleString("es-AR", { maximumFractionDigits: 2 })}% del período`}
             />
             <KpiTile
               label="Vencidos"
               value={resumen.vencidos.toLocaleString("es-AR")}
               tone={resumen.vencidos > 0 ? "danger" : "neutral"}
-              hint={`${resumen.pct_vencidos.toLocaleString("es-AR", { maximumFractionDigits: 1 })}% del período`}
+              hint={`${resumen.pct_vencidos.toLocaleString("es-AR", { maximumFractionDigits: 2 })}% del período`}
             />
           </KpiGrid>
 

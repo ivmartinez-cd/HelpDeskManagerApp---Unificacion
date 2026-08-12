@@ -25,7 +25,7 @@ function currentPeriodo(): string {
 }
 
 function formatPct(value: number): string {
-  return value.toLocaleString("es-AR", { maximumFractionDigits: 1 });
+  return value.toLocaleString("es-AR", { maximumFractionDigits: 2 });
 }
 
 /** Dona de cumplimiento del mes — Patrón nuevo acordado con el usuario a
