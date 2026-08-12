@@ -50,3 +50,27 @@ en una auditoría aparte. Concretamente:
 - Las desviaciones conscientes del texto literal de la guía se documentan como ADR en
   `backend/docs/adr/` (ver `007-vocabulario-de-permisos-en-shared-excepcion-de-presentation.md`
   como ejemplo) — una excepción sin ADR es una violación, no una decisión.
+
+## Frontend en Docker: Turbopack no siempre recompila (caché stale)
+
+`helpdesk-manager-frontend` corre en Docker (bind mount de `frontend/` a `/app`, ver
+`docker-compose.yml`) con `next dev`/Turbopack. El file-watcher no siempre detecta ediciones: el
+HTML servido y el bundle JS/CSS pueden seguir reflejando la versión anterior del código varios
+minutos después de guardar, sin ningún error en `docker logs`. Pasó repetidas veces migrando
+distintos módulos (2026-08-10, 2026-08-12), probablemente porque el watcher de Turbopack no
+recibe eventos inotify fiables sobre un bind mount de Docker Desktop con host Windows (no
+confirmado a nivel de causa raíz, solo el patrón observado).
+
+**Cómo aplicar**: después de editar código de `frontend/` con el contenedor arriba, no asumir
+que un cambio se refleja solo porque el navegador lo muestra (el navegador tiene su propia
+caché). Verificar con curl antes de dar por buena una captura de pantalla o un test visual:
+
+```
+curl -s http://localhost:3000/<ruta> | grep <algo del cambio nuevo>
+```
+
+Si el curl sigue mostrando contenido viejo (o `docker logs helpdesk-manager-frontend --tail 5`
+no muestra una recompilación reciente para esa ruta), `docker restart helpdesk-manager-frontend`
+y esperar ~5-8s a que vuelva a responder 200 en `/` antes de re-verificar. No matar el contenedor
+de forma permanente — es el servidor que se deja corriendo entre sesiones para que se pueda
+probar en el navegador.
