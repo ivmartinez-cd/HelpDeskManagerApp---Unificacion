@@ -64,7 +64,6 @@ export function BrandModal({ isOpen, onClose, title, children, widthPx = 480, er
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       style={{ background: "rgba(20,20,20,.55)" }}
-      onClick={onClose}
     >
       <div
         ref={modalRef}
@@ -72,7 +71,6 @@ export function BrandModal({ isOpen, onClose, title, children, widthPx = 480, er
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        onClick={(e) => e.stopPropagation()}
         style={{ width: widthPx, boxShadow: "0 20px 60px rgba(0,0,0,.25)" }}
         className="flex max-h-[90vh] w-full max-w-[92vw] flex-col overflow-hidden rounded-[16px] bg-card focus:outline-none"
       >
