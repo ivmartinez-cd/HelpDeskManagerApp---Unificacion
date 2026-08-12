@@ -4,6 +4,30 @@ Actualizado: 2026-08-12 (Frontend de Equipos Offline portado — 6 secciones
 colapsables, selección múltiple + baja masiva, banner outages 3 niveles; tsc + eslint
 limpios en el contenedor Docker). Backend 100% completo. Frontend 100% completo.
 
+## Bug del poller (límite de parámetros de asyncpg) — FIXEADO 2026-08-12
+
+Detectado 2026-08-12 al reactivar `DISABLE_BACKGROUND_JOBS=false`:
+
+```
+poller: ciclo de sync fallido
+asyncpg.exceptions._base.InterfaceError: the number of query arguments cannot exceed 32767
+```
+
+**Causa raíz confirmada**: `SqlAlchemyKnownDeviceRepository.upsert()` armaba un solo
+`INSERT ... VALUES` con el inventario completo (5169 equipos × 10 columnas = ~51.700
+parámetros bind, contra el límite duro de 32767 de asyncpg).
+
+**Fix**: el upsert (y el `SELECT ... WHERE device_id IN (...)` de `_existing_ids`) van
+en lotes de `BATCH_ROWS = 1000` filas (10.000 parámetros por query, margen amplio).
+Cubierto por test de integración de regresión
+(`test_upsert_supera_el_limite_de_parametros_de_asyncpg`, 3300 filas = 33.000 parámetros
+sin chunking) en `tests/integration/infrastructure/insumos/`. Verificado: lint-imports,
+ruff, mypy, 584 unit + 4 integración en verde.
+
+**Nota operativa**: para aplicar el fix se puso el backend en modo test
+(`DISABLE_BACKGROUND_JOBS=true` + recreate, según CLAUDE.md). Reactivar los jobs es
+decisión explícita del usuario.
+
 ## Qué resta hacer, en orden
 
 1. **Gaps que quedaron fuera de alcance en el frontend de Clientes** (baja prioridad):

@@ -1,5 +1,42 @@
 # CLAUDE.md
 
+## Modo test obligatorio: SDSInsumos sigue productivo, la migración nunca puede tocarlo
+
+Regla dura, no opcional, para toda sesión de trabajo en este repo — no solo la actual.
+
+- SDSInsumos (el legacy) sigue productivo mientras se migra a este monorepo. La DB de dev
+  (`helpdesk-db`) está sembrada con datos reales de producción (ver memoria
+  `project_insumos_dev_seeded_from_prod_backup`), incluidos destinatarios de mail reales de
+  logística (`app_settings.logistics_mail_to`), y `.env` tiene credenciales SMTP reales y
+  funcionales (`SMTP_HOST=smtp.gmail.com`, cuenta real de Canal Directo). **Nada de esto es un
+  mock**: cualquier job o llamada que se dispare de verdad tiene efectos reales sobre gente real
+  y sobre Canal Directo en producción.
+- **Incidente real (2026-08-12)**: editar en vivo código de jobs de fondo
+  (`poller_alerts.py`/`background_jobs.py`) con el contenedor `helpdesk-manager-backend`
+  corriendo con sus jobs activos disparó un mail real de "poller caído" a destinatarios reales
+  de Canal Directo, sin que nadie lo pidiera.
+- **Antes de tocar o dejar correr cualquier código de jobs de fondo**
+  (`backend/src/modules/*/presentation/background_jobs.py`,
+  `backend/src/modules/*/application/jobs/`, o cualquier cosa que mande mail o escriba contra
+  SOAP/Insight/wsAyC fuera de un `dryRun` explícito), el contenedor del backend tiene que estar
+  en modo test:
+  ```
+  # .env
+  DISABLE_BACKGROUND_JOBS=true
+  ```
+  y hay que confirmar que el contenedor lo tenga **aplicado de verdad** — `docker restart` NO
+  relee `.env` (reinicia el proceso con el entorno viejo). Hace falta recrear el contenedor:
+  ```
+  docker compose up -d --force-recreate backend
+  docker exec helpdesk-manager-backend printenv DISABLE_BACKGROUND_JOBS   # tiene que imprimir "true"
+  ```
+  y verificar en el log de arranque que **no** aparezca `background_jobs: N job(s) iniciados`
+  después de `Application startup complete`.
+- Esta regla aplica a cualquier módulo con jobs de fondo (insumos, y también
+  `sla/presentation/background_jobs.py`), no solo al que se esté tocando en el momento. No
+  reactivar los jobs de fondo (borrar la línea de `.env` o ponerla en `false`) sin que el usuario
+  lo pida explícitamente — no es una decisión a tomar de forma proactiva.
+
 ## Idioma y estilo de comunicación
 
 Regla dura para toda respuesta de texto a el usuario en este repo (no aplica a nombres de
