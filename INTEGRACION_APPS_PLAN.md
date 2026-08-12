@@ -320,6 +320,46 @@ en `.claude.json` global y de proyecto; sin `.mcp.json` en ninguno de los 6 repo
 - [ ] Apagar el módulo Contadores de la app vieja.
 - [ ] Actualizar `PROJECT_CONTEXT.md` del padre.
 
+#### Fase 3 — Liquidacion-Prestadores (segundo módulo, en curso — iniciada 2026-08-12)
+
+**Nota de secuencia real:** el orden original de esta Fase 0 decía Contadores →
+Liquidacion-Prestadores → ... En la práctica, SDSInsumos se migró (y cerró
+completamente, ver `SDSINSUMOS_MIGRACION_ESTADO.md`) antes de arrancar
+Liquidacion-Prestadores — decisión operativa tomada sobre la marcha, no un cambio de
+este documento. Este checklist no se reescribe retroactivamente para reflejar el orden
+real ejecutado; solo se actualiza el estado de cada módulo.
+
+- [x] **Tests de caracterización / reconocimiento:** documentación funcional del legacy
+      (`Docs importantes/`, 8 documentos) cruzada contra el código real
+      (`backend/app/`, `frontend/app/`) por 3 investigaciones en paralelo — arquitectura
+      completa, catálogo real de reglas ALT001-009 (`seed.py` como fuente de verdad, no
+      los docs — varios están desactualizados o se contradicen entre sí), y la
+      integración WS AyC (no mencionada en ningún doc funcional, no está en producción
+      hoy). Resultado completo en `LIQUIDACION_PRESTADORES_CARACTERIZACION.md` (raíz de
+      este repo) — leerla antes de escribir código del módulo.
+- [x] **Decisiones de alcance confirmadas con el usuario (2026-08-12)** — detalle y
+      verificación en vivo en `LIQUIDACION_PRESTADORES_CARACTERIZACION.md` §6: **WS AyC
+      queda fuera de esta migración** (no está en el Docker de producción real que usa
+      la Team Leader — confirmado con `curl` contra `localhost:8002`, 404 en toda ruta
+      `/liquidaciones/ws/*` — es un experimento propio del usuario en una rama sin
+      desplegar); ALT005/ALT006/ALT007 se portan tal cual (sin completar); el motor de
+      reglas mantiene el patrón híbrido actual (sin CRUD de reglas ni motor
+      interpretado).
+- [ ] Portar el modelo de datos (10 tablas) al Postgres consolidado, con Alembic (el
+      legacy usa migraciones aditivas a mano, sin Alembic — no portar ese mecanismo).
+- [ ] Reescribir domain/application/infrastructure siguiendo `ARCHITECTURE_GUIDE.md`.
+- [ ] Portar la UI a Next.js — sin handoff de diseño propio todavía (no hay
+      `design_handoff_liquidaciones/`); crearlo antes de tocar frontend, siguiendo la
+      skill `ui-design-handoff` (mismo proceso que insumos/mesa de ayuda). La paleta de
+      marca del legacy (`brand`/`graybrand`) ya es la línea Institucional de Canal
+      Directo — no hay conflicto de marca, solo aplicar los primitivos ya establecidos
+      del monorepo nuevo.
+- [ ] Prueba end-to-end con Playwright.
+- [ ] Correr en paralelo con la app vieja antes de apagarla — **no hay cutover en
+      frío** (módulo con lógica frágil, ver riesgos en §1 de este documento).
+- [ ] Apagar Liquidacion-Prestadores (repo/deploy) tras el período de observación.
+- [ ] Actualizar `PROJECT_CONTEXT.md` del padre.
+
 ### Fase 4 — STC Cloud (caso especial, va último)
 - [ ] Migrar `heartbeatMonitor` y `alertWorker` (BullMQ → outbox Postgres + APScheduler,
       según decisión de §2) manteniendo el contrato de API que consume el agente Windows.

@@ -117,3 +117,23 @@ source_modules =
 forbidden_modules =
     src.modules.auth
 
+[importlinter:contract:liquidaciones-domain-no-frameworks]
+name = El dominio de liquidaciones no importa frameworks
+type = forbidden
+source_modules =
+    src.modules.liquidaciones.domain
+forbidden_modules =
+    fastapi
+    sqlalchemy
+    pydantic
+    alembic
+
+[importlinter:contract:liquidaciones-domain-app-independent-from-auth]
+name = El domain/application de liquidaciones no depende de auth
+type = forbidden
+source_modules =
+    src.modules.liquidaciones.domain
+    src.modules.liquidaciones.application
+forbidden_modules =
+    src.modules.auth
+
