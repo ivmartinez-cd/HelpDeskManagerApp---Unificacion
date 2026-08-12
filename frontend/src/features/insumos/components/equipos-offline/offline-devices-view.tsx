@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { RefreshCw, ShieldOff, Trash2, WifiOff } from "lucide-react";
+import { Info, RefreshCw, ShieldOff, Trash2, WifiOff } from "lucide-react";
 import { BrandButton, BrandEmptyState, BrandSkeleton } from "@/shared/components/ui/brand-form";
 import { useSession } from "@/services/session-provider";
 import { ConfirmationModal, StatusBadge } from "../shared";
@@ -10,6 +10,7 @@ import { compareSortValues, useTableSort } from "../../hooks/use-table-sort";
 import { useOfflineDevices } from "../../hooks/use-offline-devices";
 import { OutageBanner } from "./outage-banner";
 import { OfflineSection } from "./offline-section";
+import { OfflineHelpModal } from "./offline-help-modal";
 import {
   groupKeyOf,
   offlineHaystack,
@@ -53,6 +54,7 @@ export function OfflineDevicesView() {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [verifyModalOpen, setVerifyModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [helpModalOpen, setHelpModalOpen] = useState(false);
 
   const { sort, toggleSort } = useTableSort<OfflineSortKey>({
     initial: { key: "daysOffline", direction: "desc" },
@@ -131,6 +133,15 @@ export function OfflineDevicesView() {
             <StatusBadge tone={candidateCount > 0 ? "activo" : "ok"}>
               {candidateCount} candidato{candidateCount === 1 ? "" : "s"} a baja
             </StatusBadge>
+            <button
+              type="button"
+              onClick={() => setHelpModalOpen(true)}
+              title="Ver detalles sobre la verificación y bajas"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 font-body text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Info className="h-3.5 w-3.5" />
+              ¿Cómo funciona?
+            </button>
           </div>
           <p className="mt-1 font-body text-sm text-muted-foreground">
             Equipos sin reportar +72hs. Verificar contra Canal Directo antes de dar de baja.
@@ -272,6 +283,9 @@ export function OfflineDevicesView() {
             pero no ejecutada realmente en el portal. */}
         Revisá que los equipos sean correctos antes de confirmar.
       </ConfirmationModal>
+
+      {/* ─── Modal de ayuda ──────────────────────────────────────────── */}
+      <OfflineHelpModal isOpen={helpModalOpen} onClose={() => setHelpModalOpen(false)} />
     </div>
   );
 }
