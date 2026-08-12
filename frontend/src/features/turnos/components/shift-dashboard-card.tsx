@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { turnosApi } from "../api/turnos-api";
 import type { ResolvedShift } from "../types/turnos";
 import { Spinner } from "@/shared/components/ui/spinner";
-import { contadoresApi } from "@/features/contadores/api/contadores-api";
+import { cn } from "@/shared/utils/cn";
 
 interface CasillaGroup {
   casillaNombre: string;
@@ -15,23 +15,13 @@ interface CasillaGroup {
 
 export function ShiftDashboardCard() {
   const [shifts, setShifts] = useState<ResolvedShift[]>([]);
-  const [operatorColors, setOperatorColors] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      turnosApi.getCurrentShifts(),
-      contadoresApi.listCalendarioOperadores().catch(() => []),
-    ])
-      .then(([data, ops]) => {
-        setShifts(data);
-        const colorMap = new Map<string, string>();
-        ops.forEach((op) => {
-          if (op.color) colorMap.set(op.nombre.toLowerCase().trim(), op.color);
-        });
-        setOperatorColors(colorMap);
-      })
+    turnosApi
+      .getCurrentShifts()
+      .then(setShifts)
       .catch((err: unknown) => {
         console.error("Error al cargar turnos de casillas:", err);
         setError("No se pudo cargar la distribución de casillas.");
@@ -97,26 +87,6 @@ export function ShiftDashboardCard() {
     allShifts: grp.allShifts.sort((a, b) => a.horaInicio.localeCompare(b.horaInicio)),
   }));
 
-  const getOpBadgeStyle = (userName: string, fallbackColor?: string | null) => {
-    const key = userName.toLowerCase().trim();
-    let hex = operatorColors.get(key);
-    if (!hex) {
-      const firstName = key.split(" ")[0];
-      for (const [opName, opColor] of operatorColors.entries()) {
-        if (opName.includes(firstName) || firstName.includes(opName.split(" ")[0])) {
-          hex = opColor;
-          break;
-        }
-      }
-    }
-    hex = hex || fallbackColor || "#3b82f6";
-    return {
-      backgroundColor: `${hex}20`,
-      color: hex,
-      borderColor: `${hex}40`,
-    };
-  };
-
   return (
     <>
       {groups.map((grp) => (
@@ -146,54 +116,52 @@ export function ShiftDashboardCard() {
             </div>
           </div>
 
-          {/* Grilla completa de slots con resaltado AHORA/PRÓXIMO */}
-          <div className="flex flex-col gap-1.5">
-            {grp.allShifts.map((s) => (
-              <div
-                key={s.slotId}
-                className={`flex items-center justify-between rounded-[8px] border px-3 py-2 transition-colors ${
-                  s.isCurrent
-                    ? "border-emerald-500/40 bg-emerald-500/10 shadow-xs"
-                    : s.isNext
-                    ? "border-amber-500/30 bg-amber-500/10"
-                    : "border-border/60 bg-muted/20"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="font-body text-xs font-mono font-semibold text-foreground">
-                    {s.horaInicio.slice(0, 5)} - {s.horaFin.slice(0, 5)}
-                  </span>
-                  {s.isCurrent && (
-                    <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 font-body text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">
-                      AHORA
+          {/* Lista de slots con resaltado AHORA/PRÓXIMO — filas separadas por
+              línea, sin caja ni color por operador (ver feedback del usuario
+              del 2026-08-12: nada de píldoras de color acá). */}
+          <div className="flex flex-col divide-y divide-border/50">
+            {grp.allShifts.map((s) => {
+              const highlighted = s.isCurrent || s.isNext;
+              return (
+                <div key={s.slotId} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-body text-xs font-mono font-semibold text-foreground">
+                      {s.horaInicio.slice(0, 5)} – {s.horaFin.slice(0, 5)}
                     </span>
-                  )}
-                  {s.isNext && (
-                    <span className="rounded-full bg-amber-500/20 px-2 py-0.5 font-body text-[10px] font-extrabold text-amber-600 dark:text-amber-400">
-                      PRÓXIMO
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 justify-end">
-                  {s.operadores.length > 0 ? (
-                    s.operadores.map((op) => (
-                      <span
-                        key={op.userId}
-                        style={getOpBadgeStyle(op.userName, grp.casillaColor)}
-                        className="rounded-full border px-2.5 py-0.5 font-body text-xs font-semibold"
-                      >
-                        {op.userName}
+                    {s.isCurrent && (
+                      <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 font-body text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">
+                        AHORA
                       </span>
-                    ))
-                  ) : (
-                    <span className="font-body text-xs italic text-muted-foreground">
-                      Sin asignar
-                    </span>
-                  )}
+                    )}
+                    {s.isNext && (
+                      <span className="rounded-full bg-brand-orange/15 px-2 py-0.5 font-body text-[10px] font-extrabold text-brand-orange">
+                        PRÓXIMO
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap justify-end gap-x-2">
+                    {s.operadores.length > 0 ? (
+                      s.operadores.map((op) => (
+                        <span
+                          key={op.userId}
+                          className={cn(
+                            "font-body text-[13px] font-bold",
+                            highlighted ? "text-brand-orange" : "text-muted-foreground",
+                          )}
+                        >
+                          {op.userName}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="font-body text-xs italic text-muted-foreground">
+                        Sin asignar
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ))}
