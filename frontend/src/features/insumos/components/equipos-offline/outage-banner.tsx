@@ -1,13 +1,16 @@
 "use client";
 
-import { AlertTriangle, ShieldAlert, Info } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, ChevronDown, ChevronRight, ShieldAlert, Info } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { formatPlainDate } from "../../utils/format";
 import type { MassOutageRow } from "../../types";
 
 /** Banner de caídas de colector con 3 niveles de certeza (portado del
  * `OutageBanner` del legacy Vue). Se renderiza en la parte superior de la
- * vista cuando hay al menos un outage en la lista.
+ * vista cuando hay al menos un outage en la lista, colapsado en una sola
+ * línea resumen — igual que el legacy — para no tapar la tabla de equipos
+ * con la lista completa de outages.
  *
  * Niveles (mismo criterio que el legacy):
  *  - "confirmado": `confirmed === true` — señal real del colector (API de monitors).
@@ -116,13 +119,35 @@ interface OutageBannerProps {
 }
 
 export function OutageBanner({ outages }: OutageBannerProps) {
+  const [open, setOpen] = useState(false);
+
   if (outages.length === 0) return null;
 
+  const ChevronIcon = open ? ChevronDown : ChevronRight;
+
   return (
-    <div className="mb-5 flex flex-col gap-2">
-      {outages.map((outage) => (
-        <OutageItem key={`${outage.customerId}-${outage.day}`} outage={outage} />
-      ))}
+    <div className="mb-5 overflow-hidden rounded-[10px] border border-[rgba(234,179,8,.3)] bg-[rgba(234,179,8,.08)]">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left"
+        aria-expanded={open}
+      >
+        <AlertTriangle className="h-[18px] w-[18px] flex-none text-[#eab308]" aria-hidden="true" />
+        <p className="flex-1 font-body text-sm font-bold text-[#92400e] dark:text-[#fde047]">
+          {outages.length} caída{outages.length === 1 ? "" : "s"} de colector detectadas — no se
+          ofrecen para baja
+        </p>
+        <ChevronIcon className="h-4 w-4 flex-none text-[#92400e] dark:text-[#fde047]" aria-hidden="true" />
+      </button>
+
+      {open && (
+        <div className="flex flex-col gap-2 border-t border-[rgba(234,179,8,.3)] px-4 py-3">
+          {outages.map((outage) => (
+            <OutageItem key={`${outage.customerId}-${outage.day}`} outage={outage} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
