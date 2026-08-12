@@ -3,39 +3,35 @@
 Actualizado: 2026-08-12 (cierre de gaps de Clientes — import-from-supply,
 zone-contacts-import —, mail dispatch con sesión propia para jobs de fondo — ADR-010 —,
 resumen de auditoría en Historial, submenú de navegación con badges, notificaciones de
-escritorio). Verificado en verde: lint-imports, ruff, mypy, 584 unit + 58 integración
-(backend), tsc + eslint (frontend, 106 archivos de insumos).
+escritorio, y los 4 gaps de la comparación final — ver abajo). Verificado en verde:
+lint-imports, ruff, mypy, 584 unit + 58 integración (backend), tsc + eslint (frontend).
 
-**No está 100% completo.** Comparación exhaustiva legacy vs puerto (2026-08-12, este
-chequeo) encontró 5 gaps reales que no estaban documentados o quedaron mal registrados:
+Comparación exhaustiva legacy vs puerto (2026-08-12) encontró 5 gaps reales que no
+estaban documentados o quedaron mal registrados. Estado de cada uno:
 
-1. **Bug real, no decisión consciente** — `background_jobs.py::_find_pending_alert`
-   (línea 208) usa `settings.threshold_critical` (default 3 días) en vez de
-   `threshold_urgent` (default 7 días, que es lo que usa el legacy en `main.py:272`) para
-   decidir qué pedidos avisar a logística. Además el job pasó de correr cada
-   `alert_check_minutes` (~15 min, legacy `main.py:252`) a una vez por día a hora fija
-   (`background_pending_alert_task`, `_PENDING_ALERT_HOUR_UTC`). Con
-   `DISABLE_BACKGROUND_JOBS=true` no tiene efecto hoy, pero si se reactiva tal cual el
-   aviso a logística sale mucho más tarde y con mucha menos frecuencia que en producción.
-   **Pendiente decisión del usuario**: ¿corregir threshold+frecuencia antes de reactivar
-   jobs, o es un cambio de comportamiento aceptado?
-2. **Scan incremental de supplies** (`/api/supply-scan/status`, `/api/supply-scan/run`,
-   paso dentro del ciclo del poller) — sigue sin portar, backend y frontend. Coincide con
-   la decisión ya tomada de posponerlo (ver "Decisión 2026-08-11" más abajo), no es una
-   sorpresa.
-3. Modal "¿Cómo funciona?" de Equipos Offline (texto explicativo del proceso de
-   verificación/baja) — no tiene equivalente, solo quedan descripciones de una línea por
-   sección.
-4. Botón "Copiar del solicitante" en el formulario de contacto por zona de Clientes
-   (`contact-form.tsx`) — desapareció, regresión de UI menor.
-5. `/api/health` no tiene el chequeo específico de Insight/Canal Directo que tenía el
-   legacy — solo status+DB genérico. Detalle de observabilidad, no de negocio.
+1. **✅ Corregido** — `background_jobs.py::_find_pending_alert` usaba
+   `settings.threshold_critical` (3 días) en vez de `threshold_urgent` (7 días, como el
+   legacy en `main.py:272`) para decidir qué pedidos avisar a logística, y el job corría
+   una vez por día en vez de cada ~15 min (`main.py:252`). Alineado a `threshold_urgent` +
+   intervalo de 15 min, mismo patrón que `background_alert_task`.
+2. **Pospuesto, no un gap** — Scan incremental de supplies
+   (`/api/supply-scan/status`, `/api/supply-scan/run`). Decisión del usuario: no se va a
+   portar — se va a modificar el WS de Canal Directo para que los pedidos de "Origen
+   Interno" aparezcan directamente, lo que vuelve innecesario el scan que los detectaba
+   por fuera. Ver "Decisión 2026-08-11" más abajo para el contexto original.
+3. **✅ Corregido** — Modal "¿Cómo funciona?" de Equipos Offline, portado de
+   `OfflineHelpModal.vue` (`offline-help-modal.tsx`).
+4. **✅ Corregido** — Botón "Copiar del solicitante" restaurado en
+   `contact-form.tsx`.
+5. **✅ Corregido** — `GET /api/insumos/health` con chequeo real de Insight
+   (`health_router.py`). Canal Directo no se portó porque en el legacy ese chequeo era un
+   no-op vestigial que nunca fallaba — no había comportamiento real que portar.
 
 Corrección a una nota previa de este documento: las notificaciones de escritorio **sí**
-están portadas (toggle funcional en Configuración + integradas al Dashboard,
-`use-desktop-notifications.ts`/`use-alert-notifications.ts`) — lo que falta es el panel
-de diagnóstico de permisos que tenía el legacy (botón "Probar notificación", estado del
-permiso, links a Configuración de Windows), no la funcionalidad en sí.
+estaban portadas desde antes (toggle funcional en Configuración + integradas al
+Dashboard) — lo que faltaba era el panel de diagnóstico de permisos del legacy (botón
+"Probar notificación", estado del permiso, links a Configuración de Windows), que
+también se agregó en esta ronda.
 
 ## Bug del poller (límite de parámetros de asyncpg) — FIXEADO 2026-08-12
 
