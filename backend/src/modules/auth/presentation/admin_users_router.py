@@ -12,6 +12,7 @@ from src.modules.auth.application.use_cases.request_password_reset import (
 )
 from src.modules.auth.application.use_cases.update_user import UpdateUser, UpdateUserDependencies
 from src.modules.auth.domain.errors import UserNotFoundError
+from src.modules.auth.domain.repositories.operador_color_lookup import OperadorColorLookup
 from src.modules.auth.domain.well_known_permissions import MANAGE_ADMIN
 from src.modules.auth.infrastructure.argon2_password_hasher import Argon2PasswordHasher
 from src.modules.auth.infrastructure.mailer_factory import get_mailer
@@ -22,6 +23,7 @@ from src.modules.auth.infrastructure.repositories.sqlalchemy_user_repository imp
     SqlAlchemyUserRepository,
 )
 from src.modules.auth.infrastructure.secure_token_generator import SecureTokenGenerator
+from src.modules.auth.presentation.dependencies.operador_colors import get_operador_color_lookup
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.auth.presentation.schemas.admin_user_schemas import (
     AdminUserResponse,
@@ -68,9 +70,12 @@ async def create_user(
     payload: CreateUserRequest,
     _: Identity = _require_manage_admin,
     db: AsyncSession = Depends(get_db),
+    operador_colors: OperadorColorLookup = Depends(get_operador_color_lookup),
 ) -> AdminUserResponse:
     deps = CreateUserDependencies(
-        users=SqlAlchemyUserRepository(db), hasher=Argon2PasswordHasher()
+        users=SqlAlchemyUserRepository(db),
+        hasher=Argon2PasswordHasher(),
+        operador_colors=operador_colors,
     )
     user = await CreateUser(deps).execute(email=payload.email, full_name=payload.full_name)
     await _send_password_link(db, user_email=user.email.value, purpose="activation")
@@ -86,7 +91,10 @@ async def update_user(
 ) -> AdminUserResponse:
     deps = UpdateUserDependencies(users=SqlAlchemyUserRepository(db))
     user = await UpdateUser(deps).execute(
-        user_id=user_id, full_name=payload.full_name, is_active=payload.is_active
+        user_id=user_id,
+        full_name=payload.full_name,
+        is_active=payload.is_active,
+        color=payload.color,
     )
     return AdminUserResponse.from_domain(user)
 

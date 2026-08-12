@@ -7,6 +7,7 @@ from typing import Protocol
 class UserInfo:
     id: uuid.UUID
     full_name: str
+    color: str | None = None
 
 
 class UserProvider(Protocol):

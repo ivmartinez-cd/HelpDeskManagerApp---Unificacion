@@ -16,9 +16,9 @@ class SqlAlchemyUserProvider:
             return {}
         stmt = select(AppUser).where(AppUser.id.in_(user_ids))
         rows = (await self._session.execute(stmt)).scalars().all()
-        return {r.id: UserInfo(id=r.id, full_name=r.full_name) for r in rows}
+        return {r.id: UserInfo(id=r.id, full_name=r.full_name, color=r.color) for r in rows}
 
     async def list_all_active_users(self) -> list[UserInfo]:
         stmt = select(AppUser).where(AppUser.is_active.is_(True)).order_by(AppUser.full_name)
         rows = (await self._session.execute(stmt)).scalars().all()
-        return [UserInfo(id=r.id, full_name=r.full_name) for r in rows]
+        return [UserInfo(id=r.id, full_name=r.full_name, color=r.color) for r in rows]

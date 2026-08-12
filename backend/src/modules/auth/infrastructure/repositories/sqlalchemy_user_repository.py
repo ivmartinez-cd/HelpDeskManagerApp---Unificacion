@@ -76,6 +76,7 @@ def _to_entity(model: AppUser) -> User:
         is_superadmin=model.is_superadmin,
         created_at=model.created_at,
         last_login_at=model.last_login_at,
+        color=model.color,
     )
 
 
@@ -87,6 +88,7 @@ def _to_new_model(user: User) -> AppUser:
         full_name=user.full_name,
         is_active=user.is_active,
         is_superadmin=user.is_superadmin,
+        color=user.color,
     )
 
 
@@ -97,3 +99,4 @@ def _apply_changes(model: AppUser, user: User) -> None:
     model.is_active = user.is_active
     model.is_superadmin = user.is_superadmin
     model.last_login_at = user.last_login_at
+    model.color = user.color

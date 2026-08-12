@@ -65,6 +65,18 @@ export function useAdminUsers() {
     }
   }
 
+  async function updateColor(user: AdminUser, color: string): Promise<boolean> {
+    try {
+      await adminUsersApi.update(user.id, { color });
+      toast.success("Color actualizado");
+      await reload();
+      return true;
+    } catch (error) {
+      toast.error(errorMessage(error));
+      return false;
+    }
+  }
+
   async function triggerPasswordReset(user: AdminUser): Promise<void> {
     try {
       await adminUsersApi.triggerPasswordReset(user.id);
@@ -85,6 +97,7 @@ export function useAdminUsers() {
     pageSize: PAGE_SIZE,
     createUser,
     toggleActive,
+    updateColor,
     triggerPasswordReset,
   };
 }

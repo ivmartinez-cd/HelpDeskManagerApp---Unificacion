@@ -7,6 +7,7 @@ export interface AdminUser {
   isActive: boolean;
   isSuperadmin: boolean;
   createdAt: string;
+  color: string | null;
 }
 
 export interface PaginatedUsers {
@@ -24,6 +25,7 @@ export interface CreateUserPayload {
 export interface UpdateUserPayload {
   fullName?: string;
   isActive?: boolean;
+  color?: string;
 }
 
 export const adminUsersApi = {

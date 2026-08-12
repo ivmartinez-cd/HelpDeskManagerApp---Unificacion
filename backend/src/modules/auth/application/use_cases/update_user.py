@@ -16,7 +16,12 @@ class UpdateUser:
         self._deps = deps
 
     async def execute(
-        self, *, user_id: uuid.UUID, full_name: str | None, is_active: bool | None
+        self,
+        *,
+        user_id: uuid.UUID,
+        full_name: str | None,
+        is_active: bool | None,
+        color: str | None = None,
     ) -> User:
         user = await self._deps.users.get_by_id(user_id)
         if user is None:
@@ -27,6 +32,8 @@ class UpdateUser:
             user.full_name = full_name
         if is_active is not None:
             user.is_active = is_active
+        if color is not None:
+            user.color = color
         await self._deps.users.save(user)
         return user
 

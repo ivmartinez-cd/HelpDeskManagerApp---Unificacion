@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 from src.modules.auth.domain.entities.user import User
 from src.modules.auth.domain.errors import EmailAlreadyRegisteredError
+from src.modules.auth.domain.repositories.operador_color_lookup import OperadorColorLookup
 from src.modules.auth.domain.repositories.user_repository import UserRepository
 from src.modules.auth.domain.services.password_hasher import PasswordHasher
 from src.modules.auth.domain.value_objects.email import Email
@@ -15,14 +16,10 @@ from src.modules.auth.domain.value_objects.raw_password import RawPassword
 class CreateUserDependencies:
     users: UserRepository
     hasher: PasswordHasher
+    operador_colors: OperadorColorLookup
 
 
 class CreateUser:
-    """El alta NO fija un password (ver contrato de la API): la cuenta se
-    crea con un hash de un valor aleatorio que nadie conoce — queda
-    inutilizable hasta que el propio usuario lo fije vía el mismo flujo de
-    reset de la Etapa 9, disparado por el router justo después de esto."""
-
     def __init__(self, deps: CreateUserDependencies) -> None:
         self._deps = deps
 
@@ -38,6 +35,7 @@ class CreateUser:
             is_active=True,
             is_superadmin=False,
             created_at=datetime.now(UTC),
+            color=await self._deps.operador_colors.find_color_by_nombre(full_name),
         )
         await self._deps.users.add(user)
         return user

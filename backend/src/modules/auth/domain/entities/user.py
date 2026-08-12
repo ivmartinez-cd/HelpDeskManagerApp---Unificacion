@@ -18,6 +18,10 @@ class User:
     is_superadmin: bool
     created_at: datetime
     last_login_at: datetime | None = None
+    # Color de identidad del operador tal cual está en Gestión (no una
+    # aproximación): resuelto una vez al dar de alta (ver CreateUser +
+    # OperadorColorLookup) y editable a mano por un admin después.
+    color: str | None = None
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, User) and self.id == other.id

@@ -66,7 +66,7 @@ class GetCurrentShifts:
                         user_name=user_info_map[u_id].full_name
                         if u_id in user_info_map
                         else "Desconocido",
-                        color=None,
+                        color=user_info_map[u_id].color if u_id in user_info_map else None,
                     )
                     for u_id in shift.user_ids
                 ],

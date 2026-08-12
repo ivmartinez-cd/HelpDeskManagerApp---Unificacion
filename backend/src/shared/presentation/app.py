@@ -3,14 +3,17 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.auth.domain.repositories.operador_color_lookup import OperadorColorLookup
 from src.modules.auth.presentation.admin_permissions_router import (
     router as admin_permissions_router,
 )
 from src.modules.auth.presentation.admin_users_router import router as admin_users_router
 from src.modules.auth.presentation.auth_router import router as auth_router
+from src.modules.auth.presentation.dependencies.operador_colors import get_operador_color_lookup
 from src.modules.contadores.presentation.calendario_router import (
     router as calendario_router,
 )
@@ -36,12 +39,25 @@ from src.modules.insumos.presentation.statistics_router import (
 from src.modules.sla.presentation.sla_router import router as sla_router
 from src.modules.turnos.presentation.turnos_router import router as turnos_router
 from src.shared.infrastructure.config.settings import get_settings
+from src.shared.infrastructure.cross_module.auth_operador_color_lookup import (
+    SqlAlchemyOperadorColorLookup,
+)
+from src.shared.infrastructure.database.session import get_db
 from src.shared.infrastructure.logging_config import configure_logging
 from src.shared.presentation.errors.handlers import register_exception_handlers
 from src.shared.presentation.health.router import router as health_router
 from src.shared.presentation.middlewares.request_id import RequestIdMiddleware
 
 logger = logging.getLogger(__name__)
+
+
+async def _provide_operador_color_lookup(
+    db: AsyncSession = Depends(get_db),
+) -> OperadorColorLookup:
+    """Override real de `get_operador_color_lookup` (auth) — este archivo es
+    el único punto del repo con permiso para conocer tanto a auth como a
+    contadores; ver ADR-009."""
+    return SqlAlchemyOperadorColorLookup(db)
 
 
 @asynccontextmanager
@@ -90,6 +106,7 @@ def create_app() -> FastAPI:
     configure_logging(level="DEBUG" if settings.environment == "development" else "INFO")
 
     app = FastAPI(title="HelpDesk Manager API", version="0.1.0", lifespan=_lifespan)
+    app.dependency_overrides[get_operador_color_lookup] = _provide_operador_color_lookup
 
     origins = list(filter(None, {
         settings.cors_origin,

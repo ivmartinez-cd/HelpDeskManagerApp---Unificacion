@@ -117,51 +117,50 @@ export function ShiftDashboardCard() {
           </div>
 
           {/* Lista de slots con resaltado AHORA/PRÓXIMO — filas separadas por
-              línea, sin caja ni color por operador (ver feedback del usuario
-              del 2026-08-12: nada de píldoras de color acá). */}
+              línea, sin caja por operador. El nombre va en el color real de
+              Gestión (AppUser.color, ver ADR-009), no naranja/gris por
+              estado (feedback del usuario del 2026-08-12). */}
           <div className="flex flex-col divide-y divide-border/50">
-            {grp.allShifts.map((s) => {
-              const highlighted = s.isCurrent || s.isNext;
-              return (
-                <div key={s.slotId} className="flex items-center justify-between gap-3 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-body text-xs font-mono font-semibold text-foreground">
-                      {s.horaInicio.slice(0, 5)} – {s.horaFin.slice(0, 5)}
+            {grp.allShifts.map((s) => (
+              <div key={s.slotId} className="flex items-center justify-between gap-3 py-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-body text-xs font-mono font-semibold text-foreground">
+                    {s.horaInicio.slice(0, 5)} – {s.horaFin.slice(0, 5)}
+                  </span>
+                  {s.isCurrent && (
+                    <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 font-body text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">
+                      AHORA
                     </span>
-                    {s.isCurrent && (
-                      <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 font-body text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">
-                        AHORA
-                      </span>
-                    )}
-                    {s.isNext && (
-                      <span className="rounded-full bg-brand-orange/15 px-2 py-0.5 font-body text-[10px] font-extrabold text-brand-orange">
-                        PRÓXIMO
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap justify-end gap-x-2">
-                    {s.operadores.length > 0 ? (
-                      s.operadores.map((op) => (
-                        <span
-                          key={op.userId}
-                          className={cn(
-                            "font-body text-[13px] font-bold",
-                            highlighted ? "text-brand-orange" : "text-muted-foreground",
-                          )}
-                        >
-                          {op.userName}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="font-body text-xs italic text-muted-foreground">
-                        Sin asignar
-                      </span>
-                    )}
-                  </div>
+                  )}
+                  {s.isNext && (
+                    <span className="rounded-full bg-brand-orange/15 px-2 py-0.5 font-body text-[10px] font-extrabold text-brand-orange">
+                      PRÓXIMO
+                    </span>
+                  )}
                 </div>
-              );
-            })}
+
+                <div className="flex flex-wrap justify-end gap-x-2">
+                  {s.operadores.length > 0 ? (
+                    s.operadores.map((op) => (
+                      <span
+                        key={op.userId}
+                        style={op.color ? { color: op.color } : undefined}
+                        className={cn(
+                          "font-body text-[13px] font-bold",
+                          !op.color && "text-muted-foreground",
+                        )}
+                      >
+                        {op.userName}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="font-body text-xs italic text-muted-foreground">
+                      Sin asignar
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       ))}

@@ -28,6 +28,7 @@ class AppUser(Base):
         DateTime(timezone=True), server_default=text("now()"), onupdate=lambda: datetime.now(UTC)
     )
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    color: Mapped[str | None] = mapped_column(String)
 
 
 class Department(Base):

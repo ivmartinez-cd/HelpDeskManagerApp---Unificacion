@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { KeyRound, Plus, Shield, ShieldOff, Sliders } from "lucide-react";
+import { KeyRound, Palette, Plus, Shield, ShieldOff, Sliders } from "lucide-react";
 import { BrandBadge, BrandButton, BrandEmptyState, BrandInput } from "@/shared/components/ui/brand-form";
 import { CreateUserModal } from "@/features/admin-users/components/create-user-modal";
+import { EditUserColorModal } from "@/features/admin-users/components/edit-user-color-modal";
+import type { AdminUser } from "@/features/admin-users/api/admin-users-api";
 import { useAdminUsers } from "@/features/admin-users/hooks/use-admin-users";
 import { useSession } from "@/services/session-provider";
 
@@ -20,10 +22,12 @@ export default function AdminUsersPage() {
     pageSize,
     createUser,
     toggleActive,
+    updateColor,
     triggerPasswordReset,
   } = useAdminUsers();
   const { user: currentUser } = useSession();
   const [modalOpen, setModalOpen] = useState(false);
+  const [colorTarget, setColorTarget] = useState<AdminUser | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -68,8 +72,17 @@ export default function AdminUsersPage() {
               {items.map((item) => (
                 <tr key={item.id} className="border-b border-border last:border-0">
                   <td className="px-4 py-3">
-                    <p className="font-semibold text-foreground">{item.fullName}</p>
-                    <p className="text-xs text-muted-foreground">{item.email}</p>
+                    <div className="flex items-center gap-2">
+                      <span
+                        title={item.color ?? "Sin color asignado"}
+                        className="h-2.5 w-2.5 flex-none rounded-full border border-border"
+                        style={{ backgroundColor: item.color ?? "transparent" }}
+                      />
+                      <div>
+                        <p className="font-semibold text-foreground">{item.fullName}</p>
+                        <p className="text-xs text-muted-foreground">{item.email}</p>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <BrandBadge variant={item.isSuperadmin ? "accent" : "neutral"}>
@@ -90,6 +103,14 @@ export default function AdminUsersPage() {
                       >
                         <Sliders className="h-4 w-4" />
                       </Link>
+                      <button
+                        type="button"
+                        title="Editar color"
+                        className="rounded-[8px] border border-border p-2 text-foreground transition-colors hover:bg-muted"
+                        onClick={() => setColorTarget(item)}
+                      >
+                        <Palette className="h-4 w-4" />
+                      </button>
                       <button
                         type="button"
                         title="Enviar link de restablecimiento"
@@ -148,6 +169,11 @@ export default function AdminUsersPage() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreate={createUser}
+      />
+      <EditUserColorModal
+        user={colorTarget}
+        onClose={() => setColorTarget(null)}
+        onSave={updateColor}
       />
     </div>
   );
