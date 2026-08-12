@@ -1,7 +1,7 @@
 "use client";
 
 import { ArcElement, Chart as ChartJS, Tooltip } from "chart.js";
-import { Gauge } from "lucide-react";
+import { ArrowDown, ArrowUp, Gauge } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
@@ -17,11 +17,19 @@ ChartJS.register(ArcElement, Tooltip);
 const ORANGE = "#F7941D";
 const RED = "#ef4444";
 
-function currentPeriodo(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
+function periodoFromDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   return `${year}${month}`;
+}
+
+function currentPeriodo(): string {
+  return periodoFromDate(new Date());
+}
+
+function previousPeriodo(): string {
+  const now = new Date();
+  return periodoFromDate(new Date(now.getFullYear(), now.getMonth() - 1, 1));
 }
 
 function formatPct(value: number): string {
@@ -94,19 +102,72 @@ function ComplianceLegend({ resumen }: { resumen: SlaResumen }) {
   );
 }
 
+function ComparisonBlock({
+  resumen,
+  resumenAnterior,
+}: {
+  resumen: SlaResumen;
+  resumenAnterior: SlaResumen;
+}) {
+  const variacion = resumen.pct_correctos - resumenAnterior.pct_correctos;
+  const mejora = variacion >= 0;
+
+  return (
+    <div className="grid grid-cols-2 divide-x divide-border rounded-[10px] bg-muted/40 p-4">
+      <div className="flex flex-col gap-0.5 pr-4">
+        <span className="font-body text-[10.5px] font-bold uppercase tracking-[.05em] text-muted-foreground">
+          Mes anterior
+        </span>
+        <span className="font-heading text-[18px] font-extrabold text-foreground">
+          {formatPct(resumenAnterior.pct_correctos)}%
+        </span>
+        <span className="font-body text-[12px] text-muted-foreground">
+          {resumenAnterior.correctos.toLocaleString("es-AR")} de{" "}
+          {resumenAnterior.total.toLocaleString("es-AR")}
+        </span>
+      </div>
+      <div className="flex flex-col gap-0.5 items-end pl-4 text-right">
+        <span className="font-body text-[10.5px] font-bold uppercase tracking-[.05em] text-muted-foreground">
+          Variación
+        </span>
+        <span
+          className={cn(
+            "flex items-center gap-1 font-heading text-[18px] font-extrabold",
+            mejora ? "text-success" : "text-destructive",
+          )}
+        >
+          {mejora ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+          {mejora ? "+" : ""}
+          {formatPct(variacion)}%
+        </span>
+        <span className="font-body text-[12px] text-muted-foreground">vs mes anterior</span>
+      </div>
+    </div>
+  );
+}
+
 export function SlaSummaryCard() {
   const { modules } = useSession();
   const canView = modules.some((m) => m.key === "sla");
 
   const [resumen, setResumen] = useState<SlaResumen | null>(null);
+  const [resumenAnterior, setResumenAnterior] = useState<SlaResumen | null>(null);
   const [loading, setLoading] = useState<boolean>(canView);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!canView) return;
-    slaApi
-      .getResumen(currentPeriodo())
-      .then(setResumen)
+    Promise.all([
+      slaApi.getResumen(currentPeriodo()),
+      slaApi.getResumen(previousPeriodo()).catch((err: unknown) => {
+        console.error("Error al cargar el resumen SLA del mes anterior:", err);
+        return null;
+      }),
+    ])
+      .then(([actual, anterior]) => {
+        setResumen(actual);
+        setResumenAnterior(anterior);
+      })
       .catch((err: unknown) => {
         console.error("Error al cargar el resumen SLA:", err);
         setError(err instanceof Error ? err.message : "No se pudo cargar el resumen SLA.");
@@ -117,7 +178,7 @@ export function SlaSummaryCard() {
   if (!canView) return null;
 
   return (
-    <div className="flex w-full max-w-sm flex-col gap-4 rounded-[12px] border border-border bg-card p-5">
+    <div className="flex w-full flex-col gap-4 rounded-[12px] border border-border bg-card p-5">
       <div className="flex items-center gap-2.5">
         <span className="flex h-9 w-9 items-center justify-center rounded-[9px] bg-brand-orange/[0.12] text-brand-orange">
           <Gauge className="h-4 w-4" />
@@ -144,6 +205,9 @@ export function SlaSummaryCard() {
         <div className="flex flex-col gap-4">
           <ComplianceDonut resumen={resumen} />
           <ComplianceLegend resumen={resumen} />
+          {resumenAnterior && resumenAnterior.total > 0 && (
+            <ComparisonBlock resumen={resumen} resumenAnterior={resumenAnterior} />
+          )}
           <Link href="/sla" className={cn(brandButtonClasses(), "w-full")}>
             Ver detalle →
           </Link>
