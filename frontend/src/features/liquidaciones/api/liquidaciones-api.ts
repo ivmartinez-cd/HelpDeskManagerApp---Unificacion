@@ -34,6 +34,8 @@ export const liquidacionesApi = {
     return httpClient.postForm<ImportarLiquidacionResult>("/api/liquidaciones/importar", fd);
   },
 
+  delete: (id: string) => httpClient.delete<void>(`/api/liquidaciones/${id}`),
+
   reanalyze: (id: string) =>
     httpClient.post<{ totalIncidentes: number; totalAlertas: number; totalObservaciones: number }>(
       `/api/liquidaciones/${id}/reanalyze`,

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
@@ -36,6 +37,8 @@ export function LiquidacionesLista() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [importOpen, setImportOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteInProgress, setDeleteInProgress] = useState(false);
 
   const loadPrestadores = useCallback(async () => {
     const prest = await liquidacionesApi.listPrestadores();
@@ -68,6 +71,18 @@ export function LiquidacionesLista() {
     setPage(1);
     void loadLiquidaciones(1);
   }, [loadLiquidaciones]);
+
+  const handleConfirmDelete = async () => {
+    if (!deletingId) return;
+    setDeleteInProgress(true);
+    try {
+      await liquidacionesApi.delete(deletingId);
+      setDeletingId(null);
+      void loadLiquidaciones(page);
+    } finally {
+      setDeleteInProgress(false);
+    }
+  };
 
   const prestadorMap = Object.fromEntries(prestadores.map((p) => [p.id, p]));
   const filtered = filtroEstado
@@ -151,6 +166,7 @@ export function LiquidacionesLista() {
                     <th className={`${thCls} text-right`}>Incidentes</th>
                     <th className={`${thCls} text-right`}>Importe</th>
                     <th className={thCls}>Fecha</th>
+                    <th className={thCls}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -198,6 +214,15 @@ export function LiquidacionesLista() {
                         </td>
                         <td className={tdCls} style={{ color: "rgba(255,255,255,.4)" }}>
                           {formatFecha(liq.fechaImportacion)}
+                        </td>
+                        <td className={tdCls}>
+                          <button
+                            onClick={() => setDeletingId(liq.id)}
+                            className="font-body text-sm transition-opacity hover:opacity-70"
+                            style={{ color: "#ef4444" }}
+                          >
+                            Eliminar
+                          </button>
                         </td>
                       </tr>
                     );
@@ -248,6 +273,42 @@ export function LiquidacionesLista() {
         prestadores={prestadores}
         onSuccess={() => void loadLiquidaciones(page)}
       />
+
+      <BrandModal
+        isOpen={deletingId !== null}
+        onClose={() => setDeletingId(null)}
+        title="Eliminar liquidación"
+        widthPx={420}
+      >
+        <p className="font-body text-sm" style={{ color: "rgba(255,255,255,.7)" }}>
+          Esta acción eliminará la liquidación y todos sus incidentes, alertas y observaciones.
+          No se puede deshacer.
+        </p>
+        {deletingId && (() => {
+          const liq = liquidaciones.find((l) => l.id === deletingId);
+          return liq ? (
+            <p className="mt-2 font-body text-sm font-semibold" style={{ color: "#e0e0e0" }}>
+              {liq.nombreArchivo ?? `Liquidación ${liq.periodo}`}
+            </p>
+          ) : null;
+        })()}
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            onClick={() => setDeletingId(null)}
+            className="rounded-[8px] border border-border px-4 py-2 font-body text-sm text-muted-foreground transition-colors hover:bg-muted"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={() => void handleConfirmDelete()}
+            disabled={deleteInProgress}
+            className="rounded-[8px] px-4 py-2 font-body text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{ background: "#ef4444" }}
+          >
+            {deleteInProgress ? "Eliminando..." : "Eliminar"}
+          </button>
+        </div>
+      </BrandModal>
     </div>
   );
 }

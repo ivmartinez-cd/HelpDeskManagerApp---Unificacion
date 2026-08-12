@@ -74,10 +74,12 @@ class SqlAlchemyLiquidacionRepository:
         )
         await self._session.execute(stmt)
 
-    async def delete(self, liquidacion_id: UUID) -> None:
+    async def delete(self, liquidacion_id: UUID) -> bool:
         row = await self._session.get(LiquidacionModel, liquidacion_id)
-        if row is not None:
-            await self._session.delete(row)
+        if row is None:
+            return False
+        await self._session.delete(row)
+        return True
 
 
 def _to_entity(row: LiquidacionModel) -> Liquidacion:

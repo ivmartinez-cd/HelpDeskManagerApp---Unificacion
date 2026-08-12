@@ -5,13 +5,16 @@ para que FastAPI no intente parsear esos segmentos como UUID y devuelva 422."""
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.liquidaciones.domain.well_known_permissions import CREATE, UPDATE, VIEW
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_liquidacion_repository import (  # noqa: E501
+    SqlAlchemyLiquidacionRepository,
+)
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (
     SqlAlchemyPrestadorRepository,
 )
 from src.modules.liquidaciones.presentation.dependencies import (
@@ -79,6 +82,17 @@ async def importar_liquidacion(
         prestador_id=prestador_id, contenido=contenido, nombre_archivo=file.filename or ""
     )
     return ImportarLiquidacionOut.from_dto(resultado)
+
+
+@router.delete("/{liquidacion_id}", status_code=204)
+async def delete_liquidacion(
+    liquidacion_id: UUID,
+    _: Identity = _require_update,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    deleted = await SqlAlchemyLiquidacionRepository(db).delete(liquidacion_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Liquidación no encontrada")
 
 
 @router.get("/{liquidacion_id}", response_model=LiquidacionDetalleOut)
