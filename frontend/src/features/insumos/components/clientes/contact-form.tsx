@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ChangeEvent } from "react";
-import { Loader2 } from "lucide-react";
+import { Copy, Loader2 } from "lucide-react";
 import { BrandInput } from "@/shared/components/ui/brand-form";
 import { brandButtonClasses } from "@/shared/components/ui/brand-form";
 import { cn } from "@/shared/utils/cn";
@@ -44,6 +44,17 @@ export function ContactForm({ mode, initial, saving, error, onSave, onCancel }: 
 
   const canSave = form.zone.trim() !== "" && !saving;
 
+  const copySolicitanteADestinatario = () => {
+    setForm((prev) => ({
+      ...prev,
+      dest_apellido: prev.sol_apellido,
+      dest_nombre: prev.sol_nombre,
+      dest_telefono: prev.sol_telefono,
+      dest_email: prev.sol_email,
+      dest_sector: prev.sol_sector,
+    }));
+  };
+
   return (
     <div className="flex flex-col gap-5">
       {error && (
@@ -74,9 +85,21 @@ export function ContactForm({ mode, initial, saving, error, onSave, onCancel }: 
         </div>
 
         <div className="flex flex-col gap-3">
-          <p className="font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-            Destinatario
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              Destinatario
+            </p>
+            <button
+              type="button"
+              onClick={copySolicitanteADestinatario}
+              disabled={saving}
+              title="Copiar los datos del solicitante al destinatario"
+              className="flex items-center gap-1 font-body text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+            >
+              <Copy className="h-3 w-3" />
+              Copiar del solicitante
+            </button>
+          </div>
           <BrandInput label="Apellido" value={form.dest_apellido} onChange={set("dest_apellido")} disabled={saving} />
           <BrandInput label="Nombre" value={form.dest_nombre} onChange={set("dest_nombre")} disabled={saving} />
           <BrandInput label="Teléfono" value={form.dest_telefono} onChange={set("dest_telefono")} disabled={saving} />
