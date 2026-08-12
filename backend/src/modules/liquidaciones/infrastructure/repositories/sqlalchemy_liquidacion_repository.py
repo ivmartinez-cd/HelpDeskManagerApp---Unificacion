@@ -27,6 +27,11 @@ class SqlAlchemyLiquidacionRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
+    async def list_all(self) -> list[Liquidacion]:
+        stmt = select(LiquidacionModel).order_by(LiquidacionModel.fecha_importacion.desc())
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_entity(row) for row in rows]
+
     async def create(
         self,
         *,

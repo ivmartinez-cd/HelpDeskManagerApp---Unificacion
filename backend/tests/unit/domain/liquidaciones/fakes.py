@@ -70,6 +70,9 @@ class FakeLiquidacionRepository:
     async def list_by_prestador(self, prestador_id: UUID) -> list[Liquidacion]:
         return [r for r in self.rows.values() if r.prestador_id == prestador_id]
 
+    async def list_all(self) -> list[Liquidacion]:
+        return list(self.rows.values())
+
     async def create(
         self,
         *,

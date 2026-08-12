@@ -1,9 +1,7 @@
 """Endpoints de liquidaciones — listado, importación, detalle y reanálisis.
 
-`/importar` está registrado ANTES de `/{liquidacion_id}` a propósito: FastAPI matchea
-rutas en orden de registro, y si `/{liquidacion_id}` fuera primero, un POST a
-`/importar` intentaría parsear "importar" como UUID y devolvería 422 en vez de llegar
-al handler correcto."""
+Orden de registro importa: `/prestadores` e `/importar` van ANTES de `/{liquidacion_id}`
+para que FastAPI no intente parsear esos segmentos como UUID y devuelva 422."""
 
 from uuid import UUID
 
@@ -13,6 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.liquidaciones.domain.well_known_permissions import CREATE, UPDATE, VIEW
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
+    SqlAlchemyPrestadorRepository,
+)
 from src.modules.liquidaciones.presentation.dependencies import (
     build_get_liquidacion_detalle,
     build_importar_liquidacion,
@@ -25,7 +26,10 @@ from src.modules.liquidaciones.presentation.schemas.importar_liquidacion_schemas
 from src.modules.liquidaciones.presentation.schemas.liquidacion_detalle_schemas import (
     LiquidacionDetalleOut,
 )
-from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import LiquidacionOut
+from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import (
+    LiquidacionOut,
+    PrestadorLiquidacionOut,
+)
 from src.modules.liquidaciones.presentation.schemas.reanalizar_liquidacion_schemas import (
     ReanalizarLiquidacionOut,
 )
@@ -39,9 +43,19 @@ _require_update = Depends(require_permission(UPDATE))
 _require_create = Depends(require_permission(CREATE))
 
 
+@router.get("/prestadores", response_model=list[PrestadorLiquidacionOut])
+async def list_prestadores(
+    solo_activos: bool = Query(default=True, alias="soloActivos"),
+    _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db),
+) -> list[PrestadorLiquidacionOut]:
+    rows = await SqlAlchemyPrestadorRepository(db).list_all(solo_activos=solo_activos)
+    return [PrestadorLiquidacionOut.from_entity(p) for p in rows]
+
+
 @router.get("", response_model=Page[LiquidacionOut])
 async def list_liquidaciones(
-    prestador_id: UUID = Query(alias="prestadorId"),
+    prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=50, ge=1, le=200),
     _: Identity = _require_view,

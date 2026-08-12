@@ -11,6 +11,11 @@ class LiquidacionRepository(Protocol):
 
     async def list_by_prestador(self, prestador_id: UUID) -> list[Liquidacion]: ...
 
+    async def list_all(self) -> list[Liquidacion]:
+        """Todas las liquidaciones ordenadas por fecha_importacion desc — para la
+        vista global del dashboard y del listado sin filtro de prestador."""
+        ...
+
     async def create(
         self,
         *,

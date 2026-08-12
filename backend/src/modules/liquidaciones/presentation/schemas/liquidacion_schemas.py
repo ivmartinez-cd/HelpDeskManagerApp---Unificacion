@@ -1,6 +1,6 @@
-"""Schemas de GET /api/liquidaciones y GET /api/liquidaciones/{id}. Módulo nuevo, sin
-contrato legacy que preservar — snake_case en Python, camelCase en el wire (mismo
-patrón que turnos/sla, ver `turno_schemas.py`)."""
+"""Schemas de GET /api/liquidaciones, GET /api/liquidaciones/{id} y
+GET /api/liquidaciones/prestadores. Módulo nuevo, sin contrato legacy que preservar —
+snake_case en Python, camelCase en el wire (mismo patrón que turnos/sla)."""
 
 import uuid
 from datetime import datetime
@@ -8,6 +8,29 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
+from src.modules.liquidaciones.domain.entities.prestador import Prestador
+
+
+class PrestadorLiquidacionOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: uuid.UUID
+    nombre: str
+    nombre_corto: str = Field(serialization_alias="nombreCorto")
+    cuit: str | None
+    region: str | None
+    activo: bool
+
+    @classmethod
+    def from_entity(cls, e: Prestador) -> "PrestadorLiquidacionOut":
+        return cls(
+            id=e.id,
+            nombre=e.nombre,
+            nombre_corto=e.nombre_corto,
+            cuit=e.cuit,
+            region=e.region,
+            activo=e.activo,
+        )
 
 
 class LiquidacionOut(BaseModel):
