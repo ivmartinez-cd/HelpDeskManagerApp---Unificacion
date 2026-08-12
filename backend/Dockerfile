@@ -20,7 +20,11 @@ RUN uv sync --frozen
 RUN uv run playwright install --with-deps chromium
 
 COPY . .
+RUN chmod +x docker-entrypoint.sh
 
 EXPOSE 8012
 
-CMD ["uv", "run", "uvicorn", "src.shared.presentation.app:app", "--host", "0.0.0.0", "--reload", "--port", "8012"]
+# Corre las migraciones pendientes antes de levantar uvicorn — evita el
+# desincronismo entre el código (git pull) y el schema/datos de cada máquina
+# de dev (cada una tiene su propio Postgres local, no sincronizado).
+ENTRYPOINT ["./docker-entrypoint.sh"]

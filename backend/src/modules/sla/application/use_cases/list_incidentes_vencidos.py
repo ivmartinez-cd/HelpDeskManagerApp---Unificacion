@@ -1,7 +1,7 @@
 from src.modules.sla.application.dtos.sla_dtos import IncidenteVencidoDTO
+from src.modules.sla.application.use_cases.refresh_sla_snapshot import RefreshSlaSnapshot
 from src.modules.sla.domain.entities.incidente_sla import IncidenteSla
-from src.modules.sla.domain.repositories.sla_query_gateway import SlaQueryGateway
-from src.modules.sla.domain.value_objects.periodo import Periodo
+from src.modules.sla.domain.repositories.sla_snapshot_repository import SlaSnapshotRepository
 
 
 def _to_dto(incidente: IncidenteSla) -> IncidenteVencidoDTO:
@@ -23,12 +23,13 @@ def _to_dto(incidente: IncidenteSla) -> IncidenteVencidoDTO:
 
 
 class ListIncidentesVencidos:
-    """Detalle de los incidentes vencidos del período, en el mismo orden en que
-    los entrega la consulta (ID de incidente descendente)."""
+    """Detalle de los incidentes vencidos del período — lee el mismo snapshot
+    cacheado que GetSlaCompliance (ver RefreshSlaSnapshot)."""
 
-    def __init__(self, gateway: SlaQueryGateway) -> None:
-        self._gateway = gateway
+    def __init__(self, repo: SlaSnapshotRepository, refresher: RefreshSlaSnapshot) -> None:
+        self._repo = repo
+        self._refresher = refresher
 
     async def execute(self, periodo: int) -> list[IncidenteVencidoDTO]:
-        incidentes = await self._gateway.find_incidentes(Periodo(periodo))
-        return [_to_dto(i) for i in incidentes if i.es_vencido]
+        snapshot = await self._repo.get(periodo) or await self._refresher.execute(periodo)
+        return [_to_dto(i) for i in snapshot.incidentes_vencidos]

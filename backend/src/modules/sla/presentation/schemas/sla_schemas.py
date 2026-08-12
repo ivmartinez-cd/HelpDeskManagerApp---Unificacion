@@ -24,6 +24,7 @@ class SlaResumenResponse(BaseModel):
     pct_correctos: float
     pct_vencidos: float
     vencidos_por_tecnico: list[TecnicoVencidosSchema]
+    updated_at: datetime
 
 
 class IncidenteVencidoSchema(BaseModel):

@@ -16,4 +16,7 @@ export const slaApi = {
     httpClient
       .get<Page<IncidenteVencido>>(`/api/sla/incidentes-vencidos?periodo=${periodo}&size=500`)
       .then((p) => p.items),
+
+  refreshResumen: (periodo: string) =>
+    httpClient.post<SlaResumen>(`/api/sla/actualizar?periodo=${periodo}`),
 };

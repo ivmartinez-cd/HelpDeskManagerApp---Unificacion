@@ -12,6 +12,7 @@ export interface SlaResumen {
   pct_correctos: number;
   pct_vencidos: number;
   vencidos_por_tecnico: TecnicoVencidos[];
+  updated_at: string;
 }
 
 export interface IncidenteVencido {

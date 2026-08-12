@@ -26,6 +26,7 @@ class SlaComplianceResult:
     pct_correctos: float
     pct_vencidos: float
     vencidos_por_tecnico: list[TecnicoVencidosDTO]
+    updated_at: datetime
 
 
 @dataclass(frozen=True, slots=True)

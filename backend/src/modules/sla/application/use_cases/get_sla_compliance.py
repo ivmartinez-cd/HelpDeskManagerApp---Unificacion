@@ -1,47 +1,37 @@
-from collections import defaultdict
-
 from src.modules.sla.application.dtos.sla_dtos import (
     GetSlaComplianceRequest,
     SlaComplianceResult,
     TecnicoVencidosDTO,
 )
-from src.modules.sla.domain.entities.incidente_sla import IncidenteSla
-from src.modules.sla.domain.repositories.sla_query_gateway import SlaQueryGateway
-from src.modules.sla.domain.value_objects.periodo import Periodo
-
-
-def _pct(parte: int, total: int) -> float:
-    return round(parte * 100 / total, 2) if total else 0.0
-
-
-def _agrupar_por_tecnico(vencidos: list[IncidenteSla]) -> list[TecnicoVencidosDTO]:
-    ids_por_tecnico: dict[str, list[int]] = defaultdict(list)
-    for incidente in vencidos:
-        ids_por_tecnico[incidente.tecnico].append(incidente.id_incidente)
-    grupos = [
-        TecnicoVencidosDTO(tecnico=tecnico, cantidad=len(ids), ids_incidente=ids)
-        for tecnico, ids in ids_por_tecnico.items()
-    ]
-    return sorted(grupos, key=lambda g: (-g.cantidad, g.tecnico))
+from src.modules.sla.application.use_cases.refresh_sla_snapshot import RefreshSlaSnapshot
+from src.modules.sla.domain.repositories.sla_snapshot_repository import SlaSnapshotRepository
 
 
 class GetSlaCompliance:
-    """Caso de uso: resumen Correcto/Vencido del período + desglose de vencidos
-    por técnico/PST — la misma cuenta que la tabla dinámica de Excel manual."""
+    """Resumen Correcto/Vencido del período — lee el snapshot cacheado; si
+    todavía no hay uno guardado para ese período (cold start), dispara un
+    refresh en vivo una sola vez y lo persiste para las próximas lecturas."""
 
-    def __init__(self, gateway: SlaQueryGateway) -> None:
-        self._gateway = gateway
+    def __init__(self, repo: SlaSnapshotRepository, refresher: RefreshSlaSnapshot) -> None:
+        self._repo = repo
+        self._refresher = refresher
 
     async def execute(self, request: GetSlaComplianceRequest) -> SlaComplianceResult:
-        incidentes = await self._gateway.find_incidentes(Periodo(request.periodo))
-        vencidos = [i for i in incidentes if i.es_vencido]
-        total, cant_vencidos = len(incidentes), len(vencidos)
+        snapshot = await self._repo.get(request.periodo) or await self._refresher.execute(
+            request.periodo
+        )
         return SlaComplianceResult(
-            periodo=request.periodo,
-            total=total,
-            correctos=total - cant_vencidos,
-            vencidos=cant_vencidos,
-            pct_correctos=_pct(total - cant_vencidos, total),
-            pct_vencidos=_pct(cant_vencidos, total),
-            vencidos_por_tecnico=_agrupar_por_tecnico(vencidos),
+            periodo=snapshot.periodo,
+            total=snapshot.total,
+            correctos=snapshot.correctos,
+            vencidos=snapshot.vencidos,
+            pct_correctos=snapshot.pct_correctos,
+            pct_vencidos=snapshot.pct_vencidos,
+            vencidos_por_tecnico=[
+                TecnicoVencidosDTO(
+                    tecnico=t.tecnico, cantidad=t.cantidad, ids_incidente=t.ids_incidente
+                )
+                for t in snapshot.vencidos_por_tecnico
+            ],
+            updated_at=snapshot.updated_at,
         )

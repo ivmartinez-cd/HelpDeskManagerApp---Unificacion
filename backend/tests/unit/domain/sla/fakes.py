@@ -6,6 +6,7 @@ from src.modules.sla.domain.entities.incidente_sla import (
     RESULTADO_CORRECTO,
     IncidenteSla,
 )
+from src.modules.sla.domain.entities.sla_snapshot import SlaSnapshot
 from src.modules.sla.domain.value_objects.periodo import Periodo
 
 
@@ -17,6 +18,20 @@ class FakeSlaQueryGateway:
     async def find_incidentes(self, periodo: Periodo) -> list[IncidenteSla]:
         self.periodos_consultados.append(periodo)
         return list(self.incidentes)
+
+
+class FakeSlaSnapshotRepository:
+    """En memoria, vacío por default — ejercita el camino de cold-start
+    (cache-miss -> refresh en vivo) que usan GetSlaCompliance/ListIncidentesVencidos."""
+
+    def __init__(self) -> None:
+        self._snapshots: dict[int, SlaSnapshot] = {}
+
+    async def get(self, periodo: int) -> SlaSnapshot | None:
+        return self._snapshots.get(periodo)
+
+    async def upsert(self, snapshot: SlaSnapshot) -> None:
+        self._snapshots[snapshot.periodo] = snapshot
 
 
 def build_incidente(id_incidente: int, tecnico: str, resultado: str) -> IncidenteSla:

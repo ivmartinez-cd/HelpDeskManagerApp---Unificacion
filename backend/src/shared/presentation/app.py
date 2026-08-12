@@ -70,7 +70,10 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
             mailer=mailer,
             recipients=logistics_recipients(insumos_settings),
         )
+        from src.modules.sla.presentation.background_jobs import start_sla_background_jobs
+
         tasks = start_background_jobs(mailer, poller_alerts, settings.poll_interval_minutes)
+        tasks += start_sla_background_jobs(settings.sla_refresh_interval_minutes)
         logger.info("background_jobs: %d job(s) iniciados", len(tasks))
     try:
         yield

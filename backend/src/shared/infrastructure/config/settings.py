@@ -101,6 +101,10 @@ class Settings(BaseSettings):
     # driver 17 con el que se consultaba esta base hasta ahora.
     sla_mercurio_encrypt: bool = False
     sla_mercurio_timeout_seconds: float = 30.0
+    # Cadencia del job de fondo que refresca el snapshot del período actual —
+    # sin esto, Inicio y /sla pegarían en vivo contra MERCURIO (~40s) en cada
+    # carga. El botón "Actualizar" siempre fuerza un refresh inmediato aparte.
+    sla_refresh_interval_minutes: int = 240
 
     # PortalWeb de SDS Insight — scraping para baja de equipos offline.
     # sds_delete_dry_run=True por default: la baja real es irreversible. Solo cambiar a
