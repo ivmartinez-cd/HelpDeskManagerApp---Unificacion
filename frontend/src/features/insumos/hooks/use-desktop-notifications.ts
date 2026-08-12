@@ -32,6 +32,10 @@ export interface DesktopNotificationsState {
   mounted: boolean;
   setEnabled: (value: boolean) => Promise<void>;
   notify: (payload: DesktopNotificationPayload) => void;
+  /** Dispara una notificación de prueba independiente del toggle `enabled` —
+   * para el botón "Probar notificación" del panel de diagnóstico. Devuelve
+   * un mensaje humano listo para mostrar (éxito o motivo del fallo). */
+  sendTestNotification: () => Promise<string>;
 }
 
 function detectSupport(): NotificationSupport {
@@ -100,6 +104,31 @@ export function useDesktopNotifications(
     persistPreference(granted);
   }, []);
 
+  const sendTestNotification = useCallback(async (): Promise<string> => {
+    if (detectSupport() === "unsupported") {
+      return "El navegador no soporta notificaciones de escritorio.";
+    }
+    let currentSupport = detectSupport();
+    if (currentSupport === "default") {
+      const result = await Notification.requestPermission();
+      currentSupport = result;
+      setSupport(result);
+    }
+    if (currentSupport === "denied") {
+      return "Las notificaciones están bloqueadas para este sitio en tu navegador.";
+    }
+    try {
+      const n = new Notification("Prueba de notificaciones", {
+        body: "Las notificaciones están configuradas correctamente en tu navegador.",
+        icon: "/favicon.svg",
+      });
+      setTimeout(() => n.close(), AUTO_CLOSE_MS);
+      return "Notificación de prueba enviada.";
+    } catch (err) {
+      return `Error al crear la notificación: ${(err as Error).message}`;
+    }
+  }, []);
+
   const notify = useCallback((payload: DesktopNotificationPayload) => {
     if (!enabled || support !== "granted") return;
     const n = new Notification(payload.title, {
@@ -115,5 +144,5 @@ export function useDesktopNotifications(
     };
   }, [enabled, support]);
 
-  return { support, enabled, mounted, setEnabled, notify };
+  return { support, enabled, mounted, setEnabled, notify, sendTestNotification };
 }
