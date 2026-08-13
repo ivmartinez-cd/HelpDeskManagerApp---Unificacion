@@ -1,7 +1,12 @@
 """ALT002 — KMs Incorrectos: kilómetros cobrados vs. Tabla KM, con supresión de falso
 positivo cuando el tramo es una ruta compartida (otro incidente del mismo día/corredor
-ya cobró el km, y este vino en $0 a propósito)."""
+ya cobró el km, y este vino en $0 a propósito).
 
+La comparación usa math.ceil(kms_a_facturar): la Tabla KM puede tener decimales (ej.
+20.5 km medidos) pero el PST factura enteros redondeando hacia arriba. Comparar contra
+el entero superior evita falsos positivos cuando el PST cobra ceil(esperado_raw)."""
+
+import math
 from collections.abc import Sequence
 
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
@@ -19,12 +24,12 @@ def evaluar_alt002(
     if tabla_km is None:
         return []
     cobrado = incidente.cant_km_cobrado or 0
-    esperado = tabla_km.kms_a_facturar
+    esperado = math.ceil(tabla_km.kms_a_facturar)
     if abs(cobrado - esperado) <= tolerancia_km:
         return []
     if cobrado == 0 and esperado > 0 and _es_ruta_compartida(tabla_km, vecinos_mismo_dia):
         return []
-    return [_hallazgo(incidente, cobrado, esperado)]
+    return [_hallazgo(incidente, cobrado, esperado, tabla_km.kms_a_facturar)]
 
 
 def _es_ruta_compartida(
@@ -38,14 +43,18 @@ def _es_ruta_compartida(
     return False
 
 
-def _hallazgo(incidente: Incidente, cobrado: float, esperado: float) -> Hallazgo:
+def _hallazgo(
+    incidente: Incidente, cobrado: float, esperado: int, esperado_raw: float
+) -> Hallazgo:
     descripcion = (
-        f"KMs cobrados {cobrado} km difieren de la Tabla KM ({esperado} km) "
+        f"KMs cobrados {cobrado} km difieren de la Tabla KM "
+        f"({esperado_raw} km → {esperado} km redondeado) "
         f"para {incidente.empresa_nombre} — {incidente.sucursal_nombre}"
     )
     contexto = {
         "cobrado": cobrado,
         "esperado": esperado,
+        "esperado_raw": esperado_raw,
         "diferencia": round(abs(cobrado - esperado), 2),
         "empresa": incidente.empresa_nombre,
         "sucursal": incidente.sucursal_nombre,

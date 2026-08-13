@@ -83,6 +83,23 @@ class TestAlt002KmsIncorrectos:
         assert len(alertas) == 1
         assert alertas[0].datos_contexto["diferencia"] == 40.0
 
+    def test_kms_decimal_cobrado_ceil_no_dispara(self) -> None:
+        """kms_a_facturar=20.5: el PST cobra 21 (ceil correcto). Con tolerancia
+        estricta (0) no debe disparar porque ceil(20.5)=21=cobrado."""
+        tabla = make_tabla_km(kms_a_facturar=20.5)
+        incidente = make_incidente(
+            empresa_nombre=tabla.empresa_nombre,
+            sucursal_nombre=tabla.sucursal_nombre,
+            cant_km_cobrado=21.0,
+        )
+        reglas = dict(reglas_activas_default())
+        reglas["ALT002"] = make_regla(
+            codigo="ALT002", riesgo_base=100.0, activa=True,
+            configuracion={"tolerancia_km": 0.0},
+        )
+        resultado = ejecutar_motor_reglas([incidente], [incidente], reglas, [tabla], [], [])
+        assert [a for a in resultado.alertas if a.tipo_alerta == "ALT002"] == []
+
     def test_ruta_compartida_suprime_falso_positivo(self) -> None:
         liquidacion_id = uuid.uuid4()
         fecha = date(2026, 1, 15)

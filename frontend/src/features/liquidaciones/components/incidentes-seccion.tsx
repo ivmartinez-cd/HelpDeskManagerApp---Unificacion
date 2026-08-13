@@ -1,11 +1,48 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ChevronDown, ChevronRight, ExternalLink, Route } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/utils/cn";
 import type { Alerta, Incidente } from "../types/liquidaciones";
 import { formatARS, formatFecha } from "../lib/format";
+
+function computeRutasCompartidas(incidentes: Incidente[]): Set<string> {
+  const ids = new Set<string>();
+  const byFecha = new Map<string, Incidente[]>();
+  for (const inc of incidentes) {
+    if (!inc.fechaCierre || (inc.cantKmCobrado ?? 0) <= 0) continue;
+    const list = byFecha.get(inc.fechaCierre) ?? [];
+    list.push(inc);
+    byFecha.set(inc.fechaCierre, list);
+  }
+  for (const incsDay of byFecha.values()) {
+    if (incsDay.length < 2) continue;
+    for (const inc of incsDay) {
+      for (const otro of incsDay) {
+        if (otro.id === inc.id) continue;
+        const mismaLocalidad =
+          inc.localidadCliente &&
+          otro.localidadCliente &&
+          inc.localidadCliente.trim().toLowerCase() ===
+            otro.localidadCliente.trim().toLowerCase();
+        const mismaDestino =
+          inc.empresaNombre &&
+          otro.empresaNombre &&
+          inc.empresaNombre.trim().toLowerCase() ===
+            otro.empresaNombre.trim().toLowerCase() &&
+          inc.sucursalNombre &&
+          otro.sucursalNombre &&
+          inc.sucursalNombre.trim().toLowerCase() ===
+            otro.sucursalNombre.trim().toLowerCase();
+        if (mismaLocalidad || mismaDestino) {
+          ids.add(inc.id);
+        }
+      }
+    }
+  }
+  return ids;
+}
 
 function EstadoValidacionBadge({ estado }: { estado: string }) {
   if (estado === "ok") return <Badge variant="success">OK</Badge>;
@@ -43,11 +80,13 @@ function IncidenteRow({
   incidente,
   alertasInc,
   expanded,
+  isRutaCompartida,
   onToggle,
 }: {
   incidente: Incidente;
   alertasInc: Alerta[];
   expanded: boolean;
+  isRutaCompartida: boolean;
   onToggle: () => void;
 }) {
   const tdCls = "py-3 px-4 font-body text-sm text-foreground";
@@ -82,6 +121,11 @@ function IncidenteRow({
               {[incidente.empresaNombre, incidente.sucursalNombre].filter(Boolean).join(" / ") ||
                 "—"}
             </span>
+            {isRutaCompartida && (
+              <span title="Posible ruta compartida: otro incidente del mismo día comparte destino o localidad">
+                <Route size={12} className="flex-shrink-0 text-brand-orange" />
+              </span>
+            )}
             {incidente.urlMaps && (
               <a
                 href={incidente.urlMaps}
@@ -139,6 +183,8 @@ export function IncidentesSeccion({
 }) {
   const [filtroFecha, setFiltroFecha] = useState("");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const rutasCompartidas = useMemo(() => computeRutasCompartidas(incidentes), [incidentes]);
 
   const fechas = Array.from(
     new Set(incidentes.map((i) => i.fechaCierre).filter((f): f is string => !!f)),
@@ -214,6 +260,7 @@ export function IncidentesSeccion({
                     incidente={inc}
                     alertasInc={alertasByInc[inc.id] ?? []}
                     expanded={expandedIds.has(inc.id)}
+                    isRutaCompartida={rutasCompartidas.has(inc.id)}
                     onToggle={() => toggleExpanded(inc.id)}
                   />
                 ))}

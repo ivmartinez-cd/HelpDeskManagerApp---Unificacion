@@ -150,7 +150,7 @@ export function TablaKmConfig() {
                     <td className={tdCls}>{t.empresaNombre}</td>
                     <td className={tdCls}>{t.sucursalNombre}</td>
                     <td className={`${tdCls} text-right`}>{t.kmsRecorrido}</td>
-                    <td className={`${tdCls} text-right`}>{t.kmsAFacturar}</td>
+                    <td className={`${tdCls} text-right`}>{Math.ceil(t.kmsAFacturar)}</td>
                     <td className={tdCls}>
                       {t.aplicaViatico
                         ? <span className="font-body text-xs text-success">Sí</span>
