@@ -31,6 +31,17 @@ class SqlAlchemyObservacionRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
+    async def update_estado(
+        self, liquidacion_id: UUID, observacion_id: UUID, estado: str
+    ) -> Observacion | None:
+        row = await self._session.get(ObservacionModel, observacion_id)
+        if row is None or row.liquidacion_id != liquidacion_id:
+            return None
+        row.estado = estado
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
     async def replace_for_liquidacion(
         self, liquidacion_id: UUID, observaciones: Sequence[ObservacionGenerada]
     ) -> list[Observacion]:

@@ -24,23 +24,40 @@ function formatARS(n: number) {
   return n.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
 }
 
-function NuevaTarifaModal({
-  isOpen, onClose, prestadores, onSuccess,
+const FORM_VACIO = { prestadorId: "", tipoServicio: "", zona: "", costoServicio: "", costoKm: "", vigenciaDesde: "", vigenciaHasta: "" };
+
+function tarifaAForm(t: Tarifario | null) {
+  if (!t) return FORM_VACIO;
+  return {
+    prestadorId: t.prestadorId,
+    tipoServicio: t.tipoServicio,
+    zona: t.zona ?? "",
+    costoServicio: String(t.costoServicio),
+    costoKm: String(t.costoKm),
+    vigenciaDesde: t.vigenciaDesde,
+    vigenciaHasta: t.vigenciaHasta ?? "",
+  };
+}
+
+// El caller lo monta con key={editing?.id ?? "nueva"} para que el estado inicial
+// del form se recalcule al cambiar de tarifa.
+function TarifaModal({
+  isOpen, onClose, prestadores, editing, onSuccess,
 }: {
-  isOpen: boolean; onClose: () => void; prestadores: PrestadorLiquidacion[]; onSuccess: () => void;
+  isOpen: boolean; onClose: () => void; prestadores: PrestadorLiquidacion[]; editing: Tarifario | null; onSuccess: () => void;
 }) {
-  const [form, setForm] = useState({ prestadorId: "", tipoServicio: "", zona: "", costoServicio: "", costoKm: "", vigenciaDesde: "", vigenciaHasta: "" });
+  const [form, setForm] = useState(() => tarifaAForm(editing));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleClose = () => { setForm({ prestadorId: "", tipoServicio: "", zona: "", costoServicio: "", costoKm: "", vigenciaDesde: "", vigenciaHasta: "" }); setError(null); onClose(); };
+  const handleClose = () => { setForm(tarifaAForm(editing)); setError(null); onClose(); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      await liquidacionesApi.createTarifario({
+      const body = {
         prestadorId: form.prestadorId,
         tipoServicio: form.tipoServicio,
         zona: form.zona || undefined,
@@ -48,8 +65,14 @@ function NuevaTarifaModal({
         costoKm: parseFloat(form.costoKm),
         vigenciaDesde: form.vigenciaDesde,
         vigenciaHasta: form.vigenciaHasta || undefined,
-      });
-      toast.success("Tarifa creada");
+      };
+      if (editing) {
+        await liquidacionesApi.updateTarifario(editing.id, body);
+        toast.success("Tarifa actualizada");
+      } else {
+        await liquidacionesApi.createTarifario(body);
+        toast.success("Tarifa creada");
+      }
       handleClose();
       onSuccess();
     } catch (err: unknown) {
@@ -60,7 +83,7 @@ function NuevaTarifaModal({
   };
 
   return (
-    <BrandModal isOpen={isOpen} onClose={handleClose} title="Nueva tarifa" error={error} widthPx={520}>
+    <BrandModal isOpen={isOpen} onClose={handleClose} title={editing ? "Editar tarifa" : "Nueva tarifa"} error={error} widthPx={520}>
       <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
           <BrandSelect label="Prestador *" required value={form.prestadorId} onChange={(e) => setForm((f) => ({ ...f, prestadorId: e.target.value }))}>
@@ -125,12 +148,13 @@ export function TarifariosConfig() {
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroPst, setFiltroPst] = useState("");
-  const [nuevaOpen, setNuevaOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Tarifario | null>(null);
   const [csvOpen, setCsvOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       const [t, p] = await Promise.all([
         liquidacionesApi.listTarifarios(),
@@ -180,7 +204,7 @@ export function TarifariosConfig() {
         <div className="flex gap-2">
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
-          <BrandButton size="sm" onClick={() => setNuevaOpen(true)}>+ Nueva tarifa</BrandButton>
+          <BrandButton size="sm" onClick={() => { setEditing(null); setModalOpen(true); }}>+ Nueva tarifa</BrandButton>
         </div>
       </div>
 
@@ -231,6 +255,7 @@ export function TarifariosConfig() {
                             <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>{t.vigenciaDesde}</td>
                             <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>{t.vigenciaHasta || "—"}</td>
                             <td className={`${tdCls} text-right`}>
+                              <button onClick={() => { setEditing(t); setModalOpen(true); }} className="mr-3 font-body text-sm text-brand-orange hover:underline">Editar</button>
                               <button onClick={() => setDeletingId(t.id)} className="font-body text-sm hover:underline" style={{ color: "#ef4444" }}>Eliminar</button>
                             </td>
                           </tr>
@@ -245,7 +270,7 @@ export function TarifariosConfig() {
         </div>
       )}
 
-      <NuevaTarifaModal isOpen={nuevaOpen} onClose={() => setNuevaOpen(false)} prestadores={prestadores} onSuccess={load} />
+      <TarifaModal key={editing?.id ?? "nueva"} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); }} prestadores={prestadores} editing={editing} onSuccess={load} />
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={load} />
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar tarifa">
         <p className="font-body text-sm text-muted-foreground mb-5">Esta acción no se puede deshacer. ¿Confirmás la eliminación?</p>

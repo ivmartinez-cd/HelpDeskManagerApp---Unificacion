@@ -45,6 +45,44 @@ class SqlAlchemyTablaKmRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
+    async def update(
+        self,
+        tabla_km_id: UUID,
+        *,
+        prestador_id: UUID,
+        spst_id: UUID | None,
+        empresa_nombre: str,
+        sucursal_nombre: str,
+        observaciones: str | None,
+        domicilio_cliente: str | None,
+        localidad_cliente: str | None,
+        provincia_cliente: str | None,
+        kms_recorrido: float,
+        umbral_viatico: float,
+        aplica_viatico: bool,
+        kms_a_facturar: float,
+        url_maps: str | None,
+    ) -> TablaKm | None:
+        row = await self._session.get(TablaKmModel, tabla_km_id)
+        if row is None:
+            return None
+        row.prestador_id = prestador_id
+        row.spst_id = spst_id
+        row.empresa_nombre = empresa_nombre
+        row.sucursal_nombre = sucursal_nombre
+        row.observaciones = observaciones
+        row.domicilio_cliente = domicilio_cliente
+        row.localidad_cliente = localidad_cliente
+        row.provincia_cliente = provincia_cliente
+        row.kms_recorrido = kms_recorrido
+        row.umbral_viatico = umbral_viatico
+        row.aplica_viatico = aplica_viatico
+        row.kms_a_facturar = kms_a_facturar
+        row.url_maps = url_maps
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
     async def delete(self, tabla_km_id: UUID) -> bool:
         row = await self._session.get(TablaKmModel, tabla_km_id)
         if not row:

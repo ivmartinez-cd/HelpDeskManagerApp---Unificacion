@@ -42,14 +42,11 @@ export function LiquidacionesLista() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteInProgress, setDeleteInProgress] = useState(false);
 
-  const loadPrestadores = useCallback(async () => {
-    const prest = await liquidacionesApi.listPrestadores();
-    setPrestadores(prest);
-  }, []);
-
+  // Sin setLoading(true) sincrónico: `loading` arranca en true y los reloads
+  // posteriores muestran los datos viejos hasta que llega la respuesta
+  // (react-hooks/set-state-in-effect prohíbe setState sincrónico en effects).
   const loadLiquidaciones = useCallback(
     async (p: number) => {
-      setLoading(true);
       try {
         const res = await liquidacionesApi.list({
           prestadorId: filtroPrestador || undefined,
@@ -66,11 +63,10 @@ export function LiquidacionesLista() {
   );
 
   useEffect(() => {
-    void loadPrestadores();
-  }, [loadPrestadores]);
+    void liquidacionesApi.listPrestadores().then(setPrestadores);
+  }, []);
 
   useEffect(() => {
-    setPage(1);
     void loadLiquidaciones(1);
   }, [loadLiquidaciones]);
 
@@ -125,7 +121,7 @@ export function LiquidacionesLista() {
 
         <select
           value={filtroPrestador}
-          onChange={(e) => setFiltroPrestador(e.target.value)}
+          onChange={(e) => { setFiltroPrestador(e.target.value); setPage(1); }}
           className={selectCls}
           aria-label="Filtrar por prestador"
         >

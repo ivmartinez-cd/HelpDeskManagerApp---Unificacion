@@ -54,8 +54,8 @@ export function LiquidacionesDashboard() {
   const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
 
+  // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       const [liqPage, prest] = await Promise.all([
         liquidacionesApi.list({ size: 200 }),

@@ -14,6 +14,9 @@ from src.modules.liquidaciones.domain.well_known_permissions import CREATE, UPDA
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_liquidacion_repository import (  # noqa: E501
     SqlAlchemyLiquidacionRepository,
 )
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_observacion_repository import (  # noqa: E501
+    SqlAlchemyObservacionRepository,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (
     SqlAlchemyPrestadorRepository,
 )
@@ -28,6 +31,8 @@ from src.modules.liquidaciones.presentation.schemas.importar_liquidacion_schemas
 )
 from src.modules.liquidaciones.presentation.schemas.liquidacion_detalle_schemas import (
     LiquidacionDetalleOut,
+    ObservacionEstadoIn,
+    ObservacionOut,
 )
 from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import (
     EstadoIn,
@@ -98,6 +103,25 @@ async def update_estado_liquidacion(
     if not updated:
         raise HTTPException(status_code=404, detail="Liquidación no encontrada")
     return LiquidacionOut.from_entity(updated)
+
+
+@router.patch(
+    "/{liquidacion_id}/observaciones/{observacion_id}/estado",
+    response_model=ObservacionOut,
+)
+async def update_estado_observacion(
+    liquidacion_id: UUID,
+    observacion_id: UUID,
+    body: ObservacionEstadoIn,
+    _: Identity = _require_update,
+    db: AsyncSession = Depends(get_db),
+) -> ObservacionOut:
+    updated = await SqlAlchemyObservacionRepository(db).update_estado(
+        liquidacion_id, observacion_id, body.estado
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Observación no encontrada")
+    return ObservacionOut.from_entity(updated)
 
 
 @router.delete("/{liquidacion_id}", status_code=204)

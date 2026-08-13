@@ -15,18 +15,40 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Spst, TablaKm } from "../types/liquidaciones";
 
-function NuevaEntradaModal({
-  isOpen, onClose, prestadores, spsts, onSuccess,
+const FORM_VACIO = { prestadorId: "", spstId: "", empresaNombre: "", sucursalNombre: "", domicilioCliente: "", localidadCliente: "", provinciaCliente: "", kmsRecorrido: "", kmsAFacturar: "", umbralViatico: "30", aplicaViatico: false, urlMaps: "", observaciones: "" };
+
+function entradaAForm(t: TablaKm | null) {
+  if (!t) return FORM_VACIO;
+  return {
+    prestadorId: t.prestadorId,
+    spstId: t.spstId ?? "",
+    empresaNombre: t.empresaNombre,
+    sucursalNombre: t.sucursalNombre,
+    domicilioCliente: t.domicilioCliente ?? "",
+    localidadCliente: t.localidadCliente ?? "",
+    provinciaCliente: t.provinciaCliente ?? "",
+    kmsRecorrido: String(t.kmsRecorrido),
+    kmsAFacturar: String(t.kmsAFacturar),
+    umbralViatico: String(t.umbralViatico),
+    aplicaViatico: t.aplicaViatico,
+    urlMaps: t.urlMaps ?? "",
+    observaciones: t.observaciones ?? "",
+  };
+}
+
+// El caller lo monta con key={editing?.id ?? "nueva"} para que el estado inicial
+// del form se recalcule al cambiar de entrada.
+function EntradaModal({
+  isOpen, onClose, prestadores, spsts, editing, onSuccess,
 }: {
   isOpen: boolean; onClose: () => void;
-  prestadores: PrestadorLiquidacion[]; spsts: Spst[]; onSuccess: () => void;
+  prestadores: PrestadorLiquidacion[]; spsts: Spst[]; editing: TablaKm | null; onSuccess: () => void;
 }) {
-  const EMPTY = { prestadorId: "", spstId: "", empresaNombre: "", sucursalNombre: "", domicilioCliente: "", localidadCliente: "", provinciaCliente: "", kmsRecorrido: "", kmsAFacturar: "", umbralViatico: "30", aplicaViatico: false, urlMaps: "", observaciones: "" };
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm] = useState(() => entradaAForm(editing));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleClose = () => { setForm(EMPTY); setError(null); onClose(); };
+  const handleClose = () => { setForm(entradaAForm(editing)); setError(null); onClose(); };
   const filteredSpsts = spsts.filter((s) => !form.prestadorId || s.prestadorId === form.prestadorId);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,7 +56,7 @@ function NuevaEntradaModal({
     setLoading(true);
     setError(null);
     try {
-      await liquidacionesApi.createTablaKm({
+      const body = {
         prestadorId: form.prestadorId,
         spstId: form.spstId || undefined,
         empresaNombre: form.empresaNombre,
@@ -48,8 +70,14 @@ function NuevaEntradaModal({
         aplicaViatico: form.aplicaViatico,
         urlMaps: form.urlMaps || undefined,
         observaciones: form.observaciones || undefined,
-      });
-      toast.success("Entrada creada");
+      };
+      if (editing) {
+        await liquidacionesApi.updateTablaKm(editing.id, body);
+        toast.success("Entrada actualizada");
+      } else {
+        await liquidacionesApi.createTablaKm(body);
+        toast.success("Entrada creada");
+      }
       handleClose();
       onSuccess();
     } catch (err: unknown) {
@@ -60,7 +88,7 @@ function NuevaEntradaModal({
   };
 
   return (
-    <BrandModal isOpen={isOpen} onClose={handleClose} title="Nueva entrada Tabla KM" error={error} widthPx={580}>
+    <BrandModal isOpen={isOpen} onClose={handleClose} title={editing ? "Editar entrada Tabla KM" : "Nueva entrada Tabla KM"} error={error} widthPx={580}>
       <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
         <BrandSelect label="Prestador *" required value={form.prestadorId} onChange={(e) => setForm((f) => ({ ...f, prestadorId: e.target.value, spstId: "" }))}>
           <option value="">Seleccioná...</option>
@@ -136,13 +164,14 @@ export function TablaKmConfig() {
   const [loading, setLoading] = useState(true);
   const [filtroPst, setFiltroPst] = useState("");
   const [busqueda, setBusqueda] = useState("");
-  const [nuevaOpen, setNuevaOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<TablaKm | null>(null);
   const [csvOpen, setCsvOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
 
+  // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       const [e, p, s] = await Promise.all([
         liquidacionesApi.listTablaKm(),
@@ -202,7 +231,7 @@ export function TablaKmConfig() {
         <div className="flex gap-2">
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
-          <BrandButton size="sm" onClick={() => setNuevaOpen(true)}>+ Nueva entrada</BrandButton>
+          <BrandButton size="sm" onClick={() => { setEditing(null); setModalOpen(true); }}>+ Nueva entrada</BrandButton>
         </div>
       </div>
 
@@ -264,6 +293,7 @@ export function TablaKmConfig() {
                                 : <span className="font-body text-xs" style={{ color: "rgba(255,255,255,.35)" }}>No</span>}
                             </td>
                             <td className={`${tdCls} text-right`}>
+                              <button onClick={() => { setEditing(t); setModalOpen(true); }} className="mr-3 font-body text-sm text-brand-orange hover:underline">Editar</button>
                               <button onClick={() => setDeletingId(t.id)} className="font-body text-sm hover:underline" style={{ color: "#ef4444" }}>Eliminar</button>
                             </td>
                           </tr>
@@ -279,7 +309,7 @@ export function TablaKmConfig() {
         </div>
       )}
 
-      <NuevaEntradaModal isOpen={nuevaOpen} onClose={() => setNuevaOpen(false)} prestadores={prestadores} spsts={spsts} onSuccess={load} />
+      <EntradaModal key={editing?.id ?? "nueva"} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); }} prestadores={prestadores} spsts={spsts} editing={editing} onSuccess={load} />
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={load} />
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar entrada">
         <p className="font-body text-sm text-muted-foreground mb-5">Esta acción no se puede deshacer. ¿Confirmás la eliminación?</p>

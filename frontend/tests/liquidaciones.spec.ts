@@ -42,6 +42,22 @@ const INCIDENTE = {
   costoServicioEsperado: 14000,
   cantKmEsperado: 45,
   estadoValidacion: "con_alertas",
+  localidadCliente: "Villa Mercedes",
+  spstId: null,
+  urlMaps: "https://maps.google.com/?q=test",
+};
+
+const OBSERVACION = {
+  id: "55555555-5555-5555-5555-555555555555",
+  tipoObservacion: "RUTA_COMPARTIDA",
+  severidad: "ADVERTENCIA",
+  titulo: "Ruta compartida entre incidentes",
+  descripcion: "Dos incidentes comparten viaje",
+  montoCobrado: 20000,
+  montoEsperado: 10000,
+  diferencia: 10000,
+  estado: "pendiente",
+  fechaGeneracion: "2026-08-12T10:02:00Z",
 };
 
 const ALERTA = {
@@ -251,6 +267,43 @@ test.describe("Módulo de Liquidaciones", () => {
     await page.getByText("INC-2026-0001").click();
     await expect(page.getByText("ALT001")).toBeVisible();
     await expect(page.getByText("Monto cobrado supera el esperado")).toBeVisible();
+  });
+
+  test("detalle: observación pendiente muestra acciones y PATCH cambia el estado", async ({
+    page,
+  }) => {
+    await page.route(`**/api/liquidaciones/${LIQ_ID}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ...DETALLE_RESPONSE, observaciones: [OBSERVACION] }),
+      });
+    });
+
+    let patchBody: unknown = null;
+    await page.route(
+      `**/api/liquidaciones/${LIQ_ID}/observaciones/${OBSERVACION.id}/estado`,
+      async (route) => {
+        patchBody = route.request().postDataJSON();
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ ...OBSERVACION, estado: "en_revision" }),
+        });
+      },
+    );
+
+    await page.goto(`/liquidaciones/${LIQ_ID}`);
+
+    await expect(page.getByText("Ruta compartida entre incidentes")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Aprobar excepción" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Resolver" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Revisar" }).click();
+
+    await expect(async () => {
+      expect(patchBody).toEqual({ estado: "en_revision" });
+    }).toPass();
   });
 
   // ── Configuración ─────────────────────────────────────────────────────────

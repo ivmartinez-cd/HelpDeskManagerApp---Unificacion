@@ -4,13 +4,15 @@ ORM perezosas)."""
 
 import uuid
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.modules.liquidaciones.application.dtos.liquidacion_detalle import LiquidacionDetalle
+from src.modules.liquidaciones.application.dtos.liquidacion_detalle import (
+    IncidenteDetalle,
+    LiquidacionDetalle,
+)
 from src.modules.liquidaciones.domain.entities.alerta import Alerta
-from src.modules.liquidaciones.domain.entities.incidente import Incidente
 from src.modules.liquidaciones.domain.entities.observacion import Observacion
 from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import LiquidacionOut
 
@@ -30,9 +32,13 @@ class IncidenteOut(BaseModel):
     costo_servicio_esperado: float | None = Field(serialization_alias="costoServicioEsperado")
     cant_km_esperado: float | None = Field(serialization_alias="cantKmEsperado")
     estado_validacion: str = Field(serialization_alias="estadoValidacion")
+    localidad_cliente: str | None = Field(serialization_alias="localidadCliente")
+    spst_id: uuid.UUID | None = Field(serialization_alias="spstId")
+    url_maps: str | None = Field(serialization_alias="urlMaps")
 
     @classmethod
-    def from_entity(cls, e: Incidente) -> "IncidenteOut":
+    def from_dto(cls, d: IncidenteDetalle) -> "IncidenteOut":
+        e = d.incidente
         return cls(
             id=e.id,
             numero_incidente=e.numero_incidente,
@@ -46,6 +52,9 @@ class IncidenteOut(BaseModel):
             costo_servicio_esperado=e.costo_servicio_esperado,
             cant_km_esperado=e.cant_km_esperado,
             estado_validacion=e.estado_validacion,
+            localidad_cliente=d.localidad_cliente,
+            spst_id=d.spst_id,
+            url_maps=d.url_maps,
         )
 
 
@@ -73,6 +82,17 @@ class AlertaOut(BaseModel):
             estado=e.estado,
             fecha_generacion=e.fecha_generacion,
         )
+
+
+# Espeja los ESTADO_* de domain/entities/observacion.py — mismo ciclo que el legacy
+# (PUT /liquidaciones/{id}/observaciones/{obs_id}/estado).
+ESTADOS_OBSERVACION = Literal[
+    "pendiente", "en_revision", "resuelta", "rechazada", "excepcion_aprobada"
+]
+
+
+class ObservacionEstadoIn(BaseModel):
+    estado: ESTADOS_OBSERVACION
 
 
 class ObservacionOut(BaseModel):
@@ -115,7 +135,7 @@ class LiquidacionDetalleOut(BaseModel):
     def from_dto(cls, dto: LiquidacionDetalle) -> "LiquidacionDetalleOut":
         return cls(
             liquidacion=LiquidacionOut.from_entity(dto.liquidacion),
-            incidentes=[IncidenteOut.from_entity(i) for i in dto.incidentes],
+            incidentes=[IncidenteOut.from_dto(i) for i in dto.incidentes],
             alertas=[AlertaOut.from_entity(a) for a in dto.alertas],
             observaciones=[ObservacionOut.from_entity(o) for o in dto.observaciones],
         )

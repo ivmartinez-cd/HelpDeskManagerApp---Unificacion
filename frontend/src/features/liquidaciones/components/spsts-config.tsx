@@ -66,8 +66,8 @@ export function SpstsConfig() {
   const [saving, setSaving] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
 
+  // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       const [s, p] = await Promise.all([
         liquidacionesApi.listSpsts(),

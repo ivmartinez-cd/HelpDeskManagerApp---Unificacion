@@ -1,15 +1,43 @@
 import { httpClient } from "@/services/http-client";
 import type {
   EstadoLiquidacion,
+  EstadoObservacion,
   ImportarLiquidacionResult,
   Liquidacion,
   LiquidacionDetalle,
   LiquidacionPage,
+  Observacion,
   PrestadorLiquidacion,
   Spst,
   TablaKm,
   Tarifario,
 } from "../types/liquidaciones";
+
+interface TarifarioBody {
+  prestadorId: string;
+  tipoServicio: string;
+  zona?: string;
+  costoServicio: number;
+  costoKm: number;
+  vigenciaDesde: string;
+  vigenciaHasta?: string;
+}
+
+interface TablaKmBody {
+  prestadorId: string;
+  spstId?: string;
+  empresaNombre: string;
+  sucursalNombre: string;
+  observaciones?: string;
+  domicilioCliente?: string;
+  localidadCliente?: string;
+  provinciaCliente?: string;
+  kmsRecorrido: number;
+  umbralViatico?: number;
+  aplicaViatico?: boolean;
+  kmsAFacturar?: number;
+  urlMaps?: string;
+}
 
 export const liquidacionesApi = {
   // ── Liquidaciones ──────────────────────────────────────────────────────────
@@ -39,6 +67,12 @@ export const liquidacionesApi = {
 
   updateEstado: (id: string, estado: EstadoLiquidacion) =>
     httpClient.patch<Liquidacion>(`/api/liquidaciones/${id}/estado`, { estado }),
+
+  updateEstadoObservacion: (liquidacionId: string, observacionId: string, estado: EstadoObservacion) =>
+    httpClient.patch<Observacion>(
+      `/api/liquidaciones/${liquidacionId}/observaciones/${observacionId}/estado`,
+      { estado },
+    ),
 
   reanalyze: (id: string) =>
     httpClient.post<{ totalIncidentes: number; totalAlertas: number; totalObservaciones: number }>(
@@ -96,15 +130,11 @@ export const liquidacionesApi = {
     return httpClient.get<Tarifario[]>(`/api/liquidaciones/tarifarios${qs}`);
   },
 
-  createTarifario: (body: {
-    prestadorId: string;
-    tipoServicio: string;
-    zona?: string;
-    costoServicio: number;
-    costoKm: number;
-    vigenciaDesde: string;
-    vigenciaHasta?: string;
-  }) => httpClient.post<Tarifario>("/api/liquidaciones/tarifarios", body),
+  createTarifario: (body: TarifarioBody) =>
+    httpClient.post<Tarifario>("/api/liquidaciones/tarifarios", body),
+
+  updateTarifario: (id: string, body: TarifarioBody) =>
+    httpClient.patch<Tarifario>(`/api/liquidaciones/tarifarios/${id}`, body),
 
   deleteTarifario: (id: string) =>
     httpClient.delete<void>(`/api/liquidaciones/tarifarios/${id}`),
@@ -126,21 +156,11 @@ export const liquidacionesApi = {
     return httpClient.get<TablaKm[]>(`/api/liquidaciones/tabla-km?${qs}`);
   },
 
-  createTablaKm: (body: {
-    prestadorId: string;
-    spstId?: string;
-    empresaNombre: string;
-    sucursalNombre: string;
-    observaciones?: string;
-    domicilioCliente?: string;
-    localidadCliente?: string;
-    provinciaCliente?: string;
-    kmsRecorrido: number;
-    umbralViatico?: number;
-    aplicaViatico?: boolean;
-    kmsAFacturar?: number;
-    urlMaps?: string;
-  }) => httpClient.post<TablaKm>("/api/liquidaciones/tabla-km", body),
+  createTablaKm: (body: TablaKmBody) =>
+    httpClient.post<TablaKm>("/api/liquidaciones/tabla-km", body),
+
+  updateTablaKm: (id: string, body: TablaKmBody) =>
+    httpClient.patch<TablaKm>(`/api/liquidaciones/tabla-km/${id}`, body),
 
   deleteTablaKm: (id: string) =>
     httpClient.delete<void>(`/api/liquidaciones/tabla-km/${id}`),

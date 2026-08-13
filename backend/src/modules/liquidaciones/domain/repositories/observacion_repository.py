@@ -14,6 +14,12 @@ from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado impor
 class ObservacionRepository(Protocol):
     async def list_by_liquidacion(self, liquidacion_id: UUID) -> list[Observacion]: ...
 
+    async def update_estado(
+        self, liquidacion_id: UUID, observacion_id: UUID, estado: str
+    ) -> Observacion | None:
+        """None si la observación no existe o no pertenece a esa liquidación."""
+        ...
+
     async def replace_for_liquidacion(
         self, liquidacion_id: UUID, observaciones: Sequence[ObservacionGenerada]
     ) -> list[Observacion]:

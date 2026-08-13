@@ -101,6 +101,9 @@ export interface Incidente {
   costoServicioEsperado: number | null;
   cantKmEsperado: number | null;
   estadoValidacion: string;
+  localidadCliente: string | null;
+  spstId: string | null;
+  urlMaps: string | null;
 }
 
 export interface Alerta {
@@ -114,6 +117,13 @@ export interface Alerta {
   fechaGeneracion: string;
 }
 
+export type EstadoObservacion =
+  | "pendiente"
+  | "en_revision"
+  | "resuelta"
+  | "rechazada"
+  | "excepcion_aprobada";
+
 export interface Observacion {
   id: string;
   tipoObservacion: string;
@@ -123,7 +133,7 @@ export interface Observacion {
   montoCobrado: number;
   montoEsperado: number;
   diferencia: number;
-  estado: string;
+  estado: EstadoObservacion;
   fechaGeneracion: string;
 }
 

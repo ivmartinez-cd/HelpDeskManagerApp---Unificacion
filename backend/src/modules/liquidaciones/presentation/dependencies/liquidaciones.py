@@ -64,6 +64,7 @@ def build_get_liquidacion_detalle(session: AsyncSession) -> GetLiquidacionDetall
             incidentes=SqlAlchemyIncidenteRepository(session),
             alertas=SqlAlchemyAlertaRepository(session),
             observaciones=SqlAlchemyObservacionRepository(session),
+            tablas_km=SqlAlchemyTablaKmRepository(session),
         )
     )
 

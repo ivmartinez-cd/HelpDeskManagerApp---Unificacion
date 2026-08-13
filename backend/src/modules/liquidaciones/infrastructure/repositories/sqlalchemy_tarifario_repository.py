@@ -29,6 +29,50 @@ class SqlAlchemyTarifarioRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
+    async def list_grupo(
+        self, *, prestador_id: UUID, tipo_servicio: str, zona: str | None
+    ) -> list[Tarifario]:
+        stmt = select(TarifarioModel).where(
+            TarifarioModel.prestador_id == prestador_id,
+            TarifarioModel.tipo_servicio == tipo_servicio,
+            TarifarioModel.zona.is_(None) if zona is None else TarifarioModel.zona == zona,
+        )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_entity(row) for row in rows]
+
+    async def set_vigencia_hasta(self, tarifario_id: UUID, vigencia_hasta: date | None) -> None:
+        row = await self._session.get(TarifarioModel, tarifario_id)
+        if row is None:
+            return
+        row.vigencia_hasta = vigencia_hasta
+        await self._session.flush()
+
+    async def update(
+        self,
+        tarifario_id: UUID,
+        *,
+        prestador_id: UUID,
+        tipo_servicio: str,
+        zona: str | None,
+        costo_servicio: float,
+        costo_km: float,
+        vigencia_desde: date,
+        vigencia_hasta: date | None,
+    ) -> Tarifario | None:
+        row = await self._session.get(TarifarioModel, tarifario_id)
+        if row is None:
+            return None
+        row.prestador_id = prestador_id
+        row.tipo_servicio = tipo_servicio
+        row.zona = zona
+        row.costo_servicio = costo_servicio
+        row.costo_km = costo_km
+        row.vigencia_desde = vigencia_desde
+        row.vigencia_hasta = vigencia_hasta
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
     async def delete(self, tarifario_id: UUID) -> bool:
         row = await self._session.get(TarifarioModel, tarifario_id)
         if not row:

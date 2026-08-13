@@ -72,8 +72,8 @@ export function PrestadoresConfig() {
   const [saving, setSaving] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
 
+  // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       setPrestadores(await liquidacionesApi.listPrestadores(false));
     } finally {
