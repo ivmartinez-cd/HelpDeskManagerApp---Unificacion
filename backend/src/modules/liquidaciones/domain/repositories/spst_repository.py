@@ -23,3 +23,18 @@ class SpstRepository(Protocol):
     ) -> Spst:
         """Genera el `id` (UUID) internamente."""
         ...
+
+    async def update(
+        self,
+        spst_id: UUID,
+        *,
+        nombre: str,
+        domicilio: str | None,
+        localidad: str | None,
+        provincia: str | None,
+        zona: str | None,
+    ) -> Spst | None: ...
+
+    async def toggle_activo(self, spst_id: UUID, *, activo: bool) -> Spst | None: ...
+
+    async def delete(self, spst_id: UUID) -> bool: ...

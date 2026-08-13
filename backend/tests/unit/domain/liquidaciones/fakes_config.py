@@ -1,0 +1,201 @@
+"""Fakes en memoria con los métodos de escritura de los puertos de configuración
+(update/toggle_activo/delete, y la cadena de vigencias de tarifarios) — extienden
+los fakes base de `fakes.py`, que solo cubren lo que usan los casos de uso de
+importación/reanálisis."""
+
+import dataclasses
+from datetime import date
+from uuid import UUID
+
+from src.modules.liquidaciones.domain.entities.prestador import Prestador
+from src.modules.liquidaciones.domain.entities.spst import Spst
+from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
+from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
+from tests.unit.domain.liquidaciones.fakes import (
+    FakePrestadorRepository,
+    FakeSpstRepository,
+    FakeTablaKmRepository,
+    FakeTarifarioRepository,
+)
+
+
+class FakeConfigPrestadorRepository(FakePrestadorRepository):
+    async def update(
+        self,
+        prestador_id: UUID,
+        *,
+        nombre: str,
+        nombre_corto: str,
+        cuit: str | None,
+        region: str | None,
+    ) -> Prestador | None:
+        row = self.rows.get(prestador_id)
+        if row is None:
+            return None
+        actualizado = dataclasses.replace(
+            row, nombre=nombre, nombre_corto=nombre_corto, cuit=cuit, region=region
+        )
+        self.rows[prestador_id] = actualizado
+        return actualizado
+
+    async def toggle_activo(self, prestador_id: UUID, *, activo: bool) -> Prestador | None:
+        row = self.rows.get(prestador_id)
+        if row is None:
+            return None
+        actualizado = dataclasses.replace(row, activo=activo)
+        self.rows[prestador_id] = actualizado
+        return actualizado
+
+    async def delete(self, prestador_id: UUID) -> bool:
+        return self.rows.pop(prestador_id, None) is not None
+
+
+class FakeConfigSpstRepository(FakeSpstRepository):
+    def _index_of(self, spst_id: UUID) -> int | None:
+        return next((i for i, s in enumerate(self.rows) if s.id == spst_id), None)
+
+    async def update(
+        self,
+        spst_id: UUID,
+        *,
+        nombre: str,
+        domicilio: str | None,
+        localidad: str | None,
+        provincia: str | None,
+        zona: str | None,
+    ) -> Spst | None:
+        idx = self._index_of(spst_id)
+        if idx is None:
+            return None
+        self.rows[idx] = dataclasses.replace(
+            self.rows[idx],
+            nombre=nombre,
+            domicilio=domicilio,
+            localidad=localidad,
+            provincia=provincia,
+            zona=zona,
+        )
+        return self.rows[idx]
+
+    async def toggle_activo(self, spst_id: UUID, *, activo: bool) -> Spst | None:
+        idx = self._index_of(spst_id)
+        if idx is None:
+            return None
+        self.rows[idx] = dataclasses.replace(self.rows[idx], activo=activo)
+        return self.rows[idx]
+
+    async def delete(self, spst_id: UUID) -> bool:
+        idx = self._index_of(spst_id)
+        if idx is None:
+            return False
+        del self.rows[idx]
+        return True
+
+
+class FakeConfigTarifarioRepository(FakeTarifarioRepository):
+    def _index_of(self, tarifario_id: UUID) -> int | None:
+        return next((i for i, t in enumerate(self.rows) if t.id == tarifario_id), None)
+
+    async def get_by_id(self, tarifario_id: UUID) -> Tarifario | None:
+        idx = self._index_of(tarifario_id)
+        return self.rows[idx] if idx is not None else None
+
+    async def list_grupo(
+        self, *, prestador_id: UUID, tipo_servicio: str, zona: str | None
+    ) -> list[Tarifario]:
+        return [
+            t
+            for t in self.rows
+            if (t.prestador_id, t.tipo_servicio, t.zona) == (prestador_id, tipo_servicio, zona)
+        ]
+
+    async def set_vigencia_hasta(self, tarifario_id: UUID, vigencia_hasta: date | None) -> None:
+        idx = self._index_of(tarifario_id)
+        if idx is None:
+            return
+        self.rows[idx] = dataclasses.replace(self.rows[idx], vigencia_hasta=vigencia_hasta)
+
+    async def update(
+        self,
+        tarifario_id: UUID,
+        *,
+        prestador_id: UUID,
+        tipo_servicio: str,
+        zona: str | None,
+        costo_servicio: float,
+        costo_km: float,
+        vigencia_desde: date,
+        vigencia_hasta: date | None,
+    ) -> Tarifario | None:
+        idx = self._index_of(tarifario_id)
+        if idx is None:
+            return None
+        self.rows[idx] = dataclasses.replace(
+            self.rows[idx],
+            prestador_id=prestador_id,
+            tipo_servicio=tipo_servicio,
+            zona=zona,
+            costo_servicio=costo_servicio,
+            costo_km=costo_km,
+            vigencia_desde=vigencia_desde,
+            vigencia_hasta=vigencia_hasta,
+        )
+        return self.rows[idx]
+
+    async def delete(self, tarifario_id: UUID) -> bool:
+        idx = self._index_of(tarifario_id)
+        if idx is None:
+            return False
+        del self.rows[idx]
+        return True
+
+
+class FakeConfigTablaKmRepository(FakeTablaKmRepository):
+    def _index_of(self, tabla_km_id: UUID) -> int | None:
+        return next((i for i, t in enumerate(self.rows) if t.id == tabla_km_id), None)
+
+    async def update(
+        self,
+        tabla_km_id: UUID,
+        *,
+        prestador_id: UUID,
+        spst_id: UUID | None,
+        empresa_nombre: str,
+        sucursal_nombre: str,
+        observaciones: str | None,
+        domicilio_cliente: str | None,
+        localidad_cliente: str | None,
+        provincia_cliente: str | None,
+        kms_recorrido: float,
+        umbral_viatico: float,
+        aplica_viatico: bool,
+        kms_a_facturar: float,
+        url_maps: str | None,
+    ) -> TablaKm | None:
+        idx = self._index_of(tabla_km_id)
+        if idx is None:
+            return None
+        self.rows[idx] = dataclasses.replace(
+            self.rows[idx],
+            prestador_id=prestador_id,
+            spst_id=spst_id,
+            empresa_nombre=empresa_nombre,
+            sucursal_nombre=sucursal_nombre,
+            observaciones=observaciones,
+            domicilio_cliente=domicilio_cliente,
+            localidad_cliente=localidad_cliente,
+            provincia_cliente=provincia_cliente,
+            kms_recorrido=kms_recorrido,
+            umbral_viatico=umbral_viatico,
+            aplica_viatico=aplica_viatico,
+            kms_a_facturar=kms_a_facturar,
+            url_maps=url_maps,
+        )
+        return self.rows[idx]
+
+    async def delete(self, tabla_km_id: UUID) -> bool:
+        idx = self._index_of(tabla_km_id)
+        if idx is None:
+            return False
+        del self.rows[idx]
+        return True

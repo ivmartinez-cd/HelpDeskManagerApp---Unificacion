@@ -18,6 +18,27 @@ class PrestadorNoEncontradoError(NotFoundError):
         super().__init__(f"Prestador no encontrado: {prestador_id}")
 
 
+class SpstNoEncontradoError(NotFoundError):
+    default_code: ClassVar[str] = "SPST_NO_ENCONTRADO"
+
+    def __init__(self, spst_id: UUID) -> None:
+        super().__init__(f"SPST no encontrado: {spst_id}")
+
+
+class TarifarioNoEncontradoError(NotFoundError):
+    default_code: ClassVar[str] = "TARIFARIO_NO_ENCONTRADO"
+
+    def __init__(self, tarifario_id: UUID) -> None:
+        super().__init__(f"Tarifario no encontrado: {tarifario_id}")
+
+
+class TablaKmNoEncontradaError(NotFoundError):
+    default_code: ClassVar[str] = "TABLA_KM_NO_ENCONTRADA"
+
+    def __init__(self, tabla_km_id: UUID) -> None:
+        super().__init__(f"Entrada de Tabla KM no encontrada: {tabla_km_id}")
+
+
 class PrestadorConLiquidacionesError(BusinessRuleViolationError):
     """`liquidaciones.prestador_id` no tiene `ondelete` a propósito (ver
     `infrastructure/models/liquidacion_model.py`) — es historial de facturación

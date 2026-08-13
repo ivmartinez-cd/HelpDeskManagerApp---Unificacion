@@ -2,11 +2,12 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.liquidaciones.application.use_cases.config_tabla_km import TablaKmDatos
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
@@ -19,6 +20,11 @@ from src.modules.liquidaciones.presentation.config_routers._deps import (
     require_update,
     require_view,
 )
+from src.modules.liquidaciones.presentation.dependencies import (
+    build_create_tabla_km,
+    build_delete_tabla_km,
+    build_update_tabla_km,
+)
 from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     TablaKmIn,
     TablaKmOut,
@@ -27,6 +33,24 @@ from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter()
+
+
+def _datos(body: TablaKmIn) -> TablaKmDatos:
+    return TablaKmDatos(
+        prestador_id=body.prestador_id,
+        spst_id=body.spst_id,
+        empresa_nombre=body.empresa_nombre,
+        sucursal_nombre=body.sucursal_nombre,
+        observaciones=body.observaciones,
+        domicilio_cliente=body.domicilio_cliente,
+        localidad_cliente=body.localidad_cliente,
+        provincia_cliente=body.provincia_cliente,
+        kms_recorrido=body.kms_recorrido,
+        umbral_viatico=body.umbral_viatico,
+        aplica_viatico=body.aplica_viatico,
+        kms_a_facturar=body.kms_a_facturar,
+        url_maps=body.url_maps,
+    )
 
 
 @router.get("/tabla-km", response_model=Page[TablaKmOut])
@@ -48,21 +72,7 @@ async def create_tabla_km(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> TablaKmOut:
-    row = await SqlAlchemyTablaKmRepository(db).create(
-        prestador_id=body.prestador_id,
-        spst_id=body.spst_id,
-        empresa_nombre=body.empresa_nombre,
-        sucursal_nombre=body.sucursal_nombre,
-        observaciones=body.observaciones,
-        domicilio_cliente=body.domicilio_cliente,
-        localidad_cliente=body.localidad_cliente,
-        provincia_cliente=body.provincia_cliente,
-        kms_recorrido=body.kms_recorrido,
-        umbral_viatico=body.umbral_viatico,
-        aplica_viatico=body.aplica_viatico,
-        kms_a_facturar=body.kms_a_facturar,
-        url_maps=body.url_maps,
-    )
+    row = await build_create_tabla_km(db).execute(_datos(body))
     return TablaKmOut.from_entity(row)
 
 
@@ -73,24 +83,7 @@ async def update_tabla_km(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> TablaKmOut:
-    updated = await SqlAlchemyTablaKmRepository(db).update(
-        tabla_km_id,
-        prestador_id=body.prestador_id,
-        spst_id=body.spst_id,
-        empresa_nombre=body.empresa_nombre,
-        sucursal_nombre=body.sucursal_nombre,
-        observaciones=body.observaciones,
-        domicilio_cliente=body.domicilio_cliente,
-        localidad_cliente=body.localidad_cliente,
-        provincia_cliente=body.provincia_cliente,
-        kms_recorrido=body.kms_recorrido,
-        umbral_viatico=body.umbral_viatico,
-        aplica_viatico=body.aplica_viatico,
-        kms_a_facturar=body.kms_a_facturar,
-        url_maps=body.url_maps,
-    )
-    if not updated:
-        raise HTTPException(status_code=404, detail="Entrada de Tabla KM no encontrada")
+    updated = await build_update_tabla_km(db).execute(tabla_km_id, _datos(body))
     return TablaKmOut.from_entity(updated)
 
 
@@ -100,9 +93,7 @@ async def delete_tabla_km(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    deleted = await SqlAlchemyTablaKmRepository(db).delete(tabla_km_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Entrada de Tabla KM no encontrada")
+    await build_delete_tabla_km(db).execute(tabla_km_id)
 
 
 @router.get("/tabla-km/export")

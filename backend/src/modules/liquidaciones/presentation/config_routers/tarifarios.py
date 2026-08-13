@@ -1,18 +1,15 @@
 """Endpoints de configuración de tarifarios (/api/liquidaciones/tarifarios).
 
-Todo alta/edición/baja recalcula la cadena temporal de vigencias del grupo
-(prestador, tipo_servicio, zona) afectado — ver
-`domain/services/cadena_tarifaria.py` (port de `_rebuild_temporal_chain` legacy)."""
+El recadenado temporal de vigencias en alta/edición/baja vive en los casos de uso
+(`application/use_cases/config_tarifarios.py`), no acá."""
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
-from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
-from src.modules.liquidaciones.domain.services.cadena_tarifaria import recalcular_cadena
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
@@ -25,6 +22,11 @@ from src.modules.liquidaciones.presentation.config_routers._deps import (
     require_update,
     require_view,
 )
+from src.modules.liquidaciones.presentation.dependencies import (
+    build_create_tarifario,
+    build_delete_tarifario,
+    build_update_tarifario,
+)
 from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     TarifarioIn,
     TarifarioOut,
@@ -33,26 +35,6 @@ from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter()
-
-
-async def _recadenar_grupo(
-    repo: SqlAlchemyTarifarioRepository,
-    *,
-    prestador_id: UUID,
-    tipo_servicio: str,
-    zona: str | None,
-) -> None:
-    grupo = await repo.list_grupo(
-        prestador_id=prestador_id, tipo_servicio=tipo_servicio, zona=zona
-    )
-    for ajuste in recalcular_cadena(grupo):
-        await repo.set_vigencia_hasta(ajuste.tarifario_id, ajuste.vigencia_hasta)
-
-
-async def _recadenar_para(repo: SqlAlchemyTarifarioRepository, t: Tarifario) -> None:
-    await _recadenar_grupo(
-        repo, prestador_id=t.prestador_id, tipo_servicio=t.tipo_servicio, zona=t.zona
-    )
 
 
 @router.get("/tarifarios", response_model=Page[TarifarioOut])
@@ -74,8 +56,7 @@ async def create_tarifario(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> TarifarioOut:
-    repo = SqlAlchemyTarifarioRepository(db)
-    tarifario = await repo.create(
+    tarifario = await build_create_tarifario(db).execute(
         prestador_id=body.prestador_id,
         tipo_servicio=body.tipo_servicio,
         zona=body.zona or None,
@@ -84,9 +65,7 @@ async def create_tarifario(
         vigencia_desde=body.vigencia_desde,
         vigencia_hasta=body.vigencia_hasta,
     )
-    await _recadenar_para(repo, tarifario)
-    refrescado = await repo.get_by_id(tarifario.id)
-    return TarifarioOut.from_entity(refrescado or tarifario)
+    return TarifarioOut.from_entity(tarifario)
 
 
 @router.patch("/tarifarios/{tarifario_id}", response_model=TarifarioOut)
@@ -96,11 +75,7 @@ async def update_tarifario(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> TarifarioOut:
-    repo = SqlAlchemyTarifarioRepository(db)
-    anterior = await repo.get_by_id(tarifario_id)
-    if anterior is None:
-        raise HTTPException(status_code=404, detail="Tarifario no encontrado")
-    updated = await repo.update(
+    updated = await build_update_tarifario(db).execute(
         tarifario_id,
         prestador_id=body.prestador_id,
         tipo_servicio=body.tipo_servicio,
@@ -110,17 +85,7 @@ async def update_tarifario(
         vigencia_desde=body.vigencia_desde,
         vigencia_hasta=body.vigencia_hasta,
     )
-    if updated is None:
-        raise HTTPException(status_code=404, detail="Tarifario no encontrado")
-    await _recadenar_para(repo, anterior)
-    if (updated.prestador_id, updated.tipo_servicio, updated.zona) != (
-        anterior.prestador_id,
-        anterior.tipo_servicio,
-        anterior.zona,
-    ):
-        await _recadenar_para(repo, updated)
-    refrescado = await repo.get_by_id(tarifario_id)
-    return TarifarioOut.from_entity(refrescado or updated)
+    return TarifarioOut.from_entity(updated)
 
 
 @router.delete("/tarifarios/{tarifario_id}", status_code=204)
@@ -129,11 +94,7 @@ async def delete_tarifario(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    repo = SqlAlchemyTarifarioRepository(db)
-    anterior = await repo.get_by_id(tarifario_id)
-    if anterior is None or not await repo.delete(tarifario_id):
-        raise HTTPException(status_code=404, detail="Tarifario no encontrado")
-    await _recadenar_para(repo, anterior)
+    await build_delete_tarifario(db).execute(tarifario_id)
 
 
 @router.get("/tarifarios/export")

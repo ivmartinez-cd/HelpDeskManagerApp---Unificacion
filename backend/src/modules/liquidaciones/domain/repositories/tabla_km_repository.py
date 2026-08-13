@@ -31,3 +31,24 @@ class TablaKmRepository(Protocol):
     ) -> TablaKm:
         """Genera el `id` (UUID) internamente."""
         ...
+
+    async def update(
+        self,
+        tabla_km_id: UUID,
+        *,
+        prestador_id: UUID,
+        spst_id: UUID | None,
+        empresa_nombre: str,
+        sucursal_nombre: str,
+        observaciones: str | None,
+        domicilio_cliente: str | None,
+        localidad_cliente: str | None,
+        provincia_cliente: str | None,
+        kms_recorrido: float,
+        umbral_viatico: float,
+        aplica_viatico: bool,
+        kms_a_facturar: float,
+        url_maps: str | None,
+    ) -> TablaKm | None: ...
+
+    async def delete(self, tabla_km_id: UUID) -> bool: ...

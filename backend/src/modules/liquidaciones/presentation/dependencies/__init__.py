@@ -1,3 +1,19 @@
+from src.modules.liquidaciones.presentation.dependencies.config import (
+    build_create_prestador,
+    build_create_spst,
+    build_create_tabla_km,
+    build_create_tarifario,
+    build_delete_prestador,
+    build_delete_spst,
+    build_delete_tabla_km,
+    build_delete_tarifario,
+    build_toggle_prestador_activo,
+    build_toggle_spst_activo,
+    build_update_prestador,
+    build_update_spst,
+    build_update_tabla_km,
+    build_update_tarifario,
+)
 from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
     build_get_liquidacion_detalle,
     build_importar_liquidacion,
@@ -7,9 +23,23 @@ from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
 )
 
 __all__ = [
+    "build_create_prestador",
+    "build_create_spst",
+    "build_create_tabla_km",
+    "build_create_tarifario",
+    "build_delete_prestador",
+    "build_delete_spst",
+    "build_delete_tabla_km",
+    "build_delete_tarifario",
     "build_get_liquidacion_detalle",
     "build_importar_liquidacion",
     "build_importar_prestador_maestro",
     "build_list_liquidaciones",
     "build_reanalizar_liquidacion",
+    "build_toggle_prestador_activo",
+    "build_toggle_spst_activo",
+    "build_update_prestador",
+    "build_update_spst",
+    "build_update_tabla_km",
+    "build_update_tarifario",
 ]

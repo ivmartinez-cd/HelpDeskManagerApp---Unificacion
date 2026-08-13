@@ -77,9 +77,9 @@ class ImportarPrestadorMaestro:
 
     async def _resolver_prestador(self, nombre_corto: str) -> tuple[Prestador, bool]:
         # `.strip().upper()`: los otros 2 caminos de escritura de Prestador
-        # (create_prestador del router, import CSV) normalizan igual antes de
-        # comparar — get_by_nombre_corto es `==` case-sensitive, sin esto
-        # "Pentacom" del Excel nunca matchea "PENTACOM" ya en la base.
+        # (Create/UpdatePrestador de config_prestadores.py, import CSV) normalizan
+        # igual antes de comparar — get_by_nombre_corto es `==` case-sensitive, sin
+        # esto "Pentacom" del Excel nunca matchea "PENTACOM" ya en la base.
         clave = nombre_corto.strip().upper()
         existente = await self._ports.prestadores.get_by_nombre_corto(clave)
         if existente is not None:

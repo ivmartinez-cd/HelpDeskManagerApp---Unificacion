@@ -21,3 +21,20 @@ class PrestadorRepository(Protocol):
     ) -> Prestador:
         """Genera el `id` (UUID) internamente — el caller no lo conoce de antemano."""
         ...
+
+    async def update(
+        self,
+        prestador_id: UUID,
+        *,
+        nombre: str,
+        nombre_corto: str,
+        cuit: str | None,
+        region: str | None,
+    ) -> Prestador | None: ...
+
+    async def toggle_activo(self, prestador_id: UUID, *, activo: bool) -> Prestador | None: ...
+
+    async def delete(self, prestador_id: UUID) -> bool:
+        """Baja física. Lanza `PrestadorConLiquidacionesError` si tiene liquidaciones
+        asociadas (`liquidaciones.prestador_id` no cascadea a propósito)."""
+        ...

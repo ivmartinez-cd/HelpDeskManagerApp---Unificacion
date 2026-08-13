@@ -25,8 +25,8 @@ backup de SQLite en modo lectura (`sqlite3.Connection.backup()`), nunca escritur
    inicialmente incompleto (solo el camino de grupo) — **ya cerrado el 2026-08-13**,
    ver más abajo.
 3. **Repositorios** — 10 Protocols + implementaciones SQLAlchemy.
-4. **Casos de uso** de lectura, importación y reanálisis (no de escritura de config —
-   ver pendientes).
+4. **Casos de uso** de lectura, importación y reanálisis; los de escritura de config
+   se agregaron el 2026-08-13 (ver sección propia más abajo).
 5. **Endpoints HTTP** — 8 de liquidaciones + 23 de configuración (prestadores, SPSTs,
    tarifarios, tabla KM), todos con paginación `Page[T]`.
 6. **Importación CSV/HTML** — parsing puro en dominio + `PandasLiquidacionFileParser`
@@ -300,18 +300,59 @@ Verificado: `lint-imports` (17/17 contratos), `ruff check src tests`, `mypy src`
 (758 archivos), `pytest tests/unit` (816 tests) y `pytest tests/integration` (166
 tests, todos los módulos) — los 4 en verde.
 
+## Use cases de escritura de configuración (2026-08-13)
+
+Cerrado el pendiente 1: los 4 config_routers ya no van router→repositorio directo
+en las escrituras. Nuevos casos de uso en `application/use_cases/` —
+`config_prestadores.py` (Create/Update/TogglePrestadorActivo/DeletePrestador),
+`config_spsts.py` (ídem SPST), `config_tarifarios.py`
+(Create/Update/DeleteTarifario) y `config_tabla_km.py`
+(Create/Update/DeleteTablaKm, con DTO `TablaKmDatos` para no repetir los 13 campos
+en alta y edición) — con factories en `presentation/dependencies/config.py`.
+Detalles con intención:
+
+- Los Protocols de dominio (`prestador/spst/tarifario/tabla_km_repository.py`) se
+  ampliaron con `update`/`toggle_activo`/`delete` (y en tarifarios además
+  `get_by_id`/`list_grupo`/`set_vigencia_hasta`) — los métodos ya existían en los
+  impl SQLAlchemy, solo faltaban en el puerto.
+- El **recadenado de vigencias** de tarifarios se movió del router
+  (`_recadenar_grupo` en presentation) a los use cases de tarifarios: la regla de
+  negocio ya no vive en la capa HTTP. El comportamiento es el mismo (recadena el
+  grupo afectado en alta/edición/baja; si la edición cambia de grupo, recadena
+  origen y destino).
+- Los 404 ya no son `HTTPException` en el router: los use cases lanzan
+  `SpstNoEncontradoError`/`TarifarioNoEncontradoError`/`TablaKmNoEncontradaError`
+  (nuevos en `domain/errors.py`, junto al ya existente `PrestadorNoEncontradoError`)
+  y el handler global de `AppError` los traduce. Cambia el shape del error: antes
+  `code: "HTTP_ERROR"`, ahora el `default_code` de cada error — el frontend no
+  matchea ni mensajes ni códigos, verificado por grep.
+- La normalización `strip().upper()` de `nombre_corto` de Prestador bajó del router
+  a Create/UpdatePrestador (es regla de negocio, no de transporte).
+- Export/import CSV siguen llamando repos concretos vía `_liq_csv` (lecturas +
+  helpers de presentación, mismo estado que antes); el import Excel maestro ya
+  tenía su use case.
+- Tests: 26 unit nuevos (`test_config_{prestadores,spsts,tarifarios,tabla_km}.py`)
+  sobre fakes de escritura nuevos en `fakes_config.py` (extienden los de
+  `fakes.py`, que ya estaba al límite de tamaño). Los de tarifarios cubren el
+  recadenado en create/update (con cambio de grupo) y delete.
+
+Verificado: `lint-imports` (17/17), `ruff check src tests`, `mypy src` (763
+archivos), `pytest tests/unit` (842 tests) y
+`pytest tests/integration/infrastructure/liquidaciones` (60 tests, desde el host
+con `helpdesk-db-test` arriba) — todo en verde. Backend reiniciado
+(`DISABLE_BACKGROUND_JOBS=true` confirmado antes y después, sin jobs iniciados).
+
 ## Pendiente
 
-1. **Use cases de escritura para el resto de las entidades de configuración** — hoy
-   router→repositorio directo en los 4 config_routers, sin casos de uso propios.
-2. **No recadena vigencias de tarifarios** al importar (Excel maestro ni CSV) —
+1. **No recadena vigencias de tarifarios** al importar (Excel maestro ni CSV) —
    decisión consciente (replica la omisión del legacy), documentada en
    `application/use_cases/importar_prestador_maestro.py`. `domain/services/
-   cadena_tarifaria.py` existe y se usa en alta/edición manual desde la UI; si se
-   quiere recadenar también en los importadores, hay que ampliar
-   `TarifarioRepository` (`list_grupo`/`set_vigencia_hasta` ya están en el impl
-   SQLAlchemy, no en el Protocol).
-3. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
+   cadena_tarifaria.py` existe y se usa en alta/edición/baja manual desde la UI
+   (vía los use cases de `config_tarifarios.py`); `list_grupo`/`set_vigencia_hasta`
+   ya están en el Protocol `TarifarioRepository` desde 2026-08-13, así que aplicarlo
+   en los importadores es solo tocar `ImportarPrestadorMaestro` y el import CSV —
+   pero es un cambio de comportamiento vs. el legacy, confirmar antes.
+2. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
 
 ## Próximo paso sugerido
 

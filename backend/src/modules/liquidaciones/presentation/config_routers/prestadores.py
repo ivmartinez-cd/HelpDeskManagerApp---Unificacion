@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,7 +15,13 @@ from src.modules.liquidaciones.presentation.config_routers._deps import (
     require_update,
     require_view,
 )
-from src.modules.liquidaciones.presentation.dependencies import build_importar_prestador_maestro
+from src.modules.liquidaciones.presentation.dependencies import (
+    build_create_prestador,
+    build_delete_prestador,
+    build_importar_prestador_maestro,
+    build_toggle_prestador_activo,
+    build_update_prestador,
+)
 from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     PrestadorIn,
     PrestadorOut,
@@ -35,9 +41,9 @@ async def create_prestador(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> PrestadorOut:
-    prestador = await SqlAlchemyPrestadorRepository(db).create(
+    prestador = await build_create_prestador(db).execute(
         nombre=body.nombre,
-        nombre_corto=body.nombre_corto.strip().upper(),
+        nombre_corto=body.nombre_corto,
         cuit=body.cuit or None,
         region=body.region or None,
     )
@@ -51,15 +57,13 @@ async def update_prestador(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> PrestadorOut:
-    updated = await SqlAlchemyPrestadorRepository(db).update(
+    updated = await build_update_prestador(db).execute(
         prestador_id,
         nombre=body.nombre,
-        nombre_corto=body.nombre_corto.strip().upper(),
+        nombre_corto=body.nombre_corto,
         cuit=body.cuit or None,
         region=body.region or None,
     )
-    if not updated:
-        raise HTTPException(status_code=404, detail="Prestador no encontrado")
     return PrestadorOut.from_entity(updated)
 
 
@@ -70,11 +74,7 @@ async def toggle_prestador_activo(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> PrestadorOut:
-    updated = await SqlAlchemyPrestadorRepository(db).toggle_activo(
-        prestador_id, activo=body.activo
-    )
-    if not updated:
-        raise HTTPException(status_code=404, detail="Prestador no encontrado")
+    updated = await build_toggle_prestador_activo(db).execute(prestador_id, activo=body.activo)
     return PrestadorOut.from_entity(updated)
 
 
@@ -84,9 +84,7 @@ async def delete_prestador(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    deleted = await SqlAlchemyPrestadorRepository(db).delete(prestador_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Prestador no encontrado")
+    await build_delete_prestador(db).execute(prestador_id)
 
 
 @router.get("/prestadores/export")

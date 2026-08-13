@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +18,12 @@ from src.modules.liquidaciones.presentation.config_routers._deps import (
     CATALOGO_SIZE,
     require_update,
     require_view,
+)
+from src.modules.liquidaciones.presentation.dependencies import (
+    build_create_spst,
+    build_delete_spst,
+    build_toggle_spst_activo,
+    build_update_spst,
 )
 from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     SpstIn,
@@ -51,7 +57,7 @@ async def create_spst(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> SpstOut:
-    spst = await SqlAlchemySpstRepository(db).create(
+    spst = await build_create_spst(db).execute(
         prestador_id=body.prestador_id,
         nombre=body.nombre,
         domicilio=body.domicilio or None,
@@ -69,7 +75,7 @@ async def update_spst(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> SpstOut:
-    updated = await SqlAlchemySpstRepository(db).update(
+    updated = await build_update_spst(db).execute(
         spst_id,
         nombre=body.nombre,
         domicilio=body.domicilio or None,
@@ -77,8 +83,6 @@ async def update_spst(
         provincia=body.provincia or None,
         zona=body.zona or None,
     )
-    if not updated:
-        raise HTTPException(status_code=404, detail="SPST no encontrado")
     return SpstOut.from_entity(updated)
 
 
@@ -89,9 +93,7 @@ async def toggle_spst_activo(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> SpstOut:
-    updated = await SqlAlchemySpstRepository(db).toggle_activo(spst_id, activo=body.activo)
-    if not updated:
-        raise HTTPException(status_code=404, detail="SPST no encontrado")
+    updated = await build_toggle_spst_activo(db).execute(spst_id, activo=body.activo)
     return SpstOut.from_entity(updated)
 
 
@@ -101,9 +103,7 @@ async def delete_spst(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    deleted = await SqlAlchemySpstRepository(db).delete(spst_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="SPST no encontrado")
+    await build_delete_spst(db).execute(spst_id)
 
 
 @router.get("/spsts/export")
