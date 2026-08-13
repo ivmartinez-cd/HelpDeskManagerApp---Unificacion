@@ -17,6 +17,18 @@ TIPO_PRE_CORRECTIVO = "pre_correctivo"
 TIPO_GUARDIA = "guardia"
 TIPO_SISTEMAS = "sistemas"
 
+# Whitelist para descartar filas de texto libre que `normalizar_tipo_servicio`
+# no logra mapear (ej. una fila de "TOTAL GENERAL" de un pie de tabla) — ver
+# domain/services/importacion_maestro/tarifarios.py.
+TIPOS_SERVICIO: tuple[str, ...] = (
+    TIPO_CORRECTIVO,
+    TIPO_PREVENTIVO,
+    TIPO_INSTALACION_DESINSTALACION,
+    TIPO_PRE_CORRECTIVO,
+    TIPO_GUARDIA,
+    TIPO_SISTEMAS,
+)
+
 
 @dataclass(frozen=True)
 class Tarifario:

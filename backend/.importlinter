@@ -156,6 +156,8 @@ forbidden_modules =
     sqlalchemy
     pydantic
     alembic
+    pandas
+    numpy
 
 [importlinter:contract:liquidaciones-domain-app-independent-from-auth]
 name = El domain/application de liquidaciones no depende de auth

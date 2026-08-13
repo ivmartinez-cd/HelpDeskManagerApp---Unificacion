@@ -26,3 +26,14 @@ class ArchivoLiquidacionInvalidoError(ValidationError):
 
     def __init__(self, detalle: str) -> None:
         super().__init__(f"No se pudo leer el archivo de liquidación: {detalle}")
+
+
+class ArchivoMaestroInvalidoError(ValidationError):
+    """El archivo no se pudo leer como Excel, o ninguna hoja tiene una celda
+    "AGENTE:" reconocible — mismo caso que el legacy convertía en 422 (acá 400,
+    convención del monorepo para `ValidationError`)."""
+
+    default_code: ClassVar[str] = "ARCHIVO_MAESTRO_INVALIDO"
+
+    def __init__(self, detalle: str) -> None:
+        super().__init__(f"No se pudo leer el archivo maestro de prestador: {detalle}")

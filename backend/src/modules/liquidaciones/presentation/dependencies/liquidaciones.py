@@ -11,6 +11,10 @@ from src.modules.liquidaciones.application.use_cases.importar_liquidacion import
     ImportarLiquidacion,
     ImportarLiquidacionPorts,
 )
+from src.modules.liquidaciones.application.use_cases.importar_prestador_maestro import (
+    ImportarPrestadorMaestro,
+    ImportarPrestadorMaestroPorts,
+)
 from src.modules.liquidaciones.application.use_cases.list_liquidaciones import (
     ListLiquidaciones,
     ListLiquidacionesPorts,
@@ -21,6 +25,9 @@ from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion impo
 )
 from src.modules.liquidaciones.infrastructure.importers.pandas_liquidacion_file_parser import (
     PandasLiquidacionFileParser,
+)
+from src.modules.liquidaciones.infrastructure.importers.pandas_prestador_maestro_file_parser import (  # noqa: E501
+    PandasPrestadorMaestroFileParser,
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_alerta_repository import (
     SqlAlchemyAlertaRepository,
@@ -92,5 +99,17 @@ def build_importar_liquidacion(session: AsyncSession) -> ImportarLiquidacion:
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
             incidentes=SqlAlchemyIncidenteRepository(session),
             reanalizar=build_reanalizar_liquidacion(session),
+        )
+    )
+
+
+def build_importar_prestador_maestro(session: AsyncSession) -> ImportarPrestadorMaestro:
+    return ImportarPrestadorMaestro(
+        ImportarPrestadorMaestroPorts(
+            parser=PandasPrestadorMaestroFileParser(),
+            prestadores=SqlAlchemyPrestadorRepository(session),
+            spsts=SqlAlchemySpstRepository(session),
+            tarifarios=SqlAlchemyTarifarioRepository(session),
+            tabla_km=SqlAlchemyTablaKmRepository(session),
         )
     )

@@ -15,10 +15,14 @@ from src.modules.liquidaciones.presentation.config_routers._deps import (
     require_update,
     require_view,
 )
+from src.modules.liquidaciones.presentation.dependencies import build_importar_prestador_maestro
 from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     PrestadorIn,
     PrestadorOut,
     ToggleActivoIn,
+)
+from src.modules.liquidaciones.presentation.schemas.importar_prestador_maestro_schemas import (
+    ImportarPrestadorMaestroOut,
 )
 from src.shared.infrastructure.database.session import get_db
 
@@ -90,3 +94,18 @@ async def import_prestadores_csv(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, int]:
     return await csv_helpers.import_prestadores(file, SqlAlchemyPrestadorRepository(db))
+
+
+@router.post(
+    "/prestadores/importar-excel", response_model=ImportarPrestadorMaestroOut, status_code=201
+)
+async def importar_excel_maestro(
+    file: UploadFile = File(...),
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> ImportarPrestadorMaestroOut:
+    contenido = await file.read()
+    resultado = await build_importar_prestador_maestro(db).execute(
+        contenido=contenido, nombre_archivo=file.filename or ""
+    )
+    return ImportarPrestadorMaestroOut.from_dto(resultado)

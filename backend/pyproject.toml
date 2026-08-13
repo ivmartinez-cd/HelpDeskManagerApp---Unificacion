@@ -27,6 +27,9 @@ dependencies = [
     # ver domain/services/importacion/ e infrastructure/importers/.
     "pandas==3.0.5",
     "lxml==6.1.1",
+    # xlrd lee .xls binario real (openpyxl ya cubre .xlsx) — para el importador de
+    # Excel maestro de PST, ver infrastructure/importers/pandas_prestador_maestro_file_parser.py.
+    "xlrd==2.0.1",
 ]
 
 [dependency-groups]
