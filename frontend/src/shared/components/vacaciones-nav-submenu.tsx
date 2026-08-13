@@ -16,10 +16,10 @@ import {
 import { useSession } from "@/services/session-provider";
 import { cn } from "@/shared/utils/cn";
 
-/** Submenú de Vacaciones — mismo lenguaje visual que ContadoresNavSubmenu.
- * Los ítems se filtran por permiso: Aprobaciones requiere `approve` y
- * Gestión Humana muestra su contenido según `manage` (la página es visible
- * con `view` para consultar catálogos). */
+/** Submenú de Gestión de Personal (module key `vacaciones`) — mismo lenguaje
+ * visual que ContadoresNavSubmenu. Los ítems se filtran por permiso:
+ * Aprobaciones requiere `approve` y Personal (el ABM) muestra su contenido
+ * según `manage` (la página es visible con `view` para consultar catálogos). */
 interface NavLinkDef {
   href: string;
   label: string;
@@ -72,7 +72,7 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
     },
     {
       href: "/vacaciones/gestion",
-      label: "Gestión Humana",
+      label: "Personal",
       icon: Users,
       visible: true,
     },

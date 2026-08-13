@@ -40,7 +40,7 @@ const MODULES_MOCK = [
   },
   {
     key: "vacaciones",
-    label: "Vacaciones",
+    label: "Gestión de Personal",
     route: "/vacaciones",
     icon: "calendar",
     sortOrder: 30,

@@ -82,10 +82,10 @@ export function GestionView() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1.5">
           <h1 className="font-heading text-[25px] font-extrabold uppercase tracking-[-.03em] text-foreground">
-            Gestión Humana
+            Personal
           </h1>
           <p className="font-body text-sm text-muted-foreground">
-            Empleados, sectores, cargos y feriados del módulo de vacaciones
+            Empleados, sectores, cargos y feriados
           </p>
         </div>
         {puedeGestionar && (

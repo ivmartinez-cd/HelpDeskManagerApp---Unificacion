@@ -11,6 +11,11 @@ Excel/PDF y emails del seam `Notificador`. Fuente de verdad visual:
 
 Pendiente: la migración de datos reales (abajo) y el paralelo con VacaSync/apagado.
 
+**Nombre visible** (2026-08-13, migración `c7d1f92e4a68`): el módulo se muestra como
+**"Gestión de Personal"** en el menú (engloba Vacaciones + Asistencias + ABM) y el subítem
+del ABM pasó de "Gestión Humana" a **"Personal"**. Solo cambió el `label`: la key
+`vacaciones`, la ruta `/vacaciones` y los paths de API siguen igual.
+
 ## Entrega 3 — decisiones y paridades
 
 - **Reportes** (`/api/vacaciones/reportes` + `/excel` + `/pdf`, pantalla
