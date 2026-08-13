@@ -372,6 +372,30 @@ real ejecutado; solo se actualiza el estado de cada módulo.
       gap analysis (además de los datos): importadores Excel + plantillas (hoy solo
       CSV) y decidir DELETE físico vs soft-delete de prestador/SPST — detalle en la
       memoria `project-liquidaciones-config`.
+- [x] **Cumplimiento 100% de `ARCHITECTURE_GUIDE.md` en liquidaciones + prestadores
+      (2026-08-12, auditoría completa; commits b337393..2aacda9):**
+      - §11: los 4 GET de catálogo que devolvían `list[...]` ahora usan `Page[T]`
+        (`/api/liquidaciones/prestadores`, `/tarifarios`, `/spsts`, `/tabla-km`; default
+        generoso `CATALOGO_SIZE=500` en `config_routers/_deps.py`). El api client del
+        frontend desenvuelve `.items`, componentes sin cambios; mock e2e actualizado.
+      - §7: cobertura unit cerrada — prestadores application ~61%→~99% (6 use cases sin
+        tests) y domain →100%; + list_liquidaciones, entidad Resolucion y permisos
+        well-known de ambos módulos. 698→719 tests.
+      - §4: partidos `prestadores_router.py` (contactos → `contactos_router.py` anidado
+        vía `include_router`, `app.py` sin cambios), `liquidaciones-lista.tsx` (tabla →
+        `liquidaciones-tabla.tsx`) y `tabla-km-config.tsx` (modales →
+        `tabla-km-modales.tsx`). Ningún archivo de ambos módulos supera 300 líneas.
+      - §6: los imports CSV de `_liq_csv.py` loguean warning al descartar filas con
+        números ilegibles; `UMBRAL_VIATICO_DEFAULT` importado del dominio (antes 30.0
+        hardcodeado en 2 lugares).
+      - `GET /api/prestadores` (resumen agregado con totales + grupos, no `Page[T]`)
+        documentado como excepción consciente en ADR-011.
+      - **Deuda §7 transversal restante** (compartida con turnos/sla): 0 tests de
+        integración de infrastructure en ambos módulos (13 repos SQLAlchemy + parser
+        pandas + gateway pyodbc de Siges) y prestadores sin spec Playwright propio.
+      - Nota técnica: la versión de FastAPI del repo envuelve routers incluidos como
+        `_IncludedRouter` lazy — `app.routes` no lista las rutas anidadas; para
+        verificar rutas usar `app.openapi()["paths"]`.
 - [ ] Correr en paralelo con la app vieja antes de apagarla — **no hay cutover en
       frío** (módulo con lógica frágil, ver riesgos en §1 de este documento).
 - [ ] Apagar Liquidacion-Prestadores (repo/deploy) tras el período de observación.
