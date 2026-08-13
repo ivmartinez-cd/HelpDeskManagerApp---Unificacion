@@ -43,23 +43,23 @@ tener que reconstruir el hilo desde los commits.
    empleado real y no corresponde intentar conseguirlas. Si en algún momento se consigue login
    de prueba de un usuario regular, vale la pena repetir el smoke test que sí se hizo para
    `prestadores`/`sla`.
-3. **`ListPrestadoresAgrupados` no expone `fecha` por API todavía**: el caso de uso ya acepta un
-   parámetro `fecha: date | None` (default hoy, ya usado por los tests), pero
-   `GET /api/prestadores` no tiene un query param para pedir el agrupado "a tal fecha" — hoy
-   siempre se resuelve a hoy. No fue pedido; queda como extensión natural si en algún momento se
-   quiere planificar coberturas a futuro desde la UI en vez de solo ver el estado actual.
+3. ~~**`ListPrestadoresAgrupados` no expone `fecha` por API todavía**~~ **Resuelto
+   (2026-08-13)**: `GET /api/prestadores` acepta `?fecha=YYYY-MM-DD` (query param opcional,
+   default hoy) y lo pasa al caso de uso, que ya lo soportaba.
 4. **Validación de invariantes solo en la capa de aplicación, no en el schema de Postgres**: el
    no-solapamiento de overrides para un mismo operador ausente se valida en el caso de uso
    (`CreateAsignacionOverride`), no con un constraint de DB — se evaluó un `EXCLUDE USING gist`
    y se descartó (ver ADR-013, el alcance por cliente/PST vive en tabla hija, no es expresable
    limpio). Ventana de carrera aceptada a propósito (ABM de baja frecuencia). Documentado, no es
    un olvido.
-5. **`operador_ausente_id`/`operador_reemplazante_id` de `contadores` sin validar contra el
-   catálogo vigente al crear el override**: son strings libres (usernames de Gestión) sin FK a
-   `contadores_operadores` (esa tabla se poda en cada sync, ver ADR-013) — un typo en el
-   username crea igual el override, sin error, y simplemente nunca matchea ningún evento real.
-   Aceptado por diseño, pero vale la pena tenerlo presente si en algún momento se arma la UI del
-   ABM (ahí sí conviene validar contra el catálogo local antes de enviar el request).
+5. ~~**`operador_ausente_id`/`operador_reemplazante_id` de `contadores` sin validar contra el
+   catálogo vigente al crear el override**~~ **Resuelto (2026-08-13)**:
+   `CreateAsignacionOverride` valida ambos usernames contra `contadores_operadores` (el mismo
+   `list_operadores()` que ya usaba para armar el DTO, ahora consultado antes de crear) y
+   rechaza con `OperadorNoEncontradoError` (400, `OPERADOR_NO_ENCONTRADO`) si alguno no existe.
+   Sigue sin FK en el schema (la tabla se poda en cada sync, ver ADR-013) — un override ya
+   creado cuyo operador desaparece del catálogo en un sync posterior queda igual que antes;
+   solo el alta valida.
 
 ## No pendiente (cerrado, no reabrir sin evidencia nueva)
 

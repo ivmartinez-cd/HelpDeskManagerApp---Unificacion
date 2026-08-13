@@ -15,6 +15,7 @@ from src.modules.contadores.domain.entities.asignacion_override import Asignacio
 from src.modules.contadores.domain.entities.operador import Operador
 from src.modules.contadores.domain.errors import (
     InvalidOverrideRangeError,
+    OperadorNoEncontradoError,
     OverlappingOverrideError,
     OverrideMismoOperadorError,
 )
@@ -108,6 +109,28 @@ async def test_rechaza_mismo_operador_como_ausente_y_reemplazante() -> None:
         await CreateAsignacionOverride(deps).execute(
             _request(operador_reemplazante_id=_AUSENTE)
         )
+
+
+@pytest.mark.asyncio
+async def test_rechaza_ausente_fuera_del_catalogo() -> None:
+    deps = _deps([])
+
+    with pytest.raises(OperadorNoEncontradoError):
+        await CreateAsignacionOverride(deps).execute(
+            _request(operador_ausente_id="mjvelaa")
+        )
+    deps.overrides.create.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_rechaza_reemplazante_fuera_del_catalogo() -> None:
+    deps = _deps([])
+
+    with pytest.raises(OperadorNoEncontradoError):
+        await CreateAsignacionOverride(deps).execute(
+            _request(operador_reemplazante_id="vpaez")
+        )
+    deps.overrides.create.assert_not_awaited()
 
 
 @pytest.mark.asyncio

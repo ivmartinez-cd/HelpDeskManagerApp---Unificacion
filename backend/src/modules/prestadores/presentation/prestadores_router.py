@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -95,6 +96,10 @@ router.include_router(overrides_router)
 
 @router.get("")
 async def list_prestadores(
+    fecha: date | None = Query(
+        default=None,
+        description="Agrupa por operador efectivo a esta fecha (default: hoy)",
+    ),
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
 ) -> PrestadoresResumenResponse:
@@ -104,7 +109,7 @@ async def list_prestadores(
         users=SqlAlchemyUserProvider(db),
         overrides=SqlAlchemyAsignacionOverrideRepository(db),
     )
-    resumen = await ListPrestadoresAgrupados(deps).execute()
+    resumen = await ListPrestadoresAgrupados(deps).execute(fecha=fecha)
     return PrestadoresResumenResponse.from_dto(resumen)
 
 

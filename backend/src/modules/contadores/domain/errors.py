@@ -86,6 +86,16 @@ class OverrideMismoOperadorError(ValidationError):
         super().__init__("El operador ausente y el reemplazante no pueden ser el mismo")
 
 
+class OperadorNoEncontradoError(ValidationError):
+    default_code = "OPERADOR_NO_ENCONTRADO"
+
+    def __init__(self, username: str) -> None:
+        super().__init__(
+            f"El operador {username!r} no existe en el catálogo local de operadores "
+            "(¿typo en el username de Gestión?)"
+        )
+
+
 class OverlappingOverrideError(BusinessRuleViolationError):
     default_code = "OVERLAPPING_OVERRIDE"
 

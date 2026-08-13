@@ -11,8 +11,10 @@ from src.modules.contadores.application.use_cases.asignacion_override_dto_builde
     build_asignacion_override_dto,
 )
 from src.modules.contadores.domain.entities.asignacion_override import AsignacionOverride
+from src.modules.contadores.domain.entities.operador import Operador
 from src.modules.contadores.domain.errors import (
     InvalidOverrideRangeError,
+    OperadorNoEncontradoError,
     OverlappingOverrideError,
     OverrideMismoOperadorError,
 )
@@ -43,6 +45,12 @@ class CreateAsignacionOverride:
         if request.operador_ausente_id == request.operador_reemplazante_id:
             raise OverrideMismoOperadorError()
 
+        # Los usernames son strings libres sin FK a `contadores_operadores`
+        # (la tabla se poda en cada sync, ver ADR-013): sin este chequeo un
+        # typo crea un override que nunca matchea ningún evento, sin error.
+        operadores = {op.id: op for op in await self._deps.calendar.list_operadores()}
+        _validar_en_catalogo(request, operadores)
+
         alcance: Literal["TOTAL"] | frozenset[str] = (
             "TOTAL" if request.clientes is None else frozenset(request.clientes)
         )
@@ -64,9 +72,15 @@ class CreateAsignacionOverride:
             created_by_user_id=request.created_by_user_id,
         )
         await self._deps.overrides.create(override)
+        return build_asignacion_override_dto(override, operadores)
 
-        operadores = await self._deps.calendar.list_operadores()
-        return build_asignacion_override_dto(override, {op.id: op for op in operadores})
+
+def _validar_en_catalogo(
+    request: CreateAsignacionOverrideRequest, operadores: dict[str, Operador]
+) -> None:
+    for username in (request.operador_ausente_id, request.operador_reemplazante_id):
+        if username not in operadores:
+            raise OperadorNoEncontradoError(username)
 
 
 def _hay_solapamiento(
