@@ -29,8 +29,10 @@ class SqlAlchemyTablaKmRepository:
         prestador_id: UUID | None = None,
         q: str | None = None,
     ) -> list[TablaKm]:
+        # id como desempate: empresa+sucursal pueden repetirse y sin orden total
+        # la paginación Page[T] puede repetir/saltear filas entre páginas.
         stmt = select(TablaKmModel).order_by(
-            TablaKmModel.empresa_nombre, TablaKmModel.sucursal_nombre
+            TablaKmModel.empresa_nombre, TablaKmModel.sucursal_nombre, TablaKmModel.id
         )
         if prestador_id is not None:
             stmt = stmt.where(TablaKmModel.prestador_id == prestador_id)

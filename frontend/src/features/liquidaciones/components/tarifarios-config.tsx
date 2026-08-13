@@ -14,18 +14,35 @@ import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Tarifario } from "../types/liquidaciones";
+import { agruparTarifarios, GrupoTarifaRow, type GrupoTarifa } from "./tarifario-history-timeline";
 
 const TIPOS = [
   "correctivo", "preventivo", "instalacion_desinstalacion",
   "pre_correctivo", "guardia", "sistemas",
 ];
 
-function formatARS(n: number) {
-  return n.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
+// Prefill del botón "Actualizar" de un grupo: nueva vigencia desde hoy con el
+// tipo/zona/costos de la tarifa vigente (el recadenado cierra la anterior).
+interface PlantillaTarifa {
+  tipoServicio: string;
+  zona: string;
+  costoServicio: string;
+  costoKm: string;
 }
 
-function tarifaAForm(t: Tarifario | null, defaultPrestadorId: string) {
-  if (!t) return { prestadorId: defaultPrestadorId, tipoServicio: "", zona: "", costoServicio: "", costoKm: "", vigenciaDesde: "", vigenciaHasta: "" };
+function tarifaAForm(t: Tarifario | null, defaultPrestadorId: string, plantilla: PlantillaTarifa | null) {
+  if (!t) {
+    const hoy = new Date().toISOString().split("T")[0];
+    return {
+      prestadorId: defaultPrestadorId,
+      tipoServicio: plantilla?.tipoServicio ?? "",
+      zona: plantilla?.zona ?? "",
+      costoServicio: plantilla?.costoServicio ?? "",
+      costoKm: plantilla?.costoKm ?? "",
+      vigenciaDesde: plantilla ? hoy : "",
+      vigenciaHasta: "",
+    };
+  }
   return {
     prestadorId: t.prestadorId,
     tipoServicio: t.tipoServicio,
@@ -37,18 +54,18 @@ function tarifaAForm(t: Tarifario | null, defaultPrestadorId: string) {
   };
 }
 
-// El caller lo monta con key={editing?.id ?? "nueva"} para que el estado inicial
-// del form se recalcule al cambiar de tarifa.
+// El caller lo monta con una key derivada de editing/plantilla para que el
+// estado inicial del form se recalcule al cambiar de tarifa o de prefill.
 function TarifaModal({
-  isOpen, onClose, prestadores, editing, defaultPrestadorId, onSuccess,
+  isOpen, onClose, prestadores, editing, plantilla, defaultPrestadorId, onSuccess,
 }: {
-  isOpen: boolean; onClose: () => void; prestadores: PrestadorLiquidacion[]; editing: Tarifario | null; defaultPrestadorId: string; onSuccess: () => void;
+  isOpen: boolean; onClose: () => void; prestadores: PrestadorLiquidacion[]; editing: Tarifario | null; plantilla: PlantillaTarifa | null; defaultPrestadorId: string; onSuccess: () => void;
 }) {
-  const [form, setForm] = useState(() => tarifaAForm(editing, defaultPrestadorId));
+  const [form, setForm] = useState(() => tarifaAForm(editing, defaultPrestadorId, plantilla));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleClose = () => { setForm(tarifaAForm(editing, defaultPrestadorId)); setError(null); onClose(); };
+  const handleClose = () => { setForm(tarifaAForm(editing, defaultPrestadorId, plantilla)); setError(null); onClose(); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,6 +170,7 @@ export function TarifariosConfig() {
   const [filtroPst, setFiltroPst] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Tarifario | null>(null);
+  const [plantilla, setPlantilla] = useState<PlantillaTarifa | null>(null);
   const [csvOpen, setCsvOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -194,12 +212,25 @@ export function TarifariosConfig() {
     catch { toast.error("Error al descargar"); }
   };
 
+  const abrirModal = (tarifa: Tarifario | null, prefill: PlantillaTarifa | null = null) => {
+    setEditing(tarifa);
+    setPlantilla(prefill);
+    setModalOpen(true);
+  };
+
+  const handleActualizar = (grupo: GrupoTarifa) =>
+    abrirModal(null, {
+      tipoServicio: grupo.tipoServicio,
+      zona: grupo.zona ?? "",
+      costoServicio: String(grupo.vigente?.costoServicio ?? ""),
+      costoKm: String(grupo.vigente?.costoKm ?? ""),
+    });
+
   const pstSeleccionado = prestadores.find((p) => p.id === filtroPst) ?? null;
   const loadingTarifarios = filtroPst !== "" && filtroPst !== tarifariosPstId;
+  const grupos = agruparTarifarios(tarifarios);
 
   const selectCls = "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
-  const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
-  const tdCls = "py-3 px-4 font-body text-sm text-foreground";
 
   return (
     <div className="flex flex-col gap-5 p-6">
@@ -207,13 +238,13 @@ export function TarifariosConfig() {
         <div>
           <h1 className="font-heading text-xl font-extrabold text-foreground">Estructura de Tarifarios</h1>
           <p className="font-body text-sm text-muted-foreground">
-            {pstSeleccionado ? `${tarifarios.length} tarifas de ${pstSeleccionado.nombreCorto}` : "Seleccioná un prestador para ver sus tarifas"}
+            {pstSeleccionado ? `${tarifarios.length} tarifas en ${grupos.length} servicios de ${pstSeleccionado.nombreCorto}` : "Seleccioná un prestador para ver sus tarifas"}
           </p>
         </div>
         <div className="flex gap-2">
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
-          <BrandButton size="sm" onClick={() => { setEditing(null); setModalOpen(true); }}>+ Nueva tarifa</BrandButton>
+          <BrandButton size="sm" onClick={() => abrirModal(null)}>+ Nueva tarifa</BrandButton>
         </div>
       </div>
 
@@ -232,41 +263,21 @@ export function TarifariosConfig() {
         <BrandEmptyState icon={Briefcase} title={`${pstSeleccionado?.nombreCorto} no tiene tarifas cargadas`} description="Usá el botón '+ Nueva tarifa' para configurar." />
       ) : (
         <div className="overflow-hidden rounded-[12px] border border-border bg-card">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-muted/40">
-                  <th className={thCls}>Tipo servicio</th>
-                  <th className={thCls}>Zona</th>
-                  <th className={`${thCls} text-right`}>Costo serv.</th>
-                  <th className={`${thCls} text-right`}>Costo KM</th>
-                  <th className={thCls}>Vigencia desde</th>
-                  <th className={thCls}>Vigencia hasta</th>
-                  <th className={`${thCls} text-right`}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {tarifarios.map((t) => (
-                  <tr key={t.id} className="border-t border-border transition-colors hover:bg-muted/30">
-                    <td className={tdCls}>{t.tipoServicio}</td>
-                    <td className={`${tdCls} text-muted-foreground`}>{t.zona || "—"}</td>
-                    <td className={`${tdCls} text-right`}>{formatARS(t.costoServicio)}</td>
-                    <td className={`${tdCls} text-right`}>{formatARS(t.costoKm)}</td>
-                    <td className={`${tdCls} text-muted-foreground`}>{t.vigenciaDesde}</td>
-                    <td className={`${tdCls} text-muted-foreground`}>{t.vigenciaHasta || "—"}</td>
-                    <td className={`${tdCls} text-right`}>
-                      <button onClick={() => { setEditing(t); setModalOpen(true); }} className="mr-3 font-body text-sm text-brand-orange hover:underline">Editar</button>
-                      <button onClick={() => setDeletingId(t.id)} className="font-body text-sm text-destructive hover:underline">Eliminar</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="divide-y divide-border">
+            {grupos.map((grupo) => (
+              <GrupoTarifaRow
+                key={`${grupo.tipoServicio}::${grupo.zona ?? ""}`}
+                grupo={grupo}
+                onActualizar={handleActualizar}
+                onEdit={(t) => abrirModal(t)}
+                onDelete={setDeletingId}
+              />
+            ))}
           </div>
         </div>
       )}
 
-      <TarifaModal key={editing?.id ?? "nueva"} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); }} prestadores={prestadores} editing={editing} defaultPrestadorId={filtroPst} onSuccess={loadTarifarios} />
+      <TarifaModal key={editing?.id ?? (plantilla ? `plantilla:${Object.values(plantilla).join("::")}` : "nueva")} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); setPlantilla(null); }} prestadores={prestadores} editing={editing} plantilla={plantilla} defaultPrestadorId={filtroPst} onSuccess={loadTarifarios} />
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={loadTarifarios} />
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar tarifa">
         <p className="font-body text-sm text-muted-foreground mb-5">Esta acción no se puede deshacer. ¿Confirmás la eliminación?</p>

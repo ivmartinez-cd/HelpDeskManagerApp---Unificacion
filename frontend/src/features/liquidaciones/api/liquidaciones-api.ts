@@ -21,6 +21,26 @@ interface Page<T> {
   size: number;
 }
 
+// Tope de `size` que acepta el backend (Query le=1000 en config_routers).
+const CATALOGO_SIZE_MAX = 1000;
+
+// Los catálogos por prestador pueden superar incluso el tope de una página
+// (INFOMAC: 960 tarifas y creciendo) — se piden páginas hasta cubrir `total`
+// en vez de truncar en silencio al default de 500.
+async function fetchCatalogoCompleto<T>(path: string, params: URLSearchParams): Promise<T[]> {
+  params.set("size", String(CATALOGO_SIZE_MAX));
+  params.set("page", "1");
+  const primera = await httpClient.get<Page<T>>(`${path}?${params}`);
+  const items = [...primera.items];
+  for (let page = 2; items.length < primera.total; page++) {
+    params.set("page", String(page));
+    const siguiente = await httpClient.get<Page<T>>(`${path}?${params}`);
+    if (siguiente.items.length === 0) break;
+    items.push(...siguiente.items);
+  }
+  return items;
+}
+
 interface TarifarioBody {
   prestadorId: string;
   tipoServicio: string;
@@ -153,10 +173,9 @@ export const liquidacionesApi = {
 
   // ── Config: Tarifarios ────────────────────────────────────────────────────
   listTarifarios: (prestadorId?: string) => {
-    const qs = prestadorId ? `?prestadorId=${prestadorId}` : "";
-    return httpClient
-      .get<Page<Tarifario>>(`/api/liquidaciones/tarifarios${qs}`)
-      .then((p) => p.items);
+    const qs = new URLSearchParams();
+    if (prestadorId) qs.set("prestadorId", prestadorId);
+    return fetchCatalogoCompleto<Tarifario>("/api/liquidaciones/tarifarios", qs);
   },
 
   createTarifario: (body: TarifarioBody) =>
@@ -182,9 +201,7 @@ export const liquidacionesApi = {
     const qs = new URLSearchParams();
     if (params?.prestadorId) qs.set("prestadorId", params.prestadorId);
     if (params?.q) qs.set("q", params.q);
-    return httpClient
-      .get<Page<TablaKm>>(`/api/liquidaciones/tabla-km?${qs}`)
-      .then((p) => p.items);
+    return fetchCatalogoCompleto<TablaKm>("/api/liquidaciones/tabla-km", qs);
   },
 
   createTablaKm: (body: TablaKmBody) =>

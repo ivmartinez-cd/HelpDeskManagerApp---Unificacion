@@ -10,6 +10,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
 from src.modules.liquidaciones.infrastructure.models.tarifario_model import TarifarioModel
 
+# Orden total (id como desempate) — sin esto la paginación Page[T] puede repetir
+# o saltear filas entre páginas cuando un prestador supera el `size` pedido.
+_ORDEN_ESTABLE = (
+    TarifarioModel.tipo_servicio,
+    TarifarioModel.zona,
+    TarifarioModel.vigencia_desde.desc(),
+    TarifarioModel.id,
+)
+
 
 class SqlAlchemyTarifarioRepository:
     def __init__(self, session: AsyncSession) -> None:
@@ -20,12 +29,16 @@ class SqlAlchemyTarifarioRepository:
         return _to_entity(row) if row else None
 
     async def list_by_prestador(self, prestador_id: UUID) -> list[Tarifario]:
-        stmt = select(TarifarioModel).where(TarifarioModel.prestador_id == prestador_id)
+        stmt = (
+            select(TarifarioModel)
+            .where(TarifarioModel.prestador_id == prestador_id)
+            .order_by(*_ORDEN_ESTABLE)
+        )
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
     async def list_all(self) -> list[Tarifario]:
-        stmt = select(TarifarioModel)
+        stmt = select(TarifarioModel).order_by(*_ORDEN_ESTABLE)
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 

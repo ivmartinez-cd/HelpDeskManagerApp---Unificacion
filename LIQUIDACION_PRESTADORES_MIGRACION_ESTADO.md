@@ -342,19 +342,84 @@ archivos), `pytest tests/unit` (842 tests) y
 con `helpdesk-db-test` arriba) — todo en verde. Backend reiniciado
 (`DISABLE_BACKGROUND_JOBS=true` confirmado antes y después, sin jobs iniciados).
 
+## Recadenado de vigencias en los importadores (2026-08-13)
+
+Cerrado el pendiente de importación (el usuario confirmó el cambio de
+comportamiento vs. el legacy): `ImportarPrestadorMaestro` y el import CSV de
+tarifarios ahora recadenan vigencias igual que el alta/edición/baja manual — el
+legacy al importar dejaba vigencias solapadas, que es justo lo que ALT001/ALT008
+usan para resolver el precio esperado. La divergencia quedó documentada en el
+docstring de `importar_prestador_maestro.py`.
+
+- Helper compartido `application/use_cases/_recadenado.py` (`recadenar_grupo`):
+  lo usan `config_tarifarios.py` (antes tenía la misma lógica inline en
+  `_recadenar_grupo_de`) y `ImportarPrestadorMaestro`.
+- `ImportarPrestadorMaestro` recadena una sola vez al final, por cada grupo
+  (tipo_servicio, zona=None) que recibió filas nuevas; si el archivo entero se
+  omite por duplicado no toca ninguna vigencia ya persistida.
+- El import CSV (`_liq_csv.import_tarifarios`) ya no llama al repo directo: cada
+  fila va por `CreateTarifario`, que recadena el grupo en cada alta — mismo camino
+  que el alta manual. Con esto no queda ninguna escritura de configuración que
+  saltee la capa de application (`prestador_repo` quedó tipado con el Protocol de
+  dominio, ya no con el repo SQLAlchemy concreto).
+- Tests: 3 unit nuevos en `test_importar_prestador_maestro.py` (recadenado dentro
+  del archivo, contra un tarifario preexistente del grupo, y no-recadenado cuando
+  todo se omite por duplicado; el `World` pasó a `FakeConfigTarifarioRepository`,
+  que implementa `list_grupo`/`set_vigencia_hasta`) y 2 en
+  `tests/unit/presentation/liquidaciones/test_liq_csv_tarifarios.py` (directorio
+  nuevo de tests unit de presentación).
+
+Verificado: `lint-imports` (17/17), `ruff check src tests`, `mypy src` (764
+archivos), `pytest tests/unit` (847 tests) y
+`pytest tests/integration/infrastructure/liquidaciones` (60 tests, desde el host
+con `helpdesk-db-test` arriba) — todo en verde.
+
+## TarifarioHistoryTimeline + cierre real del truncamiento por prestador (2026-08-13)
+
+Cerrado el pendiente menor de UX que quedaba (timeline de vigencias + evaluación de
+paginación server-side de tabla-km):
+
+**TarifarioHistoryTimeline portado.** La pantalla de Tarifarios ya no muestra una tabla
+plana de filas sueltas: agrupa por servicio (tipo + zona) con el resumen de la tarifa
+vigente (costo servicio / costo KM / desde) y un botón "Historial (N)" que expande la
+línea de tiempo de vigencias — variación % entre vigencias consecutivas, badges
+"Vigente hoy"/"Inicial", editar/eliminar por vigencia, y botón "Actualizar" que abre el
+modal prefijado (tipo/zona/costos de la vigente, vigencia desde hoy) para cargar la
+vigencia nueva (el recadenado del use case cierra la anterior). Port de
+`components/tarifarios/{ServiceTarifaRow,TarifarioHistoryTimeline}.tsx` del legacy,
+reestilado a los tokens del monorepo (indigo→brand-orange, emerald→success, dark-aware,
+radios arbitrarios) en `frontend/src/features/liquidaciones/components/
+tarifario-history-timeline.tsx`. La card-acordeón por prestador del legacy
+(`PrestadorTarifasCard`) no se portó a propósito: el selector de prestador del rediseño
+por-prestador ya cumple ese rol. `formatFechaDia` nuevo en `lib/format.ts` para fechas
+date-only (`formatFecha` con `new Date("YYYY-MM-DD")` mostraría el día anterior en
+timezone AR por el parseo UTC).
+
+**Corrección a la sección del truncamiento de más arriba**: el claim "al estar acotado
+a un solo prestador, el volumen nunca se acerca al límite de 500/1000" era falso con
+los datos reales — INFOMAC tiene 960 tarifas (la pantalla seguía truncando a las 500
+del default, historial incompleto justo para lo que el timeline necesita) y SAN JUAN
+tiene 487 entradas de tabla KM (97% del default; una importación más y truncaba en
+silencio). Cerrado de verdad con `fetchCatalogoCompleto` en `liquidaciones-api.ts`:
+pide `size=1000` (el tope `le=1000` del backend) y sigue pidiendo páginas hasta cubrir
+`total`, así ningún prestador puede truncar aunque siga creciendo. Para que ese paginado
+multi-request sea consistente se agregó orden total en SQL (los repos no tenían ningún
+`ORDER BY` en tarifarios, y tabla_km no tenía desempate — sin orden estable, `Page[T]`
+puede repetir o saltear filas entre páginas): tarifarios por (tipo_servicio, zona,
+vigencia_desde desc, id), tabla_km con id como desempate.
+
+**Paginación server-side de Tabla KM: DESCARTADA como UI, decisión documentada.** Tras
+el rediseño por-prestador el volumen máximo por vista es 487 filas (SAN JUAN) — render
+client-side sin problema, y la búsqueda por cliente/sucursal ya cubre la navegación.
+Una tabla paginada agregaría fricción (la búsqueda es client-side sobre lo cargado) sin
+resolver nada: el único problema real era el truncamiento silencioso del punto anterior,
+que se cerró con el fetch paginado. El contrato HTTP sigue siendo `Page[T]` (§11), así
+que si algún día una vista lo necesita, el backend ya lo soporta.
+
 ## Pendiente
 
-1. **No recadena vigencias de tarifarios** al importar (Excel maestro ni CSV) —
-   decisión consciente (replica la omisión del legacy), documentada en
-   `application/use_cases/importar_prestador_maestro.py`. `domain/services/
-   cadena_tarifaria.py` existe y se usa en alta/edición/baja manual desde la UI
-   (vía los use cases de `config_tarifarios.py`); `list_grupo`/`set_vigencia_hasta`
-   ya están en el Protocol `TarifarioRepository` desde 2026-08-13, así que aplicarlo
-   en los importadores es solo tocar `ImportarPrestadorMaestro` y el import CSV —
-   pero es un cambio de comportamiento vs. el legacy, confirmar antes.
-2. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
+1. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
 
 ## Próximo paso sugerido
 
-Decidir con el usuario cuál de los pendientes de arriba se ataca primero, o arrancar
-el período de observación en paralelo con la app legacy.
+Arrancar el período de observación en paralelo con la app legacy.

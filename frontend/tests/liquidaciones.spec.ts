@@ -78,6 +78,48 @@ const PAGE_RESPONSE = {
   size: 50,
 };
 
+// Dos vigencias del mismo grupo (correctivo, sin zona): la más nueva vigente
+// hoy, la vieja cerrada — alcanza para el timeline con variación +10%.
+const TARIFA_VIGENTE = {
+  id: "66666666-6666-6666-6666-666666666666",
+  prestadorId: PST_ID,
+  tipoServicio: "correctivo",
+  zona: null,
+  costoServicio: 11000,
+  costoKm: 550,
+  vigenciaDesde: "2026-01-01",
+  vigenciaHasta: null,
+  createdAt: "2026-01-01T00:00:00Z",
+};
+
+const TARIFA_ANTERIOR = {
+  ...TARIFA_VIGENTE,
+  id: "77777777-7777-7777-7777-777777777777",
+  costoServicio: 10000,
+  costoKm: 500,
+  vigenciaDesde: "2025-01-01",
+  vigenciaHasta: "2025-12-31",
+};
+
+const TABLA_KM = {
+  id: "88888888-8888-8888-8888-888888888888",
+  prestadorId: PST_ID,
+  spstId: null,
+  empresaNombre: "EMPRESA TEST",
+  sucursalNombre: "SUCURSAL CENTRO",
+  observaciones: null,
+  domicilioCliente: null,
+  localidadCliente: null,
+  provinciaCliente: null,
+  kmsRecorrido: 30,
+  umbralViatico: 30,
+  aplicaViatico: false,
+  kmsAFacturar: 30,
+  urlMaps: null,
+  createdAt: "2026-01-01T00:00:00Z",
+  updatedAt: "2026-01-01T00:00:00Z",
+};
+
 const DETALLE_RESPONSE = {
   liquidacion: LIQUIDACION,
   incidentes: [INCIDENTE],
@@ -313,5 +355,85 @@ test.describe("Módulo de Liquidaciones", () => {
 
     await expect(page.getByRole("cell", { name: "PENTACOM", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Crear prestador" })).toBeVisible();
+  });
+
+  test("tarifarios: agrupa por servicio y el timeline muestra la variación entre vigencias", async ({
+    page,
+  }) => {
+    await page.route("**/api/liquidaciones/tarifarios**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          items: [TARIFA_VIGENTE, TARIFA_ANTERIOR],
+          total: 2,
+          page: 1,
+          size: 1000,
+        }),
+      });
+    });
+
+    await page.goto("/liquidaciones/configuracion/tarifarios");
+    await page.getByLabel("Filtrar por prestador").selectOption(PST_ID);
+
+    // Grupo con resumen de la tarifa vigente
+    await expect(page.getByText("2 tarifas en 1 servicios de PENTACOM")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "correctivo" })).toBeVisible();
+    await expect(page.getByText("Costo servicio", { exact: true })).toBeVisible();
+
+    // Timeline expandible con badges de vigencia y variación
+    await page.getByRole("button", { name: /Historial \(2\)/ }).click();
+    await expect(page.getByText("Línea de tiempo de tarifas")).toBeVisible();
+    await expect(page.getByText("Vigente hoy")).toBeVisible();
+    await expect(page.getByText("+10.0%")).toBeVisible();
+    await expect(page.getByText("Inicial")).toBeVisible();
+  });
+
+  test("tarifarios: Actualizar abre el modal prefijado con el grupo", async ({ page }) => {
+    await page.route("**/api/liquidaciones/tarifarios**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          items: [TARIFA_VIGENTE, TARIFA_ANTERIOR],
+          total: 2,
+          page: 1,
+          size: 1000,
+        }),
+      });
+    });
+
+    await page.goto("/liquidaciones/configuracion/tarifarios");
+    await page.getByLabel("Filtrar por prestador").selectOption(PST_ID);
+    await page.getByRole("button", { name: "Actualizar" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Nueva tarifa" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByLabel("Tipo de servicio *")).toHaveValue("correctivo");
+    await expect(dialog.getByLabel("Costo servicio (ARS) *")).toHaveValue("11000");
+  });
+
+  test("tabla KM: muestra las entradas del prestador seleccionado", async ({ page }) => {
+    await page.route("**/api/liquidaciones/spsts**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ items: [], total: 0, page: 1, size: 500 }),
+      });
+    });
+    await page.route("**/api/liquidaciones/tabla-km**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ items: [TABLA_KM], total: 1, page: 1, size: 1000 }),
+      });
+    });
+
+    await page.goto("/liquidaciones/configuracion/tabla-km");
+    await page.getByLabel("Filtrar por PST").selectOption(PST_ID);
+
+    await expect(page.getByText("1 entradas de PENTACOM")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "EMPRESA TEST" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "SUCURSAL CENTRO" })).toBeVisible();
   });
 });
