@@ -1,12 +1,18 @@
 """Caso de uso SincronizarLiquidaciones — importa desde el SOAP de Canal Directo
 las liquidaciones nuevas que todavía no están en la DB.
 
-Solo procesa prestadores con `cd_prestador_id` configurado; los demás se
-contabilizan en `sin_prestador` y se ignoran (nunca lanzan error).
+Solo procesa prestadores activos con `cd_prestador_id` configurado; los activos
+sin vínculo se contabilizan en `sin_prestador` y se ignoran (nunca lanzan error).
+Si el detalle SOAP de una liquidación falla o vuelve vacío cuando el listado
+declaraba incidentes, la liquidación NO se crea y se cuenta en `fallidas` — el
+sync es aditivo puro, así que una liquidación creada vacía por un fallo
+transitorio quedaría vacía para siempre (hallazgo H-2 de la validación
+2026-08-13); al no crearla, la corrida siguiente la reintenta.
 """
 
 import logging
 from dataclasses import dataclass
+from uuid import UUID
 
 from src.modules.liquidaciones.application.dtos.sincronizar_liquidaciones import (
     SincronizarLiquidacionesResultado,
@@ -50,32 +56,79 @@ class SincronizarLiquidacionesPorts:
     reanalizar: ReanalizarLiquidacion
 
 
+@dataclass
+class _Contadores:
+    creadas: int = 0
+    ya_existentes: int = 0
+    fallidas: int = 0
+
+
 class SincronizarLiquidaciones:
     def __init__(self, ports: SincronizarLiquidacionesPorts) -> None:
         self._ports = ports
 
-    async def execute(self) -> SincronizarLiquidacionesResultado:
+    async def execute(
+        self, prestador_id: UUID | None = None
+    ) -> SincronizarLiquidacionesResultado:
+        """`prestador_id` acota el sync a un solo prestador (debe estar vinculado);
+        con None sincroniza todos los vinculados."""
         prestadores_cd = await self._ports.prestadores.list_con_cd_id()
+        if prestador_id is not None:
+            prestadores_cd = [p for p in prestadores_cd if p.id == prestador_id]
+        activos = await self._ports.prestadores.list_all(solo_activos=True)
+        sin_prestador = sum(1 for p in activos if p.cd_prestador_id is None)
+
         existentes = await self._ports.liquidaciones.list_numeros_liquidacion()
-        creadas, ya_existentes = 0, 0
+        totales = _Contadores()
         for prestador in prestadores_cd:
-            assert prestador.cd_prestador_id is not None
-            liqs = await self._ports.cd_gateway.get_liquidaciones(prestador.cd_prestador_id)
-            for cd_liq in liqs:
-                if cd_liq.numero_liquidacion in existentes:
-                    ya_existentes += 1
-                else:
-                    await self._procesar(cd_liq, prestador)
-                    existentes.add(cd_liq.numero_liquidacion)
-                    creadas += 1
+            parciales = await self._sincronizar_prestador(prestador, existentes)
+            logger.info(
+                "sync CD %s: %d creadas, %d ya existentes, %d fallidas",
+                prestador.nombre_corto,
+                parciales.creadas,
+                parciales.ya_existentes,
+                parciales.fallidas,
+            )
+            totales.creadas += parciales.creadas
+            totales.ya_existentes += parciales.ya_existentes
+            totales.fallidas += parciales.fallidas
+
         return SincronizarLiquidacionesResultado(
-            creadas=creadas,
-            ya_existentes=ya_existentes,
-            sin_prestador=0,
+            creadas=totales.creadas,
+            ya_existentes=totales.ya_existentes,
+            sin_prestador=sin_prestador,
+            fallidas=totales.fallidas,
         )
 
-    async def _procesar(self, cd_liq: CdLiquidacion, prestador: Prestador) -> None:
+    async def _sincronizar_prestador(
+        self, prestador: Prestador, existentes: set[str]
+    ) -> _Contadores:
+        assert prestador.cd_prestador_id is not None
+        contadores = _Contadores()
+        liqs = await self._ports.cd_gateway.get_liquidaciones(prestador.cd_prestador_id)
+        for cd_liq in liqs:
+            if cd_liq.numero_liquidacion in existentes:
+                contadores.ya_existentes += 1
+            elif await self._procesar(cd_liq, prestador):
+                existentes.add(cd_liq.numero_liquidacion)
+                contadores.creadas += 1
+            else:
+                contadores.fallidas += 1
+        return contadores
+
+    async def _procesar(self, cd_liq: CdLiquidacion, prestador: Prestador) -> bool:
+        """Crea la liquidación con sus incidentes. False (sin crear) si el detalle
+        SOAP no devolvió los incidentes que el listado declaraba."""
         filas_cd = await self._ports.cd_gateway.get_incidentes(cd_liq.id)
+        if not filas_cd and cd_liq.cant_incidentes > 0:
+            logger.warning(
+                "sync CD: liquidación %s (%s) declara %d incidentes pero el detalle "
+                "volvió vacío — no se crea, se reintenta en el próximo sync",
+                cd_liq.numero_liquidacion,
+                prestador.nombre_corto,
+                cd_liq.cant_incidentes,
+            )
+            return False
         incidentes = [_a_importado(r) for r in filas_cd]
         periodo = extraer_periodo("", incidentes) or _periodo_desde_fecha(cd_liq)
         total = round(sum(i.costo_total_cobrado for i in incidentes), 2)
@@ -90,6 +143,7 @@ class SincronizarLiquidaciones:
         )
         await self._ports.incidentes.bulk_create(liq.id, incidentes)
         await self._ports.reanalizar.execute(liq.id)
+        return True
 
 
 def _a_importado(row: CdIncidenteRow) -> IncidenteImportado:

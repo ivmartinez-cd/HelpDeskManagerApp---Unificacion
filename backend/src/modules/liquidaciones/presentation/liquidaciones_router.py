@@ -115,10 +115,13 @@ async def importar_liquidacion(
 
 @router.post("/sincronizar", response_model=SincronizarOut)
 async def sincronizar_liquidaciones(
+    prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
     _: Identity = _require_create,
     db: AsyncSession = Depends(get_db),
 ) -> SincronizarOut:
-    resultado = await build_sincronizar_liquidaciones(db).execute()
+    """Sin `prestadorId` sincroniza todos los prestadores vinculados; con él, solo
+    ese (acota la corrida — el sync completo son miles de llamadas SOAP)."""
+    resultado = await build_sincronizar_liquidaciones(db).execute(prestador_id)
     return SincronizarOut.from_dto(resultado)
 
 

@@ -8,7 +8,7 @@ from datetime import date
 class CdLiquidacion:
     id: int
     prestador_cd_id: int
-    numero_liquidacion: str   # f"{id}-{id % 10}"
+    numero_liquidacion: str   # f"{id}-{dv}" — dv de numeracion_ayc (pesos 3-1-3-1)
     fecha_liquidacion: date
     estado: str
     cant_incidentes: int

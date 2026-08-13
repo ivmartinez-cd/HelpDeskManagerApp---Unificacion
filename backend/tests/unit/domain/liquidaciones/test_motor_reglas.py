@@ -100,6 +100,38 @@ class TestAlt002KmsIncorrectos:
         resultado = ejecutar_motor_reglas([incidente], [incidente], reglas, [tabla], [], [])
         assert [a for a in resultado.alertas if a.tipo_alerta == "ALT002"] == []
 
+    def test_kms_cobrado_piso_de_decimal_no_dispara(self) -> None:
+        """H-4 (validación 2026-08-13): tabla 71.3, PST cobra 71 (el piso). Comparar
+        solo contra ceil(71.3)=72 daba |71-72|=1 > 0.5 y disparaba — la tolerancia
+        aplica también contra el valor crudo de la tabla (|71-71.3|=0.3 ≤ 0.5)."""
+        tabla = make_tabla_km(kms_a_facturar=71.3)
+        incidente = make_incidente(
+            empresa_nombre=tabla.empresa_nombre,
+            sucursal_nombre=tabla.sucursal_nombre,
+            cant_km_cobrado=71.0,
+        )
+        resultado = ejecutar_motor_reglas(
+            [incidente], [incidente], reglas_activas_default(), [tabla], [], []
+        )
+        assert [a for a in resultado.alertas if a.tipo_alerta == "ALT002"] == []
+
+    def test_kms_cobrado_decimal_exacto_no_dispara_con_tolerancia_cero(self) -> None:
+        """Cobrar exactamente el decimal de la tabla nunca es alerta, ni con
+        tolerancia 0 (antes del fix H-4, ceil lo convertía en diferencia 0.7)."""
+        tabla = make_tabla_km(kms_a_facturar=20.3)
+        incidente = make_incidente(
+            empresa_nombre=tabla.empresa_nombre,
+            sucursal_nombre=tabla.sucursal_nombre,
+            cant_km_cobrado=20.3,
+        )
+        reglas = dict(reglas_activas_default())
+        reglas["ALT002"] = make_regla(
+            codigo="ALT002", riesgo_base=100.0, activa=True,
+            configuracion={"tolerancia_km": 0.0},
+        )
+        resultado = ejecutar_motor_reglas([incidente], [incidente], reglas, [tabla], [], [])
+        assert [a for a in resultado.alertas if a.tipo_alerta == "ALT002"] == []
+
     def test_ruta_compartida_suprime_falso_positivo(self) -> None:
         liquidacion_id = uuid.uuid4()
         fecha = date(2026, 1, 15)

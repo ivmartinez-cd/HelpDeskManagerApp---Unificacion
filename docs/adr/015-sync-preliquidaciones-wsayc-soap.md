@@ -1,6 +1,6 @@
 # ADR-015: wsAyC SOAP como fuente de importación automática de preliquidaciones
 
-## Estado: Aceptado e implementado (2026-08-13 — ver `docs/liquidaciones/LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`)
+## Estado: Aceptado e implementado (2026-08-13 — ver `docs/liquidaciones/LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`). Corregido el mismo día tras la validación adversarial — ver Addendum al final.
 
 ## Contexto
 
@@ -109,3 +109,35 @@ está demostrada; la de Siges no.
   para importar liquidaciones de prestadores sin `cd_prestador_id` (si alguna vez
   hubiera uno). No se retira hasta que el sync acumule un período de convivencia
   validado por la TL.
+
+## Addendum (2026-08-13): correcciones tras la validación adversarial
+
+`docs/liquidaciones/VALIDACION_PIPELINE_LIQUIDACIONES_2026-08-13.md` refutó dos
+supuestos de la implementación original (no de la decisión en sí) y motivó estas
+correcciones, todas verificadas con una re-corrida controlada real
+(`creadas=20, yaExistentes=3, sinPrestador=33, fallidas=0` con las 3 liqs CSV
+preexistentes correctamente reconocidas):
+
+1. **Numeración (H-1, crítico)**: el gateway calculaba el dígito verificador como
+   `id % 10`; el algoritmo real de AyC es pesos 3-1-3-1 (`(10 - suma%10) % 10`,
+   legacy `core/numeracion_ayc.py`). Los dos casos con los que se había validado
+   este ADR (`3876-6`, `3928-8`) coincidían **de casualidad**. Portado como
+   servicio de dominio `numeracion_ayc.py` con caracterización sobre los 35
+   números reales (35/35). Sin este fix, el dedup del punto 1 no funcionaba
+   contra lo importado por CSV (habría duplicado ~31 de 35).
+2. **Detalle vacío (H-2, alto)**: un fallo transitorio de `getLiquidationDetails`
+   (502 de Cloudflare observado en vivo) creaba la liquidación con 0 incidentes,
+   irreparable por diseño aditivo. Ahora, si el detalle vuelve vacío pero el
+   listado declara `CantIncidentes > 0`, la liquidación NO se crea y se cuenta en
+   `fallidas` (nuevo campo del resultado) — la corrida siguiente la reintenta.
+3. **`sin_prestador` (H-3)**: estaba hardcodeado en 0; ahora cuenta los
+   prestadores activos sin `cd_prestador_id`.
+4. **Alcance (H-5)**: `POST /sincronizar` acepta `?prestadorId=` opcional para
+   acotar la corrida (el sync completo son miles de llamadas SOAP), y el use case
+   loguea el resultado por prestador.
+5. **Inactivos (H-6)**: `list_con_cd_id()` excluye prestadores con
+   `activo=false` — la baja administrativa saca del sync.
+
+La decisión "sin dry-run" (punto 5) se mantiene: con la numeración corregida y la
+guardia de detalle vacío, el sync vuelve a ser aditivo puro también en la
+práctica, que era la premisa que la ausencia de dry-run necesitaba.

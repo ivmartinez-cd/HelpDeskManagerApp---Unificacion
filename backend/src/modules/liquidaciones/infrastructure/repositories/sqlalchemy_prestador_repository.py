@@ -90,7 +90,10 @@ class SqlAlchemyPrestadorRepository:
     async def list_con_cd_id(self) -> list[Prestador]:
         stmt = (
             select(LiquidacionPrestadorModel)
-            .where(LiquidacionPrestadorModel.cd_prestador_id.is_not(None))
+            .where(
+                LiquidacionPrestadorModel.cd_prestador_id.is_not(None),
+                LiquidacionPrestadorModel.activo.is_(True),
+            )
             .order_by(LiquidacionPrestadorModel.nombre)
         )
         rows = (await self._session.execute(stmt)).scalars().all()

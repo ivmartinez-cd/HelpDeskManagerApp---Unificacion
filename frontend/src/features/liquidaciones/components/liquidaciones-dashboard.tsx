@@ -79,9 +79,14 @@ export function LiquidacionesDashboard() {
     setSyncing(true);
     try {
       const res = await liquidacionesApi.sincronizar();
-      toast.success(
-        `Sync OK — ${res.creadas} nueva${res.creadas !== 1 ? "s" : ""}, ${res.yaExistentes} ya existentes${res.sinPrestador > 0 ? `, ${res.sinPrestador} sin prestador vinculado` : ""}`,
-      );
+      const detalle = `${res.creadas} nueva${res.creadas !== 1 ? "s" : ""}, ${res.yaExistentes} ya existentes${res.sinPrestador > 0 ? `, ${res.sinPrestador} sin prestador vinculado` : ""}`;
+      if (res.fallidas > 0) {
+        toast.warning(
+          `Sync con fallas — ${detalle}, ${res.fallidas} con detalle SOAP fallido (se reintentan en el próximo sync)`,
+        );
+      } else {
+        toast.success(`Sync OK — ${detalle}`);
+      }
       if (res.creadas > 0) await load();
     } catch {
       toast.error("Error al sincronizar con Canal Directo");

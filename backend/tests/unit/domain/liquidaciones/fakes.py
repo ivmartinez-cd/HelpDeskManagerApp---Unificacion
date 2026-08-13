@@ -40,7 +40,7 @@ class FakePrestadorRepository:
         return next((p for p in self.rows.values() if p.nombre_corto == nombre_corto), None)
 
     async def list_con_cd_id(self) -> list[Prestador]:
-        return [p for p in self.rows.values() if p.cd_prestador_id is not None]
+        return [p for p in self.rows.values() if p.cd_prestador_id is not None and p.activo]
 
     async def get_by_cd_id(self, cd_id: int) -> Prestador | None:
         return next((p for p in self.rows.values() if p.cd_prestador_id == cd_id), None)

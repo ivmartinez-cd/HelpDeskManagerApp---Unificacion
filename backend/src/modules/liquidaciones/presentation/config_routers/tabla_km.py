@@ -15,6 +15,7 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tabla_km_r
     SqlAlchemyTablaKmRepository,
 )
 from src.modules.liquidaciones.presentation import _liq_csv as csv_helpers
+from src.modules.liquidaciones.presentation import _liq_csv_export as csv_export
 from src.modules.liquidaciones.presentation.config_routers._deps import (
     CATALOGO_SIZE,
     require_update,
@@ -104,7 +105,7 @@ async def export_tabla_km_csv(
     prestadores = await SqlAlchemyPrestadorRepository(db).list_all()
     pmap = {str(p.id): p.nombre_corto for p in prestadores}
     rows = await SqlAlchemyTablaKmRepository(db).list_all()
-    return csv_helpers.export_tabla_km(rows, pmap)
+    return csv_export.export_tabla_km(rows, pmap)
 
 
 @router.post("/tabla-km/import")

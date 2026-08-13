@@ -14,6 +14,7 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repos
     SqlAlchemySpstRepository,
 )
 from src.modules.liquidaciones.presentation import _liq_csv as csv_helpers
+from src.modules.liquidaciones.presentation import _liq_csv_export as csv_export
 from src.modules.liquidaciones.presentation.config_routers._deps import (
     CATALOGO_SIZE,
     require_update,
@@ -115,7 +116,7 @@ async def export_spsts_csv(
     spst_repo = SqlAlchemySpstRepository(db)
     prestadores = await prest_repo.list_all()
     pmap = {str(p.id): p.nombre_corto for p in prestadores}
-    return csv_helpers.export_spsts(await spst_repo.list_all(), pmap)
+    return csv_export.export_spsts(await spst_repo.list_all(), pmap)
 
 
 @router.post("/spsts/import")

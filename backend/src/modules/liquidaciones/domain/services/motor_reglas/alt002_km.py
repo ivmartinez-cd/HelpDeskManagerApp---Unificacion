@@ -2,9 +2,13 @@
 positivo cuando el tramo es una ruta compartida (otro incidente del mismo día/corredor
 ya cobró el km, y este vino en $0 a propósito).
 
-La comparación usa math.ceil(kms_a_facturar): la Tabla KM puede tener decimales (ej.
-20.5 km medidos) pero el PST factura enteros redondeando hacia arriba. Comparar contra
-el entero superior evita falsos positivos cuando el PST cobra ceil(esperado_raw)."""
+La comparación acepta dos formas válidas de facturar un km decimal de la Tabla KM
+(ej. 20.5 km medidos): el entero superior (`math.ceil`, lo habitual — P1, commit
+1b562e4) o el valor tal cual está en la tabla. La tolerancia se aplica contra ambos
+y alcanza con que una pase: comparar solo contra el ceil convertía en alerta el caso
+"PST factura el piso/decimal exacto" que la tolerancia original siempre aceptó
+(hallazgo H-4 de la validación 2026-08-13, con contraejemplos reales 71 vs 71.3 y
+45 vs 45.4)."""
 
 import math
 from collections.abc import Sequence
@@ -24,12 +28,16 @@ def evaluar_alt002(
     if tabla_km is None:
         return []
     cobrado = incidente.cant_km_cobrado or 0
-    esperado = math.ceil(tabla_km.kms_a_facturar)
-    if abs(cobrado - esperado) <= tolerancia_km:
+    esperado_raw = tabla_km.kms_a_facturar
+    esperado = math.ceil(esperado_raw)
+    if (
+        abs(cobrado - esperado) <= tolerancia_km
+        or abs(cobrado - esperado_raw) <= tolerancia_km
+    ):
         return []
     if cobrado == 0 and esperado > 0 and _es_ruta_compartida(tabla_km, vecinos_mismo_dia):
         return []
-    return [_hallazgo(incidente, cobrado, esperado, tabla_km.kms_a_facturar)]
+    return [_hallazgo(incidente, cobrado, esperado, esperado_raw)]
 
 
 def _es_ruta_compartida(

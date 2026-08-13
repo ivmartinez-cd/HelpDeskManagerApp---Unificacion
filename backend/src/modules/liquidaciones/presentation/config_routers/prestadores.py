@@ -11,6 +11,7 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_
     SqlAlchemyPrestadorRepository,
 )
 from src.modules.liquidaciones.presentation import _liq_csv as csv_helpers
+from src.modules.liquidaciones.presentation import _liq_csv_export as csv_export
 from src.modules.liquidaciones.presentation.config_routers._deps import (
     require_update,
     require_view,
@@ -109,7 +110,7 @@ async def export_prestadores_csv(
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     rows = await SqlAlchemyPrestadorRepository(db).list_all()
-    return csv_helpers.export_prestadores(rows)
+    return csv_export.export_prestadores(rows)
 
 
 @router.post("/prestadores/import")

@@ -132,7 +132,7 @@ export const liquidacionesApi = {
     ),
 
   sincronizar: () =>
-    httpClient.post<{ creadas: number; yaExistentes: number; sinPrestador: number }>(
+    httpClient.post<{ creadas: number; yaExistentes: number; sinPrestador: number; fallidas: number }>(
       "/api/liquidaciones/sincronizar",
     ),
 

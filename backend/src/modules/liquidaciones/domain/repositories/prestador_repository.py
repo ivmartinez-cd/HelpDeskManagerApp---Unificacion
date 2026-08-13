@@ -35,7 +35,8 @@ class PrestadorRepository(Protocol):
     async def toggle_activo(self, prestador_id: UUID, *, activo: bool) -> Prestador | None: ...
 
     async def list_con_cd_id(self) -> list[Prestador]:
-        """Todos los prestadores que tienen `cd_prestador_id` configurado."""
+        """Prestadores ACTIVOS con `cd_prestador_id` configurado — una baja
+        administrativa saca al prestador del sync de preliquidaciones."""
         ...
 
     async def get_by_cd_id(self, cd_id: int) -> Prestador | None:

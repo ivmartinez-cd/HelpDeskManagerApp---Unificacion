@@ -16,6 +16,7 @@ from typing import Any
 from zeep import Client
 from zeep.transports import Transport
 
+from src.modules.liquidaciones.domain.services.numeracion_ayc import numero_liquidacion
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
     CdIncidenteRow,
     CdLiquidacion,
@@ -82,16 +83,27 @@ def _parse_liquidaciones(raw: str, empresa_cd_id: int) -> list[CdLiquidacion]:
         liq = item.get("Liquidation", item)
         liq_id_raw = liq.get("id")
         if not liq_id_raw:
+            logger.warning(
+                "getTopLiquidations(empresa=%d): item sin 'id', descartado: %s",
+                empresa_cd_id,
+                item,
+            )
             continue
         liq_id = int(liq_id_raw)
         fecha = _parse_fecha_liquidacion(liq.get("Fecha", ""))
         if fecha is None:
+            logger.warning(
+                "getTopLiquidations(empresa=%d): item %s con Fecha ilegible %r, descartado",
+                empresa_cd_id,
+                liq_id_raw,
+                liq.get("Fecha"),
+            )
             continue
         result.append(
             CdLiquidacion(
                 id=liq_id,
                 prestador_cd_id=empresa_cd_id,
-                numero_liquidacion=f"{liq_id}-{liq_id % 10}",
+                numero_liquidacion=numero_liquidacion(liq_id),
                 fecha_liquidacion=fecha,
                 estado=liq.get("Estado", ""),
                 cant_incidentes=int(liq.get("CantIncidentes", 0) or 0),
