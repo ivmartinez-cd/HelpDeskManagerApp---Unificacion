@@ -7,3 +7,8 @@ from src.modules.liquidaciones.domain.well_known_permissions import UPDATE, VIEW
 
 require_view = Depends(require_permission(VIEW))
 require_update = Depends(require_permission(UPDATE))
+
+# Catálogos chicos (prestadores/SPST/tarifarios/tabla KM) que la UI muestra
+# completos, sin tabla paginada: el contrato sigue siendo Page[T] pero con un
+# default generoso (mismo criterio que el módulo prestadores).
+CATALOGO_SIZE = 500

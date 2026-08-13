@@ -21,6 +21,7 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tarifario_
 )
 from src.modules.liquidaciones.presentation import _liq_csv as csv_helpers
 from src.modules.liquidaciones.presentation.config_routers._deps import (
+    CATALOGO_SIZE,
     require_update,
     require_view,
 )
@@ -29,6 +30,7 @@ from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     TarifarioOut,
 )
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter()
 
@@ -53,15 +55,17 @@ async def _recadenar_para(repo: SqlAlchemyTarifarioRepository, t: Tarifario) -> 
     )
 
 
-@router.get("/tarifarios", response_model=list[TarifarioOut])
+@router.get("/tarifarios", response_model=Page[TarifarioOut])
 async def list_tarifarios(
     prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = require_view,
     db: AsyncSession = Depends(get_db),
-) -> list[TarifarioOut]:
+) -> Page[TarifarioOut]:
     repo = SqlAlchemyTarifarioRepository(db)
     rows = await (repo.list_by_prestador(prestador_id) if prestador_id else repo.list_all())
-    return [TarifarioOut.from_entity(t) for t in rows]
+    return Page.of([TarifarioOut.from_entity(t) for t in rows], page=page, size=size)
 
 
 @router.post("/tarifarios", response_model=TarifarioOut, status_code=201)

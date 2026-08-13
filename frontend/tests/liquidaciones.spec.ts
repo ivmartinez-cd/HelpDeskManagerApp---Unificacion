@@ -100,7 +100,7 @@ test.describe("Módulo de Liquidaciones", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify([PRESTADOR]),
+        body: JSON.stringify({ items: [PRESTADOR], total: 1, page: 1, size: 500 }),
       });
     });
 

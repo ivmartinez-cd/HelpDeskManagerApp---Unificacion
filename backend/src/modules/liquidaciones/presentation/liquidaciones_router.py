@@ -50,16 +50,23 @@ router = APIRouter(prefix="/api/liquidaciones", tags=["liquidaciones"])
 _require_view = Depends(require_permission(VIEW))
 _require_update = Depends(require_permission(UPDATE))
 _require_create = Depends(require_permission(CREATE))
+# Catálogo chico que alimenta combos y el listado completo de config — el
+# contrato sigue paginado con default generoso (mismo criterio que prestadores).
+_CATALOGO_SIZE = 500
 
 
-@router.get("/prestadores", response_model=list[PrestadorLiquidacionOut])
+@router.get("/prestadores", response_model=Page[PrestadorLiquidacionOut])
 async def list_prestadores(
     solo_activos: bool = Query(default=True, alias="soloActivos"),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=_CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
-) -> list[PrestadorLiquidacionOut]:
+) -> Page[PrestadorLiquidacionOut]:
     rows = await SqlAlchemyPrestadorRepository(db).list_all(solo_activos=solo_activos)
-    return [PrestadorLiquidacionOut.from_entity(p) for p in rows]
+    return Page.of(
+        [PrestadorLiquidacionOut.from_entity(p) for p in rows], page=page, size=size
+    )
 
 
 @router.get("", response_model=Page[LiquidacionOut])

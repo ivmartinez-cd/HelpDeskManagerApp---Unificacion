@@ -13,6 +13,13 @@ import type {
   Tarifario,
 } from "../types/liquidaciones";
 
+interface Page<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+}
+
 interface TarifarioBody {
   prestadorId: string;
   tipoServicio: string;
@@ -42,9 +49,11 @@ interface TablaKmBody {
 export const liquidacionesApi = {
   // ── Liquidaciones ──────────────────────────────────────────────────────────
   listPrestadores: (soloActivos = true) =>
-    httpClient.get<PrestadorLiquidacion[]>(
-      `/api/liquidaciones/prestadores?soloActivos=${soloActivos}`,
-    ),
+    httpClient
+      .get<Page<PrestadorLiquidacion>>(
+        `/api/liquidaciones/prestadores?soloActivos=${soloActivos}`,
+      )
+      .then((p) => p.items),
 
   list: (params?: { prestadorId?: string; page?: number; size?: number }) => {
     const qs = new URLSearchParams();
@@ -103,7 +112,9 @@ export const liquidacionesApi = {
     const qs = new URLSearchParams();
     if (params?.prestadorId) qs.set("prestadorId", params.prestadorId);
     if (params?.soloActivos) qs.set("soloActivos", "true");
-    return httpClient.get<Spst[]>(`/api/liquidaciones/spsts?${qs}`);
+    return httpClient
+      .get<Page<Spst>>(`/api/liquidaciones/spsts?${qs}`)
+      .then((p) => p.items);
   },
 
   createSpst: (body: { prestadorId: string; nombre: string; domicilio?: string; localidad?: string; provincia?: string; zona?: string }) =>
@@ -127,7 +138,9 @@ export const liquidacionesApi = {
   // ── Config: Tarifarios ────────────────────────────────────────────────────
   listTarifarios: (prestadorId?: string) => {
     const qs = prestadorId ? `?prestadorId=${prestadorId}` : "";
-    return httpClient.get<Tarifario[]>(`/api/liquidaciones/tarifarios${qs}`);
+    return httpClient
+      .get<Page<Tarifario>>(`/api/liquidaciones/tarifarios${qs}`)
+      .then((p) => p.items);
   },
 
   createTarifario: (body: TarifarioBody) =>
@@ -153,7 +166,9 @@ export const liquidacionesApi = {
     const qs = new URLSearchParams();
     if (params?.prestadorId) qs.set("prestadorId", params.prestadorId);
     if (params?.q) qs.set("q", params.q);
-    return httpClient.get<TablaKm[]>(`/api/liquidaciones/tabla-km?${qs}`);
+    return httpClient
+      .get<Page<TablaKm>>(`/api/liquidaciones/tabla-km?${qs}`)
+      .then((p) => p.items);
   },
 
   createTablaKm: (body: TablaKmBody) =>

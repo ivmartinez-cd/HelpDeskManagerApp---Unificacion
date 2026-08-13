@@ -15,6 +15,7 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tabla_km_r
 )
 from src.modules.liquidaciones.presentation import _liq_csv as csv_helpers
 from src.modules.liquidaciones.presentation.config_routers._deps import (
+    CATALOGO_SIZE,
     require_update,
     require_view,
 )
@@ -23,19 +24,22 @@ from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     TablaKmOut,
 )
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter()
 
 
-@router.get("/tabla-km", response_model=list[TablaKmOut])
+@router.get("/tabla-km", response_model=Page[TablaKmOut])
 async def list_tabla_km(
     prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
     q: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = require_view,
     db: AsyncSession = Depends(get_db),
-) -> list[TablaKmOut]:
+) -> Page[TablaKmOut]:
     rows = await SqlAlchemyTablaKmRepository(db).list_all(prestador_id=prestador_id, q=q)
-    return [TablaKmOut.from_entity(t) for t in rows]
+    return Page.of([TablaKmOut.from_entity(t) for t in rows], page=page, size=size)
 
 
 @router.post("/tabla-km", response_model=TablaKmOut, status_code=201)

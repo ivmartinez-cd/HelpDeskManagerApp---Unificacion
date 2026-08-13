@@ -15,6 +15,7 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repos
 )
 from src.modules.liquidaciones.presentation import _liq_csv as csv_helpers
 from src.modules.liquidaciones.presentation.config_routers._deps import (
+    CATALOGO_SIZE,
     require_update,
     require_view,
 )
@@ -24,21 +25,24 @@ from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     ToggleActivoIn,
 )
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter()
 
 
-@router.get("/spsts", response_model=list[SpstOut])
+@router.get("/spsts", response_model=Page[SpstOut])
 async def list_spsts(
     prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
     solo_activos: bool = Query(default=False, alias="soloActivos"),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = require_view,
     db: AsyncSession = Depends(get_db),
-) -> list[SpstOut]:
+) -> Page[SpstOut]:
     rows = await SqlAlchemySpstRepository(db).list_all(
         prestador_id=prestador_id, solo_activos=solo_activos
     )
-    return [SpstOut.from_entity(s) for s in rows]
+    return Page.of([SpstOut.from_entity(s) for s in rows], page=page, size=size)
 
 
 @router.post("/spsts", response_model=SpstOut, status_code=201)
