@@ -1,13 +1,11 @@
 import json
 import logging
-import re
 from pathlib import Path
 from typing import Any
 
 import httpx
 
 from src.modules.contadores.domain.entities.calendar_event import CalendarEvent
-from src.modules.contadores.domain.entities.operador import Operador
 from src.modules.contadores.domain.ports.calendar_port import CalendarPort
 from src.modules.contadores.infrastructure.gestion.gestion_session_refresher import (
     refresh_gestion_session,
@@ -18,19 +16,12 @@ from src.shared.infrastructure.config.settings import get_settings
 logger = logging.getLogger(__name__)
 
 _REDIRECT_STATUS_CODES = (301, 302, 303)
-# Gestión no expone un endpoint de datos para el catálogo de operadores de
-# facturación — se scrapea el <select> del filtro de /planificacion/ver.
-_OPERADOR_SELECT_RE = re.compile(
-    r'<select id="planificacion_filter_operador_facturacion"[^>]*>(.*?)</select>',
-    re.IGNORECASE | re.DOTALL,
-)
-_OPERADOR_OPTION_RE = re.compile(r'<option value="([^"]*)"[^>]*>([^<]*)</option>')
 
 
 class GestionPlanificacionClient(CalendarPort):
-    """Cliente HTTP que consume la planificación desde la web de gestión:
-    eventos (ajax-by-rango) y catálogo de operadores (scrapeado de
-    /planificacion/ver).
+    """Cliente HTTP que consume los eventos de facturación (ajax-by-rango) de
+    la web de gestión. El catálogo de operadores ya no se scrapea de acá —
+    ver PyodbcOperadorGateway y ADR-012.
 
     La sesión (PHPSESSID) se renueva sola vía login Symfony cuando falta o
     vence (redirect a /login) — ver gestion_session_refresher.py. `cookie`
@@ -71,10 +62,6 @@ class GestionPlanificacionClient(CalendarPort):
         except Exception as exc:
             raise ExternalServiceError(f"Respuesta inválida de gestión: {exc}") from exc
         return self._parse_events(data, operador_id, solo_facturacion)
-
-    async def get_operadores(self) -> list[Operador]:
-        response = await self._get("/planificacion/ver")
-        return self._parse_operadores(response.text)
 
     def _build_params(
         self,
@@ -215,17 +202,3 @@ class GestionPlanificacionClient(CalendarPort):
             costo_seguro=item.get("costo_seguro"),
             costo_recambio=item.get("costo_recambio"),
         )
-
-    def _parse_operadores(self, html: str) -> list[Operador]:
-        match = _OPERADOR_SELECT_RE.search(html)
-        if not match:
-            raise ExternalServiceError(
-                "No se encontró el selector de operadores en /planificacion/ver de "
-                "Gestión (¿cambió el formulario?)."
-            )
-        operadores: list[Operador] = []
-        for value, label in _OPERADOR_OPTION_RE.findall(match.group(1)):
-            if not value:
-                continue
-            operadores.append(Operador(id=value, nombre=label.strip()))
-        return operadores

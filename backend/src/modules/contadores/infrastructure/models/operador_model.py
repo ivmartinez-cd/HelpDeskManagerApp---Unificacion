@@ -7,8 +7,9 @@ from src.shared.infrastructure.database.base import Base
 
 
 class OperadorModel(Base):
-    """Catálogo local de operadores de facturación de Gestión (scrapeado de
-    /planificacion/ver) — ver GestionPlanificacionClient.get_operadores."""
+    """Catálogo local de operadores de facturación de Gestión — identidad
+    resuelta contra Siges/UsuariosWeb (ver PyodbcOperadorGateway y
+    ADR-012)."""
 
     __tablename__ = "contadores_operadores"
 

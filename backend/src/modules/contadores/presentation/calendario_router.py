@@ -22,6 +22,7 @@ from src.modules.contadores.infrastructure.gestion.gestion_planificacion_client 
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_calendario_repository import (
     SqlAlchemyCalendarEventRepository,
 )
+from src.modules.contadores.presentation.dependencies import get_operador_catalog_gateway
 from src.modules.contadores.presentation.schemas.calendario_schemas import (
     CalendarEventSchema,
     MiOperadorResponse,
@@ -127,6 +128,7 @@ async def sync_calendario(
 
     repo = SqlAlchemyCalendarEventRepository(db)
     gestion = GestionPlanificacionClient(timeout=_SYNC_TIMEOUT_SECONDS)
-    use_case = SyncCalendarEventsUseCase(gestion, repo)
+    operador_catalog = get_operador_catalog_gateway()
+    use_case = SyncCalendarEventsUseCase(gestion, operador_catalog, repo)
     result = await use_case.execute(start_date=start_date, end_date=end_date)
     return SyncCalendarioResponse.model_validate(result)

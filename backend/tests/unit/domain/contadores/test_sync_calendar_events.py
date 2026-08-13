@@ -8,10 +8,9 @@ from src.modules.contadores.application.use_cases.sync_calendar_events import (
 from src.modules.contadores.domain.entities.calendar_event import CalendarEvent
 from src.modules.contadores.domain.entities.operador import Operador
 
-_CATALOGO = [
-    Operador(id="318", nombre="Maria Jose Vela"),
-    Operador(id="1246", nombre="Victor Paez"),
-    Operador(id="749", nombre="Ivan Martinez"),
+_IDENTIDADES = [
+    Operador(id="mjvela", nombre="Maria Jose Vela", color="#FACC2E"),
+    Operador(id="vipaez", nombre="Victor Paez", color="#888200"),
 ]
 
 
@@ -25,11 +24,16 @@ def _event(event_id: str, operador: str | None, color: str | None = "#FACC2E") -
     )
 
 
-def _make_port(events: list[CalendarEvent]) -> AsyncMock:
+def _make_calendar_port(events: list[CalendarEvent]) -> AsyncMock:
     port = AsyncMock()
-    port.get_operadores.return_value = _CATALOGO
     port.get_events.return_value = events
     return port
+
+
+def _make_operador_catalog(identidades: list[Operador]) -> AsyncMock:
+    catalog = AsyncMock()
+    catalog.find_by_logins.return_value = identidades
+    return catalog
 
 
 @pytest.mark.asyncio
@@ -40,16 +44,18 @@ async def test_sync_hace_un_solo_pedido_y_agrupa_por_operador_del_evento() -> No
         _event("3", "mjvela", "#BC2FFE"),
         _event("4", "vipaez", "#66B3FF"),
     ]
-    port = _make_port(events)
+    port = _make_calendar_port(events)
+    catalog = _make_operador_catalog(_IDENTIDADES)
     repo = AsyncMock()
 
-    result = await SyncCalendarEventsUseCase(port, repo).execute(
+    result = await SyncCalendarEventsUseCase(port, catalog, repo).execute(
         start_date="2026-08-01", end_date="2026-08-31"
     )
 
     port.get_events.assert_awaited_once_with(
         start_date="2026-08-01", end_date="2026-08-31", solo_facturacion=True
     )
+    catalog.find_by_logins.assert_awaited_once_with(["mjvela", "vipaez"])
     assert result.operadores_count == 2
     assert result.events_count == 4
     repo.replace_events_in_range.assert_awaited_once_with(
@@ -58,17 +64,17 @@ async def test_sync_hace_un_solo_pedido_y_agrupa_por_operador_del_evento() -> No
 
 
 @pytest.mark.asyncio
-async def test_sync_resuelve_nombre_de_catalogo_y_color_mas_frecuente() -> None:
+async def test_sync_usa_identidad_resuelta_por_siges_no_por_eventos() -> None:
     events = [
         _event("1", "mjvela", "#FACC2E"),
-        _event("2", "mjvela", "#FACC2E"),
-        _event("3", "mjvela", "#BC2FFE"),
         _event("4", "vipaez", "#66B3FF"),
         _event("5", "desconocido", None),
     ]
+    port = _make_calendar_port(events)
+    catalog = _make_operador_catalog(_IDENTIDADES)
     repo = AsyncMock()
 
-    await SyncCalendarEventsUseCase(_make_port(events), repo).execute(
+    await SyncCalendarEventsUseCase(port, catalog, repo).execute(
         start_date="2026-08-01", end_date="2026-08-31"
     )
 
@@ -77,7 +83,8 @@ async def test_sync_resuelve_nombre_de_catalogo_y_color_mas_frecuente() -> None:
     assert por_id["mjvela"].nombre == "Maria Jose Vela"
     assert por_id["mjvela"].color == "#FACC2E"
     assert por_id["vipaez"].nombre == "Victor Paez"
-    # Sin match único en el catálogo, el username queda como nombre visible.
+    assert por_id["vipaez"].color == "#888200"
+    # Sin identidad resuelta en Siges, el username queda como nombre visible.
     assert por_id["desconocido"].nombre == "desconocido"
     assert por_id["desconocido"].color is None
     repo.prune_operadores_not_in.assert_awaited_once_with(["desconocido", "mjvela", "vipaez"])
@@ -88,10 +95,12 @@ async def test_sync_descarta_y_loguea_eventos_sin_operador(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     events = [_event("1", "mjvela"), _event("2", None)]
+    port = _make_calendar_port(events)
+    catalog = _make_operador_catalog(_IDENTIDADES)
     repo = AsyncMock()
 
     with caplog.at_level("WARNING"):
-        result = await SyncCalendarEventsUseCase(_make_port(events), repo).execute(
+        result = await SyncCalendarEventsUseCase(port, catalog, repo).execute(
             start_date="2026-08-01", end_date="2026-08-31"
         )
 

@@ -174,30 +174,3 @@ async def test_gestion_planificacion_client_parse() -> None:
         assert events[0].cliente == "NEUMATICOS ROSMI SRL"
         assert events[0].string_tipo_evento == "Facturación"
         assert events[0].operador_id == "318"
-
-
-@pytest.mark.asyncio
-async def test_gestion_planificacion_client_parses_operadores_select() -> None:
-    html = """
-    <select id="planificacion_filter_operador_facturacion"
-            name="planificacion_filter[operador_facturacion]">
-        <option value="">(Seleccione un Operador de Facturación)</option>
-        <option value="318">Maria Jose Vela</option>
-        <option value="749">Ivan Martinez</option>
-    </select>
-    """
-    client = GestionPlanificacionClient(base_url="http://test-gestion.com", cookie="test-cookie")
-
-    with patch("httpx.AsyncClient.get") as mock_get:
-        mock_response = MagicMock()
-        mock_response.raise_for_status.return_value = None
-        mock_response.text = html
-        mock_get.return_value = mock_response
-
-        operadores = await client.get_operadores()
-
-        assert len(operadores) == 2
-        assert operadores[0].id == "318"
-        assert operadores[0].nombre == "Maria Jose Vela"
-        assert operadores[1].id == "749"
-        assert operadores[1].nombre == "Ivan Martinez"

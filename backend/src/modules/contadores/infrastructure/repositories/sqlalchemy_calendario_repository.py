@@ -74,7 +74,11 @@ class SqlAlchemyCalendarEventRepository:
                 .values(id=operador.id, nombre=operador.nombre, color=operador.color)
                 .on_conflict_do_update(
                     index_elements=["id"],
-                    set_={"nombre": operador.nombre, "color": operador.color},
+                    set_={
+                        "nombre": operador.nombre,
+                        "color": operador.color,
+                        "updated_at": func.now(),
+                    },
                 )
             )
             await self._session.execute(stmt)
