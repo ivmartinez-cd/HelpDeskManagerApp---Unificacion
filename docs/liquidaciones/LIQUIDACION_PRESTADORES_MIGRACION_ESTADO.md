@@ -721,8 +721,9 @@ reconciliación porque no hay overwrite. Ver ADR-015 para la decisión completa.
 
 ### Setup inicial completado (2026-08-13)
 
-33 prestadores vinculados a su `cd_prestador_id` wsAyC (todos excepto `ZZTESTUI`,
-la fila de prueba):
+**34** prestadores vinculados a su `cd_prestador_id` wsAyC (todos excepto
+`ZZTESTUI`, la fila de prueba — el conteo original de esta sección decía 33, la
+validación posterior contó 34 en DB):
 
 - 32 vinculados por matching de nombre (nombres SOAP tienen prefijo `'PST '`; la
   coincidencia es perfecta en todos los casos).
@@ -748,11 +749,43 @@ Corrida de prueba con JUJUY (`cd_prestador_id=816`) ya vinculado:
 Gates: lint-imports 19/19 · ruff · mypy (147 archivos módulo) · 171 unit liquidaciones
 — en verde.
 
+## Validación adversarial + correcciones (2026-08-13, posterior al cierre de ADR-015)
+
+Se corrió una validación completa del pipeline (código vs ADR-014/015 vs DB real vs
+fuentes externas reales) — informe con evidencia en
+`docs/liquidaciones/VALIDACION_PIPELINE_LIQUIDACIONES_2026-08-13.md`. Refutó dos
+supuestos de la implementación del sync WS y encontró 6 hallazgos menores; **todo
+corregido el mismo día** (Addendum de ADR-015, ADR-016):
+
+- **H-1 (crítico)**: el gateway calculaba el dígito verificador como `id % 10`; el
+  algoritmo real es pesos 3-1-3-1 (`domain/services/numeracion_ayc.py`, nuevo, con
+  71 tests de caracterización sobre números reales). Los dos casos de la
+  verificación original del ADR coincidían de casualidad — sin el fix, el sync
+  duplicaba ~31 de las 35 liqs importadas por CSV (demostrado con corrida
+  controlada real: `creadas=23, yaExistentes=0` pre-fix vs `creadas=20,
+  yaExistentes=3` post-fix, 0 duplicados).
+- **H-2 (alto)**: un 502 transitorio de wsAyC en `getLiquidationDetails` (ocurrió
+  en vivo, 2 de 23 llamadas) creaba liquidaciones vacías irreparables; ahora no se
+  crean y se cuentan en `fallidas` (campo nuevo en el resultado y en el toast).
+- Menores: `sinPrestador` real (antes hardcodeado 0), `?prestadorId=` opcional en
+  `POST /sincronizar` + log por prestador, `list_con_cd_id()` solo activos, ALT002
+  con tolerancia contra valor crudo y ceil (el fix P1 alertaba al PST que factura
+  el piso de un decimal), migración `b9f2d47c8e11` desactiva ALT007 (sin
+  evaluador), split de `_liq_csv.py` (§4) y ADR-016 para la deuda restante de
+  tamaño de funciones.
+
+Gates post-fix: lint-imports 19/19 · ruff · mypy · **1098 unit** (+80). Toda
+escritura de la validación sobre datos reales fue revertida (snapshots + diff
+`EXCEPT` = 0); único cambio persistente: ALT007 inactiva (por migración).
+
 ## Pendiente
 
-1. **Correr el sync real** — los 33 prestadores están vinculados; el botón "↻
-   Sincronizar CD" del dashboard importará el histórico completo de cada uno. Decisión
-   de la TL de cuándo hacerlo (implica importar todo el historial, no solo desde ahora).
+1. **Correr el sync real** — los 34 prestadores están vinculados; el botón "↻
+   Sincronizar CD" del dashboard importará el histórico completo de cada uno (~2.000+
+   liquidaciones según el sondeo de la validación). Decisión de la TL de cuándo
+   hacerlo (implica importar todo el historial, no solo desde ahora). Ya no está
+   bloqueado por hallazgos técnicos; para acotar el volumen se puede correr por
+   prestador con `POST /api/liquidaciones/sincronizar?prestadorId=`.
 2. **Correr en paralelo con la app legacy antes de apagarla** — no hay cutover en frío.
 3. TL: confirmar los 2 conflictos menores de tarifarios (VENADO $45, INFOMAC
    preventivo Villa Mercedes) y, si algún día hace falta, mapear
