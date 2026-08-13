@@ -345,16 +345,33 @@ real ejecutado; solo se actualiza el estado de cada módulo.
       desplegar); ALT005/ALT006/ALT007 se portan tal cual (sin completar); el motor de
       reglas mantiene el patrón híbrido actual (sin CRUD de reglas ni motor
       interpretado).
-- [ ] Portar el modelo de datos (10 tablas) al Postgres consolidado, con Alembic (el
-      legacy usa migraciones aditivas a mano, sin Alembic — no portar ese mecanismo).
-- [ ] Reescribir domain/application/infrastructure siguiendo `ARCHITECTURE_GUIDE.md`.
-- [ ] Portar la UI a Next.js — sin handoff de diseño propio todavía (no hay
-      `design_handoff_liquidaciones/`); crearlo antes de tocar frontend, siguiendo la
-      skill `ui-design-handoff` (mismo proceso que insumos/mesa de ayuda). La paleta de
-      marca del legacy (`brand`/`graybrand`) ya es la línea Institucional de Canal
-      Directo — no hay conflicto de marca, solo aplicar los primitivos ya establecidos
-      del monorepo nuevo.
-- [ ] Prueba end-to-end con Playwright.
+- [x] **Modelo de datos portado al Postgres consolidado (2026-08-12):** 10 tablas en 2
+      migraciones Alembic (`liquidaciones_schema_core`, `liquidaciones_schema_transacciones`).
+      **Ojo: solo el schema — las tablas están vacías** (verificado con psql: 0 filas en
+      prestadores/spsts/tarifarios/tabla_kms/reglas_alerta). Falta el seed de
+      `reglas_alerta` (sin las 9 reglas el motor no genera ninguna alerta; fuente:
+      `seed.py::seed_reglas` del legacy) y la migración de datos reales — validar primero
+      contra la DB de la máquina laboral, que puede tenerlos cargados.
+- [x] **Domain/application/infrastructure reescritos siguiendo `ARCHITECTURE_GUIDE.md`
+      (2026-08-12):** entidades (10), value objects, repos (Protocol), servicios de dominio
+      (importación, motor de reglas ALT001–ALT009), use cases, repos SQLAlchemy, parser pandas,
+      presentación (liquidaciones_router, config_router, 21 endpoints de config).
+- [x] **UI portada a Next.js (2026-08-12):** dashboard, lista con filtros/paginación,
+      detalle de liquidación (incidentes expandibles + alertas inline + selector de estado),
+      eliminación con modal de confirmación, 4 páginas de configuración (prestadores, SPSTs,
+      tarifarios, tabla KM), submenú en el sidebar.
+- [x] **Prueba end-to-end con Playwright (2026-08-12):** 12 tests en
+      `frontend/tests/liquidaciones.spec.ts`, todos pasan.
+- [x] **Gaps de paridad vs legacy cerrados (2026-08-12, gap analysis endpoint por
+      endpoint):** cadena temporal de vigencias de tarifarios (port de
+      `_rebuild_temporal_chain` — sin esto ALT001/ALT008 evalúan contra vigencias
+      solapadas), workflow de estados de observaciones (5 estados + botones de
+      transición), edición de tarifarios y tabla KM, detalle enriquecido con tabla KM
+      (localidad/SPST/link Maps por incidente), detalle con correctivos/preventivos
+      separados, filtro por fecha de cierre y totales por sección. Deuda restante del
+      gap analysis (además de los datos): importadores Excel + plantillas (hoy solo
+      CSV) y decidir DELETE físico vs soft-delete de prestador/SPST — detalle en la
+      memoria `project-liquidaciones-config`.
 - [ ] Correr en paralelo con la app vieja antes de apagarla — **no hay cutover en
       frío** (módulo con lógica frágil, ver riesgos en §1 de este documento).
 - [ ] Apagar Liquidacion-Prestadores (repo/deploy) tras el período de observación.
