@@ -1,0 +1,3 @@
+# Los .sh se ejecutan dentro de contenedores Linux (bind mount): con CRLF el
+# shebang queda "#!/bin/sh\r" y el contenedor falla con "no such file or directory".
+*.sh text eol=lf
