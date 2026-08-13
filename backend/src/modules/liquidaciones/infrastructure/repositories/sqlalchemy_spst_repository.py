@@ -93,6 +93,17 @@ class SqlAlchemySpstRepository:
         await self._session.refresh(row)
         return _to_entity(row)
 
+    async def delete(self, spst_id: UUID) -> bool:
+        # Sin caso de bloqueo: `tabla_kms.spst_id` es `ondelete=SET NULL` (ver el
+        # modelo) — borrar un SPST desvincula sus filas de Tabla KM, no las borra
+        # ni impide el delete.
+        row = await self._session.get(SpstModel, spst_id)
+        if row is None:
+            return False
+        await self._session.delete(row)
+        await self._session.flush()
+        return True
+
 
 def _to_entity(row: SpstModel) -> Spst:
     return Spst(

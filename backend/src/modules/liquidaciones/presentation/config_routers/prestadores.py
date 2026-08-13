@@ -78,6 +78,17 @@ async def toggle_prestador_activo(
     return PrestadorOut.from_entity(updated)
 
 
+@router.delete("/prestadores/{prestador_id}", status_code=204)
+async def delete_prestador(
+    prestador_id: UUID,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    deleted = await SqlAlchemyPrestadorRepository(db).delete(prestador_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Prestador no encontrado")
+
+
 @router.get("/prestadores/export")
 async def export_prestadores_csv(
     _: Identity = require_view,

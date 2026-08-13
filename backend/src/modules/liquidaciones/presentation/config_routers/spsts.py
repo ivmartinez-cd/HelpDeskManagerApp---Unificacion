@@ -95,6 +95,17 @@ async def toggle_spst_activo(
     return SpstOut.from_entity(updated)
 
 
+@router.delete("/spsts/{spst_id}", status_code=204)
+async def delete_spst(
+    spst_id: UUID,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    deleted = await SqlAlchemySpstRepository(db).delete(spst_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="SPST no encontrado")
+
+
 @router.get("/spsts/export")
 async def export_spsts_csv(
     _: Identity = require_view,

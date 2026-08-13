@@ -1,17 +1,33 @@
+import uuid
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.contadores.application.dtos.create_asignacion_override_request import (
+    CreateAsignacionOverrideRequest as CreateAsignacionOverrideAppRequest,
+)
 from src.modules.contadores.application.dtos.get_calendar_events_request import (
     GetCalendarEventsRequest,
+)
+from src.modules.contadores.application.use_cases.cancel_asignacion_override import (
+    CancelAsignacionOverride,
+    CancelAsignacionOverrideDependencies,
+)
+from src.modules.contadores.application.use_cases.create_asignacion_override import (
+    CreateAsignacionOverride,
+    CreateAsignacionOverrideDependencies,
 )
 from src.modules.contadores.application.use_cases.get_calendar_events import (
     GetCalendarEventsUseCase,
 )
 from src.modules.contadores.application.use_cases.get_mi_operador import GetMiOperadorUseCase
+from src.modules.contadores.application.use_cases.list_asignacion_overrides import (
+    ListAsignacionOverrides,
+    ListAsignacionOverridesDependencies,
+)
 from src.modules.contadores.application.use_cases.sync_calendar_events import (
     SyncCalendarEventsUseCase,
 )
@@ -19,12 +35,17 @@ from src.modules.contadores.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.contadores.infrastructure.gestion.gestion_planificacion_client import (
     GestionPlanificacionClient,
 )
+from src.modules.contadores.infrastructure.repositories.sqlalchemy_asignacion_override_repository import (  # noqa: E501
+    SqlAlchemyAsignacionOverrideRepository,
+)
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_calendario_repository import (
     SqlAlchemyCalendarEventRepository,
 )
 from src.modules.contadores.presentation.dependencies import get_operador_catalog_gateway
 from src.modules.contadores.presentation.schemas.calendario_schemas import (
+    AsignacionOverrideResponse,
     CalendarEventSchema,
+    CreateAsignacionOverrideRequest,
     MiOperadorResponse,
     OperadorSchema,
     SyncCalendarioResponse,
@@ -132,3 +153,58 @@ async def sync_calendario(
     use_case = SyncCalendarEventsUseCase(gestion, operador_catalog, repo)
     result = await use_case.execute(start_date=start_date, end_date=end_date)
     return SyncCalendarioResponse.model_validate(result)
+
+
+@router.get("/calendario/overrides", response_model=Page[AsignacionOverrideResponse])
+async def list_overrides(
+    _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db),
+) -> Page[AsignacionOverrideResponse]:
+    deps = ListAsignacionOverridesDependencies(
+        overrides=SqlAlchemyAsignacionOverrideRepository(db),
+        calendar=SqlAlchemyCalendarEventRepository(db),
+    )
+    items = await ListAsignacionOverrides(deps).execute()
+    return Page.of(
+        [AsignacionOverrideResponse.from_dto(i) for i in items], page=1, size=_MAX_PAGE_SIZE
+    )
+
+
+@router.post(
+    "/calendario/overrides",
+    response_model=AsignacionOverrideResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_override(
+    payload: CreateAsignacionOverrideRequest,
+    identity: Identity = _require_manage,
+    db: AsyncSession = Depends(get_db),
+) -> AsignacionOverrideResponse:
+    deps = CreateAsignacionOverrideDependencies(
+        overrides=SqlAlchemyAsignacionOverrideRepository(db),
+        calendar=SqlAlchemyCalendarEventRepository(db),
+    )
+    dto = await CreateAsignacionOverride(deps).execute(
+        CreateAsignacionOverrideAppRequest(
+            operador_ausente_id=payload.operador_ausente_id,
+            operador_reemplazante_id=payload.operador_reemplazante_id,
+            vigente_desde=payload.vigente_desde,
+            vigente_hasta=payload.vigente_hasta,
+            clientes=payload.clientes,
+            motivo=payload.motivo,
+            created_by_user_id=identity.user.id,
+        )
+    )
+    return AsignacionOverrideResponse.from_dto(dto)
+
+
+@router.post("/calendario/overrides/{override_id}/cancelar", status_code=status.HTTP_204_NO_CONTENT)
+async def cancel_override(
+    override_id: uuid.UUID,
+    _: Identity = _require_manage,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    deps = CancelAsignacionOverrideDependencies(
+        overrides=SqlAlchemyAsignacionOverrideRepository(db)
+    )
+    await CancelAsignacionOverride(deps).execute(override_id)

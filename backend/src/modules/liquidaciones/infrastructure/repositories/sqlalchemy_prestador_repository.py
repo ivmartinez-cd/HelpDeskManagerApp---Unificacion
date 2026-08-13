@@ -5,9 +5,11 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
+from src.modules.liquidaciones.domain.errors import PrestadorConLiquidacionesError
 from src.modules.liquidaciones.infrastructure.models.prestador_model import (
     LiquidacionPrestadorModel,
 )
@@ -80,6 +82,23 @@ class SqlAlchemyPrestadorRepository:
         await self._session.flush()
         await self._session.refresh(row)
         return _to_entity(row)
+
+    async def delete(self, prestador_id: UUID) -> bool:
+        row = await self._session.get(LiquidacionPrestadorModel, prestador_id)
+        if row is None:
+            return False
+        await self._session.delete(row)
+        # `flush()` explícito (no basta con dejar que el commit final de `get_db`
+        # lo dispare) para poder atrapar el IntegrityError acá y traducirlo a un
+        # error de dominio prolijo, en vez de un 500 crudo. La única FK sin
+        # `ondelete` que apunta a `prestadores.id` es `liquidaciones.prestador_id`
+        # (a propósito, ver el modelo) — spsts/tarifarios/tabla_kms cascadean solo,
+        # así que cualquier IntegrityError acá es ese caso.
+        try:
+            await self._session.flush()
+        except IntegrityError as exc:
+            raise PrestadorConLiquidacionesError(prestador_id) from exc
+        return True
 
 
 def _to_entity(row: LiquidacionPrestadorModel) -> Prestador:

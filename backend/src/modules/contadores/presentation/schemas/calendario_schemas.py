@@ -1,6 +1,9 @@
-from datetime import datetime
+import uuid
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
+
+from src.modules.contadores.application.dtos.asignacion_override_dto import AsignacionOverrideDTO
 
 
 class CalendarEventSchema(BaseModel):
@@ -58,3 +61,44 @@ class MiOperadorResponse(BaseModel):
     operador_id: str | None
     nombre: str | None
     color: str | None
+
+
+class AsignacionOverrideResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    operador_ausente_id: str
+    operador_ausente_nombre: str | None
+    operador_reemplazante_id: str
+    operador_reemplazante_nombre: str | None
+    vigente_desde: date
+    vigente_hasta: date
+    alcance_total: bool
+    clientes: list[str]
+    estado: str
+    motivo: str | None
+
+    @classmethod
+    def from_dto(cls, dto: AsignacionOverrideDTO) -> "AsignacionOverrideResponse":
+        return cls(
+            id=dto.id,
+            operador_ausente_id=dto.operador_ausente_id,
+            operador_ausente_nombre=dto.operador_ausente_nombre,
+            operador_reemplazante_id=dto.operador_reemplazante_id,
+            operador_reemplazante_nombre=dto.operador_reemplazante_nombre,
+            vigente_desde=dto.vigente_desde,
+            vigente_hasta=dto.vigente_hasta,
+            alcance_total=dto.alcance_total,
+            clientes=dto.clientes,
+            estado=dto.estado,
+            motivo=dto.motivo,
+        )
+
+
+class CreateAsignacionOverrideRequest(BaseModel):
+    operador_ausente_id: str
+    operador_reemplazante_id: str
+    vigente_desde: date
+    vigente_hasta: date
+    clientes: list[str] | None = None
+    motivo: str | None = None

@@ -1,7 +1,7 @@
 from typing import ClassVar
 from uuid import UUID
 
-from src.shared.domain.errors import NotFoundError, ValidationError
+from src.shared.domain.errors import BusinessRuleViolationError, NotFoundError, ValidationError
 
 
 class LiquidacionNoEncontradaError(NotFoundError):
@@ -16,6 +16,22 @@ class PrestadorNoEncontradoError(NotFoundError):
 
     def __init__(self, prestador_id: UUID) -> None:
         super().__init__(f"Prestador no encontrado: {prestador_id}")
+
+
+class PrestadorConLiquidacionesError(BusinessRuleViolationError):
+    """`liquidaciones.prestador_id` no tiene `ondelete` a propósito (ver
+    `infrastructure/models/liquidacion_model.py`) — es historial de facturación
+    real, no se pierde por una baja administrativa. Se traduce el
+    `IntegrityError` de Postgres acá, en el repositorio, para no propagar un 500
+    crudo."""
+
+    default_code: ClassVar[str] = "PRESTADOR_CON_LIQUIDACIONES"
+
+    def __init__(self, prestador_id: UUID) -> None:
+        super().__init__(
+            f"No se puede eliminar el prestador {prestador_id}: tiene liquidaciones "
+            "asociadas. Desactivalo en su lugar."
+        )
 
 
 class ArchivoLiquidacionInvalidoError(ValidationError):

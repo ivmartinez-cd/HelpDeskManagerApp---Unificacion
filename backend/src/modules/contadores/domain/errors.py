@@ -63,3 +63,34 @@ class EmptyDb3ExportError(ValidationError):
     def __init__(self, warnings: list[str]) -> None:
         detalle = "; ".join(warnings) if warnings else "sin detalle"
         super().__init__(f"No se obtuvieron datos de los DB3 provistos: {detalle}")
+
+
+class AsignacionOverrideNotFoundError(NotFoundError):
+    default_code = "ASIGNACION_OVERRIDE_NOT_FOUND"
+
+    def __init__(self) -> None:
+        super().__init__("Override de asignación no encontrado")
+
+
+class InvalidOverrideRangeError(ValidationError):
+    default_code = "INVALID_OVERRIDE_RANGE"
+
+    def __init__(self) -> None:
+        super().__init__("El rango de vigencia del override es inválido (desde > hasta)")
+
+
+class OverrideMismoOperadorError(ValidationError):
+    default_code = "OVERRIDE_MISMO_OPERADOR"
+
+    def __init__(self) -> None:
+        super().__init__("El operador ausente y el reemplazante no pueden ser el mismo")
+
+
+class OverlappingOverrideError(BusinessRuleViolationError):
+    default_code = "OVERLAPPING_OVERRIDE"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Ya existe un override activo para ese operador ausente con fechas superpuestas "
+            "y alcance en común"
+        )
