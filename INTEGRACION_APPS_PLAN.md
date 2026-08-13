@@ -456,6 +456,16 @@ real ejecutado; solo se actualiza el estado de cada módulo.
       descartarse. Verificado end-to-end contra el prestador PENTACOM real:
       re-importar el mismo archivo dos veces no duplica nada. Detalle completo en
       `LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`.
+- [x] **DELETE de prestador/SPST portado (2026-08-13):** el schema nuevo ya tenía
+      la decisión tomada a nivel de FK (CASCADE para spsts/tarifarios/tabla_km,
+      SET NULL para `tabla_kms.spst_id`, bloqueado a propósito si el prestador
+      tiene liquidaciones); faltaba el endpoint. El legacy tenía DELETE físico
+      pero sin capturar el `IntegrityError` (500 crudo) y sin confirmación en la
+      UI de SPST. Portado con el error traducido a 409 prolijo y botón+modal de
+      confirmación en ambas pantallas. Verificado end-to-end contra el backend
+      real (prestador sin relacionados, SPST con Tabla KM vinculada confirma
+      SET NULL, PENTACOM real con liquidaciones confirma el bloqueo 409 sin
+      tocar datos). Detalle en `LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`.
 - [ ] Correr en paralelo con la app vieja antes de apagarla — **no hay cutover en
       frío** (módulo con lógica frágil, ver riesgos en §1 de este documento).
 - [ ] Apagar Liquidacion-Prestadores (repo/deploy) tras el período de observación.

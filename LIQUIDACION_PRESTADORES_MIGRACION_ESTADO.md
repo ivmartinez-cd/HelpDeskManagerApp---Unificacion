@@ -224,21 +224,61 @@ re-importar el mismo mes los hubiera duplicado en cada corrida.
 
 Soporta `.xlsx` y `.xls` (se agregó `xlrd` como dependencia).
 
+### DELETE de prestador/SPST — CERRADO (2026-08-13)
+
+El schema nuevo ya tenía la decisión tomada a nivel de FK (alguien la dejó lista al
+migrar el modelo de datos, con docstrings explicando el porqué), solo faltaba el
+endpoint que la usara: `spsts.prestador_id`/`tarifarios.prestador_id`/
+`tabla_kms.prestador_id` → `ON DELETE CASCADE`; `tabla_kms.spst_id` → `ON DELETE
+SET NULL` (borrar un SPST desvincula su Tabla KM, no la borra); `liquidaciones.
+prestador_id` → sin `ondelete` (bloquea a propósito: "es historial de facturación
+real, no se pierde por una baja administrativa").
+
+El legacy sí tenía DELETE físico, pero frágil: cascada solo a nivel ORM (no en la
+DB) y sin capturar el `IntegrityError` de Postgres cuando había liquidaciones o
+tabla_km relacionadas → 500 crudo sin manejar. Para SPST ni siquiera tenía
+confirmación en la UI (para Prestador sí, `confirm()` nativo del navegador).
+
+**Decisión, confirmada con el usuario**: DELETE físico apoyado en esas FK, con el
+`IntegrityError` traducido a un error de dominio prolijo
+(`PrestadorConLiquidacionesError`, 409) en vez de un 500. `SqlAlchemyPrestadorRepository
+.delete()`/`SqlAlchemySpstRepository.delete()` (siguen el mismo patrón que
+`update()`/`toggle_activo()`: métodos directos en el repo concreto, no en el
+Protocol — igual que el resto de este router). Nuevos `DELETE /prestadores/{id}` y
+`DELETE /spsts/{id}`, botón "Eliminar" + modal de confirmación en ambas pantallas
+(clon del patrón ya usado para tarifario/tabla-km, no el `confirm()` nativo del
+legacy).
+
+Verificado end-to-end contra el backend real (llamadas HTTP directas, no solo
+tests): prestador descartable sin relacionados → 201 crear, 204 eliminar; SPST con
+una fila de Tabla KM vinculada → eliminar el SPST da 204 y la fila de Tabla KM
+sigue existiendo con `spstId=null` (`SET NULL` confirmado); intento de eliminar el
+prestador real PENTACOM (tiene liquidaciones reales) → 409 con mensaje claro,
+PENTACOM sigue intacto después. El smoke test de click-through en el navegador
+quedó bloqueado por el contenedor de backend reiniciándose constantemente (otra
+sesión editando `contadores` en simultáneo, mismo contenedor compartido) — no se
+reintentó más allá de lo razonable porque no es un problema del código; el patrón
+de botón/modal es una copia mecánica de uno ya probado en este mismo módulo.
+
+Sin tests unitarios nuevos para `delete()`: este módulo no tiene tests de
+infraestructura para ningún repo SQLAlchemy (ver pendiente de tests de
+integración, abajo) — `delete_liquidacion` (ya existente) tampoco los tiene,
+consistente con la convención actual.
+
 ## Pendiente
 
-1. **DELETE físico vs soft-delete** de prestador/SPST — sin decidir.
-2. **0 tests de integración de infrastructure** (10 repos SQLAlchemy + 2 parsers
+1. **0 tests de integración de infrastructure** (10 repos SQLAlchemy + 2 parsers
    pandas) — deuda transversal compartida con turnos/sla.
-3. **Use cases de escritura para el resto de las entidades de configuración** — hoy
+2. **Use cases de escritura para el resto de las entidades de configuración** — hoy
    router→repositorio directo en los 4 config_routers, sin casos de uso propios.
-4. **No recadena vigencias de tarifarios** al importar (Excel maestro ni CSV) —
+3. **No recadena vigencias de tarifarios** al importar (Excel maestro ni CSV) —
    decisión consciente (replica la omisión del legacy), documentada en
    `application/use_cases/importar_prestador_maestro.py`. `domain/services/
    cadena_tarifaria.py` existe y se usa en alta/edición manual desde la UI; si se
    quiere recadenar también en los importadores, hay que ampliar
    `TarifarioRepository` (`list_grupo`/`set_vigencia_hasta` ya están en el impl
    SQLAlchemy, no en el Protocol).
-5. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
+4. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
 
 ## Próximo paso sugerido
 
