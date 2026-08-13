@@ -115,5 +115,5 @@ async def import_tarifarios_csv(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, int]:
     return await csv_helpers.import_tarifarios(
-        file, SqlAlchemyTarifarioRepository(db), SqlAlchemyPrestadorRepository(db)
+        file, build_create_tarifario(db), SqlAlchemyPrestadorRepository(db)
     )

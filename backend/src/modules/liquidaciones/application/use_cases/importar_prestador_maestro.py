@@ -6,7 +6,11 @@ Tarifarios solo dentro del archivo; acá se dedupea además contra lo ya persist
 (clave de 3 partes: tipo+costo+vigencia) — sin este segundo dedup, re-importar el
 mismo archivo crea tarifarios duplicados en cada corrida. Prestador/SPST existentes
 nunca se actualizan (igual que el legacy), Tabla KM existente (por empresa+sucursal)
-se omite en vez de pisarse."""
+se omite en vez de pisarse.
+
+Tras crear tarifarios se recadenan las vigencias de cada grupo (tipo_servicio,
+zona=None) que recibió filas nuevas — divergencia consciente vs. el legacy, que al
+importar dejaba vigencias solapadas (ver `domain/services/cadena_tarifaria.py`)."""
 
 from dataclasses import dataclass
 from datetime import date
@@ -15,6 +19,7 @@ from uuid import UUID
 from src.modules.liquidaciones.application.dtos.importar_prestador_maestro import (
     ImportarPrestadorMaestroResultado,
 )
+from src.modules.liquidaciones.application.use_cases._recadenado import recadenar_grupo
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
@@ -117,6 +122,7 @@ class ImportarPrestadorMaestro:
         existentes = await self._ports.tarifarios.list_by_prestador(prestador.id)
         vistos = {self._clave_tarifario(t) for t in existentes}
         creados = omitidos = 0
+        tipos_creados: set[str] = set()
         for t in tarifarios:
             clave = self._clave_tarifario(t)
             if clave in vistos:
@@ -124,8 +130,17 @@ class ImportarPrestadorMaestro:
                 continue
             await self._crear_un_tarifario(prestador.id, t)
             vistos.add(clave)
+            tipos_creados.add(t.tipo_servicio)
             creados += 1
+        await self._recadenar_tipos_creados(prestador.id, tipos_creados)
         return creados, omitidos
+
+    async def _recadenar_tipos_creados(self, prestador_id: UUID, tipos: set[str]) -> None:
+        # El maestro crea todo con zona=None → el grupo afectado es (prestador, tipo, None).
+        for tipo in sorted(tipos):
+            await recadenar_grupo(
+                self._ports.tarifarios, prestador_id=prestador_id, tipo_servicio=tipo, zona=None
+            )
 
     @staticmethod
     def _clave_tarifario(t: Tarifario | TarifarioImportado) -> tuple[str, float, date]:

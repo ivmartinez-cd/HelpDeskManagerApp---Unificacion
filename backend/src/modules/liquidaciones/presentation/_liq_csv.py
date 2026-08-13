@@ -21,6 +21,7 @@ from datetime import date
 from fastapi import UploadFile
 from fastapi.responses import StreamingResponse
 
+from src.modules.liquidaciones.application.use_cases.config_tarifarios import CreateTarifario
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import (
@@ -28,6 +29,9 @@ from src.modules.liquidaciones.domain.entities.tabla_km import (
     TablaKm,
 )
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
+from src.modules.liquidaciones.domain.repositories.prestador_repository import (
+    PrestadorRepository,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (
     SqlAlchemyPrestadorRepository,
 )
@@ -36,9 +40,6 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repos
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tabla_km_repository import (
     SqlAlchemyTablaKmRepository,
-)
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tarifario_repository import (
-    SqlAlchemyTarifarioRepository,
 )
 
 logger = logging.getLogger(__name__)
@@ -178,9 +179,11 @@ def _parse_date(val: str) -> date | None:
 
 async def import_tarifarios(
     file: UploadFile,
-    repo: SqlAlchemyTarifarioRepository,
-    prestador_repo: SqlAlchemyPrestadorRepository,
+    crear_tarifario: CreateTarifario,
+    prestador_repo: PrestadorRepository,
 ) -> dict[str, int]:
+    """Cada alta va por el use case `CreateTarifario` (no repo directo) para que el
+    grupo afectado quede recadenado, igual que el alta manual desde la UI."""
     rows = _read_csv(await file.read())
     created = 0
     for row in rows:
@@ -207,7 +210,7 @@ async def import_tarifarios(
                 row.get("COSTO_KM"),
             )
             continue
-        await repo.create(
+        await crear_tarifario.execute(
             prestador_id=prestador.id,
             tipo_servicio=tipo,
             zona=(row.get("ZONA") or "").strip() or None,

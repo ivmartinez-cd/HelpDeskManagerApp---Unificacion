@@ -26,8 +26,8 @@ from tests.unit.domain.liquidaciones.fakes import (
     FakePrestadorRepository,
     FakeSpstRepository,
     FakeTablaKmRepository,
-    FakeTarifarioRepository,
 )
+from tests.unit.domain.liquidaciones.fakes_config import FakeConfigTarifarioRepository
 from tests.unit.domain.liquidaciones.fakes_maestro import FakePrestadorMaestroFileParser
 
 ARCHIVO_NOMBRE = "PENTACOM 202601.xlsx"
@@ -72,7 +72,7 @@ class World:
     def __init__(self, resultado: ResultadoImportacionMaestro | None = None) -> None:
         self.prestadores = FakePrestadorRepository()
         self.spsts = FakeSpstRepository()
-        self.tarifarios = FakeTarifarioRepository()
+        self.tarifarios = FakeConfigTarifarioRepository()
         self.tabla_km = FakeTablaKmRepository()
         self.parser = FakePrestadorMaestroFileParser(resultado or make_resultado_maestro())
         self.use_case = ImportarPrestadorMaestro(
@@ -157,6 +157,90 @@ async def test_tarifario_con_vigencia_distinta_no_se_considera_duplicado() -> No
 
     assert resultado.tarifarios_creados == 1
     assert resultado.tarifarios_omitidos == 0
+
+
+async def test_importar_recadena_vigencias_dentro_del_grupo() -> None:
+    """Dos vigencias del mismo tipo en el archivo: la más vieja se cierra el día
+    anterior a la más nueva; la última queda abierta (divergencia consciente vs. el
+    legacy, que dejaba las dos abiertas/solapadas)."""
+    world = World(
+        resultado=make_resultado_maestro(
+            tarifarios=[
+                TarifarioImportado(
+                    tipo_servicio="correctivo",
+                    costo_servicio=1500.0,
+                    costo_km=100.0,
+                    vigencia_desde=date(2026, 1, 1),
+                ),
+                TarifarioImportado(
+                    tipo_servicio="correctivo",
+                    costo_servicio=1800.0,
+                    costo_km=120.0,
+                    vigencia_desde=date(2026, 6, 1),
+                ),
+            ]
+        )
+    )
+
+    await world.importar()
+
+    por_desde = {t.vigencia_desde: t for t in world.tarifarios.rows}
+    assert por_desde[date(2026, 1, 1)].vigencia_hasta == date(2026, 5, 31)
+    assert por_desde[date(2026, 6, 1)].vigencia_hasta is None
+
+
+async def test_importar_recadena_contra_tarifario_preexistente() -> None:
+    """El tarifario ya persistido del mismo grupo (tipo, zona=None) se cierra contra
+    el recién importado."""
+    world = World()
+    prestador = await world.prestadores.create(
+        nombre="PENTACOM", nombre_corto="PENTACOM", cuit=None, region=None
+    )
+    previo = make_tarifario(
+        prestador_id=prestador.id,
+        tipo_servicio="correctivo",
+        costo_servicio=1200.0,
+        vigencia_desde=date(2025, 6, 1),
+        vigencia_hasta=None,
+    )
+    world.tarifarios.rows = [previo]
+
+    await world.importar()  # trae "correctivo" con vigencia_desde 2026-01-01
+
+    cerrado = await world.tarifarios.get_by_id(previo.id)
+    assert cerrado is not None
+    assert cerrado.vigencia_hasta == date(2025, 12, 31)
+
+
+async def test_importar_sin_tarifarios_nuevos_no_recadena() -> None:
+    """Si todos los tarifarios del archivo se omiten por duplicados, no se toca
+    ninguna vigencia ya persistida — aunque el grupo tenga solapes preexistentes."""
+    world = World()
+    prestador = await world.prestadores.create(
+        nombre="PENTACOM", nombre_corto="PENTACOM", cuit=None, region=None
+    )
+    solapado = make_tarifario(
+        prestador_id=prestador.id,
+        tipo_servicio="correctivo",
+        costo_servicio=1200.0,
+        vigencia_desde=date(2025, 6, 1),
+        vigencia_hasta=None,
+    )
+    duplicado_del_archivo = make_tarifario(
+        prestador_id=prestador.id,
+        tipo_servicio="correctivo",
+        costo_servicio=1500.0,
+        vigencia_desde=date(2026, 1, 1),
+        vigencia_hasta=None,
+    )
+    world.tarifarios.rows = [solapado, duplicado_del_archivo]
+
+    resultado = await world.importar()
+
+    assert resultado.tarifarios_creados == 0
+    intacto = await world.tarifarios.get_by_id(solapado.id)
+    assert intacto is not None
+    assert intacto.vigencia_hasta is None
 
 
 async def test_tabla_km_ya_existente_se_omite() -> None:

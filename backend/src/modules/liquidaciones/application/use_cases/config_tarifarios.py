@@ -10,12 +10,12 @@ from dataclasses import dataclass
 from datetime import date
 from uuid import UUID
 
+from src.modules.liquidaciones.application.use_cases._recadenado import recadenar_grupo
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
 from src.modules.liquidaciones.domain.errors import TarifarioNoEncontradoError
 from src.modules.liquidaciones.domain.repositories.tarifario_repository import (
     TarifarioRepository,
 )
-from src.modules.liquidaciones.domain.services.cadena_tarifaria import recalcular_cadena
 
 
 @dataclass(frozen=True)
@@ -24,11 +24,9 @@ class ConfigTarifariosPorts:
 
 
 async def _recadenar_grupo_de(repo: TarifarioRepository, t: Tarifario) -> None:
-    grupo = await repo.list_grupo(
-        prestador_id=t.prestador_id, tipo_servicio=t.tipo_servicio, zona=t.zona
+    await recadenar_grupo(
+        repo, prestador_id=t.prestador_id, tipo_servicio=t.tipo_servicio, zona=t.zona
     )
-    for ajuste in recalcular_cadena(grupo):
-        await repo.set_vigencia_hasta(ajuste.tarifario_id, ajuste.vigencia_hasta)
 
 
 class CreateTarifario:
