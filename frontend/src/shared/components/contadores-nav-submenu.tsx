@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { CalendarDays, Workflow, type LucideIcon } from "lucide-react";
+import { CalendarDays, UserRoundCheck, Workflow, type LucideIcon } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
 /** Submenú de Contadores — mismo lenguaje visual que `InsumosNavSubmenu`
@@ -26,6 +26,12 @@ export function ContadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }
       label: "Calendario",
       icon: CalendarDays,
       active: pathname === "/contadores/calendario" || tool === "calendario",
+    },
+    {
+      href: "/contadores/coberturas",
+      label: "Coberturas",
+      icon: UserRoundCheck,
+      active: pathname === "/contadores/coberturas",
     },
     {
       href: "/contadores",

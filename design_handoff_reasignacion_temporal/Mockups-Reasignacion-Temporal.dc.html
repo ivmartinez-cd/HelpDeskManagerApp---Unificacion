@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0c0c0e}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(128,128,128,.25);border-radius:3px}
+@keyframes skel{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</helmet>
+
+<div style="display:flex;height:100vh;overflow:hidden;font-family:'Source Sans 3',system-ui,sans-serif">
+
+<!-- ═══════════════════ NAVEGADOR DE MOCKUPS ═══════════════════ -->
+<nav style="width:212px;flex-shrink:0;background:#0c0c0e;border-right:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;overflow-y:auto">
+  <div style="padding:16px;border-bottom:1px solid rgba(255,255,255,.06)">
+    <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#F7941D;line-height:1.3">Reasignación Temporal</div>
+    <div style="font-size:10.5px;color:rgba(255,255,255,.28);margin-top:3px">Handoff v1 · Mockups</div>
+  </div>
+
+  <div style="padding:10px 8px;flex:1">
+    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:rgba(255,255,255,.22);padding:8px 8px 5px">Contadores</div>
+
+    <button onClick="{{goListado}}" style="display:block;width:100%;text-align:left;padding:7px 10px;border-radius:7px;border:none;cursor:pointer;font-size:12.5px;font-family:inherit;background:{{navListadoBg}};color:{{navListadoColor}};font-weight:{{navListadoFw}};margin-bottom:2px;line-height:1.3;transition:background .1s">Coberturas — Listado</button>
+    <button onClick="{{openModal}}" style="display:block;width:100%;text-align:left;padding:6px 10px 6px 20px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-family:inherit;background:{{navModalBg}};color:{{navModalColor}};font-weight:{{navModalFw}};margin-bottom:2px;line-height:1.3">↳ Modal nueva cobertura</button>
+    <button onClick="{{goCal}}" style="display:block;width:100%;text-align:left;padding:7px 10px;border-radius:7px;border:none;cursor:pointer;font-size:12.5px;font-family:inherit;background:{{navCalBg}};color:{{navCalColor}};font-weight:{{navCalFw}};margin-bottom:12px;line-height:1.3">Calendario + indicadores</button>
+
+    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:rgba(255,255,255,.22);padding:0 8px 5px">PST / Liquidaciones</div>
+    <button onClick="{{goListadoPst}}" style="display:block;width:100%;text-align:left;padding:7px 10px;border-radius:7px;border:none;cursor:pointer;font-size:12.5px;font-family:inherit;background:{{navPstBg}};color:{{navPstColor}};font-weight:{{navPstFw}};margin-bottom:2px;line-height:1.3">Coberturas PST — Listado</button>
+    <button onClick="{{openPstModal}}" style="display:block;width:100%;text-align:left;padding:6px 10px 6px 20px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-family:inherit;background:{{navPstModalBg}};color:{{navPstModalColor}};font-weight:{{navPstModalFw}};margin-bottom:12px;line-height:1.3">↳ Modal nueva cobertura</button>
+
+    <sc-if value="{{showListControls}}" hint-placeholder-val="{{true}}">
+      <div style="border-top:1px solid rgba(255,255,255,.06);padding-top:10px;margin-top:2px">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:rgba(255,255,255,.22);padding:0 8px 6px">Estado del listado</div>
+        <button onClick="{{setData}}" style="display:block;width:100%;text-align:left;padding:6px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-family:inherit;background:{{btnDataBg}};color:{{btnDataColor}};margin-bottom:2px">Con datos</button>
+        <button onClick="{{setEmpty}}" style="display:block;width:100%;text-align:left;padding:6px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-family:inherit;background:{{btnEmptyBg}};color:{{btnEmptyColor}};margin-bottom:2px">Vacío</button>
+        <button onClick="{{setLoading}}" style="display:block;width:100%;text-align:left;padding:6px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-family:inherit;background:{{btnLoadBg}};color:{{btnLoadColor}};margin-bottom:2px">Cargando</button>
+        <button onClick="{{setError}}" style="display:block;width:100%;text-align:left;padding:6px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-family:inherit;background:{{btnErrBg}};color:{{btnErrColor}}">Error</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+      <div style="border-top:1px solid rgba(255,255,255,.06);padding-top:10px;margin-top:10px">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:rgba(255,255,255,.22);padding:0 8px 6px">Demo modal</div>
+        <button onClick="{{toggleSolap}}" style="display:block;width:100%;text-align:left;padding:6px 10px;border-radius:6px;border:1px solid rgba(247,148,29,.25);cursor:pointer;font-size:11.5px;font-family:inherit;background:transparent;color:rgba(247,148,29,.75)">{{solapLabel}}</button>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="padding:12px;border-top:1px solid rgba(255,255,255,.06)">
+    <button onClick="{{toggleDark}}" style="display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);cursor:pointer;font-size:12px;color:rgba(255,255,255,.5);font-family:inherit">
+      <span>{{darkIcon}}</span><span>{{darkLabel}}</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════════ ÁREA PRINCIPAL ═══════════════════ -->
+<div style="flex:1;overflow-y:auto;background:{{bg}};position:relative;transition:background .15s">
+
+<!-- ══ SCREEN: LISTADO CONTADORES ══ -->
+<sc-if value="{{isListado}}" hint-placeholder-val="{{true}}">
+  <div style="padding:32px 40px;max-width:1100px">
+
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:24px">
+      <div>
+        <h1 style="font-family:Montserrat,sans-serif;font-weight:800;font-size:26px;text-transform:uppercase;letter-spacing:-.03em;color:{{textPrimary}};line-height:1">COBERTURAS</h1>
+        <p style="font-size:13.5px;color:{{textSecondary}};margin-top:6px;line-height:1.4">Reemplazos temporales de operadores · No modifican el Calendario de Gestión</p>
+      </div>
+      <button onClick="{{openModal}}" style="display:flex;align-items:center;gap:7px;padding:10px 18px;background:#F7941D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;white-space:nowrap;flex-shrink:0;margin-top:2px">
+        <span style="font-size:18px;line-height:1;margin-top:-2px">+</span> Nueva cobertura
+      </button>
+    </div>
+
+    <!-- Filtros -->
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid {{border}};flex-wrap:wrap">
+      <span style="font-size:12px;font-weight:600;color:{{textSecondary}}">Estado:</span>
+      <button onClick="{{setFiltroTodos}}" style="padding:4px 12px;border-radius:20px;border:1px solid {{border}};cursor:pointer;font-size:12px;background:{{fTodosBg}};color:{{fTodosColor}};font-family:inherit;font-weight:600">Todos</button>
+      <button onClick="{{setFiltroActiva}}" style="padding:4px 12px;border-radius:20px;border:1px solid {{border}};cursor:pointer;font-size:12px;background:{{fActivaBg}};color:{{fActivaColor}};font-family:inherit;font-weight:600">Activa</button>
+      <button onClick="{{setFiltroProgramada}}" style="padding:4px 12px;border-radius:20px;border:1px solid {{border}};cursor:pointer;font-size:12px;background:{{fProgBg}};color:{{fProgColor}};font-family:inherit;font-weight:600">Programada</button>
+      <button onClick="{{setFiltroVencida}}" style="padding:4px 12px;border-radius:20px;border:1px solid {{border}};cursor:pointer;font-size:12px;background:{{fVencBg}};color:{{fVencColor}};font-family:inherit;font-weight:600">Vencida</button>
+      <button onClick="{{setFiltroCancelada}}" style="padding:4px 12px;border-radius:20px;border:1px solid {{border}};cursor:pointer;font-size:12px;background:{{fCancBg}};color:{{fCancColor}};font-family:inherit;font-weight:600">Cancelada</button>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid {{border}};border-radius:8px;background:{{inputBg}};min-width:180px">
+        <span style="font-size:13px;color:{{textMuted}}">🔍</span>
+        <span style="font-size:13px;color:{{textMuted}}">Buscá operador…</span>
+      </div>
+    </div>
+
+    <!-- CON DATOS -->
+    <sc-if value="{{isData}}" hint-placeholder-val="{{true}}">
+      <div style="background:{{surface}};border-radius:12px;border:1px solid {{border}};overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:{{theadBg}}">
+              <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">Ausente</th>
+              <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">Reemplazante</th>
+              <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}};white-space:nowrap">Vigencia</th>
+              <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">Alcance</th>
+              <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">Motivo</th>
+              <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">Estado</th>
+              <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{coberturas}}" as="c" hint-placeholder-count="4">
+              <tr style="border-top:1px solid {{border}}">
+                <td style="padding:13px 16px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:32px;height:32px;border-radius:8px;background:{{c.ausColor}};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">{{c.ausIni}}</div>
+                    <div>
+                      <div style="font-size:13.5px;font-weight:600;color:{{textPrimary}};line-height:1.2">{{c.ausente}}</div>
+                      <div style="font-size:11.5px;color:{{textSecondary}}">@{{c.ausUser}}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding:13px 16px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:32px;height:32px;border-radius:8px;background:{{c.remColor}};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">{{c.remIni}}</div>
+                    <div>
+                      <div style="font-size:13.5px;font-weight:600;color:{{textPrimary}};line-height:1.2">{{c.reemplazante}}</div>
+                      <div style="font-size:11.5px;color:{{textSecondary}}">@{{c.remUser}}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding:13px 16px;white-space:nowrap">
+                  <div style="font-size:13px;color:{{textPrimary}}">{{c.desde}}</div>
+                  <div style="font-size:11.5px;color:{{textSecondary}}">→ {{c.hasta}}</div>
+                </td>
+                <td style="padding:13px 16px">
+                  <div style="font-size:13px;color:{{textPrimary}}">{{c.alcance}}</div>
+                </td>
+                <td style="padding:13px 16px">
+                  <div style="font-size:13px;color:{{textSecondary}}">{{c.motivo}}</div>
+                </td>
+                <td style="padding:13px 16px">
+                  <span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:{{c.estadoBg}};color:{{c.estadoColor}}">{{c.estado}}</span>
+                </td>
+                <td style="padding:13px 16px">
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <button title="Editar" style="width:30px;height:30px;border-radius:6px;border:1px solid {{border}};background:transparent;cursor:pointer;color:{{textSecondary}};display:flex;align-items:center;justify-content:center;font-size:14px">✏️</button>
+                    <sc-if value="{{c.canCancel}}" hint-placeholder-val="{{true}}">
+                      <button title="Cancelar cobertura" style="width:30px;height:30px;border-radius:6px;border:1px solid rgba(239,68,68,.2);background:transparent;cursor:pointer;color:{{destructive}};display:flex;align-items:center;justify-content:center;font-size:14px">⛔</button>
+                    </sc-if>
+                  </div>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:0 2px">
+        <span style="font-size:12.5px;color:{{textMuted}}">{{paginLabel}}</span>
+        <div style="display:flex;gap:6px">
+          <button style="padding:5px 14px;border:1px solid {{border}};border-radius:7px;background:transparent;cursor:pointer;font-size:12.5px;color:{{textSecondary}};font-family:inherit">← Anterior</button>
+          <button style="padding:5px 14px;border:1px solid {{border}};border-radius:7px;background:transparent;cursor:pointer;font-size:12.5px;color:{{textSecondary}};font-family:inherit">Siguiente →</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;padding:11px 16px;background:{{noteBg}};border-radius:8px">
+        <p style="font-size:12px;color:{{textMuted}};line-height:1.5">Al vencer la vigencia, los clientes vuelven automáticamente a su operador original. Las coberturas no modifican el Calendario de Gestión.</p>
+      </div>
+    </sc-if>
+
+    <!-- VACÍO -->
+    <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px;text-align:center">
+        <div style="width:60px;height:60px;border-radius:16px;background:rgba(247,148,29,.1);display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:20px">📋</div>
+        <h2 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:18px;color:{{textPrimary}};margin-bottom:8px">No hay coberturas todavía</h2>
+        <p style="font-size:14px;color:{{textSecondary}};max-width:340px;line-height:1.5;margin-bottom:24px">Creá una cobertura para cubrir la ausencia de un operador. No se modificará el Calendario de Gestión.</p>
+        <button onClick="{{openModal}}" style="padding:10px 20px;background:#F7941D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit">+ Nueva cobertura</button>
+      </div>
+    </sc-if>
+
+    <!-- CARGANDO -->
+    <sc-if value="{{isLoading}}" hint-placeholder-val="{{false}}">
+      <div style="background:{{surface}};border-radius:12px;border:1px solid {{border}};overflow-x:auto">
+        <div style="display:grid;grid-template-columns:2fr 2fr 1.5fr 1fr 1fr 1fr 80px;gap:12px;padding:11px 16px;background:{{theadBg}};border-bottom:1px solid {{border}}">
+          <div style="height:11px;border-radius:4px;background:{{skelBg}};animation:skel 1.5s ease-in-out infinite"></div>
+          <div style="height:11px;border-radius:4px;background:{{skelBg}};animation:skel 1.5s ease-in-out infinite .1s"></div>
+          <div style="height:11px;border-radius:4px;background:{{skelBg}};animation:skel 1.5s ease-in-out infinite .2s"></div>
+          <div style="height:11px;border-radius:4px;background:{{skelBg}};animation:skel 1.5s ease-in-out infinite .3s"></div>
+          <div style="height:11px;border-radius:4px;background:{{skelBg}};animation:skel 1.5s ease-in-out infinite .4s"></div>
+          <div style="height:11px;border-radius:4px;background:{{skelBg}};animation:skel 1.5s ease-in-out infinite .5s"></div>
+          <div style="height:11px;border-radius:4px;background:{{skelBg}};animation:skel 1.5s ease-in-out infinite .6s"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 2fr 1.5fr 1fr 1fr 1fr 80px;gap:12px;padding:14px 16px;border-bottom:1px solid {{border}};align-items:center;animation:skel 1.5s ease-in-out infinite">
+          <div style="display:flex;gap:10px;align-items:center"><div style="width:32px;height:32px;border-radius:8px;background:{{skelBg}};flex-shrink:0"></div><div style="flex:1;height:14px;border-radius:4px;background:{{skelBg}}"></div></div>
+          <div style="display:flex;gap:10px;align-items:center"><div style="width:32px;height:32px;border-radius:8px;background:{{skelBg}};flex-shrink:0"></div><div style="flex:1;height:14px;border-radius:4px;background:{{skelBg}}"></div></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="width:60px;height:22px;border-radius:20px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 2fr 1.5fr 1fr 1fr 1fr 80px;gap:12px;padding:14px 16px;border-bottom:1px solid {{border}};align-items:center;animation:skel 1.5s ease-in-out infinite .15s">
+          <div style="display:flex;gap:10px;align-items:center"><div style="width:32px;height:32px;border-radius:8px;background:{{skelBg}};flex-shrink:0"></div><div style="flex:1;height:14px;border-radius:4px;background:{{skelBg}}"></div></div>
+          <div style="display:flex;gap:10px;align-items:center"><div style="width:32px;height:32px;border-radius:8px;background:{{skelBg}};flex-shrink:0"></div><div style="flex:1;height:14px;border-radius:4px;background:{{skelBg}}"></div></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="width:70px;height:22px;border-radius:20px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 2fr 1.5fr 1fr 1fr 1fr 80px;gap:12px;padding:14px 16px;border-bottom:1px solid {{border}};align-items:center;animation:skel 1.5s ease-in-out infinite .3s">
+          <div style="display:flex;gap:10px;align-items:center"><div style="width:32px;height:32px;border-radius:8px;background:{{skelBg}};flex-shrink:0"></div><div style="flex:1;height:14px;border-radius:4px;background:{{skelBg}}"></div></div>
+          <div style="display:flex;gap:10px;align-items:center"><div style="width:32px;height:32px;border-radius:8px;background:{{skelBg}};flex-shrink:0"></div><div style="flex:1;height:14px;border-radius:4px;background:{{skelBg}}"></div></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="width:52px;height:22px;border-radius:20px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 2fr 1.5fr 1fr 1fr 1fr 80px;gap:12px;padding:14px 16px;border-bottom:1px solid {{border}};align-items:center;animation:skel 1.5s ease-in-out infinite .45s">
+          <div style="display:flex;gap:10px;align-items:center"><div style="width:32px;height:32px;border-radius:8px;background:{{skelBg}};flex-shrink:0"></div><div style="flex:1;height:14px;border-radius:4px;background:{{skelBg}}"></div></div>
+          <div style="display:flex;gap:10px;align-items:center"><div style="width:32px;height:32px;border-radius:8px;background:{{skelBg}};flex-shrink:0"></div><div style="flex:1;height:14px;border-radius:4px;background:{{skelBg}}"></div></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="width:65px;height:22px;border-radius:20px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 2fr 1.5fr 1fr 1fr 1fr 80px;gap:12px;padding:14px 16px;align-items:center;animation:skel 1.5s ease-in-out infinite .6s">
+          <div style="display:flex;gap:10px;align-items:center"><div style="width:32px;height:32px;border-radius:8px;background:{{skelBg}};flex-shrink:0"></div><div style="flex:1;height:14px;border-radius:4px;background:{{skelBg}}"></div></div>
+          <div style="display:flex;gap:10px;align-items:center"><div style="width:32px;height:32px;border-radius:8px;background:{{skelBg}};flex-shrink:0"></div><div style="flex:1;height:14px;border-radius:4px;background:{{skelBg}}"></div></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+          <div style="width:75px;height:22px;border-radius:20px;background:{{skelBg}}"></div>
+          <div style="height:14px;border-radius:4px;background:{{skelBg}}"></div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ERROR -->
+    <sc-if value="{{isError}}" hint-placeholder-val="{{false}}">
+      <div style="padding:16px 20px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;display:flex;align-items:center;gap:14px">
+        <span style="font-size:20px;flex-shrink:0">⚠️</span>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600;color:{{destructive}};margin-bottom:3px">No se pudieron cargar las coberturas</div>
+          <div style="font-size:13px;color:{{textSecondary}}">Error de conexión al servidor. Intentá de nuevo.</div>
+        </div>
+        <button onClick="{{setData}}" style="padding:7px 14px;border:1px solid {{destructive}};border-radius:7px;background:transparent;cursor:pointer;font-size:13px;color:{{destructive}};font-family:inherit;font-weight:600;white-space:nowrap">Reintentar</button>
+      </div>
+    </sc-if>
+
+  </div>
+</sc-if>
+
+<!-- ══ SCREEN: CALENDARIO ══ -->
+<sc-if value="{{isCal}}" hint-placeholder-val="{{false}}">
+  <div style="padding:32px 40px">
+
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:24px">
+      <div>
+        <h1 style="font-family:Montserrat,sans-serif;font-weight:800;font-size:26px;text-transform:uppercase;letter-spacing:-.03em;color:{{textPrimary}};line-height:1">CALENDARIO DE CONTADORES</h1>
+        <p style="font-size:13.5px;color:{{textSecondary}};margin-top:6px">Semana del 17 al 21 de agosto de 2026</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-top:4px">
+        <span style="font-size:13px;color:{{textSecondary}};font-weight:600">Ver por:</span>
+        <div style="display:flex;border:1px solid {{border}};border-radius:8px;overflow:hidden">
+          <button onClick="{{setCalEf}}" style="padding:7px 14px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;background:{{calEfBg}};color:{{calEfColor}}">Operador efectivo</button>
+          <button onClick="{{setCalReal}}" style="padding:7px 14px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;background:{{calRealBg}};color:{{calRealColor}};border-left:1px solid {{border}}">Operador real</button>
+        </div>
+        <button style="padding:7px 14px;border:1px solid {{border}};border-radius:8px;background:transparent;cursor:pointer;font-size:13px;color:{{textSecondary}};font-family:inherit">↻ Sincronizar</button>
+      </div>
+    </div>
+
+    <!-- Grilla semanal -->
+    <div style="background:{{surface}};border-radius:12px;border:1px solid {{border}};overflow-x:auto">
+
+      <!-- Cabeceras de días -->
+      <div style="display:grid;grid-template-columns:170px repeat(5,1fr);border-bottom:2px solid {{border}}">
+        <div style="padding:11px 16px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textMuted}}">Operador</div>
+        <div style="padding:11px 16px;text-align:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">LUN 17</div>
+        <div style="padding:11px 16px;text-align:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">MAR 18</div>
+        <div style="padding:11px 16px;text-align:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#F7941D;background:rgba(247,148,29,.06)">MIÉ 19 ●</div>
+        <div style="padding:11px 16px;text-align:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">JUE 20</div>
+        <div style="padding:11px 16px;text-align:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">VIE 21</div>
+      </div>
+
+      <!-- FILA: Victor Paez (ausente — cubierto por MG) -->
+      <div style="display:grid;grid-template-columns:170px repeat(5,1fr);border-bottom:1px solid {{border}};background:{{vpRowBg}}">
+        <div style="padding:12px 14px;display:flex;align-items:flex-start;gap:8px;border-right:1px solid {{border}}">
+          <div style="width:28px;height:28px;border-radius:7px;background:#F7941D;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0;margin-top:1px">VP</div>
+          <div>
+            <div style="font-size:12.5px;font-weight:600;color:{{textPrimary}};line-height:1.2">Victor Paez</div>
+            <div style="font-size:10.5px;color:#F7941D;font-weight:700;margin-top:2px">● Cubierto</div>
+          </div>
+        </div>
+        <!-- Lun 17 -->
+        <div style="padding:8px">
+          <div style="padding:6px 8px;border-radius:7px;background:{{vpEvBg}};border:1px solid {{vpEvBorder}}">
+            <div style="font-size:11.5px;font-weight:600;color:{{vpEvColor}};line-height:1.3">Facturación ACME SA</div>
+            <span style="display:inline-block;margin-top:3px;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;background:{{vpBadgeBg}};color:#fff;letter-spacing:.03em">{{vpBadgeText}}</span>
+          </div>
+        </div>
+        <!-- Mar 18 vacío -->
+        <div style="padding:8px"></div>
+        <!-- Mié 19 (hoy) + tooltip -->
+        <div style="padding:8px;background:rgba(247,148,29,.04);position:relative">
+          <div style="padding:6px 8px;border-radius:7px;background:{{vpEvBg}};border:1px solid {{vpEvBorder}}">
+            <div style="font-size:11.5px;font-weight:600;color:{{vpEvColor}};line-height:1.3">Facturación TechCorp</div>
+            <span style="display:inline-block;margin-top:3px;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;background:{{vpBadgeBg}};color:#fff;letter-spacing:.03em">{{vpBadgeText}}</span>
+          </div>
+        </div>
+        <!-- Jue 20 -->
+        <div style="padding:8px">
+          <div style="padding:6px 8px;border-radius:7px;background:{{vpEvBg}};border:1px solid {{vpEvBorder}}">
+            <div style="font-size:11.5px;font-weight:600;color:{{vpEvColor}};line-height:1.3">Fact. Metalpro SRL</div>
+            <span style="display:inline-block;margin-top:3px;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;background:{{vpBadgeBg}};color:#fff;letter-spacing:.03em">{{vpBadgeText}}</span>
+          </div>
+        </div>
+        <!-- Vie 21 vacío -->
+        <div style="padding:8px"></div>
+      </div>
+
+      <!-- FILA: María González (reemplazante) -->
+      <div style="display:grid;grid-template-columns:170px repeat(5,1fr);border-bottom:1px solid {{border}}">
+        <div style="padding:12px 14px;display:flex;align-items:flex-start;gap:8px;border-right:1px solid {{border}}">
+          <div style="width:28px;height:28px;border-radius:7px;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0;margin-top:1px">MG</div>
+          <div>
+            <div style="font-size:12.5px;font-weight:600;color:{{textPrimary}};line-height:1.2">María González</div>
+            <div style="font-size:10.5px;color:#2563eb;font-weight:700;margin-top:2px">● Reemplazante</div>
+          </div>
+        </div>
+        <div style="padding:8px"></div>
+        <div style="padding:8px">
+          <div style="padding:6px 8px;border-radius:7px;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2)">
+            <div style="font-size:11.5px;font-weight:600;color:#2563eb;line-height:1.3">Fact. Distribuidora Norte</div>
+          </div>
+        </div>
+        <div style="padding:8px;background:rgba(247,148,29,.04)"></div>
+        <div style="padding:8px"></div>
+        <div style="padding:8px">
+          <div style="padding:6px 8px;border-radius:7px;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2)">
+            <div style="font-size:11.5px;font-weight:600;color:#2563eb;line-height:1.3">Fact. SurCoop SA</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILA: Roberto Silva -->
+      <div style="display:grid;grid-template-columns:170px repeat(5,1fr);border-bottom:1px solid {{border}}">
+        <div style="padding:12px 14px;display:flex;align-items:flex-start;gap:8px;border-right:1px solid {{border}}">
+          <div style="width:28px;height:28px;border-radius:7px;background:#7c3aed;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0;margin-top:1px">RS</div>
+          <div><div style="font-size:12.5px;font-weight:600;color:{{textPrimary}};line-height:1.2">Roberto Silva</div></div>
+        </div>
+        <div style="padding:8px">
+          <div style="padding:6px 8px;border-radius:7px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2)">
+            <div style="font-size:11.5px;font-weight:600;color:#7c3aed;line-height:1.3">Fact. Farmacity</div>
+          </div>
+        </div>
+        <div style="padding:8px"></div>
+        <div style="padding:8px;background:rgba(247,148,29,.04)">
+          <div style="padding:6px 8px;border-radius:7px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2)">
+            <div style="font-size:11.5px;font-weight:600;color:#7c3aed;line-height:1.3">Fact. Garbarino</div>
+          </div>
+        </div>
+        <div style="padding:8px"></div>
+        <div style="padding:8px"></div>
+      </div>
+
+      <!-- FILA: Carlos Medina -->
+      <div style="display:grid;grid-template-columns:170px repeat(5,1fr)">
+        <div style="padding:12px 14px;display:flex;align-items:flex-start;gap:8px;border-right:1px solid {{border}}">
+          <div style="width:28px;height:28px;border-radius:7px;background:#059669;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0;margin-top:1px">CM</div>
+          <div><div style="font-size:12.5px;font-weight:600;color:{{textPrimary}};line-height:1.2">Carlos Medina</div></div>
+        </div>
+        <div style="padding:8px"></div>
+        <div style="padding:8px">
+          <div style="padding:6px 8px;border-radius:7px;background:rgba(5,150,105,.1);border:1px solid rgba(5,150,105,.2)">
+            <div style="font-size:11.5px;font-weight:600;color:#059669;line-height:1.3">Fact. AutoGestión SRL</div>
+          </div>
+        </div>
+        <div style="padding:8px;background:rgba(247,148,29,.04)"></div>
+        <div style="padding:8px">
+          <div style="padding:6px 8px;border-radius:7px;background:rgba(5,150,105,.1);border:1px solid rgba(5,150,105,.2)">
+            <div style="font-size:11.5px;font-weight:600;color:#059669;line-height:1.3">Fact. Agrocereales SA</div>
+          </div>
+        </div>
+        <div style="padding:8px"></div>
+      </div>
+    </div>
+
+    <!-- Tooltip demo -->
+    <div style="margin-top:16px;display:flex;align-items:flex-start;gap:16px">
+      <div style="flex:1;padding:10px 14px;background:{{noteBg}};border-radius:8px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:700;color:{{textSecondary}}">Leyenda:</span>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;background:{{vpEvBg}};border:1px solid {{vpEvBorder}}"></div><span style="font-size:12px;color:{{textSecondary}}">Evento cubierto ({{calViewLabel}})</span></div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;background:rgba(37,99,235,.15)"></div><span style="font-size:12px;color:{{textSecondary}}">Evento propio del operador</span></div>
+        <span style="font-size:12px;color:{{textMuted}}">· Cambiar switch actualiza colores y badges</span>
+      </div>
+      <!-- Tooltip ejemplo -->
+      <div style="background:{{surface}};border:1px solid {{border}};border-radius:12px;padding:14px 16px;min-width:250px;box-shadow:0 6px 20px rgba(0,0,0,.12);flex-shrink:0">
+        <div style="font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#F7941D;margin-bottom:9px">Tooltip: hover sobre evento cubierto</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:{{textMuted}};margin-bottom:7px">Cobertura Activa</div>
+        <div style="font-size:12.5px;color:{{textSecondary}};margin-bottom:3px">Ausente: <span style="font-weight:600;color:{{textPrimary}}">Victor Paez</span> <span style="color:{{textMuted}}">@vipaez</span></div>
+        <div style="font-size:12.5px;color:{{textSecondary}};margin-bottom:3px">Reemplazante: <span style="font-weight:600;color:{{textPrimary}}">María González</span> <span style="color:{{textMuted}}">@mgonzalez</span></div>
+        <div style="font-size:12.5px;color:{{textSecondary}};margin-bottom:3px">Vigencia: <span style="font-weight:600;color:{{textPrimary}}">15 ago → 29 ago 2026</span></div>
+        <div style="font-size:12.5px;color:{{textSecondary}};margin-bottom:10px">Alcance: <span style="font-weight:600;color:{{textPrimary}}">Total</span></div>
+        <span style="font-size:12px;color:#F7941D;font-weight:600;cursor:pointer">Ver detalle →</span>
+      </div>
+    </div>
+
+  </div>
+</sc-if>
+
+<!-- ══ SCREEN: LISTADO PST ══ -->
+<sc-if value="{{isListadoPst}}" hint-placeholder-val="{{false}}">
+  <div style="padding:32px 40px;max-width:1100px">
+
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:24px">
+      <div>
+        <div style="display:inline-block;padding:3px 10px;border-radius:20px;background:rgba(247,148,29,.12);font-size:10.5px;font-weight:700;color:#F7941D;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">PST / Liquidaciones</div>
+        <h1 style="font-family:Montserrat,sans-serif;font-weight:800;font-size:26px;text-transform:uppercase;letter-spacing:-.03em;color:{{textPrimary}};line-height:1">COBERTURAS PST</h1>
+        <p style="font-size:13.5px;color:{{textSecondary}};margin-top:6px;line-height:1.4">Reemplazos temporales de prestadores · Mismo componente que Contadores con <code style="font-size:12px;background:rgba(247,148,29,.1);color:#F7941D;padding:1px 5px;border-radius:4px">entityType="pst"</code></p>
+      </div>
+      <button onClick="{{openPstModal}}" style="display:flex;align-items:center;gap:7px;padding:10px 18px;background:#F7941D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;white-space:nowrap;flex-shrink:0;margin-top:2px">
+        <span style="font-size:18px;line-height:1;margin-top:-2px">+</span> Nueva cobertura
+      </button>
+    </div>
+
+    <!-- Filtros PST -->
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid {{border}}">
+      <span style="font-size:12px;font-weight:600;color:{{textSecondary}}">Estado:</span>
+      <button style="padding:4px 12px;border-radius:20px;border:1px solid {{border}};cursor:pointer;font-size:12px;background:#F7941D;color:#fff;font-family:inherit;font-weight:600">Todos</button>
+      <button style="padding:4px 12px;border-radius:20px;border:1px solid {{border}};cursor:pointer;font-size:12px;background:rgba(34,197,94,.1);color:#16a34a;font-family:inherit;font-weight:600">Activa</button>
+      <button style="padding:4px 12px;border-radius:20px;border:1px solid {{border}};cursor:pointer;font-size:12px;background:transparent;color:{{textSecondary}};font-family:inherit;font-weight:600">Programada</button>
+      <button style="padding:4px 12px;border-radius:20px;border:1px solid {{border}};cursor:pointer;font-size:12px;background:transparent;color:{{textSecondary}};font-family:inherit;font-weight:600">Vencida</button>
+      <button style="padding:4px 12px;border-radius:20px;border:1px solid {{border}};cursor:pointer;font-size:12px;background:transparent;color:{{textSecondary}};font-family:inherit;font-weight:600">Cancelada</button>
+    </div>
+
+    <!-- Tabla PST -->
+    <div style="background:{{surface}};border-radius:12px;border:1px solid {{border}};overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:{{theadBg}}">
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">PST Ausente</th>
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">PST Reemplazante</th>
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}};white-space:nowrap">Vigencia</th>
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">Alcance</th>
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">Motivo</th>
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">Estado</th>
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{{textSecondary}}">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{pstCoberturas}}" as="p" hint-placeholder-count="2">
+            <tr style="border-top:1px solid {{border}}">
+              <td style="padding:13px 16px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:8px;background:{{p.ausColor}};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">{{p.ausIni}}</div>
+                  <div>
+                    <div style="font-size:13.5px;font-weight:600;color:{{textPrimary}};line-height:1.2">{{p.ausente}}</div>
+                    <div style="font-size:11.5px;color:{{textSecondary}}">{{p.ausZona}}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="padding:13px 16px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:8px;background:{{p.remColor}};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">{{p.remIni}}</div>
+                  <div>
+                    <div style="font-size:13.5px;font-weight:600;color:{{textPrimary}};line-height:1.2">{{p.reemplazante}}</div>
+                    <div style="font-size:11.5px;color:{{textSecondary}}">{{p.remZona}}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="padding:13px 16px;white-space:nowrap">
+                <div style="font-size:13px;color:{{textPrimary}}">{{p.desde}}</div>
+                <div style="font-size:11.5px;color:{{textSecondary}}">→ {{p.hasta}}</div>
+              </td>
+              <td style="padding:13px 16px"><div style="font-size:13px;color:{{textPrimary}}">{{p.alcance}}</div></td>
+              <td style="padding:13px 16px"><div style="font-size:13px;color:{{textSecondary}}">{{p.motivo}}</div></td>
+              <td style="padding:13px 16px">
+                <span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:{{p.estadoBg}};color:{{p.estadoColor}}">{{p.estado}}</span>
+              </td>
+              <td style="padding:13px 16px">
+                <div style="display:flex;gap:6px;align-items:center">
+                  <button title="Editar" style="width:30px;height:30px;border-radius:6px;border:1px solid {{border}};background:transparent;cursor:pointer;color:{{textSecondary}};display:flex;align-items:center;justify-content:center;font-size:14px">✏️</button>
+                  <sc-if value="{{p.canCancel}}" hint-placeholder-val="{{true}}">
+                    <button title="Cancelar cobertura" style="width:30px;height:30px;border-radius:6px;border:1px solid rgba(239,68,68,.2);background:transparent;cursor:pointer;color:{{destructive}};display:flex;align-items:center;justify-content:center;font-size:14px">⛔</button>
+                  </sc-if>
+                </div>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:12px;padding:11px 16px;background:{{noteBg}};border-radius:8px">
+      <p style="font-size:12px;color:{{textMuted}};line-height:1.5">Al vencer la vigencia, las zonas vuelven automáticamente a su PST original. Las coberturas no modifican el Calendario de Gestión.</p>
+    </div>
+    <div style="margin-top:10px;padding:12px 16px;background:rgba(247,148,29,.06);border:1px solid rgba(247,148,29,.18);border-radius:8px;display:flex;align-items:flex-start;gap:10px">
+      <span style="font-size:15px;margin-top:1px">♻️</span>
+      <div>
+        <div style="font-size:12.5px;font-weight:700;color:#F7941D;margin-bottom:2px">Componente reutilizado</div>
+        <div style="font-size:12px;color:{{textSecondary}};line-height:1.5">Este listado usa el mismo <code style="font-size:11.5px;background:rgba(247,148,29,.1);padding:1px 5px;border-radius:4px;color:#F7941D">CoberturaTable</code> y <code style="font-size:11.5px;background:rgba(247,148,29,.1);padding:1px 5px;border-radius:4px;color:#F7941D">CoberturaModal</code> de Contadores. Las diferencias (labels, copy) las parametriza la prop <code style="font-size:11.5px;background:rgba(247,148,29,.1);padding:1px 5px;border-radius:4px;color:#F7941D">entityType</code>.</div>
+      </div>
+    </div>
+
+  </div>
+</sc-if>
+
+<!-- ══ MODAL: NUEVA COBERTURA (CONTADORES) ══ -->
+<sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+  <div onClick="{{closeModal}}" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px">
+    <div onClick="{{stopProp}}" style="background:{{surface}};border-radius:24px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:32px;box-shadow:0 24px 64px rgba(0,0,0,.4)">
+
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px">
+        <div>
+          <h2 style="font-family:Montserrat,sans-serif;font-weight:800;font-size:20px;text-transform:uppercase;letter-spacing:-.02em;color:{{textPrimary}}">NUEVA COBERTURA</h2>
+          <p style="font-size:13px;color:{{textSecondary}};margin-top:4px">Contadores / Operadores</p>
+        </div>
+        <button onClick="{{closeModal}}" style="width:32px;height:32px;border-radius:8px;border:1px solid {{border}};background:transparent;cursor:pointer;font-size:16px;color:{{textSecondary}};display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
+      </div>
+
+      <!-- Banner solapamiento -->
+      <sc-if value="{{solapamiento}}" hint-placeholder-val="{{true}}">
+        <div style="padding:12px 16px;background:rgba(247,148,29,.08);border:1px solid rgba(247,148,29,.25);border-radius:10px;margin-bottom:20px;display:flex;gap:10px;align-items:flex-start">
+          <span style="font-size:16px;flex-shrink:0;margin-top:1px">⚠️</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#F7941D;margin-bottom:3px">Posible solapamiento</div>
+            <div style="font-size:12.5px;color:{{textSecondary}};line-height:1.4">Ya existe una cobertura para Victor Paez del 20 ago al 25 ago. Revisá los rangos antes de guardar.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Campo: Ausente -->
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:13px;font-weight:600;color:{{textPrimary}};margin-bottom:6px">¿Quién falta? <span style="color:{{destructive}}">*</span></label>
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid #F7941D;border-radius:8px;background:{{inputBg}};cursor:pointer">
+          <div style="width:24px;height:24px;border-radius:6px;background:#F7941D;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">VP</div>
+          <span style="flex:1;font-size:13.5px;color:{{textPrimary}}">Victor Paez</span>
+          <span style="font-size:11.5px;color:{{textMuted}}">@vipaez</span>
+          <span style="font-size:11px;color:{{textMuted}}">▼</span>
+        </div>
+        <div style="font-size:11px;color:{{textMuted}};margin-top:4px">SearchableSelect — buscá por nombre o @usuario</div>
+      </div>
+
+      <!-- Campo: Reemplazante -->
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:13px;font-weight:600;color:{{textPrimary}};margin-bottom:6px">¿Quién lo cubre? <span style="color:{{destructive}}">*</span></label>
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid {{inputBorder}};border-radius:8px;background:{{inputBg}};cursor:pointer">
+          <div style="width:24px;height:24px;border-radius:6px;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">MG</div>
+          <span style="flex:1;font-size:13.5px;color:{{textPrimary}}">María González</span>
+          <span style="font-size:11.5px;color:{{textMuted}}">@mgonzalez</span>
+          <span style="font-size:11px;color:{{textMuted}}">▼</span>
+        </div>
+      </div>
+
+      <!-- Campo: Vigencia -->
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:13px;font-weight:600;color:{{textPrimary}};margin-bottom:6px">Vigencia <span style="color:{{destructive}}">*</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div style="font-size:11.5px;color:{{textSecondary}};margin-bottom:4px">Desde</div>
+            <div style="padding:10px 14px;border:1px solid #F7941D;border-radius:8px;background:{{inputBg}};font-size:13.5px;color:{{textPrimary}}">15/08/2026</div>
+          </div>
+          <div>
+            <div style="font-size:11.5px;color:{{textSecondary}};margin-bottom:4px">Hasta</div>
+            <div style="padding:10px 14px;border:1px solid {{inputBorder}};border-radius:8px;background:{{inputBg}};font-size:13.5px;color:{{textPrimary}}">29/08/2026</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:{{textMuted}};margin-top:4px">DateRangePicker — mínimo: hoy (para coberturas programadas o activas)</div>
+      </div>
+
+      <!-- Campo: Alcance -->
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:13px;font-weight:600;color:{{textPrimary}};margin-bottom:8px">Alcance</label>
+        <div style="display:flex;border:1px solid {{inputBorder}};border-radius:8px;overflow:hidden">
+          <button onClick="{{setAlcanceTotal}}" style="flex:1;padding:9px 16px;border:none;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;background:{{alcTotalBg}};color:{{alcTotalColor}}">Total</button>
+          <button onClick="{{setAlcanceParcial}}" style="flex:1;padding:9px 16px;border:none;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;background:{{alcParcBg}};color:{{alcParcColor}};border-left:1px solid {{inputBorder}}">Clientes específicos</button>
+        </div>
+        <sc-if value="{{isAlcanceParcial}}" hint-placeholder-val="{{false}}">
+          <div style="margin-top:10px">
+            <label style="display:block;font-size:12.5px;font-weight:600;color:{{textSecondary}};margin-bottom:6px">Clientes o sucursales <span style="color:{{destructive}}">*</span></label>
+            <div style="padding:8px 12px;border:1px solid {{inputBorder}};border-radius:8px;background:{{inputBg}};display:flex;align-items:center;flex-wrap:wrap;gap:6px;min-height:42px">
+              <span style="padding:3px 10px;border-radius:20px;background:rgba(247,148,29,.12);color:#F7941D;font-size:12px;font-weight:600">ACME SA ✕</span>
+              <span style="padding:3px 10px;border-radius:20px;background:rgba(247,148,29,.12);color:#F7941D;font-size:12px;font-weight:600">TechCorp ✕</span>
+              <span style="font-size:13px;color:{{textMuted}}">Buscá cliente…</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- Campo: Motivo -->
+      <div style="margin-bottom:24px">
+        <label style="display:block;font-size:13px;font-weight:600;color:{{textPrimary}};margin-bottom:6px">Motivo</label>
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid {{inputBorder}};border-radius:8px;background:{{inputBg}};cursor:pointer">
+          <span style="flex:1;font-size:13.5px;color:{{textPrimary}}">Vacaciones</span>
+          <span style="font-size:11px;color:{{textMuted}}">▼</span>
+        </div>
+      </div>
+
+      <!-- Nota de alcance -->
+      <div style="padding:12px 16px;background:{{noteBg}};border-radius:8px;margin-bottom:24px">
+        <p style="font-size:12px;color:{{textSecondary}};line-height:1.5">Esta cobertura es temporal y <strong>no modifica el Calendario de Gestión</strong>. Al finalizar el 29/08/2026, los clientes vuelven a Victor Paez automáticamente.</p>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onClick="{{closeModal}}" style="padding:10px 20px;border:1px solid {{border}};border-radius:8px;background:transparent;cursor:pointer;font-size:14px;font-weight:600;color:{{textSecondary}};font-family:inherit">Cancelar</button>
+        <button style="padding:10px 24px;background:#F7941D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit">Guardar cobertura</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ══ MODAL: NUEVA COBERTURA (PST) ══ -->
+<sc-if value="{{pstModalOpen}}" hint-placeholder-val="{{false}}">
+  <div onClick="{{closePstModal}}" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px">
+    <div onClick="{{stopProp}}" style="background:{{surface}};border-radius:24px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:32px;box-shadow:0 24px 64px rgba(0,0,0,.4)">
+
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px">
+        <div>
+          <div style="display:inline-block;padding:2px 9px;border-radius:20px;background:rgba(247,148,29,.12);font-size:10px;font-weight:700;color:#F7941D;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">PST / Liquidaciones</div>
+          <h2 style="font-family:Montserrat,sans-serif;font-weight:800;font-size:20px;text-transform:uppercase;letter-spacing:-.02em;color:{{textPrimary}}">NUEVA COBERTURA PST</h2>
+          <p style="font-size:13px;color:{{textSecondary}};margin-top:3px">Mismo componente · <code style="font-size:12px;background:rgba(247,148,29,.1);color:#F7941D;padding:1px 5px;border-radius:4px">entityType="pst"</code></p>
+        </div>
+        <button onClick="{{closePstModal}}" style="width:32px;height:32px;border-radius:8px;border:1px solid {{border}};background:transparent;cursor:pointer;font-size:16px;color:{{textSecondary}};display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
+      </div>
+
+      <!-- PST ausente -->
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:13px;font-weight:600;color:{{textPrimary}};margin-bottom:6px">¿Qué PST falta? <span style="color:{{destructive}}">*</span></label>
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid {{inputBorder}};border-radius:8px;background:{{inputBg}};cursor:pointer">
+          <div style="width:24px;height:24px;border-radius:6px;background:#F7941D;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">PC</div>
+          <div style="flex:1"><div style="font-size:13.5px;color:{{textPrimary}}">Pentacom</div><div style="font-size:11px;color:{{textMuted}}">Córdoba</div></div>
+          <span style="font-size:11px;color:{{textMuted}}">▼</span>
+        </div>
+      </div>
+
+      <!-- PST reemplazante -->
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:13px;font-weight:600;color:{{textPrimary}};margin-bottom:6px">¿Qué PST lo cubre? <span style="color:{{destructive}}">*</span></label>
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid {{inputBorder}};border-radius:8px;background:{{inputBg}};cursor:pointer">
+          <div style="width:24px;height:24px;border-radius:6px;background:#059669;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">IM</div>
+          <div style="flex:1"><div style="font-size:13.5px;color:{{textPrimary}}">Infomac</div><div style="font-size:11px;color:{{textMuted}}">Villa Mercedes / Gral. Roca</div></div>
+          <span style="font-size:11px;color:{{textMuted}}">▼</span>
+        </div>
+      </div>
+
+      <!-- Vigencia PST (vacía — muestra placeholder) -->
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:13px;font-weight:600;color:{{textPrimary}};margin-bottom:6px">Vigencia <span style="color:{{destructive}}">*</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div style="font-size:11.5px;color:{{textSecondary}};margin-bottom:4px">Desde</div>
+            <div style="padding:10px 14px;border:1px solid {{inputBorder}};border-radius:8px;background:{{inputBg}};font-size:13.5px;color:{{textMuted}}">dd/mm/aaaa</div>
+          </div>
+          <div>
+            <div style="font-size:11.5px;color:{{textSecondary}};margin-bottom:4px">Hasta</div>
+            <div style="padding:10px 14px;border:1px solid {{inputBorder}};border-radius:8px;background:{{inputBg}};font-size:13.5px;color:{{textMuted}}">dd/mm/aaaa</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alcance PST -->
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:13px;font-weight:600;color:{{textPrimary}};margin-bottom:8px">Alcance</label>
+        <div style="display:flex;border:1px solid {{inputBorder}};border-radius:8px;overflow:hidden">
+          <button onClick="{{setPstAlcanceTotal}}" style="flex:1;padding:9px 16px;border:none;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;background:{{pstAlcTotalBg}};color:{{pstAlcTotalColor}}">Total</button>
+          <button onClick="{{setPstAlcanceParcial}}" style="flex:1;padding:9px 16px;border:none;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;background:{{pstAlcParcBg}};color:{{pstAlcParcColor}};border-left:1px solid {{inputBorder}}">Zonas específicas</button>
+        </div>
+        <sc-if value="{{isPstAlcanceParcial}}" hint-placeholder-val="{{false}}">
+          <div style="margin-top:10px">
+            <label style="display:block;font-size:12.5px;font-weight:600;color:{{textSecondary}};margin-bottom:6px">Zonas o localidades <span style="color:{{destructive}}">*</span></label>
+            <div style="padding:10px 14px;border:1px solid {{inputBorder}};border-radius:8px;background:{{inputBg}};font-size:13px;color:{{textMuted}}">Buscá zona o localidad…</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- Motivo PST -->
+      <div style="margin-bottom:24px">
+        <label style="display:block;font-size:13px;font-weight:600;color:{{textPrimary}};margin-bottom:6px">Motivo</label>
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid {{inputBorder}};border-radius:8px;background:{{inputBg}};cursor:pointer">
+          <span style="flex:1;font-size:13.5px;color:{{textMuted}}">Seleccioná un motivo</span>
+          <span style="font-size:11px;color:{{textMuted}}">▼</span>
+        </div>
+      </div>
+
+      <!-- Nota PST -->
+      <div style="padding:12px 16px;background:{{noteBg}};border-radius:8px;margin-bottom:24px">
+        <p style="font-size:12px;color:{{textSecondary}};line-height:1.5">Esta cobertura es temporal y <strong>no modifica el Calendario de Gestión</strong>. Al finalizar la vigencia, las zonas vuelven a Pentacom automáticamente.</p>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onClick="{{closePstModal}}" style="padding:10px 20px;border:1px solid {{border}};border-radius:8px;background:transparent;cursor:pointer;font-size:14px;font-weight:600;color:{{textSecondary}};font-family:inherit">Cancelar</button>
+        <button style="padding:10px 24px;background:rgba(247,148,29,.35);color:rgba(255,255,255,.7);border:none;border-radius:8px;cursor:not-allowed;font-size:14px;font-weight:600;font-family:inherit" title="Completá todos los campos requeridos">Guardar cobertura</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    screen: 'listado',
+    dark: false,
+    listState: 'data',
+    modalOpen: false,
+    pstModalOpen: false,
+    alcance: 'total',
+    pstAlcance: 'total',
+    solapamiento: true,
+    calView: 'efectivo',
+    filtro: 'todos',
+  };
+
+  renderVals() {
+    const { screen, dark, listState, modalOpen, pstModalOpen, alcance, pstAlcance, solapamiento, calView, filtro } = this.state;
+
+    // ── Tema ──────────────────────────────────────────────────────
+    const bg          = dark ? '#111113' : '#FAFAF8';
+    const surface     = dark ? '#1c1c1e' : '#ffffff';
+    const border      = dark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.08)';
+    const textPrimary = dark ? 'rgba(255,255,255,.92)' : '#232323';
+    const textSecondary = dark ? 'rgba(255,255,255,.5)' : '#6b6b6b';
+    const textMuted   = dark ? 'rgba(255,255,255,.28)' : '#9a9a9a';
+    const inputBg     = dark ? '#222226' : '#ffffff';
+    const inputBorder = dark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.15)';
+    const theadBg     = dark ? 'rgba(255,255,255,.03)' : '#fafaf8';
+    const skelBg      = dark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.07)';
+    const noteBg      = dark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.03)';
+    const destructive = dark ? '#f87171' : '#dc2626';
+    const vpRowBg     = dark ? 'rgba(247,148,29,.04)' : 'rgba(247,148,29,.025)';
+
+    // ── Badges de estado ──────────────────────────────────────────
+    const estadoStyle = {
+      'Activa':     { bg: dark ? 'rgba(34,197,94,.15)'  : 'rgba(34,197,94,.1)',   color: dark ? '#4ade80' : '#16a34a' },
+      'Programada': { bg: dark ? 'rgba(247,148,29,.15)' : 'rgba(247,148,29,.12)', color: '#F7941D' },
+      'Vencida':    { bg: dark ? 'rgba(255,255,255,.07)': 'rgba(0,0,0,.06)',       color: textSecondary },
+      'Cancelada':  { bg: dark ? 'rgba(239,68,68,.15)'  : 'rgba(239,68,68,.1)',    color: destructive },
+    };
+
+    // ── Datos contadores ──────────────────────────────────────────
+    const raw = [
+      { ausente:'Victor Paez',    ausIni:'VP', ausUser:'vipaez',    ausColor:'#F7941D', reemplazante:'María González', remIni:'MG', remUser:'mgonzalez', remColor:'#2563eb', desde:'15 ago 2026', hasta:'29 ago 2026', alcance:'Total',    motivo:'Vacaciones', estado:'Activa' },
+      { ausente:'Roberto Silva',  ausIni:'RS', ausUser:'rsilva',    ausColor:'#7c3aed', reemplazante:'Ana Fernández',  remIni:'AF', remUser:'afernandez', remColor:'#0891b2', desde:'01 sep 2026', hasta:'10 sep 2026', alcance:'3 clientes',motivo:'Ausencia',   estado:'Programada' },
+      { ausente:'Carlos Medina',  ausIni:'CM', ausUser:'cmedina',   ausColor:'#059669', reemplazante:'Victor Paez',   remIni:'VP', remUser:'vipaez',    remColor:'#F7941D', desde:'01 jul 2026', hasta:'15 jul 2026', alcance:'Total',    motivo:'Vacaciones', estado:'Vencida' },
+      { ausente:'Ana Fernández',  ausIni:'AF', ausUser:'afernandez',ausColor:'#0891b2', reemplazante:'Roberto Silva', remIni:'RS', remUser:'rsilva',    remColor:'#7c3aed', desde:'10 jun 2026', hasta:'20 jun 2026', alcance:'1 cliente', motivo:'Ausencia',   estado:'Cancelada' },
+    ];
+    const filtered = filtro === 'todos' ? raw : raw.filter(r => r.estado === filtro);
+    const coberturas = filtered.map(r => ({
+      ...r,
+      estadoBg:    estadoStyle[r.estado].bg,
+      estadoColor: estadoStyle[r.estado].color,
+      canCancel:   r.estado === 'Activa' || r.estado === 'Programada',
+    }));
+
+    // ── Datos PST ─────────────────────────────────────────────────
+    const rawPst = [
+      { ausente:'Pentacom',        ausIni:'PC', ausZona:'Córdoba',                 ausColor:'#F7941D', reemplazante:'Infomac',           remIni:'IM', remZona:'Gral. Roca',              remColor:'#059669', desde:'15 ago 2026', hasta:'29 ago 2026', alcance:'Total',   motivo:'Vacaciones', estado:'Activa' },
+      { ausente:'Pertex-Supernova',ausIni:'PS', ausZona:'Rosario',                 ausColor:'#7c3aed', reemplazante:'Gestión Integral',  remIni:'GI', remZona:'San Juan',                remColor:'#0891b2', desde:'01 sep 2026', hasta:'15 sep 2026', alcance:'Parcial', motivo:'Ausencia',   estado:'Programada' },
+    ];
+    const pstCoberturas = rawPst.map(r => ({
+      ...r,
+      estadoBg:    estadoStyle[r.estado].bg,
+      estadoColor: estadoStyle[r.estado].color,
+      canCancel:   r.estado === 'Activa' || r.estado === 'Programada',
+    }));
+
+    // ── Calendario ────────────────────────────────────────────────
+    const isEf      = calView === 'efectivo';
+    const vpEvBg    = isEf ? 'rgba(37,99,235,.12)' : 'rgba(247,148,29,.12)';
+    const vpEvBorder= isEf ? 'rgba(37,99,235,.25)' : 'rgba(247,148,29,.3)';
+    const vpEvColor = isEf ? '#2563eb' : '#F7941D';
+    const vpBadgeBg = isEf ? '#2563eb' : 'rgba(100,100,100,.65)';
+    const vpBadgeText = isEf ? 'CUBIERTO POR MG' : '↩ MG cubre';
+    const calEfBg   = isEf ? '#F7941D' : (dark ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.06)');
+    const calEfColor= isEf ? '#fff' : textSecondary;
+    const calRealBg = !isEf ? '#F7941D' : (dark ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.06)');
+    const calRealColor = !isEf ? '#fff' : textSecondary;
+    const calViewLabel = isEf ? 'efectivo (MG)' : 'real (VP)';
+
+    // ── Helper: nav item ──────────────────────────────────────────
+    const nav = s => ({
+      bg: screen === s ? 'rgba(247,148,29,.12)' : 'transparent',
+      color: screen === s ? '#F7941D' : 'rgba(255,255,255,.5)',
+      fw: screen === s ? '700' : '400',
+    });
+    const nL  = nav('listado');
+    const nC  = nav('calendario');
+    const nP  = nav('listado-pst');
+
+    // ── Helper: chip de filtro ─────────────────────────────────────
+    const chip = (val, activeBg, activeColor) => ({
+      bg: filtro === val ? activeBg : (dark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.04)'),
+      color: filtro === val ? activeColor : textSecondary,
+    });
+    const fT = chip('todos', '#F7941D', '#fff');
+    const fA = chip('Activa',    dark ? 'rgba(34,197,94,.2)' : 'rgba(34,197,94,.12)', dark ? '#4ade80' : '#16a34a');
+    const fP = chip('Programada','rgba(247,148,29,.15)', '#F7941D');
+    const fV = chip('Vencida',   dark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.08)', textSecondary);
+    const fC = chip('Cancelada', dark ? 'rgba(239,68,68,.2)' : 'rgba(239,68,68,.1)', destructive);
+
+    // ── Helper: state button ──────────────────────────────────────
+    const sb = s => ({
+      bg: listState === s ? 'rgba(247,148,29,.12)' : 'rgba(255,255,255,.04)',
+      color: listState === s ? '#F7941D' : 'rgba(255,255,255,.4)',
+    });
+
+    // ── Alcance segmented ─────────────────────────────────────────
+    const seg = (cur, v) => ({
+      bg: cur === v ? '#F7941D' : (dark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.04)'),
+      color: cur === v ? '#fff' : textSecondary,
+    });
+
+    return {
+      // tema
+      bg, surface, border, textPrimary, textSecondary, textMuted,
+      inputBg, inputBorder, theadBg, skelBg, noteBg, destructive, vpRowBg,
+
+      // screens
+      isListado: screen === 'listado',
+      isCal:     screen === 'calendario',
+      isListadoPst: screen === 'listado-pst',
+
+      // list states
+      isData:    listState === 'data',
+      isEmpty:   listState === 'empty',
+      isLoading: listState === 'loading',
+      isError:   listState === 'error',
+
+      // modales
+      modalOpen, pstModalOpen,
+
+      // form
+      alcance, pstAlcance, solapamiento,
+      isAlcanceParcial:    alcance === 'parcial',
+      isPstAlcanceParcial: pstAlcance === 'parcial',
+
+      // data
+      coberturas, pstCoberturas,
+      paginLabel: `Mostrando ${filtered.length} de ${raw.length}`,
+
+      // nav
+      navListadoBg: nL.bg, navListadoColor: nL.color, navListadoFw: nL.fw,
+      navCalBg: nC.bg,     navCalColor: nC.color,     navCalFw: nC.fw,
+      navPstBg: nP.bg,     navPstColor: nP.color,     navPstFw: nP.fw,
+      navModalBg:    modalOpen    ? 'rgba(247,148,29,.12)' : 'transparent',
+      navModalColor: modalOpen    ? '#F7941D' : 'rgba(255,255,255,.4)',
+      navModalFw:    modalOpen    ? '700' : '400',
+      navPstModalBg:    pstModalOpen ? 'rgba(247,148,29,.12)' : 'transparent',
+      navPstModalColor: pstModalOpen ? '#F7941D' : 'rgba(255,255,255,.4)',
+      navPstModalFw:    pstModalOpen ? '700' : '400',
+      showListControls: screen === 'listado' || screen === 'listado-pst',
+
+      // state buttons
+      btnDataBg: sb('data').bg,     btnDataColor: sb('data').color,
+      btnEmptyBg: sb('empty').bg,   btnEmptyColor: sb('empty').color,
+      btnLoadBg: sb('loading').bg,  btnLoadColor: sb('loading').color,
+      btnErrBg: sb('error').bg,     btnErrColor: sb('error').color,
+
+      // filtros
+      fTodosBg: fT.bg, fTodosColor: fT.color,
+      fActivaBg: fA.bg, fActivaColor: fA.color,
+      fProgBg: fP.bg,  fProgColor: fP.color,
+      fVencBg: fV.bg,  fVencColor: fV.color,
+      fCancBg: fC.bg,  fCancColor: fC.color,
+
+      // alcance
+      alcTotalBg:  seg(alcance, 'total').bg,    alcTotalColor:  seg(alcance, 'total').color,
+      alcParcBg:   seg(alcance, 'parcial').bg,  alcParcColor:   seg(alcance, 'parcial').color,
+      pstAlcTotalBg:  seg(pstAlcance, 'total').bg,   pstAlcTotalColor:  seg(pstAlcance, 'total').color,
+      pstAlcParcBg:   seg(pstAlcance, 'parcial').bg, pstAlcParcColor:   seg(pstAlcance, 'parcial').color,
+
+      // calendario
+      vpEvBg, vpEvBorder, vpEvColor, vpBadgeBg, vpBadgeText,
+      calEfBg, calEfColor, calRealBg, calRealColor, calViewLabel,
+
+      // dark toggle
+      darkIcon:  dark ? '☀️' : '🌙',
+      darkLabel: dark ? 'Modo claro' : 'Modo oscuro',
+      solapLabel: solapamiento ? 'Ocultar aviso solapamiento' : 'Simular solapamiento',
+
+      // actions
+      goListado:    () => this.setState({ screen: 'listado' }),
+      goCal:        () => this.setState({ screen: 'calendario' }),
+      goListadoPst: () => this.setState({ screen: 'listado-pst' }),
+      openModal:    () => this.setState({ screen: 'listado',     modalOpen: true }),
+      closeModal:   () => this.setState({ modalOpen: false }),
+      openPstModal: () => this.setState({ screen: 'listado-pst', pstModalOpen: true }),
+      closePstModal:() => this.setState({ pstModalOpen: false }),
+      stopProp:     (e) => e && e.stopPropagation && e.stopPropagation(),
+      setData:      () => this.setState({ listState: 'data' }),
+      setEmpty:     () => this.setState({ listState: 'empty' }),
+      setLoading:   () => this.setState({ listState: 'loading' }),
+      setError:     () => this.setState({ listState: 'error' }),
+      setAlcanceTotal:    () => this.setState({ alcance: 'total' }),
+      setAlcanceParcial:  () => this.setState({ alcance: 'parcial' }),
+      setPstAlcanceTotal:   () => this.setState({ pstAlcance: 'total' }),
+      setPstAlcanceParcial: () => this.setState({ pstAlcance: 'parcial' }),
+      toggleSolap: () => this.setState(s => ({ solapamiento: !s.solapamiento })),
+      toggleDark:  () => this.setState(s => ({ dark: !s.dark })),
+      setCalEf:    () => this.setState({ calView: 'efectivo' }),
+      setCalReal:  () => this.setState({ calView: 'real' }),
+      setFiltroTodos:     () => this.setState({ filtro: 'todos' }),
+      setFiltroActiva:    () => this.setState({ filtro: 'Activa' }),
+      setFiltroProgramada:() => this.setState({ filtro: 'Programada' }),
+      setFiltroVencida:   () => this.setState({ filtro: 'Vencida' }),
+      setFiltroCancelada: () => this.setState({ filtro: 'Cancelada' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

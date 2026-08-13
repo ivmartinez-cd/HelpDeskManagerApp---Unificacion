@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Map,
   Settings,
+  UserRoundCheck,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -35,6 +36,12 @@ const SECTIONS: NavSectionDef[] = [
     label: "Principal",
     links: [
       { href: "/prestadores", label: "Prestadores Asignados", exact: true, icon: Users },
+      {
+        href: "/prestadores/coberturas",
+        label: "Coberturas",
+        exact: false,
+        icon: UserRoundCheck,
+      },
     ],
   },
   {

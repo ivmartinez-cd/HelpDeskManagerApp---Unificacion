@@ -32,10 +32,31 @@ tener que reconstruir el hilo desde los commits.
 
 ## Pendiente
 
-1. **UI**: no hay handoff visual para ningún patrón nuevo de esta sesión (catálogo de
-   operadores no cambia de UI, pero el ABM de overrides en `contadores` y `prestadores` no
-   tiene ninguna pantalla — hoy solo existe como API). Regla del proyecto: no inventar diseño
-   sin mockup/handoff — pedirlo antes de tocar frontend.
+1. ~~UI del ABM~~ — **hecho (2026-08-13, tarde)** sobre el handoff
+   `design_handoff_reasignacion_temporal/` que entregó el usuario ese mismo día:
+   `frontend/src/features/coberturas/` (un solo `CoberturasView`/`CoberturaModal`
+   parametrizado por `entityType`, como pide el handoff), rutas
+   `/contadores/coberturas` y `/prestadores/coberturas` + entradas "Coberturas" en ambos
+   submenús, primitivos nuevos `SearchableSelect` y `SegmentedControl` en
+   `shared/components/ui/`, 8 tests Playwright (`frontend/tests/coberturas.spec.ts`).
+   **Desvíos conscientes del handoff, por contrato real del backend (ADR-013):**
+   - La variante PST del handoff planteaba "un PST cubre a otro PST" — el dominio real es
+     *operador cubre a operador*, con alcance en PST. Labels adaptados; el resto del diseño
+     se respetó.
+   - Sin acción "Editar": el backend no expone update de overrides a propósito (solo
+     crear/cancelar). Se omite hasta que exista el endpoint, si algún día se pide.
+   - El solapamiento es un 409 del backend (hard block), no el warning no bloqueante del
+     handoff — se muestra el error del server en el banner del modal.
+   - Vigencia con dos `BrandInput type="date"` (patrón ya establecido en todo el DS), no el
+     `DateRangePicker` custom del handoff; modales por estado local, no por ruta
+     (`/nueva`, `/:id/editar`), como el resto de la app.
+   - Los estados Programada/Vencida se derivan por fecha en el cliente (la DB solo persiste
+     ACTIVA/CANCELADA).
+   **Fase 2 pendiente**: la capa de indicadores del Calendario (§3.3 del handoff — badges
+   "CUBIERTO POR", switch efectivo/real, tooltip) necesita backend nuevo: el contrato actual
+   de `GET /calendario` no anota los eventos con cobertura (el use case mueve el evento a la
+   vista del reemplazante sin marcar nada, y para superadmin ni resuelve overrides). Diseñar
+   ese contrato antes de tocar la UI del calendario.
 2. **`contadores`, integración de lectura sin verificar en vivo**: `GetCalendarEventsUseCase`
    está cubierto por unit tests (con mocks que reproducen el escenario exacto), pero no se probó
    contra el backend real porque requiere loguearse como un usuario regular (no superadmin)
