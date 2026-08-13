@@ -66,6 +66,20 @@ class SqlAlchemyAsignacionOverrideRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(r) for r in rows]
 
+    async def list_activos_por_reemplazante(
+        self, operador_reemplazante_id: str
+    ) -> list[AsignacionOverride]:
+        stmt = (
+            select(AsignacionOverrideModel)
+            .options(selectinload(AsignacionOverrideModel.clientes))
+            .where(
+                AsignacionOverrideModel.operador_reemplazante_id == operador_reemplazante_id,
+                AsignacionOverrideModel.estado == "ACTIVA",
+            )
+        )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_entity(r) for r in rows]
+
     async def cancelar(self, override_id: uuid.UUID) -> None:
         stmt = select(AsignacionOverrideModel).where(AsignacionOverrideModel.id == override_id)
         row = (await self._session.execute(stmt)).scalar_one_or_none()

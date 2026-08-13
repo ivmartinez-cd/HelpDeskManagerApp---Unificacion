@@ -133,6 +133,15 @@ class FakeAsignacionOverrideRepository:
             if o.operador_ausente_id == operador_ausente_id and o.estado == "ACTIVA"
         ]
 
+    async def list_activos_por_reemplazante(
+        self, operador_reemplazante_id: uuid.UUID
+    ) -> list[AsignacionOverride]:
+        return [
+            o
+            for o in self.rows.values()
+            if o.operador_reemplazante_id == operador_reemplazante_id and o.estado == "ACTIVA"
+        ]
+
     async def cancelar(self, override_id: uuid.UUID) -> None:
         if override_id in self.rows:
             self.rows[override_id].estado = "CANCELADA"

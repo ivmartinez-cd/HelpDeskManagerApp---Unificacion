@@ -87,6 +87,7 @@ async def get_calendario_events(
     db: AsyncSession = Depends(get_db),
 ) -> Page[CalendarEventSchema]:
     repo = SqlAlchemyCalendarEventRepository(db)
+    overrides = SqlAlchemyAsignacionOverrideRepository(db)
     request = GetCalendarEventsRequest(
         start_date=start,
         end_date=end,
@@ -94,7 +95,7 @@ async def get_calendario_events(
         full_name=identity.user.full_name,
         operador_id=operador_id,
     )
-    events = await GetCalendarEventsUseCase(repo).execute(request)
+    events = await GetCalendarEventsUseCase(repo, overrides).execute(request)
     schema_events = [CalendarEventSchema.model_validate(e) for e in events]
     return Page.of(schema_events, page=page, size=size)
 

@@ -47,6 +47,9 @@ from src.modules.prestadores.domain.well_known_permissions import CREATE, UPDATE
 from src.modules.prestadores.infrastructure.repositories.sqlalchemy_asignacion_historial_repository import (  # noqa: E501
     SqlAlchemyAsignacionHistorialRepository,
 )
+from src.modules.prestadores.infrastructure.repositories.sqlalchemy_asignacion_override_repository import (  # noqa: E501
+    SqlAlchemyAsignacionOverrideRepository,
+)
 from src.modules.prestadores.infrastructure.repositories.sqlalchemy_contacto_repository import (
     SqlAlchemyContactoRepository,
 )
@@ -99,6 +102,7 @@ async def list_prestadores(
         prestadores=SqlAlchemyPrestadorRepository(db),
         contactos=SqlAlchemyContactoRepository(db),
         users=SqlAlchemyUserProvider(db),
+        overrides=SqlAlchemyAsignacionOverrideRepository(db),
     )
     resumen = await ListPrestadoresAgrupados(deps).execute()
     return PrestadoresResumenResponse.from_dto(resumen)
