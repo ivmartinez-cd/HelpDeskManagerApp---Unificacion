@@ -128,8 +128,11 @@ acceso ya aceptado (ADR-012) y productivo (`sla`, `prestadores`).
   decisión); la tabla KM no gana un sync propiamente dicho sino un alta asistida — la
   curaduría de qué pares existen sigue siendo humana, a propósito.
 - El import de preliquidaciones por wsAyC (el objetivo real de la rama legacy) queda
-  explícitamente fuera: antes exige diseñar la reconciliación estado-TL vs estado-AyC
-  (hoy una sola columna `estado`) que la caracterización §4 marca como no resuelta.
+  explícitamente fuera de este ADR: antes exige diseñar la reconciliación estado-TL vs
+  estado-AyC (hoy una sola columna `estado`) que la caracterización §4 marca como no
+  resuelta. **Resuelto en ADR-015** (2026-08-13): política aditiva pura —
+  `SincronizarLiquidaciones` solo crea, nunca toca existentes, eliminando el riesgo
+  de pisado de estado.
 - Revisar esta decisión si aparece una fuente para el km esperado (ej. si el negocio
   lo carga en Siges) o si wsAyC agrega una operación de catálogo de tarifas con más
   campos que `CostoServicio`.

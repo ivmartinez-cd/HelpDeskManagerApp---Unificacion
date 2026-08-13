@@ -688,15 +688,79 @@ el hipervínculo en tres lugares:
 
 ---
 
+## Sync automático de preliquidaciones desde wsAyC SOAP — CERRADO (2026-08-13, ADR-015)
+
+ADR-014 había dejado el import de preliquidaciones por wsAyC fuera de su alcance,
+indicando que antes exigía diseñar la reconciliación estado-TL/estado-AyC. El diseño
+que resuelve esa preocupación: **solo crear, nunca tocar lo ya existente** — no hay
+reconciliación porque no hay overwrite. Ver ADR-015 para la decisión completa.
+
+### Qué se implementó
+
+- **`cd_prestador_id` (nullable, UNIQUE) en `prestadores`** — migración
+  `d6e3c1b4a829_add_prestador_cd_id.py` (encadenada antes de
+  `a7c3f81e42d9`). Identifica la empresa en wsAyC; el vínculo es permanente
+  desde el momento del setup (no cambia en runtime).
+- **`ZeepCdLiquidacionesGateway`** (`infrastructure/soap/`) — mismo patrón lazy-cached
+  que `ZeepWsAycGateway`. La clave del diseño: llama
+  `getTopLiquidations(IdEmpresa=str(cd_prestador_id))` **por empresa**, no
+  `IdEmpresa=""` global — la respuesta global no incluye `prestador_id`, así que
+  filtrar por empresa es la única forma de saber a qué prestador pertenece cada
+  liquidación sin hacer un `getLiquidationById` adicional por item.
+- **`CdLiquidacionesGateway` (Protocol)** y **`CdLiquidacion` / `CdIncidenteRow`**
+  (value objects) en domain.
+- **`SincronizarLiquidaciones`** (use case) — itera `list_con_cd_id()`, compara
+  contra `list_numeros_liquidacion()` (SET de strings, no recorre la lista), procesa
+  solo las nuevas: llama `getLiquidationDetails` para los incidentes, crea la
+  liquidación y sus incidentes, y corre `ReanalizarLiquidacion` automáticamente.
+  Sin dry-run (es aditivo puro — no hay nada que proteger contra overwrite).
+- **`POST /api/liquidaciones/sincronizar`** — requiere permiso `CREATE`; devuelve
+  `{creadas, yaExistentes, sinPrestador}`.
+- **Frontend**: botón "↻ Sincronizar CD" en el dashboard, con toast de resultado y
+  recarga automática si `creadas > 0`.
+
+### Setup inicial completado (2026-08-13)
+
+33 prestadores vinculados a su `cd_prestador_id` wsAyC (todos excepto `ZZTESTUI`,
+la fila de prueba):
+
+- 32 vinculados por matching de nombre (nombres SOAP tienen prefijo `'PST '`; la
+  coincidencia es perfecta en todos los casos).
+- `TUCUMAN` (German Naselli) → id=491 (SOAP: `'PST Tucuman - NAPA Tucuman'`) —
+  confirmado por el usuario: mismo PST renombrado; las 180 vigencias de tarifarios
+  locales coinciden exactamente con NAPA (verificado en el dataset 2 de ADR-014).
+- `PST Tres Arroyos - Carlos Douma` (id=154) — no existe en la DB; se omite a
+  propósito (no se crea).
+- `ZZTESTUI` marcado como inactivo (`activo=False`); sin `cd_prestador_id`.
+
+### Verificación end-to-end (2026-08-13)
+
+Corrida de prueba con JUJUY (`cd_prestador_id=816`) ya vinculado:
+- `creadas=114  ya_existentes=1  sin_prestador=0` — los 114 registros históricos de
+  JUJUY importados correctamente (el 1 ya existente era `3928-8`, importado
+  previamente por CSV).
+- Muestra de 3 liquidaciones verificadas: estructura correcta
+  (`numero_liquidacion`, `periodo`, `total_incidentes`, `total_importe`, incidentes
+  con empresa/sucursal/costos).
+- Los 114 se eliminaron a continuación (prueba, no producción — el usuario confirmó
+  que los datos eran correctos antes de borrarlos).
+
+Gates: lint-imports 19/19 · ruff · mypy (147 archivos módulo) · 171 unit liquidaciones
+— en verde.
+
 ## Pendiente
 
-1. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
-2. TL: confirmar los 2 conflictos menores de tarifarios (VENADO $45, INFOMAC
+1. **Correr el sync real** — los 33 prestadores están vinculados; el botón "↻
+   Sincronizar CD" del dashboard importará el histórico completo de cada uno. Decisión
+   de la TL de cuándo hacerlo (implica importar todo el historial, no solo desde ahora).
+2. **Correr en paralelo con la app legacy antes de apagarla** — no hay cutover en frío.
+3. TL: confirmar los 2 conflictos menores de tarifarios (VENADO $45, INFOMAC
    preventivo Villa Mercedes) y, si algún día hace falta, mapear
    `GSJ - *` / `TMTA122 - SGO DEL ESTERO`.
 
 ## Próximo paso sugerido
 
-Con las 8 mejoras de la TL integradas y el ADR-014 completo, arrancar el período
-de observación en paralelo con la app legacy — la config se mantiene sola desde
-Siges, así que la comparación corre sobre datos siempre al día.
+Con el sync de preliquidaciones disponible y los 33 prestadores vinculados, el paso
+siguiente es correr el sync completo (importar el histórico) y arrancar el período de
+observación en paralelo con la app legacy. La config se mantiene sola desde Siges;
+las preliquidaciones nuevas llegan con un click desde el dashboard.
