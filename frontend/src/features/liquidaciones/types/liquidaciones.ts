@@ -88,6 +88,17 @@ export interface ImportarLiquidacionResult {
   totalObservaciones: number;
 }
 
+export interface ImportExcelMaestroResult {
+  prestadorId: string;
+  prestadorCreado: boolean;
+  spstsCreados: number;
+  tarifariosCreados: number;
+  tarifariosOmitidos: number;
+  tablaKmCreadas: number;
+  tablaKmOmitidas: number;
+  hojaTablaKm: string | null;
+}
+
 export interface Incidente {
   id: string;
   numeroIncidente: string;

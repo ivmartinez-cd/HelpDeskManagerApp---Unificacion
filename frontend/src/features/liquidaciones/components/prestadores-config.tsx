@@ -11,6 +11,7 @@ import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion } from "../types/liquidaciones";
+import { PrestadoresExcelImportModal } from "./prestadores-excel-import-modal";
 
 const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
 const tdCls = "py-3 px-4 font-body text-sm";
@@ -71,6 +72,7 @@ export function PrestadoresConfig() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
+  const [excelOpen, setExcelOpen] = useState(false);
 
   // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   const load = useCallback(async () => {
@@ -131,6 +133,7 @@ export function PrestadoresConfig() {
         <h1 className="font-heading text-xl font-extrabold text-foreground">Prestadores</h1>
         <div className="flex gap-2">
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
+          <BrandButton size="sm" variant="outline" onClick={() => setExcelOpen(true)}>Cargar Excel maestro</BrandButton>
           <BrandButton size="sm" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
         </div>
       </div>
@@ -195,6 +198,7 @@ export function PrestadoresConfig() {
       )}
 
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={load} />
+      <PrestadoresExcelImportModal isOpen={excelOpen} onClose={() => setExcelOpen(false)} onSuccess={load} />
     </div>
   );
 }

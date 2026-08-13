@@ -3,6 +3,7 @@ import type {
   EstadoLiquidacion,
   EstadoObservacion,
   ImportarLiquidacionResult,
+  ImportExcelMaestroResult,
   Liquidacion,
   LiquidacionDetalle,
   LiquidacionPage,
@@ -105,6 +106,15 @@ export const liquidacionesApi = {
     const fd = new FormData();
     fd.append("file", file);
     return httpClient.postForm<{ creados: number }>("/api/liquidaciones/prestadores/import", fd);
+  },
+
+  importExcelMaestro: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return httpClient.postForm<ImportExcelMaestroResult>(
+      "/api/liquidaciones/prestadores/importar-excel",
+      fd,
+    );
   },
 
   // ── Config: SPSTs ─────────────────────────────────────────────────────────
