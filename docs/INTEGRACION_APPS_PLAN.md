@@ -476,6 +476,33 @@ real ejecutado; solo se actualiza el estado de cada módulo.
 - [ ] Apagar Liquidacion-Prestadores (repo/deploy) tras el período de observación.
 - [ ] Actualizar `PROJECT_CONTEXT.md` del padre.
 
+#### Fase 3 — VacaSync/Vacaciones (iniciada y Entrega 1 completa — 2026-08-13)
+- [x] **Design handoff creado y validado**: `design_handoff_vacaciones/` (7 pantallas
+      `.dc.html` + README con tokens; los mockups requieren servirse por HTTP, con
+      `file://` el runtime no hidrata). El tab "Usuarios y roles" del legacy no se
+      porta (la plataforma ya tiene admin de usuarios + matriz de permisos).
+- [x] **Entrega 1 (backend + frontend, verificada end-to-end)**: Gestión Humana
+      (ABM empleados/sectores/cargos/feriados con import desde argentinadatos y
+      export backup) + core de vacaciones (ciclos/saldos con carry-over, solicitudes
+      con las validaciones exactas del legacy, aprobaciones con historial, dashboard
+      con calendario mensual propio). 69 tests unit de dominio + 13 de application +
+      16 de integración + spec Playwright `frontend/tests/vacaciones.spec.ts`.
+      Módulo activado (`f4c8d19b3a72_activate_vacaciones_module`).
+- [x] **Decisiones D1–D11 documentadas en `backend/src/modules/vacaciones/README.md`**
+      (las estructurales: sector = tabla `department` de auth extendida con color;
+      jefe↔sector = `user_module_scope` con module_key `vacaciones`; roles legacy →
+      acciones view/create/approve/manage + VO `ActorVacaciones`; carry-over
+      iterativo base 2026 en lugar de la recursión frágil; apertura de ciclos lazy
+      sin background jobs; fechas como DATE).
+- [ ] Entrega 2: Asistencias (Absence legacy, 7 tipos + media jornada + reporte de
+      descuentos) + UI de Configuración (PUT config, exclusiones) + UI de Auditoría.
+- [ ] Entrega 3: reportes Excel/PDF + emails (activar el seam `Notificador` sobre el
+      mailer de auth).
+- [ ] Migrar datos reales desde el Postgres de VacaSync (mapeo documentado en el
+      README del módulo; corre contra un dump de la DB productiva, que vive en la PC
+      del trabajo — ojo con el cast de timestamps medianoche-UTC a DATE).
+- [ ] Correr en paralelo con VacaSync y apagarlo tras el período de observación.
+
 ### Fase 4 — STC Cloud (caso especial, va último)
 - [ ] Migrar `heartbeatMonitor` y `alertWorker` (BullMQ → outbox Postgres + APScheduler,
       según decisión de §2) manteniendo el contrato de API que consume el agente Windows.

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(0,0,0,.13);border-radius:3px}</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;overflow:hidden;font-family:'Source Sans 3',system-ui,sans-serif;color:#232323;font-size:14px">
+
+<!-- HEADER -->
+<header style="height:64px;flex-shrink:0;background:#fff;border-bottom:1px solid rgba(0,0,0,.08);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:10">
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:15px;color:#F7941D;line-height:1.15">Canal<br>Directo</div>
+    <div style="width:1px;height:26px;background:rgba(0,0,0,.1)"></div>
+    <div style="font-family:Montserrat,sans-serif;font-weight:700;font-size:11.5px;color:#58595B;letter-spacing:.07em;text-transform:uppercase">Gestión Humana</div>
+  </div>
+  <div style="flex:1;display:flex;justify-content:center">
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;width:320px;cursor:text">
+      <span style="color:#9a9a9a;font-size:15px">⌕</span>
+      <span style="font-size:13.5px;color:#b5b5b5">Buscar empleados, solicitudes…</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <div style="position:relative;cursor:pointer">
+      <div style="width:36px;height:36px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:16px">🔔</div>
+      <div style="position:absolute;top:7px;right:7px;width:7px;height:7px;background:#F7941D;border-radius:50%;border:1.5px solid #fff"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 8px;border-radius:8px">
+      <div style="width:36px;height:36px;border-radius:50%;background:#232323;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">AP</div>
+      <div><div style="font-size:13px;font-weight:600;line-height:1.2">Admin Portal</div><div style="font-size:11.5px;color:#8a8a8a">Administrador</div></div>
+    </div>
+  </div>
+</header>
+
+<div style="display:flex;flex:1;overflow:hidden">
+
+<!-- SIDEBAR -->
+<nav style="width:224px;flex-shrink:0;background:#fff;border-right:1px solid rgba(0,0,0,.06);display:flex;flex-direction:column;overflow-y:auto">
+  <div style="flex:1;padding:12px 8px">
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:10px 10px 5px">Vacaciones</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;background:rgba(247,148,29,.12);margin-bottom:2px"><div style="width:6px;height:6px;border-radius:50%;background:#F7941D;flex-shrink:0"></div><span style="font-size:13.5px;font-weight:600;color:#F7941D">Dashboard</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Mis solicitudes</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b;flex:1">Aprobaciones</span><div style="background:#d97706;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;font-family:Montserrat,sans-serif">4</div></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Reportes</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Auditoría</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:8px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Configuración</span></div>
+    <div style="height:1px;background:rgba(0,0,0,.05);margin:4px 2px 10px"></div>
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:0 10px 5px">Asistencias</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Calendario</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Listado y registros</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:8px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Reportes descuentos</span></div>
+    <div style="height:1px;background:rgba(0,0,0,.05);margin:4px 2px 10px"></div>
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:0 10px 5px">Gestión Humana</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Empleados</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Sectores</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Cargos</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Feriados</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Usuarios y roles</span></div>
+  </div>
+  <div style="padding:12px 14px;border-top:1px solid rgba(0,0,0,.05)"><span style="font-size:11px;color:#b5b5b5">Portal interno · Canal Directo</span></div>
+</nav>
+
+<!-- MAIN -->
+<main style="flex:1;overflow-y:auto;background:#FAFAF8;padding:28px 32px">
+
+  <div style="margin-bottom:24px;display:flex;align-items:flex-end;justify-content:space-between">
+    <div>
+      <h1 style="font-family:Montserrat,sans-serif;font-weight:800;font-size:25px;color:#232323;letter-spacing:-.02em;line-height:1">DASHBOARD</h1>
+      <p style="font-size:13.5px;color:#8a8a8a;margin-top:5px">Gestión de Vacaciones · {{todayLabel}}</p>
+    </div>
+    <button style="padding:9px 18px;background:#F7941D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit">+ Nueva solicitud</button>
+  </div>
+
+  <!-- KPI row -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);padding:20px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:14px">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(247,148,29,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">👥</div>
+        <span style="font-size:10.5px;font-weight:700;color:#8a8a8a;text-align:right;line-height:1.35;text-transform:uppercase;letter-spacing:.04em">Total<br>Empleados</span>
+      </div>
+      <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:30px;color:#F7941D;line-height:1">24</div>
+      <div style="font-size:12px;color:#8a8a8a;margin-top:4px">21 activos hoy</div>
+    </div>
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);padding:20px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:14px">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(37,99,235,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏖️</div>
+        <span style="font-size:10.5px;font-weight:700;color:#8a8a8a;text-align:right;line-height:1.35;text-transform:uppercase;letter-spacing:.04em">De vacaciones<br>hoy</span>
+      </div>
+      <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:30px;color:#2563eb;line-height:1">3</div>
+      <div style="font-size:12px;color:#8a8a8a;margin-top:4px">Soporte · Logística · Admin</div>
+    </div>
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);padding:20px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:14px">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(217,119,6,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📋</div>
+        <span style="font-size:10.5px;font-weight:700;color:#8a8a8a;text-align:right;line-height:1.35;text-transform:uppercase;letter-spacing:.04em">Solicitudes<br>Pendientes</span>
+      </div>
+      <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:30px;color:#d97706;line-height:1">4</div>
+      <div style="font-size:12px;color:#8a8a8a;margin-top:4px">Requieren aprobación</div>
+    </div>
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);padding:20px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:14px">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(5,150,105,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📅</div>
+        <span style="font-size:10.5px;font-weight:700;color:#8a8a8a;text-align:right;line-height:1.35;text-transform:uppercase;letter-spacing:.04em">Días<br>Disponibles</span>
+      </div>
+      <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:30px;color:#059669;line-height:1">15</div>
+      <div style="font-size:12px;color:#8a8a8a;margin-top:4px">de 20 totales del ciclo</div>
+    </div>
+  </div>
+
+  <!-- Grid 2fr 1fr -->
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start">
+
+    <!-- Calendar card -->
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);overflow:hidden">
+      <!-- Toolbar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(0,0,0,.06);flex-wrap:wrap;row-gap:8px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <button onClick="{{prevMonth}}" style="width:30px;height:30px;border-radius:7px;border:1px solid rgba(0,0,0,.1);background:#fff;cursor:pointer;font-size:14px;color:#4b4b4b;display:flex;align-items:center;justify-content:center">‹</button>
+          <button onClick="{{nextMonth}}" style="width:30px;height:30px;border-radius:7px;border:1px solid rgba(0,0,0,.1);background:#fff;cursor:pointer;font-size:14px;color:#4b4b4b;display:flex;align-items:center;justify-content:center">›</button>
+          <button onClick="{{goToday}}" style="padding:5px 11px;border-radius:7px;border:1px solid rgba(0,0,0,.1);background:#fff;cursor:pointer;font-size:12.5px;font-weight:600;color:#4b4b4b;font-family:inherit">Hoy</button>
+        </div>
+        <div style="font-family:Montserrat,sans-serif;font-weight:700;font-size:15px;color:#232323;white-space:nowrap">{{monthLabel}}</div>
+        <div style="display:flex;align-items:stretch;border:1px solid rgba(0,0,0,.1);border-radius:7px;overflow:hidden">
+          <button onClick="{{setMes}}" style="padding:6px 11px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;background:{{mesBg}};color:{{mesC}};line-height:1.4">Mes</button>
+          <button onClick="{{setSemana}}" style="padding:6px 11px;border:none;border-left:1px solid rgba(0,0,0,.08);cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;background:{{semBg}};color:{{semC}};line-height:1.4">Semana</button>
+          <button onClick="{{setAnio}}" style="padding:6px 11px;border:none;border-left:1px solid rgba(0,0,0,.08);cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;background:{{anioBg}};color:{{anioC}};line-height:1.4">Año</button>
+        </div>
+      </div>
+      <!-- Day headers -->
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,.06)">
+        <div style="padding:7px;text-align:center;font-size:10px;font-weight:700;color:#8a8a8a;text-transform:uppercase">Lun</div>
+        <div style="padding:7px;text-align:center;font-size:10px;font-weight:700;color:#8a8a8a;text-transform:uppercase">Mar</div>
+        <div style="padding:7px;text-align:center;font-size:10px;font-weight:700;color:#8a8a8a;text-transform:uppercase">Mié</div>
+        <div style="padding:7px;text-align:center;font-size:10px;font-weight:700;color:#8a8a8a;text-transform:uppercase">Jue</div>
+        <div style="padding:7px;text-align:center;font-size:10px;font-weight:700;color:#8a8a8a;text-transform:uppercase">Vie</div>
+        <div style="padding:7px;text-align:center;font-size:10px;font-weight:700;color:#bbb;text-transform:uppercase">Sáb</div>
+        <div style="padding:7px;text-align:center;font-size:10px;font-weight:700;color:#bbb;text-transform:uppercase">Dom</div>
+      </div>
+      <!-- Cells -->
+      <div style="display:grid;grid-template-columns:repeat(7,1fr)">
+        <sc-for list="{{cells}}" as="cell" hint-placeholder-count="42">
+          <div style="border-right:1px solid rgba(0,0,0,.04);border-bottom:1px solid rgba(0,0,0,.04);min-height:68px;padding:6px 5px;background:{{cell.bg}}">
+            <sc-if value="{{cell.valid}}" hint-placeholder-val="{{true}}">
+              <div style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:{{cell.todayBg}}">
+                <span style="font-size:12px;font-weight:{{cell.numFw}};color:{{cell.numC}}">{{cell.d}}</span>
+              </div>
+              <sc-if value="{{cell.hasEv1}}" hint-placeholder-val="{{false}}">
+                <div style="display:flex;align-items:center;gap:3px;padding:2px 5px;border-radius:4px;background:{{cell.ev1bg}};margin-top:3px">
+                  <div style="width:5px;height:5px;border-radius:50%;background:{{cell.ev1tc}};flex-shrink:0"></div>
+                  <span style="font-size:9.5px;font-weight:700;color:{{cell.ev1tc}};line-height:1;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis">{{cell.ev1ini}}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{cell.hasEv2}}" hint-placeholder-val="{{false}}">
+                <div style="display:flex;align-items:center;gap:3px;padding:2px 5px;border-radius:4px;background:{{cell.ev2bg}};margin-top:2px">
+                  <div style="width:5px;height:5px;border-radius:50%;background:{{cell.ev2tc}};flex-shrink:0"></div>
+                  <span style="font-size:9.5px;font-weight:700;color:{{cell.ev2tc}};line-height:1;white-space:nowrap">{{cell.ev2ini}}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{cell.hasEv3}}" hint-placeholder-val="{{false}}">
+                <div style="padding:2px 5px;border-radius:4px;background:rgba(0,0,0,.05);margin-top:2px">
+                  <span style="font-size:9px;color:#6b6b6b;line-height:1">+{{cell.moreCnt}}</span>
+                </div>
+              </sc-if>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <!-- Legend -->
+      <div style="padding:10px 18px;border-top:1px solid rgba(0,0,0,.06);display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <span style="font-size:11.5px;font-weight:600;color:#8a8a8a">Sectores:</span>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:8px;height:8px;border-radius:50%;background:#2563eb"></div><span style="font-size:11.5px;color:#6b6b6b">Soporte Técnico</span></div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:8px;height:8px;border-radius:50%;background:#059669"></div><span style="font-size:11.5px;color:#6b6b6b">Logística</span></div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:8px;height:8px;border-radius:50%;background:#d97706"></div><span style="font-size:11.5px;color:#6b6b6b">Administración</span></div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:8px;height:8px;border-radius:50%;background:#475569"></div><span style="font-size:11.5px;color:#6b6b6b">RRHH</span></div>
+      </div>
+    </div>
+
+    <!-- Side panel -->
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06)">
+      <div style="padding:16px 18px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <h2 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#232323">De vacaciones ahora</h2>
+          <p style="font-size:11.5px;color:#8a8a8a;margin-top:2px">{{todayLabel}}</p>
+        </div>
+        <div style="width:22px;height:22px;border-radius:50%;background:rgba(37,99,235,.1);display:flex;align-items:center;justify-content:center;font-family:Montserrat,sans-serif;font-weight:700;font-size:12px;color:#2563eb">3</div>
+      </div>
+      <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{vacHoy}}" as="v" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;background:#FAFAF8">
+            <div style="width:36px;height:36px;border-radius:9px;background:{{v.color}};display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">{{v.ini}}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600;color:#232323;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{v.nombre}}</div>
+              <div style="font-size:11.5px;color:#8a8a8a;margin-top:2px">{{v.rango}}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:10px 16px;border-top:1px solid rgba(0,0,0,.06)">
+        <a href="#" style="font-size:13px;font-weight:600;color:#F7941D;text-decoration:none">Ver todas las solicitudes →</a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { monthOffset: 0, calView: 'mes' };
+
+  renderVals() {
+    const { monthOffset, calView } = this.state;
+    const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const m = ((7 + monthOffset) % 12 + 12) % 12;
+    const y = 2026 + Math.floor((7 + monthOffset) / 12);
+    const monthLabel = `${monthNames[m].charAt(0).toUpperCase()}${monthNames[m].slice(1)} de ${y}`;
+
+    // Aug 2026: starts Saturday → index 5 (Mon=0..Sun=6)
+    const startDay = 5, daysInMonth = 31;
+    const vacData = [
+      {ini:'Laura P.',  tc:'#2563eb', bg:'rgba(37,99,235,.12)',  days:new Set([4,5,6,7,10,11,12,13,14,15])},
+      {ini:'Martín G.', tc:'#059669', bg:'rgba(5,150,105,.12)',  days:new Set([10,11,12,13,14,17,18,19,20,21,22])},
+      {ini:'Carla R.',  tc:'#d97706', bg:'rgba(217,119,6,.12)',  days:new Set([11,12,13,14,17,18,19,20,21])},
+      {ini:'Diego F.',  tc:'#2563eb', bg:'rgba(37,99,235,.12)',  days:new Set([24,25,26,27,28])},
+    ];
+    const evByDay = {};
+    vacData.forEach(v => v.days.forEach(d => { if(!evByDay[d]) evByDay[d]=[]; evByDay[d].push(v); }));
+
+    const cells = [];
+    for(let i=0; i<42; i++) {
+      const d = i - startDay + 1;
+      const valid = d >= 1 && d <= daysInMonth;
+      const isWeekend = i%7 >= 5;
+      const isToday = d === 13;
+      const evs = valid ? (evByDay[d]||[]) : [];
+      cells.push({
+        d: valid ? String(d) : '', valid, isWeekend, isToday,
+        bg: !valid ? 'rgba(0,0,0,.01)' : (isWeekend ? 'rgba(0,0,0,.02)' : '#fff'),
+        todayBg: isToday ? '#F7941D' : 'transparent',
+        numC: !valid ? 'transparent' : (isToday ? '#fff' : (isWeekend ? '#aaa' : '#232323')),
+        numFw: isToday ? '700' : '400',
+        hasEv1: evs.length >= 1, hasEv2: evs.length >= 2, hasEv3: evs.length >= 3,
+        ev1ini: evs[0]?.ini??'', ev1tc: evs[0]?.tc??'', ev1bg: evs[0]?.bg??'transparent',
+        ev2ini: evs[1]?.ini??'', ev2tc: evs[1]?.tc??'', ev2bg: evs[1]?.bg??'transparent',
+        moreCnt: evs.length > 2 ? String(evs.length - 2) : '',
+      });
+    }
+
+    const vb = v => calView===v ? '#F7941D' : '#fff';
+    const vc = v => calView===v ? '#fff' : '#4b4b4b';
+
+    const vacHoy = [
+      {ini:'LP', nombre:'Laura Pérez',     rango:'4 ago – 15 ago',   color:'#2563eb'},
+      {ini:'MG', nombre:'Martín García',   rango:'10 ago – 22 ago',  color:'#059669'},
+      {ini:'CR', nombre:'Carla Rodríguez', rango:'11 ago – 21 ago',  color:'#d97706'},
+    ];
+
+    return {
+      todayLabel: 'Miércoles 13 de agosto de 2026',
+      monthLabel, cells, vacHoy,
+      mesBg:vb('mes'),   mesC:vc('mes'),
+      semBg:vb('semana'),semC:vc('semana'),
+      anioBg:vb('anio'), anioC:vc('anio'),
+      prevMonth: () => this.setState(s=>({monthOffset:s.monthOffset-1})),
+      nextMonth: () => this.setState(s=>({monthOffset:s.monthOffset+1})),
+      goToday:   () => this.setState({monthOffset:0}),
+      setMes:    () => this.setState({calView:'mes'}),
+      setSemana: () => this.setState({calView:'semana'}),
+      setAnio:   () => this.setState({calView:'anio'}),
+    };
+  }
+}
+</script>
+</body>
+</html>

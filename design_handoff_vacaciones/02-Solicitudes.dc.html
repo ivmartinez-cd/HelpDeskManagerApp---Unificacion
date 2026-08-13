@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(0,0,0,.13);border-radius:3px}</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;overflow:hidden;font-family:'Source Sans 3',system-ui,sans-serif;color:#232323;font-size:14px">
+
+<!-- HEADER -->
+<header style="height:64px;flex-shrink:0;background:#fff;border-bottom:1px solid rgba(0,0,0,.08);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:10">
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:15px;color:#F7941D;line-height:1.15">Canal<br>Directo</div>
+    <div style="width:1px;height:26px;background:rgba(0,0,0,.1)"></div>
+    <div style="font-family:Montserrat,sans-serif;font-weight:700;font-size:11.5px;color:#58595B;letter-spacing:.07em;text-transform:uppercase">Gestión Humana</div>
+  </div>
+  <div style="flex:1;display:flex;justify-content:center">
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;width:320px">
+      <span style="color:#9a9a9a;font-size:15px">⌕</span><span style="font-size:13.5px;color:#b5b5b5">Buscar empleados, solicitudes…</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <div style="position:relative;cursor:pointer"><div style="width:36px;height:36px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:16px">🔔</div><div style="position:absolute;top:7px;right:7px;width:7px;height:7px;background:#F7941D;border-radius:50%;border:1.5px solid #fff"></div></div>
+    <div style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 8px;border-radius:8px">
+      <div style="width:36px;height:36px;border-radius:50%;background:#232323;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">AP</div>
+      <div><div style="font-size:13px;font-weight:600;line-height:1.2">Admin Portal</div><div style="font-size:11.5px;color:#8a8a8a">Administrador</div></div>
+    </div>
+  </div>
+</header>
+
+<div style="display:flex;flex:1;overflow:hidden">
+
+<!-- SIDEBAR -->
+<nav style="width:224px;flex-shrink:0;background:#fff;border-right:1px solid rgba(0,0,0,.06);display:flex;flex-direction:column;overflow-y:auto">
+  <div style="flex:1;padding:12px 8px">
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:10px 10px 5px">Vacaciones</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Dashboard</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;background:rgba(247,148,29,.12);margin-bottom:2px"><div style="width:6px;height:6px;border-radius:50%;background:#F7941D;flex-shrink:0"></div><span style="font-size:13.5px;font-weight:600;color:#F7941D">Mis solicitudes</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b;flex:1">Aprobaciones</span><div style="background:#d97706;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;font-family:Montserrat,sans-serif">4</div></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Reportes</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Auditoría</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:8px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Configuración</span></div>
+    <div style="height:1px;background:rgba(0,0,0,.05);margin:4px 2px 10px"></div>
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:0 10px 5px">Asistencias</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Calendario</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Listado y registros</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:8px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Reportes descuentos</span></div>
+    <div style="height:1px;background:rgba(0,0,0,.05);margin:4px 2px 10px"></div>
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:0 10px 5px">Gestión Humana</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Empleados</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Sectores</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Cargos</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Feriados</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Usuarios y roles</span></div>
+  </div>
+  <div style="padding:12px 14px;border-top:1px solid rgba(0,0,0,.05)"><span style="font-size:11px;color:#b5b5b5">Portal interno · Canal Directo</span></div>
+</nav>
+
+<!-- MAIN -->
+<main style="flex:1;overflow-y:auto;background:#FAFAF8;padding:28px 32px">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <div>
+      <h1 style="font-family:Montserrat,sans-serif;font-weight:800;font-size:25px;color:#232323;letter-spacing:-.02em;line-height:1">MIS SOLICITUDES</h1>
+      <p style="font-size:13.5px;color:#8a8a8a;margin-top:5px">Vacaciones · Ciclo 2026</p>
+    </div>
+    <button onClick="{{openModal}}" style="padding:9px 18px;background:#F7941D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;white-space:nowrap">+ Nueva solicitud</button>
+  </div>
+
+  <!-- Filtros -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;flex:1;max-width:260px">
+      <span style="color:#9a9a9a;font-size:14px">⌕</span><span style="font-size:13.5px;color:#b5b5b5">Buscar solicitud…</span>
+    </div>
+    <button onClick="{{setFTodas}}" style="padding:6px 14px;border-radius:20px;border:1px solid {{fTodasBd}};background:{{fTodasBg}};color:{{fTodasC}};cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">Todas</button>
+    <button onClick="{{setFPend}}" style="padding:6px 14px;border-radius:20px;border:1px solid {{fPendBd}};background:{{fPendBg}};color:{{fPendC}};cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">Pendiente</button>
+    <button onClick="{{setFAprob}}" style="padding:6px 14px;border-radius:20px;border:1px solid {{fAprobBd}};background:{{fAprobBg}};color:{{fAprobC}};cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">Aprobada</button>
+    <button onClick="{{setFRech}}" style="padding:6px 14px;border-radius:20px;border:1px solid {{fRechBd}};background:{{fRechBg}};color:{{fRechC}};cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">Rechazada</button>
+  </div>
+
+  <!-- Tabla con datos -->
+  <sc-if value="{{hasRows}}" hint-placeholder-val="{{true}}">
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);overflow:hidden">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,.07)">
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a;white-space:nowrap">Empleado</th>
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a;white-space:nowrap">Rango</th>
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Días</th>
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a;white-space:nowrap">Año cargo</th>
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Estado</th>
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Motivo</th>
+            <th style="padding:11px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+            <tr style="border-top:1px solid rgba(0,0,0,.05)">
+              <td style="padding:13px 16px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:8px;background:{{r.avatarBg}};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">{{r.ini}}</div>
+                  <div>
+                    <div style="font-size:13.5px;font-weight:600;color:#232323;line-height:1.2">{{r.nombre}}</div>
+                    <div style="font-size:11.5px;color:#8a8a8a">{{r.sector}}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="padding:13px 16px;white-space:nowrap">
+                <div style="font-size:13px;color:#232323">{{r.desde}}</div>
+                <div style="font-size:11.5px;color:#8a8a8a">→ {{r.hasta}}</div>
+              </td>
+              <td style="padding:13px 16px"><span style="font-size:13.5px;font-weight:600;color:#232323">{{r.dias}}</span><span style="font-size:11.5px;color:#8a8a8a"> hábiles</span></td>
+              <td style="padding:13px 16px;font-size:13px;color:#6b6b6b">{{r.ciclo}}</td>
+              <td style="padding:13px 16px"><span style="display:inline-block;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:600;background:{{r.estadoBg}};color:{{r.estadoC}}">{{r.estado}}</span></td>
+              <td style="padding:13px 16px;font-size:13px;color:#6b6b6b;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{r.motivo}}</td>
+              <td style="padding:13px 16px">
+                <div style="display:flex;gap:6px">
+                  <button style="padding:5px 10px;border:1px solid rgba(0,0,0,.1);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#4b4b4b;font-family:inherit">Editar</button>
+                  <button style="padding:5px 10px;border:1px solid rgba(220,38,38,.2);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#dc2626;font-family:inherit">Eliminar</button>
+                </div>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:0 2px">
+      <span style="font-size:12.5px;color:#8a8a8a">Mostrando {{rowCount}} solicitudes</span>
+      <div style="display:flex;gap:6px">
+        <button style="padding:5px 14px;border:1px solid rgba(0,0,0,.1);border-radius:7px;background:#fff;cursor:pointer;font-size:12.5px;color:#4b4b4b;font-family:inherit">← Anterior</button>
+        <button style="padding:5px 14px;border:1px solid rgba(0,0,0,.1);border-radius:7px;background:#fff;cursor:pointer;font-size:12.5px;color:#4b4b4b;font-family:inherit">Siguiente →</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Estado vacío -->
+  <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px;text-align:center;background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06)">
+      <div style="width:56px;height:56px;border-radius:14px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:18px">📋</div>
+      <h2 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:18px;color:#232323;margin-bottom:8px">No hay solicitudes todavía</h2>
+      <p style="font-size:14px;color:#8a8a8a;max-width:320px;line-height:1.5;margin-bottom:24px">Creá tu primera solicitud de vacaciones. Será enviada al manager de tu sector para aprobación.</p>
+      <button onClick="{{openModal}}" style="padding:10px 20px;background:#F7941D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit">+ Nueva solicitud</button>
+    </div>
+  </sc-if>
+
+</main>
+</div>
+
+<!-- MODAL -->
+<sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+  <div onClick="{{closeModal}}" style="position:fixed;inset:0;background:rgba(20,20,20,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px">
+    <div onClick="{{stopProp}}" style="background:#fff;border-radius:16px;width:100%;max-width:490px;box-shadow:0 20px 60px rgba(0,0,0,.22);overflow:hidden">
+
+      <!-- Modal header -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:24px 24px 0">
+        <div>
+          <h2 style="font-family:Montserrat,sans-serif;font-weight:800;font-size:18px;color:#232323;letter-spacing:-.01em">NUEVA SOLICITUD</h2>
+          <p style="font-size:13px;color:#8a8a8a;margin-top:4px">Vacaciones · Ciclo 2026</p>
+        </div>
+        <button onClick="{{closeModal}}" style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;cursor:pointer;font-size:15px;color:#6b6b6b;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
+      </div>
+
+      <!-- Validation tabs (estados de error) -->
+      <div style="display:flex;gap:6px;padding:16px 24px 0">
+        <button onClick="{{setTabNormal}}" style="padding:4px 11px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;background:{{tNormalBg}};color:{{tNormalC}}">Normal</button>
+        <button onClick="{{setTabSaldo}}" style="padding:4px 11px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;background:{{tSaldoBg}};color:{{tSaldoC}}">Saldo insuf.</button>
+        <button onClick="{{setTabSolap}}" style="padding:4px 11px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;background:{{tSolapBg}};color:{{tSolapC}}">Solapamiento</button>
+        <button onClick="{{setTabAviso}}" style="padding:4px 11px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;background:{{tAvisoBg}};color:{{tAvisoC}}">Aviso previo</button>
+      </div>
+
+      <!-- Error banners -->
+      <sc-if value="{{showSaldo}}" hint-placeholder-val="{{false}}">
+        <div style="margin:14px 24px 0;padding:11px 14px;background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.2);border-radius:9px;display:flex;gap:9px;align-items:flex-start">
+          <span style="font-size:15px;flex-shrink:0">⚠️</span>
+          <div><div style="font-size:13px;font-weight:600;color:#dc2626;margin-bottom:2px">Saldo insuficiente</div><div style="font-size:12.5px;color:#6b6b6b;line-height:1.4">Solicitás 12 días pero sólo tenés <strong>8 días disponibles</strong> en el ciclo 2026.</div></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{showSolap}}" hint-placeholder-val="{{false}}">
+        <div style="margin:14px 24px 0;padding:11px 14px;background:rgba(217,119,6,.07);border:1px solid rgba(217,119,6,.2);border-radius:9px;display:flex;gap:9px;align-items:flex-start">
+          <span style="font-size:15px;flex-shrink:0">⚠️</span>
+          <div><div style="font-size:13px;font-weight:600;color:#d97706;margin-bottom:2px">Solapamiento detectado</div><div style="font-size:12.5px;color:#6b6b6b;line-height:1.4">El período elegido superpone con la solicitud aprobada de <strong>Martín García</strong> (10/08 – 22/08). El máximo simultáneo del sector es 2 personas.</div></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{showAviso}}" hint-placeholder-val="{{false}}">
+        <div style="margin:14px 24px 0;padding:11px 14px;background:rgba(217,119,6,.07);border:1px solid rgba(217,119,6,.2);border-radius:9px;display:flex;gap:9px;align-items:flex-start">
+          <span style="font-size:15px;flex-shrink:0">⏰</span>
+          <div><div style="font-size:13px;font-weight:600;color:#d97706;margin-bottom:2px">Aviso previo insuficiente</div><div style="font-size:12.5px;color:#6b6b6b;line-height:1.4">La solicitud requiere al menos <strong>5 días hábiles</strong> de anticipación. La fecha de inicio elegida no cumple este requisito.</div></div>
+        </div>
+      </sc-if>
+
+      <!-- Fields -->
+      <div style="padding:18px 24px;display:flex;flex-direction:column;gap:16px">
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Empleado</label>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid rgba(0,0,0,.15);border-radius:8px;cursor:pointer;background:#fff">
+            <div style="width:24px;height:24px;border-radius:6px;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">LP</div>
+            <span style="flex:1;font-size:13.5px;color:#232323">Laura Pérez</span>
+            <span style="font-size:11px;color:#9a9a9a">Soporte Técnico</span>
+            <span style="font-size:12px;color:#9a9a9a">▼</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Fecha de inicio</label>
+            <div style="padding:10px 14px;border:1px solid {{showSaldo ? 'rgba(220,38,38,.4)' : 'rgba(0,0,0,.15)'}};border-radius:8px;font-size:13.5px;color:#232323;background:#fff;cursor:pointer">{{fechaDesde}}</div>
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Fecha de fin</label>
+            <div style="padding:10px 14px;border:1px solid {{showSaldo ? 'rgba(220,38,38,.4)' : 'rgba(0,0,0,.15)'}};border-radius:8px;font-size:13.5px;color:#232323;background:#fff;cursor:pointer">{{fechaHasta}}</div>
+          </div>
+        </div>
+        <sc-if value="{{showSaldo}}" hint-placeholder-val="{{false}}">
+          <div style="padding:10px 14px;background:rgba(220,38,38,.06);border-radius:8px;display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:12.5px;color:#dc2626;font-weight:600">Días solicitados: 12</span>
+            <span style="font-size:12.5px;color:#dc2626">Disponibles: <strong>8</strong></span>
+          </div>
+        </sc-if>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Ciclo de cargo</label>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid rgba(0,0,0,.15);border-radius:8px;cursor:pointer;background:#fff">
+            <span style="flex:1;font-size:13.5px;color:#232323">Automático (año de inicio)</span>
+            <span style="font-size:12px;color:#9a9a9a">▼</span>
+          </div>
+          <div style="font-size:11.5px;color:#9a9a9a;margin-top:4px">Permite cargar la solicitud al ciclo 2025 si corresponde</div>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Motivo <span style="font-weight:400;color:#9a9a9a">(opcional)</span></label>
+          <div style="padding:10px 14px;border:1px solid rgba(0,0,0,.15);border-radius:8px;height:72px;background:#fff;color:#b5b5b5;font-size:13.5px;line-height:1.4">Describí brevemente el motivo de la solicitud…</div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding:0 24px 24px">
+        <button onClick="{{closeModal}}" style="padding:10px 20px;border:1px solid rgba(0,0,0,.15);border-radius:8px;background:#fff;cursor:pointer;font-size:14px;font-weight:600;color:#4b4b4b;font-family:inherit">Cancelar</button>
+        <button style="padding:10px 22px;background:{{submitBg}};color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit">Crear solicitud</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { filter: 'todas', modalOpen: false, modalTab: 'normal' };
+
+  renderVals() {
+    const { filter, modalOpen, modalTab } = this.state;
+
+    const all = [
+      {id:1, ini:'LP', nombre:'Laura Pérez',     sector:'Soporte Técnico', avatarBg:'#2563eb', desde:'04/08/2026', hasta:'15/08/2026', dias:'10', ciclo:'2026', estado:'Aprobada',  estadoBg:'rgba(5,150,105,.12)',  estadoC:'#059669', motivo:'Vacaciones de invierno'},
+      {id:2, ini:'MG', nombre:'Martín García',   sector:'Logística',       avatarBg:'#059669', desde:'10/08/2026', hasta:'22/08/2026', dias:'10', ciclo:'2026', estado:'Aprobada',  estadoBg:'rgba(5,150,105,.12)',  estadoC:'#059669', motivo:'Descanso'},
+      {id:3, ini:'CR', nombre:'Carla Rodríguez', sector:'Administración',  avatarBg:'#d97706', desde:'01/09/2026', hasta:'12/09/2026', dias:'10', ciclo:'2026', estado:'Pendiente', estadoBg:'rgba(217,119,6,.12)', estadoC:'#d97706', motivo:'Viaje familiar'},
+      {id:4, ini:'DF', nombre:'Diego Fernández', sector:'Soporte Técnico', avatarBg:'#2563eb', desde:'15/09/2026', hasta:'19/09/2026', dias:'5',  ciclo:'2026', estado:'Pendiente', estadoBg:'rgba(217,119,6,.12)', estadoC:'#d97706', motivo:''},
+      {id:5, ini:'AM', nombre:'Ana Martínez',    sector:'RRHH',            avatarBg:'#475569', desde:'20/07/2026', hasta:'31/07/2026', dias:'10', ciclo:'2026', estado:'Rechazada', estadoBg:'rgba(220,38,38,.1)',  estadoC:'#dc2626', motivo:'Solapamiento'},
+      {id:6, ini:'PL', nombre:'Pablo López',     sector:'Logística',       avatarBg:'#059669', desde:'24/08/2026', hasta:'28/08/2026', dias:'5',  ciclo:'2026', estado:'Pendiente', estadoBg:'rgba(217,119,6,.12)', estadoC:'#d97706', motivo:''},
+    ];
+    const rows = filter === 'todas' ? all : all.filter(r => r.estado === filter);
+
+    // Filter chip styles
+    const chipStyle = (val) => {
+      const active = filter === val || (val === 'todas' && filter === 'todas');
+      const colors = { todas:'#F7941D', Pendiente:'#d97706', Aprobada:'#059669', Rechazada:'#dc2626' };
+      const bgs   = { todas:'rgba(247,148,29,.12)', Pendiente:'rgba(217,119,6,.12)', Aprobada:'rgba(5,150,105,.12)', Rechazada:'rgba(220,38,38,.1)' };
+      return {
+        bg: active ? bgs[val] : '#fff',
+        c:  active ? colors[val] : '#4b4b4b',
+        bd: active ? colors[val] : 'rgba(0,0,0,.12)',
+      };
+    };
+    const fT = chipStyle('todas'); const fP = chipStyle('Pendiente');
+    const fA = chipStyle('Aprobada'); const fR = chipStyle('Rechazada');
+
+    // Modal tab styles
+    const tabStyle = (v) => ({
+      bg: modalTab===v ? '#232323' : 'rgba(0,0,0,.06)',
+      c:  modalTab===v ? '#fff' : '#4b4b4b',
+    });
+    const tN=tabStyle('normal'); const tS=tabStyle('saldo');
+    const tSo=tabStyle('solapamiento'); const tAv=tabStyle('aviso');
+
+    const showSaldo = modalOpen && modalTab === 'saldo';
+    const showSolap = modalOpen && modalTab === 'solapamiento';
+    const showAviso = modalOpen && modalTab === 'aviso';
+
+    return {
+      rows, hasRows: rows.length > 0, isEmpty: rows.length === 0,
+      rowCount: String(rows.length),
+      modalOpen, showSaldo, showSolap, showAviso,
+      fechaDesde: modalTab==='aviso' ? '15/08/2026' : '01/09/2026',
+      fechaHasta: modalTab==='saldo' ? '20/09/2026' : (modalTab==='aviso' ? '26/08/2026' : '12/09/2026'),
+      submitBg: (showSaldo) ? 'rgba(220,38,38,.4)' : '#F7941D',
+
+      fTodasBg:fT.bg, fTodasC:fT.c, fTodasBd:fT.bd,
+      fPendBg:fP.bg,  fPendC:fP.c,  fPendBd:fP.bd,
+      fAprobBg:fA.bg, fAprobC:fA.c, fAprobBd:fA.bd,
+      fRechBg:fR.bg,  fRechC:fR.c,  fRechBd:fR.bd,
+
+      tNormalBg:tN.bg,  tNormalC:tN.c,
+      tSaldoBg:tS.bg,   tSaldoC:tS.c,
+      tSolapBg:tSo.bg,  tSolapC:tSo.c,
+      tAvisoBg:tAv.bg,  tAvisoC:tAv.c,
+
+      setFTodas: ()=>this.setState({filter:'todas'}),
+      setFPend:  ()=>this.setState({filter:'Pendiente'}),
+      setFAprob: ()=>this.setState({filter:'Aprobada'}),
+      setFRech:  ()=>this.setState({filter:'Rechazada'}),
+      openModal:  ()=>this.setState({modalOpen:true}),
+      closeModal: ()=>this.setState({modalOpen:false}),
+      stopProp:   e=>e&&e.stopPropagation&&e.stopPropagation(),
+      setTabNormal:()=>this.setState({modalTab:'normal'}),
+      setTabSaldo: ()=>this.setState({modalTab:'saldo'}),
+      setTabSolap: ()=>this.setState({modalTab:'solapamiento'}),
+      setTabAviso: ()=>this.setState({modalTab:'aviso'}),
+    };
+  }
+}
+</script>
+</body>
+</html>

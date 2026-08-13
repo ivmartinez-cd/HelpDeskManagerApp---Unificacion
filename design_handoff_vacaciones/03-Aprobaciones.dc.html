@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(0,0,0,.13);border-radius:3px}</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;overflow:hidden;font-family:'Source Sans 3',system-ui,sans-serif;color:#232323;font-size:14px">
+
+<!-- HEADER -->
+<header style="height:64px;flex-shrink:0;background:#fff;border-bottom:1px solid rgba(0,0,0,.08);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:10">
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:15px;color:#F7941D;line-height:1.15">Canal<br>Directo</div>
+    <div style="width:1px;height:26px;background:rgba(0,0,0,.1)"></div>
+    <div style="font-family:Montserrat,sans-serif;font-weight:700;font-size:11.5px;color:#58595B;letter-spacing:.07em;text-transform:uppercase">Gestión Humana</div>
+  </div>
+  <div style="flex:1;display:flex;justify-content:center"><div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;width:320px"><span style="color:#9a9a9a;font-size:15px">⌕</span><span style="font-size:13.5px;color:#b5b5b5">Buscar empleados, solicitudes…</span></div></div>
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <div style="position:relative;cursor:pointer"><div style="width:36px;height:36px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:16px">🔔</div><div style="position:absolute;top:7px;right:7px;width:7px;height:7px;background:#F7941D;border-radius:50%;border:1.5px solid #fff"></div></div>
+    <div style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 8px;border-radius:8px"><div style="width:36px;height:36px;border-radius:50%;background:#232323;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">AP</div><div><div style="font-size:13px;font-weight:600;line-height:1.2">Admin Portal</div><div style="font-size:11.5px;color:#8a8a8a">Administrador</div></div></div>
+  </div>
+</header>
+
+<div style="display:flex;flex:1;overflow:hidden">
+
+<!-- SIDEBAR -->
+<nav style="width:224px;flex-shrink:0;background:#fff;border-right:1px solid rgba(0,0,0,.06);display:flex;flex-direction:column;overflow-y:auto">
+  <div style="flex:1;padding:12px 8px">
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:10px 10px 5px">Vacaciones</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Dashboard</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Mis solicitudes</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;background:rgba(247,148,29,.12);margin-bottom:2px"><div style="width:6px;height:6px;border-radius:50%;background:#F7941D;flex-shrink:0"></div><span style="font-size:13.5px;font-weight:600;color:#F7941D;flex:1">Aprobaciones</span><div style="background:#d97706;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;font-family:Montserrat,sans-serif">4</div></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Reportes</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Auditoría</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:8px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Configuración</span></div>
+    <div style="height:1px;background:rgba(0,0,0,.05);margin:4px 2px 10px"></div>
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:0 10px 5px">Asistencias</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Calendario</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Listado y registros</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:8px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Reportes descuentos</span></div>
+    <div style="height:1px;background:rgba(0,0,0,.05);margin:4px 2px 10px"></div>
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:0 10px 5px">Gestión Humana</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Empleados</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Sectores</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Cargos</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Feriados</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Usuarios y roles</span></div>
+  </div>
+  <div style="padding:12px 14px;border-top:1px solid rgba(0,0,0,.05)"><span style="font-size:11px;color:#b5b5b5">Portal interno · Canal Directo</span></div>
+</nav>
+
+<!-- MAIN -->
+<main style="flex:1;overflow-y:auto;background:#FAFAF8;padding:28px 32px">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <h1 style="font-family:Montserrat,sans-serif;font-weight:800;font-size:25px;color:#232323;letter-spacing:-.02em;line-height:1">APROBACIONES</h1>
+      <p style="font-size:13.5px;color:#8a8a8a;margin-top:5px">Solicitudes de vacaciones · Sector Soporte Técnico</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer">
+      <span style="font-size:13.5px;color:#232323;font-weight:600">{{filterLabel}}</span>
+      <span style="font-size:12px;color:#9a9a9a">▼</span>
+    </div>
+  </div>
+
+  <!-- Pendientes -->
+  <div style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
+    <span style="font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;color:#232323;text-transform:uppercase;letter-spacing:.04em">Pendientes de aprobación</span>
+    <div style="padding:2px 9px;border-radius:20px;background:rgba(217,119,6,.12);color:#d97706;font-size:11.5px;font-weight:700;font-family:Montserrat,sans-serif">{{pendCount}}</div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
+    <sc-for list="{{pendientes}}" as="p" hint-placeholder-count="3">
+      <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.07);overflow:hidden">
+        <!-- Card header -->
+        <div onClick="{{p.toggle}}" style="display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer">
+          <div style="width:40px;height:40px;border-radius:10px;background:{{p.avatarBg}};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">{{p.ini}}</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600;color:#232323;line-height:1.2">{{p.nombre}}</div>
+            <div style="font-size:12px;color:#8a8a8a;margin-top:2px">{{p.sector}} · Solicitado el {{p.fecha}}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:13.5px;font-weight:600;color:#232323">{{p.desde}} → {{p.hasta}}</div>
+            <div style="font-size:12px;color:#8a8a8a;margin-top:2px">{{p.dias}} días hábiles · Saldo: <strong style="color:#059669">{{p.saldo}} disp.</strong></div>
+          </div>
+          <span style="font-size:14px;color:#8a8a8a;transform:{{p.chevron}};display:inline-block;transition:transform .15s;flex-shrink:0">▶</span>
+        </div>
+        <!-- Expanded area -->
+        <sc-if value="{{p.expanded}}" hint-placeholder-val="{{false}}">
+          <div style="border-top:1px solid rgba(0,0,0,.06);padding:16px 18px;background:#FAFAF8;display:flex;flex-direction:column;gap:14px">
+            <div>
+              <div style="font-size:12.5px;font-weight:600;color:#6b6b6b;margin-bottom:6px">Motivo del empleado</div>
+              <div style="font-size:13.5px;color:#232323;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid rgba(0,0,0,.08)">{{p.motivo}}</div>
+            </div>
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:600;color:#6b6b6b;margin-bottom:6px">Comentario del manager <span style="font-weight:400">(opcional)</span></label>
+              <div style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;height:64px;color:#b5b5b5;font-size:13.5px">Agregá un comentario para el empleado…</div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button onClick="{{p.approve}}" style="flex:1;padding:10px;background:rgba(5,150,105,.12);color:#059669;border:1.5px solid rgba(5,150,105,.3);border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;font-family:inherit">✓ Aprobar</button>
+              <button onClick="{{p.reject}}" style="flex:1;padding:10px;background:rgba(220,38,38,.08);color:#dc2626;border:1.5px solid rgba(220,38,38,.2);border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;font-family:inherit">✕ Rechazar</button>
+              <button style="padding:10px 18px;background:#fff;color:#4b4b4b;border:1px solid rgba(0,0,0,.12);border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit">Cancelar</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- Historial -->
+  <div style="margin-bottom:8px">
+    <span style="font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;color:#232323;text-transform:uppercase;letter-spacing:.04em">Historial de decisiones</span>
+  </div>
+  <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);overflow:hidden">
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,.07)">
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Empleado</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Rango</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Días</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Decisión</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Decisor</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Comentario</th>
+        </tr>
+      </thead>
+      <tbody>
+        <sc-for list="{{historial}}" as="h" hint-placeholder-count="3">
+          <tr style="border-top:1px solid rgba(0,0,0,.05)">
+            <td style="padding:12px 16px">
+              <div style="display:flex;align-items:center;gap:9px">
+                <div style="width:28px;height:28px;border-radius:7px;background:{{h.avatarBg}};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">{{h.ini}}</div>
+                <span style="font-size:13px;font-weight:600;color:#232323">{{h.nombre}}</span>
+              </div>
+            </td>
+            <td style="padding:12px 16px;font-size:13px;color:#232323;white-space:nowrap">{{h.rango}}</td>
+            <td style="padding:12px 16px;font-size:13px;color:#232323">{{h.dias}}</td>
+            <td style="padding:12px 16px"><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:{{h.decBg}};color:{{h.decC}}">{{h.decision}}</span></td>
+            <td style="padding:12px 16px;font-size:13px;color:#6b6b6b">{{h.decisor}}</td>
+            <td style="padding:12px 16px;font-size:13px;color:#6b6b6b;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{h.comentario}}</td>
+          </tr>
+        </sc-for>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { expanded: null, showAll: false, approved: new Set(), rejected: new Set() };
+
+  renderVals() {
+    const { expanded, showAll, approved, rejected } = this.state;
+
+    const allPend = [
+      {id:1, ini:'CR', nombre:'Carla Rodríguez', sector:'Administración', avatarBg:'#d97706', fecha:'11/08/2026', desde:'01/09/2026', hasta:'12/09/2026', dias:'10', saldo:'10', motivo:'Viaje familiar programado con anticipación.'},
+      {id:2, ini:'DF', nombre:'Diego Fernández',  sector:'Soporte Técnico',avatarBg:'#2563eb', fecha:'12/08/2026', desde:'15/09/2026', hasta:'19/09/2026', dias:'5',  saldo:'15', motivo:'Descanso.'},
+      {id:3, ini:'PL', nombre:'Pablo López',      sector:'Logística',      avatarBg:'#059669', fecha:'13/08/2026', desde:'24/08/2026', hasta:'28/08/2026', dias:'5',  saldo:'12', motivo:''},
+      {id:4, ini:'VT', nombre:'Valeria Torres',   sector:'Administración', avatarBg:'#d97706', fecha:'13/08/2026', desde:'01/10/2026', hasta:'15/10/2026', dias:'11', saldo:'15', motivo:'Vacaciones de fin de año anticipadas.'},
+    ];
+
+    const pendientes = allPend.map((p, i) => ({
+      ...p,
+      expanded: expanded === i,
+      chevron: expanded === i ? 'rotate(90deg)' : 'rotate(0deg)',
+      toggle: () => this.setState(s => ({expanded: s.expanded === i ? null : i})),
+      approve: () => this.setState(s => {const a=new Set(s.approved);a.add(p.id);return{approved:a,expanded:null};}),
+      reject:  () => this.setState(s => {const r=new Set(s.rejected);r.add(p.id);return{rejected:r,expanded:null};}),
+    }));
+
+    const historial = [
+      {ini:'LP', nombre:'Laura Pérez',   avatarBg:'#2563eb', rango:'4 ago – 15 ago',  dias:'10', decision:'Aprobada', decBg:'rgba(5,150,105,.12)',  decC:'#059669', decisor:'Admin Portal', comentario:'Aprobada sin observaciones.'},
+      {ini:'MG', nombre:'Martín García', avatarBg:'#059669', rango:'10 ago – 22 ago', dias:'10', decision:'Aprobada', decBg:'rgba(5,150,105,.12)',  decC:'#059669', decisor:'Admin Portal', comentario:'OK.'},
+      {ini:'AM', nombre:'Ana Martínez',  avatarBg:'#475569', rango:'20 jul – 31 jul',  dias:'10', decision:'Rechazada',decBg:'rgba(220,38,38,.1)',  decC:'#dc2626', decisor:'Admin Portal', comentario:'Solapamiento con 2 compañeros. Reprogramar.'},
+    ];
+
+    return {
+      pendientes, historial,
+      pendCount: String(allPend.length),
+      filterLabel: showAll ? 'Todas las solicitudes' : 'Sólo pendientes',
+      toggleFilter: () => this.setState(s=>({showAll:!s.showAll})),
+    };
+  }
+}
+</script>
+</body>
+</html>

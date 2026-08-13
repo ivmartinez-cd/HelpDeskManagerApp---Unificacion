@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(0,0,0,.13);border-radius:3px}
+input[type=range]{-webkit-appearance:none;height:5px;border-radius:3px;background:rgba(0,0,0,.1);outline:none;accent-color:#F7941D}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#F7941D;cursor:pointer;box-shadow:0 1px 4px rgba(247,148,29,.4)}
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;overflow:hidden;font-family:'Source Sans 3',system-ui,sans-serif;color:#232323;font-size:14px">
+
+<header style="height:64px;flex-shrink:0;background:#fff;border-bottom:1px solid rgba(0,0,0,.08);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:10">
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:15px;color:#F7941D;line-height:1.15">Canal<br>Directo</div><div style="width:1px;height:26px;background:rgba(0,0,0,.1)"></div><div style="font-family:Montserrat,sans-serif;font-weight:700;font-size:11.5px;color:#58595B;letter-spacing:.07em;text-transform:uppercase">Gestión Humana</div></div>
+  <div style="flex:1;display:flex;justify-content:center"><div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;width:320px"><span style="color:#9a9a9a;font-size:15px">⌕</span><span style="font-size:13.5px;color:#b5b5b5">Buscar…</span></div></div>
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><div style="position:relative;cursor:pointer"><div style="width:36px;height:36px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:16px">🔔</div><div style="position:absolute;top:7px;right:7px;width:7px;height:7px;background:#F7941D;border-radius:50%;border:1.5px solid #fff"></div></div><div style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 8px;border-radius:8px"><div style="width:36px;height:36px;border-radius:50%;background:#232323;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">AP</div><div><div style="font-size:13px;font-weight:600;line-height:1.2">Admin Portal</div><div style="font-size:11.5px;color:#8a8a8a">Administrador</div></div></div></div>
+</header>
+
+<div style="display:flex;flex:1;overflow:hidden">
+
+<nav style="width:224px;flex-shrink:0;background:#fff;border-right:1px solid rgba(0,0,0,.06);display:flex;flex-direction:column;overflow-y:auto">
+  <div style="flex:1;padding:12px 8px">
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:10px 10px 5px">Vacaciones</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Dashboard</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Mis solicitudes</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b;flex:1">Aprobaciones</span><div style="background:#d97706;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;font-family:Montserrat,sans-serif">4</div></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Reportes</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Auditoría</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;background:rgba(247,148,29,.12);margin-bottom:8px"><div style="width:6px;height:6px;border-radius:50%;background:#F7941D;flex-shrink:0"></div><span style="font-size:13.5px;font-weight:600;color:#F7941D">Configuración</span></div>
+    <div style="height:1px;background:rgba(0,0,0,.05);margin:4px 2px 10px"></div>
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:0 10px 5px">Asistencias</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Calendario</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Listado y registros</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:8px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Reportes descuentos</span></div>
+    <div style="height:1px;background:rgba(0,0,0,.05);margin:4px 2px 10px"></div>
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:0 10px 5px">Gestión Humana</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Empleados</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Sectores</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Cargos</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Feriados</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Usuarios y roles</span></div>
+  </div>
+  <div style="padding:12px 14px;border-top:1px solid rgba(0,0,0,.05)"><span style="font-size:11px;color:#b5b5b5">Portal interno · Canal Directo</span></div>
+</nav>
+
+<main style="flex:1;overflow-y:auto;background:#FAFAF8;padding:28px 32px">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+    <div>
+      <h1 style="font-family:Montserrat,sans-serif;font-weight:800;font-size:25px;color:#232323;letter-spacing:-.02em;line-height:1">CONFIGURACIÓN</h1>
+      <p style="font-size:13.5px;color:#8a8a8a;margin-top:5px">Reglas de vacaciones · Solo admin</p>
+    </div>
+    <button style="padding:9px 20px;background:#F7941D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit">Guardar cambios</button>
+  </div>
+
+  <!-- Tab bar -->
+  <div style="display:flex;gap:4px;margin-bottom:22px;background:#fff;padding:5px;border-radius:10px;border:1px solid rgba(0,0,0,.06);width:fit-content">
+    <button onClick="{{setTabAntig}}" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;background:{{tAntigBg}};color:{{tAntigC}}"><span>📊</span> Antigüedad y Días</button>
+    <button onClick="{{setTabReglas}}" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;background:{{tReglasBg}};color:{{tReglasC}}"><span>⚙️</span> Reglas de Solicitud</button>
+    <button onClick="{{setTabCiclos}}" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;background:{{tCiclosBg}};color:{{tCiclosC}}"><span>🔄</span> Ciclos Anuales</button>
+    <button onClick="{{setTabSolap}}" style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;background:{{tSolapBg}};color:{{tSolapC}}"><span>🚦</span> Solapamientos</button>
+  </div>
+
+  <!-- TAB: ANTIGÜEDAD Y DÍAS -->
+  <sc-if value="{{isAntig}}" hint-placeholder-val="{{true}}">
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);overflow:hidden">
+      <div style="padding:16px 20px;border-bottom:1px solid rgba(0,0,0,.06)">
+        <h3 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#232323">Rangos de antigüedad y días de vacaciones</h3>
+        <p style="font-size:12.5px;color:#8a8a8a;margin-top:3px">Los días se asignan automáticamente al ciclo según los años de antigüedad del empleado.</p>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,.06)">
+          <th style="padding:10px 20px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Desde (años)</th>
+          <th style="padding:10px 20px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Hasta (años)</th>
+          <th style="padding:10px 20px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Días de vacaciones</th>
+          <th style="padding:10px 20px;width:48px"></th>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{ranges}}" as="r" hint-placeholder-count="4">
+            <tr style="border-top:1px solid rgba(0,0,0,.04)">
+              <td style="padding:10px 20px"><div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid rgba(0,0,0,.12);border-radius:7px;background:#FAFAF8;width:fit-content"><span style="font-size:13.5px;color:#232323;font-weight:600">{{r.desde}}</span></div></td>
+              <td style="padding:10px 20px"><div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid rgba(0,0,0,.12);border-radius:7px;background:#FAFAF8;width:fit-content"><span style="font-size:13.5px;color:#232323;font-weight:600">{{r.hasta}}</span></div></td>
+              <td style="padding:10px 20px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid rgba(0,0,0,.12);border-radius:7px;background:#FAFAF8;width:fit-content"><span style="font-size:14px;font-weight:700;color:#F7941D">{{r.dias}}</span></div>
+                  <span style="font-size:13px;color:#8a8a8a">días hábiles</span>
+                </div>
+              </td>
+              <td style="padding:10px 20px"><button onClick="{{r.del}}" style="width:28px;height:28px;border:1px solid rgba(220,38,38,.2);border-radius:6px;background:#fff;cursor:pointer;color:#dc2626;font-size:14px;display:flex;align-items:center;justify-content:center">×</button></td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+      <div style="padding:14px 20px;border-top:1px solid rgba(0,0,0,.06)">
+        <button onClick="{{addRange}}" style="padding:7px 16px;border:1.5px dashed rgba(247,148,29,.4);border-radius:7px;background:rgba(247,148,29,.05);cursor:pointer;font-size:13px;font-weight:600;color:#F7941D;font-family:inherit">+ Agregar rango</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- TAB: REGLAS DE SOLICITUD -->
+  <sc-if value="{{isReglas}}" hint-placeholder-val="{{false}}">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+      <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);padding:22px">
+        <h3 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#232323;margin-bottom:4px">Aviso Previo Mínimo</h3>
+        <p style="font-size:12.5px;color:#8a8a8a;margin-bottom:18px;line-height:1.4">Días hábiles de anticipación mínimos que el empleado debe respetar al crear una solicitud.</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="display:flex;align-items:center;gap:0;border:1px solid rgba(0,0,0,.15);border-radius:8px;overflow:hidden">
+            <button onClick="{{decAviso}}" style="width:36px;height:40px;border:none;background:#FAFAF8;cursor:pointer;font-size:18px;color:#4b4b4b;display:flex;align-items:center;justify-content:center">−</button>
+            <div style="padding:0 16px;height:40px;display:flex;align-items:center;background:#fff;border-left:1px solid rgba(0,0,0,.08);border-right:1px solid rgba(0,0,0,.08)"><span style="font-family:Montserrat,sans-serif;font-weight:700;font-size:20px;color:#232323">{{avisoVal}}</span></div>
+            <button onClick="{{incAviso}}" style="width:36px;height:40px;border:none;background:#FAFAF8;cursor:pointer;font-size:18px;color:#4b4b4b;display:flex;align-items:center;justify-content:center">+</button>
+          </div>
+          <span style="font-size:13.5px;color:#6b6b6b">días hábiles</span>
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);padding:22px">
+        <h3 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#232323;margin-bottom:4px">Límite de Solapamiento</h3>
+        <p style="font-size:12.5px;color:#8a8a8a;margin-bottom:18px;line-height:1.4">Porcentaje máximo de empleados del sector que pueden estar de vacaciones simultáneamente.</p>
+        <div style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:13px;color:#6b6b6b">Máximo del equipo</span>
+            <span style="font-family:Montserrat,sans-serif;font-weight:700;font-size:16px;color:#F7941D">{{sliderVal}}%</span>
+          </div>
+          <input type="range" min="0" max="100" value="{{sliderVal}}" onInput="{{onSlider}}" style="width:100%;height:5px;border-radius:3px;cursor:pointer">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+          <label style="font-size:13px;color:#6b6b6b;flex:1">Cantidad fija máxima <span style="color:#9a9a9a">(0 = usar %)</span></label>
+          <div style="display:flex;align-items:center;gap:0;border:1px solid rgba(0,0,0,.15);border-radius:8px;overflow:hidden">
+            <button style="width:32px;height:36px;border:none;background:#FAFAF8;cursor:pointer;font-size:16px;color:#4b4b4b;display:flex;align-items:center;justify-content:center">−</button>
+            <div style="padding:0 14px;height:36px;display:flex;align-items:center;background:#fff;border-left:1px solid rgba(0,0,0,.08);border-right:1px solid rgba(0,0,0,.08)"><span style="font-family:Montserrat,sans-serif;font-weight:700;font-size:16px;color:#232323">0</span></div>
+            <button style="width:32px;height:36px;border:none;background:#FAFAF8;cursor:pointer;font-size:16px;color:#4b4b4b;display:flex;align-items:center;justify-content:center">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- TAB: CICLOS ANUALES -->
+  <sc-if value="{{isCiclos}}" hint-placeholder-val="{{false}}">
+    <div style="display:flex;flex-direction:column;gap:16px;max-width:560px">
+      <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);padding:22px">
+        <h3 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#232323;margin-bottom:14px">Apertura del próximo ciclo anual</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#6b6b6b;margin-bottom:6px">Día</label>
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer"><span style="flex:1;font-size:13.5px;color:#232323">1</span><span style="font-size:12px;color:#9a9a9a">▼</span></div>
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#6b6b6b;margin-bottom:6px">Mes</label>
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer"><span style="flex:1;font-size:13.5px;color:#232323">Enero</span><span style="font-size:12px;color:#9a9a9a">▼</span></div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding:11px 14px;background:#FAFAF8;border-radius:8px;font-size:12.5px;color:#6b6b6b;line-height:1.4">El próximo ciclo se abrirá el <strong>1 de enero de 2027</strong> y asignará días según los rangos de antigüedad vigentes.</div>
+      </div>
+      <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);padding:22px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+          <div>
+            <h3 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#232323;margin-bottom:4px">Arrastrar días no usados</h3>
+            <p style="font-size:12.5px;color:#8a8a8a;max-width:380px;line-height:1.4">Al iniciar el nuevo ciclo, los días no gozados del ciclo anterior se suman al saldo del empleado.</p>
+          </div>
+          <div onClick="{{toggleArrastre}}" style="width:46px;height:26px;border-radius:13px;background:{{arrastreBg}};cursor:pointer;position:relative;flex-shrink:0;margin-top:2px;transition:background .15s">
+            <div style="position:absolute;top:3px;left:{{arrastrePos}};width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- TAB: SOLAPAMIENTOS -->
+  <sc-if value="{{isSolap}}" hint-placeholder-val="{{false}}">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+      <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);padding:22px">
+        <h3 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#232323;margin-bottom:4px">Exclusiones Mutuas</h3>
+        <p style="font-size:12.5px;color:#8a8a8a;margin-bottom:18px;line-height:1.4">Pares de empleados que no pueden estar de vacaciones simultáneamente.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#FAFAF8;cursor:pointer"><span style="flex:1;font-size:13px;color:#232323">Empleado A</span><span style="font-size:12px;color:#9a9a9a">▼</span></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#FAFAF8;cursor:pointer"><span style="flex:1;font-size:13px;color:#232323">Empleado B</span><span style="font-size:12px;color:#9a9a9a">▼</span></div>
+        </div>
+        <button style="padding:7px 14px;border:1px solid rgba(247,148,29,.3);border-radius:7px;background:rgba(247,148,29,.06);cursor:pointer;font-size:13px;font-weight:600;color:#F7941D;font-family:inherit;margin-bottom:16px">+ Agregar exclusión</button>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <sc-for list="{{exclusiones}}" as="ex" hint-placeholder-count="2">
+            <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:#FAFAF8;border-radius:8px;border:1px solid rgba(0,0,0,.06)">
+              <div style="width:24px;height:24px;border-radius:6px;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif">{{ex.iniA}}</div>
+              <span style="font-size:13px;font-weight:600;color:#232323">{{ex.empA}}</span>
+              <span style="font-size:12px;color:#9a9a9a;margin:0 2px">↔</span>
+              <div style="width:24px;height:24px;border-radius:6px;background:#059669;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif">{{ex.iniB}}</div>
+              <span style="font-size:13px;font-weight:600;color:#232323">{{ex.empB}}</span>
+              <button onClick="{{ex.del}}" style="margin-left:auto;width:24px;height:24px;border:none;background:transparent;cursor:pointer;color:#9a9a9a;font-size:14px">×</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);padding:22px">
+        <h3 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#232323;margin-bottom:4px">Límites por Cargo</h3>
+        <p style="font-size:12.5px;color:#8a8a8a;margin-bottom:18px;line-height:1.4">Máximo de personas del mismo cargo que pueden estar ausentes simultáneamente.</p>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <div style="flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#FAFAF8;cursor:pointer"><span style="flex:1;font-size:13px;color:#232323">Seleccioná cargo…</span><span style="font-size:12px;color:#9a9a9a">▼</span></div>
+          <div style="display:flex;align-items:center;gap:0;border:1px solid rgba(0,0,0,.12);border-radius:8px;overflow:hidden">
+            <div style="padding:0 12px;height:40px;display:flex;align-items:center;background:#fff"><span style="font-size:13px;font-weight:600;color:#232323">1</span></div>
+            <span style="font-size:12px;color:#9a9a9a;padding:0 10px;border-left:1px solid rgba(0,0,0,.08)">máx.</span>
+          </div>
+          <button style="padding:0 14px;background:#F7941D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">+</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <sc-for list="{{cargoLimites}}" as="cl" hint-placeholder-count="2">
+            <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#FAFAF8;border-radius:8px;border:1px solid rgba(0,0,0,.06)">
+              <span style="flex:1;font-size:13px;font-weight:600;color:#232323">{{cl.cargo}}</span>
+              <span style="font-size:12.5px;color:#6b6b6b">Máx. <strong style="color:#F7941D">{{cl.limite}}</strong> simultáneo</span>
+              <button onClick="{{cl.del}}" style="width:24px;height:24px;border:none;background:transparent;cursor:pointer;color:#9a9a9a;font-size:14px">×</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    activeTab: 'antiguedad',
+    ranges: [
+      {desde:'0', hasta:'1',   dias:'14'},
+      {desde:'1', hasta:'5',   dias:'21'},
+      {desde:'5', hasta:'10',  dias:'28'},
+      {desde:'10',hasta:'∞',   dias:'35'},
+    ],
+    sliderVal: 35,
+    avisoVal: 5,
+    arrastre: true,
+    exclusiones: [
+      {iniA:'LP', empA:'Laura Pérez',   iniB:'MG', empB:'Martín García'},
+      {iniA:'CR', empA:'Carla Rodríguez',iniB:'DF',empB:'Diego Fernández'},
+    ],
+    cargoLimites: [
+      {cargo:'Jefe de Soporte', limite:'1'},
+      {cargo:'Analista Senior',  limite:'2'},
+    ],
+  };
+
+  renderVals() {
+    const { activeTab, ranges, sliderVal, avisoVal, arrastre, exclusiones, cargoLimites } = this.state;
+
+    const tb = v => ({ bg: activeTab===v ? '#F7941D' : 'transparent', c: activeTab===v ? '#fff' : '#4b4b4b' });
+    const tA=tb('antiguedad'); const tR=tb('reglas'); const tC=tb('ciclos'); const tS=tb('solapamientos');
+
+    const rangeRows = ranges.map((r,i) => ({
+      ...r,
+      del: () => this.setState(s => ({ranges: s.ranges.filter((_,j)=>j!==i)})),
+    }));
+
+    const exclRows = exclusiones.map((ex,i) => ({
+      ...ex,
+      del: () => this.setState(s => ({exclusiones: s.exclusiones.filter((_,j)=>j!==i)})),
+    }));
+
+    const clRows = cargoLimites.map((cl,i) => ({
+      ...cl,
+      del: () => this.setState(s => ({cargoLimites: s.cargoLimites.filter((_,j)=>j!==i)})),
+    }));
+
+    return {
+      isAntig:  activeTab==='antiguedad',
+      isReglas: activeTab==='reglas',
+      isCiclos: activeTab==='ciclos',
+      isSolap:  activeTab==='solapamientos',
+      ranges: rangeRows,
+      sliderVal: String(sliderVal),
+      avisoVal: String(avisoVal),
+      exclusiones: exclRows,
+      cargoLimites: clRows,
+      arrastreBg:  arrastre ? '#F7941D' : 'rgba(0,0,0,.15)',
+      arrastrePos: arrastre ? '23px' : '3px',
+
+      tAntigBg:tA.bg, tAntigC:tA.c,
+      tReglasBg:tR.bg, tReglasC:tR.c,
+      tCiclosBg:tC.bg, tCiclosC:tC.c,
+      tSolapBg:tS.bg,  tSolapC:tS.c,
+
+      setTabAntig:  ()=>this.setState({activeTab:'antiguedad'}),
+      setTabReglas: ()=>this.setState({activeTab:'reglas'}),
+      setTabCiclos: ()=>this.setState({activeTab:'ciclos'}),
+      setTabSolap:  ()=>this.setState({activeTab:'solapamientos'}),
+      addRange:     ()=>this.setState(s=>({ranges:[...s.ranges,{desde:'10',hasta:'∞',dias:'35'}]})),
+      onSlider:     e=>this.setState({sliderVal:parseInt(e.target.value)}),
+      incAviso:     ()=>this.setState(s=>({avisoVal:s.avisoVal+1})),
+      decAviso:     ()=>this.setState(s=>({avisoVal:Math.max(0,s.avisoVal-1)})),
+      toggleArrastre:()=>this.setState(s=>({arrastre:!s.arrastre})),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(0,0,0,.13);border-radius:3px}</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;overflow:hidden;font-family:'Source Sans 3',system-ui,sans-serif;color:#232323;font-size:14px">
+
+<header style="height:64px;flex-shrink:0;background:#fff;border-bottom:1px solid rgba(0,0,0,.08);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:10">
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:15px;color:#F7941D;line-height:1.15">Canal<br>Directo</div><div style="width:1px;height:26px;background:rgba(0,0,0,.1)"></div><div style="font-family:Montserrat,sans-serif;font-weight:700;font-size:11.5px;color:#58595B;letter-spacing:.07em;text-transform:uppercase">Gestión Humana</div></div>
+  <div style="flex:1;display:flex;justify-content:center"><div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;width:320px"><span style="color:#9a9a9a;font-size:15px">⌕</span><span style="font-size:13.5px;color:#b5b5b5">Buscar…</span></div></div>
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><div style="position:relative;cursor:pointer"><div style="width:36px;height:36px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:16px">🔔</div><div style="position:absolute;top:7px;right:7px;width:7px;height:7px;background:#F7941D;border-radius:50%;border:1.5px solid #fff"></div></div><div style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 8px;border-radius:8px"><div style="width:36px;height:36px;border-radius:50%;background:#232323;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">AP</div><div><div style="font-size:13px;font-weight:600;line-height:1.2">Admin Portal</div><div style="font-size:11.5px;color:#8a8a8a">Administrador</div></div></div></div>
+</header>
+
+<div style="display:flex;flex:1;overflow:hidden">
+
+<nav style="width:224px;flex-shrink:0;background:#fff;border-right:1px solid rgba(0,0,0,.06);display:flex;flex-direction:column;overflow-y:auto">
+  <div style="flex:1;padding:12px 8px">
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:10px 10px 5px">Vacaciones</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Dashboard</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Mis solicitudes</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b;flex:1">Aprobaciones</span><div style="background:#d97706;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;font-family:Montserrat,sans-serif">4</div></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Reportes</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Auditoría</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:8px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Configuración</span></div>
+    <div style="height:1px;background:rgba(0,0,0,.05);margin:4px 2px 10px"></div>
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:0 10px 5px">Asistencias</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;background:rgba(247,148,29,.12);margin-bottom:2px"><div style="width:6px;height:6px;border-radius:50%;background:#F7941D;flex-shrink:0"></div><span style="font-size:13.5px;font-weight:600;color:#F7941D">Calendario</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Listado y registros</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:8px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Reportes descuentos</span></div>
+    <div style="height:1px;background:rgba(0,0,0,.05);margin:4px 2px 10px"></div>
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:0 10px 5px">Gestión Humana</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Empleados</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Sectores</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Cargos</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Feriados</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Usuarios y roles</span></div>
+  </div>
+  <div style="padding:12px 14px;border-top:1px solid rgba(0,0,0,.05)"><span style="font-size:11px;color:#b5b5b5">Portal interno · Canal Directo</span></div>
+</nav>
+
+<main style="flex:1;overflow-y:auto;background:#FAFAF8;padding:28px 32px">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+    <div>
+      <h1 style="font-family:Montserrat,sans-serif;font-weight:800;font-size:25px;color:#232323;letter-spacing:-.02em;line-height:1">ASISTENCIAS</h1>
+      <p style="font-size:13.5px;color:#8a8a8a;margin-top:5px">Registro de bajas y ausentismo</p>
+    </div>
+    <button onClick="{{openModal}}" style="padding:9px 18px;background:#F7941D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;white-space:nowrap;margin-top:4px">+ Registrar baja</button>
+  </div>
+
+  <!-- Sub-tab bar -->
+  <div style="display:flex;gap:0;margin-bottom:22px;border-bottom:2px solid rgba(0,0,0,.07)">
+    <button onClick="{{setViewCal}}" style="padding:10px 18px;border:none;border-bottom:2px solid {{tabCalBd}};margin-bottom:-2px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;background:transparent;color:{{tabCalC}}">Calendario</button>
+    <button onClick="{{setViewList}}" style="padding:10px 18px;border:none;border-bottom:2px solid {{tabListBd}};margin-bottom:-2px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;background:transparent;color:{{tabListC}}">Listado y registros</button>
+    <button onClick="{{setViewRep}}" style="padding:10px 18px;border:none;border-bottom:2px solid {{tabRepBd}};margin-bottom:-2px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;background:transparent;color:{{tabRepC}}">Reportes descuentos</button>
+  </div>
+
+  <!-- VIEW: CALENDARIO -->
+  <sc-if value="{{isCalView}}" hint-placeholder-val="{{true}}">
+
+    <!-- 6 KPI mini-cards -->
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+        <div style="background:#fff;border-radius:10px;border:1px solid rgba(0,0,0,.06);padding:14px 12px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a;margin-bottom:8px;line-height:1.3">{{k.label}}</div>
+          <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:22px;color:{{k.color}};line-height:1">{{k.val}}</div>
+          <div style="font-size:11px;color:#9a9a9a;margin-top:4px">{{k.sub}}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- Filters row -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer">
+        <span style="font-size:13.5px;font-weight:600;color:#232323">Laura Pérez</span>
+        <span style="font-size:12px;color:#9a9a9a">▼</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer">
+        <span style="font-size:13.5px;font-weight:600;color:#232323">2026</span>
+        <span style="font-size:12px;color:#9a9a9a">▼</span>
+      </div>
+      <div style="font-size:12.5px;color:#9a9a9a">Soporte Técnico · Analista Senior · Ingreso: 15/03/2019</div>
+    </div>
+
+    <!-- 2-col grid: grid + panel -->
+    <div style="display:grid;grid-template-columns:1fr 240px;gap:16px;align-items:start">
+
+      <!-- Annual grid card -->
+      <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);overflow:hidden">
+        <div style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between">
+          <h3 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#232323">Calendario de bajas · 2026</h3>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <sc-for list="{{legend}}" as="lg" hint-placeholder-count="7">
+              <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;border-radius:2px;background:{{lg.color}};flex-shrink:0"></div><span style="font-size:10.5px;color:#6b6b6b">{{lg.label}}</span></div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="padding:16px 18px;overflow-x:auto">
+          <!-- Day number headers -->
+          <div style="display:flex;align-items:center;gap:2px;margin-bottom:6px;padding-left:46px">
+            <sc-for list="{{dayHeaders}}" as="dh" hint-placeholder-count="31">
+              <div style="width:18px;text-align:center;font-size:8.5px;font-weight:700;color:#c5c5c5;flex-shrink:0">{{dh}}</div>
+            </sc-for>
+          </div>
+          <!-- Month rows -->
+          <sc-for list="{{monthRows}}" as="row" hint-placeholder-count="12">
+            <div style="display:flex;align-items:center;gap:2px;margin-bottom:3px">
+              <div style="width:44px;flex-shrink:0;font-size:11.5px;font-weight:600;color:#6b6b6b;text-align:right;padding-right:6px">{{row.m}}</div>
+              <sc-for list="{{row.cells}}" as="cell" hint-placeholder-count="31">
+                <div style="width:18px;height:22px;border-radius:3px;background:{{cell.bg}};flex-shrink:0"></div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- Side panel: resumen -->
+      <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06)">
+        <div style="padding:14px 16px;border-bottom:1px solid rgba(0,0,0,.06)">
+          <h3 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:13.5px;color:#232323">Resumen de bajas · 2026</h3>
+          <p style="font-size:11.5px;color:#8a8a8a;margin-top:2px">Laura Pérez</p>
+        </div>
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{tipoTotales}}" as="tt" hint-placeholder-count="7">
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#FAFAF8">
+              <div style="width:8px;height:8px;border-radius:50%;background:{{tt.color}};flex-shrink:0"></div>
+              <span style="flex:1;font-size:12.5px;color:#4b4b4b;line-height:1.2">{{tt.label}}</span>
+              <span style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:{{tt.color}}">{{tt.total}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding:10px 14px;border-top:1px solid rgba(0,0,0,.06)">
+          <div style="font-size:11.5px;color:#8a8a8a;margin-bottom:4px">Total días con baja</div>
+          <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:22px;color:#232323">19 <span style="font-size:13px;font-weight:400;color:#8a8a8a">días</span></div>
+        </div>
+      </div>
+
+    </div>
+  </sc-if>
+
+  <!-- VIEW: LISTADO -->
+  <sc-if value="{{isListView}}" hint-placeholder-val="{{false}}">
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;flex:1;max-width:280px"><span style="color:#9a9a9a;font-size:15px">⌕</span><span style="font-size:13.5px;color:#b5b5b5">Buscar baja…</span></div>
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer"><span style="font-size:13.5px;color:#232323">Todos los tipos</span><span style="font-size:12px;color:#9a9a9a">▼</span></div>
+    </div>
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);overflow:hidden">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,.07)">
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Empleado</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Fecha</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Tipo</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Duración</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Observaciones</th>
+          <th style="padding:10px 16px;width:90px"></th>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{bajasListado}}" as="b" hint-placeholder-count="6">
+            <tr style="border-top:1px solid rgba(0,0,0,.05)">
+              <td style="padding:11px 16px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="width:28px;height:28px;border-radius:7px;background:{{b.avatarBg}};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">{{b.ini}}</div>
+                  <span style="font-size:13px;font-weight:600;color:#232323">{{b.nombre}}</span>
+                </div>
+              </td>
+              <td style="padding:11px 16px;font-size:13px;color:#232323;white-space:nowrap">{{b.fecha}}</td>
+              <td style="padding:11px 16px"><span style="display:inline-flex;align-items:center;gap:5px"><div style="width:7px;height:7px;border-radius:50%;background:{{b.tipoColor}};flex-shrink:0"></div><span style="font-size:13px;color:#232323">{{b.tipo}}</span></span></td>
+              <td style="padding:11px 16px;font-size:13px;color:#6b6b6b">{{b.dur}}</td>
+              <td style="padding:11px 16px;font-size:13px;color:#6b6b6b;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{b.obs}}</td>
+              <td style="padding:11px 16px">
+                <div style="display:flex;gap:5px">
+                  <button style="padding:4px 9px;border:1px solid rgba(0,0,0,.1);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#4b4b4b;font-family:inherit">Editar</button>
+                  <button style="padding:4px 9px;border:1px solid rgba(220,38,38,.2);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#dc2626;font-family:inherit">Eliminar</button>
+                </div>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+  </sc-if>
+
+  <!-- VIEW: REPORTES -->
+  <sc-if value="{{isRepView}}" hint-placeholder-val="{{false}}">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#232323">Días descontables por técnico · Agosto 2026</h3>
+      <button style="padding:8px 16px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#4b4b4b;font-family:inherit">📥 Exportar</button>
+    </div>
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);overflow:hidden">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,.07)">
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Técnico</th>
+          <th style="padding:10px 16px;text-align:right;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Días desc.</th>
+          <th style="padding:10px 16px;text-align:right;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Días enf.</th>
+          <th style="padding:10px 16px;text-align:right;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Guardias</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Detalle</th>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{descuentosReport}}" as="dr" hint-placeholder-count="5">
+            <tr style="border-top:1px solid rgba(0,0,0,.05)">
+              <td style="padding:11px 16px">
+                <div style="display:flex;align-items:center;gap:8px"><div style="width:26px;height:26px;border-radius:6px;background:{{dr.color}};display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">{{dr.ini}}</div><span style="font-size:13px;font-weight:600;color:#232323">{{dr.nombre}}</span></div>
+              </td>
+              <td style="padding:11px 16px;text-align:right;font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#ef4444">{{dr.desc}}</td>
+              <td style="padding:11px 16px;text-align:right;font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#f59e0b">{{dr.enf}}</td>
+              <td style="padding:11px 16px;text-align:right;font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#475569">{{dr.guard}}</td>
+              <td style="padding:11px 16px;font-size:12.5px;color:#6b6b6b">{{dr.detalle}}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+  </sc-if>
+
+</main>
+</div>
+
+<!-- MODAL nueva baja -->
+<sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+  <div onClick="{{closeModal}}" style="position:fixed;inset:0;background:rgba(20,20,20,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px">
+    <div onClick="{{stopProp}}" style="background:#fff;border-radius:16px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.22)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 24px 0">
+        <h2 style="font-family:Montserrat,sans-serif;font-weight:800;font-size:18px;color:#232323;letter-spacing:-.01em">REGISTRAR BAJA</h2>
+        <button onClick="{{closeModal}}" style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;cursor:pointer;font-size:15px;color:#6b6b6b;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+      <div style="padding:18px 24px;display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Empleado/s</label>
+          <div style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;min-height:44px;display:flex;align-items:center;flex-wrap:wrap;gap:5px">
+            <span style="padding:3px 10px;border-radius:20px;background:rgba(37,99,235,.12);color:#2563eb;font-size:12px;font-weight:600">Laura Pérez ✕</span>
+            <span style="font-size:13px;color:#b5b5b5">Agregar empleado…</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Fecha inicio</label><div style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-size:13.5px;color:#232323;background:#fff">13/08/2026</div></div>
+          <div><label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Fecha fin</label><div style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-size:13.5px;color:#232323;background:#fff">13/08/2026</div></div>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Tipo de baja</label>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;cursor:pointer;background:#fff">
+            <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0"></div>
+            <span style="flex:1;font-size:13.5px;color:#232323">Baja por enfermedad</span>
+            <span style="font-size:12px;color:#9a9a9a">▼</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div onClick="{{toggleMedio}}" style="width:18px;height:18px;border-radius:4px;border:1.5px solid {{medioBorder}};background:{{medioBg}};cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><sc-if value="{{medioChecked}}" hint-placeholder-val="{{false}}"><span style="color:#fff;font-size:11px;font-weight:700;line-height:1">✓</span></sc-if></div>
+          <span style="font-size:13.5px;color:#232323">Medio día</span>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Observaciones <span style="font-weight:400;color:#9a9a9a">(opcional)</span></label>
+          <div style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;height:70px;color:#b5b5b5;font-size:13.5px">Agregá observaciones sobre la baja…</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding:0 24px 22px">
+        <button onClick="{{closeModal}}" style="padding:10px 18px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer;font-size:14px;font-weight:600;color:#4b4b4b;font-family:inherit">Cancelar</button>
+        <button style="padding:10px 20px;background:#F7941D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit">Registrar</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { activeView: 'calendario', modalOpen: false, medioChecked: false };
+
+  renderVals() {
+    const { activeView, modalOpen, medioChecked } = this.state;
+
+    const tb = (v, border) => ({ bd: activeView===v ? '#F7941D' : 'transparent', c: activeView===v ? '#F7941D' : '#4b4b4b' });
+    const tCal  = tb('calendario');
+    const tList = tb('listado');
+    const tRep  = tb('reportes');
+
+    // Attendance data (key: 'month-day' 1-indexed)
+    const typeColors = {
+      enfermedad:'#f59e0b', tramites:'#2563eb', home:'#9ca3af',
+      vacaciones:'#F7941D', descuento:'#ef4444', guardia:'#475569', examen:'#059669',
+    };
+    const attData = {
+      '1-15':'enfermedad','1-16':'enfermedad',
+      '2-10':'tramites',
+      '3-5':'home','3-12':'home','3-19':'home','3-26':'home',
+      '4-7':'examen','4-8':'examen',
+      '5-15':'descuento',
+      '6-20':'guardia','6-21':'guardia',
+      '7-2':'home','7-9':'home','7-16':'home',
+      '8-4':'vacaciones','8-5':'vacaciones','8-6':'vacaciones','8-7':'vacaciones',
+      '8-10':'vacaciones','8-11':'vacaciones','8-12':'vacaciones','8-13':'vacaciones',
+      '8-14':'vacaciones','8-15':'vacaciones',
+    };
+
+    const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const daysInMonth = [31,28,31,30,31,30,31,31,30,31,30,31];
+    const dayHeaders = Array.from({length:31},(_,i)=>String(i+1));
+
+    const monthRows = monthNames.map((m,mi)=>{
+      const cells=[];
+      for(let d=1;d<=31;d++){
+        if(d>daysInMonth[mi]){ cells.push({bg:'transparent'}); continue; }
+        const key=`${mi+1}-${d}`;
+        const dow=new Date(2026,mi,d).getDay();
+        const isWe=dow===0||dow===6;
+        const type=attData[key];
+        cells.push({bg: type ? typeColors[type] : (isWe ? 'rgba(0,0,0,.05)' : 'rgba(0,0,0,.07)')});
+      }
+      return {m, cells};
+    });
+
+    const kpis = [
+      {label:'Días de baja',        color:'#ef4444', val:'3',   sub:'en agosto'},
+      {label:'Días trabajados',      color:'#059669', val:'156', sub:'en 2026'},
+      {label:'Días de enfermedad',   color:'#f59e0b', val:'2',   sub:'en 2026'},
+      {label:'De vacaciones',        color:'#F7941D', val:'10',  sub:'en 2026'},
+      {label:'Trámites y estudio',   color:'#2563eb', val:'3',   sub:'en 2026'},
+      {label:'Descuento día',        color:'#ef4444', val:'1',   sub:'en 2026'},
+    ];
+
+    const legend = [
+      {label:'Vacaciones', color:'#F7941D'},
+      {label:'Enfermedad', color:'#f59e0b'},
+      {label:'Trámites',   color:'#2563eb'},
+      {label:'Home',       color:'#9ca3af'},
+      {label:'Descuento',  color:'#ef4444'},
+      {label:'Guardia',    color:'#475569'},
+      {label:'Examen',     color:'#059669'},
+    ];
+
+    const tipoTotales = [
+      {label:'Vacaciones',       color:'#F7941D', total:'10'},
+      {label:'Baja enfermedad',  color:'#f59e0b', total:'2'},
+      {label:'Trámites',         color:'#2563eb', total:'1'},
+      {label:'Home office',      color:'#9ca3af', total:'4'},
+      {label:'Descuento día',    color:'#ef4444', total:'1'},
+      {label:'Guardia',          color:'#475569', total:'2'},
+      {label:'Examen/estudio',   color:'#059669', total:'2'},
+    ];
+
+    const bajasListado = [
+      {ini:'LP',nombre:'Laura Pérez',    avatarBg:'#2563eb',fecha:'13/08/2026',tipo:'Baja por enfermedad',tipoColor:'#f59e0b',dur:'1 día',obs:''},
+      {ini:'LP',nombre:'Laura Pérez',    avatarBg:'#2563eb',fecha:'04–15/08/26',tipo:'Vacaciones',          tipoColor:'#F7941D',dur:'10 días',obs:'Vacaciones de invierno'},
+      {ini:'MG',nombre:'Martín García',  avatarBg:'#059669',fecha:'20/06/2026',tipo:'Guardia',              tipoColor:'#475569',dur:'2 días',obs:'Guardia de guardia de fin de semana'},
+      {ini:'CR',nombre:'Carla Rodríguez',avatarBg:'#d97706',fecha:'15/05/2026',tipo:'Descuento día',        tipoColor:'#ef4444',dur:'1 día',obs:'Falta injustificada'},
+      {ini:'DF',nombre:'Diego Fernández',avatarBg:'#2563eb',fecha:'07–08/04/26',tipo:'Examen/estudio',      tipoColor:'#059669',dur:'2 días',obs:'Examen universitario'},
+      {ini:'PL',nombre:'Pablo López',    avatarBg:'#059669',fecha:'10/02/2026',tipo:'Trámites personales',  tipoColor:'#2563eb',dur:'1 día',obs:'Trámite bancario'},
+    ];
+
+    const descuentosReport = [
+      {ini:'LP',nombre:'Laura Pérez',   color:'#2563eb',desc:'1',enf:'2',guard:'0',detalle:'1 desc. + 2 enf.'},
+      {ini:'MG',nombre:'Martín García', color:'#059669',desc:'0',enf:'0',guard:'2',detalle:'2 guardias'},
+      {ini:'CR',nombre:'Carla Rodríguez',color:'#d97706',desc:'1',enf:'1',guard:'0',detalle:'1 desc. + 1 enf.'},
+      {ini:'DF',nombre:'Diego Fernández',color:'#2563eb',desc:'0',enf:'0',guard:'0',detalle:'Sin bajas'},
+      {ini:'PL',nombre:'Pablo López',   color:'#059669',desc:'0',enf:'0',guard:'0',detalle:'Sin bajas'},
+    ];
+
+    return {
+      isCalView:  activeView==='calendario',
+      isListView: activeView==='listado',
+      isRepView:  activeView==='reportes',
+      tabCalBd:tCal.bd,   tabCalC:tCal.c,
+      tabListBd:tList.bd, tabListC:tList.c,
+      tabRepBd:tRep.bd,   tabRepC:tRep.c,
+      kpis, legend, tipoTotales, monthRows, dayHeaders, bajasListado, descuentosReport,
+      modalOpen,
+      medioChecked,
+      medioBg:     medioChecked ? '#F7941D' : '#fff',
+      medioBorder: medioChecked ? '#F7941D' : 'rgba(0,0,0,.2)',
+      setViewCal:  ()=>this.setState({activeView:'calendario'}),
+      setViewList: ()=>this.setState({activeView:'listado'}),
+      setViewRep:  ()=>this.setState({activeView:'reportes'}),
+      openModal:   ()=>this.setState({modalOpen:true}),
+      closeModal:  ()=>this.setState({modalOpen:false}),
+      stopProp:    e=>e&&e.stopPropagation&&e.stopPropagation(),
+      toggleMedio: ()=>this.setState(s=>({medioChecked:!s.medioChecked})),
+    };
+  }
+}
+</script>
+</body>
+</html>

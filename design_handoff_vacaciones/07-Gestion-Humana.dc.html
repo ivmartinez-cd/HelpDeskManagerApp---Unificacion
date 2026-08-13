@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(0,0,0,.13);border-radius:3px}@keyframes spin{to{transform:rotate(360deg)}}</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;overflow:hidden;font-family:'Source Sans 3',system-ui,sans-serif;color:#232323;font-size:14px">
+
+<header style="height:64px;flex-shrink:0;background:#fff;border-bottom:1px solid rgba(0,0,0,.08);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:10">
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:15px;color:#F7941D;line-height:1.15">Canal<br>Directo</div><div style="width:1px;height:26px;background:rgba(0,0,0,.1)"></div><div style="font-family:Montserrat,sans-serif;font-weight:700;font-size:11.5px;color:#58595B;letter-spacing:.07em;text-transform:uppercase">Gestión Humana</div></div>
+  <div style="flex:1;display:flex;justify-content:center"><div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;width:320px"><span style="color:#9a9a9a;font-size:15px">⌕</span><span style="font-size:13.5px;color:#b5b5b5">Buscar…</span></div></div>
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><div style="position:relative;cursor:pointer"><div style="width:36px;height:36px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:16px">🔔</div><div style="position:absolute;top:7px;right:7px;width:7px;height:7px;background:#F7941D;border-radius:50%;border:1.5px solid #fff"></div></div><div style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 8px;border-radius:8px"><div style="width:36px;height:36px;border-radius:50%;background:#232323;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">AP</div><div><div style="font-size:13px;font-weight:600;line-height:1.2">Admin Portal</div><div style="font-size:11.5px;color:#8a8a8a">Administrador</div></div></div></div>
+</header>
+
+<div style="display:flex;flex:1;overflow:hidden">
+
+<nav style="width:224px;flex-shrink:0;background:#fff;border-right:1px solid rgba(0,0,0,.06);display:flex;flex-direction:column;overflow-y:auto">
+  <div style="flex:1;padding:12px 8px">
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:10px 10px 5px">Vacaciones</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Dashboard</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Mis solicitudes</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b;flex:1">Aprobaciones</span><div style="background:#d97706;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;font-family:Montserrat,sans-serif">4</div></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Reportes</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Auditoría</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:8px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Configuración</span></div>
+    <div style="height:1px;background:rgba(0,0,0,.05);margin:4px 2px 10px"></div>
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:0 10px 5px">Asistencias</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Calendario</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Listado y registros</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:8px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Reportes descuentos</span></div>
+    <div style="height:1px;background:rgba(0,0,0,.05);margin:4px 2px 10px"></div>
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#b5b5b5;padding:0 10px 5px">Gestión Humana</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;background:rgba(247,148,29,.12);margin-bottom:2px"><div style="width:6px;height:6px;border-radius:50%;background:#F7941D;flex-shrink:0"></div><span style="font-size:13.5px;font-weight:600;color:#F7941D">Empleados</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Sectores</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Cargos</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Feriados</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer"><div style="width:6px;height:6px;border-radius:50%;background:#d8d8d8;flex-shrink:0"></div><span style="font-size:13.5px;color:#4b4b4b">Usuarios y roles</span></div>
+  </div>
+  <div style="padding:12px 14px;border-top:1px solid rgba(0,0,0,.05)"><span style="font-size:11px;color:#b5b5b5">Portal interno · Canal Directo</span></div>
+</nav>
+
+<main style="flex:1;overflow-y:auto;background:#FAFAF8;padding:28px 32px">
+
+  <!-- Sub-tab bar -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:16px;flex-wrap:wrap">
+    <div style="display:flex;gap:0;border-bottom:2px solid rgba(0,0,0,.07);padding-bottom:0">
+      <button onClick="{{setTabEmp}}"  style="padding:10px 16px;border:none;border-bottom:2px solid {{tEmpBd}};margin-bottom:-2px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;background:transparent;color:{{tEmpC}}">Empleados</button>
+      <button onClick="{{setTabSect}}" style="padding:10px 16px;border:none;border-bottom:2px solid {{tSectBd}};margin-bottom:-2px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;background:transparent;color:{{tSectC}}">Sectores</button>
+      <button onClick="{{setTabCarg}}" style="padding:10px 16px;border:none;border-bottom:2px solid {{tCargBd}};margin-bottom:-2px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;background:transparent;color:{{tCargC}}">Cargos</button>
+      <button onClick="{{setTabFer}}"  style="padding:10px 16px;border:none;border-bottom:2px solid {{tFerBd}};margin-bottom:-2px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;background:transparent;color:{{tFerC}}">Feriados</button>
+      <button onClick="{{setTabUsers}}"style="padding:10px 16px;border:none;border-bottom:2px solid {{tUsersBd}};margin-bottom:-2px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;background:transparent;color:{{tUsersC}}">Usuarios y roles</button>
+    </div>
+    <button onClick="{{openModal}}" style="padding:8px 18px;background:#F7941D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;white-space:nowrap;flex-shrink:0">{{addLabel}}</button>
+  </div>
+
+  <!-- TAB: EMPLEADOS -->
+  <sc-if value="{{isEmp}}" hint-placeholder-val="{{true}}">
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;flex:1;max-width:280px"><span style="color:#9a9a9a;font-size:15px">⌕</span><span style="font-size:13.5px;color:#b5b5b5">por nombre, email o cargo…</span></div>
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer"><span style="font-size:13.5px;color:#232323">Todos los sectores</span><span style="font-size:12px;color:#9a9a9a">▼</span></div>
+    </div>
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);overflow:hidden">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,.07)">
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Nombre</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Email</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Sector</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Cargo</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Ingreso / Antigüedad</th>
+          <th style="padding:10px 16px;text-align:right;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Días</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Estado</th>
+          <th style="padding:10px 16px;width:80px"></th>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{empleados}}" as="e" hint-placeholder-count="6">
+            <tr style="border-top:1px solid rgba(0,0,0,.05)">
+              <td style="padding:12px 16px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:34px;height:34px;border-radius:9px;background:{{e.sectorColor}};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">{{e.ini}}</div>
+                  <div>
+                    <div style="font-size:13.5px;font-weight:600;color:#232323;line-height:1.2">{{e.nombre}}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="padding:12px 16px;font-size:13px;color:#6b6b6b">{{e.email}}</td>
+              <td style="padding:12px 16px"><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:{{e.sectorBg}};color:{{e.sectorColor}}">{{e.sector}}</span></td>
+              <td style="padding:12px 16px;font-size:13px;color:#4b4b4b">{{e.cargo}}</td>
+              <td style="padding:12px 16px">
+                <div style="font-size:13px;color:#232323">{{e.ingreso}}</div>
+                <div style="font-size:11.5px;color:#8a8a8a">{{e.antiguedad}}</div>
+              </td>
+              <td style="padding:12px 16px;text-align:right;font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#F7941D">{{e.dias}}</td>
+              <td style="padding:12px 16px"><span style="display:inline-block;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600;background:{{e.estadoBg}};color:{{e.estadoC}}">{{e.estado}}</span></td>
+              <td style="padding:12px 16px">
+                <div style="display:flex;gap:5px">
+                  <button onClick="{{openModal}}" style="padding:4px 9px;border:1px solid rgba(0,0,0,.1);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#4b4b4b;font-family:inherit">Editar</button>
+                </div>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+  </sc-if>
+
+  <!-- TAB: SECTORES -->
+  <sc-if value="{{isSect}}" hint-placeholder-val="{{false}}">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+      <sc-for list="{{sectores}}" as="s" hint-placeholder-count="4">
+        <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);padding:20px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <div style="width:36px;height:36px;border-radius:9px;background:{{s.color}};flex-shrink:0"></div>
+            <div style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:#232323">{{s.nombre}}</div>
+          </div>
+          <div style="font-size:12.5px;color:#8a8a8a;margin-bottom:14px">{{s.cant}} empleados</div>
+          <!-- Color swatches -->
+          <div style="display:flex;gap:5px;margin-bottom:14px">
+            <div style="width:18px;height:18px;border-radius:4px;background:#2563eb;cursor:pointer;border:{{s.sel==='#2563eb'?'2px solid #232323':'2px solid transparent'}}"></div>
+            <div style="width:18px;height:18px;border-radius:4px;background:#059669;cursor:pointer"></div>
+            <div style="width:18px;height:18px;border-radius:4px;background:#d97706;cursor:pointer"></div>
+            <div style="width:18px;height:18px;border-radius:4px;background:#475569;cursor:pointer"></div>
+            <div style="width:18px;height:18px;border-radius:4px;background:#0369a1;cursor:pointer"></div>
+            <div style="width:18px;height:18px;border-radius:4px;background:#7c2d12;cursor:pointer"></div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button style="flex:1;padding:6px;border:1px solid rgba(0,0,0,.1);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#4b4b4b;font-family:inherit">Editar</button>
+            <button style="padding:6px 10px;border:1px solid rgba(220,38,38,.2);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#dc2626;font-family:inherit">Eliminar</button>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <!-- TAB: CARGOS -->
+  <sc-if value="{{isCarg}}" hint-placeholder-val="{{false}}">
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);overflow:hidden;max-width:600px">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,.07)"><th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Cargo</th><th style="padding:10px 16px;text-align:right;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Empleados</th><th style="padding:10px 16px;width:90px"></th></tr></thead>
+        <tbody>
+          <sc-for list="{{cargos}}" as="cg" hint-placeholder-count="5">
+            <tr style="border-top:1px solid rgba(0,0,0,.05)">
+              <td style="padding:12px 16px;font-size:13.5px;font-weight:600;color:#232323">{{cg.nombre}}</td>
+              <td style="padding:12px 16px;text-align:right;font-size:13.5px;font-weight:700;color:#F7941D;font-family:Montserrat,sans-serif">{{cg.cant}}</td>
+              <td style="padding:12px 16px">
+                <div style="display:flex;gap:5px">
+                  <button style="padding:4px 9px;border:1px solid rgba(0,0,0,.1);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#4b4b4b;font-family:inherit">Editar</button>
+                  <button style="padding:4px 9px;border:1px solid rgba(220,38,38,.2);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#dc2626;font-family:inherit">Eliminar</button>
+                </div>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+  </sc-if>
+
+  <!-- TAB: FERIADOS -->
+  <sc-if value="{{isFer}}" hint-placeholder-val="{{false}}">
+    <!-- Import card destacada -->
+    <div style="background:linear-gradient(135deg,#fff8f2,#fff);border:1.5px solid rgba(247,148,29,.25);border-radius:12px;padding:22px;margin-bottom:18px;display:flex;align-items:center;gap:18px">
+      <div style="width:48px;height:48px;border-radius:12px;background:rgba(247,148,29,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🇦🇷</div>
+      <div style="flex:1">
+        <h3 style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14.5px;color:#232323;margin-bottom:3px">Importar feriados de Argentina</h3>
+        <p style="font-size:12.5px;color:#8a8a8a;line-height:1.4">Fuente: <span style="color:#F7941D;font-weight:600">api.argentinadatos.com</span> — feriados nacionales, inamovibles y con fines turísticos.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer">
+          <span style="font-size:13.5px;font-weight:600;color:#232323">2026</span>
+          <span style="font-size:12px;color:#9a9a9a">▼</span>
+        </div>
+        <button onClick="{{importar}}" style="padding:9px 18px;background:{{importBg}};color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;white-space:nowrap;display:flex;align-items:center;gap:7px">
+          <sc-if value="{{isImporting}}" hint-placeholder-val="{{false}}"><span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></span></sc-if>
+          {{importLabel}}
+        </button>
+      </div>
+    </div>
+    <!-- Actions -->
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button style="padding:8px 16px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#4b4b4b;font-family:inherit">📥 Exportar backup</button>
+      <button style="padding:8px 16px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#4b4b4b;font-family:inherit">+ Nuevo feriado</button>
+    </div>
+    <!-- Table -->
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);overflow:hidden">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,.07)">
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Fecha</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Nombre</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Tipo</th>
+          <th style="padding:10px 16px;width:80px"></th>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{feriados}}" as="f" hint-placeholder-count="8">
+            <tr style="border-top:1px solid rgba(0,0,0,.05)">
+              <td style="padding:11px 16px;font-size:13px;color:#232323;font-weight:600;white-space:nowrap">{{f.fecha}}</td>
+              <td style="padding:11px 16px;font-size:13.5px;color:#232323">{{f.nombre}}</td>
+              <td style="padding:11px 16px"><span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:600;background:{{f.tipoBg}};color:{{f.tipoC}}">{{f.tipo}}</span></td>
+              <td style="padding:11px 16px">
+                <div style="display:flex;gap:5px">
+                  <button style="padding:4px 9px;border:1px solid rgba(0,0,0,.1);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#4b4b4b;font-family:inherit">Editar</button>
+                  <button style="padding:4px 9px;border:1px solid rgba(220,38,38,.2);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#dc2626;font-family:inherit">Eliminar</button>
+                </div>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+  </sc-if>
+
+  <!-- TAB: USUARIOS -->
+  <sc-if value="{{isUsers}}" hint-placeholder-val="{{false}}">
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);overflow:hidden">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,.07)">
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Usuario</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Email</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Rol</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Empleado vinculado</th>
+          <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a8a">Último acceso</th>
+          <th style="padding:10px 16px;width:120px"></th>
+        </tr></thead>
+        <tbody>
+          <sc-for list="{{usuarios}}" as="u" hint-placeholder-count="5">
+            <tr style="border-top:1px solid rgba(0,0,0,.05)">
+              <td style="padding:12px 16px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="width:30px;height:30px;border-radius:8px;background:#232323;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#fff;font-family:Montserrat,sans-serif;flex-shrink:0">{{u.ini}}</div>
+                  <span style="font-size:13.5px;font-weight:600;color:#232323">{{u.username}}</span>
+                </div>
+              </td>
+              <td style="padding:12px 16px;font-size:13px;color:#6b6b6b">{{u.email}}</td>
+              <td style="padding:12px 16px"><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:{{u.rolBg}};color:{{u.rolC}}">{{u.rol}}</span></td>
+              <td style="padding:12px 16px;font-size:13px;color:#4b4b4b">{{u.empleado}}</td>
+              <td style="padding:12px 16px;font-size:12.5px;color:#8a8a8a;white-space:nowrap">{{u.ultimo}}</td>
+              <td style="padding:12px 16px">
+                <div style="display:flex;gap:5px">
+                  <button style="padding:4px 9px;border:1px solid rgba(0,0,0,.1);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#4b4b4b;font-family:inherit">Editar rol</button>
+                  <button style="padding:4px 9px;border:1px solid rgba(0,0,0,.1);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#4b4b4b;font-family:inherit">Reset contraseña</button>
+                </div>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+  </sc-if>
+
+</main>
+</div>
+
+<!-- MODAL empleado -->
+<sc-if value="{{empModalOpen}}" hint-placeholder-val="{{false}}">
+  <div onClick="{{closeModal}}" style="position:fixed;inset:0;background:rgba(20,20,20,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px">
+    <div onClick="{{stopProp}}" style="background:#fff;border-radius:16px;width:100%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.22)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 24px 0"><h2 style="font-family:Montserrat,sans-serif;font-weight:800;font-size:18px;color:#232323;letter-spacing:-.01em">EDITAR EMPLEADO</h2><button onClick="{{closeModal}}" style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;cursor:pointer;font-size:15px;color:#6b6b6b;display:flex;align-items:center;justify-content:center">✕</button></div>
+      <div style="padding:18px 24px;display:flex;flex-direction:column;gap:13px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Nombre completo</label><div style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-size:13.5px;color:#232323;background:#fff">Laura Pérez</div></div>
+          <div><label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Email</label><div style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-size:13.5px;color:#232323;background:#fff">lperez@canal.com</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Sector</label><div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;cursor:pointer;background:#fff"><span style="flex:1;font-size:13.5px;color:#232323">Soporte Técnico</span><span style="font-size:12px;color:#9a9a9a">▼</span></div></div>
+          <div><label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Cargo</label><div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;cursor:pointer;background:#fff"><span style="flex:1;font-size:13.5px;color:#232323">Analista Senior</span><span style="font-size:12px;color:#9a9a9a">▼</span></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Fecha de ingreso</label><div style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-size:13.5px;color:#232323;background:#fff">15/03/2019</div></div>
+          <div><label style="display:block;font-size:13px;font-weight:600;color:#232323;margin-bottom:6px">Días anuales</label><div style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-size:13.5px;font-weight:700;color:#F7941D;font-family:Montserrat,sans-serif;background:#fff">28 <span style="font-size:12.5px;font-weight:400;color:#8a8a8a;font-family:'Source Sans 3',system-ui,sans-serif">auto · antigüedad 7 años</span></div></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding:0 24px 22px">
+        <button onClick="{{closeModal}}" style="padding:10px 18px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer;font-size:14px;font-weight:600;color:#4b4b4b;font-family:inherit">Cancelar</button>
+        <button style="padding:10px 20px;background:#F7941D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { activeTab: 'empleados', empModalOpen: false, importState: 'idle' };
+
+  renderVals() {
+    const { activeTab, empModalOpen, importState } = this.state;
+
+    const tb = v => ({ bd: activeTab===v ? '#F7941D' : 'transparent', c: activeTab===v ? '#F7941D' : '#4b4b4b' });
+    const tE=tb('empleados'); const tS=tb('sectores'); const tC=tb('cargos'); const tF=tb('feriados'); const tU=tb('usuarios');
+
+    const addLabels = {empleados:'+ Nuevo empleado', sectores:'+ Nuevo sector', cargos:'+ Nuevo cargo', feriados:'+ Nuevo feriado', usuarios:'+ Nuevo usuario'};
+
+    const empleados = [
+      {ini:'LP',nombre:'Laura Pérez',   email:'lperez@canal.com',   sector:'Soporte Técnico',sectorColor:'#2563eb',sectorBg:'rgba(37,99,235,.1)',  cargo:'Analista Senior',  ingreso:'15/03/2019',antiguedad:'7 años',dias:'28',estado:'Activo',estadoBg:'rgba(5,150,105,.12)',estadoC:'#059669'},
+      {ini:'MG',nombre:'Martín García', email:'mgarcia@canal.com',  sector:'Logística',      sectorColor:'#059669',sectorBg:'rgba(5,150,105,.1)',   cargo:'Coordinador',      ingreso:'20/07/2021',antiguedad:'5 años',dias:'21',estado:'Activo',estadoBg:'rgba(5,150,105,.12)',estadoC:'#059669'},
+      {ini:'CR',nombre:'Carla Rodríguez',email:'crodriguez@canal.com',sector:'Administración',sectorColor:'#d97706',sectorBg:'rgba(217,119,6,.1)',  cargo:'Resp. Admin',      ingreso:'01/02/2020',antiguedad:'6 años',dias:'28',estado:'Activo',estadoBg:'rgba(5,150,105,.12)',estadoC:'#059669'},
+      {ini:'DF',nombre:'Diego Fernández',email:'dfernandez@canal.com',sector:'Soporte Técnico',sectorColor:'#2563eb',sectorBg:'rgba(37,99,235,.1)',cargo:'Técnico N2',        ingreso:'10/06/2023',antiguedad:'3 años',dias:'21',estado:'Activo',estadoBg:'rgba(5,150,105,.12)',estadoC:'#059669'},
+      {ini:'AM',nombre:'Ana Martínez',  email:'amartinez@canal.com', sector:'RRHH',           sectorColor:'#475569',sectorBg:'rgba(71,85,105,.1)',  cargo:'Analista RRHH',    ingreso:'01/09/2022',antiguedad:'3 años',dias:'21',estado:'Activo',estadoBg:'rgba(5,150,105,.12)',estadoC:'#059669'},
+      {ini:'PL',nombre:'Pablo López',   email:'plopez@canal.com',    sector:'Logística',      sectorColor:'#059669',sectorBg:'rgba(5,150,105,.1)',   cargo:'Operador',         ingreso:'15/01/2025',antiguedad:'1 año', dias:'14',estado:'Activo',estadoBg:'rgba(5,150,105,.12)',estadoC:'#059669'},
+    ];
+
+    const sectores = [
+      {nombre:'Soporte Técnico', color:'#2563eb', cant:'8', sel:'#2563eb'},
+      {nombre:'Logística',       color:'#059669', cant:'7', sel:'#059669'},
+      {nombre:'Administración',  color:'#d97706', cant:'5', sel:'#d97706'},
+      {nombre:'RRHH',            color:'#475569', cant:'4', sel:'#475569'},
+    ];
+
+    const cargos = [
+      {nombre:'Jefe de Soporte',  cant:'1'},
+      {nombre:'Analista Senior',  cant:'3'},
+      {nombre:'Técnico N2',       cant:'4'},
+      {nombre:'Coordinador',      cant:'2'},
+      {nombre:'Responsable Admin',cant:'1'},
+      {nombre:'Analista RRHH',    cant:'2'},
+      {nombre:'Operador',         cant:'3'},
+    ];
+
+    const feriados = [
+      {fecha:'01/01/2026',nombre:'Año Nuevo',                             tipo:'Inamovible', tipoBg:'rgba(5,150,105,.1)',  tipoC:'#059669'},
+      {fecha:'24/03/2026',nombre:'Día Nacional de la Memoria',            tipo:'Inamovible', tipoBg:'rgba(5,150,105,.1)',  tipoC:'#059669'},
+      {fecha:'02/04/2026',nombre:'Día del Veterano y los Caídos en Malvinas',tipo:'Inamovible',tipoBg:'rgba(5,150,105,.1)',tipoC:'#059669'},
+      {fecha:'01/05/2026',nombre:'Día del Trabajador',                    tipo:'Inamovible', tipoBg:'rgba(5,150,105,.1)',  tipoC:'#059669'},
+      {fecha:'25/05/2026',nombre:'Día de la Revolución de Mayo',          tipo:'Inamovible', tipoBg:'rgba(5,150,105,.1)',  tipoC:'#059669'},
+      {fecha:'17/06/2026',nombre:'Paso a la Inmortalidad del Gral. Güemes',tipo:'Inamovible',tipoBg:'rgba(5,150,105,.1)', tipoC:'#059669'},
+      {fecha:'20/06/2026',nombre:'Paso a la Inmortalidad del Gral. Belgrano',tipo:'Inamovible',tipoBg:'rgba(5,150,105,.1)',tipoC:'#059669'},
+      {fecha:'09/07/2026',nombre:'Día de la Independencia',               tipo:'Inamovible', tipoBg:'rgba(5,150,105,.1)',  tipoC:'#059669'},
+      {fecha:'17/08/2026',nombre:'Paso a la Inmortalidad del Gral. San Martín',tipo:'Trasladable',tipoBg:'rgba(37,99,235,.1)',tipoC:'#2563eb'},
+      {fecha:'12/10/2026',nombre:'Día del Respeto a la Diversidad Cultural',tipo:'Trasladable',tipoBg:'rgba(37,99,235,.1)',tipoC:'#2563eb'},
+      {fecha:'20/11/2026',nombre:'Día de la Soberanía Nacional',          tipo:'Trasladable', tipoBg:'rgba(37,99,235,.1)', tipoC:'#2563eb'},
+      {fecha:'08/12/2026',nombre:'Inmaculada Concepción de María',        tipo:'Inamovible', tipoBg:'rgba(5,150,105,.1)',  tipoC:'#059669'},
+      {fecha:'25/12/2026',nombre:'Navidad',                               tipo:'Inamovible', tipoBg:'rgba(5,150,105,.1)',  tipoC:'#059669'},
+    ];
+
+    const usuarios = [
+      {ini:'AP',username:'adminportal',   email:'admin@canal.com',      rol:'Admin',   rolBg:'rgba(247,148,29,.12)',rolC:'#F7941D', empleado:'—',                ultimo:'hace 2 min'},
+      {ini:'LP',username:'lperez',        email:'lperez@canal.com',     rol:'Empleado',rolBg:'rgba(71,85,105,.1)', rolC:'#475569', empleado:'Laura Pérez',       ultimo:'hace 1 hora'},
+      {ini:'MG',username:'mgarcia',       email:'mgarcia@canal.com',    rol:'Manager', rolBg:'rgba(37,99,235,.1)', rolC:'#2563eb', empleado:'Martín García',     ultimo:'hace 3 horas'},
+      {ini:'CR',username:'crodriguez',    email:'crodriguez@canal.com', rol:'Empleado',rolBg:'rgba(71,85,105,.1)', rolC:'#475569', empleado:'Carla Rodríguez',   ultimo:'ayer'},
+      {ini:'AM',username:'amartinez',     email:'amartinez@canal.com',  rol:'Manager', rolBg:'rgba(37,99,235,.1)', rolC:'#2563eb', empleado:'Ana Martínez',      ultimo:'hace 2 días'},
+    ];
+
+    return {
+      isEmp:  activeTab==='empleados',
+      isSect: activeTab==='sectores',
+      isCarg: activeTab==='cargos',
+      isFer:  activeTab==='feriados',
+      isUsers:activeTab==='usuarios',
+      addLabel: addLabels[activeTab] || '+ Nuevo',
+      tEmpBd:tE.bd, tEmpC:tE.c, tSectBd:tS.bd, tSectC:tS.c,
+      tCargBd:tC.bd,tCargC:tC.c, tFerBd:tF.bd,  tFerC:tF.c, tUsersBd:tU.bd, tUsersC:tU.c,
+      empleados, sectores, cargos, feriados, usuarios,
+      empModalOpen,
+      isImporting: importState==='loading',
+      importBg: importState==='done' ? '#059669' : '#F7941D',
+      importLabel: importState==='loading' ? 'Importando…' : (importState==='done' ? '✓ Importado' : 'Importar 2026'),
+      setTabEmp:  ()=>this.setState({activeTab:'empleados'}),
+      setTabSect: ()=>this.setState({activeTab:'sectores'}),
+      setTabCarg: ()=>this.setState({activeTab:'cargos'}),
+      setTabFer:  ()=>this.setState({activeTab:'feriados'}),
+      setTabUsers:()=>this.setState({activeTab:'usuarios'}),
+      openModal:  ()=>this.setState({empModalOpen:true}),
+      closeModal: ()=>this.setState({empModalOpen:false}),
+      stopProp:   e=>e&&e.stopPropagation&&e.stopPropagation(),
+      importar:   ()=>{
+        if(importState!=='idle') return;
+        this.setState({importState:'loading'});
+        setTimeout(()=>this.setState({importState:'done'}),2000);
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>
