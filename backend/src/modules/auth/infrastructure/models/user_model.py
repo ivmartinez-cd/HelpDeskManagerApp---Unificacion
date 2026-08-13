@@ -32,9 +32,10 @@ class AppUser(Base):
 
 
 class Department(Base):
-    """Mínimo viable para el FK de alcance sectorial (ver user_module_scope).
-
-    Se extiende, no se reemplaza, al migrar el módulo de vacaciones.
+    """Sector compartido: alcance sectorial de auth (user_module_scope) y ABM de
+    Sectores del módulo de vacaciones, que lo extendió con `color` (D1 del plan
+    de vacaciones). Un solo modelo mapeado a la tabla — vacaciones lo importa
+    desde su infrastructure, nunca desde domain/application.
     """
 
     __tablename__ = "department"
@@ -44,3 +45,4 @@ class Department(Base):
     )
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    color: Mapped[str] = mapped_column(String, nullable=False, server_default=text("'#3b82f6'"))

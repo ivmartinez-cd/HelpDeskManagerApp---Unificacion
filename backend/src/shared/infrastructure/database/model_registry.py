@@ -9,3 +9,4 @@ from src.modules.insumos.infrastructure import models as _insumos_models  # noqa
 from src.modules.prestadores.infrastructure import models as _prestadores_models  # noqa: F401
 from src.modules.sla.infrastructure import models as _sla_models  # noqa: F401
 from src.modules.turnos.infrastructure import models as _turnos_models  # noqa: F401
+from src.modules.vacaciones.infrastructure import models as _vacaciones_models  # noqa: F401

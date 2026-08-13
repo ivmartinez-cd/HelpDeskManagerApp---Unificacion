@@ -1,0 +1,16 @@
+import uuid
+from typing import Protocol
+
+from src.modules.vacaciones.domain.entities.exclusion import Exclusion
+
+
+class ExclusionRepository(Protocol):
+    async def list_all(self) -> list[Exclusion]: ...
+
+    async def list_por_empleado(self, empleado_id: uuid.UUID) -> list[Exclusion]: ...
+
+    async def get_by_id(self, exclusion_id: uuid.UUID) -> Exclusion | None: ...
+
+    async def add(self, exclusion: Exclusion) -> None: ...
+
+    async def delete(self, exclusion_id: uuid.UUID) -> None: ...
