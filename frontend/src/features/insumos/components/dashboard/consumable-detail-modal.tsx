@@ -20,10 +20,11 @@ import { toneForRequestStatus, toneForSupplyStatus } from "./consumable-status-t
  *    anotaciones en el render inicial) no aplica igual acá, pero se conserva un
  *    `key` derivado del volumen de datos: es barato y garantiza que el chart se
  *    arme una sola vez, ya con las anotaciones async resueltas.
- * 2. **Las ventanas "sin contacto" van como lista, no como franjas sobre el
+ * 2. **Las ventanas "sin contacto" van como texto, no como franjas sobre el
  *    gráfico** — `TrendChart` es un primitivo compartido con Estadísticas y no
  *    soporta anotaciones de rango en X; agregarle esa capacidad tocaría código
- *    de otra pantalla. La información se muestra igual, debajo del gráfico.
+ *    de otra pantalla. La información se muestra igual, en una línea debajo
+ *    del gráfico.
  */
 
 const TYPE_LABELS: Record<string, string> = {
@@ -71,7 +72,7 @@ interface InfoRow {
 
 function InfoList({ rows }: { rows: InfoRow[] }) {
   return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-body text-[12.5px]">
+    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 font-body text-[12.5px] leading-snug">
       {rows.map((row, index) => (
         <div key={`${row.term}-${index}`} className="contents">
           <dt className="whitespace-nowrap text-muted-foreground">{row.term}</dt>
@@ -195,13 +196,13 @@ export function ConsumableDetailModal({ row, onClose }: ConsumableDetailModalPro
   const consumableUnavailable = row.consumableIndex === null || row.consumableIndex === undefined;
 
   return (
-    <BrandModal isOpen onClose={onClose} title={row.description} widthPx={1080}>
-      <div className="flex flex-col gap-5">
+    <BrandModal isOpen onClose={onClose} title={row.description} widthPx={1400}>
+      <div className="flex flex-col gap-4">
         <p className="-mt-2 font-mono text-[13px] text-muted-foreground">
           {row.serial} · <span className="text-brand-orange">{row.sku}</span>
         </p>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(240px,1fr)_minmax(320px,2fr)_minmax(200px,1fr)]">
+        <div className="grid gap-5 lg:grid-cols-[minmax(240px,1fr)_minmax(320px,2.4fr)_minmax(200px,1fr)]">
           <section>
             <SectionLabel>Detalle del consumible</SectionLabel>
             {consumableUnavailable ? (
@@ -284,19 +285,12 @@ export function ConsumableDetailModal({ row, onClose }: ConsumableDetailModalPro
                   <ChartLegend showNoContact={windows.length > 0} />
                 </div>
                 {windows.length > 0 && (
-                  <div className="mt-2 flex flex-col gap-1">
-                    <p className="font-body text-[11px] font-bold text-muted-foreground">
-                      Ventanas sin contacto del equipo
-                    </p>
-                    {windows.map((window) => (
-                      <p
-                        key={`${window.start}-${window.end}`}
-                        className="font-body text-[11px] text-muted-foreground"
-                      >
-                        {formatArgDateTime(window.start)} → {formatArgDateTime(window.end)}
-                      </p>
-                    ))}
-                  </div>
+                  <p className="mt-1.5 font-body text-[11px] text-muted-foreground">
+                    <span className="font-bold">Ventanas sin contacto del equipo:</span>{" "}
+                    {windows
+                      .map((window) => `${formatArgDateTime(window.start)} → ${formatArgDateTime(window.end)}`)
+                      .join(" · ")}
+                  </p>
                 )}
               </>
             )}
@@ -347,23 +341,23 @@ export function ConsumableDetailModal({ row, onClose }: ConsumableDetailModalPro
               <table className="w-full border-collapse font-body text-xs">
                 <thead>
                   <tr className="border-b border-border text-left text-muted-foreground">
-                    <th className="px-2 py-1.5 font-semibold">Fecha</th>
-                    <th className="px-2 py-1.5 font-semibold">ID</th>
-                    <th className="px-2 py-1.5 font-semibold">Motivo</th>
-                    <th className="px-2 py-1.5 font-semibold">Nivel indicado</th>
-                    <th className="px-2 py-1.5 font-semibold">Estado</th>
+                    <th className="px-2 py-1 font-semibold">Fecha</th>
+                    <th className="px-2 py-1 font-semibold">ID</th>
+                    <th className="px-2 py-1 font-semibold">Motivo</th>
+                    <th className="px-2 py-1 font-semibold">Nivel indicado</th>
+                    <th className="px-2 py-1 font-semibold">Estado</th>
                   </tr>
                 </thead>
                 <tbody>
                   {requests.data.map((item) => (
                     <tr key={item.requestId} className="border-b border-border/50">
-                      <td className="whitespace-nowrap px-2 py-1.5">
+                      <td className="whitespace-nowrap px-2 py-1">
                         {formatArgDateTime(item.requested)}
                       </td>
-                      <td className="px-2 py-1.5 font-mono">{item.requestId}</td>
-                      <td className="px-2 py-1.5">{labelled(REASON_LABELS, item.reason)}</td>
+                      <td className="px-2 py-1 font-mono">{item.requestId}</td>
+                      <td className="px-2 py-1">{labelled(REASON_LABELS, item.reason)}</td>
                       <td
-                        className="px-2 py-1.5 font-semibold"
+                        className="px-2 py-1 font-semibold"
                         style={
                           item.requestedLevel !== null && item.requestedLevel !== undefined
                             ? { color: tonerLevelColor(item.requestedLevel) }
@@ -374,7 +368,7 @@ export function ConsumableDetailModal({ row, onClose }: ConsumableDetailModalPro
                           ? `${item.requestedLevel}%`
                           : EMPTY_VALUE}
                       </td>
-                      <td className="px-2 py-1.5">
+                      <td className="px-2 py-1">
                         <StatusBadge tone={toneForRequestStatus(item.status)}>
                           {item.statusLabel}
                         </StatusBadge>
@@ -400,23 +394,23 @@ export function ConsumableDetailModal({ row, onClose }: ConsumableDetailModalPro
               <table className="w-full border-collapse font-body text-xs">
                 <thead>
                   <tr className="border-b border-border text-left text-muted-foreground">
-                    <th className="px-2 py-1.5 font-semibold">Fecha</th>
-                    <th className="px-2 py-1.5 font-semibold">SKU</th>
-                    <th className="px-2 py-1.5 font-semibold">Descripción</th>
-                    <th className="px-2 py-1.5 font-semibold">Estado</th>
+                    <th className="px-2 py-1 font-semibold">Fecha</th>
+                    <th className="px-2 py-1 font-semibold">SKU</th>
+                    <th className="px-2 py-1 font-semibold">Descripción</th>
+                    <th className="px-2 py-1 font-semibold">Estado</th>
                   </tr>
                 </thead>
                 <tbody>
                   {supplies.data.map((supply) => (
                     <tr key={supply.supply_id_full} className="border-b border-border/50">
-                      <td className="whitespace-nowrap px-2 py-1.5">
+                      <td className="whitespace-nowrap px-2 py-1">
                         {supply.fecha || EMPTY_VALUE}
                       </td>
-                      <td className="px-2 py-1.5 font-mono">{supply.sku || EMPTY_VALUE}</td>
-                      <td className="max-w-[20rem] truncate px-2 py-1.5" title={supply.descripcion}>
+                      <td className="px-2 py-1 font-mono">{supply.sku || EMPTY_VALUE}</td>
+                      <td className="max-w-[20rem] truncate px-2 py-1" title={supply.descripcion}>
                         {supply.descripcion || EMPTY_VALUE}
                       </td>
-                      <td className="px-2 py-1.5">
+                      <td className="px-2 py-1">
                         {supply.supplyUrl ? (
                           <a
                             href={supply.supplyUrl}
@@ -442,7 +436,7 @@ export function ConsumableDetailModal({ row, onClose }: ConsumableDetailModalPro
           )}
         </section>
 
-        <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
+        <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
           <a
             href={row.consumableUrl}
             target="_blank"
