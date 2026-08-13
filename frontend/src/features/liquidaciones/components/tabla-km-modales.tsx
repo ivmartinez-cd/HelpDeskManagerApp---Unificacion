@@ -12,8 +12,22 @@ import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Spst, TablaKm } from "../types/liquidaciones";
 
-function entradaAForm(t: TablaKm | null, defaultPrestadorId: string) {
-  if (!t) return { prestadorId: defaultPrestadorId, spstId: "", empresaNombre: "", sucursalNombre: "", domicilioCliente: "", localidadCliente: "", provinciaCliente: "", kmsRecorrido: "", kmsAFacturar: "", umbralViatico: "30", aplicaViatico: false, urlMaps: "", observaciones: "" };
+// Prefill del alta asistida desde Siges (ADR-014 DS3) — solo datos descriptivos,
+// el km queda vacío a propósito: es dato manual del acuerdo comercial.
+export interface PlantillaEntrada {
+  empresaNombre: string;
+  sucursalNombre: string;
+  domicilioCliente: string;
+  localidadCliente: string;
+  provinciaCliente: string;
+}
+
+function entradaAForm(
+  t: TablaKm | null,
+  defaultPrestadorId: string,
+  plantilla: PlantillaEntrada | null,
+) {
+  if (!t) return { prestadorId: defaultPrestadorId, spstId: "", empresaNombre: "", sucursalNombre: "", domicilioCliente: "", localidadCliente: "", provinciaCliente: "", kmsRecorrido: "", kmsAFacturar: "", umbralViatico: "30", aplicaViatico: false, urlMaps: "", observaciones: "", ...plantilla };
   return {
     prestadorId: t.prestadorId,
     spstId: t.spstId ?? "",
@@ -34,16 +48,17 @@ function entradaAForm(t: TablaKm | null, defaultPrestadorId: string) {
 // El caller lo monta con key={editing?.id ?? "nueva"} para que el estado inicial
 // del form se recalcule al cambiar de entrada.
 export function EntradaModal({
-  isOpen, onClose, prestadores, spsts, editing, defaultPrestadorId, onSuccess,
+  isOpen, onClose, prestadores, spsts, editing, defaultPrestadorId, onSuccess, plantilla = null,
 }: {
   isOpen: boolean; onClose: () => void;
   prestadores: PrestadorLiquidacion[]; spsts: Spst[]; editing: TablaKm | null; defaultPrestadorId: string; onSuccess: () => void;
+  plantilla?: PlantillaEntrada | null;
 }) {
-  const [form, setForm] = useState(() => entradaAForm(editing, defaultPrestadorId));
+  const [form, setForm] = useState(() => entradaAForm(editing, defaultPrestadorId, plantilla));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleClose = () => { setForm(entradaAForm(editing, defaultPrestadorId)); setError(null); onClose(); };
+  const handleClose = () => { setForm(entradaAForm(editing, defaultPrestadorId, plantilla)); setError(null); onClose(); };
   const filteredSpsts = spsts.filter((s) => !form.prestadorId || s.prestadorId === form.prestadorId);
 
   const handleSubmit = async (e: React.FormEvent) => {

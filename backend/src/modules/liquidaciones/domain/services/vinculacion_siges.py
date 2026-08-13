@@ -26,18 +26,23 @@ def normalizar_nombre(nombre: str) -> str:
     return " ".join(tokens)
 
 
-def _matchea(local: str, siges: str) -> bool:
-    """Compara sin espacios: 'supernova servicios s r l' tiene que matchear
-    'rosario supernova servicios srl' aunque la sigla tokenice distinto."""
-    local_compacto = local.replace(" ", "")
-    siges_compacto = siges.replace(" ", "")
-    if not local_compacto or not siges_compacto:
+def nombres_compatibles(a: str, b: str) -> bool:
+    """Compara nombres ya normalizados, sin espacios: 'supernova servicios s r l'
+    tiene que matchear 'rosario supernova servicios srl' aunque la sigla tokenice
+    distinto. También la usa el mapeo de zonas de tarifarios (ADR-014 dataset 2)."""
+    a_compacto = a.replace(" ", "")
+    b_compacto = b.replace(" ", "")
+    if not a_compacto or not b_compacto:
         return False
-    return local_compacto in siges_compacto or siges_compacto in local_compacto
+    return a_compacto in b_compacto or b_compacto in a_compacto
 
 
 def _candidato_unico(nombre_local: str, candidatos: list[SigesEmpresaInfo]) -> int | None:
-    matches = [c for c in candidatos if _matchea(nombre_local, normalizar_nombre(c.den_comercial))]
+    matches = [
+        c
+        for c in candidatos
+        if nombres_compatibles(nombre_local, normalizar_nombre(c.den_comercial))
+    ]
     return matches[0].siges_empresa_id if len(matches) == 1 else None
 
 

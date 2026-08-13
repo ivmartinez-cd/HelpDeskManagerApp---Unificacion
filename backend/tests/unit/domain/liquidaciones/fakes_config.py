@@ -4,16 +4,19 @@ los fakes base de `fakes.py`, que solo cubren lo que usan los casos de uso de
 importación/reanálisis."""
 
 import dataclasses
-from datetime import date
-from uuid import UUID
+from datetime import date, datetime
+from uuid import UUID, uuid4
 
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
+from src.modules.liquidaciones.domain.entities.tarifario_zona_map import TarifarioZonaMap
 from src.modules.liquidaciones.domain.errors import SigesVinculoDuplicadoError
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
+    SigesCostoServicio,
     SigesEmpresaInfo,
+    SigesSucursalCliente,
 )
 from tests.unit.domain.liquidaciones.fakes import (
     FakePrestadorRepository,
@@ -24,11 +27,53 @@ from tests.unit.domain.liquidaciones.fakes import (
 
 
 class FakeSigesCatalogoGateway:
-    def __init__(self, empresas: list[SigesEmpresaInfo] | None = None) -> None:
+    def __init__(
+        self,
+        empresas: list[SigesEmpresaInfo] | None = None,
+        costos: list[SigesCostoServicio] | None = None,
+        sucursales: dict[int, list[SigesSucursalCliente]] | None = None,
+    ) -> None:
         self.empresas = empresas or []
+        self.costos = costos or []
+        self.sucursales = sucursales or {}
 
     async def list_empresas_activas(self) -> list[SigesEmpresaInfo]:
         return list(self.empresas)
+
+    async def list_costos_habilitados(
+        self, siges_empresa_ids: list[int]
+    ) -> list[SigesCostoServicio]:
+        return [c for c in self.costos if c.siges_empresa_id in siges_empresa_ids]
+
+    async def list_sucursales_de_prestador(
+        self, siges_empresa_id: int
+    ) -> list[SigesSucursalCliente]:
+        return list(self.sucursales.get(siges_empresa_id, []))
+
+
+class FakeTarifarioZonaMapRepository:
+    def __init__(self, rows: list[TarifarioZonaMap] | None = None) -> None:
+        self.rows = rows or []
+
+    async def list_all(self) -> list[TarifarioZonaMap]:
+        return list(self.rows)
+
+    async def upsert(
+        self, *, prestador_id: UUID, descripcion_siges: str, zona_local: str | None
+    ) -> TarifarioZonaMap:
+        for i, fila in enumerate(self.rows):
+            if (fila.prestador_id, fila.descripcion_siges) == (prestador_id, descripcion_siges):
+                self.rows[i] = dataclasses.replace(fila, zona_local=zona_local)
+                return self.rows[i]
+        nueva = TarifarioZonaMap(
+            id=uuid4(),
+            prestador_id=prestador_id,
+            descripcion_siges=descripcion_siges,
+            zona_local=zona_local,
+            created_at=datetime(2026, 1, 1),
+        )
+        self.rows.append(nueva)
+        return nueva
 
 
 class FakeConfigPrestadorRepository(FakePrestadorRepository):

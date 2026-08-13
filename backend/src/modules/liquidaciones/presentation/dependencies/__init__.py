@@ -22,13 +22,18 @@ from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
     build_reanalizar_liquidacion,
 )
 from src.modules.liquidaciones.presentation.dependencies.siges import (
+    build_buscar_sucursales_siges,
+    build_estado_zonas_siges,
+    build_mapear_zona_siges,
     build_proponer_vinculos_siges,
     build_sync_config_desde_siges,
+    build_sync_tarifarios_desde_siges,
     build_vincular_prestador_siges,
     build_vincular_spst_siges,
 )
 
 __all__ = [
+    "build_buscar_sucursales_siges",
     "build_create_prestador",
     "build_create_spst",
     "build_create_tabla_km",
@@ -37,13 +42,16 @@ __all__ = [
     "build_delete_spst",
     "build_delete_tabla_km",
     "build_delete_tarifario",
+    "build_estado_zonas_siges",
     "build_get_liquidacion_detalle",
     "build_importar_liquidacion",
     "build_importar_prestador_maestro",
     "build_list_liquidaciones",
+    "build_mapear_zona_siges",
     "build_proponer_vinculos_siges",
     "build_reanalizar_liquidacion",
     "build_sync_config_desde_siges",
+    "build_sync_tarifarios_desde_siges",
     "build_toggle_prestador_activo",
     "build_toggle_spst_activo",
     "build_update_prestador",

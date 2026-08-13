@@ -70,6 +70,20 @@ class SigesVinculoDuplicadoError(BusinessRuleViolationError):
         )
 
 
+class PrestadorSinVinculoSigesError(BusinessRuleViolationError):
+    """El alta asistida y los syncs del ADR-014 solo operan sobre prestadores
+    con `siges_empresa_id` — pedirlos para uno sin vincular es un error de uso,
+    no un caso silencioso."""
+
+    default_code: ClassVar[str] = "PRESTADOR_SIN_VINCULO_SIGES"
+
+    def __init__(self, prestador_id: UUID) -> None:
+        super().__init__(
+            f"El prestador {prestador_id} no está vinculado a Siges. Vinculalo desde "
+            "la pantalla de Prestadores antes de usar el alta asistida."
+        )
+
+
 class ArchivoLiquidacionInvalidoError(ValidationError):
     """El archivo no se pudo leer como tabla, o ninguna tabla tiene una columna de
     incidente reconocible — mismo `ValueError` que el legacy convertía en 400."""

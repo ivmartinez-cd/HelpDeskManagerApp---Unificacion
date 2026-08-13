@@ -15,8 +15,12 @@ from src.modules.liquidaciones.presentation.config_routers._deps import (
     require_view,
 )
 from src.modules.liquidaciones.presentation.dependencies import (
+    build_buscar_sucursales_siges,
+    build_estado_zonas_siges,
+    build_mapear_zona_siges,
     build_proponer_vinculos_siges,
     build_sync_config_desde_siges,
+    build_sync_tarifarios_desde_siges,
     build_vincular_prestador_siges,
     build_vincular_spst_siges,
 )
@@ -25,11 +29,17 @@ from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     SpstOut,
 )
 from src.modules.liquidaciones.presentation.schemas.siges_schemas import (
+    MapearZonaIn,
     PropuestasVinculoOut,
+    SucursalSigesOut,
     SyncSigesOut,
+    SyncTarifariosOut,
     VincularSigesIn,
+    ZonaMapOut,
+    ZonasSigesOut,
 )
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter()
 
@@ -51,6 +61,54 @@ async def sync_config_desde_siges(
 ) -> SyncSigesOut:
     resultado = await build_sync_config_desde_siges(db).execute(dry_run=dry_run)
     return SyncSigesOut.from_dto(resultado)
+
+
+@router.get("/siges/zonas", response_model=ZonasSigesOut)
+async def estado_zonas_siges(
+    _: Identity = require_view,
+    db: AsyncSession = Depends(get_db),
+) -> ZonasSigesOut:
+    resultado = await build_estado_zonas_siges(db).execute()
+    return ZonasSigesOut.from_dto(resultado)
+
+
+@router.put("/siges/zonas", response_model=ZonaMapOut)
+async def mapear_zona_siges(
+    body: MapearZonaIn,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> ZonaMapOut:
+    mapa = await build_mapear_zona_siges(db).execute(
+        body.prestador_id,
+        descripcion_siges=body.descripcion_siges,
+        zona_local=body.zona_local,
+    )
+    return ZonaMapOut.from_entity(mapa)
+
+
+@router.post("/siges/sync-tarifarios", response_model=SyncTarifariosOut)
+async def sync_tarifarios_desde_siges(
+    dry_run: bool = Query(default=True, alias="dryRun"),
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> SyncTarifariosOut:
+    resultado = await build_sync_tarifarios_desde_siges(db).execute(dry_run=dry_run)
+    return SyncTarifariosOut.from_dto(resultado)
+
+
+@router.get("/siges/sucursales", response_model=Page[SucursalSigesOut])
+async def buscar_sucursales_siges(
+    prestador_id: UUID = Query(alias="prestadorId"),
+    q: str = Query(default=""),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=50, ge=1, le=200),
+    _: Identity = require_view,
+    db: AsyncSession = Depends(get_db),
+) -> Page[SucursalSigesOut]:
+    sucursales = await build_buscar_sucursales_siges(db).execute(prestador_id, q=q)
+    return Page.of(
+        [SucursalSigesOut.from_dto(s) for s in sucursales], page=page, size=size
+    )
 
 
 @router.put("/prestadores/{prestador_id}/siges-vinculo", response_model=PrestadorOut)

@@ -13,6 +13,7 @@ export interface PrestadorLiquidacion {
   cuit: string | null;
   region: string | null;
   activo: boolean;
+  sigesEmpresaId: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -26,7 +27,116 @@ export interface Spst {
   provincia: string | null;
   zona: string | null;
   activo: boolean;
+  sigesEmpresaId: number | null;
   createdAt: string;
+}
+
+// ── Vínculo y sync contra Siges (ADR-014) ──────────────────────────────────
+
+export interface SigesEmpresa {
+  sigesEmpresaId: number;
+  denComercial: string;
+  razonSocial: string | null;
+  cuit: string | null;
+  tipo: "PST" | "SPST";
+}
+
+export interface PropuestaVinculo {
+  entidad: "prestador" | "spst";
+  localId: string;
+  localNombre: string;
+  sigesEmpresaId: number;
+  sigesDenComercial: string;
+}
+
+export interface PropuestasVinculo {
+  propuestas: PropuestaVinculo[];
+  disponibles: SigesEmpresa[];
+}
+
+export interface SyncSigesCambio {
+  localId: string;
+  localNombre: string;
+  campo: string;
+  valorAnterior: string | null;
+  valorNuevo: string | null;
+}
+
+export interface SyncSigesDiferenciaNombre {
+  localId: string;
+  localNombre: string;
+  sigesDenComercial: string;
+}
+
+export interface SyncSigesResult {
+  dryRun: boolean;
+  cambios: SyncSigesCambio[];
+  nombresDistintos: SyncSigesDiferenciaNombre[];
+  sinCambios: number;
+  sinVinculo: string[];
+  vinculoRoto: string[];
+}
+
+// ── Sync de tarifarios contra Siges (ADR-014 dataset 2) ────────────────────
+
+export interface ZonaSigesEstado {
+  prestadorId: string;
+  prestador: string;
+  descripcionSiges: string;
+  /** true con zonaLocal null = mapeada a la zona genérica (sin zona). */
+  mapeada: boolean;
+  zonaLocal: string | null;
+  propuesta: string | null;
+  zonasLocales: string[];
+}
+
+export interface ZonasSiges {
+  zonas: ZonaSigesEstado[];
+}
+
+export interface GrupoTarifasCreadas {
+  prestador: string;
+  tipoServicio: string;
+  zona: string | null;
+  cantidad: number;
+}
+
+export interface ConflictoTarifario {
+  prestador: string;
+  tipoServicio: string;
+  zona: string | null;
+  vigenciaDesde: string;
+  campo: string;
+  valorLocal: number;
+  valorSiges: number;
+}
+
+export interface ZonaSinMapear {
+  prestador: string;
+  descripcionSiges: string;
+  filas: number;
+}
+
+// ── Alta asistida de Tabla KM (ADR-014 dataset 3) ──────────────────────────
+
+export interface SucursalSiges {
+  sigesSucursalId: number;
+  empresaNombre: string;
+  sucursalNombre: string;
+  domicilio: string | null;
+  localidad: string | null;
+  provincia: string | null;
+  yaCargada: boolean;
+}
+
+export interface SyncTarifariosResult {
+  dryRun: boolean;
+  creados: number;
+  gruposCreados: GrupoTarifasCreadas[];
+  conflictos: ConflictoTarifario[];
+  sinCambios: number;
+  zonasSinMapear: ZonaSinMapear[];
+  prestadoresSinVinculo: string[];
 }
 
 export interface Tarifario {

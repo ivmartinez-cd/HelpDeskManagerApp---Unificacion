@@ -7,8 +7,9 @@ import { BrandButton, BrandEmptyState } from "@/shared/components/ui/brand-form"
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { PrestadorLiquidacion, Spst, TablaKm } from "../types/liquidaciones";
-import { CsvImportModal, EntradaModal } from "./tabla-km-modales";
+import type { PrestadorLiquidacion, Spst, SucursalSiges, TablaKm } from "../types/liquidaciones";
+import { CsvImportModal, EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
+import { SigesTablaKmModal } from "./siges-tabla-km-modal";
 
 export function TablaKmConfig() {
   const [entradas, setEntradas] = useState<TablaKm[]>([]);
@@ -24,7 +25,9 @@ export function TablaKmConfig() {
   const [busqueda, setBusqueda] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<TablaKm | null>(null);
+  const [plantilla, setPlantilla] = useState<PlantillaEntrada | null>(null);
   const [csvOpen, setCsvOpen] = useState(false);
+  const [sigesOpen, setSigesOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -65,6 +68,19 @@ export function TablaKmConfig() {
     catch { toast.error("Error al descargar"); }
   };
 
+  const handleUsarSucursal = (s: SucursalSiges) => {
+    setSigesOpen(false);
+    setEditing(null);
+    setPlantilla({
+      empresaNombre: s.empresaNombre,
+      sucursalNombre: s.sucursalNombre,
+      domicilioCliente: s.domicilio ?? "",
+      localidadCliente: s.localidad ?? "",
+      provinciaCliente: s.provincia ?? "",
+    });
+    setModalOpen(true);
+  };
+
   const pstSeleccionado = prestadores.find((p) => p.id === filtroPst) ?? null;
   const loadingEntradas = filtroPst !== "" && filtroPst !== entradasPstId;
   const q = busqueda.toLowerCase();
@@ -86,9 +102,17 @@ export function TablaKmConfig() {
           </p>
         </div>
         <div className="flex gap-2">
+          <BrandButton
+            size="sm"
+            variant="outline"
+            disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
+            onClick={() => setSigesOpen(true)}
+          >
+            Agregar desde Siges
+          </BrandButton>
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
-          <BrandButton size="sm" onClick={() => { setEditing(null); setModalOpen(true); }}>+ Nueva entrada</BrandButton>
+          <BrandButton size="sm" onClick={() => { setEditing(null); setPlantilla(null); setModalOpen(true); }}>+ Nueva entrada</BrandButton>
         </div>
       </div>
 
@@ -144,8 +168,11 @@ export function TablaKmConfig() {
         </div>
       )}
 
-      <EntradaModal key={editing?.id ?? "nueva"} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); }} prestadores={prestadores} spsts={spsts} editing={editing} defaultPrestadorId={filtroPst} onSuccess={loadEntradas} />
+      <EntradaModal key={editing?.id ?? (plantilla ? `plantilla:${plantilla.empresaNombre}::${plantilla.sucursalNombre}` : "nueva")} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); setPlantilla(null); }} prestadores={prestadores} spsts={spsts} editing={editing} defaultPrestadorId={filtroPst} onSuccess={loadEntradas} plantilla={plantilla} />
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={loadEntradas} />
+      {sigesOpen && filtroPst && (
+        <SigesTablaKmModal prestadorId={filtroPst} onClose={() => setSigesOpen(false)} onUsar={handleUsarSucursal} />
+      )}
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar entrada">
         <p className="font-body text-sm text-muted-foreground mb-5">Esta acción no se puede deshacer. ¿Confirmás la eliminación?</p>
         <div className="flex justify-end gap-3">

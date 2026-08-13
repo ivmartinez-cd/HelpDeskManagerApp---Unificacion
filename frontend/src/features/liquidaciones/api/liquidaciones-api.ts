@@ -9,9 +9,14 @@ import type {
   LiquidacionPage,
   Observacion,
   PrestadorLiquidacion,
+  PropuestasVinculo,
   Spst,
+  SucursalSiges,
+  SyncSigesResult,
+  SyncTarifariosResult,
   TablaKm,
   Tarifario,
+  ZonasSiges,
 } from "../types/liquidaciones";
 
 interface Page<T> {
@@ -138,6 +143,39 @@ export const liquidacionesApi = {
       "/api/liquidaciones/prestadores/importar-excel",
       fd,
     );
+  },
+
+  // ── Vínculo y sync contra Siges (ADR-014) ─────────────────────────────────
+  getSigesPropuestas: () =>
+    httpClient.get<PropuestasVinculo>("/api/liquidaciones/siges/propuestas"),
+
+  syncSiges: (dryRun: boolean) =>
+    httpClient.post<SyncSigesResult>(`/api/liquidaciones/siges/sync?dryRun=${dryRun}`),
+
+  vincularPrestadorSiges: (id: string, sigesEmpresaId: number | null) =>
+    httpClient.put<PrestadorLiquidacion>(`/api/liquidaciones/prestadores/${id}/siges-vinculo`, {
+      sigesEmpresaId,
+    }),
+
+  vincularSpstSiges: (id: string, sigesEmpresaId: number | null) =>
+    httpClient.put<Spst>(`/api/liquidaciones/spsts/${id}/siges-vinculo`, { sigesEmpresaId }),
+
+  getSigesZonas: () => httpClient.get<ZonasSiges>("/api/liquidaciones/siges/zonas"),
+
+  mapearZonaSiges: (body: {
+    prestadorId: string;
+    descripcionSiges: string;
+    zonaLocal: string | null;
+  }) => httpClient.put<{ id: string }>("/api/liquidaciones/siges/zonas", body),
+
+  syncTarifariosSiges: (dryRun: boolean) =>
+    httpClient.post<SyncTarifariosResult>(
+      `/api/liquidaciones/siges/sync-tarifarios?dryRun=${dryRun}`,
+    ),
+
+  buscarSucursalesSiges: (prestadorId: string, q: string) => {
+    const qs = new URLSearchParams({ prestadorId, q, size: "200" });
+    return httpClient.get<Page<SucursalSiges>>(`/api/liquidaciones/siges/sucursales?${qs}`);
   },
 
   // ── Config: SPSTs ─────────────────────────────────────────────────────────

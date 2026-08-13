@@ -15,6 +15,7 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Tarifario } from "../types/liquidaciones";
 import { agruparTarifarios, GrupoTarifaRow, type GrupoTarifa } from "./tarifario-history-timeline";
+import { SigesTarifariosModal } from "./siges-tarifarios-modal";
 
 const TIPOS = [
   "correctivo", "preventivo", "instalacion_desinstalacion",
@@ -172,6 +173,7 @@ export function TarifariosConfig() {
   const [editing, setEditing] = useState<Tarifario | null>(null);
   const [plantilla, setPlantilla] = useState<PlantillaTarifa | null>(null);
   const [csvOpen, setCsvOpen] = useState(false);
+  const [sigesOpen, setSigesOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -242,6 +244,7 @@ export function TarifariosConfig() {
           </p>
         </div>
         <div className="flex gap-2">
+          <BrandButton size="sm" variant="outline" onClick={() => setSigesOpen(true)}>Sincronizar Siges</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
           <BrandButton size="sm" onClick={() => abrirModal(null)}>+ Nueva tarifa</BrandButton>
@@ -279,6 +282,9 @@ export function TarifariosConfig() {
 
       <TarifaModal key={editing?.id ?? (plantilla ? `plantilla:${Object.values(plantilla).join("::")}` : "nueva")} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); setPlantilla(null); }} prestadores={prestadores} editing={editing} plantilla={plantilla} defaultPrestadorId={filtroPst} onSuccess={loadTarifarios} />
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={loadTarifarios} />
+      {sigesOpen && (
+        <SigesTarifariosModal onClose={() => setSigesOpen(false)} onChanged={loadTarifarios} />
+      )}
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar tarifa">
         <p className="font-body text-sm text-muted-foreground mb-5">Esta acción no se puede deshacer. ¿Confirmás la eliminación?</p>
         <div className="flex justify-end gap-3">

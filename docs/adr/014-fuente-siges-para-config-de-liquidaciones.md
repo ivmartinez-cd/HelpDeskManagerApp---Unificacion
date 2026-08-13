@@ -1,6 +1,6 @@
 # ADR-014: SigesReadOnly como fuente de sync para la configuración de Liquidaciones; wsAyC reservado para preliquidaciones
 
-## Estado: Propuesto (pendiente de revisión del usuario antes de implementar la Fase 3)
+## Estado: Aceptado e implementado (2026-08-13 — los 3 datasets cerrados el mismo día; ver `docs/liquidaciones/LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`)
 
 ## Contexto
 

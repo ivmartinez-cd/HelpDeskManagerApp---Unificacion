@@ -416,10 +416,183 @@ resolver nada: el único problema real era el truncamiento silencioso del punto 
 que se cerró con el fetch paginado. El contrato HTTP sigue siendo `Page[T]` (§11), así
 que si algún día una vista lo necesita, el backend ya lo soporta.
 
+## Automatización de fuentes — ADR-014, dataset 1 CERRADO (2026-08-13)
+
+Workstream nuevo (posterior al port): reemplazar la carga CSV/Excel de configuración
+por sync desde SigesReadOnly. Fase 1 (validación con dato real) en
+`docs/liquidaciones/SIGES_READONLY_LIQUIDACIONES_VALIDACION.md`; Fase 2 (decisión) en
+`docs/adr/014-fuente-siges-para-config-de-liquidaciones.md` (aceptado). Fase 3 se
+implementa un dataset por vez — **dataset 1 (prestadores/SPSTs) cerrado**
+(backend commiteado en `bf0257c`; frontend + verificación de esta sesión):
+
+- **Modelo**: `siges_empresa_id` (nullable, UNIQUE) en `prestadores` y `spsts`
+  (migración `c4d8a91f26e3`, aplicada a helpdesk-db), entidades/modelos/repos con
+  `vincular_siges` (el `IntegrityError` del UNIQUE se traduce a
+  `SigesVinculoDuplicadoError`, 409).
+- **Dominio**: puerto `SigesCatalogoGateway` (+ `SigesEmpresaInfo`) y servicio puro
+  `vinculacion_siges` (matching normalizado sin acentos/prefijos, contención sin
+  espacios, solo matches inequívocos en ambas direcciones).
+- **Infra**: `PyodbcSigesCatalogoGateway` sobre `dbo.Empresa` (`Estado=0` = activo,
+  prefijos `'PST '`/`'SPST'`), patrón pyodbc de ADR-012.
+- **Application**: `ProponerVinculosSiges`, `Vincular{Prestador,Spst}Siges`,
+  `SyncConfigDesdeSiges` con dry-run first-class — actualiza solo el campo espejo
+  `cuit` de prestadores vinculados (comparación por dígitos; nunca borra si Siges no
+  lo tiene); nombre distinto se reporta sin escribir; nunca crea/desactiva.
+- **HTTP**: `GET /api/liquidaciones/siges/propuestas`, `POST /siges/sync?dryRun=`,
+  `PUT /prestadores/{id}/siges-vinculo`, `PUT /spsts/{id}/siges-vinculo`
+  (`config_routers/siges.py`); `PrestadorOut`/`SpstOut` exponen `sigesEmpresaId`.
+- **Frontend**: botón "Sincronizar Siges" en la pantalla de Prestadores →
+  `siges-sync-modal.tsx` (propuestas con confirmación individual, dry-run automático
+  al abrir, "Aplicar sync", disponibles-sin-vincular informativos); columna "Siges"
+  en la tabla. Nota eslint: `react-hooks/set-state-in-effect` prohíbe `setState`
+  dentro de un `catch` alcanzable desde un efecto — el load del modal usa
+  promise-chain (`.then/.catch`), único patrón que la regla acepta con manejo de
+  error.
+
+**Verificado contra Siges real y DB real** (script reproducible
+`backend/scripts/verificar_siges_vinculo_liquidaciones.py`, corrido con
+`DISABLE_BACKGROUND_JOBS=true`): 37 propuestas de alta confianza (31 prestadores +
+6 SPSTs), todas correctas a inspección; aplicadas; sync real trajo **31 CUITs
+reales** (todos los prestadores locales tenían cuit vacío); re-corrida → 0 cambios
+(idempotencia verificada). Quedaron sin vincular a propósito: `SUPERNOVA`+`PERTEX`
+(ambos matchean la empresa #600 de Siges — el duplicado histórico Pertex/Supernova
+del legacy; ambigüedad que el matching descarta y debe resolver la TL a mano),
+`SM TUCUMAN`/`TUCUMAN` (nombres Siges sin match de confianza:
+`'PST SM de Tucuman'`/`'PST Tucuman - NAPA'`) y `ZZTESTUI` (fila de prueba).
+
+Gates: lint-imports 17/17 · ruff · mypy (777 archivos) · 872 unit (25 nuevos) ·
+63 integración liquidaciones (3 nuevos de `vincular_siges`) · tsc · eslint — todo
+en verde el 2026-08-13.
+
+### Dataset 2 — sync de tarifarios CERRADO (2026-08-13, misma sesión)
+
+- **Modelo**: tabla `tarifario_zona_maps` (migración `d91f4b7a03c8`): mapeo por
+  prestador de `CostoServicio.descripcion` → zona local, UNIQUE por par;
+  **`zona_local` NULL = mapeada a la zona genérica** (tarifario sin zona) — no es
+  un caso raro, es el mayoritario (ver hallazgo TMT abajo).
+- **Dominio**: `SigesCostoServicio` (fila wide) + `list_costos_habilitados` en el
+  gateway; servicio puro `sync_tarifarios.py`: pivot wide→long (6 tipos con
+  equivalente local; `inclusion_a_contrato`/`relevamiento`/`presupuesto`/`taller`
+  ignorados por ADR), resolución de zona ('Genérica'→None implícito, 'DE
+  BAJA'/'Sin servicio' excluidas, resto exige mapeo), plan
+  crear/conflicto/sin_cambios (tolerancia 0.01, la de ALT001; costo 0 = "no
+  presta", el $0,01 real de Centro Cívico sí pasa), y propuesta de mapeo de zonas
+  con el mismo matching de alta confianza del dataset 1.
+- **Application**: `SyncTarifariosDesdeSiges` (dry-run first-class; **toda alta
+  entra por `CreateTarifario`** → recadenado de vigencias garantizado; conflicto
+  = misma vigencia con costo distinto, se reporta y JAMÁS se pisa),
+  `EstadoZonasSiges`, `MapearZonaSiges`. Resultado agregado por grupo (el detalle
+  fila-por-fila serían miles de líneas).
+- **HTTP**: `GET/PUT /api/liquidaciones/siges/zonas`,
+  `POST /siges/sync-tarifarios?dryRun=`. **Frontend**: botón "Sincronizar Siges"
+  en Tarifarios → `siges-tarifarios-modal.tsx` (mapeo de zonas pendientes con
+  select — genérica / adoptar nombre Siges / zona local, propuesta preseleccionada
+  —, resultado dry-run agrupado, aplicar).
+
+**Hallazgos de la verificación contra datos reales** (script
+`backend/scripts/verificar_siges_tarifarios_liquidaciones.py`):
+
+1. **Paridad perfecta PENTACOM**: 168/168 sin cambios, 0 conflictos — la cadena
+   completa de vigencias local coincide con `CostoServicio` end-to-end.
+2. **Los códigos TMT\* son la tarifa genérica de cada PST**: la mayoría de los
+   PSTs no usa descripción 'Genérica' sino su código de tarifa (`TMTB122`,
+   `TMTA222`, …). Confirmado por conteos exactos con zona local NULL (MENDOZA
+   192=192, SALTA 192=192, MACARONE 198=198, CATAMARCA 138=138). Esto motivó el
+   rediseño `zona_local` NULL = genérica (la primera versión del modelo no
+   permitía mapear a "sin zona").
+3. **2 bugs reales encontrados por datos reales, no por los tests**: `CostoKm`
+   puede venir NULL en `CostoServicio` (→ 0.0 en el gateway); y el modelo de
+   mapeo sin opción "genérica" (punto 2).
+4. **Sync real aplicado**: 33 mapeos de zona confirmados (TMT\*→genérica por
+   regla, 3 propuestas automáticas de INFOMAC, General Roca→'Gral. Roca /
+   Neuquén' manual), **764 vigencias históricas creadas** (CDU 168, MDQ 162,
+   CHACO 144, VENADO 140, PERGAMINO 78, TANDIL 66, SAN JUAN 6), 3961 sin
+   cambios, re-corrida idempotente (0 creados, 4725 sin cambios). Invariante de
+   cadenas verificado en SQL: 0 filas con `vigencia_hasta` NULL que tengan una
+   vigencia posterior en su grupo (5596 tarifarios totales).
+5. **Los 3 conflictos reportados son hallazgos de negocio reales** (correctamente
+   NO pisados): SAN JUAN instalación 2026-01-01 local=92252 vs Siges=46126 —
+   exactamente el doble, la regla conocida "doble tarifa instalación San Juan"
+   aplicada en la planilla local; VENADO instalación 2026-07-01 66794 vs 66749
+   (probable typo de $45); INFOMAC preventivo Villa Mercedes 2026-01-01 23073 vs
+   24559. Los resuelve la TL a mano si corresponde.
+6. **Sin mapear a propósito** (decisión de la TL pendiente): `GSJ - Escuelas
+   Valle Fertil` y `GSJ - GI Centro Civico` de SAN JUAN (excepciones de zona sin
+   zona local equivalente — lo local maneja Centro Cívico sin zona).
+
+Gates dataset 2: lint-imports 17/17 · ruff · mypy (785) · 891 unit (+19) · 65
+integración (+2) · tsc · eslint · 15 e2e Playwright — en verde el 2026-08-13.
+
+### Dataset 3 — alta asistida de Tabla KM CERRADO (2026-08-13, misma sesión) → ADR-014 completo
+
+Por diseño (y pedido explícito del usuario) **solo lectura + solo agregar**: no
+hay sync de tabla KM — nada toca, pisa ni borra los pares ya migrados. El alta
+sigue siendo decisión manual vía `CreateTablaKm`; Siges solo precarga los datos
+descriptivos del par.
+
+- **Gateway**: `SigesSucursalCliente` + `list_sucursales_de_prestador`
+  (`dbo.Sucursal` `Estado=0` JOIN `Empresa` LEFT JOIN `Ciudad` para
+  localidad/provincia; el `Domicilio` real viene con ruido de plantilla
+  `' 0 Piso: Dpto:'` cuando está vacío — se limpia en el gateway).
+- **Application**: `BuscarSucursalesSiges(prestador_id, q)` — exige prestador
+  vinculado (`PrestadorSinVinculoSigesError`, 409), filtra por nombre
+  normalizado y marca `ya_cargada` cruzando contra la Tabla KM local (misma
+  normalización sin acentos/case del matching del dataset 1).
+- **HTTP**: `GET /api/liquidaciones/siges/sucursales?prestadorId&q` con
+  `Page[T]` (§11). **Frontend**: botón "Agregar desde Siges" en Tabla KM
+  (deshabilitado sin prestador vinculado) → modal de búsqueda con badge
+  "Ya cargada" y botón "Usar" que abre la Nueva Entrada prefillada (prop
+  `plantilla` nueva en `EntradaModal`, mismo patrón que `TarifaModal`); el km
+  queda vacío a propósito.
+
+**Verificado contra Siges real** (solo lectura): PENTACOM 762 sucursales
+vigentes, **247 de los 276 pares locales reconocidos como `ya_cargada`** por
+comparación normalizada ('Achiras'·'CP Achiras' ✓); domicilios reales para el
+prefill ('Banco Credicoop · 100 - Cordoba Centro · Buenos Aires 23'); conteo de
+Tabla KM intacto tras las búsquedas (276 — no escribe nada). Los ~29 pares
+locales sin match son sucursales renombradas/inactivas en Siges — esperable, no
+un bug.
+
+Gates dataset 3: lint-imports 17/17 · ruff · mypy (787) · 895 unit (+4) · tsc ·
+eslint · 15 e2e — en verde el 2026-08-13. **Con esto el ADR-014 queda
+implementado completo (3/3 datasets).**
+
+### Decisiones del usuario aplicadas (2026-08-13, cierre de pendientes del ADR-014)
+
+- **SUPERNOVA → #600**: vinculado (tenía todo el historial real: 3 liquidaciones,
+  180 tarifas, 199 km; PERTEX es el duplicado vacío del legacy — queda sin vínculo,
+  candidato a baja cuando el usuario quiera).
+- **SM TUCUMAN → #1285 y TUCUMAN → #491 (NAPA)**: vinculados y **confirmados con
+  evidencia** por dry-run: tras mapear sus códigos TMT a genérica, los tres nuevos
+  dieron 0 a crear / 0 conflictos — las 180 tarifas locales de "German Naselli" son
+  exactamente las de "NAPA Tucuman" (mismo PST renombrado). `sin_cambios` global
+  4725→5139 (+414 = 180+54+180). TUCUMAN además tiene la zona
+  `'TMTA122 - SGO DEL ESTERO'` sin mapear (NAPA atiende Sgo del Estero como zona;
+  lo local no la usa — misma situación que las GSJ).
+- **CUITs de los 3 nuevos sincronizados** (SUPERNOVA 30715672657, SM TUCUMAN
+  33709510369, TUCUMAN 20297151712), re-corrida idempotente. Quedan sin vínculo
+  solo PERTEX (a propósito) y ZZTESTUI (fila de prueba): 34/36.
+- **Conflicto SAN JUAN instalación = regla del doble confirmada por el usuario**
+  ($46.126 × 2 = $92.252 exacto): se mantiene local. VENADO ($45) e INFOMAC
+  (preventivo VM) también quedan locales, pendientes de la TL — seguirán
+  apareciendo en cada dry-run como recordatorio.
+- **Zonas `GSJ - *` de SAN JUAN: sin mapear a propósito** (el manejo local de
+  Centro Cívico a $0,01 sin zona no se toca).
+
+- **PERTEX eliminado definitivamente** (pedido del usuario, 2026-08-13): baja
+  física vía `DeletePrestador` — cascadeó su único SPST (`'PST Rosario -
+  Supernova/Pertex'`, sin tabla KM vinculada); no tenía liquidaciones ni
+  tarifas. Quedan 35 prestadores, **34/35 vinculados a Siges** (solo ZZTESTUI,
+  la fila de prueba, sin vínculo).
+
 ## Pendiente
 
 1. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
+2. TL: confirmar los 2 conflictos menores (VENADO $45, INFOMAC preventivo VM) y,
+   si algún día hace falta, mapear `GSJ - *` / `TMTA122 - SGO DEL ESTERO`.
 
 ## Próximo paso sugerido
 
-Arrancar el período de observación en paralelo con la app legacy.
+Con el ADR-014 completo, arrancar el período de observación en paralelo con la app
+legacy (pendiente 1) — la config ahora se mantiene sola desde Siges, así que la
+comparación legacy-vs-nuevo corre sobre datos siempre al día.
