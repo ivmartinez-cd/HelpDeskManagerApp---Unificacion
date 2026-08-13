@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, text
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -34,3 +34,5 @@ class LiquidacionModel(Base):
     total_incidentes: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     total_alertas: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     total_importe: Mapped[float] = mapped_column(Float, nullable=False, server_default=text("0.0"))
+    concepto_extra: Mapped[str | None] = mapped_column(Text)
+    monto_extra: Mapped[float | None] = mapped_column(Float)

@@ -43,6 +43,13 @@ class LiquidacionRepository(Protocol):
 
     async def update_estado(self, liquidacion_id: UUID, estado: str) -> Liquidacion | None: ...
 
+    async def update_extra(
+        self,
+        liquidacion_id: UUID,
+        concepto_extra: str | None,
+        monto_extra: float | None,
+    ) -> Liquidacion | None: ...
+
     async def update_total_alertas(self, liquidacion_id: UUID, total_alertas: int) -> None:
         """El único campo que `ejecutar_motor` del legacy tocaba al final de una
         corrida (import o reanalyze) — `total_incidentes`/`total_importe` se fijan al

@@ -36,6 +36,7 @@ from src.modules.liquidaciones.presentation.schemas.liquidacion_detalle_schemas 
 )
 from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import (
     EstadoIn,
+    ExtraIn,
     LiquidacionOut,
     PrestadorLiquidacionOut,
 )
@@ -119,6 +120,21 @@ async def update_estado_liquidacion(
 ) -> LiquidacionOut:
     updated = await SqlAlchemyLiquidacionRepository(db).update_estado(
         liquidacion_id, body.estado
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Liquidación no encontrada")
+    return LiquidacionOut.from_entity(updated)
+
+
+@router.patch("/{liquidacion_id}/extra", response_model=LiquidacionOut)
+async def update_extra_liquidacion(
+    liquidacion_id: UUID,
+    body: ExtraIn,
+    _: Identity = _require_update,
+    db: AsyncSession = Depends(get_db),
+) -> LiquidacionOut:
+    updated = await SqlAlchemyLiquidacionRepository(db).update_extra(
+        liquidacion_id, body.concepto_extra, body.monto_extra
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Liquidación no encontrada")

@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { cn } from "@/shared/utils/cn";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type {
   Alerta,
   EstadoLiquidacion,
+  Liquidacion,
   LiquidacionDetalle,
   PrestadorLiquidacion,
 } from "../types/liquidaciones";
@@ -59,6 +61,125 @@ function Kpi({
   );
 }
 
+function ExtraItemSeccion({
+  liquidacion,
+  onUpdated,
+}: {
+  liquidacion: Liquidacion;
+  onUpdated: (updated: Liquidacion) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [concepto, setConcepto] = useState(liquidacion.conceptoExtra ?? "");
+  const [monto, setMonto] = useState(liquidacion.montoExtra?.toString() ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const inputCls =
+    "rounded-[8px] border border-border bg-background px-3 py-1.5 font-body text-sm text-foreground outline-none focus:border-brand-orange/50";
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const montoNum = monto.trim() !== "" ? parseFloat(monto) : null;
+      const conceptoVal = concepto.trim() !== "" ? concepto.trim() : null;
+      const updated = await liquidacionesApi.updateExtra(liquidacion.id, {
+        conceptoExtra: conceptoVal,
+        montoExtra: montoNum,
+      });
+      onUpdated(updated);
+      setEditing(false);
+    } catch {
+      toast.error("Error al guardar el ítem extra");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setConcepto(liquidacion.conceptoExtra ?? "");
+    setMonto(liquidacion.montoExtra?.toString() ?? "");
+    setEditing(false);
+  };
+
+  const totalAjustado = liquidacion.totalImporte + (liquidacion.montoExtra ?? 0);
+
+  return (
+    <div className="rounded-[12px] border border-border bg-card p-5">
+      <div className="flex items-center justify-between gap-4">
+        <span className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
+          Ítem extra
+        </span>
+        {!editing && (
+          <button
+            onClick={() => setEditing(true)}
+            className="font-body text-xs text-brand-orange hover:underline"
+          >
+            {liquidacion.montoExtra != null ? "Editar" : "Agregar"}
+          </button>
+        )}
+      </div>
+
+      {editing ? (
+        <div className="mt-3 flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="font-body text-xs text-muted-foreground">Concepto</label>
+            <input
+              value={concepto}
+              onChange={(e) => setConcepto(e.target.value)}
+              placeholder="Ej. Seguro de viaje"
+              className={`${inputCls} w-56`}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="font-body text-xs text-muted-foreground">Monto ($)</label>
+            <input
+              type="number"
+              value={monto}
+              onChange={(e) => setMonto(e.target.value)}
+              placeholder="0.00"
+              className={`${inputCls} w-32`}
+            />
+          </div>
+          <button
+            onClick={() => void handleSave()}
+            disabled={saving}
+            className="rounded-[8px] bg-brand-orange px-4 py-1.5 font-body text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {saving ? "Guardando..." : "Guardar"}
+          </button>
+          <button
+            onClick={handleCancel}
+            disabled={saving}
+            className="font-body text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+        </div>
+      ) : liquidacion.montoExtra != null ? (
+        <div className="mt-2 flex flex-wrap items-baseline gap-6">
+          <div className="flex flex-col">
+            <span className="font-body text-sm text-foreground">
+              {liquidacion.conceptoExtra ?? "—"}
+            </span>
+            <span className="font-heading text-xl font-extrabold text-foreground">
+              {formatARS(liquidacion.montoExtra)}
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
+              Total ajustado
+            </span>
+            <span className="font-heading text-xl font-extrabold text-foreground">
+              {formatARS(totalAjustado)}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <p className="mt-2 font-body text-sm text-muted-foreground">Sin ítem extra.</p>
+      )}
+    </div>
+  );
+}
+
 export function LiquidacionDetalleView({ id }: { id: string }) {
   const [detalle, setDetalle] = useState<LiquidacionDetalle | null>(null);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
@@ -103,6 +224,11 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
     } finally {
       setUpdatingEstado(false);
     }
+  };
+
+  const handleUpdateExtra = (updated: Liquidacion) => {
+    if (!detalle) return;
+    setDetalle({ ...detalle, liquidacion: updated });
   };
 
   if (loading) {
@@ -189,6 +315,8 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
           </button>
         </div>
       </div>
+
+      <ExtraItemSeccion liquidacion={liquidacion} onUpdated={handleUpdateExtra} />
 
       <IncidentesSeccion titulo="Correctivos" incidentes={correctivos} alertasByInc={alertasByInc} />
       {preventivos.length > 0 && (

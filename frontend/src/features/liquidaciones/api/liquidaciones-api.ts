@@ -117,6 +117,9 @@ export const liquidacionesApi = {
   updateEstado: (id: string, estado: EstadoLiquidacion) =>
     httpClient.patch<Liquidacion>(`/api/liquidaciones/${id}/estado`, { estado }),
 
+  updateExtra: (id: string, body: { conceptoExtra: string | null; montoExtra: number | null }) =>
+    httpClient.patch<Liquidacion>(`/api/liquidaciones/${id}/extra`, body),
+
   updateEstadoObservacion: (liquidacionId: string, observacionId: string, estado: EstadoObservacion) =>
     httpClient.patch<Observacion>(
       `/api/liquidaciones/${liquidacionId}/observaciones/${observacionId}/estado`,

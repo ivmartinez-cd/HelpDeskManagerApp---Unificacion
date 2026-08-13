@@ -115,6 +115,19 @@ class FakeLiquidacionRepository:
     async def update_estado(self, liquidacion_id: UUID, estado: str) -> None:
         self.rows[liquidacion_id] = dataclasses.replace(self.rows[liquidacion_id], estado=estado)
 
+    async def update_extra(
+        self,
+        liquidacion_id: UUID,
+        concepto_extra: str | None,
+        monto_extra: float | None,
+    ) -> Liquidacion | None:
+        row = self.rows.get(liquidacion_id)
+        if row is None:
+            return None
+        updated = dataclasses.replace(row, concepto_extra=concepto_extra, monto_extra=monto_extra)
+        self.rows[liquidacion_id] = updated
+        return updated
+
     async def update_total_alertas(self, liquidacion_id: UUID, total_alertas: int) -> None:
         self.rows[liquidacion_id] = dataclasses.replace(
             self.rows[liquidacion_id], total_alertas=total_alertas

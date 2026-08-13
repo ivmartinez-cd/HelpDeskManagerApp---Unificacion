@@ -20,6 +20,13 @@ class EstadoIn(BaseModel):
     estado: ESTADOS_VALIDOS
 
 
+class ExtraIn(BaseModel):
+    concepto_extra: str | None = Field(None, alias="conceptoExtra")
+    monto_extra: float | None = Field(None, alias="montoExtra")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class PrestadorLiquidacionOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -60,6 +67,8 @@ class LiquidacionOut(BaseModel):
     total_incidentes: int = Field(serialization_alias="totalIncidentes")
     total_alertas: int = Field(serialization_alias="totalAlertas")
     total_importe: float = Field(serialization_alias="totalImporte")
+    concepto_extra: str | None = Field(None, serialization_alias="conceptoExtra")
+    monto_extra: float | None = Field(None, serialization_alias="montoExtra")
 
     @classmethod
     def from_entity(cls, e: Liquidacion) -> "LiquidacionOut":
@@ -75,4 +84,6 @@ class LiquidacionOut(BaseModel):
             total_incidentes=e.total_incidentes,
             total_alertas=e.total_alertas,
             total_importe=e.total_importe,
+            concepto_extra=e.concepto_extra,
+            monto_extra=e.monto_extra,
         )

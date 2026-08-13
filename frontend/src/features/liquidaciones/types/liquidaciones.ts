@@ -182,6 +182,8 @@ export interface Liquidacion {
   totalIncidentes: number;
   totalAlertas: number;
   totalImporte: number;
+  conceptoExtra: string | null;
+  montoExtra: number | null;
 }
 
 export interface LiquidacionPage {

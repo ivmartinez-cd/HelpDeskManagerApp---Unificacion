@@ -38,3 +38,5 @@ class Liquidacion:
     total_incidentes: int
     total_alertas: int
     total_importe: float
+    concepto_extra: str | None = None
+    monto_extra: float | None = None
