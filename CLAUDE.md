@@ -56,7 +56,7 @@ en el historial de git).
 
 ## Cumplimiento de ARCHITECTURE_GUIDE.md
 
-Este repo tiene `ARCHITECTURE_GUIDE.md` en la raíz con reglas arquitectónicas obligatorias
+Este repo tiene `docs/ARCHITECTURE_GUIDE.md` con reglas arquitectónicas obligatorias
 (capas, manejo de errores, paginación, tamaños máximos, etc.). No es un documento de referencia
 opcional: todo código nuevo tiene que cumplirlo **mientras se escribe**, no corregirse después
 en una auditoría aparte. Concretamente:
