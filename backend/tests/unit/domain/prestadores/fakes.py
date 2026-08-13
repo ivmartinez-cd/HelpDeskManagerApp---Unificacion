@@ -4,6 +4,7 @@ import uuid
 from datetime import date, timedelta
 
 from src.modules.prestadores.domain.entities.asignacion_historial import AsignacionHistorial
+from src.modules.prestadores.domain.entities.asignacion_override import AsignacionOverride
 from src.modules.prestadores.domain.entities.contacto_prestador import ContactoPrestador
 from src.modules.prestadores.domain.entities.prestador import Prestador
 from src.modules.prestadores.domain.repositories.siges_prestador_gateway import (
@@ -108,6 +109,33 @@ class FakeUserProvider:
 
     async def list_all_active_users(self) -> list[UserInfo]:
         return [u for uid, u in self.users.items() if uid in self.active_ids]
+
+
+class FakeAsignacionOverrideRepository:
+    def __init__(self) -> None:
+        self.rows: dict[uuid.UUID, AsignacionOverride] = {}
+
+    async def create(self, override: AsignacionOverride) -> None:
+        self.rows[override.id] = override
+
+    async def list_all(self) -> list[AsignacionOverride]:
+        return list(self.rows.values())
+
+    async def get_by_id(self, override_id: uuid.UUID) -> AsignacionOverride | None:
+        return self.rows.get(override_id)
+
+    async def list_activos_por_ausente(
+        self, operador_ausente_id: uuid.UUID
+    ) -> list[AsignacionOverride]:
+        return [
+            o
+            for o in self.rows.values()
+            if o.operador_ausente_id == operador_ausente_id and o.estado == "ACTIVA"
+        ]
+
+    async def cancelar(self, override_id: uuid.UUID) -> None:
+        if override_id in self.rows:
+            self.rows[override_id].estado = "CANCELADA"
 
 
 class FakeSigesPrestadorGateway:

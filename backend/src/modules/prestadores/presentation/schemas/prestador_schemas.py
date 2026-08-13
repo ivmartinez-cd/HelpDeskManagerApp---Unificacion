@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.modules.prestadores.application.dtos.prestador_dtos import (
     AsignacionHistorialDTO,
+    AsignacionOverrideDTO,
     ContactoDTO,
     OperadorGroupDTO,
     PrestadorDTO,
@@ -46,6 +47,7 @@ class PrestadorResponse(BaseModel):
     den_comercial: str = Field(serialization_alias="denComercial")
     razon_social: str | None = Field(serialization_alias="razonSocial")
     cuit: str | None
+    equipos: int | None
     operador_id: uuid.UUID | None = Field(serialization_alias="operadorId")
     operador_nombre: str | None = Field(serialization_alias="operadorNombre")
     operador_color: str | None = Field(serialization_alias="operadorColor")
@@ -60,6 +62,7 @@ class PrestadorResponse(BaseModel):
             den_comercial=dto.den_comercial,
             razon_social=dto.razon_social,
             cuit=dto.cuit,
+            equipos=dto.equipos,
             operador_id=dto.operador_id,
             operador_nombre=dto.operador_nombre,
             operador_color=dto.operador_color,
@@ -113,6 +116,7 @@ class CreatePrestadorRequest(BaseModel):
     den_comercial: str = Field(validation_alias="denComercial")
     razon_social: str | None = Field(default=None, validation_alias="razonSocial")
     cuit: str | None = None
+    equipos: int | None = None
     operador_id: uuid.UUID | None = Field(default=None, validation_alias="operadorId")
 
 
@@ -122,6 +126,7 @@ class UpdatePrestadorRequest(BaseModel):
     den_comercial: str = Field(validation_alias="denComercial")
     razon_social: str | None = Field(default=None, validation_alias="razonSocial")
     cuit: str | None = None
+    equipos: int | None = None
 
 
 class SetActiveRequest(BaseModel):
@@ -176,6 +181,53 @@ class SyncResultResponse(BaseModel):
     @classmethod
     def from_dto(cls, dto: SyncResultDTO) -> "SyncResultResponse":
         return cls(actualizados=dto.actualizados, sin_cambios=dto.sin_cambios)
+
+
+class AsignacionOverrideResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: uuid.UUID
+    operador_ausente_id: uuid.UUID = Field(serialization_alias="operadorAusenteId")
+    operador_ausente_nombre: str | None = Field(serialization_alias="operadorAusenteNombre")
+    operador_reemplazante_id: uuid.UUID = Field(serialization_alias="operadorReemplazanteId")
+    operador_reemplazante_nombre: str | None = Field(
+        serialization_alias="operadorReemplazanteNombre"
+    )
+    desde: date
+    hasta: date
+    alcance_total: bool = Field(serialization_alias="alcanceTotal")
+    prestador_ids: list[uuid.UUID] = Field(serialization_alias="prestadorIds")
+    estado: str
+    motivo: str | None
+
+    @classmethod
+    def from_dto(cls, dto: AsignacionOverrideDTO) -> "AsignacionOverrideResponse":
+        return cls(
+            id=dto.id,
+            operador_ausente_id=dto.operador_ausente_id,
+            operador_ausente_nombre=dto.operador_ausente_nombre,
+            operador_reemplazante_id=dto.operador_reemplazante_id,
+            operador_reemplazante_nombre=dto.operador_reemplazante_nombre,
+            desde=dto.desde,
+            hasta=dto.hasta,
+            alcance_total=dto.alcance_total,
+            prestador_ids=dto.prestador_ids,
+            estado=dto.estado,
+            motivo=dto.motivo,
+        )
+
+
+class CreateAsignacionOverrideRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    operador_ausente_id: uuid.UUID = Field(validation_alias="operadorAusenteId")
+    operador_reemplazante_id: uuid.UUID = Field(validation_alias="operadorReemplazanteId")
+    desde: date
+    hasta: date
+    prestador_ids: list[uuid.UUID] | None = Field(
+        default=None, validation_alias="prestadorIds"
+    )
+    motivo: str | None = None
 
 
 class OperadorOptionResponse(BaseModel):

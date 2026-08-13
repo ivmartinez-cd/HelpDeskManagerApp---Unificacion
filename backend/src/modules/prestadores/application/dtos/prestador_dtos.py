@@ -21,6 +21,7 @@ class PrestadorDTO:
     den_comercial: str
     razon_social: str | None
     cuit: str | None
+    equipos: int | None
     operador_id: uuid.UUID | None
     operador_nombre: str | None
     operador_color: str | None
@@ -63,6 +64,7 @@ class CreatePrestadorCommand:
     den_comercial: str
     razon_social: str | None = None
     cuit: str | None = None
+    equipos: int | None = None
     operador_id: uuid.UUID | None = None
 
 
@@ -77,6 +79,7 @@ class UpdatePrestadorCommand:
     den_comercial: str
     razon_social: str | None
     cuit: str | None
+    equipos: int | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,3 +110,30 @@ class UpsertContactoCommand:
 class SyncResultDTO:
     actualizados: list[str]
     sin_cambios: int
+
+
+@dataclass(frozen=True, slots=True)
+class CreateAsignacionOverrideCommand:
+    operador_ausente_id: uuid.UUID
+    operador_reemplazante_id: uuid.UUID
+    desde: date
+    hasta: date
+    prestador_ids: list[uuid.UUID] | None
+    """`None` = alcance TOTAL; lista vacía o con ids = alcance por PST puntual."""
+    motivo: str | None
+    created_by_user_id: uuid.UUID
+
+
+@dataclass(frozen=True, slots=True)
+class AsignacionOverrideDTO:
+    id: uuid.UUID
+    operador_ausente_id: uuid.UUID
+    operador_ausente_nombre: str | None
+    operador_reemplazante_id: uuid.UUID
+    operador_reemplazante_nombre: str | None
+    desde: date
+    hasta: date
+    alcance_total: bool
+    prestador_ids: list[uuid.UUID]
+    estado: str
+    motivo: str | None

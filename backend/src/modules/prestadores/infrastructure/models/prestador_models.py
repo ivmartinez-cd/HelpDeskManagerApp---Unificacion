@@ -3,6 +3,7 @@ from datetime import date, datetime
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     ForeignKey,
@@ -28,6 +29,7 @@ class PrestadorModel(Base):
     den_comercial: Mapped[str] = mapped_column(String(200), nullable=False)
     razon_social: Mapped[str | None] = mapped_column(String(200), nullable=True)
     cuit: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    equipos: Mapped[int | None] = mapped_column(Integer, nullable=True)
     operador_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("app_user.id", ondelete="SET NULL"), nullable=True
     )
@@ -94,4 +96,61 @@ class PrestadorAsignacionHistorialModel(Base):
 
     prestador: Mapped["PrestadorModel"] = relationship(
         "PrestadorModel", back_populates="historial"
+    )
+
+
+class PrestadorAsignacionOverrideModel(Base):
+    """Override temporal de asignación (ver ADR-013) — no reemplaza
+    `PrestadorModel.operador_id`, se resuelve en lectura. `alcance_total=True`
+    cubre todos los PST del operador ausente; si es `False`, el alcance está
+    en las filas de `prestador_asignacion_override_prestador`."""
+
+    __tablename__ = "prestador_asignacion_override"
+    __table_args__ = (CheckConstraint("desde <= hasta", name="ck_override_rango_valido"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    operador_ausente_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("app_user.id", ondelete="CASCADE"), nullable=False
+    )
+    operador_reemplazante_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("app_user.id", ondelete="CASCADE"), nullable=False
+    )
+    desde: Mapped[date] = mapped_column(Date, nullable=False)
+    hasta: Mapped[date] = mapped_column(Date, nullable=False)
+    alcance_total: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    estado: Mapped[str] = mapped_column(String(20), nullable=False, server_default="ACTIVA")
+    motivo: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_by_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("app_user.id", ondelete="RESTRICT"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=text("now()")
+    )
+
+    prestadores: Mapped[list["PrestadorAsignacionOverridePrestadorModel"]] = relationship(
+        "PrestadorAsignacionOverridePrestadorModel",
+        back_populates="override",
+        cascade="all, delete-orphan",
+    )
+
+
+class PrestadorAsignacionOverridePrestadorModel(Base):
+    """Alcance por PST puntual de un override (solo tiene filas cuando
+    `alcance_total=False` en el override padre)."""
+
+    __tablename__ = "prestador_asignacion_override_prestador"
+
+    override_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("prestador_asignacion_override.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    prestador_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("prestador.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    override: Mapped["PrestadorAsignacionOverrideModel"] = relationship(
+        "PrestadorAsignacionOverrideModel", back_populates="prestadores"
     )

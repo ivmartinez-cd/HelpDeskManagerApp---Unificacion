@@ -58,6 +58,7 @@ from src.modules.prestadores.infrastructure.repositories.sqlalchemy_user_provide
 )
 from src.modules.prestadores.presentation.contactos_router import router as contactos_router
 from src.modules.prestadores.presentation.dependencies import get_prestador_siges_gateway
+from src.modules.prestadores.presentation.overrides_router import router as overrides_router
 from src.modules.prestadores.presentation.schemas.prestador_schemas import (
     AsignacionHistorialResponse,
     AssignOperadorRequest,
@@ -81,6 +82,12 @@ _require_update = Depends(require_permission(UPDATE))
 # agrupado completo, no una tabla paginada en la UI (mismo criterio que
 # turnos/contadores para catálogos chicos).
 _DEFAULT_SIZE = 200
+
+# Incluido acá arriba, antes de registrar `/{prestador_id}` — de lo contrario
+# Starlette matchea `/overrides` contra ese catch-all de 1 segmento primero
+# (mismo motivo por el que `/operadores` está definido antes de
+# `/{prestador_id}` más abajo) y nunca llega a este router.
+router.include_router(overrides_router)
 
 
 @router.get("")
@@ -157,6 +164,7 @@ async def create_prestador(
             den_comercial=payload.den_comercial,
             razon_social=payload.razon_social,
             cuit=payload.cuit,
+            equipos=payload.equipos,
             operador_id=payload.operador_id,
         )
     )
@@ -181,6 +189,7 @@ async def update_prestador(
             den_comercial=payload.den_comercial,
             razon_social=payload.razon_social,
             cuit=payload.cuit,
+            equipos=payload.equipos,
         )
     )
     return PrestadorResponse.from_dto(dto)
