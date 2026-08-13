@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
 import { EstadoBadge } from "./estado-badge";
+
+const WEB_AGENTES_BASE = "https://webagentes.canaldirecto.com.ar/liquidations/view";
 
 function formatARS(n: number) {
   return n.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
@@ -40,6 +43,7 @@ export function LiquidacionesTabla({
               <th className={`${thCls} text-right`}>Incidentes</th>
               <th className={`${thCls} text-right`}>Importe</th>
               <th className={thCls}>Fecha</th>
+              <th className={thCls}>Web Agentes</th>
               <th className={thCls}></th>
             </tr>
           </thead>
@@ -77,6 +81,21 @@ export function LiquidacionesTabla({
                   <td className={`${tdCls} text-right`}>{formatARS(liq.totalImporte)}</td>
                   <td className={`${tdCls} text-muted-foreground`}>
                     {formatFecha(liq.fechaImportacion)}
+                  </td>
+                  <td className={tdCls}>
+                    {liq.numeroLiquidacion ? (
+                      <a
+                        href={`${WEB_AGENTES_BASE}/${liq.numeroLiquidacion}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 font-body text-sm text-brand-orange hover:underline"
+                      >
+                        {liq.numeroLiquidacion}
+                        <ExternalLink size={12} />
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className={tdCls}>
                     <button

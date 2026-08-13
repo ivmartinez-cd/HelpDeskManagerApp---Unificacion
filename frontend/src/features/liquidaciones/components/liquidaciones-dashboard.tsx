@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import { liquidacionesApi } from "../api/liquidaciones-api";
@@ -177,6 +178,7 @@ export function LiquidacionesDashboard() {
                   <th className={`${thCls} text-right`}>Incidentes</th>
                   <th className={`${thCls} text-right`}>Importe</th>
                   <th className={thCls}>Fecha de carga</th>
+                  <th className={thCls}>Web Agentes</th>
                 </tr>
               </thead>
               <tbody>
@@ -200,6 +202,21 @@ export function LiquidacionesDashboard() {
                       <td className={`${tdCls} text-right`}>{formatARS(liq.totalImporte)}</td>
                       <td className={`${tdCls} text-muted-foreground`}>
                         {formatFecha(liq.fechaImportacion)}
+                      </td>
+                      <td className={tdCls}>
+                        {liq.numeroLiquidacion ? (
+                          <a
+                            href={`https://webagentes.canaldirecto.com.ar/liquidations/view/${liq.numeroLiquidacion}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-body text-sm text-brand-orange hover:underline"
+                          >
+                            {liq.numeroLiquidacion}
+                            <ExternalLink size={12} />
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </td>
                     </tr>
                   );

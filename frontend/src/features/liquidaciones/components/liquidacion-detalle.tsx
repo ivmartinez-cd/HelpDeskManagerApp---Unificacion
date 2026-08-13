@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { cn } from "@/shared/utils/cn";
@@ -279,6 +280,20 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
               <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 font-body text-xs text-muted-foreground">
                 {liquidacion.tipoLiquidacion}
               </span>
+              {liquidacion.numeroLiquidacion && (
+                <>
+                  <span>·</span>
+                  <a
+                    href={`https://webagentes.canaldirecto.com.ar/liquidations/view/${liquidacion.numeroLiquidacion}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-brand-orange hover:underline"
+                  >
+                    {liquidacion.numeroLiquidacion}
+                    <ExternalLink size={12} />
+                  </a>
+                </>
+              )}
               <span>·</span>
               <select
                 value={liquidacion.estado}
