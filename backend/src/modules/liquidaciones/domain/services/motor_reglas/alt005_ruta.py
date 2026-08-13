@@ -1,10 +1,9 @@
 """ALT005 — Ruta Compartida (`evaluar_grupo`): agrupa incidentes del mismo día en el
-mismo corredor y genera una `ObservacionGenerada` por grupo. Es la interfaz "actual"
-del legacy (la única con test de caracterización — ver
-`LIQUIDACION_PRESTADORES_CARACTERIZACION.md` §7); el path por-incidente legado
-(`evaluar()`, back-compat) vive en `alt005_ruta_individual.py`. Desactivada por
-default (`ReglaAlerta.activa=False` en `seed.py`) — decisión de alcance confirmada
-por el usuario, se porta tal cual, no se activa."""
+mismo corredor y genera una `ObservacionGenerada` por grupo. Corre siempre junto con
+el camino por-incidente (`evaluar_alt005` en `alt005_ruta_individual.py`, genera
+`AlertaGenerada`) — ninguno de los dos suprime al otro, igual que en el legacy.
+`ReglaAlerta.activa=True` en producción real (el `False` de `seed.py` del legacy
+estaba desactualizado) — ver `LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`."""
 
 import uuid
 from collections import defaultdict

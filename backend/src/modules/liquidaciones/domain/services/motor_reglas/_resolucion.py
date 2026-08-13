@@ -68,19 +68,19 @@ def _orden_tarifario(t: Tarifario, zona: str | None) -> tuple[int, "date"]:
 
 
 def mismo_corredor(t1: TablaKm, t2: TablaKm) -> bool:
-    if _misma_localidad(t1, t2):
+    if misma_localidad(t1, t2):
         return True
-    return _mismo_spst_dentro_del_umbral(t1, t2)
+    return mismo_spst_dentro_del_umbral(t1, t2)
 
 
-def _misma_localidad(t1: TablaKm, t2: TablaKm) -> bool:
+def misma_localidad(t1: TablaKm, t2: TablaKm) -> bool:
     l1, l2 = t1.localidad_cliente, t2.localidad_cliente
     if not l1 or not l1.strip() or not l2:
         return False
     return l1.strip().lower() == l2.strip().lower()
 
 
-def _mismo_spst_dentro_del_umbral(t1: TablaKm, t2: TablaKm) -> bool:
+def mismo_spst_dentro_del_umbral(t1: TablaKm, t2: TablaKm) -> bool:
     if not t1.spst_id or t2.spst_id != t1.spst_id:
         return False
     if t1.kms_recorrido is None or t2.kms_recorrido is None:

@@ -150,11 +150,14 @@ def make_regla(**overrides: Any) -> ReglaAlerta:
 
 
 def reglas_activas_default() -> dict[str, ReglaAlerta]:
-    """Espeja los defaults reales de `seed.py` del legacy: ALT005 desactivada, el
-    resto activa. El contrato de `reglas_activas` en todo el motor es "estar en el
-    dict == estar activa" (así lo devolvería `ReglaAlertaRepository.list_activas()`,
-    ya filtrado por SQL) — por eso ALT005 NO aparece acá; un test que quiera
-    ejercitarla la agrega explícitamente vía `reglas["ALT005"] = make_regla(...)`."""
+    """Baseline sin ALT005 — el contrato de `reglas_activas` en todo el motor es
+    "estar en el dict == estar activa" (así lo devolvería
+    `ReglaAlertaRepository.list_activas()`, ya filtrado por SQL) — un test que quiera
+    ejercitar ALT005 la agrega explícitamente vía `reglas["ALT005"] = make_regla(...)`.
+    Nota: en producción real ALT005 SÍ está activa (`activa=True`, distinto del
+    default `False` de `seed.py` del legacy) — este baseline sin ALT005 es solo una
+    conveniencia para no forzar todos los tests existentes a lidiar con ella, no
+    representa el estado real de producción."""
     codigos_activos = {
         "ALT001": 100.0,
         "ALT002": 100.0,

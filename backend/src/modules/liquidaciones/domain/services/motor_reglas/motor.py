@@ -4,11 +4,12 @@ los datos ya cargados por la aplicación y devuelve el resultado completo. Reemp
 cada evaluador (prohibido en esta capa, ver ARCHITECTURE_GUIDE.md §3 — Domain no
 importa DB/frameworks).
 
-ALT005 solo corre acá vía `evaluar_grupo_alt005` (genera `ObservacionGenerada`) — el
-path `evaluar()` por-incidente del legacy (interfaz "backward compat", sin test de
-caracterización) no se portó: es código sin cobertura para una regla que además está
-desactivada por default (`activa=False`). Si se activa ALT005 alguna vez, revisar si
-hace falta portar ese path también.
+ALT005 corre por LOS DOS caminos, igual que en el legacy: `evaluar_alt005` (módulo
+`alt005_ruta_individual`) por-incidente, vía `_EVALUADORES_POR_INCIDENTE`, genera
+`AlertaGenerada`; `evaluar_grupo_alt005` (módulo `alt005_ruta`) agrupa por corredor y
+genera `ObservacionGenerada` vía `_evaluar_observaciones`. Ninguno de los dos suprime
+al otro — así funcionaba en producción real (activa=True, no el default `False` de
+`seed.py` que se asumía originalmente).
 """
 
 import uuid
@@ -38,6 +39,7 @@ from src.modules.liquidaciones.domain.services.motor_reglas import (
     alt002_km,
     alt003_viatico,
     alt004_duplicado,
+    alt005_ruta_individual,
     alt008_tarifario,
     alt009_spst,
 )
@@ -63,6 +65,7 @@ _EVALUADORES_POR_INCIDENTE = (
     CODIGO_ALT002_KMS_INCORRECTOS,
     CODIGO_ALT003_VIATICO_DUPLICADO,
     CODIGO_ALT004_SERVICIO_DUPLICADO,
+    CODIGO_ALT005_RUTA_COMPARTIDA,
     CODIGO_ALT008_TARIFARIO_INEXISTENTE,
     CODIGO_ALT009_PAR_EMPRESA_SUCURSAL,
 )
@@ -146,9 +149,18 @@ def _evaluar_regla(
     if codigo == CODIGO_ALT004_SERVICIO_DUPLICADO:
         duplicados = _duplicados_alt004(incidente, contexto.incidentes_prestador)
         return alt004_duplicado.evaluar_alt004(incidente, duplicados)
+    if codigo == CODIGO_ALT005_RUTA_COMPARTIDA:
+        return _evaluar_alt005(incidente, tabla_km, contexto)
     if codigo == CODIGO_ALT008_TARIFARIO_INEXISTENTE:
         return alt008_tarifario.evaluar_alt008(incidente, tarifario)
     return alt009_spst.evaluar_alt009(incidente, tabla_km)
+
+
+def _evaluar_alt005(
+    incidente: Incidente, tabla_km: TablaKm | None, contexto: _ContextoMotor
+) -> list[Hallazgo]:
+    vecinos = _vecinos_mismo_dia(incidente, contexto)
+    return alt005_ruta_individual.evaluar_alt005(incidente, tabla_km, vecinos)
 
 
 def _evaluar_alt002(

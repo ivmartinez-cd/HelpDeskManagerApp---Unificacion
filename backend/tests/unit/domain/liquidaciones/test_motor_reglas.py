@@ -261,14 +261,360 @@ class TestAlt005RutaCompartida:
         assert obs.severidad == "CRITICO"
         assert set(obs.incidentes_relacionados) == {i.id for i in incidentes}
 
-    def test_desactivada_por_default_no_genera_observacion(self) -> None:
-        """`activa=False` es el default real de `seed.py` — mismo escenario que
-        arriba, sin forzar `activa=True`, no genera nada."""
+    def test_no_esta_en_reglas_activas_default_no_genera_observacion(self) -> None:
+        """`reglas_activas_default()` no incluye ALT005 (ver su docstring) — mismo
+        escenario que arriba, sin forzar `activa=True`, no genera nada. No confundir
+        con el default real de producción, que sí la tiene activa."""
         incidentes, tablas = self._escenario_corredor()
         resultado = ejecutar_motor_reglas(
             incidentes, incidentes, reglas_activas_default(), tablas, [], []
         )
         assert resultado.observaciones == []
+
+    def test_alerta_individual_coexiste_con_observacion_agrupada(self) -> None:
+        """Los dos caminos corren juntos para la misma regla activa, sin excluirse —
+        igual que en producción real (81 alertas + 22 observaciones sobre la misma
+        corrida en el legacy)."""
+        incidentes, tablas = self._escenario_corredor()
+        reglas = reglas_activas_default()
+        reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
+        resultado = ejecutar_motor_reglas(incidentes, incidentes, reglas, tablas, [], [])
+        alertas = [a for a in resultado.alertas if a.tipo_alerta == "ALT005"]
+        assert len(alertas) == 2  # una por incidente, cada uno cita al otro
+        assert len(resultado.observaciones) == 1  # el grupo sigue generando su Observacion
+
+    def test_dispara_duplicado_por_misma_localidad(self) -> None:
+        liquidacion_id = uuid.uuid4()
+        fecha = date(2026, 1, 15)
+        tabla1 = make_tabla_km(
+            localidad_cliente="Rafaela", empresa_nombre="E", sucursal_nombre="S1"
+        )
+        tabla2 = make_tabla_km(
+            localidad_cliente="RAFAELA", empresa_nombre="E", sucursal_nombre="S2"
+        )
+        inc1 = make_incidente(
+            numero_incidente="100",
+            liquidacion_id=liquidacion_id,
+            empresa_nombre="E",
+            sucursal_nombre="S1",
+            fecha_cierre=fecha,
+            cant_km_cobrado=50.0,
+        )
+        inc2 = make_incidente(
+            numero_incidente="200",
+            liquidacion_id=liquidacion_id,
+            empresa_nombre="E",
+            sucursal_nombre="S2",
+            fecha_cierre=fecha,
+            cant_km_cobrado=60.0,
+        )
+        reglas = reglas_activas_default()
+        reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
+        resultado = ejecutar_motor_reglas(
+            [inc1, inc2], [inc1, inc2], reglas, [tabla1, tabla2], [], []
+        )
+        alertas1 = [
+            a for a in resultado.alertas if a.tipo_alerta == "ALT005" and a.incidente_id == inc1.id
+        ]
+        assert len(alertas1) == 1
+        assert alertas1[0].datos_contexto == {
+            "tipo": "duplicado",
+            "cobrado_este": 50.0,
+            "otros_incidentes": ["200"],
+            "localidad": "Rafaela",
+        }
+        # simétrico: inc2 también dispara la suya citando a inc1 — cada incidente se
+        # evalúa por su cuenta, igual que el legacy.
+        alertas2 = [
+            a for a in resultado.alertas if a.tipo_alerta == "ALT005" and a.incidente_id == inc2.id
+        ]
+        assert len(alertas2) == 1
+        assert alertas2[0].datos_contexto["otros_incidentes"] == ["100"]
+
+    def test_dispara_corredor_duplicado(self) -> None:
+        spst_id = uuid.uuid4()
+        liquidacion_id = uuid.uuid4()
+        fecha = date(2026, 1, 15)
+        tabla1 = make_tabla_km(
+            spst_id=spst_id,
+            kms_recorrido=100.0,
+            localidad_cliente="A",
+            empresa_nombre="E",
+            sucursal_nombre="S1",
+        )
+        tabla2 = make_tabla_km(
+            spst_id=spst_id,
+            kms_recorrido=130.0,  # diferencia 30 <= 50 -> mismo corredor
+            localidad_cliente="B",  # distinta localidad -> no matchea "exactos"
+            empresa_nombre="E",
+            sucursal_nombre="S2",
+        )
+        inc1 = make_incidente(
+            numero_incidente="300",
+            liquidacion_id=liquidacion_id,
+            empresa_nombre="E",
+            sucursal_nombre="S1",
+            fecha_cierre=fecha,
+            cant_km_cobrado=40.0,
+        )
+        inc2 = make_incidente(
+            numero_incidente="400",
+            liquidacion_id=liquidacion_id,
+            empresa_nombre="E",
+            sucursal_nombre="S2",
+            fecha_cierre=fecha,
+            cant_km_cobrado=35.0,
+        )
+        reglas = reglas_activas_default()
+        reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
+        resultado = ejecutar_motor_reglas(
+            [inc1, inc2], [inc1, inc2], reglas, [tabla1, tabla2], [], []
+        )
+        alertas1 = [
+            a for a in resultado.alertas if a.tipo_alerta == "ALT005" and a.incidente_id == inc1.id
+        ]
+        assert len(alertas1) == 1
+        assert alertas1[0].datos_contexto == {
+            "tipo": "corredor_duplicado",
+            "cobrado_este": 40.0,
+            "km_actual": 100.0,
+            "otros_incidentes": ["400"],
+            "spst_id": str(spst_id),
+        }
+
+    def test_dispara_corredor_contenido_solo_si_ningun_hermano_cobro_km(self) -> None:
+        spst_id = uuid.uuid4()
+        liquidacion_id = uuid.uuid4()
+        fecha = date(2026, 1, 15)
+        tabla1 = make_tabla_km(
+            spst_id=spst_id,
+            kms_recorrido=100.0,
+            localidad_cliente="A",
+            empresa_nombre="E",
+            sucursal_nombre="S1",
+        )
+        tabla2 = make_tabla_km(
+            spst_id=spst_id,
+            kms_recorrido=120.0,
+            localidad_cliente="B",
+            empresa_nombre="E",
+            sucursal_nombre="S2",
+        )
+        inc1 = make_incidente(
+            numero_incidente="500",
+            liquidacion_id=liquidacion_id,
+            empresa_nombre="E",
+            sucursal_nombre="S1",
+            fecha_cierre=fecha,
+            cant_km_cobrado=45.0,
+        )
+        inc2 = make_incidente(
+            numero_incidente="600",
+            liquidacion_id=liquidacion_id,
+            empresa_nombre="E",
+            sucursal_nombre="S2",
+            fecha_cierre=fecha,
+            cant_km_cobrado=0.0,  # el hermano no cobró km -> rama de prioridad 2
+        )
+        reglas = reglas_activas_default()
+        reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
+        resultado = ejecutar_motor_reglas(
+            [inc1, inc2], [inc1, inc2], reglas, [tabla1, tabla2], [], []
+        )
+        alertas = [a for a in resultado.alertas if a.tipo_alerta == "ALT005"]
+        assert len(alertas) == 1  # inc2 no dispara nada (guarda G2: km cobrado == 0)
+        assert alertas[0].incidente_id == inc1.id
+        assert alertas[0].datos_contexto == {
+            "tipo": "corredor_contenido",
+            "cobrado_este": 45.0,
+            "km_actual": 100.0,
+            "otros_incidentes": ["600"],
+            "spst_id": str(spst_id),
+        }
+
+    def test_exactos_y_corredor_son_disjuntos(self) -> None:
+        """Un vecino que matchea por localidad Y por corredor a la vez solo cuenta
+        una vez, en `exactos` — no genera además una alerta de corredor duplicada."""
+        spst_id = uuid.uuid4()
+        liquidacion_id = uuid.uuid4()
+        fecha = date(2026, 1, 15)
+        tabla1 = make_tabla_km(
+            spst_id=spst_id,
+            kms_recorrido=100.0,
+            localidad_cliente="Rafaela",
+            empresa_nombre="E",
+            sucursal_nombre="S1",
+        )
+        tabla2 = make_tabla_km(
+            spst_id=spst_id,
+            kms_recorrido=110.0,  # dentro del umbral -> también matchearía corredor
+            localidad_cliente="Rafaela",  # misma localidad -> matchea "exactos"
+            empresa_nombre="E",
+            sucursal_nombre="S2",
+        )
+        inc1 = make_incidente(
+            numero_incidente="700",
+            liquidacion_id=liquidacion_id,
+            empresa_nombre="E",
+            sucursal_nombre="S1",
+            fecha_cierre=fecha,
+            cant_km_cobrado=50.0,
+        )
+        inc2 = make_incidente(
+            numero_incidente="800",
+            liquidacion_id=liquidacion_id,
+            empresa_nombre="E",
+            sucursal_nombre="S2",
+            fecha_cierre=fecha,
+            cant_km_cobrado=55.0,
+        )
+        reglas = reglas_activas_default()
+        reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
+        resultado = ejecutar_motor_reglas(
+            [inc1, inc2], [inc1, inc2], reglas, [tabla1, tabla2], [], []
+        )
+        alertas1 = [
+            a for a in resultado.alertas if a.tipo_alerta == "ALT005" and a.incidente_id == inc1.id
+        ]
+        assert len(alertas1) == 1
+        assert alertas1[0].datos_contexto["tipo"] == "duplicado"
+
+    def test_maximo_dos_alertas_por_incidente(self) -> None:
+        """Un incidente con un vecino solo-por-localidad y otro solo-por-corredor
+        dispara los dos caminos a la vez — el tope real del legacy es 2."""
+        spst_id = uuid.uuid4()
+        liquidacion_id = uuid.uuid4()
+        fecha = date(2026, 1, 15)
+        tabla_actual = make_tabla_km(
+            spst_id=spst_id,
+            kms_recorrido=100.0,
+            localidad_cliente="Rafaela",
+            empresa_nombre="E",
+            sucursal_nombre="S1",
+        )
+        tabla_localidad = make_tabla_km(
+            spst_id=None,  # sin SPST -> nunca matchea "corredor"
+            localidad_cliente="Rafaela",
+            empresa_nombre="E",
+            sucursal_nombre="S2",
+        )
+        tabla_corredor = make_tabla_km(
+            spst_id=spst_id,
+            kms_recorrido=120.0,
+            localidad_cliente="Otra Ciudad",  # distinta -> no matchea "exactos"
+            empresa_nombre="E",
+            sucursal_nombre="S3",
+        )
+        inc_actual = make_incidente(
+            numero_incidente="900",
+            liquidacion_id=liquidacion_id,
+            empresa_nombre="E",
+            sucursal_nombre="S1",
+            fecha_cierre=fecha,
+            cant_km_cobrado=45.0,
+        )
+        inc_localidad = make_incidente(
+            numero_incidente="901",
+            liquidacion_id=liquidacion_id,
+            empresa_nombre="E",
+            sucursal_nombre="S2",
+            fecha_cierre=fecha,
+            cant_km_cobrado=50.0,
+        )
+        inc_corredor = make_incidente(
+            numero_incidente="902",
+            liquidacion_id=liquidacion_id,
+            empresa_nombre="E",
+            sucursal_nombre="S3",
+            fecha_cierre=fecha,
+            cant_km_cobrado=55.0,
+        )
+        reglas = reglas_activas_default()
+        reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
+        resultado = ejecutar_motor_reglas(
+            [inc_actual, inc_localidad, inc_corredor],
+            [inc_actual, inc_localidad, inc_corredor],
+            reglas,
+            [tabla_actual, tabla_localidad, tabla_corredor],
+            [],
+            [],
+        )
+        alertas = [
+            a
+            for a in resultado.alertas
+            if a.tipo_alerta == "ALT005" and a.incidente_id == inc_actual.id
+        ]
+        assert len(alertas) == 2
+        tipos = {a.datos_contexto["tipo"] for a in alertas}
+        assert tipos == {"duplicado", "corredor_duplicado"}
+
+    def test_no_dispara_sin_fecha_cierre(self) -> None:
+        tabla = make_tabla_km(localidad_cliente="Rafaela")
+        vecino_tabla = make_tabla_km(
+            localidad_cliente="Rafaela", empresa_nombre="E2", sucursal_nombre="S2"
+        )
+        incidente = make_incidente(
+            empresa_nombre=tabla.empresa_nombre,
+            sucursal_nombre=tabla.sucursal_nombre,
+            fecha_cierre=None,
+            cant_km_cobrado=50.0,
+        )
+        vecino = make_incidente(
+            empresa_nombre="E2", sucursal_nombre="S2", fecha_cierre=None, cant_km_cobrado=50.0
+        )
+        reglas = reglas_activas_default()
+        reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
+        resultado = ejecutar_motor_reglas(
+            [incidente, vecino], [incidente, vecino], reglas, [tabla, vecino_tabla], [], []
+        )
+        assert [a for a in resultado.alertas if a.tipo_alerta == "ALT005"] == []
+
+    def test_no_dispara_sin_km_cobrado(self) -> None:
+        incidentes, tablas = self._escenario_corredor()
+        incidente_sin_km = make_incidente(
+            liquidacion_id=incidentes[0].liquidacion_id,
+            empresa_nombre="E",
+            sucursal_nombre="S1",
+            fecha_cierre=date(2026, 1, 15),
+            cant_km_cobrado=0.0,
+        )
+        reglas = reglas_activas_default()
+        reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
+        resultado = ejecutar_motor_reglas(
+            [incidente_sin_km, incidentes[1]],
+            [incidente_sin_km, incidentes[1]],
+            reglas,
+            tablas,
+            [],
+            [],
+        )
+        alertas = [
+            a
+            for a in resultado.alertas
+            if a.tipo_alerta == "ALT005" and a.incidente_id == incidente_sin_km.id
+        ]
+        assert alertas == []
+
+    def test_no_dispara_sin_tabla_km_resoluble(self) -> None:
+        incidente = make_incidente(
+            empresa_nombre="Sin Tabla", sucursal_nombre="Sin Tabla", cant_km_cobrado=50.0
+        )
+        reglas = reglas_activas_default()
+        reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
+        resultado = ejecutar_motor_reglas([incidente], [incidente], reglas, [], [], [])
+        assert [a for a in resultado.alertas if a.tipo_alerta == "ALT005"] == []
+
+    def test_no_dispara_sin_vecinos_mismo_dia(self) -> None:
+        tabla = make_tabla_km(localidad_cliente="Rafaela")
+        incidente = make_incidente(
+            empresa_nombre=tabla.empresa_nombre,
+            sucursal_nombre=tabla.sucursal_nombre,
+            cant_km_cobrado=50.0,
+        )
+        reglas = reglas_activas_default()
+        reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
+        resultado = ejecutar_motor_reglas([incidente], [incidente], reglas, [tabla], [], [])
+        assert [a for a in resultado.alertas if a.tipo_alerta == "ALT005"] == []
 
 
 class TestAlt008TarifarioInexistente:

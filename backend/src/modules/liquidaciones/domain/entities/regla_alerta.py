@@ -2,11 +2,12 @@
 
 Data-driven solo a medias: `activa`/`riesgo_base`/algunos parámetros de
 `configuracion` vienen de esta tabla, pero el algoritmo de cada regla es código Python
-fijo (un evaluador por código, ver `application/motor_reglas.py` cuando se porte) — no
+fijo (un evaluador por código, ver `domain/services/motor_reglas/motor.py`) — no
 hay motor de expresiones interpretado. ALT006/ALT007 son códigos válidos sin evaluador
-(nunca se ejecutan); ALT005 queda con `activa=False` por default, igual que el legacy —
-decisiones de alcance confirmadas por el usuario, ver
-`LIQUIDACION_PRESTADORES_CARACTERIZACION.md` §6.
+(nunca se ejecutan); ALT005 está `activa=True` en producción real (el `False` de
+`seed.py` del legacy estaba desactualizado respecto de lo que corría de verdad) — ver
+`LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md` y
+`LIQUIDACION_PRESTADORES_CARACTERIZACION.md` §3/§7 para el detalle de la corrección.
 """
 
 import uuid
