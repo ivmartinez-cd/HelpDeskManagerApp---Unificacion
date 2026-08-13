@@ -182,16 +182,62 @@ vez de un flag `setLoading(true)` síncrono en el efecto — lo segundo viola
 BAHIA muestra sus 48 tarifas y sus 15 entradas de Tabla KM completas (antes 0 y 7
 respectivamente).
 
+### Importador de Excel maestro de PST — CERRADO (2026-08-13)
+
+El legacy tenía `POST /prestadores/importar-excel` (un único `.xlsx`/`.xls` por
+PST/mes con Prestador+SPSTs+Tarifarios+TablaKM embebidos en varias hojas) cableado
+en su backend, pero **no** en su UI — el `<input>` que dispararía el import nunca
+llegó a renderizarse (código huérfano). Además tenía un bug real: buscaba la hoja
+llamada literalmente "ENERO", así que un archivo de otro mes con su hoja
+homónima (ej. "ABRIL") lo rompía.
+
+Portado corrigiendo ambos problemas, no replicándolos: detección de la hoja
+principal por contenido (primera hoja con una celda "AGENTE:", sin importar el
+nombre), y UI nueva desde cero en la pantalla de configuración de Prestadores.
+Sigue el patrón "pesado" ya establecido para el importador de liquidaciones
+mensuales (puerto `PrestadorMaestroFileParser` + adapter pandas +
+`domain/services/importacion_maestro/` puro + use case
+`ImportarPrestadorMaestro`), no el patrón simple de los importadores CSV — acá hay
+lógica de dominio genuina (dedup en dos capas, matching fuzzy de SPST, cálculo de
+`aplica_viatico`).
+
+**2 bugs reales encontrados corriendo el parser contra archivos reales del legacy**
+(no por los 45+8 tests unitarios, que pasaban igual con ambos bugs presentes —
+mismo patrón que ya pasó con ALT005 el mismo mes): `str(None).strip()` da el
+string literal `"None"` (truthy), así que una celda vacía de la columna Prestador
+generaba un SPST fantasma llamado "None"; y `normalizar_tipo_servicio("")` cae a
+`TIPO_CORRECTIVO` por default (correcto para el importador de liquidaciones, donde
+"sin tipo" es una regla de negocio real), lo que convertía filas con la columna
+Tipo vacía en tarifarios "correctivo" fantasma en vez de descartarlas como hacía
+el legacy. Ambos corregidos.
+
+Verificado con los 2 `.xlsx` reales del legacy (`PENTACOM 202601.xlsx` completo, y
+`CATAMARCA 202604.xlsx` que no tiene hoja de Tabla KM — confirma que la ausencia
+ya no es fatal) y, end-to-end en el navegador, subiendo `PENTACOM 202601.xlsx`
+contra el prestador PENTACOM real ya migrado: primera corrida create 6 SPSTs y 11
+filas de Tabla KM nuevas (0 tarifarios nuevos — los 4 ya estaban, migrados del
+snapshot legacy); **re-subir el mismo archivo una segunda vez no creó nada** (0
+SPSTs, 0 tarifarios, 0 Tabla KM, todo correctamente omitido por dedup) — confirma
+el fix del hallazgo más grave de la revisión de diseño: el borrador original solo
+dedupeaba tarifarios contra el resto del archivo, nunca contra la base, así que
+re-importar el mismo mes los hubiera duplicado en cada corrida.
+
+Soporta `.xlsx` y `.xls` (se agregó `xlrd` como dependencia).
+
 ## Pendiente
 
-1. **Importadores Excel + plantillas** (hoy solo CSV/HTML) — el legacy tenía
-   `POST /prestadores/importar-excel` (Excel maestro del PST) cableado en su UI; el
-   nuevo módulo no lo portó.
-2. **DELETE físico vs soft-delete** de prestador/SPST — sin decidir.
-3. **0 tests de integración de infrastructure** (10 repos SQLAlchemy + parser pandas) —
-   deuda transversal compartida con turnos/sla.
-4. **Use cases de escritura para el resto de las entidades de configuración** — hoy
+1. **DELETE físico vs soft-delete** de prestador/SPST — sin decidir.
+2. **0 tests de integración de infrastructure** (10 repos SQLAlchemy + 2 parsers
+   pandas) — deuda transversal compartida con turnos/sla.
+3. **Use cases de escritura para el resto de las entidades de configuración** — hoy
    router→repositorio directo en los 4 config_routers, sin casos de uso propios.
+4. **No recadena vigencias de tarifarios** al importar (Excel maestro ni CSV) —
+   decisión consciente (replica la omisión del legacy), documentada en
+   `application/use_cases/importar_prestador_maestro.py`. `domain/services/
+   cadena_tarifaria.py` existe y se usa en alta/edición manual desde la UI; si se
+   quiere recadenar también en los importadores, hay que ampliar
+   `TarifarioRepository` (`list_grupo`/`set_vigencia_hasta` ya están en el impl
+   SQLAlchemy, no en el Protocol).
 5. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
 
 ## Próximo paso sugerido

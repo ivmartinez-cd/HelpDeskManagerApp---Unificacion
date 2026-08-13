@@ -439,8 +439,23 @@ real ejecutado; solo se actualiza el estado de cada módulo.
       stringificando, mismo patrón que ALT004. Confirmado contra datos reales: la
       liquidación que había quedado con 0 alertas ALT005 tras un `reanalyze` volvió a
       generar las 4 originales.
-- [ ] Resolver con el usuario el truncamiento de catálogos (Tarifarios/Tabla KM a 500
-      filas en el frontend) antes de arrancar el período de observación.
+- [x] **Truncamiento de catálogos resuelto (2026-08-13):** Tarifarios/Tabla KM
+      rediseñadas para pedir por prestador seleccionado (`?prestadorId=`, el
+      backend ya lo soportaba) en vez de traer el catálogo completo — con datos
+      reales (4832 tarifarios, 1633 tabla_kms) eso truncaba a las 500 filas por
+      default del backend. Detalle en `LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`.
+- [x] **Importador de Excel maestro de PST portado (2026-08-13):** el legacy tenía
+      el endpoint pero el botón de la UI estaba huérfano (nunca se renderizaba) y
+      el parser tenía un bug real (hoja hardcodeada a "ENERO", rompía con archivos
+      de otro mes) — se portó corrigiendo ambos, no replicándolos, siguiendo el
+      mismo patrón arquitectónico (puerto+adapter+dominio puro+use case) que el
+      importador de liquidaciones mensuales. 2 bugs reales encontrados corriendo
+      el parser contra archivos `.xlsx` reales del legacy (no por los tests
+      unitarios): valores `None` convertidos al string literal `"None"`, y
+      celdas de Tipo vacías cayendo a "correctivo" por default en vez de
+      descartarse. Verificado end-to-end contra el prestador PENTACOM real:
+      re-importar el mismo archivo dos veces no duplica nada. Detalle completo en
+      `LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`.
 - [ ] Correr en paralelo con la app vieja antes de apagarla — **no hay cutover en
       frío** (módulo con lógica frágil, ver riesgos en §1 de este documento).
 - [ ] Apagar Liquidacion-Prestadores (repo/deploy) tras el período de observación.
