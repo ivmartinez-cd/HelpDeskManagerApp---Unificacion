@@ -5,6 +5,8 @@
 
 # Runtime output (contains real client data — never commit)
 backend/var/
+backups/
+backups.zip
 
 # Python
 __pycache__/
