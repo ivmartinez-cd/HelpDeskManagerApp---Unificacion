@@ -18,19 +18,36 @@ class SqlAlchemyLiquidacionRepository:
         row = await self._session.get(LiquidacionModel, liquidacion_id)
         return _to_entity(row) if row else None
 
-    async def list_by_prestador(self, prestador_id: UUID) -> list[Liquidacion]:
-        stmt = (
-            select(LiquidacionModel)
-            .where(LiquidacionModel.prestador_id == prestador_id)
-            .order_by(LiquidacionModel.fecha_importacion.desc())
-        )
+    async def list_filtered(
+        self,
+        prestador_id: UUID | None = None,
+        estado: str | None = None,
+        periodo: str | None = None,
+    ) -> list[Liquidacion]:
+        stmt = select(LiquidacionModel).order_by(LiquidacionModel.fecha_importacion.desc())
+        if prestador_id is not None:
+            stmt = stmt.where(LiquidacionModel.prestador_id == prestador_id)
+        if estado is not None:
+            stmt = stmt.where(LiquidacionModel.estado == estado)
+        if periodo is not None:
+            stmt = stmt.where(LiquidacionModel.periodo == periodo)
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
+    async def list_periodos(self) -> list[str]:
+        stmt = (
+            select(LiquidacionModel.periodo)
+            .distinct()
+            .order_by(LiquidacionModel.periodo.desc())
+        )
+        result = await self._session.execute(stmt)
+        return [row[0] for row in result.all()]
+
+    async def list_by_prestador(self, prestador_id: UUID) -> list[Liquidacion]:
+        return await self.list_filtered(prestador_id=prestador_id)
+
     async def list_all(self) -> list[Liquidacion]:
-        stmt = select(LiquidacionModel).order_by(LiquidacionModel.fecha_importacion.desc())
-        rows = (await self._session.execute(stmt)).scalars().all()
-        return [_to_entity(row) for row in rows]
+        return await self.list_filtered()
 
     async def create(
         self,

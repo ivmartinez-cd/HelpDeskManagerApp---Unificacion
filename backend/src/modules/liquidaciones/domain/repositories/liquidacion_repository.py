@@ -9,11 +9,18 @@ from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
 class LiquidacionRepository(Protocol):
     async def get_by_id(self, liquidacion_id: UUID) -> Liquidacion | None: ...
 
-    async def list_by_prestador(self, prestador_id: UUID) -> list[Liquidacion]: ...
+    async def list_filtered(
+        self,
+        prestador_id: UUID | None = None,
+        estado: str | None = None,
+        periodo: str | None = None,
+    ) -> list[Liquidacion]:
+        """Todas las liquidaciones que cumplan los filtros opcionales, ordenadas
+        por fecha_importacion desc.  Sin filtro = devuelve todas."""
+        ...
 
-    async def list_all(self) -> list[Liquidacion]:
-        """Todas las liquidaciones ordenadas por fecha_importacion desc — para la
-        vista global del dashboard y del listado sin filtro de prestador."""
+    async def list_periodos(self) -> list[str]:
+        """Valores distintos de `periodo` (YYYY-MM) en orden descendente."""
         ...
 
     async def create(

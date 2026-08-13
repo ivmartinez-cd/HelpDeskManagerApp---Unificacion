@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ChangeEvent } from "react";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
@@ -23,23 +23,25 @@ const PAGE_SIZE = 50;
 export function LiquidacionesLista() {
   const [liquidaciones, setLiquidaciones] = useState<Liquidacion[]>([]);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
+  const [periodos, setPeriodos] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroPrestador, setFiltroPrestador] = useState("");
+  const [filtroPeriodo, setFiltroPeriodo] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [importOpen, setImportOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteInProgress, setDeleteInProgress] = useState(false);
 
-  // Sin setLoading(true) sincrónico: `loading` arranca en true y los reloads
-  // posteriores muestran los datos viejos hasta que llega la respuesta
-  // (react-hooks/set-state-in-effect prohíbe setState sincrónico en effects).
+  // Sin setLoading(true) sincrónico — ver nota en liquidaciones-dashboard.tsx.
   const loadLiquidaciones = useCallback(
     async (p: number) => {
       try {
         const res = await liquidacionesApi.list({
           prestadorId: filtroPrestador || undefined,
+          estado: filtroEstado || undefined,
+          periodo: filtroPeriodo || undefined,
           page: p,
           size: PAGE_SIZE,
         });
@@ -49,11 +51,14 @@ export function LiquidacionesLista() {
         setLoading(false);
       }
     },
-    [filtroPrestador],
+    [filtroPrestador, filtroEstado, filtroPeriodo],
   );
 
   useEffect(() => {
-    void liquidacionesApi.listPrestadores().then(setPrestadores);
+    void Promise.all([
+      liquidacionesApi.listPrestadores().then(setPrestadores),
+      liquidacionesApi.listPeriodos().then(setPeriodos),
+    ]);
   }, []);
 
   useEffect(() => {
@@ -73,12 +78,14 @@ export function LiquidacionesLista() {
   };
 
   const prestadorMap = Object.fromEntries(prestadores.map((p) => [p.id, p]));
-  const filtered = filtroEstado
-    ? liquidaciones.filter((l) => l.estado === filtroEstado)
-    : liquidaciones;
 
   const selectCls =
     "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
+
+  const handleFilter = (setter: (v: string) => void) => (e: ChangeEvent<HTMLSelectElement>) => {
+    setter(e.target.value);
+    setPage(1);
+  };
 
   return (
     <div className="flex flex-col gap-5 p-6">
@@ -95,7 +102,7 @@ export function LiquidacionesLista() {
       <div className="flex flex-wrap items-center gap-3">
         <select
           value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
+          onChange={handleFilter(setFiltroEstado)}
           className={selectCls}
           aria-label="Filtrar por estado"
         >
@@ -108,7 +115,7 @@ export function LiquidacionesLista() {
 
         <select
           value={filtroPrestador}
-          onChange={(e) => { setFiltroPrestador(e.target.value); setPage(1); }}
+          onChange={handleFilter(setFiltroPrestador)}
           className={selectCls}
           aria-label="Filtrar por prestador"
         >
@@ -116,6 +123,20 @@ export function LiquidacionesLista() {
           {prestadores.map((p) => (
             <option key={p.id} value={p.id}>
               {p.nombreCorto}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filtroPeriodo}
+          onChange={handleFilter(setFiltroPeriodo)}
+          className={selectCls}
+          aria-label="Filtrar por período"
+        >
+          <option value="">Todos los períodos</option>
+          {periodos.map((p) => (
+            <option key={p} value={p}>
+              {p}
             </option>
           ))}
         </select>
@@ -129,14 +150,14 @@ export function LiquidacionesLista() {
         <div className="flex h-48 items-center justify-center">
           <Spinner />
         </div>
-      ) : filtered.length === 0 ? (
+      ) : liquidaciones.length === 0 ? (
         <p className="py-12 text-center font-body text-sm text-muted-foreground">
           No hay liquidaciones con los filtros seleccionados.
         </p>
       ) : (
         <>
           <LiquidacionesTabla
-            items={filtered}
+            items={liquidaciones}
             prestadorMap={prestadorMap}
             onDelete={setDeletingId}
           />

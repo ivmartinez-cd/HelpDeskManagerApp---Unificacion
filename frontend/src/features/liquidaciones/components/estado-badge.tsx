@@ -1,14 +1,13 @@
-import { Badge } from "@/shared/components/ui/badge";
-import { cn } from "@/shared/utils/cn";
+import { Badge, type BadgeVariant } from "@/shared/components/ui/badge";
 import type { EstadoLiquidacion } from "../types/liquidaciones";
 
-const LABELS: Record<EstadoLiquidacion, string> = {
-  abierta: "Abierta",
-  preliquidada: "Preliquidada",
-  recibida: "Recibida",
-  observada: "Observada",
-  aprobada: "Aprobada",
-  cerrada: "Cerrada",
+const ESTADO_CONFIG: Record<EstadoLiquidacion, { variant: BadgeVariant; label: string }> = {
+  abierta: { variant: "info", label: "Abierta" },
+  preliquidada: { variant: "accent", label: "Preliquidada" },
+  recibida: { variant: "neutral", label: "Recibida" },
+  observada: { variant: "warning", label: "Observada" },
+  aprobada: { variant: "success", label: "Aprobada" },
+  cerrada: { variant: "neutral", label: "Cerrada" },
 };
 
 interface EstadoBadgeProps {
@@ -17,30 +16,10 @@ interface EstadoBadgeProps {
 }
 
 export function EstadoBadge({ estado, className }: EstadoBadgeProps) {
-  if (estado === "aprobada") {
-    return (
-      <Badge variant="success" className={className}>
-        {LABELS[estado]}
-      </Badge>
-    );
-  }
-  if (estado === "observada") {
-    return (
-      <Badge variant="warning" className={className}>
-        {LABELS[estado]}
-      </Badge>
-    );
-  }
-  if (estado === "cerrada") {
-    return (
-      <Badge variant="neutral" className={className}>
-        {LABELS[estado]}
-      </Badge>
-    );
-  }
+  const { variant, label } = ESTADO_CONFIG[estado];
   return (
-    <span className={cn("font-body text-sm text-muted-foreground", className)}>
-      {LABELS[estado]}
-    </span>
+    <Badge variant={variant} className={className}>
+      {label}
+    </Badge>
   );
 }

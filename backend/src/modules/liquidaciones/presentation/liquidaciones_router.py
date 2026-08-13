@@ -72,15 +72,28 @@ async def list_prestadores(
 @router.get("", response_model=Page[LiquidacionOut])
 async def list_liquidaciones(
     prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
+    estado: str | None = Query(default=None),
+    periodo: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
-    size: int = Query(default=50, ge=1, le=200),
+    size: int = Query(default=50, ge=1, le=1000),
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
 ) -> Page[LiquidacionOut]:
-    liquidaciones = await build_list_liquidaciones(db).execute(prestador_id)
+    liquidaciones = await build_list_liquidaciones(db).execute(
+        prestador_id=prestador_id, estado=estado, periodo=periodo
+    )
     return Page.of(
         [LiquidacionOut.from_entity(item) for item in liquidaciones], page=page, size=size
     )
+
+
+@router.get("/periodos", response_model=list[str])
+async def list_periodos(
+    _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db),
+) -> list[str]:
+    """Valores distintos de período (YYYY-MM) para poblar el dropdown de filtros."""
+    return await SqlAlchemyLiquidacionRepository(db).list_periodos()
 
 
 @router.post("/importar", response_model=ImportarLiquidacionOut, status_code=201)

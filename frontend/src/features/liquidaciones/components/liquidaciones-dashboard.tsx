@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
@@ -23,15 +23,18 @@ export function LiquidacionesDashboard() {
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
+  const [filtroPrestador, setFiltroPrestador] = useState("");
+  const [filtroAnio, setFiltroAnio] = useState("");
 
   // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
+  // listAll() usa fetchCatalogoCompleto para evitar el truncamiento silencioso.
   const load = useCallback(async () => {
     try {
-      const [liqPage, prest] = await Promise.all([
-        liquidacionesApi.list({ size: 200 }),
+      const [liqs, prest] = await Promise.all([
+        liquidacionesApi.listAll(),
         liquidacionesApi.listPrestadores(),
       ]);
-      setLiquidaciones(liqPage.items);
+      setLiquidaciones(liqs);
       setPrestadores(prest);
     } finally {
       setLoading(false);
@@ -42,17 +45,32 @@ export function LiquidacionesDashboard() {
     void load();
   }, [load]);
 
+  const aniosDisponibles = useMemo(
+    () => [...new Set(liquidaciones.map((l) => l.periodo.slice(0, 4)))].sort().reverse(),
+    [liquidaciones],
+  );
+
+  const filtradas = useMemo(
+    () =>
+      liquidaciones.filter(
+        (l) =>
+          (!filtroPrestador || l.prestadorId === filtroPrestador) &&
+          (!filtroAnio || l.periodo.startsWith(filtroAnio)),
+      ),
+    [liquidaciones, filtroPrestador, filtroAnio],
+  );
+
   const prestadorMap = Object.fromEntries(prestadores.map((p) => [p.id, p]));
-  const pendientes = liquidaciones.filter(
+  const pendientes = filtradas.filter(
     (l) =>
       l.estado === "abierta" ||
       l.estado === "preliquidada" ||
       l.estado === "recibida" ||
       l.estado === "observada",
   ).length;
-  const totalIncidentes = liquidaciones.reduce((s, l) => s + l.totalIncidentes, 0);
-  const totalImporte = liquidaciones.reduce((s, l) => s + l.totalImporte, 0);
-  const ultimas = liquidaciones.slice(0, 10);
+  const totalIncidentes = filtradas.reduce((s, l) => s + l.totalIncidentes, 0);
+  const totalImporte = filtradas.reduce((s, l) => s + l.totalImporte, 0);
+  const ultimas = filtradas.slice(0, 10);
 
   if (loading) {
     return (
@@ -66,6 +84,9 @@ export function LiquidacionesDashboard() {
     "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
   const tdCls = "py-3 px-4 font-body text-sm text-foreground";
 
+  const selectCls =
+    "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
@@ -78,14 +99,48 @@ export function LiquidacionesDashboard() {
         </button>
       </div>
 
+      <div className="flex flex-wrap items-center gap-3">
+        <select
+          value={filtroPrestador}
+          onChange={(e) => setFiltroPrestador(e.target.value)}
+          className={selectCls}
+          aria-label="Filtrar por prestador"
+        >
+          <option value="">Todos los prestadores</option>
+          {prestadores.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nombreCorto}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filtroAnio}
+          onChange={(e) => setFiltroAnio(e.target.value)}
+          className={selectCls}
+          aria-label="Filtrar por año"
+        >
+          <option value="">Todos los años</option>
+          {aniosDisponibles.map((a) => (
+            <option key={a} value={a}>
+              {a}
+            </option>
+          ))}
+        </select>
+
+        <span className="font-body text-sm text-muted-foreground">
+          {filtradas.length} liquidaci{filtradas.length === 1 ? "ón" : "ones"}
+        </span>
+      </div>
+
       <KpiGrid className="lg:grid-cols-4">
         <KpiTile
           label="Liquidaciones pendientes"
           value={String(pendientes)}
-          hint={`de ${liquidaciones.length} en total`}
+          hint={`de ${filtradas.length} en total`}
           tone="orange"
         />
-        <KpiTile label="Total importadas" value={String(liquidaciones.length)} tone="neutral" />
+        <KpiTile label="Total importadas" value={String(filtradas.length)} tone="neutral" />
         <KpiTile
           label="Total incidentes"
           value={totalIncidentes.toLocaleString("es-AR")}

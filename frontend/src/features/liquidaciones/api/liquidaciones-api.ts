@@ -81,13 +81,27 @@ export const liquidacionesApi = {
       )
       .then((p) => p.items),
 
-  list: (params?: { prestadorId?: string; page?: number; size?: number }) => {
+  list: (params?: {
+    prestadorId?: string;
+    estado?: string;
+    periodo?: string;
+    page?: number;
+    size?: number;
+  }) => {
     const qs = new URLSearchParams();
     if (params?.prestadorId) qs.set("prestadorId", params.prestadorId);
+    if (params?.estado) qs.set("estado", params.estado);
+    if (params?.periodo) qs.set("periodo", params.periodo);
     qs.set("page", String(params?.page ?? 1));
     qs.set("size", String(params?.size ?? 50));
     return httpClient.get<LiquidacionPage>(`/api/liquidaciones?${qs}`);
   },
+
+  listAll: () =>
+    fetchCatalogoCompleto<Liquidacion>("/api/liquidaciones", new URLSearchParams()),
+
+  listPeriodos: () =>
+    httpClient.get<string[]>("/api/liquidaciones/periodos"),
 
   get: (id: string) => httpClient.get<LiquidacionDetalle>(`/api/liquidaciones/${id}`),
 

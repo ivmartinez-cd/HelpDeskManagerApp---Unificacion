@@ -109,3 +109,68 @@ async def test_delete_removes_liquidacion(
 
 async def test_delete_returns_false_when_missing(db_session: AsyncSession) -> None:
     assert await SqlAlchemyLiquidacionRepository(db_session).delete(uuid.uuid4()) is False
+
+
+async def test_list_filtered_by_estado(
+    db_session: AsyncSession, prestador_id: uuid.UUID
+) -> None:
+    repo = SqlAlchemyLiquidacionRepository(db_session)
+    abierta = await _create_liquidacion(db_session, prestador_id)
+    await repo.update_estado(abierta.id, "aprobada")
+
+    resultado = await repo.list_filtered(estado="aprobada")
+
+    ids = [liq.id for liq in resultado]
+    assert abierta.id in ids
+
+
+async def test_list_filtered_by_periodo(
+    db_session: AsyncSession, prestador_id: uuid.UUID
+) -> None:
+    repo = SqlAlchemyLiquidacionRepository(db_session)
+    await repo.create(
+        prestador_id=prestador_id,
+        numero_liquidacion="1-1",
+        periodo="2025-12",
+        tipo_liquidacion="regular",
+        nombre_archivo=None,
+        total_incidentes=0,
+        total_importe=0.0,
+    )
+    await repo.create(
+        prestador_id=prestador_id,
+        numero_liquidacion="1-2",
+        periodo="2026-01",
+        tipo_liquidacion="regular",
+        nombre_archivo=None,
+        total_incidentes=0,
+        total_importe=0.0,
+    )
+
+    resultado = await repo.list_filtered(periodo="2025-12")
+
+    assert all(liq.periodo == "2025-12" for liq in resultado)
+    assert len(resultado) >= 1
+
+
+async def test_list_periodos_returns_distinct_sorted(
+    db_session: AsyncSession, prestador_id: uuid.UUID
+) -> None:
+    repo = SqlAlchemyLiquidacionRepository(db_session)
+    for periodo in ["2026-01", "2026-02", "2026-01"]:
+        await repo.create(
+            prestador_id=prestador_id,
+            numero_liquidacion=None,
+            periodo=periodo,
+            tipo_liquidacion="regular",
+            nombre_archivo=None,
+            total_incidentes=0,
+            total_importe=0.0,
+        )
+
+    periodos = await repo.list_periodos()
+
+    assert "2026-01" in periodos
+    assert "2026-02" in periodos
+    assert periodos.count("2026-01") == 1
+    assert periodos.index("2026-02") < periodos.index("2026-01")

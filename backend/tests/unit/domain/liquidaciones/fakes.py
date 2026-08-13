@@ -67,11 +67,23 @@ class FakeLiquidacionRepository:
     async def get_by_id(self, liquidacion_id: UUID) -> Liquidacion | None:
         return self.rows.get(liquidacion_id)
 
-    async def list_by_prestador(self, prestador_id: UUID) -> list[Liquidacion]:
-        return [r for r in self.rows.values() if r.prestador_id == prestador_id]
+    async def list_filtered(
+        self,
+        prestador_id: UUID | None = None,
+        estado: str | None = None,
+        periodo: str | None = None,
+    ) -> list[Liquidacion]:
+        rows: list[Liquidacion] = list(self.rows.values())
+        if prestador_id is not None:
+            rows = [r for r in rows if r.prestador_id == prestador_id]
+        if estado is not None:
+            rows = [r for r in rows if r.estado == estado]
+        if periodo is not None:
+            rows = [r for r in rows if r.periodo == periodo]
+        return rows
 
-    async def list_all(self) -> list[Liquidacion]:
-        return list(self.rows.values())
+    async def list_periodos(self) -> list[str]:
+        return sorted({r.periodo for r in self.rows.values()}, reverse=True)
 
     async def create(
         self,
