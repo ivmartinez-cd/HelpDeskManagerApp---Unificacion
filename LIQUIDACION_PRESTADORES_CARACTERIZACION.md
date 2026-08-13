@@ -91,11 +91,19 @@ reglas en sí** — cualquier regresión ahí no tiene red de seguridad hoy.
 | ALT002 | KMs Incorrectos | 100 | `tolerancia_km: 0.5` | Sí | `alt002_km.py` | Ignora `kms_pendientes`; anti-falso-positivo por "corredor" (≤50km) |
 | ALT003 | Posible Viático Duplicado | 80 | `ventana_dias: 30` | Sí | `alt003_viatico.py` | **`ventana_dias` es config muerta** — compara por fecha exacta, no por ventana |
 | ALT004 | Servicio Duplicado | 90 | `{}` | Sí | `alt004_duplicado.py` | Mismo `numero_incidente` en cualquier otra liquidación del prestador |
-| ALT005 | Ruta Compartida | 40 | `{}` | **No** (desactivada) | `alt005_ruta.py` | El más elaborado (agrupa por corredor, severidad dinámica); apagada por default pese a ser la de mayor dolor operativo real (RN006) |
+| ALT005 | Ruta Compartida | 40 | `{}` | **Sí** ⚠️ | `alt005_ruta.py` | El más elaborado (agrupa por corredor, severidad dinámica). **Corrección 2026-08-13**: esta fila decía "desactivada por default" tomando `seed.py` (`activa=False`) como fuente de verdad — verificado ahora contra el contenedor productivo real, `activa=True` en producción (75 alertas + 20 observaciones reales en el histórico). `seed.py` quedó desactualizado respecto de lo que la Team Leader efectivamente usa; no volver a asumir su default sin verificar contra el contenedor. |
 | ALT006 | Segunda Visita | 30 | `ventana_dias: 30` | No | **No existe** | Fila fantasma, nunca se ejecuta |
-| ALT007 | Agrupación de Incidentes | 40 | `{}` | No | **No existe** | Fila fantasma, nunca se ejecuta |
+| ALT007 | Agrupación de Incidentes | 40 | `{}` | **Sí** ⚠️ | **No existe** | Mismo hallazgo que ALT005: `activa=True` en producción real (`seed.py` decía `False`), pero sin evaluador — activa y sin embargo inerte, no es una fila fantasma real |
 | ALT008 | Tarifario Inexistente | 100 | `{}` | Sí | `alt008_tarifario.py` | El FDD llama "SPST No Determinado" a este código — está invertido respecto al código real |
 | ALT009 | Par Empresa-Sucursal no encontrado en Tabla KM | 80 | `{}` | Sí | `alt009_spst.py` | Ídem, invertido respecto al FDD |
+
+**⚠️ Corrección importante (2026-08-13, ver `LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`)**:
+al cargar los datos reales de producción se confirmó que el port nuevo del motor
+(`domain/services/motor_reglas/motor.py`) **solo implementa el camino de grupo de
+ALT005** (`evaluar_grupo_alt005` → Observaciones) — el camino por-incidente que en el
+legacy generaba Alertas individuales de ALT005 **nunca se portó**, porque se asumió
+(con esta misma tabla como fuente) que la regla estaba inactiva. Es un gap de paridad
+real, pendiente de decisión del usuario, no solo un error de documentación.
 
 **Es data-driven solo a medias.** Sí vienen de `reglas_alerta`: activación, riesgo base,
 algunos umbrales. NO: el algoritmo de cada evaluador (clases Python fijas), el registro
@@ -179,9 +187,11 @@ para portar con handoff propio.
    más la app, no lo que la Team Leader usa. **No portar nada de §4 en esta migración.**
    El módulo `liquidaciones` del monorepo nuevo caracteriza y migra el flujo CSV tal
    como corre hoy en producción real.
-2. **ALT005/ALT006/ALT007: portar tal cual.** ALT005 se porta pero queda desactivada
-   por default (igual que hoy); ALT006/ALT007 se documentan como no implementadas, sin
-   evaluador — no se completan en esta migración.
+2. **ALT005/ALT006/ALT007: portar tal cual.** ~~ALT005 se porta pero queda desactivada
+   por default (igual que hoy)~~ **corrección 2026-08-13: ALT005 está activa en
+   producción real** — se sembró `activa=True` al cargar los datos (ver
+   `LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`); ALT006/ALT007 se documentan como no
+   implementadas, sin evaluador — no se completan en esta migración.
 3. **Motor de reglas: mantener el patrón híbrido actual.** Evaluadores como código
    Python + algunos parámetros en tabla de config, igual que el legacy — no se invierte
    en un motor interpretado ni en CRUD de reglas en esta migración.
@@ -220,7 +230,7 @@ sueltas), así que reflejan el comportamiento real de producción incluido el fi
 | ALT003 Viático Duplicado | fechas distintas | mismo día + misma sucursal, 2 incidentes con km>0 | 80 | Genera **2 alertas mutuas** (una por incidente), no una compartida |
 | ALT003 `ventana_dias` | — | dos incidentes a 5 días (dentro de la ventana de 30) → **0 alertas** | — | **Confirmado empíricamente: `ventana_dias` es config muerta**, el evaluador compara `fecha_cierre` exacto, nunca lee `self.regla.configuracion` (releído el código fuente, línea por línea, no hay ninguna referencia a `configuracion` en `alt003_viatico.py`) |
 | ALT004 Servicio Duplicado | numero_incidente único | mismo `numero_incidente` en 2 liquidaciones del mismo prestador | 90 | — |
-| ALT005 Ruta Compartida | 1 solo incidente en el corredor | `activa=True` forzado + 2 incidentes mismo corredor, suma cobrada > tabla | Observacion `CRITICO` | Mismo escenario con `activa=False` (**default real, confirmado en `seed.py`**) → 0 observaciones pese a ameritarlo |
+| ALT005 Ruta Compartida | 1 solo incidente en el corredor | `activa=True` forzado + 2 incidentes mismo corredor, suma cobrada > tabla | Observacion `CRITICO` | ~~Mismo escenario con `activa=False` (default real, confirmado en `seed.py`) → 0 observaciones pese a ameritarlo~~ **corrección 2026-08-13: `activa=True` es el default real de producción**, confirmado contra el contenedor productivo, no contra `seed.py` (desactualizado) |
 | ALT008 Tarifario Inexistente | tarifario existe para tipo/fecha | tarifario existe pero para otro `tipo_servicio` | 100 | — |
 | ALT009 Par Empresa-Sucursal | fila TablaKM con el par exacto | sin fila para el par | 80 | Si `cant_km_cobrado==0`, **nunca dispara** aunque no exista la fila — corta antes de buscar, pese a que el nombre de la regla sugiere validación siempre |
 

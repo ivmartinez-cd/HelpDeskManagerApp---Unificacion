@@ -322,6 +322,28 @@ en `.claude.json` global y de proyecto; sin `.mcp.json` en ninguno de los 6 repo
 
 #### Fase 3 — Liquidacion-Prestadores (segundo módulo, en curso — iniciada 2026-08-12)
 
+> **Atención (2026-08-13): "Prestador" nombra DOS módulos distintos y no relacionados
+> en este backend — no confundirlos.**
+> - **`backend/src/modules/liquidaciones`** (el que documenta este checklist): motor de
+>   preliquidaciones/validación de los 4 PST que facturan por CSV (Pentacom/Córdoba,
+>   Pertex-Supernova/Rosario, Infomac, Gestión Integral/San Juan). Su entidad
+>   `Prestador` (`domain/entities/prestador.py`) solo tiene
+>   `id/nombre/nombre_corto/cuit/region/activo` — nunca tuvo ni necesita operador,
+>   equipos ni contacto.
+> - **`backend/src/modules/prestadores`**: catálogo de PST vinculado a Siges
+>   (`siges_empresa_id`, tabla `dbo.Empresa`), usado para asignar qué **operador de
+>   Canal Directo** atiende a cada PST y filtrar incidentes SLA por "mis PST"
+>   (`backend/src/modules/sla/domain/repositories/prestador_lookup.py`). Tiene
+>   `prestador_contacto` (nombre/tel/email) y `prestador_asignacion_historial`
+>   (`operador_id, desde, hasta` — vigencia temporal de cada operador). Este módulo
+>   **no aparece en el diagnóstico de §1** de este documento porque no viene de
+>   ninguna de las 6 apps legacy — se construyó directo en el monolito nuevo, fuera
+>   del alcance de esta Fase 3. Ver `backend/src/modules/prestadores/README.md`.
+>
+> Un prestador de servicio técnico real (ej. "PST Corrientes") puede existir en uno
+> de los dos módulos, en ambos, o en ninguno — son catálogos independientes, sin FK
+> entre sí, poblados con distintos subconjuntos de PST según cada uno necesite.
+
 **Nota de secuencia real:** el orden original de esta Fase 0 decía Contadores →
 Liquidacion-Prestadores → ... En la práctica, SDSInsumos se migró (y cerró
 completamente, ver `SDSINSUMOS_MIGRACION_ESTADO.md`) antes de arrancar
@@ -369,9 +391,9 @@ real ejecutado; solo se actualiza el estado de cada módulo.
       transición), edición de tarifarios y tabla KM, detalle enriquecido con tabla KM
       (localidad/SPST/link Maps por incidente), detalle con correctivos/preventivos
       separados, filtro por fecha de cierre y totales por sección. Deuda restante del
-      gap analysis (además de los datos): importadores Excel + plantillas (hoy solo
-      CSV) y decidir DELETE físico vs soft-delete de prestador/SPST — detalle en la
-      memoria `project-liquidaciones-config`.
+      gap analysis (además de los datos, ya cargados — ver más abajo): importadores
+      Excel + plantillas (hoy solo CSV) y decidir DELETE físico vs soft-delete de
+      prestador/SPST.
 - [x] **Cumplimiento 100% de `ARCHITECTURE_GUIDE.md` en liquidaciones + prestadores
       (2026-08-12, auditoría completa; commits b337393..2aacda9):**
       - §11: los 4 GET de catálogo que devolvían `list[...]` ahora usan `Page[T]`
@@ -396,6 +418,29 @@ real ejecutado; solo se actualiza el estado de cada módulo.
       - Nota técnica: la versión de FastAPI del repo envuelve routers incluidos como
         `_IncludedRouter` lazy — `app.routes` no lista las rutas anidadas; para
         verificar rutas usar `app.openapi()["paths"]`.
+- [x] **Datos reales de producción cargados + módulo activado (2026-08-13):** script
+      one-off `backend/scripts/migrate_liquidaciones_data_from_sqlite.py` contra un
+      snapshot read-only fresco del contenedor productivo (nunca se tocó ese
+      contenedor en escritura). 8100 filas migradas 1:1 (conteo y sumas de control
+      exactos), remapeo de 12 FKs `INTEGER`→`UUID`, `reglas_alerta` sembrada por
+      Alembic con el estado REAL de producción (ALT005/ALT007 activas — no el
+      default `False` de `seed.py`, que estaba desactualizado en la caracterización).
+      `liquidaciones.is_enabled` → `true` recién después de verificar los datos.
+      Detalle completo, incluidos 2 gaps reales encontrados en la verificación
+      end-to-end y 1 bug de routing corregido (orden de `include_router` hacía que
+      el catch-all `/{liquidacion_id}` interceptara `/tarifarios`, `/spsts`,
+      `/tabla-km`) en `LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`.
+- [x] **Gap de ALT005 cerrado (2026-08-13):** se portó el camino por-incidente que
+      faltaba (`alt005_ruta_individual.py`, fiel al legacy — guardas, partición
+      exactos/corredor, hasta 2 alertas por incidente), cableado en `motor.py` junto
+      al camino de grupo ya existente, 10 tests de caracterización nuevos. La
+      verificación end-to-end (no los tests unitarios) encontró un bug real de
+      serialización (`spst_id` como `UUID` de Python en un campo `JSONB`) — corregido
+      stringificando, mismo patrón que ALT004. Confirmado contra datos reales: la
+      liquidación que había quedado con 0 alertas ALT005 tras un `reanalyze` volvió a
+      generar las 4 originales.
+- [ ] Resolver con el usuario el truncamiento de catálogos (Tarifarios/Tabla KM a 500
+      filas en el frontend) antes de arrancar el período de observación.
 - [ ] Correr en paralelo con la app vieja antes de apagarla — **no hay cutover en
       frío** (módulo con lógica frágil, ver riesgos en §1 de este documento).
 - [ ] Apagar Liquidacion-Prestadores (repo/deploy) tras el período de observación.
