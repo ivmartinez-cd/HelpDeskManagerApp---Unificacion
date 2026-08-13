@@ -84,6 +84,7 @@ class SqlAlchemyLiquidacionRepository:
         if row is None:
             return False
         await self._session.delete(row)
+        await self._session.flush()
         return True
 
 

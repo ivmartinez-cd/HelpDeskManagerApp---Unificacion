@@ -265,20 +265,53 @@ infraestructura para ningún repo SQLAlchemy (ver pendiente de tests de
 integración, abajo) — `delete_liquidacion` (ya existente) tampoco los tiene,
 consistente con la convención actual.
 
+### Tests de integración de infrastructure — CERRADO (2026-08-13)
+
+`backend/tests/integration/infrastructure/liquidaciones/` — 60 tests nuevos contra
+Postgres real (`docker-compose.test.yml`, `db_session` con rollback por test), no
+contra `helpdesk-db`: los 10 repos SQLAlchemy (prestador, spst, tarifario, tabla_km,
+regla_alerta, liquidacion, incidente, alerta, observacion, resolucion) y los 2
+parsers pandas (`PandasLiquidacionFileParser` contra bytes HTML reales vía lxml,
+`PandasPrestadorMaestroFileParser` contra un `.xlsx` real construido con openpyxl —
+ambos ejercitan la capa de infraestructura que los tests de dominio puro no cubren:
+lectura real del archivo, selección de tabla/hoja entre varias, fallback de
+`flavor`). `conftest.py` local con fixtures encadenadas `prestador_id` →
+`liquidacion_id` → `incidente_id` (via los repos reales, no factories separadas) —
+la mayoría de los repos transaccionales depende de esa cadena de FKs.
+
+Corren en el **host**, no dentro del contenedor backend (`uv run pytest
+tests/integration/infrastructure/liquidaciones`) — el fixture de conexión usa
+`localhost:5440`, que es el mapeo de puerto de `db-test` hacia el host; desde dentro
+del contenedor `helpdesk-manager-backend` ese `localhost` no resuelve a nada
+(contenedores distintos, sin red compartida) y todos los tests fallan con
+`Connect call failed`.
+
+**Bug real encontrado por el test, no por code review**:
+`SqlAlchemyLiquidacionRepository.delete()` no hacía `await self._session.flush()`
+tras `session.delete()` — a diferencia de los 4 repos hermanos (prestador, spst,
+tarifario, tabla_km), que sí flushean explícito en su `delete()`. `session.get()`
+inmediatamente después devolvía la fila desde el identity map en vez de `None`,
+porque sin flush la baja no se materializa. Corregido agregando el `flush()`
+faltante, mismo patrón que el resto. En producción probablemente no se notaba (el
+commit final de `get_db()` igual persiste la baja), pero cualquier lectura dentro
+del mismo request/sesión después del DELETE hubiera visto la fila "zombie".
+
+Verificado: `lint-imports` (17/17 contratos), `ruff check src tests`, `mypy src`
+(758 archivos), `pytest tests/unit` (816 tests) y `pytest tests/integration` (166
+tests, todos los módulos) — los 4 en verde.
+
 ## Pendiente
 
-1. **0 tests de integración de infrastructure** (10 repos SQLAlchemy + 2 parsers
-   pandas) — deuda transversal compartida con turnos/sla.
-2. **Use cases de escritura para el resto de las entidades de configuración** — hoy
+1. **Use cases de escritura para el resto de las entidades de configuración** — hoy
    router→repositorio directo en los 4 config_routers, sin casos de uso propios.
-3. **No recadena vigencias de tarifarios** al importar (Excel maestro ni CSV) —
+2. **No recadena vigencias de tarifarios** al importar (Excel maestro ni CSV) —
    decisión consciente (replica la omisión del legacy), documentada en
    `application/use_cases/importar_prestador_maestro.py`. `domain/services/
    cadena_tarifaria.py` existe y se usa en alta/edición manual desde la UI; si se
    quiere recadenar también en los importadores, hay que ampliar
    `TarifarioRepository` (`list_grupo`/`set_vigencia_hasta` ya están en el impl
    SQLAlchemy, no en el Protocol).
-4. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
+3. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
 
 ## Próximo paso sugerido
 
