@@ -193,8 +193,13 @@ en `.claude.json` global y de proyecto; sin `.mcp.json` en ninguno de los 6 repo
       bajo riesgo *operativo* del patrón de migración, aunque su lógica de negocio (algoritmo
       de proyección) sí requiere tests de caracterización serios antes de tocarla (ver §1,
       riesgos de negocio).
-- [ ] Qué hacer con el módulo "STC" dummy actual del padre (eliminar antes de traer STC
-      Cloud real).
+- [x] Qué hacer con el módulo "STC" dummy actual del padre — **resuelto por omisión,
+      verificado (2026-08-13)**: el dummy (parseador de IPs) nunca se portó a este monorepo
+      (0 referencias en `frontend/src`; `backend/src/modules/stc/` es solo el placeholder
+      vacío de Fase 4). Muere junto con la app padre vieja cuando se apague. La entrada
+      `stc` del catálogo de permisos (`is_enabled=false`) **no es el dummy** — es el slot
+      reservado para el STC Cloud real, igual que `vacaciones`/`parque-impresoras`; no
+      borrarla.
 
 ### Fase 1 — Preparar herramientas
 - [x] Verificar `gcloud` CLI instalado y autenticado — confirmado (2026-08-06): cuenta activa
