@@ -10,7 +10,6 @@ from src.modules.prestadores.application.dtos.prestador_dtos import (
     CreatePrestadorCommand,
     SetPrestadorActiveCommand,
     UpdatePrestadorCommand,
-    UpsertContactoCommand,
 )
 from src.modules.prestadores.application.use_cases.assign_operador import (
     AssignOperador,
@@ -23,10 +22,6 @@ from src.modules.prestadores.application.use_cases.create_prestador import (
 from src.modules.prestadores.application.use_cases.deactivate_prestador import (
     SetPrestadorActive,
     SetPrestadorActiveDependencies,
-)
-from src.modules.prestadores.application.use_cases.delete_contacto import (
-    DeleteContacto,
-    DeleteContactoDependencies,
 )
 from src.modules.prestadores.application.use_cases.get_prestador import (
     GetPrestador,
@@ -48,11 +43,7 @@ from src.modules.prestadores.application.use_cases.update_prestador import (
     UpdatePrestador,
     UpdatePrestadorDependencies,
 )
-from src.modules.prestadores.application.use_cases.upsert_contacto import (
-    UpsertContacto,
-    UpsertContactoDependencies,
-)
-from src.modules.prestadores.domain.well_known_permissions import CREATE, DELETE, UPDATE, VIEW
+from src.modules.prestadores.domain.well_known_permissions import CREATE, UPDATE, VIEW
 from src.modules.prestadores.infrastructure.repositories.sqlalchemy_asignacion_historial_repository import (  # noqa: E501
     SqlAlchemyAsignacionHistorialRepository,
 )
@@ -65,11 +56,11 @@ from src.modules.prestadores.infrastructure.repositories.sqlalchemy_prestador_re
 from src.modules.prestadores.infrastructure.repositories.sqlalchemy_user_provider import (
     SqlAlchemyUserProvider,
 )
+from src.modules.prestadores.presentation.contactos_router import router as contactos_router
 from src.modules.prestadores.presentation.dependencies import get_prestador_siges_gateway
 from src.modules.prestadores.presentation.schemas.prestador_schemas import (
     AsignacionHistorialResponse,
     AssignOperadorRequest,
-    ContactoResponse,
     CreatePrestadorRequest,
     OperadorOptionResponse,
     PrestadoresResumenResponse,
@@ -77,7 +68,6 @@ from src.modules.prestadores.presentation.schemas.prestador_schemas import (
     SetActiveRequest,
     SyncResultResponse,
     UpdatePrestadorRequest,
-    UpsertContactoRequest,
 )
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
@@ -87,7 +77,6 @@ router = APIRouter(prefix="/api/prestadores", tags=["prestadores"])
 _require_view = Depends(require_permission(VIEW))
 _require_create = Depends(require_permission(CREATE))
 _require_update = Depends(require_permission(UPDATE))
-_require_delete = Depends(require_permission(DELETE))
 # Catálogo chico (~24 PST hoy); default generoso porque alimenta el listado
 # agrupado completo, no una tabla paginada en la UI (mismo criterio que
 # turnos/contadores para catálogos chicos).
@@ -249,57 +238,4 @@ async def list_historial(
     )
 
 
-@router.post("/{prestador_id}/contactos", status_code=status.HTTP_201_CREATED)
-async def create_contacto(
-    prestador_id: uuid.UUID,
-    payload: UpsertContactoRequest,
-    _: Identity = _require_create,
-    db: AsyncSession = Depends(get_db),
-) -> ContactoResponse:
-    deps = UpsertContactoDependencies(contactos=SqlAlchemyContactoRepository(db))
-    dto = await UpsertContacto(deps).execute(
-        UpsertContactoCommand(
-            contacto_id=None,
-            prestador_id=prestador_id,
-            nombre=payload.nombre,
-            telefono=payload.telefono,
-            email=payload.email,
-            is_principal=payload.is_principal,
-            sort_order=payload.sort_order,
-        )
-    )
-    return ContactoResponse.from_dto(dto)
-
-
-@router.put("/{prestador_id}/contactos/{contacto_id}")
-async def update_contacto(
-    prestador_id: uuid.UUID,
-    contacto_id: uuid.UUID,
-    payload: UpsertContactoRequest,
-    _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
-) -> ContactoResponse:
-    deps = UpsertContactoDependencies(contactos=SqlAlchemyContactoRepository(db))
-    dto = await UpsertContacto(deps).execute(
-        UpsertContactoCommand(
-            contacto_id=contacto_id,
-            prestador_id=prestador_id,
-            nombre=payload.nombre,
-            telefono=payload.telefono,
-            email=payload.email,
-            is_principal=payload.is_principal,
-            sort_order=payload.sort_order,
-        )
-    )
-    return ContactoResponse.from_dto(dto)
-
-
-@router.delete("/{prestador_id}/contactos/{contacto_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_contacto(
-    prestador_id: uuid.UUID,
-    contacto_id: uuid.UUID,
-    _: Identity = _require_delete,
-    db: AsyncSession = Depends(get_db),
-) -> None:
-    deps = DeleteContactoDependencies(contactos=SqlAlchemyContactoRepository(db))
-    await DeleteContacto(deps).execute(contacto_id)
+router.include_router(contactos_router)
