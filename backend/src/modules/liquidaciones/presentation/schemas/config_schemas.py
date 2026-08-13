@@ -9,7 +9,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.spst import Spst
-from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
+from src.modules.liquidaciones.domain.entities.tabla_km import (
+    UMBRAL_VIATICO_DEFAULT,
+    TablaKm,
+)
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
 
 # ─── Prestadores ─────────────────────────────────────────────────────────────
@@ -147,7 +150,7 @@ class TablaKmIn(BaseModel):
     localidad_cliente: str | None = Field(default=None, alias="localidadCliente")
     provincia_cliente: str | None = Field(default=None, alias="provinciaCliente")
     kms_recorrido: float = Field(alias="kmsRecorrido")
-    umbral_viatico: float = Field(default=30.0, alias="umbralViatico")
+    umbral_viatico: float = Field(default=UMBRAL_VIATICO_DEFAULT, alias="umbralViatico")
     aplica_viatico: bool = Field(default=False, alias="aplicaViatico")
     kms_a_facturar: float = Field(default=0.0, alias="kmsAFacturar")
     url_maps: str | None = Field(default=None, alias="urlMaps")

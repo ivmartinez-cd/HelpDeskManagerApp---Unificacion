@@ -23,7 +23,10 @@ from fastapi.responses import StreamingResponse
 
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.spst import Spst
-from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
+from src.modules.liquidaciones.domain.entities.tabla_km import (
+    UMBRAL_VIATICO_DEFAULT,
+    TablaKm,
+)
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (
     SqlAlchemyPrestadorRepository,
@@ -196,6 +199,13 @@ async def import_tarifarios(
             costo_serv = float(row.get("COSTO_SERVICIO") or 0)
             costo_km = float(row.get("COSTO_KM") or 0)
         except ValueError:
+            logger.warning(
+                "import_tarifarios: fila de '%s' omitida por costo ilegible "
+                "(COSTO_SERVICIO=%r, COSTO_KM=%r)",
+                pst_clave,
+                row.get("COSTO_SERVICIO"),
+                row.get("COSTO_KM"),
+            )
             continue
         await repo.create(
             prestador_id=prestador.id,
@@ -255,8 +265,18 @@ async def import_tabla_km(
         try:
             kms = float(row.get("KMS_RECORRIDO") or 0)
             kms_fact = float(row.get("KMS_A_FACTURAR") or 0)
-            umbral = float(row.get("UMBRAL_VIATICO") or 30.0)
+            umbral = float(row.get("UMBRAL_VIATICO") or UMBRAL_VIATICO_DEFAULT)
         except ValueError:
+            logger.warning(
+                "import_tabla_km: fila de '%s' (%s / %s) omitida por kms ilegibles "
+                "(KMS_RECORRIDO=%r, KMS_A_FACTURAR=%r, UMBRAL_VIATICO=%r)",
+                pst_clave,
+                empresa,
+                sucursal,
+                row.get("KMS_RECORRIDO"),
+                row.get("KMS_A_FACTURAR"),
+                row.get("UMBRAL_VIATICO"),
+            )
             continue
         aplica = (row.get("APLICA_VIATICO") or "").strip().upper() == "SI"
         await repo.create(
