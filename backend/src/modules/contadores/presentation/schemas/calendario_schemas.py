@@ -4,6 +4,25 @@ from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict
 
 from src.modules.contadores.application.dtos.asignacion_override_dto import AsignacionOverrideDTO
+from src.modules.contadores.application.dtos.calendar_event_anotado import CalendarEventAnotado
+
+
+class CoberturaEventoSchema(BaseModel):
+    """Anotación de cobertura sobre un evento (ADR-013 fase 2): el evento
+    viaja siempre con su operador real y esta anotación dice quién lo cubre
+    efectivamente — el switch "efectivo/real" de la UI es solo render."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    override_id: uuid.UUID
+    operador_ausente_id: str
+    operador_ausente_nombre: str | None
+    operador_reemplazante_id: str
+    operador_reemplazante_nombre: str | None
+    operador_reemplazante_color: str | None
+    vigente_desde: date
+    vigente_hasta: date
+    alcance_total: bool
 
 
 class CalendarEventSchema(BaseModel):
@@ -32,6 +51,14 @@ class CalendarEventSchema(BaseModel):
     bultos: int | float | None = None
     costo_seguro: str | None = None
     costo_recambio: str | None = None
+    cobertura: CoberturaEventoSchema | None = None
+
+    @classmethod
+    def from_anotado(cls, anotado: CalendarEventAnotado) -> "CalendarEventSchema":
+        schema = cls.model_validate(anotado.event)
+        if anotado.cobertura is not None:
+            schema.cobertura = CoberturaEventoSchema.model_validate(anotado.cobertura)
+        return schema
 
 
 class OperadorSchema(BaseModel):

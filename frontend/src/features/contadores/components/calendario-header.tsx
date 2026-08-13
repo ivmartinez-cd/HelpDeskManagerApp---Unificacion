@@ -9,7 +9,8 @@ import {
   Search,
 } from "lucide-react";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
-import type { Operador } from "../types/calendario";
+import { SegmentedControl } from "@/shared/components/ui/segmented-control";
+import type { CalendarioVerPor, Operador } from "../types/calendario";
 
 interface Props {
   currentMonthTitle: string;
@@ -35,6 +36,8 @@ interface Props {
   syncing: boolean;
   onSync: () => void;
   lastSyncedAt: string | null;
+  verPor: CalendarioVerPor;
+  setVerPor: (value: CalendarioVerPor) => void;
 }
 
 function formatLastSynced(iso: string | null): string {
@@ -72,6 +75,8 @@ export function CalendarioHeader({
   syncing,
   onSync,
   lastSyncedAt,
+  verPor,
+  setVerPor,
 }: Props) {
   return (
     <>
@@ -110,6 +115,24 @@ export function CalendarioHeader({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Switch efectivo/real: solo cambia el render de los eventos
+              cubiertos, nunca el set de eventos (ver CoberturaEvento). */}
+          <div className="flex items-center gap-1.5">
+            <span className="font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              Ver por
+            </span>
+            <SegmentedControl
+              size="sm"
+              label="Ver por"
+              options={[
+                { value: "efectivo", label: "Operador efectivo" },
+                { value: "real", label: "Operador real" },
+              ]}
+              value={verPor}
+              onChange={(value) => setVerPor(value as CalendarioVerPor)}
+            />
+          </div>
+
           {/* Search box */}
           <div className="relative w-48 sm:w-64">
             <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />

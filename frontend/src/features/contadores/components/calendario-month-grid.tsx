@@ -1,12 +1,14 @@
 "use client";
 
+import { Tooltip } from "@/shared/components/ui/tooltip";
 import {
+  coberturaBadgeText,
   formatPillText,
-  getEventPillClassName,
-  getEventPillInlineStyle,
+  getPillVisual,
   WEEKDAYS,
 } from "../utils/calendario-format";
-import type { CalendarEvent } from "../types/calendario";
+import type { CalendarEvent, CalendarioVerPor } from "../types/calendario";
+import { CoberturaEventoTooltip } from "./cobertura-evento-tooltip";
 
 export interface GridDay {
   dateStr: string;
@@ -19,9 +21,55 @@ interface Props {
   gridDays: GridDay[];
   eventsByDayMap: Map<string, CalendarEvent[]>;
   onSelectEvent: (evt: CalendarEvent) => void;
+  verPor: CalendarioVerPor;
 }
 
-export function CalendarioMonthGrid({ gridDays, eventsByDayMap, onSelectEvent }: Props) {
+function EventPill({
+  evt,
+  verPor,
+  onSelect,
+}: {
+  evt: CalendarEvent;
+  verPor: CalendarioVerPor;
+  onSelect: () => void;
+}) {
+  const { className, style } = getPillVisual(evt, verPor);
+  const displayLabel = formatPillText(evt);
+  const cobertura = evt.cobertura;
+
+  const pill = (
+    <div
+      onClick={onSelect}
+      title={cobertura ? undefined : displayLabel}
+      style={style}
+      className={`group cursor-pointer px-2.5 py-1 text-[11px] font-semibold leading-tight shadow-2xs transition-all ${
+        cobertura ? "rounded-[10px]" : "rounded-full"
+      } ${className}`}
+    >
+      {cobertura && (
+        <span
+          className={`mb-0.5 inline-block rounded-full px-1.5 py-px text-[9.5px] font-bold leading-tight ${
+            verPor === "efectivo"
+              ? "bg-brand-orange/90 text-white"
+              : "bg-muted text-muted-foreground"
+          }`}
+        >
+          {coberturaBadgeText(cobertura, verPor)}
+        </span>
+      )}
+      <div className="truncate">{displayLabel}</div>
+    </div>
+  );
+
+  if (!cobertura) return pill;
+  return (
+    <Tooltip content={<CoberturaEventoTooltip cobertura={cobertura} />} delay={200}>
+      {pill}
+    </Tooltip>
+  );
+}
+
+export function CalendarioMonthGrid({ gridDays, eventsByDayMap, onSelectEvent, verPor }: Props) {
   return (
     <div className="flex flex-col border border-border rounded-xl bg-card shadow-sm overflow-hidden">
       {/* Weekday Labels Header Row */}
@@ -67,23 +115,14 @@ export function CalendarioMonthGrid({ gridDays, eventsByDayMap, onSelectEvent }:
 
               {/* Day Events Pills List */}
               <div className="flex flex-col gap-1 overflow-y-auto max-h-[140px] pr-0.5 scrollbar-thin">
-                {dayEvents.map((evt, evtIdx) => {
-                  const pillClassName = getEventPillClassName(evt);
-                  const pillStyle = getEventPillInlineStyle(evt);
-                  const displayLabel = formatPillText(evt);
-
-                  return (
-                    <div
-                      key={`${evt.id}-${cell.dateStr}-${evtIdx}`}
-                      onClick={() => onSelectEvent(evt)}
-                      title={displayLabel}
-                      style={pillStyle}
-                      className={`group cursor-pointer rounded-full px-2.5 py-1 text-[11px] font-semibold leading-tight shadow-2xs transition-all ${pillClassName}`}
-                    >
-                      <div className="truncate">{displayLabel}</div>
-                    </div>
-                  );
-                })}
+                {dayEvents.map((evt, evtIdx) => (
+                  <EventPill
+                    key={`${evt.id}-${cell.dateStr}-${evtIdx}`}
+                    evt={evt}
+                    verPor={verPor}
+                    onSelect={() => onSelectEvent(evt)}
+                  />
+                ))}
               </div>
             </div>
           );

@@ -8,6 +8,7 @@ import { cleanTitle, formatDateLocal, getMonthDateRange, getMonthNameCapitalized
 import { CalendarioHeader } from "./calendario-header";
 import { CalendarioMonthGrid, type GridDay } from "./calendario-month-grid";
 import { EventDetailModal } from "./event-detail-modal";
+import type { CalendarioVerPor } from "../types/calendario";
 
 function buildGridDays(startDate: string): GridDay[] {
   const parts = startDate.split("-");
@@ -69,6 +70,7 @@ export function CalendarioTool() {
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showFilterPanel, setShowFilterPanel] = useState<boolean>(false);
+  const [verPor, setVerPor] = useState<CalendarioVerPor>("efectivo");
 
   const handlePrevMonth = () => {
     const parts = startDate.split("-");
@@ -178,6 +180,8 @@ export function CalendarioTool() {
         syncing={syncing}
         onSync={sync}
         lastSyncedAt={lastSyncedAt}
+        verPor={verPor}
+        setVerPor={setVerPor}
       />
 
       {syncError && (
@@ -195,11 +199,26 @@ export function CalendarioTool() {
           {error}
         </div>
       ) : (
-        <CalendarioMonthGrid
-          gridDays={gridDays}
-          eventsByDayMap={eventsByDayMap}
-          onSelectEvent={setSelectedEvent}
-        />
+        <>
+          <CalendarioMonthGrid
+            gridDays={gridDays}
+            eventsByDayMap={eventsByDayMap}
+            onSelectEvent={setSelectedEvent}
+            verPor={verPor}
+          />
+          {filteredEvents.some((e) => e.cobertura) && (
+            <div className="flex items-center gap-4 px-1 font-body text-[11px] text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2 w-2 rounded-full bg-brand-orange" />
+                Evento cubierto (operador efectivo)
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2 w-2 rounded-full bg-brand-gray" />
+                Evento propio
+              </span>
+            </div>
+          )}
+        </>
       )}
 
       <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />

@@ -13,6 +13,13 @@ class AsignacionOverrideRepository(Protocol):
 
     async def get_by_id(self, override_id: uuid.UUID) -> AsignacionOverride | None: ...
 
+    async def list_activos(self) -> list[AsignacionOverride]:
+        """Todos los overrides con estado ACTIVA, sin filtrar por fecha ni
+        operador — usado por la vista superadmin del Calendario para anotar
+        eventos de cualquier operador (el filtro de vigencia/alcance lo hace
+        `resolver_override_aplicable`)."""
+        ...
+
     async def list_activos_por_ausente(
         self, operador_ausente_id: str
     ) -> list[AsignacionOverride]:

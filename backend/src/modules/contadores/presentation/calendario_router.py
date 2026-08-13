@@ -96,7 +96,7 @@ async def get_calendario_events(
         operador_id=operador_id,
     )
     events = await GetCalendarEventsUseCase(repo, overrides).execute(request)
-    schema_events = [CalendarEventSchema.model_validate(e) for e in events]
+    schema_events = [CalendarEventSchema.from_anotado(e) for e in events]
     return Page.of(schema_events, page=page, size=size)
 
 

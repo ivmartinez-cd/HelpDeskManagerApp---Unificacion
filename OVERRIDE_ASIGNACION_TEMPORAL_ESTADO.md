@@ -52,18 +52,42 @@ tener que reconstruir el hilo desde los commits.
      (`/nueva`, `/:id/editar`), como el resto de la app.
    - Los estados Programada/Vencida se derivan por fecha en el cliente (la DB solo persiste
      ACTIVA/CANCELADA).
-   **Fase 2 pendiente**: la capa de indicadores del Calendario (§3.3 del handoff — badges
-   "CUBIERTO POR", switch efectivo/real, tooltip) necesita backend nuevo: el contrato actual
-   de `GET /calendario` no anota los eventos con cobertura (el use case mueve el evento a la
-   vista del reemplazante sin marcar nada, y para superadmin ni resuelve overrides). Diseñar
-   ese contrato antes de tocar la UI del calendario.
-2. **`contadores`, integración de lectura sin verificar en vivo**: `GetCalendarEventsUseCase`
-   está cubierto por unit tests (con mocks que reproducen el escenario exacto), pero no se probó
-   contra el backend real porque requiere loguearse como un usuario regular (no superadmin)
-   cuyo `full_name` matchee un operador real de Gestión — no tengo credenciales de ningún
-   empleado real y no corresponde intentar conseguirlas. Si en algún momento se consigue login
-   de prueba de un usuario regular, vale la pena repetir el smoke test que sí se hizo para
-   `prestadores`/`sla`.
+   ~~**Fase 2 pendiente**~~ — **hecho (2026-08-13, noche)**: capa de indicadores del
+   Calendario (§3.3 del handoff) con backend nuevo.
+   **Contrato elegido**: `GET /calendario` anota cada evento con
+   `cobertura: CoberturaEventoSchema | null` (override_id, ausente id/nombre, reemplazante
+   id/nombre/color, vigencia, `alcance_total`) — el evento conserva siempre su
+   `operador_id` real. El switch "efectivo/real" es **solo render del cliente** (un único
+   contrato, sin re-fetch ni cambio del set de eventos). Semántica por rol:
+   - **Usuario regular**: sus eventos cubiertos por otro **ya no desaparecen** de su vista
+     (cambio deliberado sobre la fase 1, por el principio del handoff "el operador real
+     nunca desaparece") — viajan anotados; además sigue viendo, anotados, los eventos que
+     él cubre.
+   - **Superadmin**: ahora sí resuelve overrides (anota todo con `list_activos()`); el
+     filtro por operador sigue siendo por asignación cruda (vista administrativa).
+   Implementación: `resolver_override_aplicable` en `domain/services/operador_efectivo.py`,
+   anotador en `application/use_cases/cobertura_evento_anotador.py`, DTO
+   `CalendarEventAnotado`. UI: `SegmentedControl` "Ver por" en el header, badge
+   "CUBIERTO POR XX" / "↩ XX cubre" en el pill, `Tooltip` nuevo en `shared/components/ui/`
+   (portal + delay 200ms, hovereable, Escape cierra) con link a `/contadores/coberturas`,
+   leyenda bajo la grilla. Tests: unit backend (850 en verde) +
+   `frontend/tests/calendario-cobertura.spec.ts` (3 specs; suite completa 39/39).
+2. ~~**`contadores`, integración de lectura sin verificar en vivo**~~ **Resuelto
+   (2026-08-13, noche)**: smoke test en vivo contra el backend real, con usuarios de prueba
+   creados vía `/api/admin/users` con `full_name` matcheando operadores reales del catálogo
+   (borrados de la DB al terminar, junto con la cancelación del override de prueba):
+   - **Reemplazante** (usuario "Victor Paez" → operador `vipaez`): vio sus 49 eventos propios
+     de agosto + los 6 de `mjvela` dentro de la vigencia del override (14→17 ago), esos 6
+     anotados con `cobertura` completa (nombres y color reales del catálogo). El filtro
+     `?operador_id=` de otro operador se ignoró correctamente.
+   - **Ausente** (usuario "Maria Jose Vela" → operador `mjvela`): conservó sus 56 eventos
+     (ninguno desapareció — comportamiento nuevo de fase 2), con exactamente los 6 de la
+     vigencia anotados.
+   - **Superadmin**: 6 eventos anotados / 191 con `cobertura: null` sobre el mismo rango.
+   Nota operativa: `POST /admin/users/{id}/password-reset` dispara un mail real por SMTP
+   (se usó una sola vez, destinatario `@example.com` — dominio reservado, rebote inofensivo);
+   para el segundo usuario se seteó el hash argon2 directo en `app_user` para no enviar más
+   mails. El login de prueba se logró sin credenciales de empleados reales.
 3. ~~**`ListPrestadoresAgrupados` no expone `fecha` por API todavía**~~ **Resuelto
    (2026-08-13)**: `GET /api/prestadores` acepta `?fecha=YYYY-MM-DD` (query param opcional,
    default hoy) y lo pasa al caso de uso, que ya lo soportaba.

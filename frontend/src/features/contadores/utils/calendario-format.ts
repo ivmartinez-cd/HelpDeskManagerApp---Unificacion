@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
+import { getInitials } from "@/shared/components/ui/user-avatar";
 import { mutedColor } from "@/shared/utils/muted-color";
-import type { CalendarEvent } from "../types/calendario";
+import type { CalendarEvent, CalendarioVerPor, CoberturaEvento } from "../types/calendario";
 
 export function formatDateLocal(d: Date): string {
   const y = d.getFullYear();
@@ -83,3 +84,41 @@ export function getEventPillInlineStyle(evt: CalendarEvent): CSSProperties | und
 }
 
 export const WEEKDAYS = ["LUN", "MAR", "MIÉR", "JUEV", "VIER", "SÁB", "DOM"];
+
+/** Visual del pill según el switch "Ver por" (§3.3 del handoff): en modo
+ * efectivo un evento cubierto toma el color del reemplazante (o naranja
+ * institucional si el catálogo no le asignó color); en modo real conserva
+ * el color original de Gestión. El set de eventos nunca cambia. */
+export function getPillVisual(
+  evt: CalendarEvent,
+  verPor: CalendarioVerPor,
+): { className: string; style?: CSSProperties } {
+  const cobertura = evt.cobertura;
+  if (!cobertura || verPor === "real") {
+    return { className: getEventPillClassName(evt), style: getEventPillInlineStyle(evt) };
+  }
+  const color = cobertura.operador_reemplazante_color;
+  if (!color) {
+    return { className: "bg-brand-orange text-white hover:bg-brand-orange-hover" };
+  }
+  return {
+    className: "text-white border border-black/10 hover:brightness-95",
+    style: { backgroundColor: mutedColor(color), borderColor: mutedColor(color) },
+  };
+}
+
+export function coberturaBadgeText(cobertura: CoberturaEvento, verPor: CalendarioVerPor): string {
+  const iniciales = getInitials(
+    cobertura.operador_reemplazante_nombre ?? cobertura.operador_reemplazante_id,
+  );
+  return verPor === "efectivo" ? `CUBIERTO POR ${iniciales}` : `↩ ${iniciales} cubre`;
+}
+
+/** "2026-08-15" → "15 ago 2026". timeZone UTC porque son fechas puras: sin
+ * eso, new Date("2026-08-15") (medianoche UTC) retrocede un día en huso
+ * negativo — mismo patrón que coberturas/lib/estado.ts. */
+export function formatFechaCobertura(iso: string): string {
+  return new Date(iso)
+    .toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })
+    .replace(/\./g, "");
+}

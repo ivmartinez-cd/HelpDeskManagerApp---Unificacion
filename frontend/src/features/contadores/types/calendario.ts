@@ -1,3 +1,23 @@
+/** Anotación de cobertura de un evento (ADR-013 fase 2, ver
+ * CoberturaEventoSchema en calendario_schemas.py): el evento viaja siempre
+ * con su operador real; esta anotación dice quién lo cubre efectivamente.
+ * El switch "efectivo/real" de la UI solo cambia el render, nunca el set
+ * de eventos ni requiere re-fetch. */
+export interface CoberturaEvento {
+  override_id: string;
+  operador_ausente_id: string;
+  operador_ausente_nombre: string | null;
+  operador_reemplazante_id: string;
+  operador_reemplazante_nombre: string | null;
+  operador_reemplazante_color: string | null;
+  /** ISO YYYY-MM-DD (fecha pura, sin hora) */
+  vigente_desde: string;
+  vigente_hasta: string;
+  alcance_total: boolean;
+}
+
+export type CalendarioVerPor = "efectivo" | "real";
+
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -22,6 +42,7 @@ export interface CalendarEvent {
   bultos?: number | null;
   costo_seguro?: string | null;
   costo_recambio?: string | null;
+  cobertura?: CoberturaEvento | null;
 }
 
 export interface CalendarFilterParams {

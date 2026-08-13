@@ -52,6 +52,15 @@ class SqlAlchemyAsignacionOverrideRepository:
         row = (await self._session.execute(stmt)).scalar_one_or_none()
         return _to_entity(row) if row is not None else None
 
+    async def list_activos(self) -> list[AsignacionOverride]:
+        stmt = (
+            select(AsignacionOverrideModel)
+            .options(selectinload(AsignacionOverrideModel.clientes))
+            .where(AsignacionOverrideModel.estado == "ACTIVA")
+        )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_entity(r) for r in rows]
+
     async def list_activos_por_ausente(
         self, operador_ausente_id: str
     ) -> list[AsignacionOverride]:
