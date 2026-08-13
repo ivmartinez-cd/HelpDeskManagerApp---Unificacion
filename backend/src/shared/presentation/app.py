@@ -49,6 +49,24 @@ from src.modules.prestadores.presentation.prestadores_router import (
 )
 from src.modules.sla.presentation.sla_router import router as sla_router
 from src.modules.turnos.presentation.turnos_router import router as turnos_router
+from src.modules.vacaciones.presentation.catalogos_router import (
+    router as vacaciones_catalogos_router,
+)
+from src.modules.vacaciones.presentation.ciclos_router import (
+    router as vacaciones_ciclos_router,
+)
+from src.modules.vacaciones.presentation.dashboard_router import (
+    router as vacaciones_dashboard_router,
+)
+from src.modules.vacaciones.presentation.empleados_router import (
+    router as vacaciones_empleados_router,
+)
+from src.modules.vacaciones.presentation.feriados_router import (
+    router as vacaciones_feriados_router,
+)
+from src.modules.vacaciones.presentation.solicitudes_router import (
+    router as vacaciones_solicitudes_router,
+)
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.cross_module.auth_operador_color_lookup import (
     SqlAlchemyOperadorColorLookup,
@@ -152,6 +170,12 @@ def create_app() -> FastAPI:
     # segmentos como si fueran un UUID (422 en vez de la respuesta real).
     app.include_router(liquidaciones_config_router)
     app.include_router(liquidaciones_router)
+    app.include_router(vacaciones_empleados_router)
+    app.include_router(vacaciones_catalogos_router)
+    app.include_router(vacaciones_feriados_router)
+    app.include_router(vacaciones_solicitudes_router)
+    app.include_router(vacaciones_dashboard_router)
+    app.include_router(vacaciones_ciclos_router)
     return app
 
 

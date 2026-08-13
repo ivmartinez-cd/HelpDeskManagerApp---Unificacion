@@ -1,0 +1,264 @@
+"""Fakes in-memory de los repositorios de vacaciones para tests de application."""
+
+import uuid
+from datetime import date
+
+from src.modules.vacaciones.domain.entities.aprobacion import Aprobacion
+from src.modules.vacaciones.domain.entities.cargo import Cargo
+from src.modules.vacaciones.domain.entities.ciclo import Ciclo
+from src.modules.vacaciones.domain.entities.empleado import Empleado
+from src.modules.vacaciones.domain.entities.exclusion import Exclusion
+from src.modules.vacaciones.domain.entities.feriado import Feriado
+from src.modules.vacaciones.domain.entities.sector import Sector
+from src.modules.vacaciones.domain.entities.solicitud import ESTADOS_ACTIVOS, Solicitud
+from src.modules.vacaciones.domain.repositories.empleado_repository import FiltrosEmpleados
+from src.modules.vacaciones.domain.repositories.notificador import (
+    DecisionNotif,
+    NuevaSolicitudNotif,
+)
+from src.modules.vacaciones.domain.repositories.solicitud_repository import (
+    FiltrosSolicitudes,
+    RangoSolapado,
+)
+from src.modules.vacaciones.domain.value_objects.config_vacaciones import ConfigVacaciones
+
+
+class FakeEmpleadoRepo:
+    def __init__(self, empleados: list[Empleado]) -> None:
+        self._items = {e.id: e for e in empleados}
+
+    async def get_by_id(self, empleado_id: uuid.UUID) -> Empleado | None:
+        return self._items.get(empleado_id)
+
+    async def get_by_user_id(self, user_id: uuid.UUID) -> Empleado | None:
+        return next((e for e in self._items.values() if e.user_id == user_id), None)
+
+    async def get_by_email(self, email: str) -> Empleado | None:
+        return next((e for e in self._items.values() if e.email == email), None)
+
+    async def get_by_ids(self, ids: list[uuid.UUID]) -> dict[uuid.UUID, Empleado]:
+        return {i: self._items[i] for i in ids if i in self._items}
+
+    async def list_filtrados(self, filtros: FiltrosEmpleados) -> list[Empleado]:
+        items = list(self._items.values())
+        if filtros.department_id is not None:
+            items = [e for e in items if e.department_id == filtros.department_id]
+        if filtros.status is not None:
+            items = [e for e in items if e.status is filtros.status]
+        if filtros.empleado_id is not None:
+            items = [e for e in items if e.id == filtros.empleado_id]
+        return items
+
+    async def count_activos_por_departamento(self, department_id: uuid.UUID) -> int:
+        return sum(
+            1
+            for e in self._items.values()
+            if e.department_id == department_id and e.esta_activo
+        )
+
+    async def add(self, empleado: Empleado) -> None:
+        self._items[empleado.id] = empleado
+
+    async def save(self, empleado: Empleado) -> None:
+        self._items[empleado.id] = empleado
+
+    async def delete(self, empleado_id: uuid.UUID) -> None:
+        self._items.pop(empleado_id, None)
+
+
+class FakeSolicitudRepo:
+    def __init__(self, solicitudes: list[Solicitud] | None = None) -> None:
+        self.items: dict[uuid.UUID, Solicitud] = {s.id: s for s in (solicitudes or [])}
+
+    def _activas(self) -> list[Solicitud]:
+        return [s for s in self.items.values() if s.status in ESTADOS_ACTIVOS]
+
+    async def get_by_id(self, solicitud_id: uuid.UUID) -> Solicitud | None:
+        return self.items.get(solicitud_id)
+
+    async def list_filtradas(self, filtros: FiltrosSolicitudes) -> list[Solicitud]:
+        items = list(self.items.values())
+        if filtros.status is not None:
+            items = [s for s in items if s.status is filtros.status]
+        if filtros.empleado_id is not None:
+            items = [s for s in items if s.empleado_id == filtros.empleado_id]
+        return items
+
+    async def list_activas_de_empleado(
+        self, empleado_id: uuid.UUID, excluir_solicitud_id: uuid.UUID | None = None
+    ) -> list[Solicitud]:
+        return [
+            s
+            for s in self._activas()
+            if s.empleado_id == empleado_id and s.id != excluir_solicitud_id
+        ]
+
+    async def list_activas_de_empleados(
+        self, empleado_ids: list[uuid.UUID]
+    ) -> list[Solicitud]:
+        return sorted(
+            (s for s in self._activas() if s.empleado_id in empleado_ids),
+            key=lambda s: s.start_date,
+        )
+
+    async def list_activas_solapadas_de_empleados(
+        self, empleado_ids: list[uuid.UUID], rango: RangoSolapado
+    ) -> list[Solicitud]:
+        return [
+            s
+            for s in self._activas()
+            if s.empleado_id in empleado_ids
+            and s.id != rango.excluir_solicitud_id
+            and s.solapa_con(rango.start, rango.end)
+        ]
+
+    async def list_rangos_activos_por_cargo(
+        self, cargo_id: uuid.UUID, excluir_empleado_id: uuid.UUID, rango: RangoSolapado
+    ) -> list[tuple[date, date]]:
+        return []
+
+    async def list_activas_solapadas_de_departamento(
+        self, department_id: uuid.UUID, rango: RangoSolapado
+    ) -> list[Solicitud]:
+        return []
+
+    async def list_activas_en_rango(
+        self, desde: date | None, hasta: date | None, department_id: uuid.UUID | None
+    ) -> list[Solicitud]:
+        items = self._activas()
+        if desde is not None:
+            items = [s for s in items if s.start_date >= desde]
+        if hasta is not None:
+            items = [s for s in items if s.start_date <= hasta]
+        return items
+
+    async def add(self, solicitud: Solicitud) -> None:
+        self.items[solicitud.id] = solicitud
+
+    async def save(self, solicitud: Solicitud) -> None:
+        self.items[solicitud.id] = solicitud
+
+    async def delete(self, solicitud_id: uuid.UUID) -> None:
+        self.items.pop(solicitud_id, None)
+
+
+class FakeCicloRepo:
+    def __init__(self, ciclos: list[Ciclo] | None = None) -> None:
+        self.items: dict[uuid.UUID, Ciclo] = {c.id: c for c in (ciclos or [])}
+        self.saves = 0
+
+    async def get(self, empleado_id: uuid.UUID, year: int) -> Ciclo | None:
+        return next(
+            (
+                c
+                for c in self.items.values()
+                if c.empleado_id == empleado_id and c.year == year
+            ),
+            None,
+        )
+
+    async def list_por_empleado(self, empleado_id: uuid.UUID) -> list[Ciclo]:
+        return [c for c in self.items.values() if c.empleado_id == empleado_id]
+
+    async def list_por_empleados(self, empleado_ids: list[uuid.UUID]) -> list[Ciclo]:
+        return [c for c in self.items.values() if c.empleado_id in empleado_ids]
+
+    async def list_por_year(self, year: int) -> list[Ciclo]:
+        return [c for c in self.items.values() if c.year == year]
+
+    async def add(self, ciclo: Ciclo) -> None:
+        self.items[ciclo.id] = ciclo
+
+    async def save(self, ciclo: Ciclo) -> None:
+        self.items[ciclo.id] = ciclo
+        self.saves += 1
+
+
+class FakeConfigRepo:
+    def __init__(self, config: ConfigVacaciones) -> None:
+        self._config = config
+
+    async def get(self) -> ConfigVacaciones:
+        return self._config
+
+
+class FakeFeriadoRepo:
+    def __init__(self, feriados: list[Feriado] | None = None) -> None:
+        self.items = feriados or []
+
+    async def list_all(self) -> list[Feriado]:
+        return self.items
+
+    async def existe_no_deduce_en(self, fecha: date) -> bool:
+        return any(f.date == fecha and not f.deducts_vacation for f in self.items)
+
+
+class FakeExclusionRepo:
+    def __init__(self, exclusiones: list[Exclusion] | None = None) -> None:
+        self.items = exclusiones or []
+
+    async def list_all(self) -> list[Exclusion]:
+        return self.items
+
+    async def list_por_empleado(self, empleado_id: uuid.UUID) -> list[Exclusion]:
+        return [e for e in self.items if e.contraparte_de(empleado_id) is not None]
+
+
+class FakeCargoRepo:
+    def __init__(self, cargos: list[Cargo]) -> None:
+        self._items = {c.id: c for c in cargos}
+
+    async def get_by_id(self, cargo_id: uuid.UUID) -> Cargo | None:
+        return self._items.get(cargo_id)
+
+    async def list_all(self) -> list[Cargo]:
+        return list(self._items.values())
+
+
+class FakeSectorRepo:
+    def __init__(self, sectores: list[Sector]) -> None:
+        self._items = {s.id: s for s in sectores}
+
+    async def list_all(self) -> list[Sector]:
+        return list(self._items.values())
+
+    async def get_by_id(self, sector_id: uuid.UUID) -> Sector | None:
+        return self._items.get(sector_id)
+
+
+class FakeAprobacionRepo:
+    def __init__(self) -> None:
+        self.items: list[Aprobacion] = []
+
+    async def add(self, aprobacion: Aprobacion) -> None:
+        self.items.append(aprobacion)
+
+    async def list_por_solicitud(self, solicitud_id: uuid.UUID) -> list[Aprobacion]:
+        return [a for a in self.items if a.solicitud_id == solicitud_id]
+
+    async def list_por_solicitudes(
+        self, solicitud_ids: list[uuid.UUID]
+    ) -> dict[uuid.UUID, list[Aprobacion]]:
+        return {
+            sid: [a for a in self.items if a.solicitud_id == sid] for sid in solicitud_ids
+        }
+
+
+class FakeNotificador:
+    def __init__(self) -> None:
+        self.nuevas: list[NuevaSolicitudNotif] = []
+        self.decisiones: list[DecisionNotif] = []
+
+    async def notificar_nueva_solicitud(self, notif: NuevaSolicitudNotif) -> None:
+        self.nuevas.append(notif)
+
+    async def notificar_decision(self, notif: DecisionNotif) -> None:
+        self.decisiones.append(notif)
+
+
+class FixedClock:
+    def __init__(self, fecha: date) -> None:
+        self._fecha = fecha
+
+    def hoy(self) -> date:
+        return self._fecha
