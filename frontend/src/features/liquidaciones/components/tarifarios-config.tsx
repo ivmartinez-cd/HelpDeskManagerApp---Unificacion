@@ -24,10 +24,8 @@ function formatARS(n: number) {
   return n.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
 }
 
-const FORM_VACIO = { prestadorId: "", tipoServicio: "", zona: "", costoServicio: "", costoKm: "", vigenciaDesde: "", vigenciaHasta: "" };
-
-function tarifaAForm(t: Tarifario | null) {
-  if (!t) return FORM_VACIO;
+function tarifaAForm(t: Tarifario | null, defaultPrestadorId: string) {
+  if (!t) return { prestadorId: defaultPrestadorId, tipoServicio: "", zona: "", costoServicio: "", costoKm: "", vigenciaDesde: "", vigenciaHasta: "" };
   return {
     prestadorId: t.prestadorId,
     tipoServicio: t.tipoServicio,
@@ -42,15 +40,15 @@ function tarifaAForm(t: Tarifario | null) {
 // El caller lo monta con key={editing?.id ?? "nueva"} para que el estado inicial
 // del form se recalcule al cambiar de tarifa.
 function TarifaModal({
-  isOpen, onClose, prestadores, editing, onSuccess,
+  isOpen, onClose, prestadores, editing, defaultPrestadorId, onSuccess,
 }: {
-  isOpen: boolean; onClose: () => void; prestadores: PrestadorLiquidacion[]; editing: Tarifario | null; onSuccess: () => void;
+  isOpen: boolean; onClose: () => void; prestadores: PrestadorLiquidacion[]; editing: Tarifario | null; defaultPrestadorId: string; onSuccess: () => void;
 }) {
-  const [form, setForm] = useState(() => tarifaAForm(editing));
+  const [form, setForm] = useState(() => tarifaAForm(editing, defaultPrestadorId));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleClose = () => { setForm(tarifaAForm(editing)); setError(null); onClose(); };
+  const handleClose = () => { setForm(tarifaAForm(editing, defaultPrestadorId)); setError(null); onClose(); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,29 +143,39 @@ function CsvImportModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClo
 
 export function TarifariosConfig() {
   const [tarifarios, setTarifarios] = useState<Tarifario[]>([]);
+  // Prestador al que corresponden los `tarifarios` ya cargados — si no coincide con
+  // `filtroPst` es que hay un fetch en vuelo para la nueva selección (deriva el
+  // spinner sin setState sincrónico en el effect, prohibido por
+  // react-hooks/set-state-in-effect).
+  const [tarifariosPstId, setTarifariosPstId] = useState<string | null>(null);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingPrestadores, setLoadingPrestadores] = useState(true);
   const [filtroPst, setFiltroPst] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Tarifario | null>(null);
   const [csvOpen, setCsvOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
-  const load = useCallback(async () => {
-    try {
-      const [t, p] = await Promise.all([
-        liquidacionesApi.listTarifarios(),
-        liquidacionesApi.listPrestadores(false),
-      ]);
-      setTarifarios(t);
-      setPrestadores(p);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    void liquidacionesApi.listPrestadores(false)
+      .then(setPrestadores)
+      .finally(() => setLoadingPrestadores(false));
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  // Trae solo las tarifas del prestador seleccionado — traer el catálogo completo
+  // (4832 filas) truncaba a las 500 que trae el backend por default, ver
+  // LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md.
+  const loadTarifarios = useCallback(async () => {
+    if (!filtroPst) return;
+    try {
+      const data = await liquidacionesApi.listTarifarios(filtroPst);
+      setTarifarios(data);
+    } finally {
+      setTarifariosPstId(filtroPst);
+    }
+  }, [filtroPst]);
+
+  useEffect(() => { void loadTarifarios(); }, [loadTarifarios]);
 
   const handleDelete = async () => {
     if (!deletingId) return;
@@ -175,7 +183,7 @@ export function TarifariosConfig() {
       await liquidacionesApi.deleteTarifario(deletingId);
       toast.success("Tarifa eliminada");
       setDeletingId(null);
-      void load();
+      void loadTarifarios();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Error al eliminar");
     }
@@ -186,9 +194,8 @@ export function TarifariosConfig() {
     catch { toast.error("Error al descargar"); }
   };
 
-  const pstList = filtroPst ? prestadores.filter((p) => p.id === filtroPst) : prestadores;
-  const tarifasByPst = Object.fromEntries(prestadores.map((p) => [p.id, tarifarios.filter((t) => t.prestadorId === p.id)]));
-  const total = tarifarios.length;
+  const pstSeleccionado = prestadores.find((p) => p.id === filtroPst) ?? null;
+  const loadingTarifarios = filtroPst !== "" && filtroPst !== tarifariosPstId;
 
   const selectCls = "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
   const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
@@ -199,7 +206,9 @@ export function TarifariosConfig() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-xl font-extrabold text-foreground">Estructura de Tarifarios</h1>
-          <p className="font-body text-sm text-muted-foreground">{total} tarifas cargadas en total</p>
+          <p className="font-body text-sm text-muted-foreground">
+            {pstSeleccionado ? `${tarifarios.length} tarifas de ${pstSeleccionado.nombreCorto}` : "Seleccioná un prestador para ver sus tarifas"}
+          </p>
         </div>
         <div className="flex gap-2">
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
@@ -209,69 +218,56 @@ export function TarifariosConfig() {
       </div>
 
       <div className="flex items-center gap-3">
-        <select value={filtroPst} onChange={(e) => setFiltroPst(e.target.value)} className={selectCls} aria-label="Filtrar por prestador">
-          <option value="">Todos los prestadores</option>
+        <select value={filtroPst} onChange={(e) => setFiltroPst(e.target.value)} className={selectCls} aria-label="Filtrar por prestador" disabled={loadingPrestadores}>
+          <option value="">Seleccioná un prestador...</option>
           {prestadores.map((p) => <option key={p.id} value={p.id}>{p.nombreCorto}</option>)}
         </select>
       </div>
 
-      {loading ? (
+      {!filtroPst ? (
+        <BrandEmptyState icon={Briefcase} title="Ningún prestador seleccionado" description="Elegí un prestador arriba para ver su estructura de tarifarios." />
+      ) : loadingTarifarios ? (
         <div className="flex h-40 items-center justify-center"><Spinner /></div>
+      ) : tarifarios.length === 0 ? (
+        <BrandEmptyState icon={Briefcase} title={`${pstSeleccionado?.nombreCorto} no tiene tarifas cargadas`} description="Usá el botón '+ Nueva tarifa' para configurar." />
       ) : (
-        <div className="flex flex-col gap-4">
-          {pstList.map((pst) => {
-            const rows = tarifasByPst[pst.id] ?? [];
-            return (
-              <div key={pst.id} className="overflow-hidden rounded-[12px]" style={{ background: "#1e1e1e", border: "1px solid rgba(255,255,255,.07)" }}>
-                <div className="px-4 pt-4 pb-2">
-                  <span className="font-body text-[10px] font-bold uppercase tracking-[.08em] text-brand-orange">{pst.nombreCorto}</span>
-                  <span className="ml-2 font-body text-sm text-foreground">{pst.nombre}</span>
-                </div>
-                {rows.length === 0 ? (
-                  <div className="px-4 pb-6">
-                    <BrandEmptyState icon={Briefcase} title={`${pst.nombreCorto} no tiene tarifas cargadas`} description="Usá el botón '+ Nueva tarifa' para configurar." />
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr style={{ background: "rgba(0,0,0,.2)" }}>
-                          <th className={thCls}>Tipo servicio</th>
-                          <th className={thCls}>Zona</th>
-                          <th className={`${thCls} text-right`}>Costo serv.</th>
-                          <th className={`${thCls} text-right`}>Costo KM</th>
-                          <th className={thCls}>Vigencia desde</th>
-                          <th className={thCls}>Vigencia hasta</th>
-                          <th className={`${thCls} text-right`}></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rows.map((t) => (
-                          <tr key={t.id} className="border-t transition-colors hover:bg-white/[0.03]" style={{ borderColor: "rgba(255,255,255,.07)" }}>
-                            <td className={tdCls} style={{ color: "#e0e0e0" }}>{t.tipoServicio}</td>
-                            <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>{t.zona || "—"}</td>
-                            <td className={`${tdCls} text-right`} style={{ color: "#e0e0e0" }}>{formatARS(t.costoServicio)}</td>
-                            <td className={`${tdCls} text-right`} style={{ color: "#e0e0e0" }}>{formatARS(t.costoKm)}</td>
-                            <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>{t.vigenciaDesde}</td>
-                            <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>{t.vigenciaHasta || "—"}</td>
-                            <td className={`${tdCls} text-right`}>
-                              <button onClick={() => { setEditing(t); setModalOpen(true); }} className="mr-3 font-body text-sm text-brand-orange hover:underline">Editar</button>
-                              <button onClick={() => setDeletingId(t.id)} className="font-body text-sm hover:underline" style={{ color: "#ef4444" }}>Eliminar</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        <div className="overflow-hidden rounded-[12px]" style={{ background: "#1e1e1e", border: "1px solid rgba(255,255,255,.07)" }}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr style={{ background: "rgba(0,0,0,.2)" }}>
+                  <th className={thCls}>Tipo servicio</th>
+                  <th className={thCls}>Zona</th>
+                  <th className={`${thCls} text-right`}>Costo serv.</th>
+                  <th className={`${thCls} text-right`}>Costo KM</th>
+                  <th className={thCls}>Vigencia desde</th>
+                  <th className={thCls}>Vigencia hasta</th>
+                  <th className={`${thCls} text-right`}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {tarifarios.map((t) => (
+                  <tr key={t.id} className="border-t transition-colors hover:bg-white/[0.03]" style={{ borderColor: "rgba(255,255,255,.07)" }}>
+                    <td className={tdCls} style={{ color: "#e0e0e0" }}>{t.tipoServicio}</td>
+                    <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>{t.zona || "—"}</td>
+                    <td className={`${tdCls} text-right`} style={{ color: "#e0e0e0" }}>{formatARS(t.costoServicio)}</td>
+                    <td className={`${tdCls} text-right`} style={{ color: "#e0e0e0" }}>{formatARS(t.costoKm)}</td>
+                    <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>{t.vigenciaDesde}</td>
+                    <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>{t.vigenciaHasta || "—"}</td>
+                    <td className={`${tdCls} text-right`}>
+                      <button onClick={() => { setEditing(t); setModalOpen(true); }} className="mr-3 font-body text-sm text-brand-orange hover:underline">Editar</button>
+                      <button onClick={() => setDeletingId(t.id)} className="font-body text-sm hover:underline" style={{ color: "#ef4444" }}>Eliminar</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      <TarifaModal key={editing?.id ?? "nueva"} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); }} prestadores={prestadores} editing={editing} onSuccess={load} />
-      <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={load} />
+      <TarifaModal key={editing?.id ?? "nueva"} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); }} prestadores={prestadores} editing={editing} defaultPrestadorId={filtroPst} onSuccess={loadTarifarios} />
+      <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={loadTarifarios} />
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar tarifa">
         <p className="font-body text-sm text-muted-foreground mb-5">Esta acción no se puede deshacer. ¿Confirmás la eliminación?</p>
         <div className="flex justify-end gap-3">

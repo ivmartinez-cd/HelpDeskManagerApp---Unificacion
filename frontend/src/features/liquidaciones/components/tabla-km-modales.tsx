@@ -12,10 +12,8 @@ import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Spst, TablaKm } from "../types/liquidaciones";
 
-const FORM_VACIO = { prestadorId: "", spstId: "", empresaNombre: "", sucursalNombre: "", domicilioCliente: "", localidadCliente: "", provinciaCliente: "", kmsRecorrido: "", kmsAFacturar: "", umbralViatico: "30", aplicaViatico: false, urlMaps: "", observaciones: "" };
-
-function entradaAForm(t: TablaKm | null) {
-  if (!t) return FORM_VACIO;
+function entradaAForm(t: TablaKm | null, defaultPrestadorId: string) {
+  if (!t) return { prestadorId: defaultPrestadorId, spstId: "", empresaNombre: "", sucursalNombre: "", domicilioCliente: "", localidadCliente: "", provinciaCliente: "", kmsRecorrido: "", kmsAFacturar: "", umbralViatico: "30", aplicaViatico: false, urlMaps: "", observaciones: "" };
   return {
     prestadorId: t.prestadorId,
     spstId: t.spstId ?? "",
@@ -36,16 +34,16 @@ function entradaAForm(t: TablaKm | null) {
 // El caller lo monta con key={editing?.id ?? "nueva"} para que el estado inicial
 // del form se recalcule al cambiar de entrada.
 export function EntradaModal({
-  isOpen, onClose, prestadores, spsts, editing, onSuccess,
+  isOpen, onClose, prestadores, spsts, editing, defaultPrestadorId, onSuccess,
 }: {
   isOpen: boolean; onClose: () => void;
-  prestadores: PrestadorLiquidacion[]; spsts: Spst[]; editing: TablaKm | null; onSuccess: () => void;
+  prestadores: PrestadorLiquidacion[]; spsts: Spst[]; editing: TablaKm | null; defaultPrestadorId: string; onSuccess: () => void;
 }) {
-  const [form, setForm] = useState(() => entradaAForm(editing));
+  const [form, setForm] = useState(() => entradaAForm(editing, defaultPrestadorId));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleClose = () => { setForm(entradaAForm(editing)); setError(null); onClose(); };
+  const handleClose = () => { setForm(entradaAForm(editing, defaultPrestadorId)); setError(null); onClose(); };
   const filteredSpsts = spsts.filter((s) => !form.prestadorId || s.prestadorId === form.prestadorId);
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -152,41 +152,49 @@ en el mismo formato que producción real (`corredor_contenido`, `cobrado_este`,
 `km_actual`, `otros_incidentes`, `spst_id` ahora como string UUID en vez de int
 legacy).
 
-### Gap de UX encontrado, NO corregido: Tarifarios y Tabla KM truncan a 500 filas en el frontend
+### Gap de UX encontrado y CERRADO (2026-08-13): Tarifarios y Tabla KM truncaban a 500 filas en el frontend
 
-`liquidaciones-api.ts::listTarifarios`/`listTablaKm` llaman al endpoint sin `size`
-(cae al default del backend, `CATALOGO_SIZE=500`) y descartan el campo `.total` del
-envelope `Page[T]`, quedándose solo con `.items` — la UI muestra `items.length`
-rotulado como "N tarifas/entradas cargadas en total". Invisible hasta ahora porque
-ambas tablas estaban vacías; con datos reales, `tarifarios` (4832 filas) y `tabla_kms`
-(1633 filas) superan largamente las 500 que trae el cliente. El orden de qué 500 filas
-llegan no está garantizado por ningún `ORDER BY` explícito del lado del backend, así
-que **qué prestador aparece con datos "cargados" y cuál con "no tiene tarifas
-cargadas" es esencialmente arbitrario** (verificado: BAHIA aparece vacío en Tarifarios
-pero con 7 filas en Tabla KM, y sí tiene 48 tarifarios reales en la DB). `SPSTs` no
-tiene este problema (49 filas, por debajo del límite).
+`liquidaciones-api.ts::listTarifarios`/`listTablaKm` llamaban al endpoint sin `size`
+(cae al default del backend, `CATALOGO_SIZE=500`) y descartaban el campo `.total` del
+envelope `Page[T]`, quedándose solo con `.items` — la UI mostraba `items.length`
+rotulado como "N tarifas/entradas cargadas en total". Invisible hasta la carga de
+datos reales porque ambas tablas estaban vacías; `tarifarios` (4832 filas) y
+`tabla_kms` (1633 filas) superan largamente las 500 que traía el cliente. El orden de
+qué 500 filas llegaban no estaba garantizado por ningún `ORDER BY` explícito del lado
+del backend, así que qué prestador aparecía con datos "cargados" y cuál con "no tiene
+tarifas cargadas" era esencialmente arbitrario (BAHIA aparecía vacío en Tarifarios
+pero con solo 7 de sus 15 filas reales en Tabla KM). `SPSTs` no tenía este problema (49
+filas, por debajo del límite).
 
-**Pendiente de decisión del usuario**: subir `CATALOGO_SIZE` (parche rápido, sigue
-siendo O(N) por request y eventualmente vuelve a quedar corto), o rediseñar estas 2
-pantallas para pedir por prestador seleccionado (`?prestadorId=`, ya soportado por el
-backend) en vez de traer todo de una. No se tocó sin pedido explícito — es una decisión
-de UX, no un bug de una línea.
+**Resuelto rediseñando ambas pantallas para pedir por prestador seleccionado**
+(decisión del usuario, no subir `CATALOGO_SIZE`): `tarifarios-config.tsx` y
+`tabla-km-config.tsx` ya no traen el catálogo completo al montar — cargan solo la
+lista de prestadores (liviana, 35 filas) y no piden tarifarios/tabla-km hasta que el
+usuario elige un prestador del selector, momento en el que llaman
+`listTarifarios(prestadorId)`/`listTablaKm({ prestadorId })` (el backend ya soportaba
+el filtro `?prestadorId=` en SQL, no hizo falta tocarlo). Al estar acotado a un solo
+prestador, el volumen nunca se acerca al límite de 500/1000 filas del backend. Se
+sacó el agrupado-por-todos-los-prestadores (ya no aplica con un solo prestador
+visible a la vez) y el estado de carga se deriva comparando el prestador seleccionado
+contra el prestador de los datos ya cargados (`tarifariosPstId`/`entradasPstId`) en
+vez de un flag `setLoading(true)` síncrono en el efecto — lo segundo viola
+`react-hooks/set-state-in-effect`. Verificado en el navegador contra datos reales:
+BAHIA muestra sus 48 tarifas y sus 15 entradas de Tabla KM completas (antes 0 y 7
+respectivamente).
 
 ## Pendiente
 
-1. **Decidir y resolver el truncamiento a 500 de Tarifarios/Tabla KM** (arriba) — único
-   gap real todavía abierto de los 2 encontrados en la verificación end-to-end.
-2. **Importadores Excel + plantillas** (hoy solo CSV/HTML) — el legacy tenía
+1. **Importadores Excel + plantillas** (hoy solo CSV/HTML) — el legacy tenía
    `POST /prestadores/importar-excel` (Excel maestro del PST) cableado en su UI; el
    nuevo módulo no lo portó.
-3. **DELETE físico vs soft-delete** de prestador/SPST — sin decidir.
-4. **0 tests de integración de infrastructure** (10 repos SQLAlchemy + parser pandas) —
+2. **DELETE físico vs soft-delete** de prestador/SPST — sin decidir.
+3. **0 tests de integración de infrastructure** (10 repos SQLAlchemy + parser pandas) —
    deuda transversal compartida con turnos/sla.
-5. **Use cases de escritura para el resto de las entidades de configuración** — hoy
+4. **Use cases de escritura para el resto de las entidades de configuración** — hoy
    router→repositorio directo en los 4 config_routers, sin casos de uso propios.
-6. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
+5. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
 
 ## Próximo paso sugerido
 
-Resolver con el usuario el truncamiento de catálogos (Tarifarios/Tabla KM) antes de
-arrancar el período de observación en paralelo con la app legacy.
+Decidir con el usuario cuál de los pendientes de arriba se ataca primero, o arrancar
+el período de observación en paralelo con la app legacy.

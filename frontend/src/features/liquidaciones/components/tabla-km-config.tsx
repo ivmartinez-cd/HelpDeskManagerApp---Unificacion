@@ -12,35 +12,41 @@ import { CsvImportModal, EntradaModal } from "./tabla-km-modales";
 
 export function TablaKmConfig() {
   const [entradas, setEntradas] = useState<TablaKm[]>([]);
+  // Prestador al que corresponden las `entradas` ya cargadas — si no coincide con
+  // `filtroPst` es que hay un fetch en vuelo para la nueva selección (deriva el
+  // spinner sin setState sincrónico en el effect, prohibido por
+  // react-hooks/set-state-in-effect).
+  const [entradasPstId, setEntradasPstId] = useState<string | null>(null);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [spsts, setSpsts] = useState<Spst[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingPrestadores, setLoadingPrestadores] = useState(true);
   const [filtroPst, setFiltroPst] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<TablaKm | null>(null);
   const [csvOpen, setCsvOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
 
-  // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
-  const load = useCallback(async () => {
-    try {
-      const [e, p, s] = await Promise.all([
-        liquidacionesApi.listTablaKm(),
-        liquidacionesApi.listPrestadores(false),
-        liquidacionesApi.listSpsts(),
-      ]);
-      setEntradas(e);
-      setPrestadores(p);
-      setSpsts(s);
-      setExpandidos(Object.fromEntries(p.map((pst) => [pst.id, true])));
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    void Promise.all([liquidacionesApi.listPrestadores(false), liquidacionesApi.listSpsts()])
+      .then(([p, s]) => { setPrestadores(p); setSpsts(s); })
+      .finally(() => setLoadingPrestadores(false));
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  // Trae solo las entradas del prestador seleccionado — traer el catálogo completo
+  // (1633 filas) truncaba a las 500 que trae el backend por default, ver
+  // LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md.
+  const loadEntradas = useCallback(async () => {
+    if (!filtroPst) return;
+    try {
+      const data = await liquidacionesApi.listTablaKm({ prestadorId: filtroPst });
+      setEntradas(data);
+    } finally {
+      setEntradasPstId(filtroPst);
+    }
+  }, [filtroPst]);
+
+  useEffect(() => { void loadEntradas(); }, [loadEntradas]);
 
   const handleDelete = async () => {
     if (!deletingId) return;
@@ -48,7 +54,7 @@ export function TablaKmConfig() {
       await liquidacionesApi.deleteTablaKm(deletingId);
       toast.success("Entrada eliminada");
       setDeletingId(null);
-      void load();
+      void loadEntradas();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Error al eliminar");
     }
@@ -59,16 +65,12 @@ export function TablaKmConfig() {
     catch { toast.error("Error al descargar"); }
   };
 
-  const toggleExpand = (id: string) => setExpandidos((prev) => ({ ...prev, [id]: !prev[id] }));
-
+  const pstSeleccionado = prestadores.find((p) => p.id === filtroPst) ?? null;
+  const loadingEntradas = filtroPst !== "" && filtroPst !== entradasPstId;
   const q = busqueda.toLowerCase();
-  const pstList = filtroPst ? prestadores.filter((p) => p.id === filtroPst) : prestadores;
-  const filtered = entradas.filter((e) => {
-    if (filtroPst && e.prestadorId !== filtroPst) return false;
-    if (q && !e.empresaNombre.toLowerCase().includes(q) && !e.sucursalNombre.toLowerCase().includes(q)) return false;
-    return true;
-  });
-  const byPst = Object.fromEntries(pstList.map((p) => [p.id, filtered.filter((e) => e.prestadorId === p.id)]));
+  const filtered = q
+    ? entradas.filter((e) => e.empresaNombre.toLowerCase().includes(q) || e.sucursalNombre.toLowerCase().includes(q))
+    : entradas;
 
   const selectCls = "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
   const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
@@ -79,7 +81,9 @@ export function TablaKmConfig() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-xl font-extrabold text-foreground">Tabla KM</h1>
-          <p className="font-body text-sm text-muted-foreground">{filtered.length} entradas</p>
+          <p className="font-body text-sm text-muted-foreground">
+            {pstSeleccionado ? `${filtered.length} entradas de ${pstSeleccionado.nombreCorto}` : "Seleccioná un prestador para ver sus entradas"}
+          </p>
         </div>
         <div className="flex gap-2">
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
@@ -89,81 +93,59 @@ export function TablaKmConfig() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <select value={filtroPst} onChange={(e) => setFiltroPst(e.target.value)} className={selectCls} aria-label="Filtrar por PST">
-          <option value="">Todos los prestadores</option>
+        <select value={filtroPst} onChange={(e) => setFiltroPst(e.target.value)} className={selectCls} aria-label="Filtrar por PST" disabled={loadingPrestadores}>
+          <option value="">Seleccioná un prestador...</option>
           {prestadores.map((p) => <option key={p.id} value={p.id}>{p.nombreCorto}</option>)}
         </select>
-        <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por cliente o sucursal..." className={`${selectCls} min-w-[220px]`} aria-label="Buscar" />
+        <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por cliente o sucursal..." className={`${selectCls} min-w-[220px]`} aria-label="Buscar" disabled={!filtroPst} />
       </div>
 
-      {loading ? (
+      {!filtroPst ? (
+        <BrandEmptyState icon={Map} title="Ningún prestador seleccionado" description="Elegí un prestador arriba para ver su tabla KM." />
+      ) : loadingEntradas ? (
         <div className="flex h-40 items-center justify-center"><Spinner /></div>
+      ) : filtered.length === 0 ? (
+        <BrandEmptyState icon={Map} title="Sin entradas" description="No hay entradas para este prestador con los filtros actuales." />
       ) : (
-        <div className="flex flex-col gap-3">
-          {pstList.map((pst) => {
-            const rows = byPst[pst.id] ?? [];
-            const open = expandidos[pst.id] ?? true;
-            return (
-              <div key={pst.id} className="overflow-hidden rounded-[12px]" style={{ background: "#1e1e1e", border: "1px solid rgba(255,255,255,.07)" }}>
-                <button
-                  type="button"
-                  onClick={() => toggleExpand(pst.id)}
-                  className="flex w-full items-center justify-between px-4 py-3 transition-colors hover:bg-white/[0.04]"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="font-body text-[10px] font-bold uppercase tracking-[.08em] text-brand-orange">{pst.nombreCorto}</span>
-                    <span className="font-body text-sm text-foreground">{pst.nombre}</span>
-                    <span className="rounded-full px-2 py-0.5 font-body text-[10px]" style={{ background: "rgba(255,255,255,.08)", color: "rgba(255,255,255,.5)" }}>{rows.length}</span>
-                  </div>
-                  <span className="font-body text-xs text-muted-foreground">{open ? "▾" : "▸"}</span>
-                </button>
-                {open && rows.length === 0 && (
-                  <div className="px-4 pb-4"><BrandEmptyState icon={Map} title="Sin entradas" description="No hay entradas para este prestador con los filtros actuales." /></div>
-                )}
-                {open && rows.length > 0 && (
-                  <div className="overflow-x-auto border-t" style={{ borderColor: "rgba(255,255,255,.07)" }}>
-                    <table className="w-full">
-                      <thead>
-                        <tr style={{ background: "rgba(0,0,0,.2)" }}>
-                          <th className={thCls}>Empresa</th>
-                          <th className={thCls}>Sucursal</th>
-                          <th className={`${thCls} text-right`}>KMs rec.</th>
-                          <th className={`${thCls} text-right`}>KMs fact.</th>
-                          <th className={thCls}>Viático</th>
-                          <th className={`${thCls} text-right`}></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rows.map((t) => (
-                          <tr key={t.id} className="border-t transition-colors hover:bg-white/[0.03]" style={{ borderColor: "rgba(255,255,255,.07)" }}>
-                            <td className={tdCls} style={{ color: "#e0e0e0" }}>{t.empresaNombre}</td>
-                            <td className={tdCls} style={{ color: "#e0e0e0" }}>{t.sucursalNombre}</td>
-                            <td className={`${tdCls} text-right`} style={{ color: "rgba(255,255,255,.7)" }}>{t.kmsRecorrido}</td>
-                            <td className={`${tdCls} text-right`} style={{ color: "rgba(255,255,255,.7)" }}>{t.kmsAFacturar}</td>
-                            <td className={tdCls}>
-                              {t.aplicaViatico
-                                ? <span className="font-body text-xs" style={{ color: "#4ade80" }}>Sí</span>
-                                : <span className="font-body text-xs" style={{ color: "rgba(255,255,255,.35)" }}>No</span>}
-                            </td>
-                            <td className={`${tdCls} text-right`}>
-                              <button onClick={() => { setEditing(t); setModalOpen(true); }} className="mr-3 font-body text-sm text-brand-orange hover:underline">Editar</button>
-                              <button onClick={() => setDeletingId(t.id)} className="font-body text-sm hover:underline" style={{ color: "#ef4444" }}>Eliminar</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          {pstList.length === 0 && <p className="py-10 text-center font-body text-sm text-muted-foreground">No hay prestadores cargados.</p>}
+        <div className="overflow-hidden rounded-[12px]" style={{ background: "#1e1e1e", border: "1px solid rgba(255,255,255,.07)" }}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr style={{ background: "rgba(0,0,0,.2)" }}>
+                  <th className={thCls}>Empresa</th>
+                  <th className={thCls}>Sucursal</th>
+                  <th className={`${thCls} text-right`}>KMs rec.</th>
+                  <th className={`${thCls} text-right`}>KMs fact.</th>
+                  <th className={thCls}>Viático</th>
+                  <th className={`${thCls} text-right`}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((t) => (
+                  <tr key={t.id} className="border-t transition-colors hover:bg-white/[0.03]" style={{ borderColor: "rgba(255,255,255,.07)" }}>
+                    <td className={tdCls} style={{ color: "#e0e0e0" }}>{t.empresaNombre}</td>
+                    <td className={tdCls} style={{ color: "#e0e0e0" }}>{t.sucursalNombre}</td>
+                    <td className={`${tdCls} text-right`} style={{ color: "rgba(255,255,255,.7)" }}>{t.kmsRecorrido}</td>
+                    <td className={`${tdCls} text-right`} style={{ color: "rgba(255,255,255,.7)" }}>{t.kmsAFacturar}</td>
+                    <td className={tdCls}>
+                      {t.aplicaViatico
+                        ? <span className="font-body text-xs" style={{ color: "#4ade80" }}>Sí</span>
+                        : <span className="font-body text-xs" style={{ color: "rgba(255,255,255,.35)" }}>No</span>}
+                    </td>
+                    <td className={`${tdCls} text-right`}>
+                      <button onClick={() => { setEditing(t); setModalOpen(true); }} className="mr-3 font-body text-sm text-brand-orange hover:underline">Editar</button>
+                      <button onClick={() => setDeletingId(t.id)} className="font-body text-sm hover:underline" style={{ color: "#ef4444" }}>Eliminar</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      <EntradaModal key={editing?.id ?? "nueva"} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); }} prestadores={prestadores} spsts={spsts} editing={editing} onSuccess={load} />
-      <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={load} />
+      <EntradaModal key={editing?.id ?? "nueva"} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); }} prestadores={prestadores} spsts={spsts} editing={editing} defaultPrestadorId={filtroPst} onSuccess={loadEntradas} />
+      <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={loadEntradas} />
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar entrada">
         <p className="font-body text-sm text-muted-foreground mb-5">Esta acción no se puede deshacer. ¿Confirmás la eliminación?</p>
         <div className="flex justify-end gap-3">
