@@ -39,6 +39,7 @@ class UpdatePrestador:
             den_comercial=command.den_comercial,
             razon_social=command.razon_social,
             cuit=command.cuit,
+            equipos=command.equipos,
             operador_id=existing.operador_id,
             is_active=existing.is_active,
         )

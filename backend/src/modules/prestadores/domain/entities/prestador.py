@@ -14,6 +14,7 @@ class Prestador:
     den_comercial: str
     razon_social: str | None
     cuit: str | None
+    equipos: int | None
     operador_id: uuid.UUID | None
     is_active: bool
 

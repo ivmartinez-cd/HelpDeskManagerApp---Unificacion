@@ -16,6 +16,7 @@ def _prestador(prestador_id: uuid.UUID, den_comercial: str) -> Prestador:
         den_comercial=den_comercial,
         razon_social=None,
         cuit=None,
+        equipos=None,
         operador_id=None,
         is_active=True,
     )

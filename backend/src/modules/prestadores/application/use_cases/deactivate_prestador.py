@@ -30,6 +30,7 @@ class SetPrestadorActive:
             den_comercial=existing.den_comercial,
             razon_social=existing.razon_social,
             cuit=existing.cuit,
+            equipos=existing.equipos,
             operador_id=existing.operador_id,
             is_active=command.is_active,
         )

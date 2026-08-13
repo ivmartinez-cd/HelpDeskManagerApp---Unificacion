@@ -13,7 +13,7 @@ interface PrestadorGroupSectionProps {
 }
 
 export function PrestadorGroupSection({ grupo, onVer }: PrestadorGroupSectionProps) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const activos = grupo.prestadores.filter((p) => p.isActive).length;
 
   return (
@@ -46,6 +46,7 @@ export function PrestadorGroupSection({ grupo, onVer }: PrestadorGroupSectionPro
             <thead>
               <tr className="font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-2.5">Razón social</th>
+                <th className="px-4 py-2.5">Parque de impresoras</th>
                 <th className="px-4 py-2.5">Tel. contacto</th>
                 <th className="px-4 py-2.5">Nombre</th>
                 <th className="px-4 py-2.5">Correo</th>
@@ -64,6 +65,9 @@ export function PrestadorGroupSection({ grupo, onVer }: PrestadorGroupSectionPro
                           inactivo
                         </span>
                       )}
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground">
+                      {p.equipos ?? "—"}
                     </td>
                     <td className="px-4 py-2.5 text-muted-foreground">
                       {principal?.telefono ?? "—"}

@@ -17,11 +17,12 @@ async def test_actualiza_solo_los_que_cambiaron_y_no_crea_nada_nuevo() -> None:
 
     sin_cambios = Prestador(
         id=uuid.uuid4(), siges_empresa_id=1, den_comercial="PST A",
-        razon_social="Razon A", cuit="20111111111", operador_id=None, is_active=True,
+        razon_social="Razon A", cuit="20111111111", equipos=None,
+        operador_id=None, is_active=True,
     )
     con_cambios = Prestador(
         id=uuid.uuid4(), siges_empresa_id=2, den_comercial="PST B",
-        razon_social=None, cuit=None, operador_id=None, is_active=True,
+        razon_social=None, cuit=None, equipos=None, operador_id=None, is_active=True,
     )
     prestadores.rows[sin_cambios.id] = sin_cambios
     prestadores.rows[con_cambios.id] = con_cambios
@@ -54,7 +55,7 @@ async def test_pst_ausente_en_siges_no_se_toca() -> None:
 
     huerfano = Prestador(
         id=uuid.uuid4(), siges_empresa_id=5, den_comercial="PST viejo",
-        razon_social=None, cuit=None, operador_id=None, is_active=True,
+        razon_social=None, cuit=None, equipos=None, operador_id=None, is_active=True,
     )
     prestadores.rows[huerfano.id] = huerfano
     # siges.por_id vacío: la consulta no devuelve nada para el id 5.

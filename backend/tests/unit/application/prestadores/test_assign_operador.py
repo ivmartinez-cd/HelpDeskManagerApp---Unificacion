@@ -39,6 +39,7 @@ async def test_reasignar_actualiza_el_puntero_y_cierra_el_tramo_anterior() -> No
         den_comercial="PST Rosario",
         razon_social=None,
         cuit=None,
+        equipos=None,
         operador_id=operador_viejo,
         is_active=True,
     )
@@ -80,6 +81,7 @@ async def test_desasignar_deja_operador_id_en_none() -> None:
         den_comercial="PST Esquel",
         razon_social=None,
         cuit=None,
+        equipos=None,
         operador_id=operador,
         is_active=True,
     )

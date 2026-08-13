@@ -29,6 +29,7 @@ async def test_devuelve_detalle_con_contactos_y_operador_resuelto() -> None:
         den_comercial="PST Rosario",
         razon_social=None,
         cuit=None,
+        equipos=None,
         operador_id=operador_id,
         is_active=True,
     )

@@ -53,6 +53,7 @@ class SyncPrestadoresDesdeSiges:
                 den_comercial=info.den_comercial,
                 razon_social=info.razon_social,
                 cuit=info.cuit,
+                equipos=prestador.equipos,
                 operador_id=prestador.operador_id,
                 is_active=prestador.is_active,
             )

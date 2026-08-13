@@ -21,6 +21,7 @@ async def test_baja_conserva_el_operador_para_una_futura_reactivacion() -> None:
         den_comercial="PST Rosario",
         razon_social=None,
         cuit=None,
+        equipos=None,
         operador_id=operador_id,
         is_active=True,
     )

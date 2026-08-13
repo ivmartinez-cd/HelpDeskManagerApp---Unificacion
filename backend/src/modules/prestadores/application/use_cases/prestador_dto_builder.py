@@ -21,6 +21,7 @@ def build_prestador_dto(
         den_comercial=prestador.den_comercial,
         razon_social=prestador.razon_social,
         cuit=prestador.cuit,
+        equipos=prestador.equipos,
         operador_id=prestador.operador_id,
         operador_nombre=operador.full_name if operador else None,
         operador_color=operador.color if operador else None,

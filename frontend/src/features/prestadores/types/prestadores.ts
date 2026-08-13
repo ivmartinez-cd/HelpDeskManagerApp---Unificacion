@@ -14,6 +14,7 @@ export interface Prestador {
   denComercial: string;
   razonSocial: string | null;
   cuit: string | null;
+  equipos: number | null;
   operadorId: string | null;
   operadorNombre: string | null;
   operadorColor: string | null;
@@ -60,6 +61,7 @@ export interface CreatePrestadorPayload {
   denComercial: string;
   razonSocial?: string | null;
   cuit?: string | null;
+  equipos?: number | null;
   operadorId?: string | null;
 }
 
@@ -67,6 +69,7 @@ export interface UpdatePrestadorPayload {
   denComercial: string;
   razonSocial?: string | null;
   cuit?: string | null;
+  equipos?: number | null;
 }
 
 export interface UpsertContactoPayload {

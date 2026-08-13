@@ -12,22 +12,20 @@ from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
 
 _TERMINOS = [
-    "Corrientes",
-    "Medina",
-    "Jujuy",
-    "Espinoza",
-    "Mendoza",
-    "Piriz",
-    "Pergamino",
-    "Vazquez",
-    "San Luis",
-    "Paez Cuello",
-    "Tres Arroyos",
-    "Douma",
-    "Venado Tuerto",
-    "Natali",
-    "Villa Mercedes",
-    "Infomac",
+    "Formosa",
+    "Armoa",
+    "Posadas",
+    "Godoy",
+    "Rio Gallegos",
+    "Basiglio",
+    "Trelew",
+    "Erdozain",
+    "Copytec",
+    "Tandil",
+    "Basili",
+    "Tucuman",
+    "Naselli",
+    "Herculano",
 ]
 
 

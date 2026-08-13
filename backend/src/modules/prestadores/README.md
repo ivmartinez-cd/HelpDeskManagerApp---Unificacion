@@ -15,8 +15,9 @@ completo de la distinción.
 ## Modelo de datos
 
 - `prestador` (`domain/entities/prestador.py`): `siges_empresa_id` (NOT NULL, UNIQUE),
-  `den_comercial`, `razon_social`, `cuit`, `operador_id` (puntero rápido al operador
-  vigente), `is_active`.
+  `den_comercial`, `razon_social`, `cuit`, `equipos` (cantidad de equipos del parque
+  asignado a ese PST para servicio técnico — confirmado por el usuario 2026-08-13),
+  `operador_id` (puntero rápido al operador vigente), `is_active`.
 - `prestador_contacto`: nombre/teléfono/email de contacto. Un PST puede tener varios.
 - `prestador_asignacion_historial`: tramos `operador_id, desde, hasta` — `hasta=None` es
   el tramo vigente. Registra la vigencia temporal de cada operador sobre un PST (ej.

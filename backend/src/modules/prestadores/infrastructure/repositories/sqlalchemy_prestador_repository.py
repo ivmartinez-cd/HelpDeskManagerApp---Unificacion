@@ -37,6 +37,7 @@ class SqlAlchemyPrestadorRepository:
             den_comercial=prestador.den_comercial,
             razon_social=prestador.razon_social,
             cuit=prestador.cuit,
+            equipos=prestador.equipos,
             operador_id=prestador.operador_id,
             is_active=prestador.is_active,
         )
@@ -49,6 +50,7 @@ class SqlAlchemyPrestadorRepository:
             model.den_comercial = prestador.den_comercial
             model.razon_social = prestador.razon_social
             model.cuit = prestador.cuit
+            model.equipos = prestador.equipos
             model.operador_id = prestador.operador_id
             model.is_active = prestador.is_active
             await self._session.flush()
@@ -61,6 +63,7 @@ def _to_prestador_entity(model: PrestadorModel) -> Prestador:
         den_comercial=model.den_comercial,
         razon_social=model.razon_social,
         cuit=model.cuit,
+        equipos=model.equipos,
         operador_id=model.operador_id,
         is_active=model.is_active,
     )
