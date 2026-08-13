@@ -66,6 +66,7 @@ export function SpstsConfig() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   const load = useCallback(async () => {
@@ -127,6 +128,18 @@ export function SpstsConfig() {
   const handleDownload = async () => {
     try { await liquidacionesApi.exportSpstsCsv(); }
     catch { toast.error("Error al descargar"); }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    try {
+      await liquidacionesApi.deleteSpst(deletingId);
+      toast.success("SPST eliminado");
+      setDeletingId(null);
+      void load();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al eliminar");
+    }
   };
 
   const selectCls = "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
@@ -197,9 +210,10 @@ export function SpstsConfig() {
                       </td>
                       <td className={`${tdCls} text-right`}>
                         <button onClick={() => startEdit(s)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
-                        <button onClick={() => handleToggle(s)} className={`font-body text-sm hover:underline ${s.activo ? "text-destructive" : "text-success"}`}>
+                        <button onClick={() => handleToggle(s)} className={`font-body text-sm hover:underline mr-3 ${s.activo ? "text-destructive" : "text-success"}`}>
                           {s.activo ? "Desactivar" : "Activar"}
                         </button>
+                        <button onClick={() => setDeletingId(s.id)} className="font-body text-sm text-destructive hover:underline">Eliminar</button>
                       </td>
                     </tr>
                   );
@@ -214,6 +228,16 @@ export function SpstsConfig() {
       )}
 
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={load} />
+      <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar SPST">
+        <p className="font-body text-sm text-muted-foreground mb-5">
+          Esta acción no se puede deshacer. Las filas de Tabla KM que apunten a este SPST
+          quedan sin SPST asignado, no se borran. ¿Confirmás la eliminación?
+        </p>
+        <div className="flex justify-end gap-3">
+          <BrandButton variant="outline" onClick={() => setDeletingId(null)}>Cancelar</BrandButton>
+          <BrandButton onClick={handleDelete}>Sí, eliminar</BrandButton>
+        </div>
+      </BrandModal>
     </div>
   );
 }

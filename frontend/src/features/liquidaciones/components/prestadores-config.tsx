@@ -74,6 +74,7 @@ export function PrestadoresConfig() {
   const [saving, setSaving] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
   const [excelOpen, setExcelOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   const load = useCallback(async () => {
@@ -128,6 +129,18 @@ export function PrestadoresConfig() {
     catch { toast.error("Error al descargar"); }
   };
 
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    try {
+      await liquidacionesApi.deletePrestador(deletingId);
+      toast.success("Prestador eliminado");
+      setDeletingId(null);
+      void load();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al eliminar");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-5 p-6">
       <div className="flex items-center justify-between">
@@ -180,9 +193,10 @@ export function PrestadoresConfig() {
                     </td>
                     <td className={`${tdCls} text-right`}>
                       <button onClick={() => startEdit(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
-                      <button onClick={() => handleToggle(p)} className={`font-body text-sm hover:underline ${p.activo ? "text-destructive" : "text-success"}`}>
+                      <button onClick={() => handleToggle(p)} className={`font-body text-sm hover:underline mr-3 ${p.activo ? "text-destructive" : "text-success"}`}>
                         {p.activo ? "Desactivar" : "Activar"}
                       </button>
+                      <button onClick={() => setDeletingId(p.id)} className="font-body text-sm text-destructive hover:underline">Eliminar</button>
                     </td>
                   </tr>
                 ))}
@@ -197,6 +211,16 @@ export function PrestadoresConfig() {
 
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={load} />
       <PrestadoresExcelImportModal isOpen={excelOpen} onClose={() => setExcelOpen(false)} onSuccess={load} />
+      <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar prestador">
+        <p className="font-body text-sm text-muted-foreground mb-5">
+          Esta acción no se puede deshacer. Si el prestador tiene liquidaciones asociadas,
+          el borrado va a quedar bloqueado — desactivalo en su lugar. ¿Confirmás la eliminación?
+        </p>
+        <div className="flex justify-end gap-3">
+          <BrandButton variant="outline" onClick={() => setDeletingId(null)}>Cancelar</BrandButton>
+          <BrandButton onClick={handleDelete}>Sí, eliminar</BrandButton>
+        </div>
+      </BrandModal>
     </div>
   );
 }

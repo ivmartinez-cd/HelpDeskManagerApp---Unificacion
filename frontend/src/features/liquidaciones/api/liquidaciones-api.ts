@@ -99,6 +99,9 @@ export const liquidacionesApi = {
   togglePrestadorActivo: (id: string, activo: boolean) =>
     httpClient.patch<PrestadorLiquidacion>(`/api/liquidaciones/prestadores/${id}/activo`, { activo }),
 
+  deletePrestador: (id: string) =>
+    httpClient.delete<void>(`/api/liquidaciones/prestadores/${id}`),
+
   exportPrestadoresCsv: () =>
     httpClient.downloadFile("/api/liquidaciones/prestadores/export", "prestadores.csv"),
 
@@ -135,6 +138,9 @@ export const liquidacionesApi = {
 
   toggleSpstActivo: (id: string, activo: boolean) =>
     httpClient.patch<Spst>(`/api/liquidaciones/spsts/${id}/activo`, { activo }),
+
+  deleteSpst: (id: string) =>
+    httpClient.delete<void>(`/api/liquidaciones/spsts/${id}`),
 
   exportSpstsCsv: () =>
     httpClient.downloadFile("/api/liquidaciones/spsts/export", "spsts.csv"),
