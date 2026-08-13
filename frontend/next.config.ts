@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Acceso desde otras máquinas de la LAN (ej. para que un compañero pruebe
+  // la app): Next.js bloquea por default los chunks JS/HMR si el browser no
+  // pide el host desde localhost, y falla en silencio (la página carga pero
+  // React nunca hidrata, así que el login no responde y no hay error en la UI).
+  allowedDevOrigins: ["192.168.178.2"],
   experimental: {
     // El default de Next (proxy interno httpxy) corta cualquier rewrite a
     // los 30s. El login de Epson ERS vía Playwright (ver
