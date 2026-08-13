@@ -70,6 +70,9 @@ from src.modules.vacaciones.presentation.empleados_router import (
 from src.modules.vacaciones.presentation.feriados_router import (
     router as vacaciones_feriados_router,
 )
+from src.modules.vacaciones.presentation.reportes_router import (
+    router as vacaciones_reportes_router,
+)
 from src.modules.vacaciones.presentation.solicitudes_router import (
     router as vacaciones_solicitudes_router,
 )
@@ -184,6 +187,7 @@ def create_app() -> FastAPI:
     app.include_router(vacaciones_ciclos_router)
     app.include_router(vacaciones_ausencias_router)
     app.include_router(vacaciones_auditoria_router)
+    app.include_router(vacaciones_reportes_router)
     return app
 
 

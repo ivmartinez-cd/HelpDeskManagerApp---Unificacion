@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.auth.infrastructure.mailer_factory import get_mailer
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.vacaciones.application.dtos.solicitud_dtos import ListarSolicitudesQuery
 from src.modules.vacaciones.application.use_cases.decidir_solicitud import (
@@ -24,8 +25,10 @@ from src.modules.vacaciones.application.use_cases.leer_solicitudes import (
     ObtenerSolicitud,
 )
 from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud
+from src.modules.vacaciones.domain.repositories.notificador import Notificador
 from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 from src.modules.vacaciones.domain.well_known_permissions import APPROVE, CREATE, VIEW
+from src.modules.vacaciones.infrastructure.email_notificador import EmailNotificador
 from src.modules.vacaciones.infrastructure.logging_notificador import LoggingNotificador
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_aprobacion_repository import (  # noqa: E501
     SqlAlchemyAprobacionRepository,
@@ -41,6 +44,9 @@ from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_ciclo_reposit
 )
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_config_repository import (
     SqlAlchemyConfigRepository,
+)
+from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_destinatarios import (
+    SqlAlchemyDestinatariosNuevaSolicitud,
 )
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_empleado_repository import (
     SqlAlchemyEmpleadoRepository,
@@ -69,6 +75,7 @@ from src.modules.vacaciones.presentation.schemas.solicitud_schemas import (
     SolapamientosResponse,
     SolicitudResponse,
 )
+from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
@@ -78,6 +85,19 @@ _DEFAULT_SIZE = 200
 _require_view = Depends(require_permission(VIEW))
 _require_create = Depends(require_permission(CREATE))
 _require_approve = Depends(require_permission(APPROVE))
+
+
+def _notificador(db: AsyncSession) -> Notificador:
+    """Seam D8: emails solo con `VACACIONES_MAIL_ENABLED=true` (en dev el .env
+    tiene SMTP real — el default loguea en vez de mandar)."""
+    settings = get_settings()
+    if not settings.vacaciones_mail_enabled:
+        return LoggingNotificador()
+    return EmailNotificador(
+        mailer=get_mailer(),
+        destinatarios=SqlAlchemyDestinatariosNuevaSolicitud(db),
+        frontend_url=settings.frontend_url,
+    )
 
 
 def _write_deps(db: AsyncSession, actor: ActorVacaciones) -> SolicitudesDependencies:
@@ -91,7 +111,7 @@ def _write_deps(db: AsyncSession, actor: ActorVacaciones) -> SolicitudesDependen
         feriados=SqlAlchemyFeriadoRepository(db),
         config=SqlAlchemyConfigRepository(db),
         clock=SystemClock(),
-        notificador=LoggingNotificador(),
+        notificador=_notificador(db),
         auditoria=SqlAlchemyRegistradorAuditoria(db, actor.user_id),
     )
 
@@ -196,7 +216,7 @@ async def decidir_solicitud(
         solicitudes=SqlAlchemySolicitudRepository(db),
         empleados=SqlAlchemyEmpleadoRepository(db),
         aprobaciones=SqlAlchemyAprobacionRepository(db),
-        notificador=LoggingNotificador(),
+        notificador=_notificador(db),
         auditoria=SqlAlchemyRegistradorAuditoria(db, actor.user_id),
     )
     await DecidirSolicitud(deps).execute(solicitud_id, body.to_command(), actor)

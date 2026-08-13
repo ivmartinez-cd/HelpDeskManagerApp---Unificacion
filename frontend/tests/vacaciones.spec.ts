@@ -75,6 +75,78 @@ const DASHBOARD = {
   diasDisponiblesEquipo: 14,
 };
 
+const AUSENCIA_ID = "ffffffff-0000-0000-0000-000000000001";
+
+const AUSENCIA = {
+  id: AUSENCIA_ID,
+  empleadoId: EMPLEADO_ID,
+  empleadoNombre: "Laura Pérez",
+  empleadoColor: "#2563eb",
+  sectorNombre: "Soporte Técnico",
+  sectorColor: "#2563eb",
+  startDate: "2026-08-21",
+  endDate: "2026-08-21",
+  daysCount: 3, // viernes: corridos + extensión LCT (paridad backend)
+  halfDay: false,
+  tipo: "BAJA_ENFERMEDAD",
+  reason: "Gripe",
+  status: "APPROVED",
+  createdAt: "2026-08-13T12:00:00Z",
+};
+
+const CONFIG = {
+  seniorityTiers: [
+    { minYears: 0, maxYears: 0.5, days: 7 },
+    { minYears: 0.5, maxYears: 5, days: 14 },
+    { minYears: 5, maxYears: 10, days: 21 },
+    { minYears: 10, maxYears: 20, days: 28 },
+    { minYears: 20, maxYears: 99, days: 35 },
+  ],
+  nextYearOpenMonth: 10,
+  nextYearOpenDay: 1,
+  allowAdvanceRequest: true,
+  maxAdvanceDays: 0,
+  allowCarryOver: true,
+  maxCarryOverDays: 0,
+  minAdvanceNoticeDays: 7,
+  maxOverlapPercent: 50,
+  maxOverlapCount: 0,
+};
+
+const EXCLUSION = {
+  id: "99999999-0000-0000-0000-000000000001",
+  empleadoAId: EMPLEADO_ID,
+  empleadoBId: "cccccccc-0000-0000-0000-000000000002",
+  empleadoANombre: "Laura Pérez",
+  empleadoBNombre: "Martín García",
+};
+
+const REGISTRO_CONFIG = {
+  id: "11111111-aaaa-0000-0000-000000000001",
+  accion: "UPDATE",
+  entidad: "SystemConfig",
+  entidadId: "singleton",
+  usuarioEmail: "admin@example.com",
+  metadata: { changes: ["min_advance_notice_days"] },
+  createdAt: "2026-08-13T20:40:52Z",
+};
+
+const REGISTRO_AUSENCIA = {
+  id: "11111111-aaaa-0000-0000-000000000002",
+  accion: "CREATE",
+  entidad: "Absence",
+  entidadId: AUSENCIA_ID,
+  usuarioEmail: "admin@example.com",
+  metadata: {
+    employee: "Laura Pérez",
+    type: "BAJA_ENFERMEDAD",
+    startDate: "2026-08-21",
+    endDate: "2026-08-21",
+    days: 3,
+  },
+  createdAt: "2026-08-13T20:40:43Z",
+};
+
 function page_(items: unknown[]) {
   return JSON.stringify({ items, total: items.length, page: 1, size: 200 });
 }
@@ -243,5 +315,263 @@ test.describe("Vacaciones", () => {
     await page.getByRole("button", { name: /Importar 20/ }).click();
     await expect(page.getByText("Se importaron 19 feriados del año 2026")).toBeVisible();
     expect(importado).toBe(true);
+  });
+
+  test("asistencias: calendario anual, listado y error de solape al registrar", async ({
+    page,
+  }) => {
+    await mockVacaciones(page);
+    await page.route("**/api/vacaciones/feriados", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: page_([FERIADO]) }),
+    );
+    await page.route("**/api/vacaciones/solicitudes**", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: page_([]) }),
+    );
+    await page.route("**/api/vacaciones/ausencias**", (route) => {
+      if (route.request().method() === "GET") {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: page_([AUSENCIA]),
+        });
+      }
+      // POST → conflicto de solape del mismo tipo (mensaje real del backend)
+      return route.fulfill({
+        status: 409,
+        contentType: "application/json",
+        body: JSON.stringify({
+          message: "Ya existe una baja del mismo tipo que se solapa con esas fechas",
+          code: "SOLAPAMIENTO_AUSENCIA",
+        }),
+      });
+    });
+
+    await page.goto("/vacaciones/asistencias");
+
+    // KPIs del año (port de getStatsForYear): 1 día de enfermedad
+    await expect(page.getByText("Días trabajados")).toBeVisible();
+    await expect(page.getByText("Trámites y estudio")).toBeVisible();
+    await expect(page.getByText("Calendario de bajas · 2026")).toBeVisible();
+    await expect(page.getByText("Total días con baja")).toBeVisible();
+
+    // Listado con la baja y sus acciones
+    await page.getByRole("button", { name: "Listado y registros" }).click();
+    await expect(page.getByRole("table").getByText("Laura Pérez")).toBeVisible();
+    await expect(page.getByRole("table").getByText("Baja por enfermedad")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Editar" })).toBeVisible();
+
+    // Registrar → el 409 del backend aparece como banner en el modal
+    await page.getByRole("button", { name: "Registrar baja" }).click();
+    await page.getByRole("checkbox", { name: /Laura Pérez/ }).check();
+    await page.getByRole("button", { name: "Registrar", exact: true }).click();
+    await expect(
+      page.getByText("Ya existe una baja del mismo tipo que se solapa con esas fechas"),
+    ).toBeVisible();
+  });
+
+  test("asistencias: reporte de descuentos por técnico", async ({ page }) => {
+    await mockVacaciones(page);
+    await page.route("**/api/vacaciones/feriados", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: page_([]) }),
+    );
+    await page.route("**/api/vacaciones/solicitudes**", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: page_([]) }),
+    );
+    await page.route("**/api/vacaciones/ausencias**", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: page_([]) }),
+    );
+    await page.route("**/api/vacaciones/ausencias/reportes/descuentos**", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: page_([
+          {
+            empleadoId: EMPLEADO_ID,
+            firstName: "Laura",
+            lastName: "Pérez",
+            cargoNombre: "Analista Senior",
+            diasDescontados: 1,
+            diasEnfermedad: 2,
+            guardias: 0,
+          },
+        ]),
+      }),
+    );
+
+    await page.goto("/vacaciones/asistencias");
+    await page.getByRole("button", { name: "Reportes descuentos" }).click();
+
+    await expect(page.getByText(/Días descontables por técnico/)).toBeVisible();
+    await expect(page.getByText("Pérez, Laura")).toBeVisible();
+    await expect(page.getByText("1 desc. + 2 enf.")).toBeVisible();
+  });
+
+  test("configuración: tabs, guardado y solapamientos", async ({ page }) => {
+    await mockVacaciones(page);
+    await page.route("**/api/vacaciones/exclusiones**", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: page_([EXCLUSION]) }),
+    );
+    let guardado = false;
+    await page.route("**/api/vacaciones/config", (route) => {
+      if (route.request().method() === "PUT") {
+        guardado = true;
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ ...CONFIG, minAdvanceNoticeDays: 8 }),
+        });
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(CONFIG),
+      });
+    });
+
+    await page.goto("/vacaciones/configuracion");
+
+    // Tab Antigüedad: tabla editable de rangos
+    await expect(
+      page.getByText("Rangos de antigüedad y días de vacaciones"),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "+ Agregar rango" })).toBeVisible();
+
+    // Tab Reglas: stepper de aviso + slider de solapamiento
+    await page.getByRole("button", { name: "Reglas de Solicitud" }).click();
+    await expect(page.getByText("Aviso Previo Mínimo")).toBeVisible();
+    await expect(page.getByText("50%")).toBeVisible();
+    await page.getByRole("button", { name: "Sumar" }).first().click();
+
+    // Tab Ciclos: toggle de arrastre
+    await page.getByRole("button", { name: "Ciclos Anuales" }).click();
+    await expect(page.getByText("Arrastrar días no usados")).toBeVisible();
+    await expect(page.getByRole("switch")).toBeVisible();
+
+    // Guardar cambios (dirty por el stepper) → PUT /config
+    await page.getByRole("button", { name: "Guardar cambios" }).click();
+    await expect(page.getByText("Configuración guardada.")).toBeVisible();
+    expect(guardado).toBe(true);
+
+    // Tab Solapamientos: exclusiones + límites por cargo (max_simultaneos)
+    await page.getByRole("button", { name: "Solapamientos" }).click();
+    await expect(page.getByText("Exclusiones Mutuas")).toBeVisible();
+    await expect(page.getByText("Martín García")).toBeVisible();
+    await expect(page.getByText("Límites por Cargo")).toBeVisible();
+    await expect(page.getByText("Máx. 2 simultáneos")).toBeVisible();
+  });
+
+  test("reportes: gráfico por sector, tablas con filtro y tabs a auditoría", async ({
+    page,
+  }) => {
+    await mockVacaciones(page);
+    await page.route("**/api/vacaciones/auditoria**", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: page_([]) }),
+    );
+    await page.route("**/api/vacaciones/reportes", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          year: 2026,
+          porEmpleado: [
+            {
+              nombre: "Laura Pérez",
+              color: "#2563eb",
+              sectorNombre: "Soporte Técnico",
+              cargoNombre: "Analista Senior",
+              annual: 21,
+              used: 10,
+              pending: 0,
+              available: 11,
+            },
+            {
+              nombre: "Martín García",
+              color: "#059669",
+              sectorNombre: "Logística",
+              cargoNombre: "Analista",
+              annual: 14,
+              used: 0,
+              pending: 5,
+              available: 9,
+            },
+          ],
+          porSector: [
+            {
+              nombre: "Logística",
+              color: "#059669",
+              empleados: 1,
+              annual: 14,
+              used: 0,
+              available: 9,
+            },
+            {
+              nombre: "Soporte Técnico",
+              color: "#2563eb",
+              empleados: 1,
+              annual: 21,
+              used: 10,
+              available: 11,
+            },
+          ],
+        }),
+      }),
+    );
+
+    await page.goto("/vacaciones/reportes");
+
+    await expect(
+      page.getByText("Días consumidos vs. disponibles por sector"),
+    ).toBeVisible();
+    await expect(page.getByText("Vacaciones · Ciclo 2026")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Excel" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "PDF" })).toBeVisible();
+
+    // Tablas por empleado y por sector con los saldos
+    await expect(page.getByText("Por empleado", { exact: true })).toBeVisible();
+    await expect(page.getByText("Laura Pérez")).toBeVisible();
+    await expect(page.getByText("Por sector", { exact: true })).toBeVisible();
+
+    // El filtro de la tabla por empleado descarta a Martín
+    await page.getByPlaceholder("Filtrar…").fill("laura");
+    await expect(page.getByRole("table").getByText("Martín García")).toBeHidden();
+    await expect(page.getByText("Laura Pérez")).toBeVisible();
+
+    // El tab pill navega a Auditoría
+    await page
+      .getByRole("navigation", { name: "Reportes y auditoría" })
+      .getByRole("link", { name: "Auditoría" })
+      .click();
+    await expect(page).toHaveURL(/\/vacaciones\/auditoria/);
+    await expect(page.getByText("Sin registros de auditoría")).toBeVisible();
+  });
+
+  test("auditoría: tabla con badges en castellano y detalle expandible", async ({
+    page,
+  }) => {
+    await mockVacaciones(page);
+    await page.route("**/api/vacaciones/auditoria**", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: page_([REGISTRO_CONFIG, REGISTRO_AUSENCIA]),
+      }),
+    );
+
+    await page.goto("/vacaciones/auditoria");
+
+    const tabla = page.getByRole("table");
+    await expect(tabla.getByText("Edición")).toBeVisible();
+    await expect(tabla.getByText("Creación")).toBeVisible();
+    await expect(tabla.getByText("Configuración", { exact: true })).toBeVisible();
+    await expect(tabla.getByText("Baja", { exact: true })).toBeVisible();
+    await expect(
+      tabla.getByText("Actualizó la configuración: min_advance_notice_days"),
+    ).toBeVisible();
+    await expect(page.getByText("Mostrando 2 de 2 registros")).toBeVisible();
+
+    // Expandir la fila de la baja → detalle clave/valor desde metadata
+    await tabla.getByRole("button", { name: "Expandir" }).nth(1).click();
+    await expect(tabla.getByText("BAJA_ENFERMEDAD")).toBeVisible();
+    await expect(tabla.getByRole("definition").filter({ hasText: "Laura Pérez" })).toBeVisible();
   });
 });

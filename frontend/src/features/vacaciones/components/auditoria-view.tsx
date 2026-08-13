@@ -10,6 +10,7 @@ import {
   detalleRegistro,
   ENTIDAD_LABEL,
 } from "../lib/auditoria";
+import { ReportesAuditoriaTabs } from "./reportes-auditoria-tabs";
 import type { Page, RegistroAuditoria } from "../types/vacaciones";
 
 const PAGE_SIZE = 50;
@@ -62,6 +63,8 @@ export function AuditoriaView() {
           Registro de cambios del módulo · Solo admin
         </p>
       </div>
+
+      <ReportesAuditoriaTabs />
 
       <div className="relative">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

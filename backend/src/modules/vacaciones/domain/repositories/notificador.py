@@ -1,3 +1,4 @@
+import uuid
 from dataclasses import dataclass
 from datetime import date
 from typing import Protocol
@@ -7,6 +8,9 @@ from typing import Protocol
 class NuevaSolicitudNotif:
     empleado_nombre: str
     sector_nombre: str
+    # El sector del empleado: la impl con emails lo usa para resolver a los
+    # jefes de ese sector como destinatarios (paridad legacy).
+    department_id: uuid.UUID
     start_date: date
     end_date: date
     dias: int
@@ -25,10 +29,10 @@ class DecisionNotif:
 
 
 class Notificador(Protocol):
-    """Seam de notificaciones (D8 del plan). En la Entrega 1 la única impl es
-    LoggingNotificador; los emails del legacy (nueva solicitud → admins y
-    jefes del sector; decisión → empleado) se enchufan acá en una entrega
-    posterior sin tocar contratos."""
+    """Seam de notificaciones (D8 del plan). Impls: LoggingNotificador (log,
+    default) y EmailNotificador (Entrega 3 — nueva solicitud → admins y jefes
+    del sector; decisión → empleado), elegidas en presentation según
+    `vacaciones_mail_enabled`."""
 
     async def notificar_nueva_solicitud(self, notif: NuevaSolicitudNotif) -> None: ...
 

@@ -172,6 +172,7 @@ class CrearSolicitud:
             NuevaSolicitudNotif(
                 empleado_nombre=empleado.nombre_completo,
                 sector_nombre=sector.name if sector else "",
+                department_id=empleado.department_id,
                 start_date=solicitud.start_date,
                 end_date=solicitud.end_date,
                 dias=solicitud.days_requested,

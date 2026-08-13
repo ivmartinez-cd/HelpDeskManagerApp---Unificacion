@@ -127,6 +127,12 @@ class Settings(BaseSettings):
     # vía login Symfony estándar — reemplaza el cookie pegado a mano que vencía.
     gestion_session_file: str = "var/contadores/gestion_session.json"
 
+    # Emails del módulo vacaciones (nueva solicitud → jefes+admins, decisión →
+    # empleado). Default False a propósito: en dev el .env tiene SMTP real y la
+    # DB puede tener destinatarios reales — activarlo es una decisión explícita
+    # por entorno, no un default (mismo criterio que el modo test de CLAUDE.md).
+    vacaciones_mail_enabled: bool = False
+
     # Desactiva todos los jobs de fondo (útil en CI/test o cuando se corren
     # múltiples instancias y solo una debe ejecutar los jobs).
     disable_background_jobs: bool = False

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BarChart3,
   CalendarCheck2,
   CalendarX2,
   ClipboardCheck,
@@ -44,6 +45,12 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
       label: "Aprobaciones",
       icon: ClipboardCheck,
       visible: esAdmin || can("vacaciones", "approve"),
+    },
+    {
+      href: "/vacaciones/reportes",
+      label: "Reportes",
+      icon: BarChart3,
+      visible: esAdmin,
     },
     {
       href: "/vacaciones/auditoria",

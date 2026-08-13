@@ -503,9 +503,16 @@ real ejecutado; solo se actualiza el estado de cada módulo.
       puerto `RegistradorAuditoria` cableado en todos los use cases mutantes, pantalla
       con búsqueda server-side y filas expandibles). Migración `a7c3f81e42d9`.
       Decisiones y paridades en el README del módulo (§Entrega 2).
-- [ ] Entrega 3: reportes Excel/PDF (pantalla Reportes del handoff 04 — sumarle el tab
-      Reportes a la página de Auditoría) + emails (activar el seam `Notificador` sobre
-      el mailer de auth).
+- [x] **Entrega 3 (2026-08-13)**: pantalla Reportes del handoff 04 (`/vacaciones/reportes`
+      con tab pills Reportes|Auditoría compartidas con la página de Auditoría, gráfico
+      de barras por sector, tablas por empleado con filtro y por sector) + export Excel
+      (openpyxl) y PDF (fpdf2) con paridad de `report.controller.ts` (manage-only,
+      incluye inactivos, saldos del año en curso) + emails: seam `Notificador` activado
+      con `EmailNotificador` sobre el mailer de auth (extendido con `html_body`
+      multipart) — nueva solicitud → jefes del sector (`user_module_scope`) + admins
+      (grant `manage`), decisión → empleado; **gate `VACACIONES_MAIL_ENABLED` (default
+      false)** porque el .env de dev tiene SMTP real. Decisiones en el README del
+      módulo (§Entrega 3).
 - [ ] Migrar datos reales desde el Postgres de VacaSync (mapeo documentado en el
       README del módulo; corre contra un dump de la DB productiva, que vive en la PC
       del trabajo — ojo con el cast de timestamps medianoche-UTC a DATE).

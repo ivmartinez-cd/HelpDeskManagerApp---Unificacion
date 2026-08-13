@@ -5,12 +5,36 @@ Migración de VacaSync (`D:\Dev\Trabajo\Calendario-vacaciones-cd`, Express+Prism
 (ciclos/saldos, solicitudes, aprobaciones, dashboard, calendario). **Entrega 2** (2026-08-13):
 Asistencias (bajas `vacaciones_ausencia`, 7 tipos + medio día + reporte mensual de descuentos),
 auditoría (`vacaciones_audit_log` + pantalla) y pantalla Configuración (`PUT /config` +
-exclusiones + límites por cargo). Fuente de verdad visual: `design_handoff_vacaciones/` en la
-raíz del repo.
+exclusiones + límites por cargo). **Entrega 3** (2026-08-13): pantalla Reportes + export
+Excel/PDF y emails del seam `Notificador`. Fuente de verdad visual:
+`design_handoff_vacaciones/` en la raíz del repo.
 
-Pendiente para entregas siguientes: reportes Excel/PDF (pantalla Reportes del handoff 04 — la
-página de Auditoría hoy es standalone y en E3 se le suma el tab Reportes), emails (hoy solo
-existe el seam `Notificador` con `LoggingNotificador`), y la migración de datos reales (abajo).
+Pendiente: la migración de datos reales (abajo) y el paralelo con VacaSync/apagado.
+
+## Entrega 3 — decisiones y paridades
+
+- **Reportes** (`/api/vacaciones/reportes` + `/excel` + `/pdf`, pantalla
+  `/vacaciones/reportes` con tab pills Reportes|Auditoría): paridad de
+  `report.controller.ts` — solo admin (`manage`, el legacy era ADMIN-only), incluye
+  empleados **inactivos**, empleados ordenados por nombre y sectores por nombre, saldos del
+  año en curso vía `SaldosService` (mismo `getEmployeeBalance`); `annual` es el del ciclo
+  (sin carry) y `available` sí descuenta carry/used/pending. Excel con openpyxl (mismas dos
+  hojas y columnas del legacy, "Departamento" renombrado a "Sector"); PDF con **fpdf2**
+  (layout de texto del PDFKit legacy; fuentes core = latin-1, lo no representable se
+  degrada con `replace`).
+- **Emails (D8 activado)**: `EmailNotificador` (infrastructure) sobre el mailer de auth,
+  que ganó un `html_body` opcional (multipart texto+HTML; ConsoleMailer lo ignora).
+  Destinatarios de nueva solicitud = jefes del sector del empleado (`user_module_scope`)
+  + admins (grant `manage`), solo cuentas activas, deduplicados — el equivalente exacto
+  de MANAGERs del sector + ADMINs del legacy. Decisión → email del empleado. Templates
+  portados de `utils/email.ts` (mismos subjects, fechas dd/mm/aa, link a
+  `/vacaciones/aprobaciones`); un fallo de envío se loguea y **nunca** corta el use case
+  (paridad del `sendMail` legacy). `NuevaSolicitudNotif` ganó `department_id` para poder
+  resolver a los jefes.
+- **Gate `VACACIONES_MAIL_ENABLED` (default `false`)**: con el flag apagado se cablea
+  `LoggingNotificador`; solo con `true` se mandan emails reales. Deliberado: el .env de
+  dev tiene SMTP real de Canal Directo (ver CLAUDE.md) — activar los emails es una
+  decisión por entorno, no un default.
 
 ## Entrega 2 — decisiones y paridades
 
