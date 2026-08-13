@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/shared/components/theme-toggle";
 import { ContadoresNavSubmenu } from "@/shared/components/contadores-nav-submenu";
 import { InsumosNavSubmenu } from "@/shared/components/insumos-nav-submenu";
 import { PrestadoresNavSubmenu } from "@/shared/components/prestadores-nav-submenu";
+import { VacacionesNavSubmenu } from "@/shared/components/vacaciones-nav-submenu";
 import { cn } from "@/shared/utils/cn";
 import { ChangePasswordModal } from "@/features/auth/components/change-password-modal";
 import { useLogout } from "@/features/auth/hooks/use-logout";
@@ -156,10 +157,15 @@ export function Sidebar({ children }: { children: ReactNode }) {
               const isContadores = module.key === "contadores";
               const isInsumos = module.key === "insumos";
               const isPrestadores = module.key === "prestadores";
+              const isVacaciones = module.key === "vacaciones";
               const active =
                 isActive(module.route) ||
                 (isPrestadores && !!liquidacionesModule && isActive(liquidacionesModule.route));
-              const hasSubmenu = isContadores || isInsumos || (isPrestadores && !!liquidacionesModule);
+              const hasSubmenu =
+                isContadores ||
+                isInsumos ||
+                isVacaciones ||
+                (isPrestadores && !!liquidacionesModule);
               const submenuExpanded = submenuOverride[module.key] ?? active;
               return (
                 <div key={module.key} className="flex flex-col">
@@ -217,6 +223,9 @@ export function Sidebar({ children }: { children: ReactNode }) {
                   {isInsumos && submenuExpanded && <InsumosNavSubmenu onNavigate={closeMobile} />}
                   {isPrestadores && liquidacionesModule && submenuExpanded && (
                     <PrestadoresNavSubmenu onNavigate={closeMobile} />
+                  )}
+                  {isVacaciones && submenuExpanded && (
+                    <VacacionesNavSubmenu onNavigate={closeMobile} />
                   )}
                 </div>
               );

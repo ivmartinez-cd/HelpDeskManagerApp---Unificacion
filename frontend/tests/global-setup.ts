@@ -14,6 +14,10 @@ const USER_MOCK = {
     { moduleKey: "liquidaciones", actionKey: "create" },
     { moduleKey: "liquidaciones", actionKey: "update" },
     { moduleKey: "contadores", actionKey: "export" },
+    { moduleKey: "vacaciones", actionKey: "view" },
+    { moduleKey: "vacaciones", actionKey: "create" },
+    { moduleKey: "vacaciones", actionKey: "approve" },
+    { moduleKey: "vacaciones", actionKey: "manage" },
   ],
 };
 
@@ -32,6 +36,14 @@ const MODULES_MOCK = [
     route: "/contadores",
     icon: "printer",
     sortOrder: 5,
+    isEnabled: true,
+  },
+  {
+    key: "vacaciones",
+    label: "Vacaciones",
+    route: "/vacaciones",
+    icon: "calendar",
+    sortOrder: 30,
     isEnabled: true,
   },
 ];
