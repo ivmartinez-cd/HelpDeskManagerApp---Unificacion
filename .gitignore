@@ -32,3 +32,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Claude Code
+.claude/
+
+# Design handoff zips (directorio ya commiteado, zip es redundante)
+design_handoff_*.zip
