@@ -11,12 +11,24 @@ from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
+from src.modules.liquidaciones.domain.errors import SigesVinculoDuplicadoError
+from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
+    SigesEmpresaInfo,
+)
 from tests.unit.domain.liquidaciones.fakes import (
     FakePrestadorRepository,
     FakeSpstRepository,
     FakeTablaKmRepository,
     FakeTarifarioRepository,
 )
+
+
+class FakeSigesCatalogoGateway:
+    def __init__(self, empresas: list[SigesEmpresaInfo] | None = None) -> None:
+        self.empresas = empresas or []
+
+    async def list_empresas_activas(self) -> list[SigesEmpresaInfo]:
+        return list(self.empresas)
 
 
 class FakeConfigPrestadorRepository(FakePrestadorRepository):
@@ -46,6 +58,21 @@ class FakeConfigPrestadorRepository(FakePrestadorRepository):
         self.rows[prestador_id] = actualizado
         return actualizado
 
+    async def vincular_siges(
+        self, prestador_id: UUID, *, siges_empresa_id: int | None
+    ) -> Prestador | None:
+        row = self.rows.get(prestador_id)
+        if row is None:
+            return None
+        if siges_empresa_id is not None and any(
+            p.siges_empresa_id == siges_empresa_id and p.id != prestador_id
+            for p in self.rows.values()
+        ):
+            raise SigesVinculoDuplicadoError(siges_empresa_id)
+        actualizado = dataclasses.replace(row, siges_empresa_id=siges_empresa_id)
+        self.rows[prestador_id] = actualizado
+        return actualizado
+
     async def delete(self, prestador_id: UUID) -> bool:
         return self.rows.pop(prestador_id, None) is not None
 
@@ -53,6 +80,12 @@ class FakeConfigPrestadorRepository(FakePrestadorRepository):
 class FakeConfigSpstRepository(FakeSpstRepository):
     def _index_of(self, spst_id: UUID) -> int | None:
         return next((i for i, s in enumerate(self.rows) if s.id == spst_id), None)
+
+    async def list_all(
+        self, *, prestador_id: UUID | None = None, solo_activos: bool = False
+    ) -> list[Spst]:
+        rows = [s for s in self.rows if prestador_id is None or s.prestador_id == prestador_id]
+        return [s for s in rows if not solo_activos or s.activo]
 
     async def update(
         self,
@@ -82,6 +115,17 @@ class FakeConfigSpstRepository(FakeSpstRepository):
         if idx is None:
             return None
         self.rows[idx] = dataclasses.replace(self.rows[idx], activo=activo)
+        return self.rows[idx]
+
+    async def vincular_siges(self, spst_id: UUID, *, siges_empresa_id: int | None) -> Spst | None:
+        idx = self._index_of(spst_id)
+        if idx is None:
+            return None
+        if siges_empresa_id is not None and any(
+            s.siges_empresa_id == siges_empresa_id and s.id != spst_id for s in self.rows
+        ):
+            raise SigesVinculoDuplicadoError(siges_empresa_id)
+        self.rows[idx] = dataclasses.replace(self.rows[idx], siges_empresa_id=siges_empresa_id)
         return self.rows[idx]
 
     async def delete(self, spst_id: UUID) -> bool:

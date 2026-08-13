@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -28,6 +28,7 @@ class SpstModel(Base):
     provincia: Mapped[str | None] = mapped_column(String)
     zona: Mapped[str | None] = mapped_column(String)
     activo: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    siges_empresa_id: Mapped[int | None] = mapped_column(Integer, unique=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()"), nullable=False
     )

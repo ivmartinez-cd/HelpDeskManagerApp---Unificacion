@@ -21,6 +21,12 @@ from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
     build_list_liquidaciones,
     build_reanalizar_liquidacion,
 )
+from src.modules.liquidaciones.presentation.dependencies.siges import (
+    build_proponer_vinculos_siges,
+    build_sync_config_desde_siges,
+    build_vincular_prestador_siges,
+    build_vincular_spst_siges,
+)
 
 __all__ = [
     "build_create_prestador",
@@ -35,11 +41,15 @@ __all__ = [
     "build_importar_liquidacion",
     "build_importar_prestador_maestro",
     "build_list_liquidaciones",
+    "build_proponer_vinculos_siges",
     "build_reanalizar_liquidacion",
+    "build_sync_config_desde_siges",
     "build_toggle_prestador_activo",
     "build_toggle_spst_activo",
     "build_update_prestador",
     "build_update_spst",
+    "build_vincular_prestador_siges",
+    "build_vincular_spst_siges",
     "build_update_tabla_km",
     "build_update_tarifario",
 ]

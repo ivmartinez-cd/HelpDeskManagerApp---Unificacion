@@ -34,6 +34,7 @@ class PrestadorOut(BaseModel):
     cuit: str | None
     region: str | None
     activo: bool
+    siges_empresa_id: int | None = Field(default=None, serialization_alias="sigesEmpresaId")
     created_at: datetime = Field(serialization_alias="createdAt")
     updated_at: datetime = Field(serialization_alias="updatedAt")
 
@@ -46,6 +47,7 @@ class PrestadorOut(BaseModel):
             cuit=e.cuit,
             region=e.region,
             activo=e.activo,
+            siges_empresa_id=e.siges_empresa_id,
             created_at=e.created_at,
             updated_at=e.updated_at,
         )
@@ -78,6 +80,7 @@ class SpstOut(BaseModel):
     provincia: str | None
     zona: str | None
     activo: bool
+    siges_empresa_id: int | None = Field(default=None, serialization_alias="sigesEmpresaId")
     created_at: datetime = Field(serialization_alias="createdAt")
 
     @classmethod
@@ -91,6 +94,7 @@ class SpstOut(BaseModel):
             provincia=e.provincia,
             zona=e.zona,
             activo=e.activo,
+            siges_empresa_id=e.siges_empresa_id,
             created_at=e.created_at,
         )
 

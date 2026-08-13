@@ -5,7 +5,10 @@ import uuid
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.liquidaciones.domain.errors import PrestadorConLiquidacionesError
+from src.modules.liquidaciones.domain.errors import (
+    PrestadorConLiquidacionesError,
+    SigesVinculoDuplicadoError,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_liquidacion_repository import (  # noqa: E501
     SqlAlchemyLiquidacionRepository,
 )
@@ -91,3 +94,26 @@ async def test_delete_raises_when_prestador_has_liquidaciones(db_session: AsyncS
 
     with pytest.raises(PrestadorConLiquidacionesError):
         await prestador_repo.delete(prestador.id)
+
+
+async def test_vincular_siges_set_y_unset(db_session: AsyncSession) -> None:
+    repo = SqlAlchemyPrestadorRepository(db_session)
+    created = await repo.create(nombre="Vinculable", nombre_corto="VINC", cuit=None, region=None)
+
+    vinculado = await repo.vincular_siges(created.id, siges_empresa_id=137)
+    assert vinculado is not None
+    assert vinculado.siges_empresa_id == 137
+
+    desvinculado = await repo.vincular_siges(created.id, siges_empresa_id=None)
+    assert desvinculado is not None
+    assert desvinculado.siges_empresa_id is None
+
+
+async def test_vincular_siges_duplicado_lanza_error_de_dominio(db_session: AsyncSession) -> None:
+    repo = SqlAlchemyPrestadorRepository(db_session)
+    uno = await repo.create(nombre="Uno", nombre_corto="UNO", cuit=None, region=None)
+    dos = await repo.create(nombre="Dos", nombre_corto="DOS", cuit=None, region=None)
+    await repo.vincular_siges(uno.id, siges_empresa_id=600)
+
+    with pytest.raises(SigesVinculoDuplicadoError):
+        await repo.vincular_siges(dos.id, siges_empresa_id=600)

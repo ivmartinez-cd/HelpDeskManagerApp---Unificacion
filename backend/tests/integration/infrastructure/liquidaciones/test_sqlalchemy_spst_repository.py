@@ -111,3 +111,18 @@ async def test_delete_sets_null_on_related_tabla_km_instead_of_blocking(
 
 async def test_delete_returns_false_when_missing(db_session: AsyncSession) -> None:
     assert await SqlAlchemySpstRepository(db_session).delete(uuid.uuid4()) is False
+
+
+async def test_vincular_siges_set_y_unset(
+    db_session: AsyncSession, prestador_id: uuid.UUID
+) -> None:
+    repo = SqlAlchemySpstRepository(db_session)
+    created = await _create_spst(db_session, prestador_id)
+
+    vinculado = await repo.vincular_siges(created.id, siges_empresa_id=138)
+    assert vinculado is not None
+    assert vinculado.siges_empresa_id == 138
+
+    desvinculado = await repo.vincular_siges(created.id, siges_empresa_id=None)
+    assert desvinculado is not None
+    assert desvinculado.siges_empresa_id is None

@@ -34,6 +34,14 @@ class PrestadorRepository(Protocol):
 
     async def toggle_activo(self, prestador_id: UUID, *, activo: bool) -> Prestador | None: ...
 
+    async def vincular_siges(
+        self, prestador_id: UUID, *, siges_empresa_id: int | None
+    ) -> Prestador | None:
+        """Establece (o quita, con None) el vínculo a `dbo.Empresa` de Siges
+        (ADR-014). Lanza `SigesVinculoDuplicadoError` si el id ya vincula a otro
+        prestador."""
+        ...
+
     async def delete(self, prestador_id: UUID) -> bool:
         """Baja física. Lanza `PrestadorConLiquidacionesError` si tiene liquidaciones
         asociadas (`liquidaciones.prestador_id` no cascadea a propósito)."""

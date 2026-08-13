@@ -11,6 +11,10 @@ class SpstRepository(Protocol):
 
     async def list_by_prestador(self, prestador_id: UUID) -> list[Spst]: ...
 
+    async def list_all(
+        self, *, prestador_id: UUID | None = None, solo_activos: bool = False
+    ) -> list[Spst]: ...
+
     async def create(
         self,
         *,
@@ -36,5 +40,11 @@ class SpstRepository(Protocol):
     ) -> Spst | None: ...
 
     async def toggle_activo(self, spst_id: UUID, *, activo: bool) -> Spst | None: ...
+
+    async def vincular_siges(self, spst_id: UUID, *, siges_empresa_id: int | None) -> Spst | None:
+        """Establece (o quita, con None) el vínculo a `dbo.Empresa` de Siges
+        (ADR-014). Lanza `SigesVinculoDuplicadoError` si el id ya vincula a otro
+        SPST."""
+        ...
 
     async def delete(self, spst_id: UUID) -> bool: ...

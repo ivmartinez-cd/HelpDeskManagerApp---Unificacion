@@ -9,7 +9,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
-from src.modules.liquidaciones.domain.errors import PrestadorConLiquidacionesError
+from src.modules.liquidaciones.domain.errors import (
+    PrestadorConLiquidacionesError,
+    SigesVinculoDuplicadoError,
+)
 from src.modules.liquidaciones.infrastructure.models.prestador_model import (
     LiquidacionPrestadorModel,
 )
@@ -83,6 +86,23 @@ class SqlAlchemyPrestadorRepository:
         await self._session.refresh(row)
         return _to_entity(row)
 
+    async def vincular_siges(
+        self, prestador_id: UUID, *, siges_empresa_id: int | None
+    ) -> Prestador | None:
+        row = await self._session.get(LiquidacionPrestadorModel, prestador_id)
+        if not row:
+            return None
+        row.siges_empresa_id = siges_empresa_id
+        row.updated_at = datetime.now(UTC)
+        # flush() explícito para atrapar acá la violación del UNIQUE (mismo
+        # criterio que delete()): un id de Siges solo puede vincular a un prestador.
+        try:
+            await self._session.flush()
+        except IntegrityError as exc:
+            raise SigesVinculoDuplicadoError(siges_empresa_id) from exc
+        await self._session.refresh(row)
+        return _to_entity(row)
+
     async def delete(self, prestador_id: UUID) -> bool:
         row = await self._session.get(LiquidacionPrestadorModel, prestador_id)
         if row is None:
@@ -111,4 +131,5 @@ def _to_entity(row: LiquidacionPrestadorModel) -> Prestador:
         activo=row.activo,
         created_at=row.created_at,
         updated_at=row.updated_at,
+        siges_empresa_id=row.siges_empresa_id,
     )

@@ -55,6 +55,21 @@ class PrestadorConLiquidacionesError(BusinessRuleViolationError):
         )
 
 
+class SigesVinculoDuplicadoError(BusinessRuleViolationError):
+    """El UNIQUE de `siges_empresa_id` (prestadores/spsts) garantiza que una
+    empresa de Siges vincule a lo sumo una fila local — el `IntegrityError` se
+    traduce acá para no propagar un 500 crudo (mismo criterio que
+    `PrestadorConLiquidacionesError`)."""
+
+    default_code: ClassVar[str] = "SIGES_VINCULO_DUPLICADO"
+
+    def __init__(self, siges_empresa_id: int | None) -> None:
+        super().__init__(
+            f"La empresa {siges_empresa_id} de Siges ya está vinculada a otra fila "
+            "del catálogo. Desvinculala primero."
+        )
+
+
 class ArchivoLiquidacionInvalidoError(ValidationError):
     """El archivo no se pudo leer como tabla, o ninguna tabla tiene una columna de
     incidente reconocible — mismo `ValueError` que el legacy convertía en 400."""

@@ -21,3 +21,6 @@ class Spst:
     zona: str | None
     activo: bool
     created_at: datetime
+    # Vínculo a `dbo.Empresa` de Siges (ADR-014) — None = sin vincular, fuera
+    # del sync. Con default para no romper los constructores existentes.
+    siges_empresa_id: int | None = None

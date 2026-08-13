@@ -85,6 +85,47 @@ usa Gestión, `gestion.cdsa.com.ar` — confirmado con `login='vipaez'` → `nom
 Uso concreto ya decidido: reemplaza `GestionPlanificacionClient.get_operadores()` (scraping del
 `<select>` de `/planificacion/ver`) — ver ADR-012.
 
+### `dbo.CostoServicio` — tarifario de PST (confirmado 2026-08-13, paridad exacta)
+
+Es **el tarifario por prestador** que alimenta las planillas de las que hoy sale el CSV del
+módulo `liquidaciones` — verificado con paridad exacta contra el tarifario local de PENTACOM
+(6 vigencias, `correctivo`+`CostoKm` idénticos, ver
+`SIGES_READONLY_LIQUIDACIONES_VALIDACION.md`). 1329 filas, 96 `ID_Empresa` distintos, ~41 con
+vigencia del trimestre actual.
+
+| Columna | Notas |
+|---|---|
+| `ID_Empresa` / `Nombre_Empresa` | FK al PST en `Empresa` + nombre desnormalizado |
+| `correctivo`, `preventivo`, `instalacion`, `inclusion_a_contrato`, `relevamiento`, `presupuesto`, `PreCorrectivo`, `guardia`, `taller`, `sistemas` | costos por tipo de servicio en **formato wide** |
+| `CostoKm` | precio por km |
+| `fecha_vigencia` | inicio de vigencia (cadena trimestral) |
+| `descripcion` | **la zona del tarifario** (`'Genérica'`, `'General Roca / Rio Negro / Neuquen / Cipoletti'`, `'GSJ - GI Centro Civico'`, …; filtrar `'DE BAJA'`/`'Sin servicio'`) |
+| `prestador_id`, `habilitado` | `prestador_id` = `ID_Empresa` en todas las filas vistas |
+
+Los SPST **no** tienen filas propias — las tarifas zonales van por `descripcion` del PST padre.
+
+### `dbo.Liquidacion` / `dbo.Estado_Liquidacion` / `dbo.IncidenteCosto` — dominio de liquidaciones vivo
+
+Confirmadas con dato real 2026-08-13: `Liquidacion` (3245 filas, última mod ese mismo día;
+`ID_Liquidacion`, `ID_Estado_Liquidacion`, `ID_Prestador`→`Empresa`, `FacturaNro`,
+`Extra`/`DetalleExtra`), `Estado_Liquidacion` (`Preliquidada`/`Recibida`/`Aprobada`/
+`Observada`/`Cerrada`), `IncidenteCosto` (`ID_Incidente`, `ID_Liquidacion`, `CostoServicio`,
+`CostoKm`, `CantidadKm` — lo cobrado por incidente). La numeración del módulo `liquidaciones`
+local es `ID_Liquidacion` + dígito verificador módulo-10 (la liq local `3876-6` es la `3876`
+de Siges, 111/111 incidentes verificados vía wsAyC `getLiquidationDetails`).
+
+### `dbo.Empresa` — nota adicional: también cataloga PST/SPST
+
+Además de clientes y técnicos (§2), contiene los prestadores del dominio liquidaciones con
+convención de prefijo en `Den_Comercial`: `'PST %'` (53) y `'SPST%'` (41). Los 4 grandes y
+los chicos muestreados matchean 1:1 con el catálogo local. **⚠️ `Estado` está invertido
+respecto de la intuición: `0`=activo, `1`=inactivo** — confirmado con dato real
+(2026-08-13) en `Empresa` (los 40 PST con vigencia tarifaria actual: todos `Estado=0`; los
+83 registros `'NO USAR'`: todos `Estado=1`) y en `Sucursal` (las 1358 sucursales con
+incidentes desde 2026-07-01: todas `Estado=0`). `Sucursal.ID_Prestador` (FK al PST) da los
+pares cliente-sucursal→PST vigentes (762 activos para PENTACOM); `Sucursal` no tiene
+ninguna columna de km esperado (solo `Longitud`/`Latitud` texto y `CostoViaticos` int).
+
 ## 4. Candidatas exploradas — columnas confirmadas, dato real pendiente [CANDIDATA]
 
 Útiles para casos de uso futuros que no sean el Calendario de Contadores. Ninguna de estas fue
@@ -158,6 +199,14 @@ Documentadas para no perder tiempo re-explorándolas si alguien busca lo mismo e
   sobre las 352 columnas candidatas (`operador`/`usuario`/`facturac`/`planific`/`evento`/etc.)
   no encontró ninguna columna de asignación fuera de `UsuariosWeb` mismo. Ver ADR-012 para el
   detalle completo.
+- **`ListaCostosServicios` / `ListaCostosDistribucion` como tarifario de PST** (investigación
+  liquidaciones, 2026-08-13): descartadas — listas de costos globales históricas (una fila por
+  fecha desde 1900/2007), sin relación por PST. El tarifario real es `CostoServicio` (§3).
+  `Tiempos` también descartada (catálogo trivial `Id`/`Horas`).
+- **Km esperado por par cliente-sucursal** (para la Tabla KM de liquidaciones): no existe en
+  ninguna tabla — búsqueda por columna `%km%`/`%kilom%`/`%dist%` en todo el esquema solo
+  devuelve `IncidenteCosto.CantidadKm`/`CostoKm` (lo cobrado, no lo esperado) y
+  `CostoServicio.CostoKm` (precio por km). Es dato manual del acuerdo comercial.
 
 ## 6. Inventario completo de tablas/vistas visibles (444, capturado 2026-08-13)
 

@@ -8,6 +8,7 @@ from fastapi import APIRouter
 
 from src.modules.liquidaciones.presentation.config_routers import (
     prestadores,
+    siges,
     spsts,
     tabla_km,
     tarifarios,
@@ -18,3 +19,4 @@ router.include_router(prestadores.router)
 router.include_router(spsts.router)
 router.include_router(tarifarios.router)
 router.include_router(tabla_km.router)
+router.include_router(siges.router)
