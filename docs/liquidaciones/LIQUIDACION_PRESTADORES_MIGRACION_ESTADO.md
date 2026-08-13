@@ -585,14 +585,118 @@ implementado completo (3/3 datasets).**
   tarifas. Quedan 35 prestadores, **34/35 vinculados a Siges** (solo ZZTESTUI,
   la fila de prueba, sin vínculo).
 
+## Sprint TL — 8 mejoras funcionales (2026-08-13)
+
+Cambios pedidos por la Team Leader una vez el módulo estuvo en uso real. Listado
+completo en `docs/liquidaciones/MASTER_PROMPT_CAMBIOS_TL_LIQUIDACIONES.md`. Todos
+committeados y verificados (lint-imports · ruff · mypy · pytest unit) el mismo día.
+
+### P5 — Badge de estado en los 6 estados `CERRADO` (commit `e596ab7`)
+
+`EstadoBadge` usaba un if-chain que solo coloreaba 3 de los 6 estados
+(`aprobada`→success, `observada`→warning, `abierta`→info); los demás caían al
+default neutro. Reemplazado por un lookup table `ESTADO_CONFIG` con los 6 estados
+y sus variantes explícitas: `preliquidada`→accent, `recibida`→neutral,
+`cerrada`→neutral.
+
+### P6 — Filtros server-side + dropdown de período `CERRADO` (commit `e596ab7`)
+
+El filtro de estado era client-side sobre la página actual: filtrar por "aprobada"
+en la página 2 mostraba solo las aprobadas de esa página, no del total. Se movió
+al backend (query param `?estado=` en `list_filtered()`) para que sea consistente
+con la paginación. También se añadió filtro por período:
+
+- **Dominio**: `LiquidacionRepository` Protocol reemplazó `list_all()`/
+  `list_by_prestador()` por un único `list_filtered(prestador_id, estado, periodo)`;
+  `list_periodos()` para el dropdown.
+- **Infra**: `SqlAlchemyLiquidacionRepository` implementa ambos con cláusulas WHERE
+  dinámicas y DISTINCT en periodos.
+- **Application**: `ListLiquidaciones.execute()` acepta los 3 filtros opcionales.
+- **Router**: `GET /api/liquidaciones` acepta `?estado=` y `?periodo=`; nuevo
+  endpoint `GET /api/liquidaciones/periodos` registrado **antes** del catch-all
+  `/{liquidacion_id}` (orden de registro importa en FastAPI).
+- **Frontend**: `liquidaciones-lista.tsx` mueve el filtro de estado al servidor +
+  agrega dropdown de período que llama a `listPeriodos()`; cualquier cambio de
+  filtro resetea la página a 1 (`handleFilter` helper).
+- Max size subido de 200 a 1000 (el anterior techo era un límite arbitrario
+  que ya truncaba en algunos casos reales).
+
+### P7 — Selectores en el dashboard + fix truncación `CERRADO` (commit `e596ab7`)
+
+El dashboard pedía `list({size:200})` — con liquidaciones reales ya hay más de 200.
+Resuelto con `listAll()` (patrón `fetchCatalogoCompleto` que loopea páginas hasta
+cubrir `total`). Se agregaron filtros de prestador y año al dashboard con `useMemo`
+para el filtrado client-side.
+
+### P1 — `math.ceil` en ALT002 para kms decimales `CERRADO` (commit `1b562e4`)
+
+La Tabla KM puede guardar kms con decimales (ej. 20.5 km medidos) pero el PST
+factura el entero superior (21 km). La comparación de ALT002 usaba el valor raw
+y con tolerancia 0 disparaba alerta cuando el PST cobraba correctamente
+`ceil(kms_a_facturar)`.
+
+- `evaluar_alt002` ahora compara contra `math.ceil(tabla_km.kms_a_facturar)`.
+- `_hallazgo` incluye tanto el valor raw como el redondeado en la descripción:
+  `"(20.5 km → 21 km redondeado)"`.
+- La columna "KMs fact." de `tabla-km-config.tsx` muestra `Math.ceil(kmsAFacturar)`
+  para consistencia visual con lo que ve el PST.
+- Test nuevo `test_kms_decimal_cobrado_ceil_no_dispara` con `tolerancia_km=0.0`.
+
+### P2 — Indicador visual de ruta compartida `CERRADO` (commit `1b562e4`)
+
+Sin cambios de backend. `IncidentesSeccion` computa en el frontend (con `useMemo`)
+qué incidentes comparten ruta: agrupa por `fechaCierre` los que tienen
+`cantKmCobrado > 0`, y dentro de cada día marca los que coinciden en
+`localidadCliente` o en `empresaNombre + sucursalNombre`. Los marcados reciben
+un ícono `Route` (lucide) naranja junto al nombre del destino, con tooltip
+`"Posible ruta compartida: otro incidente del mismo día comparte destino o localidad"`.
+
+### P4 — Campo ítem extra en la liquidación `CERRADO` (commit `67449ff`)
+
+Para registrar cargos manuales (seguros, documentación, etc.) no incluidos en
+los incidentes importados.
+
+- **Migración** `2e4b8f9d3a7c`: columnas `concepto_extra` (Text, nullable) y
+  `monto_extra` (Float, nullable) en `liquidaciones`.
+- **Dominio**: campos con default `None` al final del dataclass `Liquidacion`;
+  `update_extra(liquidacion_id, concepto_extra, monto_extra)` en el Protocol.
+- **Infra**: `SqlAlchemyLiquidacionRepository.update_extra()` + `_to_entity`
+  actualizado.
+- **Schema + Router**: `ExtraIn` schema; `PATCH /api/liquidaciones/{id}/extra`
+  retorna `LiquidacionOut` con los campos nuevos.
+- **Frontend**: `ExtraItemSeccion` en el detalle — muestra el ítem actual con
+  botón "Editar"/"Agregar", formulario inline con concepto (text) y monto
+  (number), y un "Total ajustado" = `totalImporte + montoExtra` cuando hay
+  un ítem cargado.
+
+### P3 / P8 — Hipervínculo a web agentes `CERRADO` (commit `23ec993`)
+
+`webagentes.canaldirecto.com.ar` se alimenta del mismo WS SOAP que el PST usa
+para cargar la liquidación, así que el `numero_liquidacion` del Excel **es** el
+identificador del portal. URL: `https://webagentes.canaldirecto.com.ar/liquidations/view/{numero_liquidacion}`.
+
+Sin cambios de backend — el campo ya estaba guardado desde el import. Agregado
+el hipervínculo en tres lugares:
+
+- **Lista** (`liquidaciones-tabla.tsx`): columna "Web Agentes" con el número
+  como link y ícono `ExternalLink`; `—` cuando es null.
+- **Dashboard** (`liquidaciones-dashboard.tsx`): misma columna en la tabla de
+  últimas 10 liquidaciones.
+- **Detalle** (`liquidacion-detalle.tsx`): link inline en el header junto al
+  período y tipo (separado por `·`), visible solo cuando `numero_liquidacion`
+  no es null.
+
+---
+
 ## Pendiente
 
 1. Correr en paralelo con la app legacy antes de apagarla — no hay cutover en frío.
-2. TL: confirmar los 2 conflictos menores (VENADO $45, INFOMAC preventivo VM) y,
-   si algún día hace falta, mapear `GSJ - *` / `TMTA122 - SGO DEL ESTERO`.
+2. TL: confirmar los 2 conflictos menores de tarifarios (VENADO $45, INFOMAC
+   preventivo Villa Mercedes) y, si algún día hace falta, mapear
+   `GSJ - *` / `TMTA122 - SGO DEL ESTERO`.
 
 ## Próximo paso sugerido
 
-Con el ADR-014 completo, arrancar el período de observación en paralelo con la app
-legacy (pendiente 1) — la config ahora se mantiene sola desde Siges, así que la
-comparación legacy-vs-nuevo corre sobre datos siempre al día.
+Con las 8 mejoras de la TL integradas y el ADR-014 completo, arrancar el período
+de observación en paralelo con la app legacy — la config se mantiene sola desde
+Siges, así que la comparación corre sobre datos siempre al día.
