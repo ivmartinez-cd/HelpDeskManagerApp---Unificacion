@@ -88,26 +88,29 @@ en una auditoría aparte. Concretamente:
   `backend/docs/adr/` (ver `007-vocabulario-de-permisos-en-shared-excepcion-de-presentation.md`
   como ejemplo) — una excepción sin ADR es una violación, no una decisión.
 
-## Frontend en Docker: Turbopack no siempre recompila (caché stale)
+## Sin hot reload en los contenedores: los cambios de código requieren restart explícito
 
-`helpdesk-manager-frontend` corre en Docker (bind mount de `frontend/` a `/app`, ver
-`docker-compose.yml`) con `next dev`/Turbopack. El file-watcher no siempre detecta ediciones: el
-HTML servido y el bundle JS/CSS pueden seguir reflejando la versión anterior del código varios
-minutos después de guardar, sin ningún error en `docker logs`. Pasó repetidas veces migrando
-distintos módulos (2026-08-10, 2026-08-12), probablemente porque el watcher de Turbopack no
-recibe eventos inotify fiables sobre un bind mount de Docker Desktop con host Windows (no
-confirmado a nivel de causa raíz, solo el patrón observado).
+Desde 2026-08-13 (commit `e0576cd`) ni el backend ni el frontend recargan código solos —
+decisión deliberada, no una limitación: el `--reload` de uvicorn podía relanzar los background
+jobs con cada guardado (así se disparó el mail real del incidente 2026-08-12). El código sigue
+bind-monteado (`./backend:/app`, `./frontend:/app`), pero editar un archivo **no tiene ningún
+efecto** hasta reiniciar el contenedor:
 
-**Cómo aplicar**: después de editar código de `frontend/` con el contenedor arriba, no asumir
-que un cambio se refleja solo porque el navegador lo muestra (el navegador tiene su propia
-caché). Verificar con curl antes de dar por buena una captura de pantalla o un test visual:
+- **Backend** (`helpdesk-manager-backend`): uvicorn corre sin `--reload`. Tras editar
+  `backend/`, `docker restart helpdesk-manager-backend` (re-corre el entrypoint:
+  `alembic upgrade head` + uvicorn). Recordar que `docker restart` NO relee `.env` — para
+  cambios de variables de entorno hace falta `docker compose up -d --force-recreate backend`.
+- **Frontend** (`helpdesk-manager-frontend`): el contenedor corre `next build && next start`
+  (build de producción al arrancar). Tras editar `frontend/`,
+  `docker restart helpdesk-manager-frontend` re-corre el build completo — tarda bastante más
+  que un dev server; esperar a que `/` vuelva a responder 200 antes de probar.
+
+**Cómo verificar**: no asumir que un cambio está servido solo porque el navegador lo muestra
+(el navegador tiene su propia caché). Antes de dar por buena una captura o un test visual:
 
 ```
 curl -s http://localhost:3000/<ruta> | grep <algo del cambio nuevo>
 ```
 
-Si el curl sigue mostrando contenido viejo (o `docker logs helpdesk-manager-frontend --tail 5`
-no muestra una recompilación reciente para esa ruta), `docker restart helpdesk-manager-frontend`
-y esperar ~5-8s a que vuelva a responder 200 en `/` antes de re-verificar. No matar el contenedor
-de forma permanente — es el servidor que se deja corriendo entre sesiones para que se pueda
-probar en el navegador.
+No dejar los contenedores apagados al terminar — son los servidores que quedan corriendo entre
+sesiones para poder probar en el navegador.
