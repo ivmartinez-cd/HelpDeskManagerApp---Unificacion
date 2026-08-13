@@ -146,8 +146,12 @@ def create_app() -> FastAPI:
     app.include_router(turnos_router)
     app.include_router(sla_router)
     app.include_router(prestadores_router)
-    app.include_router(liquidaciones_router)
+    # config_router va ANTES: sus rutas son todas literales (/tarifarios, /spsts,
+    # /tabla-km, ...), mientras que liquidaciones_router tiene un catch-all
+    # GET/DELETE/PATCH /{liquidacion_id} que, registrado primero, interceptaba esos
+    # segmentos como si fueran un UUID (422 en vez de la respuesta real).
     app.include_router(liquidaciones_config_router)
+    app.include_router(liquidaciones_router)
     return app
 
 
