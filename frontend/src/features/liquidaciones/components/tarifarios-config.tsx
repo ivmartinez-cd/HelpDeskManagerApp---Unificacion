@@ -199,7 +199,7 @@ export function TarifariosConfig() {
 
   const selectCls = "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
   const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
-  const tdCls = "py-3 px-4 font-body text-sm";
+  const tdCls = "py-3 px-4 font-body text-sm text-foreground";
 
   return (
     <div className="flex flex-col gap-5 p-6">
@@ -231,11 +231,11 @@ export function TarifariosConfig() {
       ) : tarifarios.length === 0 ? (
         <BrandEmptyState icon={Briefcase} title={`${pstSeleccionado?.nombreCorto} no tiene tarifas cargadas`} description="Usá el botón '+ Nueva tarifa' para configurar." />
       ) : (
-        <div className="overflow-hidden rounded-[12px]" style={{ background: "#1e1e1e", border: "1px solid rgba(255,255,255,.07)" }}>
+        <div className="overflow-hidden rounded-[12px] border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr style={{ background: "rgba(0,0,0,.2)" }}>
+                <tr className="bg-muted/40">
                   <th className={thCls}>Tipo servicio</th>
                   <th className={thCls}>Zona</th>
                   <th className={`${thCls} text-right`}>Costo serv.</th>
@@ -247,16 +247,16 @@ export function TarifariosConfig() {
               </thead>
               <tbody>
                 {tarifarios.map((t) => (
-                  <tr key={t.id} className="border-t transition-colors hover:bg-white/[0.03]" style={{ borderColor: "rgba(255,255,255,.07)" }}>
-                    <td className={tdCls} style={{ color: "#e0e0e0" }}>{t.tipoServicio}</td>
-                    <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>{t.zona || "—"}</td>
-                    <td className={`${tdCls} text-right`} style={{ color: "#e0e0e0" }}>{formatARS(t.costoServicio)}</td>
-                    <td className={`${tdCls} text-right`} style={{ color: "#e0e0e0" }}>{formatARS(t.costoKm)}</td>
-                    <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>{t.vigenciaDesde}</td>
-                    <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>{t.vigenciaHasta || "—"}</td>
+                  <tr key={t.id} className="border-t border-border transition-colors hover:bg-muted/30">
+                    <td className={tdCls}>{t.tipoServicio}</td>
+                    <td className={`${tdCls} text-muted-foreground`}>{t.zona || "—"}</td>
+                    <td className={`${tdCls} text-right`}>{formatARS(t.costoServicio)}</td>
+                    <td className={`${tdCls} text-right`}>{formatARS(t.costoKm)}</td>
+                    <td className={`${tdCls} text-muted-foreground`}>{t.vigenciaDesde}</td>
+                    <td className={`${tdCls} text-muted-foreground`}>{t.vigenciaHasta || "—"}</td>
                     <td className={`${tdCls} text-right`}>
                       <button onClick={() => { setEditing(t); setModalOpen(true); }} className="mr-3 font-body text-sm text-brand-orange hover:underline">Editar</button>
-                      <button onClick={() => setDeletingId(t.id)} className="font-body text-sm hover:underline" style={{ color: "#ef4444" }}>Eliminar</button>
+                      <button onClick={() => setDeletingId(t.id)} className="font-body text-sm text-destructive hover:underline">Eliminar</button>
                     </td>
                   </tr>
                 ))}

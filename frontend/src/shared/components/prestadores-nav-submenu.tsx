@@ -24,9 +24,21 @@ interface NavSectionDef {
   links: NavLinkDef[];
 }
 
+/** Submenú de Liquidaciones, anidado bajo el ítem de nivel superior
+ * "Prestadores" (pedido del usuario: Prestadores > Liquidación en el nav).
+ * Liquidaciones sigue siendo un módulo backend independiente — con su propio
+ * catálogo "Prestador" de facturación, no relacionado al catálogo del módulo
+ * Prestadores (asignación operador/Siges/SLA) — esto es solo reorganización
+ * visual del sidebar, no una fusión de módulos. */
 const SECTIONS: NavSectionDef[] = [
   {
     label: "Principal",
+    links: [
+      { href: "/prestadores", label: "Prestadores Asignados", exact: true, icon: Users },
+    ],
+  },
+  {
+    label: "Liquidación",
     links: [
       { href: "/liquidaciones", label: "Dashboard", exact: true, icon: LayoutDashboard },
       { href: "/liquidaciones/lista", label: "Liquidaciones", exact: false, icon: FileText },
@@ -91,7 +103,7 @@ function NavLinkRow({
   );
 }
 
-export function LiquidacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }) {
+export function PrestadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (

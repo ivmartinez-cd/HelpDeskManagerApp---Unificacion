@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
 import { EstadoBadge } from "./estado-badge";
@@ -15,37 +16,6 @@ function formatARS(n: number) {
 function formatFecha(iso: string) {
   const d = new Date(iso);
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-}
-
-interface KpiCardProps {
-  label: string;
-  value: string;
-  hint?: string;
-  accentColor: string;
-}
-
-function KpiCard({ label, value, hint, accentColor }: KpiCardProps) {
-  return (
-    <div
-      className="flex flex-col gap-1.5 rounded-[10px] p-5"
-      style={{ background: "#1e1e1e", borderRadius: 10 }}
-    >
-      <span
-        className="font-body text-[11px] font-bold uppercase tracking-[.08em]"
-        style={{ color: "#9a9a9a" }}
-      >
-        {label}
-      </span>
-      <span className="font-heading text-2xl font-extrabold" style={{ color: accentColor }}>
-        {value}
-      </span>
-      {hint && (
-        <span className="font-body text-xs" style={{ color: "rgba(255,255,255,.35)" }}>
-          {hint}
-        </span>
-      )}
-    </div>
-  );
 }
 
 export function LiquidacionesDashboard() {
@@ -94,7 +64,7 @@ export function LiquidacionesDashboard() {
 
   const thCls =
     "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
-  const tdCls = "py-3 px-4 font-body text-sm";
+  const tdCls = "py-3 px-4 font-body text-sm text-foreground";
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -108,30 +78,23 @@ export function LiquidacionesDashboard() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiCard
+      <KpiGrid className="lg:grid-cols-4">
+        <KpiTile
           label="Liquidaciones pendientes"
           value={String(pendientes)}
           hint={`de ${liquidaciones.length} en total`}
-          accentColor="#eab308"
+          tone="orange"
         />
-        <KpiCard
-          label="Total importadas"
-          value={String(liquidaciones.length)}
-          accentColor="#e0e0e0"
-        />
-        <KpiCard
+        <KpiTile label="Total importadas" value={String(liquidaciones.length)} tone="neutral" />
+        <KpiTile
           label="Total incidentes"
           value={totalIncidentes.toLocaleString("es-AR")}
-          accentColor="#22c55e"
+          tone="neutral"
         />
-        <KpiCard label="Total facturado" value={formatARS(totalImporte)} accentColor="#e0e0e0" />
-      </div>
+        <KpiTile label="Total facturado" value={formatARS(totalImporte)} tone="neutral" />
+      </KpiGrid>
 
-      <div
-        className="rounded-[12px] overflow-hidden"
-        style={{ background: "#1e1e1e", border: "1px solid rgba(255,255,255,.07)" }}
-      >
+      <div className="overflow-hidden rounded-[12px] border border-border bg-card">
         <div className="flex items-center justify-between px-4 pt-5 pb-3">
           <h2 className="font-heading text-base font-bold text-foreground">
             Últimas liquidaciones
@@ -152,7 +115,7 @@ export function LiquidacionesDashboard() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr style={{ background: "rgba(0,0,0,.2)" }}>
+                <tr className="bg-muted/40">
                   <th className={thCls}>Prestador</th>
                   <th className={thCls}>Período</th>
                   <th className={thCls}>Estado</th>
@@ -167,28 +130,20 @@ export function LiquidacionesDashboard() {
                   return (
                     <tr
                       key={liq.id}
-                      className="border-t transition-colors hover:bg-white/[0.03]"
-                      style={{ borderColor: "rgba(255,255,255,.07)" }}
+                      className="border-t border-border transition-colors hover:bg-muted/30"
                     >
-                      <td className={tdCls} style={{ color: "#e0e0e0" }}>
+                      <td className={tdCls}>
                         {pst ? `${pst.region ?? pst.nombreCorto} — ${pst.nombre}` : liq.prestadorId.slice(0, 8)}
                       </td>
-                      <td className={tdCls} style={{ color: "#e0e0e0" }}>
-                        {liq.periodo || "—"}
-                      </td>
+                      <td className={tdCls}>{liq.periodo || "—"}</td>
                       <td className={tdCls}>
                         <EstadoBadge estado={liq.estado} />
                       </td>
-                      <td className={`${tdCls} text-right`} style={{ color: "#e0e0e0" }}>
+                      <td className={`${tdCls} text-right`}>
                         {liq.totalIncidentes.toLocaleString("es-AR")}
                       </td>
-                      <td
-                        className={`${tdCls} text-right`}
-                        style={{ color: "#e0e0e0" }}
-                      >
-                        {formatARS(liq.totalImporte)}
-                      </td>
-                      <td className={tdCls} style={{ color: "rgba(255,255,255,.4)" }}>
+                      <td className={`${tdCls} text-right`}>{formatARS(liq.totalImporte)}</td>
+                      <td className={`${tdCls} text-muted-foreground`}>
                         {formatFecha(liq.fechaImportacion)}
                       </td>
                     </tr>

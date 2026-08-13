@@ -7,7 +7,7 @@ import { Bell, ChevronDown, LogOut, Menu } from "lucide-react";
 import { ThemeToggle } from "@/shared/components/theme-toggle";
 import { ContadoresNavSubmenu } from "@/shared/components/contadores-nav-submenu";
 import { InsumosNavSubmenu } from "@/shared/components/insumos-nav-submenu";
-import { LiquidacionesNavSubmenu } from "@/shared/components/liquidaciones-nav-submenu";
+import { PrestadoresNavSubmenu } from "@/shared/components/prestadores-nav-submenu";
 import { cn } from "@/shared/utils/cn";
 import { ChangePasswordModal } from "@/features/auth/components/change-password-modal";
 import { useLogout } from "@/features/auth/hooks/use-logout";
@@ -21,6 +21,11 @@ export function Sidebar({ children }: { children: ReactNode }) {
   const sortedModules = [...modules].sort((a, b) =>
     a.key === "admin" ? 1 : b.key === "admin" ? -1 : 0,
   );
+  // Liquidaciones no se muestra como ítem propio de nivel superior: queda
+  // anidado dentro de Prestadores (ver PrestadoresNavSubmenu). Sigue siendo
+  // un módulo backend independiente, esto es solo reorganización visual.
+  const liquidacionesModule = modules.find((m) => m.key === "liquidaciones");
+  const topLevelModules = sortedModules.filter((m) => m.key !== "liquidaciones");
   const { logout, loading } = useLogout();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -147,12 +152,14 @@ export function Sidebar({ children }: { children: ReactNode }) {
               </p>
             )}
 
-            {sortedModules.map((module) => {
-              const active = isActive(module.route);
+            {topLevelModules.map((module) => {
               const isContadores = module.key === "contadores";
               const isInsumos = module.key === "insumos";
-              const isLiquidaciones = module.key === "liquidaciones";
-              const hasSubmenu = isContadores || isInsumos || isLiquidaciones;
+              const isPrestadores = module.key === "prestadores";
+              const active =
+                isActive(module.route) ||
+                (isPrestadores && !!liquidacionesModule && isActive(liquidacionesModule.route));
+              const hasSubmenu = isContadores || isInsumos || (isPrestadores && !!liquidacionesModule);
               const submenuExpanded = submenuOverride[module.key] ?? active;
               return (
                 <div key={module.key} className="flex flex-col">
@@ -208,8 +215,8 @@ export function Sidebar({ children }: { children: ReactNode }) {
                     <ContadoresNavSubmenu onNavigate={closeMobile} />
                   )}
                   {isInsumos && submenuExpanded && <InsumosNavSubmenu onNavigate={closeMobile} />}
-                  {isLiquidaciones && submenuExpanded && (
-                    <LiquidacionesNavSubmenu onNavigate={closeMobile} />
+                  {isPrestadores && liquidacionesModule && submenuExpanded && (
+                    <PrestadoresNavSubmenu onNavigate={closeMobile} />
                   )}
                 </div>
               );

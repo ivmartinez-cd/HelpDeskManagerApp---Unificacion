@@ -2,57 +2,37 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { Badge } from "@/shared/components/ui/badge";
+import { cn } from "@/shared/utils/cn";
 import type { Alerta, Incidente } from "../types/liquidaciones";
 import { formatARS, formatFecha } from "../lib/format";
 
 function EstadoValidacionBadge({ estado }: { estado: string }) {
-  if (estado === "ok") {
-    return (
-      <span
-        className="inline-flex items-center rounded-full px-2 py-0.5 font-body text-xs font-semibold"
-        style={{ background: "rgba(34,197,94,.15)", color: "#4ade80" }}
-      >
-        OK
-      </span>
-    );
-  }
-  if (estado === "con_alertas") {
-    return (
-      <span
-        className="inline-flex items-center rounded-full px-2 py-0.5 font-body text-xs font-semibold"
-        style={{ background: "rgba(239,68,68,.15)", color: "#ef4444" }}
-      >
-        Con alertas
-      </span>
-    );
-  }
-  return (
-    <span className="font-body text-xs" style={{ color: "rgba(255,255,255,.4)" }}>
-      {estado}
-    </span>
-  );
+  if (estado === "ok") return <Badge variant="success">OK</Badge>;
+  if (estado === "con_alertas") return <Badge variant="danger">Con alertas</Badge>;
+  return <span className="font-body text-xs text-muted-foreground">{estado}</span>;
+}
+
+function riesgoClass(riesgo: number) {
+  if (riesgo > 0.7) return "text-destructive";
+  if (riesgo > 0.3) return "text-warning";
+  return "text-success";
 }
 
 function AlertaSubRow({ alerta }: { alerta: Alerta }) {
   const tdCls = "py-2 px-4 font-body text-xs";
-  const riesgoColor =
-    alerta.riesgo > 0.7 ? "#ef4444" : alerta.riesgo > 0.3 ? "#eab308" : "#4ade80";
   return (
-    <tr style={{ background: "rgba(239,68,68,.04)", borderLeft: "3px solid rgba(239,68,68,.3)" }}>
-      <td className={tdCls} colSpan={3} style={{ paddingLeft: 28 }}>
-        <span className="font-semibold" style={{ color: "#e0e0e0" }}>
-          {alerta.tipoAlerta}
-        </span>
+    <tr className="border-l-[3px] border-l-destructive/30 bg-destructive/[0.04]">
+      <td className={cn(tdCls, "pl-7")} colSpan={3}>
+        <span className="font-semibold text-foreground">{alerta.tipoAlerta}</span>
         {alerta.descripcion && (
-          <span className="ml-2" style={{ color: "rgba(255,255,255,.5)" }}>
-            {alerta.descripcion}
-          </span>
+          <span className="ml-2 text-muted-foreground">{alerta.descripcion}</span>
         )}
       </td>
-      <td className={`${tdCls} text-right`} style={{ color: riesgoColor }}>
+      <td className={cn(tdCls, "text-right", riesgoClass(alerta.riesgo))}>
         {Math.round(alerta.riesgo * 100)}%
       </td>
-      <td className={tdCls} colSpan={4} style={{ color: "rgba(255,255,255,.35)" }}>
+      <td className={`${tdCls} text-muted-foreground`} colSpan={4}>
         {alerta.estado}
       </td>
     </tr>
@@ -70,7 +50,7 @@ function IncidenteRow({
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const tdCls = "py-3 px-4 font-body text-sm";
+  const tdCls = "py-3 px-4 font-body text-sm text-foreground";
   const diff =
     incidente.costoServicioEsperado !== null
       ? incidente.costoServicioCobrado - incidente.costoServicioEsperado
@@ -79,22 +59,24 @@ function IncidenteRow({
   return (
     <>
       <tr
-        className="border-t transition-colors hover:bg-white/[0.03]"
-        style={{ borderColor: "rgba(255,255,255,.07)", cursor: hasAlertas ? "pointer" : "default" }}
+        className={cn(
+          "border-t border-border transition-colors hover:bg-muted/30",
+          hasAlertas ? "cursor-pointer" : "cursor-default",
+        )}
         onClick={hasAlertas ? onToggle : undefined}
       >
         <td className={tdCls}>
           <div className="flex items-center gap-1.5">
             {hasAlertas &&
               (expanded ? (
-                <ChevronDown size={12} style={{ color: "rgba(255,255,255,.4)", flexShrink: 0 }} />
+                <ChevronDown size={12} className="flex-shrink-0 text-muted-foreground" />
               ) : (
-                <ChevronRight size={12} style={{ color: "rgba(255,255,255,.4)", flexShrink: 0 }} />
+                <ChevronRight size={12} className="flex-shrink-0 text-muted-foreground" />
               ))}
-            <span style={{ color: "#e0e0e0" }}>{incidente.numeroIncidente}</span>
+            <span>{incidente.numeroIncidente}</span>
           </div>
         </td>
-        <td className={tdCls} style={{ color: "#e0e0e0" }}>
+        <td className={tdCls}>
           <div className="flex items-center gap-1.5">
             <span>
               {[incidente.empresaNombre, incidente.sucursalNombre].filter(Boolean).join(" / ") ||
@@ -114,29 +96,27 @@ function IncidenteRow({
             )}
           </div>
           {incidente.localidadCliente && (
-            <div className="mt-0.5 font-body text-xs" style={{ color: "rgba(255,255,255,.4)" }}>
+            <div className="mt-0.5 font-body text-xs text-muted-foreground">
               {incidente.localidadCliente}
             </div>
           )}
         </td>
-        <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>
-          {incidente.tipo}
-        </td>
-        <td className={`${tdCls} text-right`} style={{ color: "#e0e0e0" }}>
-          {formatARS(incidente.costoServicioCobrado)}
-        </td>
-        <td className={`${tdCls} text-right`} style={{ color: "rgba(255,255,255,.5)" }}>
+        <td className={`${tdCls} text-muted-foreground`}>{incidente.tipo}</td>
+        <td className={`${tdCls} text-right`}>{formatARS(incidente.costoServicioCobrado)}</td>
+        <td className={`${tdCls} text-right text-muted-foreground`}>
           {incidente.costoServicioEsperado !== null
             ? formatARS(incidente.costoServicioEsperado)
             : "—"}
         </td>
         <td
-          className={`${tdCls} text-right`}
-          style={{ color: diff === null ? "#e0e0e0" : diff > 0 ? "#ef4444" : "#4ade80" }}
+          className={cn(
+            `${tdCls} text-right`,
+            diff !== null && (diff > 0 ? "text-destructive" : "text-success"),
+          )}
         >
           {diff !== null ? formatARS(diff) : "—"}
         </td>
-        <td className={tdCls} style={{ color: "rgba(255,255,255,.4)" }}>
+        <td className={`${tdCls} text-muted-foreground`}>
           {incidente.fechaCierre ? formatFecha(incidente.fechaCierre) : "—"}
         </td>
         <td className={tdCls}>
@@ -187,17 +167,17 @@ export function IncidentesSeccion({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-heading text-base font-bold text-foreground">
           {titulo}
-          <span className="ml-2 font-body text-sm font-normal" style={{ color: "rgba(255,255,255,.4)" }}>
+          <span className="ml-2 font-body text-sm font-normal text-muted-foreground">
             {filtrados.length.toLocaleString("es-AR")}
           </span>
         </h2>
         {fechas.length > 1 && (
-          <label className="flex items-center gap-2 font-body text-xs" style={{ color: "rgba(255,255,255,.5)" }}>
+          <label className="flex items-center gap-2 font-body text-xs text-muted-foreground">
             Filtrar por fecha de cierre:
             <select
               value={filtroFecha}
               onChange={(e) => setFiltroFecha(e.target.value)}
-              className="rounded-[8px] border border-white/10 bg-white/5 px-2 py-1 font-body text-xs text-foreground outline-none focus:border-brand-orange/50"
+              className="rounded-[8px] border border-border bg-card px-2 py-1 font-body text-xs text-foreground outline-none focus:border-brand-orange/50"
             >
               <option value="">Todas</option>
               {fechas.map((f) => (
@@ -209,17 +189,14 @@ export function IncidentesSeccion({
           </label>
         )}
       </div>
-      <div
-        className="overflow-hidden rounded-[12px]"
-        style={{ background: "#1e1e1e", border: "1px solid rgba(255,255,255,.07)" }}
-      >
+      <div className="overflow-hidden rounded-[12px] border border-border bg-card">
         {filtrados.length === 0 ? (
           <p className="px-4 py-6 font-body text-sm text-muted-foreground">Sin incidentes.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr style={{ background: "rgba(0,0,0,.2)" }}>
+                <tr className="bg-muted/40">
                   <th className={thCls}>Nro Incidente</th>
                   <th className={thCls}>Empresa / Sucursal</th>
                   <th className={thCls}>Tipo</th>
@@ -245,21 +222,16 @@ export function IncidentesSeccion({
           </div>
         )}
         {filtrados.length > 0 && (
-          <div
-            className="flex flex-wrap items-center justify-end gap-6 border-t px-4 py-3 font-body text-sm"
-            style={{ borderColor: "rgba(255,255,255,.07)", background: "rgba(0,0,0,.2)" }}
-          >
-            <span style={{ color: "rgba(255,255,255,.5)" }}>
-              Costo servicio: <span style={{ color: "#e0e0e0" }}>{formatARS(totalServicio)}</span>
+          <div className="flex flex-wrap items-center justify-end gap-6 border-t border-border bg-muted/40 px-4 py-3 font-body text-sm">
+            <span className="text-muted-foreground">
+              Costo servicio: <span className="text-foreground">{formatARS(totalServicio)}</span>
             </span>
-            <span style={{ color: "rgba(255,255,255,.5)" }}>
-              KMs: <span style={{ color: "#e0e0e0" }}>{totalKms.toLocaleString("es-AR")}</span>
+            <span className="text-muted-foreground">
+              KMs: <span className="text-foreground">{totalKms.toLocaleString("es-AR")}</span>
             </span>
-            <span style={{ color: "rgba(255,255,255,.5)" }}>
+            <span className="text-muted-foreground">
               Total general:{" "}
-              <span className="font-semibold" style={{ color: "#e0e0e0" }}>
-                {formatARS(totalGeneral)}
-              </span>
+              <span className="font-semibold text-foreground">{formatARS(totalGeneral)}</span>
             </span>
           </div>
         )}

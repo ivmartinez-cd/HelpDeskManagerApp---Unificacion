@@ -1,7 +1,8 @@
 import { type HTMLAttributes } from "react";
 import { cn } from "@/shared/utils/cn";
 
-type Variant = "neutral" | "success" | "danger" | "accent" | "warning" | "info";
+export type BadgeVariant = "neutral" | "success" | "danger" | "accent" | "warning" | "info";
+type Variant = BadgeVariant;
 
 const variants: Record<Variant, string> = {
   neutral: "bg-muted text-muted-foreground",

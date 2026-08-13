@@ -189,14 +189,14 @@ export function LiquidacionesLista() {
         title="Eliminar liquidación"
         widthPx={420}
       >
-        <p className="font-body text-sm" style={{ color: "rgba(255,255,255,.7)" }}>
+        <p className="font-body text-sm text-muted-foreground">
           Esta acción eliminará la liquidación y todos sus incidentes, alertas y observaciones.
           No se puede deshacer.
         </p>
         {deletingId && (() => {
           const liq = liquidaciones.find((l) => l.id === deletingId);
           return liq ? (
-            <p className="mt-2 font-body text-sm font-semibold" style={{ color: "#e0e0e0" }}>
+            <p className="mt-2 font-body text-sm font-semibold text-foreground">
               {liq.nombreArchivo ?? `Liquidación ${liq.periodo}`}
             </p>
           ) : null;
@@ -211,8 +211,7 @@ export function LiquidacionesLista() {
           <button
             onClick={() => void handleConfirmDelete()}
             disabled={deleteInProgress}
-            className="rounded-[8px] px-4 py-2 font-body text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-            style={{ background: "#ef4444" }}
+            className="rounded-[8px] bg-destructive px-4 py-2 font-body text-sm font-semibold text-destructive-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {deleteInProgress ? "Eliminando..." : "Eliminar"}
           </button>

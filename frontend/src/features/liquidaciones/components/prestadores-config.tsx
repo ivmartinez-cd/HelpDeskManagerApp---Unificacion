@@ -8,13 +8,14 @@ import {
   BrandInput,
 } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion } from "../types/liquidaciones";
 import { PrestadoresExcelImportModal } from "./prestadores-excel-import-modal";
 
 const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
-const tdCls = "py-3 px-4 font-body text-sm";
+const tdCls = "py-3 px-4 font-body text-sm text-foreground";
 
 type FormState = { nombre: string; nombreCorto: string; cuit: string; region: string };
 
@@ -154,11 +155,11 @@ export function PrestadoresConfig() {
       {loading ? (
         <div className="flex h-40 items-center justify-center"><Spinner /></div>
       ) : (
-        <div className="overflow-hidden rounded-[12px]" style={{ background: "#1e1e1e", border: "1px solid rgba(255,255,255,.07)" }}>
+        <div className="overflow-hidden rounded-[12px] border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr style={{ background: "rgba(0,0,0,.2)" }}>
+                <tr className="bg-muted/40">
                   <th className={thCls}>Clave</th>
                   <th className={thCls}>Nombre</th>
                   <th className={thCls}>CUIT</th>
@@ -169,20 +170,17 @@ export function PrestadoresConfig() {
               </thead>
               <tbody>
                 {prestadores.map((p) => (
-                  <tr key={p.id} className="border-t transition-colors hover:bg-white/[0.03]" style={{ borderColor: "rgba(255,255,255,.07)" }}>
+                  <tr key={p.id} className="border-t border-border transition-colors hover:bg-muted/30">
                     <td className={tdCls}><span className="font-heading text-sm font-bold uppercase text-foreground">{p.nombreCorto}</span></td>
-                    <td className={tdCls} style={{ color: "#e0e0e0" }}>{p.nombre}</td>
-                    <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>{p.cuit || "—"}</td>
-                    <td className={tdCls} style={{ color: "rgba(255,255,255,.5)" }}>{p.region?.toUpperCase() || "—"}</td>
+                    <td className={tdCls}>{p.nombre}</td>
+                    <td className={`${tdCls} text-muted-foreground`}>{p.cuit || "—"}</td>
+                    <td className={`${tdCls} text-muted-foreground`}>{p.region?.toUpperCase() || "—"}</td>
                     <td className={tdCls}>
-                      <span className="inline-flex items-center rounded-full px-2.5 py-1 font-body text-[10px] font-bold uppercase tracking-wide"
-                        style={p.activo ? { background: "rgba(34,197,94,.15)", color: "#4ade80" } : { background: "rgba(255,255,255,.08)", color: "rgba(255,255,255,.45)" }}>
-                        {p.activo ? "Activo" : "Inactivo"}
-                      </span>
+                      <Badge variant={p.activo ? "success" : "neutral"}>{p.activo ? "Activo" : "Inactivo"}</Badge>
                     </td>
                     <td className={`${tdCls} text-right`}>
                       <button onClick={() => startEdit(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
-                      <button onClick={() => handleToggle(p)} className="font-body text-sm hover:underline" style={{ color: p.activo ? "#ef4444" : "#4ade80" }}>
+                      <button onClick={() => handleToggle(p)} className={`font-body text-sm hover:underline ${p.activo ? "text-destructive" : "text-success"}`}>
                         {p.activo ? "Desactivar" : "Activar"}
                       </button>
                     </td>

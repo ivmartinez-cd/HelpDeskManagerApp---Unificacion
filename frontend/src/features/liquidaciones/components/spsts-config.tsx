@@ -9,12 +9,13 @@ import {
   BrandSelect,
 } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Spst } from "../types/liquidaciones";
 
 const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
-const tdCls = "py-3 px-4 font-body text-sm";
+const tdCls = "py-3 px-4 font-body text-sm text-foreground";
 
 type FormState = {
   prestadorId: string; nombre: string; domicilio: string;
@@ -169,11 +170,11 @@ export function SpstsConfig() {
       {loading ? (
         <div className="flex h-40 items-center justify-center"><Spinner /></div>
       ) : (
-        <div className="overflow-hidden rounded-[12px]" style={{ background: "#1e1e1e", border: "1px solid rgba(255,255,255,.07)" }}>
+        <div className="overflow-hidden rounded-[12px] border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr style={{ background: "rgba(0,0,0,.2)" }}>
+                <tr className="bg-muted/40">
                   <th className={thCls}>PST</th>
                   <th className={thCls}>Nombre</th>
                   <th className={thCls}>Localidad</th>
@@ -186,20 +187,17 @@ export function SpstsConfig() {
                 {visible.map((s) => {
                   const pst = prestadorMap[s.prestadorId];
                   return (
-                    <tr key={s.id} className="border-t transition-colors hover:bg-white/[0.03]" style={{ borderColor: "rgba(255,255,255,.07)" }}>
+                    <tr key={s.id} className="border-t border-border transition-colors hover:bg-muted/30">
                       <td className={tdCls}><span className="font-heading text-sm font-bold uppercase text-foreground">{pst?.nombreCorto ?? "—"}</span></td>
                       <td className={tdCls}><span className="text-brand-orange">{s.nombre}</span></td>
-                      <td className={tdCls} style={{ color: "rgba(255,255,255,.6)" }}>{s.localidad || "—"}</td>
-                      <td className={tdCls} style={{ color: "rgba(255,255,255,.6)" }}>{s.zona || "—"}</td>
+                      <td className={`${tdCls} text-muted-foreground`}>{s.localidad || "—"}</td>
+                      <td className={`${tdCls} text-muted-foreground`}>{s.zona || "—"}</td>
                       <td className={tdCls}>
-                        <span className="inline-flex items-center rounded-full px-2.5 py-1 font-body text-[10px] font-bold uppercase tracking-wide"
-                          style={s.activo ? { background: "rgba(34,197,94,.15)", color: "#4ade80" } : { background: "rgba(255,255,255,.08)", color: "rgba(255,255,255,.45)" }}>
-                          {s.activo ? "Activo" : "Inactivo"}
-                        </span>
+                        <Badge variant={s.activo ? "success" : "neutral"}>{s.activo ? "Activo" : "Inactivo"}</Badge>
                       </td>
                       <td className={`${tdCls} text-right`}>
                         <button onClick={() => startEdit(s)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
-                        <button onClick={() => handleToggle(s)} className="font-body text-sm hover:underline" style={{ color: s.activo ? "#ef4444" : "#4ade80" }}>
+                        <button onClick={() => handleToggle(s)} className={`font-body text-sm hover:underline ${s.activo ? "text-destructive" : "text-success"}`}>
                           {s.activo ? "Desactivar" : "Activar"}
                         </button>
                       </td>

@@ -74,7 +74,7 @@ export function TablaKmConfig() {
 
   const selectCls = "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
   const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
-  const tdCls = "py-3 px-4 font-body text-sm";
+  const tdCls = "py-3 px-4 font-body text-sm text-foreground";
 
   return (
     <div className="flex flex-col gap-5 p-6">
@@ -107,11 +107,11 @@ export function TablaKmConfig() {
       ) : filtered.length === 0 ? (
         <BrandEmptyState icon={Map} title="Sin entradas" description="No hay entradas para este prestador con los filtros actuales." />
       ) : (
-        <div className="overflow-hidden rounded-[12px]" style={{ background: "#1e1e1e", border: "1px solid rgba(255,255,255,.07)" }}>
+        <div className="overflow-hidden rounded-[12px] border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr style={{ background: "rgba(0,0,0,.2)" }}>
+                <tr className="bg-muted/40">
                   <th className={thCls}>Empresa</th>
                   <th className={thCls}>Sucursal</th>
                   <th className={`${thCls} text-right`}>KMs rec.</th>
@@ -122,19 +122,19 @@ export function TablaKmConfig() {
               </thead>
               <tbody>
                 {filtered.map((t) => (
-                  <tr key={t.id} className="border-t transition-colors hover:bg-white/[0.03]" style={{ borderColor: "rgba(255,255,255,.07)" }}>
-                    <td className={tdCls} style={{ color: "#e0e0e0" }}>{t.empresaNombre}</td>
-                    <td className={tdCls} style={{ color: "#e0e0e0" }}>{t.sucursalNombre}</td>
-                    <td className={`${tdCls} text-right`} style={{ color: "rgba(255,255,255,.7)" }}>{t.kmsRecorrido}</td>
-                    <td className={`${tdCls} text-right`} style={{ color: "rgba(255,255,255,.7)" }}>{t.kmsAFacturar}</td>
+                  <tr key={t.id} className="border-t border-border transition-colors hover:bg-muted/30">
+                    <td className={tdCls}>{t.empresaNombre}</td>
+                    <td className={tdCls}>{t.sucursalNombre}</td>
+                    <td className={`${tdCls} text-right`}>{t.kmsRecorrido}</td>
+                    <td className={`${tdCls} text-right`}>{t.kmsAFacturar}</td>
                     <td className={tdCls}>
                       {t.aplicaViatico
-                        ? <span className="font-body text-xs" style={{ color: "#4ade80" }}>Sí</span>
-                        : <span className="font-body text-xs" style={{ color: "rgba(255,255,255,.35)" }}>No</span>}
+                        ? <span className="font-body text-xs text-success">Sí</span>
+                        : <span className="font-body text-xs text-muted-foreground">No</span>}
                     </td>
                     <td className={`${tdCls} text-right`}>
                       <button onClick={() => { setEditing(t); setModalOpen(true); }} className="mr-3 font-body text-sm text-brand-orange hover:underline">Editar</button>
-                      <button onClick={() => setDeletingId(t.id)} className="font-body text-sm hover:underline" style={{ color: "#ef4444" }}>Eliminar</button>
+                      <button onClick={() => setDeletingId(t.id)} className="font-body text-sm text-destructive hover:underline">Eliminar</button>
                     </td>
                   </tr>
                 ))}
