@@ -131,6 +131,11 @@ export const liquidacionesApi = {
       `/api/liquidaciones/${id}/reanalyze`,
     ),
 
+  sincronizar: () =>
+    httpClient.post<{ creadas: number; yaExistentes: number; sinPrestador: number }>(
+      "/api/liquidaciones/sincronizar",
+    ),
+
   // ── Config: Prestadores ───────────────────────────────────────────────────
   createPrestador: (body: { nombreCorto: string; nombre: string; cuit?: string; region?: string }) =>
     httpClient.post<PrestadorLiquidacion>("/api/liquidaciones/prestadores", body),

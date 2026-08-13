@@ -30,6 +30,9 @@ from src.modules.vacaciones.infrastructure.logging_notificador import LoggingNot
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_aprobacion_repository import (  # noqa: E501
     SqlAlchemyAprobacionRepository,
 )
+from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_auditoria import (
+    SqlAlchemyRegistradorAuditoria,
+)
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_cargo_repository import (
     SqlAlchemyCargoRepository,
 )
@@ -77,7 +80,7 @@ _require_create = Depends(require_permission(CREATE))
 _require_approve = Depends(require_permission(APPROVE))
 
 
-def _write_deps(db: AsyncSession) -> SolicitudesDependencies:
+def _write_deps(db: AsyncSession, actor: ActorVacaciones) -> SolicitudesDependencies:
     return SolicitudesDependencies(
         solicitudes=SqlAlchemySolicitudRepository(db),
         empleados=SqlAlchemyEmpleadoRepository(db),
@@ -89,6 +92,7 @@ def _write_deps(db: AsyncSession) -> SolicitudesDependencies:
         config=SqlAlchemyConfigRepository(db),
         clock=SystemClock(),
         notificador=LoggingNotificador(),
+        auditoria=SqlAlchemyRegistradorAuditoria(db, actor.user_id),
     )
 
 
@@ -150,7 +154,9 @@ async def crear_solicitud(
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db),
 ) -> SolicitudResponse:
-    solicitud = await CrearSolicitud(_write_deps(db)).execute(body.to_command(), actor)
+    solicitud = await CrearSolicitud(_write_deps(db, actor)).execute(
+        body.to_command(), actor
+    )
     return await _leer_una(db, solicitud.id, actor)
 
 
@@ -162,7 +168,9 @@ async def editar_solicitud(
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db),
 ) -> SolicitudResponse:
-    await EditarSolicitud(_write_deps(db)).execute(solicitud_id, body.to_command(), actor)
+    await EditarSolicitud(_write_deps(db, actor)).execute(
+        solicitud_id, body.to_command(), actor
+    )
     return await _leer_una(db, solicitud_id, actor)
 
 
@@ -173,7 +181,7 @@ async def eliminar_solicitud(
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    await EliminarSolicitud(_write_deps(db)).execute(solicitud_id, actor)
+    await EliminarSolicitud(_write_deps(db, actor)).execute(solicitud_id, actor)
 
 
 @router.post("/{solicitud_id}/decision")
@@ -189,6 +197,7 @@ async def decidir_solicitud(
         empleados=SqlAlchemyEmpleadoRepository(db),
         aprobaciones=SqlAlchemyAprobacionRepository(db),
         notificador=LoggingNotificador(),
+        auditoria=SqlAlchemyRegistradorAuditoria(db, actor.user_id),
     )
     await DecidirSolicitud(deps).execute(solicitud_id, body.to_command(), actor)
     return await _leer_una(db, solicitud_id, actor)

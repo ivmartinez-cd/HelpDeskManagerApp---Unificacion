@@ -3,7 +3,17 @@ from dataclasses import dataclass
 
 from src.modules.vacaciones.application.dtos.gestion_dtos import CargoCommand, CargoDTO
 from src.modules.vacaciones.domain.entities.cargo import Cargo
+from src.modules.vacaciones.domain.entities.registro_auditoria import (
+    ACCION_CREATE,
+    ACCION_DELETE,
+    ACCION_UPDATE,
+    ENTIDAD_CARGO,
+)
 from src.modules.vacaciones.domain.errors import CargoConEmpleadosError, NombreDuplicadoError
+from src.modules.vacaciones.domain.repositories.auditoria import (
+    RegistradorAuditoria,
+    RegistradorAuditoriaNulo,
+)
 from src.modules.vacaciones.domain.repositories.catalogos_repositories import CargoRepository
 from src.shared.domain.errors import NotFoundError
 
@@ -11,6 +21,7 @@ from src.shared.domain.errors import NotFoundError
 @dataclass(frozen=True, slots=True)
 class GestionCargosDependencies:
     cargos: CargoRepository
+    auditoria: RegistradorAuditoria = RegistradorAuditoriaNulo()
 
 
 class ListCargos:
@@ -36,6 +47,9 @@ class CreateCargo:
             id=uuid.uuid4(), name=command.name, max_simultaneos=command.max_simultaneos
         )
         await self._deps.cargos.add(cargo)
+        await self._deps.auditoria.registrar(
+            ACCION_CREATE, ENTIDAD_CARGO, str(cargo.id), {"name": cargo.name}
+        )
         return cargo
 
 
@@ -55,6 +69,9 @@ class UpdateCargo:
         cargo.name = command.name
         cargo.max_simultaneos = command.max_simultaneos
         await self._deps.cargos.save(cargo)
+        await self._deps.auditoria.registrar(
+            ACCION_UPDATE, ENTIDAD_CARGO, str(cargo.id), {"name": cargo.name}
+        )
         return cargo
 
 
@@ -63,8 +80,12 @@ class DeleteCargo:
         self._deps = deps
 
     async def execute(self, cargo_id: uuid.UUID) -> None:
-        if await self._deps.cargos.get_by_id(cargo_id) is None:
+        cargo = await self._deps.cargos.get_by_id(cargo_id)
+        if cargo is None:
             raise NotFoundError(f"Cargo {cargo_id} no encontrado")
         if await self._deps.cargos.count_empleados(cargo_id) > 0:
             raise CargoConEmpleadosError()
         await self._deps.cargos.delete(cargo_id)
+        await self._deps.auditoria.registrar(
+            ACCION_DELETE, ENTIDAD_CARGO, str(cargo_id), {"name": cargo.name}
+        )

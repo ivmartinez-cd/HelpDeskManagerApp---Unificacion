@@ -53,4 +53,26 @@ class SqlAlchemyConfigRepository:
             max_advance_days=row.max_advance_days,
             allow_carry_over=row.allow_carry_over,
             max_carry_over_days=row.max_carry_over_days,
+            min_advance_notice_days=row.min_advance_notice_days,
+            max_overlap_percent=row.max_overlap_percent,
+            max_overlap_count=row.max_overlap_count,
         )
+
+    async def save(self, config: ConfigVacaciones) -> None:
+        row = await self._session.get(VacacionesConfigModel, _SINGLETON_ID)
+        if row is None:
+            raise RuntimeError("vacaciones_config singleton no encontrado")
+        row.seniority_tiers = [
+            {"min_years": t.min_years, "max_years": t.max_years, "days": t.days}
+            for t in config.seniority_tiers
+        ]
+        row.next_year_open_month = config.next_year_open_month
+        row.next_year_open_day = config.next_year_open_day
+        row.allow_advance_request = config.allow_advance_request
+        row.max_advance_days = config.max_advance_days
+        row.allow_carry_over = config.allow_carry_over
+        row.max_carry_over_days = config.max_carry_over_days
+        row.min_advance_notice_days = config.min_advance_notice_days
+        row.max_overlap_percent = config.max_overlap_percent
+        row.max_overlap_count = config.max_overlap_count
+        await self._session.flush()

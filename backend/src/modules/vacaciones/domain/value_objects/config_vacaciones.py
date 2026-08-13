@@ -5,9 +5,12 @@ from src.modules.vacaciones.domain.value_objects.seniority_tier import Seniority
 
 @dataclass(frozen=True, slots=True)
 class ConfigVacaciones:
-    """Config del módulo (singleton `vacaciones_config`). Los campos del legacy
-    que ninguna validación usa (`min_advance_notice_days`, `max_overlap_*`) no
-    se exponen acá a propósito: viven solo en la tabla por paridad de datos.
+    """Config del módulo (singleton `vacaciones_config`).
+
+    `min_advance_notice_days` / `max_overlap_percent` / `max_overlap_count`
+    existen por paridad de datos y se editan desde la pantalla Configuración,
+    pero NINGUNA validación los usa (el legacy tampoco) — no agregar lógica
+    sobre ellos sin decisión explícita.
     """
 
     seniority_tiers: tuple[SeniorityTier, ...]
@@ -17,3 +20,6 @@ class ConfigVacaciones:
     max_advance_days: int
     allow_carry_over: bool
     max_carry_over_days: int
+    min_advance_notice_days: int = 7
+    max_overlap_percent: int = 50
+    max_overlap_count: int = 0

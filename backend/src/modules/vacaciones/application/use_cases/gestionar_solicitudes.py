@@ -18,11 +18,21 @@ from src.modules.vacaciones.application.use_cases.solicitudes_context import (
     cargar_agenda,
 )
 from src.modules.vacaciones.domain.entities.empleado import Empleado
+from src.modules.vacaciones.domain.entities.registro_auditoria import (
+    ACCION_CREATE,
+    ACCION_DELETE,
+    ACCION_UPDATE,
+    ENTIDAD_SOLICITUD,
+)
 from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud, Solicitud
 from src.modules.vacaciones.domain.errors import (
     EmpleadoNoEncontradoError,
     SolicitudNoEncontradaError,
     SoloPendientesEditablesError,
+)
+from src.modules.vacaciones.domain.repositories.auditoria import (
+    RegistradorAuditoria,
+    RegistradorAuditoriaNulo,
 )
 from src.modules.vacaciones.domain.repositories.catalogos_repositories import (
     CargoRepository,
@@ -72,6 +82,7 @@ class SolicitudesDependencies:
     config: ConfigRepository
     clock: Clock
     notificador: Notificador
+    auditoria: RegistradorAuditoria = RegistradorAuditoriaNulo()
 
     def saldos(self) -> SaldosService:
         return SaldosService(
@@ -131,6 +142,12 @@ class CrearSolicitud:
             created_at=datetime.now(UTC),
         )
         await self._deps.solicitudes.add(solicitud)
+        await self._deps.auditoria.registrar(
+            ACCION_CREATE,
+            ENTIDAD_SOLICITUD,
+            str(solicitud.id),
+            _metadata_solicitud(solicitud, empleado),
+        )
         await self._notificar(empleado, solicitud)
         return solicitud
 
@@ -205,6 +222,7 @@ class EditarSolicitud:
             dias_actuales=solicitud.days_requested,
         )
         validar_edicion(datos, agenda, ctx)
+        previous = (solicitud.start_date, solicitud.end_date)
         solicitud.start_date = command.start_date
         solicitud.end_date = command.end_date
         solicitud.days_requested = dias
@@ -212,6 +230,12 @@ class EditarSolicitud:
         solicitud.reason = command.reason
         solicitud.status = EstadoSolicitud.PENDING
         await self._deps.solicitudes.save(solicitud)
+        metadata = _metadata_solicitud(solicitud, empleado)
+        metadata["previousStart"] = previous[0].isoformat()
+        metadata["previousEnd"] = previous[1].isoformat()
+        await self._deps.auditoria.registrar(
+            ACCION_UPDATE, ENTIDAD_SOLICITUD, str(solicitud.id), metadata
+        )
         return solicitud
 
 
@@ -226,9 +250,25 @@ class EliminarSolicitud:
         verificar_puede_modificar_solicitud(actor, solicitud.empleado_id)
         if not actor.es_admin and solicitud.status is not EstadoSolicitud.PENDING:
             raise SoloPendientesEditablesError("cancelar")
+        empleado = await self._deps.empleados.get_by_id(solicitud.empleado_id)
         await self._deps.solicitudes.delete(solicitud_id)
+        await self._deps.auditoria.registrar(
+            ACCION_DELETE,
+            ENTIDAD_SOLICITUD,
+            str(solicitud.id),
+            _metadata_solicitud(solicitud, empleado),
+        )
 
 
 async def _calcular_dias(deps: SolicitudesDependencies, start: date, end: date) -> int:
     feriado_en_inicio = await deps.feriados.existe_no_deduce_en(start)
     return dias_solicitados(start, end, feriado_no_deduce_en_inicio=feriado_en_inicio)
+
+
+def _metadata_solicitud(solicitud: Solicitud, empleado: Empleado | None) -> dict[str, object]:
+    return {
+        "employee": empleado.nombre_completo if empleado else "",
+        "startDate": solicitud.start_date.isoformat(),
+        "endDate": solicitud.end_date.isoformat(),
+        "days": solicitud.days_requested,
+    }

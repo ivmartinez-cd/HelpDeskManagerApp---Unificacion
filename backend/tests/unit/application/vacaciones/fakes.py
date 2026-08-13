@@ -4,13 +4,21 @@ import uuid
 from datetime import date
 
 from src.modules.vacaciones.domain.entities.aprobacion import Aprobacion
+from src.modules.vacaciones.domain.entities.ausencia import Ausencia, TipoAusencia
 from src.modules.vacaciones.domain.entities.cargo import Cargo
 from src.modules.vacaciones.domain.entities.ciclo import Ciclo
 from src.modules.vacaciones.domain.entities.empleado import Empleado
 from src.modules.vacaciones.domain.entities.exclusion import Exclusion
 from src.modules.vacaciones.domain.entities.feriado import Feriado
 from src.modules.vacaciones.domain.entities.sector import Sector
-from src.modules.vacaciones.domain.entities.solicitud import ESTADOS_ACTIVOS, Solicitud
+from src.modules.vacaciones.domain.entities.solicitud import (
+    ESTADOS_ACTIVOS,
+    EstadoSolicitud,
+    Solicitud,
+)
+from src.modules.vacaciones.domain.repositories.ausencia_repository import (
+    FiltrosAusencias,
+)
 from src.modules.vacaciones.domain.repositories.empleado_repository import FiltrosEmpleados
 from src.modules.vacaciones.domain.repositories.notificador import (
     DecisionNotif,
@@ -180,6 +188,78 @@ class FakeConfigRepo:
 
     async def get(self) -> ConfigVacaciones:
         return self._config
+
+    async def save(self, config: ConfigVacaciones) -> None:
+        self._config = config
+
+
+class FakeAusenciaRepo:
+    def __init__(self, ausencias: list[Ausencia] | None = None) -> None:
+        self.items: dict[uuid.UUID, Ausencia] = {a.id: a for a in (ausencias or [])}
+
+    async def get_by_id(self, ausencia_id: uuid.UUID) -> Ausencia | None:
+        return self.items.get(ausencia_id)
+
+    async def list_filtradas(self, filtros: FiltrosAusencias) -> list[Ausencia]:
+        items = list(self.items.values())
+        if filtros.status is not None:
+            items = [a for a in items if a.status is filtros.status]
+        if filtros.tipo is not None:
+            items = [a for a in items if a.tipo is filtros.tipo]
+        if filtros.empleado_id is not None:
+            items = [a for a in items if a.empleado_id == filtros.empleado_id]
+        return items
+
+    async def existe_activa_solapada(
+        self,
+        empleado_id: uuid.UUID,
+        tipo: TipoAusencia,
+        start: date,
+        end: date,
+        excluir_ausencia_id: uuid.UUID | None = None,
+    ) -> bool:
+        return any(
+            a.empleado_id == empleado_id
+            and a.tipo is tipo
+            and a.status in ESTADOS_ACTIVOS
+            and a.id != excluir_ausencia_id
+            and a.solapa_con(start, end)
+            for a in self.items.values()
+        )
+
+    async def list_aprobadas_solapadas_de_empleados(
+        self, empleado_ids: list[uuid.UUID], start: date, end: date
+    ) -> list[Ausencia]:
+        return [
+            a
+            for a in self.items.values()
+            if a.empleado_id in empleado_ids
+            and a.status is EstadoSolicitud.APPROVED
+            and a.solapa_con(start, end)
+        ]
+
+    async def add(self, ausencia: Ausencia) -> None:
+        self.items[ausencia.id] = ausencia
+
+    async def save(self, ausencia: Ausencia) -> None:
+        self.items[ausencia.id] = ausencia
+
+    async def delete(self, ausencia_id: uuid.UUID) -> None:
+        self.items.pop(ausencia_id, None)
+
+
+class FakeRegistradorAuditoria:
+    def __init__(self) -> None:
+        self.registros: list[tuple[str, str, str | None, dict[str, object]]] = []
+
+    async def registrar(
+        self,
+        accion: str,
+        entidad: str,
+        entidad_id: str | None,
+        metadata: dict[str, object],
+    ) -> None:
+        self.registros.append((accion, entidad, entidad_id, metadata))
 
 
 class FakeFeriadoRepo:

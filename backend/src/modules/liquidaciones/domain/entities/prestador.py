@@ -24,3 +24,6 @@ class Prestador:
     # Vínculo a `dbo.Empresa` de Siges (ADR-014) — None = sin vincular, fuera
     # del sync. Con default para no romper los constructores existentes.
     siges_empresa_id: int | None = None
+    # Vínculo al `prestador_id` numérico del SOAP wsAyC — None = sin vincular,
+    # liquidaciones de ese prestador no se sincronizan automáticamente.
+    cd_prestador_id: int | None = None

@@ -55,6 +55,20 @@ class PrestadorConLiquidacionesError(BusinessRuleViolationError):
         )
 
 
+class CdVinculoDuplicadoError(BusinessRuleViolationError):
+    """El UNIQUE de `cd_prestador_id` garantiza que un prestador de CD vincule
+    a lo sumo una fila local — IntegrityError traducido acá (mismo criterio que
+    `SigesVinculoDuplicadoError`)."""
+
+    default_code: ClassVar[str] = "CD_VINCULO_DUPLICADO"
+
+    def __init__(self, cd_prestador_id: int | None) -> None:
+        super().__init__(
+            f"El prestador {cd_prestador_id} de Canal Directo ya está vinculado a otro "
+            "prestador del catálogo. Desvinculalo primero."
+        )
+
+
 class SigesVinculoDuplicadoError(BusinessRuleViolationError):
     """El UNIQUE de `siges_empresa_id` (prestadores/spsts) garantiza que una
     empresa de Siges vincule a lo sumo una fila local — el `IntegrityError` se

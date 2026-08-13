@@ -2,12 +2,42 @@
 
 Migración de VacaSync (`D:\Dev\Trabajo\Calendario-vacaciones-cd`, Express+Prisma). **Entrega 1**
 (2026-08-13): Gestión Humana (empleados/sectores/cargos/feriados) + core de vacaciones
-(ciclos/saldos, solicitudes, aprobaciones, dashboard, calendario). Fuente de verdad visual:
-`design_handoff_vacaciones/` en la raíz del repo.
+(ciclos/saldos, solicitudes, aprobaciones, dashboard, calendario). **Entrega 2** (2026-08-13):
+Asistencias (bajas `vacaciones_ausencia`, 7 tipos + medio día + reporte mensual de descuentos),
+auditoría (`vacaciones_audit_log` + pantalla) y pantalla Configuración (`PUT /config` +
+exclusiones + límites por cargo). Fuente de verdad visual: `design_handoff_vacaciones/` en la
+raíz del repo.
 
-Pendiente para entregas siguientes: Asistencias (Absence legacy), reportes Excel/PDF, UI de
-Auditoría, UI de Configuración (el `PUT /config`), emails (hoy solo existe el seam
-`Notificador` con `LoggingNotificador`), y la migración de datos reales (abajo).
+Pendiente para entregas siguientes: reportes Excel/PDF (pantalla Reportes del handoff 04 — la
+página de Auditoría hoy es standalone y en E3 se le suma el tab Reportes), emails (hoy solo
+existe el seam `Notificador` con `LoggingNotificador`), y la migración de datos reales (abajo).
+
+## Entrega 2 — decisiones y paridades
+
+- **Ausencias (Absence legacy)**: nacen `APPROVED`; `days_count` usa el MISMO conteo corrido
+  con extensión LCT que las solicitudes (`dias_corridos` — el legacy usaba calendarDaysBetween
+  para ambas); `half_day` computa 0.5 solo en reportes/KPIs y la UI solo lo habilita para
+  DESCUENTO_DIA (paridad del submit legacy). Valida solape contra bajas del mismo tipo y contra
+  solicitudes activas (409). Editar/eliminar: dueño o admin (el jefe crea pero NO toca ajenas);
+  no-admin solo PENDING y nunca cambia `status`.
+- **Reporte de descuentos**: jefe clavado a su sector; admin elige sector (default el llamado
+  "Técnico"); descuentos = días hábiles (sin finde/feriado, 0.5 si medio día) — algoritmo
+  exacto del legacy; las columnas extra del handoff (enfermedad/guardias) cuentan días corridos
+  del mes (semántica de los contadores por tipo del legacy).
+- **Auditoría**: puerto `RegistradorAuditoria` (bound al usuario actuante, nunca lanza) cableado
+  en todos los use cases mutantes; **conserva el vocabulario legacy** (acciones
+  CREATE/UPDATE/DELETE/APPROVE/REJECT/IMPORT, entidades Department/Employee/Position/Holiday/
+  VacationRequest/SystemConfig/Absence) para que la migración de datos de `AuditLog` quede
+  uniforme. El login NO se audita acá (es de la plataforma auth). La UI traduce a castellano y
+  arma la descripción desde `metadata` (`frontend/.../lib/auditoria.ts`).
+- **Config**: los campos dormidos (`min_advance_notice_days`, `max_overlap_percent`,
+  `max_overlap_count`) ahora se exponen en GET/PUT y en la pantalla (tab Reglas) por paridad,
+  pero **ninguna validación los usa** (el legacy tampoco). PUT es merge parcial + audit de
+  claves cambiadas.
+- **Límites por Cargo** (tab Solapamientos): la UI edita `vacaciones_cargo.max_simultaneos` vía
+  el PUT de cargos existente (D10) — no hay endpoint nuevo.
+- KPIs/grilla anual de Asistencias se computan client-side (port de `getStatsForYear` del
+  legacy, con fechas string para evitar su off-by-one de `toISOString`).
 
 ## Decisiones de diseño (D1–D11 del plan aprobado)
 

@@ -7,9 +7,19 @@ from src.modules.vacaciones.application.dtos.gestion_dtos import (
     ListEmpleadosQuery,
 )
 from src.modules.vacaciones.domain.entities.empleado import Empleado
+from src.modules.vacaciones.domain.entities.registro_auditoria import (
+    ACCION_CREATE,
+    ACCION_DELETE,
+    ACCION_UPDATE,
+    ENTIDAD_EMPLEADO,
+)
 from src.modules.vacaciones.domain.errors import (
     EmpleadoNoEncontradoError,
     NombreDuplicadoError,
+)
+from src.modules.vacaciones.domain.repositories.auditoria import (
+    RegistradorAuditoria,
+    RegistradorAuditoriaNulo,
 )
 from src.modules.vacaciones.domain.repositories.catalogos_repositories import (
     CargoRepository,
@@ -41,6 +51,7 @@ class GestionEmpleadosDependencies:
     ciclos: CicloRepository
     config: ConfigRepository
     clock: Clock
+    auditoria: RegistradorAuditoria = RegistradorAuditoriaNulo()
 
 
 class ListEmpleados:
@@ -101,6 +112,12 @@ class CreateEmpleado:
                 raise NombreDuplicadoError("usuario vinculado", str(command.user_id))
         empleado = _build_empleado(uuid.uuid4(), command)
         await self._deps.empleados.add(empleado)
+        await self._deps.auditoria.registrar(
+            ACCION_CREATE,
+            ENTIDAD_EMPLEADO,
+            str(empleado.id),
+            {"employee": empleado.nombre_completo, "email": empleado.email},
+        )
         return empleado
 
 
@@ -118,6 +135,12 @@ class UpdateEmpleado:
             await self._recalcular_ciclos(empleado_id, command)
         empleado = _build_empleado(empleado_id, command)
         await self._deps.empleados.save(empleado)
+        await self._deps.auditoria.registrar(
+            ACCION_UPDATE,
+            ENTIDAD_EMPLEADO,
+            str(empleado.id),
+            {"employee": empleado.nombre_completo, "email": empleado.email},
+        )
         return empleado
 
     async def _validar_unicos(self, actual: Empleado, command: EmpleadoCommand) -> None:
@@ -150,9 +173,16 @@ class DeleteEmpleado:
         self._deps = deps
 
     async def execute(self, empleado_id: uuid.UUID) -> None:
-        if await self._deps.empleados.get_by_id(empleado_id) is None:
+        empleado = await self._deps.empleados.get_by_id(empleado_id)
+        if empleado is None:
             raise EmpleadoNoEncontradoError(empleado_id)
         await self._deps.empleados.delete(empleado_id)
+        await self._deps.auditoria.registrar(
+            ACCION_DELETE,
+            ENTIDAD_EMPLEADO,
+            str(empleado_id),
+            {"employee": empleado.nombre_completo, "email": empleado.email},
+        )
 
 
 async def _validar_referencias(

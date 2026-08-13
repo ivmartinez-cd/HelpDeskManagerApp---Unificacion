@@ -13,10 +13,13 @@ import type {
 const BASE = "/api/vacaciones";
 
 export const solicitudesApi = {
-  list: (params?: { status?: EstadoSolicitud }) => {
-    const q = params?.status ? `?status=${params.status}` : "";
+  list: (params?: { status?: EstadoSolicitud; empleadoId?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.status) q.set("status", params.status);
+    if (params?.empleadoId) q.set("employeeId", params.empleadoId);
+    const query = q.size > 0 ? `?${q.toString()}` : "";
     return httpClient
-      .get<Page<Solicitud>>(`${BASE}/solicitudes${q}`)
+      .get<Page<Solicitud>>(`${BASE}/solicitudes${query}`)
       .then((p) => p.items);
   },
   create: (payload: SolicitudPayload) =>

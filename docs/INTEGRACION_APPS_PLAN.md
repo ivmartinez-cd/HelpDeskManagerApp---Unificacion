@@ -494,10 +494,18 @@ real ejecutado; solo se actualiza el estado de cada módulo.
       acciones view/create/approve/manage + VO `ActorVacaciones`; carry-over
       iterativo base 2026 en lugar de la recursión frágil; apertura de ciclos lazy
       sin background jobs; fechas como DATE).
-- [ ] Entrega 2: Asistencias (Absence legacy, 7 tipos + media jornada + reporte de
-      descuentos) + UI de Configuración (PUT config, exclusiones) + UI de Auditoría.
-- [ ] Entrega 3: reportes Excel/PDF + emails (activar el seam `Notificador` sobre el
-      mailer de auth).
+- [x] **Entrega 2 (2026-08-13)**: Asistencias (tabla `vacaciones_ausencia` — 7 tipos,
+      media jornada, nacen APPROVED, solape vs. bajas del mismo tipo y vs. solicitudes;
+      calendario anual 12×31 + KPIs port de getStatsForYear + listado + reporte mensual
+      de descuentos en días hábiles) + pantalla Configuración (PUT /config parcial con
+      los campos dormidos expuestos, exclusiones mutuas y límites por cargo vía
+      `max_simultaneos`) + Auditoría (`vacaciones_audit_log` con vocabulario legacy,
+      puerto `RegistradorAuditoria` cableado en todos los use cases mutantes, pantalla
+      con búsqueda server-side y filas expandibles). Migración `a7c3f81e42d9`.
+      Decisiones y paridades en el README del módulo (§Entrega 2).
+- [ ] Entrega 3: reportes Excel/PDF (pantalla Reportes del handoff 04 — sumarle el tab
+      Reportes a la página de Auditoría) + emails (activar el seam `Notificador` sobre
+      el mailer de auth).
 - [ ] Migrar datos reales desde el Postgres de VacaSync (mapeo documentado en el
       README del módulo; corre contra un dump de la DB productiva, que vive en la PC
       del trabajo — ojo con el cast de timestamps medianoche-UTC a DATE).

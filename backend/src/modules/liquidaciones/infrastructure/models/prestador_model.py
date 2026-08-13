@@ -20,6 +20,7 @@ class LiquidacionPrestadorModel(Base):
     region: Mapped[str | None] = mapped_column(String)
     activo: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     siges_empresa_id: Mapped[int | None] = mapped_column(Integer, unique=True)
+    cd_prestador_id: Mapped[int | None] = mapped_column(Integer, unique=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()"), nullable=False
     )

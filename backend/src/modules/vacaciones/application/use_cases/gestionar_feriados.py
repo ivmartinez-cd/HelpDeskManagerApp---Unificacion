@@ -6,7 +6,18 @@ from src.modules.vacaciones.application.dtos.gestion_dtos import (
     ImportFeriadosResultDTO,
 )
 from src.modules.vacaciones.domain.entities.feriado import Feriado
+from src.modules.vacaciones.domain.entities.registro_auditoria import (
+    ACCION_CREATE,
+    ACCION_DELETE,
+    ACCION_IMPORT,
+    ACCION_UPDATE,
+    ENTIDAD_FERIADO,
+)
 from src.modules.vacaciones.domain.errors import NombreDuplicadoError
+from src.modules.vacaciones.domain.repositories.auditoria import (
+    RegistradorAuditoria,
+    RegistradorAuditoriaNulo,
+)
 from src.modules.vacaciones.domain.repositories.feriado_repository import FeriadoRepository
 from src.modules.vacaciones.domain.repositories.feriados_externos import (
     FeriadosExternosProvider,
@@ -14,9 +25,14 @@ from src.modules.vacaciones.domain.repositories.feriados_externos import (
 from src.shared.domain.errors import NotFoundError
 
 
+def _metadata(feriado: Feriado) -> dict[str, object]:
+    return {"name": feriado.name, "date": feriado.date.isoformat()}
+
+
 @dataclass(frozen=True, slots=True)
 class GestionFeriadosDependencies:
     feriados: FeriadoRepository
+    auditoria: RegistradorAuditoria = RegistradorAuditoriaNulo()
 
 
 class ListFeriados:
@@ -41,6 +57,9 @@ class CreateFeriado:
             deducts_vacation=command.deducts_vacation,
         )
         await self._deps.feriados.add(feriado)
+        await self._deps.auditoria.registrar(
+            ACCION_CREATE, ENTIDAD_FERIADO, str(feriado.id), _metadata(feriado)
+        )
         return feriado
 
 
@@ -60,6 +79,9 @@ class UpdateFeriado:
         feriado.date = command.fecha
         feriado.deducts_vacation = command.deducts_vacation
         await self._deps.feriados.save(feriado)
+        await self._deps.auditoria.registrar(
+            ACCION_UPDATE, ENTIDAD_FERIADO, str(feriado.id), _metadata(feriado)
+        )
         return feriado
 
 
@@ -68,15 +90,20 @@ class DeleteFeriado:
         self._deps = deps
 
     async def execute(self, feriado_id: uuid.UUID) -> None:
-        if await self._deps.feriados.get_by_id(feriado_id) is None:
+        feriado = await self._deps.feriados.get_by_id(feriado_id)
+        if feriado is None:
             raise NotFoundError(f"Feriado {feriado_id} no encontrado")
         await self._deps.feriados.delete(feriado_id)
+        await self._deps.auditoria.registrar(
+            ACCION_DELETE, ENTIDAD_FERIADO, str(feriado_id), _metadata(feriado)
+        )
 
 
 @dataclass(frozen=True, slots=True)
 class ImportarFeriadosDependencies:
     feriados: FeriadoRepository
     provider: FeriadosExternosProvider
+    auditoria: RegistradorAuditoria = RegistradorAuditoriaNulo()
 
 
 class ImportarFeriados:
@@ -97,4 +124,10 @@ class ImportarFeriados:
                     deducts_vacation=False,
                 )
             )
+        await self._deps.auditoria.registrar(
+            ACCION_IMPORT,
+            ENTIDAD_FERIADO,
+            None,
+            {"year": year, "count": len(importados)},
+        )
         return ImportFeriadosResultDTO(year=year, count=len(importados))

@@ -4,6 +4,11 @@ from datetime import UTC, datetime
 
 from src.modules.vacaciones.application.dtos.solicitud_dtos import DecidirSolicitudCommand
 from src.modules.vacaciones.domain.entities.aprobacion import Aprobacion, Decision
+from src.modules.vacaciones.domain.entities.registro_auditoria import (
+    ACCION_APPROVE,
+    ACCION_REJECT,
+    ENTIDAD_SOLICITUD,
+)
 from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud, Solicitud
 from src.modules.vacaciones.domain.errors import (
     EmpleadoNoEncontradoError,
@@ -11,6 +16,10 @@ from src.modules.vacaciones.domain.errors import (
 )
 from src.modules.vacaciones.domain.repositories.aprobacion_repository import (
     AprobacionRepository,
+)
+from src.modules.vacaciones.domain.repositories.auditoria import (
+    RegistradorAuditoria,
+    RegistradorAuditoriaNulo,
 )
 from src.modules.vacaciones.domain.repositories.empleado_repository import EmpleadoRepository
 from src.modules.vacaciones.domain.repositories.notificador import (
@@ -33,6 +42,7 @@ class DecidirSolicitudDependencies:
     empleados: EmpleadoRepository
     aprobaciones: AprobacionRepository
     notificador: Notificador
+    auditoria: RegistradorAuditoria = RegistradorAuditoriaNulo()
 
 
 class DecidirSolicitud:
@@ -76,6 +86,18 @@ class DecidirSolicitud:
                 comment=command.comment,
                 created_at=datetime.now(UTC),
             )
+        )
+        await self._deps.auditoria.registrar(
+            ACCION_APPROVE if decision is Decision.APPROVED else ACCION_REJECT,
+            ENTIDAD_SOLICITUD,
+            str(solicitud.id),
+            {
+                "employee": empleado.nombre_completo,
+                "startDate": solicitud.start_date.isoformat(),
+                "endDate": solicitud.end_date.isoformat(),
+                "days": solicitud.days_requested,
+                "comment": command.comment,
+            },
         )
         await self._deps.notificador.notificar_decision(
             DecisionNotif(

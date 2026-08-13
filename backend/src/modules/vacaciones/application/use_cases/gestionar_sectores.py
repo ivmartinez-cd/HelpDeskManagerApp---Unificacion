@@ -2,10 +2,20 @@ import uuid
 from dataclasses import dataclass
 
 from src.modules.vacaciones.application.dtos.gestion_dtos import SectorCommand, SectorDTO
+from src.modules.vacaciones.domain.entities.registro_auditoria import (
+    ACCION_CREATE,
+    ACCION_DELETE,
+    ACCION_UPDATE,
+    ENTIDAD_SECTOR,
+)
 from src.modules.vacaciones.domain.entities.sector import Sector
 from src.modules.vacaciones.domain.errors import (
     NombreDuplicadoError,
     SectorConEmpleadosError,
+)
+from src.modules.vacaciones.domain.repositories.auditoria import (
+    RegistradorAuditoria,
+    RegistradorAuditoriaNulo,
 )
 from src.modules.vacaciones.domain.repositories.catalogos_repositories import SectorRepository
 from src.modules.vacaciones.domain.repositories.empleado_repository import EmpleadoRepository
@@ -22,6 +32,7 @@ class GestionSectoresDependencies:
     empleados: EmpleadoRepository
     sector_manager: SectorManagerRepository
     users: UserDirectory
+    auditoria: RegistradorAuditoria = RegistradorAuditoriaNulo()
 
 
 class ListSectores:
@@ -57,6 +68,9 @@ class CreateSector:
         await self._deps.sectores.add(sector)
         if command.jefe_user_id is not None:
             await self._deps.sector_manager.asignar(command.jefe_user_id, sector.id)
+        await self._deps.auditoria.registrar(
+            ACCION_CREATE, ENTIDAD_SECTOR, str(sector.id), {"name": sector.name}
+        )
         return sector
 
 
@@ -77,6 +91,9 @@ class UpdateSector:
         sector.color = command.color
         await self._deps.sectores.save(sector)
         await self._reasignar_jefe(sector_id, command.jefe_user_id)
+        await self._deps.auditoria.registrar(
+            ACCION_UPDATE, ENTIDAD_SECTOR, str(sector.id), {"name": sector.name}
+        )
         return sector
 
     async def _reasignar_jefe(
@@ -96,7 +113,8 @@ class DeleteSector:
         self._deps = deps
 
     async def execute(self, sector_id: uuid.UUID) -> None:
-        if await self._deps.sectores.get_by_id(sector_id) is None:
+        sector = await self._deps.sectores.get_by_id(sector_id)
+        if sector is None:
             raise NotFoundError(f"Sector {sector_id} no encontrado")
         if await self._deps.empleados.count_activos_por_departamento(sector_id) > 0:
             raise SectorConEmpleadosError()
@@ -104,3 +122,6 @@ class DeleteSector:
             if jefe.department_id == sector_id:
                 await self._deps.sector_manager.desasignar(jefe.user_id)
         await self._deps.sectores.delete(sector_id)
+        await self._deps.auditoria.registrar(
+            ACCION_DELETE, ENTIDAD_SECTOR, str(sector_id), {"name": sector.name}
+        )

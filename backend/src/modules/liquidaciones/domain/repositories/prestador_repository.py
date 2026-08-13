@@ -34,6 +34,21 @@ class PrestadorRepository(Protocol):
 
     async def toggle_activo(self, prestador_id: UUID, *, activo: bool) -> Prestador | None: ...
 
+    async def list_con_cd_id(self) -> list[Prestador]:
+        """Todos los prestadores que tienen `cd_prestador_id` configurado."""
+        ...
+
+    async def get_by_cd_id(self, cd_id: int) -> Prestador | None:
+        """None si no hay prestador vinculado a ese `cd_prestador_id`."""
+        ...
+
+    async def vincular_cd(
+        self, prestador_id: UUID, *, cd_prestador_id: int | None
+    ) -> Prestador | None:
+        """Establece (o quita, con None) el vínculo al SOAP de Canal Directo.
+        Lanza `CdVinculoDuplicadoError` si el id ya vincula a otro prestador."""
+        ...
+
     async def vincular_siges(
         self, prestador_id: UUID, *, siges_empresa_id: int | None
     ) -> Prestador | None:

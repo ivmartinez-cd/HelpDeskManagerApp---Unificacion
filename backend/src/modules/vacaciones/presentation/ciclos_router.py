@@ -5,6 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.vacaciones.application.use_cases.actualizar_config import (
+    ActualizarConfig,
+    ActualizarConfigDependencies,
+)
 from src.modules.vacaciones.application.use_cases.gestionar_ciclos import (
     AbrirCiclosProximoAnio,
     CiclosDependencies,
@@ -19,6 +23,9 @@ from src.modules.vacaciones.application.use_cases.gestionar_exclusiones import (
 )
 from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 from src.modules.vacaciones.domain.well_known_permissions import MANAGE, VIEW
+from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_auditoria import (
+    SqlAlchemyRegistradorAuditoria,
+)
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_ciclo_repository import (
     SqlAlchemyCicloRepository,
 )
@@ -38,6 +45,7 @@ from src.modules.vacaciones.infrastructure.system_clock import SystemClock
 from src.modules.vacaciones.presentation.dependencies.actor import get_actor_vacaciones
 from src.modules.vacaciones.presentation.schemas.config_schemas import (
     ConfigResponse,
+    ConfigUpdateRequest,
     ExclusionRequest,
     ExclusionResponse,
 )
@@ -113,6 +121,20 @@ async def get_config(
     db: AsyncSession = Depends(get_db),
 ) -> ConfigResponse:
     config = await SqlAlchemyConfigRepository(db).get()
+    return ConfigResponse.from_config(config)
+
+
+@router.put("/config")
+async def update_config(
+    body: ConfigUpdateRequest,
+    identity: Identity = _require_manage,
+    db: AsyncSession = Depends(get_db),
+) -> ConfigResponse:
+    deps = ActualizarConfigDependencies(
+        config=SqlAlchemyConfigRepository(db),
+        auditoria=SqlAlchemyRegistradorAuditoria(db, identity.user.id),
+    )
+    config = await ActualizarConfig(deps).execute(body.to_command())
     return ConfigResponse.from_config(config)
 
 

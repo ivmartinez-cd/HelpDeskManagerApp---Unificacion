@@ -20,6 +20,9 @@ from src.modules.vacaciones.application.use_cases.gestionar_sectores import (
     UpdateSector,
 )
 from src.modules.vacaciones.domain.well_known_permissions import MANAGE, VIEW
+from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_auditoria import (
+    SqlAlchemyRegistradorAuditoria,
+)
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_cargo_repository import (
     SqlAlchemyCargoRepository,
 )
@@ -52,17 +55,29 @@ _require_view = Depends(require_permission(VIEW))
 _require_manage = Depends(require_permission(MANAGE))
 
 
-def _sector_deps(db: AsyncSession) -> GestionSectoresDependencies:
+def _sector_deps(
+    db: AsyncSession, identity: Identity | None = None
+) -> GestionSectoresDependencies:
     return GestionSectoresDependencies(
         sectores=SqlAlchemySectorRepository(db),
         empleados=SqlAlchemyEmpleadoRepository(db),
         sector_manager=SqlAlchemySectorManagerRepository(db),
         users=SqlAlchemyUserDirectory(db),
+        auditoria=SqlAlchemyRegistradorAuditoria(
+            db, identity.user.id if identity else None
+        ),
     )
 
 
-def _cargo_deps(db: AsyncSession) -> GestionCargosDependencies:
-    return GestionCargosDependencies(cargos=SqlAlchemyCargoRepository(db))
+def _cargo_deps(
+    db: AsyncSession, identity: Identity | None = None
+) -> GestionCargosDependencies:
+    return GestionCargosDependencies(
+        cargos=SqlAlchemyCargoRepository(db),
+        auditoria=SqlAlchemyRegistradorAuditoria(
+            db, identity.user.id if identity else None
+        ),
+    )
 
 
 @router.get("/sectores")
@@ -79,10 +94,10 @@ async def list_sectores(
 @router.post("/sectores", status_code=status.HTTP_201_CREATED)
 async def create_sector(
     body: SectorRequest,
-    _identity: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, uuid.UUID]:
-    sector = await CreateSector(_sector_deps(db)).execute(body.to_command())
+    sector = await CreateSector(_sector_deps(db, identity)).execute(body.to_command())
     return {"id": sector.id}
 
 
@@ -90,20 +105,22 @@ async def create_sector(
 async def update_sector(
     sector_id: uuid.UUID,
     body: SectorRequest,
-    _identity: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, uuid.UUID]:
-    sector = await UpdateSector(_sector_deps(db)).execute(sector_id, body.to_command())
+    sector = await UpdateSector(_sector_deps(db, identity)).execute(
+        sector_id, body.to_command()
+    )
     return {"id": sector.id}
 
 
 @router.delete("/sectores/{sector_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_sector(
     sector_id: uuid.UUID,
-    _identity: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    await DeleteSector(_sector_deps(db)).execute(sector_id)
+    await DeleteSector(_sector_deps(db, identity)).execute(sector_id)
 
 
 @router.get("/usuarios")
@@ -135,10 +152,10 @@ async def list_cargos(
 @router.post("/cargos", status_code=status.HTTP_201_CREATED)
 async def create_cargo(
     body: CargoRequest,
-    _identity: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, uuid.UUID]:
-    cargo = await CreateCargo(_cargo_deps(db)).execute(body.to_command())
+    cargo = await CreateCargo(_cargo_deps(db, identity)).execute(body.to_command())
     return {"id": cargo.id}
 
 
@@ -146,17 +163,19 @@ async def create_cargo(
 async def update_cargo(
     cargo_id: uuid.UUID,
     body: CargoRequest,
-    _identity: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, uuid.UUID]:
-    cargo = await UpdateCargo(_cargo_deps(db)).execute(cargo_id, body.to_command())
+    cargo = await UpdateCargo(_cargo_deps(db, identity)).execute(
+        cargo_id, body.to_command()
+    )
     return {"id": cargo.id}
 
 
 @router.delete("/cargos/{cargo_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_cargo(
     cargo_id: uuid.UUID,
-    _identity: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    await DeleteCargo(_cargo_deps(db)).execute(cargo_id)
+    await DeleteCargo(_cargo_deps(db, identity)).execute(cargo_id)

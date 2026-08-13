@@ -23,6 +23,10 @@ from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion impo
     ReanalizarLiquidacion,
     ReanalizarLiquidacionPorts,
 )
+from src.modules.liquidaciones.application.use_cases.sincronizar_liquidaciones import (
+    SincronizarLiquidaciones,
+    SincronizarLiquidacionesPorts,
+)
 from src.modules.liquidaciones.infrastructure.importers.pandas_liquidacion_file_parser import (
     PandasLiquidacionFileParser,
 )
@@ -55,6 +59,9 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tabla_km_r
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tarifario_repository import (  # noqa: E501
     SqlAlchemyTarifarioRepository,
+)
+from src.modules.liquidaciones.infrastructure.soap.zeep_cd_liquidaciones_gateway import (
+    ZeepCdLiquidacionesGateway,
 )
 
 
@@ -95,6 +102,18 @@ def build_importar_liquidacion(session: AsyncSession) -> ImportarLiquidacion:
     return ImportarLiquidacion(
         ImportarLiquidacionPorts(
             parser=PandasLiquidacionFileParser(),
+            prestadores=SqlAlchemyPrestadorRepository(session),
+            liquidaciones=SqlAlchemyLiquidacionRepository(session),
+            incidentes=SqlAlchemyIncidenteRepository(session),
+            reanalizar=build_reanalizar_liquidacion(session),
+        )
+    )
+
+
+def build_sincronizar_liquidaciones(session: AsyncSession) -> SincronizarLiquidaciones:
+    return SincronizarLiquidaciones(
+        SincronizarLiquidacionesPorts(
+            cd_gateway=ZeepCdLiquidacionesGateway(),
             prestadores=SqlAlchemyPrestadorRepository(session),
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
             incidentes=SqlAlchemyIncidenteRepository(session),

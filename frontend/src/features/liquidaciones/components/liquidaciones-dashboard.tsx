@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
+import { toast } from "sonner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
 import { EstadoBadge } from "./estado-badge";
@@ -24,6 +25,7 @@ export function LiquidacionesDashboard() {
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [filtroPrestador, setFiltroPrestador] = useState("");
   const [filtroAnio, setFiltroAnio] = useState("");
 
@@ -73,6 +75,21 @@ export function LiquidacionesDashboard() {
   const totalImporte = filtradas.reduce((s, l) => s + l.totalImporte, 0);
   const ultimas = filtradas.slice(0, 10);
 
+  const handleSincronizar = async () => {
+    setSyncing(true);
+    try {
+      const res = await liquidacionesApi.sincronizar();
+      toast.success(
+        `Sync OK — ${res.creadas} nueva${res.creadas !== 1 ? "s" : ""}, ${res.yaExistentes} ya existentes${res.sinPrestador > 0 ? `, ${res.sinPrestador} sin prestador vinculado` : ""}`,
+      );
+      if (res.creadas > 0) await load();
+    } catch {
+      toast.error("Error al sincronizar con Canal Directo");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -92,12 +109,21 @@ export function LiquidacionesDashboard() {
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-xl font-extrabold text-foreground">Liquidaciones PST</h1>
-        <button
-          onClick={() => setImportOpen(true)}
-          className="rounded-[8px] bg-brand-orange px-4 py-2.5 font-body text-sm font-semibold text-white transition-opacity hover:opacity-90"
-        >
-          + Importar liquidación
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => void handleSincronizar()}
+            disabled={syncing}
+            className="rounded-[8px] border border-border bg-card px-4 py-2.5 font-body text-sm font-semibold text-foreground transition-opacity hover:opacity-70 disabled:opacity-50"
+          >
+            {syncing ? "Sincronizando..." : "↻ Sincronizar CD"}
+          </button>
+          <button
+            onClick={() => setImportOpen(true)}
+            className="rounded-[8px] bg-brand-orange px-4 py-2.5 font-body text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            + Importar liquidación
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

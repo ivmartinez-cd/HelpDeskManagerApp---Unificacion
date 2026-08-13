@@ -49,6 +49,12 @@ from src.modules.prestadores.presentation.prestadores_router import (
 )
 from src.modules.sla.presentation.sla_router import router as sla_router
 from src.modules.turnos.presentation.turnos_router import router as turnos_router
+from src.modules.vacaciones.presentation.auditoria_router import (
+    router as vacaciones_auditoria_router,
+)
+from src.modules.vacaciones.presentation.ausencias_router import (
+    router as vacaciones_ausencias_router,
+)
 from src.modules.vacaciones.presentation.catalogos_router import (
     router as vacaciones_catalogos_router,
 )
@@ -176,6 +182,8 @@ def create_app() -> FastAPI:
     app.include_router(vacaciones_solicitudes_router)
     app.include_router(vacaciones_dashboard_router)
     app.include_router(vacaciones_ciclos_router)
+    app.include_router(vacaciones_ausencias_router)
+    app.include_router(vacaciones_auditoria_router)
     return app
 
 

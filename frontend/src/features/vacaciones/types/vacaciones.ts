@@ -184,3 +184,88 @@ export interface Solapamientos {
   overlaps: Solicitud[];
   teamSize: number;
 }
+
+export type TipoAusencia =
+  | "DESCUENTO_DIA"
+  | "BAJA_ENFERMEDAD"
+  | "TRAMITE_PERSONAL"
+  | "GUARDIA"
+  | "DIA_ESTUDIO"
+  | "HOME_OFFICE"
+  | "OTHER";
+
+export interface Ausencia {
+  id: string;
+  empleadoId: string;
+  empleadoNombre: string;
+  empleadoColor: string;
+  sectorNombre: string;
+  sectorColor: string;
+  startDate: string;
+  endDate: string;
+  daysCount: number;
+  halfDay: boolean;
+  tipo: TipoAusencia;
+  reason: string | null;
+  status: EstadoSolicitud;
+  createdAt: string;
+}
+
+export interface AusenciaPayload {
+  empleadoIds?: string[];
+  startDate: string;
+  endDate: string;
+  tipo: TipoAusencia;
+  reason: string | null;
+  halfDay: boolean;
+  status?: EstadoSolicitud;
+}
+
+export interface DescuentoRow {
+  empleadoId: string;
+  firstName: string;
+  lastName: string;
+  cargoNombre: string;
+  diasDescontados: number;
+  diasEnfermedad: number;
+  guardias: number;
+}
+
+export interface RegistroAuditoria {
+  id: string;
+  accion: string;
+  entidad: string;
+  entidadId: string | null;
+  usuarioEmail: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface SeniorityTier {
+  minYears: number;
+  maxYears: number;
+  days: number;
+}
+
+export interface ConfigVacaciones {
+  seniorityTiers: SeniorityTier[];
+  nextYearOpenMonth: number;
+  nextYearOpenDay: number;
+  allowAdvanceRequest: boolean;
+  maxAdvanceDays: number;
+  allowCarryOver: boolean;
+  maxCarryOverDays: number;
+  minAdvanceNoticeDays: number;
+  maxOverlapPercent: number;
+  maxOverlapCount: number;
+}
+
+export type ConfigUpdatePayload = Partial<ConfigVacaciones>;
+
+export interface Exclusion {
+  id: string;
+  empleadoAId: string;
+  empleadoBId: string;
+  empleadoANombre: string;
+  empleadoBNombre: string;
+}

@@ -25,6 +25,7 @@ from src.modules.liquidaciones.presentation.dependencies import (
     build_importar_liquidacion,
     build_list_liquidaciones,
     build_reanalizar_liquidacion,
+    build_sincronizar_liquidaciones,
 )
 from src.modules.liquidaciones.presentation.schemas.importar_liquidacion_schemas import (
     ImportarLiquidacionOut,
@@ -43,6 +44,7 @@ from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import (
 from src.modules.liquidaciones.presentation.schemas.reanalizar_liquidacion_schemas import (
     ReanalizarLiquidacionOut,
 )
+from src.modules.liquidaciones.presentation.schemas.sincronizar_schemas import SincronizarOut
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
@@ -109,6 +111,15 @@ async def importar_liquidacion(
         prestador_id=prestador_id, contenido=contenido, nombre_archivo=file.filename or ""
     )
     return ImportarLiquidacionOut.from_dto(resultado)
+
+
+@router.post("/sincronizar", response_model=SincronizarOut)
+async def sincronizar_liquidaciones(
+    _: Identity = _require_create,
+    db: AsyncSession = Depends(get_db),
+) -> SincronizarOut:
+    resultado = await build_sincronizar_liquidaciones(db).execute()
+    return SincronizarOut.from_dto(resultado)
 
 
 @router.patch("/{liquidacion_id}/estado", response_model=LiquidacionOut)

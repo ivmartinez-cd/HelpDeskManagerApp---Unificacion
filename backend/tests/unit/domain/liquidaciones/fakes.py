@@ -39,6 +39,12 @@ class FakePrestadorRepository:
     async def get_by_nombre_corto(self, nombre_corto: str) -> Prestador | None:
         return next((p for p in self.rows.values() if p.nombre_corto == nombre_corto), None)
 
+    async def list_con_cd_id(self) -> list[Prestador]:
+        return [p for p in self.rows.values() if p.cd_prestador_id is not None]
+
+    async def get_by_cd_id(self, cd_id: int) -> Prestador | None:
+        return next((p for p in self.rows.values() if p.cd_prestador_id == cd_id), None)
+
     async def list_all(self, *, solo_activos: bool = False) -> list[Prestador]:
         rows = self.rows.values()
         return [p for p in rows if not solo_activos or p.activo]
@@ -81,6 +87,9 @@ class FakeLiquidacionRepository:
         if periodo is not None:
             rows = [r for r in rows if r.periodo == periodo]
         return rows
+
+    async def list_numeros_liquidacion(self) -> set[str]:
+        return {r.numero_liquidacion for r in self.rows.values() if r.numero_liquidacion}
 
     async def list_periodos(self) -> list[str]:
         return sorted({r.periodo for r in self.rows.values()}, reverse=True)

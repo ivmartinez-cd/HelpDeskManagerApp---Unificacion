@@ -35,6 +35,7 @@ class PrestadorOut(BaseModel):
     region: str | None
     activo: bool
     siges_empresa_id: int | None = Field(default=None, serialization_alias="sigesEmpresaId")
+    cd_prestador_id: int | None = Field(default=None, serialization_alias="cdPrestadorId")
     created_at: datetime = Field(serialization_alias="createdAt")
     updated_at: datetime = Field(serialization_alias="updatedAt")
 
@@ -48,6 +49,7 @@ class PrestadorOut(BaseModel):
             region=e.region,
             activo=e.activo,
             siges_empresa_id=e.siges_empresa_id,
+            cd_prestador_id=e.cd_prestador_id,
             created_at=e.created_at,
             updated_at=e.updated_at,
         )
@@ -55,6 +57,11 @@ class PrestadorOut(BaseModel):
 
 class ToggleActivoIn(BaseModel):
     activo: bool
+
+
+class VincularCdIn(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    cd_prestador_id: int | None = Field(default=None, alias="cdPrestadorId")
 
 
 # ─── SPSTs ───────────────────────────────────────────────────────────────────

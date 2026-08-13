@@ -2,10 +2,14 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.modules.vacaciones.application.use_cases.actualizar_config import (
+    ActualizarConfigCommand,
+)
 from src.modules.vacaciones.application.use_cases.gestionar_exclusiones import (
     ExclusionConNombresDTO,
 )
 from src.modules.vacaciones.domain.value_objects.config_vacaciones import ConfigVacaciones
+from src.modules.vacaciones.domain.value_objects.seniority_tier import SeniorityTier
 
 
 class SeniorityTierResponse(BaseModel):
@@ -26,6 +30,9 @@ class ConfigResponse(BaseModel):
     max_advance_days: int = Field(serialization_alias="maxAdvanceDays")
     allow_carry_over: bool = Field(serialization_alias="allowCarryOver")
     max_carry_over_days: int = Field(serialization_alias="maxCarryOverDays")
+    min_advance_notice_days: int = Field(serialization_alias="minAdvanceNoticeDays")
+    max_overlap_percent: int = Field(serialization_alias="maxOverlapPercent")
+    max_overlap_count: int = Field(serialization_alias="maxOverlapCount")
 
     @classmethod
     def from_config(cls, config: ConfigVacaciones) -> "ConfigResponse":
@@ -42,6 +49,68 @@ class ConfigResponse(BaseModel):
             max_advance_days=config.max_advance_days,
             allow_carry_over=config.allow_carry_over,
             max_carry_over_days=config.max_carry_over_days,
+            min_advance_notice_days=config.min_advance_notice_days,
+            max_overlap_percent=config.max_overlap_percent,
+            max_overlap_count=config.max_overlap_count,
+        )
+
+
+class SeniorityTierRequest(BaseModel):
+    """Validación del PUT legacy (zod): min/max >= 0, days 1..365."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    min_years: float = Field(alias="minYears", ge=0)
+    max_years: float = Field(alias="maxYears", ge=0)
+    days: int = Field(ge=1, le=365)
+
+
+class ConfigUpdateRequest(BaseModel):
+    """PUT parcial (paridad legacy): los campos ausentes no se tocan."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    seniority_tiers: list[SeniorityTierRequest] | None = Field(
+        default=None, alias="seniorityTiers", min_length=1
+    )
+    min_advance_notice_days: int | None = Field(
+        default=None, alias="minAdvanceNoticeDays", ge=0, le=365
+    )
+    max_overlap_percent: int | None = Field(
+        default=None, alias="maxOverlapPercent", ge=0, le=100
+    )
+    max_overlap_count: int | None = Field(default=None, alias="maxOverlapCount", ge=0)
+    next_year_open_month: int | None = Field(
+        default=None, alias="nextYearOpenMonth", ge=1, le=12
+    )
+    next_year_open_day: int | None = Field(
+        default=None, alias="nextYearOpenDay", ge=1, le=31
+    )
+    allow_advance_request: bool | None = Field(default=None, alias="allowAdvanceRequest")
+    max_advance_days: int | None = Field(default=None, alias="maxAdvanceDays", ge=0)
+    allow_carry_over: bool | None = Field(default=None, alias="allowCarryOver")
+    max_carry_over_days: int | None = Field(default=None, alias="maxCarryOverDays", ge=0)
+
+    def to_command(self) -> ActualizarConfigCommand:
+        tiers = (
+            tuple(
+                SeniorityTier(min_years=t.min_years, max_years=t.max_years, days=t.days)
+                for t in self.seniority_tiers
+            )
+            if self.seniority_tiers is not None
+            else None
+        )
+        return ActualizarConfigCommand(
+            seniority_tiers=tiers,
+            min_advance_notice_days=self.min_advance_notice_days,
+            max_overlap_percent=self.max_overlap_percent,
+            max_overlap_count=self.max_overlap_count,
+            next_year_open_month=self.next_year_open_month,
+            next_year_open_day=self.next_year_open_day,
+            allow_advance_request=self.allow_advance_request,
+            max_advance_days=self.max_advance_days,
+            allow_carry_over=self.allow_carry_over,
+            max_carry_over_days=self.max_carry_over_days,
         )
 
 

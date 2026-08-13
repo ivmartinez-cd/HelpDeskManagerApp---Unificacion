@@ -19,6 +19,11 @@ class LiquidacionRepository(Protocol):
         por fecha_importacion desc.  Sin filtro = devuelve todas."""
         ...
 
+    async def list_numeros_liquidacion(self) -> set[str]:
+        """Conjunto de todos los `numero_liquidacion` no-nulos en la DB.
+        Usado por el sync de CD para detectar novedades sin cargar filas completas."""
+        ...
+
     async def list_periodos(self) -> list[str]:
         """Valores distintos de `periodo` (YYYY-MM) en orden descendente."""
         ...

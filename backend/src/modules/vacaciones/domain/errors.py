@@ -134,6 +134,34 @@ class LimiteCargoError(BusinessRuleViolationError):
         )
 
 
+class AusenciaNoEncontradaError(NotFoundError):
+    def __init__(self, ausencia_id: UUID) -> None:
+        super().__init__(f"Baja {ausencia_id} no encontrada")
+
+
+class SoloAusenciasPendientesError(DomainError):
+    default_code: ClassVar[str] = "SOLO_PENDIENTES_EDITABLES"
+
+    def __init__(self, accion: str) -> None:
+        super().__init__(f"Sólo puedes {accion} bajas pendientes")
+
+
+class SolapamientoAusenciaError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "SOLAPAMIENTO_AUSENCIA"
+
+    def __init__(self) -> None:
+        super().__init__("Ya existe una baja del mismo tipo que se solapa con esas fechas")
+
+
+class SolapamientoConVacacionesError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "SOLAPAMIENTO_VACACIONES"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Ya existe una solicitud de vacaciones que se solapa con esas fechas"
+        )
+
+
 class SectorConEmpleadosError(BusinessRuleViolationError):
     default_code: ClassVar[str] = "SECTOR_CON_EMPLEADOS"
 

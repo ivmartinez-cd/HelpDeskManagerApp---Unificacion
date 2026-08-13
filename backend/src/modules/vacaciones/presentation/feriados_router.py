@@ -19,6 +19,9 @@ from src.modules.vacaciones.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.vacaciones.infrastructure.argentinadatos_feriados_client import (
     ArgentinaDatosFeriadosClient,
 )
+from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_auditoria import (
+    SqlAlchemyRegistradorAuditoria,
+)
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_feriado_repository import (
     SqlAlchemyFeriadoRepository,
 )
@@ -37,8 +40,15 @@ _require_view = Depends(require_permission(VIEW))
 _require_manage = Depends(require_permission(MANAGE))
 
 
-def _deps(db: AsyncSession) -> GestionFeriadosDependencies:
-    return GestionFeriadosDependencies(feriados=SqlAlchemyFeriadoRepository(db))
+def _deps(
+    db: AsyncSession, identity: Identity | None = None
+) -> GestionFeriadosDependencies:
+    return GestionFeriadosDependencies(
+        feriados=SqlAlchemyFeriadoRepository(db),
+        auditoria=SqlAlchemyRegistradorAuditoria(
+            db, identity.user.id if identity else None
+        ),
+    )
 
 
 @router.get("")
@@ -72,11 +82,13 @@ async def export_feriados(
 @router.post("/importar/{year}")
 async def importar_feriados(
     year: int,
-    _identity: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> ImportFeriadosResponse:
     deps = ImportarFeriadosDependencies(
-        feriados=SqlAlchemyFeriadoRepository(db), provider=ArgentinaDatosFeriadosClient()
+        feriados=SqlAlchemyFeriadoRepository(db),
+        provider=ArgentinaDatosFeriadosClient(),
+        auditoria=SqlAlchemyRegistradorAuditoria(db, identity.user.id),
     )
     resultado = await ImportarFeriados(deps).execute(year)
     return ImportFeriadosResponse.from_dto(resultado)
@@ -85,10 +97,10 @@ async def importar_feriados(
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_feriado(
     body: FeriadoRequest,
-    _identity: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> FeriadoResponse:
-    feriado = await CreateFeriado(_deps(db)).execute(body.to_command())
+    feriado = await CreateFeriado(_deps(db, identity)).execute(body.to_command())
     return FeriadoResponse.from_entity(feriado)
 
 
@@ -96,17 +108,19 @@ async def create_feriado(
 async def update_feriado(
     feriado_id: uuid.UUID,
     body: FeriadoRequest,
-    _identity: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> FeriadoResponse:
-    feriado = await UpdateFeriado(_deps(db)).execute(feriado_id, body.to_command())
+    feriado = await UpdateFeriado(_deps(db, identity)).execute(
+        feriado_id, body.to_command()
+    )
     return FeriadoResponse.from_entity(feriado)
 
 
 @router.delete("/{feriado_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_feriado(
     feriado_id: uuid.UUID,
-    _identity: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    await DeleteFeriado(_deps(db)).execute(feriado_id)
+    await DeleteFeriado(_deps(db, identity)).execute(feriado_id)

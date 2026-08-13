@@ -34,6 +34,13 @@ class SqlAlchemyLiquidacionRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
+    async def list_numeros_liquidacion(self) -> set[str]:
+        stmt = select(LiquidacionModel.numero_liquidacion).where(
+            LiquidacionModel.numero_liquidacion.is_not(None)
+        )
+        result = await self._session.execute(stmt)
+        return {row[0] for row in result.all()}
+
     async def list_periodos(self) -> list[str]:
         stmt = (
             select(LiquidacionModel.periodo)

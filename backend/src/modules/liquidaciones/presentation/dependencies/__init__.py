@@ -20,6 +20,7 @@ from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
     build_importar_prestador_maestro,
     build_list_liquidaciones,
     build_reanalizar_liquidacion,
+    build_sincronizar_liquidaciones,
 )
 from src.modules.liquidaciones.presentation.dependencies.siges import (
     build_buscar_sucursales_siges,
@@ -50,6 +51,7 @@ __all__ = [
     "build_mapear_zona_siges",
     "build_proponer_vinculos_siges",
     "build_reanalizar_liquidacion",
+    "build_sincronizar_liquidaciones",
     "build_sync_config_desde_siges",
     "build_sync_tarifarios_desde_siges",
     "build_toggle_prestador_activo",

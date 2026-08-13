@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.errors import (
+    CdVinculoDuplicadoError,
     PrestadorConLiquidacionesError,
     SigesVinculoDuplicadoError,
 )
@@ -86,6 +87,37 @@ class SqlAlchemyPrestadorRepository:
         await self._session.refresh(row)
         return _to_entity(row)
 
+    async def list_con_cd_id(self) -> list[Prestador]:
+        stmt = (
+            select(LiquidacionPrestadorModel)
+            .where(LiquidacionPrestadorModel.cd_prestador_id.is_not(None))
+            .order_by(LiquidacionPrestadorModel.nombre)
+        )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_entity(row) for row in rows]
+
+    async def get_by_cd_id(self, cd_id: int) -> Prestador | None:
+        stmt = select(LiquidacionPrestadorModel).where(
+            LiquidacionPrestadorModel.cd_prestador_id == cd_id
+        )
+        row = (await self._session.execute(stmt)).scalar_one_or_none()
+        return _to_entity(row) if row else None
+
+    async def vincular_cd(
+        self, prestador_id: UUID, *, cd_prestador_id: int | None
+    ) -> Prestador | None:
+        row = await self._session.get(LiquidacionPrestadorModel, prestador_id)
+        if not row:
+            return None
+        row.cd_prestador_id = cd_prestador_id
+        row.updated_at = datetime.now(UTC)
+        try:
+            await self._session.flush()
+        except IntegrityError as exc:
+            raise CdVinculoDuplicadoError(cd_prestador_id) from exc
+        await self._session.refresh(row)
+        return _to_entity(row)
+
     async def vincular_siges(
         self, prestador_id: UUID, *, siges_empresa_id: int | None
     ) -> Prestador | None:
@@ -132,4 +164,5 @@ def _to_entity(row: LiquidacionPrestadorModel) -> Prestador:
         created_at=row.created_at,
         updated_at=row.updated_at,
         siges_empresa_id=row.siges_empresa_id,
+        cd_prestador_id=row.cd_prestador_id,
     )

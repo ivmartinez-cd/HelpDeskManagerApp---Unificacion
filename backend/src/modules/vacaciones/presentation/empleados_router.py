@@ -16,6 +16,9 @@ from src.modules.vacaciones.application.use_cases.gestionar_empleados import (
 from src.modules.vacaciones.domain.entities.empleado import EstadoEmpleado
 from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 from src.modules.vacaciones.domain.well_known_permissions import MANAGE, VIEW
+from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_auditoria import (
+    SqlAlchemyRegistradorAuditoria,
+)
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_cargo_repository import (
     SqlAlchemyCargoRepository,
 )
@@ -50,7 +53,9 @@ _require_view = Depends(require_permission(VIEW))
 _require_manage = Depends(require_permission(MANAGE))
 
 
-def _deps(db: AsyncSession) -> GestionEmpleadosDependencies:
+def _deps(
+    db: AsyncSession, identity: Identity | None = None
+) -> GestionEmpleadosDependencies:
     return GestionEmpleadosDependencies(
         empleados=SqlAlchemyEmpleadoRepository(db),
         sectores=SqlAlchemySectorRepository(db),
@@ -58,6 +63,9 @@ def _deps(db: AsyncSession) -> GestionEmpleadosDependencies:
         ciclos=SqlAlchemyCicloRepository(db),
         config=SqlAlchemyConfigRepository(db),
         clock=SystemClock(),
+        auditoria=SqlAlchemyRegistradorAuditoria(
+            db, identity.user.id if identity else None
+        ),
     )
 
 
@@ -82,10 +90,10 @@ async def list_empleados(
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_empleado(
     body: EmpleadoRequest,
-    _identity: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> EmpleadoResponse:
-    empleado = await CreateEmpleado(_deps(db)).execute(body.to_command())
+    empleado = await CreateEmpleado(_deps(db, identity)).execute(body.to_command())
     return EmpleadoResponse.from_entity(empleado)
 
 
@@ -93,17 +101,19 @@ async def create_empleado(
 async def update_empleado(
     empleado_id: uuid.UUID,
     body: EmpleadoRequest,
-    _identity: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> EmpleadoResponse:
-    empleado = await UpdateEmpleado(_deps(db)).execute(empleado_id, body.to_command())
+    empleado = await UpdateEmpleado(_deps(db, identity)).execute(
+        empleado_id, body.to_command()
+    )
     return EmpleadoResponse.from_entity(empleado)
 
 
 @router.delete("/{empleado_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_empleado(
     empleado_id: uuid.UUID,
-    _identity: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    await DeleteEmpleado(_deps(db)).execute(empleado_id)
+    await DeleteEmpleado(_deps(db, identity)).execute(empleado_id)

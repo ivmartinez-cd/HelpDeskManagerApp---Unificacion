@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,6 +26,7 @@ from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     PrestadorIn,
     PrestadorOut,
     ToggleActivoIn,
+    VincularCdIn,
 )
 from src.modules.liquidaciones.presentation.schemas.importar_prestador_maestro_schemas import (
     ImportarPrestadorMaestroOut,
@@ -75,6 +76,21 @@ async def toggle_prestador_activo(
     db: AsyncSession = Depends(get_db),
 ) -> PrestadorOut:
     updated = await build_toggle_prestador_activo(db).execute(prestador_id, activo=body.activo)
+    return PrestadorOut.from_entity(updated)
+
+
+@router.patch("/prestadores/{prestador_id}/vincular-cd", response_model=PrestadorOut)
+async def vincular_cd_prestador(
+    prestador_id: UUID,
+    body: VincularCdIn,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> PrestadorOut:
+    updated = await SqlAlchemyPrestadorRepository(db).vincular_cd(
+        prestador_id, cd_prestador_id=body.cd_prestador_id
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Prestador no encontrado")
     return PrestadorOut.from_entity(updated)
 
 

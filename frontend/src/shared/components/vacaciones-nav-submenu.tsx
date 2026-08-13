@@ -4,8 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarCheck2,
+  CalendarX2,
   ClipboardCheck,
   LayoutDashboard,
+  ScrollText,
+  Settings,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -41,6 +44,24 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
       label: "Aprobaciones",
       icon: ClipboardCheck,
       visible: esAdmin || can("vacaciones", "approve"),
+    },
+    {
+      href: "/vacaciones/auditoria",
+      label: "Auditoría",
+      icon: ScrollText,
+      visible: esAdmin,
+    },
+    {
+      href: "/vacaciones/configuracion",
+      label: "Configuración",
+      icon: Settings,
+      visible: esAdmin,
+    },
+    {
+      href: "/vacaciones/asistencias",
+      label: "Asistencias",
+      icon: CalendarX2,
+      visible: true,
     },
     {
       href: "/vacaciones/gestion",
