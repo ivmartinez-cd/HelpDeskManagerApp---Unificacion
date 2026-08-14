@@ -1,5 +1,6 @@
-"""Factories de wiring de sla: el gateway exige MERCURIO configurado y los
-builders arman el grafo de use cases sin tocar la DB."""
+"""Factories de wiring de sla: el gateway exige MERCURIO configurado (chequeo
+centralizado en `require_mercurio_runner`, ADR-018) y los builders arman el
+grafo de use cases sin tocar la DB."""
 
 from typing import cast
 
@@ -7,6 +8,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import src.modules.sla.presentation.dependencies as deps_module
+import src.shared.infrastructure.mercurio.factories as mercurio_factories
 from src.modules.sla.application.use_cases.get_sla_compliance import GetSlaCompliance
 from src.modules.sla.application.use_cases.list_incidentes_vencidos import (
     ListIncidentesVencidos,
@@ -21,13 +23,14 @@ _SESSION = cast(AsyncSession, object())  # los builders solo lo inyectan, no lo 
 @pytest.fixture(autouse=True)
 def _reset_gateway_cache() -> None:
     deps_module.get_sla_query_gateway.cache_clear()
+    mercurio_factories.require_mercurio_runner.cache_clear()
 
 
 def test_gateway_sin_mercurio_configurado_falla_con_mensaje_claro(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        deps_module, "get_settings", lambda: make_settings(sla_mercurio_host="")
+        mercurio_factories, "get_settings", lambda: make_settings(sla_mercurio_host="")
     )
     with pytest.raises(ExternalServiceError, match="SLA_MERCURIO_HOST"):
         deps_module.get_sla_query_gateway()
@@ -35,7 +38,7 @@ def test_gateway_sin_mercurio_configurado_falla_con_mensaje_claro(
 
 def test_builders_arman_el_grafo_de_use_cases(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        deps_module,
+        mercurio_factories,
         "get_settings",
         lambda: make_settings(
             sla_mercurio_host="mercurio.test",

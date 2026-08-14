@@ -1,6 +1,6 @@
 """Factory del gateway de Siges para prestadores. Singleton de proceso
-(`lru_cache`) — mismo criterio que `sla.presentation.dependencies`: no hay
-nada que cachear salvo evitar rearmar el connection string por request."""
+(`lru_cache`) — mismo criterio que `sla.presentation.dependencies`; el chequeo
+de host y el runner compartido vienen de `require_mercurio_runner` (ADR-018)."""
 
 import logging
 from functools import lru_cache
@@ -9,22 +9,14 @@ from src.modules.prestadores.infrastructure.siges.pyodbc_prestador_gateway impor
     PyodbcPrestadorGateway,
 )
 from src.shared.domain.errors import ExternalServiceError
-from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.mercurio.factories import require_mercurio_runner
 
 logger = logging.getLogger(__name__)
 
 
 @lru_cache
 def get_prestador_siges_gateway() -> PyodbcPrestadorGateway:
-    settings = get_settings()
-    if not settings.sla_mercurio_host:
-        raise ExternalServiceError(
-            "La conexión a Siges (MERCURIO) no está configurada — falta SLA_MERCURIO_HOST"
-        )
-    return PyodbcPrestadorGateway(
-        build_mercurio_connection_string(settings), settings.sla_mercurio_timeout_seconds
-    )
+    return PyodbcPrestadorGateway(require_mercurio_runner())
 
 
 def get_prestador_siges_gateway_or_none() -> PyodbcPrestadorGateway | None:

@@ -1,6 +1,7 @@
 """Factories de gateways del módulo contra Siges (ver ADR-012). Mismo patrón
-que sla/presentation/dependencies.py: singleton de proceso (`lru_cache`),
-fail-fast si MERCURIO no está configurado."""
+que sla/presentation/dependencies.py: singleton de proceso (`lru_cache`); el
+chequeo de host y el runner compartido vienen de `require_mercurio_runner`
+(ADR-018)."""
 
 import logging
 from functools import lru_cache
@@ -15,8 +16,7 @@ from src.modules.contadores.infrastructure.siges.pyodbc_parque_cliente_gateway i
     PyodbcParqueClienteGateway,
 )
 from src.shared.domain.errors import ExternalServiceError
-from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.mercurio.factories import require_mercurio_runner
 
 logger = logging.getLogger(__name__)
 
@@ -28,26 +28,15 @@ _EQUIPOS_SIN_REAL_TIMEOUT_SECONDS = 120.0
 _EQUIPOS_SIN_REAL_CACHE_TTL_SECONDS = 600.0
 
 
-def _require_mercurio_connection_string() -> str:
-    settings = get_settings()
-    if not settings.sla_mercurio_host:
-        raise ExternalServiceError(
-            "La conexión a Siges (MERCURIO) no está configurada — falta SLA_MERCURIO_HOST"
-        )
-    return build_mercurio_connection_string(settings)
-
-
 @lru_cache
 def get_operador_catalog_gateway() -> PyodbcOperadorGateway:
-    return PyodbcOperadorGateway(
-        _require_mercurio_connection_string(), get_settings().sla_mercurio_timeout_seconds
-    )
+    return PyodbcOperadorGateway(require_mercurio_runner())
 
 
 @lru_cache
 def get_equipos_sin_real_gateway() -> PyodbcEquiposSinRealGateway:
     return PyodbcEquiposSinRealGateway(
-        _require_mercurio_connection_string(),
+        require_mercurio_runner(),
         _EQUIPOS_SIN_REAL_TIMEOUT_SECONDS,
         _EQUIPOS_SIN_REAL_CACHE_TTL_SECONDS,
     )
@@ -55,9 +44,7 @@ def get_equipos_sin_real_gateway() -> PyodbcEquiposSinRealGateway:
 
 @lru_cache
 def get_parque_cliente_gateway() -> PyodbcParqueClienteGateway:
-    return PyodbcParqueClienteGateway(
-        _require_mercurio_connection_string(), get_settings().sla_mercurio_timeout_seconds
-    )
+    return PyodbcParqueClienteGateway(require_mercurio_runner())
 
 
 def get_parque_cliente_gateway_or_none() -> PyodbcParqueClienteGateway | None:

@@ -1,6 +1,8 @@
 """Factories de los casos de uso de vínculo/sync contra Siges (ADR-014) — el
-gateway pyodbc se arma desde la config de Mercurio ya existente (mismos settings
-que sla/prestadores)."""
+gateway pyodbc usa el runner compartido de MERCURIO (ADR-018): singleton de
+proceso con chequeo de host, igual que sla/prestadores/contadores."""
+
+from functools import lru_cache
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,15 +41,12 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tarifario_
 from src.modules.liquidaciones.infrastructure.siges.pyodbc_siges_catalogo_gateway import (
     PyodbcSigesCatalogoGateway,
 )
-from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.mercurio.factories import require_mercurio_runner
 
 
+@lru_cache
 def _gateway() -> PyodbcSigesCatalogoGateway:
-    settings = get_settings()
-    return PyodbcSigesCatalogoGateway(
-        build_mercurio_connection_string(settings), settings.sla_mercurio_timeout_seconds
-    )
+    return PyodbcSigesCatalogoGateway(require_mercurio_runner())
 
 
 def _siges_ports(session: AsyncSession) -> SigesConfigPorts:

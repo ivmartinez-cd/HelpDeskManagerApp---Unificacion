@@ -1,12 +1,8 @@
-"""Adapter pyodbc del puerto SigesCatalogoGateway — mismo criterio que
-`PyodbcPrestadorGateway` del módulo prestadores: pyodbc es síncrono, la consulta
-corre en un thread; conexión nueva por consulta (fetch esporádico, no hot path)."""
+"""Adapter pyodbc del puerto SigesCatalogoGateway. La plomería pyodbc vive en
+el `MercurioQueryRunner` compartido (ADR-018); acá quedan el SQL y el mapeo de
+filas propios del catálogo PST/SPST de liquidaciones."""
 
-import asyncio
-import logging
 from typing import Any
-
-import pyodbc
 
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesCostoServicio,
@@ -19,9 +15,7 @@ from src.modules.liquidaciones.infrastructure.siges.query import (
     SUCURSALES_DE_PRESTADOR_SQL,
     build_costos_habilitados_sql,
 )
-from src.shared.domain.errors import ExternalServiceError
-
-logger = logging.getLogger(__name__)
+from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
 
 
 def _texto(value: Any) -> str | None:
@@ -52,19 +46,15 @@ def _domicilio(value: Any) -> str | None:
 
 
 class PyodbcSigesCatalogoGateway:
-    def __init__(self, connection_string: str, timeout_seconds: float) -> None:
-        self._connection_string = connection_string
-        self._timeout_seconds = timeout_seconds
+    def __init__(self, runner: MercurioQueryRunner) -> None:
+        self._runner = runner
 
     async def list_empresas_activas(self) -> list[SigesEmpresaInfo]:
-        try:
-            rows = await asyncio.to_thread(self._query)
-        except pyodbc.Error as exc:
-            logger.error(
-                "Fallo la consulta del catálogo PST/SPST contra Siges/MERCURIO",
-                exc_info=exc,
-            )
-            raise ExternalServiceError("No se pudo consultar la base Siges (MERCURIO)") from exc
+        rows = await self._runner.fetch_all(
+            EMPRESAS_PST_ACTIVAS_SQL,
+            gateway="siges_catalogo",
+            log_message="Fallo la consulta del catálogo PST/SPST contra Siges/MERCURIO",
+        )
         return [
             SigesEmpresaInfo(
                 siges_empresa_id=int(row.ID_Empresa),
@@ -81,15 +71,13 @@ class PyodbcSigesCatalogoGateway:
     ) -> list[SigesCostoServicio]:
         if not siges_empresa_ids:
             return []
-        try:
-            rows = await asyncio.to_thread(self._query_costos, siges_empresa_ids)
-        except pyodbc.Error as exc:
-            logger.error(
-                "Fallo la consulta de CostoServicio contra Siges/MERCURIO",
-                extra={"cantidad_ids": len(siges_empresa_ids)},
-                exc_info=exc,
-            )
-            raise ExternalServiceError("No se pudo consultar la base Siges (MERCURIO)") from exc
+        rows = await self._runner.fetch_all(
+            build_costos_habilitados_sql(len(siges_empresa_ids)),
+            siges_empresa_ids,
+            gateway="siges_catalogo",
+            log_message="Fallo la consulta de CostoServicio contra Siges/MERCURIO",
+            log_extra={"cantidad_ids": len(siges_empresa_ids)},
+        )
         return [
             SigesCostoServicio(
                 siges_empresa_id=int(row.ID_Empresa),
@@ -109,15 +97,13 @@ class PyodbcSigesCatalogoGateway:
     async def list_sucursales_de_prestador(
         self, siges_empresa_id: int
     ) -> list[SigesSucursalCliente]:
-        try:
-            rows = await asyncio.to_thread(self._query_sucursales, siges_empresa_id)
-        except pyodbc.Error as exc:
-            logger.error(
-                "Fallo la consulta de sucursales contra Siges/MERCURIO",
-                extra={"siges_empresa_id": siges_empresa_id},
-                exc_info=exc,
-            )
-            raise ExternalServiceError("No se pudo consultar la base Siges (MERCURIO)") from exc
+        rows = await self._runner.fetch_all(
+            SUCURSALES_DE_PRESTADOR_SQL,
+            (siges_empresa_id,),
+            gateway="siges_catalogo",
+            log_message="Fallo la consulta de sucursales contra Siges/MERCURIO",
+            log_extra={"siges_empresa_id": siges_empresa_id},
+        )
         return [
             SigesSucursalCliente(
                 siges_sucursal_id=int(row.Id_Sucursal),
@@ -129,31 +115,3 @@ class PyodbcSigesCatalogoGateway:
             )
             for row in rows
         ]
-
-    def _query(self) -> list[Any]:
-        with pyodbc.connect(
-            self._connection_string, timeout=int(self._timeout_seconds)
-        ) as connection:
-            connection.timeout = int(self._timeout_seconds)
-            cursor = connection.cursor()
-            cursor.execute(EMPRESAS_PST_ACTIVAS_SQL)
-            return list(cursor.fetchall())
-
-    def _query_sucursales(self, siges_empresa_id: int) -> list[Any]:
-        with pyodbc.connect(
-            self._connection_string, timeout=int(self._timeout_seconds)
-        ) as connection:
-            connection.timeout = int(self._timeout_seconds)
-            cursor = connection.cursor()
-            cursor.execute(SUCURSALES_DE_PRESTADOR_SQL, siges_empresa_id)
-            return list(cursor.fetchall())
-
-    def _query_costos(self, siges_empresa_ids: list[int]) -> list[Any]:
-        sql = build_costos_habilitados_sql(len(siges_empresa_ids))
-        with pyodbc.connect(
-            self._connection_string, timeout=int(self._timeout_seconds)
-        ) as connection:
-            connection.timeout = int(self._timeout_seconds)
-            cursor = connection.cursor()
-            cursor.execute(sql, siges_empresa_ids)
-            return list(cursor.fetchall())

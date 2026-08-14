@@ -1,9 +1,8 @@
 """Factory del gateway de sla. Singleton de proceso (`lru_cache`) como los
-gateways de insumos (ver wiring.py de ese módulo); acá no hay token que
-cachear, pero tampoco hay razón para rearmar el connection string por request.
-
-`lru_cache` no cachea excepciones: si MERCURIO no está configurado, cada
-request reintenta la factory y devuelve el 502 con mensaje claro."""
+gateways de insumos (ver wiring.py de ese módulo). El chequeo de host y el
+runner con su semáforo viven en `require_mercurio_runner` (ADR-018), que
+tampoco cachea excepciones: sin MERCURIO configurado cada request reintenta y
+devuelve el 502 con mensaje claro."""
 
 from functools import lru_cache
 
@@ -20,21 +19,12 @@ from src.modules.sla.infrastructure.mercurio.pyodbc_sla_query_gateway import (
 from src.modules.sla.infrastructure.repositories.sqlalchemy_sla_snapshot_repository import (
     SqlAlchemySlaSnapshotRepository,
 )
-from src.shared.domain.errors import ExternalServiceError
-from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.mercurio.factories import require_mercurio_runner
 
 
 @lru_cache
 def get_sla_query_gateway() -> PyodbcSlaQueryGateway:
-    settings = get_settings()
-    if not settings.sla_mercurio_host:
-        raise ExternalServiceError(
-            "La conexión a Siges (MERCURIO) no está configurada — falta SLA_MERCURIO_HOST"
-        )
-    return PyodbcSlaQueryGateway(
-        build_mercurio_connection_string(settings), settings.sla_mercurio_timeout_seconds
-    )
+    return PyodbcSlaQueryGateway(require_mercurio_runner())
 
 
 def build_refresh_sla_snapshot(session: AsyncSession) -> RefreshSlaSnapshot:

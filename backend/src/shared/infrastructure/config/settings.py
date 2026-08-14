@@ -106,6 +106,10 @@ class Settings(BaseSettings):
     # driver 17 con el que se consultaba esta base hasta ahora.
     sla_mercurio_encrypt: bool = False
     sla_mercurio_timeout_seconds: float = 30.0
+    # Tope de consultas simultáneas a MERCURIO de todo el proceso (semáforo del
+    # MercurioQueryRunner compartido, ADR-018). Sin prefijo sla_ porque es
+    # config nueva de toda la app, no del módulo sla.
+    mercurio_max_concurrent: int = 3
     # Cadencia del job de fondo que refresca el snapshot del período actual —
     # sin esto, Inicio y /sla pegarían en vivo contra MERCURIO (~40s) en cada
     # carga. El botón "Actualizar" siempre fuerza un refresh inmediato aparte.
