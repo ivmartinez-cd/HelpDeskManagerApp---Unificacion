@@ -1,22 +1,29 @@
 "use client";
 
-import { CalendarCheck2 } from "lucide-react";
+import { CalendarCheck2, TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { contadoresApi } from "@/features/contadores/api/contadores-api";
 import type { CalendarEvent, Operador } from "@/features/contadores/types/calendario";
 import {
   cleanTitle,
+  diasDeAtraso,
   formatDateLocal,
   getEventPillClassName,
   getEventPillInlineStyle,
+  textoAtraso,
+  textoDesdeSync,
 } from "@/features/contadores/utils/calendario-format";
 import { useSession } from "@/services/session-provider";
 import { Spinner } from "@/shared/components/ui/spinner";
 
-/** Recorte de "clientes de hoy" para Inicio, a partir del mismo calendario de
- * Contadores (ver useCalendarioEvents) — acá alcanza con pedir el rango de un
- * solo día, sin el resto del estado del calendario completo (mes, sync,
- * filtro por operador). */
+// Umbral para considerar el sync viejo y atenuar/avisar. El sync es manual:
+// si nadie sincronizó hace rato, el backlog puede mostrar clientes que en
+// Gestión ya se cerraron.
+const STALE_SYNC_HORAS = 24;
+
+/** Recorte de "clientes de hoy" + pendientes de arrastre para Inicio, a
+ * partir del calendario de Contadores. La visibilidad (operador propio +
+ * coberturas) y el corte del backlog los resuelve el backend. */
 export function TodayClientsCard() {
   const { modules } = useSession();
   // `can()` sólo refleja grants explícitos; un superadmin ve el módulo sin
@@ -24,8 +31,11 @@ export function TodayClientsCard() {
   // que usa el sidebar para decidir si mostrar "Contadores".
   const canView = modules.some((m) => m.key === "contadores");
 
+  const today = formatDateLocal(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [pendientes, setPendientes] = useState<CalendarEvent[]>([]);
   const [operadores, setOperadores] = useState<Operador[]>([]);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   // `loading` arranca en true solo cuando hay que cargar: si canView es false
   // el componente no renderiza nada y no hay estado de carga que gestionar.
   const [loading, setLoading] = useState<boolean>(canView);
@@ -33,29 +43,42 @@ export function TodayClientsCard() {
 
   useEffect(() => {
     if (!canView) return;
-    const today = formatDateLocal(new Date());
-    contadoresApi
-      .getCalendarioEvents({ start: today, end: today })
-      .then((page) => setEvents(page.items))
+    const hoy = formatDateLocal(new Date());
+
+    Promise.all([
+      contadoresApi.getCalendarioEvents({ start: hoy, end: hoy }),
+      contadoresApi.getCalendarioPendientes(hoy),
+    ])
+      .then(([hoyPage, pendPage]) => {
+        setEvents(hoyPage.items);
+        setPendientes(pendPage.items);
+      })
       .catch((err: unknown) => {
-        console.error("Error al cargar los clientes de hoy:", err);
-        setError(err instanceof Error ? err.message : "No se pudo cargar la planificación de hoy.");
+        console.error("Error al cargar la planificación de Inicio:", err);
+        setError(err instanceof Error ? err.message : "No se pudo cargar la planificación.");
       })
       .finally(() => setLoading(false));
 
-    // Catálogo completo para poder mostrar a quién pertenece cada cliente
-    // (evt.operador_id no trae el nombre resuelto) — un usuario regular ve
-    // siempre el mismo operador (el suyo, ver GetCalendarEventsUseCase), pero
-    // igual sirve para dejarlo explícito en pantalla.
+    // Catálogo para resolver a quién pertenece cada cliente (el evento no
+    // trae el nombre del operador).
     contadoresApi
       .listCalendarioOperadores()
       .then(setOperadores)
       .catch((err: unknown) => console.error("Error al cargar el catálogo de operadores:", err));
+
+    // Frescura del sync: el backlog vale lo que valga la última sincronización.
+    contadoresApi
+      .getSyncStatus()
+      .then((status) => setLastSyncedAt(status.last_synced_at))
+      .catch((err: unknown) => console.error("Error al consultar el estado de sync:", err));
   }, [canView]);
 
   const operadorNombreById = new Map(operadores.map((op) => [op.id, op.nombre]));
 
   if (!canView) return null;
+
+  const syncStale =
+    !lastSyncedAt || Date.now() - Date.parse(lastSyncedAt) > STALE_SYNC_HORAS * 3_600_000;
 
   return (
     <div className="flex w-full flex-col gap-3 rounded-[12px] border border-border bg-card p-5">
@@ -77,33 +100,91 @@ export function TodayClientsCard() {
         </div>
       ) : error ? (
         <span className="font-body text-[13px] text-destructive">{error}</span>
-      ) : events.length === 0 ? (
-        <span className="font-body text-[13px] text-muted-foreground">
-          No hay clientes planificados para hoy.
-        </span>
       ) : (
-        <ul className="flex max-h-96 flex-col gap-1.5 overflow-y-auto">
-          {events.map((evt) => {
-            const operadorNombre = evt.operador_id ? operadorNombreById.get(evt.operador_id) : null;
-            return (
-              <li
-                key={evt.id}
-                className={`flex flex-col gap-0.5 rounded-[8px] px-2.5 py-1.5 ${getEventPillClassName(evt)}`}
-                style={getEventPillInlineStyle(evt)}
-                title={evt.cliente || cleanTitle(evt.title)}
-              >
-                <span className="truncate font-body text-[13px] font-semibold">
-                  {evt.cliente || cleanTitle(evt.title) || "Sin nombre"}
+        <>
+          {events.length === 0 ? (
+            <span className="font-body text-[13px] text-muted-foreground">
+              No hay clientes planificados para hoy.
+            </span>
+          ) : (
+            <ul className="flex max-h-96 flex-col gap-1.5 overflow-y-auto">
+              {events.map((evt) => {
+                const operadorNombre = evt.operador_id
+                  ? operadorNombreById.get(evt.operador_id)
+                  : null;
+                return (
+                  <li
+                    key={evt.id}
+                    className={`flex flex-col gap-0.5 rounded-[8px] px-2.5 py-1.5 ${getEventPillClassName(evt)}`}
+                    style={getEventPillInlineStyle(evt)}
+                    title={evt.cliente || cleanTitle(evt.title)}
+                  >
+                    <span className="truncate font-body text-[13px] font-semibold">
+                      {evt.cliente || cleanTitle(evt.title) || "Sin nombre"}
+                    </span>
+                    {operadorNombre && (
+                      <span className="truncate font-body text-[11px] font-normal text-white/80">
+                        {operadorNombre}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {pendientes.length > 0 && (
+            <div className="flex flex-col gap-1.5 border-t border-border pt-3">
+              <div className="flex items-center justify-between">
+                <span className="font-heading text-[13px] font-bold text-foreground">
+                  Pendientes de días anteriores
                 </span>
-                {operadorNombre && (
-                  <span className="truncate font-body text-[11px] font-normal text-white/80">
-                    {operadorNombre}
-                  </span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                <span className="rounded-full bg-brand-orange/[0.12] px-2 py-0.5 text-[11px] font-semibold text-brand-orange">
+                  {pendientes.length}
+                </span>
+              </div>
+              <ul className="flex max-h-72 flex-col gap-1.5 overflow-y-auto">
+                {pendientes.map((evt) => {
+                  const operadorNombre = evt.operador_id
+                    ? operadorNombreById.get(evt.operador_id)
+                    : null;
+                  const dias = diasDeAtraso(evt.start, today);
+                  return (
+                    <li
+                      key={evt.id}
+                      className={`flex flex-col gap-0.5 rounded-[8px] px-2.5 py-1.5 ${getEventPillClassName(evt)}`}
+                      style={getEventPillInlineStyle(evt)}
+                      title={evt.cliente || cleanTitle(evt.title)}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate font-body text-[13px] font-semibold">
+                          {evt.cliente || cleanTitle(evt.title) || "Sin nombre"}
+                        </span>
+                        <span className="shrink-0 rounded-full bg-black/20 px-1.5 py-0.5 text-[10px] font-medium">
+                          {textoAtraso(dias)}
+                        </span>
+                      </div>
+                      {operadorNombre && (
+                        <span className="truncate font-body text-[11px] font-normal text-white/80">
+                          {operadorNombre}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          <div
+            className={`flex items-center gap-1.5 font-body text-[11px] ${
+              syncStale ? "text-amber-600" : "text-muted-foreground"
+            }`}
+          >
+            {syncStale && <TriangleAlert className="h-3 w-3 shrink-0" />}
+            <span>{textoDesdeSync(lastSyncedAt)}</span>
+          </div>
+        </>
       )}
     </div>
   );

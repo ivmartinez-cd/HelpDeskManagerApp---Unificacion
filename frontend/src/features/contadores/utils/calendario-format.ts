@@ -85,6 +85,32 @@ export function getEventPillInlineStyle(evt: CalendarEvent): CSSProperties | und
 
 export const WEEKDAYS = ["LUN", "MAR", "MIÉR", "JUEV", "VIER", "SÁB", "DOM"];
 
+/** Días de atraso de un evento respecto de `todayIso`. Ambas fechas puras
+ * parseadas en UTC para no correr un día en huso negativo (mismo criterio
+ * que formatFechaCobertura). */
+export function diasDeAtraso(startIso: string, todayIso: string): number {
+  const start = Date.parse(`${startIso.slice(0, 10)}T00:00:00Z`);
+  const today = Date.parse(`${todayIso}T00:00:00Z`);
+  return Math.round((today - start) / 86_400_000);
+}
+
+/** "hace 1 día" / "hace N días". */
+export function textoAtraso(dias: number): string {
+  return dias === 1 ? "hace 1 día" : `hace ${dias} días`;
+}
+
+/** "actualizado hace X" a partir de un timestamp ISO de sync; texto propio
+ * cuando nunca se sincronizó. */
+export function textoDesdeSync(iso: string | null): string {
+  if (!iso) return "nunca sincronizado";
+  const min = Math.floor((Date.now() - Date.parse(iso)) / 60_000);
+  if (min < 1) return "actualizado recién";
+  if (min < 60) return `actualizado hace ${min} min`;
+  const horas = Math.floor(min / 60);
+  if (horas < 24) return `actualizado hace ${horas} h`;
+  return `actualizado hace ${Math.floor(horas / 24)} d`;
+}
+
 /** Visual del pill según el switch "Ver por" (§3.3 del handoff): en modo
  * efectivo un evento cubierto toma el color del reemplazante (o naranja
  * institucional si el catálogo no le asignó color); en modo real conserva

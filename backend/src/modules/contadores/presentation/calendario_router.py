@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,6 +24,9 @@ from src.modules.contadores.application.use_cases.get_calendar_events import (
     GetCalendarEventsUseCase,
 )
 from src.modules.contadores.application.use_cases.get_mi_operador import GetMiOperadorUseCase
+from src.modules.contadores.application.use_cases.get_pending_clients import (
+    GetPendingClientsUseCase,
+)
 from src.modules.contadores.application.use_cases.list_asignacion_overrides import (
     ListAsignacionOverrides,
     ListAsignacionOverridesDependencies,
@@ -68,6 +71,10 @@ _MAX_PAGE_SIZE = 2000
 # días, supera los 45s con más de un año. 90 días para cada lado cubre "todo
 # lo vigente" quedando cómodo dentro del timeout.
 _DEFAULT_SYNC_WINDOW_DAYS = 90
+# Corte del backlog de "pendientes" de la card de Inicio: 30 días de arrastre
+# reciente. Queda dentro de la ventana de sync (±90), así que el corte manda
+# antes que el borde de la copia local — ver GetPendingClientsUseCase.
+_DEFAULT_BACKLOG_DAYS = 30
 # Generoso a propósito: es una acción manual e infrecuente, no un fetch de
 # página — 2.2x el tiempo medido del pedido de 180 días, con margen para los
 # días en que Gestión anda lenta.
@@ -125,6 +132,29 @@ async def get_mi_operador(
     if operador is None:
         return MiOperadorResponse(operador_id=None, nombre=None, color=None)
     return MiOperadorResponse(operador_id=operador.id, nombre=operador.nombre, color=operador.color)
+
+
+@router.get("/calendario/pendientes", response_model=Page[CalendarEventSchema])
+async def get_calendario_pendientes(
+    today: str = Query(..., description="Hoy del operador, YYYY-MM-DD (huso local)"),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=500, ge=1, le=_MAX_PAGE_SIZE),
+    identity: Identity = _require_view,
+    db: AsyncSession = Depends(get_db),
+) -> Page[CalendarEventSchema]:
+    """Backlog de clientes de días anteriores que siguen en el calendario
+    (pendientes de arrastre). Misma visibilidad que GET /calendario."""
+    repo = SqlAlchemyCalendarEventRepository(db)
+    overrides = SqlAlchemyAsignacionOverrideRepository(db)
+    use_case = GetPendingClientsUseCase(GetCalendarEventsUseCase(repo, overrides))
+    anotados = await use_case.execute(
+        is_superadmin=identity.user.is_superadmin,
+        full_name=identity.user.full_name,
+        today=date.fromisoformat(today),
+        cutoff_days=_DEFAULT_BACKLOG_DAYS,
+    )
+    schema_events = [CalendarEventSchema.from_anotado(a) for a in anotados]
+    return Page.of(schema_events, page=page, size=size)
 
 
 @router.get("/calendario/sync/status", response_model=SyncStatusResponse)

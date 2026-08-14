@@ -194,6 +194,14 @@ export const contadoresApi = {
       `/api/contadores/calendario?${searchParams.toString()}`,
     );
   },
+  // Backlog de pendientes de días anteriores para la card de Inicio — misma
+  // visibilidad que /calendario; el corte (30 días) lo decide el backend.
+  getCalendarioPendientes: (today: string) => {
+    const searchParams = new URLSearchParams({ today, size: "500" });
+    return httpClient.get<Page<CalendarEvent>>(
+      `/api/contadores/calendario/pendientes?${searchParams.toString()}`,
+    );
+  },
   getMiOperador: () => httpClient.get<MiOperador>("/api/contadores/calendario/mi-operador"),
   // Catálogo de operadores para el filtro de superadmin (ver
   // GetCalendarEventsUseCase — un usuario regular no puede elegir operador).
