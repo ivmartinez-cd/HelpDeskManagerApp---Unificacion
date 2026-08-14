@@ -231,20 +231,11 @@ export function RequestRow({
             </div>
           )}
         </td>
-        <td className={CELL}>
-          <button
-            type="button"
-            onClick={onOpenDetail}
-            className="cursor-pointer rounded-[6px] bg-brand-orange/10 px-2 py-1 text-[11px] font-bold text-brand-orange transition-colors hover:bg-brand-orange/20"
-          >
-            Ver
-          </button>
-        </td>
       </tr>
 
       {showDiagnosis && (
         <tr className="border-b border-border/50 bg-muted/30">
-          <td colSpan={12} className="px-4 pb-2.5 pt-0">
+          <td colSpan={11} className="px-4 pb-2.5 pt-0">
             <div className="rounded-[8px] border border-border bg-card p-2.5">
               {row.validationDiagnosisHeadline && (
                 <p className="font-body text-[11px] font-bold text-foreground">

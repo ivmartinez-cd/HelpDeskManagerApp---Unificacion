@@ -7,16 +7,14 @@ import type { DashboardData } from "../../hooks/use-dashboard-data";
 import type { OrderActions } from "../../hooks/use-order-actions";
 import type { RequestRow } from "../../types";
 import { CustomerRequestsPanel } from "./customer-requests-panel";
-import { avatarColorFor, initialsFor } from "./request-status";
 
 /** Tabla de clientes con solicitudes pendientes (Patrón 1 del handoff): fila
  * padre = cliente, expandible a la tabla anidada de solicitudes.
  *
  * Se mantienen las 7 columnas del legacy (contadores por severidad) en vez de
  * la grilla `2fr 1fr 1fr 1fr 120px` del mockup: el mockup describe contenido de
- * Contadores, no de Insumos. Lo que sí se toma del Patrón 1 es el tratamiento
- * visual — caret que rota 90°, avatar cuadrado 32×32 radio 8px con iniciales,
- * fondo tintado de la fila expandida.
+ * Contadores, no de Insumos. Lo que sí se toma del Patrón 1 es el caret que
+ * rota 90° — sin avatar/iniciales, per handoff sds_insumos.
  */
 
 const HEAD_CELL =
@@ -99,13 +97,6 @@ export function CustomerRequestsTable({
                           )}
                           aria-hidden="true"
                         />
-                        <span
-                          className="flex h-8 w-8 flex-none items-center justify-center rounded-[8px] font-heading text-[12px] font-bold text-white"
-                          style={{ background: avatarColorFor(customer.customerId) }}
-                          aria-hidden="true"
-                        >
-                          {initialsFor(customer.name)}
-                        </span>
                         <span className="font-semibold text-foreground">{customer.name}</span>
                         {customer.error && (
                           <span

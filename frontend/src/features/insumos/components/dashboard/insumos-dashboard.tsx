@@ -79,7 +79,7 @@ export function InsumosDashboard({ deepLinkCustomerId }: InsumosDashboardProps) 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1.5">
           <h1 className="font-heading text-[25px] font-extrabold text-foreground">
-            Solicitudes de insumos sin cargar
+            Solicitudes de Insumos sin Cargar
           </h1>
           <p className="font-body text-sm text-muted-foreground">
             Solicitudes de HP SDS que todavía no se cargaron en Canal Directo, por cliente.
@@ -87,7 +87,12 @@ export function InsumosDashboard({ deepLinkCustomerId }: InsumosDashboardProps) 
         </div>
         <div className="flex items-center gap-3">
           {data.lastUpdatedAt && (
-            <span className="font-body text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5 font-body text-xs text-muted-foreground">
+              <span
+                className="h-2 w-2 rounded-full bg-[#22c55e]"
+                style={{ boxShadow: "0 0 0 3px rgba(34,197,94,.15)" }}
+                aria-hidden="true"
+              />
               Actualizado {formatArgTime(data.lastUpdatedAt)}
             </span>
           )}

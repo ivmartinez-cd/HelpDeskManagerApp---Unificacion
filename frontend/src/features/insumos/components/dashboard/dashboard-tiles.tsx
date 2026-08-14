@@ -27,7 +27,7 @@ function tilesFor(dashboard: DashboardResponse): Tile[] {
     { label: `Urgentes ≤${thresholds.urgent}d`, value: totals.urgent ?? 0, color: "#F7941D" },
     { label: `Atención ≤${thresholds.warning}d`, value: totals.warning ?? 0, color: "#eab308" },
     { label: "OK", value: totals.good ?? 0, color: "#22c55e" },
-    { label: "Con pedido", value: totals.loaded ?? 0, color: "#58595B" },
+    { label: "Con pedido", value: totals.loaded ?? 0, color: "#3b82f6" },
     { label: "Cargados hoy", value: loadedToday, color: "#F7941D" },
   ];
 }
@@ -61,23 +61,20 @@ export function DashboardTiles({ dashboard, loading }: DashboardTilesProps) {
       {tilesFor(dashboard).map((tile) => (
         <div
           key={tile.label}
-          className="rounded-[12px] border bg-card px-4 py-3"
+          className="flex flex-col items-center rounded-[12px] bg-card px-4 py-3 text-center"
           style={{
-            borderColor: tile.highlight ? tile.color : undefined,
+            border: `1.5px solid ${tile.color}`,
             background: tile.highlight ? `${tile.color}14` : undefined,
           }}
         >
           <p
-            className="font-body text-[11px] font-bold uppercase tracking-wide"
-            style={{ color: tile.highlight ? tile.color : undefined }}
-          >
-            {tile.label}
-          </p>
-          <p
-            className="mt-1 font-heading text-[22px] font-extrabold leading-none tabular-nums"
+            className="font-heading text-[22px] font-extrabold leading-none tabular-nums"
             style={{ color: tile.color }}
           >
             {tile.value}
+          </p>
+          <p className="mt-1.5 font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+            {tile.label}
           </p>
         </div>
       ))}

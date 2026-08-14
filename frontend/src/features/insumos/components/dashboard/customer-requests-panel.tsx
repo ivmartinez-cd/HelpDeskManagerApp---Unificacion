@@ -134,12 +134,11 @@ export function CustomerRequestsPanel({
               <th className={HEAD_CELL}>Serie</th>
               <th className={HEAD_CELL}>Descripción</th>
               <th className={HEAD_CELL}>SKU</th>
-              <th className={`${HEAD_CELL} text-right`}>Nivel</th>
+              <th className={`${HEAD_CELL} text-right`}>%</th>
               <th className={`${HEAD_CELL} text-right`}>Días rest.</th>
               <th className={`${HEAD_CELL} text-right`}>Págs. rest.</th>
               <th className={HEAD_CELL}>Estado</th>
               <th className={`${HEAD_CELL} w-36`}>Acción</th>
-              <th className={`${HEAD_CELL} w-14`} />
             </tr>
           </thead>
           <tbody>
