@@ -25,6 +25,9 @@ from src.modules.sla.infrastructure.mercurio.pyodbc_sla_query_gateway import (
 from src.modules.sla.infrastructure.repositories.sqlalchemy_pendientes_snapshot_repository import (
     SqlAlchemyPendientesSnapshotRepository,
 )
+from src.modules.sla.infrastructure.repositories.sqlalchemy_prestador_lookup import (
+    SqlAlchemyPrestadorLookup,
+)
 from src.modules.sla.infrastructure.repositories.sqlalchemy_sla_snapshot_repository import (
     SqlAlchemySlaSnapshotRepository,
 )
@@ -63,6 +66,7 @@ def build_refresh_pendientes_snapshot(session: AsyncSession) -> RefreshPendiente
     return RefreshPendientesSnapshot(
         get_pendientes_query_gateway(),
         SqlAlchemyPendientesSnapshotRepository(session),
+        pst_lookup=SqlAlchemyPrestadorLookup(session),
         meses_corte=settings.pendientes_meses_corte,
     )
 

@@ -17,6 +17,9 @@ from src.modules.sla.application.use_cases.refresh_sla_snapshot import RefreshSl
 from src.modules.sla.infrastructure.repositories.sqlalchemy_pendientes_snapshot_repository import (
     SqlAlchemyPendientesSnapshotRepository,
 )
+from src.modules.sla.infrastructure.repositories.sqlalchemy_prestador_lookup import (
+    SqlAlchemyPrestadorLookup,
+)
 from src.modules.sla.infrastructure.repositories.sqlalchemy_sla_snapshot_repository import (
     SqlAlchemySlaSnapshotRepository,
 )
@@ -67,6 +70,7 @@ async def background_pendientes_refresh_task(interval_minutes: int) -> None:
                 use_case = RefreshPendientesSnapshot(
                     get_pendientes_query_gateway(),
                     repo,
+                    pst_lookup=SqlAlchemyPrestadorLookup(session),
                     meses_corte=settings.pendientes_meses_corte,
                 )
                 snapshot = await use_case.execute()

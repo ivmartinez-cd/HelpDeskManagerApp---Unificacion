@@ -65,6 +65,11 @@ class SqlAlchemyPrestadorLookup:
             if resolver_operador_efectivo(ausente_id, p.id, hoy, reglas) == operador_id
         ]
 
+    async def get_all_pst_siges_ids(self) -> list[int]:
+        stmt = select(PrestadorModel.siges_empresa_id).where(PrestadorModel.is_active.is_(True))
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return list(rows)
+
     async def _prestadores_de(self, operador_id: uuid.UUID) -> list[PrestadorModel]:
         stmt = select(PrestadorModel).where(PrestadorModel.operador_id == operador_id)
         rows = (await self._session.execute(stmt)).scalars().all()
