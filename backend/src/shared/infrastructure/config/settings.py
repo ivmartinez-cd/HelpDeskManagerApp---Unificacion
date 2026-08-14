@@ -118,6 +118,11 @@ class Settings(BaseSettings):
     preventivos_zonas_excluidas: str = (
         "INTERIOR,A DEFINIR,PROPIO,KIKO,0000000000,BSAS.*,CBA..*,CUYO.*,NOA..*,COSTA*"
     )
+    # "Cliente vivo" para preventivos: alguna toma de contador O algún
+    # incidente de la empresa dentro de esta ventana. Es la única señal que
+    # distingue la baja de facto (Garbarino: todo figura activo en Gestión
+    # pero sin actividad desde 2022) — ver ADR-019 y rondas 7-11.
+    preventivos_meses_actividad: int = 3
 
     # SOAP wsAyC de Canal Directo — mismo endpoint/WSDL para insumos y
     # liquidaciones (provider compartido, ADR-018). Defaults = los valores que
@@ -129,6 +134,11 @@ class Settings(BaseSettings):
     # sin esto, Inicio y /sla pegarían en vivo contra MERCURIO (~40s) en cada
     # carga. El botón "Actualizar" siempre fuerza un refresh inmediato aparte.
     sla_refresh_interval_minutes: int = 240
+    # Cadencia del job de fondo que refresca el backlog de incidentes sin cerrar.
+    # Más frecuente que SLA porque cambia en tiempo real (cada cierre en Gestión
+    # actualiza el backlog). Corte temporal: cuántos meses atrás buscar en Siges.
+    pendientes_refresh_interval_minutes: int = 60
+    pendientes_meses_corte: int = 24
 
     # PortalWeb de SDS Insight — scraping para baja de equipos offline.
     # sds_delete_dry_run=True por default: la baja real es irreversible. Solo cambiar a

@@ -24,11 +24,15 @@ operativas:
   en estado terminal no anulado (500/600/700/710); fecha efectiva `Fecha_Cierre` salvo
   sentinel `1900-01-01`, en cuyo caso `Fecha_Ingreso`.
 - **Universo** = `M.Estado = 0 AND M.ID_Estado_Maquina = 1` ('Activa en Cliente') + empresa
-  cliente real (`E.Estado = 0 AND E.ID_Tipo_Empresa IN (101, 102)`). Ajustado el mismo día
-  tras reporte del usuario: el `NOT IN (2, 8)` del parque por PST dejaba pasar máquinas en
-  Baja Solicitada/No Localizado/Backup/Desguace (clientes que ya pidieron la baja) y el
-  tipo de empresa sin filtrar mostraba a CD1 (empresa propia, tipo 201) como cliente con
-  201 máquinas.
+  cliente real (`E.Estado = 0 AND E.ID_Tipo_Empresa IN (101, 102)`) + **cliente vivo por
+  actividad**: alguna toma de contador o algún incidente de la empresa en los últimos
+  `PREVENTIVOS_MESES_ACTIVIDAD` meses (default 3). Ajustado el mismo día en dos pasadas
+  tras reportes del usuario: (1) el `NOT IN (2, 8)` del parque por PST dejaba pasar
+  máquinas en Baja Solicitada/No Localizado/Backup/Desguace y el tipo de empresa sin
+  filtrar mostraba a CD1 (tipo 201) como cliente; (2) las bajas de facto tipo Garbarino
+  tienen TODO activo en Gestión (empresa, máquinas y anexo) y solo la falta de actividad
+  las delata — ni el estado ni la fecha del anexo discriminan (54% del universo vivo tiene
+  anexo vencido en tácita reconducción). Ver el detalle en el catálogo de datos §3.
 
 ## Decisiones
 

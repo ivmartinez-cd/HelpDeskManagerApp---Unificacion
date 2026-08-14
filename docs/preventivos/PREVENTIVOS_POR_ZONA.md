@@ -20,11 +20,14 @@ ADR-019; fuentes de datos confirmadas en `docs/siges/SIGES_READONLY_CATALOGO_DAT
   cuyo caso se usa `Fecha_Ingreso`.
 - **Universo**: `M.Estado = 0 AND M.ID_Estado_Maquina = 1` ('Activa en Cliente') + sucursal
   activa (`S.Estado = 0`) + empresa cliente real (`E.Estado = 0 AND E.ID_Tipo_Empresa IN
-  (101, 102)`). Más estricto que el parque por PST (`NOT IN (2, 8)`): acá se despachan
-  técnicos, y las máquinas en Baja Solicitada / No Localizado / Backup / Reparación /
-  Desguace no reciben preventivos; el filtro de tipo de empresa excluye a CD1/CD4 (empresas
-  propias, tipo 201) y a técnicos/PSTs (401/402). Ajustado 2026-08-14 tras reporte del
-  usuario (aparecían CD1 y clientes con baja solicitada).
+  (101, 102)`) + **cliente vivo**: alguna toma de contador o algún incidente de la empresa
+  en los últimos `PREVENTIVOS_MESES_ACTIVIDAD` meses (default 3; nivel empresa a
+  propósito — los corporativos que facturan por otro canal no tienen tomas pero sí
+  incidentes). Más estricto que el parque por PST (`NOT IN (2, 8)`): acá se despachan
+  técnicos. Excluye máquinas en Baja Solicitada / No Localizado / Backup / Reparación /
+  Desguace, a CD1/CD4 (empresas propias, tipo 201), a técnicos/PSTs (401/402) y a las
+  bajas de facto tipo Garbarino (todo figura activo en Gestión pero sin actividad desde
+  2022). Ajustado 2026-08-14 en dos pasadas tras reportes del usuario.
 
 ## Cómo se calcula el vencimiento (`domain/services/vencimiento.py`)
 

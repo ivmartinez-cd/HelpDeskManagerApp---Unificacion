@@ -287,6 +287,24 @@ Investigación para la feature "preventivos por zona de distribución". Scripts:
   Backup/Para Reparar/Demo/Desguace, que no reciben preventivos. Nota: ninguna empresa del
   universo local tiene `Estado=1` — "cliente de baja" en la práctica se manifiesta como
   máquinas en 'Baja Solicitada', no como empresa inactiva.
+- **Baja de facto no registrada (caso Garbarino, rondas 7-11)**: hay clientes muertos con
+  TODO activo en Gestión — `Empresa.Estado=0`, máquinas 'Activa en Cliente' y hasta el
+  anexo en `ID_EstadoAnexo=1`. Señales que NO discriminan: `FechaRestriccionServicio` (la
+  tienen las 343 empresas del universo, mayoría con sentinel 1999-01-01),
+  `Anexo.FechaFinalizacion` (54% del universo VIVO cuelga de anexos activos vencidos —
+  tácita reconducción: Aerolíneas, Natura, Credicoop, Hospital Italiano...), estado del
+  anexo (el de Garbarino figura Activo; además el estado 100 'No Facturable' cubre
+  corporativos vivos como SC JOHNSON con 1258 máquinas). La señal que SÍ discrimina es la
+  **actividad por empresa**: última toma de `Contadores` (vía `Maquina.ID_Empresa`) o
+  último `Incidente.Fecha_Ingreso` en los últimos 3 meses. Los datos son bimodales
+  (facturación mensual o nada: la franja 1-3 meses tiene 265 máquinas contra 9100 del
+  último mes) y los corporativos sin tomas quedan vivos por sus incidentes. Garbarino:
+  última toma 2024-04, último incidente 2022-04 → cae. Con N=3 meses caen 39 empresas /
+  792 máquinas del universo local, todas con años de inactividad (Ribeiro 2021/2023,
+  Compumundo 2022, Bayer 2019/2022, Walmart 2020...). Dato extra confirmado:
+  `Maquina.ID_Anexo`, `Maquina.ID_Mantenimiento` y `Maquina.ID_SituacionContractual`
+  existen (catálogo `MaquinaSituacionContractual`: 0 No Válida, 100 Comodato, 200 Del
+  Cliente, 300 Leasing, 400 Alquiler).
 
 ## 4. Candidatas exploradas — columnas confirmadas, dato real pendiente [CANDIDATA]
 
