@@ -1,6 +1,7 @@
 import {
   Activity,
   Calendar,
+  CalendarClock,
   FileText,
   Gauge,
   Package,
@@ -22,6 +23,8 @@ const ICONS: Record<string, LucideIcon> = {
   // en el fallback Shield en vez de su ícono real.
   gauge: Gauge,
   wrench: Wrench,
+  // "calendar-clock" (preventivos): "wrench" ya era de prestadores.
+  "calendar-clock": CalendarClock,
 };
 
 export function resolveIcon(name: string): LucideIcon {
