@@ -89,6 +89,32 @@ class SqlAlchemyAsignacionOverrideRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(r) for r in rows]
 
+    async def update(self, override: AsignacionOverride) -> None:
+        stmt = (
+            select(AsignacionOverrideModel)
+            .options(selectinload(AsignacionOverrideModel.clientes))
+            .where(AsignacionOverrideModel.id == override.id)
+        )
+        row = (await self._session.execute(stmt)).scalar_one_or_none()
+        if row is None:
+            return
+        row.operador_ausente_id = override.operador_ausente_id
+        row.operador_reemplazante_id = override.operador_reemplazante_id
+        row.vigente_desde = override.vigente_desde
+        row.vigente_hasta = override.vigente_hasta
+        row.alcance_total = override.alcance == "TOTAL"
+        row.motivo = override.motivo
+        # Dos flushes: delete-orphan borra las hijas viejas antes de insertar
+        # las nuevas — pueden compartir PK (p. ej. si solo cambian las fechas)
+        # y en un único flush el INSERT se ejecuta antes que el DELETE.
+        row.clientes = []
+        await self._session.flush()
+        if override.alcance != "TOTAL":
+            row.clientes = [
+                AsignacionOverrideClienteModel(cliente=cliente) for cliente in override.alcance
+            ]
+            await self._session.flush()
+
     async def cancelar(self, override_id: uuid.UUID) -> None:
         stmt = select(AsignacionOverrideModel).where(AsignacionOverrideModel.id == override_id)
         row = (await self._session.execute(stmt)).scalar_one_or_none()

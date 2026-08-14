@@ -21,7 +21,8 @@ export interface CoberturaConfig {
   footerCopy: string;
   notaVuelta: (hasta: string, ausente: string) => string;
   permisoCrear: { moduleKey: string; actionKey: string };
-  permisoCancelar: { moduleKey: string; actionKey: string };
+  /** Editar y cancelar — misma acción de backend (update/manage). */
+  permisoMutar: { moduleKey: string; actionKey: string };
 }
 
 export const COBERTURA_CONFIG: Record<CoberturaEntityType, CoberturaConfig> = {
@@ -39,7 +40,7 @@ export const COBERTURA_CONFIG: Record<CoberturaEntityType, CoberturaConfig> = {
     notaVuelta: (hasta, ausente) =>
       `Esta cobertura es temporal y no modifica el Calendario de Gestión. Al finalizar el ${hasta}, los clientes vuelven a ${ausente} automáticamente.`,
     permisoCrear: { moduleKey: "contadores", actionKey: "manage" },
-    permisoCancelar: { moduleKey: "contadores", actionKey: "manage" },
+    permisoMutar: { moduleKey: "contadores", actionKey: "manage" },
   },
   pst: {
     api: coberturasPstApi,
@@ -55,6 +56,6 @@ export const COBERTURA_CONFIG: Record<CoberturaEntityType, CoberturaConfig> = {
     notaVuelta: (hasta, ausente) =>
       `Esta cobertura es temporal y no modifica la asignación permanente. Al finalizar el ${hasta}, los PST vuelven a ${ausente} automáticamente.`,
     permisoCrear: { moduleKey: "prestadores", actionKey: "create" },
-    permisoCancelar: { moduleKey: "prestadores", actionKey: "update" },
+    permisoMutar: { moduleKey: "prestadores", actionKey: "update" },
   },
 };

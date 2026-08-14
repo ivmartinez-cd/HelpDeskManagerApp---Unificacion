@@ -124,6 +124,21 @@ class CreateAsignacionOverrideCommand:
 
 
 @dataclass(frozen=True, slots=True)
+class UpdateAsignacionOverrideCommand:
+    """Edición in-place de un override ACTIVA (ver ADR-013, actualización
+    2026-08-14). Sin `created_by_user_id`: se conserva el del alta."""
+
+    override_id: uuid.UUID
+    operador_ausente_id: uuid.UUID
+    operador_reemplazante_id: uuid.UUID
+    desde: date
+    hasta: date
+    prestador_ids: list[uuid.UUID] | None
+    """`None` = alcance TOTAL; lista vacía o con ids = alcance por PST puntual."""
+    motivo: str | None
+
+
+@dataclass(frozen=True, slots=True)
 class AsignacionOverrideDTO:
     id: uuid.UUID
     operador_ausente_id: uuid.UUID

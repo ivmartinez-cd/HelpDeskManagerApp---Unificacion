@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ApiError } from "@/services/http-client";
-import type { AlcanceOption, CoberturaOperadorOption } from "../types/coberturas";
+import type { AlcanceOption, Cobertura, CoberturaOperadorOption } from "../types/coberturas";
 import type { CoberturaConfig } from "../lib/config";
 import { formatFechaCorta, hoyIso } from "../lib/estado";
 import { BrandButton, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
@@ -16,30 +16,38 @@ interface CoberturaModalProps {
   config: CoberturaConfig;
   operadores: CoberturaOperadorOption[];
   alcanceOptions: AlcanceOption[];
+  /** Con cobertura = modo edición (update in-place, mismo id); sin ella, alta. */
+  cobertura?: Cobertura | null;
   onClose: () => void;
-  onCreated: () => void;
+  onSaved: () => void;
 }
 
-/** Alta de una cobertura. Sin modo edición: el backend no expone update de
- * overrides a propósito (ADR-013 — la única mutación post-alta es cancelar,
- * para no perder el registro de que la regla existió). El handoff preveía
- * "Editar"; se omite hasta que exista el endpoint. El solapamiento tampoco
+/** Alta y edición de una cobertura. La edición es in-place sobre una regla
+ * activa/programada (ADR-013, actualización 2026-08-14) — una cancelada es
+ * un registro histórico y el backend rechaza editarla. El solapamiento no
  * es un warning como pedía el handoff: el backend lo rechaza con 409, acá
  * se muestra ese error en el banner del modal. */
 export function CoberturaModal({
   config,
   operadores,
   alcanceOptions,
+  cobertura = null,
   onClose,
-  onCreated,
+  onSaved,
 }: CoberturaModalProps) {
-  const [ausenteId, setAusenteId] = useState<string | null>(null);
-  const [reemplazanteId, setReemplazanteId] = useState<string | null>(null);
-  const [desde, setDesde] = useState("");
-  const [hasta, setHasta] = useState("");
-  const [alcance, setAlcance] = useState<"total" | "parcial">("total");
-  const [alcanceItems, setAlcanceItems] = useState<string[]>([]);
-  const [motivo, setMotivo] = useState(MOTIVOS[0]);
+  const [ausenteId, setAusenteId] = useState<string | null>(cobertura?.ausenteId ?? null);
+  const [reemplazanteId, setReemplazanteId] = useState<string | null>(
+    cobertura?.reemplazanteId ?? null,
+  );
+  const [desde, setDesde] = useState(cobertura?.desde ?? "");
+  const [hasta, setHasta] = useState(cobertura?.hasta ?? "");
+  const [alcance, setAlcance] = useState<"total" | "parcial">(
+    cobertura && !cobertura.alcanceTotal ? "parcial" : "total",
+  );
+  const [alcanceItems, setAlcanceItems] = useState<string[]>(cobertura?.alcanceItems ?? []);
+  const [motivo, setMotivo] = useState(
+    cobertura?.motivo && MOTIVOS.includes(cobertura.motivo) ? cobertura.motivo : MOTIVOS[0],
+  );
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -63,18 +71,18 @@ export function CoberturaModal({
     if (!completo || !ausenteId || !reemplazanteId) return;
     setSaving(true);
     setSaveError(null);
-    config.api
-      .create({
-        ausenteId,
-        reemplazanteId,
-        desde,
-        hasta,
-        alcanceItems: alcance === "total" ? null : alcanceItems,
-        motivo,
-      })
-      .then(onCreated)
+    const payload = {
+      ausenteId,
+      reemplazanteId,
+      desde,
+      hasta,
+      alcanceItems: alcance === "total" ? null : alcanceItems,
+      motivo,
+    };
+    (cobertura ? config.api.update(cobertura.id, payload) : config.api.create(payload))
+      .then(onSaved)
       .catch((err: unknown) => {
-        console.error("Error al crear la cobertura:", err);
+        console.error("Error al guardar la cobertura:", err);
         setSaveError(
           err instanceof ApiError ? err.message : "No se pudo guardar la cobertura.",
         );
@@ -83,7 +91,13 @@ export function CoberturaModal({
   };
 
   return (
-    <BrandModal isOpen onClose={onClose} title="Nueva cobertura" widthPx={560} error={saveError}>
+    <BrandModal
+      isOpen
+      onClose={onClose}
+      title={cobertura ? "Editar cobertura" : "Nueva cobertura"}
+      widthPx={560}
+      error={saveError}
+    >
       <p className="-mt-2 mb-5 font-body text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {config.subtitulo}
       </p>
@@ -110,7 +124,9 @@ export function CoberturaModal({
             label="Desde"
             type="date"
             value={desde}
-            min={hoyIso()}
+            // Al editar una cobertura ya vigente, `desde` puede estar en el
+            // pasado — el min bloquearía conservarlo.
+            min={cobertura ? undefined : hoyIso()}
             onChange={(e) => setDesde(e.target.value)}
           />
           <BrandInput
@@ -175,7 +191,7 @@ export function CoberturaModal({
             Cancelar
           </BrandButton>
           <BrandButton onClick={handleSubmit} disabled={!completo} loading={saving}>
-            {saving ? "Guardando…" : "Guardar cobertura"}
+            {saving ? "Guardando…" : cobertura ? "Guardar cambios" : "Guardar cobertura"}
           </BrandButton>
         </div>
       </div>

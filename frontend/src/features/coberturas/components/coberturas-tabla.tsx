@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Ban } from "lucide-react";
+import { Ban, Pencil } from "lucide-react";
 import type { Cobertura, CoberturaOperadorOption } from "../types/coberturas";
 import { deriveEstado, ESTADO_META, formatFechaCorta } from "../lib/estado";
 import { BrandBadge } from "@/shared/components/ui/brand-form";
@@ -19,7 +19,9 @@ interface CoberturasTablaProps {
   operadorMeta: Map<string, CoberturaOperadorOption>;
   alcanceLabelOf: (id: string) => string;
   alcanceUnidad: string;
+  canEdit: boolean;
   canCancel: boolean;
+  onEdit: (cobertura: Cobertura) => void;
   onCancel: (cobertura: Cobertura) => void;
 }
 
@@ -51,7 +53,9 @@ export function CoberturasTabla({
   operadorMeta,
   alcanceLabelOf,
   alcanceUnidad,
+  canEdit,
   canCancel,
+  onEdit,
   onCancel,
 }: CoberturasTablaProps) {
   const { sort, toggleSort } = useTableSort<CoberturasSortKey>({
@@ -90,7 +94,11 @@ export function CoberturasTabla({
           {sorted.map((c) => {
             const estado = deriveEstado(c);
             const meta = ESTADO_META[estado];
-            const cancelable = canCancel && (estado === "activa" || estado === "programada");
+            // Solo las reglas aún en juego se pueden editar/cancelar: una
+            // vencida o cancelada es un registro histórico (ADR-013).
+            const mutable = estado === "activa" || estado === "programada";
+            const editable = canEdit && mutable;
+            const cancelable = canCancel && mutable;
             const alcanceLabels = c.alcanceItems.map(alcanceLabelOf);
             return (
               <tr key={c.id} className="font-body text-sm">
@@ -128,17 +136,30 @@ export function CoberturasTabla({
                   </BrandBadge>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  {cancelable && (
-                    <button
-                      type="button"
-                      onClick={() => onCancel(c)}
-                      aria-label={`Cancelar cobertura de ${c.ausenteNombre ?? c.ausenteId}`}
-                      title="Cancelar cobertura"
-                      className="rounded-[8px] p-2 text-destructive transition-colors hover:bg-destructive/10"
-                    >
-                      <Ban className="h-4 w-4" />
-                    </button>
-                  )}
+                  <div className="flex items-center justify-end gap-1">
+                    {editable && (
+                      <button
+                        type="button"
+                        onClick={() => onEdit(c)}
+                        aria-label={`Editar cobertura de ${c.ausenteNombre ?? c.ausenteId}`}
+                        title="Editar cobertura"
+                        className="rounded-[8px] p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    )}
+                    {cancelable && (
+                      <button
+                        type="button"
+                        onClick={() => onCancel(c)}
+                        aria-label={`Cancelar cobertura de ${c.ausenteNombre ?? c.ausenteId}`}
+                        title="Cancelar cobertura"
+                        className="rounded-[8px] p-2 text-destructive transition-colors hover:bg-destructive/10"
+                      >
+                        <Ban className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             );

@@ -11,6 +11,7 @@ from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.prestadores.application.dtos.prestador_dtos import (
     CreateAsignacionOverrideCommand,
+    UpdateAsignacionOverrideCommand,
 )
 from src.modules.prestadores.application.use_cases.cancel_asignacion_override import (
     CancelAsignacionOverride,
@@ -23,6 +24,10 @@ from src.modules.prestadores.application.use_cases.create_asignacion_override im
 from src.modules.prestadores.application.use_cases.list_asignacion_overrides import (
     ListAsignacionOverrides,
     ListAsignacionOverridesDependencies,
+)
+from src.modules.prestadores.application.use_cases.update_asignacion_override import (
+    UpdateAsignacionOverride,
+    UpdateAsignacionOverrideDependencies,
 )
 from src.modules.prestadores.domain.well_known_permissions import CREATE, UPDATE, VIEW
 from src.modules.prestadores.infrastructure.repositories.sqlalchemy_asignacion_override_repository import (  # noqa: E501
@@ -82,6 +87,32 @@ async def create_override(
             prestador_ids=payload.prestador_ids,
             motivo=payload.motivo,
             created_by_user_id=identity.user.id,
+        )
+    )
+    return AsignacionOverrideResponse.from_dto(dto)
+
+
+@router.put("/overrides/{override_id}")
+async def update_override(
+    override_id: uuid.UUID,
+    # Mismo body que el alta — el id va en el path y el creador no cambia.
+    payload: CreateAsignacionOverrideRequest,
+    _: Identity = _require_update,
+    db: AsyncSession = Depends(get_db),
+) -> AsignacionOverrideResponse:
+    deps = UpdateAsignacionOverrideDependencies(
+        overrides=SqlAlchemyAsignacionOverrideRepository(db),
+        users=SqlAlchemyUserProvider(db),
+    )
+    dto = await UpdateAsignacionOverride(deps).execute(
+        UpdateAsignacionOverrideCommand(
+            override_id=override_id,
+            operador_ausente_id=payload.operador_ausente_id,
+            operador_reemplazante_id=payload.operador_reemplazante_id,
+            desde=payload.desde,
+            hasta=payload.hasta,
+            prestador_ids=payload.prestador_ids,
+            motivo=payload.motivo,
         )
     )
     return AsignacionOverrideResponse.from_dto(dto)

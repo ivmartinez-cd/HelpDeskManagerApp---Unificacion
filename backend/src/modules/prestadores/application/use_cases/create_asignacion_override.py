@@ -1,6 +1,5 @@
 import uuid
 from dataclasses import dataclass
-from datetime import date
 from typing import Literal
 
 from src.modules.prestadores.application.dtos.prestador_dtos import (
@@ -9,6 +8,9 @@ from src.modules.prestadores.application.dtos.prestador_dtos import (
 )
 from src.modules.prestadores.application.use_cases.asignacion_override_dto_builder import (
     build_asignacion_override_dto,
+)
+from src.modules.prestadores.application.use_cases.asignacion_override_reglas import (
+    hay_solapamiento,
 )
 from src.modules.prestadores.domain.entities.asignacion_override import AsignacionOverride
 from src.modules.prestadores.domain.errors import (
@@ -47,7 +49,7 @@ class CreateAsignacionOverride:
         existentes = await self._deps.overrides.list_activos_por_ausente(
             command.operador_ausente_id
         )
-        if _hay_solapamiento(command.desde, command.hasta, alcance, existentes):
+        if hay_solapamiento(command.desde, command.hasta, alcance, existentes):
             raise OverlappingOverrideError()
 
         override = AsignacionOverride(
@@ -66,22 +68,3 @@ class CreateAsignacionOverride:
         involucrados = {command.operador_ausente_id, command.operador_reemplazante_id}
         users = await self._deps.users.get_users_by_ids(list(involucrados))
         return build_asignacion_override_dto(override, users)
-
-
-def _hay_solapamiento(
-    desde: date,
-    hasta: date,
-    alcance: Literal["TOTAL"] | frozenset[uuid.UUID],
-    existentes: list[AsignacionOverride],
-) -> bool:
-    """Dos overrides del mismo operador ausente conflictúan si sus rangos de
-    fecha se superponen y comparten al menos un PST en alcance (o alguno es
-    TOTAL, que cubre cualquier PST)."""
-    for existente in existentes:
-        if existente.desde > hasta or desde > existente.hasta:
-            continue
-        if alcance == "TOTAL" or existente.alcance == "TOTAL":
-            return True
-        if alcance & existente.alcance:
-            return True
-    return False

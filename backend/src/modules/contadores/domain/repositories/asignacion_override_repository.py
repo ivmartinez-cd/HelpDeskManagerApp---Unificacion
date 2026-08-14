@@ -35,4 +35,10 @@ class AsignacionOverrideRepository(Protocol):
         usado para saber a quién(es) está cubriendo al armar 'mis eventos'."""
         ...
 
+    async def update(self, override: AsignacionOverride) -> None:
+        """Reemplaza los datos del override (mismo `id`), incluido el alcance.
+        No toca `created_by_user_id` ni `estado` — la única transición de
+        estado es `cancelar`."""
+        ...
+
     async def cancelar(self, override_id: uuid.UUID) -> None: ...

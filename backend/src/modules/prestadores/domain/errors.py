@@ -38,6 +38,15 @@ class OverrideMismoOperadorError(ValidationError):
         super().__init__("El operador ausente y el reemplazante no pueden ser el mismo")
 
 
+class OverrideNoEditableError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "OVERRIDE_NO_EDITABLE"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Solo se puede editar un override activo — uno cancelado es un registro histórico"
+        )
+
+
 class OverlappingOverrideError(BusinessRuleViolationError):
     default_code: ClassVar[str] = "OVERLAPPING_OVERRIDE"
 

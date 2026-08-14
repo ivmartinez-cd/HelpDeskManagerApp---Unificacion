@@ -38,8 +38,8 @@ export function CoberturasView({ entityType }: { entityType: CoberturaEntityType
   const { user, can } = useSession();
   const puedeCrear =
     user.isSuperadmin || can(config.permisoCrear.moduleKey, config.permisoCrear.actionKey);
-  const puedeCancelar =
-    user.isSuperadmin || can(config.permisoCancelar.moduleKey, config.permisoCancelar.actionKey);
+  const puedeMutar =
+    user.isSuperadmin || can(config.permisoMutar.moduleKey, config.permisoMutar.actionKey);
 
   const [coberturas, setCoberturas] = useState<Cobertura[] | null>(null);
   const [operadores, setOperadores] = useState<CoberturaOperadorOption[]>([]);
@@ -49,6 +49,7 @@ export function CoberturasView({ entityType }: { entityType: CoberturaEntityType
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(1);
   const [creando, setCreando] = useState(false);
+  const [editando, setEditando] = useState<Cobertura | null>(null);
   const [cancelando, setCancelando] = useState<Cobertura | null>(null);
   const [cancelandoBusy, setCancelandoBusy] = useState(false);
 
@@ -207,7 +208,9 @@ export function CoberturasView({ entityType }: { entityType: CoberturaEntityType
               operadorMeta={operadorMeta}
               alcanceLabelOf={(id) => alcanceLabelMap.get(id) ?? id}
               alcanceUnidad={config.alcanceUnidad}
-              canCancel={puedeCancelar}
+              canEdit={puedeMutar}
+              canCancel={puedeMutar}
+              onEdit={setEditando}
               onCancel={setCancelando}
             />
           )}
@@ -242,14 +245,19 @@ export function CoberturasView({ entityType }: { entityType: CoberturaEntityType
         </>
       )}
 
-      {creando && (
+      {(creando || editando) && (
         <CoberturaModal
           config={config}
           operadores={operadores}
           alcanceOptions={alcanceOptions}
-          onClose={() => setCreando(false)}
-          onCreated={() => {
+          cobertura={editando}
+          onClose={() => {
             setCreando(false);
+            setEditando(null);
+          }}
+          onSaved={() => {
+            setCreando(false);
+            setEditando(null);
             void load();
           }}
         />

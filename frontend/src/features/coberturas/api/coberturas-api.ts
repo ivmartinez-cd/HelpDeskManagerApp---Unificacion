@@ -66,6 +66,18 @@ export const coberturasContadoresApi: CoberturasApi = {
       })
       .then(fromContadoresWire),
 
+  update: (id: string, payload: CreateCoberturaPayload) =>
+    httpClient
+      .put<ContadoresOverrideWire>(`/api/contadores/calendario/overrides/${id}`, {
+        operador_ausente_id: payload.ausenteId,
+        operador_reemplazante_id: payload.reemplazanteId,
+        vigente_desde: payload.desde,
+        vigente_hasta: payload.hasta,
+        clientes: payload.alcanceItems,
+        motivo: payload.motivo,
+      })
+      .then(fromContadoresWire),
+
   cancel: (id: string) =>
     httpClient.post<void>(`/api/contadores/calendario/overrides/${id}/cancelar`),
 
@@ -136,6 +148,18 @@ export const coberturasPstApi: CoberturasApi = {
   create: (payload: CreateCoberturaPayload) =>
     httpClient
       .post<PrestadoresOverrideWire>("/api/prestadores/overrides", {
+        operadorAusenteId: payload.ausenteId,
+        operadorReemplazanteId: payload.reemplazanteId,
+        desde: payload.desde,
+        hasta: payload.hasta,
+        prestadorIds: payload.alcanceItems,
+        motivo: payload.motivo,
+      })
+      .then(fromPrestadoresWire),
+
+  update: (id: string, payload: CreateCoberturaPayload) =>
+    httpClient
+      .put<PrestadoresOverrideWire>(`/api/prestadores/overrides/${id}`, {
         operadorAusenteId: payload.ausenteId,
         operadorReemplazanteId: payload.reemplazanteId,
         desde: payload.desde,

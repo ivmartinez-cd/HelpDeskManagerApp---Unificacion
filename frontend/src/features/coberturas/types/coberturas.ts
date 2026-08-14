@@ -57,6 +57,9 @@ export interface AlcanceOption {
 export interface CoberturasApi {
   list: () => Promise<Cobertura[]>;
   create: (payload: CreateCoberturaPayload) => Promise<Cobertura>;
+  /** Edición in-place de una cobertura activa/programada (mismo id, mismo
+   * body que el alta — ADR-013, actualización 2026-08-14). */
+  update: (id: string, payload: CreateCoberturaPayload) => Promise<Cobertura>;
   cancel: (id: string) => Promise<void>;
   listOperadores: () => Promise<CoberturaOperadorOption[]>;
   /** Catálogo para el multi-select de alcance parcial. Vacío en contadores:

@@ -12,6 +12,9 @@ from src.modules.contadores.application.dtos.create_asignacion_override_request 
 from src.modules.contadores.application.dtos.get_calendar_events_request import (
     GetCalendarEventsRequest,
 )
+from src.modules.contadores.application.dtos.update_asignacion_override_request import (
+    UpdateAsignacionOverrideRequest as UpdateAsignacionOverrideAppRequest,
+)
 from src.modules.contadores.application.use_cases.cancel_asignacion_override import (
     CancelAsignacionOverride,
     CancelAsignacionOverrideDependencies,
@@ -42,6 +45,10 @@ from src.modules.contadores.application.use_cases.resolver_cliente_siges import 
 )
 from src.modules.contadores.application.use_cases.sync_calendar_events import (
     SyncCalendarEventsUseCase,
+)
+from src.modules.contadores.application.use_cases.update_asignacion_override import (
+    UpdateAsignacionOverride,
+    UpdateAsignacionOverrideDependencies,
 )
 from src.modules.contadores.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.contadores.infrastructure.gestion.gestion_planificacion_client import (
@@ -302,6 +309,32 @@ async def create_override(
             clientes=payload.clientes,
             motivo=payload.motivo,
             created_by_user_id=identity.user.id,
+        )
+    )
+    return AsignacionOverrideResponse.from_dto(dto)
+
+
+@router.put("/calendario/overrides/{override_id}", response_model=AsignacionOverrideResponse)
+async def update_override(
+    override_id: uuid.UUID,
+    # Mismo body que el alta — el id va en el path y el creador no cambia.
+    payload: CreateAsignacionOverrideRequest,
+    _: Identity = _require_manage,
+    db: AsyncSession = Depends(get_db),
+) -> AsignacionOverrideResponse:
+    deps = UpdateAsignacionOverrideDependencies(
+        overrides=SqlAlchemyAsignacionOverrideRepository(db),
+        calendar=SqlAlchemyCalendarEventRepository(db),
+    )
+    dto = await UpdateAsignacionOverride(deps).execute(
+        UpdateAsignacionOverrideAppRequest(
+            override_id=override_id,
+            operador_ausente_id=payload.operador_ausente_id,
+            operador_reemplazante_id=payload.operador_reemplazante_id,
+            vigente_desde=payload.vigente_desde,
+            vigente_hasta=payload.vigente_hasta,
+            clientes=payload.clientes,
+            motivo=payload.motivo,
         )
     )
     return AsignacionOverrideResponse.from_dto(dto)

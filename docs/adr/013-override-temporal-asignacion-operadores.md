@@ -152,3 +152,22 @@ original sin ninguna acción adicional, porque la regla simplemente deja de matc
 - Revisar esta decisión si aparece un tercer módulo con la misma necesidad: en ese punto sí
   vale la pena extraer un value object/servicio de resolución genérico a `shared` (no una tabla
   compartida, solo el algoritmo de resolución y las validaciones de invariantes).
+
+## Actualización 2026-08-14 — edición de overrides
+
+El diseño original dejó "cancelar" como única mutación post-alta y la UI de Coberturas omitió
+el botón "Editar" que preveía el handoff, porque no existía el endpoint. Se agrega ahora en
+ambos módulos:
+
+- `PUT /api/contadores/calendario/overrides/{id}` y `PUT /api/prestadores/overrides/{id}`
+  (casos de uso `UpdateAsignacionOverride`), con el mismo body que el alta y el mismo permiso
+  que cancelar (`manage` / `UPDATE`).
+- La edición es **in-place** (mismo `id`): reemplaza operadores, vigencia, alcance y motivo.
+  `created_by_user_id` y `estado` no cambian. Se descartó modelarla como "cancelar + crear"
+  porque generaría una fila CANCELADA indistinguible de una cancelación real por cada edición,
+  ensuciando el historial que esa marca quiere preservar.
+- Solo se edita un override `ACTIVA` — uno `CANCELADA` es un registro histórico inmutable
+  (`OverrideNoEditableError`). Siguen sin existir `DELETE` ni transición de vuelta a `ACTIVA`.
+- Aplican las mismas validaciones del alta (rango, operadores distintos, catálogo en
+  `contadores`, no solapamiento), compartidas en `asignacion_override_reglas.py`; para el
+  solapamiento el override editado se excluye a sí mismo del universo comparado.
