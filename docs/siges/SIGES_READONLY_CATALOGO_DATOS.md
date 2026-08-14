@@ -228,6 +228,51 @@ reporte (43/43 filas tipo Impresión, mismas fechas e importes). Scripts:
   `GrupoEconomico.descripcion`, `Anexo.moneda_id`/`moneda_facturacion_id`→`Moneda.Descripcion`
   (`Pesos`/`Dólar Billete`/`Dólar Divisa`).
 
+### Preventivos por zona: `Sucursal.Cuadricula` + `Sucursal.TipoPreventivo` + `Tipo_Incidente` (confirmado 2026-08-14)
+
+Investigación para la feature "preventivos por zona de distribución". Scripts:
+`backend/scripts/explore_siges_preventivos_zona.py` / `_ronda2.py` / `_ronda3.py`.
+
+- **Zona = `Sucursal.Cuadricula`** (varchar 10, texto libre, SIN catálogo ni FK — la búsqueda
+  global de columnas/tablas `%zona%`/`%cuadric%` en las 444 visibles solo devuelve esta
+  columna). Valores reales con sucursales activas (top): `INTERIOR` 5186, `A DEFINIR` 1714,
+  `OESTE` 615, `CENTRO` 559, `CABA-N` 549, `SUR` 566, `SUROESTE` 523, `CABA` 503, `NORTE2` 351,
+  `NORTE3` 308, `NORTE4` 280, `CABA-S` 258, `CABA-O` 221, `SMARTIN` 154, `NORTE1` 148, más
+  agrupaciones de interior (`BSAS.1/2/3`, `CBA..1/2/3`, `CUYO.1/2/3`, `NOA..1/2`, `COSTA1/2/3`)
+  y basura (`''`, `'SUORESTE'` typo, `'NORTE 3'` con espacio, `'KIKO'`, `'0000000000'`,
+  `'PROPIO'`). **No existe `SURESTE`** en los datos. El catálogo de zonas debe salir de
+  `DISTINCT` sobre sucursales activas, no de un enum.
+- **La zona vive SOLO en la sucursal**: `Empresa` no tiene ninguna columna de zona, y
+  `Empresa.ID_DomicilioFactur` NO apunta a `Sucursal` (0 match en 1092 empresas activas;
+  apunta a otra cosa, probablemente una tabla de domicilios no explorada).
+- **Frecuencia del preventivo = `Sucursal.TipoPreventivo` (int NOT NULL) →
+  `TipoPreventivo(Tipo, Dias)`** (7 filas): 0→0 días, 10→180, 20→120, 30→90, 40→60, 50→30,
+  60→360. Granularidad: por sucursal. Distribución en sucursales activas (máquinas activas):
+  180 días 23402 máq., 0 días ("sin preventivo") 5023, 360 días 1150, 120 días 414, 30 días
+  355, 90 días 317, 60 días 55. La tabla `Frecuencia` (Mensual/Bimestral/…) NO es esto: solo
+  la referencia `OLD_AnexoRevision` — descartada.
+- **Catálogo completo `Tipo_Incidente`** (13 filas, deuda del módulo sla que filtra
+  `IN (101, 108)`): 101 Correctivo, 102 **Preventivo**, 103 Instalación-Desinstalación,
+  104 Inclusion a Contrato, 105 Relevamiento, 106 Presupuesto, 107 Pre-Correctivo,
+  108 Guardia, 150 Taller, 201 Sistemas, 202 Para PISAR (Estado=1), 203 Toma de Contador,
+  204 Entrega de Insumo.
+- **Último preventivo por máquina** = `MAX` de `Incidente` con `ID_Tipo_Incidente = 102` y
+  `ID_Estado_Incidente IN (500, 600, 700, 710)` (Finalizado/Cerrado/Resuelto/Resuelto
+  c/pendientes; excluye 900 Anulado — 4201 anulados desde 2024). ⚠️ `Fecha_Cierre` usa
+  sentinel `1900-01-01` incluso en Cerrados: la fecha efectiva es
+  `CASE WHEN Fecha_Cierre > '1900-01-01' THEN Fecha_Cierre ELSE Fecha_Ingreso END`.
+  Los preventivos se siguen cargando (8269 en 2026 hasta agosto). Catálogo
+  `Estado_Incidente` completo volcado en el script de ronda 2.
+- `IncidentePreventivo` **descartada** como fuente: 33 filas viejas (2009-2015), es una
+  planificación puntual abandonada. `Mantenimiento` (VIEW, 6 filas) es la cobertura del
+  anexo (1 Full Service, 2 Sin Servicio, 3 Sin Repuestos, 4 Solo Toner, 5 Sin Repuestos/Sin
+  Insumos) vía `Anexo.ID_Mantenimiento` — útil para excluir equipos sin servicio, no es la
+  frecuencia.
+- **Medición** (consulta candidata: parque activo de una zona + frecuencia + último
+  preventivo agregado): SUR 1441 filas 0.18-0.42 s, CABA-N 1722 filas 0.26-0.33 s, NORTE2
+  1884 filas 0.24-0.34 s → alcanza consulta **en vivo** vía `MercurioQueryRunner`, sin
+  snapshot.
+
 ## 4. Candidatas exploradas — columnas confirmadas, dato real pendiente [CANDIDATA]
 
 Útiles para casos de uso futuros que no sean el Calendario de Contadores. Ninguna de estas fue
@@ -252,10 +297,15 @@ cliente), `Id_Sucursal`, `Id_Estado_Remito`, `Id_Proveedor`, `Entrega_a`, `Impri
 `Remito_Maquina`: `Id_Remito_Cab` (FK), `Id_Maquina` (FK), `Item` — vincula un remito a
 máquinas específicas.
 
-### `dbo.Distribucion`
+### `dbo.Distribucion` — confirmada como transportistas (2026-08-14), NO son zonas
 
-Catálogo simple de transportistas/distribuidoras: `Id` (PK), `Descripcion`, `Cuit`,
-`RequerirNroGuia`, `Estado`, `Fecha_Mod`, `Usuario_Mod`.
+Catálogo de transportistas/distribuidoras y personal propio de logística: `Id` (PK),
+`Descripcion`, `Cuit`, `RequerirNroGuia`, `Estado`, `Fecha_Mod`, `Usuario_Mod`. Confirmado con
+las 57 filas reales (Andreani, OCA, Credifin, `'Propio'`, técnicos por nombre `'Ivan
+(Tecnico)'`, choferes…). Se investigó como posible catálogo de zonas de distribución para la
+feature de preventivos y **no lo es** — las zonas geográficas viven en `Sucursal.Cuadricula`
+(ver §3). `Sucursal.Distribucion` (int) sí apunta acá: es el medio de despacho habitual de la
+sucursal (Propio 5252 activas, OCA 5218, Credifin 1655…).
 
 ### `dbo.Vendedor`
 
