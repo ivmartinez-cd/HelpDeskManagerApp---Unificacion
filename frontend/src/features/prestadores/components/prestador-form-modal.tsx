@@ -32,9 +32,6 @@ export function PrestadorFormModal({
   const [denComercial, setDenComercial] = useState(prestador?.denComercial ?? "");
   const [razonSocial, setRazonSocial] = useState(prestador?.razonSocial ?? "");
   const [cuit, setCuit] = useState(prestador?.cuit ?? "");
-  const [equipos, setEquipos] = useState(
-    prestador?.equipos != null ? String(prestador.equipos) : "",
-  );
   const [operadorId, setOperadorId] = useState(prestador?.operadorId ?? SIN_ASIGNAR);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,14 +45,12 @@ export function PrestadorFormModal({
           denComercial,
           razonSocial: razonSocial || null,
           cuit: cuit || null,
-          equipos: equipos === "" ? null : Number(equipos),
         })
       : prestadoresApi.createPrestador({
           sigesEmpresaId: Number(sigesEmpresaId),
           denComercial,
           razonSocial: razonSocial || null,
           cuit: cuit || null,
-          equipos: equipos === "" ? null : Number(equipos),
           operadorId: operadorId === SIN_ASIGNAR ? null : operadorId,
         });
     request
@@ -101,13 +96,6 @@ export function PrestadorFormModal({
           onChange={(e) => setRazonSocial(e.target.value)}
         />
         <BrandInput label="CUIT" value={cuit} onChange={(e) => setCuit(e.target.value)} />
-        <BrandInput
-          label="Parque de impresoras"
-          type="number"
-          value={equipos}
-          onChange={(e) => setEquipos(e.target.value)}
-          hint="Cantidad de equipos del parque asignado a este PST."
-        />
         {!isEdit && (
           <BrandSelect
             label="Operador"

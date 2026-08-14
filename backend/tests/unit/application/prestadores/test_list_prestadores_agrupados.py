@@ -8,16 +8,23 @@ from src.modules.prestadores.application.use_cases.list_prestadores_agrupados im
 from src.modules.prestadores.domain.entities.asignacion_override import AsignacionOverride
 from src.modules.prestadores.domain.entities.prestador import Prestador
 from src.modules.prestadores.domain.repositories.user_provider import UserInfo
+from src.shared.domain.errors import ExternalServiceError
 from tests.unit.domain.prestadores.fakes import (
     FakeAsignacionOverrideRepository,
     FakeContactoRepository,
     FakePrestadorRepository,
+    FakeSigesPrestadorGateway,
     FakeUserProvider,
 )
 
 
 def _prestador(
-    *, siges_id: int, nombre: str, operador_id: uuid.UUID | None, activo: bool = True
+    *,
+    siges_id: int,
+    nombre: str,
+    operador_id: uuid.UUID | None,
+    activo: bool = True,
+    equipos: int | None = None,
 ) -> Prestador:
     return Prestador(
         id=uuid.uuid4(),
@@ -25,7 +32,7 @@ def _prestador(
         den_comercial=nombre,
         razon_social=None,
         cuit=None,
-        equipos=None,
+        equipos=equipos,
         operador_id=operador_id,
         is_active=activo,
     )
@@ -35,12 +42,14 @@ def _deps(
     prestadores: FakePrestadorRepository,
     users: FakeUserProvider,
     overrides: FakeAsignacionOverrideRepository | None = None,
+    siges: FakeSigesPrestadorGateway | None = None,
 ) -> ListPrestadoresAgrupadosDependencies:
     return ListPrestadoresAgrupadosDependencies(
         prestadores=prestadores,
         contactos=FakeContactoRepository(),
         users=users,
         overrides=overrides or FakeAsignacionOverrideRepository(),
+        siges=siges,
     )
 
 
@@ -153,3 +162,52 @@ async def test_pst_cubierto_fuera_de_vigencia_agrupa_bajo_el_titular() -> None:
     )
 
     assert [g.operador_id for g in resumen.grupos] == [titular_id]
+
+
+async def test_parque_de_equipos_sale_del_conteo_en_vivo_de_siges() -> None:
+    prestadores = FakePrestadorRepository()
+    users = FakeUserProvider()
+    siges = FakeSigesPrestadorGateway()
+
+    con_parque = _prestador(
+        siges_id=740, nombre="PST Villa Mercedes", operador_id=None, equipos=100
+    )
+    sin_maquinas = _prestador(siges_id=3, nombre="PST C", operador_id=None, equipos=15)
+    prestadores.rows[con_parque.id] = con_parque
+    prestadores.rows[sin_maquinas.id] = sin_maquinas
+    siges.equipos_por_id[740] = 841
+    # el 3 no tiene filas en el conteo: parque real de 0, pisa el valor persistido
+
+    resumen = await ListPrestadoresAgrupados(_deps(prestadores, users, siges=siges)).execute()
+
+    equipos_por_nombre = {
+        p.den_comercial: p.equipos for g in resumen.grupos for p in g.prestadores
+    }
+    assert equipos_por_nombre == {"PST Villa Mercedes": 841, "PST C": 0}
+    assert siges.equipos_calls == [[3, 740]]
+
+
+async def test_siges_caido_degrada_al_ultimo_parque_persistido() -> None:
+    prestadores = FakePrestadorRepository()
+    users = FakeUserProvider()
+    siges = FakeSigesPrestadorGateway()
+    siges.fail_equipos = ExternalServiceError("MERCURIO caído")
+
+    pst = _prestador(siges_id=740, nombre="PST Villa Mercedes", operador_id=None, equipos=800)
+    prestadores.rows[pst.id] = pst
+
+    resumen = await ListPrestadoresAgrupados(_deps(prestadores, users, siges=siges)).execute()
+
+    assert resumen.grupos[0].prestadores[0].equipos == 800
+
+
+async def test_sin_gateway_configurado_usa_el_parque_persistido() -> None:
+    prestadores = FakePrestadorRepository()
+    users = FakeUserProvider()
+
+    pst = _prestador(siges_id=740, nombre="PST Villa Mercedes", operador_id=None, equipos=800)
+    prestadores.rows[pst.id] = pst
+
+    resumen = await ListPrestadoresAgrupados(_deps(prestadores, users)).execute()
+
+    assert resumen.grupos[0].prestadores[0].equipos == 800

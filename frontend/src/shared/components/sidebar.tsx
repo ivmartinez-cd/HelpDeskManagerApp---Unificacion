@@ -147,6 +147,26 @@ export function Sidebar({ children }: { children: ReactNode }) {
               Inicio
             </Link>
 
+            <Link
+              href="/servicio-tecnico"
+              onClick={closeMobile}
+              aria-current={isActive("/servicio-tecnico") ? "page" : undefined}
+              className={cn(
+                "flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 font-body text-sm no-underline transition-colors",
+                isActive("/servicio-tecnico")
+                  ? "bg-brand-orange/[0.12] font-semibold text-brand-orange"
+                  : "text-muted-foreground hover:bg-muted",
+              )}
+            >
+              <span
+                className={cn(
+                  "h-[7px] w-[7px] flex-none rounded-full",
+                  isActive("/servicio-tecnico") ? "bg-brand-orange" : "bg-muted-foreground/40",
+                )}
+              />
+              Servicio Técnico
+            </Link>
+
             {modules.length === 0 && (
               <p className="px-3 py-4 font-body text-xs text-muted-foreground">
                 Todavía no tenés módulos habilitados.
