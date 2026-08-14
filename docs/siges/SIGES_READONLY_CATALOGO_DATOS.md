@@ -83,7 +83,7 @@ usa Gestión, `gestion.cdsa.com.ar` — confirmado con `login='vipaez'` → `nom
 | `fechaSync`, `fechaLogin` | datetime | |
 | `apellido`, `nombre` | varchar | identidad real — reemplaza la heurística `operador_matcher` de `contadores` |
 | `cargo`, `telefono`, `interno`, `movil` | varchar | |
-| `color` | varchar | **identidad real de color**, ej. `#888200` — reemplaza la aproximación de `Operador.color` en `contadores` |
+| `color` | varchar | color del usuario, ej. `#888200` — **⚠️ desactualizado/duplicado** (verificado 2026-08-14: `ltorres` y `mjvela` comparten `#BC2FFE`, pero los eventos de Gestión pintan a ltorres `#FFC0CB`). El color operativo real es el `backgroundColor` dominante de los eventos del calendario; esta columna quedó como fallback (ver SyncCalendarEventsUseCase) |
 | `usuarioMod`, `fechaMod` | varchar/smalldatetime | auditoría |
 
 Uso concreto ya decidido: reemplaza `GestionPlanificacionClient.get_operadores()` (scraping del

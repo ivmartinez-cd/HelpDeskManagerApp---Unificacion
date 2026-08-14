@@ -64,10 +64,18 @@ async def test_sync_hace_un_solo_pedido_y_agrupa_por_operador_del_evento() -> No
 
 
 @pytest.mark.asyncio
-async def test_sync_usa_identidad_resuelta_por_siges_no_por_eventos() -> None:
+async def test_sync_nombre_por_siges_y_color_dominante_de_los_eventos() -> None:
+    """El nombre sale de UsuariosWeb, pero el color sale de los eventos:
+    UsuariosWeb.color está desactualizado/duplicado (caso real ltorres),
+    mientras que el color de los eventos es el que la gente ve en Gestión."""
     events = [
+        # mjvela: dominante #FACC2E (2 a 1), aunque UsuariosWeb diga lo mismo
         _event("1", "mjvela", "#FACC2E"),
+        _event("2", "mjvela", "#FACC2E"),
+        _event("3", "mjvela", "#BC2FFE"),
+        # vipaez: los eventos (#66B3FF) pisan el color viejo de UsuariosWeb (#888200)
         _event("4", "vipaez", "#66B3FF"),
+        # sin color en los eventos ni identidad: queda username y color None
         _event("5", "desconocido", None),
     ]
     port = _make_calendar_port(events)
@@ -83,11 +91,27 @@ async def test_sync_usa_identidad_resuelta_por_siges_no_por_eventos() -> None:
     assert por_id["mjvela"].nombre == "Maria Jose Vela"
     assert por_id["mjvela"].color == "#FACC2E"
     assert por_id["vipaez"].nombre == "Victor Paez"
-    assert por_id["vipaez"].color == "#888200"
+    assert por_id["vipaez"].color == "#66B3FF"
     # Sin identidad resuelta en Siges, el username queda como nombre visible.
     assert por_id["desconocido"].nombre == "desconocido"
     assert por_id["desconocido"].color is None
     repo.prune_operadores_not_in.assert_awaited_once_with(["desconocido", "mjvela", "vipaez"])
+
+
+@pytest.mark.asyncio
+async def test_sync_sin_color_en_eventos_cae_a_usuariosweb() -> None:
+    events = [_event("1", "vipaez", None)]
+    port = _make_calendar_port(events)
+    catalog = _make_operador_catalog(_IDENTIDADES)
+    repo = AsyncMock()
+
+    await SyncCalendarEventsUseCase(port, catalog, repo).execute(
+        start_date="2026-08-01", end_date="2026-08-31"
+    )
+
+    (call,) = repo.replace_operadores.await_args_list
+    por_id = {op.id: op for op in call.args[0]}
+    assert por_id["vipaez"].color == "#888200"
 
 
 @pytest.mark.asyncio

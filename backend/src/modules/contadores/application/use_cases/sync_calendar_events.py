@@ -1,5 +1,5 @@
 import logging
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import UTC, datetime
 
 from src.modules.contadores.application.dtos.sync_calendar_events_result import (
@@ -22,10 +22,15 @@ class SyncCalendarEventsUseCase:
     cada evento de facturación (campo `operador`), así que pedir el rango una
     vez por operador —como se hacía antes— multiplicaba por ~50 los requests
     a Gestión y moría por timeout. El username es la identidad local del
-    operador; su nombre/color reales se resuelven contra Siges/UsuariosWeb
-    (OperadorCatalogPort, ver ADR-012), no contra Gestión. Full replace del
-    rango: los cambios de operador o de clientes en Gestión se reflejan sin
-    dejar basura vieja, y un operador sin eventos en toda la ventana se poda.
+    operador; su nombre real se resuelve contra Siges/UsuariosWeb
+    (OperadorCatalogPort, ver ADR-012). El color, en cambio, sale del color
+    dominante de los propios eventos del operador: `UsuariosWeb.color` está
+    desactualizado/duplicado (verificado 2026-08-14: ltorres figura #BC2FFE
+    igual que mjvela, pero sus eventos en Gestión son #FFC0CB — el color que
+    la gente reconoce en el calendario); UsuariosWeb queda solo como fallback
+    para un operador cuyos eventos no traigan color. Full replace del rango:
+    los cambios de operador o de clientes en Gestión se reflejan sin dejar
+    basura vieja, y un operador sin eventos en toda la ventana se poda.
     """
 
     def __init__(
@@ -92,5 +97,16 @@ def _build_operadores(
                 "Operador sin identidad resuelta en Siges/UsuariosWeb, se usa el username",
                 extra={"username": username},
             )
-        operadores.append(identidad or Operador(id=username, nombre=username))
+        color = _color_dominante(por_operador[username]) or (
+            identidad.color if identidad else None
+        )
+        nombre = identidad.nombre if identidad else username
+        operadores.append(Operador(id=username, nombre=nombre, color=color))
     return operadores
+
+
+def _color_dominante(events: list[CalendarEvent]) -> str | None:
+    """El color con que Gestión pinta los eventos del operador — su identidad
+    visual real en el calendario (ver docstring del use case)."""
+    conteo = Counter(e.background_color for e in events if e.background_color)
+    return conteo.most_common(1)[0][0] if conteo else None
