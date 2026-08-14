@@ -18,8 +18,13 @@ ADR-019; fuentes de datos confirmadas en `docs/siges/SIGES_READONLY_CATALOGO_DAT
   anulado (Finalizado 500 / Cerrado 600 / Resuelto 700 / Resuelto c/pendientes 710). La fecha
   es `Fecha_Cierre`, salvo que tenga el sentinel `1900-01-01` (pasa incluso en Cerrados), en
   cuyo caso se usa `Fecha_Ingreso`.
-- **Máquina activa**: `M.Estado = 0 AND M.ID_Estado_Maquina NOT IN (2, 8)` + sucursal activa
-  (`S.Estado = 0`). Misma definición con paridad exacta contra el legacy (§3 del catálogo).
+- **Universo**: `M.Estado = 0 AND M.ID_Estado_Maquina = 1` ('Activa en Cliente') + sucursal
+  activa (`S.Estado = 0`) + empresa cliente real (`E.Estado = 0 AND E.ID_Tipo_Empresa IN
+  (101, 102)`). Más estricto que el parque por PST (`NOT IN (2, 8)`): acá se despachan
+  técnicos, y las máquinas en Baja Solicitada / No Localizado / Backup / Reparación /
+  Desguace no reciben preventivos; el filtro de tipo de empresa excluye a CD1/CD4 (empresas
+  propias, tipo 201) y a técnicos/PSTs (401/402). Ajustado 2026-08-14 tras reporte del
+  usuario (aparecían CD1 y clientes con baja solicitada).
 
 ## Cómo se calcula el vencimiento (`domain/services/vencimiento.py`)
 

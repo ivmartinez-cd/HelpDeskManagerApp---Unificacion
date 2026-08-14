@@ -23,8 +23,12 @@ operativas:
 - **Último preventivo** = `MAX` de `Incidente` tipo 102 (`Tipo_Incidente` 102 = Preventivo)
   en estado terminal no anulado (500/600/700/710); fecha efectiva `Fecha_Cierre` salvo
   sentinel `1900-01-01`, en cuyo caso `Fecha_Ingreso`.
-- **Máquina activa** = `M.Estado = 0 AND M.ID_Estado_Maquina NOT IN (2, 8)` (definición ya
-  confirmada con paridad exacta contra el legacy).
+- **Universo** = `M.Estado = 0 AND M.ID_Estado_Maquina = 1` ('Activa en Cliente') + empresa
+  cliente real (`E.Estado = 0 AND E.ID_Tipo_Empresa IN (101, 102)`). Ajustado el mismo día
+  tras reporte del usuario: el `NOT IN (2, 8)` del parque por PST dejaba pasar máquinas en
+  Baja Solicitada/No Localizado/Backup/Desguace (clientes que ya pidieron la baja) y el
+  tipo de empresa sin filtrar mostraba a CD1 (empresa propia, tipo 201) como cliente con
+  201 máquinas.
 
 ## Decisiones
 

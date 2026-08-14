@@ -272,6 +272,21 @@ Investigación para la feature "preventivos por zona de distribución". Scripts:
   preventivo agregado): SUR 1441 filas 0.18-0.42 s, CABA-N 1722 filas 0.26-0.33 s, NORTE2
   1884 filas 0.24-0.34 s → alcanza consulta **en vivo** vía `MercurioQueryRunner`, sin
   snapshot.
+- **`Empresa.ID_Tipo_Empresa`** (sin tabla catálogo — `Tipo_Empresa` no existe; semántica
+  inferida por distribución de `Den_Comercial`, ronda 6): **101/102 = clientes reales**
+  (101 general 778 empresas, 102 grandes cuentas 80: ACCUSYS…YPF), **201 = empresas propias
+  de Canal Directo** (6: `CD1 (CDSA)` = `ID_Empresa 1`, `CD4 (Directar)`, `CD - Roberto
+  CULVER`…), 301 = proveedores (Advance…Zaidap), 401 = técnicos/PST individuales,
+  402 = SPST, 403 = cliente-como-prestador. Para pantallas de clientes, filtrar
+  `IN (101, 102)` — sin eso CD1 aparece como "cliente" con 201 máquinas (edificio Laprida,
+  bodegas, equipos de prueba).
+- **Universo de despacho de preventivos** (ajuste 2026-08-14, ronda 5/6, reporte del
+  usuario): además del filtro de cliente real, solo `ID_Estado_Maquina = 1` ('Activa en
+  Cliente') — el `NOT IN (2, 8)` del parque por PST deja pasar 216 máquinas en 'Baja
+  Solicitada' (clientes que pidieron la baja y esperan retiro), 162 'No Localizado', y
+  Backup/Para Reparar/Demo/Desguace, que no reciben preventivos. Nota: ninguna empresa del
+  universo local tiene `Estado=1` — "cliente de baja" en la práctica se manifiesta como
+  máquinas en 'Baja Solicitada', no como empresa inactiva.
 
 ## 4. Candidatas exploradas — columnas confirmadas, dato real pendiente [CANDIDATA]
 

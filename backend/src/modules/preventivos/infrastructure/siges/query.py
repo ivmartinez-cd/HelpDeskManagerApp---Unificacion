@@ -12,8 +12,14 @@ parametrizadas — ARCHITECTURE_GUIDE §8). Fuentes confirmadas con dato real el
   710 Resuelto c/pendientes). `Fecha_Cierre` usa el sentinel 1900-01-01
   incluso en incidentes cerrados, por eso la fecha efectiva cae a
   `Fecha_Ingreso` cuando el cierre es sentinel.
-- Máquina activa = `M.Estado = 0 AND M.ID_Estado_Maquina NOT IN (2, 8)`
-  (definición con paridad exacta contra el legacy, ver §3 `dbo.Maquina`).
+- Universo (ajustado 2026-08-14 tras reporte del usuario, ronda 5/6):
+  `M.Estado = 0 AND M.ID_Estado_Maquina = 1` ('Activa en Cliente' — más
+  estricto que el `NOT IN (2, 8)` del parque por PST: acá se despachan
+  técnicos, y una máquina en Baja Solicitada/No Localizado/Backup/Desguace no
+  recibe preventivos), `E.Estado = 0` y `E.ID_Tipo_Empresa IN (101, 102)`
+  (clientes reales; 201 son las empresas propias de CD —CD1/CD4—, 401/402
+  técnicos y prestadores — no existe tabla Tipo_Empresa, semántica inferida
+  por distribución de Den_Comercial en ronda 6).
 
 Medido 2026-08-14 (scripts/explore_siges_preventivos_ronda3.py): 0.18-0.42 s
 por zona (1400-1900 filas) — alcanza consulta en vivo, sin snapshot local.
@@ -46,7 +52,9 @@ LEFT JOIN (
 ) UP ON UP.ID_Maquina = M.ID_Maquina
 WHERE S.Estado = 0
   AND M.Estado = 0
-  AND M.ID_Estado_Maquina NOT IN (2, 8)
+  AND M.ID_Estado_Maquina = 1
+  AND E.Estado = 0
+  AND E.ID_Tipo_Empresa IN (101, 102)
   AND S.Cuadricula = ?
 """
 
@@ -61,7 +69,11 @@ FROM dbo.Sucursal S
 INNER JOIN dbo.Maquina M
     ON M.ID_Sucursal = S.Id_Sucursal
    AND M.Estado = 0
-   AND M.ID_Estado_Maquina NOT IN (2, 8)
+   AND M.ID_Estado_Maquina = 1
+INNER JOIN dbo.Empresa E
+    ON E.ID_Empresa = M.ID_Empresa
+   AND E.Estado = 0
+   AND E.ID_Tipo_Empresa IN (101, 102)
 WHERE S.Estado = 0
   AND LTRIM(RTRIM(S.Cuadricula)) <> ''
 GROUP BY S.Cuadricula
