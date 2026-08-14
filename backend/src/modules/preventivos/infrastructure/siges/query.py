@@ -12,7 +12,7 @@ parametrizadas — ARCHITECTURE_GUIDE §8). Fuentes confirmadas con dato real el
   710 Resuelto c/pendientes). `Fecha_Cierre` usa el sentinel 1900-01-01
   incluso en incidentes cerrados, por eso la fecha efectiva cae a
   `Fecha_Ingreso` cuando el cierre es sentinel.
-- Universo (ajustado 2026-08-14 tras reporte del usuario, ronda 5/6):
+- Universo (ajustado 2026-08-14 tras reporte del usuario, rondas 5-11):
   `M.Estado = 0 AND M.ID_Estado_Maquina = 1` ('Activa en Cliente' — más
   estricto que el `NOT IN (2, 8)` del parque por PST: acá se despachan
   técnicos, y una máquina en Baja Solicitada/No Localizado/Backup/Desguace no
@@ -20,12 +20,47 @@ parametrizadas — ARCHITECTURE_GUIDE §8). Fuentes confirmadas con dato real el
   (clientes reales; 201 son las empresas propias de CD —CD1/CD4—, 401/402
   técnicos y prestadores — no existe tabla Tipo_Empresa, semántica inferida
   por distribución de Den_Comercial en ronda 6).
+- Cliente VIVO por actividad: alguna toma de contador O algún incidente de la
+  empresa en los últimos N meses (`preventivos_meses_actividad`, default 3).
+  Es la única señal que distingue la baja de facto (Garbarino: anexo
+  "Activo", Empresa activa, máquinas 'Activa en Cliente'... y sin actividad
+  desde 2022/2024) de los vivos: ni Empresa.Estado (rondas 5/7), ni el estado
+  del anexo (el de Garbarino figura Activo), ni su FechaFinalizacion (54% del
+  universo vivo tiene anexo vencido en tácita reconducción — ronda 9), ni
+  FechaRestriccionServicio (la tienen todas) discriminan. Nivel EMPRESA a
+  propósito: una máquina puntual puede pasar meses sin actividad estando
+  viva, y los corporativos que facturan por otro canal (SC JOHNSON, TERNIUM)
+  no tienen tomas pero sí incidentes. Datos bimodales (facturación mensual o
+  nada): con N=3 caen 39 empresas / 792 máquinas, todas con años de
+  inactividad.
 
-Medido 2026-08-14 (scripts/explore_siges_preventivos_ronda3.py): 0.18-0.42 s
-por zona (1400-1900 filas) — alcanza consulta en vivo, sin snapshot local.
+Medido 2026-08-14 (rondas 3 y 11): 0.7-2.0 s por zona con el filtro de
+actividad — alcanza consulta en vivo, sin snapshot local.
 """
 
-PARQUE_ZONA_SQL = """
+# Los dos parámetros de PARQUE_ZONA_SQL: (meses_actividad, meses_actividad,
+# zona) — pyodbc no soporta parámetros con nombre.
+_ACTIVIDAD_EMPRESA_JOIN = """
+LEFT JOIN (
+    SELECT M2.ID_Empresa, MAX(CT.FechaTomaContador) AS ultima_toma
+    FROM dbo.Contadores CT
+    INNER JOIN dbo.Maquina M2 ON M2.ID_Maquina = CT.ID_Maquina
+    WHERE CT.Estado = 0
+    GROUP BY M2.ID_Empresa
+) TOMA ON TOMA.ID_Empresa = E.ID_Empresa
+LEFT JOIN (
+    SELECT I2.ID_Empresa, MAX(I2.Fecha_Ingreso) AS ultimo_incidente
+    FROM dbo.Incidente I2
+    GROUP BY I2.ID_Empresa
+) INC ON INC.ID_Empresa = E.ID_Empresa
+"""
+
+_EMPRESA_VIVA_WHERE = """
+  AND (TOMA.ultima_toma >= DATEADD(month, -?, GETDATE())
+       OR INC.ultimo_incidente >= DATEADD(month, -?, GETDATE()))
+"""
+
+PARQUE_ZONA_SQL = f"""
 SELECT
     M.ID_Maquina AS id_maquina,
     M.Nro_Serie AS serie,
@@ -50,18 +85,22 @@ LEFT JOIN (
       AND I.ID_Estado_Incidente IN (500, 600, 700, 710)
     GROUP BY I.ID_Maquina
 ) UP ON UP.ID_Maquina = M.ID_Maquina
+{_ACTIVIDAD_EMPRESA_JOIN}
 WHERE S.Estado = 0
   AND M.Estado = 0
   AND M.ID_Estado_Maquina = 1
   AND E.Estado = 0
   AND E.ID_Tipo_Empresa IN (101, 102)
+{_EMPRESA_VIVA_WHERE}
   AND S.Cuadricula = ?
 """
 
 # El catálogo trae TODAS las cuadrículas con parque activo; la exclusión de
 # INTERIOR/agrupaciones de PST es regla de dominio (services/zonas.py), no SQL
-# — así la lista configurable vive en un solo lugar.
-ZONAS_SQL = """
+# — así la lista configurable vive en un solo lugar. Parámetros:
+# (meses_actividad, meses_actividad) — mismo criterio de cliente vivo que el
+# parque, para que el conteo del chip coincida con la tabla.
+ZONAS_SQL = f"""
 SELECT
     S.Cuadricula AS zona,
     COUNT(M.ID_Maquina) AS maquinas_activas
@@ -74,7 +113,9 @@ INNER JOIN dbo.Empresa E
     ON E.ID_Empresa = M.ID_Empresa
    AND E.Estado = 0
    AND E.ID_Tipo_Empresa IN (101, 102)
+{_ACTIVIDAD_EMPRESA_JOIN}
 WHERE S.Estado = 0
   AND LTRIM(RTRIM(S.Cuadricula)) <> ''
+{_EMPRESA_VIVA_WHERE}
 GROUP BY S.Cuadricula
 """

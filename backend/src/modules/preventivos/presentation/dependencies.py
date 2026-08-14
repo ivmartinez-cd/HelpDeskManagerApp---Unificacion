@@ -18,7 +18,11 @@ _CACHE_TTL_SECONDS = 300.0
 
 @lru_cache
 def get_preventivos_gateway() -> PyodbcPreventivosGateway:
-    return PyodbcPreventivosGateway(require_mercurio_runner(), _CACHE_TTL_SECONDS)
+    return PyodbcPreventivosGateway(
+        require_mercurio_runner(),
+        _CACHE_TTL_SECONDS,
+        get_settings().preventivos_meses_actividad,
+    )
 
 
 @lru_cache

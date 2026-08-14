@@ -19,9 +19,12 @@ from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
 
 
 class PyodbcPreventivosGateway:
-    def __init__(self, runner: MercurioQueryRunner, cache_ttl_seconds: float) -> None:
+    def __init__(
+        self, runner: MercurioQueryRunner, cache_ttl_seconds: float, meses_actividad: int
+    ) -> None:
         self._runner = runner
         self._cache_ttl_seconds = cache_ttl_seconds
+        self._meses_actividad = meses_actividad
         self._lock = asyncio.Lock()
         self._por_zona: dict[str, ParqueZonaSnapshot] = {}
         self._zonas: list[ZonaParque] | None = None
@@ -38,7 +41,7 @@ class PyodbcPreventivosGateway:
                 return vigente
             rows = await self._runner.fetch_all(
                 PARQUE_ZONA_SQL,
-                (zona,),
+                (self._meses_actividad, self._meses_actividad, zona),
                 gateway="preventivos_parque_zona",
                 log_message="Falló la consulta del parque de preventivos contra Siges/MERCURIO",
                 log_extra={"zona": zona},
@@ -56,6 +59,7 @@ class PyodbcPreventivosGateway:
                 return self._zonas
             rows = await self._runner.fetch_all(
                 ZONAS_SQL,
+                (self._meses_actividad, self._meses_actividad),
                 gateway="preventivos_zonas",
                 log_message="Falló el catálogo de zonas de preventivos contra Siges/MERCURIO",
             )
