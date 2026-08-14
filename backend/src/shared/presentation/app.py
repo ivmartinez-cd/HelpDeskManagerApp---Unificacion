@@ -53,6 +53,9 @@ from src.modules.liquidaciones.presentation.liquidaciones_router import (
 from src.modules.prestadores.presentation.prestadores_router import (
     router as prestadores_router,
 )
+from src.modules.preventivos.presentation.preventivos_router import (
+    router as preventivos_router,
+)
 from src.modules.sla.presentation.sla_router import router as sla_router
 from src.modules.turnos.presentation.turnos_router import router as turnos_router
 from src.modules.vacaciones.presentation.auditoria_router import (
@@ -181,6 +184,7 @@ def create_app() -> FastAPI:
     app.include_router(turnos_router)
     app.include_router(sla_router)
     app.include_router(prestadores_router)
+    app.include_router(preventivos_router)
     # config_router va ANTES: sus rutas son todas literales (/tarifarios, /spsts,
     # /tabla-km, ...), mientras que liquidaciones_router tiene un catch-all
     # GET/DELETE/PATCH /{liquidacion_id} que, registrado primero, interceptaba esos

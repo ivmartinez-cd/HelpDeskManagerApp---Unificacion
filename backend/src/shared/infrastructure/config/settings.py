@@ -111,6 +111,14 @@ class Settings(BaseSettings):
     # config nueva de toda la app, no del módulo sla.
     mercurio_max_concurrent: int = 3
 
+    # Zonas de `Sucursal.Cuadricula` fuera del alcance de preventivos locales
+    # (PSTs del interior, agrupaciones y basura de carga). "X*" excluye por
+    # prefijo; el resto es igualdad exacta. Es lista de EXCLUSIÓN a propósito:
+    # una zona local nueva (p. ej. NORTE5) aparece sola sin tocar nada.
+    preventivos_zonas_excluidas: str = (
+        "INTERIOR,A DEFINIR,PROPIO,KIKO,0000000000,BSAS.*,CBA..*,CUYO.*,NOA..*,COSTA*"
+    )
+
     # SOAP wsAyC de Canal Directo — mismo endpoint/WSDL para insumos y
     # liquidaciones (provider compartido, ADR-018). Defaults = los valores que
     # estaban hardcodeados en los gateways; no hace falta tocar ningún .env.
