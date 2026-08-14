@@ -1,4 +1,5 @@
 import { TodayClientsCard } from "@/features/home/components/today-clients-card";
+import { ParqueOperadorCard } from "@/features/prestadores/components/parque-operador-card";
 import { SlaSummaryCard } from "@/features/sla/components/sla-summary-card";
 import { ShiftDashboardCard } from "@/features/turnos/components/shift-dashboard-card";
 
@@ -23,6 +24,7 @@ export default function HomePage() {
             widgets más "densos" y crecen con datos reales. */}
         <div className="flex flex-col gap-4">
           <ShiftDashboardCard />
+          <ParqueOperadorCard />
         </div>
         <TodayClientsCard />
         <SlaSummaryCard />
