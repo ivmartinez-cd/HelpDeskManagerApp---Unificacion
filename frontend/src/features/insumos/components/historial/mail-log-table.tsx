@@ -1,9 +1,15 @@
 "use client";
 
+import { useMemo } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { SortableHeader } from "@/shared/components/ui/sortable-header";
+import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import type { DateRange, MailLogRow } from "../../types";
 import { EMPTY_VALUE, formatArgDateTime, toArgDateKey } from "../../utils/format";
 import { StatusBadge } from "../shared";
+
+type MailSortKey = "tipo" | "enviado" | "estado";
+const MAIL_SORT_KEYS: readonly MailSortKey[] = ["tipo", "enviado", "estado"];
 
 /** Pestaña "Mails enviados": log de lo que la app mandó (o intentó mandar) —
  * backup diario, alertas de poller caído/recuperado y aviso de pedidos por
@@ -61,29 +67,34 @@ interface MailLogTableProps {
 }
 
 export function MailLogTable({ rows, loading, onDetail }: MailLogTableProps) {
+  const { sort, toggleSort } = useTableSort<MailSortKey>({
+    initial: { key: "enviado", direction: "desc" },
+    keys: MAIL_SORT_KEYS,
+    descFirstKeys: ["enviado"],
+  });
+
+  const sorted = useMemo(() => {
+    const getSv = (r: MailLogRow) => {
+      switch (sort.key) {
+        case "tipo": return mailKindLabel(r.kind);
+        case "enviado": return r.sent_at;
+        case "estado": return r.success ? 1 : 0;
+      }
+    };
+    return [...rows].sort((a, b) => compareSortValues(getSv(a), getSv(b), sort.direction));
+  }, [rows, sort]);
+
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-border bg-muted/40">
-            <th scope="col" className={thClass}>
-              Estado
-            </th>
-            <th scope="col" className={thClass}>
-              Tipo
-            </th>
-            <th scope="col" className={thClass}>
-              Asunto
-            </th>
-            <th scope="col" className={thClass}>
-              Destinatarios
-            </th>
-            <th scope="col" className={thClass}>
-              Enviado el
-            </th>
-            <th scope="col" className={thClass}>
-              Detalle
-            </th>
+            <SortableHeader column={{ key: "estado", label: "Estado" }} sort={sort} onToggleSort={toggleSort} thClassName={thClass} />
+            <SortableHeader column={{ key: "tipo", label: "Tipo" }} sort={sort} onToggleSort={toggleSort} thClassName={thClass} />
+            <th scope="col" className={thClass}>Asunto</th>
+            <th scope="col" className={thClass}>Destinatarios</th>
+            <SortableHeader column={{ key: "enviado", label: "Enviado el" }} sort={sort} onToggleSort={toggleSort} thClassName={thClass} />
+            <th scope="col" className={thClass}>Detalle</th>
           </tr>
         </thead>
         <tbody>
@@ -98,7 +109,7 @@ export function MailLogTable({ rows, loading, onDetail }: MailLogTableProps) {
             </tr>
           )}
 
-          {rows.map((row) => (
+          {sorted.map((row) => (
             <tr key={row.id} className="border-b border-border last:border-0 hover:bg-muted/30">
               <td className={tdClass}>
                 <StatusBadge tone={row.success ? "ok" : "atencion"}>

@@ -4,10 +4,24 @@ import { useMemo, useState } from "react";
 import { Search, ShieldAlert } from "lucide-react";
 import { ApiError } from "@/services/http-client";
 import { BrandEmptyState, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
+import { SortableHeader } from "@/shared/components/ui/sortable-header";
+import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { asistenciasApi } from "../api/asistencias-api";
 import { formatFecha, iniciales } from "../lib/fechas";
 import { TIPO_AUSENCIA } from "../lib/tipos-ausencia";
 import type { Ausencia, TipoAusencia } from "../types/vacaciones";
+
+type AusenciaSortKey = "empleado" | "fecha" | "tipo" | "duracion";
+const AUSENCIA_SORT_KEYS: readonly AusenciaSortKey[] = ["empleado", "fecha", "tipo", "duracion"];
+
+function ausenciaSortValue(a: Ausencia, key: AusenciaSortKey) {
+  switch (key) {
+    case "empleado": return a.empleadoNombre;
+    case "fecha": return a.startDate;
+    case "tipo": return TIPO_AUSENCIA[a.tipo].label;
+    case "duracion": return a.halfDay ? 0.5 : a.daysCount;
+  }
+}
 
 interface Props {
   ausencias: Ausencia[];
@@ -26,6 +40,12 @@ export function AsistenciasListado({
   const [busqueda, setBusqueda] = useState("");
   const [tipo, setTipo] = useState<TipoAusencia | "">("");
   const [anio, setAnio] = useState<string>(String(anioActual));
+
+  const { sort, toggleSort } = useTableSort<AusenciaSortKey>({
+    initial: { key: "fecha", direction: "desc" },
+    keys: AUSENCIA_SORT_KEYS,
+    descFirstKeys: ["fecha"],
+  });
   const [error, setError] = useState<string | null>(null);
 
   const anios = useMemo(() => {
@@ -35,7 +55,7 @@ export function AsistenciasListado({
 
   const filtradas = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
-    return ausencias.filter((a) => {
+    const base = ausencias.filter((a) => {
       if (tipo && a.tipo !== tipo) return false;
       if (anio && a.startDate.slice(0, 4) !== anio) return false;
       if (!q) return true;
@@ -45,7 +65,10 @@ export function AsistenciasListado({
         (a.reason ?? "").toLowerCase().includes(q)
       );
     });
-  }, [ausencias, busqueda, tipo, anio]);
+    return [...base].sort((a, b) =>
+      compareSortValues(ausenciaSortValue(a, sort.key), ausenciaSortValue(b, sort.key), sort.direction),
+    );
+  }, [ausencias, busqueda, tipo, anio, sort]);
 
   const eliminar = (a: Ausencia) => {
     if (!window.confirm(`¿Eliminar la baja de ${a.empleadoNombre}?`)) return;
@@ -114,10 +137,10 @@ export function AsistenciasListado({
           <table className="w-full min-w-[720px] font-body text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30 text-left font-heading text-[11px] uppercase tracking-[.06em] text-muted-foreground">
-                <th className="px-4 py-3">Empleado</th>
-                <th className="px-4 py-3">Fecha</th>
-                <th className="px-4 py-3">Tipo</th>
-                <th className="px-4 py-3">Duración</th>
+                <SortableHeader column={{ key: "empleado", label: "Empleado" }} sort={sort} onToggleSort={toggleSort} />
+                <SortableHeader column={{ key: "fecha", label: "Fecha" }} sort={sort} onToggleSort={toggleSort} />
+                <SortableHeader column={{ key: "tipo", label: "Tipo" }} sort={sort} onToggleSort={toggleSort} />
+                <SortableHeader column={{ key: "duracion", label: "Duración" }} sort={sort} onToggleSort={toggleSort} />
                 <th className="px-4 py-3">Observaciones</th>
                 {puedeGestionar && <th className="px-4 py-3" />}
               </tr>

@@ -1,13 +1,27 @@
 "use client";
 
 import { Map } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BrandButton, BrandEmptyState } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Spst, SucursalSiges, TablaKm } from "../types/liquidaciones";
+
+type KmSortKey = "empresa" | "sucursal" | "kmsRec" | "kmsFact";
+const KM_SORT_KEYS: readonly KmSortKey[] = ["empresa", "sucursal", "kmsRec", "kmsFact"];
+
+function kmSortValue(t: TablaKm, key: KmSortKey) {
+  switch (key) {
+    case "empresa": return t.empresaNombre;
+    case "sucursal": return t.sucursalNombre;
+    case "kmsRec": return t.kmsRecorrido;
+    case "kmsFact": return t.kmsAFacturar;
+  }
+}
 import { CsvImportModal, EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
 import { SigesTablaKmModal } from "./siges-tabla-km-modal";
 
@@ -29,6 +43,11 @@ export function TablaKmConfig() {
   const [csvOpen, setCsvOpen] = useState(false);
   const [sigesOpen, setSigesOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const { sort, toggleSort } = useTableSort<KmSortKey>({
+    initial: { key: "empresa", direction: "asc" },
+    keys: KM_SORT_KEYS,
+  });
 
   useEffect(() => {
     void Promise.all([liquidacionesApi.listPrestadores(false), liquidacionesApi.listSpsts()])
@@ -84,9 +103,14 @@ export function TablaKmConfig() {
   const pstSeleccionado = prestadores.find((p) => p.id === filtroPst) ?? null;
   const loadingEntradas = filtroPst !== "" && filtroPst !== entradasPstId;
   const q = busqueda.toLowerCase();
-  const filtered = q
-    ? entradas.filter((e) => e.empresaNombre.toLowerCase().includes(q) || e.sucursalNombre.toLowerCase().includes(q))
-    : entradas;
+  const filtered = useMemo(() => {
+    const base = q
+      ? entradas.filter((e) => e.empresaNombre.toLowerCase().includes(q) || e.sucursalNombre.toLowerCase().includes(q))
+      : entradas;
+    return [...base].sort((a, b) =>
+      compareSortValues(kmSortValue(a, sort.key), kmSortValue(b, sort.key), sort.direction),
+    );
+  }, [entradas, q, sort]);
 
   const selectCls = "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
   const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
@@ -136,10 +160,10 @@ export function TablaKmConfig() {
             <table className="w-full">
               <thead>
                 <tr className="bg-muted/40">
-                  <th className={thCls}>Empresa</th>
-                  <th className={thCls}>Sucursal</th>
-                  <th className={`${thCls} text-right`}>KMs rec.</th>
-                  <th className={`${thCls} text-right`}>KMs fact.</th>
+                  <SortableHeader column={{ key: "empresa", label: "Empresa" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+                  <SortableHeader column={{ key: "sucursal", label: "Sucursal" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+                  <SortableHeader column={{ key: "kmsRec", label: "KMs rec." }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+                  <SortableHeader column={{ key: "kmsFact", label: "KMs fact." }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
                   <th className={thCls}>Viático</th>
                   <th className={`${thCls} text-right`}></th>
                 </tr>

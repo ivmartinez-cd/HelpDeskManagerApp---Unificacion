@@ -1,10 +1,18 @@
 "use client";
 
+import { useMemo } from "react";
 import { Ban } from "lucide-react";
 import type { Cobertura, CoberturaOperadorOption } from "../types/coberturas";
 import { deriveEstado, ESTADO_META, formatFechaCorta } from "../lib/estado";
 import { BrandBadge } from "@/shared/components/ui/brand-form";
+import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
+import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
+
+type CoberturasSortKey = "ausente" | "reemplazante" | "desde" | "estado";
+const COBERTURAS_SORT_KEYS: readonly CoberturasSortKey[] = [
+  "ausente", "reemplazante", "desde", "estado",
+];
 
 interface CoberturasTablaProps {
   rows: Cobertura[];
@@ -46,22 +54,40 @@ export function CoberturasTabla({
   canCancel,
   onCancel,
 }: CoberturasTablaProps) {
+  const { sort, toggleSort } = useTableSort<CoberturasSortKey>({
+    initial: { key: "desde", direction: "desc" },
+    keys: COBERTURAS_SORT_KEYS,
+    descFirstKeys: ["desde"],
+  });
+
+  const sorted = useMemo(() => {
+    const getSv = (c: Cobertura) => {
+      switch (sort.key) {
+        case "ausente": return c.ausenteNombre ?? c.ausenteId;
+        case "reemplazante": return c.reemplazanteNombre ?? c.reemplazanteId;
+        case "desde": return c.desde;
+        case "estado": return deriveEstado(c);
+      }
+    };
+    return [...rows].sort((a, b) => compareSortValues(getSv(a), getSv(b), sort.direction));
+  }, [rows, sort]);
+
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
       <table className="w-full min-w-[760px] text-left">
         <thead>
           <tr className="border-b border-border font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-            <th className="px-4 py-2.5">Ausente</th>
-            <th className="px-4 py-2.5">Reemplazante</th>
-            <th className="px-4 py-2.5">Vigencia</th>
+            <SortableHeader column={{ key: "ausente", label: "Ausente" }} sort={sort} onToggleSort={toggleSort} thClassName="px-4 py-2.5" />
+            <SortableHeader column={{ key: "reemplazante", label: "Reemplazante" }} sort={sort} onToggleSort={toggleSort} thClassName="px-4 py-2.5" />
+            <SortableHeader column={{ key: "desde", label: "Vigencia" }} sort={sort} onToggleSort={toggleSort} thClassName="px-4 py-2.5" />
             <th className="px-4 py-2.5">Alcance</th>
             <th className="px-4 py-2.5">Motivo</th>
-            <th className="px-4 py-2.5">Estado</th>
+            <SortableHeader column={{ key: "estado", label: "Estado" }} sort={sort} onToggleSort={toggleSort} thClassName="px-4 py-2.5" />
             <th className="px-4 py-2.5" />
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {rows.map((c) => {
+          {sorted.map((c) => {
             const estado = deriveEstado(c);
             const meta = ESTADO_META[estado];
             const cancelable = canCancel && (estado === "activa" || estado === "programada");

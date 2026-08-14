@@ -3,10 +3,29 @@
 import { useMemo, useState } from "react";
 import { Users } from "lucide-react";
 import { BrandBadge, BrandEmptyState, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
+import { SortableHeader } from "@/shared/components/ui/sortable-header";
+import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { gestionApi } from "../api/gestion-api";
 import { formatAntiguedad, formatFecha, iniciales } from "../lib/fechas";
 import type { Cargo, EmpleadoListItem, Sector, UsuarioOption } from "../types/vacaciones";
 import { EmpleadoModal } from "./empleado-modal";
+
+type EmpleadoSortKey = "nombre" | "email" | "sector" | "cargo" | "ingreso" | "dias" | "estado";
+const EMPLEADO_SORT_KEYS: readonly EmpleadoSortKey[] = [
+  "nombre", "email", "sector", "cargo", "ingreso", "dias", "estado",
+];
+
+function empleadoSortValue(e: EmpleadoListItem, key: EmpleadoSortKey) {
+  switch (key) {
+    case "nombre": return `${e.firstName} ${e.lastName}`;
+    case "email": return e.email;
+    case "sector": return e.sectorNombre;
+    case "cargo": return e.cargoNombre;
+    case "ingreso": return e.hireDate;
+    case "dias": return e.diasAnuales;
+    case "estado": return e.status;
+  }
+}
 
 interface Props {
   empleados: EmpleadoListItem[];
@@ -33,16 +52,25 @@ export function EmpleadosTab({
   const [sectorId, setSectorId] = useState("");
   const [editando, setEditando] = useState<EmpleadoListItem | null>(null);
 
+  const { sort, toggleSort } = useTableSort<EmpleadoSortKey>({
+    initial: { key: "nombre", direction: "asc" },
+    keys: EMPLEADO_SORT_KEYS,
+    descFirstKeys: ["ingreso"],
+  });
+
   const visibles = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
-    return empleados.filter((e) => {
+    const base = empleados.filter((e) => {
       if (sectorId && e.departmentId !== sectorId) return false;
       if (!q) return true;
       return [`${e.firstName} ${e.lastName}`, e.email, e.cargoNombre].some((v) =>
         v.toLowerCase().includes(q),
       );
     });
-  }, [empleados, busqueda, sectorId]);
+    return [...base].sort((a, b) =>
+      compareSortValues(empleadoSortValue(a, sort.key), empleadoSortValue(b, sort.key), sort.direction),
+    );
+  }, [empleados, busqueda, sectorId, sort]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -83,13 +111,13 @@ export function EmpleadosTab({
           <table className="w-full min-w-[860px] font-body text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30 text-left font-heading text-[11px] uppercase tracking-[.06em] text-muted-foreground">
-                <th className="px-4 py-3">Nombre</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Sector</th>
-                <th className="px-4 py-3">Cargo</th>
-                <th className="px-4 py-3">Ingreso / Antigüedad</th>
-                <th className="px-4 py-3 text-right">Días</th>
-                <th className="px-4 py-3">Estado</th>
+                <SortableHeader column={{ key: "nombre", label: "Nombre" }} sort={sort} onToggleSort={toggleSort} />
+                <SortableHeader column={{ key: "email", label: "Email" }} sort={sort} onToggleSort={toggleSort} />
+                <SortableHeader column={{ key: "sector", label: "Sector" }} sort={sort} onToggleSort={toggleSort} />
+                <SortableHeader column={{ key: "cargo", label: "Cargo" }} sort={sort} onToggleSort={toggleSort} />
+                <SortableHeader column={{ key: "ingreso", label: "Ingreso / Antigüedad" }} sort={sort} onToggleSort={toggleSort} />
+                <SortableHeader column={{ key: "dias", label: "Días" }} sort={sort} onToggleSort={toggleSort} />
+                <SortableHeader column={{ key: "estado", label: "Estado" }} sort={sort} onToggleSort={toggleSort} />
                 {puedeGestionar && <th className="px-4 py-3" />}
               </tr>
             </thead>

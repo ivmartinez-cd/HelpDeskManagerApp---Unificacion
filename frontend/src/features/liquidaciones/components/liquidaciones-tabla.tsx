@@ -1,9 +1,17 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import { SortableHeader } from "@/shared/components/ui/sortable-header";
+import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
 import { EstadoBadge } from "./estado-badge";
+
+type LiqSortKey = "prestador" | "periodo" | "tipo" | "estado" | "incidentes" | "importe" | "fecha";
+const LIQ_SORT_KEYS: readonly LiqSortKey[] = [
+  "prestador", "periodo", "tipo", "estado", "incidentes", "importe", "fecha",
+];
 
 const WEB_AGENTES_BASE = "https://webagentes.canaldirecto.com.ar/liquidations/view";
 
@@ -29,6 +37,28 @@ export function LiquidacionesTabla({
   prestadorMap: Record<string, PrestadorLiquidacion>;
   onDelete: (id: string) => void;
 }) {
+  const { sort, toggleSort } = useTableSort<LiqSortKey>({
+    initial: { key: "fecha", direction: "desc" },
+    keys: LIQ_SORT_KEYS,
+    descFirstKeys: ["fecha"],
+  });
+
+  const sorted = useMemo(() => {
+    const getSv = (liq: Liquidacion) => {
+      const pst = prestadorMap[liq.prestadorId];
+      switch (sort.key) {
+        case "prestador": return pst ? `${pst.region ?? pst.nombreCorto} — ${pst.nombre}` : "";
+        case "periodo": return liq.periodo;
+        case "tipo": return liq.tipoLiquidacion;
+        case "estado": return liq.estado;
+        case "incidentes": return liq.totalIncidentes;
+        case "importe": return liq.totalImporte;
+        case "fecha": return liq.fechaImportacion;
+      }
+    };
+    return [...items].sort((a, b) => compareSortValues(getSv(a), getSv(b), sort.direction));
+  }, [items, prestadorMap, sort]);
+
   return (
     <div className="overflow-hidden rounded-[12px] border border-border bg-card">
       <div className="overflow-x-auto">
@@ -36,19 +66,19 @@ export function LiquidacionesTabla({
           <thead>
             <tr className="bg-muted/40">
               <th className={thCls}>Archivo</th>
-              <th className={thCls}>Prestador</th>
-              <th className={thCls}>Período</th>
-              <th className={thCls}>Tipo</th>
-              <th className={thCls}>Estado</th>
-              <th className={`${thCls} text-right`}>Incidentes</th>
-              <th className={`${thCls} text-right`}>Importe</th>
-              <th className={thCls}>Fecha</th>
+              <SortableHeader column={{ key: "prestador", label: "Prestador" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+              <SortableHeader column={{ key: "periodo", label: "Período" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+              <SortableHeader column={{ key: "tipo", label: "Tipo" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+              <SortableHeader column={{ key: "estado", label: "Estado" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+              <SortableHeader column={{ key: "incidentes", label: "Incidentes" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+              <SortableHeader column={{ key: "importe", label: "Importe" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+              <SortableHeader column={{ key: "fecha", label: "Fecha" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <th className={thCls}>Web Agentes</th>
               <th className={thCls}></th>
             </tr>
           </thead>
           <tbody>
-            {items.map((liq) => {
+            {sorted.map((liq) => {
               const pst = prestadorMap[liq.prestadorId];
               return (
                 <tr

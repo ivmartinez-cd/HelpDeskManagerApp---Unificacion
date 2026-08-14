@@ -12,12 +12,26 @@ import {
 } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
+import { SortableHeader } from "@/shared/components/ui/sortable-header";
+import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { gestionApi } from "../api/gestion-api";
 import { solicitudesApi } from "../api/solicitudes-api";
 import { formatFecha, iniciales } from "../lib/fechas";
 import type { EmpleadoListItem, EstadoSolicitud, Solicitud } from "../types/vacaciones";
 import { SolicitudEstadoBadge } from "./solicitud-estado-badge";
 import { SolicitudModal } from "./solicitud-modal";
+
+type SolicitudSortKey = "empleado" | "inicio" | "dias" | "estado";
+const SOLICITUD_SORT_KEYS: readonly SolicitudSortKey[] = ["empleado", "inicio", "dias", "estado"];
+
+function solicitudSortValue(s: Solicitud, key: SolicitudSortKey) {
+  switch (key) {
+    case "empleado": return s.empleadoNombre;
+    case "inicio": return s.startDate;
+    case "dias": return s.daysRequested;
+    case "estado": return s.status;
+  }
+}
 
 const FILTROS: { value: "todas" | EstadoSolicitud; label: string }[] = [
   { value: "todas", label: "Todas" },
@@ -36,6 +50,12 @@ export function SolicitudesView() {
   const [error, setError] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<"todas" | EstadoSolicitud>("todas");
   const [busqueda, setBusqueda] = useState("");
+
+  const { sort, toggleSort } = useTableSort<SolicitudSortKey>({
+    initial: { key: "inicio", direction: "desc" },
+    keys: SOLICITUD_SORT_KEYS,
+    descFirstKeys: ["inicio"],
+  });
   const [creando, setCreando] = useState(false);
   const [editando, setEditando] = useState<Solicitud | null>(null);
   const [eliminando, setEliminando] = useState<Solicitud | null>(null);
@@ -64,14 +84,17 @@ export function SolicitudesView() {
   const visibles = useMemo(() => {
     if (!solicitudes) return [];
     const q = busqueda.trim().toLowerCase();
-    return solicitudes.filter((s) => {
+    const base = solicitudes.filter((s) => {
       if (filtro !== "todas" && s.status !== filtro) return false;
       if (!q) return true;
       return [s.empleadoNombre, s.reason ?? "", s.sectorNombre].some((v) =>
         v.toLowerCase().includes(q),
       );
     });
-  }, [solicitudes, filtro, busqueda]);
+    return [...base].sort((a, b) =>
+      compareSortValues(solicitudSortValue(a, sort.key), solicitudSortValue(b, sort.key), sort.direction),
+    );
+  }, [solicitudes, filtro, busqueda, sort]);
 
   const handleEliminar = () => {
     if (!eliminando) return;
@@ -159,11 +182,11 @@ export function SolicitudesView() {
               <table className="w-full min-w-[860px] font-body text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/30 text-left font-heading text-[11px] uppercase tracking-[.06em] text-muted-foreground">
-                    <th className="px-4 py-3">Empleado</th>
-                    <th className="px-4 py-3">Rango</th>
-                    <th className="px-4 py-3 text-right">Días</th>
-                    <th className="px-4 py-3 text-right">Año cargo</th>
-                    <th className="px-4 py-3">Estado</th>
+                    <SortableHeader column={{ key: "empleado", label: "Empleado" }} sort={sort} onToggleSort={toggleSort} />
+                    <SortableHeader column={{ key: "inicio", label: "Rango" }} sort={sort} onToggleSort={toggleSort} />
+                    <SortableHeader column={{ key: "dias", label: "Días" }} sort={sort} onToggleSort={toggleSort} />
+                    <th className="px-4 py-3">Año cargo</th>
+                    <SortableHeader column={{ key: "estado", label: "Estado" }} sort={sort} onToggleSort={toggleSort} />
                     <th className="px-4 py-3">Motivo</th>
                     <th className="px-4 py-3" />
                   </tr>
