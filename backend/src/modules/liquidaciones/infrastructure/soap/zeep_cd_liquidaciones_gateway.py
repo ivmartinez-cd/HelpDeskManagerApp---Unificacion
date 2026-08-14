@@ -79,9 +79,8 @@ class ZeepCdLiquidacionesGateway:
         self, liquidacion_ayc_id: int, nuevo_estado: str, usuario: str
     ) -> None:
         # Sin try/except: la excepción de zeep propaga cruda al use case.
-        # Formato de newStatus: literal del campo Estado de getTopLiquidations
-        # (ej. "Aprobada"). Pendiente de verificar en Fase 4 si AyC acepta el
-        # literal string o requiere el estado_id numérico.
+        # setLiquidationStatus retorna '""' en éxito y en transición inválida (silencio).
+        # Solo levanta si el raw es explícitamente "false" o un mensaje de error ("Error:…").
         raw = await asyncio.to_thread(
             lambda: self._service().setLiquidationStatus(
                 id=str(liquidacion_ayc_id),
@@ -93,26 +92,34 @@ class ZeepCdLiquidacionesGateway:
             "setLiquidationStatus(%d, %r, %r): raw=%r",
             liquidacion_ayc_id, nuevo_estado, usuario, raw,
         )
-        if str(raw or "").strip().lower() == "false":
-            raise RuntimeError(
-                f"setLiquidationStatus retornó false: id={liquidacion_ayc_id} "
-                f"estado={nuevo_estado!r}"
-            )
+        _raise_if_soap_error(
+            raw, f"setLiquidationStatus id={liquidacion_ayc_id} estado={nuevo_estado!r}"
+        )
 
     async def void_liquidacion(self, liquidacion_ayc_id: int) -> None:
         # Sin try/except, igual que set_estado.
-        # Formato de Datos por analogía con voidSupply/voidIncident del módulo insumos.
-        # Pendiente de verificar en Fase 4.
+        # voidLiquidation retorna '""' en éxito (verificado con 3929-7 en 2026-08-14).
+        # Formato correcto: {"Liquidation": {"id": "<id>"}}.
         raw = await asyncio.to_thread(
             lambda: self._service().voidLiquidation(
                 Datos=json.dumps({"Liquidation": {"id": str(liquidacion_ayc_id)}})
             )
         )
         logger.debug("voidLiquidation(%d): raw=%r", liquidacion_ayc_id, raw)
-        if str(raw or "").strip().lower() == "false":
-            raise RuntimeError(
-                f"voidLiquidation retornó false: id={liquidacion_ayc_id}"
-            )
+        _raise_if_soap_error(raw, f"voidLiquidation id={liquidacion_ayc_id}")
+
+
+def _raise_if_soap_error(raw: Any, context: str) -> None:
+    """Levanta RuntimeError si el raw de wsAyC indica un error explícito.
+
+    AyC usa patrones distintos según la operación:
+    - '"false"' / 'false' → falla genérica
+    - '"Error: <mensaje>"' → error descriptivo del servidor
+    - '""' → éxito (verificado para voidLiquidation en 2026-08-14)
+    """
+    normalized = str(raw or "").strip().strip('"').lower()
+    if normalized == "false" or normalized.startswith("error:"):
+        raise RuntimeError(f"{context}: {raw!r}")
 
 
 def _parse_liquidaciones(raw: str, empresa_cd_id: int) -> list[CdLiquidacion]:
