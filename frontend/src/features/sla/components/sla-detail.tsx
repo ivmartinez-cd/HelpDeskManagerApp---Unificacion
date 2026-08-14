@@ -9,6 +9,7 @@ import type { OperadorOption } from "@/features/prestadores/types/prestadores";
 import { useSession } from "@/services/session-provider";
 import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
+import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
 import { StatsTable, type StatsColumn } from "@/shared/components/ui/stats-table";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { incidentUrl } from "@/shared/utils/incident-link";
@@ -228,9 +229,38 @@ export function SlaDetail() {
       </div>
 
       {loading && (
-        <div className="flex h-64 items-center justify-center">
-          <Spinner />
-        </div>
+        <>
+          {/* Un período ya snapshoteado responde en <1s y el modal ni aparece
+              (delay de 1s); uno nuevo/viejo dispara la consulta completa a
+              MERCURIO (~40s) y acá el modal evita el spinner eterno. */}
+          <SigesLoadingModal
+            etapas={[
+              { hasta: 3, texto: "Buscando el resumen del período…" },
+              {
+                hasta: 15,
+                texto: "El período no tenía datos precalculados — consultando Siges en vivo…",
+              },
+              { hasta: 35, texto: "Cruzando incidentes y tiempos del período…" },
+              { texto: "Un momento más — la consulta completa ronda los 40 segundos…" },
+            ]}
+            nota="Los períodos ya consultados se sirven al instante desde el snapshot local; uno nuevo requiere la consulta completa a MERCURIO (~40 segundos, queda guardada)."
+          />
+          <div className="flex h-64 items-center justify-center">
+            <Spinner />
+          </div>
+        </>
+      )}
+
+      {refreshing && (
+        <SigesLoadingModal
+          etapas={[
+            { hasta: 10, texto: "Recalculando el período contra Siges en vivo…" },
+            { hasta: 25, texto: "Cruzando incidentes y tiempos del período…" },
+            { hasta: 40, texto: "Un momento más, ya casi está…" },
+            { texto: "La base está lenta hoy — seguimos esperando la respuesta…" },
+          ]}
+          nota="Actualizar fuerza la consulta completa a MERCURIO (~40 segundos) y recalcula el snapshot del período."
+        />
       )}
 
       {!loading && error && (
