@@ -18,9 +18,9 @@ import { useInsumosNavCounts } from "@/features/insumos/hooks/use-insumos-nav-co
 /** Submenú de Insumos en la barra lateral, con el patrón de secciones +
  * badges del mockup del handoff (antes era una lista plana de 7 links sin
  * agrupar, sin iconos, sin contadores — ver `git log` de este archivo).
- * "Historial de pedidos" queda deliberadamente sin el acento naranja de los
- * demás items: es la única pantalla de solo-consulta del grupo, el resto son
- * vistas operativas. */
+ * Todos los items llevan el acento naranja: la distinción original
+ * operativo/solo-consulta (Historial en gris) se descartó a pedido del
+ * usuario (2026-08-13) por consistencia con el resto de los submenús. */
 interface NavLinkDef {
   href: string;
   label: string;
@@ -47,7 +47,13 @@ const SECTIONS: NavSectionDef[] = [
         accent: true,
         badge: "solicitudes",
       },
-      { href: "/insumos/historial", label: "Historial de pedidos", exact: false, icon: History },
+      {
+        href: "/insumos/historial",
+        label: "Historial de pedidos",
+        exact: false,
+        icon: History,
+        accent: true,
+      },
     ],
   },
   {
