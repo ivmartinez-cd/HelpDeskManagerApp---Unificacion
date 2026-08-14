@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 from src.modules.sla.domain.entities.incidente_sin_cerrar import IncidenteSinCerrar
 from src.modules.sla.domain.entities.pendientes_snapshot import (
+    OperadorPendientes,
     PendientesSnapshot,
     PrestadorPendientes,
 )
@@ -13,7 +14,9 @@ from src.modules.sla.domain.repositories.prestador_lookup import PrestadorLookup
 
 
 def _build_snapshot(
-    incidentes: list[IncidenteSinCerrar], updated_at: datetime
+    incidentes: list[IncidenteSinCerrar],
+    pst_to_operador: dict[int, str],
+    updated_at: datetime,
 ) -> PendientesSnapshot:
     agrupados: dict[int, list[IncidenteSinCerrar]] = {}
     for inc in incidentes:
@@ -26,15 +29,29 @@ def _build_snapshot(
                 tecnico=grupo[0].tecnico,
                 cantidad=len(grupo),
                 ids_incidente=[i.id_incidente for i in grupo],
+                operador_nombre=pst_to_operador.get(id_tecnico),
             )
             for id_tecnico, grupo in agrupados.items()
         ],
         key=lambda p: p.tecnico,
     )
+
+    conteo_operador: dict[str, int] = {}
+    for p in por_prestador:
+        if p.operador_nombre:
+            prev = conteo_operador.get(p.operador_nombre, 0)
+            conteo_operador[p.operador_nombre] = prev + p.cantidad
+
+    por_operador = sorted(
+        [OperadorPendientes(operador_nombre=n, cantidad=c) for n, c in conteo_operador.items()],
+        key=lambda o: o.operador_nombre,
+    )
+
     return PendientesSnapshot(
         total=len(incidentes),
         incidentes=incidentes,
         por_prestador=por_prestador,
+        por_operador=por_operador,
         updated_at=updated_at,
     )
 
@@ -58,8 +75,9 @@ class RefreshPendientesSnapshot:
 
     async def execute(self) -> PendientesSnapshot:
         pst_ids = set(await self._pst_lookup.get_all_pst_siges_ids())
+        pst_to_operador = await self._pst_lookup.get_pst_to_operador_mapping()
         todos = await self._gateway.find_incidentes_sin_cerrar(self._meses_corte)
         incidentes = [i for i in todos if i.id_tecnico in pst_ids]
-        snapshot = _build_snapshot(incidentes, datetime.now(UTC))
+        snapshot = _build_snapshot(incidentes, pst_to_operador, datetime.now(UTC))
         await self._repo.upsert(snapshot)
         return snapshot

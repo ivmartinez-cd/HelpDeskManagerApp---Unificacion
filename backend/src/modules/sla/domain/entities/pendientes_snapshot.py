@@ -6,12 +6,23 @@ from src.modules.sla.domain.entities.incidente_sin_cerrar import IncidenteSinCer
 
 @dataclass(frozen=True, slots=True)
 class PrestadorPendientes:
-    """Conteo de incidentes sin cerrar para un PST específico."""
+    """Conteo de incidentes sin cerrar para un PST específico.
+    `operador_nombre` es None para PSTs sin operador asignado."""
 
     id_tecnico: int
     tecnico: str
     cantidad: int
     ids_incidente: list[int]
+    operador_nombre: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class OperadorPendientes:
+    """Conteo agregado de incidentes sin cerrar atribuidos a un operador
+    (suma de todos sus PSTs asignados de forma permanente)."""
+
+    operador_nombre: str
+    cantidad: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,4 +34,5 @@ class PendientesSnapshot:
     total: int
     incidentes: list[IncidenteSinCerrar]
     por_prestador: list[PrestadorPendientes]
+    por_operador: list[OperadorPendientes]
     updated_at: datetime

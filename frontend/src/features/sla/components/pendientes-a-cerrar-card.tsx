@@ -47,17 +47,17 @@ export function PendientesACerrarCard({
         </p>
       ) : (
         <>
-          <ul className="mt-3 flex max-h-[160px] flex-col gap-1 overflow-y-auto pr-1">
-            {resumen.por_prestador.map((p) => (
+          <ul className="mt-2.5 flex max-h-[120px] flex-col gap-1 overflow-y-auto pr-1">
+            {resumen.por_operador.map((op) => (
               <li
-                key={p.id_tecnico}
+                key={op.operador_nombre}
                 className="flex items-center justify-between gap-2 rounded-[6px] px-2 py-1.5 hover:bg-white/[.03]"
               >
                 <span className="min-w-0 flex-1 truncate font-body text-[12px] text-foreground/80">
-                  {p.tecnico}
+                  {op.operador_nombre}
                 </span>
                 <span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 font-heading text-[11px] font-bold text-amber-400">
-                  {p.cantidad}
+                  {op.cantidad}
                 </span>
               </li>
             ))}

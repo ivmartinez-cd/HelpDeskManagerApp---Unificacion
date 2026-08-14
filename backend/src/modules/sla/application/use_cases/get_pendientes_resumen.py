@@ -1,4 +1,5 @@
 from src.modules.sla.application.dtos.pendientes_dtos import (
+    OperadorPendientesDTO,
     PendientesResumenResult,
     PrestadorPendientesDTO,
 )
@@ -29,6 +30,14 @@ class GetPendientesResumen:
             filtro = set(siges_ids_filtro)
             por_prestador = [p for p in por_prestador if p.id_tecnico in filtro]
         total = sum(p.cantidad for p in por_prestador)
+        conteo_op: dict[str, int] = {}
+        for p in por_prestador:
+            if p.operador_nombre:
+                conteo_op[p.operador_nombre] = conteo_op.get(p.operador_nombre, 0) + p.cantidad
+        por_operador = sorted(
+            [OperadorPendientesDTO(operador_nombre=n, cantidad=c) for n, c in conteo_op.items()],
+            key=lambda o: o.operador_nombre,
+        )
         return PendientesResumenResult(
             total=total,
             por_prestador=[
@@ -37,8 +46,10 @@ class GetPendientesResumen:
                     tecnico=p.tecnico,
                     cantidad=p.cantidad,
                     ids_incidente=p.ids_incidente,
+                    operador_nombre=p.operador_nombre,
                 )
                 for p in por_prestador
             ],
+            por_operador=por_operador,
             updated_at=snapshot.updated_at,
         )

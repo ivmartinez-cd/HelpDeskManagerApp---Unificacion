@@ -18,6 +18,9 @@ class PendientesSnapshotModel(Base):
     total: Mapped[int] = mapped_column(Integer, nullable=False)
     incidentes: Mapped[list[dict[str, object]]] = mapped_column(JSONB, nullable=False)
     por_prestador: Mapped[list[dict[str, object]]] = mapped_column(JSONB, nullable=False)
+    por_operador: Mapped[list[dict[str, object]]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("now()")
     )

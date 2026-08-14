@@ -3,11 +3,18 @@ export interface PrestadorPendientes {
   tecnico: string;
   cantidad: number;
   ids_incidente: number[];
+  operador_nombre: string | null;
+}
+
+export interface OperadorPendientes {
+  operador_nombre: string;
+  cantidad: number;
 }
 
 export interface PendientesResumen {
   total: number;
   por_prestador: PrestadorPendientes[];
+  por_operador: OperadorPendientes[];
   updated_at: string;
 }
 

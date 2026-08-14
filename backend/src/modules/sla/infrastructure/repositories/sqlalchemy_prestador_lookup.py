@@ -4,6 +4,7 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.auth.infrastructure.models.user_model import AppUser
 from src.modules.prestadores.domain.entities.asignacion_override import AsignacionOverride
 from src.modules.prestadores.domain.services.operador_efectivo import resolver_operador_efectivo
 from src.modules.prestadores.infrastructure.models.prestador_models import PrestadorModel
@@ -69,6 +70,20 @@ class SqlAlchemyPrestadorLookup:
         stmt = select(PrestadorModel.siges_empresa_id).where(PrestadorModel.is_active.is_(True))
         rows = (await self._session.execute(stmt)).scalars().all()
         return list(rows)
+
+    async def get_pst_to_operador_mapping(self) -> dict[int, str]:
+        """Devuelve {siges_empresa_id: operador_full_name} para PSTs activos
+        con operador asignado. PSTs sin operador quedan fuera del dict."""
+        stmt = (
+            select(PrestadorModel.siges_empresa_id, AppUser.full_name)
+            .join(AppUser, AppUser.id == PrestadorModel.operador_id)
+            .where(
+                PrestadorModel.is_active.is_(True),
+                PrestadorModel.operador_id.is_not(None),
+            )
+        )
+        rows = (await self._session.execute(stmt)).all()
+        return {siges_id: nombre for siges_id, nombre in rows}
 
     async def _prestadores_de(self, operador_id: uuid.UUID) -> list[PrestadorModel]:
         stmt = select(PrestadorModel).where(PrestadorModel.operador_id == operador_id)

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.sla.domain.entities.incidente_sin_cerrar import IncidenteSinCerrar
 from src.modules.sla.domain.entities.pendientes_snapshot import (
+    OperadorPendientes,
     PendientesSnapshot,
     PrestadorPendientes,
 )
@@ -13,7 +14,7 @@ from src.modules.sla.infrastructure.models.pendientes_snapshot_model import (
 )
 
 _VERSION = 1
-_SNAPSHOT_FIELDS = ("total", "incidentes", "por_prestador", "updated_at")
+_SNAPSHOT_FIELDS = ("total", "incidentes", "por_prestador", "por_operador", "updated_at")
 
 
 def _incidente_to_json(i: IncidenteSinCerrar) -> dict[str, object]:
@@ -56,7 +57,23 @@ def _row_to_snapshot(row: PendientesSnapshotModel) -> PendientesSnapshot:
     return PendientesSnapshot(
         total=row.total,
         incidentes=[_json_to_incidente(i) for i in row.incidentes],
-        por_prestador=[PrestadorPendientes(**p) for p in row.por_prestador],  # type: ignore[arg-type]
+        por_prestador=[
+            PrestadorPendientes(
+                id_tecnico=p["id_tecnico"],  # type: ignore[arg-type]
+                tecnico=p["tecnico"],  # type: ignore[arg-type]
+                cantidad=p["cantidad"],  # type: ignore[arg-type]
+                ids_incidente=p["ids_incidente"],  # type: ignore[arg-type]
+                operador_nombre=p.get("operador_nombre"),  # type: ignore[arg-type]
+            )
+            for p in row.por_prestador
+        ],
+        por_operador=[
+            OperadorPendientes(
+                operador_nombre=o["operador_nombre"],  # type: ignore[arg-type]
+                cantidad=o["cantidad"],  # type: ignore[arg-type]
+            )
+            for o in (row.por_operador or [])
+        ],
         updated_at=row.updated_at,
     )
 
@@ -72,8 +89,13 @@ def _snapshot_to_values(snapshot: PendientesSnapshot) -> dict[str, object]:
                 "tecnico": p.tecnico,
                 "cantidad": p.cantidad,
                 "ids_incidente": p.ids_incidente,
+                "operador_nombre": p.operador_nombre,
             }
             for p in snapshot.por_prestador
+        ],
+        "por_operador": [
+            {"operador_nombre": o.operador_nombre, "cantidad": o.cantidad}
+            for o in snapshot.por_operador
         ],
         "updated_at": snapshot.updated_at,
     }

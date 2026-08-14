@@ -8,12 +8,20 @@ class PrestadorPendientesDTO:
     tecnico: str
     cantidad: int
     ids_incidente: list[int]
+    operador_nombre: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class OperadorPendientesDTO:
+    operador_nombre: str
+    cantidad: int
 
 
 @dataclass(frozen=True, slots=True)
 class PendientesResumenResult:
     total: int
     por_prestador: list[PrestadorPendientesDTO]
+    por_operador: list[OperadorPendientesDTO]
     updated_at: datetime
 
 
