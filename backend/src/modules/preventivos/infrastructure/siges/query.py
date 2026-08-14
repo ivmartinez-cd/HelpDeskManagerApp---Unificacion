@@ -60,6 +60,15 @@ _EMPRESA_VIVA_WHERE = """
        OR INC.ultimo_incidente >= DATEADD(month, -?, GETDATE()))
 """
 
+# Solo impresoras (regla del usuario, 2026-08-14): el parque de Siges mezcla
+# los otros negocios de CD — pantallas LFD, notebooks, 'Reproductor Carteleria
+# Digital', docks, headsets, celulares, etc. Preventivos aplica únicamente a
+# PRT (impresora) y MFP (multifunción); quedan afuera también PRL/PLT/SCN/
+# PrintBox por decisión explícita ("SOLO PRT O MFP").
+_SOLO_IMPRESORAS_WHERE = """
+  AND (AG.Descripcion LIKE 'PRT %' OR AG.Descripcion LIKE 'MFP %')
+"""
+
 PARQUE_ZONA_SQL = f"""
 SELECT
     M.ID_Maquina AS id_maquina,
@@ -92,6 +101,7 @@ WHERE S.Estado = 0
   AND E.Estado = 0
   AND E.ID_Tipo_Empresa IN (101, 102)
 {_EMPRESA_VIVA_WHERE}
+{_SOLO_IMPRESORAS_WHERE}
   AND S.Cuadricula = ?
 """
 
@@ -113,9 +123,12 @@ INNER JOIN dbo.Empresa E
     ON E.ID_Empresa = M.ID_Empresa
    AND E.Estado = 0
    AND E.ID_Tipo_Empresa IN (101, 102)
+INNER JOIN dbo.Articulo A ON A.Id_Articulo = M.ID_Articulo
+INNER JOIN dbo.ArtGen AG ON AG.Id_ArtGen = A.Id_ArtGen
 {_ACTIVIDAD_EMPRESA_JOIN}
 WHERE S.Estado = 0
   AND LTRIM(RTRIM(S.Cuadricula)) <> ''
 {_EMPRESA_VIVA_WHERE}
+{_SOLO_IMPRESORAS_WHERE}
 GROUP BY S.Cuadricula
 """

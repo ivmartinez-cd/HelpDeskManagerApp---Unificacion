@@ -305,6 +305,12 @@ Investigación para la feature "preventivos por zona de distribución". Scripts:
   `Maquina.ID_Anexo`, `Maquina.ID_Mantenimiento` y `Maquina.ID_SituacionContractual`
   existen (catálogo `MaquinaSituacionContractual`: 0 No Válida, 100 Comodato, 200 Del
   Cliente, 300 Leasing, 400 Alquiler).
+- **El parque de `Maquina` NO son solo impresoras**: `ArtGen.Descripcion` arranca con un
+  prefijo de tipo de equipo — universo cliente-real activo: MFP 8078, PRT 7993, LFD
+  (pantallas) 1148, NTB (notebooks) 978, `Reproductor Carteleria Digital` 693, Dock 530,
+  Headset 411, Monitor 271, CEL 197, SCN 117, PRL 42, PLT 31, PrintBox 8, etc. Toda
+  pantalla "de impresoras" tiene que filtrar por prefijo (preventivos usa
+  `LIKE 'PRT %' OR 'MFP %'`); el rubro no alcanza (ver nota PrintBox más arriba).
 
 ## 4. Candidatas exploradas — columnas confirmadas, dato real pendiente [CANDIDATA]
 

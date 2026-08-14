@@ -28,6 +28,10 @@ ADR-019; fuentes de datos confirmadas en `docs/siges/SIGES_READONLY_CATALOGO_DAT
   Desguace, a CD1/CD4 (empresas propias, tipo 201), a técnicos/PSTs (401/402) y a las
   bajas de facto tipo Garbarino (todo figura activo en Gestión pero sin actividad desde
   2022). Ajustado 2026-08-14 en dos pasadas tras reportes del usuario.
+- **Solo impresoras**: `ArtGen.Descripcion LIKE 'PRT %' OR 'MFP %'`. El parque de Siges
+  mezcla los otros negocios de CD (pantallas LFD, notebooks, 'Reproductor Carteleria
+  Digital', docks, headsets, celulares, scanners SCN, plotters PLT, rotuladoras PRL,
+  PrintBox) — por decisión explícita del usuario, preventivos cubre únicamente PRT/MFP.
 
 ## Cómo se calcula el vencimiento (`domain/services/vencimiento.py`)
 
