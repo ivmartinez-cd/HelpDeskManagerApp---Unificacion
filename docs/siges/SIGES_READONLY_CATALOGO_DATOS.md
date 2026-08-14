@@ -192,12 +192,12 @@ Catálogo de vendedores: `Id_Vendedor` (PK), `Descripcion`, `Abreviada`, `Mail`,
 `Estado`, `Fecha_Mod`, `Usuario_Mod`. Referenciado por `Contrato.Id_Vendedor`,
 `Factura_Vendedor.Id_Vendedor`, `ContratoVendedor.ID_Vendedor`, `Reservas.IDVendedor`.
 
-### `dbo.UsuariosWebEmpresa` / `dbo.UsuariosWebPerfil` / `dbo.UsuariosWebPermiso`
+### `dbo.UsuariosWebPerfil` / `dbo.UsuariosWebPermiso`
 
-Tablas de relación de `UsuariosWeb`: `UsuariosWebEmpresa(id_usuario, id_empresa)`,
-`UsuariosWebPerfil(idUsuarioWeb, idPerfil)`, `UsuariosWebPermiso(idUsuarioWeb, idPermiso)` — sin
-explorar qué son `Perfil`/`Permiso` en detalle, pero es la forma obvia de un modelo de
-roles/permisos de la app web.
+Tablas de relación de `UsuariosWeb`: `UsuariosWebPerfil(idUsuarioWeb, idPerfil)`,
+`UsuariosWebPermiso(idUsuarioWeb, idPermiso)` — sin explorar qué son `Perfil`/`Permiso` en
+detalle, pero es la forma obvia de un modelo de roles/permisos de la app web.
+(`UsuariosWebEmpresa` ya fue investigada y descartada como cartera por operador — ver §5.)
 
 ### `dbo.Reservas`
 
@@ -230,6 +230,15 @@ Documentadas para no perder tiempo re-explorándolas si alguien busca lo mismo e
   sobre las 352 columnas candidatas (`operador`/`usuario`/`facturac`/`planific`/`evento`/etc.)
   no encontró ninguna columna de asignación fuera de `UsuariosWeb` mismo. Ver ADR-012 para el
   detalle completo.
+- **`UsuariosWebEmpresa` como cartera de clientes por operador de facturación** (investigación
+  card de Contadores, 2026-08-14): descartada con dato real. Es el alcance de visibilidad de
+  usuarios web (qué empresas ve cada usuario en Gestión/portal), no una asignación de
+  responsabilidad: los operadores de contadores (`vipaez`, `mpollero`) tienen 0 filas; los que
+  tienen cientos son usuarios comerciales/admin de Canal Directo (614/461 empresas), y los
+  usuarios con mail de dominio de cliente (`@galeno.com.ar`) tienen ~10-12 (las empresas de su
+  propio grupo). Refuerza la conclusión de ADR-012: la asignación operador↔cliente de
+  facturación vive solo en la app de Gestión (eventos de planificación scrapeados), no en la
+  réplica de Siges. Script: `backend/scripts/explore_usuariosweb_empresa.py`.
 - **`ListaCostosServicios` / `ListaCostosDistribucion` como tarifario de PST** (investigación
   liquidaciones, 2026-08-13): descartadas — listas de costos globales históricas (una fila por
   fecha desde 1900/2007), sin relación por PST. El tarifario real es `CostoServicio` (§3).

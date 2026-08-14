@@ -2,8 +2,10 @@ import { httpClient } from "@/services/http-client";
 import type {
   CalendarEvent,
   CalendarFilterParams,
+  EmpresaSiges,
   MiOperador,
   Operador,
+  ResumenClientesOperador,
   SyncCalendarioResult,
   SyncStatus,
 } from "../types/calendario";
@@ -210,6 +212,23 @@ export const contadoresApi = {
       .get<Page<Operador>>("/api/contadores/calendario/operadores")
       .then((page) => page.items),
   getSyncStatus: () => httpClient.get<SyncStatus>("/api/contadores/calendario/sync/status"),
+  // Card de Inicio: clientes del mes e impresoras (cruce contra Siges) por
+  // operador. El backend excluye los operadores pool.
+  getResumenClientesOperador: () =>
+    httpClient.get<ResumenClientesOperador>("/api/contadores/calendario/resumen-clientes"),
+  // Resolución de clientes sin cruce: búsqueda en vivo de empresas en Siges
+  // y guardado del mapeo manual (requiere contadores:manage).
+  searchEmpresasSiges: (q: string) =>
+    httpClient
+      .get<Page<EmpresaSiges>>(
+        `/api/contadores/calendario/empresas-siges?q=${encodeURIComponent(q)}`,
+      )
+      .then((page) => page.items),
+  setClienteSigesMap: (clienteGestion: string, sigesEmpresaIds: number[]) =>
+    httpClient.put<void>("/api/contadores/calendario/cliente-siges-map", {
+      cliente_gestion: clienteGestion,
+      siges_empresa_ids: sigesEmpresaIds,
+    }),
   syncCalendario: () => httpClient.post<SyncCalendarioResult>("/api/contadores/calendario/sync"),
 };
 

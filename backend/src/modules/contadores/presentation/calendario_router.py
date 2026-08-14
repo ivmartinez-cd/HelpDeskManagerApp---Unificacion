@@ -27,9 +27,18 @@ from src.modules.contadores.application.use_cases.get_mi_operador import GetMiOp
 from src.modules.contadores.application.use_cases.get_pending_clients import (
     GetPendingClientsUseCase,
 )
+from src.modules.contadores.application.use_cases.get_resumen_clientes_operador import (
+    GetResumenClientesOperador,
+    GetResumenClientesOperadorDependencies,
+)
 from src.modules.contadores.application.use_cases.list_asignacion_overrides import (
     ListAsignacionOverrides,
     ListAsignacionOverridesDependencies,
+)
+from src.modules.contadores.application.use_cases.resolver_cliente_siges import (
+    SearchEmpresasSiges,
+    SetClienteSigesMap,
+    SetClienteSigesMapCommand,
 )
 from src.modules.contadores.application.use_cases.sync_calendar_events import (
     SyncCalendarEventsUseCase,
@@ -44,13 +53,23 @@ from src.modules.contadores.infrastructure.repositories.sqlalchemy_asignacion_ov
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_calendario_repository import (
     SqlAlchemyCalendarEventRepository,
 )
-from src.modules.contadores.presentation.dependencies import get_operador_catalog_gateway
+from src.modules.contadores.infrastructure.repositories.sqlalchemy_cliente_siges_map_repository import (  # noqa: E501
+    SqlAlchemyClienteSigesMapRepository,
+)
+from src.modules.contadores.presentation.dependencies import (
+    get_operador_catalog_gateway,
+    get_parque_cliente_gateway,
+    get_parque_cliente_gateway_or_none,
+)
 from src.modules.contadores.presentation.schemas.calendario_schemas import (
     AsignacionOverrideResponse,
     CalendarEventSchema,
     CreateAsignacionOverrideRequest,
+    EmpresaSigesSchema,
     MiOperadorResponse,
     OperadorSchema,
+    ResumenClientesOperadorResponse,
+    SetClienteSigesMapRequest,
     SyncCalendarioResponse,
     SyncStatusResponse,
 )
@@ -160,6 +179,57 @@ async def get_calendario_pendientes(
     )
     schema_events = [CalendarEventSchema.from_anotado(a) for a in anotados]
     return Page.of(schema_events, page=page, size=size)
+
+
+@router.get("/calendario/resumen-clientes", response_model=ResumenClientesOperadorResponse)
+async def get_resumen_clientes_operador(
+    _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db),
+) -> ResumenClientesOperadorResponse:
+    """Card de Inicio: clientes planificados del mes en curso e impresoras
+    (cruzadas contra Siges por nombre) por operador. Los operadores pool se
+    excluyen igual que en el backlog de pendientes."""
+    deps = GetResumenClientesOperadorDependencies(
+        calendar=SqlAlchemyCalendarEventRepository(db),
+        alias=SqlAlchemyClienteSigesMapRepository(db),
+        parque=get_parque_cliente_gateway_or_none(),
+    )
+    dto = await GetResumenClientesOperador(deps).execute(
+        hoy=datetime.now(UTC).date(), exclude_operador_ids=_POOL_BACKLOG_OPERADOR_IDS
+    )
+    return ResumenClientesOperadorResponse.model_validate(dto)
+
+
+@router.get("/calendario/empresas-siges", response_model=Page[EmpresaSigesSchema])
+async def search_empresas_siges(
+    q: str = Query(..., min_length=2, description="Texto a buscar en Den_Comercial"),
+    _: Identity = _require_manage,
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=20, ge=1, le=50),
+) -> Page[EmpresaSigesSchema]:
+    """Búsqueda en vivo de empresas activas en Siges (con su parque) para
+    resolver un cliente sin cruce desde la card de Inicio."""
+    empresas = await SearchEmpresasSiges(get_parque_cliente_gateway()).execute(q)
+    return Page.of(
+        [EmpresaSigesSchema.model_validate(e) for e in empresas], page=page, size=size
+    )
+
+
+@router.put("/calendario/cliente-siges-map", status_code=status.HTTP_204_NO_CONTENT)
+async def set_cliente_siges_map(
+    payload: SetClienteSigesMapRequest,
+    _: Identity = _require_manage,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Reemplaza el mapeo manual de un cliente de Gestión a empresa(s) de
+    Siges (lista vacía = desmapear). El cruce automático queda para los que
+    matchean solos; esto es solo para los nombres rebeldes."""
+    await SetClienteSigesMap(SqlAlchemyClienteSigesMapRepository(db)).execute(
+        SetClienteSigesMapCommand(
+            cliente_gestion=payload.cliente_gestion,
+            siges_empresa_ids=payload.siges_empresa_ids,
+        )
+    )
 
 
 @router.get("/calendario/sync/status", response_model=SyncStatusResponse)

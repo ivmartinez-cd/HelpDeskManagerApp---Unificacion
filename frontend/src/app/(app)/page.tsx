@@ -1,3 +1,4 @@
+import { ClientesOperadorCard } from "@/features/contadores/components/clientes-operador-card";
 import { TodayClientsCard } from "@/features/home/components/today-clients-card";
 import { ParqueOperadorCard } from "@/features/prestadores/components/parque-operador-card";
 import { SlaSummaryCard } from "@/features/sla/components/sla-summary-card";
@@ -27,7 +28,10 @@ export default function HomePage() {
           <ParqueOperadorCard />
         </div>
         <TodayClientsCard />
-        <SlaSummaryCard />
+        <div className="flex flex-col gap-4">
+          <SlaSummaryCard />
+          <ClientesOperadorCard />
+        </div>
       </div>
     </div>
   );

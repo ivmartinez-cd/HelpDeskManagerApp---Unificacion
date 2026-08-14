@@ -129,3 +129,44 @@ class CreateAsignacionOverrideRequest(BaseModel):
     vigente_hasta: date
     clientes: list[str] | None = None
     motivo: str | None = None
+
+
+class OperadorClientesSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    operador_id: str
+    operador_nombre: str
+    operador_color: str | None
+    clientes: int
+    impresoras: int | None
+    sin_cruce: list[str]
+
+
+class ResumenClientesOperadorResponse(BaseModel):
+    """Card de Inicio: clientes planificados del mes e impresoras por
+    operador. `total_impresoras=None` cuando Siges no respondió (la card
+    degrada a solo clientes)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    desde: date
+    hasta: date
+    total_clientes: int
+    total_impresoras: int | None
+    operadores: list[OperadorClientesSchema]
+
+
+class EmpresaSigesSchema(BaseModel):
+    """Resultado de búsqueda de empresas para resolver un cliente sin cruce."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    den_comercial: str
+    impresoras: int
+
+
+class SetClienteSigesMapRequest(BaseModel):
+    cliente_gestion: str
+    siges_empresa_ids: list[int]
+    """Vacía = desmapear el cliente (vuelve a 'sin cruce')."""

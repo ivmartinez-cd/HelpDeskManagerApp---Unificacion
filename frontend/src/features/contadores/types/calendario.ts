@@ -75,3 +75,28 @@ export interface SyncCalendarioResult {
   range_end: string;
   synced_at: string;
 }
+
+export interface OperadorClientes {
+  operador_id: string;
+  operador_nombre: string;
+  operador_color: string | null;
+  clientes: number;
+  /** null cuando Siges no respondió: la card degrada a solo clientes. */
+  impresoras: number | null;
+  /** Clientes sin cruce contra Siges — sus impresoras no están en la suma. */
+  sin_cruce: string[];
+}
+
+export interface ResumenClientesOperador {
+  desde: string;
+  hasta: string;
+  total_clientes: number;
+  total_impresoras: number | null;
+  operadores: OperadorClientes[];
+}
+
+export interface EmpresaSiges {
+  id: number;
+  den_comercial: string;
+  impresoras: number;
+}
