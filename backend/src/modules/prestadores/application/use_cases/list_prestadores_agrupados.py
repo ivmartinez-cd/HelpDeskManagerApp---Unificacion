@@ -1,3 +1,4 @@
+import logging
 import uuid
 from dataclasses import dataclass
 from datetime import date
@@ -16,8 +17,14 @@ from src.modules.prestadores.domain.repositories.asignacion_override_repository 
 )
 from src.modules.prestadores.domain.repositories.contacto_repository import ContactoRepository
 from src.modules.prestadores.domain.repositories.prestador_repository import PrestadorRepository
+from src.modules.prestadores.domain.repositories.siges_prestador_gateway import (
+    SigesPrestadorGateway,
+)
 from src.modules.prestadores.domain.repositories.user_provider import UserInfo, UserProvider
 from src.modules.prestadores.domain.services.operador_efectivo import resolver_operador_efectivo
+from src.shared.domain.errors import ExternalServiceError
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +33,9 @@ class ListPrestadoresAgrupadosDependencies:
     contactos: ContactoRepository
     users: UserProvider
     overrides: AsignacionOverrideRepository
+    siges: SigesPrestadorGateway | None = None
+    """Para el parque de equipos en vivo — `None` (o caído) degrada al último
+    valor persistido por el sync, el listado nunca se rompe por MERCURIO."""
 
 
 class ListPrestadoresAgrupados:
@@ -46,13 +56,19 @@ class ListPrestadoresAgrupados:
             [p.id for p in prestadores]
         )
         efectivo_por_prestador = await self._resolver_efectivos(prestadores, fecha or date.today())
+        equipos_en_vivo = await self._equipos_en_vivo(prestadores)
 
         operador_ids = {p.operador_id for p in prestadores if p.operador_id is not None}
         operador_ids |= {v for v in efectivo_por_prestador.values() if v is not None}
         users = await self._deps.users.get_users_by_ids(list(operador_ids))
 
         dtos = [
-            build_prestador_dto(p, contactos_por_prestador.get(p.id, []), users)
+            build_prestador_dto(
+                p,
+                contactos_por_prestador.get(p.id, []),
+                users,
+                equipos=equipos_en_vivo.get(p.siges_empresa_id),
+            )
             for p in prestadores
         ]
 
@@ -64,6 +80,26 @@ class ListPrestadoresAgrupados:
             sin_asignar=len([p for p in activos if p.operador_id is None]),
             grupos=_agrupar(dtos, efectivo_por_prestador, users),
         )
+
+    async def _equipos_en_vivo(self, prestadores: list[Prestador]) -> dict[int, int]:
+        """Parque de equipos actual desde Siges, por `siges_empresa_id`. Un PST
+        con parque vacío se devuelve como 0 explícito (que pise el valor
+        persistido); si MERCURIO no responde se devuelve vacío y el listado
+        cae al último valor conocido."""
+        if self._deps.siges is None or not prestadores:
+            return {}
+        siges_ids = [p.siges_empresa_id for p in prestadores]
+        try:
+            conteos = await self._deps.siges.count_equipos_by_siges_ids(siges_ids)
+        except ExternalServiceError as exc:
+            logger.warning(
+                "Sin conteo de equipos en vivo desde Siges; el listado usa el último valor "
+                "persistido por el sync",
+                extra={"cantidad_prestadores": len(siges_ids)},
+                exc_info=exc,
+            )
+            return {}
+        return {sid: conteos.get(sid, 0) for sid in siges_ids}
 
     async def _resolver_efectivos(
         self, prestadores: list[Prestador], fecha: date

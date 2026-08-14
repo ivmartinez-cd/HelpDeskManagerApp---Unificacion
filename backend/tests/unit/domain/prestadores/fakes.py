@@ -150,8 +150,20 @@ class FakeAsignacionOverrideRepository:
 class FakeSigesPrestadorGateway:
     def __init__(self) -> None:
         self.por_id: dict[int, SigesPrestadorInfo] = {}
+        self.equipos_por_id: dict[int, int] = {}
         self.calls: list[list[int]] = []
+        self.equipos_calls: list[list[int]] = []
+        self.fail_equipos: Exception | None = None
+        """Si se setea, count_equipos_by_siges_ids lanza esto — simula MERCURIO caído."""
 
     async def find_by_siges_ids(self, siges_empresa_ids: list[int]) -> list[SigesPrestadorInfo]:
         self.calls.append(siges_empresa_ids)
         return [self.por_id[i] for i in siges_empresa_ids if i in self.por_id]
+
+    async def count_equipos_by_siges_ids(self, siges_empresa_ids: list[int]) -> dict[int, int]:
+        if self.fail_equipos is not None:
+            raise self.fail_equipos
+        self.equipos_calls.append(siges_empresa_ids)
+        return {
+            i: self.equipos_por_id[i] for i in siges_empresa_ids if i in self.equipos_por_id
+        }

@@ -61,7 +61,10 @@ from src.modules.prestadores.infrastructure.repositories.sqlalchemy_user_provide
     SqlAlchemyUserProvider,
 )
 from src.modules.prestadores.presentation.contactos_router import router as contactos_router
-from src.modules.prestadores.presentation.dependencies import get_prestador_siges_gateway
+from src.modules.prestadores.presentation.dependencies import (
+    get_prestador_siges_gateway,
+    get_prestador_siges_gateway_or_none,
+)
 from src.modules.prestadores.presentation.overrides_router import router as overrides_router
 from src.modules.prestadores.presentation.schemas.prestador_schemas import (
     AsignacionHistorialResponse,
@@ -108,6 +111,7 @@ async def list_prestadores(
         contactos=SqlAlchemyContactoRepository(db),
         users=SqlAlchemyUserProvider(db),
         overrides=SqlAlchemyAsignacionOverrideRepository(db),
+        siges=get_prestador_siges_gateway_or_none(),
     )
     resumen = await ListPrestadoresAgrupados(deps).execute(fecha=fecha)
     return PrestadoresResumenResponse.from_dto(resumen)
@@ -173,7 +177,6 @@ async def create_prestador(
             den_comercial=payload.den_comercial,
             razon_social=payload.razon_social,
             cuit=payload.cuit,
-            equipos=payload.equipos,
             operador_id=payload.operador_id,
         )
     )
@@ -198,7 +201,6 @@ async def update_prestador(
             den_comercial=payload.den_comercial,
             razon_social=payload.razon_social,
             cuit=payload.cuit,
-            equipos=payload.equipos,
         )
     )
     return PrestadorResponse.from_dto(dto)

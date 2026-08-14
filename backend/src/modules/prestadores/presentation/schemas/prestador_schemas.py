@@ -116,7 +116,6 @@ class CreatePrestadorRequest(BaseModel):
     den_comercial: str = Field(validation_alias="denComercial")
     razon_social: str | None = Field(default=None, validation_alias="razonSocial")
     cuit: str | None = None
-    equipos: int | None = None
     operador_id: uuid.UUID | None = Field(default=None, validation_alias="operadorId")
 
 
@@ -126,7 +125,6 @@ class UpdatePrestadorRequest(BaseModel):
     den_comercial: str = Field(validation_alias="denComercial")
     razon_social: str | None = Field(default=None, validation_alias="razonSocial")
     cuit: str | None = None
-    equipos: int | None = None
 
 
 class SetActiveRequest(BaseModel):

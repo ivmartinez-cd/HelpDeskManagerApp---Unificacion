@@ -10,10 +10,14 @@ def build_prestador_dto(
     prestador: Prestador,
     contactos: list[ContactoPrestador],
     users: dict[uuid.UUID, UserInfo],
+    *,
+    equipos: int | None = None,
 ) -> PrestadorDTO:
     """Ensambla el DTO de un PST con su operador y contactos resueltos —
     compartido por los use cases que devuelven un `PrestadorDTO` completo
-    (list/get/create/update/assign) para no repetir el mapeo en cada uno."""
+    (list/get/create/update/assign) para no repetir el mapeo en cada uno.
+    `equipos` permite pisar el valor persistido con el conteo en vivo de
+    Siges (lo usa el listado); sin override se devuelve el último conocido."""
     operador = users.get(prestador.operador_id) if prestador.operador_id else None
     return PrestadorDTO(
         id=prestador.id,
@@ -21,7 +25,7 @@ def build_prestador_dto(
         den_comercial=prestador.den_comercial,
         razon_social=prestador.razon_social,
         cuit=prestador.cuit,
-        equipos=prestador.equipos,
+        equipos=equipos if equipos is not None else prestador.equipos,
         operador_id=prestador.operador_id,
         operador_nombre=operador.full_name if operador else None,
         operador_color=operador.color if operador else None,

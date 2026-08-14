@@ -22,7 +22,7 @@ def _deps(prestadores: FakePrestadorRepository) -> UpdatePrestadorDependencies:
     )
 
 
-async def test_edita_datos_propios_sin_tocar_operador_ni_is_active() -> None:
+async def test_edita_datos_propios_sin_tocar_operador_equipos_ni_is_active() -> None:
     prestadores = FakePrestadorRepository()
     operador_id = uuid.uuid4()
     prestador = Prestador(
@@ -31,7 +31,7 @@ async def test_edita_datos_propios_sin_tocar_operador_ni_is_active() -> None:
         den_comercial="Nombre viejo",
         razon_social=None,
         cuit=None,
-        equipos=None,
+        equipos=841,
         operador_id=operador_id,
         is_active=False,
     )
@@ -43,13 +43,13 @@ async def test_edita_datos_propios_sin_tocar_operador_ni_is_active() -> None:
             den_comercial="Nombre nuevo",
             razon_social="Razón nueva",
             cuit="30-22222222-2",
-            equipos=150,
         )
     )
 
     assert dto.den_comercial == "Nombre nuevo"
     assert dto.razon_social == "Razón nueva"
-    assert dto.equipos == 150
+    # equipos ya no es editable: se preserva el último valor contado desde Siges
+    assert dto.equipos == 841
     assert dto.operador_id == operador_id
     assert dto.is_active is False
     assert prestadores.rows[prestador.id].den_comercial == "Nombre nuevo"
@@ -63,6 +63,5 @@ async def test_prestador_inexistente_lanza_not_found() -> None:
                 den_comercial="X",
                 razon_social=None,
                 cuit=None,
-                equipos=None,
             )
         )

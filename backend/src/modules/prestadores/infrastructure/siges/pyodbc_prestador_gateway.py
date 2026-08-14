@@ -11,7 +11,10 @@ import pyodbc
 from src.modules.prestadores.domain.repositories.siges_prestador_gateway import (
     SigesPrestadorInfo,
 )
-from src.modules.prestadores.infrastructure.siges.query import build_empresa_por_ids_sql
+from src.modules.prestadores.infrastructure.siges.query import (
+    build_empresa_por_ids_sql,
+    build_equipos_por_prestador_sql,
+)
 from src.shared.domain.errors import ExternalServiceError
 
 logger = logging.getLogger(__name__)
@@ -53,12 +56,31 @@ class PyodbcPrestadorGateway:
             for row in rows
         ]
 
+    async def count_equipos_by_siges_ids(self, siges_empresa_ids: list[int]) -> dict[int, int]:
+        if not siges_empresa_ids:
+            return {}
+        sql = build_equipos_por_prestador_sql(len(siges_empresa_ids))
+        try:
+            rows = await asyncio.to_thread(self._fetch, sql, siges_empresa_ids)
+        except pyodbc.Error as exc:
+            logger.error(
+                "Fallo el conteo de equipos por PST contra Siges/MERCURIO",
+                extra={"cantidad_ids": len(siges_empresa_ids)},
+                exc_info=exc,
+            )
+            raise ExternalServiceError(
+                "No se pudo consultar la base Siges (MERCURIO)"
+            ) from exc
+        return {int(row.ID_Prestador): int(row.equipos) for row in rows}
+
     def _query(self, siges_empresa_ids: list[int]) -> list[Any]:
-        sql = build_empresa_por_ids_sql(len(siges_empresa_ids))
+        return self._fetch(build_empresa_por_ids_sql(len(siges_empresa_ids)), siges_empresa_ids)
+
+    def _fetch(self, sql: str, params: list[int]) -> list[Any]:
         with pyodbc.connect(
             self._connection_string, timeout=int(self._timeout_seconds)
         ) as connection:
             connection.timeout = int(self._timeout_seconds)
             cursor = connection.cursor()
-            cursor.execute(sql, siges_empresa_ids)
+            cursor.execute(sql, params)
             return list(cursor.fetchall())

@@ -38,7 +38,7 @@ class CreatePrestador:
             den_comercial=command.den_comercial,
             razon_social=command.razon_social,
             cuit=command.cuit,
-            equipos=command.equipos,
+            equipos=None,
             operador_id=command.operador_id,
             is_active=True,
         )

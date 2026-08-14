@@ -15,11 +15,14 @@ class SyncPrestadoresDesdeSigesDependencies:
 
 
 class SyncPrestadoresDesdeSiges:
-    """Caso de uso: actualiza `den_comercial`/`razon_social`/`cuit` de los PST
-    ya conocidos con el estado actual de Siges. A propósito NO crea PST
-    nuevos ni desactiva los que falten en la respuesta — el alta/baja es
-    siempre una decisión explícita desde la UI (ver plan: evitar el problema
-    del legacy, que creó automáticamente ~29 prestadores fuera de alcance)."""
+    """Caso de uso: actualiza `den_comercial`/`razon_social`/`cuit`/`equipos`
+    de los PST ya conocidos con el estado actual de Siges (`equipos` es el
+    parque activo contado desde `Maquina`, misma definición que el reporte
+    legacy — queda persistido como último valor conocido para cuando MERCURIO
+    no responda). A propósito NO crea PST nuevos ni desactiva los que falten
+    en la respuesta — el alta/baja es siempre una decisión explícita desde la
+    UI (ver plan: evitar el problema del legacy, que creó automáticamente ~29
+    prestadores fuera de alcance)."""
 
     def __init__(self, deps: SyncPrestadoresDesdeSigesDependencies) -> None:
         self._deps = deps
@@ -29,9 +32,9 @@ class SyncPrestadoresDesdeSiges:
         if not existentes:
             return SyncResultDTO(actualizados=[], sin_cambios=0)
 
-        siges_info = await self._deps.siges.find_by_siges_ids(
-            [p.siges_empresa_id for p in existentes]
-        )
+        siges_ids = [p.siges_empresa_id for p in existentes]
+        siges_info = await self._deps.siges.find_by_siges_ids(siges_ids)
+        equipos_por_id = await self._deps.siges.count_equipos_by_siges_ids(siges_ids)
         por_id = {info.siges_empresa_id: info for info in siges_info}
 
         actualizados: list[str] = []
@@ -40,10 +43,12 @@ class SyncPrestadoresDesdeSiges:
             info = por_id.get(prestador.siges_empresa_id)
             if info is None:
                 continue
+            equipos = equipos_por_id.get(prestador.siges_empresa_id, 0)
             if (
                 info.den_comercial == prestador.den_comercial
                 and info.razon_social == prestador.razon_social
                 and info.cuit == prestador.cuit
+                and equipos == prestador.equipos
             ):
                 sin_cambios += 1
                 continue
@@ -53,7 +58,7 @@ class SyncPrestadoresDesdeSiges:
                 den_comercial=info.den_comercial,
                 razon_social=info.razon_social,
                 cuit=info.cuit,
-                equipos=prestador.equipos,
+                equipos=equipos,
                 operador_id=prestador.operador_id,
                 is_active=prestador.is_active,
             )

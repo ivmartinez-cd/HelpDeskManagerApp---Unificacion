@@ -20,3 +20,11 @@ class SigesPrestadorGateway(Protocol):
     donde el sync creó automáticamente ~29 prestadores fuera de alcance)."""
 
     async def find_by_siges_ids(self, siges_empresa_ids: list[int]) -> list[SigesPrestadorInfo]: ...
+
+    async def count_equipos_by_siges_ids(self, siges_empresa_ids: list[int]) -> dict[int, int]:
+        """Parque de equipos activos por PST (`Sucursal.ID_Prestador` →
+        `Maquina`), con la misma definición de "activo" que el reporte legacy
+        'Maquinas Activas por Prestador' — paridad exacta verificada, ver
+        docs/siges/SIGES_READONLY_CATALOGO_DATOS.md §3. Un PST sin equipos
+        puede no aparecer en el dict: tratar ausencia como 0."""
+        ...

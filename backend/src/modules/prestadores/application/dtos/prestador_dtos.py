@@ -64,7 +64,6 @@ class CreatePrestadorCommand:
     den_comercial: str
     razon_social: str | None = None
     cuit: str | None = None
-    equipos: int | None = None
     operador_id: uuid.UUID | None = None
 
 
@@ -73,13 +72,13 @@ class UpdatePrestadorCommand:
     """Solo los datos propios editables — la asignación de operador tiene su
     propio comando (`AssignOperadorCommand`) porque además escribe historial,
     y `is_active` tiene el suyo porque es una acción de alta/baja, no una
-    edición de datos."""
+    edición de datos. `equipos` ya no es editable: se cuenta desde Siges
+    (en vivo en el listado, persistido por el sync)."""
 
     prestador_id: uuid.UUID
     den_comercial: str
     razon_social: str | None
     cuit: str | None
-    equipos: int | None
 
 
 @dataclass(frozen=True, slots=True)
