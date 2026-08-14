@@ -110,6 +110,13 @@ class Settings(BaseSettings):
     # MercurioQueryRunner compartido, ADR-018). Sin prefijo sla_ porque es
     # config nueva de toda la app, no del módulo sla.
     mercurio_max_concurrent: int = 3
+
+    # SOAP wsAyC de Canal Directo — mismo endpoint/WSDL para insumos y
+    # liquidaciones (provider compartido, ADR-018). Defaults = los valores que
+    # estaban hardcodeados en los gateways; no hace falta tocar ningún .env.
+    wsayc_wsdl_url: str = "https://wsg.cdsisa.com.ar/wsAyC_server.php?wsdl"
+    wsayc_endpoint: str = "https://wsg.cdsisa.com.ar/wsAyC_server.php"
+    wsayc_timeout_seconds: float = 30.0
     # Cadencia del job de fondo que refresca el snapshot del período actual —
     # sin esto, Inicio y /sla pegarían en vivo contra MERCURIO (~40s) en cada
     # carga. El botón "Actualizar" siempre fuerza un refresh inmediato aparte.

@@ -1,52 +1,35 @@
 """Adapter zeep del puerto WsAycGateway (SOAP wsAyC de Canal Directo).
 
 zeep es sincrónico (requests) — cada llamada corre en un thread (asyncio.to_thread) para
-no bloquear el event loop. El transporte NO reintenta nunca: toda operación SOAP viaja
-como POST, y reintentar persistNewSupply duplicaría pedidos reales (regla de negocio
-dura del legacy, no un detalle de configuración). Timeout explícito obligatorio en toda
-llamada (caracterización §8: una llamada sin timeout cuelga un thread para siempre).
+no bloquear el event loop. El cliente sale del provider compartido (ADR-018): WSDL
+parseado una vez por proceso, Session propia por llamada, transporte sin reintentos
+(reintentar persistNewSupply duplicaría pedidos reales) y timeout explícito — ver
+`shared/infrastructure/wsayc/client_provider.py`. Acá quedan las operaciones, el parsing
+y el manejo de errores por método, que son negocio de insumos.
 """
 
 import asyncio
 import json
 import logging
-import threading
 from typing import Any
-
-from zeep import Client
-from zeep.transports import Transport
 
 from src.modules.insumos.domain.value_objects.cd_supply import CdIncident, CdMachine, CdSupply
 from src.modules.insumos.domain.value_objects.serial_number import clean_serial
 from src.modules.insumos.infrastructure.soap import wsayc_parsing as parsing
+from src.shared.infrastructure.wsayc.client_provider import (
+    WsAycClientProvider,
+    get_wsayc_client_provider,
+)
 
 logger = logging.getLogger(__name__)
 
-WSDL_URL = "https://wsg.cdsisa.com.ar/wsAyC_server.php?wsdl"
-REAL_ENDPOINT = "https://wsg.cdsisa.com.ar/wsAyC_server.php"
-_TIMEOUT_SECONDS = 30
-
 
 class ZeepWsAycGateway:
-    """El cliente zeep se construye lazy y se cachea (cargar el WSDL es caro) — el lock
-    evita construirlo dos veces si dos requests llegan a la vez al primer uso."""
-
-    def __init__(self, wsdl_url: str = WSDL_URL, endpoint: str = REAL_ENDPOINT) -> None:
-        self._wsdl_url = wsdl_url
-        self._endpoint = endpoint
-        self._client: Client | None = None
-        self._client_lock = threading.Lock()
+    def __init__(self, provider: WsAycClientProvider | None = None) -> None:
+        self._provider = provider or get_wsayc_client_provider()
 
     def _service(self) -> Any:
-        with self._client_lock:
-            if self._client is None:
-                transport = Transport(
-                    timeout=_TIMEOUT_SECONDS, operation_timeout=_TIMEOUT_SECONDS
-                )
-                client = Client(self._wsdl_url, transport=transport)
-                client.service._binding_options["address"] = self._endpoint
-                self._client = client
-            return self._client.service
+        return self._provider.service()
 
     async def get_machine_by_serial(self, serial: str) -> CdMachine | None:
         # Sin try/except a propósito: el caller necesita distinguir "confirmado sin

@@ -1,32 +1,31 @@
 """Gateway zeep para el SOAP de liquidaciones de Canal Directo.
 
-Mismo patrón que ZeepWsAycGateway (insumos): cliente lazy cacheado, cada llamada
-en asyncio.to_thread para no bloquear el event loop. El WSDL es el mismo endpoint
-que el módulo insumos — wsAyC expone también métodos de liquidaciones.
+Mismo patrón que ZeepWsAycGateway (insumos): cada llamada en asyncio.to_thread
+para no bloquear el event loop; el cliente sale del provider compartido
+(ADR-018) — el WSDL es el mismo endpoint que el módulo insumos, wsAyC expone
+también métodos de liquidaciones. Acá quedan las operaciones, el parsing y el
+manejo de errores por método, que son negocio de liquidaciones.
 """
 
 import asyncio
 import contextlib
 import json
 import logging
-import threading
 from datetime import date, datetime
 from typing import Any
-
-from zeep import Client
-from zeep.transports import Transport
 
 from src.modules.liquidaciones.domain.services.numeracion_ayc import numero_liquidacion
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
     CdIncidenteRow,
     CdLiquidacion,
 )
+from src.shared.infrastructure.wsayc.client_provider import (
+    WsAycClientProvider,
+    get_wsayc_client_provider,
+)
 
 logger = logging.getLogger(__name__)
 
-WSDL_URL = "https://wsg.cdsisa.com.ar/wsAyC_server.php?wsdl"
-REAL_ENDPOINT = "https://wsg.cdsisa.com.ar/wsAyC_server.php"
-_TIMEOUT = 30
 _DATE_FMT_CIERRE = "%Y%m%d"
 _DATE_FMT_FECHA = "%d/%m/%Y"
 
@@ -43,20 +42,11 @@ _ESTADO_NOMBRE_A_ID: dict[str, str] = {
 
 
 class ZeepCdLiquidacionesGateway:
-    def __init__(self, wsdl_url: str = WSDL_URL, endpoint: str = REAL_ENDPOINT) -> None:
-        self._wsdl_url = wsdl_url
-        self._endpoint = endpoint
-        self._client: Client | None = None
-        self._lock = threading.Lock()
+    def __init__(self, provider: WsAycClientProvider | None = None) -> None:
+        self._provider = provider or get_wsayc_client_provider()
 
     def _service(self) -> Any:
-        with self._lock:
-            if self._client is None:
-                transport = Transport(timeout=_TIMEOUT, operation_timeout=_TIMEOUT)
-                client = Client(self._wsdl_url, transport=transport)
-                client.service._binding_options["address"] = self._endpoint
-                self._client = client
-            return self._client.service
+        return self._provider.service()
 
     async def get_liquidaciones(
         self, empresa_cd_id: int, top: int = 200
