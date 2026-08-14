@@ -10,6 +10,14 @@ class PrestadorPendientesSchema(BaseModel):
     tecnico: str
     cantidad: int
     ids_incidente: list[int]
+    operador_nombre: str | None
+
+
+class OperadorPendientesSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    operador_nombre: str
+    cantidad: int
 
 
 class PendientesResumenResponse(BaseModel):
@@ -20,6 +28,7 @@ class PendientesResumenResponse(BaseModel):
 
     total: int
     por_prestador: list[PrestadorPendientesSchema]
+    por_operador: list[OperadorPendientesSchema]
     updated_at: datetime
 
 
