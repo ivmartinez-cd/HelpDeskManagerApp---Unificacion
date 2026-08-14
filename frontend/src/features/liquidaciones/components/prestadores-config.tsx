@@ -12,6 +12,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion } from "../types/liquidaciones";
+import { PrestadorEditModal } from "./prestador-edit-modal";
 import { PrestadoresExcelImportModal } from "./prestadores-excel-import-modal";
 import { SigesSyncModal } from "./siges-sync-modal";
 
@@ -71,7 +72,7 @@ export function PrestadoresConfig() {
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<FormState>(EMPTY);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<PrestadorLiquidacion | null>(null);
   const [saving, setSaving] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
   const [excelOpen, setExcelOpen] = useState(false);
@@ -89,26 +90,13 @@ export function PrestadoresConfig() {
 
   useEffect(() => { void load(); }, [load]);
 
-  const startEdit = (p: PrestadorLiquidacion) => {
-    setEditingId(p.id);
-    setForm({ nombre: p.nombre, nombreCorto: p.nombreCorto, cuit: p.cuit ?? "", region: p.region ?? "" });
-  };
-
-  const cancelEdit = () => { setEditingId(null); setForm(EMPTY); };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = { nombre: form.nombre, nombreCorto: form.nombreCorto, cuit: form.cuit || undefined, region: form.region || undefined };
-      if (editingId) {
-        await liquidacionesApi.updatePrestador(editingId, payload);
-        toast.success("Prestador actualizado");
-      } else {
-        await liquidacionesApi.createPrestador(payload);
-        toast.success("Prestador creado");
-      }
-      cancelEdit();
+      await liquidacionesApi.createPrestador({ nombre: form.nombre, nombreCorto: form.nombreCorto, cuit: form.cuit || undefined, region: form.region || undefined });
+      toast.success("Prestador creado");
+      setForm(EMPTY);
       void load();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Error al guardar");
@@ -155,15 +143,14 @@ export function PrestadoresConfig() {
         </div>
       </div>
 
-      {/* Formulario inline */}
+      {/* Formulario inline de alta — la edición va por PrestadorEditModal */}
       <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-3 rounded-[12px] border border-border bg-card p-4 lg:grid-cols-4">
         <BrandInput label="Nombre completo *" required value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} />
         <BrandInput label="Clave *" required value={form.nombreCorto} placeholder="PENTACOM" onChange={(e) => setForm((f) => ({ ...f, nombreCorto: e.target.value }))} />
         <BrandInput label="CUIT" value={form.cuit} placeholder="30712345678" onChange={(e) => setForm((f) => ({ ...f, cuit: e.target.value }))} />
         <BrandInput label="Región / Plaza" value={form.region} placeholder="Córdoba, Rosario..." onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))} />
         <div className="col-span-2 flex gap-2 lg:col-span-4">
-          <BrandButton type="submit" loading={saving}>{editingId ? "Guardar cambios" : "Crear prestador"}</BrandButton>
-          {editingId && <BrandButton type="button" variant="outline" onClick={cancelEdit}>Cancelar</BrandButton>}
+          <BrandButton type="submit" loading={saving}>Crear prestador</BrandButton>
         </div>
       </form>
 
@@ -203,7 +190,7 @@ export function PrestadoresConfig() {
                       <Badge variant={p.activo ? "success" : "neutral"}>{p.activo ? "Activo" : "Inactivo"}</Badge>
                     </td>
                     <td className={`${tdCls} text-right`}>
-                      <button onClick={() => startEdit(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
+                      <button onClick={() => setEditing(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
                       <button onClick={() => handleToggle(p)} className={`font-body text-sm hover:underline mr-3 ${p.activo ? "text-destructive" : "text-success"}`}>
                         {p.activo ? "Desactivar" : "Activar"}
                       </button>
@@ -220,6 +207,9 @@ export function PrestadoresConfig() {
         </div>
       )}
 
+      {editing && (
+        <PrestadorEditModal prestador={editing} onClose={() => setEditing(null)} onSuccess={load} />
+      )}
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={load} />
       <PrestadoresExcelImportModal isOpen={excelOpen} onClose={() => setExcelOpen(false)} onSuccess={load} />
       {sigesOpen && (
