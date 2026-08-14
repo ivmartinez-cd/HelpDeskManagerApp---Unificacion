@@ -7,20 +7,26 @@ from src.modules.contadores.application.dtos.get_calendar_events_request import 
 from src.modules.contadores.application.use_cases.get_calendar_events import (
     GetCalendarEventsUseCase,
 )
+from src.modules.contadores.domain.repositories.calendar_event_repository import (
+    CalendarEventRepository,
+)
 
 
 class GetPendingClientsUseCase:
     """Backlog de clientes pendientes para la card de Inicio. Un evento con
     fecha anterior a hoy que TODAVÍA está en el calendario es un cliente que
     quedó de arrastre (Gestión saca del calendario al que ya se realizó — es
-    la única señal disponible, CalendarEvent no tiene estado). Reusa la
-    visibilidad de GetCalendarEventsUseCase (operador propio + coberturas):
-    un usuario nunca ve pendientes de otro operador. El rango excluye hoy
-    (los clientes de hoy los trae otra llamada) y arranca `cutoff_days` atrás.
-    Ordena del más viejo al más nuevo para que el mayor atraso quede arriba."""
+    la única señal disponible, CalendarEvent no tiene estado). Solo se
+    incluyen eventos asignados al operador propio del usuario — los eventos de
+    operadores que el usuario cubre por override NO aparecen en el backlog:
+    el arrastre es responsabilidad del operador original, no del reemplazante.
+    El superadmin ve todos los operadores sin filtro de propiedad."""
 
-    def __init__(self, events: GetCalendarEventsUseCase) -> None:
+    def __init__(
+        self, events: GetCalendarEventsUseCase, repository: CalendarEventRepository
+    ) -> None:
         self._events = events
+        self._repository = repository
 
     async def execute(
         self, *, is_superadmin: bool, full_name: str, today: date, cutoff_days: int
@@ -36,4 +42,14 @@ class GetPendingClientsUseCase:
                 operador_id=None,
             )
         )
+        if not is_superadmin:
+            anotados = await self._filter_solo_propios(anotados, full_name)
         return sorted(anotados, key=lambda anotado: anotado.event.start)
+
+    async def _filter_solo_propios(
+        self, anotados: list[CalendarEventAnotado], full_name: str
+    ) -> list[CalendarEventAnotado]:
+        operador = await self._repository.find_operador_by_nombre(full_name)
+        if operador is None:
+            return []
+        return [a for a in anotados if a.event.operador_id == operador.id]

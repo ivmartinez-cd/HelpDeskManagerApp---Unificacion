@@ -146,7 +146,7 @@ async def get_calendario_pendientes(
     (pendientes de arrastre). Misma visibilidad que GET /calendario."""
     repo = SqlAlchemyCalendarEventRepository(db)
     overrides = SqlAlchemyAsignacionOverrideRepository(db)
-    use_case = GetPendingClientsUseCase(GetCalendarEventsUseCase(repo, overrides))
+    use_case = GetPendingClientsUseCase(GetCalendarEventsUseCase(repo, overrides), repo)
     anotados = await use_case.execute(
         is_superadmin=identity.user.is_superadmin,
         full_name=identity.user.full_name,
