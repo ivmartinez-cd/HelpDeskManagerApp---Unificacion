@@ -7,23 +7,24 @@ import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion } from "../types/liquidaciones";
 
-/** Modal de edición de un prestador. Se monta solo mientras está abierto
- * (el padre lo renderiza condicionalmente), así el estado del formulario
- * arranca fresco desde el prestador en cada apertura. */
-export function PrestadorEditModal({
+/** Modal de alta/edición de un prestador (`prestador: null` = alta). Se
+ * monta solo mientras está abierto (el padre lo renderiza
+ * condicionalmente), así el estado del formulario arranca fresco en cada
+ * apertura. */
+export function PrestadorFormModal({
   prestador,
   onClose,
   onSuccess,
 }: {
-  prestador: PrestadorLiquidacion;
+  prestador: PrestadorLiquidacion | null;
   onClose: () => void;
   onSuccess: () => void;
 }) {
   const [form, setForm] = useState({
-    nombre: prestador.nombre,
-    nombreCorto: prestador.nombreCorto,
-    cuit: prestador.cuit ?? "",
-    region: prestador.region ?? "",
+    nombre: prestador?.nombre ?? "",
+    nombreCorto: prestador?.nombreCorto ?? "",
+    cuit: prestador?.cuit ?? "",
+    region: prestador?.region ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,13 +34,19 @@ export function PrestadorEditModal({
     setSaving(true);
     setError(null);
     try {
-      await liquidacionesApi.updatePrestador(prestador.id, {
+      const payload = {
         nombre: form.nombre,
         nombreCorto: form.nombreCorto,
         cuit: form.cuit || undefined,
         region: form.region || undefined,
-      });
-      toast.success("Prestador actualizado");
+      };
+      if (prestador) {
+        await liquidacionesApi.updatePrestador(prestador.id, payload);
+        toast.success("Prestador actualizado");
+      } else {
+        await liquidacionesApi.createPrestador(payload);
+        toast.success("Prestador creado");
+      }
       onClose();
       onSuccess();
     } catch (err: unknown) {
@@ -50,7 +57,7 @@ export function PrestadorEditModal({
   };
 
   return (
-    <BrandModal isOpen onClose={onClose} title="Editar prestador" error={error}>
+    <BrandModal isOpen onClose={onClose} title={prestador ? "Editar prestador" : "Nuevo prestador"} error={error}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <BrandInput label="Nombre completo *" required value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} />
         <BrandInput label="Clave *" required value={form.nombreCorto} placeholder="PENTACOM" onChange={(e) => setForm((f) => ({ ...f, nombreCorto: e.target.value }))} />
@@ -58,7 +65,7 @@ export function PrestadorEditModal({
         <BrandInput label="Región / Plaza" value={form.region} placeholder="Córdoba, Rosario..." onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))} />
         <div className="flex justify-end gap-3 pt-1">
           <BrandButton type="button" variant="outline" onClick={onClose}>Cancelar</BrandButton>
-          <BrandButton type="submit" loading={saving}>Guardar cambios</BrandButton>
+          <BrandButton type="submit" loading={saving}>{prestador ? "Guardar cambios" : "Crear prestador"}</BrandButton>
         </div>
       </form>
     </BrandModal>

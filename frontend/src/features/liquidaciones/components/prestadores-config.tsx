@@ -2,26 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  BrandButton,
-  BrandFileInput,
-  BrandInput,
-} from "@/shared/components/ui/brand-form";
+import { BrandButton, BrandFileInput } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion } from "../types/liquidaciones";
-import { PrestadorEditModal } from "./prestador-edit-modal";
+import { PrestadorFormModal } from "./prestador-form-modal";
 import { PrestadoresExcelImportModal } from "./prestadores-excel-import-modal";
 import { SigesSyncModal } from "./siges-sync-modal";
 
 const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
 const tdCls = "py-3 px-4 font-body text-sm text-foreground";
-
-type FormState = { nombre: string; nombreCorto: string; cuit: string; region: string };
-
-const EMPTY: FormState = { nombre: "", nombreCorto: "", cuit: "", region: "" };
 
 function CsvImportModal({
   isOpen,
@@ -71,9 +63,8 @@ function CsvImportModal({
 export function PrestadoresConfig() {
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState<FormState>(EMPTY);
-  const [editing, setEditing] = useState<PrestadorLiquidacion | null>(null);
-  const [saving, setSaving] = useState(false);
+  // `undefined` = cerrado; `null` = alta; un prestador = edición.
+  const [formPrestador, setFormPrestador] = useState<PrestadorLiquidacion | null | undefined>(undefined);
   const [csvOpen, setCsvOpen] = useState(false);
   const [excelOpen, setExcelOpen] = useState(false);
   const [sigesOpen, setSigesOpen] = useState(false);
@@ -89,21 +80,6 @@ export function PrestadoresConfig() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await liquidacionesApi.createPrestador({ nombre: form.nombre, nombreCorto: form.nombreCorto, cuit: form.cuit || undefined, region: form.region || undefined });
-      toast.success("Prestador creado");
-      setForm(EMPTY);
-      void load();
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Error al guardar");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleToggle = async (p: PrestadorLiquidacion) => {
     try {
@@ -139,20 +115,10 @@ export function PrestadoresConfig() {
           <BrandButton size="sm" variant="outline" onClick={() => setSigesOpen(true)}>Sincronizar Siges</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={() => setExcelOpen(true)}>Cargar Excel maestro</BrandButton>
-          <BrandButton size="sm" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
+          <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
+          <BrandButton size="sm" onClick={() => setFormPrestador(null)}>Nuevo prestador</BrandButton>
         </div>
       </div>
-
-      {/* Formulario inline de alta — la edición va por PrestadorEditModal */}
-      <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-3 rounded-[12px] border border-border bg-card p-4 lg:grid-cols-4">
-        <BrandInput label="Nombre completo *" required value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} />
-        <BrandInput label="Clave *" required value={form.nombreCorto} placeholder="PENTACOM" onChange={(e) => setForm((f) => ({ ...f, nombreCorto: e.target.value }))} />
-        <BrandInput label="CUIT" value={form.cuit} placeholder="30712345678" onChange={(e) => setForm((f) => ({ ...f, cuit: e.target.value }))} />
-        <BrandInput label="Región / Plaza" value={form.region} placeholder="Córdoba, Rosario..." onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))} />
-        <div className="col-span-2 flex gap-2 lg:col-span-4">
-          <BrandButton type="submit" loading={saving}>Crear prestador</BrandButton>
-        </div>
-      </form>
 
       {/* Tabla */}
       {loading ? (
@@ -190,7 +156,7 @@ export function PrestadoresConfig() {
                       <Badge variant={p.activo ? "success" : "neutral"}>{p.activo ? "Activo" : "Inactivo"}</Badge>
                     </td>
                     <td className={`${tdCls} text-right`}>
-                      <button onClick={() => setEditing(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
+                      <button onClick={() => setFormPrestador(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
                       <button onClick={() => handleToggle(p)} className={`font-body text-sm hover:underline mr-3 ${p.activo ? "text-destructive" : "text-success"}`}>
                         {p.activo ? "Desactivar" : "Activar"}
                       </button>
@@ -207,8 +173,8 @@ export function PrestadoresConfig() {
         </div>
       )}
 
-      {editing && (
-        <PrestadorEditModal prestador={editing} onClose={() => setEditing(null)} onSuccess={load} />
+      {formPrestador !== undefined && (
+        <PrestadorFormModal prestador={formPrestador} onClose={() => setFormPrestador(undefined)} onSuccess={load} />
       )}
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={load} />
       <PrestadoresExcelImportModal isOpen={excelOpen} onClose={() => setExcelOpen(false)} onSuccess={load} />

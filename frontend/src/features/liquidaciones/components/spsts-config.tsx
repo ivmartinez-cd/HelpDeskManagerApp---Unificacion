@@ -2,26 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  BrandButton,
-  BrandFileInput,
-  BrandInput,
-  BrandSelect,
-} from "@/shared/components/ui/brand-form";
+import { BrandButton, BrandFileInput } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Spst } from "../types/liquidaciones";
+import { SpstFormModal } from "./spst-form-modal";
 
 const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
 const tdCls = "py-3 px-4 font-body text-sm text-foreground";
-
-type FormState = {
-  prestadorId: string; nombre: string; domicilio: string;
-  localidad: string; provincia: string; zona: string;
-};
-const EMPTY: FormState = { prestadorId: "", nombre: "", domicilio: "", localidad: "", provincia: "", zona: "" };
 
 function CsvImportModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose: () => void; onSuccess: () => void }) {
   const [file, setFile] = useState<File | null>(null);
@@ -62,9 +52,8 @@ export function SpstsConfig() {
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroPst, setFiltroPst] = useState("");
-  const [form, setForm] = useState<FormState>(EMPTY);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  // `undefined` = cerrado; `null` = alta; un SPST = edición.
+  const [formSpst, setFormSpst] = useState<Spst | null | undefined>(undefined);
   const [csvOpen, setCsvOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -86,35 +75,6 @@ export function SpstsConfig() {
 
   const prestadorMap = Object.fromEntries(prestadores.map((p) => [p.id, p]));
   const visible = filtroPst ? spsts.filter((s) => s.prestadorId === filtroPst) : spsts;
-
-  const startEdit = (s: Spst) => {
-    setEditingId(s.id);
-    setForm({ prestadorId: s.prestadorId, nombre: s.nombre, domicilio: s.domicilio ?? "", localidad: s.localidad ?? "", provincia: s.provincia ?? "", zona: s.zona ?? "" });
-  };
-
-  const cancelEdit = () => { setEditingId(null); setForm(EMPTY); };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.prestadorId) return;
-    setSaving(true);
-    try {
-      const payload = { prestadorId: form.prestadorId, nombre: form.nombre, domicilio: form.domicilio || undefined, localidad: form.localidad || undefined, provincia: form.provincia || undefined, zona: form.zona || undefined };
-      if (editingId) {
-        await liquidacionesApi.updateSpst(editingId, payload);
-        toast.success("SPST actualizado");
-      } else {
-        await liquidacionesApi.createSpst(payload);
-        toast.success("SPST creado");
-      }
-      cancelEdit();
-      void load();
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Error al guardar");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleToggle = async (s: Spst) => {
     try {
@@ -150,26 +110,10 @@ export function SpstsConfig() {
         <h1 className="font-heading text-xl font-extrabold text-foreground">SPSTs</h1>
         <div className="flex gap-2">
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
-          <BrandButton size="sm" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
+          <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
+          <BrandButton size="sm" onClick={() => setFormSpst(null)}>Nuevo SPST</BrandButton>
         </div>
       </div>
-
-      {/* Formulario inline */}
-      <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-3 rounded-[12px] border border-border bg-card p-4 lg:grid-cols-3">
-        <BrandSelect label="Prestador *" required value={form.prestadorId} onChange={(e) => setForm((f) => ({ ...f, prestadorId: e.target.value }))}>
-          <option value="">Seleccioná...</option>
-          {prestadores.map((p) => <option key={p.id} value={p.id}>{p.nombreCorto} — {p.nombre}</option>)}
-        </BrandSelect>
-        <BrandInput label="Nombre *" required value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} />
-        <BrandInput label="Domicilio base" value={form.domicilio} onChange={(e) => setForm((f) => ({ ...f, domicilio: e.target.value }))} />
-        <BrandInput label="Localidad" value={form.localidad} onChange={(e) => setForm((f) => ({ ...f, localidad: e.target.value }))} />
-        <BrandInput label="Provincia" value={form.provincia} onChange={(e) => setForm((f) => ({ ...f, provincia: e.target.value }))} />
-        <BrandInput label="Zona" value={form.zona} placeholder="Córdoba Capital..." onChange={(e) => setForm((f) => ({ ...f, zona: e.target.value }))} />
-        <div className="col-span-2 flex gap-2 lg:col-span-3">
-          <BrandButton type="submit" loading={saving}>{editingId ? "Guardar cambios" : "Crear SPST"}</BrandButton>
-          {editingId && <BrandButton type="button" variant="outline" onClick={cancelEdit}>Cancelar</BrandButton>}
-        </div>
-      </form>
 
       {/* Filtro */}
       <div className="flex items-center gap-3">
@@ -209,7 +153,7 @@ export function SpstsConfig() {
                         <Badge variant={s.activo ? "success" : "neutral"}>{s.activo ? "Activo" : "Inactivo"}</Badge>
                       </td>
                       <td className={`${tdCls} text-right`}>
-                        <button onClick={() => startEdit(s)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
+                        <button onClick={() => setFormSpst(s)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
                         <button onClick={() => handleToggle(s)} className={`font-body text-sm hover:underline mr-3 ${s.activo ? "text-destructive" : "text-success"}`}>
                           {s.activo ? "Desactivar" : "Activar"}
                         </button>
@@ -227,6 +171,9 @@ export function SpstsConfig() {
         </div>
       )}
 
+      {formSpst !== undefined && (
+        <SpstFormModal spst={formSpst} prestadores={prestadores} onClose={() => setFormSpst(undefined)} onSuccess={load} />
+      )}
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={load} />
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar SPST">
         <p className="font-body text-sm text-muted-foreground mb-5">
