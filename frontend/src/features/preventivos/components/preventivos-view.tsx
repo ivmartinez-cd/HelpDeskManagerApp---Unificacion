@@ -17,6 +17,7 @@ import {
   BrandSkeleton,
 } from "@/shared/components/ui/brand-form";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
+import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
 import { Switch } from "@/shared/components/ui/switch";
 import { cn } from "@/shared/utils/cn";
 
@@ -247,8 +248,13 @@ export function PreventivosView() {
           zonas={zonas}
           seleccionada={zona}
           onSelect={(z) => {
+            if (z === zona) return;
             setZona(z);
             setPagina(1);
+            // La zona nueva puede tener la caché fría en el backend (2-7 s):
+            // vaciar la tabla dispara skeletons + modal en vez de dejar la
+            // zona anterior congelada sin feedback.
+            setRows(null);
           }}
         />
       )}
@@ -287,11 +293,24 @@ export function PreventivosView() {
       </div>
 
       {rows === null && !error && (
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 8 }, (_, i) => (
-            <BrandSkeleton key={i} className="h-12 w-full" />
-          ))}
-        </div>
+        <>
+          {zona !== null && (
+            <SigesLoadingModal
+              etapas={[
+                { hasta: 4, texto: `Consultando el parque de la zona ${zona}…` },
+                { hasta: 12, texto: "Calculando últimos preventivos y vencimientos…" },
+                { hasta: 20, texto: "Un momento más, ya casi está…" },
+                { texto: "La base está lenta hoy — seguimos esperando la respuesta…" },
+              ]}
+              nota="La primera carga de cada zona cruza el historial de incidentes y contadores (~5-10 segundos). Después queda en caché 5 minutos y responde al instante."
+            />
+          )}
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 8 }, (_, i) => (
+              <BrandSkeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        </>
       )}
 
       {error && (

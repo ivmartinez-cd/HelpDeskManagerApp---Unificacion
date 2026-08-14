@@ -17,6 +17,7 @@ import {
   BrandSkeleton,
 } from "@/shared/components/ui/brand-form";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
+import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
 
 const FILTROS_ESTADO = [
   { value: "todos", label: "Todos" },
@@ -171,11 +172,22 @@ export function AnexosPendientesView() {
       </div>
 
       {rows === null && !error && (
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 8 }, (_, i) => (
-            <BrandSkeleton key={i} className="h-12 w-full" />
-          ))}
-        </div>
+        <>
+          <SigesLoadingModal
+            etapas={[
+              { hasta: 5, texto: "Consultando los anexos con período abierto…" },
+              { hasta: 12, texto: "Cruzando los procesos de facturación…" },
+              { hasta: 20, texto: "Un momento más, ya casi está…" },
+              { texto: "La base está lenta hoy — seguimos esperando la respuesta…" },
+            ]}
+            nota="La primera carga cruza los procesos de facturación en Siges. Después queda en caché 5 minutos y la página responde al instante."
+          />
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 8 }, (_, i) => (
+              <BrandSkeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        </>
       )}
 
       {error && (

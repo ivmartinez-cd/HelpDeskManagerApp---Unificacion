@@ -8,7 +8,6 @@ import type {
   EquiposSinRealResumen,
   EquiposSinRealSortKey,
 } from "../types/equipos-sin-real";
-import { EquiposSinRealLoadingModal } from "./equipos-sin-real-loading-modal";
 import { EquiposSinRealTabla } from "./equipos-sin-real-tabla";
 import {
   BrandButton,
@@ -17,6 +16,7 @@ import {
   BrandSkeleton,
 } from "@/shared/components/ui/brand-form";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
+import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
 import { useTableSort } from "@/shared/hooks/use-table-sort";
 
 const POR_PAGINA = 50;
@@ -184,7 +184,15 @@ export function EquiposSinRealView() {
 
       {rows === null && !error && (
         <>
-          <EquiposSinRealLoadingModal />
+          <SigesLoadingModal
+            etapas={[
+              { hasta: 5, texto: "Consultando el parque de equipos…" },
+              { hasta: 12, texto: "Analizando el historial de tomas de contadores…" },
+              { hasta: 20, texto: "Un momento más, ya casi está…" },
+              { texto: "La base está lenta hoy — seguimos esperando la respuesta…" },
+            ]}
+            nota="La primera carga recorre el historial completo de contadores (~10-15 segundos). Después queda en caché 10 minutos y la página responde al instante."
+          />
           <div className="flex flex-col gap-2">
             {Array.from({ length: 8 }, (_, i) => (
               <BrandSkeleton key={i} className="h-12 w-full" />
