@@ -8,6 +8,7 @@ import type {
   EquiposSinRealResumen,
   EquiposSinRealSortKey,
 } from "../types/equipos-sin-real";
+import { EquiposSinRealLoadingModal } from "./equipos-sin-real-loading-modal";
 import { EquiposSinRealTabla } from "./equipos-sin-real-tabla";
 import {
   BrandButton,
@@ -182,11 +183,14 @@ export function EquiposSinRealView() {
       </div>
 
       {rows === null && !error && (
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 8 }, (_, i) => (
-            <BrandSkeleton key={i} className="h-12 w-full" />
-          ))}
-        </div>
+        <>
+          <EquiposSinRealLoadingModal />
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 8 }, (_, i) => (
+              <BrandSkeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        </>
       )}
 
       {error && (
