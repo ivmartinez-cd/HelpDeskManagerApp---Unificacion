@@ -778,22 +778,50 @@ Gates post-fix: lint-imports 19/19 · ruff · mypy · **1098 unit** (+80). Toda
 escritura de la validación sobre datos reales fue revertida (snapshots + diff
 `EXCEPT` = 0); único cambio persistente: ALT007 inactiva (por migración).
 
+## Sync CD completo ejecutado (2026-08-13) — pendiente #1 cerrado
+
+Se corrió el sync WS completo real sobre los 34 prestadores vinculados, por tandas
+(un `POST /api/liquidaciones/sincronizar?prestadorId=` secuencial por prestador —
+mitigación H-5 para no hacer un request síncrono gigante), con
+`DISABLE_BACKGROUND_JOBS=true` verificado en el contenedor y una sesión admin
+temporal minteada en DB (user_agent `sync-cd-completo-2026-08-13`, revocada al
+cierre — mismo método que la validación).
+
+Resultado agregado (log por prestador de la corrida):
+
+- **34/34 prestadores en verde, `fallidas=0` en todos** (ningún 502 de wsAyC esta vez;
+  la guarda H-2 no tuvo que actuar).
+- **2.380 creadas + 35 yaExistentes = 2.415 liquidaciones** — los 35 `yaExistentes`
+  son exactamente las 35 importadas por CSV: el dedup por `numero_liquidacion`
+  (numeración 3-1-3-1 del fix H-1) matcheó el 100% de lo preexistente, cero
+  duplicados.
+- Extremos: SAN JUAN 185 · MENDOZA/MACARONE 134 · CORRIENTES 132 · TUCUMAN 130 ·
+  SUPERNOVA/INFOMAC 129 · PENTACOM 128 … JUNIN 12. JUJUY dio 114, idéntico a la
+  prueba controlada que se había borrado.
+
+Integridad post-sync verificada en `helpdesk-db`:
+
+- 2.415 liquidaciones, **2.415 `numero_liquidacion` distintos** (cero duplicados),
+  **0 con `total_incidentes=0`** (la guarda H-2 garantiza que no queden vacías).
+- 112.354 incidentes · 32.329 alertas · 758 observaciones — el motor de reglas
+  corrió al crear cada liquidación, como corresponde.
+- Los 34 prestadores activos tienen liquidaciones (`count(DISTINCT prestador_id) = 34`).
+
 ## Pendiente
 
-1. **Correr el sync real** — los 34 prestadores están vinculados; el botón "↻
-   Sincronizar CD" del dashboard importará el histórico completo de cada uno (~2.000+
-   liquidaciones según el sondeo de la validación). Decisión de la TL de cuándo
-   hacerlo (implica importar todo el historial, no solo desde ahora). Ya no está
-   bloqueado por hallazgos técnicos; para acotar el volumen se puede correr por
-   prestador con `POST /api/liquidaciones/sincronizar?prestadorId=`.
-2. **Correr en paralelo con la app legacy antes de apagarla** — no hay cutover en frío.
-3. TL: confirmar los 2 conflictos menores de tarifarios (VENADO $45, INFOMAC
+1. **Correr en paralelo con la app legacy antes de apagarla** — no hay cutover en frío.
+   Con el histórico completo importado, el período de observación puede arrancar:
+   comparar alertas/totales contra el legacy sobre las preliquidaciones nuevas.
+2. TL: confirmar los 2 conflictos menores de tarifarios (VENADO $45, INFOMAC
    preventivo Villa Mercedes) y, si algún día hace falta, mapear
    `GSJ - *` / `TMTA122 - SGO DEL ESTERO`.
+3. TL: confirmar el cambio de semántica de ALT002 del fix H-4 (tolerancia contra el
+   valor crudo además del ceil) — documentado en docstring y tests, sin registro de
+   confirmación explícita todavía.
 
 ## Próximo paso sugerido
 
-Con el sync de preliquidaciones disponible y los 33 prestadores vinculados, el paso
-siguiente es correr el sync completo (importar el histórico) y arrancar el período de
-observación en paralelo con la app legacy. La config se mantiene sola desde Siges;
-las preliquidaciones nuevas llegan con un click desde el dashboard.
+Arrancar el período de observación en paralelo con la app legacy: la config se
+mantiene sola desde Siges, el histórico completo ya está importado y las
+preliquidaciones nuevas llegan con un click (o un `curl`) desde el dashboard. La TL
+ya puede gestionar estados de alertas/observaciones sobre datos completos.
