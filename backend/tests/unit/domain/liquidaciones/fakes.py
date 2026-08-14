@@ -18,6 +18,10 @@ from src.modules.liquidaciones.domain.entities.regla_alerta import ReglaAlerta
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
+from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
+    CdIncidenteRow,
+    CdLiquidacion,
+)
 from src.modules.liquidaciones.domain.value_objects.incidente_importado import (
     IncidenteImportado,
     ResultadoImportacion,
@@ -121,8 +125,14 @@ class FakeLiquidacionRepository:
         self.rows[row.id] = row
         return row
 
-    async def update_estado(self, liquidacion_id: UUID, estado: str) -> None:
-        self.rows[liquidacion_id] = dataclasses.replace(self.rows[liquidacion_id], estado=estado)
+    async def update_estado(self, liquidacion_id: UUID, estado: str) -> Liquidacion | None:
+        row = self.rows.get(liquidacion_id)
+        if row is None:
+            return None
+        updated = dataclasses.replace(row, estado=estado)
+        self.rows[liquidacion_id] = updated
+        return updated
+
 
     async def update_extra(
         self,
@@ -142,8 +152,11 @@ class FakeLiquidacionRepository:
             self.rows[liquidacion_id], total_alertas=total_alertas
         )
 
-    async def delete(self, liquidacion_id: UUID) -> None:
-        self.rows.pop(liquidacion_id, None)
+    async def delete(self, liquidacion_id: UUID) -> bool:
+        if liquidacion_id not in self.rows:
+            return False
+        self.rows.pop(liquidacion_id)
+        return True
 
 
 class FakeIncidenteRepository:
@@ -386,6 +399,33 @@ class FakeTarifarioRepository:
         )
         self.rows.append(row)
         return row
+
+
+class FakeCdLiquidacionesGateway:
+    """Gateway en memoria para tests — registra llamadas y permite simular fallos."""
+
+    def __init__(self) -> None:
+        self.estados_seteados: list[tuple[int, str, str]] = []  # (ayc_id, estado, usuario)
+        self.anulados: list[int] = []
+        self.set_estado_raises: Exception | None = None
+        self.void_raises: Exception | None = None
+        self.liquidaciones_por_empresa: dict[int, list[CdLiquidacion]] = {}
+
+    async def get_liquidaciones(self, empresa_cd_id: int, top: int = 200) -> list[CdLiquidacion]:
+        return self.liquidaciones_por_empresa.get(empresa_cd_id, [])
+
+    async def get_incidentes(self, liquidacion_id: int) -> list[CdIncidenteRow]:
+        return []
+
+    async def set_estado(self, liquidacion_ayc_id: int, nuevo_estado: str, usuario: str) -> None:
+        if self.set_estado_raises is not None:
+            raise self.set_estado_raises
+        self.estados_seteados.append((liquidacion_ayc_id, nuevo_estado, usuario))
+
+    async def void_liquidacion(self, liquidacion_ayc_id: int) -> None:
+        if self.void_raises is not None:
+            raise self.void_raises
+        self.anulados.append(liquidacion_ayc_id)
 
 
 class FakeLiquidacionFileParser:

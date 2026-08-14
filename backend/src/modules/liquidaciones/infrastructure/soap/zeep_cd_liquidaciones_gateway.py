@@ -75,6 +75,45 @@ class ZeepCdLiquidacionesGateway:
             )
             return []
 
+    async def set_estado(
+        self, liquidacion_ayc_id: int, nuevo_estado: str, usuario: str
+    ) -> None:
+        # Sin try/except: la excepción de zeep propaga cruda al use case.
+        # Formato de newStatus: literal del campo Estado de getTopLiquidations
+        # (ej. "Aprobada"). Pendiente de verificar en Fase 4 si AyC acepta el
+        # literal string o requiere el estado_id numérico.
+        raw = await asyncio.to_thread(
+            lambda: self._service().setLiquidationStatus(
+                id=str(liquidacion_ayc_id),
+                newStatus=nuevo_estado,
+                usuario=usuario,
+            )
+        )
+        logger.debug(
+            "setLiquidationStatus(%d, %r, %r): raw=%r",
+            liquidacion_ayc_id, nuevo_estado, usuario, raw,
+        )
+        if str(raw or "").strip().lower() == "false":
+            raise RuntimeError(
+                f"setLiquidationStatus retornó false: id={liquidacion_ayc_id} "
+                f"estado={nuevo_estado!r}"
+            )
+
+    async def void_liquidacion(self, liquidacion_ayc_id: int) -> None:
+        # Sin try/except, igual que set_estado.
+        # Formato de Datos por analogía con voidSupply/voidIncident del módulo insumos.
+        # Pendiente de verificar en Fase 4.
+        raw = await asyncio.to_thread(
+            lambda: self._service().voidLiquidation(
+                Datos=json.dumps({"Liquidation": {"id": str(liquidacion_ayc_id)}})
+            )
+        )
+        logger.debug("voidLiquidation(%d): raw=%r", liquidacion_ayc_id, raw)
+        if str(raw or "").strip().lower() == "false":
+            raise RuntimeError(
+                f"voidLiquidation retornó false: id={liquidacion_ayc_id}"
+            )
+
 
 def _parse_liquidaciones(raw: str, empresa_cd_id: int) -> list[CdLiquidacion]:
     items = json.loads(raw) if raw else []

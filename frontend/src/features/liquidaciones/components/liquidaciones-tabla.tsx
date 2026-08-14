@@ -6,6 +6,7 @@ import { ExternalLink } from "lucide-react";
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
+import { formatARS, formatFecha } from "../lib/format";
 import { EstadoBadge } from "./estado-badge";
 
 type LiqSortKey = "prestador" | "periodo" | "tipo" | "estado" | "incidentes" | "importe" | "fecha";
@@ -14,15 +15,6 @@ const LIQ_SORT_KEYS: readonly LiqSortKey[] = [
 ];
 
 const WEB_AGENTES_BASE = "https://webagentes.canaldirecto.com.ar/liquidations/view";
-
-function formatARS(n: number) {
-  return n.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
-}
-
-function formatFecha(iso: string) {
-  const d = new Date(iso);
-  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-}
 
 const thCls =
   "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";

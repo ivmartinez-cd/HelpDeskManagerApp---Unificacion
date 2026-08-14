@@ -126,6 +126,15 @@ export const liquidacionesApi = {
       { estado },
     ),
 
+  aprobar: (id: string) =>
+    httpClient.post<Liquidacion>(`/api/liquidaciones/${id}/aprobar`),
+
+  observar: (id: string) =>
+    httpClient.post<Liquidacion>(`/api/liquidaciones/${id}/observar`),
+
+  anular: (id: string) =>
+    httpClient.post<void>(`/api/liquidaciones/${id}/anular`),
+
   reanalyze: (id: string) =>
     httpClient.post<{ totalIncidentes: number; totalAlertas: number; totalObservaciones: number }>(
       `/api/liquidaciones/${id}/reanalyze`,

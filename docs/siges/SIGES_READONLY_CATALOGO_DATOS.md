@@ -126,6 +126,37 @@ incidentes desde 2026-07-01: todas `Estado=0`). `Sucursal.ID_Prestador` (FK al P
 pares cliente-sucursal→PST vigentes (762 activos para PENTACOM); `Sucursal` no tiene
 ninguna columna de km esperado (solo `Longitud`/`Latitud` texto y `CostoViaticos` int).
 
+### `dbo.Maquina` + `dbo.Estado_Maquina` — parque de impresoras por PST (confirmado 2026-08-14, paridad exacta)
+
+El parque de equipos asignado a un PST se obtiene con `Sucursal.ID_Prestador` →
+`Maquina.ID_Sucursal`, y el detalle de modelo con la cadena ya conocida de `sla`
+(`Maquina.ID_Articulo` → `Articulo.Id_ArtGen` → `ArtGen.Descripcion`). Verificado contra el
+reporte legacy `sitesphp.cdsa.com.ar/laprida/Operaciones/MaquinasPorPrestador/RUN.php` para
+PST Villa Mercedes (`ID_Empresa=740`, `'PST Villa Mercedes - Infomac'`): **paridad exacta,
+841 equipos** con la definición de "máquina activa" del legacy:
+
+```sql
+WHERE S.ID_Prestador = ?          -- sucursales asignadas al PST
+  AND S.Estado = 0                -- sucursal activa (0=activo, ver §3 Empresa)
+  AND M.Estado = 0                -- fila de máquina vigente
+  AND M.ID_Estado_Maquina NOT IN (2, 8)   -- excluye 'De Baja' y 'Backup Fijo'
+```
+
+Columnas útiles de `Maquina` (38 en total): `ID_Maquina` (PK), `Nro_Serie`, `ID_Articulo`
+(FK→modelo), `ID_Empresa` (FK cliente), `ID_Sucursal`, `ID_Estado_Maquina`, `sla`/`heredaSla`,
+`Direccion_IP`, `Fecha_Cpra`/`Fecha_Gtia`, `ID_UFisica`, `Estado`, `Fecha_Mod`/`Usuario_Mod`.
+
+Catálogo `Estado_Maquina` (17 estados): 1 `Activa en Cliente`, 2 `De Baja`, 3 `Backup`,
+4 `Para Limpiar`, 5 `Para Reparar`, 6 `En Demo`, 7 `Desguace`, 8 `Backup Fijo`,
+9 `Backup Prestador`, 10 `Lista para salida`, 11 `Nueva`, 99 `Sólo Facturación`,
+200 `Baja Solicitada`, 210 `Alta Solicitada`, 211 `En Garantia`, 254 `No Localizado`,
+255 `Falta CI Real`.
+
+Ojo con la doble condición de baja: hay máquinas con `ID_Estado_Maquina=2` (`De Baja`) que
+siguen con `Maquina.Estado=0` (87 en el caso verificado) — para replicar el conteo del legacy
+hacen falta **los dos** filtros, no alcanza con uno. Script de exploración:
+`backend/scripts/explore_siges_parque_pst.py`.
+
 ## 4. Candidatas exploradas — columnas confirmadas, dato real pendiente [CANDIDATA]
 
 Útiles para casos de uso futuros que no sean el Calendario de Contadores. Ninguna de estas fue

@@ -24,3 +24,23 @@ class CdLiquidacionesGateway(Protocol):
         [] si la liquidación no tiene incidentes o hay error (se loguea allá).
         """
         ...
+
+    async def set_estado(
+        self, liquidacion_ayc_id: int, nuevo_estado: str, usuario: str
+    ) -> None:
+        """Cambia el estado de la liquidación en wsAyC.
+
+        `nuevo_estado`: literal del campo Estado del WS (ej. "Aprobada", "Observada").
+        `usuario`: nombre del operador — se pasa para auditoría en AyC.
+
+        NO tiene try/except: la excepción de zeep propaga cruda al caller, que la
+        envuelve en LiquidacionAyCOperationError. NUNCA falla en silencio.
+        """
+        ...
+
+    async def void_liquidacion(self, liquidacion_ayc_id: int) -> None:
+        """Anula la liquidación en wsAyC (voidLiquidation).
+
+        NO tiene try/except: igual que set_estado, propaga cruda. NUNCA falla en silencio.
+        """
+        ...

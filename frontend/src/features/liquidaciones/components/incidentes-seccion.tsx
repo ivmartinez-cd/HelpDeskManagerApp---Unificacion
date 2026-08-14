@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, ExternalLink, Route } from "lucide-react";
-import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/utils/cn";
 import type { Alerta, Incidente } from "../types/liquidaciones";
 import { formatARS, formatFecha } from "../lib/format";
@@ -35,9 +34,7 @@ function computeRutasCompartidas(incidentes: Incidente[]): Set<string> {
           otro.sucursalNombre &&
           inc.sucursalNombre.trim().toLowerCase() ===
             otro.sucursalNombre.trim().toLowerCase();
-        if (mismaLocalidad || mismaDestino) {
-          ids.add(inc.id);
-        }
+        if (mismaLocalidad || mismaDestino) ids.add(inc.id);
       }
     }
   }
@@ -45,9 +42,28 @@ function computeRutasCompartidas(incidentes: Incidente[]): Set<string> {
 }
 
 function EstadoValidacionBadge({ estado }: { estado: string }) {
-  if (estado === "ok") return <Badge variant="success">OK</Badge>;
-  if (estado === "con_alertas") return <Badge variant="danger">Con alertas</Badge>;
+  if (estado === "ok")
+    return <span className="font-body text-xs font-semibold text-success">● OK</span>;
+  if (estado === "con_alertas")
+    return <span className="font-body text-xs font-semibold text-destructive">● CON ALERTAS</span>;
   return <span className="font-body text-xs text-muted-foreground">{estado}</span>;
+}
+
+function TipoBadge({ tipo }: { tipo: string }) {
+  const lower = tipo.toLowerCase();
+  const cls =
+    lower === "correctivo"
+      ? "bg-brand-orange/15 text-brand-orange"
+      : lower === "preventivo"
+        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+        : "";
+  return cls ? (
+    <span className={`rounded-[6px] px-2 py-0.5 font-body text-xs font-semibold ${cls}`}>
+      {tipo}
+    </span>
+  ) : (
+    <span className="font-body text-xs text-muted-foreground">{tipo}</span>
+  );
 }
 
 function riesgoClass(riesgo: number) {
@@ -145,7 +161,9 @@ function IncidenteRow({
             </div>
           )}
         </td>
-        <td className={`${tdCls} text-muted-foreground`}>{incidente.tipo}</td>
+        <td className={tdCls}>
+          <TipoBadge tipo={incidente.tipo} />
+        </td>
         <td className={`${tdCls} text-right`}>{formatARS(incidente.costoServicioCobrado)}</td>
         <td className={`${tdCls} text-right text-muted-foreground`}>
           {incidente.costoServicioEsperado !== null
@@ -174,12 +192,16 @@ function IncidenteRow({
 
 export function IncidentesSeccion({
   titulo,
+  accentClass,
   incidentes,
   alertasByInc,
+  soloConAlertas,
 }: {
   titulo: string;
+  accentClass?: string;
   incidentes: Incidente[];
   alertasByInc: Record<string, Alerta[]>;
+  soloConAlertas?: boolean;
 }) {
   const [filtroFecha, setFiltroFecha] = useState("");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -189,9 +211,14 @@ export function IncidentesSeccion({
   const fechas = Array.from(
     new Set(incidentes.map((i) => i.fechaCierre).filter((f): f is string => !!f)),
   ).sort();
-  const filtrados = filtroFecha
-    ? incidentes.filter((i) => i.fechaCierre === filtroFecha)
-    : incidentes;
+
+  const filtrados = useMemo(() => {
+    const base = soloConAlertas
+      ? incidentes.filter((i) => (alertasByInc[i.id] ?? []).length > 0)
+      : incidentes;
+    return filtroFecha ? base.filter((i) => i.fechaCierre === filtroFecha) : base;
+  }, [incidentes, alertasByInc, soloConAlertas, filtroFecha]);
+
   const totalServicio = filtrados.reduce((s, i) => s + i.costoServicioCobrado, 0);
   const totalKms = filtrados.reduce((s, i) => s + i.cantKmCobrado, 0);
   const totalGeneral = filtrados.reduce((s, i) => s + i.costoTotalCobrado, 0);
@@ -211,10 +238,11 @@ export function IncidentesSeccion({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-heading text-base font-bold text-foreground">
+        <h2 className="flex items-center gap-2 font-heading text-base font-bold text-foreground">
+          {accentClass && <span className={cn("text-lg leading-none", accentClass)}>■</span>}
           {titulo}
-          <span className="ml-2 font-body text-sm font-normal text-muted-foreground">
-            {filtrados.length.toLocaleString("es-AR")}
+          <span className="font-body text-sm font-normal text-muted-foreground">
+            {incidentes.length.toLocaleString("es-AR")}
           </span>
         </h2>
         {fechas.length > 1 && (

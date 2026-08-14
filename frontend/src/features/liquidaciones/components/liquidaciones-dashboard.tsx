@@ -8,17 +8,9 @@ import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import { toast } from "sonner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
+import { formatARS, formatFecha } from "../lib/format";
 import { EstadoBadge } from "./estado-badge";
 import { LiquidacionesImportModal } from "./liquidaciones-import-modal";
-
-function formatARS(n: number) {
-  return n.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
-}
-
-function formatFecha(iso: string) {
-  const d = new Date(iso);
-  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-}
 
 export function LiquidacionesDashboard() {
   const [liquidaciones, setLiquidaciones] = useState<Liquidacion[]>([]);

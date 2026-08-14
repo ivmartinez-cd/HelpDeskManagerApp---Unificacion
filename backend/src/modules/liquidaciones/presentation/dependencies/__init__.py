@@ -15,10 +15,14 @@ from src.modules.liquidaciones.presentation.dependencies.config import (
     build_update_tarifario,
 )
 from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
+    build_anular_liquidacion,
+    build_aprobar_liquidacion,
+    build_backfill_estado,
     build_get_liquidacion_detalle,
     build_importar_liquidacion,
     build_importar_prestador_maestro,
     build_list_liquidaciones,
+    build_observar_liquidacion,
     build_reanalizar_liquidacion,
     build_sincronizar_liquidaciones,
 )
@@ -34,6 +38,9 @@ from src.modules.liquidaciones.presentation.dependencies.siges import (
 )
 
 __all__ = [
+    "build_anular_liquidacion",
+    "build_aprobar_liquidacion",
+    "build_backfill_estado",
     "build_buscar_sucursales_siges",
     "build_create_prestador",
     "build_create_spst",
@@ -48,6 +55,7 @@ __all__ = [
     "build_importar_liquidacion",
     "build_importar_prestador_maestro",
     "build_list_liquidaciones",
+    "build_observar_liquidacion",
     "build_mapear_zona_siges",
     "build_proponer_vinculos_siges",
     "build_reanalizar_liquidacion",

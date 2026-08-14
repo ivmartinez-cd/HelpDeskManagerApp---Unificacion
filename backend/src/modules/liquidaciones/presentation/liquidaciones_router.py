@@ -10,7 +10,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
-from src.modules.liquidaciones.domain.well_known_permissions import CREATE, UPDATE, VIEW
+from src.modules.liquidaciones.domain.well_known_permissions import (
+    APPROVE,
+    CREATE,
+    DELETE,
+    UPDATE,
+    VIEW,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_liquidacion_repository import (  # noqa: E501
     SqlAlchemyLiquidacionRepository,
 )
@@ -21,12 +27,17 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_
     SqlAlchemyPrestadorRepository,
 )
 from src.modules.liquidaciones.presentation.dependencies import (
+    build_anular_liquidacion,
+    build_aprobar_liquidacion,
+    build_backfill_estado,
     build_get_liquidacion_detalle,
     build_importar_liquidacion,
     build_list_liquidaciones,
+    build_observar_liquidacion,
     build_reanalizar_liquidacion,
     build_sincronizar_liquidaciones,
 )
+from src.modules.liquidaciones.presentation.schemas.backfill_schemas import BackfillEstadoOut
 from src.modules.liquidaciones.presentation.schemas.importar_liquidacion_schemas import (
     ImportarLiquidacionOut,
 )
@@ -53,6 +64,8 @@ router = APIRouter(prefix="/api/liquidaciones", tags=["liquidaciones"])
 _require_view = Depends(require_permission(VIEW))
 _require_update = Depends(require_permission(UPDATE))
 _require_create = Depends(require_permission(CREATE))
+_require_approve = Depends(require_permission(APPROVE))
+_require_delete = Depends(require_permission(DELETE))
 # Catálogo chico que alimenta combos y el listado completo de config — el
 # contrato sigue paginado con default generoso (mismo criterio que prestadores).
 _CATALOGO_SIZE = 500
@@ -128,6 +141,24 @@ async def sincronizar_liquidaciones(
     return SincronizarOut.from_dto(resultado)
 
 
+@router.post("/backfill-estado", response_model=BackfillEstadoOut)
+async def backfill_estado_liquidaciones(
+    dry_run: bool = Query(default=True, alias="dryRun"),
+    prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
+    _: Identity = _require_create,
+    db: AsyncSession = Depends(get_db),
+) -> BackfillEstadoOut:
+    """Actualiza el `estado` de las liquidaciones `abierta` con su estado real en AyC.
+
+    `?dryRun=true` (default) reporta sin escribir. Pasar `?dryRun=false` para ejecutar.
+    Acotable con `?prestadorId=` (misma semántica que `/sincronizar`). Ver ADR-016.
+    """
+    resultado = await build_backfill_estado(db).execute(
+        dry_run=dry_run, prestador_id=prestador_id
+    )
+    return BackfillEstadoOut.from_dto(resultado)
+
+
 @router.patch("/{liquidacion_id}/estado", response_model=LiquidacionOut)
 async def update_estado_liquidacion(
     liquidacion_id: UUID,
@@ -177,12 +208,50 @@ async def update_estado_observacion(
     return ObservacionOut.from_entity(updated)
 
 
+@router.post("/{liquidacion_id}/aprobar", response_model=LiquidacionOut)
+async def aprobar_liquidacion(
+    liquidacion_id: UUID,
+    identity: Identity = _require_approve,
+    db: AsyncSession = Depends(get_db),
+) -> LiquidacionOut:
+    updated = await build_aprobar_liquidacion(db).execute(
+        liquidacion_id, usuario=identity.user.full_name
+    )
+    return LiquidacionOut.from_entity(updated)
+
+
+@router.post("/{liquidacion_id}/observar", response_model=LiquidacionOut)
+async def observar_liquidacion(
+    liquidacion_id: UUID,
+    identity: Identity = _require_approve,
+    db: AsyncSession = Depends(get_db),
+) -> LiquidacionOut:
+    updated = await build_observar_liquidacion(db).execute(
+        liquidacion_id, usuario=identity.user.full_name
+    )
+    return LiquidacionOut.from_entity(updated)
+
+
+@router.post("/{liquidacion_id}/anular", status_code=204)
+async def anular_liquidacion(
+    liquidacion_id: UUID,
+    _: Identity = _require_delete,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Anula la liquidación en wsAyC (voidLiquidation) y la elimina localmente.
+    Acción destructiva e irreversible desde nuestra app — el frontend pide confirmación
+    explícita nombrando la liquidación antes de llamar a este endpoint."""
+    await build_anular_liquidacion(db).execute(liquidacion_id)
+
+
 @router.delete("/{liquidacion_id}", status_code=204)
 async def delete_liquidacion(
     liquidacion_id: UUID,
     _: Identity = _require_update,
     db: AsyncSession = Depends(get_db),
 ) -> None:
+    # Baja local únicamente — para liquidaciones sin numero_liquidacion (CSV sin AyC ID).
+    # Para liquidaciones con vínculo AyC, usar POST /{id}/anular.
     deleted = await SqlAlchemyLiquidacionRepository(db).delete(liquidacion_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Liquidación no encontrada")

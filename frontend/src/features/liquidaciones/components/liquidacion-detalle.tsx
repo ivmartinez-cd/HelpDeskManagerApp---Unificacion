@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AlertTriangle, Calendar, DollarSign, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { cn } from "@/shared/utils/cn";
@@ -15,6 +16,9 @@ import type {
   PrestadorLiquidacion,
 } from "../types/liquidaciones";
 import { formatARS } from "../lib/format";
+import { AyCAccionesBar } from "./ayc-acciones-bar";
+import { EstadoBadge } from "./estado-badge";
+import { ExtraItemSeccion } from "./extra-item-seccion";
 import { IncidentesSeccion } from "./incidentes-seccion";
 import { ObservacionesSeccion } from "./observaciones-seccion";
 
@@ -36,159 +40,48 @@ const ESTADO_LABELS: Record<EstadoLiquidacion, string> = {
   cerrada: "Cerrada",
 };
 
-function Kpi({
+function KpiTile({
+  icon,
   label,
   value,
-  tone,
+  warn,
 }: {
+  icon: React.ReactNode;
   label: string;
   value: string;
-  tone?: "success" | "destructive";
+  warn?: boolean;
 }) {
   return (
-    <div className="flex flex-col">
-      <span className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
-        {label}
-      </span>
-      <span
-        className={cn(
-          "font-heading text-2xl font-extrabold",
-          tone === "success" ? "text-success" : tone === "destructive" ? "text-destructive" : "text-foreground",
-        )}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function ExtraItemSeccion({
-  liquidacion,
-  onUpdated,
-}: {
-  liquidacion: Liquidacion;
-  onUpdated: (updated: Liquidacion) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [concepto, setConcepto] = useState(liquidacion.conceptoExtra ?? "");
-  const [monto, setMonto] = useState(liquidacion.montoExtra?.toString() ?? "");
-  const [saving, setSaving] = useState(false);
-
-  const inputCls =
-    "rounded-[8px] border border-border bg-background px-3 py-1.5 font-body text-sm text-foreground outline-none focus:border-brand-orange/50";
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const montoNum = monto.trim() !== "" ? parseFloat(monto) : null;
-      const conceptoVal = concepto.trim() !== "" ? concepto.trim() : null;
-      const updated = await liquidacionesApi.updateExtra(liquidacion.id, {
-        conceptoExtra: conceptoVal,
-        montoExtra: montoNum,
-      });
-      onUpdated(updated);
-      setEditing(false);
-    } catch {
-      toast.error("Error al guardar el ítem extra");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setConcepto(liquidacion.conceptoExtra ?? "");
-    setMonto(liquidacion.montoExtra?.toString() ?? "");
-    setEditing(false);
-  };
-
-  const totalAjustado = liquidacion.totalImporte + (liquidacion.montoExtra ?? 0);
-
-  return (
-    <div className="rounded-[12px] border border-border bg-card p-5">
-      <div className="flex items-center justify-between gap-4">
-        <span className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
-          Ítem extra
-        </span>
-        {!editing && (
-          <button
-            onClick={() => setEditing(true)}
-            className="font-body text-xs text-brand-orange hover:underline"
-          >
-            {liquidacion.montoExtra != null ? "Editar" : "Agregar"}
-          </button>
-        )}
-      </div>
-
-      {editing ? (
-        <div className="mt-3 flex flex-wrap items-end gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="font-body text-xs text-muted-foreground">Concepto</label>
-            <input
-              value={concepto}
-              onChange={(e) => setConcepto(e.target.value)}
-              placeholder="Ej. Seguro de viaje"
-              className={`${inputCls} w-56`}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="font-body text-xs text-muted-foreground">Monto ($)</label>
-            <input
-              type="number"
-              value={monto}
-              onChange={(e) => setMonto(e.target.value)}
-              placeholder="0.00"
-              className={`${inputCls} w-32`}
-            />
-          </div>
-          <button
-            onClick={() => void handleSave()}
-            disabled={saving}
-            className="rounded-[8px] bg-brand-orange px-4 py-1.5 font-body text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-          >
-            {saving ? "Guardando..." : "Guardar"}
-          </button>
-          <button
-            onClick={handleCancel}
-            disabled={saving}
-            className="font-body text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-        </div>
-      ) : liquidacion.montoExtra != null ? (
-        <div className="mt-2 flex flex-wrap items-baseline gap-6">
-          <div className="flex flex-col">
-            <span className="font-body text-sm text-foreground">
-              {liquidacion.conceptoExtra ?? "—"}
-            </span>
-            <span className="font-heading text-xl font-extrabold text-foreground">
-              {formatARS(liquidacion.montoExtra)}
-            </span>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
-              Total ajustado
-            </span>
-            <span className="font-heading text-xl font-extrabold text-foreground">
-              {formatARS(totalAjustado)}
-            </span>
-          </div>
-        </div>
-      ) : (
-        <p className="mt-2 font-body text-sm text-muted-foreground">Sin ítem extra.</p>
+    <div
+      className={cn(
+        "flex min-w-[130px] items-start gap-3 rounded-[10px] border px-4 py-3",
+        warn ? "border-brand-orange/30 bg-brand-orange/5" : "border-border bg-background/20",
       )}
+    >
+      <div className={cn("mt-0.5 flex-shrink-0", warn ? "text-brand-orange" : "text-muted-foreground")}>
+        {icon}
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <span className="font-body text-[10px] font-bold uppercase tracking-[.08em] text-muted-foreground">
+          {label}
+        </span>
+        <span className={cn("font-heading text-2xl font-extrabold", warn ? "text-brand-orange" : "text-foreground")}>
+          {value}
+        </span>
+      </div>
     </div>
   );
 }
 
 export function LiquidacionDetalleView({ id }: { id: string }) {
+  const router = useRouter();
   const [detalle, setDetalle] = useState<LiquidacionDetalle | null>(null);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [reanalizing, setReanalizing] = useState(false);
   const [updatingEstado, setUpdatingEstado] = useState(false);
+  const [soloConAlertas, setSoloConAlertas] = useState(false);
 
-  // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   const load = useCallback(async () => {
     try {
       const [det, prest] = await Promise.all([
@@ -202,9 +95,7 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
     }
   }, [id]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
   const handleReanalizar = async () => {
     setReanalizing(true);
@@ -227,11 +118,6 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
     }
   };
 
-  const handleUpdateExtra = (updated: Liquidacion) => {
-    if (!detalle) return;
-    setDetalle({ ...detalle, liquidacion: updated });
-  };
-
   if (loading) {
     return (
       <div className="flex h-48 items-center justify-center">
@@ -249,6 +135,7 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
     (acc[a.incidenteId] ??= []).push(a);
     return acc;
   }, {});
+  const incConAlertas = Object.keys(alertasByInc).length;
   const correctivos = incidentes.filter((i) => i.tipo.toLowerCase() !== "preventivo");
   const preventivos = incidentes.filter((i) => i.tipo.toLowerCase() === "preventivo");
 
@@ -263,63 +150,13 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
 
       {/* Header */}
       <div className="rounded-[12px] border border-border bg-card p-5">
+        {/* Row 1: título + estado badge | reanalizar */}
         <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-2">
-            <h1 className="font-heading text-xl font-extrabold text-foreground">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-heading text-2xl font-extrabold text-foreground">
               {liquidacion.nombreArchivo ?? `Liquidación ${liquidacion.periodo}`}
             </h1>
-            <div className="flex flex-wrap items-center gap-3 font-body text-sm text-muted-foreground">
-              {pst && (
-                <span>
-                  {pst.region ?? pst.nombreCorto} — {pst.nombre}
-                </span>
-              )}
-              <span>·</span>
-              <span>{liquidacion.periodo}</span>
-              <span>·</span>
-              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 font-body text-xs text-muted-foreground">
-                {liquidacion.tipoLiquidacion}
-              </span>
-              {liquidacion.numeroLiquidacion && (
-                <>
-                  <span>·</span>
-                  <a
-                    href={`https://webagentes.canaldirecto.com.ar/liquidations/view/${liquidacion.numeroLiquidacion}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-brand-orange hover:underline"
-                  >
-                    {liquidacion.numeroLiquidacion}
-                    <ExternalLink size={12} />
-                  </a>
-                </>
-              )}
-              <span>·</span>
-              <select
-                value={liquidacion.estado}
-                disabled={updatingEstado}
-                onChange={(e) => void handleUpdateEstado(e.target.value as EstadoLiquidacion)}
-                className="rounded-[8px] border border-border bg-card px-2 py-1 font-body text-xs text-foreground outline-none focus:border-brand-orange/50 disabled:opacity-50"
-              >
-                {ESTADOS.map((e) => (
-                  <option key={e} value={e}>
-                    {ESTADO_LABELS[e]}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-8 pt-1">
-              <Kpi
-                label="Incidentes"
-                value={liquidacion.totalIncidentes.toLocaleString("es-AR")}
-              />
-              <Kpi
-                label="Alertas"
-                value={liquidacion.totalAlertas.toLocaleString("es-AR")}
-                tone={liquidacion.totalAlertas > 0 ? "destructive" : "success"}
-              />
-              <Kpi label="Total facturado" value={formatARS(liquidacion.totalImporte)} />
-            </div>
+            <EstadoBadge estado={liquidacion.estado} />
           </div>
           <button
             onClick={() => void handleReanalizar()}
@@ -329,16 +166,130 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
             {reanalizing ? "Reanalizando..." : "↻ Reanalizar"}
           </button>
         </div>
+
+        {/* Row 2: breadcrumbs */}
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 font-body text-sm text-muted-foreground">
+          {pst && (
+            <>
+              <span>{pst.region ?? pst.nombreCorto} — {pst.nombre}</span>
+              <span>·</span>
+            </>
+          )}
+          <span>Período {liquidacion.periodo}</span>
+          <span>·</span>
+          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs">
+            {liquidacion.tipoLiquidacion}
+          </span>
+          {liquidacion.numeroLiquidacion && (
+            <>
+              <span>·</span>
+              <a
+                href={`https://webagentes.canaldirecto.com.ar/liquidations/view/${liquidacion.numeroLiquidacion}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-brand-orange hover:underline"
+              >
+                Remito {liquidacion.numeroLiquidacion}
+                <ExternalLink size={12} />
+              </a>
+            </>
+          )}
+        </div>
+
+        {/* Row 3: KPIs | cambiar estado + acciones */}
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
+          <div className="flex flex-wrap items-stretch gap-3">
+            <KpiTile
+              icon={<Calendar size={16} />}
+              label="Incidentes"
+              value={liquidacion.totalIncidentes.toLocaleString("es-AR")}
+            />
+            <KpiTile
+              icon={<AlertTriangle size={16} />}
+              label="Alertas"
+              value={liquidacion.totalAlertas.toLocaleString("es-AR")}
+              warn={liquidacion.totalAlertas > 0}
+            />
+            <KpiTile
+              icon={<DollarSign size={16} />}
+              label="Total facturado"
+              value={formatARS(liquidacion.totalImporte)}
+            />
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-2">
+              <span className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
+                Cambiar estado
+              </span>
+              <select
+                value={liquidacion.estado}
+                disabled={updatingEstado}
+                onChange={(e) => void handleUpdateEstado(e.target.value as EstadoLiquidacion)}
+                className="rounded-[8px] border border-border bg-card px-2 py-1 font-body text-xs text-foreground outline-none focus:border-brand-orange/50 disabled:opacity-50"
+              >
+                {ESTADOS.map((e) => (
+                  <option key={e} value={e}>{ESTADO_LABELS[e]}</option>
+                ))}
+              </select>
+            </div>
+            <AyCAccionesBar
+              liquidacion={liquidacion}
+              onActualizado={(updated) => setDetalle({ ...detalle, liquidacion: updated })}
+              onAnulado={() => router.push("/liquidaciones/lista")}
+            />
+          </div>
+        </div>
       </div>
 
-      <ExtraItemSeccion liquidacion={liquidacion} onUpdated={handleUpdateExtra} />
+      {/* Banner de alertas */}
+      {incConAlertas > 0 && (
+        <div className="flex items-center justify-between gap-4 rounded-[12px] border border-brand-orange/30 bg-brand-orange/10 px-5 py-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0 text-brand-orange" />
+            <p className="font-body text-sm text-foreground">
+              <span className="font-semibold">
+                Los {incConAlertas} incidentes tienen alertas de validación.
+              </span>{" "}
+              Revisá los importes cobrados contra los esperados antes de aprobar.
+            </p>
+          </div>
+          {soloConAlertas ? (
+            <button
+              onClick={() => setSoloConAlertas(false)}
+              className="flex-shrink-0 font-body text-sm text-brand-orange hover:underline"
+            >
+              Mostrar todos
+            </button>
+          ) : (
+            <button
+              onClick={() => setSoloConAlertas(true)}
+              className="flex-shrink-0 font-body text-sm text-brand-orange hover:underline"
+            >
+              Ver sólo con alertas →
+            </button>
+          )}
+        </div>
+      )}
 
-      <IncidentesSeccion titulo="Correctivos" incidentes={correctivos} alertasByInc={alertasByInc} />
+      <ExtraItemSeccion
+        liquidacion={liquidacion}
+        onUpdated={(updated) => setDetalle({ ...detalle, liquidacion: updated })}
+      />
+
+      <IncidentesSeccion
+        titulo="Correctivos"
+        accentClass="text-brand-orange"
+        incidentes={correctivos}
+        alertasByInc={alertasByInc}
+        soloConAlertas={soloConAlertas}
+      />
       {preventivos.length > 0 && (
         <IncidentesSeccion
           titulo="Preventivos"
+          accentClass="text-emerald-500"
           incidentes={preventivos}
           alertasByInc={alertasByInc}
+          soloConAlertas={soloConAlertas}
         />
       )}
 
