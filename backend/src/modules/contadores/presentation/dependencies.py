@@ -5,6 +5,9 @@ fail-fast si MERCURIO no está configurado."""
 import logging
 from functools import lru_cache
 
+from src.modules.contadores.infrastructure.siges.pyodbc_equipos_sin_real_gateway import (
+    PyodbcEquiposSinRealGateway,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_operador_gateway import (
     PyodbcOperadorGateway,
 )
@@ -16,6 +19,13 @@ from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
 
 logger = logging.getLogger(__name__)
+
+# La consulta de equipos sin real recorre Contadores completo (medido: ~10s);
+# el timeout general de 30s queda justo si MERCURIO está cargado, y por eso
+# tiene el suyo propio. El TTL de la caché hace que el costo se pague una vez
+# por ventana de trabajo, no por interacción (refresh manual aparte).
+_EQUIPOS_SIN_REAL_TIMEOUT_SECONDS = 120.0
+_EQUIPOS_SIN_REAL_CACHE_TTL_SECONDS = 600.0
 
 
 def _require_mercurio_connection_string() -> str:
@@ -31,6 +41,15 @@ def _require_mercurio_connection_string() -> str:
 def get_operador_catalog_gateway() -> PyodbcOperadorGateway:
     return PyodbcOperadorGateway(
         _require_mercurio_connection_string(), get_settings().sla_mercurio_timeout_seconds
+    )
+
+
+@lru_cache
+def get_equipos_sin_real_gateway() -> PyodbcEquiposSinRealGateway:
+    return PyodbcEquiposSinRealGateway(
+        _require_mercurio_connection_string(),
+        _EQUIPOS_SIN_REAL_TIMEOUT_SECONDS,
+        _EQUIPOS_SIN_REAL_CACHE_TTL_SECONDS,
     )
 
 

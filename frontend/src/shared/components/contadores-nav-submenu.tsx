@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { CalendarDays, UserRoundCheck, Workflow, type LucideIcon } from "lucide-react";
+import { CalendarDays, Gauge, UserRoundCheck, Workflow, type LucideIcon } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
 /** Submenú de Contadores — mismo lenguaje visual que `InsumosNavSubmenu`
- * (ícono + acento naranja, pill activo) pero sin agrupar en secciones: solo
- * hay 2 links y no forman categorías distintas como Insumos. */
+ * (ícono + acento naranja, pill activo) pero sin agrupar en secciones: son
+ * pocos links y no forman categorías distintas como Insumos. */
 interface NavLinkDef {
   href: string;
   label: string;
@@ -32,6 +32,12 @@ export function ContadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }
       label: "Coberturas",
       icon: UserRoundCheck,
       active: pathname === "/contadores/coberturas",
+    },
+    {
+      href: "/contadores/equipos-sin-real",
+      label: "Sin contador real",
+      icon: Gauge,
+      active: pathname === "/contadores/equipos-sin-real",
     },
     {
       href: "/contadores",

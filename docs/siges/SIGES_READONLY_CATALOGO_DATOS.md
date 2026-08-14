@@ -54,6 +54,10 @@ documento, pero se resume acá para tener todo en un solo lugar.
 | `dbo.Sucursal` (VIEW) | `sla` | Sucursal del incidente |
 | `dbo.Empresa` (VIEW) | `sla`, `prestadores` | Cliente **y** técnico/PST — se distinguen por el rol del join (`E`=cliente, `E1`=técnico en `INCIDENTES_SLA_SQL`); `prestadores` la consulta por `ID_Empresa` para sincronizar `den_comercial`/`razon_social`/`cuit` |
 | `dbo.IncidenteTiempo` | `sla` | Tiempos de resolución, base de los cálculos de SLA |
+| `dbo.Contadores` | `contadores` | Tomas de contadores por máquina — base del análisis "equipos sin contador real" (ver §3) |
+| `dbo.Tipo_Toma` | `contadores` | Catálogo del tipo de toma (real vs estimada, ver §3) |
+| `dbo.Estado_Maquina` | `contadores` | Estado operativo de la máquina (también §3 del 2026-08-14) |
+| `dbo.Tecnologia` | `contadores` | Mono/Color del modelo (`ArtGen.Id_Tecnologia`) |
 
 ## 3. Confirmadas con dato real en esta sesión [CONFIRMADA]
 
@@ -156,6 +160,38 @@ Ojo con la doble condición de baja: hay máquinas con `ID_Estado_Maquina=2` (`D
 siguen con `Maquina.Estado=0` (87 en el caso verificado) — para replicar el conteo del legacy
 hacen falta **los dos** filtros, no alcanza con uno. Script de exploración:
 `backend/scripts/explore_siges_parque_pst.py`.
+
+### `dbo.Contadores` + `dbo.Tipo_Toma` — tomas de contadores (confirmado 2026-08-14, paridad exacta)
+
+Fuente del análisis "equipos sin contador real" del módulo `contadores` (migra el reporte
+legacy `sitesphp/.../Operaciones/EquiposSinContadorReal/RUN.php`). Verificado contra ese
+reporte con paridad exacta: mismo TOP por meses serial por serial, mismas fechas de último
+real, mismos IM-1..3. Script: `backend/scripts/explore_siges_contadores_reales.py`; consulta
+productiva: `contadores/infrastructure/siges/equipos_sin_real_query.py`.
+
+- `Contadores`: una fila por toma — `ID_Contador` (PK), `ID_Maquina`, `ID_ClaseContador`
+  (catálogo `ClaseContador`: 10 Mono, 20 Color, 30 Digitalización, 40 Contador Total),
+  `Secuencia`, `FechaTomaContador`, `Contador` (valor acumulado), `ID_TipoToma`,
+  `Para_Facturar`, `ID_Factura`, `ID_MotivoEstimado`, `Estado` (0=vigente).
+- `Tipo_Toma` (21 filas): **"toma real" = `ID_TipoToma NOT IN (8, 13, 14, 19)`** (8 Contador
+  Inicial, 13 Contador Final, 14 Estimado, 19 Promedio Instalación). El resto (Teléfono, Mail,
+  Fax, Informe S. Técnico, Automático, Semi-Automático, WebCliente, Whatsapp, SDS HP, VPN,
+  Print Screen, …) cuenta como real.
+- FechaUltCDOR del legacy = `MAX(FechaTomaContador)` de tomas reales; si el equipo **nunca**
+  tuvo una real, cae a `MIN(FechaTomaContador)` de cualquier tipo (fecha de instalación) —
+  verificado exacto con los dos PrintBox más viejos del reporte.
+- IM-n del legacy = diferencia de `Contador` entre tomas mensuales consecutivas (clases
+  10+20), de la más reciente hacia atrás; `ImpProm3M` = promedio de IM-1..3 **truncado**
+  (no redondeado). Reproducido exacto (194/232/992 → 472).
+- Universo del legacy: máquinas `Estado=0`, `ID_Estado_Maquina IN (1, 3, 8, 200, 254)` y con
+  alguna toma dentro del último mes ("sigue facturando"). Con eso el TOP matchea 1:1 pero los
+  conteos dan ~15% más que el legacy (180 vs 157 en >=60 meses) — el filtro restante no se
+  identificó y la divergencia quedó documentada como decisión en
+  `equipos_sin_real_query.py`. Además se excluyen los `ArtGen` `PrintBox %` (cajas de
+  monitoreo, no impresoras; el legacy sí las lista) por pedido del usuario. Ojo: los PrintBox
+  están en `Rubro` 4 `'Impresoras'` igual que las impresoras reales, el rubro no alcanza para
+  distinguirlos. `Propiedad` = `Maquina.ID_Propietario` → `Empresa`; `Observaciones` =
+  `Maquina.Observ` (la tabla `Observacion` es solo de `ObjetoBalance`).
 
 ## 4. Candidatas exploradas — columnas confirmadas, dato real pendiente [CANDIDATA]
 

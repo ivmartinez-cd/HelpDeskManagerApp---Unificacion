@@ -9,6 +9,11 @@ import type {
   SyncCalendarioResult,
   SyncStatus,
 } from "../types/calendario";
+import type {
+  EquipoSinReal,
+  EquiposSinRealListParams,
+  EquiposSinRealResumen,
+} from "../types/equipos-sin-real";
 
 /** Nombres tal como los serializa el backend real (`RunDb3ExportResponse` en
  * `db3_schemas.py`, camelCase vía `serialization_alias`) — este tipo tenía
@@ -230,6 +235,27 @@ export const contadoresApi = {
       siges_empresa_ids: sigesEmpresaIds,
     }),
   syncCalendario: () => httpClient.post<SyncCalendarioResult>("/api/contadores/calendario/sync"),
+
+  // Equipos sin contador real — consulta en vivo a Siges cacheada en el
+  // backend (TTL 10 min); filtro/orden/paginación son server-side sobre ese
+  // snapshot, así que acá se devuelve el envelope completo (hace falta
+  // `total` para paginar).
+  listEquiposSinReal: (params: EquiposSinRealListParams) => {
+    const searchParams = new URLSearchParams({
+      page: String(params.page),
+      size: String(params.size),
+      sort_by: params.sortBy,
+      sort_dir: params.sortDir,
+      min_meses: String(params.minMeses),
+    });
+    if (params.search) searchParams.set("search", params.search);
+    if (params.refresh) searchParams.set("refresh", "true");
+    return httpClient.get<Page<EquipoSinReal>>(
+      `/api/contadores/equipos-sin-real?${searchParams.toString()}`,
+    );
+  },
+  getEquiposSinRealResumen: () =>
+    httpClient.get<EquiposSinRealResumen>("/api/contadores/equipos-sin-real/resumen"),
 };
 
 

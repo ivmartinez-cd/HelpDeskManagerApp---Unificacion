@@ -197,7 +197,7 @@ export function BrandSkeleton({ className }: { className?: string }) {
 }
 
 interface BrandBadgeProps {
-  variant?: "neutral" | "accent" | "success" | "danger";
+  variant?: "neutral" | "accent" | "success" | "warning" | "danger";
   children: ReactNode;
 }
 
@@ -205,6 +205,7 @@ const brandBadgeVariants: Record<NonNullable<BrandBadgeProps["variant"]>, string
   neutral: "bg-muted text-foreground",
   accent: "bg-brand-orange/10 text-brand-orange",
   success: "bg-success/10 text-success",
+  warning: "bg-warning/10 text-warning",
   danger: "bg-destructive/10 text-destructive",
 };
 
