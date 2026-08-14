@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
@@ -40,30 +40,42 @@ from src.modules.auth.presentation.schemas.permission_schemas import (
     ReplacePermissionsRequest,
 )
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 _require_manage_admin = Depends(require_permission(MANAGE_ADMIN))
+# Catálogo sembrado por migración (~decenas de filas) que la matriz de permisos
+# consume completo — contrato paginado con default generoso (§11 + CLAUDE.md).
+_CATALOGO_SIZE = 200
 
 
 @router.get("/catalog/modules")
 async def list_modules(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=_CATALOGO_SIZE, ge=1, le=500),
     _: Identity = _require_manage_admin,
     db: AsyncSession = Depends(get_db),
-) -> list[ModuleCatalogResponse]:
+) -> Page[ModuleCatalogResponse]:
     deps = ListModuleCatalogDependencies(catalog=SqlAlchemyModuleCatalogRepository(db))
     entries = await ListModuleCatalog(deps).execute()
-    return [ModuleCatalogResponse.from_domain(entry) for entry in entries]
+    return Page.of(
+        [ModuleCatalogResponse.from_domain(entry) for entry in entries], page=page, size=size
+    )
 
 
 @router.get("/catalog/actions")
 async def list_actions(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=_CATALOGO_SIZE, ge=1, le=500),
     _: Identity = _require_manage_admin,
     db: AsyncSession = Depends(get_db),
-) -> list[ActionCatalogResponse]:
+) -> Page[ActionCatalogResponse]:
     deps = ListActionCatalogDependencies(catalog=SqlAlchemyModuleCatalogRepository(db))
     entries = await ListActionCatalog(deps).execute()
-    return [ActionCatalogResponse.from_domain(entry) for entry in entries]
+    return Page.of(
+        [ActionCatalogResponse.from_domain(entry) for entry in entries], page=page, size=size
+    )
 
 
 @router.get("/users/{user_id}/permissions")

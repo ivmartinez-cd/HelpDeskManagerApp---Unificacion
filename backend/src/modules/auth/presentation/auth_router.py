@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -55,6 +55,7 @@ from src.modules.auth.presentation.schemas.catalog_schemas import ModuleCatalogR
 from src.modules.auth.presentation.schemas.identity_schemas import IdentityResponse
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -98,9 +99,11 @@ async def me(identity: Identity = Depends(get_current_identity)) -> IdentityResp
 
 @router.get("/modules")
 async def my_modules(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=200, ge=1, le=500),
     identity: Identity = Depends(get_current_identity),
     db: AsyncSession = Depends(get_db),
-) -> list[ModuleCatalogResponse]:
+) -> Page[ModuleCatalogResponse]:
     """Arma el sidebar: a diferencia de /admin/catalog/modules (que requiere
     admin:manage y expone todo el catálogo para editar la matriz), esto es
     para cualquier usuario autenticado y ya viene filtrado a lo que puede ver."""
@@ -111,7 +114,9 @@ async def my_modules(
     entries = await ListVisibleModules(deps).execute(
         user_id=identity.user.id, is_superadmin=identity.user.is_superadmin
     )
-    return [ModuleCatalogResponse.from_domain(entry) for entry in entries]
+    return Page.of(
+        [ModuleCatalogResponse.from_domain(entry) for entry in entries], page=page, size=size
+    )
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

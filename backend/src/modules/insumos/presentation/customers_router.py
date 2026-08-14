@@ -45,6 +45,7 @@ from src.modules.insumos.presentation.schemas.customer_schemas import (
 from src.modules.insumos.presentation.wiring import get_insight_gateway
 from src.shared.domain.errors import ExternalServiceError
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.pagination import Page
 
 logger = logging.getLogger(__name__)
 
@@ -52,15 +53,20 @@ router = APIRouter(prefix="/api/insumos", tags=["insumos"])
 
 _require_view = Depends(require_permission(VIEW))
 _require_update = Depends(require_permission(UPDATE))
+# Catálogos acotados (clientes de Insight, zonas/contactos de un cliente) que la UI
+# consume completos — el contrato queda paginado con default generoso (§11 + CLAUDE.md).
+_CATALOGO_SIZE = 500
 
 
-@router.get("/customers", response_model=list[CustomerOut])
+@router.get("/customers", response_model=Page[CustomerOut])
 async def list_customers(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=_CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
-) -> list[CustomerOut]:
+) -> Page[CustomerOut]:
     customers = await build_list_customers(db).execute()
-    return [CustomerOut.from_domain(c) for c in customers]
+    return Page.of([CustomerOut.from_domain(c) for c in customers], page=page, size=size)
 
 
 @router.patch("/customers/{customer_id}", response_model=OkResponse)
@@ -100,14 +106,16 @@ async def sync_customers(
     return SyncCustomersResponse(ok=True, count=count)
 
 
-@router.get("/customers/{customer_id}/contacts", response_model=list[ZoneContactOut])
+@router.get("/customers/{customer_id}/contacts", response_model=Page[ZoneContactOut])
 async def get_customer_contacts(
     customer_id: int,
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=_CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
-) -> list[ZoneContactOut]:
+) -> Page[ZoneContactOut]:
     rows = await build_get_zone_contacts(db).execute(customer_id)
-    return [ZoneContactOut.from_domain(r) for r in rows]
+    return Page.of([ZoneContactOut.from_domain(r) for r in rows], page=page, size=size)
 
 
 @router.put("/customers/{customer_id}/contacts", response_model=OkResponse)
@@ -165,27 +173,32 @@ async def import_contacts_from_supply(
     return ImportContactsResponse(ok=True, zone=row.zone, row=ZoneContactOut.from_domain(row))
 
 
-@router.get("/customers/{customer_id}/sds-contacts", response_model=list[SdsContactOut])
+@router.get("/customers/{customer_id}/sds-contacts", response_model=Page[SdsContactOut])
 async def get_customer_sds_contacts(
     customer_id: int,
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=_CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
-) -> list[SdsContactOut]:
+) -> Page[SdsContactOut]:
     try:
         rows = await build_get_sds_contacts().execute(customer_id)
     except ExternalServiceError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
-    return [SdsContactOut.from_domain(r) for r in rows]
+    return Page.of([SdsContactOut.from_domain(r) for r in rows], page=page, size=size)
 
 
-@router.get("/customers/{customer_id}/zones", response_model=list[str])
+@router.get("/customers/{customer_id}/zones", response_model=Page[str])
 async def get_customer_zones(
     customer_id: int,
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=_CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
-) -> list[str]:
+) -> Page[str]:
     try:
-        return await build_get_customer_zones().execute(customer_id)
+        zones = await build_get_customer_zones().execute(customer_id)
     except ExternalServiceError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return Page.of(zones, page=page, size=size)
 
 
 @router.get(

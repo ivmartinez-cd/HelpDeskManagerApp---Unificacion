@@ -101,7 +101,7 @@ export const liquidacionesApi = {
     fetchCatalogoCompleto<Liquidacion>("/api/liquidaciones", new URLSearchParams()),
 
   listPeriodos: () =>
-    httpClient.get<string[]>("/api/liquidaciones/periodos"),
+    httpClient.get<Page<string>>("/api/liquidaciones/periodos").then((p) => p.items),
 
   get: (id: string) => httpClient.get<LiquidacionDetalle>(`/api/liquidaciones/${id}`),
 

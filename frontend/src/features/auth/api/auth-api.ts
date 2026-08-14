@@ -32,11 +32,21 @@ export interface LoginPayload {
   password: string;
 }
 
+/** Envelope `Page[T]` del backend — declarado local, como en el resto de las
+ * features (no hay tipo compartido para no acoplarlas). */
+export interface Page<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+}
+
 export const authApi = {
   login: (payload: LoginPayload) =>
     httpClient.post<IdentityResponse>("/api/auth/login", payload),
   me: () => httpClient.get<IdentityResponse>("/api/auth/me"),
-  modules: () => httpClient.get<ModuleSummary[]>("/api/auth/modules"),
+  modules: () =>
+    httpClient.get<Page<ModuleSummary>>("/api/auth/modules").then((p) => p.items),
   logout: () => httpClient.post<void>("/api/auth/logout"),
   forgotPassword: (email: string) =>
     httpClient.post<{ message: string }>("/api/auth/password/forgot", { email }),

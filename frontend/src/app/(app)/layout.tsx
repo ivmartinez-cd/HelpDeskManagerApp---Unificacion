@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import type { IdentityResponse, ModuleSummary } from "@/features/auth/api/auth-api";
+import type { IdentityResponse, ModuleSummary, Page } from "@/features/auth/api/auth-api";
 import { Sidebar } from "@/shared/components/sidebar";
 import { SessionProvider } from "@/services/session-provider";
 
@@ -27,7 +27,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     redirect("/login");
   }
   const modules =
-    (await fetchFromBackend<ModuleSummary[]>("/api/auth/modules", cookieHeader)) ?? [];
+    (await fetchFromBackend<Page<ModuleSummary>>("/api/auth/modules", cookieHeader))?.items ?? [];
 
   return (
     <SessionProvider user={identity.user} permissions={identity.permissions} modules={modules}>

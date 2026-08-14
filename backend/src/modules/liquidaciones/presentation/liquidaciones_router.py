@@ -90,13 +90,16 @@ async def list_liquidaciones(
     )
 
 
-@router.get("/periodos", response_model=list[str])
+@router.get("/periodos", response_model=Page[str])
 async def list_periodos(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=_CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
-) -> list[str]:
+) -> Page[str]:
     """Valores distintos de período (YYYY-MM) para poblar el dropdown de filtros."""
-    return await SqlAlchemyLiquidacionRepository(db).list_periodos()
+    periodos = await SqlAlchemyLiquidacionRepository(db).list_periodos()
+    return Page.of(periodos, page=page, size=size)
 
 
 @router.post("/importar", response_model=ImportarLiquidacionOut, status_code=201)

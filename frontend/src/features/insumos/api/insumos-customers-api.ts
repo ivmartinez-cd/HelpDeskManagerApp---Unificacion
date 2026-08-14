@@ -9,7 +9,7 @@ import type {
   ZoneContactPreviewResponse,
   ZoneContactRow,
 } from "../types";
-import { BASE, toQuery } from "./insumos-api-base";
+import { BASE, toQuery, type Page } from "./insumos-api-base";
 
 /** Métodos de `/api/insumos/customers/*` y `/api/insumos/sync-customers` —
  * separados de `insumosApi` solo para no pasar el límite de líneas del
@@ -18,8 +18,10 @@ import { BASE, toQuery } from "./insumos-api-base";
  * `insumosApi.getContacts(...)` como siempre. */
 export const insumosCustomersApi = {
   // ------------------------------------------------------------------ Clientes
-  /** Todos los clientes de Insight con su flag de monitoreo. */
-  listCustomers: () => httpClient.get<CustomerRow[]>(`${BASE}/customers`),
+  /** Todos los clientes de Insight con su flag de monitoreo. Catálogo chico:
+   * el backend pagina (`Page[T]`, default 500) y acá se desenvuelve `.items`. */
+  listCustomers: () =>
+    httpClient.get<Page<CustomerRow>>(`${BASE}/customers`).then((p) => p.items),
 
   /** Habilita o deshabilita el monitoreo de un cliente. */
   toggleCustomer: (customerId: number, enabled: boolean) =>
@@ -34,7 +36,9 @@ export const insumosCustomersApi = {
 
   /** Contactos por zona de un cliente. */
   getContacts: (customerId: number) =>
-    httpClient.get<ZoneContactRow[]>(`${BASE}/customers/${customerId}/contacts`),
+    httpClient
+      .get<Page<ZoneContactRow>>(`${BASE}/customers/${customerId}/contacts`)
+      .then((p) => p.items),
 
   /** Crea o actualiza los contactos de una zona (upsert por `zone`). */
   putContact: (customerId: number, body: ZoneContactRow) =>
@@ -48,7 +52,9 @@ export const insumosCustomersApi = {
 
   /** Contactos detectados en el PortalWeb SDS (solo lectura, piloto). */
   getSdsContacts: (customerId: number) =>
-    httpClient.get<SdsContactRow[]>(`${BASE}/customers/${customerId}/sds-contacts`),
+    httpClient
+      .get<Page<SdsContactRow>>(`${BASE}/customers/${customerId}/sds-contacts`)
+      .then((p) => p.items),
 
   /** Resuelve el contacto de una zona a partir de un N° de pedido de supply
    * (SOAP HP SDS) y hace upsert directo — sin preview, pisa la zona. */
