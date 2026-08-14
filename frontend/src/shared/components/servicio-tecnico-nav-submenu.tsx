@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarClock,
+  ClipboardList,
   FileText,
   Gauge,
   LayoutDashboard,
@@ -74,7 +75,15 @@ function buildSections({
   if (hasSla) {
     sections.push({
       label: "SLA",
-      links: [{ href: "/sla", label: "SLA", exact: false, icon: Gauge }],
+      links: [
+        { href: "/sla", label: "SLA", exact: true, icon: Gauge },
+        {
+          href: "/sla/pendientes-a-cerrar",
+          label: "Pendientes a Cerrar",
+          exact: false,
+          icon: ClipboardList,
+        },
+      ],
     });
   }
 

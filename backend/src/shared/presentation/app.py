@@ -56,6 +56,7 @@ from src.modules.prestadores.presentation.prestadores_router import (
 from src.modules.preventivos.presentation.preventivos_router import (
     router as preventivos_router,
 )
+from src.modules.sla.presentation.pendientes_router import router as sla_pendientes_router
 from src.modules.sla.presentation.sla_router import router as sla_router
 from src.modules.turnos.presentation.turnos_router import router as turnos_router
 from src.modules.vacaciones.presentation.auditoria_router import (
@@ -183,6 +184,7 @@ def create_app() -> FastAPI:
     app.include_router(insumos_health_router)
     app.include_router(turnos_router)
     app.include_router(sla_router)
+    app.include_router(sla_pendientes_router)
     app.include_router(prestadores_router)
     app.include_router(preventivos_router)
     # config_router va ANTES: sus rutas son todas literales (/tarifarios, /spsts,

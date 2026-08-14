@@ -6,6 +6,7 @@ import {
   useCalendarioHome,
   useContadoresResumen,
   useParqueResumen,
+  usePendientesResumen,
   useSlaHistoria,
   useTurnosHoy,
 } from "../hooks/use-inicio-data";
@@ -16,6 +17,7 @@ import { HeatmapSemanaCard } from "./heatmap-semana-card";
 import { KpiStrip } from "./kpi-strip";
 import { ParqueDonutCard } from "./parque-donut-card";
 import { PendientesAntiguedadCard } from "./pendientes-antiguedad-card";
+import { PendientesACerrarCard } from "@/features/sla/components/pendientes-a-cerrar-card";
 import { SlaMesCard } from "./sla-mes-card";
 import { TurnosTimelineCard } from "./turnos-timeline-card";
 
@@ -38,6 +40,7 @@ export function InicioDashboard() {
   const contadoresResumen = useContadoresResumen(verContadores);
   const slaHistoria = useSlaHistoria(verSla);
   const parque = useParqueResumen(verPrestadores);
+  const pendientesResumen = usePendientesResumen(verSla);
 
   const kpis = buildKpis({
     prestadores: verPrestadores,
@@ -116,6 +119,13 @@ export function InicioDashboard() {
                 historia={slaHistoria.data}
                 loading={slaHistoria.loading}
                 error={slaHistoria.error}
+              />
+            )}
+            {verSla && (
+              <PendientesACerrarCard
+                resumen={pendientesResumen.data}
+                loading={pendientesResumen.loading}
+                error={pendientesResumen.error}
               />
             )}
             {verPrestadores && (

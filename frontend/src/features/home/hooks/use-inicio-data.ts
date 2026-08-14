@@ -10,6 +10,8 @@ import type {
 import { formatDateLocal } from "@/features/contadores/utils/calendario-format";
 import { prestadoresApi } from "@/features/prestadores/api/prestadores-api";
 import type { PrestadoresResumen } from "@/features/prestadores/types/prestadores";
+import { pendientesApi } from "@/features/sla/api/pendientes-api";
+import type { PendientesResumen } from "@/features/sla/types/pendientes";
 import { slaApi } from "@/features/sla/api/sla-api";
 import type { SlaResumen } from "@/features/sla/types/sla";
 import { turnosApi } from "@/features/turnos/api/turnos-api";
@@ -125,6 +127,10 @@ function rangoSemana(now: Date): { start: string; end: string } {
   const lunes = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
   const sabado = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 5);
   return { start: formatDateLocal(lunes), end: formatDateLocal(sabado) };
+}
+
+export function usePendientesResumen(enabled: boolean): Remote<PendientesResumen> {
+  return useRemote(enabled, () => pendientesApi.getResumen(), "los pendientes a cerrar");
 }
 
 export function useCalendarioHome(enabled: boolean): Remote<CalendarioHome> {
