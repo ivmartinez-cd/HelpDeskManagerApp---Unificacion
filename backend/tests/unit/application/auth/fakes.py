@@ -1,0 +1,224 @@
+"""Fakes en memoria de los puertos de auth, para tests de application puros
+(sin DB ni argon2 real) — mismo patrón que tests/unit/domain/prestadores/fakes.py."""
+
+import uuid
+from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
+
+from src.modules.auth.domain.entities.password_reset_token import PasswordResetToken
+from src.modules.auth.domain.entities.session import Session
+from src.modules.auth.domain.entities.user import User
+from src.modules.auth.domain.value_objects.email import Email
+from src.modules.auth.domain.value_objects.password_hash import PasswordHash
+from src.modules.auth.domain.value_objects.permission_set import PermissionSet
+from src.modules.auth.domain.value_objects.raw_password import RawPassword
+from src.shared.domain.value_objects.permission import Permission
+
+
+def make_user(
+    *,
+    email: str = "ana@canaldirecto.com.ar",
+    password: str = "Correcta1!",
+    is_active: bool = True,
+    is_superadmin: bool = False,
+    color: str | None = None,
+) -> User:
+    return User(
+        id=uuid.uuid4(),
+        email=Email(email),
+        password_hash=FakePasswordHasher().hash(RawPassword(password)),
+        full_name="Ana Prueba",
+        is_active=is_active,
+        is_superadmin=is_superadmin,
+        created_at=datetime.now(UTC),
+        color=color,
+    )
+
+
+def make_session(
+    *,
+    user_id: uuid.UUID,
+    token_hash: bytes = b"h:tok",
+    last_seen_delta: timedelta = timedelta(minutes=5),
+    expires_delta: timedelta = timedelta(days=7),
+    revoked: bool = False,
+) -> Session:
+    now = datetime.now(UTC)
+    return Session(
+        id=uuid.uuid4(),
+        user_id=user_id,
+        token_hash=token_hash,
+        issued_at=now - last_seen_delta,
+        expires_at=now + expires_delta,
+        last_seen_at=now - last_seen_delta,
+        revoked_at=now if revoked else None,
+    )
+
+
+class FakeUserRepository:
+    def __init__(self) -> None:
+        self.rows: dict[uuid.UUID, User] = {}
+        self.saved: list[User] = []
+
+    async def get_by_email(self, email: Email) -> User | None:
+        return next((u for u in self.rows.values() if u.email == email), None)
+
+    async def get_by_id(self, user_id: uuid.UUID) -> User | None:
+        return self.rows.get(user_id)
+
+    async def add(self, user: User) -> None:
+        self.rows[user.id] = user
+
+    async def save(self, user: User) -> None:
+        self.rows[user.id] = user
+        self.saved.append(user)
+
+    async def count_active_superadmins(self) -> int:
+        return sum(1 for u in self.rows.values() if u.is_superadmin and u.is_active)
+
+
+class FakeSessionRepository:
+    def __init__(self) -> None:
+        self.rows: dict[uuid.UUID, Session] = {}
+        self.saved: list[Session] = []
+        self.revoked_all: list[tuple[uuid.UUID, uuid.UUID | None]] = []
+
+    async def add(self, session: Session) -> None:
+        self.rows[session.id] = session
+
+    async def get_by_token_hash(self, token_hash: bytes) -> Session | None:
+        return next((s for s in self.rows.values() if s.token_hash == token_hash), None)
+
+    async def save(self, session: Session) -> None:
+        self.rows[session.id] = session
+        self.saved.append(session)
+
+    async def revoke_all_for_user(
+        self,
+        user_id: uuid.UUID,
+        *,
+        at: datetime,
+        except_session_id: uuid.UUID | None = None,
+    ) -> None:
+        self.revoked_all.append((user_id, except_session_id))
+        for session in self.rows.values():
+            if session.user_id == user_id and session.id != except_session_id:
+                session.revoke(at=at)
+
+
+class FakePermissionRepository:
+    def __init__(self) -> None:
+        self.by_user: dict[uuid.UUID, PermissionSet] = {}
+        self.replaced: list[tuple[uuid.UUID, PermissionSet, uuid.UUID]] = []
+
+    async def get_for_user(self, user_id: uuid.UUID) -> PermissionSet:
+        return self.by_user.get(user_id, PermissionSet(granted=frozenset()))
+
+    async def replace_for_user(
+        self, user_id: uuid.UUID, desired: PermissionSet, *, granted_by: uuid.UUID
+    ) -> None:
+        self.by_user[user_id] = desired
+        self.replaced.append((user_id, desired, granted_by))
+
+
+@dataclass(slots=True)
+class RecordedDiff:
+    actor_user_id: uuid.UUID
+    target_user_id: uuid.UUID
+    added: frozenset[Permission]
+    removed: frozenset[Permission]
+
+
+class FakePermissionAuditRepository:
+    def __init__(self) -> None:
+        self.diffs: list[RecordedDiff] = []
+
+    async def record_diff(
+        self,
+        *,
+        actor_user_id: uuid.UUID,
+        target_user_id: uuid.UUID,
+        added: frozenset[Permission],
+        removed: frozenset[Permission],
+    ) -> None:
+        self.diffs.append(RecordedDiff(actor_user_id, target_user_id, added, removed))
+
+
+@dataclass(slots=True)
+class FakeLoginAttemptRepository:
+    recent_failures: int = 0
+    records: list[tuple[str, str | None, bool]] = field(default_factory=list)
+
+    async def record(self, *, email: str, ip: str | None, succeeded: bool) -> None:
+        self.records.append((email, ip, succeeded))
+
+    async def count_recent_failures(self, *, email: str, since: datetime) -> int:
+        return self.recent_failures
+
+
+class FakeResetTokenRepository:
+    def __init__(self) -> None:
+        self.rows: dict[bytes, PasswordResetToken] = {}
+        self.marked_used: list[bytes] = []
+
+    async def add(self, token: PasswordResetToken) -> None:
+        self.rows[token.token_hash] = token
+
+    async def get_by_token_hash(self, token_hash: bytes) -> PasswordResetToken | None:
+        return self.rows.get(token_hash)
+
+    async def mark_used(self, token_hash: bytes, *, at: datetime) -> None:
+        self.marked_used.append(token_hash)
+        record = self.rows.get(token_hash)
+        if record is not None:
+            record.used_at = at
+
+
+class FakePasswordHasher:
+    """Hash reversible de juguete: suficiente para verificar el contrato
+    hash/verify sin pagar argon2 en cada test."""
+
+    def hash(self, raw: RawPassword) -> PasswordHash:
+        return PasswordHash(value=f"hash:{raw.value}")
+
+    def verify(self, candidate: str, stored: PasswordHash) -> bool:
+        return stored.value == f"hash:{candidate}"
+
+    def needs_rehash(self, stored: PasswordHash) -> bool:
+        return False
+
+
+class FakeSessionTokenGenerator:
+    def __init__(self, token: str = "tok") -> None:
+        self.token = token
+
+    def generate(self) -> str:
+        return self.token
+
+    def hash(self, token: str) -> bytes:
+        return f"h:{token}".encode()
+
+
+@dataclass(slots=True)
+class SentMail:
+    to: str
+    subject: str
+    body: str
+
+
+class FakeMailer:
+    def __init__(self) -> None:
+        self.sent: list[SentMail] = []
+
+    async def send(
+        self, *, to: str, subject: str, body: str, html_body: str | None = None
+    ) -> None:
+        self.sent.append(SentMail(to=to, subject=subject, body=body))
+
+
+class FakeOperadorColorLookup:
+    def __init__(self, colors: dict[str, str] | None = None) -> None:
+        self.colors = colors or {}
+
+    async def find_color_by_nombre(self, nombre: str) -> str | None:
+        return self.colors.get(nombre)

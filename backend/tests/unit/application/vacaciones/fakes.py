@@ -20,14 +20,17 @@ from src.modules.vacaciones.domain.repositories.ausencia_repository import (
     FiltrosAusencias,
 )
 from src.modules.vacaciones.domain.repositories.empleado_repository import FiltrosEmpleados
+from src.modules.vacaciones.domain.repositories.feriados_externos import FeriadoImportado
 from src.modules.vacaciones.domain.repositories.notificador import (
     DecisionNotif,
     NuevaSolicitudNotif,
 )
+from src.modules.vacaciones.domain.repositories.sector_manager_repository import JefeSector
 from src.modules.vacaciones.domain.repositories.solicitud_repository import (
     FiltrosSolicitudes,
     RangoSolapado,
 )
+from src.modules.vacaciones.domain.repositories.user_directory import UserInfo
 from src.modules.vacaciones.domain.value_objects.config_vacaciones import ConfigVacaciones
 
 
@@ -272,6 +275,28 @@ class FakeFeriadoRepo:
     async def existe_no_deduce_en(self, fecha: date) -> bool:
         return any(f.date == fecha and not f.deducts_vacation for f in self.items)
 
+    async def get_by_id(self, feriado_id: uuid.UUID) -> Feriado | None:
+        return next((f for f in self.items if f.id == feriado_id), None)
+
+    async def get_by_date(self, fecha: date) -> Feriado | None:
+        return next((f for f in self.items if f.date == fecha), None)
+
+    async def add(self, feriado: Feriado) -> None:
+        self.items.append(feriado)
+
+    async def save(self, feriado: Feriado) -> None:
+        self.items = [feriado if f.id == feriado.id else f for f in self.items]
+
+    async def delete(self, feriado_id: uuid.UUID) -> None:
+        self.items = [f for f in self.items if f.id != feriado_id]
+
+    async def upsert_por_fecha(self, feriado: Feriado) -> None:
+        existente = await self.get_by_date(feriado.date)
+        if existente is None:
+            self.items.append(feriado)
+        else:
+            existente.name = feriado.name
+
 
 class FakeExclusionRepo:
     def __init__(self, exclusiones: list[Exclusion] | None = None) -> None:
@@ -283,16 +308,41 @@ class FakeExclusionRepo:
     async def list_por_empleado(self, empleado_id: uuid.UUID) -> list[Exclusion]:
         return [e for e in self.items if e.contraparte_de(empleado_id) is not None]
 
+    async def get_by_id(self, exclusion_id: uuid.UUID) -> Exclusion | None:
+        return next((e for e in self.items if e.id == exclusion_id), None)
+
+    async def add(self, exclusion: Exclusion) -> None:
+        self.items.append(exclusion)
+
+    async def delete(self, exclusion_id: uuid.UUID) -> None:
+        self.items = [e for e in self.items if e.id != exclusion_id]
+
 
 class FakeCargoRepo:
     def __init__(self, cargos: list[Cargo]) -> None:
         self._items = {c.id: c for c in cargos}
+        self.empleados_por_cargo: dict[uuid.UUID, int] = {}
 
     async def get_by_id(self, cargo_id: uuid.UUID) -> Cargo | None:
         return self._items.get(cargo_id)
 
+    async def get_by_name(self, name: str) -> Cargo | None:
+        return next((c for c in self._items.values() if c.name == name), None)
+
     async def list_all(self) -> list[Cargo]:
         return list(self._items.values())
+
+    async def count_empleados(self, cargo_id: uuid.UUID) -> int:
+        return self.empleados_por_cargo.get(cargo_id, 0)
+
+    async def add(self, cargo: Cargo) -> None:
+        self._items[cargo.id] = cargo
+
+    async def save(self, cargo: Cargo) -> None:
+        self._items[cargo.id] = cargo
+
+    async def delete(self, cargo_id: uuid.UUID) -> None:
+        self._items.pop(cargo_id, None)
 
 
 class FakeSectorRepo:
@@ -304,6 +354,18 @@ class FakeSectorRepo:
 
     async def get_by_id(self, sector_id: uuid.UUID) -> Sector | None:
         return self._items.get(sector_id)
+
+    async def get_by_name(self, name: str) -> Sector | None:
+        return next((s for s in self._items.values() if s.name == name), None)
+
+    async def add(self, sector: Sector) -> None:
+        self._items[sector.id] = sector
+
+    async def save(self, sector: Sector) -> None:
+        self._items[sector.id] = sector
+
+    async def delete(self, sector_id: uuid.UUID) -> None:
+        self._items.pop(sector_id, None)
 
 
 class FakeAprobacionRepo:
@@ -342,3 +404,43 @@ class FixedClock:
 
     def hoy(self) -> date:
         return self._fecha
+
+
+class FakeSectorManagerRepo:
+    def __init__(self, jefes: list[JefeSector] | None = None) -> None:
+        self.items: list[JefeSector] = jefes or []
+
+    async def get_sector_de_usuario(self, user_id: uuid.UUID) -> uuid.UUID | None:
+        return next((j.department_id for j in self.items if j.user_id == user_id), None)
+
+    async def list_jefes(self) -> list[JefeSector]:
+        return list(self.items)
+
+    async def asignar(self, user_id: uuid.UUID, department_id: uuid.UUID) -> None:
+        await self.desasignar(user_id)
+        self.items.append(JefeSector(user_id=user_id, department_id=department_id))
+
+    async def desasignar(self, user_id: uuid.UUID) -> None:
+        self.items = [j for j in self.items if j.user_id != user_id]
+
+
+class FakeUserDirectory:
+    def __init__(self, users: list[UserInfo] | None = None) -> None:
+        self._items = {u.id: u for u in (users or [])}
+
+    async def list_activos(self) -> list[UserInfo]:
+        return list(self._items.values())
+
+    async def get_by_id(self, user_id: uuid.UUID) -> UserInfo | None:
+        return self._items.get(user_id)
+
+    async def get_by_ids(self, user_ids: list[uuid.UUID]) -> dict[uuid.UUID, UserInfo]:
+        return {i: self._items[i] for i in user_ids if i in self._items}
+
+
+class FakeFeriadosExternosProvider:
+    def __init__(self, feriados: list[FeriadoImportado] | None = None) -> None:
+        self.feriados = feriados or []
+
+    async def fetch(self, year: int) -> list[FeriadoImportado]:
+        return self.feriados
