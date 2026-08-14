@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, ExternalLink, Route } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import type { Alerta, Incidente } from "../types/liquidaciones";
 import { formatARS, formatFecha } from "../lib/format";
+import { incidentUrl } from "@/shared/utils/incident-link";
 
 function computeRutasCompartidas(incidentes: Incidente[]): Set<string> {
   const ids = new Set<string>();
@@ -128,7 +129,15 @@ function IncidenteRow({
               ) : (
                 <ChevronRight size={12} className="flex-shrink-0 text-muted-foreground" />
               ))}
-            <span>{incidente.numeroIncidente}</span>
+            <a
+                href={incidentUrl(incidente.numeroIncidente)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-brand-orange hover:underline"
+              >
+                {incidente.numeroIncidente}
+              </a>
           </div>
         </td>
         <td className={tdCls}>

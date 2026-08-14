@@ -11,6 +11,7 @@ import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import { StatsTable, type StatsColumn } from "@/shared/components/ui/stats-table";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { incidentUrl } from "@/shared/utils/incident-link";
 
 const MIS_PST = "__mis_pst__";
 const TODOS = "__todos__";
@@ -51,7 +52,16 @@ const incidenteColumns: StatsColumn<IncidenteVencido>[] = [
     key: "id",
     label: "ID",
     className: "w-20",
-    render: (row) => <span className="font-semibold tabular-nums">{row.id_incidente}</span>,
+    render: (row) => (
+      <a
+        href={incidentUrl(row.id_incidente)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-semibold tabular-nums text-brand-orange hover:underline"
+      >
+        {row.id_incidente}
+      </a>
+    ),
   },
   { key: "tecnico", label: "Técnico", render: (row) => row.tecnico },
   { key: "region", label: "Región", render: (row) => row.region },
