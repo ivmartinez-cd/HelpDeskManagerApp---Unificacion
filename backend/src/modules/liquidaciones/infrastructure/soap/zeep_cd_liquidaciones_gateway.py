@@ -30,6 +30,17 @@ _TIMEOUT = 30
 _DATE_FMT_CIERRE = "%Y%m%d"
 _DATE_FMT_FECHA = "%d/%m/%Y"
 
+# wsAyC espera el estado_id numérico, no el string. Verificado 2026-08-14 con
+# la liquidación de prueba 3929-7: pasar el string ("Recibida", "Aprobada", etc.)
+# devuelve '""' sin cambiar el estado; pasar el ID numérico sí aplica el cambio.
+_ESTADO_NOMBRE_A_ID: dict[str, str] = {
+    "Preliquidada": "1",
+    "Recibida": "2",
+    "Observada": "3",
+    "Aprobada": "4",
+    "Cerrada": "5",
+}
+
 
 class ZeepCdLiquidacionesGateway:
     def __init__(self, wsdl_url: str = WSDL_URL, endpoint: str = REAL_ENDPOINT) -> None:
@@ -79,12 +90,13 @@ class ZeepCdLiquidacionesGateway:
         self, liquidacion_ayc_id: int, nuevo_estado: str, usuario: str
     ) -> None:
         # Sin try/except: la excepción de zeep propaga cruda al use case.
-        # setLiquidationStatus retorna '""' en éxito y en transición inválida (silencio).
-        # Solo levanta si el raw es explícitamente "false" o un mensaje de error ("Error:…").
+        # wsAyC espera el estado_id numérico (no el string): pasar "Aprobada" retorna
+        # '""' sin cambiar el estado; pasar "4" sí lo aplica (verificado 2026-08-14).
+        estado_id = _ESTADO_NOMBRE_A_ID.get(nuevo_estado, nuevo_estado)
         raw = await asyncio.to_thread(
             lambda: self._service().setLiquidationStatus(
                 id=str(liquidacion_ayc_id),
-                newStatus=nuevo_estado,
+                newStatus=estado_id,
                 usuario=usuario,
             )
         )
