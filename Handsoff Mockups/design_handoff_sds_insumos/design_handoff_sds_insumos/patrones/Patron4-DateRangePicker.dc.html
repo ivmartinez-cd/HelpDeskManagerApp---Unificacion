@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}*{box-sizing:border-box}</style>
+</helmet>
+<div style="background:#FAFAF8;min-height:100vh;padding:32px 36px;font-family:'Source Sans Pro',sans-serif;color:#232323">
+  <div style="margin-bottom:20px">
+    <span style="font:800 20px 'Montserrat',sans-serif">Selector de rango de fechas</span>
+    <span style="font:13px 'Source Sans Pro',sans-serif;color:#8a8a8a;margin-left:12px">Patrón 4</span>
+  </div>
+
+  <div style="display:flex;gap:24px;align-items:flex-start">
+
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.08);padding:20px;display:flex;flex-direction:column;gap:6px;min-width:200px">
+      <span style="font:700 12px 'Montserrat',sans-serif;color:#9a9a9a;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Presets</span>
+      <sc-for list="{{ presets }}" as="p" hint-placeholder-count="6">
+        <div onClick="{{ p.select }}" style="cursor:pointer;padding:9px 12px;border-radius:8px;font:14px 'Source Sans Pro',sans-serif;color:{{ p.color }};background:{{ p.bg }};font-weight:{{ p.weight }}" style-hover="background:rgba(247,148,29,.06)">{{ p.label }}</div>
+      </sc-for>
+    </div>
+
+    <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.08);padding:20px;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;gap:32px">
+        <sc-for list="{{ months }}" as="month" hint-placeholder-count="2">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:20px">
+            <span onClick="{{ month.prev }}" style="cursor:pointer;color:#9a9a9a;font:16px 'Source Sans Pro',sans-serif;padding:4px 8px" style-hover="color:#F7941D">‹</span>
+            <span style="font:700 14px 'Montserrat',sans-serif;color:#232323">{{ month.label }}</span>
+            <span onClick="{{ month.next }}" style="cursor:pointer;color:#9a9a9a;font:16px 'Source Sans Pro',sans-serif;padding:4px 8px" style-hover="color:#F7941D">›</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,36px);gap:2px">
+            <sc-for list="{{ month.dayHeaders }}" as="dh" hint-placeholder-count="7">
+              <div style="width:36px;height:28px;display:flex;align-items:center;justify-content:center;font:600 11px 'Source Sans Pro',sans-serif;color:#b5b5b5">{{ dh }}</div>
+            </sc-for>
+            <sc-for list="{{ month.days }}" as="day" hint-placeholder-count="35">
+              <div onClick="{{ day.select }}" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:{{ day.radius }};font:13px 'Source Sans Pro',sans-serif;cursor:{{ day.cursor }};background:{{ day.bg }};color:{{ day.color }};font-weight:{{ day.weight }}">{{ day.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-for>
+      </div>
+
+      <div style="border-top:1px solid rgba(0,0,0,.07);padding-top:16px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:20px">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font:600 11px 'Source Sans Pro',sans-serif;color:#9a9a9a;text-transform:uppercase;letter-spacing:.04em">Desde</span>
+            <span style="font:700 14px 'Montserrat',sans-serif;color:#232323">{{ rangeFrom }}</span>
+          </div>
+          <div style="width:1px;background:rgba(0,0,0,.08)"></div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font:600 11px 'Source Sans Pro',sans-serif;color:#9a9a9a;text-transform:uppercase;letter-spacing:.04em">Hasta</span>
+            <span style="font:700 14px 'Montserrat',sans-serif;color:#232323">{{ rangeTo }}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button onClick="{{ clearRange }}" style="font:600 13px 'Source Sans Pro',sans-serif;padding:9px 16px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;color:#58595B;cursor:pointer">Limpiar</button>
+          <button style="font:700 13px 'Source Sans Pro',sans-serif;padding:9px 16px;border-radius:8px;border:none;background:#F7941D;color:#fff;cursor:pointer">Aplicar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { activePreset: 'mes', start: null, end: null, baseMonth: 6 };
+
+  buildMonth(year, month) {
+    const first = new Date(year, month, 1).getDay();
+    const days_in = new Date(year, month + 1, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < (first === 0 ? 6 : first - 1); i++) cells.push({ label: '', cursor: 'default', bg: 'transparent', color: 'transparent', radius: '50%', weight: 400, select: () => {} });
+    for (let d = 1; d <= days_in; d++) {
+      const dt = new Date(year, month, d);
+      const { start, end } = this.state;
+      const isStart = start && dt.toDateString() === start.toDateString();
+      const isEnd = end && dt.toDateString() === end.toDateString();
+      const inRange = start && end && dt > start && dt < end;
+      cells.push({
+        label: d,
+        cursor: 'pointer',
+        bg: isStart || isEnd ? '#F7941D' : inRange ? 'rgba(247,148,29,.12)' : 'transparent',
+        color: isStart || isEnd ? '#fff' : inRange ? '#F7941D' : '#232323',
+        radius: isStart ? '50% 0 0 50%' : isEnd ? '0 50% 50% 0' : inRange ? '0' : '50%',
+        weight: isStart || isEnd ? 700 : 400,
+        select: () => {
+          const { start, end } = this.state;
+          if (!start || (start && end)) this.setState({ start: dt, end: null, activePreset: null });
+          else if (dt >= start) this.setState({ end: dt, activePreset: null });
+          else this.setState({ start: dt, end: null, activePreset: null });
+        }
+      });
+    }
+    return cells;
+  }
+
+  fmt(dt) {
+    if (!dt) return '—';
+    return dt.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  renderVals() {
+    const now = new Date();
+    const base = this.state.baseMonth;
+    const year = now.getFullYear();
+    const months = [base, base + 1].map(m => {
+      const real = new Date(year, m, 1);
+      return {
+        label: real.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }),
+        dayHeaders: ['Lu','Ma','Mi','Ju','Vi','Sá','Do'],
+        days: this.buildMonth(real.getFullYear(), real.getMonth()),
+        prev: () => this.setState(s => ({ baseMonth: s.baseMonth - 1 })),
+        next: () => this.setState(s => ({ baseMonth: s.baseMonth + 1 })),
+      };
+    });
+
+    const presets = [
+      { label: 'Hoy', key: 'hoy' },
+      { label: 'Esta semana', key: 'semana' },
+      { label: 'Este mes', key: 'mes' },
+      { label: 'Mes pasado', key: 'mespasado' },
+      { label: 'Último trimestre', key: 'trimestre' },
+      { label: 'Personalizado', key: 'custom' },
+    ].map(p => ({
+      label: p.label,
+      color: this.state.activePreset === p.key ? '#F7941D' : '#4b4b4b',
+      bg: this.state.activePreset === p.key ? 'rgba(247,148,29,.1)' : 'transparent',
+      weight: this.state.activePreset === p.key ? 700 : 400,
+      select: () => {
+        const t = new Date(); let s = new Date();
+        if (p.key === 'hoy') s = new Date();
+        else if (p.key === 'semana') { s = new Date(t); s.setDate(t.getDate() - t.getDay() + 1); }
+        else if (p.key === 'mes') s = new Date(t.getFullYear(), t.getMonth(), 1);
+        else if (p.key === 'mespasado') { s = new Date(t.getFullYear(), t.getMonth() - 1, 1); t.setDate(0); }
+        else if (p.key === 'trimestre') { s = new Date(t.getFullYear(), t.getMonth() - 3, 1); }
+        this.setState({ activePreset: p.key, start: s, end: new Date() });
+      }
+    }));
+
+    return {
+      months, presets,
+      rangeFrom: this.fmt(this.state.start),
+      rangeTo: this.fmt(this.state.end),
+      clearRange: () => this.setState({ start: null, end: null, activePreset: null }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

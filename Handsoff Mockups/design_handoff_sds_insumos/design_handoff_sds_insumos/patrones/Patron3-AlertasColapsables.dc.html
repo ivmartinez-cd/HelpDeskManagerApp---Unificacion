@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}*{box-sizing:border-box}</style>
+</helmet>
+<div style="background:#FAFAF8;min-height:100vh;padding:32px 36px;font-family:'Source Sans Pro',sans-serif;color:#232323">
+  <div style="margin-bottom:20px">
+    <span style="font:800 20px 'Montserrat',sans-serif">Equipos Offline — Alertas colapsables multi-nivel</span>
+    <span style="font:13px 'Source Sans Pro',sans-serif;color:#8a8a8a;margin-left:12px">Patrón 3</span>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+
+    <div style="border-radius:10px;overflow:hidden;border:1.5px solid #ef4444">
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(239,68,68,.08)">
+        <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex:none"></div>
+        <span style="font:700 14px 'Montserrat',sans-serif;color:#dc2626;flex:1">🔴 Crítico — Caída de colector detectada</span>
+        <span style="font:12px 'Source Sans Pro',sans-serif;color:#dc2626">hace 12 min</span>
+        <button style="font:600 12px 'Source Sans Pro',sans-serif;padding:5px 12px;border-radius:6px;border:1px solid #ef4444;background:#fff;color:#dc2626;cursor:pointer">Ver detalles</button>
+      </div>
+      <div style="padding:12px 16px 14px;background:#fff;border-top:1px solid rgba(239,68,68,.15)">
+        <div style="font:13.5px 'Source Sans Pro',sans-serif;color:#4b4b4b;margin-bottom:10px">El agente de recolección no responde para <strong>Banco Nación — Casa Central</strong>. Se interrumpió la toma de contadores. 3 equipos afectados:</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#FAFAF8;border-radius:8px">
+            <span style="font:13px 'Source Sans Pro',sans-serif;color:#232323;flex:1">HP LaserJet Pro M404 · SN-00312</span>
+            <span style="font:600 12px 'Source Sans Pro',sans-serif;color:#dc2626;padding:2px 8px;border-radius:12px;background:rgba(239,68,68,.1)">Sin datos desde 08:42</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#FAFAF8;border-radius:8px">
+            <span style="font:13px 'Source Sans Pro',sans-serif;color:#232323;flex:1">Canon imageRUNNER · SN-00401</span>
+            <span style="font:600 12px 'Source Sans Pro',sans-serif;color:#dc2626;padding:2px 8px;border-radius:12px;background:rgba(239,68,68,.1)">Sin datos desde 08:42</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#FAFAF8;border-radius:8px">
+            <span style="font:13px 'Source Sans Pro',sans-serif;color:#232323;flex:1">Epson WorkForce Pro · SN-00298</span>
+            <span style="font:600 12px 'Source Sans Pro',sans-serif;color:#dc2626;padding:2px 8px;border-radius:12px;background:rgba(239,68,68,.1)">Sin datos desde 08:42</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="border-radius:10px;overflow:hidden;border:1.5px solid #eab308">
+      <div onClick="{{ toggleWarn }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(234,179,8,.07)">
+        <div style="width:8px;height:8px;border-radius:50%;background:#eab308;flex:none"></div>
+        <span style="font:700 14px 'Montserrat',sans-serif;color:#a16207;flex:1">🟡 Advertencia — Tóner crítico en 4 equipos</span>
+        <span style="font:12px 'Source Sans Pro',sans-serif;color:#a16207">Mapfre · Belgrano</span>
+        <span style="font:11px 'Source Sans Pro',sans-serif;color:#b5b5b5;transform:{{ warnChevron }};display:inline-block;transition:transform .2s">▼</span>
+      </div>
+      <sc-if value="{{ warnOpen }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:12px 16px 14px;background:#fff;border-top:1px solid rgba(234,179,8,.15);display:flex;flex-direction:column;gap:6px">
+        <sc-for list="{{ warnItems }}" as="wi" hint-placeholder-count="4">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#FAFAF8;border-radius:8px">
+          <span style="font:13px 'Source Sans Pro',sans-serif;color:#232323;flex:1">{{ wi.name }}</span>
+          <div style="display:flex;flex-direction:column;gap:3px;width:140px">
+            <div style="height:6px;background:#eee;border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:{{ wi.toner }}%;background:#eab308;border-radius:4px"></div>
+            </div>
+          </div>
+          <span style="font:600 12px 'Source Sans Pro',sans-serif;color:#a16207;width:36px;text-align:right">{{ wi.toner }}%</span>
+        </div>
+        </sc-for>
+      </div>
+      </sc-if>
+    </div>
+
+    <div style="border-radius:10px;overflow:hidden;border:1.5px solid rgba(0,0,0,.08)">
+      <div onClick="{{ toggleInfo }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;background:#fff">
+        <div style="width:8px;height:8px;border-radius:50%;background:#58595B;flex:none"></div>
+        <span style="font:700 14px 'Montserrat',sans-serif;color:#58595B;flex:1">ℹ️ Informativo — 2 equipos sin reporte en 48 h</span>
+        <span style="font:12px 'Source Sans Pro',sans-serif;color:#9a9a9a">OSDE · Rosario</span>
+        <span style="font:11px 'Source Sans Pro',sans-serif;color:#b5b5b5;transform:{{ infoChevron }};display:inline-block;transition:transform .2s">▼</span>
+      </div>
+      <sc-if value="{{ infoOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:12px 16px 14px;background:#fff;border-top:1px solid rgba(0,0,0,.06)">
+        <div style="font:13.5px 'Source Sans Pro',sans-serif;color:#4b4b4b">Equipos sin actividad: Samsung Xpress M2020 (SN-00488) y HP OfficeJet Pro (SN-00321). Posible desconexión de red o equipo apagado. Sin impacto en facturación.</div>
+      </div>
+      </sc-if>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { warnOpen: true, infoOpen: false };
+  renderVals() {
+    const { warnOpen, infoOpen } = this.state;
+    return {
+      warnOpen, infoOpen,
+      warnChevron: warnOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+      infoChevron: infoOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+      toggleWarn: () => this.setState(s => ({ warnOpen: !s.warnOpen })),
+      toggleInfo: () => this.setState(s => ({ infoOpen: !s.infoOpen })),
+      warnItems: [
+        { name: 'HP Color LaserJet M479', toner: 12 },
+        { name: 'Canon imageRUNNER 2206', toner: 8 },
+        { name: 'Epson EcoTank L3250', toner: 15 },
+        { name: 'Samsung ProXpress M4025', toner: 10 },
+      ]
+    };
+  }
+}
+
+</script>
+</body>
+</html>

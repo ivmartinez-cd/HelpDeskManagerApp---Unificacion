@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#111}*{box-sizing:border-box}
+  input,select{outline:none}
+  a{color:#F7941D;text-decoration:none}a:hover{color:#e08010}
+  ::-webkit-scrollbar{width:7px;height:7px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:4px}
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;overflow:hidden;font-family:'Source Sans Pro',sans-serif;color:#e8e8e8;background:#111">
+
+  <!-- HEADER -->
+  <div style="display:flex;align-items:center;height:60px;padding:0 22px;background:#171717;border-bottom:1px solid rgba(255,255,255,.07);flex:none;gap:18px">
+    <img src="assets/logo-naranja.png" alt="Canal Directo" style="height:28px;width:auto;flex:none">
+    <div style="width:1px;height:20px;background:rgba(255,255,255,.1)"></div>
+    <span style="font:700 12px 'Montserrat',sans-serif;color:rgba(255,255,255,.5);letter-spacing:.08em;white-space:nowrap">MESA DE AYUDA</span>
+    <div style="flex:1;max-width:440px;margin:0 auto;position:relative">
+      <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2" style="width:16px;height:16px;position:absolute;left:12px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input placeholder="Buscador próximamente..." style="width:100%;padding:8px 14px 8px 36px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);font:13.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.45)" readonly>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;flex:none">
+      <div style="position:relative;cursor:pointer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" style="width:19px;height:19px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#ef4444;color:#fff;font:700 9px 'Montserrat',sans-serif;display:flex;align-items:center;justify-content:center;border:2px solid #171717">3</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;cursor:pointer;padding-left:6px;border-left:1px solid rgba(255,255,255,.08)">
+        <div style="width:34px;height:34px;border-radius:50%;background:#F7941D;display:flex;align-items:center;justify-content:center;font:700 13px 'Montserrat',sans-serif;color:#fff">IM</div>
+        <div style="line-height:1.2">
+          <div style="font:600 13px 'Source Sans Pro',sans-serif;color:#fff">Ivan Martinez</div>
+          <div style="font:11.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.4)">Superadmin</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex:1;min-height:0">
+
+    <!-- SIDEBAR -->
+    <div style="width:220px;flex:none;background:#141414;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;padding:14px 10px;overflow-y:auto">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer" style-hover="background:rgba(255,255,255,.05)">
+          <span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);flex:none"></span>
+          <span style="font:14px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.5)">Inicio</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer" style-hover="background:rgba(255,255,255,.05)">
+          <span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);flex:none"></span>
+          <span style="font:14px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.5);flex:1">Contadores</span>
+          <span style="font:11px sans-serif;color:rgba(255,255,255,.2)">›</span>
+        </div>
+        <div style="display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;background:rgba(247,148,29,.12)">
+            <span style="width:6px;height:6px;border-radius:50%;background:#F7941D;flex:none"></span>
+            <span style="font:700 14px 'Source Sans Pro',sans-serif;color:#F7941D;flex:1">Insumos</span>
+            <span style="font:11px sans-serif;color:#F7941D;transform:rotate(90deg);display:inline-block">›</span>
+          </div>
+          <div style="margin:6px 0 4px 18px;display:flex;flex-direction:column">
+            <div style="padding:8px 10px 4px"><span style="font:700 9px 'Montserrat',sans-serif;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.08em">Principal</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:7px;background:rgba(255,255,255,.06);cursor:pointer">
+              <div style="display:flex;align-items:center;gap:8px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#F7941D" stroke-width="2" style="width:14px;height:14px;flex:none"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+                <span style="font:600 13px 'Source Sans Pro',sans-serif;color:#F7941D">Solicitudes</span>
+              </div>
+              <span style="font:700 10px 'Montserrat',sans-serif;min-width:18px;height:18px;border-radius:9px;background:#F7941D;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 5px">3</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer" style-hover="background:rgba(255,255,255,.05)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" style="width:14px;height:14px;flex:none"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span style="font:13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.5)">Historial de pedidos</span>
+            </div>
+            <div style="padding:10px 10px 4px"><span style="font:700 9px 'Montserrat',sans-serif;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.08em">Equipos</span></div>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer" style-hover="background:rgba(255,255,255,.05)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" style="width:14px;height:14px;flex:none"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              <span style="font:13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.5)">Sin registrar</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:7px;cursor:pointer" style-hover="background:rgba(255,255,255,.05)">
+              <div style="display:flex;align-items:center;gap:8px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" style="width:14px;height:14px;flex:none"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+                <span style="font:13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.5)">Equipos offline</span>
+              </div>
+              <span style="font:700 10px 'Montserrat',sans-serif;min-width:18px;height:18px;border-radius:9px;background:#ef4444;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 5px">2</span>
+            </div>
+            <div style="padding:10px 10px 4px"><span style="font:700 9px 'Montserrat',sans-serif;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.08em">Administración</span></div>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer" style-hover="background:rgba(255,255,255,.05)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" style="width:14px;height:14px;flex:none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <span style="font:13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.5)">Clientes</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer" style-hover="background:rgba(255,255,255,.05)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" style="width:14px;height:14px;flex:none"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+              <span style="font:13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.5)">Configuración</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer" style-hover="background:rgba(255,255,255,.05)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" style="width:14px;height:14px;flex:none"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              <span style="font:13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.5)">Estadísticas</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer" style-hover="background:rgba(255,255,255,.05)">
+          <span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);flex:none"></span>
+          <span style="font:14px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.5)">SLA</span>
+        </div>
+      </div>
+      <div style="margin-top:auto;padding:12px 12px 4px;border-top:1px solid rgba(255,255,255,.06)">
+        <span style="font:11px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.18)">Portal interno · Canal Directo</span>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:26px 30px 44px;min-width:0">
+
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap">
+        <div>
+          <div style="font:800 25px 'Montserrat',sans-serif;color:#fff">Solicitudes de Insumos sin Cargar</div>
+          <div style="font:14px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.42);margin-top:5px">Solicitudes de HP SDS que todavía no se cargaron en Canal Directo, por cliente.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="display:flex;align-items:center;gap:6px;font:13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.4)">
+            Actualizado {{ updatedAt }}
+            <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.15)"></span>
+          </span>
+          <button style="display:inline-flex;align-items:center;gap:7px;font:700 13px 'Source Sans Pro',sans-serif;padding:9px 16px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:transparent;color:rgba(255,255,255,.75);cursor:pointer" style-hover="background:rgba(255,255,255,.06)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:13px;height:13px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Actualizar
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI STRIP -->
+      <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;margin-bottom:22px">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="7">
+          <div style="background:#1a1a1a;border-radius:11px;padding:16px 10px;border:1.5px solid {{ k.color }};display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center">
+            <span style="font:800 25px 'Montserrat',sans-serif;color:{{ k.color }};line-height:1">{{ k.value }}</span>
+            <span style="font:700 10.5px 'Montserrat',sans-serif;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.03em">{{ k.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- TABLE -->
+      <div style="background:#181818;border-radius:12px;border:1px solid rgba(255,255,255,.07);overflow:hidden">
+        <div style="display:grid;grid-template-columns:2.2fr 1fr 1fr 1fr 1fr 1fr 1fr;padding:11px 20px;background:rgba(0,0,0,.28);border-bottom:1px solid rgba(255,255,255,.06)">
+          <span style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.05em">Cliente</span>
+          <sc-for list="{{ tableCols }}" as="c" hint-placeholder-count="6">
+            <span style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.05em;text-align:right;padding-right:10px">{{ c }}</span>
+          </sc-for>
+        </div>
+
+        <div>
+          <div onClick="{{ toggleClient }}" style="display:grid;grid-template-columns:2.2fr 1fr 1fr 1fr 1fr 1fr 1fr;padding:14px 20px;align-items:center;cursor:pointer" style-hover="background:rgba(255,255,255,.02)">
+            <div style="display:flex;align-items:center;gap:9px">
+              <span style="font:11px sans-serif;color:rgba(255,255,255,.4);display:inline-block;transform:{{ clientChevron }};transition:transform .15s">▶</span>
+              <span style="font:700 14px 'Source Sans Pro',sans-serif;color:#fff">Supermercados Dia</span>
+            </div>
+            <span style="text-align:right;padding-right:10px;font:600 13px 'Source Sans Pro',sans-serif;color:#F7941D">1</span>
+            <span style="text-align:right;padding-right:10px;font:600 13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.4)">0</span>
+            <span style="text-align:right;padding-right:10px;font:600 13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.4)">0</span>
+            <span style="text-align:right;padding-right:10px;font:600 13px 'Source Sans Pro',sans-serif;color:#eab308">1</span>
+            <span style="text-align:right;padding-right:10px;font:600 13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.4)">0</span>
+            <span style="text-align:right;padding-right:10px;font:600 13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.4)">0</span>
+          </div>
+
+          <sc-if value="{{ clientOpen }}" hint-placeholder-val="{{ true }}">
+          <div style="background:rgba(0,0,0,.18);border-top:1px solid rgba(255,255,255,.05);padding:18px 20px 20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <span style="font:700 14px 'Source Sans Pro',sans-serif;color:#fff">Solicitudes de Supermercados Dia (1)</span>
+              <div style="display:flex;gap:10px">
+                <button style="font:700 12.5px 'Source Sans Pro',sans-serif;padding:7px 14px;border-radius:7px;border:1px solid rgba(247,148,29,.4);background:rgba(247,148,29,.1);color:#F7941D;cursor:pointer">Cargar seleccionados (0)</button>
+                <button style="font:700 12.5px 'Source Sans Pro',sans-serif;padding:7px 14px;border-radius:7px;border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:#f87171;cursor:pointer">Descartar seleccionados (0)</button>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:26px 1.1fr 1.3fr 1.1fr 1.6fr .8fr 1fr .8fr .8fr .9fr 1.5fr;padding:9px 4px;border-bottom:1px solid rgba(255,255,255,.06);gap:8px">
+              <span></span>
+              <span style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.3);text-transform:uppercase">Solicitud</span>
+              <span style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.3);text-transform:uppercase">Sucursal</span>
+              <span style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.3);text-transform:uppercase">Serie</span>
+              <span style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.3);text-transform:uppercase">Descripción</span>
+              <span style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.3);text-transform:uppercase">SKU</span>
+              <span style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.3);text-transform:uppercase">%</span>
+              <span style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.3);text-transform:uppercase">Días rest.</span>
+              <span style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.3);text-transform:uppercase">Págs. rest.</span>
+              <span style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.3);text-transform:uppercase">Estado</span>
+              <span style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.3);text-transform:uppercase">Acción</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:26px 1.1fr 1.3fr 1.1fr 1.6fr .8fr 1fr .8fr .8fr .9fr 1.5fr;padding:13px 4px;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,.04)">
+              <input type="checkbox" style="accent-color:#F7941D;cursor:pointer">
+              <a href="#" style="font:600 13px 'Source Sans Pro',sans-serif">14/08 14:30</a>
+              <span style="font:13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.7)">Tienda 0239 Palermo</span>
+              <a href="#" style="font:600 13px 'Source Sans Pro',sans-serif">PHC5R19859</a>
+              <span style="font:13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.7)">Black Cartridge HP CF287X</span>
+              <span style="font:12.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.4)">CF287X</span>
+              <div style="display:flex;flex-direction:column;gap:3px">
+                <div style="width:100%;height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden"><div style="width:6%;height:100%;background:#eab308"></div></div>
+                <span style="font:700 11.5px 'Source Sans Pro',sans-serif;color:#eab308">6%</span>
+                <span style="font:10px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.3)">Ini: 6%</span>
+              </div>
+              <div>
+                <div style="font:700 13px 'Source Sans Pro',sans-serif;color:#e0e0e0">14</div>
+                <div style="font:10px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.3)">Ini: 14</div>
+              </div>
+              <span style="font:13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.6)">702</span>
+              <span style="font:700 11px 'Montserrat',sans-serif;padding:3px 10px;border-radius:20px;background:rgba(234,179,8,.15);color:#eab308;width:fit-content">Atención</span>
+              <div style="display:flex;gap:8px">
+                <button style="font:700 12px 'Source Sans Pro',sans-serif;padding:6px 13px;border-radius:6px;border:none;background:#F7941D;color:#fff;cursor:pointer">Cargar</button>
+                <button style="font:700 12px 'Source Sans Pro',sans-serif;padding:6px 13px;border-radius:6px;border:none;background:#ef4444;color:#fff;cursor:pointer">Descartar</button>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <!-- LEYENDA -->
+      <div style="display:flex;align-items:center;gap:22px;margin-top:16px;flex-wrap:wrap">
+        <span style="font:700 12.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.4)">Leyenda:</span>
+        <sc-for list="{{ leyenda }}" as="l" hint-placeholder-count="4">
+          <span style="display:flex;align-items:center;gap:6px;font:12.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.55)">
+            <span style="width:8px;height:8px;border-radius:50%;background:{{ l.color }}"></span>{{ l.label }}
+          </span>
+        </sc-for>
+      </div>
+
+      <!-- SCAN DE SUPPLIES -->
+      <div style="margin-top:18px;background:#181818;border-radius:12px;border:1px solid rgba(255,255,255,.07);overflow:hidden">
+        <div onClick="{{ toggleScan }}" style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer" style-hover="background:rgba(255,255,255,.02)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font:11px sans-serif;color:rgba(255,255,255,.35);display:inline-block;transform:{{ scanChevron }};transition:transform .15s">▶</span>
+            <span style="font:700 14px 'Source Sans Pro',sans-serif;color:#e0e0e0">Scan de supplies (Canal Directo)</span>
+          </div>
+          <button onClick="{{ stopProp }}" style="font:700 12.5px 'Source Sans Pro',sans-serif;padding:8px 16px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.7);cursor:pointer" style-hover="background:rgba(255,255,255,.06)">Ejecutar scan</button>
+        </div>
+        <sc-if value="{{ scanOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 20px 18px;font:13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.4)">Ejecuta un relevamiento manual de niveles de insumos vía HP SDS para todos los equipos activos. Último scan: hoy {{ updatedAt }}.</div>
+        </sc-if>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { clientOpen: true, scanOpen: false };
+
+  renderVals() {
+    const kpis = [
+      { value:'1', label:'Pendientes', color:'#F7941D' },
+      { value:'0', label:'Críticos ≤3d', color:'#ef4444' },
+      { value:'0', label:'Urgentes ≤7d', color:'#f97316' },
+      { value:'1', label:'Atención ≤14d', color:'#eab308' },
+      { value:'0', label:'OK', color:'#22c55e' },
+      { value:'0', label:'Con pedido', color:'#3b82f6' },
+      { value:'12', label:'Cargados hoy', color:'#F7941D' },
+    ];
+    const leyenda = [
+      { label:'Crítico (≤ 3 días)', color:'#ef4444' },
+      { label:'Urgente (4–7 días)', color:'#f97316' },
+      { label:'Atención (8–14 días)', color:'#eab308' },
+      { label:'OK (más de 14 días)', color:'#22c55e' },
+    ];
+    return {
+      kpis, leyenda,
+      tableCols: ['Pendientes','Críticos','Urgentes','Atención','OK','Cargados'],
+      updatedAt: '14:37',
+      clientOpen: this.state.clientOpen,
+      clientChevron: this.state.clientOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+      toggleClient: () => this.setState(s => ({ clientOpen: !s.clientOpen })),
+      scanOpen: this.state.scanOpen,
+      scanChevron: this.state.scanOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+      toggleScan: () => this.setState(s => ({ scanOpen: !s.scanOpen })),
+      stopProp: (e) => e.stopPropagation(),
+    };
+  }
+}
+</script>
+</body>
+</html>

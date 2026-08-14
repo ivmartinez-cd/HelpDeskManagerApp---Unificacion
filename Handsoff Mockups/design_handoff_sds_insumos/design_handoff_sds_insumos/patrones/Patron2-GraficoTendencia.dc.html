@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>body{margin:0}*{box-sizing:border-box}</style>
+</helmet>
+<div style="background:#FAFAF8;min-height:100vh;padding:32px 36px;font-family:'Source Sans Pro',sans-serif;color:#232323">
+  <div style="margin-bottom:20px">
+    <span style="font:800 20px 'Montserrat',sans-serif">Estadísticas — Gráfico de tendencia con anotaciones</span>
+    <span style="font:13px 'Source Sans Pro',sans-serif;color:#8a8a8a;margin-left:12px">Patrón 2</span>
+  </div>
+
+  <div style="background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.06);padding:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font:700 16px 'Montserrat',sans-serif;color:#232323">Consumo de tóner — HP LaserJet Pro M404</div>
+        <div style="font:13px 'Source Sans Pro',sans-serif;color:#8a8a8a">Banco Nación · Casa Central · Últimos 6 meses</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <span style="font:600 12px 'Source Sans Pro',sans-serif;padding:6px 12px;border-radius:6px;border:1px solid rgba(247,148,29,.3);color:#F7941D;cursor:pointer">3M</span>
+        <span style="font:600 12px 'Source Sans Pro',sans-serif;padding:6px 12px;border-radius:6px;background:#F7941D;color:#fff;cursor:pointer">6M</span>
+        <span style="font:600 12px 'Source Sans Pro',sans-serif;padding:6px 12px;border-radius:6px;border:1px solid rgba(0,0,0,.1);color:#58595B;cursor:pointer">1A</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:16px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:3px;background:#F7941D;border-radius:2px"></div><span style="font:12px 'Source Sans Pro',sans-serif;color:#6b6b6b">Hojas impresas</span></div>
+      <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:3px;background:#58595B;border-radius:2px;border-top:2px dashed #58595B;border-style:dashed"></div><span style="font:12px 'Source Sans Pro',sans-serif;color:#6b6b6b">Proyección</span></div>
+      <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:#E32D91"></div><span style="font:12px 'Source Sans Pro',sans-serif;color:#6b6b6b">Reposición</span></div>
+      <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div><span style="font:12px 'Source Sans Pro',sans-serif;color:#6b6b6b">Falla reportada</span></div>
+    </div>
+
+    <div style="position:relative;height:320px">
+      <canvas id="tendencia-chart"></canvas>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px">
+      <div style="background:#FAFAF8;border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:4px">
+        <span style="font:11px 'Source Sans Pro',sans-serif;color:#9a9a9a;text-transform:uppercase;letter-spacing:.04em">Promedio mensual</span>
+        <span style="font:800 22px 'Montserrat',sans-serif;color:#F7941D">4.820</span>
+        <span style="font:12px 'Source Sans Pro',sans-serif;color:#6b6b6b">hojas / mes</span>
+      </div>
+      <div style="background:#FAFAF8;border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:4px">
+        <span style="font:11px 'Source Sans Pro',sans-serif;color:#9a9a9a;text-transform:uppercase;letter-spacing:.04em">Reposiciones</span>
+        <span style="font:800 22px 'Montserrat',sans-serif;color:#58595B">3</span>
+        <span style="font:12px 'Source Sans Pro',sans-serif;color:#6b6b6b">en el período</span>
+      </div>
+      <div style="background:#FAFAF8;border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:4px">
+        <span style="font:11px 'Source Sans Pro',sans-serif;color:#9a9a9a;text-transform:uppercase;letter-spacing:.04em">Próxima reposición est.</span>
+        <span style="font:800 22px 'Montserrat',sans-serif;color:#232323">~24 días</span>
+        <span style="font:12px 'Source Sans Pro',sans-serif;color:#6b6b6b">según tendencia</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() {
+    const ctx = document.getElementById('tendencia-chart').getContext('2d');
+    const labels = ['Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago'];
+    const data =   [3800, 4200, 4650, 4100, 5200, 4900, 4820];
+    const proj =   [null, null, null, null, null, 4900, 5300];
+    const annotations = {
+      reponer1: { type: 'point', xValue: 1, yValue: 4200, backgroundColor: '#E32D91', radius: 6, label: { content: 'Reposición', enabled: true, position: 'top', font: { size: 11, family: "'Source Sans Pro'" }, color: '#E32D91', backgroundColor: 'transparent' } },
+      reponer2: { type: 'point', xValue: 3, yValue: 4100, backgroundColor: '#E32D91', radius: 6 },
+      reponer3: { type: 'point', xValue: 5, yValue: 4900, backgroundColor: '#E32D91', radius: 6 },
+      falla: { type: 'point', xValue: 4, yValue: 5200, backgroundColor: '#ef4444', radius: 6, label: { content: 'Falla papel', enabled: true, position: 'top', font: { size: 11, family: "'Source Sans Pro'" }, color: '#ef4444', backgroundColor: 'transparent' } },
+    };
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Hojas impresas', data, borderColor: '#F7941D', backgroundColor: 'rgba(247,148,29,.08)', fill: true, tension: 0.4, pointBackgroundColor: '#F7941D', pointRadius: 4, borderWidth: 2 },
+          { label: 'Proyección', data: proj, borderColor: '#58595B', borderDash: [6,4], backgroundColor: 'transparent', fill: false, tension: 0.4, pointBackgroundColor: '#58595B', pointRadius: 4, borderWidth: 2 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw?.toLocaleString('es-AR')} hojas` } }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { font: { family: "'Source Sans Pro'", size: 12 }, color: '#9a9a9a' } },
+          y: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { font: { family: "'Source Sans Pro'", size: 12 }, color: '#9a9a9a', callback: v => v.toLocaleString('es-AR') }, suggestedMin: 3000 }
+        }
+      }
+    });
+  }
+}
+
+</script>
+</body>
+</html>
