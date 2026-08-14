@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body{margin:0;background:#0f0f0f}*{box-sizing:border-box}
+  input,select{outline:none}
+  a{color:#F7941D;text-decoration:none}a:hover{color:#e08010}
+  ::-webkit-scrollbar{width:7px;height:7px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:4px}
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;overflow:hidden;font-family:'Source Sans Pro',sans-serif;color:#e8e8e8;background:#0f0f0f">
+
+  <!-- HEADER -->
+  <div style="display:flex;align-items:center;height:60px;padding:0 22px;background:#171717;border-bottom:1px solid rgba(255,255,255,.07);flex:none;gap:18px;z-index:5">
+    <img src="assets/logo-naranja.png" alt="Canal Directo" style="height:28px;width:auto;flex:none">
+    <div style="width:1px;height:20px;background:rgba(255,255,255,.1)"></div>
+    <span style="font:700 12px 'Montserrat',sans-serif;color:rgba(255,255,255,.5);letter-spacing:.08em;white-space:nowrap">MESA DE AYUDA</span>
+    <div style="flex:1;max-width:440px;margin:0 auto;position:relative">
+      <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2" style="width:16px;height:16px;position:absolute;left:12px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input placeholder="Buscador próximamente..." style="width:100%;padding:8px 14px 8px 36px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);font:13.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.45)" readonly>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;flex:none">
+      <div style="position:relative;cursor:pointer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" style="width:19px;height:19px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#ef4444;color:#fff;font:700 9px 'Montserrat',sans-serif;display:flex;align-items:center;justify-content:center;border:2px solid #171717">3</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;cursor:pointer;padding-left:6px;border-left:1px solid rgba(255,255,255,.08)">
+        <div style="width:34px;height:34px;border-radius:50%;background:#F7941D;display:flex;align-items:center;justify-content:center;font:700 13px 'Montserrat',sans-serif;color:#fff">IM</div>
+        <div style="line-height:1.2">
+          <div style="font:600 13px 'Source Sans Pro',sans-serif;color:#fff">Ivan Martinez</div>
+          <div style="font:11.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.4)">Superadmin</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2" style="width:18px;height:18px;cursor:pointer"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2" style="width:18px;height:18px;cursor:pointer"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </div>
+  </div>
+
+  <div style="display:flex;flex:1;min-height:0">
+
+    <!-- SIDEBAR -->
+    <div style="width:210px;flex:none;background:#141414;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;padding:14px 10px;overflow-y:auto">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:8px;background:rgba(247,148,29,.14)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#F7941D" stroke-width="2" style="width:16px;height:16px;flex:none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span style="font:700 14px 'Source Sans Pro',sans-serif;color:#F7941D">Inicio</span>
+        </div>
+        <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="7">
+          <div style="display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:8px;cursor:pointer" style-hover="background:rgba(255,255,255,.05)">
+            <span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.22);flex:none;margin:0 5px"></span>
+            <span style="font:14px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.62);flex:1">{{ n.label }}</span>
+            <sc-if value="{{ n.chevron }}" hint-placeholder-val="{{ false }}"><span style="font:11px sans-serif;color:rgba(255,255,255,.28)">›</span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="margin-top:auto;padding:12px 13px 4px;border-top:1px solid rgba(255,255,255,.06)">
+        <span style="font:11px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.2)">Portal interno · Canal Directo</span>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:24px 26px 40px;min-width:0">
+
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap">
+        <div>
+          <div style="font:800 25px 'Montserrat',sans-serif;color:#fff">Inicio</div>
+          <div style="font:14px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.42);margin-top:3px">Panel principal con turnos de operadores y planificación diaria.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font:13px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.35)">
+          <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.15)"></span>
+          Viernes 14 · actualizado hace 14 h
+        </div>
+      </div>
+
+      <!-- KPI STRIP con sparklines -->
+      <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:18px">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="5">
+          <div style="background:#1a1a1a;border-radius:13px;padding:15px 16px 12px;border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font:700 10.5px 'Montserrat',sans-serif;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.05em">{{ k.label }}</span>
+              <span style="font:700 11.5px 'Source Sans Pro',sans-serif;color:{{ k.trendColor }}">{{ k.trend }}</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:6px">
+              <span style="font:800 25px 'Montserrat',sans-serif;color:{{ k.valueColor }};line-height:1;letter-spacing:-.01em">{{ k.value }}</span>
+              <span style="font:11.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.3)">{{ k.sub }}</span>
+            </div>
+            <div style="position:relative;height:34px;margin:2px -4px 0"><canvas id="{{ k.sparkId }}"></canvas></div>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- MAIN GRID -->
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px;align-items:start">
+
+        <!-- ============ COLUMN A ============ -->
+        <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+
+          <!-- TURNOS TIMELINE -->
+          <div style="background:#1a1a1a;border-radius:14px;padding:20px;border:1px solid rgba(255,255,255,.07)">
+            <div style="display:flex;align-items:center;gap:11px;margin-bottom:18px">
+              <div style="width:34px;height:34px;border-radius:9px;background:rgba(247,148,29,.15);display:flex;align-items:center;justify-content:center;flex:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#F7941D" stroke-width="2" style="width:17px;height:17px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div style="flex:1">
+                <div style="font:800 15px 'Montserrat',sans-serif;color:#fff">Turnos del día</div>
+                <div style="font:12px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.35)">Cobertura de operadores · 08:00 a 18:00</div>
+              </div>
+              <span style="display:inline-flex;align-items:center;gap:6px;font:700 10.5px 'Montserrat',sans-serif;padding:4px 10px;border-radius:20px;background:rgba(34,197,94,.13);color:#22c55e">
+                <span style="width:6px;height:6px;border-radius:50%;background:#22c55e"></span>{{ nowLabel }}
+              </span>
+            </div>
+            <sc-for list="{{ tracks }}" as="t" hint-placeholder-count="2">
+            <div style="margin-bottom:14px">
+              <div style="font:700 10.5px 'Montserrat',sans-serif;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">{{ t.name }}</div>
+              <div style="position:relative;height:46px;background:rgba(255,255,255,.03);border-radius:9px;overflow:hidden">
+                <sc-for list="{{ t.segs }}" as="s" hint-placeholder-count="4">
+                  <div title="{{ s.tip }}" style="position:absolute;top:0;bottom:0;left:{{ s.left }};width:{{ s.width }};background:{{ s.bg }};border-right:2px solid #1a1a1a;display:flex;flex-direction:column;justify-content:center;padding:0 8px;overflow:hidden">
+                    <sc-if value="{{ s.showRange }}" hint-placeholder-val="{{ true }}"><span style="font:700 10px 'Montserrat',sans-serif;color:{{ s.color }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.range }}</span></sc-if>
+                    <span style="font:600 11.5px 'Source Sans Pro',sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.op }}</span>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ inHours }}" hint-placeholder-val="{{ true }}">
+                  <div style="position:absolute;top:-2px;bottom:-2px;left:{{ nowLeft }};width:2px;background:#fff;box-shadow:0 0 8px rgba(255,255,255,.6)"></div>
+                </sc-if>
+              </div>
+            </div>
+            </sc-for>
+            <div style="display:flex;justify-content:space-between;padding:0 2px;margin-top:2px">
+              <sc-for list="{{ hourTicks }}" as="h" hint-placeholder-count="6">
+                <span style="font:600 10.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.3)">{{ h }}</span>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)">
+              <sc-for list="{{ operators }}" as="o" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="width:9px;height:9px;border-radius:3px;background:{{ o.color }}"></span>
+                  <span style="font:600 12px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.6)">{{ o.name }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- CONTADORES POR OPERADOR -->
+          <div style="background:#1a1a1a;border-radius:14px;padding:20px;border:1px solid rgba(255,255,255,.07)">
+            <div style="display:flex;align-items:center;gap:11px;margin-bottom:8px">
+              <div style="width:34px;height:34px;border-radius:9px;background:rgba(247,148,29,.15);display:flex;align-items:center;justify-content:center;flex:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#F7941D" stroke-width="2" style="width:16px;height:16px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div style="flex:1">
+                <div style="font:800 15px 'Montserrat',sans-serif;color:#fff">Contadores por operador</div>
+                <div style="font:12px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.35)">Clientes e impresoras del mes</div>
+              </div>
+              <span style="font:800 15px 'Montserrat',sans-serif;color:#F7941D">13.514</span>
+            </div>
+            <div style="position:relative;height:160px;display:flex;align-items:center;justify-content:center;margin:6px 0 10px">
+              <canvas id="contadoresDonut" style="max-width:160px;max-height:160px"></canvas>
+              <div style="position:absolute;display:flex;flex-direction:column;align-items:center;pointer-events:none">
+                <span style="font:800 21px 'Montserrat',sans-serif;color:#fff;line-height:1">13.514</span>
+                <span style="font:10.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.4)">impresoras</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <sc-for list="{{ contadoresRows }}" as="r" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="width:9px;height:9px;border-radius:3px;background:{{ r.color }};flex:none"></span>
+                  <span style="font:600 12.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.7);flex:1">{{ r.name }} · {{ r.cl }}</span>
+                  <span style="font:600 12px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.35)">{{ r.pct }}</span>
+                  <span style="font:700 12.5px 'Montserrat',sans-serif;color:#fff;min-width:44px;text-align:right">{{ r.val }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <a href="#" style="display:block;text-align:center;font:700 13px 'Source Sans Pro',sans-serif;padding:9px;border-radius:8px;background:#F7941D;color:#fff;margin-top:16px" style-hover="background:#e08010;color:#fff">Ver calendario →</a>
+          </div>
+
+        </div>
+
+        <!-- ============ COLUMN B ============ -->
+        <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+
+          <!-- CLIENTES DE HOY -->
+          <div style="background:#1a1a1a;border-radius:14px;padding:20px;border:1px solid rgba(255,255,255,.07)">
+            <div style="display:flex;align-items:center;gap:11px;margin-bottom:16px">
+              <div style="width:34px;height:34px;border-radius:9px;background:rgba(247,148,29,.15);display:flex;align-items:center;justify-content:center;flex:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#F7941D" stroke-width="2" style="width:16px;height:16px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div style="flex:1">
+                <div style="font:800 15px 'Montserrat',sans-serif;color:#fff">Clientes de hoy</div>
+                <div style="font:12px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.35)">Viernes y sábado · 7 visitas</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px;max-height:230px;overflow-y:auto;padding-right:2px">
+              <sc-for list="{{ clientesHoy }}" as="c" hint-placeholder-count="7">
+                <div style="padding:9px 12px;border-radius:8px;background:{{ c.bg }};border-left:3px solid {{ c.color }};display:flex;flex-direction:column;gap:2px">
+                  <span style="font:700 12.5px 'Montserrat',sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.name }}</span>
+                  <span style="font:12px 'Source Sans Pro',sans-serif;color:{{ c.color }}">{{ c.op }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- HEATMAP ACTIVIDAD SEMANAL -->
+          <div style="background:#1a1a1a;border-radius:14px;padding:20px;border:1px solid rgba(255,255,255,.07)">
+            <div style="font:800 15px 'Montserrat',sans-serif;color:#fff">Clientes por operador · semana</div>
+            <div style="font:12px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.35);margin-bottom:14px">Clientes procesados por día según calendario · si faltan contadores, la facturación queda pendiente</div>
+            <div style="display:grid;grid-template-columns:86px repeat(6,1fr);gap:4px;align-items:center">
+              <span></span>
+              <sc-for list="{{ heatDays }}" as="d" hint-placeholder-count="6">
+                <span style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.35);text-align:center">{{ d }}</span>
+              </sc-for>
+              <sc-for list="{{ heatRows }}" as="r" hint-placeholder-count="4">
+                <span style="font:600 11px 'Source Sans Pro',sans-serif;color:{{ r.color }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+                <sc-for list="{{ r.cells }}" as="cell" hint-placeholder-count="6">
+                  <div title="{{ cell.tip }}" style="height:26px;border-radius:5px;background:{{ cell.bg }};display:flex;align-items:center;justify-content:center;font:700 10.5px 'Montserrat',sans-serif;color:{{ cell.text }}">{{ cell.n }}</div>
+                </sc-for>
+              </sc-for>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:12px;justify-content:flex-end">
+              <span style="font:10.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.3)">menos</span>
+              <span style="width:12px;height:12px;border-radius:3px;background:rgba(247,148,29,.1)"></span>
+              <span style="width:12px;height:12px;border-radius:3px;background:rgba(247,148,29,.32)"></span>
+              <span style="width:12px;height:12px;border-radius:3px;background:rgba(247,148,29,.6)"></span>
+              <span style="width:12px;height:12px;border-radius:3px;background:#F7941D"></span>
+              <span style="font:10.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.3)">más</span>
+            </div>
+          </div>
+
+          <!-- PENDIENTES POR ANTIGÜEDAD -->
+          <div style="background:#1a1a1a;border-radius:14px;padding:20px;border:1px solid rgba(255,255,255,.07)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div>
+                <div style="font:800 15px 'Montserrat',sans-serif;color:#fff">Pendientes por antigüedad</div>
+                <div style="font:12px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.35)">Facturación sin cerrar · esperando contadores del cliente</div>
+              </div>
+              <span style="font:800 12px 'Montserrat',sans-serif;padding:2px 9px;border-radius:20px;background:rgba(239,68,68,.15);color:#f87171">26</span>
+            </div>
+            <div style="position:relative;height:150px"><canvas id="agingBar"></canvas></div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)">
+              <sc-for list="{{ pendientesTop }}" as="p" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="width:7px;height:7px;border-radius:50%;background:{{ p.dotColor }};flex:none"></span>
+                  <span style="font:600 12.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.75);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+                  <span style="font:600 11px 'Source Sans Pro',sans-serif;color:{{ p.dotColor }};white-space:nowrap">{{ p.age }}</span>
+                </div>
+              </sc-for>
+              <a href="#" style="font:700 12.5px 'Source Sans Pro',sans-serif;margin-top:4px">Ver los 26 pendientes →</a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ============ COLUMN C ============ -->
+        <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+
+          <!-- SLA GAUGE -->
+          <div style="background:#1a1a1a;border-radius:14px;padding:20px;border:1px solid rgba(255,255,255,.07)">
+            <div style="display:flex;align-items:center;gap:11px">
+              <div style="width:34px;height:34px;border-radius:9px;background:rgba(247,148,29,.15);display:flex;align-items:center;justify-content:center;flex:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#F7941D" stroke-width="2" style="width:16px;height:16px"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 12l4-4"/><path d="M12 2v4"/></svg>
+              </div>
+              <div style="flex:1">
+                <div style="font:800 15px 'Montserrat',sans-serif;color:#fff">SLA del mes</div>
+                <div style="font:12px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.35)">Cumplimiento de acuerdos</div>
+              </div>
+            </div>
+            <div style="position:relative;height:160px;display:flex;align-items:center;justify-content:center;margin:10px 0 12px">
+              <canvas id="slaGauge" style="max-width:160px;max-height:160px"></canvas>
+              <div style="position:absolute;display:flex;flex-direction:column;align-items:center;pointer-events:none">
+                <span style="font:800 26px 'Montserrat',sans-serif;color:#F7941D;line-height:1">96,42%</span>
+                <span style="font:11px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.4)">592 de 614 correctos</span>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:9px 10px;text-align:center">
+                <div style="font:700 9.5px 'Montserrat',sans-serif;color:rgba(255,255,255,.35);text-transform:uppercase">Vencidos</div>
+                <div style="font:800 15px 'Montserrat',sans-serif;color:#ef4444;margin-top:2px">22</div>
+              </div>
+              <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:9px 10px;text-align:center">
+                <div style="font:700 9.5px 'Montserrat',sans-serif;color:rgba(255,255,255,.35);text-transform:uppercase">Mes ant.</div>
+                <div style="font:800 15px 'Montserrat',sans-serif;color:rgba(255,255,255,.6);margin-top:2px">96,45%</div>
+              </div>
+              <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:9px 10px;text-align:center">
+                <div style="font:700 9.5px 'Montserrat',sans-serif;color:rgba(255,255,255,.35);text-transform:uppercase">Variación</div>
+                <div style="font:800 15px 'Montserrat',sans-serif;color:#f87171;margin-top:2px">▼ 0,03%</div>
+              </div>
+            </div>
+            <div style="font:700 10px 'Montserrat',sans-serif;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px">Tendencia · últimos 6 meses</div>
+            <div style="position:relative;height:56px"><canvas id="slaTrend"></canvas></div>
+            <a href="#" style="display:block;text-align:center;font:700 13px 'Source Sans Pro',sans-serif;padding:9px;border-radius:8px;background:#F7941D;color:#fff;margin-top:14px" style-hover="background:#e08010;color:#fff">Ver detalle →</a>
+          </div>
+
+          <!-- PARQUE DONUT -->
+          <div style="background:#1a1a1a;border-radius:14px;padding:20px;border:1px solid rgba(255,255,255,.07)">
+            <div style="display:flex;align-items:center;gap:11px;margin-bottom:6px">
+              <div style="width:34px;height:34px;border-radius:9px;background:rgba(247,148,29,.15);display:flex;align-items:center;justify-content:center;flex:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#F7941D" stroke-width="2" style="width:16px;height:16px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              </div>
+              <div style="flex:1">
+                <div style="font:800 15px 'Montserrat',sans-serif;color:#fff">Distribución del parque</div>
+                <div style="font:12px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.35)">Impresoras por operador</div>
+              </div>
+            </div>
+            <div style="position:relative;height:160px;display:flex;align-items:center;justify-content:center;margin:6px 0 10px">
+              <canvas id="parqueDonut" style="max-width:160px;max-height:160px"></canvas>
+              <div style="position:absolute;display:flex;flex-direction:column;align-items:center;pointer-events:none">
+                <span style="font:800 21px 'Montserrat',sans-serif;color:#fff;line-height:1">7.121</span>
+                <span style="font:10.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.4)">impresoras</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <sc-for list="{{ parqueLegend }}" as="pl" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="width:9px;height:9px;border-radius:3px;background:{{ pl.color }};flex:none"></span>
+                  <span style="font:600 12.5px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.7);flex:1">{{ pl.name }}</span>
+                  <span style="font:600 12px 'Source Sans Pro',sans-serif;color:rgba(255,255,255,.35)">{{ pl.pct }}</span>
+                  <span style="font:700 12.5px 'Montserrat',sans-serif;color:#fff;min-width:44px;text-align:right">{{ pl.value }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <a href="#" style="display:block;text-align:center;font:700 13px 'Source Sans Pro',sans-serif;padding:9px;border-radius:8px;background:#F7941D;color:#fff;margin-top:14px" style-hover="background:#e08010;color:#fff">Ver prestadores →</a>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() {
+    this._clock = setInterval(() => this.forceUpdate(), 30000);
+    let tries = 0;
+    this._iv = setInterval(() => {
+      tries++;
+      if (typeof Chart !== 'undefined' && document.getElementById('slaGauge')) {
+        this.initCharts();
+        clearInterval(this._iv);
+      } else if (tries > 80) { clearInterval(this._iv); }
+    }, 120);
+  }
+  componentWillUnmount() { if (this._iv) clearInterval(this._iv); if (this._clock) clearInterval(this._clock); }
+
+  initCharts() {
+    const C = window.Chart;
+    ['slaGauge','slaTrend','parqueDonut','contadoresDonut','agingBar','spark0','spark1','spark2','spark3','spark4'].forEach(id => { const e = C.getChart(id); if (e) e.destroy(); });
+    const grid = 'rgba(255,255,255,.06)', tick = 'rgba(255,255,255,.4)';
+    const opColors = ['#F7941D','#fbbf24','#f472b6','#a3e635'];
+
+    // KPI sparklines
+    const sparkData = {
+      spark0: { d:[6640,6720,6810,6890,6980,7050,7121], c:'#b87a2a' },
+      spark1: { d:[171,174,176,179,182,182,186], c:'#8e6ab0' },
+      spark2: { d:[95.6,96.1,95.9,96.3,96.45,96.4,96.42], c:'#6f9c7f' },
+      spark3: { d:[31,28,25,26,24,23,22], c:'#b06a6a' },
+      spark4: { d:[18,21,24,22,25,27,26], c:'#a68a4e' },
+    };
+    Object.entries(sparkData).forEach(([id, s]) => {
+      const el = document.getElementById(id); if (!el) return;
+      const ctx = el.getContext('2d');
+      const g = ctx.createLinearGradient(0,0,0,34);
+      g.addColorStop(0, s.c + '26'); g.addColorStop(1, s.c + '00');
+      new C(el, {
+        type: 'line',
+        data: { labels: s.d.map((_,i)=>i), datasets: [{ data: s.d, borderColor: s.c, backgroundColor: g, fill: true, tension: .45, borderWidth: 1.5, pointRadius: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } } }
+      });
+    });
+
+    // SLA gauge (semicircle)
+    const gauge = document.getElementById('slaGauge');
+    if (gauge) new C(gauge, {
+      type: 'doughnut',
+      data: { labels:['Correctos','Vencidos'], datasets:[{ data:[96.42,3.58], backgroundColor:['#F7941D','#ef4444'], borderWidth:0, borderRadius:6 }] },
+      options: {
+        responsive: true, maintainAspectRatio: true, cutout: '74%',
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + c.label + ': ' + c.raw + '%' } } },
+        animation: { animateRotate: true, duration: 900 }
+      }
+    });
+
+    // SLA trend
+    const trend = document.getElementById('slaTrend');
+    if (trend) {
+      const ctx = trend.getContext('2d');
+      const g = ctx.createLinearGradient(0,0,0,56);
+      g.addColorStop(0,'rgba(247,148,29,.35)'); g.addColorStop(1,'rgba(247,148,29,0)');
+      new C(trend, {
+        type: 'line',
+        data: { labels:['Mar','Abr','May','Jun','Jul','Ago'], datasets:[{ data:[95.6,96.1,95.9,96.3,96.45,96.42], borderColor:'#F7941D', backgroundColor:g, fill:true, tension:.4, borderWidth:2, pointRadius:0, pointHoverRadius:4, pointBackgroundColor:'#F7941D' }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + c.raw + '%' } } },
+          scales: { x: { grid: { display: false, drawBorder: false }, ticks: { color: 'rgba(255,255,255,.3)', font: { size: 9 } } }, y: { display: false, min: 94, max: 97 } }
+        }
+      });
+    }
+
+    // Pendientes por antigüedad
+    const aging = document.getElementById('agingBar');
+    if (aging) new C(aging, {
+      type: 'bar',
+      data: {
+        labels: ['1-2 días','3-4 días','5-7 días','8-10 días','+10 días'],
+        datasets: [{ data: [5,6,9,3,3], backgroundColor: ['#22c55e','#9aa832','#d69e08','#c2410c','#ef4444'], borderRadius: 5, barPercentage: .62 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + c.raw + ' clientes' } } },
+        scales: {
+          x: { grid: { display: false, drawBorder: false }, ticks: { color: tick, font: { size: 9.5 } } },
+          y: { grid: { color: grid, drawBorder: false }, ticks: { color: tick, font: { size: 10 }, stepSize: 3 } }
+        }
+      }
+    });
+
+    // Parque donut
+    const pd = document.getElementById('parqueDonut');
+    if (pd) new C(pd, {
+      type: 'doughnut',
+      data: { labels:['M. J. Vela','V. Paez','L. Torres','M. Rodriguez'], datasets:[{ data:[2224,3314,832,751], backgroundColor:['#a855f7','#d69e08','#d08ea1','#9aa832'], borderWidth:2, borderColor:'#1a1a1a', hoverOffset:5 }] },
+      options: { responsive: true, maintainAspectRatio: true, cutout: '70%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + c.label + ': ' + c.raw.toLocaleString('es-AR') } } } }
+    });
+
+    // Contadores donut
+    const cd = document.getElementById('contadoresDonut');
+    if (cd) new C(cd, {
+      type: 'doughnut',
+      data: { labels:['M. Rodriguez','M. J. Vela','L. Torres','V. Paez'], datasets:[{ data:[5638,3664,2267,1945], backgroundColor:['#9aa832','#a855f7','#d08ea1','#d69e08'], borderWidth:2, borderColor:'#1a1a1a', hoverOffset:5 }] },
+      options: { responsive: true, maintainAspectRatio: true, cutout: '70%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + c.label + ': ' + c.raw.toLocaleString('es-AR') + ' impresoras' } } } }
+    });
+  }
+
+  renderVals() {
+    const opColor = { 'Maria Jose Vela':'#a855f7', 'Victor Paez':'#d69e08', 'Luna Torres':'#d08ea1', 'Mariana Rodriguez':'#9aa832', 'Mariano Villegas':'#94a3b8' };
+    const tint = h => h + '22';
+
+    const navItems = [
+      { label:'Servicio Técnico', chevron:false },
+      { label:'Contadores', chevron:true },
+      { label:'Insumos', chevron:true },
+      { label:'SLA', chevron:false },
+      { label:'Prestadores', chevron:true },
+      { label:'Gestión de Personal', chevron:true },
+      { label:'Configuración', chevron:false },
+    ];
+
+    const kpis = [
+      { sparkId:'spark0', value:'7.121', valueColor:'#fff', label:'Parque total', sub:'impresoras', trend:'+71', trendColor:'#8fb59a' },
+      { sparkId:'spark1', value:'186', valueColor:'#fff', label:'Clientes del mes', sub:'activos', trend:'+4', trendColor:'#8fb59a' },
+      { sparkId:'spark2', value:'96,42%', valueColor:'#fff', label:'SLA del mes', sub:'de 614', trend:'▼ 0,03%', trendColor:'#c98484' },
+      { sparkId:'spark3', value:'22', valueColor:'#c98484', label:'Vencidos', sub:'incidentes', trend:'−1', trendColor:'#8fb59a' },
+      { sparkId:'spark4', value:'26', valueColor:'#c4a35a', label:'Pendientes', sub:'facturación sin cerrar', trend:'−1', trendColor:'#8fb59a' },
+    ];
+
+    const span = 10, start = 8;
+    const seg = (op, from, to) => {
+      const w = (to-from)/span*100;
+      return {
+        op, range: `${from}–${to}h`, showRange: w >= 12,
+        tip: `${op} · ${String(from).padStart(2,'0')}:00–${String(to).padStart(2,'0')}:00`,
+        left: ((from-start)/span*100)+'%', width: w+'%',
+        color: opColor[op], bg: tint(opColor[op]),
+      };
+    };
+    const tracks = [
+      { name:'Turnos Insumos', segs:[ seg('Maria Jose Vela',8,11), seg('Luna Torres',11,13), seg('Mariano Villegas',13,17), seg('Victor Paez',17,18) ] },
+      { name:'Turnos Servicio Técnico', segs:[ seg('Victor Paez',9,13), seg('Maria Jose Vela',13,15), seg('Luna Torres',15,18) ] },
+    ];
+    const operators = ['Maria Jose Vela','Victor Paez','Luna Torres','Mariana Rodriguez','Mariano Villegas'].map(n => ({ name:n, color:opColor[n] }));
+    const hourTicks = ['08:00','10:00','12:00','14:00','16:00','18:00'];
+
+    const now = new Date();
+    const nowH = now.getHours() + now.getMinutes()/60;
+    const inHours = nowH >= start && nowH <= start + span;
+    const nowLeft = (Math.min(Math.max(nowH, start), start + span) - start) / span * 100 + '%';
+    const hh = String(now.getHours()).padStart(2,'0'), mm = String(now.getMinutes()).padStart(2,'0');
+    const nowLabel = inHours ? `Ahora ${hh}:${mm}` : `Fuera de horario · ${hh}:${mm}`;
+
+    const cli = (name, op) => ({ name, op, color:opColor[op], bg:tint(opColor[op]) });
+    const clientesHoy = [
+      cli('MINERA SANTA CRUZ','Maria Jose Vela'),
+      cli('Textil Federal','Victor Paez'),
+      cli('CORREO ARGENTINO (Correo Oficial S.A.)','Mariana Rodriguez'),
+      cli('VITALCAN','Luna Torres'),
+      cli('Transportes La Sevillanita','Victor Paez'),
+      cli('JBS','Luna Torres'),
+      cli('Citrusvil','Maria Jose Vela'),
+    ];
+
+    const heatDays = ['Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const heatData = [
+      { name:'M. J. Vela', values:[3,5,2,6,4,1] },
+      { name:'V. Paez', values:[4,2,5,3,6,2] },
+      { name:'L. Torres', values:[2,3,1,4,3,0] },
+      { name:'M. Rodriguez', values:[1,2,3,1,2,1] },
+    ];
+    const fullName = { 'M. J. Vela':'Maria Jose Vela', 'V. Paez':'Victor Paez', 'L. Torres':'Luna Torres', 'M. Rodriguez':'Mariana Rodriguez' };
+    const heatRows = heatData.map(r => ({
+      name: r.name, color: opColor[fullName[r.name]],
+      cells: r.values.map((v, i) => ({
+        n: v > 0 ? String(v) : '',
+        tip: `${r.name} · ${heatDays[i]}: ${v} clientes procesados`,
+        bg: v === 0 ? 'rgba(255,255,255,.03)' : v <= 2 ? 'rgba(247,148,29,.14)' : v <= 4 ? 'rgba(247,148,29,.38)' : '#F7941D',
+        text: v > 4 ? '#fff' : 'rgba(255,255,255,.75)',
+      })),
+    }));
+
+    const pendientesTop = [
+      { name:'Roemmers / Maprimed · Victor Paez', age:'hace 13 días', dotColor:'#ef4444' },
+      { name:'Resmacon · Victor Paez', age:'hace 8 días', dotColor:'#d69e08' },
+      { name:'Calico · Luna Torres', age:'hace 7 días', dotColor:'#d69e08' },
+      { name:'Laboratorios Raffo + Asofarma = Adium · Maria Jose Vela', age:'hace 6 días', dotColor:'#d69e08' },
+      { name:'Galicia Seguros · Maria Jose Vela', age:'hace 5 días', dotColor:'#d69e08' },
+      { name:'Bayer Argentina · Mariana Rodriguez', age:'hace 4 días', dotColor:'#22c55e' },
+    ];
+
+    const contadoresRows = [
+      { name:'Mariana Rodriguez', cl:'37 clientes', val:'5.638', pct:'41,7%', color:'#9aa832' },
+      { name:'Maria Jose Vela', cl:'55 clientes', val:'3.664', pct:'27,1%', color:'#a855f7' },
+      { name:'Luna Torres', cl:'49 clientes', val:'2.267', pct:'16,8%', color:'#d08ea1' },
+      { name:'Victor Paez', cl:'45 clientes', val:'1.945', pct:'14,4%', color:'#d69e08' },
+    ];
+
+    const parqueLegend = [
+      { name:'Victor Paez · 13 PST', value:'3.314', pct:'46,5%', color:'#d69e08' },
+      { name:'Maria Jose Vela · 12 PST', value:'2.224', pct:'31,2%', color:'#a855f7' },
+      { name:'Luna Torres · 9 PST', value:'832', pct:'11,7%', color:'#d08ea1' },
+      { name:'Mariana Rodriguez · 1 PST', value:'751', pct:'10,6%', color:'#9aa832' },
+    ];
+
+    return { navItems, kpis, tracks, operators, hourTicks, clientesHoy, heatDays, heatRows, pendientesTop, parqueLegend, contadoresRows, nowLeft, nowLabel, inHours };
+  }
+}
+</script>
+</body>
+</html>
