@@ -75,6 +75,10 @@ _DEFAULT_SYNC_WINDOW_DAYS = 90
 # reciente. Queda dentro de la ventana de sync (±90), así que el corte manda
 # antes que el borde de la copia local — ver GetPendingClientsUseCase.
 _DEFAULT_BACKLOG_DAYS = 30
+# Operadores pool de Gestión sin persona real detrás: sus eventos no deben
+# aparecer en el backlog de pendientes de nadie (ni de usuarios regulares
+# ni del superadmin). Identificados por su id/login de Gestión.
+_POOL_BACKLOG_OPERADOR_IDS: frozenset[str] = frozenset({"contadores"})
 # Generoso a propósito: es una acción manual e infrecuente, no un fetch de
 # página — 2.2x el tiempo medido del pedido de 180 días, con margen para los
 # días en que Gestión anda lenta.
@@ -152,6 +156,7 @@ async def get_calendario_pendientes(
         full_name=identity.user.full_name,
         today=date.fromisoformat(today),
         cutoff_days=_DEFAULT_BACKLOG_DAYS,
+        exclude_operador_ids=_POOL_BACKLOG_OPERADOR_IDS,
     )
     schema_events = [CalendarEventSchema.from_anotado(a) for a in anotados]
     return Page.of(schema_events, page=page, size=size)

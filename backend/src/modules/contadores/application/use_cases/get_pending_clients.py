@@ -20,7 +20,9 @@ class GetPendingClientsUseCase:
     incluyen eventos asignados al operador propio del usuario — los eventos de
     operadores que el usuario cubre por override NO aparecen en el backlog:
     el arrastre es responsabilidad del operador original, no del reemplazante.
-    El superadmin ve todos los operadores sin filtro de propiedad."""
+    Los operadores pool configurados en `exclude_operador_ids` se omiten
+    siempre (cuentas de Gestión sin persona real detrás). El superadmin ve
+    todos los operadores no excluidos."""
 
     def __init__(
         self, events: GetCalendarEventsUseCase, repository: CalendarEventRepository
@@ -29,7 +31,13 @@ class GetPendingClientsUseCase:
         self._repository = repository
 
     async def execute(
-        self, *, is_superadmin: bool, full_name: str, today: date, cutoff_days: int
+        self,
+        *,
+        is_superadmin: bool,
+        full_name: str,
+        today: date,
+        cutoff_days: int,
+        exclude_operador_ids: frozenset[str] = frozenset(),
     ) -> list[CalendarEventAnotado]:
         start = (today - timedelta(days=cutoff_days)).isoformat()
         end = (today - timedelta(days=1)).isoformat()
@@ -44,6 +52,8 @@ class GetPendingClientsUseCase:
         )
         if not is_superadmin:
             anotados = await self._filter_solo_propios(anotados, full_name)
+        if exclude_operador_ids:
+            anotados = [a for a in anotados if a.event.operador_id not in exclude_operador_ids]
         return sorted(anotados, key=lambda anotado: anotado.event.start)
 
     async def _filter_solo_propios(
