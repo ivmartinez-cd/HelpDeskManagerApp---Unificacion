@@ -54,9 +54,11 @@ function FilaOperador({ fila, max }: { fila: OperadorClientes; max: number }) {
   );
 }
 
-/** Card de Inicio: clientes planificados del mes en el calendario de
- * Contadores e impresoras que suman esos clientes (cruce por nombre contra
- * Siges), por operador. Si Siges no responde, muestra solo clientes. */
+/** Card de Inicio: cartera de clientes de cada operador (calendario de
+ * Contadores mirado hacia adelante — el mes en curso subcuenta porque Gestión
+ * borra los eventos ya realizados) e impresoras que suman esos clientes
+ * (cruce por nombre contra Siges). Si Siges no responde, muestra solo
+ * clientes. */
 export function ClientesOperadorCard() {
   const { user, modules, can } = useSession();
   const canView = modules.some((m) => m.key === "contadores");
@@ -100,7 +102,7 @@ export function ClientesOperadorCard() {
             Contadores por operador
           </h2>
           <span className="truncate font-body text-[12.5px] text-muted-foreground">
-            Clientes e impresoras del mes
+            Cartera de clientes e impresoras
           </span>
         </div>
         {resumen && resumen.total_impresoras != null && (
@@ -118,7 +120,7 @@ export function ClientesOperadorCard() {
         <span className="font-body text-[13px] text-destructive">{error}</span>
       ) : filas.length === 0 ? (
         <span className="font-body text-[13px] text-muted-foreground">
-          No hay clientes planificados este mes.
+          No hay clientes planificados en el calendario.
         </span>
       ) : (
         <>
@@ -135,8 +137,8 @@ export function ClientesOperadorCard() {
           {sinCruce.length > 0 && (
             <div className="flex items-center justify-between gap-2">
               <span className="font-body text-[11px] text-muted-foreground">
-                {sinCruce.length} {sinCruce.length === 1 ? "cliente" : "clientes"} del mes sin
-                cruce con Siges — sus impresoras no están sumadas.
+                {sinCruce.length} {sinCruce.length === 1 ? "cliente" : "clientes"} sin cruce
+                con Siges — sus impresoras no están sumadas.
               </span>
               {canManage && (
                 <button

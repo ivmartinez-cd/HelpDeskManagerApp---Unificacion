@@ -1,14 +1,18 @@
-"""Resumen para la card de Inicio: cuántos clientes tiene planificados cada
-operador en el mes y cuántas impresoras suman esos clientes. Los clientes
-salen del calendario local (copia de Gestión); las impresoras, del cruce por
-nombre contra Siges (ver cliente_matcher) — los que no cruzan se informan
-aparte en `sin_cruce`, no se inventa un cero. Si Siges no responde, la card
-degrada a mostrar solo clientes (impresoras=None)."""
+"""Resumen para la card de Inicio: la cartera de clientes de cada operador y
+cuántas impresoras suman esos clientes. La cartera se cuenta mirando el
+calendario local (copia de Gestión) **hacia adelante** por toda la ventana
+sincronizada: Gestión borra los eventos ya realizados, así que el mes en
+curso subcuenta cada vez más a medida que avanza; como toda cuenta se factura
+al menos una vez por mes, la ventana futura contiene la cartera completa
+(verificado 2026-08-14 contra la planilla de cuentas por operador de la TL:
+75/74/62/52 vs 74/72/62/53). Las impresoras salen del cruce por nombre contra
+Siges (ver cliente_matcher) — los que no cruzan se informan aparte en
+`sin_cruce`, no se inventa un cero. Si Siges no responde, la card degrada a
+mostrar solo clientes (impresoras=None)."""
 
-import calendar
 import logging
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 
 from src.modules.contadores.application.dtos.resumen_clientes_operador import (
     OperadorClientesDTO,
@@ -41,10 +45,14 @@ class GetResumenClientesOperador:
         self._deps = deps
 
     async def execute(
-        self, *, hoy: date, exclude_operador_ids: frozenset[str] = frozenset()
+        self,
+        *,
+        hoy: date,
+        dias_ventana: int,
+        exclude_operador_ids: frozenset[str] = frozenset(),
     ) -> ResumenClientesOperadorDTO:
-        desde = hoy.replace(day=1)
-        hasta = hoy.replace(day=calendar.monthrange(hoy.year, hoy.month)[1])
+        desde = hoy
+        hasta = hoy + timedelta(days=dias_ventana)
         clientes_por_operador = await self._clientes_por_operador(
             desde, hasta, exclude_operador_ids
         )

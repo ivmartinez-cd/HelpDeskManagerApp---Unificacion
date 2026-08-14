@@ -186,16 +186,19 @@ async def get_resumen_clientes_operador(
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
 ) -> ResumenClientesOperadorResponse:
-    """Card de Inicio: clientes planificados del mes en curso e impresoras
-    (cruzadas contra Siges por nombre) por operador. Los operadores pool se
-    excluyen igual que en el backlog de pendientes."""
+    """Card de Inicio: cartera de clientes por operador (ventana futura del
+    calendario — la misma que sincroniza el sync, ver el docstring del use
+    case) e impresoras cruzadas contra Siges por nombre. Los operadores pool
+    se excluyen igual que en el backlog de pendientes."""
     deps = GetResumenClientesOperadorDependencies(
         calendar=SqlAlchemyCalendarEventRepository(db),
         alias=SqlAlchemyClienteSigesMapRepository(db),
         parque=get_parque_cliente_gateway_or_none(),
     )
     dto = await GetResumenClientesOperador(deps).execute(
-        hoy=datetime.now(UTC).date(), exclude_operador_ids=_POOL_BACKLOG_OPERADOR_IDS
+        hoy=datetime.now(UTC).date(),
+        dias_ventana=_DEFAULT_SYNC_WINDOW_DAYS,
+        exclude_operador_ids=_POOL_BACKLOG_OPERADOR_IDS,
     )
     return ResumenClientesOperadorResponse.model_validate(dto)
 
