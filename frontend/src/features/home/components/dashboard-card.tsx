@@ -25,7 +25,7 @@ export function DashboardCard({
   children,
 }: DashboardCardProps) {
   return (
-    <div className="flex w-full flex-col rounded-[14px] border border-border bg-card p-5">
+    <div className="flex w-full flex-col rounded-[14px] border border-border bg-card p-4">
       <div className="flex items-center gap-2.5">
         {Icon && (
           <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-brand-orange/[0.15] text-brand-orange">

@@ -27,7 +27,7 @@ const RED = "#ef4444";
 
 function Dona({ resumen }: { resumen: SlaResumen }) {
   return (
-    <div className="relative mx-auto my-3 flex h-[160px] w-[160px] items-center justify-center">
+    <div className="relative mx-auto my-2 flex h-[130px] w-[130px] items-center justify-center">
       <Doughnut
         data={{
           labels: ["Correctos", "Vencidos"],
@@ -47,7 +47,7 @@ function Dona({ resumen }: { resumen: SlaResumen }) {
         }}
       />
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-heading text-[26px] font-extrabold leading-none text-brand-orange">
+        <span className="font-heading text-[22px] font-extrabold leading-none text-brand-orange">
           {fmtPct(resumen.pct_correctos)}%
         </span>
         <span className="font-body text-[11px] text-muted-foreground">
@@ -68,10 +68,10 @@ function Tendencia({ historia }: { historia: SlaHistoria }) {
 
   return (
     <>
-      <div className="mb-1.5 mt-3.5 font-heading text-[10px] font-bold uppercase tracking-[.05em] text-muted-foreground">
+      <div className="mb-1.5 mt-2.5 font-heading text-[10px] font-bold uppercase tracking-[.05em] text-muted-foreground">
         Tendencia · últimos {puntos.length} meses
       </div>
-      <div className="relative h-[56px]">
+      <div className="relative h-[44px]">
         <Line
           data={{
             labels: puntos.map((p) => p.label),
@@ -173,7 +173,7 @@ export function SlaMesCard({
             </div>
           </div>
           {historia && <Tendencia historia={historia} />}
-          <Link href="/sla" className={cn(brandButtonClasses(), "mt-3.5 w-full")}>
+          <Link href="/sla" className={cn(brandButtonClasses(), "mt-2.5 w-full")}>
             Ver detalle →
           </Link>
         </>

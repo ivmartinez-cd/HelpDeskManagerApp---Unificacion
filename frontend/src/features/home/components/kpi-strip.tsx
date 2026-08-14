@@ -32,7 +32,7 @@ export interface KpiDef {
 
 function Sparkline({ data, color }: { data: number[]; color: string }) {
   return (
-    <div className="relative -mx-1 mt-0.5 h-[34px]">
+    <div className="relative -mx-1 mt-0.5 h-[28px]">
       <Line
         data={{
           labels: data.map((_, i) => i),
@@ -66,7 +66,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 
 function KpiCard({ kpi }: { kpi: KpiDef }) {
   return (
-    <div className="flex flex-col gap-1.5 rounded-[13px] border border-border bg-card px-4 pb-3 pt-[15px]">
+    <div className="flex flex-col gap-1.5 rounded-[13px] border border-border bg-card px-4 pb-2.5 pt-[11px]">
       <div className="flex items-center justify-between gap-2">
         <span className="truncate font-heading text-[10.5px] font-bold uppercase tracking-[.05em] text-muted-foreground">
           {kpi.label}

@@ -53,8 +53,8 @@ export function InicioDashboard() {
   });
 
   return (
-    <div className="flex flex-col gap-[18px] px-7 py-6 pb-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="flex h-full flex-col gap-3 px-7 py-4">
+      <div className="flex flex-none flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-heading text-[25px] font-extrabold text-foreground">Inicio</h1>
           <p className="mt-0.5 font-body text-sm text-muted-foreground">
@@ -68,10 +68,12 @@ export function InicioDashboard() {
         </div>
       </div>
 
-      <KpiStrip kpis={kpis} />
+      <div className="flex-none">
+        <KpiStrip kpis={kpis} />
+      </div>
 
-      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[1.4fr_1fr_1fr]">
-        <div className="flex min-w-0 flex-col gap-4">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-[1.4fr_1fr_0.9fr_0.9fr]">
+        <div className="flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto thin-scrollbar pb-3">
           <TurnosTimelineCard
             shifts={turnos.data ?? []}
             loading={turnos.loading}
@@ -88,7 +90,7 @@ export function InicioDashboard() {
         </div>
 
         {verContadores && (
-          <div className="flex min-w-0 flex-col gap-4">
+          <div className="flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto thin-scrollbar pb-3">
             <ClientesHoyCard
               eventos={calendario.data?.hoy ?? []}
               subtitulo={calendario.data?.subtituloHoy ?? "Planificación de Contadores"}
@@ -112,29 +114,28 @@ export function InicioDashboard() {
           </div>
         )}
 
-        {(verSla || verPrestadores) && (
-          <div className="flex min-w-0 flex-col gap-4">
-            {verSla && (
-              <SlaMesCard
-                historia={slaHistoria.data}
-                loading={slaHistoria.loading}
-                error={slaHistoria.error}
-              />
-            )}
-            {verSla && (
-              <PendientesACerrarCard
-                resumen={pendientesResumen.data}
-                loading={pendientesResumen.loading}
-                error={pendientesResumen.error}
-              />
-            )}
-            {verPrestadores && (
-              <ParqueDonutCard
-                resumen={parque.data}
-                loading={parque.loading}
-                error={parque.error}
-              />
-            )}
+        {verSla && (
+          <div className="flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto thin-scrollbar pb-3">
+            <SlaMesCard
+              historia={slaHistoria.data}
+              loading={slaHistoria.loading}
+              error={slaHistoria.error}
+            />
+            <PendientesACerrarCard
+              resumen={pendientesResumen.data}
+              loading={pendientesResumen.loading}
+              error={pendientesResumen.error}
+            />
+          </div>
+        )}
+
+        {verPrestadores && (
+          <div className="flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto thin-scrollbar pb-3">
+            <ParqueDonutCard
+              resumen={parque.data}
+              loading={parque.loading}
+              error={parque.error}
+            />
           </div>
         )}
       </div>

@@ -44,13 +44,13 @@ export function ClientesHoyCard({
       loading={loading}
       error={error}
     >
-      <div className="flex flex-col gap-3 pt-3.5">
+      <div className="flex flex-col gap-2 pt-2.5">
         {eventos.length === 0 ? (
           <span className="font-body text-[13px] text-muted-foreground">
             No hay clientes planificados para hoy.
           </span>
         ) : (
-          <ul className="flex max-h-[230px] flex-col gap-[7px] overflow-y-auto pr-0.5">
+          <ul className="flex max-h-[170px] flex-col gap-[7px] overflow-y-auto pr-0.5">
             {eventos.map((evt) => {
               const operador = evt.operador_id ? porId.get(evt.operador_id) : undefined;
               const color = operador?.color ?? FALLBACK_COLOR;

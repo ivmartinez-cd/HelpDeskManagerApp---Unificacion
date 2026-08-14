@@ -108,7 +108,7 @@ export function ContadoresDonutCard({
               )}
             </div>
           )}
-          <Link href="/contadores/calendario" className={cn(brandButtonClasses(), "mt-3.5 w-full")}>
+          <Link href="/contadores/calendario" className={cn(brandButtonClasses(), "mt-2.5 w-full")}>
             Ver calendario →
           </Link>
         </>

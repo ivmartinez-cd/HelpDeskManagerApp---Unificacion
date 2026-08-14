@@ -31,7 +31,7 @@ export function OperadorDonut({
 }) {
   return (
     <>
-      <div className="relative mx-auto my-2.5 flex h-[160px] w-[160px] items-center justify-center">
+      <div className="relative mx-auto my-1.5 flex h-[130px] w-[130px] items-center justify-center">
         <Doughnut
           data={{
             labels: rows.map((r) => r.nombre),
@@ -58,7 +58,7 @@ export function OperadorDonut({
           }}
         />
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-heading text-[21px] font-extrabold leading-none text-foreground">
+          <span className="font-heading text-[18px] font-extrabold leading-none text-foreground">
             {fmtInt(total)}
           </span>
           <span className="font-body text-[10.5px] text-muted-foreground">{centerSub}</span>

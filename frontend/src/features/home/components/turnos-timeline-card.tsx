@@ -132,9 +132,9 @@ export function TurnosTimelineCard({
           No hay horarios configurados para el día de hoy.
         </p>
       ) : (
-        <div className="flex flex-col pt-4">
+        <div className="flex flex-col pt-3">
           {tracks.map((track) => (
-            <div key={track.name} className="mb-3.5">
+            <div key={track.name} className="mb-3">
               <div className="mb-1.5 font-heading text-[10.5px] font-bold uppercase tracking-[.06em] text-muted-foreground">
                 {track.name}
               </div>
@@ -175,7 +175,7 @@ export function TurnosTimelineCard({
               </span>
             ))}
           </div>
-          <div className="mt-4 flex flex-wrap gap-x-3.5 gap-y-1.5 border-t border-border/60 pt-3.5">
+          <div className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1.5 border-t border-border/60 pt-3">
             {Array.from(operadores.values()).map((op) => (
               <div key={op.name} className="flex items-center gap-1.5">
                 <span className="h-[9px] w-[9px] rounded-[3px]" style={{ background: op.color }} />

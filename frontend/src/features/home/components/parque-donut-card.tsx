@@ -59,7 +59,7 @@ export function ParqueDonutCard({
       ) : (
         <>
           <OperadorDonut rows={rows} total={total} centerSub="impresoras" tooltipUnidad="impresoras" />
-          <Link href="/prestadores" className={cn(brandButtonClasses(), "mt-3.5 w-full")}>
+          <Link href="/prestadores" className={cn(brandButtonClasses(), "mt-2.5 w-full")}>
             Ver prestadores →
           </Link>
         </>

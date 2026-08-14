@@ -73,7 +73,7 @@ export function PendientesAntiguedadCard({
         </span>
       ) : (
         <>
-          <div className="relative mt-2 h-[150px]">
+          <div className="relative mt-1.5 h-[110px]">
             <Bar
               data={{
                 labels: AGING_BUCKETS.map((b) => b.label),
@@ -110,7 +110,7 @@ export function PendientesAntiguedadCard({
               }}
             />
           </div>
-          <div className="mt-3 flex flex-col gap-1.5 border-t border-border/60 pt-3">
+          <div className="mt-2.5 flex flex-col gap-1.5 border-t border-border/60 pt-2.5">
             {pendientes.slice(0, TOP_LISTA).map((p) => (
               <div key={p.id} className="flex items-center gap-2">
                 <span
