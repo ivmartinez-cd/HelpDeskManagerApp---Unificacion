@@ -173,6 +173,24 @@
   }
 }
 
+/* Impresión de reportes: solo el nodo marcado `.print-area` llega al papel
+   (la app corre en dark — el área imprimible define sus propios colores
+   claros literales, no hereda tokens del theme). */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+  }
+}
+
 @layer utilities {
   .thin-scrollbar {
     scrollbar-width: thin;

@@ -58,6 +58,10 @@ documento, pero se resume acá para tener todo en un solo lugar.
 | `dbo.Tipo_Toma` | `contadores` | Catálogo del tipo de toma (real vs estimada, ver §3) |
 | `dbo.Estado_Maquina` | `contadores` | Estado operativo de la máquina (también §3 del 2026-08-14) |
 | `dbo.Tecnologia` | `contadores` | Mono/Color del modelo (`ArtGen.Id_Tecnologia`) |
+| `dbo.Factura_Anexo` | `contadores` | Una fila por (anexo, período de facturación) — base del reporte "anexos sin facturar" (ver §3) |
+| `dbo.Factura_SubProceso` | `contadores` | Importes calculados por proceso de facturación (`ImporteTotalDolares`, ver §3) |
+| `dbo.Anexo` (VIEW) / `dbo.Contrato` (VIEW) / `dbo.GrupoEconomico` | `contadores` | Anexo→contrato→grupo económico del reporte de cierre |
+| `dbo.Vendedor` / `dbo.Moneda` (VIEW) | `contadores` | Vendedor del contrato y monedas del anexo (dejan de ser [CANDIDATA]) |
 
 ## 3. Confirmadas con dato real en esta sesión [CONFIRMADA]
 
@@ -192,6 +196,37 @@ productiva: `contadores/infrastructure/siges/equipos_sin_real_query.py`.
   están en `Rubro` 4 `'Impresoras'` igual que las impresoras reales, el rubro no alcanza para
   distinguirlos. `Propiedad` = `Maquina.ID_Propietario` → `Empresa`; `Observaciones` =
   `Maquina.Observ` (la tabla `Observacion` es solo de `ObjetoBalance`).
+
+### `dbo.Factura_Anexo` + `dbo.Factura_SubProceso` — ciclo de facturación por anexo (confirmado 2026-08-14, paridad exacta)
+
+Fuente del reporte "anexos sin facturar" del módulo `contadores` (migra el legacy
+`sitesphp/.../SiGes/AnexosNoFacturados/RUN.php`). Verificado con paridad exacta contra ese
+reporte (43/43 filas tipo Impresión, mismas fechas e importes). Scripts:
+`backend/scripts/explore_siges_anexos_no_facturados.py` (+ `_ronda3/4/5`); consulta productiva:
+`contadores/infrastructure/siges/anexos_pendientes_query.py`.
+
+- `Factura_Anexo`: una fila por (anexo, período `PeriodoFacturacion` char YYYYMM); el proceso
+  es secuencial por anexo (la última fila por `PeriodoFacturacion`/`Nro_Proceso` es el período
+  abierto). Estados del legacy: pendiente (`Facturado=0 AND ListoParaFacturar=0` → EN
+  PROCESO/DEMORADO según el período vs la referencia), A LIBERAR (`Listo=1, Facturado=0`),
+  LIBERADO/FACTURADO (`Facturado=1` — se distinguen en otra tabla, no investigada). La FECHA
+  del legacy es `Fecha_Proceso`; su ventana de "meses atrás" filtra por `Fecha_Proceso`, no por
+  período (hay pendientes zombis de 2014-2024 que el legacy oculta así).
+- **Solo los anexos `discriminador='I'` (Impresión) facturan por `Factura_Anexo`** (2999
+  anexos). Los tipos C (Cartelería), D (DaaS) y G (Genérico) van por el flujo genérico: su
+  única vista visible, `factura_contrato_anexo_generico`, está **rota en la réplica** (error
+  4502 "more column names specified than columns defined", definición no recuperable ni por
+  `INFORMATION_SCHEMA.VIEWS` ni `sys.sql_modules`) — irrecuperable con esta cuenta.
+- Importe "USD" del legacy = `SUM(Factura_SubProceso.ImporteTotalDolares)` por
+  (`Nro_Proceso`, `ID_Anexo`) — verificado exacto (6.472,41 para SUMCDSI0077/C2). **No** es
+  `Anexo.ValorFijo` (verificado que no coincide).
+- `Estado_Anexo` es el ciclo de vida del anexo (1 Activo, 2 En Demo, 3 Inactivo/Cancelado,
+  4 En Revisión, 100 No Facturable, 200 Falta Firma, 300 Anulado), no el estado de facturación
+  del período; el legacy filtra `ID_EstadoAnexo=1`.
+- Joins de presentación: `Anexo.ID_Contrato`→`Contrato` (`NombreContrato`, `Id_Vendedor`→
+  `Vendedor.Descripcion`, `ID_EmpresaAdmin`→`Empresa.Den_Comercial`), `Anexo.ID_GrupoE`→
+  `GrupoEconomico.descripcion`, `Anexo.moneda_id`/`moneda_facturacion_id`→`Moneda.Descripcion`
+  (`Pesos`/`Dólar Billete`/`Dólar Divisa`).
 
 ## 4. Candidatas exploradas — columnas confirmadas, dato real pendiente [CANDIDATA]
 

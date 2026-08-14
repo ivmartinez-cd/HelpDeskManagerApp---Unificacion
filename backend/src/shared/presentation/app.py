@@ -14,6 +14,9 @@ from src.modules.auth.presentation.admin_permissions_router import (
 from src.modules.auth.presentation.admin_users_router import router as admin_users_router
 from src.modules.auth.presentation.auth_router import router as auth_router
 from src.modules.auth.presentation.dependencies.operador_colors import get_operador_color_lookup
+from src.modules.contadores.presentation.anexos_pendientes_router import (
+    router as anexos_pendientes_router,
+)
 from src.modules.contadores.presentation.calendario_router import (
     router as calendario_router,
 )
@@ -162,6 +165,7 @@ def create_app() -> FastAPI:
     app.include_router(sds_router)
     app.include_router(ers_router)
     app.include_router(equipos_sin_real_router)
+    app.include_router(anexos_pendientes_router)
     app.include_router(calendario_router)
     app.include_router(insumos_customers_router)
     app.include_router(insumos_requests_router)

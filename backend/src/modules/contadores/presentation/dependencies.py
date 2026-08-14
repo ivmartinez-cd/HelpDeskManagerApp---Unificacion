@@ -6,6 +6,9 @@ chequeo de host y el runner compartido vienen de `require_mercurio_runner`
 import logging
 from functools import lru_cache
 
+from src.modules.contadores.infrastructure.siges.pyodbc_anexos_pendientes_gateway import (
+    PyodbcAnexosPendientesGateway,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_equipos_sin_real_gateway import (
     PyodbcEquiposSinRealGateway,
 )
@@ -27,6 +30,12 @@ logger = logging.getLogger(__name__)
 _EQUIPOS_SIN_REAL_TIMEOUT_SECONDS = 120.0
 _EQUIPOS_SIN_REAL_CACHE_TTL_SECONDS = 600.0
 
+# La consulta de anexos pendientes es liviana (~50 filas sobre Factura_Anexo
+# indexada) — alcanza el timeout general del runner; el TTL corto mantiene el
+# reporte fresco durante la ventana de cierre sin repetir consultas por cada
+# interacción de la UI.
+_ANEXOS_PENDIENTES_CACHE_TTL_SECONDS = 300.0
+
 
 @lru_cache
 def get_operador_catalog_gateway() -> PyodbcOperadorGateway:
@@ -39,6 +48,13 @@ def get_equipos_sin_real_gateway() -> PyodbcEquiposSinRealGateway:
         require_mercurio_runner(),
         _EQUIPOS_SIN_REAL_TIMEOUT_SECONDS,
         _EQUIPOS_SIN_REAL_CACHE_TTL_SECONDS,
+    )
+
+
+@lru_cache
+def get_anexos_pendientes_gateway() -> PyodbcAnexosPendientesGateway:
+    return PyodbcAnexosPendientesGateway(
+        require_mercurio_runner(), _ANEXOS_PENDIENTES_CACHE_TTL_SECONDS
     )
 
 

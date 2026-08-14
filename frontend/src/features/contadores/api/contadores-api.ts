@@ -10,6 +10,11 @@ import type {
   SyncStatus,
 } from "../types/calendario";
 import type {
+  AnexoPendiente,
+  AnexosPendientesListParams,
+  AnexosPendientesResumen,
+} from "../types/anexos-pendientes";
+import type {
   EquipoSinReal,
   EquiposSinRealListParams,
   EquiposSinRealResumen,
@@ -256,6 +261,24 @@ export const contadoresApi = {
   },
   getEquiposSinRealResumen: () =>
     httpClient.get<EquiposSinRealResumen>("/api/contadores/equipos-sin-real/resumen"),
+
+  // Anexos sin facturar (reporte de cierre de contadores) — consulta en vivo
+  // a Siges cacheada en el backend (TTL 5 min). El universo real es chico
+  // (~50 filas) y el reporte se imprime entero: se pide en una sola página
+  // grande y se desenvuelve `.items`.
+  listAnexosPendientes: (params: AnexosPendientesListParams = {}) => {
+    const searchParams = new URLSearchParams({ size: "500" });
+    if (params.estado) searchParams.set("estado", params.estado);
+    if (params.search) searchParams.set("search", params.search);
+    if (params.refresh) searchParams.set("refresh", "true");
+    return httpClient
+      .get<Page<AnexoPendiente>>(
+        `/api/contadores/anexos-pendientes?${searchParams.toString()}`,
+      )
+      .then((page) => page.items);
+  },
+  getAnexosPendientesResumen: () =>
+    httpClient.get<AnexosPendientesResumen>("/api/contadores/anexos-pendientes/resumen"),
 };
 
 

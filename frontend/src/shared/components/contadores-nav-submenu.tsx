@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { CalendarDays, Gauge, UserRoundCheck, Workflow, type LucideIcon } from "lucide-react";
+import {
+  CalendarDays,
+  Gauge,
+  ReceiptText,
+  UserRoundCheck,
+  Workflow,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
 /** Submenú de Contadores — mismo lenguaje visual que `InsumosNavSubmenu`
@@ -38,6 +45,12 @@ export function ContadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }
       label: "Sin contador real",
       icon: Gauge,
       active: pathname === "/contadores/equipos-sin-real",
+    },
+    {
+      href: "/contadores/anexos-pendientes",
+      label: "Anexos sin facturar",
+      icon: ReceiptText,
+      active: pathname === "/contadores/anexos-pendientes",
     },
     {
       href: "/contadores",
