@@ -142,10 +142,11 @@ export function EventDetailModal({ event, onClose }: Props) {
         {event.content_tooltip && (
           <div className="mt-2 rounded-lg border border-border bg-muted p-3 text-xs text-muted-foreground">
             <p className="font-medium text-foreground mb-1">Información Adicional:</p>
-            <div
-              className="prose prose-xs max-w-none text-muted-foreground"
-              dangerouslySetInnerHTML={{ __html: event.content_tooltip }}
-            />
+            {/* Texto plano de Gestión: nunca inyectar como HTML — además de XSS,
+                el navegador se tragaría los mails en ángulos ("<x@y.com>") como tags. */}
+            <div className="whitespace-pre-line break-words text-muted-foreground">
+              {event.content_tooltip}
+            </div>
           </div>
         )}
       </div>
