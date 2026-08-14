@@ -7,7 +7,7 @@ import { Bell, ChevronDown, LogOut, Menu } from "lucide-react";
 import { ThemeToggle } from "@/shared/components/theme-toggle";
 import { ContadoresNavSubmenu } from "@/shared/components/contadores-nav-submenu";
 import { InsumosNavSubmenu } from "@/shared/components/insumos-nav-submenu";
-import { PrestadoresNavSubmenu } from "@/shared/components/prestadores-nav-submenu";
+import { ServicioTecnicoNavSubmenu } from "@/shared/components/servicio-tecnico-nav-submenu";
 import { VacacionesNavSubmenu } from "@/shared/components/vacaciones-nav-submenu";
 import { cn } from "@/shared/utils/cn";
 import { ChangePasswordModal } from "@/features/auth/components/change-password-modal";
@@ -26,7 +26,13 @@ export function Sidebar({ children }: { children: ReactNode }) {
   // anidado dentro de Prestadores (ver PrestadoresNavSubmenu). Sigue siendo
   // un módulo backend independiente, esto es solo reorganización visual.
   const liquidacionesModule = modules.find((m) => m.key === "liquidaciones");
-  const topLevelModules = sortedModules.filter((m) => m.key !== "liquidaciones");
+  const prestadoresModule = modules.find((m) => m.key === "prestadores");
+  const slaModule = modules.find((m) => m.key === "sla");
+  // prestadores, sla y liquidaciones se muestran anidados bajo Servicio Técnico,
+  // no como ítems de nivel superior — solo reorganización visual del sidebar.
+  const topLevelModules = sortedModules.filter(
+    (m) => m.key !== "liquidaciones" && m.key !== "prestadores" && m.key !== "sla",
+  );
   const { logout, loading } = useLogout();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -147,25 +153,80 @@ export function Sidebar({ children }: { children: ReactNode }) {
               Inicio
             </Link>
 
-            <Link
-              href="/servicio-tecnico"
-              onClick={closeMobile}
-              aria-current={isActive("/servicio-tecnico") ? "page" : undefined}
-              className={cn(
-                "flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 font-body text-sm no-underline transition-colors",
-                isActive("/servicio-tecnico")
-                  ? "bg-brand-orange/[0.12] font-semibold text-brand-orange"
-                  : "text-muted-foreground hover:bg-muted",
-              )}
-            >
-              <span
-                className={cn(
-                  "h-[7px] w-[7px] flex-none rounded-full",
-                  isActive("/servicio-tecnico") ? "bg-brand-orange" : "bg-muted-foreground/40",
-                )}
-              />
-              Servicio Técnico
-            </Link>
+            {/* Servicio Técnico: hardcodeado como Inicio, pero expandible cuando
+                el módulo sla está habilitado — mismo patrón que Prestadores +
+                Liquidaciones pero en sentido inverso (el padre es el hardcodeado). */}
+            {(() => {
+              const stcActive =
+                isActive("/servicio-tecnico") ||
+                (!!slaModule && isActive("/sla")) ||
+                (!!prestadoresModule && isActive("/prestadores")) ||
+                (!!liquidacionesModule && isActive("/liquidaciones"));
+              const stcHasSubmenu = !!slaModule || !!prestadoresModule;
+              const stcSubmenuExpanded = submenuOverride["stc"] ?? stcActive;
+              const stcHref = prestadoresModule
+                ? "/prestadores"
+                : slaModule
+                  ? "/sla"
+                  : "/servicio-tecnico";
+              return (
+                <div className="flex flex-col">
+                  <div
+                    className={cn(
+                      "flex items-center rounded-[8px] transition-colors",
+                      stcActive
+                        ? "bg-brand-orange/[0.12] font-semibold text-brand-orange"
+                        : "text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    <Link
+                      href={stcHref}
+                      onClick={closeMobile}
+                      aria-current={stcActive ? "page" : undefined}
+                      className="flex flex-1 items-center gap-2.5 px-3 py-2.5 font-body text-sm no-underline"
+                    >
+                      <span
+                        className={cn(
+                          "h-[7px] w-[7px] flex-none rounded-full",
+                          stcActive ? "bg-brand-orange" : "bg-muted-foreground/40",
+                        )}
+                      />
+                      Servicio Técnico
+                    </Link>
+                    {stcHasSubmenu && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSubmenuOverride((prev) => ({ ...prev, stc: !stcSubmenuExpanded }))
+                        }
+                        aria-expanded={stcSubmenuExpanded}
+                        aria-label={
+                          stcSubmenuExpanded
+                            ? "Colapsar submenú de Servicio Técnico"
+                            : "Expandir submenú de Servicio Técnico"
+                        }
+                        className="flex-none rounded-[6px] p-2 text-muted-foreground hover:text-foreground"
+                      >
+                        <ChevronDown
+                          className={cn(
+                            "h-3.5 w-3.5 transition-transform",
+                            !stcSubmenuExpanded && "-rotate-90",
+                          )}
+                        />
+                      </button>
+                    )}
+                  </div>
+                  {stcHasSubmenu && stcSubmenuExpanded && (
+                    <ServicioTecnicoNavSubmenu
+                      hasPrestadores={!!prestadoresModule}
+                      hasLiquidaciones={!!liquidacionesModule}
+                      hasSla={!!slaModule}
+                      onNavigate={closeMobile}
+                    />
+                  )}
+                </div>
+              );
+            })()}
 
             {modules.length === 0 && (
               <p className="px-3 py-4 font-body text-xs text-muted-foreground">
@@ -176,16 +237,9 @@ export function Sidebar({ children }: { children: ReactNode }) {
             {topLevelModules.map((module) => {
               const isContadores = module.key === "contadores";
               const isInsumos = module.key === "insumos";
-              const isPrestadores = module.key === "prestadores";
               const isVacaciones = module.key === "vacaciones";
-              const active =
-                isActive(module.route) ||
-                (isPrestadores && !!liquidacionesModule && isActive(liquidacionesModule.route));
-              const hasSubmenu =
-                isContadores ||
-                isInsumos ||
-                isVacaciones ||
-                (isPrestadores && !!liquidacionesModule);
+              const active = isActive(module.route);
+              const hasSubmenu = isContadores || isInsumos || isVacaciones;
               const submenuExpanded = submenuOverride[module.key] ?? active;
               return (
                 <div key={module.key} className="flex flex-col">
@@ -241,9 +295,6 @@ export function Sidebar({ children }: { children: ReactNode }) {
                     <ContadoresNavSubmenu onNavigate={closeMobile} />
                   )}
                   {isInsumos && submenuExpanded && <InsumosNavSubmenu onNavigate={closeMobile} />}
-                  {isPrestadores && liquidacionesModule && submenuExpanded && (
-                    <PrestadoresNavSubmenu onNavigate={closeMobile} />
-                  )}
                   {isVacaciones && submenuExpanded && (
                     <VacacionesNavSubmenu onNavigate={closeMobile} />
                   )}
