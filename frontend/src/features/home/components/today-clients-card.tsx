@@ -31,7 +31,17 @@ export function TodayClientsCard() {
   // que usa el sidebar para decidir si mostrar "Contadores".
   const canView = modules.some((m) => m.key === "contadores");
 
-  const today = formatDateLocal(new Date());
+  const now = new Date();
+  const today = formatDateLocal(now);
+  const dayOfWeek = now.getDay(); // 0=Dom, 1=Lun, 5=Vie
+  // Viernes: mostrar viernes + sábado. Lunes: mostrar domingo + lunes.
+  const rangeStart = dayOfWeek === 1 ? formatDateLocal(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)) : today;
+  const rangeEnd = dayOfWeek === 5 ? formatDateLocal(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)) : today;
+  const subtitulo =
+    dayOfWeek === 5 ? "Viernes y sábado" :
+    dayOfWeek === 1 ? "Domingo y lunes" :
+    "Planificación de Contadores";
+
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [pendientes, setPendientes] = useState<CalendarEvent[]>([]);
   const [operadores, setOperadores] = useState<Operador[]>([]);
@@ -46,7 +56,7 @@ export function TodayClientsCard() {
     const hoy = formatDateLocal(new Date());
 
     Promise.all([
-      contadoresApi.getCalendarioEvents({ start: hoy, end: hoy }),
+      contadoresApi.getCalendarioEvents({ start: rangeStart, end: rangeEnd }),
       contadoresApi.getCalendarioPendientes(hoy),
     ])
       .then(([hoyPage, pendPage]) => {
@@ -89,7 +99,7 @@ export function TodayClientsCard() {
         <div className="flex flex-col">
           <h2 className="font-heading text-[14.5px] font-bold text-foreground">Clientes de hoy</h2>
           <span className="font-body text-[12.5px] text-muted-foreground">
-            Planificación de Contadores
+            {subtitulo}
           </span>
         </div>
       </div>
