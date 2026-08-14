@@ -28,10 +28,16 @@ export function Sidebar({ children }: { children: ReactNode }) {
   const liquidacionesModule = modules.find((m) => m.key === "liquidaciones");
   const prestadoresModule = modules.find((m) => m.key === "prestadores");
   const slaModule = modules.find((m) => m.key === "sla");
-  // prestadores, sla y liquidaciones se muestran anidados bajo Servicio Técnico,
-  // no como ítems de nivel superior — solo reorganización visual del sidebar.
+  const preventivosModule = modules.find((m) => m.key === "preventivos");
+  // prestadores, sla, liquidaciones y preventivos se muestran anidados bajo
+  // Servicio Técnico, no como ítems de nivel superior — solo reorganización
+  // visual del sidebar.
   const topLevelModules = sortedModules.filter(
-    (m) => m.key !== "liquidaciones" && m.key !== "prestadores" && m.key !== "sla",
+    (m) =>
+      m.key !== "liquidaciones" &&
+      m.key !== "prestadores" &&
+      m.key !== "sla" &&
+      m.key !== "preventivos",
   );
   const { logout, loading } = useLogout();
   const pathname = usePathname();
@@ -161,8 +167,9 @@ export function Sidebar({ children }: { children: ReactNode }) {
                 isActive("/servicio-tecnico") ||
                 (!!slaModule && isActive("/sla")) ||
                 (!!prestadoresModule && isActive("/prestadores")) ||
-                (!!liquidacionesModule && isActive("/liquidaciones"));
-              const stcHasSubmenu = !!slaModule || !!prestadoresModule;
+                (!!liquidacionesModule && isActive("/liquidaciones")) ||
+                (!!preventivosModule && isActive("/preventivos"));
+              const stcHasSubmenu = !!slaModule || !!prestadoresModule || !!preventivosModule;
               const stcSubmenuExpanded = submenuOverride["stc"] ?? stcActive;
               const stcHref = prestadoresModule
                 ? "/prestadores"
@@ -221,6 +228,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
                       hasPrestadores={!!prestadoresModule}
                       hasLiquidaciones={!!liquidacionesModule}
                       hasSla={!!slaModule}
+                      hasPreventivos={!!preventivosModule}
                       onNavigate={closeMobile}
                     />
                   )}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CalendarClock,
   FileText,
   Gauge,
   LayoutDashboard,
@@ -30,10 +31,12 @@ function buildSections({
   hasPrestadores,
   hasLiquidaciones,
   hasSla,
+  hasPreventivos,
 }: {
   hasPrestadores: boolean;
   hasLiquidaciones: boolean;
   hasSla: boolean;
+  hasPreventivos: boolean;
 }): NavSectionDef[] {
   const sections: NavSectionDef[] = [];
 
@@ -75,6 +78,15 @@ function buildSections({
     });
   }
 
+  if (hasPreventivos) {
+    sections.push({
+      label: "Preventivos",
+      links: [
+        { href: "/preventivos", label: "Preventivos por zona", exact: false, icon: CalendarClock },
+      ],
+    });
+  }
+
   return sections;
 }
 
@@ -110,15 +122,17 @@ export function ServicioTecnicoNavSubmenu({
   hasPrestadores,
   hasLiquidaciones,
   hasSla,
+  hasPreventivos,
   onNavigate,
 }: {
   hasPrestadores: boolean;
   hasLiquidaciones: boolean;
   hasSla: boolean;
+  hasPreventivos: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const sections = buildSections({ hasPrestadores, hasLiquidaciones, hasSla });
+  const sections = buildSections({ hasPrestadores, hasLiquidaciones, hasSla, hasPreventivos });
 
   return (
     <div className="flex flex-col gap-3 py-1.5 pb-2 pl-6 pr-1">
