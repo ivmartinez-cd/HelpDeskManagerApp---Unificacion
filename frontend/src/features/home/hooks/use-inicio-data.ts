@@ -14,6 +14,8 @@ import { pendientesApi } from "@/features/sla/api/pendientes-api";
 import type { PendientesResumen } from "@/features/sla/types/pendientes";
 import { slaApi } from "@/features/sla/api/sla-api";
 import type { SlaResumen } from "@/features/sla/types/sla";
+import { insumosApi } from "@/features/insumos/api/insumos-api";
+import type { DashboardResponse } from "@/features/insumos/types/dashboard";
 import { turnosApi } from "@/features/turnos/api/turnos-api";
 import type { ResolvedShift } from "@/features/turnos/types/turnos";
 import { periodoOffset } from "../utils/inicio-format";
@@ -131,6 +133,10 @@ function rangoSemana(now: Date): { start: string; end: string } {
 
 export function usePendientesResumen(enabled: boolean): Remote<PendientesResumen> {
   return useRemote(enabled, () => pendientesApi.getResumen(), "los pendientes a cerrar");
+}
+
+export function useInsumosDashboard(enabled: boolean): Remote<DashboardResponse> {
+  return useRemote(enabled, () => insumosApi.getDashboard(), "el dashboard de Insumos");
 }
 
 export function useCalendarioHome(enabled: boolean): Remote<CalendarioHome> {

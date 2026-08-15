@@ -5,6 +5,7 @@ import { useSession } from "@/services/session-provider";
 import {
   useCalendarioHome,
   useContadoresResumen,
+  useInsumosDashboard,
   useParqueResumen,
   usePendientesResumen,
   useSlaHistoria,
@@ -14,6 +15,7 @@ import { buildKpis } from "../utils/build-kpis";
 import { ClientesHoyCard } from "./clientes-hoy-card";
 import { ContadoresDonutCard } from "./contadores-donut-card";
 import { HeatmapSemanaCard } from "./heatmap-semana-card";
+import { InsumosSinCargarCard } from "./insumos-sin-cargar-card";
 import { KpiStrip } from "./kpi-strip";
 import { ParqueDonutCard } from "./parque-donut-card";
 import { PendientesAntiguedadCard } from "./pendientes-antiguedad-card";
@@ -34,6 +36,7 @@ export function InicioDashboard() {
   const verContadores = modules.some((m) => m.key === "contadores");
   const verSla = modules.some((m) => m.key === "sla");
   const verPrestadores = modules.some((m) => m.key === "prestadores");
+  const verInsumos = modules.some((m) => m.key === "insumos");
 
   const turnos = useTurnosHoy();
   const calendario = useCalendarioHome(verContadores);
@@ -41,6 +44,7 @@ export function InicioDashboard() {
   const slaHistoria = useSlaHistoria(verSla);
   const parque = useParqueResumen(verPrestadores);
   const pendientesResumen = usePendientesResumen(verSla);
+  const insumosDashboard = useInsumosDashboard(verInsumos);
 
   const kpis = buildKpis({
     prestadores: verPrestadores,
@@ -129,13 +133,22 @@ export function InicioDashboard() {
           </div>
         )}
 
-        {verPrestadores && (
+        {(verPrestadores || verInsumos) && (
           <div className="flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto thin-scrollbar pb-3">
-            <ParqueDonutCard
-              resumen={parque.data}
-              loading={parque.loading}
-              error={parque.error}
-            />
+            {verPrestadores && (
+              <ParqueDonutCard
+                resumen={parque.data}
+                loading={parque.loading}
+                error={parque.error}
+              />
+            )}
+            {verInsumos && (
+              <InsumosSinCargarCard
+                dashboard={insumosDashboard.data}
+                loading={insumosDashboard.loading}
+                error={insumosDashboard.error}
+              />
+            )}
           </div>
         )}
       </div>
