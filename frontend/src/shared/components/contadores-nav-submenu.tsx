@@ -61,7 +61,7 @@ export function ContadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }
   ];
 
   return (
-    <div className="flex flex-col gap-px py-1.5 pb-2 pl-6 pr-1">
+    <div className="flex flex-col gap-px py-1.5 pb-2 pl-4 pr-1">
       {links.map(({ href, label, icon: Icon, active }) => (
         <Link
           key={href}

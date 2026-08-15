@@ -5,11 +5,12 @@ import { usePathname } from "next/navigation";
 import {
   CalendarClock,
   ClipboardList,
+  DollarSign,
   FileText,
   Gauge,
   LayoutDashboard,
   Map,
-  Settings,
+  ScrollText,
   UserRoundCheck,
   Users,
   type LucideIcon,
@@ -24,7 +25,7 @@ interface NavLinkDef {
 }
 
 interface NavSectionDef {
-  label: string;
+  label: string | null;
   links: NavLinkDef[];
 }
 
@@ -56,16 +57,16 @@ function buildSections({
       {
         label: "Liquidación",
         links: [
-          { href: "/liquidaciones", label: "Dashboard", exact: true, icon: LayoutDashboard },
+          { href: "/liquidaciones", label: "Resumen", exact: true, icon: LayoutDashboard },
           { href: "/liquidaciones/lista", label: "Liquidaciones", exact: false, icon: FileText },
         ],
       },
       {
         label: "Configuración",
         links: [
-          { href: "/liquidaciones/configuracion/prestadores", label: "Prestadores", exact: false, icon: Users },
-          { href: "/liquidaciones/configuracion/spsts", label: "SPSTs", exact: false, icon: Settings },
-          { href: "/liquidaciones/configuracion/tarifarios", label: "Tarifarios", exact: false, icon: Settings },
+          { href: "/liquidaciones/configuracion/prestadores", label: "Conf. Prestadores", exact: false, icon: Users },
+          { href: "/liquidaciones/configuracion/spsts", label: "SPSTs", exact: false, icon: ScrollText },
+          { href: "/liquidaciones/configuracion/tarifarios", label: "Tarifarios", exact: false, icon: DollarSign },
           { href: "/liquidaciones/configuracion/tabla-km", label: "Tabla KM", exact: false, icon: Map },
         ],
       },
@@ -76,7 +77,7 @@ function buildSections({
     sections.push({
       label: "SLA",
       links: [
-        { href: "/sla", label: "SLA", exact: true, icon: Gauge },
+        { href: "/sla", label: "Resumen SLA", exact: true, icon: Gauge },
         {
           href: "/sla/pendientes-a-cerrar",
           label: "Pendientes a Cerrar",
@@ -89,7 +90,7 @@ function buildSections({
 
   if (hasPreventivos) {
     sections.push({
-      label: "Preventivos",
+      label: null,
       links: [
         { href: "/preventivos", label: "Preventivos por zona", exact: false, icon: CalendarClock },
       ],
@@ -144,12 +145,14 @@ export function ServicioTecnicoNavSubmenu({
   const sections = buildSections({ hasPrestadores, hasLiquidaciones, hasSla, hasPreventivos });
 
   return (
-    <div className="flex flex-col gap-3 py-1.5 pb-2 pl-6 pr-1">
+    <div className="flex flex-col gap-3 py-1.5 pb-2 pl-4 pr-1">
       {sections.map((section) => (
-        <div key={section.label} className="flex flex-col gap-px">
-          <p className="px-2 pb-1 font-body text-[10px] font-bold uppercase tracking-[.08em] text-muted-foreground/70">
-            {section.label}
-          </p>
+        <div key={section.label ?? section.links[0]?.href} className="flex flex-col gap-px">
+          {section.label && (
+            <p className="px-2 pb-1 font-body text-[10px] font-bold uppercase tracking-[.08em] text-muted-foreground/70">
+              {section.label}
+            </p>
+          )}
           {section.links.map((link) => {
             const active = link.exact
               ? pathname === link.href

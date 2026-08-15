@@ -156,7 +156,7 @@ export function InsumosNavSubmenu({ onNavigate }: { onNavigate?: () => void }) {
   const counts = useInsumosNavCounts();
 
   return (
-    <div className="flex flex-col gap-3 py-1.5 pb-2 pl-6 pr-1">
+    <div className="flex flex-col gap-3 py-1.5 pb-2 pl-4 pr-1">
       {SECTIONS.map((section) => (
         <div key={section.label} className="flex flex-col gap-px">
           <p className="px-2 pb-1 font-body text-[10px] font-bold uppercase tracking-[.08em] text-muted-foreground/70">

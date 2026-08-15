@@ -3,7 +3,21 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, ChevronDown, LogOut, Menu } from "lucide-react";
+import {
+  BarChart2,
+  Bell,
+  ChevronDown,
+  Circle,
+  FileSearch,
+  Home,
+  LogOut,
+  Menu,
+  Package,
+  Settings,
+  UserRound,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react";
 import { ThemeToggle } from "@/shared/components/theme-toggle";
 import { ContadoresNavSubmenu } from "@/shared/components/contadores-nav-submenu";
 import { InsumosNavSubmenu } from "@/shared/components/insumos-nav-submenu";
@@ -14,6 +28,14 @@ import { ChangePasswordModal } from "@/features/auth/components/change-password-
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useSession } from "@/services/session-provider";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
+
+const MODULE_ICONS: Record<string, LucideIcon> = {
+  contadores: BarChart2,
+  insumos: Package,
+  vacaciones: UserRound,
+  "analisis-log-hp": FileSearch,
+  admin: Settings,
+};
 
 export function Sidebar({ children }: { children: ReactNode }) {
   const { user, modules } = useSession();
@@ -150,12 +172,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
                   : "text-muted-foreground hover:bg-muted",
               )}
             >
-              <span
-                className={cn(
-                  "h-[7px] w-[7px] flex-none rounded-full",
-                  isHome ? "bg-brand-orange" : "bg-muted-foreground/40",
-                )}
-              />
+              <Home className="h-4 w-4 flex-none" aria-hidden="true" />
               Inicio
             </Link>
 
@@ -192,12 +209,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
                       aria-current={stcActive ? "page" : undefined}
                       className="flex flex-1 items-center gap-2.5 px-3 py-2.5 font-body text-sm no-underline"
                     >
-                      <span
-                        className={cn(
-                          "h-[7px] w-[7px] flex-none rounded-full",
-                          stcActive ? "bg-brand-orange" : "bg-muted-foreground/40",
-                        )}
-                      />
+                      <Wrench className="h-4 w-4 flex-none" aria-hidden="true" />
                       Servicio Técnico
                     </Link>
                     {stcHasSubmenu && (
@@ -249,6 +261,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
               const active = isActive(module.route);
               const hasSubmenu = isContadores || isInsumos || isVacaciones;
               const submenuExpanded = submenuOverride[module.key] ?? active;
+              const ModuleIcon = MODULE_ICONS[module.key] ?? Circle;
               return (
                 <div key={module.key} className="flex flex-col">
                   <div
@@ -265,12 +278,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
                       aria-current={active ? "page" : undefined}
                       className="flex flex-1 items-center gap-2.5 px-3 py-2.5 font-body text-sm no-underline"
                     >
-                      <span
-                        className={cn(
-                          "h-[7px] w-[7px] flex-none rounded-full",
-                          active ? "bg-brand-orange" : "bg-muted-foreground/40",
-                        )}
-                      />
+                      <ModuleIcon className="h-4 w-4 flex-none" aria-hidden="true" />
                       {module.label}
                     </Link>
                     {hasSubmenu && (

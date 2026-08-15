@@ -105,7 +105,7 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
     .filter((g) => g.items.length > 0);
 
   return (
-    <div className="flex flex-col py-1.5 pb-2 pl-6 pr-1">
+    <div className="flex flex-col py-1.5 pb-2 pl-4 pr-1">
       {visibles.map((grupo, idx) => (
         <div key={grupo.titulo} className="flex flex-col gap-px">
           {idx > 0 && <div className="mx-2 mb-1.5 mt-2 h-px bg-border/70" />}
