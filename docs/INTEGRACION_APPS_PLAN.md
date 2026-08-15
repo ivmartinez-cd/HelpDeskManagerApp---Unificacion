@@ -596,7 +596,7 @@ real ejecutado; solo se actualiza el estado de cada módulo.
 - [ ] Migrar datos reales desde el Postgres legacy del Printer-Logs-Analyzer
       (principalmente `error_codes` del catálogo — `saved_analyses` y `telemetry`
       son datos históricos opcionales; coordinar con la PC laboral que tiene la DB).
-- [ ] Prueba end-to-end con Playwright (`frontend/tests/analisis-log-hp.spec.ts`).
+- [x] Prueba end-to-end con Playwright (`frontend/tests/analisis-log-hp.spec.ts`) — 13 tests.
 - [ ] Correr en paralelo con el Printer-Logs-Analyzer legacy y apagarlo.
 - [ ] Actualizar `PROJECT_CONTEXT.md` del padre.
 

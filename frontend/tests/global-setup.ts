@@ -18,6 +18,8 @@ const USER_MOCK = {
     { moduleKey: "vacaciones", actionKey: "create" },
     { moduleKey: "vacaciones", actionKey: "approve" },
     { moduleKey: "vacaciones", actionKey: "manage" },
+    { moduleKey: "analisis-log-hp", actionKey: "view" },
+    { moduleKey: "analisis-log-hp", actionKey: "export" },
   ],
 };
 
@@ -44,6 +46,14 @@ const MODULES_MOCK = [
     route: "/vacaciones",
     icon: "calendar",
     sortOrder: 30,
+    isEnabled: true,
+  },
+  {
+    key: "analisis-log-hp",
+    label: "Análisis de Log HP",
+    route: "/analisis-log-hp",
+    icon: "printer",
+    sortOrder: 40,
     isEnabled: true,
   },
 ];
