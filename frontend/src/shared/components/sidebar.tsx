@@ -51,15 +51,17 @@ export function Sidebar({ children }: { children: ReactNode }) {
   const prestadoresModule = modules.find((m) => m.key === "prestadores");
   const slaModule = modules.find((m) => m.key === "sla");
   const preventivosModule = modules.find((m) => m.key === "preventivos");
-  // prestadores, sla, liquidaciones y preventivos se muestran anidados bajo
-  // Servicio Técnico, no como ítems de nivel superior — solo reorganización
-  // visual del sidebar.
+  const analisisLogHpModule = modules.find((m) => m.key === "analisis-log-hp");
+  // prestadores, sla, liquidaciones, preventivos y analisis-log-hp se muestran
+  // anidados bajo Servicio Técnico, no como ítems de nivel superior — solo
+  // reorganización visual del sidebar.
   const topLevelModules = sortedModules.filter(
     (m) =>
       m.key !== "liquidaciones" &&
       m.key !== "prestadores" &&
       m.key !== "sla" &&
-      m.key !== "preventivos",
+      m.key !== "preventivos" &&
+      m.key !== "analisis-log-hp",
   );
   const { logout, loading } = useLogout();
   const pathname = usePathname();
@@ -185,8 +187,10 @@ export function Sidebar({ children }: { children: ReactNode }) {
                 (!!slaModule && isActive("/sla")) ||
                 (!!prestadoresModule && isActive("/prestadores")) ||
                 (!!liquidacionesModule && isActive("/liquidaciones")) ||
-                (!!preventivosModule && isActive("/preventivos"));
-              const stcHasSubmenu = !!slaModule || !!prestadoresModule || !!preventivosModule;
+                (!!preventivosModule && isActive("/preventivos")) ||
+                (!!analisisLogHpModule && isActive("/analisis-log-hp"));
+              const stcHasSubmenu =
+                !!slaModule || !!prestadoresModule || !!preventivosModule || !!analisisLogHpModule;
               const stcSubmenuExpanded = submenuOverride["stc"] ?? stcActive;
               const stcHref = prestadoresModule
                 ? "/prestadores"
@@ -241,6 +245,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
                       hasLiquidaciones={!!liquidacionesModule}
                       hasSla={!!slaModule}
                       hasPreventivos={!!preventivosModule}
+                      hasAnalisisLogHp={!!analisisLogHpModule}
                       onNavigate={closeMobile}
                     />
                   )}

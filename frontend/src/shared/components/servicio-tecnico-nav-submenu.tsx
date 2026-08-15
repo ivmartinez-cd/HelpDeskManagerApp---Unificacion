@@ -6,6 +6,7 @@ import {
   CalendarClock,
   ClipboardList,
   DollarSign,
+  FileSearch,
   FileText,
   Gauge,
   LayoutDashboard,
@@ -34,11 +35,13 @@ function buildSections({
   hasLiquidaciones,
   hasSla,
   hasPreventivos,
+  hasAnalisisLogHp,
 }: {
   hasPrestadores: boolean;
   hasLiquidaciones: boolean;
   hasSla: boolean;
   hasPreventivos: boolean;
+  hasAnalisisLogHp: boolean;
 }): NavSectionDef[] {
   const sections: NavSectionDef[] = [];
 
@@ -97,6 +100,15 @@ function buildSections({
     });
   }
 
+  if (hasAnalisisLogHp) {
+    sections.push({
+      label: null,
+      links: [
+        { href: "/analisis-log-hp", label: "Análisis Logs HP", exact: false, icon: FileSearch },
+      ],
+    });
+  }
+
   return sections;
 }
 
@@ -133,16 +145,18 @@ export function ServicioTecnicoNavSubmenu({
   hasLiquidaciones,
   hasSla,
   hasPreventivos,
+  hasAnalisisLogHp,
   onNavigate,
 }: {
   hasPrestadores: boolean;
   hasLiquidaciones: boolean;
   hasSla: boolean;
   hasPreventivos: boolean;
+  hasAnalisisLogHp: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const sections = buildSections({ hasPrestadores, hasLiquidaciones, hasSla, hasPreventivos });
+  const sections = buildSections({ hasPrestadores, hasLiquidaciones, hasSla, hasPreventivos, hasAnalisisLogHp });
 
   return (
     <div className="flex flex-col gap-3 py-1.5 pb-2 pl-4 pr-1">
