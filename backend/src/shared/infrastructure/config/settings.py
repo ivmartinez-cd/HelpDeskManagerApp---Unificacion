@@ -162,6 +162,12 @@ class Settings(BaseSettings):
     # por entorno, no un default (mismo criterio que el modo test de CLAUDE.md).
     vacaciones_mail_enabled: bool = False
 
+    # Módulo analisis-log-hp — diagnóstico IA con Anthropic.
+    # Sin clave configurada los endpoints de IA responden 502 con mensaje claro.
+    anthropic_api_key: str = ""
+    # Cadencia del job de snapshots SDS automáticos (2×/día = cada 720 min).
+    analisis_log_hp_snapshot_interval_minutes: int = 720
+
     # Desactiva todos los jobs de fondo (útil en CI/test o cuando se corren
     # múltiples instancias y solo una debe ejecutar los jobs).
     disable_background_jobs: bool = False

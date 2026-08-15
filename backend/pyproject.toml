@@ -32,6 +32,8 @@ dependencies = [
     "xlrd==2.0.1",
     # fpdf2 genera el PDF del reporte de vacaciones (paridad del PDFKit legacy).
     "fpdf2==2.8.8",
+    # SDK de Anthropic para el diagnóstico IA del módulo analisis-log-hp.
+    "anthropic>=0.40.0",
 ]
 
 [dependency-groups]
@@ -74,6 +76,9 @@ extend-immutable-calls = [
 # Alembic genera este boilerplate (op/sa) aunque una migración concreta no
 # los use todavía; no vale la pena mantenerlo a mano archivo por archivo.
 "src/shared/infrastructure/database/migrations/versions/*.py" = ["F401", "I001"]
+# El system prompt del gateway de IA es contenido de texto, no código:
+# las líneas largas son deliberadas para mantener el prompt legible como prosa.
+"src/modules/analisis_log_hp/infrastructure/anthropic/anthropic_ai_gateway.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -87,6 +92,20 @@ disallow_untyped_defs = true
 [[tool.mypy.overrides]]
 # zeep no publica stubs ni py.typed — el adapter lo aísla detrás del puerto WsAycGateway.
 module = "zeep.*"
+ignore_missing_imports = true
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+# lxml publica stubs parciales en lxml-stubs (no instalados) — el uso está aislado
+# en infrastructure/hp_portal, detrás del puerto HpPortalGateway.
+module = "lxml.*"
+ignore_missing_imports = true
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+# anthropic no publica py.typed — el uso está aislado en infrastructure/anthropic,
+# detrás del puerto AiGateway.
+module = "anthropic.*"
 ignore_missing_imports = true
 follow_imports = "skip"
 

@@ -7,6 +7,16 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.analisis_log_hp.presentation.analysis_router import (
+    router as pi_analysis_router,
+)
+from src.modules.analisis_log_hp.presentation.error_codes_router import (
+    router as pi_error_codes_router,
+)
+from src.modules.analisis_log_hp.presentation.saved_analyses_router import (
+    router as pi_saved_analyses_router,
+)
+from src.modules.analisis_log_hp.presentation.sds_router import router as pi_sds_router
 from src.modules.auth.domain.repositories.operador_color_lookup import OperadorColorLookup
 from src.modules.auth.presentation.admin_permissions_router import (
     router as admin_permissions_router,
@@ -124,6 +134,12 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
 
         tasks = start_background_jobs(mailer, poller_alerts, settings.poll_interval_minutes)
         tasks += start_sla_background_jobs(settings.sla_refresh_interval_minutes)
+        from src.modules.analisis_log_hp.presentation.background_jobs import (
+            start_analisis_log_hp_background_jobs,
+        )
+        tasks += start_analisis_log_hp_background_jobs(
+            settings.analisis_log_hp_snapshot_interval_minutes
+        )
         logger.info("background_jobs: %d job(s) iniciados", len(tasks))
     try:
         yield
@@ -202,6 +218,10 @@ def create_app() -> FastAPI:
     app.include_router(vacaciones_ausencias_router)
     app.include_router(vacaciones_auditoria_router)
     app.include_router(vacaciones_reportes_router)
+    app.include_router(pi_analysis_router)
+    app.include_router(pi_error_codes_router)
+    app.include_router(pi_sds_router)
+    app.include_router(pi_saved_analyses_router)
     return app
 
 

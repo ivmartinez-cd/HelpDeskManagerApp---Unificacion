@@ -25,7 +25,7 @@ MODULES = [
     ("insumos", "Insumos", "/insumos", "package", 10, False),
     ("liquidaciones", "Liquidaciones", "/liquidaciones", "file-text", 20, False),
     ("vacaciones", "Vacaciones", "/vacaciones", "calendar", 30, False),
-    ("parque-impresoras", "Parque de Impresoras", "/parque-impresoras", "printer", 40, False),
+    ("analisis-log-hp", "Análisis Logs HP", "/analisis-log-hp", "printer", 40, False),
     ("stc", "STC", "/stc", "activity", 50, False),
 ]
 
@@ -59,8 +59,8 @@ MODULE_ACTIONS = [
     ("vacaciones", "create"),
     ("vacaciones", "update"),
     ("vacaciones", "approve"),
-    ("parque-impresoras", "view"),
-    ("parque-impresoras", "export"),
+    ("analisis-log-hp", "view"),
+    ("analisis-log-hp", "export"),
     ("stc", "view"),
     ("stc", "export"),
 ]
