@@ -518,6 +518,88 @@ real ejecutado; solo se actualiza el estado de cada módulo.
       del trabajo — ojo con el cast de timestamps medianoche-UTC a DATE).
 - [ ] Correr en paralelo con VacaSync y apagarlo tras el período de observación.
 
+#### Fase 3 — Printer-Logs-Analyzer (reconocimiento iniciado — 2026-08-15)
+- [x] **Análisis de migración / caracterización por lectura de código completo**:
+      `docs/parque-impresoras/PRINTER_LOGS_ANALYZER_CARACTERIZACION.md` — leerla antes de
+      escribir código del módulo. **Alcance decidido por el usuario: migrar ahora solo el
+      análisis de logs**; Avisos/mantenimiento preventivo, Monitor de flota y la app mobile
+      Expo (no relevada en el diagnóstico original de §1) quedan para una revisión posterior
+      — no se portan tal cual porque el usuario quiere repensarlos. Hallazgos clave:
+      Insight API es la misma integración y credenciales que insumos (cerrada la duda de
+      Fase 1) — reusar vía patrón ADR-018; los mock fallbacks del legacy en
+      `/sds/extract-logs` muestran datos falsos al usuario y se recomienda no portarlos;
+      el prompt de IA de despacho es lógica de negocio real a portar textual.
+- [x] **Repo legacy local estaba desactualizado (detectado por el usuario, 2026-08-15):**
+      la primera pasada se hizo sobre un snapshot del 16-jun. Actualizado por fast-forward
+      a `origin/main` (`3d28a96`, 17-jul) sin perder nada y re-verificado todo (detalle en
+      §12 de la caracterización). Cambios que corrigen conclusiones previas: el alcance SÍ
+      tiene **un** background job (snapshots SDS automáticos 2×/día → entra bajo
+      `DISABLE_BACKGROUND_JOBS`); aparece **wsAyC como tercera integración compartida**
+      (incidentes CDS para el panel y para la IA — reusar el provider de ADR-018, el legacy
+      usa `requests` con `verify=False`, no replicar); CPMD pasó a servido directo de PDF
+      (tabla `error_solutions` dropeada — cierra esa decisión); prompt de IA v2 (umbral
+      dinámico por volumen + recency temporal + gate de reincidencia); centro de
+      notificaciones in-app nuevo (decisión pendiente de cómo mapearlo); la UI legacy ya
+      está rebrandeada Canal Directo + RNS Sanz (insumo para el handoff); drift de schema:
+      `printer_models`/`printer_consumables`/`consumable_related_codes` sin migración que
+      las cree. **Confirmado por el usuario (2026-08-15): el 17-jul es lo último que tocó
+      — no hay commits sin pushear; caracterización congelada sobre `3d28a96`.**
+- [x] **Decisiones de alcance (2026-08-15):** entrada principal = scraping SDS por serial;
+      pegar TSV queda como **backup** explícito para cuando el scraping se rompa (la UI
+      nueva debe reflejar esa jerarquía). El design handoff lo está construyendo el usuario
+      — esperar a que lo entregue antes de tocar frontend.
+- [x] **Tests de caracterización (2026-08-15):** 18 tests nuevos en el repo legacy
+      (`backend/tests/test_caracterizacion_analisis_logs.py`) sobre las muestras reales de
+      `samples/` — pipeline completo parseo→incidentes, portal HTML→TSV→round-trip,
+      extract_help_urls, diff+tendencia, shape del JSONB de snapshots. Re-corridos tras
+      actualizar el repo a `origin/main` y **relanzados sobre la app actualizada a pedido
+      del usuario (tercera ronda)**: 21 tests de caracterización, suite completa **258
+      passed**. La segunda pasada cubrió lo nuevo de julio (compare-with de dos snapshots,
+      servicio de snapshots automáticos con el HTML real del portal) y encontró un **bug
+      real del legacy**: el fan-out a telemetría de los snapshots automáticos crashea
+      (`Incident.last_event_time` no existe en la entidad de dominio) — en producción los
+      snapshots automáticos se guardan pero nunca escriben telemetría; la migración lo
+      corrige con `end_time` (detalle en §12.bis de la caracterización). Sin levantar el
+      server (pytest puro — el APScheduler del legacy no arranca en tests; solo arranca
+      con la app FastAPI, que no tiene flag para apagarlo y saca snapshots SDS 2×/día).
+- [x] **Decisiones de la tercera ronda (2026-08-15):** EWS remoto SÍ entra en esta
+      entrega; modelo de IA → **selector de modelos** desde la UI usando la Models API de
+      Anthropic (`GET /v1/models`; hoy sin créditos en la cuenta — se implementa con mocks
+      y se prueba en vivo cuando haya); centro de notificaciones → **no portar tal cual**:
+      existe para avisar el fin del refresh de caché HP pero no funcionaba bien — se
+      rediseña el mecanismo de aviso al llegar a esa parte.
+- [x] Design handoff del alcance — **primeras 2 pantallas entregadas por el usuario
+      (2026-08-15)** y formalizadas en
+      `Handsoff Mockups/design_handoff_analisis_log_hp/` (README + 3 capturas):
+      bienvenida/búsqueda por serie y panel de errores completo (KPIs, filtros, charts,
+      heatmap, timeline, IA, collapsibles de detalle) sobre el shell real de Mesa de
+      Ayuda. Las 7 preguntas del README fueron todas resueltas antes de arrancar el
+      frontend (colores, Buscar por Cliente, tasa de errores, TSV backup — todo en
+      "Puntos resueltos" del handoff). Las pantallas secundarias sin mockup se derivan
+      del sistema visual.
+- [x] **Backend completo + renombrado (2026-08-15):** módulo `analisis_log_hp` (antes
+      `parque_impresoras` — nombre más descriptivo) con dominio, 13 casos de uso,
+      infraestructura (SDS Portal scraping + lxml, Insight Portal, Anthropic Claude,
+      3 repositorios SQLAlchemy, prefijo `pi_`), 4 routers y job de snapshots automáticos
+      (cada 720 min). Migraciones: `a3c8e2f1` (schema `pi_*`) + `b7e4c9f2` (rename
+      parque→analisis-log-hp con DELETE+INSERT para FK no-deferrable). Arquitectura
+      limpia: `lint-imports` 22/0, `ruff` 0 errores, `mypy` 67 archivos, `pytest`
+      1319 passed. anthropic>=0.40.0 agregado. `EventLogsResult` como frontera
+      domain/infrastructure para no violar la dirección de capas.
+- [x] **Frontend completo + activación (2026-08-15):** pantalla de bienvenida (toggle
+      Serie/Manual, scraping SDS como entrada principal, TSV como backup explícito),
+      panel de errores (4 KPIs, filtro por severidad, gráfico de volumen apilado
+      Área/Barras/Líneas, barras de frecuencia por código, heatmap día×franja horaria,
+      timeline paginado con rangos, card IA colapsable, collapsibles de detalle).
+      Migración `c2e5f8a3d9b1` activa el módulo. Build TypeScript limpio, ruta
+      `/analisis-log-hp` sirve 307 (auth) como esperado.
+- [ ] Migrar datos reales desde el Postgres legacy del Printer-Logs-Analyzer
+      (principalmente `error_codes` del catálogo — `saved_analyses` y `telemetry`
+      son datos históricos opcionales; coordinar con la PC laboral que tiene la DB).
+- [ ] Prueba end-to-end con Playwright (`frontend/tests/analisis-log-hp.spec.ts`).
+- [ ] Correr en paralelo con el Printer-Logs-Analyzer legacy y apagarlo.
+- [ ] Actualizar `PROJECT_CONTEXT.md` del padre.
+
 ### Fase 4 — STC Cloud (caso especial, va último)
 - [ ] Migrar `heartbeatMonitor` y `alertWorker` (BullMQ → outbox Postgres + APScheduler,
       según decisión de §2) manteniendo el contrato de API que consume el agente Windows.
