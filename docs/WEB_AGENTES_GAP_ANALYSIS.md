@@ -175,43 +175,15 @@ Si en algún momento el monorepo necesita exponer liquidaciones a prestadores ex
 
 ---
 
-## 3. Componentes técnicos reutilizables a portar
+## 3. Patrones de UX a considerar
 
-### 3.1 Codec de Códigos de Barras
-
-Web-Agentes tiene una clase `CodigoBarrasCodec` (en `app/Lib/CodigoBarrasCodec.php`)
-que codifica/decodifica números de repuesto para escaneo con pistola de código de barras
-usando un checksum CRC8. Si el módulo de Incidentes llega a implementarse, este codec
-hay que portarlo a Python (clase pura, sin dependencias de framework).
-
-**Algoritmo:** CRC8 como dígito verificador, concatenado al número de repuesto, encodificado
-en una representación escaneable. Relevarlo del PHP antes de implementar.
-
-### 3.2 Dígito Verificador para Números de Incidente
-
-Web-Agentes genera un dígito verificador tipo módulo-N para el número de incidente
-(`_GeneraDigitoVerificador`, `_CodificaNumeroDeIncidente`, `_DecodificaNumeroDeIncidente`).
-Produce un código legible como `"1234-5"` y permite validar que el número no se haya
-ingresado con error tipográfico.
-
-El monorepo ya usa dígito verificador módulo-10 para liquidaciones (ADR mencionado en
-`INTEGRACION_APPS_PLAN.md` §1). Verificar si el algoritmo es el mismo o distinto —
-si es el mismo, extraerlo a `shared/domain/` como servicio puro.
-
-### 3.3 Filtros Persistentes por Sesión
+### 3.1 Filtros Persistentes por Sesión
 
 Web-Agentes guarda los filtros aplicados en sesión PHP y los restaura en la próxima visita
 al listado. El equivalente en el monorepo puede ser estado de URL (`searchParams`) o
 localStorage — pero hay que decidirlo y hacerlo consistente entre módulos. Hoy algunos
 módulos del monorepo no restauran el filtro anterior al volver desde el detalle, lo que
 obliga al usuario a volver a filtrar desde cero.
-
-### 3.4 Formularios Imprimibles
-
-Web-Agentes tiene un layout `print` (sin sidebar, sin navegación) activado por
-`/incidents/printform`. El equivalente moderno en Next.js es una página con
-`print:hidden` en los elementos de UI y `print:block` en el contenido del documento,
-o una ruta `/imprimir` con un layout limpio. No existe en ningún módulo del monorepo hoy.
 
 ---
 
@@ -290,7 +262,5 @@ la regla §6 de `ARCHITECTURE_GUIDE.md`: ningún `except Exception` en silencio.
 - [ ] ADR de decisión persist-local vs. on-demand para este módulo.
 - [ ] Design handoff antes de tocar el frontend (seguir el mismo proceso que los
       módulos anteriores — no inventar UI desde cero).
-- [ ] Portear `CodigoBarrasCodec` a Python como clase pura con tests de
-      caracterización (round-trip encode/decode) antes de enchufar al endpoint.
 - [ ] Definir permisos well-known: `VIEW`, `CREATE`, `UPDATE`, `MANAGE` como mínimo.
       Evaluar si `CANCEL` (anular incidente) merece permiso aparte.
