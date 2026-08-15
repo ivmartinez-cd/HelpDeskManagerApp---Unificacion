@@ -20,7 +20,13 @@ from src.modules.liquidaciones.application.dtos.sincronizar_liquidaciones import
 from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion import (
     ReanalizarLiquidacion,
 )
-from src.modules.liquidaciones.domain.entities.liquidacion import TIPO_REGULAR
+from src.modules.liquidaciones.domain.entities.liquidacion import (
+    ESTADO_ABIERTA,
+    ESTADO_OBSERVADA,
+    ESTADO_PRELIQUIDADA,
+    ESTADO_RECIBIDA,
+    TIPO_REGULAR,
+)
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.repositories.cd_liquidaciones_gateway import (
     CdLiquidacionesGateway,
@@ -46,6 +52,16 @@ from src.modules.liquidaciones.domain.value_objects.incidente_importado import I
 
 logger = logging.getLogger(__name__)
 
+# Estados que pueden ser anulados en AyC mientras siguen abiertos localmente.
+# Las terminales (aprobada, cerrada) no se tocan — no se anulan en AyC después de cerradas.
+_ESTADOS_PENDIENTES = frozenset(
+    {ESTADO_ABIERTA, ESTADO_PRELIQUIDADA, ESTADO_RECIBIDA, ESTADO_OBSERVADA}
+)
+
+# Nombres de estado que AyC puede devolver para una liquidación anulada, en caso de que
+# getTopLiquidations las incluya con estado explícito en lugar de omitirlas.
+_ESTADOS_CD_ANULADOS = frozenset({"anulada", "anulado", "cancelada", "void", "voided"})
+
 
 @dataclass(frozen=True)
 class SincronizarLiquidacionesPorts:
@@ -61,6 +77,7 @@ class _Contadores:
     creadas: int = 0
     ya_existentes: int = 0
     fallidas: int = 0
+    anuladas: int = 0
 
 
 class SincronizarLiquidaciones:
@@ -98,6 +115,7 @@ class SincronizarLiquidaciones:
             ya_existentes=totales.ya_existentes,
             sin_prestador=sin_prestador,
             fallidas=totales.fallidas,
+            anuladas=totales.anuladas,
         )
 
     async def _sincronizar_prestador(
@@ -114,7 +132,54 @@ class SincronizarLiquidaciones:
                 contadores.creadas += 1
             else:
                 contadores.fallidas += 1
+        contadores.anuladas = await self._detectar_y_eliminar_anuladas(liqs, prestador)
         return contadores
+
+    async def _detectar_y_eliminar_anuladas(
+        self, liqs: list[CdLiquidacion], prestador: Prestador
+    ) -> int:
+        """Elimina localmente las liquidaciones pendientes que AyC ya no reporta como vigentes.
+
+        No hace llamadas SOAP extra: reutiliza `liqs` ya obtenida por `_sincronizar_prestador`.
+        Guarda contra SOAP vacío: si `liqs` está vacío (fallo de red u otro error),
+        no toca nada — evita eliminar falsamente todo el historial local del prestador.
+
+        Detecta dos comportamientos posibles de AyC:
+        - Que omita las anuladas del response (la más común): ausencia en `liqs`.
+        - Que las incluya con un estado explícito (ej. "Anulada"): campo `estado`.
+        """
+        if not liqs:
+            return 0
+
+        cd_vigentes = {
+            cd_liq.numero_liquidacion
+            for cd_liq in liqs
+            if cd_liq.estado.lower() not in _ESTADOS_CD_ANULADOS
+        }
+        # Límite superior del window: el ID numérico más alto retornado por AyC.
+        # Solo se eliminan locales con ID ≤ ese máximo para no tocar liquidaciones
+        # más viejas que el top-N del SOAP (que podrían estar fuera del window).
+        max_cd_id = max(cd_liq.id for cd_liq in liqs)
+
+        locales = await self._ports.liquidaciones.list_activas_por_prestador_con_numero(
+            prestador.id, _ESTADOS_PENDIENTES
+        )
+        eliminadas = 0
+        for liq in locales:
+            assert liq.numero_liquidacion is not None
+            try:
+                local_ayc_id = int(liq.numero_liquidacion.split("-")[0])
+            except (ValueError, IndexError):
+                continue
+            if local_ayc_id <= max_cd_id and liq.numero_liquidacion not in cd_vigentes:
+                await self._ports.liquidaciones.delete(liq.id)
+                eliminadas += 1
+                logger.info(
+                    "sync CD %s: liquidación %s eliminada localmente (no vigente en AyC)",
+                    prestador.nombre_corto,
+                    liq.numero_liquidacion,
+                )
+        return eliminadas
 
     async def _procesar(self, cd_liq: CdLiquidacion, prestador: Prestador) -> bool:
         """Crea la liquidación con sus incidentes. False (sin crear) si el detalle

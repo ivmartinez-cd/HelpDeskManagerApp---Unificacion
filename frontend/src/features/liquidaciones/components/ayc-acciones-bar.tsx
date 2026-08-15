@@ -101,6 +101,20 @@ export function AyCAccionesBar({ liquidacion, onActualizado, onAnulado }: Props)
     }
   };
 
+  const handleForceLocalDelete = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await liquidacionesApi.delete(liquidacion.id);
+      toast.success("Registro local eliminado");
+      onAnulado();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al eliminar el registro local");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <div className="flex items-center gap-2">
@@ -127,21 +141,32 @@ export function AyCAccionesBar({ liquidacion, onActualizado, onAnulado }: Props)
           <p className="font-body text-sm text-muted-foreground leading-relaxed">
             {cfg.mensaje(liquidacion.numeroLiquidacion!)}
           </p>
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              onClick={() => setAccion(null)}
-              disabled={loading}
-              className="font-body text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={() => void handleConfirm()}
-              disabled={loading}
-              className={`rounded-[8px] px-4 py-2 font-body text-sm font-semibold transition-opacity disabled:opacity-50 ${cfg.btnCls}`}
-            >
-              {loading ? "Procesando..." : cfg.btnLabel}
-            </button>
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+            {accion === "anular" && error && (
+              <button
+                onClick={() => void handleForceLocalDelete()}
+                disabled={loading}
+                className="font-body text-xs text-muted-foreground underline hover:text-foreground disabled:opacity-50"
+              >
+                Eliminar solo localmente
+              </button>
+            )}
+            <div className="ml-auto flex gap-3">
+              <button
+                onClick={() => setAccion(null)}
+                disabled={loading}
+                className="font-body text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => void handleConfirm()}
+                disabled={loading}
+                className={`rounded-[8px] px-4 py-2 font-body text-sm font-semibold transition-opacity disabled:opacity-50 ${cfg.btnCls}`}
+              >
+                {loading ? "Procesando..." : cfg.btnLabel}
+              </button>
+            </div>
           </div>
         </BrandModal>
       )}

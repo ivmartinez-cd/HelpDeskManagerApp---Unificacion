@@ -3,7 +3,7 @@
 import uuid
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import and_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
@@ -24,13 +24,28 @@ class SqlAlchemyLiquidacionRepository:
         estado: str | None = None,
         periodo: str | None = None,
     ) -> list[Liquidacion]:
-        stmt = select(LiquidacionModel).order_by(LiquidacionModel.fecha_importacion.desc())
+        stmt = select(LiquidacionModel).order_by(
+            LiquidacionModel.periodo.desc(), LiquidacionModel.fecha_importacion.desc()
+        )
         if prestador_id is not None:
             stmt = stmt.where(LiquidacionModel.prestador_id == prestador_id)
         if estado is not None:
             stmt = stmt.where(LiquidacionModel.estado == estado)
         if periodo is not None:
             stmt = stmt.where(LiquidacionModel.periodo == periodo)
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_entity(row) for row in rows]
+
+    async def list_activas_por_prestador_con_numero(
+        self, prestador_id: UUID, estados: frozenset[str]
+    ) -> list[Liquidacion]:
+        stmt = select(LiquidacionModel).where(
+            and_(
+                LiquidacionModel.prestador_id == prestador_id,
+                LiquidacionModel.numero_liquidacion.is_not(None),
+                LiquidacionModel.estado.in_(estados),
+            )
+        )
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 

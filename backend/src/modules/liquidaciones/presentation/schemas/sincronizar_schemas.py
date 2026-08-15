@@ -13,6 +13,7 @@ class SincronizarOut(BaseModel):
     ya_existentes: int = Field(serialization_alias="yaExistentes")
     sin_prestador: int = Field(serialization_alias="sinPrestador")
     fallidas: int
+    anuladas: int
 
     @classmethod
     def from_dto(cls, dto: SincronizarLiquidacionesResultado) -> "SincronizarOut":
@@ -21,4 +22,5 @@ class SincronizarOut(BaseModel):
             ya_existentes=dto.ya_existentes,
             sin_prestador=dto.sin_prestador,
             fallidas=dto.fallidas,
+            anuladas=dto.anuladas,
         )

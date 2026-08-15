@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { Spinner } from "@/shared/components/ui/spinner";
@@ -12,6 +12,13 @@ import { formatARS, formatFecha } from "../lib/format";
 import { EstadoBadge } from "./estado-badge";
 import { LiquidacionesImportModal } from "./liquidaciones-import-modal";
 
+function formatPeriodo(periodo: string): string {
+  const [year, month] = periodo.split("-");
+  if (!year || !month) return periodo;
+  const date = new Date(Number(year), Number(month) - 1);
+  return date.toLocaleDateString("es-AR", { month: "short", year: "numeric" });
+}
+
 export function LiquidacionesDashboard() {
   const [liquidaciones, setLiquidaciones] = useState<Liquidacion[]>([]);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
@@ -19,7 +26,8 @@ export function LiquidacionesDashboard() {
   const [importOpen, setImportOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [filtroPrestador, setFiltroPrestador] = useState("");
-  const [filtroAnio, setFiltroAnio] = useState("");
+  const [filtroPeriodo, setFiltroPeriodo] = useState("");
+  const hasAutoSelected = useRef(false);
 
   // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   // listAll() usa fetchCatalogoCompleto para evitar el truncamiento silencioso.
@@ -31,6 +39,13 @@ export function LiquidacionesDashboard() {
       ]);
       setLiquidaciones(liqs);
       setPrestadores(prest);
+      if (!hasAutoSelected.current && liqs.length > 0) {
+        const periodos = [...new Set(liqs.map((l) => l.periodo))].sort().reverse();
+        if (periodos[0]) {
+          setFiltroPeriodo(periodos[0]);
+          hasAutoSelected.current = true;
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -40,8 +55,8 @@ export function LiquidacionesDashboard() {
     void load();
   }, [load]);
 
-  const aniosDisponibles = useMemo(
-    () => [...new Set(liquidaciones.map((l) => l.periodo.slice(0, 4)))].sort().reverse(),
+  const periodosDisponibles = useMemo(
+    () => [...new Set(liquidaciones.map((l) => l.periodo))].sort().reverse(),
     [liquidaciones],
   );
 
@@ -50,9 +65,9 @@ export function LiquidacionesDashboard() {
       liquidaciones.filter(
         (l) =>
           (!filtroPrestador || l.prestadorId === filtroPrestador) &&
-          (!filtroAnio || l.periodo.startsWith(filtroAnio)),
+          (!filtroPeriodo || l.periodo === filtroPeriodo),
       ),
-    [liquidaciones, filtroPrestador, filtroAnio],
+    [liquidaciones, filtroPrestador, filtroPeriodo],
   );
 
   const prestadorMap = Object.fromEntries(prestadores.map((p) => [p.id, p]));
@@ -71,7 +86,7 @@ export function LiquidacionesDashboard() {
     setSyncing(true);
     try {
       const res = await liquidacionesApi.sincronizar();
-      const detalle = `${res.creadas} nueva${res.creadas !== 1 ? "s" : ""}, ${res.yaExistentes} ya existentes${res.sinPrestador > 0 ? `, ${res.sinPrestador} sin prestador vinculado` : ""}`;
+      const detalle = `${res.creadas} nueva${res.creadas !== 1 ? "s" : ""}, ${res.yaExistentes} ya existentes${res.sinPrestador > 0 ? `, ${res.sinPrestador} sin prestador vinculado` : ""}${res.anuladas > 0 ? `, ${res.anuladas} anulada${res.anuladas !== 1 ? "s" : ""} en AyC eliminada${res.anuladas !== 1 ? "s" : ""}` : ""}`;
       if (res.fallidas > 0) {
         toast.warning(
           `Sync con fallas — ${detalle}, ${res.fallidas} con detalle SOAP fallido (se reintentan en el próximo sync)`,
@@ -139,15 +154,15 @@ export function LiquidacionesDashboard() {
         </select>
 
         <select
-          value={filtroAnio}
-          onChange={(e) => setFiltroAnio(e.target.value)}
+          value={filtroPeriodo}
+          onChange={(e) => setFiltroPeriodo(e.target.value)}
           className={selectCls}
-          aria-label="Filtrar por año"
+          aria-label="Filtrar por período"
         >
-          <option value="">Todos los años</option>
-          {aniosDisponibles.map((a) => (
-            <option key={a} value={a}>
-              {a}
+          <option value="">Todos los períodos</option>
+          {periodosDisponibles.map((p) => (
+            <option key={p} value={p}>
+              {formatPeriodo(p)}
             </option>
           ))}
         </select>

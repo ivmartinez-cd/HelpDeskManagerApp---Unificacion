@@ -24,6 +24,14 @@ class LiquidacionRepository(Protocol):
         Usado por el sync de CD para detectar novedades sin cargar filas completas."""
         ...
 
+    async def list_activas_por_prestador_con_numero(
+        self, prestador_id: UUID, estados: frozenset[str]
+    ) -> list[Liquidacion]:
+        """Liquidaciones del prestador que tienen `numero_liquidacion` (vínculo AyC)
+        y están en alguno de los `estados` dados. Usado por el sync para cruzar contra
+        la lista de AyC y detectar las que fueron anuladas allá sin pasar por nuestra app."""
+        ...
+
     async def list_periodos(self) -> list[str]:
         """Valores distintos de `periodo` (YYYY-MM) en orden descendente."""
         ...

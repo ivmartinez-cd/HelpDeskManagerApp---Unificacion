@@ -152,6 +152,16 @@ class FakeLiquidacionRepository:
             self.rows[liquidacion_id], total_alertas=total_alertas
         )
 
+    async def list_activas_por_prestador_con_numero(
+        self, prestador_id: UUID, estados: frozenset[str]
+    ) -> list[Liquidacion]:
+        return [
+            r for r in self.rows.values()
+            if r.prestador_id == prestador_id
+            and r.numero_liquidacion is not None
+            and r.estado in estados
+        ]
+
     async def delete(self, liquidacion_id: UUID) -> bool:
         if liquidacion_id not in self.rows:
             return False

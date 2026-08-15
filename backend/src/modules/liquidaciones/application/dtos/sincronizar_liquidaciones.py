@@ -9,3 +9,4 @@ class SincronizarLiquidacionesResultado:
     ya_existentes: int
     sin_prestador: int  # prestadores activos sin cd_prestador_id (fuera del sync)
     fallidas: int  # detalle SOAP vacío/fallido: no se crearon, se reintentan
+    anuladas: int = 0  # detectadas como anuladas en AyC y eliminadas localmente
