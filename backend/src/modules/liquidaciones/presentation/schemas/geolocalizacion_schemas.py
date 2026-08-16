@@ -16,6 +16,7 @@ from src.modules.liquidaciones.application.use_cases.resolver_coordenadas import
 )
 from src.modules.liquidaciones.application.use_cases.tabla_km_lugares import (
     CambioDomicilio,
+    FilaNoEncontrada,
     RefrescarDireccionesResultado,
 )
 from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
@@ -171,12 +172,25 @@ class CambioDomicilioOut(BaseModel):
         )
 
 
+class FilaNoEncontradaOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    empresa_nombre: str = Field(serialization_alias="empresaNombre")
+    sucursal_nombre: str = Field(serialization_alias="sucursalNombre")
+
+    @classmethod
+    def from_dto(cls, f: FilaNoEncontrada) -> FilaNoEncontradaOut:
+        return cls(empresa_nombre=f.empresa_nombre, sucursal_nombre=f.sucursal_nombre)
+
+
 class RefrescarDireccionesOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     actualizadas: int
     sin_cambios: int = Field(serialization_alias="sinCambios")
     no_encontradas: int = Field(serialization_alias="noEncontradas")
     cambios: list[CambioDomicilioOut]
+    no_encontradas_detalle: list[FilaNoEncontradaOut] = Field(
+        serialization_alias="noEncontradasDetalle", default_factory=list
+    )
 
     @classmethod
     def from_dto(cls, r: RefrescarDireccionesResultado) -> RefrescarDireccionesOut:
@@ -185,4 +199,7 @@ class RefrescarDireccionesOut(BaseModel):
             sin_cambios=r.sin_cambios,
             no_encontradas=r.no_encontradas,
             cambios=[CambioDomicilioOut.from_dto(c) for c in r.cambios],
+            no_encontradas_detalle=[
+                FilaNoEncontradaOut.from_dto(f) for f in r.no_encontradas_detalle
+            ],
         )

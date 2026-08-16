@@ -213,11 +213,18 @@ class CambioDomicilio:
 
 
 @dataclass(frozen=True)
+class FilaNoEncontrada:
+    empresa_nombre: str
+    sucursal_nombre: str
+
+
+@dataclass(frozen=True)
 class RefrescarDireccionesResultado:
     actualizadas: int
     sin_cambios: int
     no_encontradas: int
     cambios: list[CambioDomicilio] = field(default_factory=list)
+    no_encontradas_detalle: list[FilaNoEncontrada] = field(default_factory=list)
 
 
 class RefrescarDatosSiges:
@@ -242,11 +249,18 @@ class RefrescarDatosSiges:
         filas = await self._ports.tabla_km.list_by_prestador(prestador_id)
         actualizadas = sin_cambios = no_encontradas = 0
         cambios: list[CambioDomicilio] = []
+        no_encontradas_detalle: list[FilaNoEncontrada] = []
         for fila in filas:
             key = (normalizar_nombre(fila.empresa_nombre), normalizar_nombre(fila.sucursal_nombre))
             siges = indice.get(key)
             if siges is None:
                 no_encontradas += 1
+                no_encontradas_detalle.append(
+                    FilaNoEncontrada(
+                        empresa_nombre=fila.empresa_nombre,
+                        sucursal_nombre=fila.sucursal_nombre,
+                    )
+                )
                 continue
             if _mismo_domicilio(fila, siges.domicilio, siges.localidad, siges.provincia):
                 sin_cambios += 1
@@ -271,6 +285,7 @@ class RefrescarDatosSiges:
             sin_cambios=sin_cambios,
             no_encontradas=no_encontradas,
             cambios=cambios,
+            no_encontradas_detalle=no_encontradas_detalle,
         )
 
 

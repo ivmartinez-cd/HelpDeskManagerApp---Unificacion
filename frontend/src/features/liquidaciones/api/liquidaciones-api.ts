@@ -305,6 +305,7 @@ export const liquidacionesApi = {
       sinCambios: number;
       noEncontradas: number;
       cambios: { sucursalNombre: string; empresaNombre: string; domicilioAntes: string | null; domicilioDespues: string | null }[];
+      noEncontradasDetalle: { empresaNombre: string; sucursalNombre: string }[];
     }>(`/api/liquidaciones/siges/prestador/${prestadorId}/refrescar-datos-sucursales`),
 
   buscarLugarFila: (tablaKmId: string) =>

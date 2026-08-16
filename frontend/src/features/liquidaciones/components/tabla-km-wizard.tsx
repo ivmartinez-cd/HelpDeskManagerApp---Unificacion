@@ -100,8 +100,31 @@ function SeccionRefrescarSiges({ prestadorId }: { prestadorId: string }) {
           <div className="flex flex-wrap gap-2">
             <Badge variant="success">{resultado.actualizadas} actualizadas</Badge>
             <Badge variant="neutral">{resultado.sinCambios} sin cambios</Badge>
-            {resultado.noEncontradas > 0 && <Badge variant="warning">{resultado.noEncontradas} no encontradas en Siges</Badge>}
+            {resultado.noEncontradas > 0 && (
+              <Badge variant="warning">{resultado.noEncontradas} no encontradas en Gestión</Badge>
+            )}
           </div>
+          {resultado.noEncontradas > 0 && resultado.noEncontradasDetalle.length > 0 && (
+            <div className="rounded-[6px] border border-warning/30 bg-warning/5 p-3 flex flex-col gap-2">
+              <p className="font-body text-xs font-semibold text-foreground">
+                ¿Qué significa "no encontradas en Gestión"?
+              </p>
+              <p className="font-body text-xs text-muted-foreground">
+                Estas sucursales están en tu Tabla KM pero no aparecen en Gestión (Siges) con el mismo
+                nombre. Puede que hayan cambiado de nombre en Gestión, o que ya no estén asignadas a
+                este prestador. Sus domicilios <strong>no se actualizaron</strong> — revisalas y
+                corregí el nombre en tu Tabla KM si corresponde.
+              </p>
+              <div className="flex flex-col gap-0.5 max-h-[12vh] overflow-y-auto">
+                {resultado.noEncontradasDetalle.map((f) => (
+                  <p key={`${f.empresaNombre}::${f.sucursalNombre}`} className="font-body text-xs text-foreground">
+                    <span className="text-muted-foreground">{f.empresaNombre} —</span>{" "}
+                    <span className="font-semibold">{f.sucursalNombre}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
           {resultado.cambios.length > 0 && (
             <div className="flex max-h-[15vh] flex-col gap-1 overflow-y-auto text-xs font-body text-muted-foreground">
               {resultado.cambios.map((c) => (
