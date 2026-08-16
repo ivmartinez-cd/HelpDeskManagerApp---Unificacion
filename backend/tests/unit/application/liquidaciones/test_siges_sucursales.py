@@ -16,7 +16,7 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     SigesSucursalCliente,
 )
 from tests.unit.domain.liquidaciones.factories import make_prestador, make_tabla_km
-from tests.unit.domain.liquidaciones.fakes import FakeTablaKmRepository
+from tests.unit.domain.liquidaciones.fakes import FakeIncidenteRepository, FakeTablaKmRepository
 from tests.unit.domain.liquidaciones.fakes_config import (
     FakeConfigPrestadorRepository,
     FakeSigesCatalogoGateway,
@@ -45,6 +45,7 @@ def _ports(
         prestadores=prestadores,
         tabla_km=tabla_km or FakeTablaKmRepository(),
         siges=FakeSigesCatalogoGateway(sucursales=sucursales),
+        incidentes=FakeIncidenteRepository(),
     )
 
 

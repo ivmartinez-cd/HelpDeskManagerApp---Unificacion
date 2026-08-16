@@ -8,12 +8,16 @@ intactos). El alta real sigue siendo la decisión manual del usuario vía
 """
 
 from dataclasses import dataclass
+from datetime import date
 from uuid import UUID
 
 from src.modules.liquidaciones.application.dtos.siges_sucursales import SucursalSigesDTO
 from src.modules.liquidaciones.domain.errors import (
     PrestadorNoEncontradoError,
     PrestadorSinVinculoSigesError,
+)
+from src.modules.liquidaciones.domain.repositories.incidente_repository import (
+    IncidenteRepository,
 )
 from src.modules.liquidaciones.domain.repositories.prestador_repository import (
     PrestadorRepository,
@@ -23,7 +27,20 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     SigesSucursalPropia,
 )
 from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
-from src.modules.liquidaciones.domain.services.vinculacion_siges import normalizar_nombre
+from src.modules.liquidaciones.domain.services.vinculacion_siges import (
+    nombres_compatibles,
+    normalizar_nombre,
+)
+
+
+def _desde_periodo_hace_meses(meses: int) -> str:
+    hoy = date.today()
+    mes = hoy.month - (meses % 12)
+    anio = hoy.year - (meses // 12)
+    if mes <= 0:
+        mes += 12
+        anio -= 1
+    return f"{anio:04d}-{mes:02d}"
 
 
 @dataclass(frozen=True)
@@ -52,6 +69,7 @@ class SigesSucursalesPorts:
     prestadores: PrestadorRepository
     tabla_km: TablaKmRepository
     siges: SigesCatalogoGateway
+    incidentes: IncidenteRepository
 
 
 class BuscarSucursalesSiges:
@@ -69,6 +87,11 @@ class BuscarSucursalesSiges:
             (normalizar_nombre(fila.empresa_nombre), normalizar_nombre(fila.sucursal_nombre))
             for fila in await self._ports.tabla_km.list_by_prestador(prestador_id)
         }
+        activos_raw = await self._ports.incidentes.empresas_con_actividad_reciente(
+            prestador_id, _desde_periodo_hace_meses(24)
+        )
+        activos_norm = {normalizar_nombre(n) for n in activos_raw}
+
         filtro = normalizar_nombre(q)
         resultados = []
         for sucursal in await self._ports.siges.list_sucursales_de_prestador(
@@ -78,6 +101,9 @@ class BuscarSucursalesSiges:
             nombre = normalizar_nombre(sucursal.sucursal_nombre)
             if filtro and filtro not in empresa and filtro not in nombre:
                 continue
+            actividad_reciente = empresa in activos_norm or any(
+                nombres_compatibles(empresa, a) for a in activos_norm
+            )
             resultados.append(
                 SucursalSigesDTO(
                     siges_sucursal_id=sucursal.siges_sucursal_id,
@@ -87,6 +113,7 @@ class BuscarSucursalesSiges:
                     localidad=sucursal.localidad,
                     provincia=sucursal.provincia,
                     ya_cargada=(empresa, nombre) in cargadas,
+                    actividad_reciente=actividad_reciente,
                 )
             )
         return resultados

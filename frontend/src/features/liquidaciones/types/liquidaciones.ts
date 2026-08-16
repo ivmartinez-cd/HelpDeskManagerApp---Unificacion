@@ -232,6 +232,7 @@ export interface SucursalSiges {
   localidad: string | null;
   provincia: string | null;
   yaCargada: boolean;
+  actividadReciente: boolean;
 }
 
 export interface SyncTarifariosResult {

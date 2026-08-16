@@ -16,3 +16,4 @@ class SucursalSigesDTO:
     localidad: str | None
     provincia: str | None
     ya_cargada: bool
+    actividad_reciente: bool

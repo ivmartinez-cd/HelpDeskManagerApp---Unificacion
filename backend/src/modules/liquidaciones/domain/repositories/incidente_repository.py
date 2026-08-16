@@ -35,3 +35,10 @@ class IncidenteRepository(Protocol):
         devuelve `ejecutar_motor_reglas` — en el legacy era una mutación directa del
         ORM, acá es un update explícito porque `Incidente` es inmutable."""
         ...
+
+    async def empresas_con_actividad_reciente(
+        self, prestador_id: UUID, desde_periodo: str
+    ) -> set[str]:
+        """Distinct empresa_nombre (sin normalizar) de incidentes de este prestador
+        en liquidaciones con periodo >= desde_periodo. Sirve para detectar ex-clientes."""
+        ...

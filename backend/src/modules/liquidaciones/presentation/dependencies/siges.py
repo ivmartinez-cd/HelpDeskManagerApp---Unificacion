@@ -37,6 +37,9 @@ from src.modules.liquidaciones.infrastructure.google_maps.httpx_google_maps_gate
 from src.modules.liquidaciones.infrastructure.models.cuadricula_base_map_model import (
     SqlAlchemyCuadriculaBaseMapRepository,
 )
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_incidente_repository import (  # noqa: E501
+    SqlAlchemyIncidenteRepository,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
@@ -153,5 +156,6 @@ def build_buscar_sucursales_siges(session: AsyncSession) -> BuscarSucursalesSige
             prestadores=SqlAlchemyPrestadorRepository(session),
             tabla_km=SqlAlchemyTablaKmRepository(session),
             siges=siges_catalogo_gateway(),
+            incidentes=SqlAlchemyIncidenteRepository(session),
         )
     )

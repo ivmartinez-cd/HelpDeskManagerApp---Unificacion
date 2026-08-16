@@ -62,6 +62,21 @@ class SqlAlchemyIncidenteRepository:
             )
             await self._session.execute(stmt)
 
+    async def empresas_con_actividad_reciente(
+        self, prestador_id: UUID, desde_periodo: str
+    ) -> set[str]:
+        stmt = (
+            select(IncidenteModel.empresa_nombre)
+            .distinct()
+            .join(LiquidacionModel, LiquidacionModel.id == IncidenteModel.liquidacion_id)
+            .where(
+                LiquidacionModel.prestador_id == prestador_id,
+                LiquidacionModel.periodo >= desde_periodo,
+            )
+        )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return {r for r in rows if r is not None}
+
 
 def _a_model(liquidacion_id: UUID, incidente: IncidenteImportado) -> IncidenteModel:
     return IncidenteModel(

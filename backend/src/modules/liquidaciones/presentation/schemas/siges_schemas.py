@@ -143,6 +143,7 @@ class SucursalSigesOut(BaseModel):
     localidad: str | None
     provincia: str | None
     ya_cargada: bool = Field(serialization_alias="yaCargada")
+    actividad_reciente: bool = Field(serialization_alias="actividadReciente")
 
     @classmethod
     def from_dto(cls, dto: SucursalSigesDTO) -> SucursalSigesOut:
@@ -154,6 +155,7 @@ class SucursalSigesOut(BaseModel):
             localidad=dto.localidad,
             provincia=dto.provincia,
             ya_cargada=dto.ya_cargada,
+            actividad_reciente=dto.actividad_reciente,
         )
 
 

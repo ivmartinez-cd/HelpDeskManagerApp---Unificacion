@@ -225,6 +225,11 @@ class FakeIncidenteRepository:
                 estado_validacion=r.estado_validacion,
             )
 
+    async def empresas_con_actividad_reciente(
+        self, prestador_id: UUID, desde_periodo: str
+    ) -> set[str]:
+        return {i.empresa_nombre for i in self.rows.values() if i.empresa_nombre is not None}
+
 
 class FakeAlertaRepository:
     def __init__(self) -> None:

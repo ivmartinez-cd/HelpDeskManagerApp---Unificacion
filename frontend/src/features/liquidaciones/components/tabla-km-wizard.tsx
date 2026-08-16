@@ -53,6 +53,7 @@ function PasoImportar({ prestadorId, onImportado }: {
   const [importando, setImportando] = useState(false);
   const [progreso, setProgreso] = useState(0);
   const [importado, setImportado] = useState(false);
+  const [verExClientes, setVerExClientes] = useState(false);
 
   useEffect(() => {
     liquidacionesApi.buscarSucursalesSiges(prestadorId, "")
@@ -61,8 +62,11 @@ function PasoImportar({ prestadorId, onImportado }: {
       .finally(() => setCargando(false));
   }, [prestadorId]);
 
-  const nuevas = sucursales.filter(s => !s.yaCargada);
+  const todasNuevas = sucursales.filter(s => !s.yaCargada);
   const yaCargadas = sucursales.filter(s => s.yaCargada);
+  const nuevasActivas = todasNuevas.filter(s => s.actividadReciente);
+  const nuevasExClientes = todasNuevas.filter(s => !s.actividadReciente);
+  const nuevas = verExClientes ? todasNuevas : nuevasActivas;
 
   const importar = async () => {
     setImportando(true);
@@ -102,18 +106,34 @@ function PasoImportar({ prestadorId, onImportado }: {
         se muestran como &quot;ya cargada&quot; — solo se importan las nuevas.
         Los km recorrido quedan en 0 para que los completes a mano.
       </p>
-      <div className="flex flex-wrap gap-2">
-        <Badge variant="info">{nuevas.length} nuevas</Badge>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="info">{nuevasActivas.length} nuevas activas</Badge>
+        {nuevasExClientes.length > 0 && (
+          <Badge variant="neutral">{nuevasExClientes.length} ex-clientes</Badge>
+        )}
         <Badge variant="neutral">{yaCargadas.length} ya cargadas</Badge>
+        {nuevasExClientes.length > 0 && (
+          <button
+            className="font-body text-xs text-muted-foreground underline-offset-2 hover:underline"
+            onClick={() => setVerExClientes(v => !v)}
+          >
+            {verExClientes ? "Ocultar ex-clientes" : "Mostrar también ex-clientes (sin liquidaciones en 24 meses)"}
+          </button>
+        )}
       </div>
       {nuevas.length > 0 && !importado && (
         <div className="flex flex-col gap-3">
           <div className="max-h-[30vh] overflow-y-auto rounded-[8px] border border-border divide-y divide-border">
             {nuevas.map(s => (
-              <div key={s.sigesSucursalId} className="px-3 py-2">
-                <p className="font-body text-sm font-semibold text-foreground">
-                  {s.empresaNombre} · {s.sucursalNombre}
-                </p>
+              <div key={s.sigesSucursalId} className={cn("px-3 py-2", !s.actividadReciente && "opacity-60")}>
+                <div className="flex items-center gap-2">
+                  <p className="font-body text-sm font-semibold text-foreground">
+                    {s.empresaNombre} · {s.sucursalNombre}
+                  </p>
+                  {!s.actividadReciente && (
+                    <Badge variant="neutral">sin actividad</Badge>
+                  )}
+                </div>
                 <p className="font-body text-xs text-muted-foreground">
                   {[s.domicilio, s.localidad, s.provincia].filter(Boolean).join(" · ") || "Sin domicilio en Siges"}
                 </p>
@@ -134,7 +154,9 @@ function PasoImportar({ prestadorId, onImportado }: {
       )}
       {nuevas.length === 0 && (
         <p className="font-body text-sm text-muted-foreground italic">
-          Todas las sucursales de este PST ya están en la Tabla KM. Podés pasar al siguiente paso.
+          {todasNuevas.length === 0
+            ? "Todas las sucursales de este PST ya están en la Tabla KM. Podés pasar al siguiente paso."
+            : "No hay clientes activos nuevos para importar. Usá \"Mostrar también ex-clientes\" si querés importar clientes sin actividad reciente."}
         </p>
       )}
     </div>
