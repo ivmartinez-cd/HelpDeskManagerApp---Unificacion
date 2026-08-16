@@ -4,6 +4,12 @@
 propias) — se resuelven por comparación case-insensitive contra `Incidente`, no por FK.
 `umbral_viatico` es 30.0 por default pero configurable por excepción (ej. 20.0 para el
 Aeropuerto de Santa Fe en PERTEX) — ver RN005 en `ANALISIS_FUNCIONAL...md` del legacy.
+
+Convención de km (Fase 0, 2026-08-15, validada con datos reales): TODOS los prestadores
+facturan ida y vuelta — `kms_recorrido` y `kms_a_facturar` son el TOTAL del viaje, y
+`umbral_viatico` se compara contra ese total. `kms_ida`/`kms_vuelta` son los tramos
+reales medidos por Google (la vuelta B→A puede diferir de la ida por manos únicas).
+`coords_origen` registra la procedencia del pin destino ('siges' | 'geocode' | 'manual').
 """
 
 import uuid
@@ -31,3 +37,10 @@ class TablaKm:
     url_maps: str | None
     created_at: datetime
     updated_at: datetime
+    latitud_destino: float | None = None
+    longitud_destino: float | None = None
+    kms_ida: float | None = None
+    kms_vuelta: float | None = None
+    coords_origen: str | None = None
+    geocode_formatted_address: str | None = None
+    geocode_fecha: datetime | None = None

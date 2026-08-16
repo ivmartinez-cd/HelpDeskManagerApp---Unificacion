@@ -36,6 +36,9 @@ class PrestadorOut(BaseModel):
     activo: bool
     siges_empresa_id: int | None = Field(default=None, serialization_alias="sigesEmpresaId")
     cd_prestador_id: int | None = Field(default=None, serialization_alias="cdPrestadorId")
+    siges_base_sucursal_id: int | None = Field(
+        default=None, serialization_alias="sigesBaseSucursalId"
+    )
     created_at: datetime = Field(serialization_alias="createdAt")
     updated_at: datetime = Field(serialization_alias="updatedAt")
 
@@ -50,6 +53,7 @@ class PrestadorOut(BaseModel):
             activo=e.activo,
             siges_empresa_id=e.siges_empresa_id,
             cd_prestador_id=e.cd_prestador_id,
+            siges_base_sucursal_id=e.siges_base_sucursal_id,
             created_at=e.created_at,
             updated_at=e.updated_at,
         )
@@ -62,6 +66,11 @@ class ToggleActivoIn(BaseModel):
 class VincularCdIn(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     cd_prestador_id: int | None = Field(default=None, alias="cdPrestadorId")
+
+
+class VincularBaseSucursalIn(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    siges_base_sucursal_id: int | None = Field(default=None, alias="sigesBaseSucursalId")
 
 
 # ─── SPSTs ───────────────────────────────────────────────────────────────────
@@ -183,6 +192,14 @@ class TablaKmOut(BaseModel):
     aplica_viatico: bool = Field(serialization_alias="aplicaViatico")
     kms_a_facturar: float = Field(serialization_alias="kmsAFacturar")
     url_maps: str | None = Field(serialization_alias="urlMaps")
+    latitud_destino: float | None = Field(default=None, serialization_alias="latitudDestino")
+    longitud_destino: float | None = Field(default=None, serialization_alias="longitudDestino")
+    kms_ida: float | None = Field(default=None, serialization_alias="kmsIda")
+    kms_vuelta: float | None = Field(default=None, serialization_alias="kmsVuelta")
+    coords_origen: str | None = Field(default=None, serialization_alias="coordsOrigen")
+    geocode_formatted_address: str | None = Field(
+        default=None, serialization_alias="geocodeFormattedAddress"
+    )
     created_at: datetime = Field(serialization_alias="createdAt")
     updated_at: datetime = Field(serialization_alias="updatedAt")
 
@@ -203,6 +220,12 @@ class TablaKmOut(BaseModel):
             aplica_viatico=e.aplica_viatico,
             kms_a_facturar=e.kms_a_facturar,
             url_maps=e.url_maps,
+            latitud_destino=e.latitud_destino,
+            longitud_destino=e.longitud_destino,
+            kms_ida=e.kms_ida,
+            kms_vuelta=e.kms_vuelta,
+            coords_origen=e.coords_origen,
+            geocode_formatted_address=e.geocode_formatted_address,
             created_at=e.created_at,
             updated_at=e.updated_at,
         )

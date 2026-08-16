@@ -27,3 +27,6 @@ class Prestador:
     # Vínculo al `prestador_id` numérico del SOAP wsAyC — None = sin vincular,
     # liquidaciones de ese prestador no se sincronizan automáticamente.
     cd_prestador_id: int | None = None
+    # `Id_Sucursal` de Siges de la sucursal base del PST (su sede de despacho).
+    # Se usa para calcular distancias automáticamente vía Google Maps Distance Matrix.
+    siges_base_sucursal_id: int | None = None

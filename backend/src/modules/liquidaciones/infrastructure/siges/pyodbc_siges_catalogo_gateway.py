@@ -8,10 +8,12 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     SigesCostoServicio,
     SigesEmpresaInfo,
     SigesSucursalCliente,
+    SigesSucursalPropia,
     TipoEmpresaSiges,
 )
 from src.modules.liquidaciones.infrastructure.siges.query import (
     EMPRESAS_PST_ACTIVAS_SQL,
+    SUCURSALES_DE_EMPRESA_SQL,
     SUCURSALES_DE_PRESTADOR_SQL,
     build_costos_habilitados_sql,
 )
@@ -112,6 +114,28 @@ class PyodbcSigesCatalogoGateway:
                 domicilio=_domicilio(row.Domicilio),
                 localidad=_texto(row.DesCiudad),
                 provincia=_texto(row.DesProvincia),
+                latitud=_texto(row.Latitud),
+                longitud=_texto(row.Longitud),
+            )
+            for row in rows
+        ]
+
+    async def list_sucursales_de_empresa(
+        self, siges_empresa_id: int
+    ) -> list[SigesSucursalPropia]:
+        rows = await self._runner.fetch_all(
+            SUCURSALES_DE_EMPRESA_SQL,
+            (siges_empresa_id,),
+            gateway="siges_catalogo",
+            log_message="Fallo la consulta de sucursales propias contra Siges/MERCURIO",
+            log_extra={"siges_empresa_id": siges_empresa_id},
+        )
+        return [
+            SigesSucursalPropia(
+                siges_sucursal_id=int(row.Id_Sucursal),
+                descripcion=str(row.descripcion).strip(),
+                latitud=_texto(row.Latitud),
+                longitud=_texto(row.Longitud),
             )
             for row in rows
         ]

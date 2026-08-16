@@ -36,6 +36,11 @@ class PrestadorLiquidacionOut(BaseModel):
     cuit: str | None
     region: str | None
     activo: bool
+    siges_empresa_id: int | None = Field(default=None, serialization_alias="sigesEmpresaId")
+    cd_prestador_id: int | None = Field(default=None, serialization_alias="cdPrestadorId")
+    siges_base_sucursal_id: int | None = Field(
+        default=None, serialization_alias="sigesBaseSucursalId"
+    )
     created_at: datetime = Field(serialization_alias="createdAt")
     updated_at: datetime = Field(serialization_alias="updatedAt")
 
@@ -48,6 +53,9 @@ class PrestadorLiquidacionOut(BaseModel):
             cuit=e.cuit,
             region=e.region,
             activo=e.activo,
+            siges_empresa_id=e.siges_empresa_id,
+            cd_prestador_id=e.cd_prestador_id,
+            siges_base_sucursal_id=e.siges_base_sucursal_id,
             created_at=e.created_at,
             updated_at=e.updated_at,
         )

@@ -168,6 +168,15 @@ class Settings(BaseSettings):
     # Cadencia del job de snapshots SDS automáticos (2×/día = cada 720 min).
     analisis_log_hp_snapshot_interval_minutes: int = 720
 
+    # Google Maps (Distance Matrix + Geocoding) — usadas por el módulo de
+    # liquidaciones para calcular distancias PST↔sucursal cliente y geocodificar
+    # sucursales sin pin en Siges. Sin clave configurada los endpoints responden
+    # 502 con mensaje claro. La key es corporativa y paga: el tope corta una
+    # corrida antes de superar ese número de unidades facturables (requests de
+    # geocoding + elementos de matrix).
+    google_maps_api_key: str = ""
+    google_maps_max_calls_per_run: int = 200
+
     # Desactiva todos los jobs de fondo (útil en CI/test o cuando se corren
     # múltiples instancias y solo una debe ejecutar los jobs).
     disable_background_jobs: bool = False

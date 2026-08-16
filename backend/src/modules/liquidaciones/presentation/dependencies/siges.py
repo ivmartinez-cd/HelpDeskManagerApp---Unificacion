@@ -1,4 +1,4 @@
-"""Factories de los casos de uso de vínculo/sync contra Siges (ADR-014) — el
+﻿"""Factories de los casos de uso de vínculo/sync contra Siges (ADR-014) — el
 gateway pyodbc usa el runner compartido de MERCURIO (ADR-018): singleton de
 proceso con chequeo de host, igual que sla/prestadores/contadores."""
 
@@ -15,13 +15,18 @@ from src.modules.liquidaciones.application.use_cases.siges_config import (
 )
 from src.modules.liquidaciones.application.use_cases.siges_sucursales import (
     BuscarSucursalesSiges,
+    ListarSucursalesPropias,
     SigesSucursalesPorts,
+    SigesSucursalesPropiasSimplePorts,
 )
 from src.modules.liquidaciones.application.use_cases.siges_tarifarios import (
     EstadoZonasSiges,
     MapearZonaSiges,
     SigesTarifariosPorts,
     SyncTarifariosDesdeSiges,
+)
+from src.modules.liquidaciones.infrastructure.google_maps.httpx_google_maps_gateway import (
+    HttpxGoogleMapsGateway,
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
@@ -41,19 +46,29 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tarifario_
 from src.modules.liquidaciones.infrastructure.siges.pyodbc_siges_catalogo_gateway import (
     PyodbcSigesCatalogoGateway,
 )
+from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.mercurio.factories import require_mercurio_runner
 
 
 @lru_cache
-def _gateway() -> PyodbcSigesCatalogoGateway:
+def siges_catalogo_gateway() -> PyodbcSigesCatalogoGateway:
+    """Singleton de proceso — también lo consumen los builders de
+    `dependencies/geolocalizacion.py`."""
     return PyodbcSigesCatalogoGateway(require_mercurio_runner())
+
+
+@lru_cache
+def siges_google_maps_gateway() -> HttpxGoogleMapsGateway:
+    """Singleton de proceso — también lo consumen los builders de
+    `dependencies/geolocalizacion.py`."""
+    return HttpxGoogleMapsGateway(get_settings().google_maps_api_key)
 
 
 def _siges_ports(session: AsyncSession) -> SigesConfigPorts:
     return SigesConfigPorts(
         prestadores=SqlAlchemyPrestadorRepository(session),
         spsts=SqlAlchemySpstRepository(session),
-        siges=_gateway(),
+        siges=siges_catalogo_gateway(),
     )
 
 
@@ -78,7 +93,7 @@ def _siges_tarifarios_ports(session: AsyncSession) -> SigesTarifariosPorts:
         prestadores=SqlAlchemyPrestadorRepository(session),
         tarifarios=SqlAlchemyTarifarioRepository(session),
         zona_maps=SqlAlchemyTarifarioZonaMapRepository(session),
-        siges=_gateway(),
+        siges=siges_catalogo_gateway(),
     )
 
 
@@ -94,11 +109,20 @@ def build_sync_tarifarios_desde_siges(session: AsyncSession) -> SyncTarifariosDe
     return SyncTarifariosDesdeSiges(_siges_tarifarios_ports(session))
 
 
+def build_listar_sucursales_propias(session: AsyncSession) -> ListarSucursalesPropias:
+    return ListarSucursalesPropias(
+        SigesSucursalesPropiasSimplePorts(
+            prestadores=SqlAlchemyPrestadorRepository(session),
+            siges=siges_catalogo_gateway(),
+        )
+    )
+
+
 def build_buscar_sucursales_siges(session: AsyncSession) -> BuscarSucursalesSiges:
     return BuscarSucursalesSiges(
         SigesSucursalesPorts(
             prestadores=SqlAlchemyPrestadorRepository(session),
             tabla_km=SqlAlchemyTablaKmRepository(session),
-            siges=_gateway(),
+            siges=siges_catalogo_gateway(),
         )
     )

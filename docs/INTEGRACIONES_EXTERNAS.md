@@ -122,6 +122,26 @@ fresco por request en producción).
   (`mail_delivery.py`, ADR-010). **Credenciales reales** — regla de CLAUDE.md:
   `DISABLE_BACKGROUND_JOBS=true` antes de tocar cualquier código de jobs.
 
+## 11. Google Maps (Distance Matrix + Geocoding, httpx)
+
+- Módulo: liquidaciones (Tabla KM). Puertos: `GoogleMapsGateway` (distancias ida y
+  vuelta) y `GeocodingGateway` (candidatos por dirección) en
+  `liquidaciones/domain/repositories/`; adapters httpx en
+  `liquidaciones/infrastructure/google_maps/` (timeout 30 s, errores →
+  `ExternalServiceError`, **sin retry**). Se agregó al inventario en 2026-08-15 — se le
+  había escapado a la pasada del ADR-018.
+- **Key corporativa y paga** (`GOOGLE_MAPS_API_KEY`, cuenta de Canal Directo): $5/1000
+  por request de Geocoding y por elemento de Distance Matrix, 10.000 gratis/mes por SKU
+  (pricing marzo 2025). Controles obligatorios: cache de geocodes por dirección
+  normalizada (`geocode_cache`, incluye ZERO_RESULTS), tope por corrida
+  (`GOOGLE_MAPS_MAX_CALLS_PER_RUN`, default 200 unidades facturables) y contador de
+  llamadas visible en cada resultado. El cálculo masivo es two-step: el preview llama a
+  Google una vez y el apply materializa sin re-llamar.
+- Estado de la key (verificado 2026-08-15): Geocoding ✓, Distance Matrix ✓ (Legacy, sin
+  fecha de apagado); Routes API y Places (New) NO habilitadas (403). Si algún día se
+  migra a Routes `computeRouteMatrix`, va un adapter nuevo detrás del mismo puerto y el
+  viejo se retira en el mismo commit.
+
 ---
 
 ## Locks entre workers

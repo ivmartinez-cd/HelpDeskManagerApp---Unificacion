@@ -1,0 +1,85 @@
+"""Piezas compartidas del cálculo de distancias y la geocodificación:
+validación de prestador, coords de la base de despacho, parseo de lat/lon de
+Siges (varchar con coma decimal), URL de Maps del viaje completo y control del
+tope de llamadas a Google (la key es corporativa y paga)."""
+
+from dataclasses import dataclass
+from uuid import UUID
+
+from src.modules.liquidaciones.domain.entities.prestador import Prestador
+from src.modules.liquidaciones.domain.errors import (
+    BaseSucursalSinCoordenadasError,
+    PrestadorNoEncontradoError,
+    PrestadorSinBaseSucursalError,
+    PrestadorSinVinculoSigesError,
+    TopeLlamadasGoogleError,
+)
+from src.modules.liquidaciones.domain.repositories.prestador_repository import PrestadorRepository
+from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
+    SigesCatalogoGateway,
+    SigesSucursalCliente,
+)
+
+_MAPS_BASE = "https://www.google.com/maps/dir/?api=1"
+
+
+@dataclass(frozen=True)
+class Destino:
+    sucursal: SigesSucursalCliente
+    coords: tuple[float, float]
+    coords_origen: str
+
+
+def parse_latlon_siges(lat: str | None, lon: str | None) -> tuple[float, float] | None:
+    if lat is None or lon is None:
+        return None
+    try:
+        parsed = float(lat.replace(",", ".")), float(lon.replace(",", "."))
+    except ValueError:
+        return None
+    return None if parsed == (0.0, 0.0) else parsed
+
+
+def maps_url_ida_vuelta(base: tuple[float, float], dest: tuple[float, float]) -> str:
+    """Viaje completo base→cliente→base (la convención de negocio es ida y
+    vuelta): origin y destination son la base, el cliente va como waypoint."""
+    return (
+        f"{_MAPS_BASE}"
+        f"&origin={base[0]},{base[1]}"
+        f"&destination={base[0]},{base[1]}"
+        f"&waypoints={dest[0]},{dest[1]}"
+        f"&travelmode=driving"
+    )
+
+
+async def validar_prestador_para_distancias(
+    prestadores: PrestadorRepository, prestador_id: UUID
+) -> Prestador:
+    prestador = await prestadores.get_by_id(prestador_id)
+    if prestador is None:
+        raise PrestadorNoEncontradoError(prestador_id)
+    if prestador.siges_empresa_id is None:
+        raise PrestadorSinVinculoSigesError(prestador_id)
+    if prestador.siges_base_sucursal_id is None:
+        raise PrestadorSinBaseSucursalError(prestador_id)
+    return prestador
+
+
+async def obtener_coords_base(
+    siges: SigesCatalogoGateway, prestador: Prestador
+) -> tuple[float, float]:
+    propias = await siges.list_sucursales_de_empresa(prestador.siges_empresa_id)  # type: ignore[arg-type]
+    base = next(
+        (s for s in propias if s.siges_sucursal_id == prestador.siges_base_sucursal_id), None
+    )
+    if base is None:
+        raise PrestadorSinBaseSucursalError(prestador.id)
+    coords = parse_latlon_siges(base.latitud, base.longitud)
+    if coords is None:
+        raise BaseSucursalSinCoordenadasError(prestador.siges_base_sucursal_id)  # type: ignore[arg-type]
+    return coords
+
+
+def verificar_tope(necesarias: int, tope: int) -> None:
+    if necesarias > tope:
+        raise TopeLlamadasGoogleError(necesarias, tope)

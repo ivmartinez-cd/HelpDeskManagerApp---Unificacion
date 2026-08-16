@@ -1,6 +1,7 @@
 """Implementación Postgres del puerto TablaKmRepository (tabla tabla_kms)."""
 
 import uuid
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import func, or_, select
@@ -64,6 +65,8 @@ class SqlAlchemyTablaKmRepository:
         aplica_viatico: bool,
         kms_a_facturar: float,
         url_maps: str | None,
+        latitud_destino: float | None = None,
+        longitud_destino: float | None = None,
     ) -> TablaKm | None:
         row = await self._session.get(TablaKmModel, tabla_km_id)
         if row is None:
@@ -81,6 +84,62 @@ class SqlAlchemyTablaKmRepository:
         row.aplica_viatico = aplica_viatico
         row.kms_a_facturar = kms_a_facturar
         row.url_maps = url_maps
+        row.latitud_destino = latitud_destino
+        row.longitud_destino = longitud_destino
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
+    async def set_coordenadas(
+        self,
+        tabla_km_id: UUID,
+        *,
+        latitud: float,
+        longitud: float,
+        coords_origen: str,
+        geocode_formatted_address: str | None,
+        geocode_fecha: datetime | None,
+    ) -> TablaKm | None:
+        row = await self._session.get(TablaKmModel, tabla_km_id)
+        if row is None:
+            return None
+        row.latitud_destino = latitud
+        row.longitud_destino = longitud
+        row.coords_origen = coords_origen
+        row.geocode_formatted_address = geocode_formatted_address
+        row.geocode_fecha = geocode_fecha
+        row.updated_at = datetime.now(UTC)
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
+    async def update_distancias(
+        self,
+        tabla_km_id: UUID,
+        *,
+        kms_ida: float,
+        kms_vuelta: float,
+        kms_recorrido: float,
+        aplica_viatico: bool,
+        kms_a_facturar: float,
+        url_maps: str | None,
+        latitud_destino: float,
+        longitud_destino: float,
+        coords_origen: str,
+    ) -> TablaKm | None:
+        row = await self._session.get(TablaKmModel, tabla_km_id)
+        if row is None:
+            return None
+        row.kms_ida = kms_ida
+        row.kms_vuelta = kms_vuelta
+        row.kms_recorrido = kms_recorrido
+        row.aplica_viatico = aplica_viatico
+        row.kms_a_facturar = kms_a_facturar
+        row.url_maps = url_maps
+        row.latitud_destino = latitud_destino
+        row.longitud_destino = longitud_destino
+        row.coords_origen = coords_origen
+        row.updated_at = datetime.now(UTC)
         await self._session.flush()
         await self._session.refresh(row)
         return _to_entity(row)
@@ -109,6 +168,13 @@ class SqlAlchemyTablaKmRepository:
         aplica_viatico: bool,
         kms_a_facturar: float,
         url_maps: str | None,
+        latitud_destino: float | None = None,
+        longitud_destino: float | None = None,
+        kms_ida: float | None = None,
+        kms_vuelta: float | None = None,
+        coords_origen: str | None = None,
+        geocode_formatted_address: str | None = None,
+        geocode_fecha: datetime | None = None,
     ) -> TablaKm:
         model = TablaKmModel(
             id=uuid.uuid4(),
@@ -125,6 +191,13 @@ class SqlAlchemyTablaKmRepository:
             aplica_viatico=aplica_viatico,
             kms_a_facturar=kms_a_facturar,
             url_maps=url_maps,
+            latitud_destino=latitud_destino,
+            longitud_destino=longitud_destino,
+            kms_ida=kms_ida,
+            kms_vuelta=kms_vuelta,
+            coords_origen=coords_origen,
+            geocode_formatted_address=geocode_formatted_address,
+            geocode_fecha=geocode_fecha,
         )
         self._session.add(model)
         await self._session.flush()
@@ -148,6 +221,13 @@ def _to_entity(row: TablaKmModel) -> TablaKm:
         aplica_viatico=row.aplica_viatico,
         kms_a_facturar=row.kms_a_facturar,
         url_maps=row.url_maps,
+        latitud_destino=row.latitud_destino,
+        longitud_destino=row.longitud_destino,
         created_at=row.created_at,
         updated_at=row.updated_at,
+        kms_ida=row.kms_ida,
+        kms_vuelta=row.kms_vuelta,
+        coords_origen=row.coords_origen,
+        geocode_formatted_address=row.geocode_formatted_address,
+        geocode_fecha=row.geocode_fecha,
     )

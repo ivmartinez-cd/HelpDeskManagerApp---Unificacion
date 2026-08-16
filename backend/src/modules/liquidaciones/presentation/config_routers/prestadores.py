@@ -27,6 +27,7 @@ from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     PrestadorIn,
     PrestadorOut,
     ToggleActivoIn,
+    VincularBaseSucursalIn,
     VincularCdIn,
 )
 from src.modules.liquidaciones.presentation.schemas.importar_prestador_maestro_schemas import (
@@ -77,6 +78,21 @@ async def toggle_prestador_activo(
     db: AsyncSession = Depends(get_db),
 ) -> PrestadorOut:
     updated = await build_toggle_prestador_activo(db).execute(prestador_id, activo=body.activo)
+    return PrestadorOut.from_entity(updated)
+
+
+@router.patch("/prestadores/{prestador_id}/base-sucursal", response_model=PrestadorOut)
+async def vincular_base_sucursal_prestador(
+    prestador_id: UUID,
+    body: VincularBaseSucursalIn,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> PrestadorOut:
+    updated = await SqlAlchemyPrestadorRepository(db).vincular_base_sucursal(
+        prestador_id, siges_base_sucursal_id=body.siges_base_sucursal_id
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Prestador no encontrado")
     return PrestadorOut.from_entity(updated)
 
 

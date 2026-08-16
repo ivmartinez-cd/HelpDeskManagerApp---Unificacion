@@ -7,6 +7,7 @@ FastAPI intente parsear "export" como UUID."""
 from fastapi import APIRouter
 
 from src.modules.liquidaciones.presentation.config_routers import (
+    geolocalizacion,
     prestadores,
     siges,
     spsts,
@@ -20,3 +21,4 @@ router.include_router(spsts.router)
 router.include_router(tarifarios.router)
 router.include_router(tabla_km.router)
 router.include_router(siges.router)
+router.include_router(geolocalizacion.router)

@@ -20,9 +20,31 @@ from src.modules.liquidaciones.domain.repositories.prestador_repository import (
 )
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesCatalogoGateway,
+    SigesSucursalPropia,
 )
 from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
 from src.modules.liquidaciones.domain.services.vinculacion_siges import normalizar_nombre
+
+
+@dataclass(frozen=True)
+class SigesSucursalesPropiasSimplePorts:
+    prestadores: PrestadorRepository
+    siges: SigesCatalogoGateway
+
+
+class ListarSucursalesPropias:
+    """Lista sucursales propias (sedes) del PST para el selector de base."""
+
+    def __init__(self, ports: SigesSucursalesPropiasSimplePorts) -> None:
+        self._ports = ports
+
+    async def execute(self, prestador_id: UUID) -> list[SigesSucursalPropia]:
+        prestador = await self._ports.prestadores.get_by_id(prestador_id)
+        if prestador is None:
+            raise PrestadorNoEncontradoError(prestador_id)
+        if prestador.siges_empresa_id is None:
+            raise PrestadorSinVinculoSigesError(prestador_id)
+        return await self._ports.siges.list_sucursales_de_empresa(prestador.siges_empresa_id)
 
 
 @dataclass(frozen=True)

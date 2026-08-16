@@ -98,6 +98,83 @@ class PrestadorSinVinculoSigesError(BusinessRuleViolationError):
         )
 
 
+class PrestadorSinBaseSucursalError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "PRESTADOR_SIN_BASE_SUCURSAL"
+
+    def __init__(self, prestador_id: UUID) -> None:
+        super().__init__(
+            f"El prestador {prestador_id} no tiene sucursal base configurada. "
+            "Configurala desde la pantalla de Prestadores antes de calcular distancias."
+        )
+
+
+class BaseSucursalSinCoordenadasError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "BASE_SUCURSAL_SIN_COORDENADAS"
+
+    def __init__(self, siges_sucursal_id: int) -> None:
+        super().__init__(
+            f"La sucursal base {siges_sucursal_id} no tiene coordenadas cargadas en Siges. "
+            "Cargá latitud y longitud en Gestión antes de calcular distancias."
+        )
+
+
+class PreviewNoEncontradoError(NotFoundError):
+    """El apply exige un preview vigente: si se corrió otro preview después (o
+    se aplicó), el id viejo ya no existe — obliga a re-previsualizar en vez de
+    aplicar una propuesta que el usuario no vio."""
+
+    default_code: ClassVar[str] = "PREVIEW_NO_ENCONTRADO"
+
+    def __init__(self, preview_id: UUID) -> None:
+        super().__init__(
+            f"Preview de cálculo no encontrado: {preview_id}. "
+            "Volvé a previsualizar antes de aplicar."
+        )
+
+
+class SucursalCoordenadasNoEncontradaError(NotFoundError):
+    default_code: ClassVar[str] = "SUCURSAL_COORDENADAS_NO_ENCONTRADA"
+
+    def __init__(self, siges_sucursal_id: int) -> None:
+        super().__init__(
+            f"No hay resolución de coordenadas para la sucursal Siges {siges_sucursal_id}. "
+            "Corré 'Geocodificar faltantes' primero."
+        )
+
+
+class FilaSinCoordenadasError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "FILA_SIN_COORDENADAS"
+
+    def __init__(self, tabla_km_id: UUID) -> None:
+        super().__init__(
+            f"La fila {tabla_km_id} de Tabla KM no tiene coordenadas de destino. "
+            "Resolvelas con 'Buscar lugar' o cargalas a mano antes de recalcular."
+        )
+
+
+class FilaSinDomicilioError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "FILA_SIN_DOMICILIO"
+
+    def __init__(self, tabla_km_id: UUID) -> None:
+        super().__init__(
+            f"La fila {tabla_km_id} de Tabla KM no tiene domicilio ni localidad del "
+            "cliente — no hay nada que geocodificar."
+        )
+
+
+class TopeLlamadasGoogleError(BusinessRuleViolationError):
+    """Control de costo: la key es corporativa y paga. Antes que pasarse del
+    tope configurado, la corrida se corta y lo reporta."""
+
+    default_code: ClassVar[str] = "TOPE_LLAMADAS_GOOGLE"
+
+    def __init__(self, necesarias: int, tope: int) -> None:
+        super().__init__(
+            f"El cálculo necesita {necesarias} llamadas a Google y el tope por corrida "
+            f"es {tope} (GOOGLE_MAPS_MAX_CALLS_PER_RUN). Subí el tope o reducí el alcance."
+        )
+
+
 class ArchivoLiquidacionInvalidoError(ValidationError):
     """El archivo no se pudo leer como tabla, o ninguna tabla tiene una columna de
     incidente reconocible — mismo `ValueError` que el legacy convertía en 400."""

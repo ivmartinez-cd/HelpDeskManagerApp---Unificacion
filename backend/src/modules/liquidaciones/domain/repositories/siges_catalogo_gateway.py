@@ -42,8 +42,7 @@ class SigesCostoServicio:
 @dataclass(frozen=True)
 class SigesSucursalCliente:
     """Sucursal de cliente asignada a un PST (`dbo.Sucursal.ID_Prestador`) —
-    insumo del alta asistida de Tabla KM (ADR-014, dataset 3). Solo datos
-    descriptivos: el km esperado no existe en Siges, es dato manual."""
+    insumo del alta asistida y cálculo de distancias (ADR-014, dataset 3)."""
 
     siges_sucursal_id: int
     empresa_nombre: str
@@ -51,6 +50,19 @@ class SigesSucursalCliente:
     domicilio: str | None
     localidad: str | None
     provincia: str | None
+    latitud: str | None = None
+    longitud: str | None = None
+
+
+@dataclass(frozen=True)
+class SigesSucursalPropia:
+    """Sucursal de la propia empresa del PST (`dbo.Sucursal.Id_Empresa`) —
+    insumo del selector de base de despacho."""
+
+    siges_sucursal_id: int
+    descripcion: str
+    latitud: str | None
+    longitud: str | None
 
 
 class SigesCatalogoGateway(Protocol):
@@ -71,4 +83,11 @@ class SigesCatalogoGateway(Protocol):
         self, siges_empresa_id: int
     ) -> list[SigesSucursalCliente]:
         """Sucursales de cliente activas (`Estado=0`) asignadas al PST."""
+        ...
+
+    async def list_sucursales_de_empresa(
+        self, siges_empresa_id: int
+    ) -> list[SigesSucursalPropia]:
+        """Sucursales propias del PST (`Id_Empresa = siges_empresa_id`) —
+        sus sedes/bases de despacho, con coordenadas."""
         ...

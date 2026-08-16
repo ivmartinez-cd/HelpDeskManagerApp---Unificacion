@@ -38,6 +38,13 @@ class TablaKmModel(Base):
     )
     kms_a_facturar: Mapped[float] = mapped_column(Float, nullable=False, server_default=text("0.0"))
     url_maps: Mapped[str | None] = mapped_column(String)
+    latitud_destino: Mapped[float | None] = mapped_column(Float)
+    longitud_destino: Mapped[float | None] = mapped_column(Float)
+    kms_ida: Mapped[float | None] = mapped_column(Float)
+    kms_vuelta: Mapped[float | None] = mapped_column(Float)
+    coords_origen: Mapped[str | None] = mapped_column(String)
+    geocode_formatted_address: Mapped[str | None] = mapped_column(String)
+    geocode_fecha: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()"), nullable=False
     )

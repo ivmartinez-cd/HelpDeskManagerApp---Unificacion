@@ -17,6 +17,7 @@ from src.modules.liquidaciones.presentation.config_routers._deps import (
 from src.modules.liquidaciones.presentation.dependencies import (
     build_buscar_sucursales_siges,
     build_estado_zonas_siges,
+    build_listar_sucursales_propias,
     build_mapear_zona_siges,
     build_proponer_vinculos_siges,
     build_sync_config_desde_siges,
@@ -27,6 +28,9 @@ from src.modules.liquidaciones.presentation.dependencies import (
 from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     PrestadorOut,
     SpstOut,
+)
+from src.modules.liquidaciones.presentation.schemas.distancias_schemas import (
+    SucursalPropiaOut,
 )
 from src.modules.liquidaciones.presentation.schemas.siges_schemas import (
     MapearZonaIn,
@@ -94,6 +98,19 @@ async def sync_tarifarios_desde_siges(
 ) -> SyncTarifariosOut:
     resultado = await build_sync_tarifarios_desde_siges(db).execute(dry_run=dry_run)
     return SyncTarifariosOut.from_dto(resultado)
+
+
+@router.get(
+    "/siges/prestador/{prestador_id}/sucursales-propia",
+    response_model=list[SucursalPropiaOut],
+)
+async def sucursales_propias_prestador(
+    prestador_id: UUID,
+    _: Identity = require_view,
+    db: AsyncSession = Depends(get_db),
+) -> list[SucursalPropiaOut]:
+    sucursales = await build_listar_sucursales_propias(db).execute(prestador_id)
+    return [SucursalPropiaOut.from_entity(s) for s in sucursales]
 
 
 @router.get("/siges/sucursales", response_model=Page[SucursalSigesOut])

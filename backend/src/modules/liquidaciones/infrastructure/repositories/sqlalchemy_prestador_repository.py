@@ -121,6 +121,18 @@ class SqlAlchemyPrestadorRepository:
         await self._session.refresh(row)
         return _to_entity(row)
 
+    async def vincular_base_sucursal(
+        self, prestador_id: UUID, *, siges_base_sucursal_id: int | None
+    ) -> Prestador | None:
+        row = await self._session.get(LiquidacionPrestadorModel, prestador_id)
+        if not row:
+            return None
+        row.siges_base_sucursal_id = siges_base_sucursal_id
+        row.updated_at = datetime.now(UTC)
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
     async def vincular_siges(
         self, prestador_id: UUID, *, siges_empresa_id: int | None
     ) -> Prestador | None:
@@ -168,4 +180,5 @@ def _to_entity(row: LiquidacionPrestadorModel) -> Prestador:
         updated_at=row.updated_at,
         siges_empresa_id=row.siges_empresa_id,
         cd_prestador_id=row.cd_prestador_id,
+        siges_base_sucursal_id=row.siges_base_sucursal_id,
     )

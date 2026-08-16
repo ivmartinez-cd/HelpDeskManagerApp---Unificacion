@@ -14,6 +14,18 @@ from src.modules.liquidaciones.presentation.dependencies.config import (
     build_update_tabla_km,
     build_update_tarifario,
 )
+from src.modules.liquidaciones.presentation.dependencies.geolocalizacion import (
+    build_aplicar_calcular_distancias,
+    build_auditar_pines,
+    build_buscar_lugar_fila,
+    build_geocodificar_sucursales,
+    build_listar_coordenadas_pendientes,
+    build_listar_pines_sospechosos,
+    build_preview_calcular_distancias,
+    build_recalcular_km_fila,
+    build_resolver_coordenadas,
+    build_resolver_coordenadas_fila,
+)
 from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
     build_anular_liquidacion,
     build_aprobar_liquidacion,
@@ -29,6 +41,7 @@ from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
 from src.modules.liquidaciones.presentation.dependencies.siges import (
     build_buscar_sucursales_siges,
     build_estado_zonas_siges,
+    build_listar_sucursales_propias,
     build_mapear_zona_siges,
     build_proponer_vinculos_siges,
     build_sync_config_desde_siges,
@@ -39,9 +52,20 @@ from src.modules.liquidaciones.presentation.dependencies.siges import (
 
 __all__ = [
     "build_anular_liquidacion",
+    "build_aplicar_calcular_distancias",
     "build_aprobar_liquidacion",
+    "build_auditar_pines",
     "build_backfill_estado",
+    "build_buscar_lugar_fila",
     "build_buscar_sucursales_siges",
+    "build_geocodificar_sucursales",
+    "build_listar_coordenadas_pendientes",
+    "build_listar_pines_sospechosos",
+    "build_listar_sucursales_propias",
+    "build_preview_calcular_distancias",
+    "build_recalcular_km_fila",
+    "build_resolver_coordenadas",
+    "build_resolver_coordenadas_fila",
     "build_create_prestador",
     "build_create_spst",
     "build_create_tabla_km",

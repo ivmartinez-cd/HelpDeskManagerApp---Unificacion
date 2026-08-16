@@ -50,6 +50,13 @@ class PrestadorRepository(Protocol):
         Lanza `CdVinculoDuplicadoError` si el id ya vincula a otro prestador."""
         ...
 
+    async def vincular_base_sucursal(
+        self, prestador_id: UUID, *, siges_base_sucursal_id: int | None
+    ) -> Prestador | None:
+        """Establece (o quita, con None) el `Id_Sucursal` de la sucursal base
+        del PST en Siges (su sede de despacho para cálculo de distancias)."""
+        ...
+
     async def vincular_siges(
         self, prestador_id: UUID, *, siges_empresa_id: int | None
     ) -> Prestador | None:
