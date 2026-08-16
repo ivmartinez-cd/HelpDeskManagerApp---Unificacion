@@ -47,38 +47,31 @@ export function OfflineSection({
   const isBodegaSection = group === "bodega";
 
   return (
-    <div className="overflow-hidden rounded-[12px] border border-border bg-card">
+    <div className="rounded-[12px] border border-border bg-card">
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          "flex w-full cursor-pointer items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-muted/40",
+          "flex w-full cursor-pointer items-center gap-2.5 px-4 py-3 transition-colors hover:bg-muted/40",
           isOutageSection && "border-l-4 border-l-[#ef4444]",
           isBodegaSection && "border-l-4 border-l-[#eab308]",
         )}
         aria-expanded={open}
       >
         <ChevronIcon className="h-4 w-4 flex-none text-muted-foreground" aria-hidden="true" />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-heading font-bold text-foreground">{meta.label}</span>
-            <span
-              className={cn(
-                "inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 font-body text-[11px] font-bold",
-                rows.length > 0
-                  ? isOutageSection
-                    ? "bg-[rgba(239,68,68,.15)] text-[#ef4444]"
-                    : isBodegaSection
-                      ? "bg-[rgba(234,179,8,.15)] text-[#ca9a04]"
-                      : "bg-brand-orange/15 text-brand-orange"
-                  : "bg-muted text-muted-foreground",
-              )}
-            >
-              {rows.length}
-            </span>
-          </div>
-          <p className="mt-0.5 font-body text-xs text-muted-foreground">{meta.description}</p>
-        </div>
+        <span className="font-heading text-sm font-bold text-foreground">{meta.label}</span>
+        <span
+          className={cn(
+            "inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 font-body text-[11px] font-bold",
+            isOutageSection
+              ? "bg-[rgba(239,68,68,.15)] text-[#ef4444]"
+              : isBodegaSection
+                ? "bg-[rgba(234,179,8,.15)] text-[#ca9a04]"
+                : "bg-brand-orange/15 text-brand-orange",
+          )}
+        >
+          {rows.length}
+        </span>
       </button>
 
       {open && rows.length > 0 && (
@@ -97,11 +90,6 @@ export function OfflineSection({
         </div>
       )}
 
-      {open && rows.length === 0 && (
-        <div className="border-t border-border px-5 py-4 font-body text-sm text-muted-foreground">
-          No hay equipos en esta sección.
-        </div>
-      )}
     </div>
   );
 }
