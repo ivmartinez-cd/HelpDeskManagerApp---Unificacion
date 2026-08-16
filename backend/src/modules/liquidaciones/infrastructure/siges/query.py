@@ -32,7 +32,8 @@ def build_costos_habilitados_sql(cantidad: int) -> str:
 # varchar — se parsean a float en el gateway antes de llamar a Google Maps.
 SUCURSALES_DE_PRESTADOR_SQL = """
 SELECT S.Id_Sucursal, E.Den_Comercial, S.descripcion, S.Domicilio,
-       C.DesCiudad, C.DesProvincia, S.Latitud, S.Longitud
+       C.DesCiudad, C.DesProvincia, S.Latitud, S.Longitud,
+       S.Cuadricula, S.IDCostoServicios
 FROM dbo.Sucursal S
 JOIN dbo.Empresa E ON E.ID_Empresa = S.Id_Empresa
 LEFT JOIN dbo.Ciudad C ON C.Id_Ciudad = S.Id_Ciudad
@@ -40,12 +41,22 @@ WHERE S.ID_Prestador = ? AND S.Estado = 0
 ORDER BY E.Den_Comercial, S.descripcion
 """
 
+# Cuadrículas distintas con al menos una sucursal activa asignada al PST.
+# NULL y vacío se excluyen — solo cuadrículas que tienen valor real.
+CUADRICULAS_DE_PRESTADOR_SQL = """
+SELECT DISTINCT S.Cuadricula
+FROM dbo.Sucursal S
+WHERE S.ID_Prestador = ? AND S.Estado = 0
+  AND S.Cuadricula IS NOT NULL AND LTRIM(RTRIM(S.Cuadricula)) != ''
+ORDER BY S.Cuadricula
+"""
+
 # Sucursales propias del PST (sede/base de despacho) — `Id_Empresa` apunta al
 # PST mismo (distinto de `ID_Prestador` que es el PST asignado a una sucursal
 # de cliente). Solo se necesitan id, descripción y coordenadas para el dropdown
 # de selección de base y el cálculo de distancias.
 SUCURSALES_DE_EMPRESA_SQL = """
-SELECT S.Id_Sucursal, S.descripcion, S.Latitud, S.Longitud
+SELECT S.Id_Sucursal, S.descripcion, S.Latitud, S.Longitud, S.IDCostoServicios
 FROM dbo.Sucursal S
 WHERE S.Id_Empresa = ? AND S.Estado = 0
 ORDER BY S.descripcion

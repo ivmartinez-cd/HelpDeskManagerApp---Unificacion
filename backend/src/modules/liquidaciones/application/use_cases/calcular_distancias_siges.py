@@ -8,17 +8,24 @@ ese total y NUNCA se pisa en filas existentes (tampoco `observaciones`).
 
 Destinos: coords de Siges cuando existen (`coords_origen='siges'`); si no, la
 resolución local de `sucursal_coordenadas` (geocode confirmado o manual). Una
-sucursal sin ninguna de las dos queda contada en `sin_ubicar` — jamás se
-inventa una coordenada."""
+sucursal sin ninguna de las dos queda contada en `sin_ubicar`.
 
+Base multi-sede: cada cliente tiene `IDCostoServicios` en Siges; el mismo campo
+está en las sucursales PROPIAS del PST (`Id_Empresa = empresa_id`). Si coinciden,
+el destino sale desde esa base propia; si no hay match, usa la base por defecto
+del prestador. El `latitud_base`/`longitud_base` de cada `PreviewFila` registra
+qué base se usó (confirmado en PST SAN JUAN y INFOMAC, 2026-08-16)."""
+
+from collections import defaultdict
 from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
     Destino,
+    build_costo_bases,
     calcular_kms_a_facturar,
+    coords_base_default,
     maps_url_ida_vuelta,
-    obtener_coords_base,
     parse_latlon_siges,
     validar_prestador_para_distancias,
     verificar_tope,
@@ -32,7 +39,9 @@ from src.modules.liquidaciones.domain.entities.calculo_km_preview import (
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import SucursalCoordenadas
 from src.modules.liquidaciones.domain.entities.tabla_km import UMBRAL_VIATICO_DEFAULT, TablaKm
-from src.modules.liquidaciones.domain.errors import PreviewNoEncontradoError
+from src.modules.liquidaciones.domain.errors import (
+    PreviewNoEncontradoError,
+)
 from src.modules.liquidaciones.domain.repositories.calculo_km_preview_repository import (
     CalculoKmPreviewRepository,
 )
@@ -80,11 +89,17 @@ class PreviewCalcularDistancias:
         prestador = await validar_prestador_para_distancias(
             self._ports.prestadores, prestador_id
         )
-        base = await obtener_coords_base(self._ports.siges, prestador)
+        propias = await self._ports.siges.list_sucursales_de_empresa(
+            prestador.siges_empresa_id  # type: ignore[arg-type]
+        )
+        base_default = coords_base_default(prestador, propias)
+        costo_bases = build_costo_bases(propias)
         destinos, sin_ubicar = await self._armar_destinos(prestador)
         verificar_tope(2 * len(destinos), self._tope)
         existentes = await self._cargar_existentes(prestador_id)
-        filas, sin_ruta = await self._calcular_filas(base, destinos, existentes)
+        filas, sin_ruta = await self._calcular_filas(
+            base_default, costo_bases, destinos, existentes
+        )
         return await self._ports.previews.create(
             prestador_id=prestador_id,
             filas=tuple(filas),
@@ -120,22 +135,31 @@ class PreviewCalcularDistancias:
 
     async def _calcular_filas(
         self,
-        base: tuple[float, float],
+        base_default: tuple[float, float],
+        costo_bases: dict[int, tuple[float, float]],
         destinos: list[Destino],
         existentes: dict[tuple[str, str], TablaKm],
     ) -> tuple[list[PreviewFila], int]:
+        # Agrupar destinos por base efectiva para minimizar batches distintos.
+        grupos: dict[tuple[float, float], list[Destino]] = defaultdict(list)
+        for d in destinos:
+            id_cs = d.sucursal.id_costo_servicios
+            base = (costo_bases.get(id_cs) if id_cs is not None else None) or base_default
+            grupos[base].append(d)
+
         filas: list[PreviewFila] = []
         sin_ruta = 0
-        for i in range(0, len(destinos), _GOOGLE_BATCH):
-            batch = destinos[i : i + _GOOGLE_BATCH]
-            tramos = await self._ports.google_maps.distancias_km_ida_vuelta(
-                base, [d.coords for d in batch]
-            )
-            for destino, (ida, vuelta) in zip(batch, tramos, strict=True):
-                if ida is None or vuelta is None:
-                    sin_ruta += 1
-                    continue
-                filas.append(_armar_fila(destino, ida, vuelta, existentes))
+        for base, grupo in grupos.items():
+            for i in range(0, len(grupo), _GOOGLE_BATCH):
+                batch = grupo[i : i + _GOOGLE_BATCH]
+                tramos = await self._ports.google_maps.distancias_km_ida_vuelta(
+                    base, [d.coords for d in batch]
+                )
+                for destino, (ida, vuelta) in zip(batch, tramos, strict=True):
+                    if ida is None or vuelta is None:
+                        sin_ruta += 1
+                        continue
+                    filas.append(_armar_fila(destino, base, ida, vuelta, existentes))
         return filas, sin_ruta
 
 
@@ -147,22 +171,28 @@ class AplicarCalcularDistancias:
         preview = await self._ports.previews.get_by_id(preview_id)
         if preview is None:
             raise PreviewNoEncontradoError(preview_id)
-        prestador = await validar_prestador_para_distancias(
+        await validar_prestador_para_distancias(
             self._ports.prestadores, preview.prestador_id
         )
-        base = await obtener_coords_base(self._ports.siges, prestador)
         creadas = actualizadas = 0
         for fila in preview.filas:
-            c, a = await self._aplicar_fila(preview.prestador_id, base, fila)
+            c, a = await self._aplicar_fila(preview.prestador_id, fila)
             creadas += c
             actualizadas += a
         await self._ports.previews.delete(preview_id)
         return AplicarDistanciasResultado(creadas=creadas, actualizadas=actualizadas)
 
     async def _aplicar_fila(
-        self, prestador_id: UUID, base: tuple[float, float], fila: PreviewFila
+        self, prestador_id: UUID, fila: PreviewFila
     ) -> tuple[int, int]:
-        url = maps_url_ida_vuelta(base, (fila.latitud_destino, fila.longitud_destino))
+        base = (fila.latitud_base, fila.longitud_base)
+        url = maps_url_ida_vuelta(
+            base,
+            (fila.latitud_destino, fila.longitud_destino),
+            domicilio=fila.domicilio,
+            localidad=fila.localidad,
+            provincia=fila.provincia,
+        )
         if fila.accion == ACCION_ACTUALIZAR and fila.tabla_km_id is not None:
             actualizada = await self._ports.tabla_km.update_distancias(
                 fila.tabla_km_id,
@@ -206,21 +236,25 @@ class AplicarCalcularDistancias:
 def _resolver_destino(
     sucursal: SigesSucursalCliente, resoluciones: dict[int, SucursalCoordenadas]
 ) -> Destino | None:
+    # Override explícito (corrección de pin sospechoso) tiene prioridad sobre Siges.
+    resolucion = resoluciones.get(sucursal.siges_sucursal_id)
+    if resolucion is not None:
+        lat, lon = resolucion.latitud, resolucion.longitud
+        if lat is not None and lon is not None:
+            return Destino(
+                sucursal=sucursal,
+                coords=(lat, lon),
+                coords_origen=resolucion.procedencia or PROCEDENCIA_MANUAL,
+            )
     coords = parse_latlon_siges(sucursal.latitud, sucursal.longitud)
     if coords is not None:
         return Destino(sucursal=sucursal, coords=coords, coords_origen=PROCEDENCIA_SIGES)
-    resolucion = resoluciones.get(sucursal.siges_sucursal_id)
-    if resolucion is None or resolucion.latitud is None or resolucion.longitud is None:
-        return None
-    return Destino(
-        sucursal=sucursal,
-        coords=(resolucion.latitud, resolucion.longitud),
-        coords_origen=resolucion.procedencia or PROCEDENCIA_MANUAL,
-    )
+    return None
 
 
 def _armar_fila(
     destino: Destino,
+    base: tuple[float, float],
     ida: float,
     vuelta: float,
     existentes: dict[tuple[str, str], TablaKm],
@@ -243,6 +277,8 @@ def _armar_fila(
         coords_origen=destino.coords_origen,
         latitud_destino=destino.coords[0],
         longitud_destino=destino.coords[1],
+        latitud_base=base[0],
+        longitud_base=base[1],
         kms_ida=round(ida, 3),
         kms_vuelta=round(vuelta, 3),
         kms_total=total,

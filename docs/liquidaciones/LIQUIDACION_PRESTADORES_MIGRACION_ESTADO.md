@@ -882,6 +882,16 @@ y entrada de integración en `docs/INTEGRACIONES_EXTERNAS.md §11`.
 4. **Geolocalización — opcionales**: auditar y corregir el pin roto de "080 - Puan"
    en Siges; end-to-end de `geocodificar-faltantes` en un PST con sinCoords
    (requiere autorización de llamadas Google sobre la key corporativa).
+5. **SPSTs redundantes por PST** — aplica a todos los PSTs, no solo SAN JUAN.
+   Un SPST cuyo `siges_base_sucursal_id` coincide con el del PST padre es redundante:
+   `RecalcularKmFila` y el batch preview ya usan esa misma base como fallback cuando
+   `spst_id` es NULL (o cuando el SPST no tiene `siges_base_sucursal_id`).
+   Acción pendiente: para cada PST, identificar los SPSTs que replican la base default
+   del PST, reasignar `spst_id = NULL` en sus filas de Tabla KM, y eliminar el SPST.
+   Ejemplo concreto: "PST San Juan - Gestión Integral" (sucursal 2649) es redundante
+   porque el PST SAN JUAN ya tiene `siges_base_sucursal_id = 2649`; el SPST legítimo
+   para SAN JUAN es solo "GSJ - Escuelas Valle Fértil" (sucursal 14549, distinta a la
+   default).
 
 ## Próximo paso sugerido
 

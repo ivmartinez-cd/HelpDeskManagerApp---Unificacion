@@ -71,6 +71,11 @@ class VincularSigesIn(BaseModel):
     siges_empresa_id: int | None = Field(default=None, alias="sigesEmpresaId")
 
 
+class VincularBaseSucursalIn(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    siges_base_sucursal_id: int | None = Field(default=None, alias="sigesBaseSucursalId")
+
+
 class SyncCambioOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     local_id: uuid.UUID = Field(serialization_alias="localId")

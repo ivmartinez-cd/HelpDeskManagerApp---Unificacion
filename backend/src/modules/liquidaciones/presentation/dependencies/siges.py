@@ -13,6 +13,12 @@ from src.modules.liquidaciones.application.use_cases.siges_config import (
     VincularPrestadorSiges,
     VincularSpstSiges,
 )
+from src.modules.liquidaciones.application.use_cases.siges_cuadriculas import (
+    CuadriculasPorts,
+    EliminarMapeo,
+    ListarCuadriculas,
+    MapearCuadricula,
+)
 from src.modules.liquidaciones.application.use_cases.siges_sucursales import (
     BuscarSucursalesSiges,
     ListarSucursalesPropias,
@@ -27,6 +33,9 @@ from src.modules.liquidaciones.application.use_cases.siges_tarifarios import (
 )
 from src.modules.liquidaciones.infrastructure.google_maps.httpx_google_maps_gateway import (
     HttpxGoogleMapsGateway,
+)
+from src.modules.liquidaciones.infrastructure.models.cuadricula_base_map_model import (
+    SqlAlchemyCuadriculaBaseMapRepository,
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
@@ -116,6 +125,26 @@ def build_listar_sucursales_propias(session: AsyncSession) -> ListarSucursalesPr
             siges=siges_catalogo_gateway(),
         )
     )
+
+
+def _cuadriculas_ports(session: AsyncSession) -> CuadriculasPorts:
+    return CuadriculasPorts(
+        prestadores=SqlAlchemyPrestadorRepository(session),
+        siges=siges_catalogo_gateway(),
+        cuadricula_maps=SqlAlchemyCuadriculaBaseMapRepository(session),
+    )
+
+
+def build_listar_cuadriculas(session: AsyncSession) -> ListarCuadriculas:
+    return ListarCuadriculas(_cuadriculas_ports(session))
+
+
+def build_mapear_cuadricula(session: AsyncSession) -> MapearCuadricula:
+    return MapearCuadricula(_cuadriculas_ports(session))
+
+
+def build_eliminar_mapeo_cuadricula(session: AsyncSession) -> EliminarMapeo:
+    return EliminarMapeo(_cuadriculas_ports(session))
 
 
 def build_buscar_sucursales_siges(session: AsyncSession) -> BuscarSucursalesSiges:

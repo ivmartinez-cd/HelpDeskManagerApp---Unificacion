@@ -41,6 +41,10 @@ class SpstRepository(Protocol):
 
     async def toggle_activo(self, spst_id: UUID, *, activo: bool) -> Spst | None: ...
 
+    async def vincular_base_sucursal(
+        self, spst_id: UUID, *, siges_base_sucursal_id: int | None
+    ) -> Spst | None: ...
+
     async def vincular_siges(self, spst_id: UUID, *, siges_empresa_id: int | None) -> Spst | None:
         """Establece (o quita, con None) el vínculo a `dbo.Empresa` de Siges
         (ADR-014). Lanza `SigesVinculoDuplicadoError` si el id ya vincula a otro

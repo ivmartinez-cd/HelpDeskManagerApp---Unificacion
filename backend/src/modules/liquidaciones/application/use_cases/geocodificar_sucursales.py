@@ -12,7 +12,7 @@ from uuid import UUID
 
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
     parse_latlon_siges,
-    validar_prestador_para_distancias,
+    validar_prestador_vinculado_siges,
 )
 from src.modules.liquidaciones.domain.repositories.geocode_cache_repository import (
     GeocodeCacheRepository,
@@ -62,7 +62,7 @@ class GeocodificarSucursales:
         self._tope = tope_llamadas
 
     async def execute(self, prestador_id: UUID) -> GeocodificarResultado:
-        prestador = await validar_prestador_para_distancias(
+        prestador = await validar_prestador_vinculado_siges(
             self._ports.prestadores, prestador_id
         )
         sucursales = await self._ports.siges.list_sucursales_de_prestador(

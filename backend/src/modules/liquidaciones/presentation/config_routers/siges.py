@@ -16,8 +16,11 @@ from src.modules.liquidaciones.presentation.config_routers._deps import (
 )
 from src.modules.liquidaciones.presentation.dependencies import (
     build_buscar_sucursales_siges,
+    build_eliminar_mapeo_cuadricula,
     build_estado_zonas_siges,
+    build_listar_cuadriculas,
     build_listar_sucursales_propias,
+    build_mapear_cuadricula,
     build_mapear_zona_siges,
     build_proponer_vinculos_siges,
     build_sync_config_desde_siges,
@@ -28,6 +31,11 @@ from src.modules.liquidaciones.presentation.dependencies import (
 from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     PrestadorOut,
     SpstOut,
+)
+from src.modules.liquidaciones.presentation.schemas.cuadricula_schemas import (
+    CuadriculaMapOut,
+    CuadriculaOut,
+    MapearCuadriculaIn,
 )
 from src.modules.liquidaciones.presentation.schemas.distancias_schemas import (
     SucursalPropiaOut,
@@ -139,6 +147,50 @@ async def vincular_prestador_siges(
         prestador_id, siges_empresa_id=body.siges_empresa_id
     )
     return PrestadorOut.from_entity(actualizado)
+
+
+@router.get(
+    "/siges/prestador/{prestador_id}/cuadriculas",
+    response_model=list[CuadriculaOut],
+)
+async def listar_cuadriculas(
+    prestador_id: UUID,
+    _: Identity = require_view,
+    db: AsyncSession = Depends(get_db),
+) -> list[CuadriculaOut]:
+    resultado = await build_listar_cuadriculas(db).execute(prestador_id)
+    return [CuadriculaOut.from_dto(c) for c in resultado]
+
+
+@router.put(
+    "/siges/prestador/{prestador_id}/cuadriculas/{cuadricula}",
+    response_model=CuadriculaMapOut,
+)
+async def mapear_cuadricula(
+    prestador_id: UUID,
+    cuadricula: str,
+    body: MapearCuadriculaIn,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> CuadriculaMapOut:
+    resultado = await build_mapear_cuadricula(db).execute(
+        prestador_id, cuadricula=cuadricula,
+        siges_base_sucursal_id=body.siges_base_sucursal_id,
+    )
+    return CuadriculaMapOut.from_entity(resultado)
+
+
+@router.delete(
+    "/siges/prestador/{prestador_id}/cuadriculas/{cuadricula}",
+    status_code=204,
+)
+async def eliminar_mapeo_cuadricula(
+    prestador_id: UUID,
+    cuadricula: str,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    await build_eliminar_mapeo_cuadricula(db).execute(prestador_id, cuadricula=cuadricula)
 
 
 @router.put("/spsts/{spst_id}/siges-vinculo", response_model=SpstOut)

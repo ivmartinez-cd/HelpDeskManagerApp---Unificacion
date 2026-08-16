@@ -94,4 +94,16 @@ class TablaKmRepository(Protocol):
         longitud_destino: float | None = None,
     ) -> TablaKm | None: ...
 
+    async def update_domicilio(
+        self,
+        tabla_km_id: UUID,
+        *,
+        domicilio_cliente: str | None,
+        localidad_cliente: str | None,
+        provincia_cliente: str | None,
+    ) -> TablaKm | None:
+        """Solo campos de dirección (sync desde Siges). No toca km, coordenadas
+        ni viático. Limpia geocode_formatted_address para forzar re-geocoding."""
+        ...
+
     async def delete(self, tabla_km_id: UUID) -> bool: ...

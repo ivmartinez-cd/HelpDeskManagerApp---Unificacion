@@ -27,6 +27,8 @@ class PreviewFila:
     coords_origen: str
     latitud_destino: float
     longitud_destino: float
+    latitud_base: float
+    longitud_base: float
     kms_ida: float
     kms_vuelta: float
     kms_total: float

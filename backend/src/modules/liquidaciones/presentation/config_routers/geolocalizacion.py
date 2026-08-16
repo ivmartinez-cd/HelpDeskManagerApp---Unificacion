@@ -25,11 +25,13 @@ from src.modules.liquidaciones.presentation.dependencies import (
     build_aplicar_calcular_distancias,
     build_auditar_pines,
     build_buscar_lugar_fila,
+    build_corregir_pin,
     build_geocodificar_sucursales,
     build_listar_coordenadas_pendientes,
     build_listar_pines_sospechosos,
     build_preview_calcular_distancias,
     build_recalcular_km_fila,
+    build_refrescar_datos_siges,
     build_resolver_coordenadas,
     build_resolver_coordenadas_fila,
 )
@@ -44,6 +46,7 @@ from src.modules.liquidaciones.presentation.schemas.geolocalizacion_schemas impo
     GeocodeCandidatoOut,
     GeocodificarResultadoOut,
     PinSospechosoOut,
+    RefrescarDireccionesOut,
     ResolverCoordenadasIn,
     SucursalCoordenadasOut,
 )
@@ -82,6 +85,19 @@ async def aplicar_calcular_distancias(
 ) -> AplicarDistanciasOut:
     resultado = await build_aplicar_calcular_distancias(db).execute(body.preview_id)
     return AplicarDistanciasOut.from_resultado(resultado)
+
+
+@router.post(
+    "/siges/prestador/{prestador_id}/refrescar-datos-sucursales",
+    response_model=RefrescarDireccionesOut,
+)
+async def refrescar_datos_sucursales(
+    prestador_id: UUID,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> RefrescarDireccionesOut:
+    resultado = await build_refrescar_datos_siges(db).execute(prestador_id)
+    return RefrescarDireccionesOut.from_dto(resultado)
 
 
 @router.post(
@@ -149,6 +165,19 @@ async def listar_pines_sospechosos(
 ) -> Page[PinSospechosoOut]:
     pines = await build_listar_pines_sospechosos(db).execute(prestador_id)
     return Page.of([PinSospechosoOut.from_dto(p) for p in pines], page=page, size=size)
+
+
+@router.post(
+    "/siges/prestador/{prestador_id}/sucursal/{siges_sucursal_id}/corregir-pin",
+    status_code=204,
+)
+async def corregir_pin(
+    prestador_id: UUID,
+    siges_sucursal_id: int,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    await build_corregir_pin(db).execute(prestador_id, siges_sucursal_id)
 
 
 @router.post(

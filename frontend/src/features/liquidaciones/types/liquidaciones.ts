@@ -132,6 +132,7 @@ export interface Spst {
   zona: string | null;
   activo: boolean;
   sigesEmpresaId: number | null;
+  sigesBaseSucursalId: number | null;
   createdAt: string;
 }
 

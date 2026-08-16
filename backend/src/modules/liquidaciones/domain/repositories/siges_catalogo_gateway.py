@@ -42,7 +42,11 @@ class SigesCostoServicio:
 @dataclass(frozen=True)
 class SigesSucursalCliente:
     """Sucursal de cliente asignada a un PST (`dbo.Sucursal.ID_Prestador`) —
-    insumo del alta asistida y cálculo de distancias (ADR-014, dataset 3)."""
+    insumo del alta asistida y cálculo de distancias (ADR-014, dataset 3).
+
+    `id_costo_servicios` coincide con el mismo campo de la sucursal propia del
+    PST que la atiende — permite auto-seleccionar la base de origen correcta sin
+    configuración manual (confirmado en PST 504 y INFOMAC, 2026-08-16)."""
 
     siges_sucursal_id: int
     empresa_nombre: str
@@ -52,17 +56,20 @@ class SigesSucursalCliente:
     provincia: str | None
     latitud: str | None = None
     longitud: str | None = None
+    cuadricula: str | None = None
+    id_costo_servicios: int | None = None
 
 
 @dataclass(frozen=True)
 class SigesSucursalPropia:
     """Sucursal de la propia empresa del PST (`dbo.Sucursal.Id_Empresa`) —
-    insumo del selector de base de despacho."""
+    insumo del selector de base de despacho y del auto-mapping por costo."""
 
     siges_sucursal_id: int
     descripcion: str
     latitud: str | None
     longitud: str | None
+    id_costo_servicios: int | None = None
 
 
 class SigesCatalogoGateway(Protocol):
@@ -90,4 +97,11 @@ class SigesCatalogoGateway(Protocol):
     ) -> list[SigesSucursalPropia]:
         """Sucursales propias del PST (`Id_Empresa = siges_empresa_id`) —
         sus sedes/bases de despacho, con coordenadas."""
+        ...
+
+    async def list_cuadriculas_de_prestador(
+        self, siges_empresa_id: int
+    ) -> list[str]:
+        """Cuadrículas distintas (Cod. Agrupación en Gestión) de las sucursales
+        cliente activas asignadas al PST — vacíos y NULL excluidos."""
         ...

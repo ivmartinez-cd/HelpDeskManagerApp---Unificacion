@@ -12,6 +12,7 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     TipoEmpresaSiges,
 )
 from src.modules.liquidaciones.infrastructure.siges.query import (
+    CUADRICULAS_DE_PRESTADOR_SQL,
     EMPRESAS_PST_ACTIVAS_SQL,
     SUCURSALES_DE_EMPRESA_SQL,
     SUCURSALES_DE_PRESTADOR_SQL,
@@ -29,6 +30,10 @@ def _texto(value: Any) -> str | None:
 
 def _tipo(den_comercial: str) -> TipoEmpresaSiges:
     return "SPST" if den_comercial.upper().startswith("SPST") else "PST"
+
+
+def _entero(value: Any) -> int | None:
+    return None if value is None else int(value)
 
 
 def _numero(value: Any) -> float:
@@ -116,9 +121,21 @@ class PyodbcSigesCatalogoGateway:
                 provincia=_texto(row.DesProvincia),
                 latitud=_texto(row.Latitud),
                 longitud=_texto(row.Longitud),
+                cuadricula=_texto(row.Cuadricula),
+                id_costo_servicios=_entero(row.IDCostoServicios),
             )
             for row in rows
         ]
+
+    async def list_cuadriculas_de_prestador(self, siges_empresa_id: int) -> list[str]:
+        rows = await self._runner.fetch_all(
+            CUADRICULAS_DE_PRESTADOR_SQL,
+            (siges_empresa_id,),
+            gateway="siges_catalogo",
+            log_message="Fallo la consulta de cuadrículas contra Siges/MERCURIO",
+            log_extra={"siges_empresa_id": siges_empresa_id},
+        )
+        return [str(row.Cuadricula).strip() for row in rows]
 
     async def list_sucursales_de_empresa(
         self, siges_empresa_id: int
@@ -136,6 +153,7 @@ class PyodbcSigesCatalogoGateway:
                 descripcion=str(row.descripcion).strip(),
                 latitud=_texto(row.Latitud),
                 longitud=_texto(row.Longitud),
+                id_costo_servicios=_entero(row.IDCostoServicios),
             )
             for row in rows
         ]

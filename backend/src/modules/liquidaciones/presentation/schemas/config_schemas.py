@@ -97,6 +97,9 @@ class SpstOut(BaseModel):
     zona: str | None
     activo: bool
     siges_empresa_id: int | None = Field(default=None, serialization_alias="sigesEmpresaId")
+    siges_base_sucursal_id: int | None = Field(  # noqa: E501
+        default=None, serialization_alias="sigesBaseSucursalId"
+    )
     created_at: datetime = Field(serialization_alias="createdAt")
 
     @classmethod
@@ -111,6 +114,7 @@ class SpstOut(BaseModel):
             zona=e.zona,
             activo=e.activo,
             siges_empresa_id=e.siges_empresa_id,
+            siges_base_sucursal_id=e.siges_base_sucursal_id,
             created_at=e.created_at,
         )
 

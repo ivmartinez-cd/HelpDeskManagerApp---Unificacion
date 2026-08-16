@@ -4,6 +4,7 @@ Siges (varchar con coma decimal), URL de Maps del viaje completo y control del
 tope de llamadas a Google (la key es corporativa y paga)."""
 
 from dataclasses import dataclass
+from urllib.parse import quote
 from uuid import UUID
 
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
@@ -18,7 +19,9 @@ from src.modules.liquidaciones.domain.repositories.prestador_repository import P
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesCatalogoGateway,
     SigesSucursalCliente,
+    SigesSucursalPropia,
 )
+from src.modules.liquidaciones.domain.services.geolocalizacion import armar_direccion
 
 _MAPS_BASE = "https://www.google.com/maps/dir/?api=1"
 
@@ -40,9 +43,21 @@ def parse_latlon_siges(lat: str | None, lon: str | None) -> tuple[float, float] 
     return None if parsed == (0.0, 0.0) else parsed
 
 
-def maps_url_ida_vuelta(base: tuple[float, float], dest: tuple[float, float]) -> str:
-    """Viaje completo base→cliente→base (la convención de negocio es ida y
-    vuelta): origin y destination son la base, el cliente va como waypoint."""
+def maps_url_ida_vuelta(
+    base: tuple[float, float],
+    dest: tuple[float, float],
+    *,
+    domicilio: str | None = None,
+    localidad: str | None = None,
+    provincia: str | None = None,
+) -> str:
+    """Viaje completo base→cliente→base. Cuando hay dirección de texto usa el
+    formato /maps/dir/ con la dirección como waypoint — Google la geocodifica
+    y muestra el lugar correcto aunque el pin de Siges esté desplazado."""
+    base_str = f"{base[0]},{base[1]}"
+    direccion = armar_direccion(domicilio, localidad, provincia)
+    if direccion:
+        return f"https://www.google.com/maps/dir/{base_str}/{quote(direccion)}/{base_str}"
     return (
         f"{_MAPS_BASE}"
         f"&origin={base[0]},{base[1]}"
@@ -52,7 +67,7 @@ def maps_url_ida_vuelta(base: tuple[float, float], dest: tuple[float, float]) ->
     )
 
 
-async def validar_prestador_para_distancias(
+async def validar_prestador_vinculado_siges(
     prestadores: PrestadorRepository, prestador_id: UUID
 ) -> Prestador:
     prestador = await prestadores.get_by_id(prestador_id)
@@ -60,15 +75,21 @@ async def validar_prestador_para_distancias(
         raise PrestadorNoEncontradoError(prestador_id)
     if prestador.siges_empresa_id is None:
         raise PrestadorSinVinculoSigesError(prestador_id)
+    return prestador
+
+
+async def validar_prestador_para_distancias(
+    prestadores: PrestadorRepository, prestador_id: UUID
+) -> Prestador:
+    prestador = await validar_prestador_vinculado_siges(prestadores, prestador_id)
     if prestador.siges_base_sucursal_id is None:
         raise PrestadorSinBaseSucursalError(prestador_id)
     return prestador
 
 
-async def obtener_coords_base(
-    siges: SigesCatalogoGateway, prestador: Prestador
+def coords_base_default(
+    prestador: Prestador, propias: list[SigesSucursalPropia]
 ) -> tuple[float, float]:
-    propias = await siges.list_sucursales_de_empresa(prestador.siges_empresa_id)  # type: ignore[arg-type]
     base = next(
         (s for s in propias if s.siges_sucursal_id == prestador.siges_base_sucursal_id), None
     )
@@ -78,6 +99,26 @@ async def obtener_coords_base(
     if coords is None:
         raise BaseSucursalSinCoordenadasError(prestador.siges_base_sucursal_id)  # type: ignore[arg-type]
     return coords
+
+
+def build_costo_bases(
+    propias: list[SigesSucursalPropia],
+) -> dict[int, tuple[float, float]]:
+    resultado: dict[int, tuple[float, float]] = {}
+    for s in propias:
+        if s.id_costo_servicios is None:
+            continue
+        coords = parse_latlon_siges(s.latitud, s.longitud)
+        if coords is not None:
+            resultado[s.id_costo_servicios] = coords
+    return resultado
+
+
+async def obtener_coords_base(
+    siges: SigesCatalogoGateway, prestador: Prestador
+) -> tuple[float, float]:
+    propias = await siges.list_sucursales_de_empresa(prestador.siges_empresa_id)  # type: ignore[arg-type]
+    return coords_base_default(prestador, propias)
 
 
 def verificar_tope(necesarias: int, tope: int) -> None:

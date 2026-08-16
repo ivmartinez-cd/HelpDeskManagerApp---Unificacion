@@ -167,7 +167,7 @@ class TestApply:
         assert filas[0].kms_recorrido == pytest.approx(398.815)
         assert filas[0].kms_ida == 199.294
         assert filas[0].kms_vuelta == 199.521
-        assert filas[0].url_maps is not None and "waypoints=" in filas[0].url_maps
+        assert filas[0].url_maps is not None and "google.com/maps/dir/" in filas[0].url_maps
         # el preview aplicado se descarta
         assert await ports.previews.get_by_id(preview.id) is None
 

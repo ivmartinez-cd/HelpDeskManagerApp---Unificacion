@@ -95,6 +95,17 @@ class SqlAlchemySpstRepository:
         await self._session.refresh(row)
         return _to_entity(row)
 
+    async def vincular_base_sucursal(
+        self, spst_id: UUID, *, siges_base_sucursal_id: int | None
+    ) -> Spst | None:
+        row = await self._session.get(SpstModel, spst_id)
+        if not row:
+            return None
+        row.siges_base_sucursal_id = siges_base_sucursal_id
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
     async def vincular_siges(self, spst_id: UUID, *, siges_empresa_id: int | None) -> Spst | None:
         row = await self._session.get(SpstModel, spst_id)
         if not row:
@@ -133,4 +144,5 @@ def _to_entity(row: SpstModel) -> Spst:
         activo=row.activo,
         created_at=row.created_at,
         siges_empresa_id=row.siges_empresa_id,
+        siges_base_sucursal_id=row.siges_base_sucursal_id,
     )

@@ -14,6 +14,10 @@ from src.modules.liquidaciones.application.use_cases.pines_sospechosos import (
 from src.modules.liquidaciones.application.use_cases.resolver_coordenadas import (
     SucursalConCandidatos,
 )
+from src.modules.liquidaciones.application.use_cases.tabla_km_lugares import (
+    CambioDomicilio,
+    RefrescarDireccionesResultado,
+)
 from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
 
 
@@ -147,4 +151,38 @@ class AuditarPinesOut(BaseModel):
             sin_direccion=r.sin_direccion,
             pendientes_por_tope=r.pendientes_por_tope,
             llamadas_google=r.llamadas_google,
+        )
+
+
+class CambioDomicilioOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    sucursal_nombre: str = Field(serialization_alias="sucursalNombre")
+    empresa_nombre: str = Field(serialization_alias="empresaNombre")
+    domicilio_antes: str | None = Field(serialization_alias="domicilioAntes")
+    domicilio_despues: str | None = Field(serialization_alias="domicilioDespues")
+
+    @classmethod
+    def from_dto(cls, c: CambioDomicilio) -> CambioDomicilioOut:
+        return cls(
+            sucursal_nombre=c.sucursal_nombre,
+            empresa_nombre=c.empresa_nombre,
+            domicilio_antes=c.domicilio_antes,
+            domicilio_despues=c.domicilio_despues,
+        )
+
+
+class RefrescarDireccionesOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    actualizadas: int
+    sin_cambios: int = Field(serialization_alias="sinCambios")
+    no_encontradas: int = Field(serialization_alias="noEncontradas")
+    cambios: list[CambioDomicilioOut]
+
+    @classmethod
+    def from_dto(cls, r: RefrescarDireccionesResultado) -> RefrescarDireccionesOut:
+        return cls(
+            actualizadas=r.actualizadas,
+            sin_cambios=r.sin_cambios,
+            no_encontradas=r.no_encontradas,
+            cambios=[CambioDomicilioOut.from_dto(c) for c in r.cambios],
         )

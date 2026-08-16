@@ -8,6 +8,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Spst } from "../types/liquidaciones";
+import { SpstBaseSucursalModal } from "./spst-base-sucursal-modal";
 import { SpstFormModal } from "./spst-form-modal";
 
 const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
@@ -54,6 +55,7 @@ export function SpstsConfig() {
   const [filtroPst, setFiltroPst] = useState("");
   // `undefined` = cerrado; `null` = alta; un SPST = edición.
   const [formSpst, setFormSpst] = useState<Spst | null | undefined>(undefined);
+  const [baseSucursalSpst, setBaseSucursalSpst] = useState<Spst | null>(null);
   const [csvOpen, setCsvOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -153,6 +155,9 @@ export function SpstsConfig() {
                         <Badge variant={s.activo ? "success" : "neutral"}>{s.activo ? "Activo" : "Inactivo"}</Badge>
                       </td>
                       <td className={`${tdCls} text-right`}>
+                        <button onClick={() => setBaseSucursalSpst(s)} className={`font-body text-sm hover:underline mr-3 ${s.sigesBaseSucursalId ? "text-success" : "text-muted-foreground"}`}>
+                          Base despacho
+                        </button>
                         <button onClick={() => setFormSpst(s)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
                         <button onClick={() => handleToggle(s)} className={`font-body text-sm hover:underline mr-3 ${s.activo ? "text-destructive" : "text-success"}`}>
                           {s.activo ? "Desactivar" : "Activar"}
@@ -174,6 +179,17 @@ export function SpstsConfig() {
       {formSpst !== undefined && (
         <SpstFormModal spst={formSpst} prestadores={prestadores} onClose={() => setFormSpst(undefined)} onSuccess={load} />
       )}
+      {baseSucursalSpst && (() => {
+        const pst = prestadorMap[baseSucursalSpst.prestadorId];
+        return pst ? (
+          <SpstBaseSucursalModal
+            spst={baseSucursalSpst}
+            prestador={pst}
+            onClose={() => setBaseSucursalSpst(null)}
+            onChanged={() => { setBaseSucursalSpst(null); void load(); }}
+          />
+        ) : null;
+      })()}
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={load} />
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar SPST">
         <p className="font-body text-sm text-muted-foreground mb-5">

@@ -31,6 +31,7 @@ from src.modules.liquidaciones.presentation.schemas.config_schemas import (
     SpstOut,
     ToggleActivoIn,
 )
+from src.modules.liquidaciones.presentation.schemas.siges_schemas import VincularBaseSucursalIn
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
@@ -95,6 +96,22 @@ async def toggle_spst_activo(
     db: AsyncSession = Depends(get_db),
 ) -> SpstOut:
     updated = await build_toggle_spst_activo(db).execute(spst_id, activo=body.activo)
+    return SpstOut.from_entity(updated)
+
+
+@router.put("/spsts/{spst_id}/siges-base-sucursal", response_model=SpstOut)
+async def vincular_base_sucursal_spst(
+    spst_id: UUID,
+    body: VincularBaseSucursalIn,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> SpstOut:
+    updated = await SqlAlchemySpstRepository(db).vincular_base_sucursal(
+        spst_id, siges_base_sucursal_id=body.siges_base_sucursal_id
+    )
+    if updated is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404)
     return SpstOut.from_entity(updated)
 
 

@@ -144,6 +144,27 @@ class SqlAlchemyTablaKmRepository:
         await self._session.refresh(row)
         return _to_entity(row)
 
+    async def update_domicilio(
+        self,
+        tabla_km_id: UUID,
+        *,
+        domicilio_cliente: str | None,
+        localidad_cliente: str | None,
+        provincia_cliente: str | None,
+    ) -> TablaKm | None:
+        row = await self._session.get(TablaKmModel, tabla_km_id)
+        if row is None:
+            return None
+        row.domicilio_cliente = domicilio_cliente
+        row.localidad_cliente = localidad_cliente
+        row.provincia_cliente = provincia_cliente
+        row.geocode_formatted_address = None
+        row.geocode_fecha = None
+        row.updated_at = datetime.now(UTC)
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
     async def delete(self, tabla_km_id: UUID) -> bool:
         row = await self._session.get(TablaKmModel, tabla_km_id)
         if not row:

@@ -65,6 +65,54 @@ function ResolverPendiente({ prestadorId, fila, onResuelta }: {
   );
 }
 
+type RefrescarResultado = Awaited<ReturnType<typeof liquidacionesApi.refrescarDatosSucursales>>;
+
+function SeccionRefrescarSiges({ prestadorId }: { prestadorId: string }) {
+  const [ejecutando, setEjecutando] = useState(false);
+  const [resultado, setResultado] = useState<RefrescarResultado | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const ejecutar = async () => {
+    setEjecutando(true); setError(null);
+    try {
+      setResultado(await liquidacionesApi.refrescarDatosSucursales(prestadorId));
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : "Error al refrescar"); }
+    finally { setEjecutando(false); }
+  };
+  return (
+    <div className="rounded-[8px] border border-border p-4 flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="font-body text-sm font-semibold text-foreground">Actualizar datos desde Gestión</p>
+          <p className="font-body text-xs text-muted-foreground">Sincroniza domicilio, localidad y provincia de cada sucursal con los datos actuales de Siges.</p>
+        </div>
+        <BrandButton size="sm" variant="outline" loading={ejecutando} onClick={ejecutar}>
+          Actualizar desde Siges
+        </BrandButton>
+      </div>
+      {error && <p className="font-body text-sm text-destructive">{error}</p>}
+      {resultado && (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="success">{resultado.actualizadas} actualizadas</Badge>
+            <Badge variant="neutral">{resultado.sinCambios} sin cambios</Badge>
+            {resultado.noEncontradas > 0 && <Badge variant="warning">{resultado.noEncontradas} no encontradas en Siges</Badge>}
+          </div>
+          {resultado.cambios.length > 0 && (
+            <div className="flex max-h-[15vh] flex-col gap-1 overflow-y-auto text-xs font-body text-muted-foreground">
+              {resultado.cambios.map((c) => (
+                <p key={`${c.empresaNombre}::${c.sucursalNombre}`}>
+                  <span className="font-semibold text-foreground">{c.sucursalNombre}</span>:{" "}
+                  <span className="line-through">{c.domicilioAntes ?? "—"}</span> → {c.domicilioDespues ?? "—"}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PasoGeocodificar({ prestadorId, resumen, setResumen }: {
   prestadorId: string; resumen: GeocodificarResultado | null;
   setResumen: (r: GeocodificarResultado) => void;
@@ -85,9 +133,9 @@ function PasoGeocodificar({ prestadorId, resumen, setResumen }: {
   const pendientes = (filas ?? []).filter((f) => f.estado !== "resuelta");
   return (
     <div className="flex flex-col gap-4">
+      <SeccionRefrescarSiges prestadorId={prestadorId} />
       <p className="font-body text-sm text-muted-foreground">
-        Antes de calcular distancias, cada sucursal cliente necesita coordenadas.
-        Este paso busca en Google Maps las que no tienen pin en Siges.
+        Después de actualizar, geocodificá las sucursales sin coordenadas en Siges.
         Las ambiguas quedan listadas para que elijas el candidato correcto.
       </p>
       {error && !resumen && <p className="font-body text-sm text-destructive">{error}</p>}
@@ -138,7 +186,24 @@ function PasoCalcular({ prestador, preview, setPreview, onAplicado }: {
       <Spinner /><p className="font-body text-sm text-muted-foreground">Consultando Google Maps (ida y vuelta por sucursal)…</p>
     </div>
   );
-  if (error) return <p className="font-body text-sm text-destructive">{error}</p>;
+  if (error) {
+    const sinBase = error.includes("sucursal base");
+    return (
+      <div className="rounded-[8px] border border-destructive/40 bg-destructive/5 p-4 flex flex-col gap-2">
+        <p className="font-body text-sm font-semibold text-destructive">
+          {sinBase ? "Falta configurar la sucursal base de despacho" : "Error al calcular distancias"}
+        </p>
+        {sinBase ? (
+          <p className="font-body text-sm text-muted-foreground">
+            Para calcular distancias necesitás definir desde qué sucursal propia sale el técnico.
+            Configurala en <span className="font-semibold text-foreground">Configuración → Prestadores → {prestador.nombre}</span>, campo <span className="font-semibold text-foreground">Sucursal base</span>.
+          </p>
+        ) : (
+          <p className="font-body text-sm text-muted-foreground">{error}</p>
+        )}
+      </div>
+    );
+  }
   if (aplicado) return <p className="font-body text-sm font-semibold text-brand-orange">✓ Distancias aplicadas. Podés continuar al paso de auditoría.</p>;
 
   const aplicar = async () => {
@@ -190,6 +255,40 @@ function PasoCalcular({ prestador, preview, setPreview, onAplicado }: {
   ) : null;
 }
 
+function PinSospechosoItem({ pin, prestadorId, onCorregido }: {
+  pin: PinSospechoso; prestadorId: string; onCorregido: () => void;
+}) {
+  const [corrigiendo, setCorrigiendo] = useState(false);
+  const corregir = async () => {
+    setCorrigiendo(true);
+    try {
+      await liquidacionesApi.corregirPin(prestadorId, pin.sigesSucursalId);
+      toast.success(`${pin.empresaNombre}: pin corregido con geocode`);
+      onCorregido();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Error al corregir pin");
+    } finally { setCorrigiendo(false); }
+  };
+  return (
+    <div className="rounded-[8px] border border-border px-4 py-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-body text-sm font-semibold text-foreground">{pin.empresaNombre} — {pin.sucursalNombre}</p>
+        <Badge variant={pin.locationType === "ROOFTOP" ? "danger" : "warning"}>{pin.discrepanciaKm.toFixed(1)} km · {pin.locationType}</Badge>
+      </div>
+      <p className="mt-0.5 font-body text-xs text-muted-foreground">{pin.direccion}</p>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <div className="flex gap-3 font-body text-[11px] font-bold uppercase tracking-wide">
+          <a href={`https://www.google.com/maps?q=${pin.latitudSiges},${pin.longitudSiges}`} target="_blank" rel="noopener noreferrer" className="text-brand-orange hover:underline">Pin Siges</a>
+          <a href={`https://www.google.com/maps?q=${pin.latitudGeocode},${pin.longitudGeocode}`} target="_blank" rel="noopener noreferrer" className="text-brand-orange hover:underline">Geocode</a>
+        </div>
+        <BrandButton type="button" size="sm" variant="outline" loading={corrigiendo} onClick={corregir}>
+          Usar geocode
+        </BrandButton>
+      </div>
+    </div>
+  );
+}
+
 function PasoPines({ prestadorId }: { prestadorId: string }) {
   const [pines, setPines] = useState<PinSospechoso[] | null>(null);
   const [auditando, setAuditando] = useState(false);
@@ -209,7 +308,7 @@ function PasoPines({ prestadorId }: { prestadorId: string }) {
     <div className="flex flex-col gap-4">
       <p className="font-body text-sm text-muted-foreground">
         Revisá si algún pin de Siges difiere del geocode del domicilio (umbral: 5 km).
-        Un pin muy alejado puede indicar una coordenada incorrecta en Gestión.
+        &quot;Usar geocode&quot; corrige las coordenadas para el próximo cálculo de km.
         Este paso es opcional — podés finalizar sin auditarlo.
       </p>
       {!pines ? (
@@ -219,17 +318,12 @@ function PasoPines({ prestadorId }: { prestadorId: string }) {
       ) : (
         <div className="flex max-h-[35vh] flex-col gap-2 overflow-y-auto pr-1">
           {pines.map((p) => (
-            <div key={p.sigesSucursalId} className="rounded-[8px] border border-border px-4 py-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-body text-sm font-semibold text-foreground">{p.empresaNombre} — {p.sucursalNombre}</p>
-                <Badge variant={p.locationType === "ROOFTOP" ? "danger" : "warning"}>{p.discrepanciaKm.toFixed(1)} km · {p.locationType}</Badge>
-              </div>
-              <p className="mt-0.5 font-body text-xs text-muted-foreground">{p.direccion}</p>
-              <div className="mt-1 flex gap-3 font-body text-[11px] font-bold uppercase tracking-wide">
-                <a href={`https://www.google.com/maps?q=${p.latitudSiges},${p.longitudSiges}`} target="_blank" rel="noopener noreferrer" className="text-brand-orange hover:underline">Pin Siges</a>
-                <a href={`https://www.google.com/maps?q=${p.latitudGeocode},${p.longitudGeocode}`} target="_blank" rel="noopener noreferrer" className="text-brand-orange hover:underline">Geocode</a>
-              </div>
-            </div>
+            <PinSospechosoItem
+              key={p.sigesSucursalId}
+              pin={p}
+              prestadorId={prestadorId}
+              onCorregido={() => setKey(k => k + 1)}
+            />
           ))}
         </div>
       )}

@@ -10,6 +10,7 @@ from src.modules.liquidaciones.domain.entities.calculo_km_preview import (
     CalculoKmPreview,
     PreviewFila,
 )
+from src.modules.liquidaciones.domain.entities.cuadricula_base_map import CuadriculaBaseMap
 from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import SucursalCoordenadas
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
@@ -196,6 +197,32 @@ class FakeGoogleMapsIdaVuelta:
     ) -> list[tuple[float | None, float | None]]:
         self.lotes.append(list(destinos))
         return [self.tramos.get(d, (None, None)) for d in destinos]
+
+
+class FakeCuadriculaBaseMapRepository:
+    """Sin mapeos por defecto; tests de multi-base pueden añadir entradas directamente."""
+
+    def __init__(self) -> None:
+        self.rows: dict[tuple[UUID, str], CuadriculaBaseMap] = {}
+
+    async def list_by_prestador(self, prestador_id: UUID) -> list[CuadriculaBaseMap]:
+        return [v for k, v in self.rows.items() if k[0] == prestador_id]
+
+    async def upsert(
+        self, *, prestador_id: UUID, cuadricula: str, siges_base_sucursal_id: int
+    ) -> CuadriculaBaseMap:
+        entry = CuadriculaBaseMap(
+            id=uuid.uuid4(),
+            prestador_id=prestador_id,
+            cuadricula=cuadricula,
+            siges_base_sucursal_id=siges_base_sucursal_id,
+            created_at=_AHORA,
+        )
+        self.rows[(prestador_id, cuadricula)] = entry
+        return entry
+
+    async def delete(self, *, prestador_id: UUID, cuadricula: str) -> None:
+        self.rows.pop((prestador_id, cuadricula), None)
 
 
 class FakeTablaKmGeoRepository:

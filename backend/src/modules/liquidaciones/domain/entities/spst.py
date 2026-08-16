@@ -21,6 +21,8 @@ class Spst:
     zona: str | None
     activo: bool
     created_at: datetime
-    # Vínculo a `dbo.Empresa` de Siges (ADR-014) — None = sin vincular, fuera
-    # del sync. Con default para no romper los constructores existentes.
+    # Vínculo a `dbo.Empresa` de Siges (ADR-014) — None = sin vincular.
     siges_empresa_id: int | None = None
+    # Sucursal propia del PST desde la que este SPST despacha — determina el
+    # origen de las distancias en el recálculo por fila. None = usa base default del PST.
+    siges_base_sucursal_id: int | None = None

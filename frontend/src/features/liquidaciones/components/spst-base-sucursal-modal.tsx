@@ -7,20 +7,22 @@ import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { PrestadorLiquidacion, SucursalPropia } from "../types/liquidaciones";
+import type { PrestadorLiquidacion, Spst, SucursalPropia } from "../types/liquidaciones";
 
-export function PrestadorBaseSucursalModal({
+export function SpstBaseSucursalModal({
+  spst,
   prestador,
   onClose,
   onChanged,
 }: {
+  spst: Spst;
   prestador: PrestadorLiquidacion;
   onClose: () => void;
   onChanged: () => void;
 }) {
   const [sucursales, setSucursales] = useState<SucursalPropia[] | null>(null);
   const [loadingList, setLoadingList] = useState(true);
-  const [selectedId, setSelectedId] = useState<number | null>(prestador.sigesBaseSucursalId);
+  const [selectedId, setSelectedId] = useState<number | null>(spst.sigesBaseSucursalId);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,8 +38,8 @@ export function PrestadorBaseSucursalModal({
     setSaving(true);
     setError(null);
     try {
-      await liquidacionesApi.vincularBaseSucursal(prestador.id, selectedId);
-      toast.success(selectedId ? "Sucursal base guardada" : "Base desvinculada");
+      await liquidacionesApi.vincularBaseSucursalSpst(spst.id, selectedId);
+      toast.success(selectedId ? "Base guardada" : "Base desvinculada");
       onChanged();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error al guardar");
@@ -46,21 +48,20 @@ export function PrestadorBaseSucursalModal({
     }
   };
 
-  const baseCambiada = selectedId !== prestador.sigesBaseSucursalId;
+  const baseCambiada = selectedId !== spst.sigesBaseSucursalId;
   const baseTieneCoords = sucursales?.find((s) => s.sigesSucursalId === selectedId)?.tieneCoords ?? false;
 
   return (
     <BrandModal
       isOpen
       onClose={onClose}
-      title={`Sucursal base — ${prestador.nombreCorto}`}
+      title={`Base despacho — ${spst.nombre}`}
       error={error}
     >
       <div className="flex flex-col gap-4">
         <p className="font-body text-sm text-muted-foreground">
-          Seleccioná la sede del PST desde donde se calculan las distancias a los clientes.
-          La sucursal debe tener coordenadas cargadas en Gestión. Si el PST tiene varias sedes,
-          cada cliente usa automáticamente la base que Siges le asigna por su grupo de costos.
+          Seleccioná la sucursal de Siges desde donde este SPST despacha.
+          Se usa como punto de origen para el cálculo de distancias de las filas asignadas a este SPST.
         </p>
 
         {loadingList ? (
@@ -76,7 +77,7 @@ export function PrestadorBaseSucursalModal({
               >
                 <input
                   type="radio"
-                  name="base-sucursal"
+                  name="base-sucursal-spst"
                   value={s.sigesSucursalId}
                   checked={selectedId === s.sigesSucursalId}
                   onChange={() => setSelectedId(s.sigesSucursalId)}
@@ -94,14 +95,6 @@ export function PrestadorBaseSucursalModal({
         ) : (
           <p className="font-body text-sm text-muted-foreground italic">
             No se encontraron sucursales propias del PST en Siges.
-            Verificá que el vínculo Siges del prestador esté configurado.
-          </p>
-        )}
-
-        {prestador.sigesBaseSucursalId !== null && !baseCambiada && (
-          <p className="font-body text-xs text-muted-foreground">
-            El cálculo de distancias (con preview de km ida y vuelta) se hace desde la
-            pantalla Tabla KM con este prestador seleccionado.
           </p>
         )}
 

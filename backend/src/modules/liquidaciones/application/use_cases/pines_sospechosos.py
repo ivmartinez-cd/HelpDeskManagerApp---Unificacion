@@ -13,7 +13,7 @@ from uuid import UUID
 
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
     parse_latlon_siges,
-    validar_prestador_para_distancias,
+    validar_prestador_vinculado_siges,
 )
 from src.modules.liquidaciones.domain.repositories.geocode_cache_repository import (
     GeocodeCacheRepository,
@@ -27,11 +27,16 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     SigesCatalogoGateway,
     SigesSucursalCliente,
 )
+from src.modules.liquidaciones.domain.repositories.sucursal_coordenadas_repository import (
+    SucursalCoordenadasRepository,
+)
 from src.modules.liquidaciones.domain.services.geolocalizacion import (
+    PROCEDENCIA_GEOCODE,
     armar_direccion,
     es_pin_sospechoso,
     haversine_km,
 )
+from src.shared.domain.errors import ValidationError
 
 
 @dataclass(frozen=True)
@@ -40,6 +45,7 @@ class PinesPorts:
     siges: SigesCatalogoGateway
     geocode_cache: GeocodeCacheRepository
     geocoding: GeocodingGateway
+    sucursal_coords: SucursalCoordenadasRepository
 
 
 @dataclass(frozen=True)
@@ -111,7 +117,7 @@ class AuditarPines:
         )
 
     async def _contar_sin_direccion(self, prestador_id: UUID) -> int:
-        prestador = await validar_prestador_para_distancias(
+        prestador = await validar_prestador_vinculado_siges(
             self._ports.prestadores, prestador_id
         )
         sucursales = await self._ports.siges.list_sucursales_de_prestador(
@@ -128,7 +134,7 @@ class AuditarPines:
 async def _con_pin(
     ports: PinesPorts, prestador_id: UUID
 ) -> list[tuple[SigesSucursalCliente, tuple[float, float], str]]:
-    prestador = await validar_prestador_para_distancias(ports.prestadores, prestador_id)
+    prestador = await validar_prestador_vinculado_siges(ports.prestadores, prestador_id)
     sucursales = await ports.siges.list_sucursales_de_prestador(
         prestador.siges_empresa_id  # type: ignore[arg-type]
     )
@@ -165,3 +171,44 @@ def _evaluar(
         location_type=candidato.location_type,
         discrepancia_km=round(discrepancia, 3),
     )
+
+
+class CorregirPin:
+    """Guarda el geocode de un pin sospechoso como override en
+    `sucursal_coordenadas`, reemplazando las coords de Siges en el cálculo."""
+
+    def __init__(self, ports: PinesPorts) -> None:
+        self._ports = ports
+
+    async def execute(self, prestador_id: UUID, siges_sucursal_id: int) -> None:
+        prestador = await validar_prestador_vinculado_siges(
+            self._ports.prestadores, prestador_id
+        )
+        sucursales = await self._ports.siges.list_sucursales_de_prestador(
+            prestador.siges_empresa_id  # type: ignore[arg-type]
+        )
+        sucursal = next(
+            (s for s in sucursales if s.siges_sucursal_id == siges_sucursal_id), None
+        )
+        if sucursal is None:
+            raise ValidationError(f"Sucursal {siges_sucursal_id} no encontrada")
+        direccion = armar_direccion(sucursal.domicilio, sucursal.localidad, sucursal.provincia)
+        if direccion is None:
+            raise ValidationError("La sucursal no tiene dirección para geocodificar")
+        candidatos = await self._ports.geocode_cache.get(direccion)
+        if not candidatos:
+            raise ValidationError("Ejecutá 'Auditar con Google' primero para obtener el geocode")
+        candidato = candidatos[0]
+        await self._ports.sucursal_coords.upsert_pendiente(
+            siges_sucursal_id=sucursal.siges_sucursal_id,
+            empresa_nombre=sucursal.empresa_nombre,
+            sucursal_nombre=sucursal.sucursal_nombre,
+            direccion_normalizada=direccion,
+        )
+        await self._ports.sucursal_coords.resolver(
+            siges_sucursal_id=sucursal.siges_sucursal_id,
+            latitud=candidato.latitud,
+            longitud=candidato.longitud,
+            procedencia=PROCEDENCIA_GEOCODE,
+            formatted_address=candidato.formatted_address,
+        )

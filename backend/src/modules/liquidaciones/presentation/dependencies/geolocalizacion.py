@@ -19,6 +19,7 @@ from src.modules.liquidaciones.application.use_cases.geocodificar_sucursales imp
 )
 from src.modules.liquidaciones.application.use_cases.pines_sospechosos import (
     AuditarPines,
+    CorregirPin,
     ListarPinesSospechosos,
     PinesPorts,
 )
@@ -30,6 +31,7 @@ from src.modules.liquidaciones.application.use_cases.resolver_coordenadas import
 from src.modules.liquidaciones.application.use_cases.tabla_km_lugares import (
     BuscarLugarFila,
     RecalcularKmFila,
+    RefrescarDatosSiges,
     ResolverCoordenadasFila,
     TablaKmLugaresPorts,
 )
@@ -44,6 +46,9 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_geocode_ca
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
+)
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repository import (  # noqa: E501
+    SqlAlchemySpstRepository,
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_sucursal_coordenadas_repository import (  # noqa: E501
     SqlAlchemySucursalCoordenadasRepository,
@@ -120,6 +125,7 @@ def _pines_ports(session: AsyncSession) -> PinesPorts:
         siges=siges_catalogo_gateway(),
         geocode_cache=SqlAlchemyGeocodeCacheRepository(session),
         geocoding=_geocoding_gateway(),
+        sucursal_coords=SqlAlchemySucursalCoordenadasRepository(session),
     )
 
 
@@ -131,6 +137,10 @@ def build_auditar_pines(session: AsyncSession) -> AuditarPines:
     return AuditarPines(_pines_ports(session), _tope())
 
 
+def build_corregir_pin(session: AsyncSession) -> CorregirPin:
+    return CorregirPin(_pines_ports(session))
+
+
 def _lugares_ports(session: AsyncSession) -> TablaKmLugaresPorts:
     return TablaKmLugaresPorts(
         prestadores=SqlAlchemyPrestadorRepository(session),
@@ -139,11 +149,16 @@ def _lugares_ports(session: AsyncSession) -> TablaKmLugaresPorts:
         geocode_cache=SqlAlchemyGeocodeCacheRepository(session),
         geocoding=_geocoding_gateway(),
         google_maps=siges_google_maps_gateway(),
+        spsts=SqlAlchemySpstRepository(session),
     )
 
 
 def build_buscar_lugar_fila(session: AsyncSession) -> BuscarLugarFila:
     return BuscarLugarFila(_lugares_ports(session))
+
+
+def build_refrescar_datos_siges(session: AsyncSession) -> RefrescarDatosSiges:
+    return RefrescarDatosSiges(_lugares_ports(session))
 
 
 def build_resolver_coordenadas_fila(session: AsyncSession) -> ResolverCoordenadasFila:
