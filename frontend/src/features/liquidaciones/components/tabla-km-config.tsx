@@ -9,7 +9,7 @@ import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { PrestadorLiquidacion, Spst, SucursalSiges, TablaKm } from "../types/liquidaciones";
+import type { PrestadorLiquidacion, SucursalSiges, TablaKm } from "../types/liquidaciones";
 
 type KmSortKey = "empresa" | "sucursal" | "kmsRec" | "kmsFact";
 const KM_SORT_KEYS: readonly KmSortKey[] = ["empresa", "sucursal", "kmsRec", "kmsFact"];
@@ -34,7 +34,6 @@ export function TablaKmConfig() {
   // react-hooks/set-state-in-effect).
   const [entradasPstId, setEntradasPstId] = useState<string | null>(null);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
-  const [spsts, setSpsts] = useState<Spst[]>([]);
   const [loadingPrestadores, setLoadingPrestadores] = useState(true);
   const [filtroPst, setFiltroPst] = useState("");
   const [busqueda, setBusqueda] = useState("");
@@ -52,8 +51,8 @@ export function TablaKmConfig() {
   });
 
   useEffect(() => {
-    void Promise.all([liquidacionesApi.listPrestadores(false), liquidacionesApi.listSpsts()])
-      .then(([p, s]) => { setPrestadores(p); setSpsts(s); })
+    void liquidacionesApi.listPrestadores(false)
+      .then(setPrestadores)
       .finally(() => setLoadingPrestadores(false));
   }, []);
 
@@ -154,7 +153,7 @@ export function TablaKmConfig() {
             onClick={() => setWizardOpen(true)}
             title="Guía paso a paso: geocodificar → calcular km → auditar pines"
           >
-            Configurar km →
+            Asistente de KM →
           </BrandButton>
           <BrandButton size="sm" onClick={() => { setEditing(null); setPlantilla(null); setModalOpen(true); }}>+ Nueva entrada</BrandButton>
         </div>
@@ -244,7 +243,7 @@ export function TablaKmConfig() {
         </div>
       )}
 
-      <EntradaModal key={editing?.id ?? (plantilla ? `plantilla:${plantilla.empresaNombre}::${plantilla.sucursalNombre}` : "nueva")} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); setPlantilla(null); }} prestadores={prestadores} spsts={spsts} editing={editing} defaultPrestadorId={filtroPst} onSuccess={loadEntradas} plantilla={plantilla} />
+      <EntradaModal key={editing?.id ?? (plantilla ? `plantilla:${plantilla.empresaNombre}::${plantilla.sucursalNombre}` : "nueva")} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); setPlantilla(null); }} prestadores={prestadores} editing={editing} defaultPrestadorId={filtroPst} onSuccess={loadEntradas} plantilla={plantilla} />
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={loadEntradas} />
       {sigesOpen && filtroPst && (
         <SigesTablaKmModal prestadorId={filtroPst} onClose={() => setSigesOpen(false)} onUsar={handleUsarSucursal} />

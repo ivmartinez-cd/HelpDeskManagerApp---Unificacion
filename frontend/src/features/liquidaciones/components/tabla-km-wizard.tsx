@@ -15,6 +15,11 @@ import type {
 import { CandidatosPicker } from "./tabla-km-lugar-modal";
 
 const PASOS = ["Geocodificar", "Distancias", "Pines"] as const;
+const LABEL_COORDS_ORIGEN: Record<string, string> = {
+  siges: "Siges",
+  geocode: "Geocodificado",
+  manual: "Manual",
+};
 type Paso = 0 | 1 | 2;
 const th = "py-2 px-3 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
 const td = "py-1.5 px-3 font-body text-[13px]";
@@ -243,7 +248,7 @@ function PasoCalcular({ prestador, preview, setPreview, onAplicado }: {
                 <td className={`${td} text-right tabular-nums text-foreground`}>{f.kmsIda.toFixed(1)}</td>
                 <td className={`${td} text-right tabular-nums text-foreground`}>{f.kmsVuelta.toFixed(1)}</td>
                 <td className={`${td} text-right tabular-nums font-semibold text-foreground`}>{f.kmsTotal.toFixed(1)}</td>
-                <td className={td}><Badge variant={f.coordsOrigen === "siges" ? "neutral" : "info"}>{f.coordsOrigen}</Badge></td>
+                <td className={td}><Badge variant={f.coordsOrigen === "siges" ? "neutral" : "info"}>{LABEL_COORDS_ORIGEN[f.coordsOrigen] ?? f.coordsOrigen}</Badge></td>
                 <td className={td}><Badge variant={f.accion === "crear" ? "info" : "accent"}>{f.accion}</Badge></td>
               </tr>
             ))}
@@ -282,7 +287,7 @@ function PinSospechosoItem({ pin, prestadorId, onCorregido }: {
           <a href={`https://www.google.com/maps?q=${pin.latitudGeocode},${pin.longitudGeocode}`} target="_blank" rel="noopener noreferrer" className="text-brand-orange hover:underline">Geocode</a>
         </div>
         <BrandButton type="button" size="sm" variant="outline" loading={corrigiendo} onClick={corregir}>
-          Usar geocode
+          Corregir pin
         </BrandButton>
       </div>
     </div>

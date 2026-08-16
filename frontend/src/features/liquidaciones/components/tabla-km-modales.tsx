@@ -11,7 +11,7 @@ import {
 } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { PrestadorLiquidacion, Spst, TablaKm } from "../types/liquidaciones";
+import type { PrestadorLiquidacion, TablaKm } from "../types/liquidaciones";
 import { BuscarLugarModal } from "./tabla-km-lugar-modal";
 
 // Prefill del alta asistida desde Siges (ADR-014 DS3) — solo datos descriptivos,
@@ -29,10 +29,9 @@ function entradaAForm(
   defaultPrestadorId: string,
   plantilla: PlantillaEntrada | null,
 ) {
-  if (!t) return { prestadorId: defaultPrestadorId, spstId: "", empresaNombre: "", sucursalNombre: "", domicilioCliente: "", localidadCliente: "", provinciaCliente: "", kmsRecorrido: "", kmsAFacturar: "", umbralViatico: "30", aplicaViatico: false, urlMaps: "", observaciones: "", ...plantilla };
+  if (!t) return { prestadorId: defaultPrestadorId, empresaNombre: "", sucursalNombre: "", domicilioCliente: "", localidadCliente: "", provinciaCliente: "", kmsRecorrido: "", kmsAFacturar: "", umbralViatico: "30", aplicaViatico: false, urlMaps: "", observaciones: "", ...plantilla };
   return {
     prestadorId: t.prestadorId,
-    spstId: t.spstId ?? "",
     empresaNombre: t.empresaNombre,
     sucursalNombre: t.sucursalNombre,
     domicilioCliente: t.domicilioCliente ?? "",
@@ -47,13 +46,19 @@ function entradaAForm(
   };
 }
 
+const LABEL_COORDS_ORIGEN: Record<string, string> = {
+  siges: "Siges",
+  geocode: "Geocodificado",
+  manual: "Manual",
+};
+
 // El caller lo monta con key={editing?.id ?? "nueva"} para que el estado inicial
 // del form se recalcule al cambiar de entrada.
 export function EntradaModal({
-  isOpen, onClose, prestadores, spsts, editing, defaultPrestadorId, onSuccess, plantilla = null,
+  isOpen, onClose, prestadores, editing, defaultPrestadorId, onSuccess, plantilla = null,
 }: {
   isOpen: boolean; onClose: () => void;
-  prestadores: PrestadorLiquidacion[]; spsts: Spst[]; editing: TablaKm | null; defaultPrestadorId: string; onSuccess: () => void;
+  prestadores: PrestadorLiquidacion[]; editing: TablaKm | null; defaultPrestadorId: string; onSuccess: () => void;
   plantilla?: PlantillaEntrada | null;
 }) {
   const [form, setForm] = useState(() => entradaAForm(editing, defaultPrestadorId, plantilla));
@@ -63,7 +68,6 @@ export function EntradaModal({
   const [recalculando, setRecalculando] = useState(false);
 
   const handleClose = () => { setForm(entradaAForm(editing, defaultPrestadorId, plantilla)); setError(null); onClose(); };
-  const filteredSpsts = spsts.filter((s) => !form.prestadorId || s.prestadorId === form.prestadorId);
 
   // Recalcula ida+vuelta reales contra Google usando las coords guardadas de la
   // fila (2 llamadas). El resultado pisa km/viático pero nunca umbral ni
@@ -93,7 +97,6 @@ export function EntradaModal({
     try {
       const body = {
         prestadorId: form.prestadorId,
-        spstId: form.spstId || undefined,
         empresaNombre: form.empresaNombre,
         sucursalNombre: form.sucursalNombre,
         domicilioCliente: form.domicilioCliente || undefined,
@@ -125,22 +128,18 @@ export function EntradaModal({
   return (
     <BrandModal isOpen={isOpen} onClose={handleClose} title={editing ? "Editar entrada Tabla KM" : "Nueva entrada Tabla KM"} error={error} widthPx={580}>
       <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-        <BrandSelect label="Prestador *" required value={form.prestadorId} onChange={(e) => setForm((f) => ({ ...f, prestadorId: e.target.value, spstId: "" }))}>
+        <BrandSelect label="Prestador *" required value={form.prestadorId} onChange={(e) => setForm((f) => ({ ...f, prestadorId: e.target.value }))}>
           <option value="">Seleccioná...</option>
           {prestadores.map((p) => <option key={p.id} value={p.id}>{p.nombreCorto} — {p.nombre}</option>)}
-        </BrandSelect>
-        <BrandSelect label="SPST (opcional)" value={form.spstId} onChange={(e) => setForm((f) => ({ ...f, spstId: e.target.value }))}>
-          <option value="">Sin SPST</option>
-          {filteredSpsts.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
         </BrandSelect>
         <BrandInput label="Empresa / Cliente *" required value={form.empresaNombre} onChange={(e) => setForm((f) => ({ ...f, empresaNombre: e.target.value }))} />
         <BrandInput label="Sucursal *" required value={form.sucursalNombre} onChange={(e) => setForm((f) => ({ ...f, sucursalNombre: e.target.value }))} />
         <BrandInput label="Domicilio cliente" value={form.domicilioCliente} onChange={(e) => setForm((f) => ({ ...f, domicilioCliente: e.target.value }))} />
         <BrandInput label="Localidad" value={form.localidadCliente} onChange={(e) => setForm((f) => ({ ...f, localidadCliente: e.target.value }))} />
         <BrandInput label="Provincia" value={form.provinciaCliente} onChange={(e) => setForm((f) => ({ ...f, provinciaCliente: e.target.value }))} />
-        <BrandInput label="KMs recorrido *" type="number" step="0.1" required value={form.kmsRecorrido} onChange={(e) => setForm((f) => ({ ...f, kmsRecorrido: e.target.value }))} />
-        <BrandInput label="KMs a facturar" type="number" step="0.1" value={form.kmsAFacturar} placeholder="Igual a recorrido si vacío" onChange={(e) => setForm((f) => ({ ...f, kmsAFacturar: e.target.value }))} />
-        <BrandInput label="Umbral viático (km)" type="number" step="0.1" value={form.umbralViatico} onChange={(e) => setForm((f) => ({ ...f, umbralViatico: e.target.value }))} />
+        <BrandInput label="KMs recorrido *" type="number" step="0.1" required value={form.kmsRecorrido} hint="Total del viaje: ida + vuelta." onChange={(e) => setForm((f) => ({ ...f, kmsRecorrido: e.target.value }))} />
+        <BrandInput label="KMs a facturar" type="number" step="0.1" value={form.kmsAFacturar} placeholder="Igual a recorrido si vacío" hint="Puede ser menor si aplica franquicia." onChange={(e) => setForm((f) => ({ ...f, kmsAFacturar: e.target.value }))} />
+        <BrandInput label="Umbral viático (km)" type="number" step="0.1" value={form.umbralViatico} hint="Si el total supera este valor, aplica viático. Default: 30 km." onChange={(e) => setForm((f) => ({ ...f, umbralViatico: e.target.value }))} />
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <span className="font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">URL Maps</span>
@@ -164,7 +163,9 @@ export function EntradaModal({
               <div className="flex items-center gap-2">
                 <span className="font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Coordenadas destino</span>
                 {editing.coordsOrigen && (
-                  <Badge variant={editing.coordsOrigen === "siges" ? "neutral" : "info"}>{editing.coordsOrigen}</Badge>
+                  <Badge variant={editing.coordsOrigen === "siges" ? "neutral" : "info"}>
+                    {LABEL_COORDS_ORIGEN[editing.coordsOrigen] ?? editing.coordsOrigen}
+                  </Badge>
                 )}
               </div>
               {editing.latitudDestino != null && editing.longitudDestino != null && (
