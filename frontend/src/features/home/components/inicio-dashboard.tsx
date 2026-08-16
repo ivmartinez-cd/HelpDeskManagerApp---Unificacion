@@ -12,6 +12,7 @@ import {
   useSlaHistoria,
   useTurnosHoy,
 } from "../hooks/use-inicio-data";
+import { LiquidacionesPendientesCard } from "./liquidaciones-pendientes-card";
 import { buildKpis } from "../utils/build-kpis";
 import { ClientesHoyCard } from "./clientes-hoy-card";
 import { ContadoresDonutCard } from "./contadores-donut-card";
@@ -53,12 +54,10 @@ export function InicioDashboard() {
     prestadores: verPrestadores,
     contadores: verContadores,
     sla: verSla,
-    liquidaciones: verLiquidaciones,
     parque,
     contadoresResumen,
     slaHistoria,
     calendario,
-    liquidacionesPendientes,
   });
 
   return (
@@ -94,6 +93,13 @@ export function InicioDashboard() {
               loading={contadoresResumen.loading}
               error={contadoresResumen.error}
               onResolved={contadoresResumen.refetch}
+            />
+          )}
+          {verLiquidaciones && (
+            <LiquidacionesPendientesCard
+              data={liquidacionesPendientes.data}
+              loading={liquidacionesPendientes.loading}
+              error={liquidacionesPendientes.error}
             />
           )}
         </div>

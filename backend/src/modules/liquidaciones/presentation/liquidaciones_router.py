@@ -50,6 +50,7 @@ from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import (
     EstadoIn,
     ExtraIn,
     LiquidacionOut,
+    PorEstadoPendientesOut,
     PrestadorLiquidacionOut,
     ResumenLiquidacionesOut,
 )
@@ -166,8 +167,16 @@ async def get_resumen_liquidaciones(
     db: AsyncSession = Depends(get_db),
 ) -> ResumenLiquidacionesOut:
     """Conteo de liquidaciones pendientes de aprobación (abierta/preliquidada/recibida/observada)."""
-    count = await SqlAlchemyLiquidacionRepository(db).count_pendientes()
-    return ResumenLiquidacionesOut(pendientes=count)
+    por_estado = await SqlAlchemyLiquidacionRepository(db).count_por_estado_pendientes()
+    return ResumenLiquidacionesOut(
+        pendientes=sum(por_estado.values()),
+        por_estado=PorEstadoPendientesOut(
+            abierta=por_estado.get("abierta", 0),
+            preliquidada=por_estado.get("preliquidada", 0),
+            recibida=por_estado.get("recibida", 0),
+            observada=por_estado.get("observada", 0),
+        ),
+    )
 
 
 @router.patch("/{liquidacion_id}/estado", response_model=LiquidacionOut)

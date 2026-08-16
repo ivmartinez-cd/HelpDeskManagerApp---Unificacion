@@ -16,8 +16,16 @@ ESTADOS_VALIDOS = Literal[
 ]
 
 
+class PorEstadoPendientesOut(BaseModel):
+    abierta: int = 0
+    preliquidada: int = 0
+    recibida: int = 0
+    observada: int = 0
+
+
 class ResumenLiquidacionesOut(BaseModel):
     pendientes: int
+    por_estado: PorEstadoPendientesOut = Field(serialization_alias="porEstado")
 
 
 class EstadoIn(BaseModel):

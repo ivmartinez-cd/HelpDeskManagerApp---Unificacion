@@ -140,7 +140,10 @@ export function useInsumosDashboard(enabled: boolean): Remote<DashboardResponse>
   return useRemote(enabled, () => insumosApi.getDashboard(), "el dashboard de Insumos");
 }
 
-export function useLiquidacionesPendientes(enabled: boolean): Remote<{ pendientes: number }> {
+export function useLiquidacionesPendientes(enabled: boolean): Remote<{
+  pendientes: number;
+  porEstado: { abierta: number; preliquidada: number; recibida: number; observada: number };
+}> {
   return useRemote(
     enabled,
     () => liquidacionesApi.getResumen(),

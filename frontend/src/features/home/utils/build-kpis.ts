@@ -24,15 +24,13 @@ export function buildKpis(gates: {
   prestadores: boolean;
   contadores: boolean;
   sla: boolean;
-  liquidaciones: boolean;
   parque: Remote<PrestadoresResumen>;
   contadoresResumen: Remote<ResumenClientesOperador>;
   slaHistoria: Remote<SlaHistoria>;
   calendario: Remote<CalendarioHome>;
-  liquidacionesPendientes: Remote<{ pendientes: number }>;
 }): KpiDef[] {
   const kpis: KpiDef[] = [];
-  const { parque, contadoresResumen, slaHistoria, calendario, liquidacionesPendientes } = gates;
+  const { parque, contadoresResumen, slaHistoria, calendario } = gates;
 
   if (gates.prestadores) {
     kpis.push({
@@ -103,15 +101,6 @@ export function buildKpis(gates: {
       label: "Pendientes",
       value: valor(calendario, (c) => fmtInt(c.pendientes.length)),
       sub: "facturación sin cerrar",
-      valueColor: VALUE_AMBER,
-    });
-  }
-
-  if (gates.liquidaciones) {
-    kpis.push({
-      label: "Sin aprobar",
-      value: valor(liquidacionesPendientes, (r) => fmtInt(r.pendientes)),
-      sub: "liquidaciones",
       valueColor: VALUE_AMBER,
     });
   }
