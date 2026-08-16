@@ -78,12 +78,12 @@ export function OfflineDevicesTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
+    <div className="overflow-x-auto">
       <table className="w-full text-left font-body text-sm">
         <thead>
-          <tr className="border-b border-border text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+          <tr className="border-b border-border text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
             {canDelete && (
-              <th scope="col" className="px-4 py-3">
+              <th scope="col" className="px-4 py-2">
                 <input
                   type="checkbox"
                   checked={allSelected}
@@ -103,9 +103,10 @@ export function OfflineDevicesTable({
                 column={column}
                 sort={sort}
                 onToggleSort={onToggleSort}
+                thClassName="px-4 py-2"
               />
             ))}
-            <th scope="col" className="px-4 py-3 text-right">
+            <th scope="col" className="px-4 py-2 text-right">
               Acciones
             </th>
           </tr>
@@ -147,19 +148,17 @@ function OfflineRow({
   onToggleDismissed: (device: OfflineDeviceRow, dismissed: boolean) => void;
 }) {
   const selectable = row.deletable && !row.inMassOutage;
-  const iconButtonClass =
-    "cursor-pointer rounded-[8px] border border-border p-2 text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-40";
 
   return (
     <tr
       className={cn(
-        "border-b border-border last:border-0",
+        "border-b border-border last:border-0 transition-colors hover:bg-muted/30",
         row.offlineDismissed && "opacity-55",
         isSelected && "bg-brand-orange/5",
       )}
     >
       {canDelete && (
-        <td className="px-4 py-3">
+        <td className="px-4 py-2">
           <input
             type="checkbox"
             checked={isSelected}
@@ -173,18 +172,18 @@ function OfflineRow({
           />
         </td>
       )}
-      <td className="px-4 py-3 font-semibold text-foreground">{row.model || "—"}</td>
-      <td className="px-4 py-3 font-mono text-xs text-foreground">{row.serial || "—"}</td>
-      <td className="px-4 py-3 text-foreground">{row.customerName || "—"}</td>
-      <td className="px-4 py-3 text-muted-foreground">{row.zone || "—"}</td>
-      <td className="hidden whitespace-nowrap px-4 py-3 text-muted-foreground lg:table-cell">
+      <td className="px-4 py-2 font-body text-sm text-foreground">{row.model || "—"}</td>
+      <td className="px-4 py-2 font-mono text-xs text-muted-foreground">{row.serial || "—"}</td>
+      <td className="px-4 py-2 font-body text-sm text-foreground">{row.customerName || "—"}</td>
+      <td className="px-4 py-2 font-body text-sm text-muted-foreground">{row.zone || "—"}</td>
+      <td className="hidden whitespace-nowrap px-4 py-2 font-body text-sm text-muted-foreground lg:table-cell">
         {formatArgDateTime(row.lastContact)}
       </td>
-      <td className="hidden whitespace-nowrap px-4 py-3 text-muted-foreground xl:table-cell">
-        {row.daysOffline != null ? `${row.daysOffline} días` : "—"}
+      <td className="hidden whitespace-nowrap px-4 py-2 font-body text-sm text-muted-foreground xl:table-cell">
+        {row.daysOffline != null ? `${row.daysOffline} d` : "—"}
       </td>
-      <td className="px-4 py-3">
-        <div className="flex flex-wrap items-center gap-1.5">
+      <td className="px-4 py-2">
+        <div className="flex flex-wrap items-center gap-1">
           <StatusBadge tone={CD_STATUS_TONE[row.cdStatus] ?? "neutral"}>
             {cdStatusLabel(row.cdStatus)}
           </StatusBadge>
@@ -192,13 +191,13 @@ function OfflineRow({
           {row.inMassOutage && <StatusBadge tone="advertencia">Outage</StatusBadge>}
           {row.cdDetail && row.cdStatus !== "BODEGA" && (
             <span className="font-body text-xs text-muted-foreground" title={row.cdDetail}>
-              {row.cdDetail.length > 28 ? `${row.cdDetail.slice(0, 28)}…` : row.cdDetail}
+              {row.cdDetail.length > 32 ? `${row.cdDetail.slice(0, 32)}…` : row.cdDetail}
             </span>
           )}
         </div>
       </td>
-      <td className="px-4 py-3">
-        <div className="flex items-center justify-end gap-1.5">
+      <td className="px-4 py-2">
+        <div className="flex items-center justify-end">
           <button
             type="button"
             disabled={!canUpdate || busy}
@@ -210,14 +209,14 @@ function OfflineRow({
                   : "Descartar: no se da de baja, solo se oculta"
                 : "Sin permiso para modificar equipos"
             }
-            className={iconButtonClass}
+            className="cursor-pointer rounded-[6px] p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-40"
           >
             {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : row.offlineDismissed ? (
-              <Eye className="h-4 w-4" />
+              <Eye className="h-3.5 w-3.5" />
             ) : (
-              <EyeOff className="h-4 w-4" />
+              <EyeOff className="h-3.5 w-3.5" />
             )}
             <span className="sr-only">
               {row.offlineDismissed ? "Restaurar" : "Descartar"} {row.serial}
