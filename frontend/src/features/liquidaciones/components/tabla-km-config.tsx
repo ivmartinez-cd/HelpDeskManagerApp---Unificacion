@@ -138,12 +138,25 @@ export function TablaKmConfig() {
           </p>
         </div>
         <div className="flex flex-wrap justify-end gap-2">
+          {/* Paso 1: agregar filas */}
+          <BrandButton
+            size="sm"
+            variant="outline"
+            disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
+            onClick={() => setSigesOpen(true)}
+            title="Buscar sucursales del PST en Siges y precargar los datos en una entrada nueva"
+          >
+            Agregar desde Siges
+          </BrandButton>
+          <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
+          <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
+          {/* Paso 2-4: flujo de geolocalización (en orden) */}
           <BrandButton
             size="sm"
             variant="outline"
             disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
             onClick={() => setGeoOpen(true)}
-            title="Geocodifica las sucursales del PST que no tienen coordenadas en Siges"
+            title="Geocodifica las sucursales sin coordenadas en Siges (paso previo a Calcular distancias)"
           >
             Geocodificar faltantes
           </BrandButton>
@@ -161,19 +174,10 @@ export function TablaKmConfig() {
             variant="outline"
             disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
             onClick={() => setPinesOpen(true)}
+            title="Detecta sucursales cuyo pin de Siges difiere más de 5 km del geocode de su domicilio"
           >
             Pines sospechosos
           </BrandButton>
-          <BrandButton
-            size="sm"
-            variant="outline"
-            disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
-            onClick={() => setSigesOpen(true)}
-          >
-            Agregar desde Siges
-          </BrandButton>
-          <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
-          <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
           <BrandButton size="sm" onClick={() => { setEditing(null); setPlantilla(null); setModalOpen(true); }}>+ Nueva entrada</BrandButton>
         </div>
       </div>
