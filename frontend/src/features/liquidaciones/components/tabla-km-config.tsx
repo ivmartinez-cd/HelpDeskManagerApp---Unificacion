@@ -23,9 +23,8 @@ function kmSortValue(t: TablaKm, key: KmSortKey) {
   }
 }
 import { CsvImportModal, EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
-import { CalcularDistanciasModal, GeocodificarModal } from "./tabla-km-geo-modales";
-import { PinesSospechososModal } from "./tabla-km-lugar-modal";
 import { SigesTablaKmModal } from "./siges-tabla-km-modal";
+import { TablaKmWizard } from "./tabla-km-wizard";
 
 export function TablaKmConfig() {
   const [entradas, setEntradas] = useState<TablaKm[]>([]);
@@ -45,9 +44,7 @@ export function TablaKmConfig() {
   const [csvOpen, setCsvOpen] = useState(false);
   const [sigesOpen, setSigesOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [geoOpen, setGeoOpen] = useState(false);
-  const [calcularOpen, setCalcularOpen] = useState(false);
-  const [pinesOpen, setPinesOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const { sort, toggleSort } = useTableSort<KmSortKey>({
     initial: { key: "empresa", direction: "asc" },
@@ -150,33 +147,14 @@ export function TablaKmConfig() {
           </BrandButton>
           <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
-          {/* Paso 2-4: flujo de geolocalización (en orden) */}
           <BrandButton
             size="sm"
             variant="outline"
             disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
-            onClick={() => setGeoOpen(true)}
-            title="Geocodifica las sucursales sin coordenadas en Siges (paso previo a Calcular distancias)"
+            onClick={() => setWizardOpen(true)}
+            title="Guía paso a paso: geocodificar → calcular km → auditar pines"
           >
-            Geocodificar faltantes
-          </BrandButton>
-          <BrandButton
-            size="sm"
-            variant="outline"
-            disabled={!pstSeleccionado || pstSeleccionado.sigesBaseSucursalId == null}
-            onClick={() => setCalcularOpen(true)}
-            title="Preview de km ida+vuelta desde la base del PST — nada se guarda hasta Aplicar"
-          >
-            Calcular distancias
-          </BrandButton>
-          <BrandButton
-            size="sm"
-            variant="outline"
-            disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
-            onClick={() => setPinesOpen(true)}
-            title="Detecta sucursales cuyo pin de Siges difiere más de 5 km del geocode de su domicilio"
-          >
-            Pines sospechosos
+            Configurar km →
           </BrandButton>
           <BrandButton size="sm" onClick={() => { setEditing(null); setPlantilla(null); setModalOpen(true); }}>+ Nueva entrada</BrandButton>
         </div>
@@ -271,18 +249,12 @@ export function TablaKmConfig() {
       {sigesOpen && filtroPst && (
         <SigesTablaKmModal prestadorId={filtroPst} onClose={() => setSigesOpen(false)} onUsar={handleUsarSucursal} />
       )}
-      {geoOpen && pstSeleccionado && (
-        <GeocodificarModal prestador={pstSeleccionado} onClose={() => setGeoOpen(false)} />
-      )}
-      {calcularOpen && pstSeleccionado && (
-        <CalcularDistanciasModal
+      {wizardOpen && pstSeleccionado && (
+        <TablaKmWizard
           prestador={pstSeleccionado}
-          onClose={() => setCalcularOpen(false)}
+          onClose={() => setWizardOpen(false)}
           onAplicado={loadEntradas}
         />
-      )}
-      {pinesOpen && pstSeleccionado && (
-        <PinesSospechososModal prestador={pstSeleccionado} onClose={() => setPinesOpen(false)} />
       )}
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar entrada">
         <p className="font-body text-sm text-muted-foreground mb-5">Esta acción no se puede deshacer. ¿Confirmás la eliminación?</p>
