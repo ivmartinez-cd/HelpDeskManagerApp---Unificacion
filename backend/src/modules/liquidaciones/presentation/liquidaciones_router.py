@@ -51,6 +51,7 @@ from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import (
     ExtraIn,
     LiquidacionOut,
     PrestadorLiquidacionOut,
+    ResumenLiquidacionesOut,
 )
 from src.modules.liquidaciones.presentation.schemas.reanalizar_liquidacion_schemas import (
     ReanalizarLiquidacionOut,
@@ -157,6 +158,16 @@ async def backfill_estado_liquidaciones(
         dry_run=dry_run, prestador_id=prestador_id
     )
     return BackfillEstadoOut.from_dto(resultado)
+
+
+@router.get("/resumen", response_model=ResumenLiquidacionesOut)
+async def get_resumen_liquidaciones(
+    _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db),
+) -> ResumenLiquidacionesOut:
+    """Conteo de liquidaciones pendientes de aprobación (abierta/preliquidada/recibida/observada)."""
+    count = await SqlAlchemyLiquidacionRepository(db).count_pendientes()
+    return ResumenLiquidacionesOut(pendientes=count)
 
 
 @router.patch("/{liquidacion_id}/estado", response_model=LiquidacionOut)

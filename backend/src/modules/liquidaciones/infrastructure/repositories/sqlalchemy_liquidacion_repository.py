@@ -3,10 +3,14 @@
 import uuid
 from uuid import UUID
 
-from sqlalchemy import and_, select, update
+from sqlalchemy import and_, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
+from src.modules.liquidaciones.domain.entities.liquidacion import (
+    ESTADO_APROBADA,
+    ESTADO_CERRADA,
+    Liquidacion,
+)
 from src.modules.liquidaciones.infrastructure.models.liquidacion_model import LiquidacionModel
 
 
@@ -135,6 +139,13 @@ class SqlAlchemyLiquidacionRepository:
             .values(total_alertas=total_alertas)
         )
         await self._session.execute(stmt)
+
+    async def count_pendientes(self) -> int:
+        stmt = select(func.count()).where(
+            LiquidacionModel.estado.notin_([ESTADO_APROBADA, ESTADO_CERRADA])
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar_one()
 
     async def delete(self, liquidacion_id: UUID) -> bool:
         row = await self._session.get(LiquidacionModel, liquidacion_id)

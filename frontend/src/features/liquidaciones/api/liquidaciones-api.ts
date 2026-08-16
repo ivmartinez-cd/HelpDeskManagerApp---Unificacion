@@ -82,6 +82,9 @@ interface TablaKmBody {
 
 export const liquidacionesApi = {
   // ── Liquidaciones ──────────────────────────────────────────────────────────
+  getResumen: () =>
+    httpClient.get<{ pendientes: number }>("/api/liquidaciones/resumen"),
+
   listPrestadores: (soloActivos = true) =>
     httpClient
       .get<Page<PrestadorLiquidacion>>(

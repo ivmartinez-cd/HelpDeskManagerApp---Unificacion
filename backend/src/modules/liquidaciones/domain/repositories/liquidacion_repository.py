@@ -71,4 +71,9 @@ class LiquidacionRepository(Protocol):
         no toca `estado` ni el resto de los totales)."""
         ...
 
+    async def count_pendientes(self) -> int:
+        """Cantidad de liquidaciones en estados previos a la aprobación
+        (abierta, preliquidada, recibida, observada). Excluye aprobada y cerrada."""
+        ...
+
     async def delete(self, liquidacion_id: UUID) -> bool: ...

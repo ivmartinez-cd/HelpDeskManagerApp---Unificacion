@@ -16,6 +16,7 @@ import { slaApi } from "@/features/sla/api/sla-api";
 import type { SlaResumen } from "@/features/sla/types/sla";
 import { insumosApi } from "@/features/insumos/api/insumos-api";
 import type { DashboardResponse } from "@/features/insumos/types/dashboard";
+import { liquidacionesApi } from "@/features/liquidaciones/api/liquidaciones-api";
 import { turnosApi } from "@/features/turnos/api/turnos-api";
 import type { ResolvedShift } from "@/features/turnos/types/turnos";
 import { periodoOffset } from "../utils/inicio-format";
@@ -137,6 +138,14 @@ export function usePendientesResumen(enabled: boolean): Remote<PendientesResumen
 
 export function useInsumosDashboard(enabled: boolean): Remote<DashboardResponse> {
   return useRemote(enabled, () => insumosApi.getDashboard(), "el dashboard de Insumos");
+}
+
+export function useLiquidacionesPendientes(enabled: boolean): Remote<{ pendientes: number }> {
+  return useRemote(
+    enabled,
+    () => liquidacionesApi.getResumen(),
+    "el resumen de liquidaciones",
+  );
 }
 
 export function useCalendarioHome(enabled: boolean): Remote<CalendarioHome> {

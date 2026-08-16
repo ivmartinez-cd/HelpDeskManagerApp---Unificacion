@@ -16,6 +16,10 @@ ESTADOS_VALIDOS = Literal[
 ]
 
 
+class ResumenLiquidacionesOut(BaseModel):
+    pendientes: int
+
+
 class EstadoIn(BaseModel):
     estado: ESTADOS_VALIDOS
 

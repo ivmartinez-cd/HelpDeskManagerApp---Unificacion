@@ -6,6 +6,7 @@ import {
   useCalendarioHome,
   useContadoresResumen,
   useInsumosDashboard,
+  useLiquidacionesPendientes,
   useParqueResumen,
   usePendientesResumen,
   useSlaHistoria,
@@ -37,6 +38,7 @@ export function InicioDashboard() {
   const verSla = modules.some((m) => m.key === "sla");
   const verPrestadores = modules.some((m) => m.key === "prestadores");
   const verInsumos = modules.some((m) => m.key === "insumos");
+  const verLiquidaciones = modules.some((m) => m.key === "liquidaciones");
 
   const turnos = useTurnosHoy();
   const calendario = useCalendarioHome(verContadores);
@@ -45,15 +47,18 @@ export function InicioDashboard() {
   const parque = useParqueResumen(verPrestadores);
   const pendientesResumen = usePendientesResumen(verSla);
   const insumosDashboard = useInsumosDashboard(verInsumos);
+  const liquidacionesPendientes = useLiquidacionesPendientes(verLiquidaciones);
 
   const kpis = buildKpis({
     prestadores: verPrestadores,
     contadores: verContadores,
     sla: verSla,
+    liquidaciones: verLiquidaciones,
     parque,
     contadoresResumen,
     slaHistoria,
     calendario,
+    liquidacionesPendientes,
   });
 
   return (
