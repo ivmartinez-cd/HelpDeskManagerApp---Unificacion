@@ -807,6 +807,67 @@ Integridad post-sync verificada en `helpdesk-db`:
   corrió al crear cada liquidación, como corresponde.
 - Los 34 prestadores activos tienen liquidaciones (`count(DISTINCT prestador_id) = 34`).
 
+## Geolocalización y km ida/vuelta — Tabla KM (2026-08-15, commits `c99621e` + `c1fe97f`)
+
+Feature de cálculo automático de distancias PST↔sucursal cliente con Google Maps.
+Documentación operativa completa en `docs/liquidaciones/GEOLOCALIZACION_TABLA_KM.md`
+y entrada de integración en `docs/INTEGRACIONES_EXTERNAS.md §11`.
+
+### Decisiones de negocio (validadas con datos reales)
+
+- **Convención uniforme**: todos los prestadores facturan ida y vuelta.
+  `kms_recorrido` = total ida+vuelta (evidencia: mediana cobrado/tabla = 1,000 en
+  filas manuales de 14 PSTs). El cálculo original solo almacenaba ida → las 22
+  filas automáticas de BAHIA tenían los esperados a la mitad.
+- **Preview→apply obligatorio** para el bulk: el preview persiste todos los diffs
+  sin tocar la DB; el apply materializa sin re-llamar a Google.
+- **No reemplaza coordenadas**: geocode solo llena vacíos; nunca pisa un pin de
+  Siges ni una coord manual sin confirmación humana.
+- **Key corporativa**: cero llamadas sin autorización explícita; cache por dirección
+  normalizada (incluye ZERO_RESULTS); tope `GOOGLE_MAPS_MAX_CALLS_PER_RUN=200`.
+
+### Modelo nuevo
+
+- `tabla_kms`: 5 columnas nuevas (`kms_ida`, `kms_vuelta`, `coords_origen`,
+  `geocode_formatted_address`, `geocode_fecha`).
+- 3 tablas nuevas: `geocode_cache`, `sucursal_coordenadas`, `calculo_km_previews`.
+- Migración `b2f7d914ce08` (reversible).
+
+### Implementación
+
+- **Dominio**: puerto `GeocodingGateway`, servicio puro `geolocalizacion.py`
+  (normalización de domicilios, `elegir_automatico`, haversine, pin sospechoso).
+- **Infra**: `HttpxGeocodingGateway`, `HttpxGoogleMapsGateway` extendido con
+  `distancias_km_ida_vuelta` (ida y vuelta como requests separados — la vuelta
+  puede diferir por manos únicas/ruteo).
+- **Application**: `GeocodificarSucursales`, `ListarCoordenadasPendientes`,
+  `ResolverCoordenadas`, `PreviewCalcularDistancias`, `AplicarCalcularDistancias`,
+  `ListarPinesSospechosos`, `AuditarPines`, `BuscarLugarFila`, `ResolverCoordenadasFila`,
+  `RecalcularKmFila`.
+- **10 endpoints nuevos** en `config_routers/geolocalizacion.py`:
+  preview/aplicar distancias, geocodificar faltantes, ver/resolver coordenadas,
+  pines sospechosos/auditar, buscar lugar por fila, actualizar coords fila,
+  recalcular km fila.
+- **Frontend**: `tabla-km-geo-modales.tsx`, `tabla-km-lugar-modal.tsx`; botones
+  "Geocodificar faltantes", "Calcular distancias" y "Pines sospechosos" en la
+  pantalla de Tabla KM; coordenadas + provenance badge + ida/vuelta + "Buscar lugar"
+  + "Recalcular KM" en el modal de edición de fila.
+- **Tests**: 21 unit de dominio + 7 fakes + 7 tests de `GeocodificarSucursales` +
+  8 tests de `PreviewCalcularDistancias` / `AplicarCalcularDistancias`.
+
+### Verificaciones
+
+- **Regresión ALT002**: idéntica en 3 liquidaciones reales (127+109+50 alertas)
+  — los esperados manuales ya eran ida+vuelta, el motor no cambió.
+- **BAHIA preview/apply ejecutado con OK del usuario (2026-08-15)**:
+  76 filas actualizadas a ida+vuelta (160 elementos Distance Matrix),
+  mediana cobrado/tabla pasó de ≈2.0 a **0.996**, umbrales y observaciones
+  preservados; 4 filas manuales sin match Siges intactas.
+- **Pin a auditar**: "080 - Puan" (Banco Credicoop) da 635 km de ida — Puan real
+  está a ~200 km de Bahía Blanca; el pin en Siges está mal cargado.
+
+---
+
 ## Pendiente
 
 1. **Correr en paralelo con la app legacy antes de apagarla** — no hay cutover en frío.
@@ -818,6 +879,9 @@ Integridad post-sync verificada en `helpdesk-db`:
 3. TL: confirmar el cambio de semántica de ALT002 del fix H-4 (tolerancia contra el
    valor crudo además del ceil) — documentado en docstring y tests, sin registro de
    confirmación explícita todavía.
+4. **Geolocalización — opcionales**: auditar y corregir el pin roto de "080 - Puan"
+   en Siges; end-to-end de `geocodificar-faltantes` en un PST con sinCoords
+   (requiere autorización de llamadas Google sobre la key corporativa).
 
 ## Próximo paso sugerido
 
