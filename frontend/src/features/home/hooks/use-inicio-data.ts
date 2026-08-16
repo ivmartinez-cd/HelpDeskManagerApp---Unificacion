@@ -142,7 +142,7 @@ export function useInsumosDashboard(enabled: boolean): Remote<DashboardResponse>
 
 export function useLiquidacionesPendientes(enabled: boolean): Remote<{
   pendientes: number;
-  porEstado: { abierta: number; preliquidada: number; recibida: number; observada: number };
+  porPrestador: { nombreCorto: string; count: number }[];
 }> {
   return useRemote(
     enabled,

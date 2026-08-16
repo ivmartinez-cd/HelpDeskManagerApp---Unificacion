@@ -71,9 +71,9 @@ class LiquidacionRepository(Protocol):
         no toca `estado` ni el resto de los totales)."""
         ...
 
-    async def count_por_estado_pendientes(self) -> dict[str, int]:
-        """Conteo de liquidaciones agrupado por estado, excluyendo aprobada y cerrada.
-        Retorna solo los estados con al menos una fila."""
+    async def count_pendientes_por_prestador(self) -> list[tuple[str, int]]:
+        """Conteo de liquidaciones pendientes (excluye aprobada y cerrada) agrupado
+        por prestador. Retorna pares (nombre_corto, count) ordenados por count desc."""
         ...
 
     async def delete(self, liquidacion_id: UUID) -> bool: ...

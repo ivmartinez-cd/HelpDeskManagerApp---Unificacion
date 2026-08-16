@@ -8,43 +8,32 @@ import { fmtInt } from "../utils/inicio-format";
 import { DashboardCard } from "./dashboard-card";
 import { OperadorDonut } from "./operador-donut";
 
-type PorEstado = { abierta: number; preliquidada: number; recibida: number; observada: number };
-
-const ESTADO_COLOR: Record<keyof PorEstado, string> = {
-  abierta: "#6b9bb8",
-  preliquidada: "#e07c39",
-  recibida: "#7a7a7a",
-  observada: "#c4a35a",
-};
-
-const ESTADO_LABEL: Record<keyof PorEstado, string> = {
-  abierta: "Abierta",
-  preliquidada: "Preliquidada",
-  recibida: "Recibida",
-  observada: "Observada",
-};
-
-const ESTADOS_ORDEN: (keyof PorEstado)[] = ["abierta", "preliquidada", "recibida", "observada"];
+const PALETTE = [
+  "#e07c39", // brand orange
+  "#6b9bb8", // blue
+  "#c4a35a", // amber
+  "#7a9b7a", // green
+  "#9b7ab8", // purple
+  "#b87a7a", // red
+];
 
 export function LiquidacionesPendientesCard({
   data,
   loading,
   error,
 }: {
-  data: { pendientes: number; porEstado: PorEstado } | null;
+  data: { pendientes: number; porPrestador: { nombreCorto: string; count: number }[] } | null;
   loading: boolean;
   error: string | null;
 }) {
   const total = data?.pendientes ?? 0;
 
-  const rows = data
-    ? ESTADOS_ORDEN.filter((k) => data.porEstado[k] > 0).map((k) => ({
-        id: k,
-        nombre: ESTADO_LABEL[k],
-        color: ESTADO_COLOR[k],
-        valor: data.porEstado[k],
-      }))
-    : [];
+  const rows = (data?.porPrestador ?? []).map((p, i) => ({
+    id: p.nombreCorto,
+    nombre: p.nombreCorto,
+    color: PALETTE[i % PALETTE.length],
+    valor: p.count,
+  }));
 
   return (
     <DashboardCard

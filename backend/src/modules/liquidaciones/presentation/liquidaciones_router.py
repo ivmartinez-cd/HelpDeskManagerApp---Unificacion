@@ -50,8 +50,8 @@ from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import (
     EstadoIn,
     ExtraIn,
     LiquidacionOut,
-    PorEstadoPendientesOut,
     PrestadorLiquidacionOut,
+    PrestadorPendienteOut,
     ResumenLiquidacionesOut,
 )
 from src.modules.liquidaciones.presentation.schemas.reanalizar_liquidacion_schemas import (
@@ -167,15 +167,10 @@ async def get_resumen_liquidaciones(
     db: AsyncSession = Depends(get_db),
 ) -> ResumenLiquidacionesOut:
     """Conteo de liquidaciones pendientes de aprobación (abierta/preliquidada/recibida/observada)."""
-    por_estado = await SqlAlchemyLiquidacionRepository(db).count_por_estado_pendientes()
+    filas = await SqlAlchemyLiquidacionRepository(db).count_pendientes_por_prestador()
     return ResumenLiquidacionesOut(
-        pendientes=sum(por_estado.values()),
-        por_estado=PorEstadoPendientesOut(
-            abierta=por_estado.get("abierta", 0),
-            preliquidada=por_estado.get("preliquidada", 0),
-            recibida=por_estado.get("recibida", 0),
-            observada=por_estado.get("observada", 0),
-        ),
+        pendientes=sum(n for _, n in filas),
+        por_prestador=[PrestadorPendienteOut(nombre_corto=nombre, count=n) for nombre, n in filas],
     )
 
 

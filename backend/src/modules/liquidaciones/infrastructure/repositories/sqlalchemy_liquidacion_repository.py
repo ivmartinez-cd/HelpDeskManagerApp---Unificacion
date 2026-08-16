@@ -140,14 +140,23 @@ class SqlAlchemyLiquidacionRepository:
         )
         await self._session.execute(stmt)
 
-    async def count_por_estado_pendientes(self) -> dict[str, int]:
+    async def count_pendientes_por_prestador(self) -> list[tuple[str, int]]:
+        from src.modules.liquidaciones.infrastructure.models.prestador_model import (
+            LiquidacionPrestadorModel,
+        )
+
         stmt = (
-            select(LiquidacionModel.estado, func.count().label("n"))
+            select(LiquidacionPrestadorModel.nombre_corto, func.count().label("n"))
+            .join(
+                LiquidacionPrestadorModel,
+                LiquidacionModel.prestador_id == LiquidacionPrestadorModel.id,
+            )
             .where(LiquidacionModel.estado.notin_([ESTADO_APROBADA, ESTADO_CERRADA]))
-            .group_by(LiquidacionModel.estado)
+            .group_by(LiquidacionPrestadorModel.nombre_corto)
+            .order_by(func.count().desc())
         )
         result = await self._session.execute(stmt)
-        return {row[0]: row[1] for row in result.all()}
+        return [(row[0], row[1]) for row in result.all()]
 
     async def delete(self, liquidacion_id: UUID) -> bool:
         row = await self._session.get(LiquidacionModel, liquidacion_id)

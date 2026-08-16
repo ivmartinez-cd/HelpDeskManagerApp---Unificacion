@@ -85,7 +85,7 @@ export const liquidacionesApi = {
   getResumen: () =>
     httpClient.get<{
       pendientes: number;
-      porEstado: { abierta: number; preliquidada: number; recibida: number; observada: number };
+      porPrestador: { nombreCorto: string; count: number }[];
     }>("/api/liquidaciones/resumen"),
 
   listPrestadores: (soloActivos = true) =>
