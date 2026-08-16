@@ -14,8 +14,112 @@ export interface PrestadorLiquidacion {
   region: string | null;
   activo: boolean;
   sigesEmpresaId: number | null;
+  cdPrestadorId: number | null;
+  sigesBaseSucursalId: number | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SucursalPropia {
+  sigesSucursalId: number;
+  descripcion: string;
+  latitud: string | null;
+  longitud: string | null;
+  tieneCoords: boolean;
+}
+
+export interface GeocodeCandidato {
+  formattedAddress: string;
+  latitud: number;
+  longitud: number;
+  locationType: string;
+  tipos: string[];
+  partialMatch: boolean;
+}
+
+export interface GeocodificarResultado {
+  resueltasAuto: number;
+  ambiguas: number;
+  sinResultados: number;
+  sinDireccion: number;
+  yaResueltas: number;
+  llamadasGoogle: number;
+  pendientesPorTope: number;
+}
+
+export type EstadoCoordenadas =
+  | "resuelta"
+  | "ambigua"
+  | "sin_resultados"
+  | "sin_direccion"
+  | "pendiente";
+
+export interface SucursalCoordenadas {
+  sigesSucursalId: number;
+  empresaNombre: string;
+  sucursalNombre: string;
+  direccion: string | null;
+  estado: EstadoCoordenadas;
+  latitud: number | null;
+  longitud: number | null;
+  procedencia: string | null;
+  formattedAddress: string | null;
+  candidatos: GeocodeCandidato[];
+}
+
+export interface PreviewFilaKm {
+  accion: "crear" | "actualizar";
+  tablaKmId: string | null;
+  empresaNombre: string;
+  sucursalNombre: string;
+  coordsOrigen: string;
+  latitudDestino: number;
+  longitudDestino: number;
+  kmsIda: number;
+  kmsVuelta: number;
+  kmsTotal: number;
+  umbralViatico: number;
+  aplicaViatico: boolean;
+  kmsAFacturar: number;
+  kmsRecorridoActual: number | null;
+  kmsAFacturarActual: number | null;
+}
+
+export interface CalculoKmPreview {
+  id: string;
+  prestadorId: string;
+  filas: PreviewFilaKm[];
+  sinUbicar: number;
+  sinRuta: number;
+  elementosGoogle: number;
+  createdAt: string;
+}
+
+export interface AplicarDistanciasResult {
+  creadas: number;
+  actualizadas: number;
+}
+
+export interface PinSospechoso {
+  sigesSucursalId: number;
+  empresaNombre: string;
+  sucursalNombre: string;
+  direccion: string;
+  latitudSiges: number;
+  longitudSiges: number;
+  latitudGeocode: number;
+  longitudGeocode: number;
+  formattedAddress: string;
+  locationType: string;
+  discrepanciaKm: number;
+}
+
+export interface AuditarPinesResult {
+  geocodificadas: number;
+  yaEnCache: number;
+  sinDireccion: number;
+  pendientesPorTope: number;
+  llamadasGoogle: number;
 }
 
 export interface Spst {
@@ -166,6 +270,12 @@ export interface TablaKm {
   aplicaViatico: boolean;
   kmsAFacturar: number;
   urlMaps: string | null;
+  latitudDestino: number | null;
+  longitudDestino: number | null;
+  kmsIda: number | null;
+  kmsVuelta: number | null;
+  coordsOrigen: string | null;
+  geocodeFormattedAddress: string | null;
   createdAt: string;
   updatedAt: string;
 }

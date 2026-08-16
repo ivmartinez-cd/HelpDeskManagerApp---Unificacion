@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/shared/components/ui/badge";
 import {
   BrandButton,
   BrandFileInput,
@@ -11,6 +12,7 @@ import {
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Spst, TablaKm } from "../types/liquidaciones";
+import { BuscarLugarModal } from "./tabla-km-lugar-modal";
 
 // Prefill del alta asistida desde Siges (ADR-014 DS3) — solo datos descriptivos,
 // el km queda vacío a propósito: es dato manual del acuerdo comercial.
@@ -57,9 +59,32 @@ export function EntradaModal({
   const [form, setForm] = useState(() => entradaAForm(editing, defaultPrestadorId, plantilla));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [buscarLugarOpen, setBuscarLugarOpen] = useState(false);
+  const [recalculando, setRecalculando] = useState(false);
 
   const handleClose = () => { setForm(entradaAForm(editing, defaultPrestadorId, plantilla)); setError(null); onClose(); };
   const filteredSpsts = spsts.filter((s) => !form.prestadorId || s.prestadorId === form.prestadorId);
+
+  // Recalcula ida+vuelta reales contra Google usando las coords guardadas de la
+  // fila (2 llamadas). El resultado pisa km/viático pero nunca umbral ni
+  // observaciones — la fila se refresca vía onSuccess y se cierra el modal.
+  const handleRecalcular = async () => {
+    if (!editing) return;
+    setRecalculando(true);
+    setError(null);
+    try {
+      const actualizada = await liquidacionesApi.recalcularKmFila(editing.id);
+      toast.success(
+        `KM recalculados: ida ${actualizada.kmsIda?.toFixed(1)} + vuelta ${actualizada.kmsVuelta?.toFixed(1)} = ${actualizada.kmsRecorrido.toFixed(1)} km`,
+      );
+      onSuccess();
+      handleClose();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al recalcular");
+    } finally {
+      setRecalculando(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,8 +141,67 @@ export function EntradaModal({
         <BrandInput label="KMs recorrido *" type="number" step="0.1" required value={form.kmsRecorrido} onChange={(e) => setForm((f) => ({ ...f, kmsRecorrido: e.target.value }))} />
         <BrandInput label="KMs a facturar" type="number" step="0.1" value={form.kmsAFacturar} placeholder="Igual a recorrido si vacío" onChange={(e) => setForm((f) => ({ ...f, kmsAFacturar: e.target.value }))} />
         <BrandInput label="Umbral viático (km)" type="number" step="0.1" value={form.umbralViatico} onChange={(e) => setForm((f) => ({ ...f, umbralViatico: e.target.value }))} />
-        <BrandInput label="URL Maps" value={form.urlMaps} placeholder="https://..." onChange={(e) => setForm((f) => ({ ...f, urlMaps: e.target.value }))} />
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <span className="font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">URL Maps</span>
+            {form.urlMaps && (
+              <a href={form.urlMaps} target="_blank" rel="noopener noreferrer" className="font-body text-[11px] font-bold uppercase tracking-wide text-brand-orange hover:underline">
+                Abrir en Maps →
+              </a>
+            )}
+          </div>
+          <input
+            value={form.urlMaps}
+            placeholder="https://..."
+            onChange={(e) => setForm((f) => ({ ...f, urlMaps: e.target.value }))}
+            className="rounded-[8px] border border-border bg-card px-[14px] py-[9px] font-body text-sm text-foreground outline-none focus:ring-2 focus:ring-brand-orange/40"
+          />
+        </div>
         <BrandInput label="Observaciones" value={form.observaciones} onChange={(e) => setForm((f) => ({ ...f, observaciones: e.target.value }))} />
+        {editing && (
+          <div className="col-span-2 flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Coordenadas destino</span>
+                {editing.coordsOrigen && (
+                  <Badge variant={editing.coordsOrigen === "siges" ? "neutral" : "info"}>{editing.coordsOrigen}</Badge>
+                )}
+              </div>
+              {editing.latitudDestino != null && editing.longitudDestino != null && (
+                <a
+                  href={`https://www.google.com/maps?q=${editing.latitudDestino},${editing.longitudDestino}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-body text-[11px] font-bold uppercase tracking-wide text-brand-orange hover:underline"
+                >
+                  Ver pin →
+                </a>
+              )}
+            </div>
+            <p className="font-body text-sm text-muted-foreground tabular-nums">
+              {editing.latitudDestino != null && editing.longitudDestino != null
+                ? `${editing.latitudDestino.toFixed(6)}, ${editing.longitudDestino.toFixed(6)}`
+                : "Sin coordenadas — usá Buscar lugar o cargalas a mano"}
+              {editing.geocodeFormattedAddress ? ` · ${editing.geocodeFormattedAddress}` : ""}
+            </p>
+            {editing.kmsIda != null && editing.kmsVuelta != null && (
+              <p className="font-body text-xs text-muted-foreground tabular-nums">
+                Ida {editing.kmsIda.toFixed(1)} km · Vuelta {editing.kmsVuelta.toFixed(1)} km ·
+                Total {(editing.kmsIda + editing.kmsVuelta).toFixed(1)} km
+              </p>
+            )}
+            <div className="flex gap-2 pt-1">
+              <BrandButton type="button" size="sm" variant="outline" onClick={() => setBuscarLugarOpen(true)}>
+                Buscar lugar
+              </BrandButton>
+              {editing.latitudDestino != null && editing.longitudDestino != null && (
+                <BrandButton type="button" size="sm" variant="outline" loading={recalculando} onClick={handleRecalcular}>
+                  Recalcular KM (ida y vuelta)
+                </BrandButton>
+              )}
+            </div>
+          </div>
+        )}
         <div className="col-span-2 flex items-center gap-3">
           <label className="flex items-center gap-2 font-body text-sm text-muted-foreground cursor-pointer">
             <input type="checkbox" checked={form.aplicaViatico} onChange={(e) => setForm((f) => ({ ...f, aplicaViatico: e.target.checked }))} className="accent-brand-orange" />
@@ -129,6 +213,13 @@ export function EntradaModal({
           <BrandButton type="submit" loading={loading}>Guardar</BrandButton>
         </div>
       </form>
+      {buscarLugarOpen && editing && (
+        <BuscarLugarModal
+          fila={editing}
+          onClose={() => setBuscarLugarOpen(false)}
+          onResuelto={() => { onSuccess(); handleClose(); }}
+        />
+      )}
     </BrandModal>
   );
 }

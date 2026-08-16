@@ -1,6 +1,13 @@
 import { httpClient } from "@/services/http-client";
 import type {
+  AplicarDistanciasResult,
+  AuditarPinesResult,
+  CalculoKmPreview,
   EstadoLiquidacion,
+  GeocodeCandidato,
+  GeocodificarResultado,
+  PinSospechoso,
+  SucursalCoordenadas,
   EstadoObservacion,
   ImportarLiquidacionResult,
   ImportExcelMaestroResult,
@@ -11,6 +18,7 @@ import type {
   PrestadorLiquidacion,
   PropuestasVinculo,
   Spst,
+  SucursalPropia,
   SucursalSiges,
   SyncSigesResult,
   SyncTarifariosResult,
@@ -208,6 +216,75 @@ export const liquidacionesApi = {
     const qs = new URLSearchParams({ prestadorId, q, size: "200" });
     return httpClient.get<Page<SucursalSiges>>(`/api/liquidaciones/siges/sucursales?${qs}`);
   },
+
+  listSucursalesPropiasPrestatdor: (prestadorId: string) =>
+    httpClient.get<SucursalPropia[]>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/sucursales-propia`,
+    ),
+
+  vincularBaseSucursal: (prestadorId: string, sigesBaseSucursalId: number | null) =>
+    httpClient.patch<PrestadorLiquidacion>(
+      `/api/liquidaciones/prestadores/${prestadorId}/base-sucursal`,
+      { sigesBaseSucursalId },
+    ),
+
+  // ── Geolocalización / distancias (two-step) ───────────────────────────────
+  previewCalcularDistancias: (prestadorId: string) =>
+    httpClient.post<CalculoKmPreview>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/calcular-distancias/preview`,
+    ),
+
+  aplicarCalcularDistancias: (prestadorId: string, previewId: string) =>
+    httpClient.post<AplicarDistanciasResult>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/calcular-distancias/aplicar`,
+      { previewId },
+    ),
+
+  geocodificarFaltantes: (prestadorId: string) =>
+    httpClient.post<GeocodificarResultado>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/geocodificar-faltantes`,
+    ),
+
+  listCoordenadas: (prestadorId: string) =>
+    fetchCatalogoCompleto<SucursalCoordenadas>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/coordenadas`,
+      new URLSearchParams(),
+    ),
+
+  resolverCoordenadas: (
+    prestadorId: string,
+    sigesSucursalId: number,
+    body: { candidatoIdx?: number; latitud?: number; longitud?: number },
+  ) =>
+    httpClient.put<SucursalCoordenadas>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/coordenadas/${sigesSucursalId}`,
+      body,
+    ),
+
+  listPinesSospechosos: (prestadorId: string) =>
+    fetchCatalogoCompleto<PinSospechoso>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/pines-sospechosos`,
+      new URLSearchParams(),
+    ),
+
+  auditarPines: (prestadorId: string) =>
+    httpClient.post<AuditarPinesResult>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/auditar-pines`,
+    ),
+
+  buscarLugarFila: (tablaKmId: string) =>
+    httpClient.post<{ candidatos: GeocodeCandidato[] }>(
+      `/api/liquidaciones/tabla-km/${tablaKmId}/buscar-lugar`,
+    ),
+
+  resolverCoordenadasFila: (
+    tablaKmId: string,
+    body: { candidatoIdx?: number; latitud?: number; longitud?: number },
+  ) =>
+    httpClient.put<TablaKm>(`/api/liquidaciones/tabla-km/${tablaKmId}/coordenadas`, body),
+
+  recalcularKmFila: (tablaKmId: string) =>
+    httpClient.post<TablaKm>(`/api/liquidaciones/tabla-km/${tablaKmId}/recalcular-km`),
 
   // ── Config: SPSTs ─────────────────────────────────────────────────────────
   listSpsts: (params?: { prestadorId?: string; soloActivos?: boolean }) => {

@@ -8,6 +8,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion } from "../types/liquidaciones";
+import { PrestadorBaseSucursalModal } from "./prestador-base-sucursal-modal";
 import { PrestadorFormModal } from "./prestador-form-modal";
 import { PrestadoresExcelImportModal } from "./prestadores-excel-import-modal";
 import { SigesSyncModal } from "./siges-sync-modal";
@@ -69,6 +70,7 @@ export function PrestadoresConfig() {
   const [excelOpen, setExcelOpen] = useState(false);
   const [sigesOpen, setSigesOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [basePrestador, setBasePrestador] = useState<PrestadorLiquidacion | null>(null);
 
   // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   const load = useCallback(async () => {
@@ -157,6 +159,11 @@ export function PrestadoresConfig() {
                     </td>
                     <td className={`${tdCls} text-right`}>
                       <button onClick={() => setFormPrestador(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
+                      {p.sigesEmpresaId != null && (
+                        <button onClick={() => setBasePrestador(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">
+                          {p.sigesBaseSucursalId != null ? "Distancias" : "Base Siges"}
+                        </button>
+                      )}
                       <button onClick={() => handleToggle(p)} className={`font-body text-sm hover:underline mr-3 ${p.activo ? "text-destructive" : "text-success"}`}>
                         {p.activo ? "Desactivar" : "Activar"}
                       </button>
@@ -180,6 +187,13 @@ export function PrestadoresConfig() {
       <PrestadoresExcelImportModal isOpen={excelOpen} onClose={() => setExcelOpen(false)} onSuccess={load} />
       {sigesOpen && (
         <SigesSyncModal isOpen onClose={() => setSigesOpen(false)} onChanged={load} />
+      )}
+      {basePrestador && (
+        <PrestadorBaseSucursalModal
+          prestador={basePrestador}
+          onClose={() => setBasePrestador(null)}
+          onChanged={() => { setBasePrestador(null); void load(); }}
+        />
       )}
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar prestador">
         <p className="font-body text-sm text-muted-foreground mb-5">

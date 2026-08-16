@@ -4,14 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Calendar, DollarSign, ExternalLink } from "lucide-react";
-import { toast } from "sonner";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { cn } from "@/shared/utils/cn";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type {
   Alerta,
   EstadoLiquidacion,
-  Liquidacion,
   LiquidacionDetalle,
   PrestadorLiquidacion,
 } from "../types/liquidaciones";
