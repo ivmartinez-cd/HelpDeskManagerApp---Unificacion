@@ -226,7 +226,7 @@ export function OfflineDevicesView() {
         />
       ) : (
         <div className="flex flex-col gap-3">
-          {OFFLINE_GROUP_ORDER.map((group) => {
+          {OFFLINE_GROUP_ORDER.filter((group) => (grouped.get(group)?.length ?? 0) > 0).map((group) => {
             const groupRows = grouped.get(group) ?? [];
             return (
               <OfflineSection

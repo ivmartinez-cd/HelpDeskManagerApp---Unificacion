@@ -12,13 +12,14 @@ export type OfflineGroup =
   | "otro_cliente"
   | "en_cliente";
 
+// Mismo orden que el legacy: bodega primero (grupo de acción), caida_colector al final.
 export const OFFLINE_GROUP_ORDER: readonly OfflineGroup[] = [
-  "caida_colector",
   "bodega",
-  "sin_verificar",
-  "error",
   "otro_cliente",
   "en_cliente",
+  "error",
+  "sin_verificar",
+  "caida_colector",
 ];
 
 export interface OfflineGroupMeta {
@@ -29,35 +30,36 @@ export interface OfflineGroupMeta {
 }
 
 export const OFFLINE_GROUP_META: Record<OfflineGroup, OfflineGroupMeta> = {
-  caida_colector: {
-    label: "Caída de colector",
-    description: "Equipos de un cliente con caída masiva — excluidos de la baja automática.",
-    defaultExpanded: false,
-  },
+  // bodega: grupo de acción — arranca expandido (igual que el legacy).
   bodega: {
-    label: "En bodega",
+    label: "En bodega — candidatos a baja",
     description: "Veredicto Canal Directo: el equipo está en bodega. Son los candidatos a baja.",
-    defaultExpanded: false,
-  },
-  sin_verificar: {
-    label: "Sin verificar",
-    description: "Todavía no se consultó Canal Directo para este equipo.",
-    defaultExpanded: false,
-  },
-  error: {
-    label: "Error de verificación",
-    description: "La consulta a Canal Directo falló o devolvió un error inesperado.",
-    defaultExpanded: false,
+    defaultExpanded: true,
   },
   otro_cliente: {
-    label: "En otro cliente",
+    label: "En otro cliente (revisar a mano)",
     description: "Canal Directo ubica el equipo bajo un cliente diferente al actual.",
     defaultExpanded: false,
   },
   en_cliente: {
-    label: "En cliente",
+    label: "Sigue en el cliente",
     description:
       "Canal Directo confirma que sigue en el cliente — puede ser un falso positivo de offline.",
+    defaultExpanded: false,
+  },
+  error: {
+    label: "No se pudo verificar",
+    description: "La consulta a Canal Directo falló o devolvió un error inesperado.",
+    defaultExpanded: false,
+  },
+  sin_verificar: {
+    label: "Sin verificar todavía",
+    description: "Todavía no se consultó Canal Directo para este equipo.",
+    defaultExpanded: false,
+  },
+  caida_colector: {
+    label: "Caída de colector (no se ofrecen para baja)",
+    description: "Equipos de un cliente con caída masiva — excluidos de la baja automática.",
     defaultExpanded: false,
   },
 };

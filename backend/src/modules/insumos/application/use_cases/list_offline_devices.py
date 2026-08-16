@@ -55,13 +55,22 @@ class CountOfflineCandidates:
         self._settings = settings
 
     async def execute(self) -> int:
-        """Cuenta de equipos en BODEGA sin outage — candidatos a baja masiva.
+        """Cuenta de equipos en BODEGA sin outage y sin dismissed — candidatos a baja masiva.
+
+        Paridad con el legacy: `if deletable and not dismissed: count += 1`.
+        `deletable_ids` incluye los dismissed (siguen siendo elegibles para baja manual),
+        pero el badge del sidebar debe mostrar solo los no descartados, igual que el legacy.
 
         No se puede resolver con COUNT en SQL: `deletable` depende de la detección
         de caídas (doble umbral, señal de colectores). Expresarlo en SQL duplicaría
         lógica de negocio en infraestructura."""
         snapshot = await build_offline_snapshot(self._ports, self._settings)
-        return len(snapshot.deletable_ids)
+        deletable_set = set(snapshot.deletable_ids)
+        return sum(
+            1
+            for d in snapshot.devices
+            if d.device_id in deletable_set and not d.offline_dismissed
+        )
 
 
 class DismissOfflineDevice:
