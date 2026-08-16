@@ -90,7 +90,7 @@ function PasoGeocodificar({ prestadorId, resumen, setResumen }: {
         Este paso busca en Google Maps las que no tienen pin en Siges.
         Las ambiguas quedan listadas para que elijas el candidato correcto.
       </p>
-      {error && <p className="font-body text-sm text-destructive">{error}</p>}
+      {error && !resumen && <p className="font-body text-sm text-destructive">{error}</p>}
       {!resumen ? (
         <BrandButton loading={ejecutando} onClick={ejecutar}>Geocodificar sucursales faltantes</BrandButton>
       ) : (
