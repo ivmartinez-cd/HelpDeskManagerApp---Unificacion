@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Badge } from "@/shared/components/ui/badge";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { ApiError } from "@/services/http-client";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { CalculoKmPreview, PrestadorLiquidacion } from "../types/liquidaciones";
 
@@ -20,7 +21,7 @@ export function PasoCalcular({ prestador, preview, setPreview, onAplicado }: {
   prestador: PrestadorLiquidacion; preview: CalculoKmPreview | null;
   setPreview: (p: CalculoKmPreview) => void; onAplicado: () => void;
 }) {
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [aplicando, setAplicando] = useState(false);
   const [aplicado, setAplicado] = useState(false);
   const fetched = useRef(false);
@@ -29,7 +30,7 @@ export function PasoCalcular({ prestador, preview, setPreview, onAplicado }: {
     if (fetched.current || preview) return;
     fetched.current = true;
     liquidacionesApi.previewCalcularDistancias(prestador.id).then(setPreview)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Error al generar preview"));
+      .catch((e: unknown) => setError(e));
   }, []);
 
   if (!preview && !error) return (
@@ -38,19 +39,27 @@ export function PasoCalcular({ prestador, preview, setPreview, onAplicado }: {
     </div>
   );
   if (error) {
-    const sinBase = error.includes("sucursal base");
+    const esSinBase = error instanceof ApiError && error.code === "PRESTADOR_SIN_BASE_SUCURSAL";
+    const esSinCoordenadas = error instanceof ApiError && error.code === "BASE_SUCURSAL_SIN_COORDENADAS";
     return (
       <div className="rounded-[8px] border border-destructive/40 bg-destructive/5 p-4 flex flex-col gap-2">
         <p className="font-body text-sm font-semibold text-destructive">
-          {sinBase ? "Falta configurar la sucursal base de despacho" : "Error al calcular distancias"}
+          {esSinBase ? "Falta configurar la sucursal base de despacho"
+            : esSinCoordenadas ? "La sucursal base no tiene coordenadas en Siges"
+            : "Error al calcular distancias"}
         </p>
-        {sinBase ? (
+        {esSinBase ? (
           <p className="font-body text-sm text-muted-foreground">
             Para calcular distancias necesitás definir desde qué sucursal propia sale el técnico.
             Configurala en <span className="font-semibold text-foreground">Configuración → Prestadores → {prestador.nombre}</span>, campo <span className="font-semibold text-foreground">Sucursal base</span>.
           </p>
+        ) : esSinCoordenadas ? (
+          <p className="font-body text-sm text-muted-foreground">
+            La sucursal base tiene latitud y longitud en cero en Gestión (Siges).
+            Cargá las coordenadas reales en <span className="font-semibold text-foreground">Gestión → la sucursal correspondiente</span> y volvé a intentarlo.
+          </p>
         ) : (
-          <p className="font-body text-sm text-muted-foreground">{error}</p>
+          <p className="font-body text-sm text-muted-foreground">{error instanceof Error ? error.message : String(error)}</p>
         )}
       </div>
     );
@@ -64,7 +73,7 @@ export function PasoCalcular({ prestador, preview, setPreview, onAplicado }: {
       const res = await liquidacionesApi.aplicarCalcularDistancias(prestador.id, preview.id);
       toast.success(`Aplicado: ${res.creadas} creadas, ${res.actualizadas} actualizadas`);
       onAplicado(); setAplicado(true);
-    } catch (e: unknown) { setError(e instanceof Error ? e.message : "Error al aplicar"); }
+    } catch (e: unknown) { setError(e); }
     finally { setAplicando(false); }
   };
 
