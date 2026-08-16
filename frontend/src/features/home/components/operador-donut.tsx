@@ -9,8 +9,8 @@ ChartJS.register(ArcElement, Tooltip);
 export interface DonutRow {
   id: string;
   nombre: string;
-  /** Detalle junto al nombre: "13 PST", "37 clientes"... */
-  detalle: string;
+  /** Detalle junto al nombre: "13 PST", "37 clientes"... Opcional. */
+  detalle?: string;
   color: string;
   valor: number;
 }
@@ -72,7 +72,7 @@ export function OperadorDonut({
               style={{ background: r.color }}
             />
             <span className="min-w-0 flex-1 truncate font-body text-[12.5px] font-semibold text-foreground/70">
-              {r.nombre} · {r.detalle}
+              {r.nombre}{r.detalle ? ` · ${r.detalle}` : ""}
             </span>
             <span className="shrink-0 font-body text-[12px] font-semibold text-muted-foreground">
               {total > 0 ? `${fmtPct((r.valor / total) * 100)}%` : "—"}

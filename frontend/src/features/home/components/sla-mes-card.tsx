@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArcElement,
   CategoryScale,
   Chart as ChartJS,
   Filler,
@@ -12,50 +11,25 @@ import {
 } from "chart.js";
 import { Gauge } from "lucide-react";
 import Link from "next/link";
-import { Doughnut, Line } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import type { SlaResumen } from "@/features/sla/types/sla";
 import { brandButtonClasses } from "@/shared/components/ui/brand-form";
 import { cn } from "@/shared/utils/cn";
 import type { SlaHistoria } from "../hooks/use-inicio-data";
 import { fmtInt, fmtPct, periodoLabel } from "../utils/inicio-format";
 import { DashboardCard } from "./dashboard-card";
+import { OperadorDonut } from "./operador-donut";
 
-ChartJS.register(ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
 const ORANGE = "#F7941D";
 const RED = "#ef4444";
 
-function Dona({ resumen }: { resumen: SlaResumen }) {
-  return (
-    <div className="relative mx-auto my-2 flex h-[130px] w-[130px] items-center justify-center">
-      <Doughnut
-        data={{
-          labels: ["Correctos", "Vencidos"],
-          datasets: [
-            {
-              data: [resumen.correctos, resumen.vencidos],
-              backgroundColor: [ORANGE, RED],
-              borderWidth: 0,
-              borderRadius: 6,
-            },
-          ],
-        }}
-        options={{
-          cutout: "74%",
-          plugins: { legend: { display: false }, tooltip: { enabled: false } },
-          animation: { animateRotate: true, duration: 900 },
-        }}
-      />
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-heading text-[22px] font-extrabold leading-none text-brand-orange">
-          {fmtPct(resumen.pct_correctos)}%
-        </span>
-        <span className="font-body text-[11px] text-muted-foreground">
-          {fmtInt(resumen.correctos)} de {fmtInt(resumen.total)} correctos
-        </span>
-      </div>
-    </div>
-  );
+function slaRows(resumen: SlaResumen) {
+  return [
+    { id: "correctos", nombre: "Correctos", color: ORANGE, valor: resumen.correctos },
+    { id: "vencidos", nombre: "Vencidos", color: RED, valor: resumen.vencidos },
+  ];
 }
 
 function Tendencia({ historia }: { historia: SlaHistoria }) {
@@ -140,7 +114,12 @@ export function SlaMesCard({
         </span>
       ) : (
         <>
-          <Dona resumen={actual} />
+          <OperadorDonut
+            rows={slaRows(actual)}
+            total={actual.total}
+            centerSub="incidentes"
+            tooltipUnidad="incidentes"
+          />
           <div className="grid grid-cols-3 gap-2">
             <div className="rounded-[8px] bg-white/[.03] px-2.5 py-[9px] text-center">
               <div className="font-heading text-[9.5px] font-bold uppercase text-muted-foreground">
