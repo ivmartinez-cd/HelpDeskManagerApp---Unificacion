@@ -205,6 +205,8 @@ class AplicarCalcularDistancias:
                 latitud_destino=fila.latitud_destino,
                 longitud_destino=fila.longitud_destino,
                 coords_origen=fila.coords_origen,
+                siges_sucursal_id=fila.siges_sucursal_id,
+                id_costo_servicios=fila.id_costo_servicios,
             )
             return (0, 1) if actualizada else (0, 0)
         await self._crear_fila(prestador_id, fila, url)
@@ -230,6 +232,8 @@ class AplicarCalcularDistancias:
             kms_ida=fila.kms_ida,
             kms_vuelta=fila.kms_vuelta,
             coords_origen=fila.coords_origen,
+            siges_sucursal_id=fila.siges_sucursal_id,
+            id_costo_servicios=fila.id_costo_servicios,
         )
 
 
@@ -287,4 +291,5 @@ def _armar_fila(
         kms_a_facturar=kms_a_facturar,
         kms_recorrido_actual=existente.kms_recorrido if existente else None,
         kms_a_facturar_actual=existente.kms_a_facturar if existente else None,
+        id_costo_servicios=s.id_costo_servicios,
     )

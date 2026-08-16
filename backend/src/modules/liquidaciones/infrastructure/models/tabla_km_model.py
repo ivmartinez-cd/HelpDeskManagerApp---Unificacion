@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String, text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -45,6 +45,8 @@ class TablaKmModel(Base):
     coords_origen: Mapped[str | None] = mapped_column(String)
     geocode_formatted_address: Mapped[str | None] = mapped_column(String)
     geocode_fecha: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    siges_sucursal_id: Mapped[int | None] = mapped_column(Integer)
+    id_costo_servicios: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()"), nullable=False
     )

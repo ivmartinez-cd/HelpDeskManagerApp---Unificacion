@@ -47,9 +47,6 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_geocode_ca
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repository import (  # noqa: E501
-    SqlAlchemySpstRepository,
-)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_sucursal_coordenadas_repository import (  # noqa: E501
     SqlAlchemySucursalCoordenadasRepository,
 )
@@ -149,7 +146,6 @@ def _lugares_ports(session: AsyncSession) -> TablaKmLugaresPorts:
         geocode_cache=SqlAlchemyGeocodeCacheRepository(session),
         geocoding=_geocoding_gateway(),
         google_maps=siges_google_maps_gateway(),
-        spsts=SqlAlchemySpstRepository(session),
     )
 
 

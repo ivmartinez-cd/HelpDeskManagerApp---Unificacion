@@ -44,3 +44,5 @@ class TablaKm:
     coords_origen: str | None = None
     geocode_formatted_address: str | None = None
     geocode_fecha: datetime | None = None
+    siges_sucursal_id: int | None = None
+    id_costo_servicios: int | None = None

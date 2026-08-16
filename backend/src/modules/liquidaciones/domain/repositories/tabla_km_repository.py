@@ -41,6 +41,8 @@ class TablaKmRepository(Protocol):
         latitud_destino: float,
         longitud_destino: float,
         coords_origen: str,
+        siges_sucursal_id: int | None = None,
+        id_costo_servicios: int | None = None,
     ) -> TablaKm | None:
         """Resultado de un recálculo: km y pin. `umbral_viatico`, `observaciones`
         y el resto de la fila se preservan siempre."""
@@ -69,6 +71,8 @@ class TablaKmRepository(Protocol):
         coords_origen: str | None = None,
         geocode_formatted_address: str | None = None,
         geocode_fecha: datetime | None = None,
+        siges_sucursal_id: int | None = None,
+        id_costo_servicios: int | None = None,
     ) -> TablaKm:
         """Genera el `id` (UUID) internamente."""
         ...
@@ -101,8 +105,10 @@ class TablaKmRepository(Protocol):
         domicilio_cliente: str | None,
         localidad_cliente: str | None,
         provincia_cliente: str | None,
+        siges_sucursal_id: int | None = None,
+        id_costo_servicios: int | None = None,
     ) -> TablaKm | None:
-        """Solo campos de dirección (sync desde Siges). No toca km, coordenadas
+        """Dirección + vínculo Siges (sync desde Siges). No toca km, coordenadas
         ni viático. Limpia geocode_formatted_address para forzar re-geocoding."""
         ...
 

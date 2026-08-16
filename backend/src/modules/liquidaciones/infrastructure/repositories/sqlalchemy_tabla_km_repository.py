@@ -126,6 +126,8 @@ class SqlAlchemyTablaKmRepository:
         latitud_destino: float,
         longitud_destino: float,
         coords_origen: str,
+        siges_sucursal_id: int | None = None,
+        id_costo_servicios: int | None = None,
     ) -> TablaKm | None:
         row = await self._session.get(TablaKmModel, tabla_km_id)
         if row is None:
@@ -139,6 +141,10 @@ class SqlAlchemyTablaKmRepository:
         row.latitud_destino = latitud_destino
         row.longitud_destino = longitud_destino
         row.coords_origen = coords_origen
+        if siges_sucursal_id is not None:
+            row.siges_sucursal_id = siges_sucursal_id
+        if id_costo_servicios is not None:
+            row.id_costo_servicios = id_costo_servicios
         row.updated_at = datetime.now(UTC)
         await self._session.flush()
         await self._session.refresh(row)
@@ -151,6 +157,8 @@ class SqlAlchemyTablaKmRepository:
         domicilio_cliente: str | None,
         localidad_cliente: str | None,
         provincia_cliente: str | None,
+        siges_sucursal_id: int | None = None,
+        id_costo_servicios: int | None = None,
     ) -> TablaKm | None:
         row = await self._session.get(TablaKmModel, tabla_km_id)
         if row is None:
@@ -160,6 +168,10 @@ class SqlAlchemyTablaKmRepository:
         row.provincia_cliente = provincia_cliente
         row.geocode_formatted_address = None
         row.geocode_fecha = None
+        if siges_sucursal_id is not None:
+            row.siges_sucursal_id = siges_sucursal_id
+        if id_costo_servicios is not None:
+            row.id_costo_servicios = id_costo_servicios
         row.updated_at = datetime.now(UTC)
         await self._session.flush()
         await self._session.refresh(row)
@@ -196,6 +208,8 @@ class SqlAlchemyTablaKmRepository:
         coords_origen: str | None = None,
         geocode_formatted_address: str | None = None,
         geocode_fecha: datetime | None = None,
+        siges_sucursal_id: int | None = None,
+        id_costo_servicios: int | None = None,
     ) -> TablaKm:
         model = TablaKmModel(
             id=uuid.uuid4(),
@@ -219,6 +233,8 @@ class SqlAlchemyTablaKmRepository:
             coords_origen=coords_origen,
             geocode_formatted_address=geocode_formatted_address,
             geocode_fecha=geocode_fecha,
+            siges_sucursal_id=siges_sucursal_id,
+            id_costo_servicios=id_costo_servicios,
         )
         self._session.add(model)
         await self._session.flush()
@@ -251,4 +267,6 @@ def _to_entity(row: TablaKmModel) -> TablaKm:
         coords_origen=row.coords_origen,
         geocode_formatted_address=row.geocode_formatted_address,
         geocode_fecha=row.geocode_fecha,
+        siges_sucursal_id=row.siges_sucursal_id,
+        id_costo_servicios=row.id_costo_servicios,
     )

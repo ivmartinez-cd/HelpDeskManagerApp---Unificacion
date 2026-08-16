@@ -10,10 +10,10 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
+    build_costo_bases,
     calcular_kms_a_facturar,
     coords_base_default,
     maps_url_ida_vuelta,
-    parse_latlon_siges,
     validar_prestador_para_distancias,
     validar_prestador_vinculado_siges,
 )
@@ -37,7 +37,6 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     SigesCatalogoGateway,
     SigesSucursalPropia,
 )
-from src.modules.liquidaciones.domain.repositories.spst_repository import SpstRepository
 from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
 from src.modules.liquidaciones.domain.services.geolocalizacion import (
     PROCEDENCIA_GEOCODE,
@@ -56,7 +55,6 @@ class TablaKmLugaresPorts:
     geocode_cache: GeocodeCacheRepository
     geocoding: GeocodingGateway
     google_maps: GoogleMapsGateway
-    spsts: SpstRepository
 
 
 class BuscarLugarFila:
@@ -145,7 +143,7 @@ class RecalcularKmFila:
         propias = await self._ports.siges.list_sucursales_de_empresa(
             prestador.siges_empresa_id  # type: ignore[arg-type]
         )
-        base = await _resolver_base_recalculo(fila, propias, prestador, self._ports.spsts)
+        base = _resolver_base_recalculo(fila, propias, prestador)
         destino = (fila.latitud_destino, fila.longitud_destino)
         tramos = await self._ports.google_maps.distancias_km_ida_vuelta(base, [destino])
         ida, vuelta = tramos[0]
@@ -186,25 +184,16 @@ class RecalcularKmFila:
         return actualizada
 
 
-async def _resolver_base_recalculo(
+def _resolver_base_recalculo(
     fila: TablaKm,
     propias: list[SigesSucursalPropia],
     prestador: Prestador,
-    spsts: SpstRepository,
 ) -> tuple[float, float]:
-    if fila.spst_id is not None:
-        spst = await spsts.get_by_id(fila.spst_id)
-        if spst is not None and spst.siges_base_sucursal_id is not None:
-            coords = next(
-                (
-                    parse_latlon_siges(s.latitud, s.longitud)
-                    for s in propias
-                    if s.siges_sucursal_id == spst.siges_base_sucursal_id
-                ),
-                None,
-            )
-            if coords is not None:
-                return coords
+    if fila.id_costo_servicios is not None:
+        costo_bases = build_costo_bases(propias)
+        coords = costo_bases.get(fila.id_costo_servicios)
+        if coords is not None:
+            return coords
     return coords_base_default(prestador, propias)
 
 
@@ -273,6 +262,8 @@ class RefrescarDatosSiges:
                 domicilio_cliente=siges.domicilio,
                 localidad_cliente=siges.localidad,
                 provincia_cliente=siges.provincia,
+                siges_sucursal_id=siges.siges_sucursal_id,
+                id_costo_servicios=siges.id_costo_servicios,
             )
             actualizadas += 1
         return RefrescarDireccionesResultado(

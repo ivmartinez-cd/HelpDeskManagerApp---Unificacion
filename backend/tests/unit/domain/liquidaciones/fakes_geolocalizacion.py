@@ -284,6 +284,8 @@ class FakeTablaKmGeoRepository:
         latitud_destino: float,
         longitud_destino: float,
         coords_origen: str,
+        siges_sucursal_id: int | None = None,
+        id_costo_servicios: int | None = None,
     ) -> TablaKm | None:
         row = self.rows.get(tabla_km_id)
         if row is None:
@@ -299,6 +301,38 @@ class FakeTablaKmGeoRepository:
             latitud_destino=latitud_destino,
             longitud_destino=longitud_destino,
             coords_origen=coords_origen,
+            siges_sucursal_id=siges_sucursal_id if siges_sucursal_id is not None
+            else row.siges_sucursal_id,
+            id_costo_servicios=id_costo_servicios if id_costo_servicios is not None
+            else row.id_costo_servicios,
+        )
+        self.rows[tabla_km_id] = actualizada
+        return actualizada
+
+    async def update_domicilio(
+        self,
+        tabla_km_id: UUID,
+        *,
+        domicilio_cliente: str | None,
+        localidad_cliente: str | None,
+        provincia_cliente: str | None,
+        siges_sucursal_id: int | None = None,
+        id_costo_servicios: int | None = None,
+    ) -> TablaKm | None:
+        row = self.rows.get(tabla_km_id)
+        if row is None:
+            return None
+        actualizada = dataclasses.replace(
+            row,
+            domicilio_cliente=domicilio_cliente,
+            localidad_cliente=localidad_cliente,
+            provincia_cliente=provincia_cliente,
+            geocode_formatted_address=None,
+            geocode_fecha=None,
+            siges_sucursal_id=siges_sucursal_id if siges_sucursal_id is not None
+            else row.siges_sucursal_id,
+            id_costo_servicios=id_costo_servicios if id_costo_servicios is not None
+            else row.id_costo_servicios,
         )
         self.rows[tabla_km_id] = actualizada
         return actualizada

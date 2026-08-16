@@ -37,6 +37,7 @@ class PreviewFila:
     kms_a_facturar: float
     kms_recorrido_actual: float | None
     kms_a_facturar_actual: float | None
+    id_costo_servicios: int | None = None
 
 
 @dataclass(frozen=True)
