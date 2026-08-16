@@ -32,22 +32,22 @@ export const OFFLINE_GROUP_META: Record<OfflineGroup, OfflineGroupMeta> = {
   caida_colector: {
     label: "Caída de colector",
     description: "Equipos de un cliente con caída masiva — excluidos de la baja automática.",
-    defaultExpanded: true,
+    defaultExpanded: false,
   },
   bodega: {
     label: "En bodega",
     description: "Veredicto Canal Directo: el equipo está en bodega. Son los candidatos a baja.",
-    defaultExpanded: true,
+    defaultExpanded: false,
   },
   sin_verificar: {
     label: "Sin verificar",
     description: "Todavía no se consultó Canal Directo para este equipo.",
-    defaultExpanded: true,
+    defaultExpanded: false,
   },
   error: {
     label: "Error de verificación",
     description: "La consulta a Canal Directo falló o devolvió un error inesperado.",
-    defaultExpanded: true,
+    defaultExpanded: false,
   },
   otro_cliente: {
     label: "En otro cliente",
