@@ -16,6 +16,7 @@ from uuid import UUID
 
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
     Destino,
+    calcular_kms_a_facturar,
     maps_url_ida_vuelta,
     obtener_coords_base,
     parse_latlon_siges,
@@ -29,11 +30,7 @@ from src.modules.liquidaciones.domain.entities.calculo_km_preview import (
     PreviewFila,
 )
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
-from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import (
-    PROCEDENCIA_MANUAL,
-    PROCEDENCIA_SIGES,
-    SucursalCoordenadas,
-)
+from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import SucursalCoordenadas
 from src.modules.liquidaciones.domain.entities.tabla_km import UMBRAL_VIATICO_DEFAULT, TablaKm
 from src.modules.liquidaciones.domain.errors import PreviewNoEncontradoError
 from src.modules.liquidaciones.domain.repositories.calculo_km_preview_repository import (
@@ -49,6 +46,10 @@ from src.modules.liquidaciones.domain.repositories.sucursal_coordenadas_reposito
     SucursalCoordenadasRepository,
 )
 from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
+from src.modules.liquidaciones.domain.services.geolocalizacion import (
+    PROCEDENCIA_MANUAL,
+    PROCEDENCIA_SIGES,
+)
 from src.modules.liquidaciones.domain.services.vinculacion_siges import normalizar_nombre
 
 _GOOGLE_BATCH = 25
@@ -229,7 +230,7 @@ def _armar_fila(
     existente = existentes.get(key)
     total = round(ida + vuelta, 3)
     umbral = existente.umbral_viatico if existente else UMBRAL_VIATICO_DEFAULT
-    aplica = total > umbral
+    aplica, kms_a_facturar = calcular_kms_a_facturar(total, umbral)
     return PreviewFila(
         accion=ACCION_ACTUALIZAR if existente else ACCION_CREAR,
         tabla_km_id=existente.id if existente else None,
@@ -247,7 +248,7 @@ def _armar_fila(
         kms_total=total,
         umbral_viatico=umbral,
         aplica_viatico=aplica,
-        kms_a_facturar=total if aplica else 0.0,
+        kms_a_facturar=kms_a_facturar,
         kms_recorrido_actual=existente.kms_recorrido if existente else None,
         kms_a_facturar_actual=existente.kms_a_facturar if existente else None,
     )

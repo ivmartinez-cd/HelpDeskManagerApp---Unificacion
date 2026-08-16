@@ -10,13 +10,10 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
+    calcular_kms_a_facturar,
     maps_url_ida_vuelta,
     obtener_coords_base,
     validar_prestador_para_distancias,
-)
-from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import (
-    PROCEDENCIA_GEOCODE,
-    PROCEDENCIA_MANUAL,
 )
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.errors import (
@@ -37,7 +34,11 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     SigesCatalogoGateway,
 )
 from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
-from src.modules.liquidaciones.domain.services.geolocalizacion import armar_direccion
+from src.modules.liquidaciones.domain.services.geolocalizacion import (
+    PROCEDENCIA_GEOCODE,
+    PROCEDENCIA_MANUAL,
+    armar_direccion,
+)
 from src.shared.domain.errors import ValidationError
 
 
@@ -151,14 +152,14 @@ class RecalcularKmFila:
         vuelta: float,
     ) -> TablaKm:
         total = round(ida + vuelta, 3)
-        aplica = total > fila.umbral_viatico
+        aplica, kms_a_facturar = calcular_kms_a_facturar(total, fila.umbral_viatico)
         actualizada = await self._ports.tabla_km.update_distancias(
             fila.id,
             kms_ida=round(ida, 3),
             kms_vuelta=round(vuelta, 3),
             kms_recorrido=total,
             aplica_viatico=aplica,
-            kms_a_facturar=total if aplica else 0.0,
+            kms_a_facturar=kms_a_facturar,
             url_maps=maps_url_ida_vuelta(base, destino),
             latitud_destino=destino[0],
             longitud_destino=destino[1],

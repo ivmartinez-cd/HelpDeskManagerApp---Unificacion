@@ -14,7 +14,6 @@ from src.modules.liquidaciones.application.use_cases._distancias_comunes import 
     parse_latlon_siges,
     validar_prestador_para_distancias,
 )
-from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import PROCEDENCIA_GEOCODE
 from src.modules.liquidaciones.domain.repositories.geocode_cache_repository import (
     GeocodeCacheRepository,
 )
@@ -31,6 +30,7 @@ from src.modules.liquidaciones.domain.repositories.sucursal_coordenadas_reposito
     SucursalCoordenadasRepository,
 )
 from src.modules.liquidaciones.domain.services.geolocalizacion import (
+    PROCEDENCIA_GEOCODE,
     armar_direccion,
     elegir_automatico,
 )

@@ -83,3 +83,8 @@ async def obtener_coords_base(
 def verificar_tope(necesarias: int, tope: int) -> None:
     if necesarias > tope:
         raise TopeLlamadasGoogleError(necesarias, tope)
+
+
+def calcular_kms_a_facturar(kms_total: float, umbral_viatico: float) -> tuple[bool, float]:
+    aplica = kms_total > umbral_viatico
+    return aplica, kms_total if aplica else 0.0

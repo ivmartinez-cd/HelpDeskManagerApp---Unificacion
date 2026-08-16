@@ -13,6 +13,13 @@ from src.modules.liquidaciones.domain.repositories.geocoding_gateway import Geoc
 
 UMBRAL_PIN_SOSPECHOSO_KM = 5.0
 
+# Procedencia de coordenadas — compartida por TablaKm.coords_origen y
+# SucursalCoordenadas.procedencia (mismos valores, campos distintos en
+# entidades distintas).
+PROCEDENCIA_SIGES = "siges"
+PROCEDENCIA_GEOCODE = "geocode"
+PROCEDENCIA_MANUAL = "manual"
+
 # Los domicilios de Siges arrastran sufijos de formulario vacíos ("Piso: Dpto:",
 # "Piso:7 Dpto:") y un " 0" final de altura sin dato — ruido para el geocoder.
 _SUFIJO_PISO = re.compile(r"\s*Piso\s*:.*$", re.IGNORECASE)
@@ -35,8 +42,9 @@ def armar_direccion(
     no hay ni domicilio ni localidad (no tiene sentido geocodificar solo la
     provincia)."""
     partes = []
-    if domicilio and normalizar_domicilio(domicilio):
-        partes.append(normalizar_domicilio(domicilio))
+    dom_norm = normalizar_domicilio(domicilio) if domicilio else ""
+    if dom_norm:
+        partes.append(dom_norm)
     if localidad and localidad.strip():
         partes.append(localidad.strip())
     if not partes:

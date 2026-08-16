@@ -10,10 +10,6 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 
-PROCEDENCIA_GEOCODE = "geocode"
-PROCEDENCIA_MANUAL = "manual"
-PROCEDENCIA_SIGES = "siges"
-
 
 @dataclass(frozen=True)
 class SucursalCoordenadas:

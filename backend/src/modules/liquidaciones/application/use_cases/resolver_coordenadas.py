@@ -7,11 +7,7 @@ resuelve "por score" — regla de la Fase 0."""
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import (
-    PROCEDENCIA_GEOCODE,
-    PROCEDENCIA_MANUAL,
-    SucursalCoordenadas,
-)
+from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import SucursalCoordenadas
 from src.modules.liquidaciones.domain.errors import SucursalCoordenadasNoEncontradaError
 from src.modules.liquidaciones.domain.repositories.geocode_cache_repository import (
     GeocodeCacheRepository,
@@ -19,6 +15,10 @@ from src.modules.liquidaciones.domain.repositories.geocode_cache_repository impo
 from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
 from src.modules.liquidaciones.domain.repositories.sucursal_coordenadas_repository import (
     SucursalCoordenadasRepository,
+)
+from src.modules.liquidaciones.domain.services.geolocalizacion import (
+    PROCEDENCIA_GEOCODE,
+    PROCEDENCIA_MANUAL,
 )
 from src.shared.domain.errors import ValidationError
 
