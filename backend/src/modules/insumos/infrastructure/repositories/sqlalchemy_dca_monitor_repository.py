@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -46,14 +46,23 @@ class SqlAlchemyDcaMonitorRepository:
         )
 
     async def list_offline_monitors(self, stale_hours: int) -> set[MonitorKey]:
-        """3 condiciones en AND: online=False, status=ACTIVE, checked_at fresco."""
-        freshness_cutoff = datetime.now(UTC) - timedelta(hours=stale_hours)
+        """online=False + status=ACTIVE + last_contact vencido (igual que el legacy).
+
+        Usar last_contact del monitor (no checked_at) hace que la detección sea robusta
+        a que el poller esté pausado: un monitor offline sigue siendo offline aunque no
+        hayamos re-verificado hoy. Con checked_at >= cutoff, si el job no corre el dato
+        envejece y todos los outages desaparecen de la lista — comportamiento incorrecto.
+        """
+        cutoff = datetime.now(UTC) - timedelta(hours=stale_hours)
         stmt = select(
             DcaMonitorModel.customer_id, DcaMonitorModel.monitor_name
         ).where(
             DcaMonitorModel.online.is_(False),
             DcaMonitorModel.status == _ACTIVE_STATUS,
-            DcaMonitorModel.checked_at >= freshness_cutoff,
+            or_(
+                DcaMonitorModel.last_contact.is_(None),
+                DcaMonitorModel.last_contact < cutoff,
+            ),
         )
         rows = (await self._session.execute(stmt)).all()
         return {MonitorKey(customer_id, monitor_name) for customer_id, monitor_name in rows}
