@@ -145,14 +145,14 @@ class SqlAlchemyLiquidacionRepository:
             LiquidacionPrestadorModel,
         )
 
+        liq = LiquidacionModel.__table__
+        pst = LiquidacionPrestadorModel.__table__
         stmt = (
-            select(LiquidacionPrestadorModel.nombre_corto, func.count().label("n"))
-            .join(
-                LiquidacionPrestadorModel,
-                LiquidacionModel.prestador_id == LiquidacionPrestadorModel.id,
-            )
-            .where(LiquidacionModel.estado.notin_([ESTADO_APROBADA, ESTADO_CERRADA]))
-            .group_by(LiquidacionPrestadorModel.nombre_corto)
+            select(pst.c.nombre_corto, func.count().label("n"))
+            .select_from(liq)
+            .join(pst, liq.c.prestador_id == pst.c.id)
+            .where(liq.c.estado.notin_([ESTADO_APROBADA, ESTADO_CERRADA]))
+            .group_by(pst.c.nombre_corto)
             .order_by(func.count().desc())
         )
         result = await self._session.execute(stmt)
