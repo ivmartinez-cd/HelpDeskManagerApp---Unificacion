@@ -74,9 +74,17 @@ Los dos archivos >300 se partieron (verificado: rutas OpenAPI idénticas antes/d
 - `tabla_km_lugares.py` (302) → 202 líneas; `RefrescarDatosSiges` y sus DTOs se movieron
   a `tabla_km_refrescar_siges.py` (sync de datos maestros ≠ operaciones por fila).
 
-**Queda abierto** (decisión pendiente: refactorizar vs. incorporar al inventario de
-ADR-017 con una nota de enmienda): las 6 funciones >50 y la clase >200 nuevas de la
-tabla de abajo.
+**Cerrado 2026-08-16 (5ª corrida)**: las 6 funciones >50 y la clase >200 nuevas se
+refactorizaron — `evaluate_device_health` partido en una regla por helper
+(`_rule_post_repair`/`_rule_recurrence`/`_rule_stable`), `analyze_events` con
+`_build_incident`/`_max_severity`, `calculate_trend` con `_empeoro`/`_mejoro`,
+`backfill_estado.execute` con `_backfill_prestador`/`_estados_ayc`/`_aplicar_estado`,
+`RefrescarDatosSiges.execute` con `_indice_siges`/`_actualizar_fila`, y el `create`
+del repo de tabla_km como passthrough `**campos` (la firma tipada vive en el puerto,
+mismo criterio que su fake). La medición AST volvió exactamente al inventario
+congelado de ADR-017 (10 funciones >50, 2 clases >200). Los tres servicios de dominio
+de analisis-log-hp no tenían **ningún** test — se agregaron 15 tests de
+caracterización (`tests/unit/domain/analisis_log_hp/`) como red del refactor.
 
 **Medición AST 2026-08-16** (mismo criterio que la auditoría, sin migraciones) vs. línea
 de base del 2026-08-14 — la brecha es deuda nueva o no inventariada:

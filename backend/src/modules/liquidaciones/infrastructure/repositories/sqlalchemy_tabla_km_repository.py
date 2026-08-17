@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import func, or_, select
@@ -185,57 +186,11 @@ class SqlAlchemyTablaKmRepository:
         await self._session.flush()
         return True
 
-    async def create(
-        self,
-        *,
-        prestador_id: UUID,
-        spst_id: UUID | None,
-        empresa_nombre: str,
-        sucursal_nombre: str,
-        observaciones: str | None,
-        domicilio_cliente: str | None,
-        localidad_cliente: str | None,
-        provincia_cliente: str | None,
-        kms_recorrido: float,
-        umbral_viatico: float,
-        aplica_viatico: bool,
-        kms_a_facturar: float,
-        url_maps: str | None,
-        latitud_destino: float | None = None,
-        longitud_destino: float | None = None,
-        kms_ida: float | None = None,
-        kms_vuelta: float | None = None,
-        coords_origen: str | None = None,
-        geocode_formatted_address: str | None = None,
-        geocode_fecha: datetime | None = None,
-        siges_sucursal_id: int | None = None,
-        id_costo_servicios: int | None = None,
-    ) -> TablaKm:
-        model = TablaKmModel(
-            id=uuid.uuid4(),
-            prestador_id=prestador_id,
-            spst_id=spst_id,
-            empresa_nombre=empresa_nombre,
-            sucursal_nombre=sucursal_nombre,
-            observaciones=observaciones,
-            domicilio_cliente=domicilio_cliente,
-            localidad_cliente=localidad_cliente,
-            provincia_cliente=provincia_cliente,
-            kms_recorrido=kms_recorrido,
-            umbral_viatico=umbral_viatico,
-            aplica_viatico=aplica_viatico,
-            kms_a_facturar=kms_a_facturar,
-            url_maps=url_maps,
-            latitud_destino=latitud_destino,
-            longitud_destino=longitud_destino,
-            kms_ida=kms_ida,
-            kms_vuelta=kms_vuelta,
-            coords_origen=coords_origen,
-            geocode_formatted_address=geocode_formatted_address,
-            geocode_fecha=geocode_fecha,
-            siges_sucursal_id=siges_sucursal_id,
-            id_costo_servicios=id_costo_servicios,
-        )
+    async def create(self, **campos: Any) -> TablaKm:
+        """La firma tipada (keyword-only, una por columna) vive en el puerto
+        `TablaKmRepository`; repetirla acá solo duplicaba la lista de columnas
+        — mismo criterio que el fake del puerto."""
+        model = TablaKmModel(id=uuid.uuid4(), **campos)
         self._session.add(model)
         await self._session.flush()
         await self._session.refresh(model)

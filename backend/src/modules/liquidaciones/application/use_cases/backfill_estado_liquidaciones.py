@@ -16,7 +16,11 @@ from src.modules.liquidaciones.application.dtos.backfill_estado import (
     BackfillEstadoPrestadorResultado,
     BackfillEstadoResultado,
 )
-from src.modules.liquidaciones.domain.entities.liquidacion import ESTADO_ABIERTA
+from src.modules.liquidaciones.domain.entities.liquidacion import (
+    ESTADO_ABIERTA,
+    Liquidacion,
+)
+from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.repositories.cd_liquidaciones_gateway import (
     CdLiquidacionesGateway,
 )
@@ -56,66 +60,70 @@ class BackfillEstadoLiquidaciones:
         prestadores = (
             [p for p in todos if p.id == prestador_id] if prestador_id else todos
         )
-
         resultado = BackfillEstadoResultado(dry_run=dry_run)
-
         for pst in prestadores:
-            pst_res = BackfillEstadoPrestadorResultado(
-                prestador_id=str(pst.id), prestador_nombre=pst.nombre
+            resultado.prestadores.append(
+                await self._backfill_prestador(pst, resultado, dry_run=dry_run)
             )
-            assert pst.cd_prestador_id is not None  # garantizado por list_con_cd_id()
-            cd_liqs = await self._ports.cd_gateway.get_liquidaciones(
-                pst.cd_prestador_id, top=500
-            )
-            # numero_liquidacion → estado en minúsculas
-            ayc_map = {
-                numero_liquidacion(liq.id): liq.estado.lower()
-                for liq in cd_liqs
-                if liq.estado
-            }
-
-            locales = await self._ports.liquidaciones.list_filtered(
-                prestador_id=pst.id, estado=ESTADO_ABIERTA
-            )
-
-            for liq in locales:
-                pst_res.procesadas += 1
-                if not liq.numero_liquidacion:
-                    pst_res.sin_match += 1
-                    continue
-
-                nuevo_estado = ayc_map.get(liq.numero_liquidacion)
-                if not nuevo_estado:
-                    pst_res.sin_match += 1
-                    continue
-
-                if nuevo_estado not in _ESTADOS_AYC_VALIDOS:
-                    logger.warning(
-                        "backfill_estado: estado AyC desconocido %r para %s — saltando",
-                        nuevo_estado,
-                        liq.numero_liquidacion,
-                    )
-                    pst_res.saltadas += 1
-                    continue
-
-                if not dry_run:
-                    await self._ports.liquidaciones.update_estado(liq.id, nuevo_estado)
-
-                pst_res.actualizadas += 1
-                resultado.por_estado_destino[nuevo_estado] = (
-                    resultado.por_estado_destino.get(nuevo_estado, 0) + 1
-                )
-
-            logger.info(
-                "backfill_estado(pst=%s, dry_run=%s): procesadas=%d actualizadas=%d "
-                "saltadas=%d sin_match=%d",
-                pst.nombre,
-                dry_run,
-                pst_res.procesadas,
-                pst_res.actualizadas,
-                pst_res.saltadas,
-                pst_res.sin_match,
-            )
-            resultado.prestadores.append(pst_res)
-
         return resultado
+
+    async def _backfill_prestador(
+        self, pst: Prestador, resultado: BackfillEstadoResultado, *, dry_run: bool
+    ) -> BackfillEstadoPrestadorResultado:
+        pst_res = BackfillEstadoPrestadorResultado(
+            prestador_id=str(pst.id), prestador_nombre=pst.nombre
+        )
+        ayc_map = await self._estados_ayc(pst)
+        locales = await self._ports.liquidaciones.list_filtered(
+            prestador_id=pst.id, estado=ESTADO_ABIERTA
+        )
+        for liq in locales:
+            await self._aplicar_estado(liq, ayc_map, pst_res, resultado, dry_run=dry_run)
+        logger.info(
+            "backfill_estado(pst=%s, dry_run=%s): procesadas=%d actualizadas=%d "
+            "saltadas=%d sin_match=%d",
+            pst.nombre, dry_run, pst_res.procesadas,
+            pst_res.actualizadas, pst_res.saltadas, pst_res.sin_match,
+        )
+        return pst_res
+
+    async def _estados_ayc(self, pst: Prestador) -> dict[str, str]:
+        """Mapa numero_liquidacion → estado AyC en minúsculas."""
+        assert pst.cd_prestador_id is not None  # garantizado por list_con_cd_id()
+        cd_liqs = await self._ports.cd_gateway.get_liquidaciones(
+            pst.cd_prestador_id, top=500
+        )
+        return {
+            numero_liquidacion(liq.id): liq.estado.lower()
+            for liq in cd_liqs
+            if liq.estado
+        }
+
+    async def _aplicar_estado(
+        self,
+        liq: Liquidacion,
+        ayc_map: dict[str, str],
+        pst_res: BackfillEstadoPrestadorResultado,
+        resultado: BackfillEstadoResultado,
+        *,
+        dry_run: bool,
+    ) -> None:
+        pst_res.procesadas += 1
+        numero = liq.numero_liquidacion
+        nuevo_estado = ayc_map.get(numero) if numero else None
+        if not nuevo_estado:
+            pst_res.sin_match += 1
+            return
+        if nuevo_estado not in _ESTADOS_AYC_VALIDOS:
+            logger.warning(
+                "backfill_estado: estado AyC desconocido %r para %s — saltando",
+                nuevo_estado, numero,
+            )
+            pst_res.saltadas += 1
+            return
+        if not dry_run:
+            await self._ports.liquidaciones.update_estado(liq.id, nuevo_estado)
+        pst_res.actualizadas += 1
+        resultado.por_estado_destino[nuevo_estado] = (
+            resultado.por_estado_destino.get(nuevo_estado, 0) + 1
+        )

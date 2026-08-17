@@ -66,10 +66,8 @@ def evaluate_device_health(
     maintenance: list[_TelemetryEvent] | None = None,
     now: datetime | None = None,
 ) -> DeviceHealth:
-    maintenance = maintenance or []
     now_aware = _aware(now) if now else datetime.now(UTC)
     events = _dedup(events)
-
     if not events:
         return DeviceHealth(
             "GREEN", "Sin historial",
@@ -78,22 +76,39 @@ def evaluate_device_health(
 
     crit = [e for e in events if _is_critical(e)]
     latest_counter = max(e.counter for e in events)
+    return (
+        _rule_post_repair(crit, maintenance or [])
+        or _rule_recurrence(crit, latest_counter, now_aware)
+        or _rule_stable(crit, latest_counter, now_aware)
+        or DeviceHealth(
+            "YELLOW", "En observación",
+            "Errores críticos recientes sin alcanzar el umbral de alerta.",
+            "Monitorear la evolución del equipo.",
+        )
+    )
 
-    # R2: falla post-reparación
+
+def _rule_post_repair(
+    crit: list[_TelemetryEvent], maintenance: list[_TelemetryEvent]
+) -> DeviceHealth | None:
     dated_maint = [m for m in maintenance if getattr(m, "changed_at", None) is not None]
-    if dated_maint:
-        last_maint_dt = max(_aware(m.changed_at) for m in dated_maint)  # type: ignore[attr-defined]
-        post = [e for e in crit if _aware(e.event_time) > last_maint_dt]
-        if post:
-            code = post[-1].code
-            return DeviceHealth(
-                "RED", "Falla post-reparación",
-                f"El error crítico {code} reapareció tras el último mantenimiento.",
-                "Enviar técnico: la reparación no resolvió la falla.",
-                triggered_rule="post_repair",
-            )
+    if not dated_maint:
+        return None
+    last_maint_dt = max(_aware(m.changed_at) for m in dated_maint)  # type: ignore[attr-defined]
+    post = [e for e in crit if _aware(e.event_time) > last_maint_dt]
+    if not post:
+        return None
+    return DeviceHealth(
+        "RED", "Falla post-reparación",
+        f"El error crítico {post[-1].code} reapareció tras el último mantenimiento.",
+        "Enviar técnico: la reparación no resolvió la falla.",
+        triggered_rule="post_repair",
+    )
 
-    # R1: recurrencia
+
+def _rule_recurrence(
+    crit: list[_TelemetryEvent], latest_counter: int, now_aware: datetime
+) -> DeviceHealth | None:
     by_code: dict[str, list[_TelemetryEvent]] = {}
     for e in crit:
         by_code.setdefault(e.code, []).append(e)
@@ -114,27 +129,25 @@ def evaluate_device_health(
                 "Se recomienda Técnico.",
                 triggered_rule="recurrence",
             )
+    return None
 
-    # R3: estabilización
+
+def _rule_stable(
+    crit: list[_TelemetryEvent], latest_counter: int, now_aware: datetime
+) -> DeviceHealth | None:
     if not crit:
         return DeviceHealth(
             "GREEN", "Estable", "Sin errores críticos.",
             "Sin acciones requeridas.", triggered_rule="stable",
         )
-
     last_crit = max(crit, key=lambda e: _aware(e.event_time))
     days_clean = (now_aware - _aware(last_crit.event_time)).days
     pages_clean = latest_counter - last_crit.counter
-    if days_clean >= STABLE_DAYS or pages_clean >= STABLE_PAGES:
-        return DeviceHealth(
-            "GREEN", "Estable",
-            f"Sin errores críticos por {pages_clean:,} páginas / {days_clean} días.",
-            "Sin acciones requeridas.",
-            triggered_rule="stable",
-        )
-
+    if days_clean < STABLE_DAYS and pages_clean < STABLE_PAGES:
+        return None
     return DeviceHealth(
-        "YELLOW", "En observación",
-        "Errores críticos recientes sin alcanzar el umbral de alerta.",
-        "Monitorear la evolución del equipo.",
+        "GREEN", "Estable",
+        f"Sin errores críticos por {pages_clean:,} páginas / {days_clean} días.",
+        "Sin acciones requeridas.",
+        triggered_rule="stable",
     )

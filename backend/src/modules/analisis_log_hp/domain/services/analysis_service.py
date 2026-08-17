@@ -24,55 +24,45 @@ def analyze_events(events: list[EnrichedEvent]) -> AnalysisResult:
     for evt in ordered:
         by_code[evt.code].append(evt)
 
-    incidents: list[Incident] = []
-    for code, group in by_code.items():
-        severity = max(
-            (e.type.upper() for e in group),
-            key=lambda s: _SEVERITY_SCORE.get(s, 0),
-        )
-        if severity not in _SEVERITY_SCORE:
-            severity = "INFO"
+    return AnalysisResult(
+        incidents=tuple(_build_incident(code, group) for code, group in by_code.items()),
+        global_severity=_max_severity(ordered),
+        events_count=len(ordered),
+    )
 
-        classification = code
-        sds_link: str | None = None
-        sds_solution_content: str | None = None
-        for evt in group:
-            if evt.code_description and evt.code_description.strip():
-                classification = evt.code_description.strip()
-                break
-        for evt in group:
-            if evt.code_solution_url and evt.code_solution_url.strip():
-                sds_link = evt.code_solution_url.strip()
-                sds_solution_content = evt.code_solution_content
-                break
 
-        start = group[0].timestamp
-        end = group[-1].timestamp
-        incidents.append(
-            Incident(
-                id=f"{code}-{start.isoformat()}",
-                code=code,
-                classification=classification,
-                severity=severity,
-                severity_weight=_SEVERITY_SCORE.get(severity, 0),
-                occurrences=len(group),
-                start_time=start,
-                end_time=end,
-                counter_range=(group[0].counter, group[-1].counter),
-                sds_link=sds_link,
-                sds_solution_content=sds_solution_content,
-            )
-        )
-
-    global_severity = max(
-        (e.type.upper() for e in ordered),
+def _max_severity(events: list[EnrichedEvent]) -> str:
+    severity = max(
+        (e.type.upper() for e in events),
         key=lambda s: _SEVERITY_SCORE.get(s, 0),
     )
-    if global_severity not in _SEVERITY_SCORE:
-        global_severity = "INFO"
+    return severity if severity in _SEVERITY_SCORE else "INFO"
 
-    return AnalysisResult(
-        incidents=tuple(incidents),
-        global_severity=global_severity,
-        events_count=len(ordered),
+
+def _primer_valor(group: list[EnrichedEvent], attr: str) -> EnrichedEvent | None:
+    return next(
+        (e for e in group if (getattr(e, attr) or "").strip()),
+        None,
+    )
+
+
+def _build_incident(code: str, group: list[EnrichedEvent]) -> Incident:
+    severity = _max_severity(group)
+    con_descripcion = _primer_valor(group, "code_description")
+    con_solucion = _primer_valor(group, "code_solution_url")
+    descripcion = con_descripcion.code_description if con_descripcion else None
+    solucion_url = con_solucion.code_solution_url if con_solucion else None
+    start = group[0].timestamp
+    return Incident(
+        id=f"{code}-{start.isoformat()}",
+        code=code,
+        classification=descripcion.strip() if descripcion else code,
+        severity=severity,
+        severity_weight=_SEVERITY_SCORE.get(severity, 0),
+        occurrences=len(group),
+        start_time=start,
+        end_time=group[-1].timestamp,
+        counter_range=(group[0].counter, group[-1].counter),
+        sds_link=solucion_url.strip() if solucion_url else None,
+        sds_solution_content=con_solucion.code_solution_content if con_solucion else None,
     )

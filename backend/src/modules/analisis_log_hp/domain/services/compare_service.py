@@ -43,6 +43,57 @@ def compute_diff(
     }
 
 
+def _current_severity(current_by_code: dict[str, Any], code: str) -> str | None:
+    inc = current_by_code.get(code)
+    if inc is None:
+        return None
+    return inc if isinstance(inc, str) else getattr(inc, "severity", None)
+
+
+def _current_occ(current_by_code: dict[str, Any], code: str) -> int:
+    inc = current_by_code.get(code)
+    if inc is None:
+        return 0
+    return inc if isinstance(inc, int) else getattr(inc, "occurrences", 0)
+
+
+def _empeoro(
+    saved_by_code: dict[str, dict[str, Any]],
+    current_by_code: dict[str, Any],
+    diff: dict[str, Any],
+    total_saved_err: int,
+    total_current_err: int,
+) -> bool:
+    for code in diff.get("codigos_nuevos") or []:
+        if _is_error(_current_severity(current_by_code, code)):
+            return True
+    for c in diff.get("cambios_ocurrencias") or []:
+        si = saved_by_code.get(c.get("code"))
+        if si and _is_error(si.get("severity")) and (c.get("delta") or 0) >= 3:
+            return True
+    if total_saved_err == 0 and total_current_err > 0:
+        return True
+    return total_saved_err > 0 and total_current_err >= total_saved_err * 1.20
+
+
+def _mejoro(
+    saved_by_code: dict[str, dict[str, Any]],
+    current_by_code: dict[str, Any],
+    diff: dict[str, Any],
+    total_saved_err: int,
+    total_current_err: int,
+) -> bool:
+    errors_gone = any(
+        _is_error((saved_by_code.get(code) or {}).get("severity"))
+        for code in diff.get("codigos_desaparecidos") or []
+    )
+    no_new_err = not any(
+        _is_error(_current_severity(current_by_code, code))
+        for code in diff.get("codigos_nuevos") or []
+    )
+    return errors_gone and total_current_err < total_saved_err and no_new_err
+
+
 def calculate_trend(
     saved_incidents: list[dict[str, Any]],
     current_by_code: dict[str, Any],
@@ -50,55 +101,18 @@ def calculate_trend(
 ) -> str:
     """'empeoro' | 'estable' | 'mejoro'."""
     saved_by_code = {i["code"]: i for i in saved_incidents}
-    codigos_nuevos: list[str] = diff.get("codigos_nuevos") or []
-    codigos_desaparecidos: list[str] = diff.get("codigos_desaparecidos") or []
-    cambios: list[dict[str, Any]] = diff.get("cambios_ocurrencias") or []
-
-    def _current_severity(code: str) -> str | None:
-        inc = current_by_code.get(code)
-        if inc is None:
-            return None
-        return inc if isinstance(inc, str) else getattr(inc, "severity", None)
-
-    def _current_occ(code: str) -> int:
-        inc = current_by_code.get(code)
-        if inc is None:
-            return 0
-        return inc if isinstance(inc, int) else getattr(inc, "occurrences", 0)
-
     total_saved_err = sum(
         i.get("occurrences") or 0 for i in saved_incidents if _is_error(i.get("severity"))
     )
     total_current_err = sum(
-        _current_occ(code)
+        _current_occ(current_by_code, code)
         for code in current_by_code
-        if _is_error(_current_severity(code))
+        if _is_error(_current_severity(current_by_code, code))
     )
-
-    for code in codigos_nuevos:
-        if _is_error(_current_severity(code)):
-            return "empeoro"
-
-    for c in cambios:
-        si = saved_by_code.get(c.get("code"))
-        if si and _is_error(si.get("severity")) and (c.get("delta") or 0) >= 3:
-            return "empeoro"
-
-    if total_saved_err == 0 and total_current_err > 0:
+    if _empeoro(saved_by_code, current_by_code, diff, total_saved_err, total_current_err):
         return "empeoro"
-
-    if total_saved_err > 0 and total_current_err >= total_saved_err * 1.20:
-        return "empeoro"
-
-    errors_gone = any(
-        _is_error((saved_by_code.get(code) or {}).get("severity"))
-        for code in codigos_desaparecidos
-    )
-    total_down = total_current_err < total_saved_err
-    no_new_err = not any(_is_error(_current_severity(code)) for code in codigos_nuevos)
-    if errors_gone and total_down and no_new_err:
+    if _mejoro(saved_by_code, current_by_code, diff, total_saved_err, total_current_err):
         return "mejoro"
-
     return "estable"
 
 
