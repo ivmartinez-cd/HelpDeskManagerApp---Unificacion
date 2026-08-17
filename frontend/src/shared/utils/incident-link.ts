@@ -1,12 +1,15 @@
 const WEB_AGENTES_INCIDENTS = "https://webagentes.canaldirecto.com.ar/incidents/view";
 
-function checkDigit(nro: number | string): number {
-  return String(nro)
+// Pesos alternados 3-1-3-1… de izquierda a derecha, igual que numeracion_ayc.py.
+function checkDigit(base: number | string): number {
+  const digits = String(base).replace(/-\d+$/, ""); // strip trailing -DV if present
+  const sum = digits
     .split("")
-    .filter((c) => c >= "0" && c <= "9")
-    .reduce((acc, d) => acc + Number(d), 0) % 10;
+    .reduce((acc, d, i) => acc + Number(d) * (i % 2 === 0 ? 3 : 1), 0);
+  return (10 - (sum % 10)) % 10;
 }
 
 export function incidentUrl(nro: number | string): string {
-  return `${WEB_AGENTES_INCIDENTS}/${nro}-${checkDigit(nro)}`;
+  const base = String(nro).replace(/-\d+$/, ""); // normalise: strip any existing -DV
+  return `${WEB_AGENTES_INCIDENTS}/${base}-${checkDigit(base)}`;
 }
