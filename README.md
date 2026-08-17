@@ -7,31 +7,36 @@ vacaciones, parque de impresoras, monitoreo STC) en un solo monolito modular.
 
 ## Estado
 
-En construcción. Ver `INTEGRACION_APPS_PLAN.md` (plan maestro de la unificación) y
-`ARCHITECTURE_GUIDE.md` (norma de arquitectura y código) en esta misma carpeta — léelos
-completos antes de tocar código. El plan de implementación del módulo `auth` (fundaciones)
-vive en `C:\Users\imartinez.CDSA\.claude\plans\idempotent-pondering-graham.md`.
+En construcción. Ver `docs/INTEGRACION_APPS_PLAN.md` (plan maestro de la unificación) y
+`docs/ARCHITECTURE_GUIDE.md` (norma de arquitectura y código) — léelos completos antes
+de tocar código.
 
 ## Setup rápido
 
-Todo en Docker (DB + backend + frontend, con hot-reload vía volúmenes — recomendado para
-desarrollo local):
+Todo en Docker (DB + backend + frontend — recomendado para desarrollo local):
 
 ```bash
 cp .env.example .env
 docker compose up -d --build
 ```
 
-Frontend en `http://localhost:3000`, backend en `http://localhost:8012`. Los cambios de código
-se reflejan sin rebuildear la imagen.
+Frontend en `http://localhost:3000`, backend en `http://localhost:8012`.
 
-Alternativa sin Docker para backend/frontend (solo la DB containerizada):
+**Sin hot reload — decisión deliberada** (ver CLAUDE.md): el código está bind-monteado
+pero editar un archivo no tiene efecto hasta reiniciar el contenedor
+(`docker restart helpdesk-manager-backend` / `helpdesk-manager-frontend`; el del
+frontend re-corre el build completo). `docker restart` NO relee `.env` — para cambios
+de variables de entorno: `docker compose up -d --force-recreate <servicio>`.
+
+Alternativa sin Docker para backend/frontend (solo la DB containerizada). Atención:
+nunca usar `--reload` de uvicorn en este repo — puede relanzar los background jobs en
+cada guardado con efectos reales (mails); mantener `DISABLE_BACKGROUND_JOBS=true`:
 
 ```bash
 cd backend && uv sync --frozen
 docker compose up -d db
 uv run alembic upgrade head
-uv run uvicorn src.shared.presentation.app:app --reload --port 8012
+uv run uvicorn src.shared.presentation.app:app --port 8012
 ```
 
 ```bash

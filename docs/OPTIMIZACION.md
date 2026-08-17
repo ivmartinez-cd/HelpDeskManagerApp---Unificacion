@@ -1,6 +1,18 @@
 # Optimización y cumplimiento de ARCHITECTURE_GUIDE.md
 
-**Última pasada:** 2026-08-16 (6ª corrida: anidamiento >3 de vuelta a línea de base)
+**Última pasada:** 2026-08-16 (7ª corrida: §10 READMEs + README raíz corregido)
+
+**Hallazgos 7ª corrida**: (1) el README raíz afirmaba que había hot-reload por
+volúmenes — contradiciendo la decisión post-incidente de CLAUDE.md y sugiriendo el
+`--reload` que causó el mail real del 2026-08-12; corregido, más rutas de docs
+actualizadas a `docs/`. (2) Creados `backend/README.md` y `frontend/README.md`
+(template §10) — cierra el hallazgo BAJO §10 de la auditoría. (3) Los 8 endpoints
+BAJO §11 de la auditoría (customers, catálogos auth, /periodos) ya estaban paginados
+desde la corrección del 08-14 — verificado; el único stray restante es
+`GET /analysis/models` (`list[dict]`, catálogo chico), que además **no tiene ningún
+consumidor en el frontend** (`listAiModels` definido y nunca usado): mismo caso que
+`GET /clients` en ADR-021 — candidato a borrar en la próxima revisión antes que a
+paginar un contrato muerto.
 
 **Estado §4 al cierre de la 6ª corrida**: todas las métricas en o por debajo de los
 inventarios congelados — funciones >50: 10/10 de ADR-017 · clases >200: 2/2 ·
