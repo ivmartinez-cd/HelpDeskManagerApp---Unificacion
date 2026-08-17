@@ -37,6 +37,9 @@ class RefrescarDireccionesResultado:
     actualizadas: int
     sin_cambios: int
     no_encontradas: int
+    # Filas cuyo domicilio ya coincidía pero les faltaba (o difería) el vínculo
+    # Siges — backfill silencioso de siges_sucursal_id/id_costo_servicios.
+    vinculadas: int = 0
     cambios: list[CambioDomicilio] = field(default_factory=list)
     no_encontradas_detalle: list[FilaNoEncontrada] = field(default_factory=list)
 
@@ -52,7 +55,7 @@ class RefrescarDatosSiges:
     async def execute(self, prestador_id: UUID) -> RefrescarDireccionesResultado:
         indice = await self._indice_siges(prestador_id)
         filas = await self._ports.tabla_km.list_by_prestador(prestador_id)
-        sin_cambios = 0
+        sin_cambios = vinculadas = 0
         cambios: list[CambioDomicilio] = []
         no_encontradas: list[FilaNoEncontrada] = []
         for fila in filas:
@@ -64,15 +67,33 @@ class RefrescarDatosSiges:
                 ))
             elif _mismo_domicilio(fila, siges.domicilio, siges.localidad, siges.provincia):
                 sin_cambios += 1
+                vinculadas += await self._backfill_vinculo(fila, siges)
             else:
                 cambios.append(await self._actualizar_fila(fila, siges))
         return RefrescarDireccionesResultado(
             actualizadas=len(cambios),
             sin_cambios=sin_cambios,
             no_encontradas=len(no_encontradas),
+            vinculadas=vinculadas,
             cambios=cambios,
             no_encontradas_detalle=no_encontradas,
         )
+
+    async def _backfill_vinculo(self, fila: TablaKm, siges: SigesSucursalCliente) -> int:
+        """Fila con domicilio ya al día pero vínculo Siges ausente o distinto:
+        completa solo el vínculo (sin tocar geocode ni dirección). Devuelve 1
+        si vinculó, 0 si ya estaba correcta."""
+        if (
+            fila.siges_sucursal_id == siges.siges_sucursal_id
+            and fila.id_costo_servicios == siges.id_costo_servicios
+        ):
+            return 0
+        await self._ports.tabla_km.update_vinculo_siges(
+            fila.id,
+            siges_sucursal_id=siges.siges_sucursal_id,
+            id_costo_servicios=siges.id_costo_servicios,
+        )
+        return 1
 
     async def _indice_siges(
         self, prestador_id: UUID

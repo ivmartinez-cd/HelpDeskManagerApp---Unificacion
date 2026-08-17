@@ -13,6 +13,7 @@ from uuid import UUID
 from src.modules.liquidaciones.application.dtos.siges_sucursales import SucursalSigesDTO
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
     desde_periodo_hace_meses,
+    es_empresa_activa,
 )
 from src.modules.liquidaciones.domain.errors import (
     PrestadorNoEncontradoError,
@@ -29,10 +30,7 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     SigesSucursalPropia,
 )
 from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
-from src.modules.liquidaciones.domain.services.vinculacion_siges import (
-    nombres_compatibles,
-    normalizar_nombre,
-)
+from src.modules.liquidaciones.domain.services.vinculacion_siges import normalizar_nombre
 
 
 @dataclass(frozen=True)
@@ -93,9 +91,7 @@ class BuscarSucursalesSiges:
             nombre = normalizar_nombre(sucursal.sucursal_nombre)
             if filtro and filtro not in empresa and filtro not in nombre:
                 continue
-            actividad_reciente = empresa in activos_norm or any(
-                nombres_compatibles(empresa, a) for a in activos_norm
-            )
+            actividad_reciente = es_empresa_activa(sucursal.empresa_nombre, activos_norm)
             resultados.append(
                 SucursalSigesDTO(
                     siges_sucursal_id=sucursal.siges_sucursal_id,

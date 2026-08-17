@@ -12,6 +12,7 @@ from uuid import UUID
 
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
     desde_periodo_hace_meses,
+    es_empresa_activa,
     parse_latlon_siges,
     validar_prestador_vinculado_siges,
 )
@@ -36,10 +37,7 @@ from src.modules.liquidaciones.domain.services.geolocalizacion import (
     armar_direccion,
     elegir_automatico,
 )
-from src.modules.liquidaciones.domain.services.vinculacion_siges import (
-    nombres_compatibles,
-    normalizar_nombre,
-)
+from src.modules.liquidaciones.domain.services.vinculacion_siges import normalizar_nombre
 
 
 @dataclass(frozen=True)
@@ -82,10 +80,7 @@ class GeocodificarSucursales:
         activos_norm = {normalizar_nombre(n) for n in activos_raw}
         contador = _Contador()
         for sucursal in sucursales:
-            empresa = normalizar_nombre(sucursal.empresa_nombre)
-            if empresa not in activos_norm and not any(
-                nombres_compatibles(empresa, a) for a in activos_norm
-            ):
+            if not es_empresa_activa(sucursal.empresa_nombre, activos_norm):
                 contador.sin_actividad += 1
                 continue
             if parse_latlon_siges(sucursal.latitud, sucursal.longitud) is not None:

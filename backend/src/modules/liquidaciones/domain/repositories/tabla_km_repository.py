@@ -98,6 +98,18 @@ class TablaKmRepository(Protocol):
         longitud_destino: float | None = None,
     ) -> TablaKm | None: ...
 
+    async def update_vinculo_siges(
+        self,
+        tabla_km_id: UUID,
+        *,
+        siges_sucursal_id: int,
+        id_costo_servicios: int | None,
+    ) -> TablaKm | None:
+        """SOLO el vínculo Siges (backfill de filas legacy cuyo domicilio ya
+        coincide). No toca domicilio, geocode, km ni viático — a diferencia de
+        `update_domicilio`, que limpia el geocode."""
+        ...
+
     async def update_domicilio(
         self,
         tabla_km_id: UUID,

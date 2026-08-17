@@ -189,6 +189,7 @@ class RefrescarDireccionesOut(BaseModel):
     actualizadas: int
     sin_cambios: int = Field(serialization_alias="sinCambios")
     no_encontradas: int = Field(serialization_alias="noEncontradas")
+    vinculadas: int = 0
     cambios: list[CambioDomicilioOut]
     no_encontradas_detalle: list[FilaNoEncontradaOut] = Field(
         serialization_alias="noEncontradasDetalle", default_factory=list
@@ -200,6 +201,7 @@ class RefrescarDireccionesOut(BaseModel):
             actualizadas=r.actualizadas,
             sin_cambios=r.sin_cambios,
             no_encontradas=r.no_encontradas,
+            vinculadas=r.vinculadas,
             cambios=[CambioDomicilioOut.from_dto(c) for c in r.cambios],
             no_encontradas_detalle=[
                 FilaNoEncontradaOut.from_dto(f) for f in r.no_encontradas_detalle

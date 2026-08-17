@@ -23,8 +23,22 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     SigesSucursalPropia,
 )
 from src.modules.liquidaciones.domain.services.geolocalizacion import armar_direccion
+from src.modules.liquidaciones.domain.services.vinculacion_siges import (
+    nombres_compatibles,
+    normalizar_nombre,
+)
 
 _MAPS_BASE = "https://www.google.com/maps/dir/?api=1"
+
+
+def es_empresa_activa(empresa_nombre: str, activos_norm: set[str]) -> bool:
+    """Actividad reciente por nombre normalizado, tolerando variantes compatibles.
+    Mismo criterio en Geocodificar, Distancias y Buscar sucursales (ex-clientes
+    = las que no están en el set)."""
+    empresa = normalizar_nombre(empresa_nombre)
+    return empresa in activos_norm or any(
+        nombres_compatibles(empresa, a) for a in activos_norm
+    )
 
 
 def desde_periodo_hace_meses(meses: int) -> str:

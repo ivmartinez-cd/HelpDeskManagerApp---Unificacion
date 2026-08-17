@@ -82,6 +82,7 @@ export const geolocalizacionApi = {
       actualizadas: number;
       sinCambios: number;
       noEncontradas: number;
+      vinculadas: number;
       cambios: { sucursalNombre: string; empresaNombre: string; domicilioAntes: string | null; domicilioDespues: string | null }[];
       noEncontradasDetalle: { empresaNombre: string; sucursalNombre: string }[];
     }>(`/api/liquidaciones/siges/prestador/${prestadorId}/refrescar-datos-sucursales`),

@@ -26,6 +26,7 @@ from src.modules.liquidaciones.application.use_cases._distancias_comunes import 
     calcular_kms_a_facturar,
     coords_base_default,
     desde_periodo_hace_meses,
+    es_empresa_activa,
     maps_url_ida_vuelta,
     parse_latlon_siges,
     validar_prestador_para_distancias,
@@ -61,10 +62,7 @@ from src.modules.liquidaciones.domain.services.geolocalizacion import (
     PROCEDENCIA_MANUAL,
     PROCEDENCIA_SIGES,
 )
-from src.modules.liquidaciones.domain.services.vinculacion_siges import (
-    nombres_compatibles,
-    normalizar_nombre,
-)
+from src.modules.liquidaciones.domain.services.vinculacion_siges import normalizar_nombre
 
 _GOOGLE_BATCH = 25
 
@@ -132,10 +130,7 @@ class PreviewCalcularDistancias:
         sin_ubicar = 0
         sin_actividad = 0
         for s in sucursales:
-            empresa = normalizar_nombre(s.empresa_nombre)
-            if empresa not in activos_norm and not any(
-                nombres_compatibles(empresa, a) for a in activos_norm
-            ):
+            if not es_empresa_activa(s.empresa_nombre, activos_norm):
                 sin_actividad += 1
                 continue
             destino = _resolver_destino(s, resoluciones)
