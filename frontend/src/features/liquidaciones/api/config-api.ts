@@ -1,0 +1,151 @@
+import { httpClient } from "@/services/http-client";
+import type {
+  ImportExcelMaestroResult,
+  PrestadorLiquidacion,
+  Spst,
+  TablaKm,
+  Tarifario,
+} from "../types/liquidaciones";
+import { fetchCatalogoCompleto, type Page } from "./_shared";
+
+interface TarifarioBody {
+  prestadorId: string;
+  tipoServicio: string;
+  zona?: string;
+  costoServicio: number;
+  costoKm: number;
+  vigenciaDesde: string;
+  vigenciaHasta?: string;
+}
+
+interface TablaKmBody {
+  prestadorId: string;
+  spstId?: string;
+  empresaNombre: string;
+  sucursalNombre: string;
+  observaciones?: string;
+  domicilioCliente?: string;
+  localidadCliente?: string;
+  provinciaCliente?: string;
+  kmsRecorrido: number;
+  umbralViatico?: number;
+  aplicaViatico?: boolean;
+  kmsAFacturar?: number;
+  urlMaps?: string;
+}
+
+/** CRUD de catálogos de configuración: prestadores, SPSTs, tarifarios y tabla KM. */
+export const configApi = {
+  // ── Prestadores ────────────────────────────────────────────────────────────
+  createPrestador: (body: { nombreCorto: string; nombre: string; cuit?: string; region?: string }) =>
+    httpClient.post<PrestadorLiquidacion>("/api/liquidaciones/prestadores", body),
+
+  updatePrestador: (id: string, body: { nombreCorto: string; nombre: string; cuit?: string; region?: string }) =>
+    httpClient.patch<PrestadorLiquidacion>(`/api/liquidaciones/prestadores/${id}`, body),
+
+  togglePrestadorActivo: (id: string, activo: boolean) =>
+    httpClient.patch<PrestadorLiquidacion>(`/api/liquidaciones/prestadores/${id}/activo`, { activo }),
+
+  deletePrestador: (id: string) =>
+    httpClient.delete<void>(`/api/liquidaciones/prestadores/${id}`),
+
+  exportPrestadoresCsv: () =>
+    httpClient.downloadFile("/api/liquidaciones/prestadores/export", "prestadores.csv"),
+
+  importPrestadoresCsv: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return httpClient.postForm<{ creados: number }>("/api/liquidaciones/prestadores/import", fd);
+  },
+
+  importExcelMaestro: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return httpClient.postForm<ImportExcelMaestroResult>(
+      "/api/liquidaciones/prestadores/importar-excel",
+      fd,
+    );
+  },
+
+  // ── SPSTs ──────────────────────────────────────────────────────────────────
+  listSpsts: (params?: { prestadorId?: string; soloActivos?: boolean }) => {
+    const qs = new URLSearchParams();
+    if (params?.prestadorId) qs.set("prestadorId", params.prestadorId);
+    if (params?.soloActivos) qs.set("soloActivos", "true");
+    return httpClient
+      .get<Page<Spst>>(`/api/liquidaciones/spsts?${qs}`)
+      .then((p) => p.items);
+  },
+
+  createSpst: (body: { prestadorId: string; nombre: string; domicilio?: string; localidad?: string; provincia?: string; zona?: string }) =>
+    httpClient.post<Spst>("/api/liquidaciones/spsts", body),
+
+  updateSpst: (id: string, body: { prestadorId: string; nombre: string; domicilio?: string; localidad?: string; provincia?: string; zona?: string }) =>
+    httpClient.patch<Spst>(`/api/liquidaciones/spsts/${id}`, body),
+
+  toggleSpstActivo: (id: string, activo: boolean) =>
+    httpClient.patch<Spst>(`/api/liquidaciones/spsts/${id}/activo`, { activo }),
+
+  deleteSpst: (id: string) =>
+    httpClient.delete<void>(`/api/liquidaciones/spsts/${id}`),
+
+  exportSpstsCsv: () =>
+    httpClient.downloadFile("/api/liquidaciones/spsts/export", "spsts.csv"),
+
+  importSpstsCsv: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return httpClient.postForm<{ creados: number }>("/api/liquidaciones/spsts/import", fd);
+  },
+
+  // ── Tarifarios ─────────────────────────────────────────────────────────────
+  listTarifarios: (prestadorId?: string) => {
+    const qs = new URLSearchParams();
+    if (prestadorId) qs.set("prestadorId", prestadorId);
+    return fetchCatalogoCompleto<Tarifario>("/api/liquidaciones/tarifarios", qs);
+  },
+
+  createTarifario: (body: TarifarioBody) =>
+    httpClient.post<Tarifario>("/api/liquidaciones/tarifarios", body),
+
+  updateTarifario: (id: string, body: TarifarioBody) =>
+    httpClient.patch<Tarifario>(`/api/liquidaciones/tarifarios/${id}`, body),
+
+  deleteTarifario: (id: string) =>
+    httpClient.delete<void>(`/api/liquidaciones/tarifarios/${id}`),
+
+  exportTarifariosCsv: () =>
+    httpClient.downloadFile("/api/liquidaciones/tarifarios/export", "tarifarios.csv"),
+
+  importTarifariosCsv: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return httpClient.postForm<{ creados: number }>("/api/liquidaciones/tarifarios/import", fd);
+  },
+
+  // ── Tabla KM ───────────────────────────────────────────────────────────────
+  listTablaKm: (params?: { prestadorId?: string; q?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.prestadorId) qs.set("prestadorId", params.prestadorId);
+    if (params?.q) qs.set("q", params.q);
+    return fetchCatalogoCompleto<TablaKm>("/api/liquidaciones/tabla-km", qs);
+  },
+
+  createTablaKm: (body: TablaKmBody) =>
+    httpClient.post<TablaKm>("/api/liquidaciones/tabla-km", body),
+
+  updateTablaKm: (id: string, body: TablaKmBody) =>
+    httpClient.patch<TablaKm>(`/api/liquidaciones/tabla-km/${id}`, body),
+
+  deleteTablaKm: (id: string) =>
+    httpClient.delete<void>(`/api/liquidaciones/tabla-km/${id}`),
+
+  exportTablaKmCsv: () =>
+    httpClient.downloadFile("/api/liquidaciones/tabla-km/export", "tabla_km.csv"),
+
+  importTablaKmCsv: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return httpClient.postForm<{ creados: number }>("/api/liquidaciones/tabla-km/import", fd);
+  },
+};
