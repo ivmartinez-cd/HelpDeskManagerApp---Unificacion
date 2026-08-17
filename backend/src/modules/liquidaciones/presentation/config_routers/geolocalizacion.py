@@ -26,6 +26,7 @@ from src.modules.liquidaciones.presentation.dependencies import (
     build_auditar_pines,
     build_buscar_lugar_fila,
     build_corregir_pin,
+    build_diagnosticar_asistente_km,
     build_geocodificar_sucursales,
     build_listar_coordenadas_pendientes,
     build_listar_pines_sospechosos,
@@ -34,6 +35,9 @@ from src.modules.liquidaciones.presentation.dependencies import (
     build_refrescar_datos_siges,
     build_resolver_coordenadas,
     build_resolver_coordenadas_fila,
+)
+from src.modules.liquidaciones.presentation.schemas.asistente_km_schemas import (
+    EstadoAsistenteKmOut,
 )
 from src.modules.liquidaciones.presentation.schemas.config_schemas import TablaKmOut
 from src.modules.liquidaciones.presentation.schemas.distancias_schemas import (
@@ -58,6 +62,21 @@ router = APIRouter()
 
 class BuscarLugarOut(BaseModel):
     candidatos: list[GeocodeCandidatoOut]
+
+
+@router.get(
+    "/siges/prestador/{prestador_id}/asistente-km/estado",
+    response_model=EstadoAsistenteKmOut,
+)
+async def estado_asistente_km(
+    prestador_id: UUID,
+    _: Identity = require_view,
+    db: AsyncSession = Depends(get_db),
+) -> EstadoAsistenteKmOut:
+    """Diagnóstico read-only del wizard: qué falta y cuánto costaría cada
+    acción en llamadas Google — sin consumir ninguna."""
+    estado = await build_diagnosticar_asistente_km(db).execute(prestador_id)
+    return EstadoAsistenteKmOut.from_dto(estado)
 
 
 @router.post(

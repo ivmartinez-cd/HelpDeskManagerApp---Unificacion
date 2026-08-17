@@ -13,6 +13,10 @@ from src.modules.liquidaciones.application.use_cases.calcular_distancias_siges i
     CalcularDistanciasPorts,
     PreviewCalcularDistancias,
 )
+from src.modules.liquidaciones.application.use_cases.estado_asistente_km import (
+    DiagnosticarAsistenteKm,
+    EstadoAsistenteKmPorts,
+)
 from src.modules.liquidaciones.application.use_cases.geocodificar_sucursales import (
     GeocodificarPorts,
     GeocodificarSucursales,
@@ -170,3 +174,19 @@ def build_resolver_coordenadas_fila(session: AsyncSession) -> ResolverCoordenada
 
 def build_recalcular_km_fila(session: AsyncSession) -> RecalcularKmFila:
     return RecalcularKmFila(_lugares_ports(session))
+
+
+def build_diagnosticar_asistente_km(session: AsyncSession) -> DiagnosticarAsistenteKm:
+    """Sin gateway de geocoding a propósito: el diagnóstico no puede gastar
+    Google ni por accidente — la garantía es estructural."""
+    return DiagnosticarAsistenteKm(
+        EstadoAsistenteKmPorts(
+            prestadores=SqlAlchemyPrestadorRepository(session),
+            siges=siges_catalogo_gateway(),
+            tabla_km=SqlAlchemyTablaKmRepository(session),
+            sucursal_coords=SqlAlchemySucursalCoordenadasRepository(session),
+            geocode_cache=SqlAlchemyGeocodeCacheRepository(session),
+            incidentes=SqlAlchemyIncidenteRepository(session),
+        ),
+        _tope(),
+    )
