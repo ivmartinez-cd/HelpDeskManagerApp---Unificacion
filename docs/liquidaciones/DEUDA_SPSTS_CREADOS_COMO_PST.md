@@ -1,5 +1,11 @@
 # Deuda técnica — SPSTs heredados del legacy con nombre "PST ..."
 
+> **Estado 2026-08-17: SANEADA en la DB de dev.** El dry-run de
+> `backend/scripts/limpiar_spsts_pst_legacy.py` contra `helpdesk` reporta **0 SPSTs con
+> prefijo "PST "** (quedan 15 SPSTs, todos legítimos). El script queda en el repo para
+> re-verificar en cualquier entorno (dry-run por default; `--apply` implementa la
+> propuesta de este doc si la deuda reaparece, p. ej. tras re-sembrar desde otro backup).
+
 Fecha de análisis: 2026-08-16. Datos de `helpdesk` (sembrada desde producción el 2026-08-13).
 
 ## El problema
