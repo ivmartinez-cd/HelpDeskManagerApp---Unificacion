@@ -181,11 +181,15 @@ Regla vigente: la próxima edición de cualquiera de ellas debe bajarla del lím
 recordarlo especialmente para `export_meters_to_csv` (SDS 106 líneas) si el cutover del
 Printer-Logs-Analyzer la toca.
 
-### 4.3 `sla/presentation/background_jobs.py` sigue en 0% de cobertura
+### 4.3 `sla/presentation/background_jobs.py` en 0% — RESUELTO 2026-08-16
 
-Arrastrado de la auditoría 2026-08-14. Probar jobs de fondo requiere el cuidado especial
-de CLAUDE.md (modo test, sin mails reales); cuando se planifique, hacerlo con los puertos
-mockeados y `DISABLE_BACKGROUND_JOBS=true` verificado.
+Refactor + tests con todo mockeado (`DISABLE_BACKGROUND_JOBS=true` verificado antes y
+después): `_loop` genérico (elimina la duplicación de los dos while/try/sleep) + un
+`_ciclo` por job. Los 5 tests cubren que el loop sobrevive a un ciclo fallido y respeta
+el intervalo, que cada ciclo compone y commitea, y que `start` crea los dos tasks con
+sus intervalos. Cobertura: 0% → 96%. También cerrado el hallazgo BAJO §9 con
+**ADR-023** (flujo single-dev documentado: gates locales en lugar de CI, auditoría
+periódica en lugar de review, misma cláusula de reversión que ADR-022).
 
 ### 4.4 Suite e2e inexistente (§7) — RESUELTO 2026-08-16 por ADR-022
 
