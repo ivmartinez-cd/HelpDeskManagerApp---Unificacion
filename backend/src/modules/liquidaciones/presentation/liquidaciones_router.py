@@ -166,7 +166,7 @@ async def get_resumen_liquidaciones(
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
 ) -> ResumenLiquidacionesOut:
-    """Conteo de liquidaciones pendientes de aprobación (abierta/preliquidada/recibida/observada)."""
+    """Conteo de liquidaciones pendientes (abierta/preliquidada/recibida/observada)."""
     filas = await SqlAlchemyLiquidacionRepository(db).count_pendientes_por_prestador()
     return ResumenLiquidacionesOut(
         pendientes=sum(n for _, n in filas),

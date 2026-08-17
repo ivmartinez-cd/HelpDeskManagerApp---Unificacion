@@ -200,6 +200,7 @@ class CorregirPin:
             raise ValidationError("Ejecutá 'Auditar con Google' primero para obtener el geocode")
         candidato = candidatos[0]
         await self._ports.sucursal_coords.upsert_pendiente(
+            prestador_id=prestador_id,
             siges_sucursal_id=sucursal.siges_sucursal_id,
             empresa_nombre=sucursal.empresa_nombre,
             sucursal_nombre=sucursal.sucursal_nombre,
