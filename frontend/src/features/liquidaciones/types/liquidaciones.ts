@@ -328,6 +328,7 @@ export interface ImportExcelMaestroResult {
 export interface Incidente {
   id: string;
   numeroIncidente: string;
+  nroSerie: string | null;
   tipo: string;
   empresaNombre: string | null;
   sucursalNombre: string | null;

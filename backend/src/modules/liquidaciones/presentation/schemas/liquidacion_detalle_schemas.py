@@ -22,6 +22,7 @@ class IncidenteOut(BaseModel):
 
     id: uuid.UUID
     numero_incidente: str = Field(serialization_alias="numeroIncidente")
+    nro_serie: str | None = Field(None, serialization_alias="nroSerie")
     tipo: str
     empresa_nombre: str | None = Field(serialization_alias="empresaNombre")
     sucursal_nombre: str | None = Field(serialization_alias="sucursalNombre")
@@ -42,6 +43,7 @@ class IncidenteOut(BaseModel):
         return cls(
             id=e.id,
             numero_incidente=e.numero_incidente,
+            nro_serie=e.nro_serie or None,
             tipo=e.tipo,
             empresa_nombre=e.empresa_nombre,
             sucursal_nombre=e.sucursal_nombre,

@@ -32,12 +32,13 @@ const LIQUIDACION = {
 const INCIDENTE = {
   id: INC_ID,
   numeroIncidente: "INC-2026-0001",
+  nroSerie: "SN-ABC-123",
   tipo: "correctivo",
   empresaNombre: "EMPRESA TEST",
   sucursalNombre: "SUCURSAL CENTRO",
   fechaCierre: "2026-08-05",
   costoServicioCobrado: 15000,
-  cantKmCobrado: 50,
+  cantKmCobrado: 50.7,
   costoTotalCobrado: 16500,
   costoServicioEsperado: 14000,
   cantKmEsperado: 45,
@@ -45,6 +46,25 @@ const INCIDENTE = {
   localidadCliente: "Villa Mercedes",
   spstId: null,
   urlMaps: "https://maps.google.com/?q=test",
+};
+
+const INCIDENTE_SIN_TABLA = {
+  id: "99999999-9999-9999-9999-999999999999",
+  numeroIncidente: "INC-2026-0002",
+  nroSerie: "SN-ABC-123",
+  tipo: "correctivo",
+  empresaNombre: "EMPRESA SIN TABLA",
+  sucursalNombre: "SUCURSAL NORTE",
+  fechaCierre: "2026-08-05",
+  costoServicioCobrado: 8000,
+  cantKmCobrado: 30,
+  costoTotalCobrado: 8000,
+  costoServicioEsperado: null,
+  cantKmEsperado: null,
+  estadoValidacion: "ok",
+  localidadCliente: null,
+  spstId: null,
+  urlMaps: null,
 };
 
 const OBSERVACION = {
@@ -172,7 +192,7 @@ test.describe("Módulo de Liquidaciones", () => {
     await expect(page.getByText("Total facturado")).toBeVisible();
 
     await expect(page.getByText("Últimas liquidaciones")).toBeVisible();
-    await expect(page.getByText("PENTACOM")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Córdoba — Pentacom S.A." })).toBeVisible();
   });
 
   test("dashboard muestra el link 'Ver todas' que navega a la lista", async ({ page }) => {
@@ -239,7 +259,7 @@ test.describe("Módulo de Liquidaciones", () => {
     await expect(page.getByText("liquidacion_0001_20260812.xls")).toBeVisible();
     await expect(page.getByText("2026-08")).toBeVisible();
     await expect(page.getByText("42")).toBeVisible();
-    await expect(page.getByText("3")).toBeVisible();
+    await expect(page.getByText("3", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "↻ Reanalizar" })).toBeVisible();
     await expect(page.getByRole("link", { name: "← Lista de liquidaciones" })).toBeVisible();
   });
@@ -301,14 +321,82 @@ test.describe("Módulo de Liquidaciones", () => {
 
     await page.goto(`/liquidaciones/${LIQ_ID}`);
 
-    await expect(page.getByText("INC-2026-0001")).toBeVisible();
+    await expect(page.getByRole("link", { name: "INC-2026-0001" }).first()).toBeVisible();
     await expect(page.getByText("EMPRESA TEST / SUCURSAL CENTRO")).toBeVisible();
-    await expect(page.getByText("Con alertas")).toBeVisible();
+    await expect(page.getByText("● CON ALERTAS")).toBeVisible();
 
     // Expandir la fila para ver la alerta inline
-    await page.getByText("INC-2026-0001").click();
+    await page.getByRole("link", { name: "INC-2026-0001" }).first().click();
     await expect(page.getByText("ALT001")).toBeVisible();
     await expect(page.getByText("Monto cobrado supera el esperado")).toBeVisible();
+  });
+
+  test("detalle: tabla de incidentes muestra columnas KMs y Nro Serie", async ({ page }) => {
+    await page.route(`**/api/liquidaciones/${LIQ_ID}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(DETALLE_RESPONSE),
+      });
+    });
+
+    await page.goto(`/liquidaciones/${LIQ_ID}`);
+
+    // Cabeceras nuevas
+    await expect(page.getByRole("columnheader", { name: /Nro Serie/i })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: /KMs cob/i })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: /KMs esp/i })).toBeVisible();
+
+    // Nro de serie del incidente
+    await expect(page.getByText("SN-ABC-123")).toBeVisible();
+
+    // KMs cobrado redondeado (50.7 → 51) — cell en la tabla
+    await expect(page.getByRole("cell", { name: "51", exact: true })).toBeVisible();
+
+    // KMs esperado en verde (45)
+    await expect(page.getByRole("cell", { name: "45", exact: true })).toBeVisible();
+  });
+
+  test("detalle: incidente sin entrada en tabla KM muestra 'Sin tabla' en KMs esp.", async ({
+    page,
+  }) => {
+    await page.route(`**/api/liquidaciones/${LIQ_ID}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ...DETALLE_RESPONSE,
+          incidentes: [INCIDENTE_SIN_TABLA],
+          alertas: [],
+        }),
+      });
+    });
+
+    await page.goto(`/liquidaciones/${LIQ_ID}`);
+
+    await expect(page.getByText("EMPRESA SIN TABLA / SUCURSAL NORTE")).toBeVisible();
+    await expect(page.getByText("Sin tabla", { exact: true })).toBeVisible();
+  });
+
+  test("detalle: nro de serie duplicado muestra advertencia ⚠", async ({ page }) => {
+    // Dos incidentes con el mismo nroSerie "SN-ABC-123"
+    await page.route(`**/api/liquidaciones/${LIQ_ID}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ...DETALLE_RESPONSE,
+          incidentes: [INCIDENTE, INCIDENTE_SIN_TABLA],
+          alertas: [],
+        }),
+      });
+    });
+
+    await page.goto(`/liquidaciones/${LIQ_ID}`);
+
+    // Ambos tienen nroSerie "SN-ABC-123" → deben mostrar ⚠
+    const warnings = page.getByTitle("Nro de serie duplicado en esta liquidación");
+    await expect(warnings).toHaveCount(2);
   });
 
   test("detalle: observación pendiente muestra acciones y PATCH cambia el estado", async ({
@@ -318,7 +406,7 @@ test.describe("Módulo de Liquidaciones", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ ...DETALLE_RESPONSE, observaciones: [OBSERVACION] }),
+        body: JSON.stringify({ ...DETALLE_RESPONSE, alertas: [], observaciones: [OBSERVACION] }),
       });
     });
 
@@ -354,7 +442,7 @@ test.describe("Módulo de Liquidaciones", () => {
     await page.goto("/liquidaciones/configuracion/prestadores");
 
     await expect(page.getByRole("cell", { name: "PENTACOM", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Crear prestador" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Nuevo prestador" })).toBeVisible();
   });
 
   test("tarifarios: agrupa por servicio y el timeline muestra la variación entre vigencias", async ({
