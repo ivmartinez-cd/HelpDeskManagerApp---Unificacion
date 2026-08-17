@@ -36,6 +36,7 @@ export function AnexosPendientesPrintSheet({
               "Grupo",
               "Contrato",
               "Anexo",
+              "Operador",
               "E. Admin",
               "Vendedor",
               "Moneda",
@@ -60,6 +61,9 @@ export function AnexosPendientesPrintSheet({
               <td className="border border-neutral-300 px-1.5 py-0.5">{a.grupo ?? ""}</td>
               <td className="border border-neutral-300 px-1.5 py-0.5">{a.contrato ?? ""}</td>
               <td className="border border-neutral-300 px-1.5 py-0.5">{a.anexo}</td>
+              <td className="border border-neutral-300 px-1.5 py-0.5">
+                {a.operador_nombre ?? ""}
+              </td>
               <td className="border border-neutral-300 px-1.5 py-0.5">
                 {a.empresa_admin ?? ""}
               </td>

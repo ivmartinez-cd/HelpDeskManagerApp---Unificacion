@@ -19,6 +19,8 @@ export interface AnexoPendiente {
   estado: EstadoAnexoPendiente;
   /** Pydantic serializa `Decimal` como string JSON. */
   importe_usd: string;
+  operador_nombre: string | null;
+  operador_color: string | null;
 }
 
 export interface AnexosPendientesResumen {

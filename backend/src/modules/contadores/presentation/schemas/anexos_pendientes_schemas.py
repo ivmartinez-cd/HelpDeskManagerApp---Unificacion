@@ -22,6 +22,8 @@ class AnexoPendienteSchema(BaseModel):
     fecha_proceso: date
     estado: EstadoAnexoPendiente
     importe_usd: Decimal
+    operador_nombre: str | None
+    operador_color: str | None
 
     @classmethod
     def from_anotado(cls, anotado: AnexoPendienteConEstado) -> "AnexoPendienteSchema":
@@ -39,6 +41,8 @@ class AnexoPendienteSchema(BaseModel):
             fecha_proceso=anexo.fecha_proceso,
             estado=anotado.estado,
             importe_usd=anexo.importe_usd,
+            operador_nombre=anotado.operador.nombre if anotado.operador else None,
+            operador_color=anotado.operador.color if anotado.operador else None,
         )
 
 

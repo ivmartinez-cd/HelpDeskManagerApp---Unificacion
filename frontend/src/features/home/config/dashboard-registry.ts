@@ -30,6 +30,7 @@ export const CARDS: CardDef[] = [
   { id: "heatmap-semana",    col: "planificacion", order: 2, guard: (m) => m.contadores },
   { id: "contadores-donut",  col: "contadores",    order: 0, guard: (m) => m.contadores },
   { id: "pendientes-antig",  col: "contadores",    order: 1, guard: (m) => m.contadores },
+  { id: "cierre-mensual",    col: "contadores",    order: 2, guard: (m) => m.contadores },
   { id: "sla-mes",           col: "sla",           order: 0, guard: (m) => m.sla },
   { id: "pendientes-cerrar", col: "sla",           order: 1, guard: (m) => m.sla },
   { id: "liquidaciones",     col: "admin",         order: 0, guard: (m) => m.liquidaciones },

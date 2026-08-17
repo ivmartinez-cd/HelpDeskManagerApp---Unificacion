@@ -34,6 +34,7 @@ WITH ultimo AS (
 )
 SELECT A.ID_Anexo AS id_anexo, A.NombreAnexo AS anexo,
        G.descripcion AS grupo, C.NombreContrato AS contrato,
+       C.ID_EmpresaAdmin AS id_empresa_admin,
        EA.Den_Comercial AS empresa_admin, V.Descripcion AS vendedor,
        MO.Descripcion AS moneda, MF.Descripcion AS moneda_facturacion,
        u.PeriodoFacturacion AS periodo, u.Fecha_Proceso AS fecha_proceso,

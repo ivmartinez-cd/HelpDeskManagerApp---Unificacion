@@ -46,6 +46,9 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_calculo_km
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_geocode_cache_repository import (  # noqa: E501
     SqlAlchemyGeocodeCacheRepository,
 )
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_incidente_repository import (  # noqa: E501
+    SqlAlchemyIncidenteRepository,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
@@ -79,6 +82,7 @@ def _distancias_ports(session: AsyncSession) -> CalcularDistanciasPorts:
         google_maps=siges_google_maps_gateway(),
         sucursal_coords=SqlAlchemySucursalCoordenadasRepository(session),
         previews=SqlAlchemyCalculoKmPreviewRepository(session),
+        incidentes=SqlAlchemyIncidenteRepository(session),
     )
 
 
@@ -98,6 +102,7 @@ def build_geocodificar_sucursales(session: AsyncSession) -> GeocodificarSucursal
             sucursal_coords=SqlAlchemySucursalCoordenadasRepository(session),
             geocode_cache=SqlAlchemyGeocodeCacheRepository(session),
             geocoding=_geocoding_gateway(),
+            incidentes=SqlAlchemyIncidenteRepository(session),
         ),
         _tope(),
     )

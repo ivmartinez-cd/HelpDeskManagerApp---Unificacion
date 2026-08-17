@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
+    desde_periodo_hace_meses,
     parse_latlon_siges,
     validar_prestador_vinculado_siges,
 )
@@ -21,6 +22,7 @@ from src.modules.liquidaciones.domain.repositories.geocoding_gateway import (
     GeocodeCandidato,
     GeocodingGateway,
 )
+from src.modules.liquidaciones.domain.repositories.incidente_repository import IncidenteRepository
 from src.modules.liquidaciones.domain.repositories.prestador_repository import PrestadorRepository
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesCatalogoGateway,
@@ -34,6 +36,10 @@ from src.modules.liquidaciones.domain.services.geolocalizacion import (
     armar_direccion,
     elegir_automatico,
 )
+from src.modules.liquidaciones.domain.services.vinculacion_siges import (
+    nombres_compatibles,
+    normalizar_nombre,
+)
 
 
 @dataclass(frozen=True)
@@ -43,6 +49,7 @@ class GeocodificarPorts:
     sucursal_coords: SucursalCoordenadasRepository
     geocode_cache: GeocodeCacheRepository
     geocoding: GeocodingGateway
+    incidentes: IncidenteRepository
 
 
 @dataclass(frozen=True)
@@ -54,6 +61,7 @@ class GeocodificarResultado:
     ya_resueltas: int
     llamadas_google: int
     pendientes_por_tope: int
+    sin_actividad: int
 
 
 class GeocodificarSucursales:
@@ -68,8 +76,18 @@ class GeocodificarSucursales:
         sucursales = await self._ports.siges.list_sucursales_de_prestador(
             prestador.siges_empresa_id  # type: ignore[arg-type]
         )
+        activos_raw = await self._ports.incidentes.empresas_con_actividad_reciente(
+            prestador.id, desde_periodo_hace_meses(24)
+        )
+        activos_norm = {normalizar_nombre(n) for n in activos_raw}
         contador = _Contador()
         for sucursal in sucursales:
+            empresa = normalizar_nombre(sucursal.empresa_nombre)
+            if empresa not in activos_norm and not any(
+                nombres_compatibles(empresa, a) for a in activos_norm
+            ):
+                contador.sin_actividad += 1
+                continue
             if parse_latlon_siges(sucursal.latitud, sucursal.longitud) is not None:
                 continue
             await self._procesar(prestador_id, sucursal, contador)
@@ -147,6 +165,7 @@ class _Contador:
         self.ya_resueltas = 0
         self.llamadas_google = 0
         self.pendientes_por_tope = 0
+        self.sin_actividad = 0
 
     def resultado(self) -> GeocodificarResultado:
         return GeocodificarResultado(
@@ -157,4 +176,5 @@ class _Contador:
             ya_resueltas=self.ya_resueltas,
             llamadas_google=self.llamadas_google,
             pendientes_por_tope=self.pendientes_por_tope,
+            sin_actividad=self.sin_actividad,
         )

@@ -25,6 +25,7 @@ from src.modules.liquidaciones.application.use_cases._distancias_comunes import 
     build_costo_bases,
     calcular_kms_a_facturar,
     coords_base_default,
+    desde_periodo_hace_meses,
     maps_url_ida_vuelta,
     parse_latlon_siges,
     validar_prestador_para_distancias,
@@ -46,6 +47,7 @@ from src.modules.liquidaciones.domain.repositories.calculo_km_preview_repository
     CalculoKmPreviewRepository,
 )
 from src.modules.liquidaciones.domain.repositories.google_maps_gateway import GoogleMapsGateway
+from src.modules.liquidaciones.domain.repositories.incidente_repository import IncidenteRepository
 from src.modules.liquidaciones.domain.repositories.prestador_repository import PrestadorRepository
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesCatalogoGateway,
@@ -59,7 +61,10 @@ from src.modules.liquidaciones.domain.services.geolocalizacion import (
     PROCEDENCIA_MANUAL,
     PROCEDENCIA_SIGES,
 )
-from src.modules.liquidaciones.domain.services.vinculacion_siges import normalizar_nombre
+from src.modules.liquidaciones.domain.services.vinculacion_siges import (
+    nombres_compatibles,
+    normalizar_nombre,
+)
 
 _GOOGLE_BATCH = 25
 
@@ -72,6 +77,7 @@ class CalcularDistanciasPorts:
     google_maps: GoogleMapsGateway
     sucursal_coords: SucursalCoordenadasRepository
     previews: CalculoKmPreviewRepository
+    incidentes: IncidenteRepository
 
 
 @dataclass(frozen=True)
@@ -94,7 +100,7 @@ class PreviewCalcularDistancias:
         )
         base_default = coords_base_default(prestador, propias)
         costo_bases = build_costo_bases(propias)
-        destinos, sin_ubicar = await self._armar_destinos(prestador)
+        destinos, sin_ubicar, sin_actividad = await self._armar_destinos(prestador)
         verificar_tope(2 * len(destinos), self._tope)
         existentes = await self._cargar_existentes(prestador_id)
         filas, sin_ruta = await self._calcular_filas(
@@ -106,12 +112,17 @@ class PreviewCalcularDistancias:
             sin_ubicar=sin_ubicar,
             sin_ruta=sin_ruta,
             elementos_google=2 * len(destinos),
+            sin_actividad=sin_actividad,
         )
 
-    async def _armar_destinos(self, prestador: Prestador) -> tuple[list[Destino], int]:
+    async def _armar_destinos(self, prestador: Prestador) -> tuple[list[Destino], int, int]:
         sucursales = await self._ports.siges.list_sucursales_de_prestador(
             prestador.siges_empresa_id  # type: ignore[arg-type]
         )
+        activos_raw = await self._ports.incidentes.empresas_con_actividad_reciente(
+            prestador.id, desde_periodo_hace_meses(24)
+        )
+        activos_norm = {normalizar_nombre(n) for n in activos_raw}
         resoluciones = {
             r.siges_sucursal_id: r
             for r in await self._ports.sucursal_coords.list_by_prestador(prestador.id)
@@ -119,13 +130,20 @@ class PreviewCalcularDistancias:
         }
         destinos: list[Destino] = []
         sin_ubicar = 0
+        sin_actividad = 0
         for s in sucursales:
+            empresa = normalizar_nombre(s.empresa_nombre)
+            if empresa not in activos_norm and not any(
+                nombres_compatibles(empresa, a) for a in activos_norm
+            ):
+                sin_actividad += 1
+                continue
             destino = _resolver_destino(s, resoluciones)
             if destino is None:
                 sin_ubicar += 1
             else:
                 destinos.append(destino)
-        return destinos, sin_ubicar
+        return destinos, sin_ubicar, sin_actividad
 
     async def _cargar_existentes(self, prestador_id: UUID) -> dict[tuple[str, str], TablaKm]:
         return {

@@ -18,6 +18,7 @@ class CalculoKmPreviewRepository(Protocol):
         sin_ubicar: int,
         sin_ruta: int,
         elementos_google: int,
+        sin_actividad: int,
     ) -> CalculoKmPreview:
         """Genera el `id` internamente y descarta previews anteriores del
         prestador — solo el último preview es aplicable."""

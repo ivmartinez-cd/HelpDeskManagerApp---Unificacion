@@ -45,6 +45,7 @@ export interface GeocodificarResultado {
   yaResueltas: number;
   llamadasGoogle: number;
   pendientesPorTope: number;
+  sinActividad: number;
 }
 
 export type EstadoCoordenadas =
@@ -92,6 +93,7 @@ export interface CalculoKmPreview {
   sinUbicar: number;
   sinRuta: number;
   elementosGoogle: number;
+  sinActividad: number;
   createdAt: string;
 }
 

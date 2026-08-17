@@ -22,6 +22,7 @@ import { InsumosSinCargarCard } from "./insumos-sin-cargar-card";
 import { KpiStrip } from "./kpi-strip";
 import { LiquidacionesPendientesCard } from "./liquidaciones-pendientes-card";
 import { ParqueDonutCard } from "./parque-donut-card";
+import { CierreMensualCard } from "./cierre-mensual-card";
 import { PendientesAntiguedadCard } from "./pendientes-antiguedad-card";
 import { PendientesACerrarCard } from "@/features/sla/components/pendientes-a-cerrar-card";
 import { SlaMesCard } from "./sla-mes-card";
@@ -105,6 +106,15 @@ export function InicioDashboard() {
             operadores={calendario.data?.operadores ?? []}
             loading={calendario.loading}
             error={calendario.error}
+          />
+        );
+      case "cierre-mensual":
+        return (
+          <CierreMensualCard
+            pendientes={calendario.data?.pendientes ?? []}
+            resumen={contadoresResumen.data}
+            loading={calendario.loading || contadoresResumen.loading}
+            error={calendario.error ?? contadoresResumen.error}
           />
         );
       case "sla-mes":

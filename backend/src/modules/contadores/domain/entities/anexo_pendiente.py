@@ -16,6 +16,7 @@ class AnexoPendiente:
     # históricos sucios — se muestran vacíos, no rompen el reporte.
     grupo: str | None
     contrato: str | None
+    id_empresa_admin: int | None
     empresa_admin: str | None
     vendedor: str | None
     moneda: str | None

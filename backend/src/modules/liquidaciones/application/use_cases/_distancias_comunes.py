@@ -4,6 +4,7 @@ Siges (varchar con coma decimal), URL de Maps del viaje completo y control del
 tope de llamadas a Google (la key es corporativa y paga)."""
 
 from dataclasses import dataclass
+from datetime import date
 from urllib.parse import quote
 from uuid import UUID
 
@@ -24,6 +25,16 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
 from src.modules.liquidaciones.domain.services.geolocalizacion import armar_direccion
 
 _MAPS_BASE = "https://www.google.com/maps/dir/?api=1"
+
+
+def desde_periodo_hace_meses(meses: int) -> str:
+    hoy = date.today()
+    mes = hoy.month - (meses % 12)
+    anio = hoy.year - (meses // 12)
+    if mes <= 0:
+        mes += 12
+        anio -= 1
+    return f"{anio:04d}-{mes:02d}"
 
 
 @dataclass(frozen=True)

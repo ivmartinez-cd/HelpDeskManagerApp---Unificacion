@@ -84,6 +84,7 @@ export function PasoCalcular({ prestador, preview, setPreview, onAplicado }: {
         <Badge variant="accent">{preview.filas.filter(f => f.accion === "actualizar").length} a actualizar</Badge>
         <Badge variant="neutral">{preview.sinUbicar} sin ubicar</Badge>
         {preview.sinRuta > 0 && <Badge variant="warning">{preview.sinRuta} sin ruta</Badge>}
+        {preview.sinActividad > 0 && <Badge variant="neutral">{preview.sinActividad} ex-clientes omitidos</Badge>}
         <Badge variant="neutral">{preview.elementosGoogle} llamadas Google</Badge>
       </div>
       <div className="max-h-[35vh] overflow-y-auto rounded-[8px] border border-border">

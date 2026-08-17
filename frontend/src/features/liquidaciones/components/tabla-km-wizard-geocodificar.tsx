@@ -137,6 +137,7 @@ export function PasoGeocodificar({ prestadorId, resumen, setResumen }: {
             <Badge variant="neutral">{resumen.yaResueltas} ya resueltas</Badge>
             <Badge variant="info">{resumen.llamadasGoogle} llamadas Google</Badge>
             {resumen.pendientesPorTope > 0 && <Badge variant="danger">{resumen.pendientesPorTope} cortadas por tope</Badge>}
+            {resumen.sinActividad > 0 && <Badge variant="neutral">{resumen.sinActividad} ex-clientes omitidos</Badge>}
           </div>
           {pendientes.length > 0 ? (
             <div className="flex max-h-[35vh] flex-col gap-3 overflow-y-auto pr-1">

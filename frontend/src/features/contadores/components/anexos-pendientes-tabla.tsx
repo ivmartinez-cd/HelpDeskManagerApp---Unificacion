@@ -29,13 +29,14 @@ export function formatImporteUsd(importe: string): string {
 export function AnexosPendientesTabla({ rows }: { rows: AnexoPendiente[] }) {
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
-      <table className="w-full min-w-[960px] text-left">
+      <table className="w-full min-w-[1060px] text-left">
         <thead>
           <tr className="border-b border-border font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
             <th className="px-4 py-2.5">Período</th>
             <th className="px-4 py-2.5">Estado</th>
             <th className="px-4 py-2.5">Grupo</th>
             <th className="px-4 py-2.5">Anexo</th>
+            <th className="px-4 py-2.5">Operador</th>
             <th className="px-4 py-2.5">Vendedor</th>
             <th className="px-4 py-2.5">Moneda</th>
             <th className="px-4 py-2.5">Últ. proceso</th>
@@ -67,6 +68,21 @@ export function AnexosPendientesTabla({ rows }: { rows: AnexoPendiente[] }) {
                     <p className="truncate text-xs text-muted-foreground" title={a.contrato}>
                       {a.contrato}
                     </p>
+                  )}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  {a.operador_nombre ? (
+                    <span className="flex items-center gap-1.5">
+                      <span
+                        className="h-[7px] w-[7px] shrink-0 rounded-full"
+                        style={{ background: a.operador_color ?? "#F7941D" }}
+                      />
+                      <span className="font-body text-sm text-foreground/80">
+                        {a.operador_nombre}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
                   )}
                 </td>
                 <td

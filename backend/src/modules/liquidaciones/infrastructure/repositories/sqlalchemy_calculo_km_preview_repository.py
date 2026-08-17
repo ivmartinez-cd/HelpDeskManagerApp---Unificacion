@@ -30,6 +30,7 @@ class SqlAlchemyCalculoKmPreviewRepository:
         sin_ubicar: int,
         sin_ruta: int,
         elementos_google: int,
+        sin_actividad: int,
     ) -> CalculoKmPreview:
         await self._session.execute(
             delete(CalculoKmPreviewModel).where(
@@ -42,6 +43,7 @@ class SqlAlchemyCalculoKmPreviewRepository:
             sin_ubicar=sin_ubicar,
             sin_ruta=sin_ruta,
             elementos_google=elementos_google,
+            sin_actividad=sin_actividad,
         )
         self._session.add(model)
         await self._session.flush()
@@ -122,5 +124,6 @@ def _to_entity(row: CalculoKmPreviewModel) -> CalculoKmPreview:
         sin_ubicar=row.sin_ubicar,
         sin_ruta=row.sin_ruta,
         elementos_google=row.elementos_google,
+        sin_actividad=row.sin_actividad,
         created_at=row.created_at,
     )

@@ -75,6 +75,9 @@ class CalculoKmPreviewModel(Base):
     elementos_google: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default=text("0")
     )
+    sin_actividad: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()"), nullable=False
     )

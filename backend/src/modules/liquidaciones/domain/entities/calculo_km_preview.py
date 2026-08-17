@@ -48,4 +48,5 @@ class CalculoKmPreview:
     sin_ubicar: int
     sin_ruta: int
     elementos_google: int
+    sin_actividad: int
     created_at: datetime

@@ -87,6 +87,7 @@ class CalculoKmPreviewOut(BaseModel):
     sin_ubicar: int = Field(serialization_alias="sinUbicar")
     sin_ruta: int = Field(serialization_alias="sinRuta")
     elementos_google: int = Field(serialization_alias="elementosGoogle")
+    sin_actividad: int = Field(serialization_alias="sinActividad")
     created_at: datetime = Field(serialization_alias="createdAt")
 
     @classmethod
@@ -98,6 +99,7 @@ class CalculoKmPreviewOut(BaseModel):
             sin_ubicar=p.sin_ubicar,
             sin_ruta=p.sin_ruta,
             elementos_google=p.elementos_google,
+            sin_actividad=p.sin_actividad,
             created_at=p.created_at,
         )
 

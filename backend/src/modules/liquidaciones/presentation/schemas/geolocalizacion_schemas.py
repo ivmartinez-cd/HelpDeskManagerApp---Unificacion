@@ -52,6 +52,7 @@ class GeocodificarResultadoOut(BaseModel):
     ya_resueltas: int = Field(serialization_alias="yaResueltas")
     llamadas_google: int = Field(serialization_alias="llamadasGoogle")
     pendientes_por_tope: int = Field(serialization_alias="pendientesPorTope")
+    sin_actividad: int = Field(serialization_alias="sinActividad")
 
     @classmethod
     def from_dto(cls, r: GeocodificarResultado) -> GeocodificarResultadoOut:
@@ -63,6 +64,7 @@ class GeocodificarResultadoOut(BaseModel):
             ya_resueltas=r.ya_resueltas,
             llamadas_google=r.llamadas_google,
             pendientes_por_tope=r.pendientes_por_tope,
+            sin_actividad=r.sin_actividad,
         )
 
 

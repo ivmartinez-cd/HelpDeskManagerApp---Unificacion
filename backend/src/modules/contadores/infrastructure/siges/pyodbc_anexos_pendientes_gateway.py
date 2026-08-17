@@ -74,6 +74,7 @@ def _to_anexo(row: Any) -> AnexoPendiente:
         anexo=row.anexo.strip(),
         grupo=_limpio(row.grupo),
         contrato=_limpio(row.contrato),
+        id_empresa_admin=row.id_empresa_admin,
         empresa_admin=_limpio(row.empresa_admin),
         vendedor=_limpio(row.vendedor),
         moneda=_limpio(row.moneda),

@@ -8,10 +8,12 @@ intactos). El alta real sigue siendo la decisión manual del usuario vía
 """
 
 from dataclasses import dataclass
-from datetime import date
 from uuid import UUID
 
 from src.modules.liquidaciones.application.dtos.siges_sucursales import SucursalSigesDTO
+from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
+    desde_periodo_hace_meses,
+)
 from src.modules.liquidaciones.domain.errors import (
     PrestadorNoEncontradoError,
     PrestadorSinVinculoSigesError,
@@ -31,16 +33,6 @@ from src.modules.liquidaciones.domain.services.vinculacion_siges import (
     nombres_compatibles,
     normalizar_nombre,
 )
-
-
-def _desde_periodo_hace_meses(meses: int) -> str:
-    hoy = date.today()
-    mes = hoy.month - (meses % 12)
-    anio = hoy.year - (meses // 12)
-    if mes <= 0:
-        mes += 12
-        anio -= 1
-    return f"{anio:04d}-{mes:02d}"
 
 
 @dataclass(frozen=True)
@@ -88,7 +80,7 @@ class BuscarSucursalesSiges:
             for fila in await self._ports.tabla_km.list_by_prestador(prestador_id)
         }
         activos_raw = await self._ports.incidentes.empresas_con_actividad_reciente(
-            prestador_id, _desde_periodo_hace_meses(24)
+            prestador_id, desde_periodo_hace_meses(24)
         )
         activos_norm = {normalizar_nombre(n) for n in activos_raw}
 
