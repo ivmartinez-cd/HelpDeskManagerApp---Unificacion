@@ -1,11 +1,11 @@
 # Optimización y cumplimiento de ARCHITECTURE_GUIDE.md
 
-**Última pasada:** 2026-08-16
+**Última pasada:** 2026-08-16 (2ª corrida; incluye el commit `c51dea2` del card registry)
 **Método:** gates obligatorios dentro de los contenedores (`lint-imports`, `ruff`, `mypy`,
-`pytest tests/unit`, `tsc`, `eslint`) + medición de tamaños (§4) con `wc -l` + revisión
-manual de `except Exception` (§6) y endpoints de colección (§11), contrastado contra los
-ADRs vigentes (011, 016, 017) y el inventario congelado de
-`AUDITORIA_ARCHITECTURE_GUIDE_2026-08-14.md`.
+`pytest tests/unit`, `tsc`, `eslint`) + medición AST de §4 (funciones/clases/anidamiento,
+excluyendo migraciones) + revisión manual de `except Exception` (§6), endpoints de
+colección (§11) y SQL/secretos (§8), contrastado contra los ADRs vigentes (011, 016, 017)
+y el inventario congelado de `AUDITORIA_ARCHITECTURE_GUIDE_2026-08-14.md`.
 
 ---
 
@@ -37,6 +37,9 @@ ADRs vigentes (011, 016, 017) y el inventario congelado de
    del fallback a CDATA.
 4. **E501** en `liquidaciones/presentation/liquidaciones_router.py:169` (docstring 101
    chars).
+5. **BOM UTF-8** en `liquidaciones/presentation/dependencies/siges.py` — único archivo
+   del repo con BOM; Python lo tolera pero rompe herramientas que parsean el fuente (el
+   script AST de auditoría falló ahí). Removido.
 
 ## 3. Incumplimientos de la guía pendientes (requieren decisión o trabajo)
 
@@ -52,6 +55,25 @@ Ambos archivos crecieron/nacieron después de esa fecha:
 - `backend/src/modules/liquidaciones/application/use_cases/tabla_km_lugares.py` — **302
   líneas** (módulo geo nuevo, posterior a la auditoría). Está apenas sobre el límite:
   extraer helpers compartidos con `_distancias_comunes.py` o partir preview/apply.
+
+**Medición AST 2026-08-16** (mismo criterio que la auditoría, sin migraciones) vs. línea
+de base del 2026-08-14 — la brecha es deuda nueva o no inventariada:
+
+| Métrica | Baseline 08-14 | Hoy | Nuevos |
+|---|---|---|---|
+| Funciones >50 líneas | 10 | 16 | 6 |
+| Clases >200 líneas | 2 | 3 | 1 (`SqlAlchemyTablaKmRepository`, 229) |
+| Anidamiento >3 | 4 | 7 | 3 |
+
+Las 6 funciones >50 nuevas: `evaluate_device_health` (77), `backfill_estado_liquidaciones
+.execute` (73), `analyze_events` (62), `calculate_trend` (57), `SqlAlchemyTablaKmRepository
+.create` (55), `tabla_km_lugares.execute` (52). Las tres de `analisis_log_hp` no figuran
+en ningún conteo de ADR-017 (el módulo no aparece en su desglose por módulo): son
+inventario faltante, conviene incorporarlas explícitamente a la ADR o refactorizarlas.
+Nota: el conteo total de funciones >20 dio 326 vs. 247 del baseline, pero sin el script
+original de la auditoría la comparación fina no es 1:1 (criterios de span pueden diferir);
+el tier >50 sí coincide nombre por nombre con el inventario de ADR-017, así que la tabla
+de arriba es comparable.
 
 ### 3.2 §11 + tipado en `analisis_log_hp/presentation/sds_router.py` — PRIORIDAD MEDIA
 
@@ -81,6 +103,30 @@ código portado y verificado, refactor oportunista), o se abre workstream de spl
 primero es coherente con lo ya decidido para backend. `liquidaciones-api.ts` (412) es el
 más mecánico de partir: un archivo por sub-recurso (liquidaciones / config / distancias /
 pines), espejando `config_routers/` del backend.
+
+### 3.4 Seguridad §8 — revisado, sin hallazgos
+
+Barrido de SQL construido por string: los únicos f-strings en queries son constantes de
+módulo (`ftp_client_model.py`), un `int()` casteado (`sqlalchemy_supply_cache_repository
+.py:152`) y lecturas de un SQLite local bajado por FTP con identificadores citados
+(`ftplib_db3_downloader.py`) — nada recibe input de usuario. Sin secretos hardcodeados en
+`backend/src`.
+
+### 3.5 Observaciones sobre el card registry del dashboard (`c51dea2`) — PRIORIDAD BAJA
+
+El refactor es correcto (gates verdes, sin bugs funcionales), pero quedaron tres puntas:
+
+1. **`COLUMNS[].fraction` es dato muerto**: el grid sigue hardcodeado en la clase Tailwind
+   `xl:grid-cols-[1.4fr_1fr_0.9fr_0.9fr]` y el registry solo lo "documenta" con un
+   comentario de "deben coincidir" — exactamente la duplicación que el registry venía a
+   eliminar. Generar `gridTemplateColumns` inline desde las columnas **visibles** resuelve
+   la duplicación y de paso el punto 2.
+2. **Tracks fantasma con permisos parciales** (preexistente al refactor): el template
+   declara 4 tracks fijos; si un usuario no ve `contadores`/`sla`, las columnas visibles
+   se corren a tracks con fracciones que no les corresponden y queda un track vacío al
+   final.
+3. `CARDS` se importa en `inicio-dashboard.tsx` pero no se usa (solo lo usa `cardsForCol`
+   internamente), y el cast `key as ColKey` es innecesario (`key` ya tipa `ColKey`).
 
 ## 4. Optimizaciones recomendadas (accionables, con evidencia)
 
