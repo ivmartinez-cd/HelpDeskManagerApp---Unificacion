@@ -1,6 +1,16 @@
 # Optimización y cumplimiento de ARCHITECTURE_GUIDE.md
 
-**Última pasada:** 2026-08-16 (7ª corrida: §10 READMEs + README raíz corregido)
+**Última pasada:** 2026-08-17 (8ª corrida: review del commit `e8683ad` de contadores)
+
+**Hallazgos 8ª corrida**: gates todos en verde (1393 tests). Review del cruce
+operador↔grupo nuevo (`e8683ad`): el cableado del `parque` opcional está bien
+protegido en el router (no era bug); sí había un costo evitable — el índice flex se
+reconstruía con regex por cada anexo (2× por anexo) — resuelto con
+`_IndiceOperadores` precalculado por request, más los tests que faltaban para la
+escalera de matching (exacto > flex > contención única; 6 casos). Observación menor
+que queda anotada: si dos clientes del calendario difieren solo en separadores, el
+índice flex colisiona y el match elige uno arbitrariamente — improbable (sería el
+mismo cliente duplicado), pero si aparece, tratar la colisión como ambigüedad.
 
 **Hallazgos 7ª corrida**: (1) el README raíz afirmaba que había hot-reload por
 volúmenes — contradiciendo la decisión post-incidente de CLAUDE.md y sugiriendo el
