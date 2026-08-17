@@ -1,6 +1,6 @@
 # Optimización y cumplimiento de ARCHITECTURE_GUIDE.md
 
-**Última pasada:** 2026-08-16 (2ª corrida; incluye el commit `c51dea2` del card registry)
+**Última pasada:** 2026-08-16 (3ª corrida: ejecución de las optimizaciones §3.1–§3.3 y §4.1)
 **Método:** gates obligatorios dentro de los contenedores (`lint-imports`, `ruff`, `mypy`,
 `pytest tests/unit`, `tsc`, `eslint`) + medición AST de §4 (funciones/clases/anidamiento,
 excluyendo migraciones) + revisión manual de `except Exception` (§6), endpoints de
@@ -43,18 +43,19 @@ y el inventario congelado de `AUDITORIA_ARCHITECTURE_GUIDE_2026-08-14.md`.
 
 ## 3. Incumplimientos de la guía pendientes (requieren decisión o trabajo)
 
-### 3.1 Deuda §4 **nueva**, fuera del inventario congelado de ADR-017 — PRIORIDAD ALTA
+### 3.1 Deuda §4 **nueva**, fuera del inventario congelado de ADR-017 — RESUELTO PARCIAL 2026-08-16
 
-ADR-017 §5: todo caso posterior al inventario del 2026-08-14 "es violación, no deuda".
-Ambos archivos crecieron/nacieron después de esa fecha:
+Los dos archivos >300 se partieron (verificado: rutas OpenAPI idénticas antes/después):
 
-- `backend/src/modules/contadores/presentation/calendario_router.py` — **352 líneas**
-  (creció con `get_pending_clients`, portfolio por operador y overrides de coberturas).
-  Acción: separar por responsabilidad (p. ej. router de calendario vs. router de
-  coberturas/portfolio) como ya hace liquidaciones con `config_routers/`.
-- `backend/src/modules/liquidaciones/application/use_cases/tabla_km_lugares.py` — **302
-  líneas** (módulo geo nuevo, posterior a la auditoría). Está apenas sobre el límite:
-  extraer helpers compartidos con `_distancias_comunes.py` o partir preview/apply.
+- `calendario_router.py` (352) → aggregator de 20 líneas + paquete `calendario_routers/`
+  (`eventos`, `sync`, `clientes_siges`, `overrides`, `_deps`), espejando el patrón
+  `config_routers/` de liquidaciones.
+- `tabla_km_lugares.py` (302) → 202 líneas; `RefrescarDatosSiges` y sus DTOs se movieron
+  a `tabla_km_refrescar_siges.py` (sync de datos maestros ≠ operaciones por fila).
+
+**Queda abierto** (decisión pendiente: refactorizar vs. incorporar al inventario de
+ADR-017 con una nota de enmienda): las 6 funciones >50 y la clase >200 nuevas de la
+tabla de abajo.
 
 **Medición AST 2026-08-16** (mismo criterio que la auditoría, sin migraciones) vs. línea
 de base del 2026-08-14 — la brecha es deuda nueva o no inventariada:
@@ -75,34 +76,26 @@ original de la auditoría la comparación fina no es 1:1 (criterios de span pued
 el tier >50 sí coincide nombre por nombre con el inventario de ADR-017, así que la tabla
 de arriba es comparable.
 
-### 3.2 §11 + tipado en `analisis_log_hp/presentation/sds_router.py` — PRIORIDAD MEDIA
+### 3.2 §11 + tipado en `analisis_log_hp/presentation/sds_router.py` — RESUELTO 2026-08-16
 
-Seis endpoints devuelven `list[dict[str, Any]]` sin `Page[T]` ni schemas Pydantic:
-`/devices/{id}/consumables`, `/alerts`, `/meters`, `/hp-operations`, `/clients`,
-`/clients/{id}/devices`. No hay ADR que lo cubra — per CLAUDE.md, excepción sin ADR es
-violación. Los cinco por-device son sub-recursos acotados por el equipo (candidatos a un
-ADR estilo 011), pero `/clients` es el catálogo de clientes de la flota completa y
-`dict[str, Any]` en presentation esquiva la validación de salida. Acción: escribir el ADR
-que delimite la excepción para los sub-recursos por device **y** tipar/paginar `/clients`.
+Documentado en **ADR-021**: los seis endpoints son proxies de lectura de HP Insight
+(shape del sistema externo, sin transformación ni persistencia propia), acotados por
+equipo o por el tamaño del negocio — se exceptúan de `Page[T]` y schemas con condiciones
+de reversión explícitas. Hallazgo adicional: `GET /clients` no tiene ningún consumidor
+en `frontend/src` — el ADR fija que si sigue huérfano en la próxima auditoría, se borra
+(YAGNI) en vez de mantenerlo exceptuado.
 
-### 3.3 Tamaños §4 del frontend sin inventario equivalente a ADR-017 — PRIORIDAD MEDIA
+### 3.3 Tamaños §4 del frontend sin inventario equivalente a ADR-017 — RESUELTO 2026-08-16
 
-ADR-017 cubre solo `backend/src`. En `frontend/src` hay **15 archivos >300 líneas** sin
-registro de deuda; los peores:
+Dos partes:
 
-| Archivo | Líneas |
-|---|---|
-| `features/insumos/components/dashboard/consumable-detail-modal.tsx` | 459 |
-| `features/insumos/components/shared/date-range-picker.tsx` | 450 |
-| `features/turnos/components/admin/casillas-manager.tsx` | 428 |
-| `features/liquidaciones/api/liquidaciones-api.ts` | 412 |
-| `features/contadores/components/client-picker-process-modal.tsx` | 395 |
-
-Acción: o se extiende ADR-017 al frontend con este inventario congelado (misma lógica:
-código portado y verificado, refactor oportunista), o se abre workstream de split. Lo
-primero es coherente con lo ya decidido para backend. `liquidaciones-api.ts` (412) es el
-más mecánico de partir: un archivo por sub-recurso (liquidaciones / config / distancias /
-pines), espejando `config_routers/` del backend.
+- **ADR-020** extiende el criterio de ADR-017 al frontend con el inventario congelado de
+  14 archivos >300 líneas (refactor oportunista; todo caso nuevo es violación).
+- `liquidaciones-api.ts` (412, el más mecánico) se partió en sub-clientes por
+  responsabilidad espejando los routers del backend: `liquidaciones-core-api.ts`,
+  `config-api.ts`, `siges-api.ts`, `geolocalizacion-api.ts` + `_shared.ts`
+  (`fetchCatalogoCompleto`/`Page`). `liquidaciones-api.ts` queda como aggregator que
+  conserva el contrato para los consumidores existentes.
 
 ### 3.4 Seguridad §8 — revisado, sin hallazgos
 
@@ -122,15 +115,14 @@ import de `CARDS` sin uso y el cast innecesario `key as ColKey`.
 
 ## 4. Optimizaciones recomendadas (accionables, con evidencia)
 
-### 4.1 Cobertura: `pines_sospechosos.py` tiene **cero tests** — PRIORIDAD ALTA
+### 4.1 Cobertura: `pines_sospechosos.py` tenía **cero tests** — RESUELTO 2026-08-16
 
-`grep CorregirPin|AuditarPines|ListarPinesSospechosos backend/tests` → sin resultados. El
-bug del §2.1 (endpoint que revienta al primer uso) atravesó 1355 tests unitarios en verde.
-Es exactamente el caso que la cobertura mínima de application (≥85%, §7 de la guía) debía
-prevenir, y el flujo toca la Google key paga (tope de llamadas, cache-first): merece tests
-de la lógica de tope/cache (`AuditarPines` no llama a Google si está en cache, respeta
-`tope_llamadas`, `CorregirPin` exige geocode cacheado). Todos los puertos son Protocols —
-fakes in-memory triviales.
+`test_pines_sospechosos.py`: 12 tests con los fakes in-memory existentes de
+`fakes_geolocalizacion.py`. Cubren la lógica que toca la Google key paga (`AuditarPines`
+cache-first, respeta `tope_llamadas`, no audita sucursales sin pin), el umbral y orden de
+`ListarPinesSospechosos` (que nunca llama a Google), y `CorregirPin` (guarda el override
+con `prestador_id` y `PROCEDENCIA_GEOCODE` — el caso que hubiera atrapado el bug del
+§2.1 — y falla sin geocode cacheado o con sucursal inexistente).
 
 ### 4.2 Refactor oportunista pendiente (ADR-017 punto 2)
 
