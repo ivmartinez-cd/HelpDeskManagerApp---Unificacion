@@ -21,6 +21,16 @@ class SqlAlchemyReglaAlertaRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
+    async def set_activa(self, codigo: str, activa: bool) -> ReglaAlerta | None:
+        stmt = select(ReglaAlertaModel).where(ReglaAlertaModel.codigo == codigo)
+        row = (await self._session.execute(stmt)).scalar_one_or_none()
+        if row is None:
+            return None
+        row.activa = activa
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
 
 def _to_entity(row: ReglaAlertaModel) -> ReglaAlerta:
     return ReglaAlerta(

@@ -8,7 +8,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.alerta import Alerta
-from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado import AlertaGenerada
+from src.modules.liquidaciones.domain.services.conciliar_alertas import AlertaConciliada
 from src.modules.liquidaciones.infrastructure.models.alerta_model import AlertaModel
 
 
@@ -22,7 +22,7 @@ class SqlAlchemyAlertaRepository:
         return [_to_entity(row) for row in rows]
 
     async def replace_for_liquidacion(
-        self, liquidacion_id: UUID, alertas: Sequence[AlertaGenerada]
+        self, liquidacion_id: UUID, alertas: Sequence[AlertaConciliada]
     ) -> list[Alerta]:
         await self._session.execute(
             delete(AlertaModel).where(AlertaModel.liquidacion_id == liquidacion_id)
@@ -34,8 +34,26 @@ class SqlAlchemyAlertaRepository:
             await self._session.refresh(modelo)
         return [_to_entity(m) for m in modelos]
 
+    async def update_estado(
+        self,
+        liquidacion_id: UUID,
+        alerta_id: UUID,
+        *,
+        estado: str,
+        justificacion: str | None,
+    ) -> Alerta | None:
+        row = await self._session.get(AlertaModel, alerta_id)
+        if row is None or row.liquidacion_id != liquidacion_id:
+            return None
+        row.estado = estado
+        row.justificacion = justificacion
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
 
-def _a_model(liquidacion_id: UUID, alerta: AlertaGenerada) -> AlertaModel:
+
+def _a_model(liquidacion_id: UUID, conciliada: AlertaConciliada) -> AlertaModel:
+    alerta = conciliada.generada
     return AlertaModel(
         id=uuid.uuid4(),
         incidente_id=alerta.incidente_id,
@@ -44,6 +62,8 @@ def _a_model(liquidacion_id: UUID, alerta: AlertaGenerada) -> AlertaModel:
         descripcion=alerta.descripcion,
         datos_contexto=alerta.datos_contexto,
         riesgo=alerta.riesgo,
+        estado=conciliada.estado,
+        justificacion=conciliada.justificacion,
     )
 
 
@@ -58,4 +78,5 @@ def _to_entity(row: AlertaModel) -> Alerta:
         riesgo=row.riesgo,
         estado=row.estado,
         fecha_generacion=row.fecha_generacion,
+        justificacion=row.justificacion,
     )

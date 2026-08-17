@@ -18,6 +18,7 @@ from src.modules.liquidaciones.domain.entities.regla_alerta import ReglaAlerta
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
+from src.modules.liquidaciones.domain.services.conciliar_alertas import AlertaConciliada
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
     CdIncidenteRow,
     CdLiquidacion,
@@ -27,7 +28,6 @@ from src.modules.liquidaciones.domain.value_objects.incidente_importado import (
     ResultadoImportacion,
 )
 from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado import (
-    AlertaGenerada,
     IncidenteEvaluado,
     ObservacionGenerada,
 )
@@ -239,24 +239,43 @@ class FakeAlertaRepository:
         return self.por_liquidacion.get(liquidacion_id, [])
 
     async def replace_for_liquidacion(
-        self, liquidacion_id: UUID, alertas: Sequence[AlertaGenerada]
+        self, liquidacion_id: UUID, alertas: Sequence[AlertaConciliada]
     ) -> list[Alerta]:
         creadas = [
             Alerta(
                 id=uuid.uuid4(),
-                incidente_id=a.incidente_id,
+                incidente_id=c.generada.incidente_id,
                 liquidacion_id=liquidacion_id,
-                tipo_alerta=a.tipo_alerta,
-                descripcion=a.descripcion,
-                datos_contexto=a.datos_contexto,
-                riesgo=a.riesgo,
-                estado="pendiente",
+                tipo_alerta=c.generada.tipo_alerta,
+                descripcion=c.generada.descripcion,
+                datos_contexto=c.generada.datos_contexto,
+                riesgo=c.generada.riesgo,
+                estado=c.estado,
+                justificacion=c.justificacion,
                 fecha_generacion=datetime(2026, 1, 1),
             )
-            for a in alertas
+            for c in alertas
         ]
         self.por_liquidacion[liquidacion_id] = creadas
         return creadas
+
+    async def update_estado(
+        self,
+        liquidacion_id: UUID,
+        alerta_id: UUID,
+        *,
+        estado: str,
+        justificacion: str | None,
+    ) -> Alerta | None:
+        filas = self.por_liquidacion.get(liquidacion_id, [])
+        for i, alerta in enumerate(filas):
+            if alerta.id == alerta_id:
+                actualizada = dataclasses.replace(
+                    alerta, estado=estado, justificacion=justificacion
+                )
+                filas[i] = actualizada
+                return actualizada
+        return None
 
 
 class FakeObservacionRepository:
@@ -296,10 +315,18 @@ class FakeReglaAlertaRepository:
         self.activas = activas or {}
 
     async def list_activas(self) -> dict[str, ReglaAlerta]:
-        return self.activas
+        return {c: r for c, r in self.activas.items() if r.activa}
 
     async def list_all(self) -> list[ReglaAlerta]:
         return list(self.activas.values())
+
+    async def set_activa(self, codigo: str, activa: bool) -> ReglaAlerta | None:
+        regla = self.activas.get(codigo)
+        if regla is None:
+            return None
+        actualizada = dataclasses.replace(regla, activa=activa)
+        self.activas[codigo] = actualizada
+        return actualizada
 
 
 class FakeSpstRepository:

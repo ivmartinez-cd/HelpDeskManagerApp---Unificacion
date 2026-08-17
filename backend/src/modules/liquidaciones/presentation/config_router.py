@@ -9,6 +9,7 @@ from fastapi import APIRouter
 from src.modules.liquidaciones.presentation.config_routers import (
     geolocalizacion,
     prestadores,
+    reglas,
     siges,
     spsts,
     tabla_km,
@@ -22,3 +23,4 @@ router.include_router(tarifarios.router)
 router.include_router(tabla_km.router)
 router.include_router(siges.router)
 router.include_router(geolocalizacion.router)
+router.include_router(reglas.router)

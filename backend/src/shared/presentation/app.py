@@ -54,6 +54,9 @@ from src.modules.insumos.presentation.requests_router import router as insumos_r
 from src.modules.insumos.presentation.statistics_router import (
     router as insumos_statistics_router,
 )
+from src.modules.liquidaciones.presentation.alertas_router import (
+    router as liquidaciones_alertas_router,
+)
 from src.modules.liquidaciones.presentation.config_router import (
     router as liquidaciones_config_router,
 )
@@ -208,6 +211,7 @@ def create_app() -> FastAPI:
     # GET/DELETE/PATCH /{liquidacion_id} que, registrado primero, interceptaba esos
     # segmentos como si fueran un UUID (422 en vez de la respuesta real).
     app.include_router(liquidaciones_config_router)
+    app.include_router(liquidaciones_alertas_router)
     app.include_router(liquidaciones_router)
     app.include_router(vacaciones_empleados_router)
     app.include_router(vacaciones_catalogos_router)

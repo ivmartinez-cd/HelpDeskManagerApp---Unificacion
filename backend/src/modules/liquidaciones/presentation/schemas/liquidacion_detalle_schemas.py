@@ -6,7 +6,7 @@ import uuid
 from datetime import date, datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.modules.liquidaciones.application.dtos.liquidacion_detalle import (
     IncidenteDetalle,
@@ -68,6 +68,7 @@ class AlertaOut(BaseModel):
     datos_contexto: dict[str, Any] | None = Field(serialization_alias="datosContexto")
     riesgo: float
     estado: str
+    justificacion: str | None = None
     fecha_generacion: datetime = Field(serialization_alias="fechaGeneracion")
 
     @classmethod
@@ -80,8 +81,25 @@ class AlertaOut(BaseModel):
             datos_contexto=e.datos_contexto,
             riesgo=e.riesgo,
             estado=e.estado,
+            justificacion=e.justificacion,
             fecha_generacion=e.fecha_generacion,
         )
+
+
+# Espeja los ESTADO_* de domain/entities/alerta.py. Descartar exige motivo:
+# es el "eliminar" de la TL y sobrevive al re-análisis (conciliar_alertas).
+ESTADOS_ALERTA = Literal["pendiente", "en_revision", "resuelta", "descartada"]
+
+
+class AlertaEstadoIn(BaseModel):
+    estado: ESTADOS_ALERTA
+    justificacion: str | None = None
+
+    @model_validator(mode="after")
+    def _justificacion_al_descartar(self) -> "AlertaEstadoIn":
+        if self.estado == "descartada" and not (self.justificacion or "").strip():
+            raise ValueError("Descartar una alerta requiere una justificación.")
+        return self
 
 
 # Espeja los ESTADO_* de domain/entities/observacion.py — mismo ciclo que el legacy

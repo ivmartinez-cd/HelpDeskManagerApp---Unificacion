@@ -29,3 +29,6 @@ class Alerta:
     riesgo: float
     estado: str
     fecha_generacion: datetime
+    # Motivo de la decisión de la TL — obligatorio al descartar; el re-análisis
+    # lo preserva junto con el estado (ver `conciliar_alertas`).
+    justificacion: str | None = None

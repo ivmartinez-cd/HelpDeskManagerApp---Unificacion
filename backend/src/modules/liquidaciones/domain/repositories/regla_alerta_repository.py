@@ -12,3 +12,9 @@ class ReglaAlertaRepository(Protocol):
         ...
 
     async def list_all(self) -> list[ReglaAlerta]: ...
+
+    async def set_activa(self, codigo: str, activa: bool) -> ReglaAlerta | None:
+        """Prende/apaga una regla. Aplica en el próximo re-análisis (el motor
+        consulta `list_activas` en cada corrida); las alertas ya generadas no
+        se tocan. None si el código no existe."""
+        ...

@@ -32,6 +32,7 @@ from src.modules.liquidaciones.domain.repositories.tabla_km_repository import Ta
 from src.modules.liquidaciones.domain.repositories.tarifario_repository import (
     TarifarioRepository,
 )
+from src.modules.liquidaciones.domain.services.conciliar_alertas import conciliar_alertas
 from src.modules.liquidaciones.domain.services.motor_reglas.motor import ejecutar_motor_reglas
 from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado import (
     ResultadoMotorReglas,
@@ -83,7 +84,11 @@ class ReanalizarLiquidacion:
 
     async def _persistir(self, liquidacion_id: UUID, resultado: ResultadoMotorReglas) -> None:
         await self._ports.incidentes.apply_evaluacion(resultado.incidentes_evaluados)
-        await self._ports.alertas.replace_for_liquidacion(liquidacion_id, resultado.alertas)
+        # El triage previo de la TL (estado ≠ pendiente + justificación) sobrevive
+        # al reemplazo — ver conciliar_alertas.
+        existentes = await self._ports.alertas.list_by_liquidacion(liquidacion_id)
+        conciliadas = conciliar_alertas(existentes, resultado.alertas)
+        await self._ports.alertas.replace_for_liquidacion(liquidacion_id, conciliadas)
         await self._ports.observaciones.replace_for_liquidacion(
             liquidacion_id, resultado.observaciones
         )

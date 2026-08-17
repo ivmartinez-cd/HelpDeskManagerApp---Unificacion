@@ -26,6 +26,7 @@ class AlertaModel(Base):
     datos_contexto: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     riesgo: Mapped[float] = mapped_column(Float, nullable=False)
     estado: Mapped[str] = mapped_column(String, nullable=False, server_default=text("'pendiente'"))
+    justificacion: Mapped[str | None] = mapped_column(String)
     fecha_generacion: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()"), nullable=False
     )
