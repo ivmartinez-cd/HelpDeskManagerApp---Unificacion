@@ -187,11 +187,15 @@ Arrastrado de la auditoría 2026-08-14. Probar jobs de fondo requiere el cuidado
 de CLAUDE.md (modo test, sin mails reales); cuando se planifique, hacerlo con los puertos
 mockeados y `DISABLE_BACKGROUND_JOBS=true` verificado.
 
-### 4.4 Suite e2e inexistente (§7)
+### 4.4 Suite e2e inexistente (§7) — RESUELTO 2026-08-16 por ADR-022
 
-Sigue abierta la decisión producto/ADR (hallazgo MEDIO de la auditoría). La pirámide §7
-pide 5–10% e2e; hoy es 0. Mínimo viable: un smoke e2e de login + una pantalla por módulo
-contra los contenedores, corrido a demanda (no en cada CI) mientras no haya pipeline.
+Decisión tomada: la pirámide de este monorepo queda redefinida como unit +
+integración + verificación e2e manual por módulo, sin suite automatizada
+(**ADR-022**, con el razonamiento completo: integraciones productivas vivas que no
+se pueden mockear con honestidad ni tocar sin riesgo, single-dev sin CI, protocolo
+manual ya obligatorio). Incluye cláusula de reversión explícita: un segundo bug
+tipo `CorregirPin` (roto en runtime con gates en verde) o la llegada de CI/segundo
+dev dispara la construcción de la suite mínima de Playwright.
 
 ## 5. Qué NO se recomienda tocar
 
