@@ -1,4 +1,4 @@
-﻿"""Factories de los casos de uso de vínculo/sync contra Siges (ADR-014) — el
+"""Factories de los casos de uso de vínculo/sync contra Siges (ADR-014) — el
 gateway pyodbc usa el runner compartido de MERCURIO (ADR-018): singleton de
 proceso con chequeo de host, igual que sla/prestadores/contadores."""
 
