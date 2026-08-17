@@ -112,21 +112,13 @@ módulo (`ftp_client_model.py`), un `int()` casteado (`sqlalchemy_supply_cache_r
 (`ftplib_db3_downloader.py`) — nada recibe input de usuario. Sin secretos hardcodeados en
 `backend/src`.
 
-### 3.5 Observaciones sobre el card registry del dashboard (`c51dea2`) — PRIORIDAD BAJA
+### 3.5 Observaciones sobre el card registry del dashboard (`c51dea2`) — RESUELTO 2026-08-16
 
-El refactor es correcto (gates verdes, sin bugs funcionales), pero quedaron tres puntas:
-
-1. **`COLUMNS[].fraction` es dato muerto**: el grid sigue hardcodeado en la clase Tailwind
-   `xl:grid-cols-[1.4fr_1fr_0.9fr_0.9fr]` y el registry solo lo "documenta" con un
-   comentario de "deben coincidir" — exactamente la duplicación que el registry venía a
-   eliminar. Generar `gridTemplateColumns` inline desde las columnas **visibles** resuelve
-   la duplicación y de paso el punto 2.
-2. **Tracks fantasma con permisos parciales** (preexistente al refactor): el template
-   declara 4 tracks fijos; si un usuario no ve `contadores`/`sla`, las columnas visibles
-   se corren a tracks con fracciones que no les corresponden y queda un track vacío al
-   final.
-3. `CARDS` se importa en `inicio-dashboard.tsx` pero no se usa (solo lo usa `cardsForCol`
-   internamente), y el cast `key as ColKey` es innecesario (`key` ya tipa `ColKey`).
+Las tres puntas del refactor se corrigieron: el grid ahora se arma con
+`grid-template-columns` desde las fractions de las columnas **visibles** del registry
+(vía variable CSS + variante `xl:`), lo que elimina tanto la duplicación
+registry/Tailwind como los tracks fantasma con permisos parciales; y se limpiaron el
+import de `CARDS` sin uso y el cast innecesario `key as ColKey`.
 
 ## 4. Optimizaciones recomendadas (accionables, con evidencia)
 

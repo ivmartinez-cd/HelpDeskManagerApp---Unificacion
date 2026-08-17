@@ -15,7 +15,8 @@ export interface CardDef {
   guard: (m: ModuleAccess) => boolean;
 }
 
-/** Fractions deben coincidir con xl:grid-cols-[...] en inicio-dashboard.tsx */
+/** Fuente de verdad del grid: inicio-dashboard.tsx arma grid-template-columns
+ * con las fractions de las columnas visibles (sin tracks para columnas ocultas). */
 export const COLUMNS: { key: ColKey; fraction: string }[] = [
   { key: "planificacion", fraction: "1.4fr" },
   { key: "contadores",    fraction: "1fr" },

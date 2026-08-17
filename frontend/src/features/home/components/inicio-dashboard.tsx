@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { textoDesdeSync } from "@/features/contadores/utils/calendario-format";
 import { useSession } from "@/services/session-provider";
 import {
@@ -13,7 +14,7 @@ import {
   useTurnosHoy,
 } from "../hooks/use-inicio-data";
 import { buildKpis } from "../utils/build-kpis";
-import { CARDS, COLUMNS, cardsForCol, type ColKey, type ModuleAccess } from "../config/dashboard-registry";
+import { COLUMNS, cardsForCol, type ModuleAccess } from "../config/dashboard-registry";
 import { ClientesHoyCard } from "./clientes-hoy-card";
 import { ContadoresDonutCard } from "./contadores-donut-card";
 import { HeatmapSemanaCard } from "./heatmap-semana-card";
@@ -139,6 +140,10 @@ export function InicioDashboard() {
     }
   }
 
+  const columnasVisibles = COLUMNS
+    .map((col) => ({ ...col, cards: cardsForCol(col.key, access) }))
+    .filter((col) => col.cards.length > 0);
+
   return (
     <div className="flex h-full flex-col gap-3 px-7 py-4">
       <div className="flex flex-none flex-wrap items-end justify-between gap-4">
@@ -159,19 +164,17 @@ export function InicioDashboard() {
         <KpiStrip kpis={kpis} />
       </div>
 
-      {/* xl:grid-cols mirrors COLUMNS fractions in dashboard-registry.ts */}
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-[1.4fr_1fr_0.9fr_0.9fr]">
-        {COLUMNS.map(({ key }) => {
-          const cards = cardsForCol(key as ColKey, access);
-          if (!cards.length) return null;
-          return (
-            <div key={key} className="flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto thin-scrollbar pb-3">
-              {cards.map((card) => (
-                <div key={card.id}>{renderCard(card.id)}</div>
-              ))}
-            </div>
-          );
-        })}
+      <div
+        className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:[grid-template-columns:var(--dash-cols)]"
+        style={{ "--dash-cols": columnasVisibles.map((c) => c.fraction).join(" ") } as CSSProperties}
+      >
+        {columnasVisibles.map(({ key, cards }) => (
+          <div key={key} className="flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto thin-scrollbar pb-3">
+            {cards.map((card) => (
+              <div key={card.id}>{renderCard(card.id)}</div>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );
