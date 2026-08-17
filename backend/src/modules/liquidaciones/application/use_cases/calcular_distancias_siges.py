@@ -169,16 +169,30 @@ class PreviewCalcularDistancias:
         sin_ruta = 0
         for base, grupo in grupos.items():
             for i in range(0, len(grupo), _GOOGLE_BATCH):
-                batch = grupo[i : i + _GOOGLE_BATCH]
-                tramos = await self._ports.google_maps.distancias_km_ida_vuelta(
-                    base, [d.coords for d in batch]
+                sin_ruta += await self._procesar_batch(
+                    base, grupo[i : i + _GOOGLE_BATCH], existentes, filas
                 )
-                for destino, (ida, vuelta) in zip(batch, tramos, strict=True):
-                    if ida is None or vuelta is None:
-                        sin_ruta += 1
-                        continue
-                    filas.append(_armar_fila(destino, base, ida, vuelta, existentes))
         return filas, sin_ruta
+
+    async def _procesar_batch(
+        self,
+        base: tuple[float, float],
+        batch: list[Destino],
+        existentes: dict[tuple[str, str], TablaKm],
+        filas: list[PreviewFila],
+    ) -> int:
+        """Un pedido de matrix por batch; suma filas al preview y devuelve
+        cuántos destinos quedaron sin ruta."""
+        tramos = await self._ports.google_maps.distancias_km_ida_vuelta(
+            base, [d.coords for d in batch]
+        )
+        sin_ruta = 0
+        for destino, (ida, vuelta) in zip(batch, tramos, strict=True):
+            if ida is None or vuelta is None:
+                sin_ruta += 1
+                continue
+            filas.append(_armar_fila(destino, base, ida, vuelta, existentes))
+        return sin_ruta
 
 
 class AplicarCalcularDistancias:

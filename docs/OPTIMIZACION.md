@@ -1,6 +1,14 @@
 # Optimización y cumplimiento de ARCHITECTURE_GUIDE.md
 
-**Última pasada:** 2026-08-16 (4ª corrida: seguridad §8, `.env.example` y migraciones)
+**Última pasada:** 2026-08-16 (6ª corrida: anidamiento >3 de vuelta a línea de base)
+
+**Estado §4 al cierre de la 6ª corrida**: todas las métricas en o por debajo de los
+inventarios congelados — funciones >50: 10/10 de ADR-017 · clases >200: 2/2 ·
+archivos >300 backend: solo los 3 de ADR-017 · anidamiento >3: los 4 de la línea de
+base (los 3 nuevos se refactorizaron: `html_to_tsv` y `extract_help_urls` con
+helpers de extracción, `_calcular_filas` con `_procesar_batch`; de paso cayó otro
+`except Exception` silencioso interno en `html_to_tsv`, §6). Suite completa:
+1382 tests en verde.
 **Método:** gates obligatorios dentro de los contenedores (`lint-imports`, `ruff`, `mypy`,
 `pytest tests/unit`, `tsc`, `eslint`) + medición AST de §4 (funciones/clases/anidamiento,
 excluyendo migraciones) + revisión manual de `except Exception` (§6), endpoints de
