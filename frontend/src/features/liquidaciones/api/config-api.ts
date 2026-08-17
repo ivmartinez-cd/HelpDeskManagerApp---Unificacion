@@ -2,6 +2,7 @@ import { httpClient } from "@/services/http-client";
 import type {
   ImportExcelMaestroResult,
   PrestadorLiquidacion,
+  ReglaAlerta,
   Spst,
   TablaKm,
   Tarifario,
@@ -34,8 +35,21 @@ interface TablaKmBody {
   urlMaps?: string;
 }
 
-/** CRUD de catálogos de configuración: prestadores, SPSTs, tarifarios y tabla KM. */
+/** CRUD de catálogos de configuración: prestadores, SPSTs, tarifarios, tabla KM
+ * y reglas de alerta. */
 export const configApi = {
+  // ── Reglas de alerta ───────────────────────────────────────────────────────
+  listReglasAlerta: () =>
+    httpClient
+      .get<Page<ReglaAlerta>>("/api/liquidaciones/reglas-alerta")
+      .then((p) => p.items),
+
+  updateReglaActiva: (codigo: string, activa: boolean) =>
+    httpClient.patch<ReglaAlerta>(
+      `/api/liquidaciones/reglas-alerta/${codigo}/activa`,
+      { activa },
+    ),
+
   // ── Prestadores ────────────────────────────────────────────────────────────
   createPrestador: (body: { nombreCorto: string; nombre: string; cuit?: string; region?: string }) =>
     httpClient.post<PrestadorLiquidacion>("/api/liquidaciones/prestadores", body),

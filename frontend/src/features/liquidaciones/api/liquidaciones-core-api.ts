@@ -1,5 +1,7 @@
 import { httpClient } from "@/services/http-client";
 import type {
+  Alerta,
+  EstadoAlerta,
   EstadoLiquidacion,
   EstadoObservacion,
   ImportarLiquidacionResult,
@@ -68,6 +70,16 @@ export const liquidacionesCoreApi = {
     httpClient.patch<Observacion>(
       `/api/liquidaciones/${liquidacionId}/observaciones/${observacionId}/estado`,
       { estado },
+    ),
+
+  updateEstadoAlerta: (
+    liquidacionId: string,
+    alertaId: string,
+    body: { estado: EstadoAlerta; justificacion?: string },
+  ) =>
+    httpClient.patch<Alerta>(
+      `/api/liquidaciones/${liquidacionId}/alertas/${alertaId}/estado`,
+      body,
     ),
 
   aprobar: (id: string) =>

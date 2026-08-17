@@ -343,6 +343,8 @@ export interface Incidente {
   urlMaps: string | null;
 }
 
+export type EstadoAlerta = "pendiente" | "en_revision" | "resuelta" | "descartada";
+
 export interface Alerta {
   id: string;
   incidenteId: string;
@@ -350,8 +352,22 @@ export interface Alerta {
   descripcion: string | null;
   datosContexto: Record<string, unknown> | null;
   riesgo: number;
-  estado: string;
+  estado: EstadoAlerta;
+  justificacion: string | null;
   fechaGeneracion: string;
+}
+
+/** Regla del motor (catálogo ALT001-009). `tieneEvaluador=false` = existe en
+ * el catálogo pero nunca genera alertas (ALT006/007). */
+export interface ReglaAlerta {
+  id: string;
+  codigo: string;
+  nombre: string;
+  descripcion: string | null;
+  activa: boolean;
+  riesgoBase: number;
+  tieneEvaluador: boolean;
+  updatedAt: string;
 }
 
 export type EstadoObservacion =

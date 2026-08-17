@@ -78,6 +78,12 @@ const SECTIONS: NavSectionDef[] = [
         exact: false,
         icon: Map,
       },
+      {
+        href: "/liquidaciones/configuracion/reglas",
+        label: "Reglas de alerta",
+        exact: false,
+        icon: Settings,
+      },
     ],
   },
 ];

@@ -14,10 +14,12 @@ import type {
   PrestadorLiquidacion,
 } from "../types/liquidaciones";
 import { formatARS } from "../lib/format";
+import { AlertasSeccion } from "./alertas-seccion";
 import { AyCAccionesBar } from "./ayc-acciones-bar";
 import { EstadoBadge } from "./estado-badge";
 import { ExtraItemSeccion } from "./extra-item-seccion";
 import { IncidentesSeccion } from "./incidentes-seccion";
+import { KpiTile } from "./kpi-tile";
 import { ObservacionesSeccion } from "./observaciones-seccion";
 
 const ESTADOS: EstadoLiquidacion[] = [
@@ -37,39 +39,6 @@ const ESTADO_LABELS: Record<EstadoLiquidacion, string> = {
   aprobada: "Aprobada",
   cerrada: "Cerrada",
 };
-
-function KpiTile({
-  icon,
-  label,
-  value,
-  warn,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  warn?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex min-w-[130px] items-start gap-3 rounded-[10px] border px-4 py-3",
-        warn ? "border-brand-orange/30 bg-brand-orange/5" : "border-border bg-background/20",
-      )}
-    >
-      <div className={cn("mt-0.5 flex-shrink-0", warn ? "text-brand-orange" : "text-muted-foreground")}>
-        {icon}
-      </div>
-      <div className="flex flex-col gap-0.5">
-        <span className="font-body text-[10px] font-bold uppercase tracking-[.08em] text-muted-foreground">
-          {label}
-        </span>
-        <span className={cn("font-heading text-2xl font-extrabold", warn ? "text-brand-orange" : "text-foreground")}>
-          {value}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 export function LiquidacionDetalleView({ id }: { id: string }) {
   const router = useRouter();
@@ -290,6 +259,13 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
           soloConAlertas={soloConAlertas}
         />
       )}
+
+      <AlertasSeccion
+        liquidacionId={id}
+        alertas={alertas}
+        incidentes={incidentes}
+        onChanged={() => void load()}
+      />
 
       <ObservacionesSeccion
         liquidacionId={id}
