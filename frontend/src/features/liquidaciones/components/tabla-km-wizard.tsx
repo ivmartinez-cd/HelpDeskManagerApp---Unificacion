@@ -1,200 +1,213 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Badge } from "@/shared/components/ui/badge";
+import { useCallback, useEffect, useState } from "react";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { Tooltip } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type {
-  CalculoKmPreview, GeocodificarResultado, PrestadorLiquidacion, SucursalSiges,
+  CalculoKmPreview, EstadoAsistenteKm, PrestadorLiquidacion,
 } from "../types/liquidaciones";
 import { PasoCalcular } from "./tabla-km-wizard-calcular";
+import { PasoDiagnostico } from "./tabla-km-wizard-diagnostico";
 import { PasoGeocodificar } from "./tabla-km-wizard-geocodificar";
+import { PasoImportar } from "./tabla-km-wizard-importar";
 import { PasoPines } from "./tabla-km-wizard-pines";
+import { LABEL_PASO, PASOS_WIZARD, type PasoWizard } from "./tabla-km-wizard-tipos";
 
-const PASOS = ["Importar", "Geocodificar", "Distancias", "Pines"] as const;
-type Paso = 0 | 1 | 2 | 3;
+type EstadoPaso = "actual" | "bloqueado" | "pendiente" | "ok";
 
-function Indicador({ actual }: { actual: Paso }) {
+function estadoDePaso(
+  paso: PasoWizard, actual: PasoWizard, e: EstadoAsistenteKm | null,
+): { estado: EstadoPaso; motivo?: string } {
+  if (paso === actual) return { estado: "actual" };
+  if (!e || paso === "diagnostico") return { estado: "ok" };
+  if (!e.vinculadoSiges) {
+    return { estado: "bloqueado", motivo: "Primero vinculá el prestador a Gestión (ver Diagnóstico)." };
+  }
+  switch (paso) {
+    case "importar":
+      return { estado: e.sucursalesNuevasPorImportar > 0 ? "pendiente" : "ok" };
+    case "ubicar":
+      return {
+        estado: e.sinCoordenadas + e.ambiguasPendientes + e.noEncontradasEnSiges > 0
+          ? "pendiente" : "ok",
+      };
+    case "distancias":
+      if (!e.baseConfigurada || !e.baseConCoordenadas) {
+        return {
+          estado: "bloqueado",
+          motivo: !e.baseConfigurada
+            ? "Falta la sucursal base de despacho (ver Diagnóstico)."
+            : "La sucursal base no tiene ubicación en Gestión (ver Diagnóstico).",
+        };
+      }
+      return { estado: e.filasSinKm > 0 ? "pendiente" : "ok" };
+    case "pines":
+      return { estado: e.pinesSospechososCacheados > 0 ? "pendiente" : "ok" };
+    default:
+      return { estado: "ok" };
+  }
+}
+
+/** Consecuencia concreta de avanzar dejando pendientes — reemplaza al viejo
+ * "Omitir este paso" ciego. `null` = se puede avanzar sin preguntar. */
+function consecuenciaDeAvanzar(paso: PasoWizard, e: EstadoAsistenteKm | null): string | null {
+  if (!e) return null;
+  if (paso === "importar" && e.sucursalesNuevasPorImportar > 0) {
+    return `Quedan ${e.sucursalesNuevasPorImportar} sucursales sin importar: no van a tener fila en tu Tabla KM ni km calculado hasta que las importes.`;
+  }
+  if (paso === "ubicar" && e.sinCoordenadas + e.ambiguasPendientes > 0) {
+    const partes = [];
+    if (e.sinCoordenadas > 0) partes.push(`${e.sinCoordenadas} sucursales sin ubicación`);
+    if (e.ambiguasPendientes > 0) partes.push(`${e.ambiguasPendientes} direcciones sin resolver`);
+    return `Quedan ${partes.join(" y ")}: esas sucursales van a quedar SIN km cuando calcules distancias.`;
+  }
+  return null;
+}
+
+function Indicador({ actual, estado, irA }: {
+  actual: PasoWizard;
+  estado: EstadoAsistenteKm | null;
+  irA: (p: PasoWizard) => void;
+}) {
   return (
     <div className="mb-6 flex items-center justify-center">
-      {PASOS.map((nombre, i) => (
-        <div key={nombre} className="flex items-center">
-          <div className="flex flex-col items-center gap-1">
+      {PASOS_WIZARD.map((paso, i) => {
+        const info = estadoDePaso(paso, actual, estado);
+        const boton = (
+          <button
+            type="button"
+            disabled={info.estado === "bloqueado"}
+            onClick={() => irA(paso)}
+            className="flex flex-col items-center gap-1 disabled:cursor-not-allowed"
+          >
             <div className={cn(
               "flex h-8 w-8 items-center justify-center rounded-full font-heading text-sm font-bold transition-colors",
-              i < actual && "bg-brand-orange/20 text-brand-orange",
-              i === actual && "bg-brand-orange text-white",
-              i > actual && "border-2 border-border text-muted-foreground",
+              info.estado === "actual" && "bg-brand-orange text-white",
+              info.estado === "ok" && "bg-emerald-500/15 text-emerald-500",
+              info.estado === "pendiente" && "bg-brand-orange/15 text-brand-orange border-2 border-brand-orange/50",
+              info.estado === "bloqueado" && "border-2 border-border text-muted-foreground opacity-50",
             )}>
-              {i < actual ? "✓" : i + 1}
+              {info.estado === "ok" ? "✓" : info.estado === "bloqueado" ? "🔒" : i + 1}
             </div>
-            <span className={cn("font-body text-[10px] font-bold uppercase tracking-[.06em]",
-              i === actual ? "text-brand-orange" : "text-muted-foreground"
-            )}>{nombre}</span>
-          </div>
-          {i < PASOS.length - 1 && <div className={cn("mb-5 mx-3 h-[2px] w-12 flex-shrink-0 rounded-full transition-colors",
-            i < actual ? "bg-brand-orange/40" : "bg-border")} />}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function PasoImportar({ prestadorId, onImportado }: {
-  prestadorId: string; onImportado: () => void;
-}) {
-  const [cargando, setCargando] = useState(true);
-  const [sucursales, setSucursales] = useState<SucursalSiges[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [importando, setImportando] = useState(false);
-  const [progreso, setProgreso] = useState(0);
-  const [importado, setImportado] = useState(false);
-  const [verExClientes, setVerExClientes] = useState(false);
-
-  useEffect(() => {
-    liquidacionesApi.buscarSucursalesSiges(prestadorId, "")
-      .then(page => setSucursales(page.items))
-      .catch(() => setError("No se pudieron cargar las sucursales desde Siges"))
-      .finally(() => setCargando(false));
-  }, [prestadorId]);
-
-  const todasNuevas = sucursales.filter(s => !s.yaCargada);
-  const yaCargadas = sucursales.filter(s => s.yaCargada);
-  const nuevasActivas = todasNuevas.filter(s => s.actividadReciente);
-  const nuevasExClientes = todasNuevas.filter(s => !s.actividadReciente);
-  const nuevas = verExClientes ? todasNuevas : nuevasActivas;
-
-  const importar = async () => {
-    setImportando(true);
-    setProgreso(0);
-    try {
-      for (const s of nuevas) {
-        await liquidacionesApi.createTablaKm({
-          prestadorId,
-          empresaNombre: s.empresaNombre,
-          sucursalNombre: s.sucursalNombre,
-          domicilioCliente: s.domicilio ?? undefined,
-          localidadCliente: s.localidad ?? undefined,
-          provinciaCliente: s.provincia ?? undefined,
-          kmsRecorrido: 0,
-          umbralViatico: 30,
-          aplicaViatico: false,
-        });
-        setProgreso(p => p + 1);
-      }
-      onImportado();
-      setImportado(true);
-      toast.success(`${nuevas.length} sucursales importadas`);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Error al importar");
-    } finally {
-      setImportando(false);
-    }
-  };
-
-  if (cargando) return <div className="flex h-40 items-center justify-center"><Spinner /></div>;
-  if (error) return <p className="font-body text-sm text-destructive">{error}</p>;
-
-  return (
-    <div className="flex flex-col gap-4">
-      <p className="font-body text-sm text-muted-foreground">
-        Sucursales de clientes asignadas a este PST en Siges. Las que ya están en tu Tabla KM
-        se muestran como &quot;ya cargada&quot; — solo se importan las nuevas.
-        Los km recorrido quedan en 0 para que los completes a mano.
-      </p>
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="info">{nuevasActivas.length} nuevas activas</Badge>
-        {nuevasExClientes.length > 0 && (
-          <Badge variant="neutral">{nuevasExClientes.length} ex-clientes</Badge>
-        )}
-        <Badge variant="neutral">{yaCargadas.length} ya cargadas</Badge>
-        {nuevasExClientes.length > 0 && (
-          <button
-            className="font-body text-xs text-muted-foreground underline-offset-2 hover:underline"
-            onClick={() => setVerExClientes(v => !v)}
-          >
-            {verExClientes ? "Ocultar ex-clientes" : "Mostrar también ex-clientes (sin liquidaciones en 24 meses)"}
+            <span className={cn(
+              "font-body text-[10px] font-bold uppercase tracking-[.06em]",
+              info.estado === "actual" ? "text-brand-orange" : "text-muted-foreground",
+            )}>
+              {LABEL_PASO[paso]}
+            </span>
           </button>
-        )}
-      </div>
-      {nuevas.length > 0 && !importado && (
-        <div className="flex flex-col gap-3">
-          <div className="max-h-[30vh] overflow-y-auto rounded-[8px] border border-border divide-y divide-border">
-            {nuevas.map(s => (
-              <div key={s.sigesSucursalId} className={cn("px-3 py-2", !s.actividadReciente && "opacity-60")}>
-                <div className="flex items-center gap-2">
-                  <p className="font-body text-sm font-semibold text-foreground">
-                    {s.empresaNombre} · {s.sucursalNombre}
-                  </p>
-                  {!s.actividadReciente && (
-                    <Badge variant="neutral">sin actividad</Badge>
-                  )}
-                </div>
-                <p className="font-body text-xs text-muted-foreground">
-                  {[s.domicilio, s.localidad, s.provincia].filter(Boolean).join(" · ") || "Sin domicilio en Siges"}
-                </p>
-              </div>
-            ))}
+        );
+        return (
+          <div key={paso} className="flex items-center">
+            {info.motivo
+              ? <Tooltip content={<span className="font-body text-xs">{info.motivo}</span>}>{boton}</Tooltip>
+              : boton}
+            {i < PASOS_WIZARD.length - 1 && (
+              <div className="mb-5 mx-3 h-[2px] w-10 flex-shrink-0 rounded-full bg-border" />
+            )}
           </div>
-          <BrandButton loading={importando} disabled={importando} onClick={importar} className="self-start">
-            {importando
-              ? `Importando ${progreso}/${nuevas.length}…`
-              : `Importar ${nuevas.length} sucursal${nuevas.length !== 1 ? "es" : ""} nueva${nuevas.length !== 1 ? "s" : ""}`}
-          </BrandButton>
-        </div>
-      )}
-      {importado && (
-        <p className="font-body text-sm font-semibold text-brand-orange">
-          ✓ {nuevas.length} sucursales importadas. Podés continuar al siguiente paso.
-        </p>
-      )}
-      {nuevas.length === 0 && (
-        <p className="font-body text-sm text-muted-foreground italic">
-          {todasNuevas.length === 0
-            ? "Todas las sucursales de este PST ya están en la Tabla KM. Podés pasar al siguiente paso."
-            : "No hay clientes activos nuevos para importar. Usá \"Mostrar también ex-clientes\" si querés importar clientes sin actividad reciente."}
-        </p>
-      )}
+        );
+      })}
     </div>
   );
 }
 
-export function TablaKmWizard({
-  prestador, onClose, onAplicado,
-}: {
+export function TablaKmWizard({ prestador, onClose, onAplicado }: {
   prestador: PrestadorLiquidacion; onClose: () => void; onAplicado: () => void;
 }) {
-  const [paso, setPaso] = useState<Paso>(0);
-  const [geoResumen, setGeoResumen] = useState<GeocodificarResultado | null>(null);
+  const [paso, setPaso] = useState<PasoWizard>("diagnostico");
+  const [estado, setEstado] = useState<EstadoAsistenteKm | null>(null);
+  const [errorEstado, setErrorEstado] = useState<string | null>(null);
   const [preview, setPreview] = useState<CalculoKmPreview | null>(null);
-  const ir = (n: number) => setPaso(Math.max(0, Math.min(3, n)) as Paso);
+  const [salidaPendiente, setSalidaPendiente] = useState<PasoWizard | null>(null);
+
+  const refrescarEstado = useCallback(() => {
+    liquidacionesApi.estadoAsistenteKm(prestador.id)
+      .then((e) => { setEstado(e); setErrorEstado(null); })
+      .catch(() => setErrorEstado("No se pudo leer el estado del asistente. Cerrá y volvé a abrir."));
+  }, [prestador.id]);
+  useEffect(() => { refrescarEstado(); }, [refrescarEstado]);
+
+  const cambio = () => { onAplicado(); refrescarEstado(); };
+
+  const irA = (destino: PasoWizard) => {
+    if (estadoDePaso(destino, paso, estado).estado === "bloqueado") return;
+    setPaso(destino);
+  };
+  const idx = PASOS_WIZARD.indexOf(paso);
+  const siguiente = PASOS_WIZARD[idx + 1] as PasoWizard | undefined;
+  const avanzar = () => {
+    if (!siguiente) return;
+    const consecuencia = consecuenciaDeAvanzar(paso, estado);
+    if (consecuencia) setSalidaPendiente(siguiente);
+    else irA(siguiente);
+  };
 
   return (
-    <BrandModal isOpen onClose={onClose} title={`Configurar km — ${prestador.nombreCorto}`} widthPx={900}>
-      <Indicador actual={paso} />
+    <BrandModal isOpen onClose={onClose} title={`Asistente de KM — ${prestador.nombreCorto}`} widthPx={900}>
+      <Indicador actual={paso} estado={estado} irA={irA} />
       <div className="min-h-[300px]">
-        {paso === 0 && <PasoImportar prestadorId={prestador.id} onImportado={onAplicado} />}
-        {paso === 1 && <PasoGeocodificar prestadorId={prestador.id} resumen={geoResumen} setResumen={setGeoResumen} />}
-        {paso === 2 && <PasoCalcular prestador={prestador} preview={preview} setPreview={setPreview} onAplicado={onAplicado} />}
-        {paso === 3 && <PasoPines prestadorId={prestador.id} />}
+        {errorEstado && <p className="font-body text-sm text-destructive">{errorEstado}</p>}
+        {!estado && !errorEstado && (
+          <div className="flex h-40 flex-col items-center justify-center gap-3">
+            <Spinner />
+            <p className="font-body text-sm text-muted-foreground">Revisando el estado de tu Tabla KM… (no consulta Google)</p>
+          </div>
+        )}
+        {estado && paso === "diagnostico" && (
+          <PasoDiagnostico estado={estado} nombrePrestador={prestador.nombre} irA={irA} />
+        )}
+        {estado && paso === "importar" && (
+          <PasoImportar prestadorId={prestador.id} onCambio={cambio} />
+        )}
+        {estado && paso === "ubicar" && (
+          <PasoGeocodificar prestadorId={prestador.id} estado={estado} onCambio={cambio} />
+        )}
+        {estado && paso === "distancias" && (
+          <PasoCalcular
+            prestador={prestador} estado={estado} preview={preview}
+            setPreview={setPreview} onCambio={cambio} irAUbicar={() => irA("ubicar")}
+          />
+        )}
+        {estado && paso === "pines" && (
+          <PasoPines prestadorId={prestador.id} estado={estado} onCambio={cambio} />
+        )}
       </div>
-      <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-        {paso < 3 ? (
-          <button className="font-body text-sm text-muted-foreground hover:text-foreground" onClick={() => ir(paso + 1)}>
-            Omitir este paso →
-          </button>
-        ) : <span />}
-        <div className="flex gap-2">
-          {paso > 0 && <BrandButton variant="outline" onClick={() => ir(paso - 1)}>← Anterior</BrandButton>}
-          {paso < 3
-            ? <BrandButton onClick={() => ir(paso + 1)}>Siguiente →</BrandButton>
-            : <BrandButton onClick={onClose}>Finalizar</BrandButton>}
+      <div className="mt-4 flex items-center justify-end gap-2 border-t border-border pt-4">
+        {idx > 0 && <BrandButton variant="outline" onClick={() => setPaso(PASOS_WIZARD[idx - 1])}>← Anterior</BrandButton>}
+        {siguiente
+          ? (
+            <BrandButton
+              onClick={avanzar}
+              disabled={!estado || estadoDePaso(siguiente, paso, estado).estado === "bloqueado"}
+            >
+              Siguiente →
+            </BrandButton>
+          )
+          : <BrandButton onClick={onClose}>Finalizar</BrandButton>}
+      </div>
+      <BrandModal
+        isOpen={salidaPendiente !== null}
+        onClose={() => setSalidaPendiente(null)}
+        title="Este paso quedó incompleto"
+        widthPx={460}
+      >
+        <div className="flex flex-col gap-4">
+          <p className="font-body text-sm text-foreground">{consecuenciaDeAvanzar(paso, estado)}</p>
+          <div className="flex justify-end gap-2">
+            <BrandButton variant="outline" onClick={() => setSalidaPendiente(null)}>
+              Quedarme y terminarlo
+            </BrandButton>
+            <BrandButton onClick={() => { const destino = salidaPendiente; setSalidaPendiente(null); if (destino) irA(destino); }}>
+              Continuar igual
+            </BrandButton>
+          </div>
         </div>
-      </div>
+      </BrandModal>
     </BrandModal>
   );
 }

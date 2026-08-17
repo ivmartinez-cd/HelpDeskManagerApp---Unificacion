@@ -3,6 +3,7 @@ import type {
   AplicarDistanciasResult,
   AuditarPinesResult,
   CalculoKmPreview,
+  EstadoAsistenteKm,
   GeocodeCandidato,
   GeocodificarResultado,
   PinSospechoso,
@@ -13,6 +14,11 @@ import { fetchCatalogoCompleto } from "./_shared";
 
 /** Geolocalización / distancias (two-step preview→aplicar) y pines. */
 export const geolocalizacionApi = {
+  estadoAsistenteKm: (prestadorId: string) =>
+    httpClient.get<EstadoAsistenteKm>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/asistente-km/estado`,
+    ),
+
   previewCalcularDistancias: (prestadorId: string) =>
     httpClient.post<CalculoKmPreview>(
       `/api/liquidaciones/siges/prestador/${prestadorId}/calcular-distancias/preview`,

@@ -380,3 +380,25 @@ export interface LiquidacionDetalle {
   alertas: Alerta[];
   observaciones: Observacion[];
 }
+
+/** Diagnóstico completo del Asistente de KM — GET asistente-km/estado.
+ * Lo calcula el backend sin gastar Google; es la única fuente de verdad
+ * del semáforo del wizard. */
+export interface EstadoAsistenteKm {
+  vinculadoSiges: boolean;
+  baseConfigurada: boolean;
+  baseConCoordenadas: boolean;
+  sucursalesActivas: number;
+  exClientes: number;
+  sucursalesNuevasPorImportar: number;
+  filasTablaKm: number;
+  sinCoordenadas: number;
+  ambiguasPendientes: number;
+  filasSinKm: number;
+  noEncontradasEnSiges: number;
+  pinesSospechososCacheados: number;
+  estimacionGeocodificar: number;
+  estimacionDistancias: number;
+  estimacionAuditarPines: number;
+  topePorCorrida: number;
+}
