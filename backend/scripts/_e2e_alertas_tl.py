@@ -109,7 +109,9 @@ def main() -> int:
         assert alt001_despues == 0, f"quedaron {alt001_despues} ALT001 con la regla apagada"
         page.get_by_text(f"Motivo: {MOTIVO}").wait_for(timeout=10000)  # la descartada sigue
         page.screenshot(path=f"{OUT}/14-sin-alt001.png")
-        paso(f"con ALT001 apagada: {alt001_antes} → 0 alertas ALT001 (la descartada no-ALT001 sigue)")
+        paso(
+            f"con ALT001 apagada: {alt001_antes} → 0 ALT001 (la descartada no-ALT001 sigue)"
+        )
 
         # 5. Reactivar → reanalizar → vuelven pendientes
         toggle_alt001(page, activar=True)
