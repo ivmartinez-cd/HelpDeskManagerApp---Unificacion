@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +9,6 @@ from src.modules.analisis_log_hp.application.use_cases.analyze_log import Analyz
 from src.modules.analisis_log_hp.application.use_cases.diagnose_ai import (
     DiagnoseAi,
     GeneratePdfSummary,
-    ListAiModels,
 )
 from src.modules.analisis_log_hp.application.use_cases.validate_log import ValidateLog
 from src.modules.analisis_log_hp.domain.well_known_permissions import VIEW
@@ -114,7 +111,3 @@ async def pdf_summary(
     )
 
 
-@router.get("/analysis/models")
-async def list_ai_models(_: Identity = _require_view) -> list[dict[str, Any]]:
-    uc = ListAiModels(get_ai_gateway())
-    return await uc.execute()

@@ -8,11 +8,12 @@ volúmenes — contradiciendo la decisión post-incidente de CLAUDE.md y sugirie
 actualizadas a `docs/`. (2) Creados `backend/README.md` y `frontend/README.md`
 (template §10) — cierra el hallazgo BAJO §10 de la auditoría. (3) Los 8 endpoints
 BAJO §11 de la auditoría (customers, catálogos auth, /periodos) ya estaban paginados
-desde la corrección del 08-14 — verificado; el único stray restante es
-`GET /analysis/models` (`list[dict]`, catálogo chico), que además **no tiene ningún
-consumidor en el frontend** (`listAiModels` definido y nunca usado): mismo caso que
-`GET /clients` en ADR-021 — candidato a borrar en la próxima revisión antes que a
-paginar un contrato muerto.
+desde la corrección del 08-14 — verificado; el único stray restante era
+`GET /analysis/models`, sin consumidor en el frontend. **Resuelto mismo día**: se
+borraron los dos endpoints huérfanos (`GET /clients` y `GET /analysis/models`) con
+sus cadenas completas (use cases, métodos de puerto, implementaciones y entradas del
+API client del frontend). Con esto no queda ningún endpoint de colección fuera de
+§11 sin ADR.
 
 **Estado §4 al cierre de la 6ª corrida**: todas las métricas en o por debajo de los
 inventarios congelados — funciones >50: 10/10 de ADR-017 · clases >200: 2/2 ·

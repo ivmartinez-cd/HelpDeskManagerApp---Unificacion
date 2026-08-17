@@ -13,7 +13,3 @@ class AiGateway(Protocol):
     ) -> tuple[str, dict[str, int]]:
         """Resumen ejecutivo para PDF. Retorna (summary_str, tokens_dict)."""
         ...
-
-    async def list_models(self) -> list[dict[str, Any]]:
-        """Lista los modelos disponibles vía Anthropic Models API."""
-        ...

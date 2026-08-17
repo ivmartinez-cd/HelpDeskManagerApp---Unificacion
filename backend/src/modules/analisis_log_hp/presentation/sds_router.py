@@ -13,7 +13,6 @@ from src.modules.analisis_log_hp.application.use_cases.get_device_live_data impo
     GetDeviceAlerts,
     GetDeviceConsumables,
     GetDeviceMeters,
-    GetFleetClients,
 )
 from src.modules.analisis_log_hp.application.use_cases.get_hp_operations import GetHpOperations
 from src.modules.analisis_log_hp.application.use_cases.get_remote_ews import GetRemoteEws
@@ -119,12 +118,6 @@ async def refresh_hp_cache(
     uc = RefreshHpCache(get_hp_portal_gateway())
     baseline = await uc.execute(device_id)
     return {"baseline": baseline}
-
-
-@router.get("/clients")
-async def get_fleet_clients(_: Identity = _require_view) -> list[dict[str, Any]]:
-    uc = GetFleetClients(get_hp_insight_gateway())
-    return await uc.execute()
 
 
 @router.get("/clients/{customer_id}/devices")

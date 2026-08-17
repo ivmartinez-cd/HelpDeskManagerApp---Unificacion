@@ -42,9 +42,6 @@ export const analisisLogHpApi = {
   refreshCache: (deviceId: string) =>
     httpClient.post<{ baseline: Record<string, unknown>[] }>(`${BASE_SDS}/devices/${encodeURIComponent(deviceId)}/refresh-cache`),
 
-  getFleetClients: () =>
-    httpClient.get<Record<string, unknown>[]>(`${BASE_SDS}/clients`),
-
   getClientDevices: (customerId: number) =>
     httpClient.get<ClientDevice[]>(`${BASE_SDS}/clients/${customerId}/devices`),
 
@@ -63,9 +60,6 @@ export const analisisLogHpApi = {
       payload,
       ...(model ? { model } : {}),
     }),
-
-  listAiModels: () =>
-    httpClient.get<Record<string, unknown>[]>(`${BASE}/analysis/models`),
 
   // Error codes
   listErrorCodes: (page = 1, size = 50) =>

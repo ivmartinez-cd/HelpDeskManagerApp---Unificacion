@@ -43,14 +43,6 @@ class GetDeviceMeters:
         return await self._insight.get_device_meters_history(device_id, days=days)
 
 
-class GetFleetClients:
-    def __init__(self, insight: HpInsightGateway) -> None:
-        self._insight = insight
-
-    async def execute(self) -> list[dict[str, Any]]:
-        return await self._insight.get_customers()
-
-
 class GetClientDevices:
     def __init__(self, insight: HpInsightGateway) -> None:
         self._insight = insight

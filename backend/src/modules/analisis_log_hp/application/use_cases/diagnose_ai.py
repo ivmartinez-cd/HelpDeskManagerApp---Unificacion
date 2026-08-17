@@ -52,11 +52,3 @@ class GeneratePdfSummary:
     async def execute(self, payload: dict[str, Any], model: str) -> DiagnoseAiResult:
         text, tokens = await self._ai.generate_pdf_summary(payload, model)
         return DiagnoseAiResult(diagnosis=text, tokens=tokens, cost_usd=_cost(tokens))
-
-
-class ListAiModels:
-    def __init__(self, ai: AiGateway) -> None:
-        self._ai = ai
-
-    async def execute(self) -> list[dict[str, Any]]:
-        return await self._ai.list_models()

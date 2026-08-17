@@ -152,9 +152,6 @@ class HttpxHpInsightGateway:
             params={"days": days},
         )
 
-    async def get_customers(self) -> list[JsonDict]:
-        return await self._get_list("/api/customers")
-
     async def get_devices(self, customer_id: int) -> list[JsonDict]:
         return await self._get_list(
             "/api/devices",

@@ -1,6 +1,9 @@
 # ADR-021: Endpoints proxy de SDS/Insight sin Page[T] ni schemas propios
 
-## Estado: Aceptado (2026-08-16)
+## Estado: Aceptado (2026-08-16) — condición 3 ejecutada el mismo día:
+`GET /clients` se borró (sin consumidor, YAGNI) junto con su cadena
+(`GetFleetClients`, `get_customers` del puerto e implementación). El alcance de
+esta ADR queda en los cinco endpoints restantes.
 
 ## Contexto
 

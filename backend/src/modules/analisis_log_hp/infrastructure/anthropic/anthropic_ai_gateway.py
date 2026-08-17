@@ -131,14 +131,3 @@ class AnthropicAiGateway:
         )
         raw = response.content[0].text
         return raw.strip(), _parse_tokens(response.usage)
-
-    async def list_models(self) -> list[dict[str, Any]]:
-        page = await self._client.models.list()
-        return [
-            {
-                "id": m.id,
-                "display_name": getattr(m, "display_name", m.id),
-                "created_at": getattr(m, "created_at", None),
-            }
-            for m in page.data
-        ]
