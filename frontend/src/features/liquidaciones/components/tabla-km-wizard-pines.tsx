@@ -6,7 +6,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { PinSospechoso } from "../types/liquidaciones";
+import type { AuditarPinesResult, PinSospechoso } from "../types/liquidaciones";
 
 function PinSospechosoItem({ pin, prestadorId, onCorregido }: {
   pin: PinSospechoso; prestadorId: string; onCorregido: () => void;
@@ -45,30 +45,32 @@ function PinSospechosoItem({ pin, prestadorId, onCorregido }: {
 export function PasoPines({ prestadorId }: { prestadorId: string }) {
   const [pines, setPines] = useState<PinSospechoso[] | null>(null);
   const [auditando, setAuditando] = useState(false);
+  const [resultado, setResultado] = useState<AuditarPinesResult | null>(null);
   const [key, setKey] = useState(0);
+
   useEffect(() => {
     liquidacionesApi.listPinesSospechosos(prestadorId).then(setPines).catch(() => setPines([]));
   }, [prestadorId, key]);
+
   const auditar = async () => {
     setAuditando(true);
     try {
       const r = await liquidacionesApi.auditarPines(prestadorId);
-      toast.success(`${r.geocodificadas} geocodificadas (${r.llamadasGoogle} llamadas Google)`);
+      setResultado(r);
       setKey(k => k + 1);
     } finally { setAuditando(false); }
   };
+
   return (
     <div className="flex flex-col gap-4">
       <p className="font-body text-sm text-muted-foreground">
-        Revisá si algún pin de Siges difiere del geocode del domicilio (umbral: 5 km).
-        &quot;Corregir pin&quot; reemplaza las coordenadas con el geocode para el próximo cálculo.
-        Este paso es opcional — podés finalizar sin auditarlo.
+        Compara el pin de Siges de cada sucursal contra el geocode de su domicilio (umbral: 5 km).
+        Si el pin difiere demasiado, podés reemplazarlo con el geocode — eso mejora la precisión
+        del cálculo de distancias. Este paso es opcional.
       </p>
       {!pines ? (
         <div className="flex h-20 items-center justify-center"><Spinner /></div>
-      ) : pines.length === 0 ? (
-        <p className="font-body text-sm text-muted-foreground italic">Sin discrepancias detectadas. Usá &quot;Auditar con Google&quot; para geocodificar domicilios faltantes.</p>
-      ) : (
+      ) : pines.length > 0 ? (
         <div className="flex max-h-[35vh] flex-col gap-2 overflow-y-auto pr-1">
           {pines.map((p) => (
             <PinSospechosoItem
@@ -79,8 +81,22 @@ export function PasoPines({ prestadorId }: { prestadorId: string }) {
             />
           ))}
         </div>
+      ) : resultado ? (
+        <p className="font-body text-sm text-muted-foreground italic">
+          ✓ Sin discrepancias mayores a 5 km
+          {resultado.geocodificadas > 0 && ` (${resultado.geocodificadas} geocodificadas, ${resultado.llamadasGoogle} llamadas Google)`}.
+          Podés finalizar.
+        </p>
+      ) : (
+        <p className="font-body text-sm text-muted-foreground italic">
+          Hacé clic en &quot;Verificar pines con Google&quot; para comparar los pines de Siges
+          contra el domicilio de cada sucursal. No modifica nada — solo detecta cuáles
+          difieren más de 5 km para que puedas corregirlos.
+        </p>
       )}
-      <BrandButton variant="outline" size="sm" loading={auditando} onClick={auditar}>Auditar con Google</BrandButton>
+      <BrandButton variant="outline" size="sm" loading={auditando} onClick={auditar}>
+        Verificar pines con Google
+      </BrandButton>
     </div>
   );
 }
