@@ -137,6 +137,11 @@ class Settings(BaseSettings):
     # actualiza el backlog). Corte temporal: cuántos meses atrás buscar en Siges.
     pendientes_refresh_interval_minutes: int = 60
     pendientes_meses_corte: int = 24
+    # Cadencia del job de fondo que refresca la copia local de eventos del
+    # Calendario de Planificación. Full replace de ±90 días (~20 s); Gestión no
+    # expone diff, así que cada ciclo rehace el rango entero. El botón
+    # "Sincronizar" fuerza un ciclo inmediato aparte.
+    calendario_refresh_interval_minutes: int = 120
 
     # PortalWeb de SDS Insight — scraping para baja de equipos offline.
     # sds_delete_dry_run=True por default: la baja real es irreversible. Solo cambiar a

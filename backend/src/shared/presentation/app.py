@@ -143,6 +143,10 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
         tasks += start_analisis_log_hp_background_jobs(
             settings.analisis_log_hp_snapshot_interval_minutes
         )
+        from src.modules.contadores.presentation.background_jobs import (
+            start_contadores_background_jobs,
+        )
+        tasks += start_contadores_background_jobs(settings.calendario_refresh_interval_minutes)
         logger.info("background_jobs: %d job(s) iniciados", len(tasks))
     try:
         yield

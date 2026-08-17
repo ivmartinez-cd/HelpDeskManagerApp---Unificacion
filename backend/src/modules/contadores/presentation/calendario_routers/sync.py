@@ -1,4 +1,7 @@
-"""Sync del calendario contra Gestión: estado y disparo manual."""
+"""Sync del calendario contra Gestión: estado y disparo manual.
+
+El auto-sync automático corre cada 120 min (2 h) vía background_jobs.py de este
+módulo. Este router solo expone el estado y el disparo manual (botón "Sincronizar")."""
 
 from datetime import UTC, datetime, timedelta
 
