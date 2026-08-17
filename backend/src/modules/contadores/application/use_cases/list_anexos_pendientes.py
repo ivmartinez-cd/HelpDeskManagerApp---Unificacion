@@ -5,6 +5,7 @@ el snapshot cacheado del puerto. El orden ya viene fijo del SQL (período más
 viejo primero, después grupo y anexo) — es un reporte para imprimir, no una
 tabla explorable."""
 
+import re
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 
@@ -23,6 +24,8 @@ from src.modules.contadores.domain.services.cliente_matcher import normalizar_no
 from src.modules.contadores.domain.services.periodos_facturacion import estado_de_periodo
 
 _MIN_LARGO_NOMBRE = 5
+# Separadores tipográficos equivalentes: "Roemmers - Maprimed" ≈ "Roemmers / Maprimed"
+_SEPARADORES_RE = re.compile(r"\s*[-–/|]\s*")
 
 
 @dataclass(frozen=True)
@@ -45,12 +48,15 @@ class ListAnexosPendientesUseCase:
     ) -> ListAnexosPendientesResult:
         snapshot = await self._port.list_anexos(force_refresh=request.force_refresh)
         hoy = hoy or datetime.now(UTC).date()
-        mapa_por_cliente = await self._build_operadores(hoy)
+        mapa_nome, mapa_grupo = await self._build_mapas(hoy)
         anotados = [
             AnexoPendienteConEstado(
                 anexo=a,
                 estado=estado_de_periodo(a.periodo, hoy=hoy),
-                operador=_buscar_operador(a.grupo, mapa_por_cliente),
+                operador=(
+                    _buscar_operador(a.grupo, mapa_nome)
+                    or _buscar_operador(a.grupo, mapa_grupo)
+                ),
             )
             for a in snapshot.anexos
         ]
@@ -62,10 +68,12 @@ class ListAnexosPendientesUseCase:
             anexos=anotados, consultado_en=snapshot.consultado_en
         )
 
-    async def _build_operadores(self, hoy: date) -> dict[str, OperadorAsignado]:
+    async def _build_mapas(
+        self, hoy: date
+    ) -> tuple[dict[str, OperadorAsignado], dict[str, OperadorAsignado]]:
         if self._operador_mapa is None:
-            return {}
-        return await self._operador_mapa.build_por_cliente(hoy=hoy)
+            return {}, {}
+        return await self._operador_mapa.build_ambos(hoy=hoy)
 
 
 def _filtrar(
@@ -83,19 +91,30 @@ def _matchea(anotado: AnexoPendienteConEstado, needle: str) -> bool:
     return any(needle in campo.casefold() for campo in campos if campo)
 
 
+def _flex(norm: str) -> str:
+    """Normaliza separadores tipográficos a espacio para equiparar variantes
+    como 'Roemmers - Maprimed' y 'Roemmers / Maprimed'."""
+    return re.sub(r"\s+", " ", _SEPARADORES_RE.sub(" ", norm)).strip()
+
+
 def _buscar_operador(
     grupo: str | None,
     mapa_norm: dict[str, OperadorAsignado],
 ) -> OperadorAsignado | None:
     """Cruza el grupo económico del anexo contra nombres normalizados de
-    clientes del calendario. Exacto primero, contención única si no hay exacto
-    (misma lógica que `match_clientes`/`_match_por_contencion`)."""
+    clientes del calendario. Exacto > flex (separadores equivalentes) >
+    contención única (misma lógica que `match_clientes`)."""
     if not grupo or not mapa_norm:
         return None
     norm = normalizar_nombre(grupo)
     if norm in mapa_norm:
         return mapa_norm[norm]
-    if len(norm) < _MIN_LARGO_NOMBRE:
+    # Segunda pasada: igualar '-' '/' '|' '–' a espacio en ambos lados
+    flex_grupo = _flex(norm)
+    flex_mapa = {_flex(k): v for k, v in mapa_norm.items()}
+    if flex_grupo in flex_mapa:
+        return flex_mapa[flex_grupo]
+    if len(flex_grupo) < _MIN_LARGO_NOMBRE:
         return None
-    candidatos = [op for key, op in mapa_norm.items() if norm in key or key in norm]
+    candidatos = [op for key, op in flex_mapa.items() if flex_grupo in key or key in flex_grupo]
     return candidatos[0] if len(candidatos) == 1 else None

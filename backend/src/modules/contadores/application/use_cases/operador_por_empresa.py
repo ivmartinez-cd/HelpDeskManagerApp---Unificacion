@@ -39,21 +39,42 @@ class MapaOperadorPorEmpresa:
         self._alias = alias
         self._parque = parque
 
-    async def build_por_cliente(self, *, hoy: date) -> dict[str, OperadorAsignado]:
-        """Nombre normalizado de Gestión → operador, para cruce por nombre
-        cuando no hay ID de Siges confiable (ej. anexos-pendientes vs
-        ID_EmpresaAdmin del contrato). Degrada a vacío si el cruce falla."""
+    async def build_ambos(
+        self, *, hoy: date
+    ) -> tuple[dict[str, OperadorAsignado], dict[str, OperadorAsignado]]:
+        """Un fetch del calendario → (mapa_nombre, mapa_grupo).
+        mapa_nombre: nombre_norm de Gestión → op (cruce exacto/flex).
+        mapa_grupo: den_comercial_norm de Siges → op (alias + parque;
+          cubre casos como ASP→451→"Nutrien" donde los nombres son distintos).
+        Cualquiera degrada a vacío si el cruce falla."""
         from src.modules.contadores.domain.services.cliente_matcher import normalizar_nombre
 
         try:
-            raw = await self._operador_por_cliente(hoy)
+            opc = await self._operador_por_cliente(hoy)
         except ExternalServiceError as exc:
-            logger.warning(
-                "Sin cruce cliente→operador por nombre; el listado va sin operador",
-                exc_info=exc,
-            )
+            logger.warning("Sin cruce cliente→operador (build_ambos)", exc_info=exc)
+            return {}, {}
+        mapa_nombre = {normalizar_nombre(k): v for k, v in opc.items()}
+        return mapa_nombre, await self._build_mapa_grupo(opc)
+
+    async def _build_mapa_grupo(
+        self, opc: dict[str, OperadorAsignado]
+    ) -> dict[str, OperadorAsignado]:
+        from src.modules.contadores.domain.services.cliente_matcher import normalizar_nombre
+
+        try:
+            empresas = await self._parque.list_empresas_activas()
+            matches = match_clientes(sorted(opc), empresas, await self._alias.list_all())
+            por_id = self._invertir(matches, opc)
+            by_id = {e.id: e for e in empresas}
+            return {
+                normalizar_nombre(by_id[eid].den_comercial): op
+                for eid, op in por_id.items()
+                if eid in by_id
+            }
+        except ExternalServiceError as exc:
+            logger.warning("Sin cruce empresa→grupo; fallback por grupo vacío", exc_info=exc)
             return {}
-        return {normalizar_nombre(k): v for k, v in raw.items()}
 
     async def build(self, *, hoy: date) -> dict[int, OperadorAsignado]:
         """Vacío si el cruce no se puede armar (Siges caído): el listado
