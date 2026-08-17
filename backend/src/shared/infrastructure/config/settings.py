@@ -36,10 +36,10 @@ class Settings(BaseSettings):
 
     contadores_output_dir: str = "var/contadores/outputs"
 
-    sds_api_key: str = "2bc8f5eaae344c46814190bffd40060d"
-    sds_api_secret: SecretStr = SecretStr(
-        "0iIxVYcz5lH8sTjl6c6B89uvyQ4qyl2bojRPv155onzqkqpANt6culpITUBldR8a"
-    )
+    # Credenciales solo por .env — nunca defaults en código (§8; los valores que
+    # vivieron acá hasta 2026-08-16 quedan en el historial git: rotarlos).
+    sds_api_key: str = ""
+    sds_api_secret: SecretStr = SecretStr("")
     sds_base_url: str = "https://hp-sds-latam.insightportal.net/PortalAPI"
     sds_timeout_seconds: float = 20.0
 
@@ -51,10 +51,8 @@ class Settings(BaseSettings):
     # backend HP. Cada módulo mantiene su propio bloque de config y su propio cliente
     # de todas formas por la independencia entre módulos de negocio (import-linter).
     insight_base_url: str = "https://hp-sds-latam.insightportal.net/PortalAPI"
-    insight_api_key: str = "cbcf148472e74e868c44199f507aa2f7"
-    insight_api_secret: SecretStr = SecretStr(
-        "Ra5tjX4UbZNbpRMzVGKrN1KcBsLDJFOYvJzWNwqk5ukbdlxrJthO7NxqthNSM4Yr"
-    )
+    insight_api_key: str = ""
+    insight_api_secret: SecretStr = SecretStr("")
     # INSIGHT_STATUS_ON_ORDER: nótese ACTION, no ACTIONED (bug corregido en el legacy).
     insight_mark_actioned: bool = False
     insight_status_on_order: str = "ACTION"
@@ -85,8 +83,8 @@ class Settings(BaseSettings):
     # una válvula operativa — mismo criterio que el legacy (AUTOLOAD_MAX_ORDERS_PER_CYCLE).
     autoload_max_orders_per_cycle: int = 10
 
-    epson_ers_username: str = "insumos@canaldirecto.com.ar"
-    epson_ers_password: SecretStr = SecretStr("C@nal3160")
+    epson_ers_username: str = ""
+    epson_ers_password: SecretStr = SecretStr("")
     epson_ers_base_url: str = "https://www.remote-services.epson.com/prod"
     epson_ers_token_file: str = "var/contadores/ers_token.json"
     epson_ers_timeout_seconds: float = 15.0

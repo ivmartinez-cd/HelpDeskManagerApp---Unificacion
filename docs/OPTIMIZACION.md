@@ -1,6 +1,6 @@
 # Optimización y cumplimiento de ARCHITECTURE_GUIDE.md
 
-**Última pasada:** 2026-08-16 (3ª corrida: ejecución de las optimizaciones §3.1–§3.3 y §4.1)
+**Última pasada:** 2026-08-16 (4ª corrida: seguridad §8, `.env.example` y migraciones)
 **Método:** gates obligatorios dentro de los contenedores (`lint-imports`, `ruff`, `mypy`,
 `pytest tests/unit`, `tsc`, `eslint`) + medición AST de §4 (funciones/clases/anidamiento,
 excluyendo migraciones) + revisión manual de `except Exception` (§6), endpoints de
@@ -40,6 +40,27 @@ y el inventario congelado de `AUDITORIA_ARCHITECTURE_GUIDE_2026-08-14.md`.
 5. **BOM UTF-8** en `liquidaciones/presentation/dependencies/siges.py` — único archivo
    del repo con BOM; Python lo tolera pero rompe herramientas que parsean el fuente (el
    script AST de auditoría falló ahí). Removido.
+
+## 2.b Hallazgos de la 4ª corrida (2026-08-16)
+
+1. **Secretos hardcodeados en `settings.py` (§8, CRÍTICO) — corregido, falta rotar.**
+   Tres pares de credenciales reales commiteadas como defaults: `sds_api_key/secret`
+   (Insight de contadores), `insight_api_key/secret` (Insight de insumos) y
+   `epson_ers_username/password`. Los dos pares de Insight **ni siquiera estaban en
+   `.env`**: la app corría con el default del código. Fix aplicado: valores movidos a
+   `.env` (git-ignored, verificado), defaults blanqueados en `settings.py`, backend
+   recreado y verificado. **Pendiente para el usuario: rotar las tres credenciales en
+   sus portales — los valores viejos quedan para siempre en el historial de git.**
+2. **`.env.example` desincronizado (§12)**: 23 variables de `Settings` sin documentar,
+   incluida `DISABLE_BACKGROUND_JOBS` (el freno de seguridad de CLAUDE.md) y
+   `GOOGLE_MAPS_API_KEY`. Sincronizado completo (verificado por diff contra
+   `Settings.model_fields`); secretos como placeholder vacío, defaults como comentario.
+3. **Migraciones (§12/ADR-002) — sin violaciones**: de 61 migraciones, las únicas dos
+   con `downgrade` vacío son el baseline (upgrade también vacío, revisión bandera) y
+   `60ee5fdc4225_backfill_app_user_color` (irreversibilidad deliberada y documentada
+   en el propio archivo).
+4. **Higiene §12 — limpio**: sin `console.log`/`debugger` en `frontend/src`, sin
+   `print()` en `backend/src`, sin catches vacíos en el frontend.
 
 ## 3. Incumplimientos de la guía pendientes (requieren decisión o trabajo)
 
