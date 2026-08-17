@@ -31,9 +31,11 @@ from src.modules.liquidaciones.application.use_cases.resolver_coordenadas import
 from src.modules.liquidaciones.application.use_cases.tabla_km_lugares import (
     BuscarLugarFila,
     RecalcularKmFila,
-    RefrescarDatosSiges,
     ResolverCoordenadasFila,
     TablaKmLugaresPorts,
+)
+from src.modules.liquidaciones.application.use_cases.tabla_km_refrescar_siges import (
+    RefrescarDatosSiges,
 )
 from src.modules.liquidaciones.infrastructure.google_maps.httpx_geocoding_gateway import (
     HttpxGeocodingGateway,

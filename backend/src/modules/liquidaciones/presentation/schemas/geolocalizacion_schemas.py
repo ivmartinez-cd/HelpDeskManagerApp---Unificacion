@@ -14,7 +14,7 @@ from src.modules.liquidaciones.application.use_cases.pines_sospechosos import (
 from src.modules.liquidaciones.application.use_cases.resolver_coordenadas import (
     SucursalConCandidatos,
 )
-from src.modules.liquidaciones.application.use_cases.tabla_km_lugares import (
+from src.modules.liquidaciones.application.use_cases.tabla_km_refrescar_siges import (
     CambioDomicilio,
     FilaNoEncontrada,
     RefrescarDireccionesResultado,
