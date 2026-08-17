@@ -139,6 +139,19 @@ class FakeSucursalCoordenadasRepository:
         return resuelta
 
 
+class FakeIncidentesActividad:
+    """Solo lo que usan los use cases geo del puerto de incidentes: el set de
+    empresas con actividad reciente (ex-clientes = las que no están)."""
+
+    def __init__(self, empresas: set[str] | None = None) -> None:
+        self.empresas = empresas or set()
+
+    async def empresas_con_actividad_reciente(
+        self, prestador_id: UUID, desde_periodo: str
+    ) -> set[str]:
+        return set(self.empresas)
+
+
 class FakeCalculoKmPreviewRepository:
     def __init__(self) -> None:
         self.rows: dict[UUID, CalculoKmPreview] = {}
@@ -151,6 +164,7 @@ class FakeCalculoKmPreviewRepository:
         sin_ubicar: int,
         sin_ruta: int,
         elementos_google: int,
+        sin_actividad: int = 0,
     ) -> CalculoKmPreview:
         self.rows = {
             pid: p for pid, p in self.rows.items() if p.prestador_id != prestador_id
@@ -162,6 +176,7 @@ class FakeCalculoKmPreviewRepository:
             sin_ubicar=sin_ubicar,
             sin_ruta=sin_ruta,
             elementos_google=elementos_google,
+            sin_actividad=sin_actividad,
             created_at=_AHORA,
         )
         self.rows[row.id] = row

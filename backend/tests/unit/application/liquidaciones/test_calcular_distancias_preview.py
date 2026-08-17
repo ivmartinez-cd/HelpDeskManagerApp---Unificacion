@@ -24,6 +24,7 @@ from tests.unit.domain.liquidaciones.fakes import FakePrestadorRepository
 from tests.unit.domain.liquidaciones.fakes_geolocalizacion import (
     FakeCalculoKmPreviewRepository,
     FakeGoogleMapsIdaVuelta,
+    FakeIncidentesActividad,
     FakeSigesGeoGateway,
     FakeSucursalCoordenadasRepository,
     FakeTablaKmGeoRepository,
@@ -69,6 +70,9 @@ def _armar(
         google_maps=FakeGoogleMapsIdaVuelta(tramos or {_DESTINO: (199.294, 199.521)}),
         sucursal_coords=FakeSucursalCoordenadasRepository(),
         previews=FakeCalculoKmPreviewRepository(),
+        # Todas las empresas del escenario cuentan como activas — el filtro de
+        # ex-clientes se prueba aparte.
+        incidentes=FakeIncidentesActividad({c.empresa_nombre for c in clientes}),
     )
     return (
         PreviewCalcularDistancias(ports, tope),

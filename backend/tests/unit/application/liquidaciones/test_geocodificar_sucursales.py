@@ -18,6 +18,7 @@ from tests.unit.domain.liquidaciones.fakes import FakePrestadorRepository
 from tests.unit.domain.liquidaciones.fakes_geolocalizacion import (
     FakeGeocodeCacheRepository,
     FakeGeocodingGateway,
+    FakeIncidentesActividad,
     FakeSigesGeoGateway,
     FakeSucursalCoordenadasRepository,
 )
@@ -71,6 +72,9 @@ def _armar(
         sucursal_coords=FakeSucursalCoordenadasRepository(),
         geocode_cache=FakeGeocodeCacheRepository(),
         geocoding=geocoding,
+        # Todas las empresas del escenario cuentan como activas — el filtro de
+        # ex-clientes se prueba aparte.
+        incidentes=FakeIncidentesActividad({s.empresa_nombre for s in sucursales}),
     )
     return GeocodificarSucursales(ports, tope), ports, prestador.id
 

@@ -40,6 +40,7 @@ def _anexo(
         anexo=nombre,
         grupo=grupo,
         contrato="COD36CDSI00328",
+        id_empresa_admin=3,
         empresa_admin="CD3 (CDSISA)",
         vendedor=vendedor,
         moneda="Pesos",
