@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Calendar, DollarSign, ExternalLink } from "lucide-react";
 import { Spinner } from "@/shared/components/ui/spinner";
-import { cn } from "@/shared/utils/cn";
+import { ApiError } from "@/services/http-client";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type {
   Alerta,
@@ -17,50 +17,36 @@ import { formatARS } from "../lib/format";
 import { AlertasSeccion } from "./alertas-seccion";
 import { AyCAccionesBar } from "./ayc-acciones-bar";
 import { EstadoBadge } from "./estado-badge";
+import { EstadoSelector } from "./estado-selector";
 import { ExtraItemSeccion } from "./extra-item-seccion";
 import { IncidentesSeccion } from "./incidentes-seccion";
 import { KpiTile } from "./kpi-tile";
 import { ObservacionesSeccion } from "./observaciones-seccion";
-
-const ESTADOS: EstadoLiquidacion[] = [
-  "abierta",
-  "preliquidada",
-  "recibida",
-  "observada",
-  "aprobada",
-  "cerrada",
-];
-
-const ESTADO_LABELS: Record<EstadoLiquidacion, string> = {
-  abierta: "Abierta",
-  preliquidada: "Preliquidada",
-  recibida: "Recibida",
-  observada: "Observada",
-  aprobada: "Aprobada",
-  cerrada: "Cerrada",
-};
 
 export function LiquidacionDetalleView({ id }: { id: string }) {
   const router = useRouter();
   const [detalle, setDetalle] = useState<LiquidacionDetalle | null>(null);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [reanalizing, setReanalizing] = useState(false);
   const [updatingEstado, setUpdatingEstado] = useState(false);
   const [soloConAlertas, setSoloConAlertas] = useState(false);
 
-  const load = useCallback(async () => {
-    try {
-      const [det, prest] = await Promise.all([
-        liquidacionesApi.get(id),
-        liquidacionesApi.listPrestadores(false),
-      ]);
-      setDetalle(det);
-      setPrestadores(prest);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  const load = useCallback(
+    () =>
+      Promise.all([liquidacionesApi.get(id), liquidacionesApi.listPrestadores(false)])
+        .then(([det, prest]) => {
+          setDetalle(det);
+          setPrestadores(prest);
+        })
+        .catch((err: unknown) => {
+          if (err instanceof ApiError && err.status === 404) setNotFound(true);
+          else throw err;
+        })
+        .finally(() => setLoading(false)),
+    [id],
+  );
 
   useEffect(() => { void load(); }, [load]);
 
@@ -93,7 +79,24 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
     );
   }
 
-  if (!detalle) return null;
+  if (notFound || !detalle) {
+    return (
+      <div className="flex flex-col items-center gap-4 p-16">
+        <p className="font-heading text-xl font-extrabold text-foreground">
+          Liquidación no encontrada
+        </p>
+        <p className="font-body text-sm text-muted-foreground">
+          Puede que se haya eliminado o que el enlace sea viejo.
+        </p>
+        <Link
+          href="/liquidaciones/lista"
+          className="font-body text-sm font-semibold text-brand-orange hover:underline"
+        >
+          ← Volver a la lista de liquidaciones
+        </Link>
+      </div>
+    );
+  }
 
   const { liquidacion, incidentes, alertas, observaciones } = detalle;
   const pstMap = Object.fromEntries(prestadores.map((p) => [p.id, p]));
@@ -188,16 +191,11 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
               <span className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
                 Cambiar estado
               </span>
-              <select
-                value={liquidacion.estado}
+              <EstadoSelector
+                estado={liquidacion.estado}
                 disabled={updatingEstado}
-                onChange={(e) => void handleUpdateEstado(e.target.value as EstadoLiquidacion)}
-                className="rounded-[8px] border border-border bg-card px-2 py-1 font-body text-xs text-foreground outline-none focus:border-brand-orange/50 disabled:opacity-50"
-              >
-                {ESTADOS.map((e) => (
-                  <option key={e} value={e}>{ESTADO_LABELS[e]}</option>
-                ))}
-              </select>
+                onCambiar={(nuevo) => void handleUpdateEstado(nuevo)}
+              />
             </div>
             <AyCAccionesBar
               liquidacion={liquidacion}
