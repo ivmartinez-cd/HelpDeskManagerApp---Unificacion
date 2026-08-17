@@ -117,19 +117,19 @@ function EventsTable({ analysis }: { analysis: AnalysisResult }) {
 }
 
 function ConsumablesPanel({ deviceId }: { deviceId: string }) {
-  const [data, setData] = useState<Record<string, unknown>[] | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ deviceId: string; data: Record<string, unknown>[] } | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!loaded) return;
-    setLoading(true);
+    let cancelled = false;
     analisisLogHpApi.getConsumables(Number(deviceId))
-      .then(setData)
-      .catch(() => setData([]))
-      .finally(() => setLoading(false));
+      .then((data) => { if (!cancelled) setResult({ deviceId, data }); })
+      .catch(() => { if (!cancelled) setResult({ deviceId, data: [] }); });
+    return () => { cancelled = true; };
   }, [deviceId, loaded]);
 
+  const data = result?.deviceId === deviceId ? result.data : null;
   if (!loaded) return (
     <button
       type="button"
@@ -139,8 +139,8 @@ function ConsumablesPanel({ deviceId }: { deviceId: string }) {
       Cargar estado de consumibles →
     </button>
   );
-  if (loading) return <p className="font-body text-[13px] text-muted-foreground">Cargando...</p>;
-  if (!data?.length) return <p className="font-body text-[13px] text-muted-foreground">Sin datos de consumibles.</p>;
+  if (data === null) return <p className="font-body text-[13px] text-muted-foreground">Cargando...</p>;
+  if (!data.length) return <p className="font-body text-[13px] text-muted-foreground">Sin datos de consumibles.</p>;
   return (
     <pre className="font-mono text-[11px] text-foreground/70 overflow-auto max-h-48">
       {JSON.stringify(data, null, 2)}

@@ -31,8 +31,8 @@ def _get_html_content(raw_xml_html: str) -> str:
         node = root.find("content")
         if node is not None and node.text:
             return str(node.text)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("XML de event log no parseable, fallback a CDATA", exc_info=exc)
     cdatas = re.findall(r"<!\[CDATA\[(.*?)\]\]>", raw_xml_html, re.DOTALL)
     return max(cdatas, key=len) if cdatas else raw_xml_html
 
