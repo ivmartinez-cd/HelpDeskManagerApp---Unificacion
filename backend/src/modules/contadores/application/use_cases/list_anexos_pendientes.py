@@ -48,15 +48,17 @@ class ListAnexosPendientesUseCase:
     ) -> ListAnexosPendientesResult:
         snapshot = await self._port.list_anexos(force_refresh=request.force_refresh)
         hoy = hoy or datetime.now(UTC).date()
-        mapa_nome, mapa_grupo = await self._build_mapas(hoy)
+        mapa_nombre, mapa_grupo = await self._build_mapas(hoy)
+        # Los índices flex se arman UNA vez, no por anexo (el matching corre
+        # N_anexos × 2 veces por request).
+        por_nombre = _IndiceOperadores(mapa_nombre)
+        por_grupo = _IndiceOperadores(mapa_grupo)
         anotados = [
             AnexoPendienteConEstado(
                 anexo=a,
                 estado=estado_de_periodo(a.periodo, hoy=hoy),
-                operador=(
-                    _buscar_operador(a.grupo, mapa_nome)
-                    or _buscar_operador(a.grupo, mapa_grupo)
-                ),
+                operador=_buscar_operador(a.grupo, por_nombre)
+                or _buscar_operador(a.grupo, por_grupo),
             )
             for a in snapshot.anexos
         ]
@@ -97,24 +99,32 @@ def _flex(norm: str) -> str:
     return re.sub(r"\s+", " ", _SEPARADORES_RE.sub(" ", norm)).strip()
 
 
+class _IndiceOperadores:
+    """Mapa normalizado → operador con su variante flex precalculada."""
+
+    def __init__(self, exacto: dict[str, OperadorAsignado]) -> None:
+        self.exacto = exacto
+        self.flex = {_flex(k): v for k, v in exacto.items()}
+
+
 def _buscar_operador(
     grupo: str | None,
-    mapa_norm: dict[str, OperadorAsignado],
+    indice: _IndiceOperadores,
 ) -> OperadorAsignado | None:
     """Cruza el grupo económico del anexo contra nombres normalizados de
     clientes del calendario. Exacto > flex (separadores equivalentes) >
     contención única (misma lógica que `match_clientes`)."""
-    if not grupo or not mapa_norm:
+    if not grupo or not indice.exacto:
         return None
     norm = normalizar_nombre(grupo)
-    if norm in mapa_norm:
-        return mapa_norm[norm]
-    # Segunda pasada: igualar '-' '/' '|' '–' a espacio en ambos lados
+    if norm in indice.exacto:
+        return indice.exacto[norm]
     flex_grupo = _flex(norm)
-    flex_mapa = {_flex(k): v for k, v in mapa_norm.items()}
-    if flex_grupo in flex_mapa:
-        return flex_mapa[flex_grupo]
+    if flex_grupo in indice.flex:
+        return indice.flex[flex_grupo]
     if len(flex_grupo) < _MIN_LARGO_NOMBRE:
         return None
-    candidatos = [op for key, op in flex_mapa.items() if flex_grupo in key or key in flex_grupo]
+    candidatos = [
+        op for key, op in indice.flex.items() if flex_grupo in key or key in flex_grupo
+    ]
     return candidatos[0] if len(candidatos) == 1 else None

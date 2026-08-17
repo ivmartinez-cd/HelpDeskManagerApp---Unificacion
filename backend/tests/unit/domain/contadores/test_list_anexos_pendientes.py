@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 
+from src.modules.contadores.application.dtos.equipo_sin_real_anotado import OperadorAsignado
 from src.modules.contadores.application.dtos.list_anexos_pendientes_request import (
     ListAnexosPendientesRequest,
 )
@@ -11,11 +12,14 @@ from src.modules.contadores.application.use_cases.get_anexos_pendientes_resumen 
 )
 from src.modules.contadores.application.use_cases.list_anexos_pendientes import (
     ListAnexosPendientesUseCase,
+    _buscar_operador,
+    _IndiceOperadores,
 )
 from src.modules.contadores.domain.entities.anexo_pendiente import (
     AnexoPendiente,
     AnexosPendientesSnapshot,
 )
+from src.modules.contadores.domain.services.cliente_matcher import normalizar_nombre
 from src.modules.contadores.domain.services.periodos_facturacion import (
     estado_de_periodo,
     periodo_anterior,
@@ -135,3 +139,43 @@ async def test_resumen_cuenta_estados_y_suma_importes() -> None:
     assert resumen.importe_usd_total == Decimal("6472.41")
     assert resumen.periodo_referencia == "202607"
     assert resumen.consultado_en == _CONSULTADO_EN
+
+
+class TestBuscarOperador:
+    """Cruce grupo del anexo → operador: exacto > flex (separadores) >
+    contención única; ambiguo o corto queda sin operador."""
+
+    def _indice(self, nombres: dict[str, str]) -> _IndiceOperadores:
+        return _IndiceOperadores(
+            {
+                normalizar_nombre(k): OperadorAsignado(nombre=v, color=None)
+                for k, v in nombres.items()
+            }
+        )
+
+    def test_match_exacto(self) -> None:
+        indice = self._indice({"Chubb": "Barbara Romero"})
+        op = _buscar_operador("Chubb", indice)
+        assert op is not None and op.nombre == "Barbara Romero"
+
+    def test_flex_equipara_separadores(self) -> None:
+        indice = self._indice({"Roemmers / Maprimed": "Soledad Miguez"})
+        op = _buscar_operador("Roemmers - Maprimed", indice)
+        assert op is not None and op.nombre == "Soledad Miguez"
+
+    def test_contencion_unica(self) -> None:
+        indice = self._indice({"Galicia Seguros Retiro": "Op A", "Chubb": "Op B"})
+        op = _buscar_operador("Galicia Seguros", indice)
+        assert op is not None and op.nombre == "Op A"
+
+    def test_contencion_ambigua_queda_sin_operador(self) -> None:
+        indice = self._indice({"Galicia Seguros": "Op A", "Galicia Retiro": "Op B"})
+        assert _buscar_operador("Galicia", indice) is None
+
+    def test_nombre_corto_no_matchea_por_contencion(self) -> None:
+        indice = self._indice({"ASP Logistica Central": "Op A"})
+        assert _buscar_operador("ASP", indice) is None
+
+    def test_sin_grupo_o_sin_mapa(self) -> None:
+        assert _buscar_operador(None, self._indice({"Chubb": "Op"})) is None
+        assert _buscar_operador("Chubb", self._indice({})) is None
