@@ -19,7 +19,10 @@ from src.modules.contadores.application.use_cases.operador_por_empresa import (
     MapaOperadorPorEmpresa,
 )
 from src.modules.contadores.domain.ports.anexos_pendientes_port import AnexosPendientesPort
+from src.modules.contadores.domain.services.cliente_matcher import normalizar_nombre
 from src.modules.contadores.domain.services.periodos_facturacion import estado_de_periodo
+
+_MIN_LARGO_NOMBRE = 5
 
 
 @dataclass(frozen=True)
@@ -42,12 +45,12 @@ class ListAnexosPendientesUseCase:
     ) -> ListAnexosPendientesResult:
         snapshot = await self._port.list_anexos(force_refresh=request.force_refresh)
         hoy = hoy or datetime.now(UTC).date()
-        operadores = await self._build_operadores(hoy)
+        mapa_por_cliente = await self._build_operadores(hoy)
         anotados = [
             AnexoPendienteConEstado(
                 anexo=a,
                 estado=estado_de_periodo(a.periodo, hoy=hoy),
-                operador=operadores.get(a.id_empresa_admin) if a.id_empresa_admin else None,
+                operador=_buscar_operador(a.grupo, mapa_por_cliente),
             )
             for a in snapshot.anexos
         ]
@@ -59,10 +62,10 @@ class ListAnexosPendientesUseCase:
             anexos=anotados, consultado_en=snapshot.consultado_en
         )
 
-    async def _build_operadores(self, hoy: date) -> dict[int, OperadorAsignado]:
+    async def _build_operadores(self, hoy: date) -> dict[str, OperadorAsignado]:
         if self._operador_mapa is None:
             return {}
-        return await self._operador_mapa.build(hoy=hoy)
+        return await self._operador_mapa.build_por_cliente(hoy=hoy)
 
 
 def _filtrar(
@@ -78,3 +81,21 @@ def _matchea(anotado: AnexoPendienteConEstado, needle: str) -> bool:
     campos = (anexo.grupo, anexo.contrato, anexo.anexo, anexo.vendedor, anexo.periodo,
               operador_nombre)
     return any(needle in campo.casefold() for campo in campos if campo)
+
+
+def _buscar_operador(
+    grupo: str | None,
+    mapa_norm: dict[str, OperadorAsignado],
+) -> OperadorAsignado | None:
+    """Cruza el grupo económico del anexo contra nombres normalizados de
+    clientes del calendario. Exacto primero, contención única si no hay exacto
+    (misma lógica que `match_clientes`/`_match_por_contencion`)."""
+    if not grupo or not mapa_norm:
+        return None
+    norm = normalizar_nombre(grupo)
+    if norm in mapa_norm:
+        return mapa_norm[norm]
+    if len(norm) < _MIN_LARGO_NOMBRE:
+        return None
+    candidatos = [op for key, op in mapa_norm.items() if norm in key or key in norm]
+    return candidatos[0] if len(candidatos) == 1 else None

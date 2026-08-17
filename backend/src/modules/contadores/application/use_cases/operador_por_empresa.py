@@ -39,6 +39,22 @@ class MapaOperadorPorEmpresa:
         self._alias = alias
         self._parque = parque
 
+    async def build_por_cliente(self, *, hoy: date) -> dict[str, OperadorAsignado]:
+        """Nombre normalizado de Gestión → operador, para cruce por nombre
+        cuando no hay ID de Siges confiable (ej. anexos-pendientes vs
+        ID_EmpresaAdmin del contrato). Degrada a vacío si el cruce falla."""
+        from src.modules.contadores.domain.services.cliente_matcher import normalizar_nombre
+
+        try:
+            raw = await self._operador_por_cliente(hoy)
+        except ExternalServiceError as exc:
+            logger.warning(
+                "Sin cruce cliente→operador por nombre; el listado va sin operador",
+                exc_info=exc,
+            )
+            return {}
+        return {normalizar_nombre(k): v for k, v in raw.items()}
+
     async def build(self, *, hoy: date) -> dict[int, OperadorAsignado]:
         """Vacío si el cruce no se puede armar (Siges caído): el listado
         degrada a mostrarse sin operador, no falla."""
