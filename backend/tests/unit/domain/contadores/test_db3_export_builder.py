@@ -76,7 +76,7 @@ def test_dedupes_to_the_most_recent_reading_per_serie_and_clase() -> None:
     assert row.contador_10 == 500
 
 
-def test_fecha_maxima_excludes_readings_on_or_after_the_cutoff() -> None:
+def test_fecha_maxima_excludes_readings_strictly_after_the_cutoff() -> None:
     rows = [
         Db3CounterRow("SER007", date(2026, 8, 1), 100, "M", 10),
         Db3CounterRow("SER007", date(2026, 8, 10), 500, "M", 10),
@@ -85,3 +85,15 @@ def test_fecha_maxima_excludes_readings_on_or_after_the_cutoff() -> None:
     row = build_db3_export_rows(rows, fecha_maxima=date(2026, 8, 5))[0]
 
     assert row.contador_10 == 100
+
+
+def test_fecha_maxima_includes_readings_on_the_cutoff_date() -> None:
+    rows = [
+        Db3CounterRow("SER008", date(2026, 8, 1), 100, "M", 10),
+        Db3CounterRow("SER008", date(2026, 8, 17), 500, "M", 10),
+    ]
+
+    row = build_db3_export_rows(rows, fecha_maxima=date(2026, 8, 17))[0]
+
+    assert row.fecha == date(2026, 8, 17)
+    assert row.contador_10 == 500

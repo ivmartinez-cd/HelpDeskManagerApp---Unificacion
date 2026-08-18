@@ -44,7 +44,7 @@ class _ClassifiedRow:
 def build_db3_export_rows(
     rows: list[Db3CounterRow], fecha_maxima: date | None = None
 ) -> list[Db3ExportRow]:
-    filtered = [r for r in rows if fecha_maxima is None or r.read_date < fecha_maxima]
+    filtered = [r for r in rows if fecha_maxima is None or r.read_date <= fecha_maxima]
     classified = _dedupe_most_recent(_classify(filtered))
     grouped = _group_by_serie_fecha_tipo(classified)
     return sorted(
