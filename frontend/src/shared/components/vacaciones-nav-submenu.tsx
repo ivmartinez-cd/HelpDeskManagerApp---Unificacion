@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   BarChart3,
+  Briefcase,
+  Building2,
   CalendarCheck2,
   CalendarX2,
   ClipboardCheck,
   LayoutDashboard,
+  PartyPopper,
   ScrollText,
   Settings,
   Users,
@@ -18,15 +21,22 @@ import { cn } from "@/shared/utils/cn";
 
 /** Submenú de Gestión de Personal (module key `vacaciones`) — mismo lenguaje
  * visual que ContadoresNavSubmenu, con títulos de sección del handoff
- * (Vacaciones / Asistencias / Configuración). Los ítems se filtran por
- * permiso: Aprobaciones requiere `approve` y Personal (el ABM) muestra su
- * contenido según `manage` (la página es visible con `view` para consultar
- * catálogos). */
+ * (Vacaciones / Asistencias / Gestión Humana / Configuración). Los ítems se
+ * filtran por permiso: Aprobaciones requiere `approve` y los de Gestión
+ * Humana muestran su contenido según `manage` (la página es visible con
+ * `view` para consultar catálogos). Gestión Humana son 4 accesos directos
+ * (Empleados/Sectores/Cargos/Feriados) sobre la misma ruta `/vacaciones/gestion`
+ * con `?tab=`, como en el handoff (07-Gestion-Humana) — antes era un solo
+ * link a "Personal" que siempre abría en Empleados, y Feriados quedaba sin
+ * acceso directo. */
 interface NavLinkDef {
   href: string;
   label: string;
   icon: LucideIcon;
   visible: boolean;
+  /** Override de `pathname === href` para links que comparten ruta y se
+   * distinguen por query param (ej. Gestión Humana con `?tab=`). */
+  active?: boolean;
 }
 
 interface NavGroupDef {
@@ -36,8 +46,11 @@ interface NavGroupDef {
 
 export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user, can } = useSession();
   const esAdmin = user.isSuperadmin || can("vacaciones", "manage");
+  const enGestion = pathname === "/vacaciones/gestion";
+  const tabGestion = enGestion ? (searchParams.get("tab") ?? "empleados") : null;
 
   const grupos: NavGroupDef[] = [
     {
@@ -76,6 +89,39 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
       ],
     },
     {
+      titulo: "Gestión Humana",
+      items: [
+        {
+          href: "/vacaciones/gestion",
+          label: "Empleados",
+          icon: Users,
+          visible: true,
+          active: tabGestion === "empleados",
+        },
+        {
+          href: "/vacaciones/gestion?tab=sectores",
+          label: "Sectores",
+          icon: Building2,
+          visible: true,
+          active: tabGestion === "sectores",
+        },
+        {
+          href: "/vacaciones/gestion?tab=cargos",
+          label: "Cargos",
+          icon: Briefcase,
+          visible: true,
+          active: tabGestion === "cargos",
+        },
+        {
+          href: "/vacaciones/gestion?tab=feriados",
+          label: "Feriados",
+          icon: PartyPopper,
+          visible: true,
+          active: tabGestion === "feriados",
+        },
+      ],
+    },
+    {
       titulo: "Configuración",
       items: [
         {
@@ -89,12 +135,6 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
           label: "Configuración",
           icon: Settings,
           visible: esAdmin,
-        },
-        {
-          href: "/vacaciones/gestion",
-          label: "Personal",
-          icon: Users,
-          visible: true,
         },
       ],
     },
@@ -112,8 +152,8 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
           <p className="px-2 pb-1 font-heading text-[9.5px] font-bold uppercase tracking-[.09em] text-muted-foreground/80">
             {grupo.titulo}
           </p>
-          {grupo.items.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
+          {grupo.items.map(({ href, label, icon: Icon, active: activeOverride }) => {
+            const active = activeOverride ?? pathname === href;
             return (
               <Link
                 key={href}

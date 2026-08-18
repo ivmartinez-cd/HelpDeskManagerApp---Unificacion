@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/services/session-provider";
 import { BrandButton, BrandSkeleton } from "@/shared/components/ui/brand-form";
 import { Plus } from "lucide-react";
@@ -18,6 +19,7 @@ import { FeriadosTab } from "./feriados-tab";
 import { SectoresTab } from "./sectores-tab";
 
 type Tab = "empleados" | "sectores" | "cargos" | "feriados";
+const TAB_VALUES: readonly Tab[] = ["empleados", "sectores", "cargos", "feriados"];
 
 const TABS: { value: Tab; label: string }[] = [
   { value: "empleados", label: "Empleados" },
@@ -25,6 +27,10 @@ const TABS: { value: Tab; label: string }[] = [
   { value: "cargos", label: "Cargos" },
   { value: "feriados", label: "Feriados" },
 ];
+
+function tabDesdeQuery(raw: string | null): Tab {
+  return (TAB_VALUES as readonly string[]).includes(raw ?? "") ? (raw as Tab) : "empleados";
+}
 
 const NUEVO_LABEL: Record<Tab, string> = {
   empleados: "Nuevo empleado",
@@ -36,8 +42,19 @@ const NUEVO_LABEL: Record<Tab, string> = {
 export function GestionView() {
   const { user, can } = useSession();
   const puedeGestionar = user.isSuperadmin || can("vacaciones", "manage");
-
-  const [tab, setTab] = useState<Tab>("empleados");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  // El tab es derivado de la URL (?tab=…), no estado propio — así el
+  // sidebar puede linkear directo a cada pestaña. Antes solo existía
+  // "Personal" con Empleados por default, y Sectores/Cargos/Feriados
+  // quedaban a 2 clics sin acceso directo.
+  const tab = tabDesdeQuery(searchParams.get("tab"));
+  const setTab = useCallback(
+    (next: Tab) => {
+      router.replace(next === "empleados" ? "/vacaciones/gestion" : `/vacaciones/gestion?tab=${next}`);
+    },
+    [router],
+  );
   const [empleados, setEmpleados] = useState<EmpleadoListItem[] | null>(null);
   const [sectores, setSectores] = useState<Sector[] | null>(null);
   const [cargos, setCargos] = useState<Cargo[] | null>(null);
