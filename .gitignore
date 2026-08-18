@@ -39,3 +39,6 @@ Thumbs.db
 # Design handoff zips (directorio ya commiteado, zip es redundante)
 design_handoff_*.zip
 Sidebar Navegacion.zip
+
+# Transferencias entre PCs (dump + .env con credenciales reales)
+hdm_transfer_*.zip
