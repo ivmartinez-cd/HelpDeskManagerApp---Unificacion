@@ -21,6 +21,7 @@ import { EstadoSelector } from "./estado-selector";
 import { ExtraItemSeccion } from "./extra-item-seccion";
 import { IncidentesSeccion } from "./incidentes-seccion";
 import { KpiTile } from "./kpi-tile";
+import { ModeloFacturacionSeccion } from "./modelo-facturacion-seccion";
 import { ObservacionesSeccion } from "./observaciones-seccion";
 
 export function LiquidacionDetalleView({ id }: { id: string }) {
@@ -257,6 +258,8 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
           soloConAlertas={soloConAlertas}
         />
       )}
+
+      <ModeloFacturacionSeccion incidentes={incidentes} totalImporte={liquidacion.totalImporte} />
 
       <AlertasSeccion
         liquidacionId={id}
