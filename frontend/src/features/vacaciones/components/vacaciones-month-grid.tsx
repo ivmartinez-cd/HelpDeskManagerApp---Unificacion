@@ -57,7 +57,7 @@ export function VacacionesMonthGrid({ year, month, hoyIso, eventos }: Props) {
                 </span>
                 {feriado && (
                   <Tooltip content={feriado.title}>
-                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                    <span className="block h-2 w-2 rounded-full bg-red-500" />
                   </Tooltip>
                 )}
               </div>

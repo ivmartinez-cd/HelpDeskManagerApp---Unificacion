@@ -76,9 +76,10 @@ export function feriadoDelDia(
   return eventos.find((e) => e.tipo === "holiday" && e.start === iso);
 }
 
-export function rangoDelMes(year: number, month: number): { desde: string; hasta: string } {
-  const desde = `${year}-${String(month).padStart(2, "0")}-01`;
-  const ultimo = new Date(year, month, 0).getDate();
-  const hasta = `${year}-${String(month).padStart(2, "0")}-${String(ultimo).padStart(2, "0")}`;
-  return { desde, hasta };
+/** Rango de la grilla visible (lunes a domingo), no del mes calendario: la
+ * grilla siempre muestra días de fin del mes anterior/inicio del siguiente
+ * para completar semanas, y esos eventos también hay que pedirlos. */
+export function rangoDeGrilla(year: number, month: number): { desde: string; hasta: string } {
+  const celdas = buildGridDays(year, month, "");
+  return { desde: celdas[0].iso, hasta: celdas[celdas.length - 1].iso };
 }

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, UserX } from "lucide-react";
 import { BrandButton, BrandSkeleton, BrandStatTile } from "@/shared/components/ui/brand-form";
 import { solicitudesApi } from "../api/solicitudes-api";
-import { labelMes, rangoDelMes } from "../lib/calendario";
+import { labelMes, rangoDeGrilla } from "../lib/calendario";
 import { formatRango, hoyIso, iniciales } from "../lib/fechas";
 import type { DashboardResumen, EventoCalendario } from "../types/vacaciones";
 import { VacacionesMonthGrid } from "./vacaciones-month-grid";
@@ -18,7 +18,7 @@ export function DashboardView() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    const { desde, hasta } = rangoDelMes(year, month);
+    const { desde, hasta } = rangoDeGrilla(year, month);
     return Promise.all([solicitudesApi.dashboard(), solicitudesApi.calendario(desde, hasta)])
       .then(([res, evs]) => {
         setResumen(res);
