@@ -87,7 +87,7 @@ export function LiquidacionesImportModal({
         </div>
 
         <div>
-          <label className={labelCls}>Archivo (.xls / .xlsx) *</label>
+          <label className={labelCls}>Archivo (.xls / .xlsx / .html) *</label>
           <label
             className="flex cursor-pointer flex-col items-center gap-3 rounded-[10px] border-2 border-dashed border-border p-6 text-center transition-colors hover:border-brand-orange/50"
             htmlFor="liq-file"
@@ -104,7 +104,7 @@ export function LiquidacionesImportModal({
               ref={fileRef}
               id="liq-file"
               type="file"
-              accept=".xls,.xlsx"
+              accept=".xls,.xlsx,.html"
               required
               className="sr-only"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
