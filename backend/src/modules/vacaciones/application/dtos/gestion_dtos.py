@@ -8,6 +8,7 @@ from src.modules.vacaciones.domain.entities.cargo import Cargo
 from src.modules.vacaciones.domain.entities.empleado import Empleado, EstadoEmpleado
 from src.modules.vacaciones.domain.entities.sector import Sector
 from src.modules.vacaciones.domain.repositories.user_directory import UserInfo
+from src.modules.vacaciones.domain.value_objects.saldo import Saldo
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,6 +39,11 @@ class EmpleadoListItemDTO:
     cargo_nombre: str
     dias_anuales: int
     antiguedad_anios: float
+    saldo: Saldo
+    """Saldo del año en curso — paridad con `balance` del listado legacy."""
+    saldo_siguiente: Saldo | None
+    """Solo si el ciclo del año siguiente ya está abierto (paridad con
+    `nextYearBalance`, que el legacy solo adjuntaba con `cycleOpen: true`)."""
 
 
 @dataclass(frozen=True, slots=True)

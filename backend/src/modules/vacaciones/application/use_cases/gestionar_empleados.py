@@ -6,6 +6,10 @@ from src.modules.vacaciones.application.dtos.gestion_dtos import (
     EmpleadoListItemDTO,
     ListEmpleadosQuery,
 )
+from src.modules.vacaciones.application.use_cases.saldos_service import (
+    SaldosDependencies,
+    SaldosService,
+)
 from src.modules.vacaciones.domain.entities.empleado import Empleado
 from src.modules.vacaciones.domain.entities.registro_auditoria import (
     ACCION_CREATE,
@@ -32,6 +36,9 @@ from src.modules.vacaciones.domain.repositories.empleado_repository import (
     EmpleadoRepository,
     FiltrosEmpleados,
 )
+from src.modules.vacaciones.domain.repositories.solicitud_repository import (
+    SolicitudRepository,
+)
 from src.modules.vacaciones.domain.services.antiguedad import (
     dias_por_antiguedad,
     referencia_para_anio,
@@ -51,6 +58,7 @@ class GestionEmpleadosDependencies:
     ciclos: CicloRepository
     config: ConfigRepository
     clock: Clock
+    solicitudes: SolicitudRepository
     auditoria: RegistradorAuditoria = RegistradorAuditoriaNulo()
 
 
@@ -79,10 +87,24 @@ class ListEmpleados:
         cargos = {c.id: c for c in await self._deps.cargos.list_all()}
         hoy = self._deps.clock.hoy()
         referencia = referencia_para_anio(hoy.year)
+
+        saldos_service = SaldosService(
+            SaldosDependencies(
+                empleados=self._deps.empleados,
+                ciclos=self._deps.ciclos,
+                solicitudes=self._deps.solicitudes,
+                config=self._deps.config,
+                clock=self._deps.clock,
+            )
+        )
+        saldos_anio = await saldos_service.saldos_batch(empleados, hoy.year)
+        saldos_siguiente = await saldos_service.saldos_batch(empleados, hoy.year + 1)
+
         items = []
         for e in empleados:
             sector = sectores.get(e.department_id)
             cargo = cargos.get(e.cargo_id)
+            saldo_siguiente = saldos_siguiente[e.id]
             items.append(
                 EmpleadoListItemDTO(
                     empleado=e,
@@ -93,6 +115,9 @@ class ListEmpleados:
                         e.hire_date, referencia, config.seniority_tiers
                     ),
                     antiguedad_anios=(hoy - e.hire_date).days / _DIAS_POR_ANIO,
+                    saldo=saldos_anio[e.id],
+                    # Paridad con `nextYearBalance.cycleOpen ? … : null` del legacy.
+                    saldo_siguiente=saldo_siguiente if saldo_siguiente.cycle_open else None,
                 )
             )
         return items

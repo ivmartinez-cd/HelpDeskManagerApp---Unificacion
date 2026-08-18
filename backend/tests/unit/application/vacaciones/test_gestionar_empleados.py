@@ -31,6 +31,7 @@ from tests.unit.application.vacaciones.fakes import (
     FakeConfigRepo,
     FakeEmpleadoRepo,
     FakeSectorRepo,
+    FakeSolicitudRepo,
     FixedClock,
 )
 from tests.unit.domain.vacaciones.factories import make_actor, make_config, make_empleado
@@ -52,6 +53,7 @@ def _deps(
         ciclos=ciclos or FakeCicloRepo(),
         config=FakeConfigRepo(make_config()),
         clock=FixedClock(_HOY),
+        solicitudes=FakeSolicitudRepo(),
     )
 
 

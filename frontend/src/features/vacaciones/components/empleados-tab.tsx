@@ -6,13 +6,14 @@ import { BrandBadge, BrandEmptyState, BrandInput, BrandSelect } from "@/shared/c
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { gestionApi } from "../api/gestion-api";
-import { formatAntiguedad, formatFecha, iniciales } from "../lib/fechas";
+import { formatAntiguedad, formatFecha, hoyIso, iniciales } from "../lib/fechas";
 import type { Cargo, EmpleadoListItem, Sector, UsuarioOption } from "../types/vacaciones";
 import { EmpleadoModal } from "./empleado-modal";
 
-type EmpleadoSortKey = "nombre" | "email" | "sector" | "cargo" | "ingreso" | "dias" | "estado";
+type EmpleadoSortKey =
+  | "nombre" | "email" | "sector" | "cargo" | "ingreso" | "disponibles" | "estado";
 const EMPLEADO_SORT_KEYS: readonly EmpleadoSortKey[] = [
-  "nombre", "email", "sector", "cargo", "ingreso", "dias", "estado",
+  "nombre", "email", "sector", "cargo", "ingreso", "disponibles", "estado",
 ];
 
 function empleadoSortValue(e: EmpleadoListItem, key: EmpleadoSortKey) {
@@ -22,7 +23,7 @@ function empleadoSortValue(e: EmpleadoListItem, key: EmpleadoSortKey) {
     case "sector": return e.sectorNombre;
     case "cargo": return e.cargoNombre;
     case "ingreso": return e.hireDate;
-    case "dias": return e.diasAnuales;
+    case "disponibles": return e.saldo.available;
     case "estado": return e.status;
   }
 }
@@ -51,6 +52,7 @@ export function EmpleadosTab({
   const [busqueda, setBusqueda] = useState("");
   const [sectorId, setSectorId] = useState("");
   const [editando, setEditando] = useState<EmpleadoListItem | null>(null);
+  const anioActual = Number(hoyIso().slice(0, 4));
 
   const { sort, toggleSort } = useTableSort<EmpleadoSortKey>({
     initial: { key: "nombre", direction: "asc" },
@@ -116,7 +118,7 @@ export function EmpleadosTab({
                 <SortableHeader column={{ key: "sector", label: "Sector" }} sort={sort} onToggleSort={toggleSort} />
                 <SortableHeader column={{ key: "cargo", label: "Cargo" }} sort={sort} onToggleSort={toggleSort} />
                 <SortableHeader column={{ key: "ingreso", label: "Ingreso / Antigüedad" }} sort={sort} onToggleSort={toggleSort} />
-                <SortableHeader column={{ key: "dias", label: "Días" }} sort={sort} onToggleSort={toggleSort} />
+                <SortableHeader column={{ key: "disponibles", label: "Disponibles" }} sort={sort} onToggleSort={toggleSort} />
                 <SortableHeader column={{ key: "estado", label: "Estado" }} sort={sort} onToggleSort={toggleSort} />
                 {puedeGestionar && <th className="px-4 py-3" />}
               </tr>
@@ -153,8 +155,31 @@ export function EmpleadosTab({
                       {formatAntiguedad(e.antiguedadAnios)}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-right font-heading font-bold text-brand-orange">
-                    {e.diasAnuales}
+                  <td className="px-4 py-3">
+                    <div>
+                      <span className="mr-1 text-[10px] font-semibold uppercase text-muted-foreground">
+                        {anioActual}:
+                      </span>
+                      <span className="font-heading font-bold text-brand-orange">
+                        {e.saldo.available}
+                      </span>
+                      <span className="text-muted-foreground">
+                        /{e.saldo.annual + e.saldo.carryOver}
+                      </span>
+                    </div>
+                    {e.saldoSiguiente && (
+                      <div className="mt-0.5 text-xs">
+                        <span className="mr-1 text-[10px] font-semibold uppercase text-muted-foreground">
+                          {anioActual + 1}:
+                        </span>
+                        <span className="font-semibold text-foreground">
+                          {e.saldoSiguiente.available}
+                        </span>
+                        <span className="text-muted-foreground">
+                          /{e.saldoSiguiente.annual + e.saldoSiguiente.carryOver}
+                        </span>
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <BrandBadge variant={e.status === "ACTIVE" ? "success" : "neutral"}>

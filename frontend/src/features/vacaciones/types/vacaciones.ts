@@ -31,6 +31,8 @@ export interface EmpleadoListItem extends Empleado {
   cargoNombre: string;
   diasAnuales: number;
   antiguedadAnios: number;
+  saldo: Saldo;
+  saldoSiguiente: Saldo | null;
 }
 
 export interface EmpleadoPayload {

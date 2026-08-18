@@ -8,6 +8,7 @@ from src.modules.vacaciones.application.dtos.gestion_dtos import (
     EmpleadoListItemDTO,
 )
 from src.modules.vacaciones.domain.entities.empleado import Empleado, EstadoEmpleado
+from src.modules.vacaciones.presentation.schemas.dashboard_schemas import SaldoResponse
 
 
 class EmpleadoResponse(BaseModel):
@@ -46,6 +47,8 @@ class EmpleadoListItemResponse(EmpleadoResponse):
     cargo_nombre: str = Field(serialization_alias="cargoNombre")
     dias_anuales: int = Field(serialization_alias="diasAnuales")
     antiguedad_anios: float = Field(serialization_alias="antiguedadAnios")
+    saldo: SaldoResponse
+    saldo_siguiente: SaldoResponse | None = Field(serialization_alias="saldoSiguiente")
 
     @classmethod
     def from_dto(cls, dto: EmpleadoListItemDTO) -> "EmpleadoListItemResponse":
@@ -57,6 +60,12 @@ class EmpleadoListItemResponse(EmpleadoResponse):
             cargo_nombre=dto.cargo_nombre,
             dias_anuales=dto.dias_anuales,
             antiguedad_anios=round(dto.antiguedad_anios, 2),
+            saldo=SaldoResponse.from_saldo(dto.saldo),
+            saldo_siguiente=(
+                SaldoResponse.from_saldo(dto.saldo_siguiente)
+                if dto.saldo_siguiente
+                else None
+            ),
         )
 
 
