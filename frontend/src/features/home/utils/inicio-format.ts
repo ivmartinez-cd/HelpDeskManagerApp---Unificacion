@@ -8,18 +8,36 @@ export function fmtPct(n: number): string {
   return n.toLocaleString("es-AR", { maximumFractionDigits: 2 });
 }
 
-/** Tinte de fondo del handoff: color del operador + alpha `22`. Solo aplica
- * a colores hex; para cualquier otro formato cae a un tinte neutro. */
+/** Tinte de fondo del handoff: color del operador mezclado con transparente
+ * vía `--tint-alpha` (definido por tema en globals.css). Un alpha fijo en hex
+ * se veía bien sobre card oscuro pero quedaba casi invisible sobre card claro
+ * (mismo % de color, mucho más desaturado al mezclar con blanco) — por eso el
+ * alpha depende del tema en vez de estar hardcodeado. Solo aplica a colores
+ * hex; para cualquier otro formato cae a un tinte neutro sobre `--foreground`. */
 export function tint(color: string): string {
-  return /^#[0-9a-fA-F]{6}$/.test(color) ? `${color}22` : "rgba(255,255,255,.06)";
+  return /^#[0-9a-fA-F]{6}$/.test(color)
+    ? `color-mix(in srgb, ${color} var(--tint-alpha, 13%), transparent)`
+    : "color-mix(in srgb, var(--foreground) 6%, transparent)";
+}
+
+/** Texto de acento sobre `tint()`: el color crudo del operador pierde
+ * contraste contra su propio tinte cuando `--tint-alpha` es alto (tema
+ * claro) — se oscurece con `--accent-text-weight` (100% = sin cambio, el
+ * comportamiento original que ya andaba bien en oscuro). */
+export function accentText(color: string): string {
+  return /^#[0-9a-fA-F]{6}$/.test(color)
+    ? `color-mix(in oklch, ${color} var(--accent-text-weight, 100%), black)`
+    : color;
 }
 
 /** Intensidad del heatmap semanal (README del handoff): 0 vacía, 1-2 tenue,
- * 3-4 media, 5+ naranja sólido. */
+ * 3-4 media, 5+ naranja sólido. El texto de 1-4 mezcla `--foreground` en vez
+ * de blanco fijo: sobre el tinte naranja pálido de tema claro, blanco fijo
+ * quedaba invisible (mismo bug de fondo que `tint()`). */
 export function heatCellStyle(n: number): { bg: string; text: string } {
   if (n === 0) return { bg: "rgba(255,255,255,.03)", text: "transparent" };
-  if (n <= 2) return { bg: "rgba(247,148,29,.14)", text: "rgba(255,255,255,.75)" };
-  if (n <= 4) return { bg: "rgba(247,148,29,.38)", text: "rgba(255,255,255,.75)" };
+  if (n <= 2) return { bg: "rgba(247,148,29,.14)", text: "color-mix(in srgb, var(--foreground) 75%, transparent)" };
+  if (n <= 4) return { bg: "rgba(247,148,29,.38)", text: "color-mix(in srgb, var(--foreground) 75%, transparent)" };
   return { bg: "#F7941D", text: "#fff" };
 }
 

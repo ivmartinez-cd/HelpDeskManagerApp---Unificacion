@@ -143,6 +143,14 @@
     --input: hsl(240 6% 88%);
     --ring: hsl(24 95% 53%);
     --radius: 1.5rem;
+    /* Alpha de `tint()` (home): mezclado sobre card claro, el mismo alpha
+       que sobre card oscuro casi no se distingue del fondo — hace falta más
+       peso de color para que el bloque se note (feedback usuario, 2026-08-18). */
+    --tint-alpha: 32%;
+    /* Peso de `accentText()` (home): con --tint-alpha más alto en claro, el
+       color crudo del operador como texto queda pegado al tinte — se oscurece
+       mezclando negro para mantener contraste (feedback usuario, 2026-08-18). */
+    --accent-text-weight: 55%;
   }
   .dark {
     --background: hsl(240 10% 4%);
@@ -170,6 +178,8 @@
     --border: hsl(240 5% 15%);
     --input: hsl(240 5% 15%);
     --ring: hsl(24 95% 53%);
+    --tint-alpha: 13%;
+    --accent-text-weight: 100%;
   }
 }
 

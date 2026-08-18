@@ -115,15 +115,6 @@ export function Sidebar({ children }: { children: ReactNode }) {
           </span>
         </div>
 
-        <div className="mx-8 hidden max-w-[440px] flex-1 md:block">
-          <input
-            disabled
-            placeholder="Buscador próximamente..."
-            aria-label="Buscar (próximamente)"
-            className="w-full rounded-[8px] border border-border bg-muted px-[14px] py-[9px] font-body text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-70"
-          />
-        </div>
-
         <div className="flex flex-none items-center gap-1 sm:gap-3">
           <Bell className="hidden h-5 w-5 text-muted-foreground sm:block" aria-hidden="true" />
           <div className="hidden h-[22px] w-px bg-border sm:block" />

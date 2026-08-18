@@ -3,7 +3,7 @@
 import { Clock } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { ResolvedShift } from "@/features/turnos/types/turnos";
-import { FALLBACK_COLOR, tint } from "../utils/inicio-format";
+import { FALLBACK_COLOR, accentText, tint } from "../utils/inicio-format";
 import { DashboardCard } from "./dashboard-card";
 
 function toHours(hhmmss: string): number {
@@ -149,12 +149,12 @@ export function TurnosTimelineCard({
                     {seg.widthPct >= 12 && (
                       <span
                         className="truncate font-heading text-[10px] font-bold"
-                        style={{ color: seg.color }}
+                        style={{ color: accentText(seg.color) }}
                       >
                         {seg.range}
                       </span>
                     )}
-                    <span className="truncate font-body text-[11.5px] font-semibold text-white">
+                    <span className="truncate font-body text-[11.5px] font-semibold text-foreground">
                       {seg.label}
                     </span>
                   </div>

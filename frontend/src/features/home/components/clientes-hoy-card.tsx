@@ -4,7 +4,7 @@ import { CalendarCheck2, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import type { CalendarEvent, Operador } from "@/features/contadores/types/calendario";
 import { cleanTitle, textoDesdeSync } from "@/features/contadores/utils/calendario-format";
-import { FALLBACK_COLOR, tint } from "../utils/inicio-format";
+import { FALLBACK_COLOR, accentText, tint } from "../utils/inicio-format";
 import { DashboardCard } from "./dashboard-card";
 
 // Umbral para considerar el sync viejo y avisar: el sync es manual y la
@@ -66,7 +66,7 @@ export function ClientesHoyCard({
                     {nombre}
                   </span>
                   {operador && (
-                    <span className="truncate font-body text-[12px]" style={{ color }}>
+                    <span className="truncate font-body text-[12px]" style={{ color: accentText(color) }}>
                       {operador.nombre}
                     </span>
                   )}
