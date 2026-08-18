@@ -25,6 +25,7 @@ Paso post-migración (impreso al final):
 
 import argparse
 import asyncio
+import json
 import os
 import re
 import sys
@@ -63,8 +64,21 @@ def parse_backup(path: Path) -> dict[str, tuple[list[str], list[list[str]]]]:
     return result
 
 
+_COPY_ESCAPES = {"\\n": "\n", "\\t": "\t", "\\r": "\r", "\\\\": "\\"}
+_COPY_ESCAPE_RE = re.compile(r"\\[ntr\\]")
+
+
+def _unescape(v: str) -> str:
+    """Des-escapa el formato COPY de pg_dump (\\n, \\t, \\r, \\\\) en una sola
+    pasada — encadenar replace() procesaría dos veces los backslashes. Sin esto,
+    un texto con salto de línea real llega con un "\\n" literal al destino."""
+    return _COPY_ESCAPE_RE.sub(lambda m: _COPY_ESCAPES[m.group(0)], v)
+
+
 def as_dict(cols: list[str], row: list[str]) -> dict[str, Any]:
-    return {c: (None if v == r"\N" else v) for c, v in zip(cols, row)}
+    return {
+        c: (None if v == r"\N" else _unescape(v)) for c, v in zip(cols, row, strict=True)
+    }
 
 
 # ── Conversiones de tipo ───────────────────────────────────────────────────────
@@ -95,6 +109,16 @@ def to_bool(s: str | None) -> bool | None:
 
 def trunc(s: str | None, n: int) -> str | None:
     return s[:n] if s else None
+
+
+def to_seniority_tiers(raw: str) -> str:
+    """JSON legacy (claves camelCase minYears/maxYears/days) → snake_case
+    (min_years/max_years/days), que es lo que espera SqlAlchemyConfigRepository."""
+    tiers = json.loads(raw)
+    return json.dumps([
+        {"min_years": t["minYears"], "max_years": t["maxYears"], "days": t["days"]}
+        for t in tiers
+    ])
 
 
 # ── Loaders ────────────────────────────────────────────────────────────────────
@@ -166,7 +190,8 @@ async def load_feriado(data: dict, conn: asyncpg.Connection | None) -> int:
     if conn:
         await conn.executemany(
             """
-            INSERT INTO vacaciones_feriado (id, name, date, deducts_vacation, created_at, updated_at)
+            INSERT INTO vacaciones_feriado
+                (id, name, date, deducts_vacation, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT DO NOTHING
             """,
@@ -209,7 +234,7 @@ async def load_config(data: dict, conn: asyncpg.Connection | None) -> int:
                 max_carry_over_days     = EXCLUDED.max_carry_over_days,
                 updated_at              = EXCLUDED.updated_at
             """,
-            r["seniorityTiers"],
+            to_seniority_tiers(r["seniorityTiers"]),
             int(r["minAdvanceNoticeDays"]),
             int(r["maxOverlapPercent"]),
             int(r["maxOverlapCount"]),
