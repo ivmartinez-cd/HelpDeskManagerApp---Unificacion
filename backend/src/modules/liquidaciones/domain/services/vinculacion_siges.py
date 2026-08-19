@@ -4,6 +4,10 @@ Es solo una *propuesta* (la confirmación es manual en la UI), pero igual se
 proponen únicamente matches de alta confianza: igualdad normalizada o
 contención, y nunca con ambigüedad — un candidato conflictivo se descarta en
 silencio antes que proponer un vínculo equivocado.
+
+`normalizar_nombre` también la reusa el matching de sucursales de Tabla KM
+(`matching_sucursales_tabla_km.py`, niveles N1/N2) — no cambiar su semántica
+acá sin revisar ambos consumidores.
 """
 
 import unicodedata
