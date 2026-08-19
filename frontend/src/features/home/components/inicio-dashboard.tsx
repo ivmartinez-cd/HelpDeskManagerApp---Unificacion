@@ -196,7 +196,7 @@ export function InicioDashboard() {
         </div>
       )}
 
-      <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-1 gap-3 overflow-y-auto thin-scrollbar pb-3 lg:grid-cols-2">
+      <div className="grid min-h-0 flex-1 auto-rows-min items-start grid-cols-1 gap-3 overflow-y-auto thin-scrollbar pb-3 lg:grid-cols-2">
         {cardsTabActual.map((card) => (
           <div key={card.id}>{renderCard(card.id)}</div>
         ))}
