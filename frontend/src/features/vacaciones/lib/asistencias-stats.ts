@@ -46,7 +46,7 @@ export function estadoCelda(
   feriados: Set<string>,
 ): EstadoCelda | null {
   if (feriados.has(fecha)) {
-    return { color: "#94a3b8", label: "Feriado", halfDay: false, esFeriado: true };
+    return { color: "#8b5cf6", label: "Feriado", halfDay: false, esFeriado: true };
   }
   const vac = vacaciones.find(
     (v) => v.status === "APPROVED" && cubre(v.startDate, v.endDate, fecha),
