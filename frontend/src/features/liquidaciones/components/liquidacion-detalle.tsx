@@ -280,6 +280,8 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
 
       <AlertasSeccion
         liquidacionId={id}
+        prestadorId={liquidacion.prestadorId}
+        prestadores={prestadores}
         alertas={alertas}
         incidentes={incidentes}
         onChanged={() => void load()}

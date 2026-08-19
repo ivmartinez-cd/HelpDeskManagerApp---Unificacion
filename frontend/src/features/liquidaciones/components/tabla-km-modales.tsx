@@ -55,11 +55,12 @@ const LABEL_COORDS_ORIGEN: Record<string, string> = {
 // El caller lo monta con key={editing?.id ?? "nueva"} para que el estado inicial
 // del form se recalcule al cambiar de entrada.
 export function EntradaModal({
-  isOpen, onClose, prestadores, editing, defaultPrestadorId, onSuccess, plantilla = null,
+  isOpen, onClose, prestadores, editing, defaultPrestadorId, onSuccess, plantilla = null, title,
 }: {
   isOpen: boolean; onClose: () => void;
   prestadores: PrestadorLiquidacion[]; editing: TablaKm | null; defaultPrestadorId: string; onSuccess: () => void;
   plantilla?: PlantillaEntrada | null;
+  title?: string;
 }) {
   const [form, setForm] = useState(() => entradaAForm(editing, defaultPrestadorId, plantilla));
   const [loading, setLoading] = useState(false);
@@ -126,7 +127,7 @@ export function EntradaModal({
   };
 
   return (
-    <BrandModal isOpen={isOpen} onClose={handleClose} title={editing ? "Editar entrada Tabla KM" : "Nueva entrada Tabla KM"} error={error} widthPx={580}>
+    <BrandModal isOpen={isOpen} onClose={handleClose} title={title ?? (editing ? "Editar entrada Tabla KM" : "Nueva entrada Tabla KM")} error={error} widthPx={580}>
       <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
         <BrandSelect label="Prestador *" required value={form.prestadorId} onChange={(e) => setForm((f) => ({ ...f, prestadorId: e.target.value }))}>
           <option value="">Seleccioná...</option>

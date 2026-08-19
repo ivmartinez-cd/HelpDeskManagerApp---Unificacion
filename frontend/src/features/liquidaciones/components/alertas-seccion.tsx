@@ -7,7 +7,21 @@ import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import { ESTADO_ALERTA_STYLES, TRANSICIONES_ALERTA } from "../lib/alerta-estados";
-import type { Alerta, EstadoAlerta, Incidente } from "../types/liquidaciones";
+import type { Alerta, EstadoAlerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
+import { EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
+
+const CODIGO_ALT009 = "ALT009";
+
+function plantillaDesdeAlerta(alerta: Alerta): PlantillaEntrada {
+  const ctx = alerta.datosContexto as { empresa?: string; sucursal?: string } | null;
+  return {
+    empresaNombre: ctx?.empresa ?? "",
+    sucursalNombre: ctx?.sucursal ?? "",
+    domicilioCliente: "",
+    localidadCliente: "",
+    provinciaCliente: "",
+  };
+}
 
 const FILTROS: { valor: EstadoAlerta | "todas"; label: string }[] = [
   { valor: "todas", label: "Todas" },
@@ -23,12 +37,13 @@ function riesgoClass(riesgo: number) {
   return "text-success";
 }
 
-function AlertaRow({ liquidacionId, alerta, numeroIncidente, onChanged, onDescartar }: {
+function AlertaRow({ liquidacionId, alerta, numeroIncidente, onChanged, onDescartar, onResolverAlt009 }: {
   liquidacionId: string;
   alerta: Alerta;
   numeroIncidente: string | null;
   onChanged: () => void;
   onDescartar: (alerta: Alerta) => void;
+  onResolverAlt009: (alerta: Alerta) => void;
 }) {
   const [updating, setUpdating] = useState(false);
   const tdCls = "py-3 px-4 font-body text-sm text-foreground";
@@ -71,7 +86,17 @@ function AlertaRow({ liquidacionId, alerta, numeroIncidente, onChanged, onDescar
           <button
             key={t.estado}
             disabled={updating}
-            onClick={() => (t.pideJustificacion ? onDescartar(alerta) : void cambiar(t.estado))}
+            onClick={() => {
+              // Para ALT009 tanto "Revisar" como "Resolver" llevan al mismo lugar: no
+              // hay nada que revisar sin antes cargar la sucursal faltante en Tabla KM.
+              const abreCargaSucursal =
+                alerta.tipoAlerta === CODIGO_ALT009 &&
+                !t.pideJustificacion &&
+                (alerta.estado === "pendiente" || alerta.estado === "en_revision");
+              if (abreCargaSucursal) onResolverAlt009(alerta);
+              else if (t.pideJustificacion) onDescartar(alerta);
+              else void cambiar(t.estado);
+            }}
             className="ml-3 font-body text-xs text-brand-orange hover:underline disabled:opacity-50"
           >
             {t.label}
@@ -136,14 +161,28 @@ function DescartarModal({ liquidacionId, alerta, onClose, onChanged }: {
   );
 }
 
-export function AlertasSeccion({ liquidacionId, alertas, incidentes, onChanged }: {
+export function AlertasSeccion({ liquidacionId, prestadorId, prestadores, alertas, incidentes, onChanged }: {
   liquidacionId: string;
+  prestadorId: string;
+  prestadores: PrestadorLiquidacion[];
   alertas: Alerta[];
   incidentes: Incidente[];
   onChanged: () => void;
 }) {
   const [filtro, setFiltro] = useState<EstadoAlerta | "todas">("todas");
   const [descartando, setDescartando] = useState<Alerta | null>(null);
+  const [resolviendoAlt009, setResolviendoAlt009] = useState<Alerta | null>(null);
+
+  const resolverAlt009 = async (alerta: Alerta) => {
+    try {
+      await liquidacionesApi.updateEstadoAlerta(liquidacionId, alerta.id, { estado: "resuelta" });
+      onChanged();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al marcar la alerta como resuelta");
+    } finally {
+      setResolviendoAlt009(null);
+    }
+  };
   const numeroPorIncidente = useMemo(
     () => new Map(incidentes.map((i) => [i.id, i.numeroIncidente])),
     [incidentes],
@@ -201,6 +240,7 @@ export function AlertasSeccion({ liquidacionId, alertas, incidentes, onChanged }
                   numeroIncidente={numeroPorIncidente.get(a.incidenteId) ?? null}
                   onChanged={onChanged}
                   onDescartar={setDescartando}
+                  onResolverAlt009={setResolviendoAlt009}
                 />
               ))}
             </tbody>
@@ -218,6 +258,19 @@ export function AlertasSeccion({ liquidacionId, alertas, incidentes, onChanged }
           alerta={descartando}
           onClose={() => setDescartando(null)}
           onChanged={onChanged}
+        />
+      )}
+      {resolviendoAlt009 && (
+        <EntradaModal
+          key={`alt009:${resolviendoAlt009.id}`}
+          isOpen
+          onClose={() => setResolviendoAlt009(null)}
+          prestadores={prestadores}
+          editing={null}
+          defaultPrestadorId={prestadorId}
+          plantilla={plantillaDesdeAlerta(resolviendoAlt009)}
+          title="Cargar sucursal en Tabla KM"
+          onSuccess={() => void resolverAlt009(resolviendoAlt009)}
         />
       )}
     </div>
