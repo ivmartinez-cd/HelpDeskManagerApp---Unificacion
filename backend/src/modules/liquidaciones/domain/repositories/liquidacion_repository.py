@@ -71,6 +71,15 @@ class LiquidacionRepository(Protocol):
         no toca `estado` ni el resto de los totales)."""
         ...
 
+    async def update_totales(
+        self, liquidacion_id: UUID, total_incidentes: int, total_importe: float
+    ) -> None:
+        """Recalculo tras `reconciliar_incidentes` — el caller pasa lo que quedó
+        realmente persistido (no lo que reportó AyC crudo), para que la DB y el
+        total cuenten la misma historia si `update_cobrados`/`delete_by_ids`
+        fallara a mitad de camino."""
+        ...
+
     async def count_pendientes_por_prestador(self) -> list[tuple[str, int]]:
         """Conteo de liquidaciones pendientes (excluye aprobada y cerrada) agrupado
         por prestador. Retorna pares (nombre_corto, count) ordenados por count desc."""

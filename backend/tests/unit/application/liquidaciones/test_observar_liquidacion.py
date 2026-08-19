@@ -8,16 +8,15 @@ from src.modules.liquidaciones.application.use_cases.observar_liquidacion import
     ObservarLiquidacion,
     ObservarLiquidacionPorts,
 )
+from src.modules.liquidaciones.domain.entities.liquidacion import ESTADO_OBSERVADA
 from src.modules.liquidaciones.domain.exceptions import (
     LiquidacionAyCOperationError,
     LiquidacionSinVinculoAyCError,
 )
 from src.shared.domain.errors import NotFoundError
 from tests.unit.domain.liquidaciones.factories import make_liquidacion
-from tests.unit.domain.liquidaciones.fakes import (
-    FakeCdLiquidacionesGateway,
-    FakeLiquidacionRepository,
-)
+from tests.unit.domain.liquidaciones.fakes import FakeCdLiquidacionesGateway
+from tests.unit.domain.liquidaciones.fakes_liquidacion import FakeLiquidacionRepository
 
 
 class World:
@@ -67,7 +66,7 @@ async def test_pasa_ayc_id_y_usuario_correctos_al_soap() -> None:
     assert len(world.gateway.estados_seteados) == 1
     ayc_id, estado_ayc, usuario = world.gateway.estados_seteados[0]
     assert ayc_id == 888
-    assert estado_ayc == "Observada"
+    assert estado_ayc == ESTADO_OBSERVADA
     assert usuario == "Carlos López"
 
 

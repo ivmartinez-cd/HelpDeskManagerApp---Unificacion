@@ -27,16 +27,18 @@ from tests.unit.domain.liquidaciones.factories import (
     reglas_activas_default,
 )
 from tests.unit.domain.liquidaciones.fakes import (
-    FakeAlertaRepository,
-    FakeIncidenteRepository,
     FakeLiquidacionFileParser,
-    FakeLiquidacionRepository,
-    FakeObservacionRepository,
     FakePrestadorRepository,
     FakeReglaAlertaRepository,
     FakeSpstRepository,
     FakeTablaKmRepository,
     FakeTarifarioRepository,
+)
+from tests.unit.domain.liquidaciones.fakes_liquidacion import (
+    FakeAlertaRepository,
+    FakeIncidenteRepository,
+    FakeLiquidacionRepository,
+    FakeObservacionRepository,
 )
 
 ARCHIVO_NOMBRE = "liquidacion_TEST_2026-01.xls"

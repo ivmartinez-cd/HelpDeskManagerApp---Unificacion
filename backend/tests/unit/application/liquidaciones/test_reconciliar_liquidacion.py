@@ -1,0 +1,320 @@
+"""Tests de ReconciliarLiquidacion — identidad de `incidente_id` preservada tras
+un cambio (nunca borrar y recrear), el triage de la TL sobrevive a un cambio pero
+no a una baja, y los guards que protegen contra reconciliar liquidaciones
+terminales o con datos incompletos/sospechosos."""
+
+from datetime import date
+
+from src.modules.liquidaciones.application.use_cases._reconciliar_liquidacion import (
+    ReconciliarLiquidacion,
+    ReconciliarLiquidacionPorts,
+)
+from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion import (
+    ReanalizarLiquidacion,
+    ReanalizarLiquidacionPorts,
+)
+from src.modules.liquidaciones.domain.entities.liquidacion import ESTADO_APROBADA
+from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import CdLiquidacion
+from src.modules.liquidaciones.domain.value_objects.incidente_importado import IncidenteImportado
+from tests.unit.domain.liquidaciones.factories import (
+    make_incidente,
+    make_liquidacion,
+    make_tarifario,
+    reglas_activas_default,
+)
+from tests.unit.domain.liquidaciones.fakes import (
+    FakeReglaAlertaRepository,
+    FakeSpstRepository,
+    FakeTablaKmRepository,
+    FakeTarifarioRepository,
+)
+from tests.unit.domain.liquidaciones.fakes_liquidacion import (
+    FakeAlertaRepository,
+    FakeIncidenteRepository,
+    FakeLiquidacionRepository,
+    FakeObservacionRepository,
+)
+
+_FECHA = date(2026, 1, 15)
+
+
+def make_cd_liq(
+    cant_incidentes: int, *, estado: str = "Recibida", estado_id: int | None = None
+) -> CdLiquidacion:
+    return CdLiquidacion(
+        id=1,
+        prestador_cd_id=1310,
+        numero_liquidacion="1-1",
+        fecha_liquidacion=_FECHA,
+        estado=estado,
+        cant_incidentes=cant_incidentes,
+        estado_id=estado_id,
+    )
+
+
+def make_remoto(numero_incidente: str, **overrides: object) -> IncidenteImportado:
+    base: dict[str, object] = dict(
+        numero_incidente=numero_incidente,
+        rubro="Impresoras",
+        tipo="correctivo",
+        empresa_nombre="Empresa Test",
+        sucursal_nombre="Sucursal Test",
+        nro_serie="SN-1",
+        fecha_cierre=_FECHA,
+        costo_servicio_cobrado=1500.0,
+        cant_km_cobrado=0.0,
+        costo_km_cobrado=0.0,
+        total_viaje_cobrado=0.0,
+        costo_total_cobrado=1500.0,
+        pasa_it=True,
+    )
+    base.update(overrides)
+    return IncidenteImportado(**base)  # type: ignore[arg-type]
+
+
+class World:
+    def __init__(self) -> None:
+        self.liquidaciones = FakeLiquidacionRepository()
+        self.incidentes = FakeIncidenteRepository()
+        self.alertas = FakeAlertaRepository()
+        self.tarifarios = FakeTarifarioRepository()
+        self.reanalizar = ReanalizarLiquidacion(
+            ReanalizarLiquidacionPorts(
+                liquidaciones=self.liquidaciones,
+                incidentes=self.incidentes,
+                alertas=self.alertas,
+                observaciones=FakeObservacionRepository(),
+                reglas=FakeReglaAlertaRepository(reglas_activas_default()),
+                tablas_km=FakeTablaKmRepository(),
+                spsts=FakeSpstRepository(),
+                tarifarios=self.tarifarios,
+            )
+        )
+        self.use_case = ReconciliarLiquidacion(
+            ReconciliarLiquidacionPorts(
+                incidentes=self.incidentes,
+                liquidaciones=self.liquidaciones,
+                reanalizar=self.reanalizar,
+            )
+        )
+
+    def con_liquidacion(self, **overrides: object):
+        liq = make_liquidacion(**overrides)
+        self.liquidaciones.rows[liq.id] = liq
+        return liq
+
+    def con_incidente(self, liquidacion_id, **overrides: object):
+        inc = make_incidente(liquidacion_id=liquidacion_id, fecha_cierre=_FECHA, **overrides)
+        self.incidentes.rows[inc.id] = inc
+        return inc
+
+
+async def test_cambio_actualiza_in_place_preservando_el_id() -> None:
+    world = World()
+    liq = world.con_liquidacion()
+    local = world.con_incidente(liq.id, numero_incidente="1", costo_servicio_cobrado=1000.0)
+    remoto = make_remoto("1", costo_servicio_cobrado=1500.0)
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.reconciliada is True
+    assert resultado.cambios == 1
+    assert list(world.incidentes.rows.keys()) == [local.id]
+    actualizado = world.incidentes.rows[local.id]
+    assert actualizado.costo_servicio_cobrado == 1500.0
+
+    liq_actualizada = world.liquidaciones.rows[liq.id]
+    assert liq_actualizada.total_incidentes == 1
+    assert liq_actualizada.total_importe == 1500.0
+
+
+async def test_alta_crea_incidente_nuevo() -> None:
+    world = World()
+    liq = world.con_liquidacion()
+    remoto = make_remoto("1", costo_servicio_cobrado=1500.0)
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.altas == 1
+    [creado] = await world.incidentes.list_by_liquidacion(liq.id)
+    assert creado.numero_incidente == "1"
+
+
+async def test_sin_diferencias_no_toca_nada_pero_reconcilia() -> None:
+    world = World()
+    liq = world.con_liquidacion(
+        estado="recibida", total_incidentes=1, total_importe=1500.0
+    )
+    world.con_incidente(
+        liq.id,
+        numero_incidente="1",
+        costo_servicio_cobrado=1500.0,
+        nro_serie="SN-1",
+        cant_km_cobrado=0.0,
+        costo_km_cobrado=0.0,
+        total_viaje_cobrado=0.0,
+        costo_total_cobrado=1500.0,
+    )
+    remoto = make_remoto("1", costo_servicio_cobrado=1500.0)
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1, estado="Recibida"), [remoto])
+
+    assert resultado.reconciliada is True
+    assert (resultado.altas, resultado.cambios, resultado.bajas) == (0, 0, 0)
+    assert resultado.estado_actualizado is False
+    assert world.liquidaciones.rows[liq.id].estado == "recibida"
+
+
+async def test_triage_sobrevive_a_un_cambio() -> None:
+    """El caso central del diseño: la TL descartó una alerta ALT001 sobre un
+    incidente; AyC corrige un dato no económico del mismo incidente (nro_serie);
+    tras reconciliar, la alerta se regenera (mismo incidente, sigue habiendo
+    diferencia de precio) y conserva el descarte — mismo mecanismo que ya prueba
+    `test_reanalizar_preserva_el_triage_de_la_tl`, acá disparado por
+    `ReconciliarLiquidacion` en vez de un `ReanalizarLiquidacion` manual."""
+    world = World()
+    liq = world.con_liquidacion()
+    world.tarifarios.rows = [make_tarifario(prestador_id=liq.prestador_id, costo_servicio=1500.0)]
+    local = world.con_incidente(
+        liq.id, numero_incidente="1", costo_servicio_cobrado=1800.0, nro_serie="SN-OLD"
+    )
+    await world.reanalizar.execute(liq.id)
+    [alerta] = world.alertas.por_liquidacion[liq.id]
+    assert alerta.tipo_alerta == "ALT001"
+    await world.alertas.update_estado(
+        liq.id, alerta.id, estado="descartada", justificacion="acordado con el PST"
+    )
+
+    remoto = make_remoto("1", costo_servicio_cobrado=1800.0, nro_serie="SN-NEW")
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.cambios == 1
+    assert world.incidentes.rows[local.id].nro_serie == "SN-NEW"
+    [regenerada] = world.alertas.por_liquidacion[liq.id]
+    assert regenerada.tipo_alerta == "ALT001"
+    assert regenerada.estado == "descartada"
+    assert regenerada.justificacion == "acordado con el PST"
+
+
+async def test_triage_no_sobrevive_a_una_baja() -> None:
+    """El incidente con la alerta descartada deja de existir del lado de AyC —
+    se borra, y con él (vía `ReanalizarLiquidacion`, que ya no lo evalúa) su
+    alerta descartada. Los otros dos incidentes no se tocan (33% de bajas, bajo
+    el umbral de 50% que aborta por sospecha de mismatch masivo)."""
+    world = World()
+    liq = world.con_liquidacion()
+    world.tarifarios.rows = [make_tarifario(prestador_id=liq.prestador_id, costo_servicio=1500.0)]
+    a_borrar = world.con_incidente(liq.id, numero_incidente="1", costo_servicio_cobrado=1800.0)
+    world.con_incidente(liq.id, numero_incidente="2", costo_servicio_cobrado=1500.0)
+    world.con_incidente(liq.id, numero_incidente="3", costo_servicio_cobrado=1500.0)
+    await world.reanalizar.execute(liq.id)
+    [alerta] = world.alertas.por_liquidacion[liq.id]
+    await world.alertas.update_estado(
+        liq.id, alerta.id, estado="descartada", justificacion="acordado con el PST"
+    )
+
+    remotos = [
+        make_remoto("2", costo_servicio_cobrado=1500.0),
+        make_remoto("3", costo_servicio_cobrado=1500.0),
+    ]
+    resultado = await world.use_case.execute(liq, make_cd_liq(2), remotos)
+
+    assert resultado.bajas == 1
+    assert a_borrar.id not in world.incidentes.rows
+    assert world.alertas.por_liquidacion[liq.id] == []
+
+
+async def test_guard_estado_terminal_no_reconcilia() -> None:
+    world = World()
+    liq = world.con_liquidacion(estado=ESTADO_APROBADA)
+    local = world.con_incidente(liq.id, numero_incidente="1", costo_servicio_cobrado=1000.0)
+    remoto = make_remoto("1", costo_servicio_cobrado=9999.0)
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.reconciliada is False
+    assert world.incidentes.rows[local.id].costo_servicio_cobrado == 1000.0
+
+
+async def test_guard_cantidad_declarada_no_coincide_no_reconcilia() -> None:
+    world = World()
+    liq = world.con_liquidacion()
+    local = world.con_incidente(liq.id, numero_incidente="1", costo_servicio_cobrado=1000.0)
+    remoto = make_remoto("1", costo_servicio_cobrado=9999.0)
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(5), [remoto])
+
+    assert resultado.reconciliada is False
+    assert world.incidentes.rows[local.id].costo_servicio_cobrado == 1000.0
+
+
+async def test_guard_bajas_masivas_aborta() -> None:
+    """Con locales que ya no matchean nada (ej. cambio de formato de
+    numero_incidente), el diff sería 100% bajas — abortar es más seguro que
+    borrar en masa por un bug de matching."""
+    world = World()
+    liq = world.con_liquidacion()
+    world.con_incidente(liq.id, numero_incidente="1", costo_servicio_cobrado=1000.0)
+    world.con_incidente(liq.id, numero_incidente="2", costo_servicio_cobrado=1000.0)
+    remoto = make_remoto("999", costo_servicio_cobrado=1000.0)  # no matchea a nada local
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.reconciliada is False
+    assert len(world.incidentes.rows) == 2
+
+
+async def test_estado_se_pisa_con_el_que_reporta_ayc() -> None:
+    world = World()
+    liq = world.con_liquidacion(estado="abierta")
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
+
+    resultado = await world.use_case.execute(
+        liq, make_cd_liq(1, estado="Recibida"), [remoto]
+    )
+
+    assert resultado.estado_actualizado is True
+    assert world.liquidaciones.rows[liq.id].estado == "recibida"
+
+
+async def test_estado_se_pisa_por_estado_id_con_prioridad_sobre_el_nombre() -> None:
+    world = World()
+    liq = world.con_liquidacion(estado="recibida")
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
+
+    resultado = await world.use_case.execute(
+        liq, make_cd_liq(1, estado="Recibida", estado_id=3), [remoto]
+    )
+
+    assert resultado.estado_actualizado is True
+    assert world.liquidaciones.rows[liq.id].estado == "observada"
+
+
+async def test_estado_puede_avanzar_a_terminal_via_reconciliacion() -> None:
+    """La reconciliación puede mover una pendiente directo a `aprobada` — el
+    guard de estado terminal mira el estado local *previo* a esta corrida, no
+    el nuevo que trae AyC (ver docstring de ReconciliarLiquidacion)."""
+    world = World()
+    liq = world.con_liquidacion(estado="observada")
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
+
+    resultado = await world.use_case.execute(
+        liq, make_cd_liq(1, estado="Aprobada", estado_id=4), [remoto]
+    )
+
+    assert resultado.reconciliada is True
+    assert resultado.estado_actualizado is True
+    assert world.liquidaciones.rows[liq.id].estado == "aprobada"
+
+
+async def test_estado_ayc_desconocido_no_se_pisa() -> None:
+    world = World()
+    liq = world.con_liquidacion(estado="recibida")
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
+
+    resultado = await world.use_case.execute(
+        liq, make_cd_liq(1, estado="Anulada"), [remoto]
+    )
+
+    assert resultado.estado_actualizado is False
+    assert world.liquidaciones.rows[liq.id].estado == "recibida"

@@ -24,8 +24,6 @@ from src.shared.domain.errors import NotFoundError
 
 logger = logging.getLogger(__name__)
 
-_ESTADO_AYC = "Aprobada"
-
 
 @dataclass(frozen=True)
 class AprobarLiquidacionPorts:
@@ -47,7 +45,7 @@ class AprobarLiquidacion:
         ayc_id = int(liq.numero_liquidacion.split("-")[0])
 
         try:
-            await self._ports.cd_gateway.set_estado(ayc_id, _ESTADO_AYC, usuario)
+            await self._ports.cd_gateway.set_estado(ayc_id, ESTADO_APROBADA, usuario)
         except Exception as exc:
             raise LiquidacionAyCOperationError(
                 f"No se pudo aprobar la liquidación {liq.numero_liquidacion} en wsAyC"

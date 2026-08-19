@@ -91,13 +91,22 @@ export const liquidacionesCoreApi = {
   anular: (id: string) =>
     httpClient.post<void>(`/api/liquidaciones/${id}/anular`),
 
+  reconciliar: (id: string) =>
+    httpClient.post<void>(`/api/liquidaciones/${id}/reconciliar`),
+
   reanalyze: (id: string) =>
     httpClient.post<{ totalIncidentes: number; totalAlertas: number; totalObservaciones: number }>(
       `/api/liquidaciones/${id}/reanalyze`,
     ),
 
   sincronizar: () =>
-    httpClient.post<{ creadas: number; yaExistentes: number; sinPrestador: number; fallidas: number; anuladas: number }>(
-      "/api/liquidaciones/sincronizar",
-    ),
+    httpClient.post<{
+      creadas: number;
+      yaExistentes: number;
+      sinPrestador: number;
+      fallidas: number;
+      anuladas: number;
+      reconciliadas: number;
+      estadosActualizados: number;
+    }>("/api/liquidaciones/sincronizar"),
 };

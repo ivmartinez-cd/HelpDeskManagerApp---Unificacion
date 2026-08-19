@@ -86,7 +86,10 @@ export function LiquidacionesDashboard() {
     setSyncing(true);
     try {
       const res = await liquidacionesApi.sincronizar();
-      const detalle = `${res.creadas} nueva${res.creadas !== 1 ? "s" : ""}, ${res.yaExistentes} ya existentes${res.sinPrestador > 0 ? `, ${res.sinPrestador} sin prestador vinculado` : ""}${res.anuladas > 0 ? `, ${res.anuladas} anulada${res.anuladas !== 1 ? "s" : ""} en AyC eliminada${res.anuladas !== 1 ? "s" : ""}` : ""}`;
+      const revisadas = res.reconciliadas > 0
+        ? ` (${res.reconciliadas} revisada${res.reconciliadas !== 1 ? "s" : ""} contra AyC${res.estadosActualizados > 0 ? `, ${res.estadosActualizados} con estado actualizado` : ""})`
+        : "";
+      const detalle = `${res.creadas} nueva${res.creadas !== 1 ? "s" : ""}, ${res.yaExistentes} ya existentes${revisadas}${res.sinPrestador > 0 ? `, ${res.sinPrestador} sin prestador vinculado` : ""}${res.anuladas > 0 ? `, ${res.anuladas} anulada${res.anuladas !== 1 ? "s" : ""} en AyC eliminada${res.anuladas !== 1 ? "s" : ""}` : ""}`;
       if (res.fallidas > 0) {
         toast.warning(
           `Sync con fallas — ${detalle}, ${res.fallidas} con detalle SOAP fallido (se reintentan en el próximo sync)`,
@@ -94,7 +97,7 @@ export function LiquidacionesDashboard() {
       } else {
         toast.success(`Sync OK — ${detalle}`);
       }
-      if (res.creadas > 0) await load();
+      if (res.creadas > 0 || res.reconciliadas > 0 || res.anuladas > 0) await load();
     } catch {
       toast.error("Error al sincronizar con Canal Directo");
     } finally {

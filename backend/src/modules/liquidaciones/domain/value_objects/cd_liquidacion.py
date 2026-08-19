@@ -12,6 +12,10 @@ class CdLiquidacion:
     fecha_liquidacion: date
     estado: str
     cant_incidentes: int
+    # id numérico de AyC (1=Preliquidada..5=Cerrada) — el mismo que espera
+    # setLiquidationStatus. None si el JSON no lo trae; `estado` (nombre) es el
+    # fallback. Ver domain/services/estados_ayc.py.
+    estado_id: int | None = None
 
 
 @dataclass(frozen=True)

@@ -9,6 +9,14 @@ from functools import lru_cache
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.liquidaciones.application.use_cases._reconciliar_liquidacion import (
+    ReconciliarLiquidacion,
+    ReconciliarLiquidacionPorts,
+)
+from src.modules.liquidaciones.application.use_cases.actualizar_estado_local import (
+    ActualizarEstadoLocal,
+    ActualizarEstadoLocalPorts,
+)
 from src.modules.liquidaciones.application.use_cases.anular_liquidacion import (
     AnularLiquidacion,
     AnularLiquidacionPorts,
@@ -44,6 +52,10 @@ from src.modules.liquidaciones.application.use_cases.observar_liquidacion import
 from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion import (
     ReanalizarLiquidacion,
     ReanalizarLiquidacionPorts,
+)
+from src.modules.liquidaciones.application.use_cases.reconciliar_liquidacion_individual import (
+    ReconciliarLiquidacionIndividual,
+    ReconciliarLiquidacionIndividualPorts,
 )
 from src.modules.liquidaciones.application.use_cases.sincronizar_liquidaciones import (
     SincronizarLiquidaciones,
@@ -98,6 +110,12 @@ def build_list_liquidaciones(session: AsyncSession) -> ListLiquidaciones:
     )
 
 
+def build_actualizar_estado_local(session: AsyncSession) -> ActualizarEstadoLocal:
+    return ActualizarEstadoLocal(
+        ActualizarEstadoLocalPorts(liquidaciones=SqlAlchemyLiquidacionRepository(session))
+    )
+
+
 def build_get_liquidacion_detalle(session: AsyncSession) -> GetLiquidacionDetalle:
     return GetLiquidacionDetalle(
         GetLiquidacionDetallePorts(
@@ -137,6 +155,29 @@ def build_importar_liquidacion(session: AsyncSession) -> ImportarLiquidacion:
     )
 
 
+def build_reconciliar_liquidacion(session: AsyncSession) -> ReconciliarLiquidacion:
+    return ReconciliarLiquidacion(
+        ReconciliarLiquidacionPorts(
+            incidentes=SqlAlchemyIncidenteRepository(session),
+            liquidaciones=SqlAlchemyLiquidacionRepository(session),
+            reanalizar=build_reanalizar_liquidacion(session),
+        )
+    )
+
+
+def build_reconciliar_liquidacion_individual(
+    session: AsyncSession,
+) -> ReconciliarLiquidacionIndividual:
+    return ReconciliarLiquidacionIndividual(
+        ReconciliarLiquidacionIndividualPorts(
+            liquidaciones=SqlAlchemyLiquidacionRepository(session),
+            prestadores=SqlAlchemyPrestadorRepository(session),
+            cd_gateway=_cd_gateway(),
+            reconciliar=build_reconciliar_liquidacion(session),
+        )
+    )
+
+
 def build_sincronizar_liquidaciones(session: AsyncSession) -> SincronizarLiquidaciones:
     return SincronizarLiquidaciones(
         SincronizarLiquidacionesPorts(
@@ -145,6 +186,7 @@ def build_sincronizar_liquidaciones(session: AsyncSession) -> SincronizarLiquida
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
             incidentes=SqlAlchemyIncidenteRepository(session),
             reanalizar=build_reanalizar_liquidacion(session),
+            reconciliar=build_reconciliar_liquidacion(session),
         )
     )
 

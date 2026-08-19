@@ -140,6 +140,16 @@ class SqlAlchemyLiquidacionRepository:
         )
         await self._session.execute(stmt)
 
+    async def update_totales(
+        self, liquidacion_id: UUID, total_incidentes: int, total_importe: float
+    ) -> None:
+        stmt = (
+            update(LiquidacionModel)
+            .where(LiquidacionModel.id == liquidacion_id)
+            .values(total_incidentes=total_incidentes, total_importe=total_importe)
+        )
+        await self._session.execute(stmt)
+
     async def count_pendientes_por_prestador(self) -> list[tuple[str, int]]:
         from src.modules.liquidaciones.infrastructure.models.prestador_model import (
             LiquidacionPrestadorModel,

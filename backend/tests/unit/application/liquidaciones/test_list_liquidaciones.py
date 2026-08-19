@@ -5,7 +5,7 @@ from src.modules.liquidaciones.application.use_cases.list_liquidaciones import (
     ListLiquidacionesPorts,
 )
 from tests.unit.domain.liquidaciones.factories import make_liquidacion
-from tests.unit.domain.liquidaciones.fakes import FakeLiquidacionRepository
+from tests.unit.domain.liquidaciones.fakes_liquidacion import FakeLiquidacionRepository
 
 
 async def test_sin_filtros_devuelve_todas() -> None:

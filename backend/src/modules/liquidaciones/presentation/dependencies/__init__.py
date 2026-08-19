@@ -30,6 +30,7 @@ from src.modules.liquidaciones.presentation.dependencies.geolocalizacion import 
     build_resolver_coordenadas_fila,
 )
 from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
+    build_actualizar_estado_local,
     build_anular_liquidacion,
     build_aprobar_liquidacion,
     build_backfill_estado,
@@ -39,6 +40,7 @@ from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
     build_list_liquidaciones,
     build_observar_liquidacion,
     build_reanalizar_liquidacion,
+    build_reconciliar_liquidacion_individual,
     build_sincronizar_liquidaciones,
 )
 from src.modules.liquidaciones.presentation.dependencies.siges import (
@@ -74,6 +76,7 @@ __all__ = [
     "build_listar_sucursales_propias",
     "build_preview_calcular_distancias",
     "build_recalcular_km_fila",
+    "build_actualizar_estado_local",
     "build_diagnosticar_asistente_km",
     "build_refrescar_datos_siges",
     "build_resolver_coordenadas",
@@ -95,6 +98,7 @@ __all__ = [
     "build_mapear_zona_siges",
     "build_proponer_vinculos_siges",
     "build_reanalizar_liquidacion",
+    "build_reconciliar_liquidacion_individual",
     "build_sincronizar_liquidaciones",
     "build_sync_config_desde_siges",
     "build_sync_tarifarios_desde_siges",

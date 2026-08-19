@@ -1,6 +1,6 @@
 # ADR-015: wsAyC SOAP como fuente de importación automática de preliquidaciones
 
-## Estado: Aceptado e implementado (2026-08-13 — ver `docs/liquidaciones/LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`). Corregido el mismo día tras la validación adversarial — ver Addendum al final.
+## Estado: Aceptado e implementado (2026-08-13 — ver `docs/liquidaciones/LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`). Corregido el mismo día tras la validación adversarial — ver Addendum al final. **Parcialmente superado por ADR-024 (2026-08-19)**: el sync deja de ser "aditivo puro" — además de crear liquidaciones nuevas, ahora también reconcilia in-place las pendientes existentes (costos/km de incidentes y estado) contra AyC. La garantía que sobrevive es el dedup por `numero_liquidacion` para liquidaciones nuevas.
 
 ## Contexto
 

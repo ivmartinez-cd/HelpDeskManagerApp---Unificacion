@@ -97,6 +97,22 @@ async def test_update_total_alertas_persists_count(
     assert fetched.total_alertas == 5
 
 
+async def test_update_totales_persists_incidentes_y_importe(
+    db_session: AsyncSession, prestador_id: uuid.UUID
+) -> None:
+    repo = SqlAlchemyLiquidacionRepository(db_session)
+    created = await _create_liquidacion(
+        db_session, prestador_id, total_incidentes=1, total_importe=100.0
+    )
+
+    await repo.update_totales(created.id, 3, 999.5)
+
+    fetched = await repo.get_by_id(created.id)
+    assert fetched is not None
+    assert fetched.total_incidentes == 3
+    assert fetched.total_importe == 999.5
+
+
 async def test_delete_removes_liquidacion(
     db_session: AsyncSession, prestador_id: uuid.UUID
 ) -> None:

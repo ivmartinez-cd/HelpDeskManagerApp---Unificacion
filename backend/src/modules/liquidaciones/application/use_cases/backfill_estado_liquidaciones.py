@@ -30,13 +30,11 @@ from src.modules.liquidaciones.domain.repositories.liquidacion_repository import
 from src.modules.liquidaciones.domain.repositories.prestador_repository import (
     PrestadorRepository,
 )
+from src.modules.liquidaciones.domain.services.estados_ayc import estado_local_desde_ayc
 from src.modules.liquidaciones.domain.services.numeracion_ayc import numero_liquidacion
+from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import CdLiquidacion
 
 logger = logging.getLogger(__name__)
-
-_ESTADOS_AYC_VALIDOS = frozenset(
-    {"preliquidada", "recibida", "observada", "aprobada", "cerrada"}
-)
 
 
 @dataclass(frozen=True)
@@ -87,22 +85,19 @@ class BackfillEstadoLiquidaciones:
         )
         return pst_res
 
-    async def _estados_ayc(self, pst: Prestador) -> dict[str, str]:
-        """Mapa numero_liquidacion → estado AyC en minúsculas."""
+    async def _estados_ayc(self, pst: Prestador) -> dict[str, CdLiquidacion]:
+        """Mapa numero_liquidacion → liquidación AyC (trae estado_id + nombre,
+        ver `domain/services/estados_ayc.py`)."""
         assert pst.cd_prestador_id is not None  # garantizado por list_con_cd_id()
         cd_liqs = await self._ports.cd_gateway.get_liquidaciones(
             pst.cd_prestador_id, top=500
         )
-        return {
-            numero_liquidacion(liq.id): liq.estado.lower()
-            for liq in cd_liqs
-            if liq.estado
-        }
+        return {numero_liquidacion(liq.id): liq for liq in cd_liqs}
 
     async def _aplicar_estado(
         self,
         liq: Liquidacion,
-        ayc_map: dict[str, str],
+        ayc_map: dict[str, CdLiquidacion],
         pst_res: BackfillEstadoPrestadorResultado,
         resultado: BackfillEstadoResultado,
         *,
@@ -110,14 +105,15 @@ class BackfillEstadoLiquidaciones:
     ) -> None:
         pst_res.procesadas += 1
         numero = liq.numero_liquidacion
-        nuevo_estado = ayc_map.get(numero) if numero else None
-        if not nuevo_estado:
+        cd_liq = ayc_map.get(numero) if numero else None
+        if cd_liq is None:
             pst_res.sin_match += 1
             return
-        if nuevo_estado not in _ESTADOS_AYC_VALIDOS:
+        nuevo_estado = estado_local_desde_ayc(estado_id=cd_liq.estado_id, nombre=cd_liq.estado)
+        if nuevo_estado is None:
             logger.warning(
                 "backfill_estado: estado AyC desconocido %r para %s — saltando",
-                nuevo_estado, numero,
+                cd_liq.estado, numero,
             )
             pst_res.saltadas += 1
             return

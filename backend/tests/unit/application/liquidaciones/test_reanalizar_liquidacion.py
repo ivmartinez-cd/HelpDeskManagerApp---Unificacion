@@ -19,14 +19,16 @@ from tests.unit.domain.liquidaciones.factories import (
     reglas_activas_default,
 )
 from tests.unit.domain.liquidaciones.fakes import (
-    FakeAlertaRepository,
-    FakeIncidenteRepository,
-    FakeLiquidacionRepository,
-    FakeObservacionRepository,
     FakeReglaAlertaRepository,
     FakeSpstRepository,
     FakeTablaKmRepository,
     FakeTarifarioRepository,
+)
+from tests.unit.domain.liquidaciones.fakes_liquidacion import (
+    FakeAlertaRepository,
+    FakeIncidenteRepository,
+    FakeLiquidacionRepository,
+    FakeObservacionRepository,
 )
 
 

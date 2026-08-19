@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Calendar, DollarSign, ExternalLink } from "lucide-react";
@@ -50,6 +50,21 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
   );
 
   useEffect(() => { void load(); }, [load]);
+
+  // Refresh silencioso al abrir el detalle: reconcilia esta liquidación contra
+  // AyC (estado, costos/km de incidentes) una sola vez por visita a la página.
+  // Best-effort — un fallo acá nunca debe impedir ver el detalle ya cargado.
+  const reconciliadoRef = useRef(false);
+  useEffect(() => {
+    if (!detalle || reconciliadoRef.current) return;
+    reconciliadoRef.current = true;
+    const { numeroLiquidacion, estado } = detalle.liquidacion;
+    if (!numeroLiquidacion || estado === "aprobada" || estado === "cerrada") return;
+    void liquidacionesApi
+      .reconciliar(id)
+      .catch(() => {})
+      .then(() => load());
+  }, [detalle, id, load]);
 
   const handleReanalizar = async () => {
     setReanalizing(true);
@@ -188,16 +203,18 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
             />
           </div>
           <div className="flex flex-col items-end gap-2">
-            <div className="flex items-center gap-2">
-              <span className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
-                Cambiar estado
-              </span>
-              <EstadoSelector
-                estado={liquidacion.estado}
-                disabled={updatingEstado}
-                onCambiar={(nuevo) => void handleUpdateEstado(nuevo)}
-              />
-            </div>
+            {!liquidacion.numeroLiquidacion && (
+              <div className="flex items-center gap-2">
+                <span className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
+                  Cambiar estado
+                </span>
+                <EstadoSelector
+                  estado={liquidacion.estado}
+                  disabled={updatingEstado}
+                  onCambiar={(nuevo) => void handleUpdateEstado(nuevo)}
+                />
+              </div>
+            )}
             <AyCAccionesBar
               liquidacion={liquidacion}
               onActualizado={(updated) => setDetalle({ ...detalle, liquidacion: updated })}

@@ -4,10 +4,13 @@ import uuid
 from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
+from src.modules.liquidaciones.domain.value_objects.incidente_actualizado import (
+    IncidenteActualizado,
+)
 from src.modules.liquidaciones.domain.value_objects.incidente_importado import (
     IncidenteImportado,
 )
@@ -76,6 +79,39 @@ class SqlAlchemyIncidenteRepository:
         )
         rows = (await self._session.execute(stmt)).scalars().all()
         return {r for r in rows if r is not None}
+
+    async def update_cobrados(self, cambios: Sequence[IncidenteActualizado]) -> None:
+        for c in cambios:
+            stmt = (
+                update(IncidenteModel)
+                .where(IncidenteModel.id == c.incidente_id)
+                .values(
+                    rubro=c.rubro,
+                    tipo=c.tipo,
+                    empresa_nombre=c.empresa_nombre,
+                    sucursal_nombre=c.sucursal_nombre,
+                    nro_serie=c.nro_serie,
+                    fecha_cierre=c.fecha_cierre,
+                    costo_servicio_cobrado=c.costo_servicio_cobrado,
+                    cant_km_cobrado=c.cant_km_cobrado,
+                    costo_km_cobrado=c.costo_km_cobrado,
+                    total_viaje_cobrado=c.total_viaje_cobrado,
+                    costo_total_cobrado=c.costo_total_cobrado,
+                    pasa_it=c.pasa_it,
+                )
+            )
+            await self._session.execute(stmt)
+
+    async def delete_by_ids(self, incidente_ids: Sequence[UUID]) -> int:
+        from sqlalchemy.engine import CursorResult
+
+        if not incidente_ids:
+            return 0
+        stmt = delete(IncidenteModel).where(IncidenteModel.id.in_(incidente_ids))
+        result: CursorResult[tuple[()]] = await self._session.execute(  # type: ignore[assignment]
+            stmt
+        )
+        return int(result.rowcount)
 
 
 def _a_model(liquidacion_id: UUID, incidente: IncidenteImportado) -> IncidenteModel:

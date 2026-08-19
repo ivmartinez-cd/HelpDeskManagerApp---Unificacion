@@ -17,10 +17,8 @@ from src.modules.liquidaciones.domain.exceptions import (
 )
 from src.shared.domain.errors import NotFoundError
 from tests.unit.domain.liquidaciones.factories import make_liquidacion
-from tests.unit.domain.liquidaciones.fakes import (
-    FakeCdLiquidacionesGateway,
-    FakeLiquidacionRepository,
-)
+from tests.unit.domain.liquidaciones.fakes import FakeCdLiquidacionesGateway
+from tests.unit.domain.liquidaciones.fakes_liquidacion import FakeLiquidacionRepository
 
 
 class World:

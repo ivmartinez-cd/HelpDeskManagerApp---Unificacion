@@ -15,12 +15,12 @@ from tests.unit.domain.liquidaciones.factories import (
     make_liquidacion,
     make_tabla_km,
 )
-from tests.unit.domain.liquidaciones.fakes import (
+from tests.unit.domain.liquidaciones.fakes import FakeTablaKmRepository
+from tests.unit.domain.liquidaciones.fakes_liquidacion import (
     FakeAlertaRepository,
     FakeIncidenteRepository,
     FakeLiquidacionRepository,
     FakeObservacionRepository,
-    FakeTablaKmRepository,
 )
 
 

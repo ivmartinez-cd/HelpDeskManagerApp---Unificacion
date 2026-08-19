@@ -5,6 +5,9 @@ from typing import Protocol
 from uuid import UUID
 
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
+from src.modules.liquidaciones.domain.value_objects.incidente_actualizado import (
+    IncidenteActualizado,
+)
 from src.modules.liquidaciones.domain.value_objects.incidente_importado import (
     IncidenteImportado,
 )
@@ -41,4 +44,17 @@ class IncidenteRepository(Protocol):
     ) -> set[str]:
         """Distinct empresa_nombre (sin normalizar) de incidentes de este prestador
         en liquidaciones con periodo >= desde_periodo. Sirve para detectar ex-clientes."""
+        ...
+
+    async def update_cobrados(self, cambios: Sequence[IncidenteActualizado]) -> None:
+        """UPDATE in-place de los campos que reporta AyC, para incidentes que siguen
+        existiendo remotamente pero cambiaron — usado por `reconciliar_incidentes`.
+        Preserva el `incidente_id` a propósito: nunca se borra y recrea un incidente
+        que sigue existiendo, porque `alertas.incidente_id` es `ON DELETE CASCADE` y
+        eso perdería el triage de la TL en silencio."""
+        ...
+
+    async def delete_by_ids(self, incidente_ids: Sequence[UUID]) -> int:
+        """Elimina incidentes que AyC dejó de reportar — cascada a sus alertas y
+        observaciones asociadas (`ON DELETE CASCADE`). Devuelve la cantidad eliminada."""
         ...

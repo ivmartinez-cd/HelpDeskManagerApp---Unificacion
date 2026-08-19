@@ -1,5 +1,9 @@
 """Endpoints de liquidaciones — listado, importación, detalle y reanálisis.
 
+Las acciones que hablan con wsAyC (sync, backfill de estado, aprobar/observar/
+anular, reconciliar una sola) viven en liquidaciones_ayc_router.py — router
+separado, mismo prefijo (ver ese archivo para el motivo).
+
 Orden de registro importa: `/prestadores` e `/importar` van ANTES de `/{liquidacion_id}`
 para que FastAPI no intente parsear esos segmentos como UUID y devuelva 422."""
 
@@ -10,13 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
-from src.modules.liquidaciones.domain.well_known_permissions import (
-    APPROVE,
-    CREATE,
-    DELETE,
-    UPDATE,
-    VIEW,
-)
+from src.modules.liquidaciones.domain.well_known_permissions import CREATE, UPDATE, VIEW
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_liquidacion_repository import (  # noqa: E501
     SqlAlchemyLiquidacionRepository,
 )
@@ -27,17 +25,12 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_
     SqlAlchemyPrestadorRepository,
 )
 from src.modules.liquidaciones.presentation.dependencies import (
-    build_anular_liquidacion,
-    build_aprobar_liquidacion,
-    build_backfill_estado,
+    build_actualizar_estado_local,
     build_get_liquidacion_detalle,
     build_importar_liquidacion,
     build_list_liquidaciones,
-    build_observar_liquidacion,
     build_reanalizar_liquidacion,
-    build_sincronizar_liquidaciones,
 )
-from src.modules.liquidaciones.presentation.schemas.backfill_schemas import BackfillEstadoOut
 from src.modules.liquidaciones.presentation.schemas.importar_liquidacion_schemas import (
     ImportarLiquidacionOut,
 )
@@ -57,7 +50,6 @@ from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import (
 from src.modules.liquidaciones.presentation.schemas.reanalizar_liquidacion_schemas import (
     ReanalizarLiquidacionOut,
 )
-from src.modules.liquidaciones.presentation.schemas.sincronizar_schemas import SincronizarOut
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
@@ -66,8 +58,6 @@ router = APIRouter(prefix="/api/liquidaciones", tags=["liquidaciones"])
 _require_view = Depends(require_permission(VIEW))
 _require_update = Depends(require_permission(UPDATE))
 _require_create = Depends(require_permission(CREATE))
-_require_approve = Depends(require_permission(APPROVE))
-_require_delete = Depends(require_permission(DELETE))
 # Catálogo chico que alimenta combos y el listado completo de config — el
 # contrato sigue paginado con default generoso (mismo criterio que prestadores).
 _CATALOGO_SIZE = 500
@@ -131,36 +121,6 @@ async def importar_liquidacion(
     return ImportarLiquidacionOut.from_dto(resultado)
 
 
-@router.post("/sincronizar", response_model=SincronizarOut)
-async def sincronizar_liquidaciones(
-    prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
-    _: Identity = _require_create,
-    db: AsyncSession = Depends(get_db),
-) -> SincronizarOut:
-    """Sin `prestadorId` sincroniza todos los prestadores vinculados; con él, solo
-    ese (acota la corrida — el sync completo son miles de llamadas SOAP)."""
-    resultado = await build_sincronizar_liquidaciones(db).execute(prestador_id)
-    return SincronizarOut.from_dto(resultado)
-
-
-@router.post("/backfill-estado", response_model=BackfillEstadoOut)
-async def backfill_estado_liquidaciones(
-    dry_run: bool = Query(default=True, alias="dryRun"),
-    prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
-    _: Identity = _require_create,
-    db: AsyncSession = Depends(get_db),
-) -> BackfillEstadoOut:
-    """Actualiza el `estado` de las liquidaciones `abierta` con su estado real en AyC.
-
-    `?dryRun=true` (default) reporta sin escribir. Pasar `?dryRun=false` para ejecutar.
-    Acotable con `?prestadorId=` (misma semántica que `/sincronizar`). Ver ADR-016.
-    """
-    resultado = await build_backfill_estado(db).execute(
-        dry_run=dry_run, prestador_id=prestador_id
-    )
-    return BackfillEstadoOut.from_dto(resultado)
-
-
 @router.get("/resumen", response_model=ResumenLiquidacionesOut)
 async def get_resumen_liquidaciones(
     _: Identity = _require_view,
@@ -181,11 +141,12 @@ async def update_estado_liquidacion(
     _: Identity = _require_update,
     db: AsyncSession = Depends(get_db),
 ) -> LiquidacionOut:
-    updated = await SqlAlchemyLiquidacionRepository(db).update_estado(
-        liquidacion_id, body.estado
-    )
-    if not updated:
-        raise HTTPException(status_code=404, detail="Liquidación no encontrada")
+    """Solo para liquidaciones SIN vínculo AyC (`numero_liquidacion` nulo) — las
+    vinculadas tienen su estado gobernado por AyC (reconciliación automática,
+    ADR-024, o los botones Aprobar/Observar/Anular de liquidaciones_ayc_router.py).
+    `ActualizarEstadoLocal` levanta `LiquidacionConVinculoAycError` (409) si la
+    liquidación está vinculada."""
+    updated = await build_actualizar_estado_local(db).execute(liquidacion_id, body.estado)
     return LiquidacionOut.from_entity(updated)
 
 
@@ -221,42 +182,6 @@ async def update_estado_observacion(
     if not updated:
         raise HTTPException(status_code=404, detail="Observación no encontrada")
     return ObservacionOut.from_entity(updated)
-
-
-@router.post("/{liquidacion_id}/aprobar", response_model=LiquidacionOut)
-async def aprobar_liquidacion(
-    liquidacion_id: UUID,
-    identity: Identity = _require_approve,
-    db: AsyncSession = Depends(get_db),
-) -> LiquidacionOut:
-    updated = await build_aprobar_liquidacion(db).execute(
-        liquidacion_id, usuario=identity.user.full_name
-    )
-    return LiquidacionOut.from_entity(updated)
-
-
-@router.post("/{liquidacion_id}/observar", response_model=LiquidacionOut)
-async def observar_liquidacion(
-    liquidacion_id: UUID,
-    identity: Identity = _require_approve,
-    db: AsyncSession = Depends(get_db),
-) -> LiquidacionOut:
-    updated = await build_observar_liquidacion(db).execute(
-        liquidacion_id, usuario=identity.user.full_name
-    )
-    return LiquidacionOut.from_entity(updated)
-
-
-@router.post("/{liquidacion_id}/anular", status_code=204)
-async def anular_liquidacion(
-    liquidacion_id: UUID,
-    _: Identity = _require_delete,
-    db: AsyncSession = Depends(get_db),
-) -> None:
-    """Anula la liquidación en wsAyC (voidLiquidation) y la elimina localmente.
-    Acción destructiva e irreversible desde nuestra app — el frontend pide confirmación
-    explícita nombrando la liquidación antes de llamar a este endpoint."""
-    await build_anular_liquidacion(db).execute(liquidacion_id)
 
 
 @router.delete("/{liquidacion_id}", status_code=204)

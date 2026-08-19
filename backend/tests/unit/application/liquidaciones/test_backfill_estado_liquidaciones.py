@@ -16,9 +16,9 @@ from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import CdLiqu
 from tests.unit.domain.liquidaciones.factories import make_liquidacion, make_prestador
 from tests.unit.domain.liquidaciones.fakes import (
     FakeCdLiquidacionesGateway,
-    FakeLiquidacionRepository,
     FakePrestadorRepository,
 )
+from tests.unit.domain.liquidaciones.fakes_liquidacion import FakeLiquidacionRepository
 
 CD_ID = 504
 

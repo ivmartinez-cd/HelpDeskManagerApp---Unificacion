@@ -1,6 +1,6 @@
 # ADR-016: Backfill del estado real de liquidaciones desde wsAyC
 
-## Estado: Aceptado (2026-08-14)
+## Estado: Aceptado (2026-08-14). **Parcialmente superado por ADR-024 (2026-08-19)**: la reconciliación pisa el `estado` de cualquier liquidación pendiente (no solo `abierta`) con el que reporte AyC — "la decisión de la TL tiene prioridad sobre el estado remoto" deja de valer para liquidaciones con vínculo AyC. El mapeo de estados de este ADR (`.lower()` sobre el nombre) queda reemplazado por `domain/services/estados_ayc.py`, que prioriza el `estado_id` numérico. El comando de backfill en sí sigue existiendo y siendo válido para su alcance original.
 
 ## Contexto
 
