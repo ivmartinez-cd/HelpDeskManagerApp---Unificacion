@@ -181,6 +181,13 @@ class Settings(BaseSettings):
     google_maps_api_key: str = ""
     google_maps_max_calls_per_run: int = 200
 
+    # Georef (API del Estado argentino, gratuita/sin auth) — Tier 1 de
+    # geovalidación. Sin costo, pero sin abuso de un servicio público: tope
+    # por corrida acota la duración del request HTTP (no por dinero, por
+    # tiempo), y la pausa entre llamadas es cortesía hacia el servicio.
+    georef_max_calls_per_run: int = 200
+    georef_pausa_segundos: float = 0.2
+
     # Cadencia del job de fondo que reconcilia contra AyC las liquidaciones
     # pendientes de todos los prestadores vinculados (estado, costos/km de
     # incidentes) — mismo caso de uso que el botón "Sincronizar CD", pero sin

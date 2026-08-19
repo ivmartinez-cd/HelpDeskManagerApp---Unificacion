@@ -14,6 +14,12 @@ from src.modules.liquidaciones.domain.entities.cuadricula_base_map import Cuadri
 from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import SucursalCoordenadas
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
+from src.modules.liquidaciones.domain.repositories.georef_reverse_cache_repository import (
+    ReverseCacheado,
+)
+from src.modules.liquidaciones.domain.repositories.georeferenciacion_gateway import (
+    UbicacionGeoref,
+)
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesSucursalCliente,
     SigesSucursalPropia,
@@ -137,6 +143,29 @@ class FakeSucursalCoordenadasRepository:
         )
         self.rows[siges_sucursal_id] = resuelta
         return resuelta
+
+
+class FakeGeoreferenciacionGateway:
+    def __init__(
+        self, por_coords: dict[tuple[float, float], UbicacionGeoref | None] | None = None
+    ) -> None:
+        self.por_coords = por_coords or {}
+        self.llamadas: list[tuple[float, float]] = []
+
+    async def reverse(self, lat: float, lon: float) -> UbicacionGeoref | None:
+        self.llamadas.append((lat, lon))
+        return self.por_coords.get((lat, lon))
+
+
+class FakeGeorefReverseCacheRepository:
+    def __init__(self) -> None:
+        self.rows: dict[tuple[float, float], ReverseCacheado] = {}
+
+    async def get(self, lat: float, lon: float) -> ReverseCacheado | None:
+        return self.rows.get((round(lat, 4), round(lon, 4)))
+
+    async def put(self, lat: float, lon: float, ubicacion: UbicacionGeoref | None) -> None:
+        self.rows[(round(lat, 4), round(lon, 4))] = ReverseCacheado(ubicacion=ubicacion)
 
 
 class FakeMatchingDescarteRepository:

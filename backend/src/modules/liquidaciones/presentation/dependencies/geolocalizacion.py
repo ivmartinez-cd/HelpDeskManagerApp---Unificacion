@@ -25,6 +25,11 @@ from src.modules.liquidaciones.application.use_cases.geovalidacion_tier0 import 
     EvaluarTier0Geovalidacion,
     GeovalidacionTier0Ports,
 )
+from src.modules.liquidaciones.application.use_cases.geovalidacion_tier1 import (
+    ConsultarGeorefReversePendientes,
+    GeovalidacionTier1Ports,
+    ListarHallazgosTier1,
+)
 from src.modules.liquidaciones.application.use_cases.pines_sospechosos import (
     AuditarPines,
     CorregirPin,
@@ -45,6 +50,9 @@ from src.modules.liquidaciones.application.use_cases.tabla_km_lugares import (
 from src.modules.liquidaciones.application.use_cases.tabla_km_refrescar_siges import (
     RefrescarDatosSiges,
 )
+from src.modules.liquidaciones.infrastructure.georef.httpx_georef_gateway import (
+    HttpxGeorefGateway,
+)
 from src.modules.liquidaciones.infrastructure.google_maps.httpx_geocoding_gateway import (
     HttpxGeocodingGateway,
 )
@@ -53,6 +61,9 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_calculo_km
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_geocode_cache_repository import (  # noqa: E501
     SqlAlchemyGeocodeCacheRepository,
+)
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_georef_reverse_cache_repository import (  # noqa: E501
+    SqlAlchemyGeorefReverseCacheRepository,
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_incidente_repository import (  # noqa: E501
     SqlAlchemyIncidenteRepository,
@@ -76,6 +87,11 @@ from src.shared.infrastructure.config.settings import get_settings
 @lru_cache
 def _geocoding_gateway() -> HttpxGeocodingGateway:
     return HttpxGeocodingGateway(get_settings().google_maps_api_key)
+
+
+@lru_cache
+def _georef_gateway() -> HttpxGeorefGateway:
+    return HttpxGeorefGateway()
 
 
 def _tope() -> int:
@@ -189,6 +205,26 @@ def build_evaluar_tier0(session: AsyncSession) -> EvaluarTier0Geovalidacion:
             siges=siges_catalogo_gateway(),
         )
     )
+
+
+def _tier1_ports(session: AsyncSession) -> GeovalidacionTier1Ports:
+    return GeovalidacionTier1Ports(
+        prestadores=SqlAlchemyPrestadorRepository(session),
+        siges=siges_catalogo_gateway(),
+        georef=_georef_gateway(),
+        georef_cache=SqlAlchemyGeorefReverseCacheRepository(session),
+    )
+
+
+def build_consultar_georef_pendientes(session: AsyncSession) -> ConsultarGeorefReversePendientes:
+    settings = get_settings()
+    return ConsultarGeorefReversePendientes(
+        _tier1_ports(session), settings.georef_max_calls_per_run, settings.georef_pausa_segundos
+    )
+
+
+def build_listar_hallazgos_tier1(session: AsyncSession) -> ListarHallazgosTier1:
+    return ListarHallazgosTier1(_tier1_ports(session))
 
 
 def build_diagnosticar_asistente_km(session: AsyncSession) -> DiagnosticarAsistenteKm:

@@ -25,11 +25,13 @@ from src.modules.liquidaciones.presentation.dependencies import (
     build_aplicar_calcular_distancias,
     build_auditar_pines,
     build_buscar_lugar_fila,
+    build_consultar_georef_pendientes,
     build_corregir_pin,
     build_diagnosticar_asistente_km,
     build_evaluar_tier0,
     build_geocodificar_sucursales,
     build_listar_coordenadas_pendientes,
+    build_listar_hallazgos_tier1,
     build_listar_pines_sospechosos,
     build_preview_calcular_distancias,
     build_recalcular_km_fila,
@@ -57,6 +59,10 @@ from src.modules.liquidaciones.presentation.schemas.geolocalizacion_schemas impo
 )
 from src.modules.liquidaciones.presentation.schemas.geovalidacion_tier0_schemas import (
     HallazgoTier0Out,
+)
+from src.modules.liquidaciones.presentation.schemas.geovalidacion_tier1_schemas import (
+    HallazgoTier1Out,
+    ResultadoConsultarGeorefOut,
 )
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
@@ -100,6 +106,40 @@ async def geovalidacion_tier0(
     sin costo (cero llamadas a Georef/Nominatim/Google)."""
     hallazgos = await build_evaluar_tier0(db).execute(prestador_id)
     return Page.of([HallazgoTier0Out.from_dto(h) for h in hallazgos], page=page, size=size)
+
+
+@router.post(
+    "/siges/prestador/{prestador_id}/geovalidacion/tier1/consultar-georef",
+    response_model=ResultadoConsultarGeorefOut,
+)
+async def consultar_georef(
+    prestador_id: UUID,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> ResultadoConsultarGeorefOut:
+    """Reverse geocoding de Georef (gratis, sin auth) para sucursales con pin
+    todavía sin cachear — secuencial, con pausa y tope por corrida. Repetir
+    esta acción no vuelve a consultar lo ya cacheado."""
+    resultado = await build_consultar_georef_pendientes(db).execute(prestador_id)
+    return ResultadoConsultarGeorefOut.from_dto(resultado)
+
+
+@router.get(
+    "/siges/prestador/{prestador_id}/geovalidacion/tier1",
+    response_model=Page[HallazgoTier1Out],
+)
+async def geovalidacion_tier1(
+    prestador_id: UUID,
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=500, ge=1, le=1000),
+    _: Identity = require_view,
+    db: AsyncSession = Depends(get_db),
+) -> Page[HallazgoTier1Out]:
+    """Sucursales donde la provincia declarada en Siges no coincide con la
+    que devolvió el reverse de Georef para el pin — solo sobre lo ya
+    consultado (`consultar-georef`), no llama a nada."""
+    hallazgos = await build_listar_hallazgos_tier1(db).execute(prestador_id)
+    return Page.of([HallazgoTier1Out.from_dto(h) for h in hallazgos], page=page, size=size)
 
 
 @router.post(

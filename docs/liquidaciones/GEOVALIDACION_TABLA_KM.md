@@ -1,8 +1,10 @@
 # Geovalidación de coordenadas (Fase 2)
 
 Ver `docs/MASTER_PROMPT_MATCHING_SUCURSALES_GEOVALIDACION.md` para el plan completo.
-Este doc cubre lo implementado hasta ahora: **Tier 0** (saneo geométrico puro). Tier 1
-(Georef), Tier 1b (Nominatim) y Tier 2 (Google) — no arrancados.
+Este doc cubre lo implementado hasta ahora: **Tier 0** (saneo geométrico puro) y
+**Tier 1** (reverse geocoding de Georef, solo la comparación de provincia — el geocode
+de direcciones de Georef queda pendiente, ver más abajo). Tier 1b (Nominatim) y Tier 2
+(Google) — no arrancados.
 
 ## Tier 0 — saneo puro, cero llamadas
 
@@ -56,13 +58,59 @@ Google Maps para verificar a ojo. Sin acción de "corregir" todavía: Tier 0 no 
 candidato sugerido (no llamó a ningún geocoder), así que la única acción es investigar
 y corregir en Gestión o cargar un override local vía el flujo de coordenadas existente.
 
+## Tier 1 — reverse geocoding de Georef (gratis, sin auth)
+
+`domain/repositories/georeferenciacion_gateway.py` (puerto) +
+`infrastructure/georef/httpx_georef_gateway.py` (adapter real, timeout 30s, backoff
+acotado — 2 reintentos con espera 1s/2s — SOLO ante 429/5xx, sin retry ante 4xx no
+reintentable ni error de conexión). Shape de la API verificado en vivo contra
+`apis.datos.gob.ar/georef/api` antes de escribir el parser (no asumido de memoria):
+`/ubicacion` con `provincia.nombre == null` es "sin cobertura" (HTTP 200, no error).
+
+Cache propio (`georef_reverse_cache`, migración `b7e3f1a9d2c6`) por pin redondeado a 4
+decimales (~11 m) — clave por PIN, no por sucursal: cuando muchas sucursales comparten
+el mismo pin roto (el caso "todas al centro" de Tier 0), una sola llamada real resuelve
+todo el grupo. `provincias_compatibles` (dominio puro,
+`domain/services/geovalidacion_tier1.py`) normaliza y compara `DesProvincia` de Siges
+contra la provincia real de Georef, con alias conocidos (CABA/Capital Federal ↔ "Ciudad
+Autónoma de Buenos Aires").
+
+Dos casos de uso separados (mismo criterio que Google/AuditarPines): `ConsultarGeoref
+ReversePendientes` es la única que llama a la red (secuencial, pausa
+`georef_pausa_segundos` = 0.2s, tope `georef_max_calls_per_run` = 200 por corrida — no
+por costo, por duración del request HTTP); `ListarHallazgosTier1` es puramente de
+lectura sobre lo ya cacheado.
+
+### Resultado medido (SAN JUAN, piloto real 2026-08-19)
+
+3 corridas de `consultar-georef` cubrieron las 948 sucursales activas: **472 llamadas
+reales** a Georef (200 + 200 + 72) y **833 resueltas por cache** — la mayoría por el
+efecto de pines compartidos ya visto en Tier 0 (una sola llamada real al pin del
+centroide de Argentina resolvió las 55 sucursales que lo comparten). 43 sin
+coordenadas (igual que Tier 0).
+
+**192 sucursales con provincia incompatible** — confirmado por una fuente
+independiente y oficial (no solo la heurística de bounding box de Tier 0) que el pin
+cae en otra provincia: el cluster del centroide cae en **La Pampa**; otros pines caen
+en Chubut, Tucumán, Buenos Aires, Neuquén, Santa Fe y Córdoba. Endpoints:
+`POST .../geovalidacion/tier1/consultar-georef` (escribe cache) y
+`GET .../geovalidacion/tier1` (`Page[HallazgoTier1]`, solo lectura).
+
+UI: sección "Provincia del pin vs. Gestión (Georef)" en el paso "Pines" del wizard,
+debajo de Tier 0 — botón "Consultar Georef" (repetirlo solo consulta lo pendiente) y
+lista de discrepancias con el link a Maps.
+
 ## Pendiente
 
-- Calibrar `umbral_distancia_base_km` con evidencia real (300 km es provisorio — dado
-  que el propio San Juan tiene sucursales del Gobierno provincial hasta 1600 km,
-  posiblemente el umbral deba ser más generoso o dividirse por tipo de empresa).
-- Tier 1 (Georef): puerto `GeoreferenciacionGateway`, reverse por pin + geocode por
-  domicilio, cache, política de uso (secuencial, pausa, backoff 429/5xx).
+- Calibrar `umbral_distancia_base_km` de Tier 0 con evidencia real (300 km es
+  provisorio — el propio San Juan tiene sucursales del Gobierno provincial hasta
+  1600 km, posiblemente el umbral deba ser más generoso o dividirse por tipo de
+  empresa).
+- Tier 1, geocode de direcciones (`/direcciones` de Georef): no implementado en esta
+  ronda — ya se había confirmado cobertura pobre de calles para San Juan en la
+  medición de Fase 0 (0 resultados en 4 pruebas reales), así que su valor inmediato es
+  bajo frente al reverse. El reverse (implementado) es "la validación más barata y
+  contundente" que preveía el plan.
 - Tier 1b (Nominatim): segunda opinión solo para lo que Georef no resuelve — política
   dura de 1 req/s, User-Agent propio, atribución ODbL.
 - Tier 2 (Google): solo residuo tras tiers gratis, cero llamadas sin autorización

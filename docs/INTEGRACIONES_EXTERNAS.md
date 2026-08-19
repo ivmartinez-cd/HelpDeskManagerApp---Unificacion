@@ -142,6 +142,28 @@ fresco por request en producción).
   migra a Routes `computeRouteMatrix`, va un adapter nuevo detrás del mismo puerto y el
   viejo se retira en el mismo commit.
 
+## 12. Georef (apis.datos.gob.ar, API del Estado argentino, httpx)
+
+- Módulo: liquidaciones (geovalidación de coordenadas Tabla KM, Tier 1). Puerto:
+  `GeoreferenciacionGateway` en `liquidaciones/domain/repositories/`; adapter httpx en
+  `liquidaciones/infrastructure/georef/httpx_georef_gateway.py` (timeout 30 s, errores →
+  `ExternalServiceError`). Agregado al inventario en 2026-08-19 al implementarse — no se
+  le escapa al ADR-018 como le pasó a Google Maps.
+- **Gratuita, sin autenticación** (doc oficial: "completamente gratuita y no requiere
+  autenticación"). Sin rate limit publicado, pero sin abuso: llamadas secuenciales con
+  pausa configurable (`GEOREF_PAUSA_SEGUNDOS`, default 0.2 s) y backoff acotado (2
+  reintentos, 1 s/2 s) SOLO ante 429/5xx — un error persistente o un 4xx no reintentable
+  se propaga, no se reintenta en loop. Tope por corrida (`GEOREF_MAX_CALLS_PER_RUN`,
+  default 200) — no por costo, por duración del request HTTP.
+- Endpoint usado: `/ubicacion` (reverse geocoding por lat/lon). Shape verificado en vivo
+  contra la API real antes de escribir el parser: `provincia.nombre == null` es "sin
+  cobertura para ese punto" (HTTP 200, no error). El endpoint `/direcciones` (geocode de
+  domicilio) no se implementó — cobertura de calles pobre para San Juan confirmada en la
+  medición de Fase 0 (0 resultados en 4 pruebas reales).
+- Cache propio (`georef_reverse_cache`, no comparte tabla con `geocode_cache` de Google
+  — shape de dato distinto) por pin redondeado a 4 decimales (~11 m), evita re-consultar
+  el mismo punto.
+
 ---
 
 ## Locks entre workers
