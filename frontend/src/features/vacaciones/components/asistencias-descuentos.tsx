@@ -176,7 +176,7 @@ export function AsistenciasDescuentos({ esAdmin }: { esAdmin: boolean }) {
                   <td className="px-4 py-3 text-right font-heading text-sm font-bold text-[#ef4444]">
                     {r.diasDescontados}
                   </td>
-                  <td className="px-4 py-3 text-right font-heading text-sm font-bold text-[#f59e0b]">
+                  <td className="px-4 py-3 text-right font-heading text-sm font-bold text-[#0d9488]">
                     {r.diasEnfermedad}
                   </td>
                   <td className="px-4 py-3 text-right font-heading text-sm font-bold text-[#475569] dark:text-[#94a3b8]">

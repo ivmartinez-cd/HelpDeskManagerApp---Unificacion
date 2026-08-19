@@ -3,7 +3,7 @@ import type { TipoAusencia } from "../types/vacaciones";
 /** Etiquetas y colores semánticos de los tipos de baja (handoff §Colores de
  * tipos de baja). El naranja institucional queda reservado para Vacaciones. */
 export const TIPO_AUSENCIA: Record<TipoAusencia, { label: string; color: string }> = {
-  BAJA_ENFERMEDAD: { label: "Baja por enfermedad", color: "#f59e0b" },
+  BAJA_ENFERMEDAD: { label: "Baja por enfermedad", color: "#0d9488" },
   TRAMITE_PERSONAL: { label: "Trámites personales", color: "#2563eb" },
   HOME_OFFICE: { label: "Home office", color: "#9ca3af" },
   DESCUENTO_DIA: { label: "Descuento día", color: "#ef4444" },

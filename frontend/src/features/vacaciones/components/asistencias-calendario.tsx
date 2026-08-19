@@ -79,7 +79,7 @@ export function AsistenciasCalendario({
   const kpis = [
     { label: "Días de baja", valor: stats.totalBajas, color: "#ef4444" },
     { label: "Días trabajados", valor: stats.diasTrabajados, color: "#059669" },
-    { label: "Días de enfermedad", valor: stats.enfermedad, color: "#f59e0b" },
+    { label: "Días de enfermedad", valor: stats.enfermedad, color: TIPO_AUSENCIA.BAJA_ENFERMEDAD.color },
     { label: "De vacaciones", valor: stats.vacaciones, color: COLOR_VACACIONES },
     { label: "Trámites y estudio", valor: stats.tramitesEstudio, color: "#2563eb" },
     { label: "Descuento día", valor: stats.descuento, color: "#ef4444" },
