@@ -468,3 +468,17 @@ export interface PropuestaN2Match {
   sucursalNombre: string;
   candidatos: CandidatoN2Match[];
 }
+
+/** Tier 0 de geovalidación (Fase 2): saneo geométrico sin costo, corre sobre
+ * todas las sucursales activas del PST. */
+export interface HallazgoTier0 {
+  sigesSucursalId: number;
+  empresaNombre: string;
+  sucursalNombre: string;
+  domicilio: string | null;
+  latitud: number | null;
+  longitud: number | null;
+  severidad: "alta" | "media" | "baja";
+  codigo: string;
+  detalle: string;
+}

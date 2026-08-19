@@ -6,6 +6,7 @@ import type {
   EstadoAsistenteKm,
   GeocodeCandidato,
   GeocodificarResultado,
+  HallazgoTier0,
   PinSospechoso,
   SucursalCoordenadas,
   TablaKm,
@@ -49,6 +50,12 @@ export const geolocalizacionApi = {
     httpClient.put<SucursalCoordenadas>(
       `/api/liquidaciones/siges/prestador/${prestadorId}/coordenadas/${sigesSucursalId}`,
       body,
+    ),
+
+  listGeovalidacionTier0: (prestadorId: string) =>
+    fetchCatalogoCompleto<HallazgoTier0>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/geovalidacion/tier0`,
+      new URLSearchParams(),
     ),
 
   listPinesSospechosos: (prestadorId: string) =>
