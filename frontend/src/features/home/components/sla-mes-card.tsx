@@ -9,10 +9,14 @@ import {
   PointElement,
   Tooltip,
 } from "chart.js";
-import { Gauge } from "lucide-react";
+import { Gauge, RotateCw } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { Line } from "react-chartjs-2";
+import { toast } from "sonner";
+import { slaApi } from "@/features/sla/api/sla-api";
 import type { SlaResumen } from "@/features/sla/types/sla";
+import { useSession } from "@/services/session-provider";
 import { brandButtonClasses } from "@/shared/components/ui/brand-form";
 import { cn } from "@/shared/utils/cn";
 import type { SlaHistoria } from "../hooks/use-inicio-data";
@@ -90,15 +94,36 @@ export function SlaMesCard({
   historia,
   loading,
   error,
+  onSynced,
 }: {
   historia: SlaHistoria | null;
   loading: boolean;
   error: string | null;
+  onSynced?: () => void;
 }) {
+  const { user, can } = useSession();
+  const canUpdate = user.isSuperadmin || can("sla", "update");
+  const [syncing, setSyncing] = useState(false);
+
   const actual = historia?.resumenes[historia.resumenes.length - 1] ?? null;
   const anterior = historia?.resumenes[historia.resumenes.length - 2] ?? null;
   const variacion =
     actual && anterior && anterior.total > 0 ? actual.pct_correctos - anterior.pct_correctos : null;
+
+  const handleSincronizar = async () => {
+    const periodo = historia?.periodos[historia.periodos.length - 1];
+    if (!periodo) return;
+    setSyncing(true);
+    try {
+      await slaApi.refreshResumen(periodo);
+      toast.success("SLA actualizado contra MERCURIO");
+      onSynced?.();
+    } catch {
+      toast.error("Error al actualizar el SLA");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   return (
     <DashboardCard
@@ -107,6 +132,18 @@ export function SlaMesCard({
       subtitle="Cumplimiento de acuerdos"
       loading={loading}
       error={error}
+      headerRight={
+        <button
+          type="button"
+          onClick={() => void handleSincronizar()}
+          disabled={syncing || !historia || !canUpdate}
+          title={canUpdate ? "Actualizar SLA (consulta completa a MERCURIO, ~40 s)" : "Sin permiso para actualizar"}
+          aria-label="Actualizar SLA"
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border border-border text-muted-foreground transition-colors hover:border-brand-orange/60 hover:text-brand-orange disabled:opacity-50"
+        >
+          <RotateCw className={cn("h-3.5 w-3.5", syncing && "animate-spin")} />
+        </button>
+      }
     >
       {!actual || actual.total === 0 ? (
         <span className="pt-3 font-body text-[13px] text-muted-foreground">

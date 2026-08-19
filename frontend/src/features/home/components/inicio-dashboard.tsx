@@ -128,7 +128,14 @@ export function InicioDashboard() {
           />
         );
       case "sla-mes":
-        return <SlaMesCard historia={slaHistoria.data} loading={slaHistoria.loading} error={slaHistoria.error} />;
+        return (
+          <SlaMesCard
+            historia={slaHistoria.data}
+            loading={slaHistoria.loading}
+            error={slaHistoria.error}
+            onSynced={slaHistoria.refetch}
+          />
+        );
       case "pendientes-cerrar":
         return (
           <PendientesACerrarCard
