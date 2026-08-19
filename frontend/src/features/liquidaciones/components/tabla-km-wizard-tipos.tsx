@@ -4,6 +4,7 @@
 export const PASOS_WIZARD = [
   "diagnostico",
   "importar",
+  "matching",
   "ubicar",
   "distancias",
   "pines",
@@ -14,6 +15,7 @@ export type PasoWizard = (typeof PASOS_WIZARD)[number];
 export const LABEL_PASO: Record<PasoWizard, string> = {
   diagnostico: "Diagnóstico",
   importar: "Importar",
+  matching: "Sin match",
   ubicar: "Ubicar",
   distancias: "Distancias",
   pines: "Pines",

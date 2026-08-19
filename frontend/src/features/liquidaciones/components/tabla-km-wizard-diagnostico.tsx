@@ -70,8 +70,8 @@ export function derivarRenglones(e: EstadoAsistenteKm, nombrePrestador: string):
     renglones.push({
       nivel: "pendiente",
       texto: `${e.noEncontradasEnSiges} fila${e.noEncontradasEnSiges !== 1 ? "s" : ""} de tu tabla no aparece${e.noEncontradasEnSiges !== 1 ? "n" : ""} en Gestión`,
-      detalle: "Puede que hayan cambiado de nombre o ya no estén asignadas al prestador. En el paso Ubicar, \"Actualizar desde Gestión\" te muestra cuáles.",
-      irA: "ubicar",
+      detalle: "Puede que el nombre tenga un símbolo o una abreviatura distinta — el paso \"Sin match\" propone a qué sucursal de Gestión corresponde cada una.",
+      irA: "matching",
       accionLabel: "Ver cuáles",
     });
   }

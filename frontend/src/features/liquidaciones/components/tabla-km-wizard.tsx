@@ -14,6 +14,7 @@ import { PasoCalcular } from "./tabla-km-wizard-calcular";
 import { PasoDiagnostico } from "./tabla-km-wizard-diagnostico";
 import { PasoGeocodificar } from "./tabla-km-wizard-geocodificar";
 import { PasoImportar } from "./tabla-km-wizard-importar";
+import { PasoMatching } from "./tabla-km-wizard-matching";
 import { PasoPines } from "./tabla-km-wizard-pines";
 import { LABEL_PASO, PASOS_WIZARD, type PasoWizard } from "./tabla-km-wizard-tipos";
 
@@ -30,10 +31,11 @@ function estadoDePaso(
   switch (paso) {
     case "importar":
       return { estado: e.sucursalesNuevasPorImportar > 0 ? "pendiente" : "ok" };
+    case "matching":
+      return { estado: e.noEncontradasEnSiges > 0 ? "pendiente" : "ok" };
     case "ubicar":
       return {
-        estado: e.sinCoordenadas + e.ambiguasPendientes + e.noEncontradasEnSiges > 0
-          ? "pendiente" : "ok",
+        estado: e.sinCoordenadas + e.ambiguasPendientes > 0 ? "pendiente" : "ok",
       };
     case "distancias":
       if (!e.baseConfigurada || !e.baseConCoordenadas) {
@@ -58,6 +60,9 @@ function consecuenciaDeAvanzar(paso: PasoWizard, e: EstadoAsistenteKm | null): s
   if (!e) return null;
   if (paso === "importar" && e.sucursalesNuevasPorImportar > 0) {
     return `Quedan ${e.sucursalesNuevasPorImportar} sucursales sin importar: no van a tener fila en tu Tabla KM ni km calculado hasta que las importes.`;
+  }
+  if (paso === "matching" && e.noEncontradasEnSiges > 0) {
+    return `Quedan ${e.noEncontradasEnSiges} filas sin vincular a una sucursal de Gestión: no van a poder ubicarse ni calcular km hasta que las resuelvas.`;
   }
   if (paso === "ubicar" && e.sinCoordenadas + e.ambiguasPendientes > 0) {
     const partes = [];
@@ -163,6 +168,9 @@ export function TablaKmWizard({ prestador, onClose, onAplicado }: {
         )}
         {estado && paso === "importar" && (
           <PasoImportar prestadorId={prestador.id} onCambio={cambio} />
+        )}
+        {estado && paso === "matching" && (
+          <PasoMatching prestadorId={prestador.id} onCambio={cambio} />
         )}
         {estado && paso === "ubicar" && (
           <PasoGeocodificar prestadorId={prestador.id} estado={estado} onCambio={cambio} />

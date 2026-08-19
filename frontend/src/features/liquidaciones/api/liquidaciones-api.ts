@@ -1,6 +1,7 @@
 import { configApi } from "./config-api";
 import { geolocalizacionApi } from "./geolocalizacion-api";
 import { liquidacionesCoreApi } from "./liquidaciones-core-api";
+import { matchingSucursalesApi } from "./matching-sucursales-api";
 import { sigesApi } from "./siges-api";
 
 /** API del feature, compuesta por sub-clientes por responsabilidad (espeja los
@@ -11,4 +12,5 @@ export const liquidacionesApi = {
   ...configApi,
   ...sigesApi,
   ...geolocalizacionApi,
+  ...matchingSucursalesApi,
 };
