@@ -88,7 +88,7 @@ async def create_saved_analysis(
             severity=i.severity, severity_weight=i.severity_weight,
             occurrences=i.occurrences, start_time=i.start_time,
             end_time=i.end_time, counter_range=(i.counter_range[0], i.counter_range[1]),
-            sds_link=i.sds_link,
+            sds_link=i.sds_link, code_description=i.code_description,
         )
         for i in body.incidents
     ]
@@ -124,7 +124,7 @@ async def update_saved_analysis(
             severity=i.severity, severity_weight=i.severity_weight,
             occurrences=i.occurrences, start_time=i.start_time,
             end_time=i.end_time, counter_range=(i.counter_range[0], i.counter_range[1]),
-            sds_link=i.sds_link,
+            sds_link=i.sds_link, code_description=i.code_description,
         )
         for i in body.incidents
     ]

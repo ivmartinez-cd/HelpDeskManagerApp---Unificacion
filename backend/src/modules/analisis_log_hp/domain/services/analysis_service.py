@@ -65,4 +65,5 @@ def _build_incident(code: str, group: list[EnrichedEvent]) -> Incident:
         counter_range=(group[0].counter, group[-1].counter),
         sds_link=solucion_url.strip() if solucion_url else None,
         sds_solution_content=con_solucion.code_solution_content if con_solucion else None,
+        code_description=descripcion.strip() if descripcion else None,
     )

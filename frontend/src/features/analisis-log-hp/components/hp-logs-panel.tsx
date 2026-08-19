@@ -1,15 +1,24 @@
 "use client";
 
-import { ArrowLeft, Loader2, RefreshCw, Save } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { ApiError } from "@/services/http-client";
 import type { AnalysisResult, SdsExtractResult, Severity } from "../types/analisis-log-hp";
 import { analisisLogHpApi } from "../api/analisis-log-hp-api";
-import { AiDiagnosisCard } from "./ai-diagnosis-card";
+import { useExportPdf } from "../hooks/use-export-pdf";
+import {
+  type DateFilter,
+  filterEventsByDateFilter,
+  filterIncidentsByDateFilter,
+} from "../utils/date-filter";
+import { AiDiagnosisCard, buildPayload } from "./ai-diagnosis-card";
 import { AnalysisCollapsibles } from "./analysis-collapsibles";
+import { CpmdUploadModal } from "./cpmd-upload-modal";
 import { ErrorCharts } from "./error-charts";
 import { ErrorHeatmap } from "./error-heatmap";
 import { ErrorTimeline } from "./error-timeline";
+import { ExecutivePrintReport } from "./executive-print-report";
 import { KpiCards } from "./kpi-cards";
+import { PanelToolbar } from "./panel-toolbar";
 import { SeverityFilter } from "./severity-filter";
 
 interface Props {
@@ -42,10 +51,21 @@ export function HpLogsPanel({
   onAnalysisUpdate,
 }: Props) {
   const [activeSeverities, setActiveSeverities] = useState<Set<Severity>>(new Set());
+  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [diagnosis, setDiagnosis] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [cpmdModalOpen, setCpmdModalOpen] = useState(false);
+  const [pdfSummary, setPdfSummary] = useState<string | null>(null);
+  const [pdfGeneratedAt, setPdfGeneratedAt] = useState<string>("");
+  const { exportingPdf, handleExportPdf, printReportRef } = useExportPdf(serial);
+
+  const scopedAnalysis: AnalysisResult = useMemo(() => {
+    const events = filterEventsByDateFilter(analysis.events, dateFilter);
+    const incidents = filterIncidentsByDateFilter(analysis.incidents, dateFilter);
+    return { ...analysis, events, incidents, events_count: events.length };
+  }, [analysis, dateFilter]);
 
   async function handleSave() {
     setSaving(true);
@@ -82,6 +102,34 @@ export function HpLogsPanel({
     }
   }
 
+  async function handleCpmd() {
+    try {
+      const { url } = await analisisLogHpApi.getCpmdPdfUrl(modelName);
+      window.open(url, "_blank");
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 404) {
+        setCpmdModalOpen(true);
+      }
+    }
+  }
+
+  async function handleExportPdfClick() {
+    setPdfGeneratedAt(new Date().toISOString());
+    try {
+      const payload = buildPayload(scopedAnalysis, serial, modelName);
+      const result = await analisisLogHpApi.generatePdfSummary(payload);
+      setPdfSummary(result.diagnosis);
+    } catch {
+      setPdfSummary(null); // sin resumen de IA, el reporte se exporta igual
+    }
+    // Esperar a que React commitee `pdfSummary` en el DOM antes de leer
+    // `printReportRef.current.outerHTML` (si no, el hook lee el HTML viejo).
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    );
+    await handleExportPdf();
+  }
+
   async function handleEws() {
     if (deviceId === "manual") return;
     const { url } = await analisisLogHpApi.getRemoteEws(deviceId);
@@ -101,45 +149,20 @@ export function HpLogsPanel({
             {modelName} · S/N {serial}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={onBack}
-            title="Volver"
-            className="flex h-9 w-9 items-center justify-center rounded-[8px] border border-border bg-card text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          {deviceId !== "manual" && (
-            <>
-              <button
-                type="button"
-                onClick={handleEws}
-                className="rounded-[8px] border border-border bg-card px-3 py-2 font-body text-[12px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                EWS Remoto
-              </button>
-              <button
-                type="button"
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="flex items-center gap-1.5 rounded-[8px] border border-border bg-card px-3 py-2 font-body text-[12px] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-              >
-                {refreshing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                Actualizar caché HP
-              </button>
-            </>
-          )}
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-1.5 rounded-[8px] border border-border bg-card px-3 py-2 font-body text-[12px] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-            Guardar
-          </button>
-        </div>
+        <PanelToolbar
+          deviceId={deviceId}
+          dateFilter={dateFilter}
+          onDateFilterChange={setDateFilter}
+          onBack={onBack}
+          onEws={handleEws}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
+          onCpmd={handleCpmd}
+          onExportPdf={handleExportPdfClick}
+          exportingPdf={exportingPdf}
+          onSave={handleSave}
+          saving={saving}
+        />
       </div>
 
       {saveMsg && (
@@ -149,23 +172,23 @@ export function HpLogsPanel({
       )}
 
       {/* KPIs */}
-      <KpiCards analysis={analysis} activeSeverities={activeSeverities} />
+      <KpiCards analysis={scopedAnalysis} activeSeverities={activeSeverities} />
 
       {/* Filtro de severidad */}
       <SeverityFilter active={activeSeverities} onChange={setActiveSeverities} />
 
       {/* Gráficos */}
-      <ErrorCharts analysis={analysis} activeSeverities={activeSeverities} />
+      <ErrorCharts analysis={scopedAnalysis} activeSeverities={activeSeverities} />
 
       {/* Heatmap */}
-      <ErrorHeatmap analysis={analysis} dateRange={dateRangeLabel(analysis.events)} />
+      <ErrorHeatmap analysis={scopedAnalysis} dateRange={dateRangeLabel(scopedAnalysis.events)} />
 
       {/* Timeline */}
-      <ErrorTimeline analysis={analysis} activeSeverities={activeSeverities} />
+      <ErrorTimeline analysis={scopedAnalysis} activeSeverities={activeSeverities} />
 
       {/* IA */}
       <AiDiagnosisCard
-        analysis={analysis}
+        analysis={scopedAnalysis}
         serial={serial}
         modelName={modelName}
         onDiagnosis={setDiagnosis}
@@ -173,8 +196,9 @@ export function HpLogsPanel({
 
       {/* Collapsibles detallados */}
       <AnalysisCollapsibles
-        analysis={analysis}
+        analysis={scopedAnalysis}
         deviceId={deviceId !== "manual" ? deviceId : null}
+        serial={serial}
         activeSeverities={activeSeverities}
       />
 
@@ -187,6 +211,26 @@ export function HpLogsPanel({
           </p>
         </div>
       )}
+
+      {cpmdModalOpen && (
+        <CpmdUploadModal
+          modelName={modelName}
+          onClose={() => setCpmdModalOpen(false)}
+          onUploaded={(url) => { setCpmdModalOpen(false); window.open(url, "_blank"); }}
+        />
+      )}
+
+      {/* Reporte oculto — solo se lee su outerHTML para armar el PDF (useExportPdf) */}
+      <div aria-hidden="true" style={{ position: "fixed", top: -99999, left: -99999 }}>
+        <ExecutivePrintReport
+          ref={printReportRef}
+          serial={serial}
+          modelName={modelName}
+          analysis={scopedAnalysis}
+          aiSummary={pdfSummary}
+          generatedAtIso={pdfGeneratedAt || new Date().toISOString()}
+        />
+      </div>
     </div>
   );
 }

@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     smtp_from: str = "HelpDesk Manager <no-reply@cdsa.com.ar>"
 
     contadores_output_dir: str = "var/contadores/outputs"
+    analisis_log_hp_cpmd_dir: str = "var/analisis_log_hp/cpmd"
 
     # Credenciales solo por .env — nunca defaults en código (§8; los valores que
     # vivieron acá hasta 2026-08-16 quedan en el historial git: rotarlos).
@@ -179,6 +180,14 @@ class Settings(BaseSettings):
     # geocoding + elementos de matrix).
     google_maps_api_key: str = ""
     google_maps_max_calls_per_run: int = 200
+
+    # Cadencia del job de fondo que reconcilia contra AyC las liquidaciones
+    # pendientes de todos los prestadores vinculados (estado, costos/km de
+    # incidentes) — mismo caso de uso que el botón "Sincronizar CD", pero sin
+    # la fase de detección de anuladas (esa queda exclusiva del botón manual,
+    # con el usuario mirando). El universo típico es chico (~5 pendientes hoy),
+    # 2h alcanza sin generar carga SOAP relevante.
+    liquidaciones_reconciliar_interval_minutes: int = 120
 
     # Desactiva todos los jobs de fondo (útil en CI/test o cuando se corren
     # múltiples instancias y solo una debe ejecutar los jobs).

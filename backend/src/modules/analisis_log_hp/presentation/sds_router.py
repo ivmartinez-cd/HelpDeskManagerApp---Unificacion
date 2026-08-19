@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.analisis_log_hp.application.use_cases.extract_sds_logs import ExtractSdsLogs
+from src.modules.analisis_log_hp.application.use_cases.get_cds_incidents import GetCdsIncidents
 from src.modules.analisis_log_hp.application.use_cases.get_device_live_data import (
     GetClientDevices,
+    GetClients,
     GetDeviceAlerts,
     GetDeviceConsumables,
     GetDeviceMeters,
@@ -20,6 +23,7 @@ from src.modules.analisis_log_hp.application.use_cases.refresh_hp_cache import R
 from src.modules.analisis_log_hp.application.use_cases.resolve_device import ResolveDevice
 from src.modules.analisis_log_hp.domain.well_known_permissions import VIEW
 from src.modules.analisis_log_hp.presentation.dependencies import (
+    get_cds_wsayc_gateway,
     get_error_code_repo,
     get_hp_insight_gateway,
     get_hp_portal_gateway,
@@ -43,7 +47,7 @@ async def extract_logs(
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
 ) -> SdsExtractResponse:
-    uc = ExtractSdsLogs(get_hp_portal_gateway(), get_error_code_repo(db))
+    uc = ExtractSdsLogs(get_hp_portal_gateway(), get_error_code_repo(db), get_hp_insight_gateway())
     result = await uc.execute(body.serial, days=body.days)
     return SdsExtractResponse(
         device_id=result.device_id,
@@ -127,3 +131,21 @@ async def get_client_devices(
 ) -> list[dict[str, Any]]:
     uc = GetClientDevices(get_hp_insight_gateway())
     return await uc.execute(customer_id)
+
+
+@router.get("/clients")
+async def get_clients(
+    _: Identity = _require_view,
+) -> list[dict[str, Any]]:
+    uc = GetClients(get_hp_insight_gateway())
+    return await uc.execute()
+
+
+@router.get("/devices/{serial}/cds-incidents")
+async def get_cds_incidents(
+    serial: str,
+    _: Identity = _require_view,
+) -> list[dict[str, Any]]:
+    uc = GetCdsIncidents(get_cds_wsayc_gateway())
+    incidents = await uc.execute(serial)
+    return [asdict(i) for i in incidents]

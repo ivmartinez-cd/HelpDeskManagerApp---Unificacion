@@ -43,9 +43,41 @@ class GetDeviceMeters:
         return await self._insight.get_device_meters_history(device_id, days=days)
 
 
+def _to_client_device(raw: dict[str, Any]) -> dict[str, Any]:
+    """Traduce el dict crudo de Insight (`serialNumber`, `extendedFields.*`) al shape
+    de dominio que espera el frontend (`device_id`, `serial`, `location`, `model`)."""
+    extended = raw.get("extendedFields") or {}
+    return {
+        "device_id": raw.get("deviceId"),
+        "serial": raw.get("serialNumber") or "",
+        "location": extended.get("zone"),
+        "model": extended.get("model"),
+    }
+
+
+def _to_client(raw: dict[str, Any]) -> dict[str, Any]:
+    """`device_count` siempre 0: Insight no lo trae en la búsqueda de clientes y no
+    hacemos un fan-out de `get_devices` por cliente solo para contar (N+1 lento)."""
+    return {
+        "customer_id": raw.get("customerId"),
+        "name": raw.get("name") or raw.get("customerName") or "",
+        "device_count": 0,
+    }
+
+
 class GetClientDevices:
     def __init__(self, insight: HpInsightGateway) -> None:
         self._insight = insight
 
     async def execute(self, customer_id: int) -> list[dict[str, Any]]:
-        return await self._insight.get_devices(customer_id)
+        raw = await self._insight.get_devices(customer_id)
+        return [_to_client_device(d) for d in raw]
+
+
+class GetClients:
+    def __init__(self, insight: HpInsightGateway) -> None:
+        self._insight = insight
+
+    async def execute(self) -> list[dict[str, Any]]:
+        raw = await self._insight.get_customers()
+        return [_to_client(c) for c in raw]

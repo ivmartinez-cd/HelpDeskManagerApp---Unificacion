@@ -18,9 +18,12 @@ from dataclasses import dataclass
 from src.modules.analisis_log_hp.domain.repositories.error_code_repository import (
     ErrorCodeRepository,
 )
+from src.modules.analisis_log_hp.domain.repositories.hp_insight_gateway import HpInsightGateway
 from src.modules.analisis_log_hp.domain.repositories.hp_portal_gateway import HpPortalGateway
 
 logger = logging.getLogger(__name__)
+
+_GENERIC_MODEL = "Generico / Desconocido"
 
 
 @dataclass
@@ -33,15 +36,20 @@ class SdsExtractResult:
 
 class ExtractSdsLogs:
     def __init__(
-        self, portal: HpPortalGateway, error_code_repo: ErrorCodeRepository
+        self,
+        portal: HpPortalGateway,
+        error_code_repo: ErrorCodeRepository,
+        insight: HpInsightGateway,
     ) -> None:
         self._portal = portal
         self._repo = error_code_repo
+        self._insight = insight
 
     async def execute(self, serial: str, days: int = 30) -> SdsExtractResult:
-        device = await self._portal.search_device(serial.strip().upper())
+        serial = serial.strip().upper()
+        device = await self._portal.search_device(serial)
         device_id = device["id"]
-        model_name = device.get("model_name", "")
+        model_name = await self._resolve_model_name(serial, device.get("model_name", ""))
 
         result = await self._portal.fetch_event_logs(device_id, days=days)
 
@@ -61,3 +69,18 @@ class ExtractSdsLogs:
             tsv=result.tsv,
             help_urls_updated=updated,
         )
+
+    async def _resolve_model_name(self, serial: str, sds_model_name: str) -> str:
+        """Fallback a HP Insight si el scraping SDS no pudo resolver el modelo."""
+        if sds_model_name and sds_model_name != _GENERIC_MODEL:
+            return sds_model_name
+        try:
+            device = await self._insight.search_by_serial(serial)
+        except Exception as exc:
+            logger.warning(
+                "extract_sds_logs: fallback a Insight para model_name falló",
+                exc_info=exc,
+            )
+            return sds_model_name or _GENERIC_MODEL
+        extended = (device or {}).get("extendedFields") or {}
+        return str(extended.get("model") or sds_model_name or _GENERIC_MODEL)

@@ -2,9 +2,11 @@ import { httpClient } from "@/services/http-client";
 import type {
   AiDiagnoseResult,
   AnalysisResult,
+  CdsIncident,
   ClientDevice,
   DeviceHealth,
   ErrorCode,
+  FleetClient,
   Incident,
   Page,
   ResolvedDevice,
@@ -27,8 +29,10 @@ export const analisisLogHpApi = {
   getConsumables: (deviceId: number) =>
     httpClient.get<Record<string, unknown>[]>(`${BASE_SDS}/devices/${deviceId}/consumables`),
 
-  getAlerts: (deviceId: number) =>
-    httpClient.get<Record<string, unknown>[]>(`${BASE_SDS}/devices/${deviceId}/alerts`),
+  getAlerts: (deviceId: number, currentOnly = true) =>
+    httpClient.get<Record<string, unknown>[]>(
+      `${BASE_SDS}/devices/${deviceId}/alerts?current_only=${currentOnly}`,
+    ),
 
   getMeters: (deviceId: number, days = 90) =>
     httpClient.get<Record<string, unknown>[]>(`${BASE_SDS}/devices/${deviceId}/meters?days=${days}`),
@@ -44,6 +48,25 @@ export const analisisLogHpApi = {
 
   getClientDevices: (customerId: number) =>
     httpClient.get<ClientDevice[]>(`${BASE_SDS}/clients/${customerId}/devices`),
+
+  listClients: () => httpClient.get<FleetClient[]>(`${BASE_SDS}/clients`),
+
+  getCdsIncidents: (serial: string) =>
+    httpClient.get<CdsIncident[]>(`${BASE_SDS}/devices/${encodeURIComponent(serial)}/cds-incidents`),
+
+  // CPMD
+  getCpmdPdfUrl: (modelFamily: string) =>
+    httpClient.get<{ url: string; label: string }>(
+      `${BASE}/cpmd/pdf-url?model_family=${encodeURIComponent(modelFamily)}`,
+    ),
+
+  uploadCpmdManual: (file: File, keywords: string, label: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("keywords", keywords);
+    form.append("label", label);
+    return httpClient.postForm<{ id: number }>(`${BASE}/cpmd/upload`, form);
+  },
 
   // Analysis
   previewAnalysis: (logs: string) =>

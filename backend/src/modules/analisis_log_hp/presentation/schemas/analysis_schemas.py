@@ -35,6 +35,7 @@ class IncidentSchema(BaseModel):
     end_time: datetime
     counter_range: list[int]
     sds_link: str | None
+    code_description: str | None = None
 
 
 class AnalysisRequest(BaseModel):

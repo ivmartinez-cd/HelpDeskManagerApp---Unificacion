@@ -157,3 +157,6 @@ class HttpxHpInsightGateway:
             "/api/devices",
             params={"customerId": customer_id, "includeExtendedFields": "true"},
         )
+
+    async def get_customers(self) -> list[JsonDict]:
+        return await self._get_list("/api/customers")

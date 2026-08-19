@@ -53,25 +53,47 @@ export function lastCriticalIncident(incidents: Incident[]): Incident | null {
   );
 }
 
-/** KPI: tasa de errores — páginas por error */
-export function computeErrorRate(
-  incidents: Incident[],
-  events: LogEvent[],
-): { label: string; pagesInPeriod: number; totalCounter: number } | null {
-  if (!incidents.length || !events.length) return null;
+/** KPI: tasa de errores — páginas por error (denominador = eventos ERROR, no incidentes) */
+export function computeErrorRate(events: LogEvent[]): {
+  label: string;
+  labelColor?: string;
+  sub: string;
+  pagesInPeriod: number;
+  totalCounter: number;
+} {
   const counters = events.map((e) => e.counter).filter((c) => c > 0);
-  if (!counters.length) return null;
+  if (counters.length < 2) {
+    return { label: "—", sub: "sin datos de contador", pagesInPeriod: 0, totalCounter: 0 };
+  }
   const cMin = Math.min(...counters);
   const cMax = Math.max(...counters);
   const pagesInPeriod = cMax - cMin;
-  const errorCount = incidents.length;
-  if (errorCount === 0) return null;
+  if (pagesInPeriod === 0) {
+    return { label: "—", sub: "sin rango de contador", pagesInPeriod: 0, totalCounter: cMax };
+  }
+
+  const errorEvents = events.filter((e) => normSev(e.type) === "ERROR");
+  const errorCount = errorEvents.length;
+  if (errorCount === 0) {
+    return {
+      label: "Sin errores",
+      labelColor: "var(--color-success, #22c55e)",
+      sub: "sin errores críticos",
+      pagesInPeriod,
+      totalCounter: cMax,
+    };
+  }
+
+  const freq = new Map<string, number>();
+  for (const e of errorEvents) freq.set(e.code, (freq.get(e.code) ?? 0) + 1);
+  const topCode = [...freq.entries()].reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+
   const pagesPerError = Math.round(pagesInPeriod / errorCount);
   const label =
     pagesPerError >= 1
       ? `1 c/${pagesPerError.toLocaleString("es-AR")} pág.`
       : `${errorCount} err.`;
-  return { label, pagesInPeriod, totalCounter: cMax };
+  return { label, sub: topCode, pagesInPeriod, totalCounter: cMax };
 }
 
 /** Datos del heatmap: día-de-semana × franja horaria → conteo */

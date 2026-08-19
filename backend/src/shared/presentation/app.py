@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.analisis_log_hp.presentation.analysis_router import (
     router as pi_analysis_router,
 )
+from src.modules.analisis_log_hp.presentation.cpmd_router import router as pi_cpmd_router
 from src.modules.analisis_log_hp.presentation.error_codes_router import (
     router as pi_error_codes_router,
 )
@@ -59,6 +60,9 @@ from src.modules.liquidaciones.presentation.alertas_router import (
 )
 from src.modules.liquidaciones.presentation.config_router import (
     router as liquidaciones_config_router,
+)
+from src.modules.liquidaciones.presentation.liquidaciones_ayc_router import (
+    router as liquidaciones_ayc_router,
 )
 from src.modules.liquidaciones.presentation.liquidaciones_router import (
     router as liquidaciones_router,
@@ -147,6 +151,12 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
             start_contadores_background_jobs,
         )
         tasks += start_contadores_background_jobs(settings.calendario_refresh_interval_minutes)
+        from src.modules.liquidaciones.presentation.background_jobs import (
+            start_liquidaciones_background_jobs,
+        )
+        tasks += start_liquidaciones_background_jobs(
+            settings.liquidaciones_reconciliar_interval_minutes
+        )
         logger.info("background_jobs: %d job(s) iniciados", len(tasks))
     try:
         yield
@@ -216,6 +226,7 @@ def create_app() -> FastAPI:
     # segmentos como si fueran un UUID (422 en vez de la respuesta real).
     app.include_router(liquidaciones_config_router)
     app.include_router(liquidaciones_alertas_router)
+    app.include_router(liquidaciones_ayc_router)
     app.include_router(liquidaciones_router)
     app.include_router(vacaciones_empleados_router)
     app.include_router(vacaciones_catalogos_router)
@@ -227,6 +238,7 @@ def create_app() -> FastAPI:
     app.include_router(vacaciones_auditoria_router)
     app.include_router(vacaciones_reportes_router)
     app.include_router(pi_analysis_router)
+    app.include_router(pi_cpmd_router)
     app.include_router(pi_error_codes_router)
     app.include_router(pi_sds_router)
     app.include_router(pi_saved_analyses_router)

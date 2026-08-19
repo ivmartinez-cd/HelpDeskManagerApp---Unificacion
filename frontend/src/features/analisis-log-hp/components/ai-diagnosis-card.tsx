@@ -13,7 +13,7 @@ interface Props {
   onDiagnosis?: (diagnosis: string) => void;
 }
 
-function buildPayload(
+export function buildPayload(
   analysis: AnalysisResult,
   serial: string,
   modelName: string,

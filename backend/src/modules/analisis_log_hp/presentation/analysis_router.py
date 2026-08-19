@@ -60,7 +60,7 @@ async def preview_analysis(
                 severity=i.severity, severity_weight=i.severity_weight,
                 occurrences=i.occurrences, start_time=i.start_time,
                 end_time=i.end_time, counter_range=list(i.counter_range),
-                sds_link=i.sds_link,
+                sds_link=i.sds_link, code_description=i.code_description,
             )
             for i in result.analysis.incidents
         ],

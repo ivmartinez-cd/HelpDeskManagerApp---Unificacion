@@ -1,3 +1,6 @@
+from src.modules.analisis_log_hp.infrastructure.models.cpmd_manual_model import (
+    CpmdManualModel,  # noqa: F401
+)
 from src.modules.analisis_log_hp.infrastructure.models.error_code_model import (
     ErrorCodeModel,  # noqa: F401
 )

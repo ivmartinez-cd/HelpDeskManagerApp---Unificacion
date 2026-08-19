@@ -10,10 +10,13 @@ import {
   fmtDatetime,
   normSev,
 } from "../utils/analysis-utils";
+import { CdsIncidentsPanel } from "./cds-incidents-panel";
+import { SdsAlertsPanel } from "./sds-alerts-panel";
 
 interface Props {
   analysis: AnalysisResult;
   deviceId: string | null;
+  serial: string;
   activeSeverities: Set<Severity>;
 }
 
@@ -148,7 +151,7 @@ function ConsumablesPanel({ deviceId }: { deviceId: string }) {
   );
 }
 
-export function AnalysisCollapsibles({ analysis, deviceId, activeSeverities }: Props) {
+export function AnalysisCollapsibles({ analysis, deviceId, serial, activeSeverities }: Props) {
   const visible = filterIncidentsBySeverity(analysis.incidents, activeSeverities);
   return (
     <div className="rounded-[12px] border border-border bg-card px-4">
@@ -171,6 +174,26 @@ export function AnalysisCollapsibles({ analysis, deviceId, activeSeverities }: P
       >
         {deviceId && deviceId !== "manual" ? (
           <ConsumablesPanel deviceId={deviceId} />
+        ) : (
+          <p className="font-body text-[13px] text-muted-foreground">
+            No disponible para análisis manual.
+          </p>
+        )}
+      </Section>
+
+      <Section title="Alertas del portal SDS" color={SEV_COLOR.WARNING} count={0}>
+        {deviceId && deviceId !== "manual" ? (
+          <SdsAlertsPanel deviceId={deviceId} />
+        ) : (
+          <p className="font-body text-[13px] text-muted-foreground">
+            No disponible para análisis manual.
+          </p>
+        )}
+      </Section>
+
+      <Section title="Incidentes CD" color={SEV_COLOR.INFO} count={0}>
+        {deviceId && deviceId !== "manual" ? (
+          <CdsIncidentsPanel serial={serial} />
         ) : (
           <p className="font-body text-[13px] text-muted-foreground">
             No disponible para análisis manual.

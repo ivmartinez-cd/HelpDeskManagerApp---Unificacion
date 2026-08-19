@@ -106,6 +106,24 @@ export interface ClientDevice {
   model: string | null;
 }
 
+export interface CdsReplacement {
+  articulo: string;
+  cantidad: number;
+}
+
+export interface CdsIncident {
+  id: string;
+  numero_incidente: string;
+  fecha: string;
+  fecha_cierre: string | null;
+  tipo: string;
+  estado: string;
+  motivo: string;
+  contador: string | null;
+  repuestos: CdsReplacement[];
+  tareas_realizadas: string[];
+}
+
 export interface Page<T> {
   items: T[];
   total: number;

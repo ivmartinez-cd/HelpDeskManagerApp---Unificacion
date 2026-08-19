@@ -5,6 +5,7 @@ import { useState } from "react";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import { analisisLogHpApi } from "../api/analisis-log-hp-api";
 import type { AnalysisResult, SdsExtractResult } from "../types/analisis-log-hp";
+import { ClientSearchMode } from "./client-search-mode";
 
 interface Props {
   onResult: (
@@ -18,49 +19,51 @@ interface Props {
 
 const MODE_OPTIONS = [
   { value: "serie", label: "Buscar por Serie" },
+  { value: "cliente", label: "Buscar por Cliente" },
   { value: "manual", label: "Análisis Manual" },
 ];
 
 export function HpLogsWelcome({ onResult }: Props) {
-  const [mode, setMode] = useState<"serie" | "manual">("serie");
+  const [mode, setMode] = useState<"serie" | "cliente" | "manual">("serie");
   const [serial, setSerial] = useState("");
   const [tsv, setTsv] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleAnalyze() {
+  async function handleAnalyzeSerial(value: string) {
+    if (!value.trim()) return;
     setError(null);
-    if (mode === "serie") {
-      if (!serial.trim()) return;
-      setLoading(true);
-      try {
-        const sdsResult = await analisisLogHpApi.extractLogs(serial.trim());
-        const analysis = await analisisLogHpApi.previewAnalysis(sdsResult.tsv);
-        onResult(serial.trim(), sdsResult.model_name, sdsResult.device_id, sdsResult, analysis);
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Error al conectar con HP SDS";
-        setError(msg);
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      if (!tsv.trim()) return;
-      setLoading(true);
-      try {
-        const analysis = await analisisLogHpApi.previewAnalysis(tsv.trim());
-        const fake: SdsExtractResult = {
-          device_id: "manual",
-          model_name: "Manual",
-          tsv: tsv.trim(),
-          help_urls_updated: 0,
-        };
-        onResult("MANUAL", "Análisis Manual", "manual", fake, analysis);
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Error al analizar los logs";
-        setError(msg);
-      } finally {
-        setLoading(false);
-      }
+    setLoading(true);
+    try {
+      const sdsResult = await analisisLogHpApi.extractLogs(value.trim());
+      const analysis = await analisisLogHpApi.previewAnalysis(sdsResult.tsv);
+      onResult(value.trim(), sdsResult.model_name, sdsResult.device_id, sdsResult, analysis);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error al conectar con HP SDS";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleAnalyzeManual() {
+    if (!tsv.trim()) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const analysis = await analisisLogHpApi.previewAnalysis(tsv.trim());
+      const fake: SdsExtractResult = {
+        device_id: "manual",
+        model_name: "Manual",
+        tsv: tsv.trim(),
+        help_urls_updated: 0,
+      };
+      onResult("MANUAL", "Análisis Manual", "manual", fake, analysis);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error al analizar los logs";
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -83,24 +86,24 @@ export function HpLogsWelcome({ onResult }: Props) {
         <SegmentedControl
           options={MODE_OPTIONS}
           value={mode}
-          onChange={(v) => { setMode(v as "serie" | "manual"); setError(null); }}
+          onChange={(v) => { setMode(v as "serie" | "cliente" | "manual"); setError(null); }}
         />
 
         {/* Input */}
-        {mode === "serie" ? (
+        {mode === "serie" && (
           <div className="w-full flex gap-2">
             <input
               type="text"
               value={serial}
               onChange={(e) => setSerial(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleAnalyze(); }}
+              onKeyDown={(e) => { if (e.key === "Enter") handleAnalyzeSerial(serial); }}
               placeholder="Ingrese Serie de Impresora (ej: MXBCN...)"
               className="flex-1 rounded-[10px] border border-border bg-card px-4 py-3 font-body text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-orange/60 focus:outline-none"
               disabled={loading}
             />
             <button
               type="button"
-              onClick={handleAnalyze}
+              onClick={() => handleAnalyzeSerial(serial)}
               disabled={loading || !serial.trim()}
               className="flex items-center gap-2 rounded-[10px] bg-brand-orange px-5 py-3 font-body text-sm font-bold text-white hover:bg-brand-orange/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
@@ -115,7 +118,13 @@ export function HpLogsWelcome({ onResult }: Props) {
               <HelpCircle className="h-4 w-4" />
             </button>
           </div>
-        ) : (
+        )}
+
+        {mode === "cliente" && (
+          <ClientSearchMode loading={loading} onAnalyze={handleAnalyzeSerial} />
+        )}
+
+        {mode === "manual" && (
           <div className="w-full flex flex-col gap-3">
             <textarea
               value={tsv}
@@ -127,7 +136,7 @@ export function HpLogsWelcome({ onResult }: Props) {
             />
             <button
               type="button"
-              onClick={handleAnalyze}
+              onClick={handleAnalyzeManual}
               disabled={loading || !tsv.trim()}
               className="flex items-center justify-center gap-2 rounded-[10px] bg-brand-orange px-5 py-3 font-body text-sm font-bold text-white hover:bg-brand-orange/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >

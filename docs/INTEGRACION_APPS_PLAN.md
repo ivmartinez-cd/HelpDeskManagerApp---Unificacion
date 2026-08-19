@@ -593,12 +593,109 @@ real ejecutado; solo se actualiza el estado de cada módulo.
       timeline paginado con rangos, card IA colapsable, collapsibles de detalle).
       Migración `c2e5f8a3d9b1` activa el módulo. Build TypeScript limpio, ruta
       `/analisis-log-hp` sirve 307 (auth) como esperado.
-- [ ] Migrar datos reales desde el Postgres legacy del Printer-Logs-Analyzer
-      (principalmente `error_codes` del catálogo — `saved_analyses` y `telemetry`
-      son datos históricos opcionales; coordinar con la PC laboral que tiene la DB).
+- [x] **Migrar `error_codes` del catálogo legacy (2026-08-19):** corrección — el repo y la
+      DB legacy sí están en esta PC (`C:\Users\imartinez.CDSA\Desktop\Proyectos\
+      Printer-Logs-Analyzer`, contenedor Docker `printer-logs-analyzer-db-1`, puerto 5433),
+      no hacía falta coordinar con la PC laboral. Migrados los 153 códigos (upsert por
+      `code`, preservando los 17 ya autogenerados) a `pi_error_codes`. `saved_analyses` y
+      `telemetry` siguen pendientes como datos históricos opcionales (no bloquean nada).
 - [x] Prueba end-to-end con Playwright (`frontend/tests/analisis-log-hp.spec.ts`) — 13 tests.
-- [ ] Correr en paralelo con el Printer-Logs-Analyzer legacy y apagarlo.
-- [ ] Actualizar `PROJECT_CONTEXT.md` del padre.
+- [x] **Validación en vivo contra el legacy real (2026-08-18):** ambos stacks levantados en
+      Docker (legacy `5175`/`8000`/`5433`, migrado `3000`/`8012`) y comparados con datos reales
+      sobre la misma serie (`BRBSN9YYSL`). KPIs núcleo (errores críticos, incidencias activas,
+      timeline, charts), marca (card IA recoloreado a naranja institucional) y estabilidad
+      (sin excepciones en logs) OK. Encontró 6 gaps concretos, quedan pendientes:
+  - [x] **"Buscar por Cliente" implementado (2026-08-19)** — backend: `get_customers()`
+        agregado a `HpInsightGateway` (Protocol + `httpx_hp_insight_gateway.py`), caso de uso
+        `GetClients`, endpoint `GET /sds/clients`; se arregló además el mismatch de shape de
+        `/clients/{customer_id}/devices` (devolvía dicts crudos de Insight —
+        `serialNumber`/`extendedFields.*` — se mapea ahora a `device_id/serial/location/model`
+        en `get_device_live_data.py`, mismo criterio que
+        `insumos/_device_inventory_parsing.py`). Frontend: tercera opción "Cliente" en
+        `hp-logs-welcome.tsx` vía `ClientSearchMode` (2 selects encadenados). Verificado en vivo
+        con la cuenta real de Insight: 56 clientes reales listados, selección de equipo y
+        análisis end-to-end funcionando (probado con Mercado Libre, Cheeky, Supermercados Dia
+        — hasta 1073 equipos en un cliente).
+  - [x] **Nombre de modelo mal resuelto (arreglado 2026-08-19)** — la hipótesis inicial
+        (`printer_models` sin migrar) era incorrecta: esa tabla no existe ni en la DB legacy
+        (verificado por `\dt`). La causa real: el regex de scraping SDS es idéntico al legacy
+        y a veces no matchea (portal en vivo, fragilidad conocida — §6.1 caracterización);
+        el legacy no tiene ningún fallback, así que también le puede fallar, pero en la
+        prueba le tocó una respuesta que sí matcheaba. Fix: `ExtractSdsLogs` ahora hace
+        fallback a HP Insight (`search_by_serial` → `extendedFields.model`) cuando el
+        scraping devuelve vacío o "Generico / Desconocido"
+        (`application/use_cases/extract_sds_logs.py`). Insight es una API REST estable, no
+        scraping — más confiable que el legacy en este punto. Verificado en vivo con la
+        misma serie tras el fix: "LaserJet Managed E50145dn" en vez de "Generico /
+        Desconocido".
+  - [x] **KPI "Último error crítico" sin descripción (arreglado 2026-08-19)** — no era un
+        problema de datos: el código de prueba (`13.B9.D2`) ya estaba en el catálogo
+        migrado con la descripción correcta. El bug real era de wiring: la entidad de
+        dominio `Incident` nunca tuvo campo `code_description` (solo `classification`,
+        pensado para otra cosa), y ni el schema de presentación `IncidentSchema` ni el
+        router lo exponían — el frontend ya leía `code_description` correctamente (así lo
+        pedía el handoff), pero el backend jamás lo mandaba. Fix: agregado el campo a
+        `Incident` (domain), `analysis_service._build_incident` (lo completa),
+        `IncidentSchema` y los 3 puntos donde se construye (`analysis_router.py`,
+        `saved_analyses_router.py` ×2). Además se migraron los 153 códigos de
+        `error_codes` del legacy a `pi_error_codes` (antes 17, autogenerados on-the-fly;
+        ahora completo) — sigue habiendo margen para que aparezcan códigos nuevos no
+        vistos por el legacy. Verificado: `lint-imports` 22/0, `ruff` limpio, `mypy` limpio,
+        `pytest tests/unit` sin regresiones en el módulo, y KPI mostrando descripción real
+        en el navegador tras el fix.
+  - [x] **KPI "Tasa de errores" arreglado (2026-08-19)** — `computeErrorRate` en
+        `analysis-utils.ts` reescrito para matchear exacto la fórmula del legacy
+        (`KPICards.tsx:11-58`): denominador = eventos con `type === 'ERROR'` (no
+        `incidents.length`), guards `counters.length < 2` / `counterRange === 0` → "—", estado
+        "Sin errores" en verde cuando no hay errores en el período, y `sub` = código más
+        frecuente entre los eventos ERROR. `kpi-cards.tsx` ahora pasa eventos filtrados por
+        severidad (no crudos) y muestra `sub` + "En periodo:" (antes decía "Por período:",
+        no matcheaba el handoff). Verificado en vivo: label/sub/colores coinciden con la
+        lógica del legacy para la misma serie.
+  - [x] **Botonera completa (2026-08-19)**: agregados "Todo el período" (filtro de fechas
+        100% client-side, presets Hoy/Esta semana/Semana anterior/Este mes/Mes anterior/
+        Últimos 7-30 días + rango custom, sin librería nueva — `date-filter.ts` +
+        `date-range-picker.tsx`), "Exportar PDF" (ver detalle abajo) y "Manual CPMD" (nueva
+        tabla `pi_cpmd_manuals` + storage en `var/analisis_log_hp/cpmd/` siguiendo el único
+        precedente de storage de archivos del monorepo, `contadores/upload_storage.py`;
+        `cpmd_router.py` con `pdf-url`/`upload`/`file`, todo autenticado — nunca `StaticFiles`).
+        El botón "SDS" (modal de pegado manual de texto del portal) se dejó afuera de esta
+        tanda, confirmado con el usuario: bajo valor aislado.
+  - [x] **2 collapsibles agregados (2026-08-19)**:
+    - "Alertas del portal SDS" — backend ya existía (`GetDeviceAlerts`); solo faltaba el
+      frontend (`sds-alerts-panel.tsx`, tabs Activas/Historial). Verificado con datos reales:
+      52 alertas de historial para un equipo real.
+    - "Incidentes CD" (wsAyC) — el más grande de esta tanda. Se sumaron 2 operaciones SOAP
+      nuevas (`getCounters`, `getIncidentReplacements`, `getIncidentJobs`) a un gateway propio
+      del módulo (`infrastructure/wsayc/zeep_cds_gateway.py` + `cds_parsing.py`), reusando el
+      provider compartido de ADR-018 (`get_wsayc_client_provider()`) — sin acoplar
+      `analisis_log_hp` al gateway de `insumos` (puerto y parsing propios, mismo criterio que
+      exige el ADR). Caso de uso `GetCdsIncidents` porta el pipeline exacto del legacy
+      (`cds_service.py::get_cds_incidents_for_serial`): últimos 12 meses, tope 15, matching de
+      contador por fecha (`domain/services/cds_counter_matching.py`, pure/testable), enriquecido
+      concurrente (semáforo 3). Frontend: `cds-incidents-panel.tsx` con el algoritmo de dígito
+      verificador de CD (`check-digit.ts`) para el link a webagentes. Verificado en vivo con
+      datos reales de producción: incidentes, repuestos y tareas de técnicos reales.
+  - [x] **"Exportar PDF" agregado (2026-08-19)** — el endpoint de resumen IA
+        (`POST /analysis/pdf-summary`) ya existía completo en el backend, sin usar; solo faltaba
+        el frontend. Mecanismo idéntico al legacy (`useExportPdf.ts`): popup +
+        `document.write` + `window.print()`, sin jsPDF/html2canvas. Reporte ejecutivo dividido
+        en varios componentes (`executive-print-report/`) para no repetir el archivo de 811
+        líneas del legacy en uno solo. Verificado en vivo: popup se abre con título
+        `Reporte_Ejecutivo_{serial}`, KPIs/incidencias reales, sin errores de consola. El
+        resumen de IA no se pudo probar end-to-end porque `ANTHROPIC_API_KEY` no está
+        configurada en este entorno (limitación ya conocida del proyecto) — el fallback
+        funciona como debe: exporta el reporte igual, sin el resumen.
+- [x] **Legacy apagado (2026-08-19)** — confirmado por el usuario: el legacy real vive
+      dockerizado en esta PC (`printer-logs-analyzer-{frontend,backend,db}-1`,
+      `C:\Users\imartinez.CDSA\Desktop\Proyectos\Printer-Logs-Analyzer`), no en la VM de GCP
+      que menciona `PROJECT_CONTEXT.md` del padre (esa referencia quedó desactualizada — ver
+      nota ahí). Corrido en paralelo durante toda la sesión de validación/fixes de esta fase;
+      los 3 contenedores se pararon (`docker stop`) tras cerrar los 6 gaps encontrados.
+- [x] **`PROJECT_CONTEXT.md` del padre actualizado (2026-08-19)** — nota agregada en
+      `HelpDeskManager-Web/PROJECT_CONTEXT.md` marcando Printer-Logs-Analyzer como migrado y
+      apagado, y flageando como desactualizada la entrada de la VM de GCP para ese legacy
+      (sin tocar el resto del documento, que es de otro sistema y no se pudo verificar).
 
 ### Fase 4 — STC Cloud (caso especial, va último)
 - [ ] Migrar `heartbeatMonitor` y `alertWorker` (BullMQ → outbox Postgres + APScheduler,

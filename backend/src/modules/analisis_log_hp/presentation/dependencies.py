@@ -19,6 +19,9 @@ from src.modules.analisis_log_hp.infrastructure.hp_insight.httpx_hp_insight_gate
 from src.modules.analisis_log_hp.infrastructure.hp_portal.httpx_hp_portal_gateway import (
     HttpxHpPortalGateway,
 )
+from src.modules.analisis_log_hp.infrastructure.repositories.sqlalchemy_cpmd_manual_repository import (  # noqa: E501
+    SqlAlchemyCpmdManualRepository,
+)
 from src.modules.analisis_log_hp.infrastructure.repositories.sqlalchemy_error_code_repository import (  # noqa: E501
     SqlAlchemyErrorCodeRepository,
 )
@@ -28,6 +31,7 @@ from src.modules.analisis_log_hp.infrastructure.repositories.sqlalchemy_saved_an
 from src.modules.analisis_log_hp.infrastructure.repositories.sqlalchemy_telemetry_repository import (  # noqa: E501
     SqlAlchemyTelemetryRepository,
 )
+from src.modules.analisis_log_hp.infrastructure.wsayc.zeep_cds_gateway import ZeepCdsGateway
 from src.shared.infrastructure.config.settings import get_settings
 
 
@@ -66,3 +70,12 @@ def get_saved_analysis_repo(db: AsyncSession) -> SqlAlchemySavedAnalysisReposito
 
 def get_telemetry_repo(db: AsyncSession) -> SqlAlchemyTelemetryRepository:
     return SqlAlchemyTelemetryRepository(db)
+
+
+def get_cpmd_manual_repo(db: AsyncSession) -> SqlAlchemyCpmdManualRepository:
+    return SqlAlchemyCpmdManualRepository(db)
+
+
+@lru_cache
+def get_cds_wsayc_gateway() -> ZeepCdsGateway:
+    return ZeepCdsGateway()

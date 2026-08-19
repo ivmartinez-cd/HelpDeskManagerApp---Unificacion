@@ -20,6 +20,7 @@ class Incident:
     counter_range: tuple[int, int]
     sds_link: str | None = None
     sds_solution_content: str | None = None
+    code_description: str | None = None
 
 
 @dataclass(frozen=True)

@@ -2,6 +2,7 @@ import type { AnalysisResult, Severity } from "../types/analisis-log-hp";
 import {
   SEV_COLOR,
   computeErrorRate,
+  filterEventsBySeverity,
   filterIncidentsBySeverity,
   lastCriticalIncident,
   normSev,
@@ -16,7 +17,8 @@ interface Props {
 export function KpiCards({ analysis, activeSeverities }: Props) {
   const visible = filterIncidentsBySeverity(analysis.incidents, activeSeverities);
   const last = lastCriticalIncident(visible);
-  const errorRate = computeErrorRate(visible, analysis.events);
+  const visibleEvents = filterEventsBySeverity(analysis.events, activeSeverities);
+  const errorRate = computeErrorRate(visibleEvents);
 
   const errorCount = visible.filter((i) => normSev(i.severity) === "ERROR").length;
   const warnCount = visible.filter((i) => normSev(i.severity) === "WARNING").length;
@@ -90,23 +92,28 @@ export function KpiCards({ analysis, activeSeverities }: Props) {
         <span className="font-body text-[10px] font-bold uppercase tracking-[.05em] text-muted-foreground">
           Tasa de errores
         </span>
-        {errorRate ? (
-          <>
-            <div className="font-heading text-[22px] font-extrabold leading-tight text-brand-orange">
-              {errorRate.label}
-            </div>
-            <div className="font-body text-xs text-muted-foreground">
-              {`Por período: ${errorRate.pagesInPeriod.toLocaleString("es-AR")} pág.`}
+        <div
+          className={`font-heading text-[22px] font-extrabold leading-tight ${
+            errorRate.labelColor ? "text-success" : "text-brand-orange"
+          }`}
+        >
+          {errorRate.label}
+        </div>
+        <div className="font-body text-xs text-muted-foreground">
+          {errorRate.sub}
+          {errorRate.pagesInPeriod > 0 && (
+            <>
+              <br />
+              {`En periodo: ${errorRate.pagesInPeriod.toLocaleString("es-AR")} pág.`}
+            </>
+          )}
+          {errorRate.totalCounter > 0 && (
+            <>
               <br />
               {`Contador total: ${errorRate.totalCounter.toLocaleString("es-AR")} pág.`}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="font-heading text-[22px] font-extrabold leading-tight text-muted-foreground">—</div>
-            <div className="font-body text-xs text-muted-foreground">Sin datos de contador</div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
