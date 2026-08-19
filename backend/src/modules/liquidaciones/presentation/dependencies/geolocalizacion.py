@@ -21,6 +21,10 @@ from src.modules.liquidaciones.application.use_cases.geocodificar_sucursales imp
     GeocodificarPorts,
     GeocodificarSucursales,
 )
+from src.modules.liquidaciones.application.use_cases.geovalidacion_tier0 import (
+    EvaluarTier0Geovalidacion,
+    GeovalidacionTier0Ports,
+)
 from src.modules.liquidaciones.application.use_cases.pines_sospechosos import (
     AuditarPines,
     CorregirPin,
@@ -174,6 +178,17 @@ def build_resolver_coordenadas_fila(session: AsyncSession) -> ResolverCoordenada
 
 def build_recalcular_km_fila(session: AsyncSession) -> RecalcularKmFila:
     return RecalcularKmFila(_lugares_ports(session))
+
+
+def build_evaluar_tier0(session: AsyncSession) -> EvaluarTier0Geovalidacion:
+    """Sin gateways de red — Tier 0 es dominio puro sobre datos ya locales
+    (Siges read-only), se puede recalcular en cada request sin costo."""
+    return EvaluarTier0Geovalidacion(
+        GeovalidacionTier0Ports(
+            prestadores=SqlAlchemyPrestadorRepository(session),
+            siges=siges_catalogo_gateway(),
+        )
+    )
 
 
 def build_diagnosticar_asistente_km(session: AsyncSession) -> DiagnosticarAsistenteKm:

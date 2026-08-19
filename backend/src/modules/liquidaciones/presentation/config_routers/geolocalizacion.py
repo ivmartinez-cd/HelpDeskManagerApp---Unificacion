@@ -27,6 +27,7 @@ from src.modules.liquidaciones.presentation.dependencies import (
     build_buscar_lugar_fila,
     build_corregir_pin,
     build_diagnosticar_asistente_km,
+    build_evaluar_tier0,
     build_geocodificar_sucursales,
     build_listar_coordenadas_pendientes,
     build_listar_pines_sospechosos,
@@ -54,6 +55,9 @@ from src.modules.liquidaciones.presentation.schemas.geolocalizacion_schemas impo
     ResolverCoordenadasIn,
     SucursalCoordenadasOut,
 )
+from src.modules.liquidaciones.presentation.schemas.geovalidacion_tier0_schemas import (
+    HallazgoTier0Out,
+)
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
@@ -77,6 +81,25 @@ async def estado_asistente_km(
     acción en llamadas Google — sin consumir ninguna."""
     estado = await build_diagnosticar_asistente_km(db).execute(prestador_id)
     return EstadoAsistenteKmOut.from_dto(estado)
+
+
+@router.get(
+    "/siges/prestador/{prestador_id}/geovalidacion/tier0",
+    response_model=Page[HallazgoTier0Out],
+)
+async def geovalidacion_tier0(
+    prestador_id: UUID,
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=500, ge=1, le=1000),
+    _: Identity = require_view,
+    db: AsyncSession = Depends(get_db),
+) -> Page[HallazgoTier0Out]:
+    """Worklist de saneo geométrico (Tier 0): coordenadas ausentes/inválidas,
+    fuera de Argentina, lat/lon invertidas, pin compartido entre sucursales
+    con domicilio distinto y distancia a la base — rankeada por severidad,
+    sin costo (cero llamadas a Georef/Nominatim/Google)."""
+    hallazgos = await build_evaluar_tier0(db).execute(prestador_id)
+    return Page.of([HallazgoTier0Out.from_dto(h) for h in hallazgos], page=page, size=size)
 
 
 @router.post(
