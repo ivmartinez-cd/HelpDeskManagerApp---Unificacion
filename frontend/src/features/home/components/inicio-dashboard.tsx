@@ -1,8 +1,9 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useState } from "react";
 import { textoDesdeSync } from "@/features/contadores/utils/calendario-format";
 import { useSession } from "@/services/session-provider";
+import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import {
   useCalendarioHome,
   useContadoresResumen,
@@ -13,13 +14,11 @@ import {
   useSlaHistoria,
   useTurnosHoy,
 } from "../hooks/use-inicio-data";
-import { buildKpis } from "../utils/build-kpis";
-import { COLUMNS, cardsForCol, type ModuleAccess } from "../config/dashboard-registry";
+import { COLUMNS, cardsForCol, type ColKey, type ModuleAccess } from "../config/dashboard-registry";
 import { ClientesHoyCard } from "./clientes-hoy-card";
 import { ContadoresDonutCard } from "./contadores-donut-card";
 import { HeatmapSemanaCard } from "./heatmap-semana-card";
 import { InsumosSinCargarCard } from "./insumos-sin-cargar-card";
-import { KpiStrip } from "./kpi-strip";
 import { LiquidacionesPendientesCard } from "./liquidaciones-pendientes-card";
 import { ParqueDonutCard } from "./parque-donut-card";
 import { CierreMensualCard } from "./cierre-mensual-card";
@@ -28,6 +27,13 @@ import { PendientesACerrarCard } from "@/features/sla/components/pendientes-a-ce
 import { SlaMesCard } from "./sla-mes-card";
 import { TurnosTimelineCard } from "./turnos-timeline-card";
 
+const COL_LABELS: Record<ColKey, string> = {
+  planificacion: "Planificación",
+  contadores: "Contadores",
+  sla: "SLA",
+  admin: "Administración",
+};
+
 function fechaHoy(): string {
   const texto = new Date().toLocaleDateString("es-AR", { weekday: "long", day: "numeric" });
   return texto.charAt(0).toUpperCase() + texto.slice(1);
@@ -35,7 +41,10 @@ function fechaHoy(): string {
 
 /** Dashboard de Inicio. El orden y columna de cada card se declara en
  * dashboard-registry.ts — este componente solo renderiza lo que el registro
- * indica. Para mover una card: editar el registro, no este archivo. */
+ * indica. Para mover una card: editar el registro, no este archivo.
+ * Las columnas del registro se muestran como pestañas: cada una agrupa las
+ * cards de una sección para que se vean grandes en vez de apretadas
+ * lado a lado. */
 export function InicioDashboard() {
   const { modules } = useSession();
 
@@ -47,6 +56,17 @@ export function InicioDashboard() {
     liquidaciones: modules.some((m) => m.key === "liquidaciones"),
   };
 
+  const columnasVisibles = COLUMNS
+    .map((col) => ({ ...col, cards: cardsForCol(col.key, access) }))
+    .filter((col) => col.cards.length > 0);
+
+  const [activeTab, setActiveTab] = useState<ColKey>(
+    () => columnasVisibles[0]?.key ?? COLUMNS[0].key,
+  );
+  const tabActual = columnasVisibles.some((c) => c.key === activeTab)
+    ? activeTab
+    : columnasVisibles[0]?.key;
+
   const turnos            = useTurnosHoy();
   const calendario        = useCalendarioHome(access.contadores);
   const contadoresResumen = useContadoresResumen(access.contadores);
@@ -55,16 +75,6 @@ export function InicioDashboard() {
   const pendientesResumen = usePendientesResumen(access.sla);
   const insumosDashboard  = useInsumosDashboard(access.insumos);
   const liquidacionesPendientes = useLiquidacionesPendientes(access.liquidaciones);
-
-  const kpis = buildKpis({
-    prestadores: access.prestadores,
-    contadores:  access.contadores,
-    sla:         access.sla,
-    parque,
-    contadoresResumen,
-    slaHistoria,
-    calendario,
-  });
 
   function renderCard(id: string) {
     switch (id) {
@@ -150,9 +160,7 @@ export function InicioDashboard() {
     }
   }
 
-  const columnasVisibles = COLUMNS
-    .map((col) => ({ ...col, cards: cardsForCol(col.key, access) }))
-    .filter((col) => col.cards.length > 0);
+  const cardsTabActual = columnasVisibles.find((c) => c.key === tabActual)?.cards ?? [];
 
   return (
     <div className="flex h-full flex-col gap-3 px-7 py-4">
@@ -170,20 +178,20 @@ export function InicioDashboard() {
         </div>
       </div>
 
-      <div className="flex-none">
-        <KpiStrip kpis={kpis} />
-      </div>
+      {columnasVisibles.length > 1 && (
+        <div className="flex-none">
+          <SegmentedControl
+            label="Sección"
+            value={tabActual ?? ""}
+            onChange={(v) => setActiveTab(v as ColKey)}
+            options={columnasVisibles.map((c) => ({ value: c.key, label: COL_LABELS[c.key] }))}
+          />
+        </div>
+      )}
 
-      <div
-        className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:[grid-template-columns:var(--dash-cols)]"
-        style={{ "--dash-cols": columnasVisibles.map((c) => c.fraction).join(" ") } as CSSProperties}
-      >
-        {columnasVisibles.map(({ key, cards }) => (
-          <div key={key} className="flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto thin-scrollbar pb-3">
-            {cards.map((card) => (
-              <div key={card.id}>{renderCard(card.id)}</div>
-            ))}
-          </div>
+      <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-1 gap-3 overflow-y-auto thin-scrollbar pb-3 lg:grid-cols-2">
+        {cardsTabActual.map((card) => (
+          <div key={card.id}>{renderCard(card.id)}</div>
         ))}
       </div>
     </div>
