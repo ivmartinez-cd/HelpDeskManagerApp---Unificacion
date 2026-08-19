@@ -33,6 +33,7 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     SigesCatalogoGateway,
     SigesCostoServicio,
 )
+from src.modules.liquidaciones.domain.repositories.spst_repository import SpstRepository
 from src.modules.liquidaciones.domain.repositories.tarifario_repository import (
     TarifarioRepository,
 )
@@ -50,6 +51,7 @@ from src.modules.liquidaciones.domain.services.sync_tarifarios import (
 class SigesTarifariosPorts:
     prestadores: PrestadorRepository
     tarifarios: TarifarioRepository
+    spsts: SpstRepository
     zona_maps: TarifarioZonaMapRepository
     siges: SigesCatalogoGateway
 
@@ -107,8 +109,15 @@ class EstadoZonasSiges:
         descripciones = sorted(plan.zonas_sin_mapear) + sorted(mapeo)
         if not descripciones:
             return []
+        # Candidatas de zona: el catálogo real son los SPST del prestador (ahí se
+        # define la zona, ej. Liquidación > Configuración > SPSTs) — se completa
+        # con zonas que ya tengan una tarifa cargada por si alguna quedó suelta
+        # sin SPST asociado.
         tarifarios = await self._ports.tarifarios.list_by_prestador(prestador.id)
-        zonas_locales = sorted({t.zona for t in tarifarios if t.zona})
+        spsts = await self._ports.spsts.list_by_prestador(prestador.id)
+        zonas_locales = sorted(
+            {t.zona for t in tarifarios if t.zona} | {s.zona for s in spsts if s.zona}
+        )
         propuestas = proponer_mapeo_zonas(sorted(plan.zonas_sin_mapear), zonas_locales)
         return [
             ZonaEstado(

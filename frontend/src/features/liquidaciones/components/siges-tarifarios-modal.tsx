@@ -20,9 +20,25 @@ const filaCls = "flex items-end justify-between gap-3 border-t border-border py-
 const ZONA_GENERICA = "__generica__";
 const USAR_NOMBRE_SIGES = "__siges__";
 
+// Selección inicial del select: si ya está mapeada, reflejar el mapeo actual
+// (no la propuesta) para que remapear parta de dónde está hoy, no de cero.
+function seleccionInicialDe(zona: ZonaSigesEstado): string {
+  if (!zona.mapeada) return zona.propuesta ?? ZONA_GENERICA;
+  if (zona.zonaLocal === null) return ZONA_GENERICA;
+  if (zona.zonaLocal === zona.descripcionSiges) return USAR_NOMBRE_SIGES;
+  return zona.zonaLocal;
+}
+
 function ZonaMapRow({ zona, onMapeada }: { zona: ZonaSigesEstado; onMapeada: () => void }) {
-  const [seleccion, setSeleccion] = useState(zona.propuesta ?? ZONA_GENERICA);
+  const [seleccion, setSeleccion] = useState(() => seleccionInicialDe(zona));
   const [saving, setSaving] = useState(false);
+
+  // El mapeo vigente puede ser una zona que ya no aparece en `zonasLocales`
+  // (ninguna tarifa la usa todavía) — agregarla para no perderla del select.
+  const opciones =
+    zona.zonaLocal && zona.zonaLocal !== zona.descripcionSiges && !zona.zonasLocales.includes(zona.zonaLocal)
+      ? [...zona.zonasLocales, zona.zonaLocal].sort()
+      : zona.zonasLocales;
 
   const handleMapear = async () => {
     setSaving(true);
@@ -59,7 +75,7 @@ function ZonaMapRow({ zona, onMapeada }: { zona: ZonaSigesEstado; onMapeada: () 
         >
           <option value={ZONA_GENERICA}>Zona genérica (tarifario sin zona)</option>
           <option value={USAR_NOMBRE_SIGES}>Usar el nombre de Siges tal cual</option>
-          {zona.zonasLocales.map((z) => (
+          {opciones.map((z) => (
             <option key={z} value={z}>
               {z}
               {zona.propuesta === z ? " (propuesta)" : ""}
@@ -68,7 +84,7 @@ function ZonaMapRow({ zona, onMapeada }: { zona: ZonaSigesEstado; onMapeada: () 
         </BrandSelect>
       </div>
       <BrandButton size="sm" variant="outline" loading={saving} onClick={handleMapear}>
-        Mapear
+        {zona.mapeada ? "Remapear" : "Mapear"}
       </BrandButton>
     </div>
   );
@@ -184,14 +200,15 @@ export function SigesTarifariosModal({
 
           {mapeadas.length > 0 && (
             <div>
-              <p className={`${seccionCls} mb-1`}>Zonas mapeadas</p>
+              <p className={`${seccionCls} mb-1`}>
+                Zonas mapeadas ({mapeadas.length}) — se puede remapear
+              </p>
               {mapeadas.map((z) => (
-                <p
+                <ZonaMapRow
                   key={`${z.prestadorId}-${z.descripcionSiges}`}
-                  className="font-body text-xs text-muted-foreground"
-                >
-                  {z.prestador} · {z.descripcionSiges} → {z.zonaLocal ?? "Genérica (sin zona)"}
-                </p>
+                  zona={z}
+                  onMapeada={load}
+                />
               ))}
             </div>
           )}

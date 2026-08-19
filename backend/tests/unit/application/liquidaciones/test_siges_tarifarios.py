@@ -15,9 +15,10 @@ from src.modules.liquidaciones.domain.errors import PrestadorNoEncontradoError
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesCostoServicio,
 )
-from tests.unit.domain.liquidaciones.factories import make_prestador, make_tarifario
+from tests.unit.domain.liquidaciones.factories import make_prestador, make_spst, make_tarifario
 from tests.unit.domain.liquidaciones.fakes_config import (
     FakeConfigPrestadorRepository,
+    FakeConfigSpstRepository,
     FakeConfigTarifarioRepository,
     FakeSigesCatalogoGateway,
     FakeTarifarioZonaMapRepository,
@@ -49,10 +50,12 @@ def _ports(
     tarifarios: FakeConfigTarifarioRepository | None = None,
     zona_maps: FakeTarifarioZonaMapRepository | None = None,
     costos: list[SigesCostoServicio] | None = None,
+    spsts: FakeConfigSpstRepository | None = None,
 ) -> SigesTarifariosPorts:
     return SigesTarifariosPorts(
         prestadores=prestadores,
         tarifarios=tarifarios or FakeConfigTarifarioRepository(),
+        spsts=spsts or FakeConfigSpstRepository(),
         zona_maps=zona_maps or FakeTarifarioZonaMapRepository(),
         siges=FakeSigesCatalogoGateway(costos=costos),
     )
@@ -174,6 +177,24 @@ class TestEstadoZonas:
         assert por_descripcion["Ushuaia - Infomac"].propuesta == "Ushuaia"
         assert por_descripcion["Villa Mercedes / Rio IV"].mapeada
         assert por_descripcion["Villa Mercedes / Rio IV"].zona_local == "Villa Mercedes"
+
+    async def test_propone_zona_de_spst_aunque_no_tenga_tarifa_cargada(self) -> None:
+        """Antes solo se ofrecían zonas ya usadas en `Tarifario` — obligaba a cargar
+        una tarifa "semilla" a mano antes de poder mapear. Ahora el catálogo de
+        zonas candidatas sale directo de los SPST del prestador."""
+        prestador = make_prestador(nombre_corto="SAN JUAN", siges_empresa_id=850)
+        repo_p = FakeConfigPrestadorRepository({prestador.id: prestador})
+        spsts = FakeConfigSpstRepository(
+            [make_spst(prestador_id=prestador.id, zona="Valle Fértil")]
+        )
+        costos = [_costo(empresa=850, descripcion="GSJ - Escuelas Valle Fertil")]
+
+        resultado = await EstadoZonasSiges(
+            _ports(repo_p, spsts=spsts, costos=costos)
+        ).execute()
+
+        zona = resultado.zonas[0]
+        assert zona.zonas_locales == ["Valle Fértil"]
 
     async def test_mapeo_a_generica_se_distingue_de_sin_mapear(self) -> None:
         prestador = make_prestador(nombre_corto="MENDOZA", siges_empresa_id=657)

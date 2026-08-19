@@ -24,6 +24,9 @@ from src.modules.liquidaciones.application.use_cases.siges_tarifarios import (
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repository import (
+    SqlAlchemySpstRepository,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tarifario_repository import (  # noqa: E501
     SqlAlchemyTarifarioRepository,
 )
@@ -78,6 +81,7 @@ async def main() -> None:
         ports = SigesTarifariosPorts(
             prestadores=SqlAlchemyPrestadorRepository(session),
             tarifarios=SqlAlchemyTarifarioRepository(session),
+            spsts=SqlAlchemySpstRepository(session),
             zona_maps=SqlAlchemyTarifarioZonaMapRepository(session),
             siges=gateway,
         )

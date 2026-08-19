@@ -104,6 +104,7 @@ def _siges_tarifarios_ports(session: AsyncSession) -> SigesTarifariosPorts:
     return SigesTarifariosPorts(
         prestadores=SqlAlchemyPrestadorRepository(session),
         tarifarios=SqlAlchemyTarifarioRepository(session),
+        spsts=SqlAlchemySpstRepository(session),
         zona_maps=SqlAlchemyTarifarioZonaMapRepository(session),
         siges=siges_catalogo_gateway(),
     )
