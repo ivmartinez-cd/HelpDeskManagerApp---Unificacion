@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { textoDesdeSync } from "@/features/contadores/utils/calendario-format";
 import { useSession } from "@/services/session-provider";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import {
@@ -33,11 +32,6 @@ const COL_LABELS: Record<ColKey, string> = {
   sla: "SLA",
   admin: "Administración",
 };
-
-function fechaHoy(): string {
-  const texto = new Date().toLocaleDateString("es-AR", { weekday: "long", day: "numeric" });
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
-}
 
 /** Dashboard de Inicio. El orden y columna de cada card se declara en
  * dashboard-registry.ts — este componente solo renderiza lo que el registro
@@ -172,18 +166,11 @@ export function InicioDashboard() {
 
   return (
     <div className="flex h-full flex-col gap-3 px-7 py-4">
-      <div className="flex flex-none flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-[25px] font-extrabold text-foreground">Inicio</h1>
-          <p className="mt-0.5 font-body text-sm text-muted-foreground">
-            Panel principal con turnos de operadores y planificación diaria.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 font-body text-[13px] text-muted-foreground">
-          <span className="h-[7px] w-[7px] rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(34,197,94,.15)]" />
-          {fechaHoy()}
-          {access.contadores && calendario.data && ` · ${textoDesdeSync(calendario.data.lastSyncedAt)}`}
-        </div>
+      <div className="flex-none">
+        <h1 className="font-heading text-[25px] font-extrabold text-foreground">Inicio</h1>
+        <p className="mt-0.5 font-body text-sm text-muted-foreground">
+          Panel principal con turnos de operadores y planificación diaria.
+        </p>
       </div>
 
       {columnasVisibles.length > 1 && (
