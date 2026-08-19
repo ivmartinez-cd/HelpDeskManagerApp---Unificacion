@@ -6,6 +6,7 @@ export interface ModuleAccess {
   prestadores: boolean;
   insumos: boolean;
   liquidaciones: boolean;
+  vacaciones: boolean;
 }
 
 export interface CardDef {
@@ -36,6 +37,7 @@ export const CARDS: CardDef[] = [
   { id: "liquidaciones",     col: "admin",         order: 0, guard: (m) => m.liquidaciones },
   { id: "parque",            col: "admin",         order: 1, guard: (m) => m.prestadores },
   { id: "insumos",           col: "admin",         order: 2, guard: (m) => m.insumos },
+  { id: "proximos-equipo",   col: "admin",         order: 3, guard: (m) => m.vacaciones },
 ];
 
 export function cardsForCol(col: ColKey, access: ModuleAccess): CardDef[] {

@@ -10,6 +10,7 @@ import {
   useLiquidacionesPendientes,
   useParqueResumen,
   usePendientesResumen,
+  useProximosEquipo,
   useSlaHistoria,
   useTurnosHoy,
 } from "../hooks/use-inicio-data";
@@ -23,6 +24,7 @@ import { ParqueDonutCard } from "./parque-donut-card";
 import { CierreMensualCard } from "./cierre-mensual-card";
 import { PendientesAntiguedadCard } from "./pendientes-antiguedad-card";
 import { PendientesACerrarCard } from "@/features/sla/components/pendientes-a-cerrar-card";
+import { ProximosEquipoCard } from "@/features/vacaciones/components/proximos-equipo-card";
 import { SlaMesCard } from "./sla-mes-card";
 import { TurnosTimelineCard } from "./turnos-timeline-card";
 
@@ -48,6 +50,7 @@ export function InicioDashboard() {
     prestadores:  modules.some((m) => m.key === "prestadores"),
     insumos:      modules.some((m) => m.key === "insumos"),
     liquidaciones: modules.some((m) => m.key === "liquidaciones"),
+    vacaciones:   modules.some((m) => m.key === "vacaciones"),
   };
 
   const columnasVisibles = COLUMNS
@@ -69,6 +72,7 @@ export function InicioDashboard() {
   const pendientesResumen = usePendientesResumen(access.sla);
   const insumosDashboard  = useInsumosDashboard(access.insumos);
   const liquidacionesPendientes = useLiquidacionesPendientes(access.liquidaciones);
+  const proximosEquipo    = useProximosEquipo(access.vacaciones);
 
   function renderCard(id: string) {
     switch (id) {
@@ -155,6 +159,14 @@ export function InicioDashboard() {
             dashboard={insumosDashboard.data}
             loading={insumosDashboard.loading}
             error={insumosDashboard.error}
+          />
+        );
+      case "proximos-equipo":
+        return (
+          <ProximosEquipoCard
+            data={proximosEquipo.data}
+            loading={proximosEquipo.loading}
+            error={proximosEquipo.error}
           />
         );
       default:

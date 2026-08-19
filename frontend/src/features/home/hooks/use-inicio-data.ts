@@ -9,7 +9,11 @@ import type {
 } from "@/features/contadores/types/calendario";
 import { formatDateLocal } from "@/features/contadores/utils/calendario-format";
 import { prestadoresApi } from "@/features/prestadores/api/prestadores-api";
+import { asistenciasApi } from "@/features/vacaciones/api/asistencias-api";
 import { gestionApi } from "@/features/vacaciones/api/gestion-api";
+import { solicitudesApi } from "@/features/vacaciones/api/solicitudes-api";
+import { hoyIso } from "@/features/vacaciones/lib/fechas";
+import type { Ausencia, Solicitud } from "@/features/vacaciones/types/vacaciones";
 import type { PrestadoresResumen } from "@/features/prestadores/types/prestadores";
 import { pendientesApi } from "@/features/sla/api/pendientes-api";
 import type { PendientesResumen } from "@/features/sla/types/pendientes";
@@ -198,6 +202,37 @@ export function useLiquidacionesPendientes(enabled: boolean): Remote<{
     enabled,
     () => liquidacionesApi.getResumen(),
     "el resumen de liquidaciones",
+  );
+}
+
+const PROXIMOS_EQUIPO_DIAS = 21;
+
+function addDiasIso(iso: string, n: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return formatDateLocal(new Date(y, m - 1, d + n));
+}
+
+export interface ProximosEquipo {
+  vacaciones: Solicitud[];
+  homeOffice: Ausencia[];
+}
+
+/** Próximos 21 días: vacaciones aprobadas y home office agendado, para la
+ * card "Próximos días del equipo" de Inicio. Reusa /solicitudes y /ausencias
+ * filtrando por start_date en rango (mismo semántica en ambos repos). */
+export function useProximosEquipo(enabled: boolean): Remote<ProximosEquipo> {
+  return useRemote(
+    enabled,
+    async () => {
+      const desde = hoyIso();
+      const hasta = addDiasIso(desde, PROXIMOS_EQUIPO_DIAS);
+      const [vacaciones, homeOffice] = await Promise.all([
+        solicitudesApi.list({ status: "APPROVED", desde, hasta }),
+        asistenciasApi.list({ tipo: "HOME_OFFICE", desde, hasta }),
+      ]);
+      return { vacaciones, homeOffice };
+    },
+    "los próximos días del equipo",
   );
 }
 
