@@ -6,7 +6,7 @@ import { SortableHeader, StatusBadge, type SortableColumn } from "../shared";
 import { formatArgDateTime } from "../../utils/format";
 import type { SortState } from "../../hooks/use-table-sort";
 import type { NewDeviceRow } from "../../types";
-import { toneForMonitorStatus, type NewDeviceSortKey } from "./new-devices-utils";
+import { formatMonitorStatus, toneForMonitorStatus, type NewDeviceSortKey } from "./new-devices-utils";
 
 /** Tabla de Equipos Nuevos, con el estado de orden inyectado desde afuera
  * (`useTableSort`) y el header ordenable compartido con las demás tablas del
@@ -83,7 +83,7 @@ export function NewDevicesTable({
               <td className="px-4 py-3">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <StatusBadge tone={toneForMonitorStatus(row.monitorStatus)}>
-                    {row.monitorStatus || "Sin estado"}
+                    {formatMonitorStatus(row.monitorStatus)}
                   </StatusBadge>
                   {row.dismissed && <StatusBadge tone="neutral">Ignorado</StatusBadge>}
                 </div>

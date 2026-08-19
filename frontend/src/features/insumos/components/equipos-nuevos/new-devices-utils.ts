@@ -62,14 +62,23 @@ export function newDeviceHaystack(row: NewDeviceRow): string {
     .toLowerCase();
 }
 
-/** `monitorStatus` viene de Insight como texto libre (p.ej. "Not Monitored",
- * "Pending"). Se mapea a los tonos del `StatusBadge` compartido; cualquier
- * valor desconocido cae en `toneForStatusKey`, que devuelve `neutral`. */
+/** `monitorStatus` viene de Insight como código de una letra ("X", "I", ...),
+ * igual que en la app legacy (`EquiposNuevosView.vue::formatMonitorStatus`).
+ * Cualquier valor desconocido cae en `toneForStatusKey`, que devuelve `neutral`. */
 export function toneForMonitorStatus(status: string | null | undefined): StatusTone {
-  const normalized = (status ?? "").trim().toLowerCase();
+  const normalized = (status ?? "").trim();
   if (!normalized) return "neutral";
-  if (normalized.includes("not monitored") || normalized.includes("no monitor")) return "atencion";
-  if (normalized.includes("pending") || normalized.includes("progress")) return "activo";
-  if (normalized.includes("monitored") || normalized.includes("ok")) return "ok";
-  return toneForStatusKey(normalized);
+  if (normalized === "X") return "atencion";
+  if (normalized === "I") return "advertencia";
+  return toneForStatusKey(normalized) === "neutral" ? "advertencia" : toneForStatusKey(normalized);
+}
+
+/** Traduce el código crudo de Insight al texto que mostraba la app legacy
+ * (`EquiposNuevosView.vue::formatMonitorStatus`) — portado 1:1. */
+export function formatMonitorStatus(status: string | null | undefined): string {
+  const normalized = (status ?? "").trim();
+  if (!normalized) return "Sin estado";
+  if (normalized === "X") return "Deshabilitado";
+  if (normalized === "I") return "Solo consumibles";
+  return `Sin registrar · ${normalized}`;
 }
