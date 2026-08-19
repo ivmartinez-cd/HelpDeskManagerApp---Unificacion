@@ -1,10 +1,10 @@
-"""Estado real de cierre por grupo económico de Siges: a diferencia del
-universo de `AnexoPendiente` (que a propósito deja afuera el mes en curso y
-lo `A LIBERAR`, para el reporte que se imprime), acá interesa saber si el
-grupo tiene TODAVÍA algún anexo de Impresión activo sin facturar de un
-período anterior al actual — sin importar si ya está `A LIBERAR` o no. Es la
-señal para decidir si un cliente sigue "sin cerrar" o ya cerró/rodó al mes
-en curso."""
+"""Estado real de cierre por grupo económico de Siges: misma definición de
+"pendiente" que `AnexoPendiente` (Facturado=0 AND ListoParaFacturar=0 —
+regla de la TL, 2026-08-14), pero SIN dejar afuera el mes en curso: acá
+interesa el grupo aunque su período abierto ya sea el actual, porque eso es
+justo lo que indica que el cliente avanzó y no sigue "sin cerrar". Es la
+señal para decidir si un cliente del backlog de calendario sigue sin cerrar
+o ya cerró/rodó al mes en curso."""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -13,8 +13,9 @@ from datetime import datetime
 @dataclass(frozen=True)
 class EstadoCierreGrupo:
     grupo: str
-    # True si al menos uno de sus anexos de Impresión activos tiene un
-    # período abierto anterior al mes en curso y todavía no se facturó.
+    # True si al menos uno de sus anexos de Impresión activos sigue
+    # pendiente (mismo criterio que el reporte de anexos sin facturar) de un
+    # período anterior al mes en curso.
     sin_cerrar: bool
 
 

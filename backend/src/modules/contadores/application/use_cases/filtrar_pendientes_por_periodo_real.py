@@ -2,7 +2,8 @@
 `GetPendingClientsUseCase`) contra el estado real de cierre en Siges: un
 cliente sale del backlog si su grupo económico cruza contra Siges y NINGUNO
 de sus anexos de Impresión activos sigue con un período anterior al mes en
-curso sin facturar (ya lo facturaron o ya rodó al mes en curso).
+curso sin facturar (ya lo facturaron, ya está A LIBERAR o ya rodó al mes en
+curso — misma definición de "pendiente" que el reporte de anexos).
 
 Si el cliente no tiene ningún anexo de Impresión activo en Siges, o el cruce
 de nombre no encuentra candidato, se conserva sin cambios: no hay señal para
@@ -22,6 +23,22 @@ from src.modules.contadores.domain.services.cliente_matcher import (
 from src.shared.domain.errors import ExternalServiceError
 
 logger = logging.getLogger(__name__)
+
+# El cruce automático (exacto/flex/contención ≥5 caracteres) no resuelve
+# siglas cortas ni abreviaturas: "JBS" (3) y "Arag"/"ELEA" (4) quedan bajo el
+# mínimo de contención, y "HOSP. ITALIANO..." no comparte prefijo tokenizado
+# con "Hospital Italiano...". Verificado a mano contra Siges (2026-08-19).
+# Mismo criterio que `contadores_cliente_siges_map`: alias manual solo para
+# lo que el cruce automático no resuelve.
+_ALIAS_CLIENTE_GRUPO_NORM: dict[str, str] = {
+    normalizar_nombre(cliente): normalizar_nombre(grupo)
+    for cliente, grupo in {
+        "JBS": "JBS Leather Argentina S.A.",
+        "ELEA": "Laboratorio Elea Phoenix SA",
+        "Arag": "Arag S.R.L.",
+        "HOSP. ITALIANO DE LA PLATA": "Hospital Italiano De La Plata",
+    }.items()
+}
 
 
 class FiltrarPendientesPorPeriodoReal:
@@ -46,6 +63,12 @@ class FiltrarPendientesPorPeriodoReal:
         indice = IndiceNombres(
             {normalizar_nombre(g.grupo): g.sin_cerrar for g in snapshot.grupos}
         )
-        return [
-            p for p in pendientes if buscar_por_nombre(p.event.cliente, indice) is not False
-        ]
+        return [p for p in pendientes if self._sin_cerrar(p.event.cliente, indice) is not False]
+
+    @staticmethod
+    def _sin_cerrar(cliente: str | None, indice: IndiceNombres[bool]) -> bool | None:
+        directo = buscar_por_nombre(cliente, indice)
+        if directo is not None or not cliente:
+            return directo
+        grupo_alias = _ALIAS_CLIENTE_GRUPO_NORM.get(normalizar_nombre(cliente))
+        return None if grupo_alias is None else indice.exacto.get(grupo_alias)

@@ -82,3 +82,33 @@ async def test_cruza_por_grupo_normalizado_con_separadores_equivalentes() -> Non
     pendiente = _pendiente("e1", "Roemmers / Maprimed")
     result = await FiltrarPendientesPorPeriodoReal(port).execute([pendiente])
     assert result == [pendiente]
+
+
+class TestAliasManual:
+    """Siglas/abreviaturas que el cruce automático no resuelve (muy cortas
+    para contención, o sin prefijo tokenizado común) tienen alias manual."""
+
+    @pytest.mark.asyncio
+    async def test_sigla_corta_con_alias_ya_cerrada_se_excluye(self) -> None:
+        port = _FakePort(
+            [EstadoCierreGrupo(grupo="JBS Leather Argentina S.A.", sin_cerrar=False)]
+        )
+        result = await FiltrarPendientesPorPeriodoReal(port).execute([_pendiente("e1", "JBS")])
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_sigla_corta_con_alias_todavia_abierta_se_conserva(self) -> None:
+        port = _FakePort([EstadoCierreGrupo(grupo="Arag S.R.L.", sin_cerrar=True)])
+        pendiente = _pendiente("e1", "Arag")
+        result = await FiltrarPendientesPorPeriodoReal(port).execute([pendiente])
+        assert result == [pendiente]
+
+    @pytest.mark.asyncio
+    async def test_abreviatura_sin_prefijo_comun_usa_alias(self) -> None:
+        port = _FakePort(
+            [EstadoCierreGrupo(grupo="Hospital Italiano De La Plata", sin_cerrar=False)]
+        )
+        result = await FiltrarPendientesPorPeriodoReal(port).execute(
+            [_pendiente("e1", "HOSP. ITALIANO DE LA PLATA")]
+        )
+        assert result == []
