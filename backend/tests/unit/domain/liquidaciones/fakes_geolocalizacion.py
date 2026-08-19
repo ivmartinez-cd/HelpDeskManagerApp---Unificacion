@@ -139,6 +139,19 @@ class FakeSucursalCoordenadasRepository:
         return resuelta
 
 
+class FakeMatchingDescarteRepository:
+    def __init__(self) -> None:
+        self.rows: dict[UUID, set[int]] = {}
+
+    async def create(self, tabla_km_id: UUID, siges_sucursal_id: int, usuario_email: str) -> None:
+        self.rows.setdefault(tabla_km_id, set()).add(siges_sucursal_id)
+
+    async def list_descartados_por_fila(
+        self, tabla_km_ids: list[UUID]
+    ) -> dict[UUID, set[int]]:
+        return {tid: set(self.rows[tid]) for tid in tabla_km_ids if tid in self.rows}
+
+
 class FakeIncidentesActividad:
     """Solo lo que usan los use cases geo del puerto de incidentes: el set de
     empresas con actividad reciente (ex-clientes = las que no están)."""
