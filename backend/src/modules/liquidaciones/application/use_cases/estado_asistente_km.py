@@ -113,10 +113,14 @@ class DiagnosticarAsistenteKm:
             sin_coordenadas=contadores.sin_coordenadas,
             ambiguas_pendientes=await self._contar_ambiguas(resoluciones),
             filas_sin_km=sum(1 for f in filas if f.kms_recorrido <= 0),
+            # Una fila con siges_sucursal_id ya no cuenta como "no encontrada"
+            # aunque su nombre no matchee textualmente (N0): el vínculo N1/N2/
+            # manual del matching de sucursales es más fuerte que el nombre.
             no_encontradas_en_siges=sum(
                 1
                 for f in filas
-                if _clave(f.empresa_nombre, f.sucursal_nombre) not in contadores.claves_siges
+                if f.siges_sucursal_id is None
+                and _clave(f.empresa_nombre, f.sucursal_nombre) not in contadores.claves_siges
             ),
             pines_sospechosos_cacheados=contadores.pines_cacheados,
             estimacion_geocodificar=contadores.estim_geocodificar,

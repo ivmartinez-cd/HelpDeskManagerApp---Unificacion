@@ -118,6 +118,7 @@ def _fila_km(
     empresa: str = "Dia %",
     sucursal: str = "Tienda 1",
     kms: float = 12.0,
+    siges_sucursal_id: int | None = None,
 ) -> TablaKm:
     return TablaKm(
         id=uuid.uuid4(),
@@ -136,6 +137,7 @@ def _fila_km(
         url_maps=None,
         created_at=_AHORA,
         updated_at=_AHORA,
+        siges_sucursal_id=siges_sucursal_id,
     )
 
 
@@ -307,3 +309,16 @@ class TestDiagnosticarAsistenteKm:
         assert estado.filas_sin_km == 1
         assert estado.no_encontradas_en_siges == 1  # "Renombrada"
         assert estado.ambiguas_pendientes == 1
+
+    @pytest.mark.asyncio
+    async def test_fila_vinculada_por_id_no_cuenta_como_no_encontrada(self) -> None:
+        # Matching N1/N2: el nombre local no matchea textualmente (símbolo/
+        # abreviatura distinta) pero la fila ya tiene siges_sucursal_id — no
+        # es "no encontrada", está vinculada por id.
+        clientes = [_sucursal(1, sucursal="Tienda 1")]
+        filas = [
+            _fila_km(uuid.uuid4(), sucursal="Tienda Uno", siges_sucursal_id=1),
+        ]
+        use_case, _, pid = _armar(clientes=clientes, filas=filas)
+        estado = await use_case.execute(pid)
+        assert estado.no_encontradas_en_siges == 0
