@@ -1,10 +1,10 @@
 # Geovalidación de coordenadas (Fase 2)
 
 Ver `docs/MASTER_PROMPT_MATCHING_SUCURSALES_GEOVALIDACION.md` para el plan completo.
-Este doc cubre lo implementado hasta ahora: **Tier 0** (saneo geométrico puro) y
+Este doc cubre lo implementado hasta ahora: **Tier 0** (saneo geométrico puro),
 **Tier 1** (reverse geocoding de Georef, solo la comparación de provincia — el geocode
-de direcciones de Georef queda pendiente, ver más abajo). Tier 1b (Nominatim) y Tier 2
-(Google) — no arrancados.
+de direcciones de Georef queda pendiente, ver más abajo) y **Tier 1b** (segunda opinión
+de Nominatim, confirmación por dos fuentes). Tier 2 (Google) — no arrancado.
 
 ## Tier 0 — saneo puro, cero llamadas
 
@@ -100,6 +100,41 @@ UI: sección "Provincia del pin vs. Gestión (Georef)" en el paso "Pines" del wi
 debajo de Tier 0 — botón "Consultar Georef" (repetirlo solo consulta lo pendiente) y
 lista de discrepancias con el link a Maps.
 
+## Tier 1b — segunda opinión de Nominatim (gratis)
+
+`domain/repositories/nominatim_gateway.py` (puerto) +
+`infrastructure/nominatim/httpx_nominatim_gateway.py` (adapter real). Cumple la
+política de uso publicada (https://operations.osmfoundation.org/policies/nominatim/):
+**1 req/s estricto** (lock + timestamp en la instancia singleton — todas las llamadas
+del proceso pasan serializadas por el mismo gateway), User-Agent identificable propio
+(`HelpDeskManager-CanalDirecto-Geovalidacion/1.0`), sin backoff agresivo ante error
+(a diferencia de Georef: si Nominatim devuelve 5xx significa que estamos siendo
+groseros con el rate limit, mejor fallar ese caso y no insistir). Atribución ODbL
+obligatoria — viaja en cada hallazgo (`atribucion` en el schema) y se muestra en la UI.
+
+**SOLO corre sobre lo que Tier 1 (Georef) ya marcó incompatible** — nunca sobre el
+universo completo del PST (192 casos en San Juan, no 948). Cache propio
+(`nominatim_reverse_cache`, migración `d4a8c2e6f931`), obligatoria por la política (no
+solo cortesía). `confirmado_por_dos_fuentes` (dominio puro,
+`domain/services/geovalidacion_tier1.py`): si Georef ya marcó incompatible Y Nominatim
+coincide con Georef, es evidencia de dos fuentes independientes — el plan dice
+explícitamente que "eso ya no necesita Google".
+
+### Resultado medido (SAN JUAN, piloto real 2026-08-19)
+
+2 corridas de `consultar-nominatim` cubrieron los 192 casos de Tier 1: **63 llamadas
+reales** (60 + 3) a 1 req/s y **189 resueltas por cache** (mismo efecto de pines
+compartidos). **Las 192 discrepancias de Tier 1 fueron confirmadas al 100% por
+Nominatim** — coincidencia exacta de provincia en cada caso, sin una sola discrepancia
+entre las dos fuentes (65 en Chubut, 59 en La Pampa, 16 en Buenos Aires, 10 en Santa
+Fe, y el resto repartido en 12 provincias más). Endpoints:
+`POST .../geovalidacion/tier1b/consultar-nominatim` y
+`GET .../geovalidacion/tier1b` (`Page[HallazgoTier1b]`).
+
+UI: sección "Segunda opinión (Nominatim / OpenStreetMap)" en el paso "Pines", debajo de
+Tier 1 — cada hallazgo confirmado se muestra con fondo distinto (severidad alta) y la
+atribución ODbL visible.
+
 ## Pendiente
 
 - Calibrar `umbral_distancia_base_km` de Tier 0 con evidencia real (300 km es
@@ -111,8 +146,8 @@ lista de discrepancias con el link a Maps.
   medición de Fase 0 (0 resultados en 4 pruebas reales), así que su valor inmediato es
   bajo frente al reverse. El reverse (implementado) es "la validación más barata y
   contundente" que preveía el plan.
-- Tier 1b (Nominatim): segunda opinión solo para lo que Georef no resuelve — política
-  dura de 1 req/s, User-Agent propio, atribución ODbL.
-- Tier 2 (Google): solo residuo tras tiers gratis, cero llamadas sin autorización
-  explícita del usuario.
+- Tier 2 (Google): solo residuo tras Tier 0/1/1b, cero llamadas sin autorización
+  explícita del usuario. Con las 192 sucursales ya confirmadas por dos fuentes
+  gratuitas, el residuo real que necesitaría Google es chico (los 43 `sin_coordenadas`
+  de Tier 0 y los casos que Georef no pudo cubrir).
 - Worklist final combinada (Tier 0 + 1 + 1b + 2) con export CSV para Gestión.

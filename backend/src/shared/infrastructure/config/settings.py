@@ -188,6 +188,12 @@ class Settings(BaseSettings):
     georef_max_calls_per_run: int = 200
     georef_pausa_segundos: float = 0.2
 
+    # Nominatim (OpenStreetMap, gratuito) — Tier 1b, segunda opinión SOLO
+    # sobre lo que Georef ya marcó incompatible (nunca el universo completo).
+    # El rate limit real de 1 req/s lo aplica el adapter mismo; este tope es
+    # para no bloquear el request HTTP demasiado tiempo (60 = ~1 minuto).
+    nominatim_max_calls_per_run: int = 60
+
     # Cadencia del job de fondo que reconcilia contra AyC las liquidaciones
     # pendientes de todos los prestadores vinculados (estado, costos/km de
     # incidentes) — mismo caso de uso que el botón "Sincronizar CD", pero sin

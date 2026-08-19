@@ -30,6 +30,11 @@ from src.modules.liquidaciones.application.use_cases.geovalidacion_tier1 import 
     GeovalidacionTier1Ports,
     ListarHallazgosTier1,
 )
+from src.modules.liquidaciones.application.use_cases.geovalidacion_tier1b import (
+    ConsultarNominatimPendientes,
+    GeovalidacionTier1bPorts,
+    ListarHallazgosTier1b,
+)
 from src.modules.liquidaciones.application.use_cases.pines_sospechosos import (
     AuditarPines,
     CorregirPin,
@@ -56,6 +61,9 @@ from src.modules.liquidaciones.infrastructure.georef.httpx_georef_gateway import
 from src.modules.liquidaciones.infrastructure.google_maps.httpx_geocoding_gateway import (
     HttpxGeocodingGateway,
 )
+from src.modules.liquidaciones.infrastructure.nominatim.httpx_nominatim_gateway import (
+    HttpxNominatimGateway,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_calculo_km_preview_repository import (  # noqa: E501
     SqlAlchemyCalculoKmPreviewRepository,
 )
@@ -67,6 +75,9 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_georef_rev
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_incidente_repository import (  # noqa: E501
     SqlAlchemyIncidenteRepository,
+)
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_nominatim_reverse_cache_repository import (  # noqa: E501
+    SqlAlchemyNominatimReverseCacheRepository,
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
@@ -92,6 +103,14 @@ def _geocoding_gateway() -> HttpxGeocodingGateway:
 @lru_cache
 def _georef_gateway() -> HttpxGeorefGateway:
     return HttpxGeorefGateway()
+
+
+@lru_cache
+def _nominatim_gateway() -> HttpxNominatimGateway:
+    """Singleton de proceso — el rate limit de 1 req/s de Nominatim se aplica
+    en la instancia (lock + timestamp), así que TIENE que ser la misma para
+    todas las llamadas del proceso."""
+    return HttpxNominatimGateway()
 
 
 def _tope() -> int:
@@ -225,6 +244,24 @@ def build_consultar_georef_pendientes(session: AsyncSession) -> ConsultarGeorefR
 
 def build_listar_hallazgos_tier1(session: AsyncSession) -> ListarHallazgosTier1:
     return ListarHallazgosTier1(_tier1_ports(session))
+
+
+def _tier1b_ports(session: AsyncSession) -> GeovalidacionTier1bPorts:
+    return GeovalidacionTier1bPorts(
+        tier1=_tier1_ports(session),
+        nominatim=_nominatim_gateway(),
+        nominatim_cache=SqlAlchemyNominatimReverseCacheRepository(session),
+    )
+
+
+def build_consultar_nominatim_pendientes(session: AsyncSession) -> ConsultarNominatimPendientes:
+    return ConsultarNominatimPendientes(
+        _tier1b_ports(session), get_settings().nominatim_max_calls_per_run
+    )
+
+
+def build_listar_hallazgos_tier1b(session: AsyncSession) -> ListarHallazgosTier1b:
+    return ListarHallazgosTier1b(_tier1b_ports(session))
 
 
 def build_diagnosticar_asistente_km(session: AsyncSession) -> DiagnosticarAsistenteKm:

@@ -26,12 +26,14 @@ from src.modules.liquidaciones.presentation.dependencies import (
     build_auditar_pines,
     build_buscar_lugar_fila,
     build_consultar_georef_pendientes,
+    build_consultar_nominatim_pendientes,
     build_corregir_pin,
     build_diagnosticar_asistente_km,
     build_evaluar_tier0,
     build_geocodificar_sucursales,
     build_listar_coordenadas_pendientes,
     build_listar_hallazgos_tier1,
+    build_listar_hallazgos_tier1b,
     build_listar_pines_sospechosos,
     build_preview_calcular_distancias,
     build_recalcular_km_fila,
@@ -63,6 +65,10 @@ from src.modules.liquidaciones.presentation.schemas.geovalidacion_tier0_schemas 
 from src.modules.liquidaciones.presentation.schemas.geovalidacion_tier1_schemas import (
     HallazgoTier1Out,
     ResultadoConsultarGeorefOut,
+)
+from src.modules.liquidaciones.presentation.schemas.geovalidacion_tier1b_schemas import (
+    HallazgoTier1bOut,
+    ResultadoConsultarNominatimOut,
 )
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
@@ -140,6 +146,39 @@ async def geovalidacion_tier1(
     consultado (`consultar-georef`), no llama a nada."""
     hallazgos = await build_listar_hallazgos_tier1(db).execute(prestador_id)
     return Page.of([HallazgoTier1Out.from_dto(h) for h in hallazgos], page=page, size=size)
+
+
+@router.post(
+    "/siges/prestador/{prestador_id}/geovalidacion/tier1b/consultar-nominatim",
+    response_model=ResultadoConsultarNominatimOut,
+)
+async def consultar_nominatim(
+    prestador_id: UUID,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> ResultadoConsultarNominatimOut:
+    """Segunda opinión de Nominatim (OpenStreetMap, gratis), SOLO sobre lo
+    que Georef ya marcó con provincia incompatible — rate limit de 1 req/s
+    aplicado por el adapter. Datos © OpenStreetMap contributors, ODbL 1.0."""
+    resultado = await build_consultar_nominatim_pendientes(db).execute(prestador_id)
+    return ResultadoConsultarNominatimOut.from_dto(resultado)
+
+
+@router.get(
+    "/siges/prestador/{prestador_id}/geovalidacion/tier1b",
+    response_model=Page[HallazgoTier1bOut],
+)
+async def geovalidacion_tier1b(
+    prestador_id: UUID,
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=500, ge=1, le=1000),
+    _: Identity = require_view,
+    db: AsyncSession = Depends(get_db),
+) -> Page[HallazgoTier1bOut]:
+    """Hallazgos confirmados por DOS fuentes independientes (Georef +
+    Nominatim de acuerdo) — solo sobre lo ya consultado, no llama a nada."""
+    hallazgos = await build_listar_hallazgos_tier1b(db).execute(prestador_id)
+    return Page.of([HallazgoTier1bOut.from_dto(h) for h in hallazgos], page=page, size=size)
 
 
 @router.post(

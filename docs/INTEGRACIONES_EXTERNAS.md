@@ -164,6 +164,32 @@ fresco por request en producción).
   — shape de dato distinto) por pin redondeado a 4 decimales (~11 m), evita re-consultar
   el mismo punto.
 
+## 13. Nominatim / OpenStreetMap (nominatim.openstreetmap.org, httpx)
+
+- Módulo: liquidaciones (geovalidación de coordenadas Tabla KM, Tier 1b — segunda
+  opinión). Puerto: `NominatimGateway`; adapter httpx en
+  `liquidaciones/infrastructure/nominatim/httpx_nominatim_gateway.py` (timeout 30 s,
+  errores → `ExternalServiceError`, **sin backoff ante error** — a diferencia de
+  Georef: un 5xx de Nominatim probablemente signifique que se violó el rate limit,
+  mejor fallar ese caso que insistir). Agregado al inventario en 2026-08-19 al
+  implementarse.
+- **Gratuito**, pero con política de uso DURA
+  (https://operations.osmfoundation.org/policies/nominatim/), cumplida al pie de la
+  letra: máximo **1 req/s** (lock + timestamp en la instancia singleton del gateway —
+  serializa TODAS las llamadas del proceso), User-Agent identificable propio
+  (`HelpDeskManager-CanalDirecto-Geovalidacion/1.0`), secuencial (un solo
+  thread/proceso), cache **obligatoria** (no solo cortesía), atribución ODbL visible
+  donde se muestra el dato (`"Data © OpenStreetMap contributors, ODbL 1.0"`, viaja en
+  cada hallazgo de la API y se renderiza en la UI).
+- Uso acotado a propósito: **solo consulta lo que Tier 1 (Georef) ya marcó
+  incompatible** — nunca el universo completo del PST. Si Nominatim coincide con
+  Georef, son dos fuentes independientes de acuerdo (confirmación fuerte sin gastar
+  Google).
+- Endpoint usado: `/reverse` (reverse geocoding por lat/lon, `format=jsonv2`). Shape
+  verificado en vivo antes de escribir el parser: `{"error": "..."}` con HTTP 200 es
+  "sin resultado", la provincia vive en `address.state`.
+- Cache propio (`nominatim_reverse_cache`) por pin redondeado a 4 decimales.
+
 ---
 
 ## Locks entre workers

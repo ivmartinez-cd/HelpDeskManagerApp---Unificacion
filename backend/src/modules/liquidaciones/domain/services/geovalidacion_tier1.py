@@ -26,7 +26,18 @@ def _normalizar_provincia(nombre: str) -> str:
 def provincias_compatibles(declarada: str | None, real: str) -> bool:
     """`declarada` es `DesProvincia` de Siges (puede venir vacío — LEFT JOIN
     con `Ciudad`, muchas sucursales no la tienen cargada); `real` es la
-    provincia que devolvió el reverse de Georef para el pin."""
+    provincia que devolvió el reverse de Georef (o Nominatim) para el pin."""
     if not declarada or not declarada.strip():
         return True  # sin dato declarado, no hay nada que contradecir
     return _normalizar_provincia(declarada) == _normalizar_provincia(real)
+
+
+def confirmado_por_dos_fuentes(
+    declarada: str | None, provincia_georef: str, provincia_nominatim: str
+) -> bool:
+    """Tier 1b: Georef ya marcó la provincia declarada como incompatible, y
+    Nominatim (fuente independiente) coincide con Georef — dos fuentes de
+    acuerdo es evidencia fuerte, no necesita Google (decisión del plan)."""
+    if provincias_compatibles(declarada, provincia_georef):
+        return False
+    return provincias_compatibles(provincia_georef, provincia_nominatim)

@@ -1,4 +1,5 @@
 from src.modules.liquidaciones.domain.services.geovalidacion_tier1 import (
+    confirmado_por_dos_fuentes,
     provincias_compatibles,
 )
 
@@ -22,3 +23,14 @@ class TestProvinciasCompatibles:
 
     def test_con_tilde_vs_sin_tilde(self) -> None:
         assert provincias_compatibles("Córdoba", "Cordoba") is True
+
+
+class TestConfirmadoPorDosFuentes:
+    def test_dos_fuentes_de_acuerdo_confirma(self) -> None:
+        assert confirmado_por_dos_fuentes("San Juan", "La Pampa", "La Pampa") is True
+
+    def test_georef_compatible_no_hay_nada_que_confirmar(self) -> None:
+        assert confirmado_por_dos_fuentes("San Juan", "San Juan", "La Pampa") is False
+
+    def test_nominatim_discrepa_de_georef_no_confirma(self) -> None:
+        assert confirmado_por_dos_fuentes("San Juan", "La Pampa", "Chubut") is False

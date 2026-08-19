@@ -20,6 +20,10 @@ from src.modules.liquidaciones.domain.repositories.georef_reverse_cache_reposito
 from src.modules.liquidaciones.domain.repositories.georeferenciacion_gateway import (
     UbicacionGeoref,
 )
+from src.modules.liquidaciones.domain.repositories.nominatim_gateway import UbicacionNominatim
+from src.modules.liquidaciones.domain.repositories.nominatim_reverse_cache_repository import (
+    NominatimCacheado,
+)
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesSucursalCliente,
     SigesSucursalPropia,
@@ -166,6 +170,29 @@ class FakeGeorefReverseCacheRepository:
 
     async def put(self, lat: float, lon: float, ubicacion: UbicacionGeoref | None) -> None:
         self.rows[(round(lat, 4), round(lon, 4))] = ReverseCacheado(ubicacion=ubicacion)
+
+
+class FakeNominatimGateway:
+    def __init__(
+        self, por_coords: dict[tuple[float, float], UbicacionNominatim | None] | None = None
+    ) -> None:
+        self.por_coords = por_coords or {}
+        self.llamadas: list[tuple[float, float]] = []
+
+    async def reverse(self, lat: float, lon: float) -> UbicacionNominatim | None:
+        self.llamadas.append((lat, lon))
+        return self.por_coords.get((lat, lon))
+
+
+class FakeNominatimReverseCacheRepository:
+    def __init__(self) -> None:
+        self.rows: dict[tuple[float, float], NominatimCacheado] = {}
+
+    async def get(self, lat: float, lon: float) -> NominatimCacheado | None:
+        return self.rows.get((round(lat, 4), round(lon, 4)))
+
+    async def put(self, lat: float, lon: float, ubicacion: UbicacionNominatim | None) -> None:
+        self.rows[(round(lat, 4), round(lon, 4))] = NominatimCacheado(ubicacion=ubicacion)
 
 
 class FakeMatchingDescarteRepository:
