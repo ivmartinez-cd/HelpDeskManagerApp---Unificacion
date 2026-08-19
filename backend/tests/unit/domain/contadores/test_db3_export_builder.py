@@ -25,16 +25,19 @@ def test_normal_classes_10_and_20_merge_into_one_wide_row() -> None:
     assert row.clase_20 == "20" and row.contador_20 == 200
 
 
-def test_total_counter_of_special_model_duplicates_into_clase_10_and_20() -> None:
-    # Regla no obvia: para counter_class_id=40 de un modelo "especial", el
-    # mismo valor aparece en CLASE_10 y CLASE_20 (no es "solo color").
+def test_total_counter_of_special_model_goes_to_clase_20_only() -> None:
+    # Decisión consciente (distinta de la app vieja, ver CONTADORES_CARACTERIZACION.md):
+    # la app vieja duplicaba el total en CLASE_10 y CLASE_20, pero eso manda un
+    # "mono" mal etiquetado que SiGes rechaza por contador mono faltante/inválido
+    # (caso real: equipo 0BLRBJLHC00001B, modelo X4300LX, solo reporta clase 40).
+    # Ahora no se carga la columna 10 en absoluto.
     rows = [Db3CounterRow("SER002", _FECHA, 5000, "C4010ND", 40)]
 
     row = build_db3_export_rows(rows)[0]
 
     assert row.tipo == 15
     assert row.clase_10 == "20" and row.contador_10 == 5000
-    assert row.clase_20 == "20" and row.contador_20 == 5000
+    assert row.clase_20 == "" and row.contador_20 == 0
 
 
 def test_total_counter_of_normal_model_goes_to_clase_10_only() -> None:
@@ -74,6 +77,28 @@ def test_dedupes_to_the_most_recent_reading_per_serie_and_clase() -> None:
 
     assert row.fecha == date(2026, 8, 10)
     assert row.contador_10 == 500
+
+
+def test_raw_and_total_readings_of_special_model_dont_collide_in_dedupe() -> None:
+    # Regresión: el dedupe deduplicaba por (serie, clase) sin `tipo`, así que
+    # una lectura cruda de clase 20 (tipo=7) y el total de un modelo especial
+    # (clase 40 -> clase "20", tipo=15) el mismo día competían por la misma
+    # clave y una de las dos se perdía en silencio según el orden de llegada.
+    rows = [
+        Db3CounterRow("SER009", _FECHA, 900, "C4010ND", 10),
+        Db3CounterRow("SER009", _FECHA, 300, "C4010ND", 20),
+        Db3CounterRow("SER009", _FECHA, 1200, "C4010ND", 40),
+    ]
+
+    out = build_db3_export_rows(rows)
+
+    assert len(out) == 2
+    raw_row = next(r for r in out if r.tipo == 7)
+    total_row = next(r for r in out if r.tipo == 15)
+    assert raw_row.clase_10 == "10" and raw_row.contador_10 == 900
+    assert raw_row.clase_20 == "20" and raw_row.contador_20 == 300
+    assert total_row.clase_10 == "20" and total_row.contador_10 == 1200
+    assert total_row.clase_20 == "" and total_row.contador_20 == 0
 
 
 def test_fecha_maxima_excludes_readings_strictly_after_the_cutoff() -> None:

@@ -139,6 +139,15 @@ reimplementación, es una decisión consciente, no un accidente.
   contador** (verificado en vivo: `TIPO=15;CLASE_10=20;CONTADOR_10=5000;CLASE_20=20;
   CONTADOR_20=5000`). No es un caso de "solo color" — es una duplicación real de la fila.
 - `counterclass_id=40` con modelo normal → `CLASE_10=10` únicamente, sin fila en CLASE_20.
+- **Desviación consciente en la reimplementación (2026-08-19):** en `db3_export_builder.py`
+  se dejó de duplicar el total en CLASE_10 — ahora un modelo especial en clase 40 carga
+  únicamente CLASE_20 (vía el mismo shift que ya usaba el caso "solo color" de clase 20 cruda).
+  Motivo: la duplicación manda a SiGes un CLASE_10=20 (mono mal etiquetado) que el sistema
+  rechaza por contador mono faltante/inválido. Caso real que lo disparó: equipo
+  `0BLRBJLHC00001B` (Envases Tinplate/Food Solution, mismo grupo empresario, modelo
+  `X4300LX`) — verificado contra datos reales de FTP que solo reporta clase 40, nunca 10/20
+  por separado, en 7 lecturas consecutivas (2026-08-10 a 2026-08-18). Ver test
+  `test_total_counter_of_special_model_goes_to_clase_20_only`.
 
 ### Estimación en 0 (`filtrar_falta_contador_csv`)
 - **Corrección (2026-08-07): no es un bug.** `main.py` importa `filtrar_falta_contador_csv`

@@ -68,10 +68,17 @@ def _classify_row(r: Db3CounterRow) -> _ClassifiedRow:
 
 
 def _dedupe_most_recent(rows: list[_ClassifiedRow]) -> list[_ClassifiedRow]:
-    """Una sola lectura por (serie, clase): la más reciente."""
-    best: dict[tuple[str, str], _ClassifiedRow] = {}
+    """Una sola lectura por (serie, clase, tipo): la más reciente.
+
+    `tipo` tiene que estar en la clave: una lectura cruda de clase 20
+    (tipo=7) y el total de un modelo especial convertido a clase 20
+    (tipo=15) son datos distintos que pueden convivir el mismo día para el
+    mismo equipo. Deduplicar solo por (serie, clase) hacía que una de las
+    dos se descartara en silencio según el orden de llegada del .db3.
+    """
+    best: dict[tuple[str, str, int], _ClassifiedRow] = {}
     for r in sorted(rows, key=lambda x: x.fecha, reverse=True):
-        best.setdefault((r.serie, r.clase), r)
+        best.setdefault((r.serie, r.clase, r.tipo), r)
     return list(best.values())
 
 
@@ -89,10 +96,14 @@ def _group_by_serie_fecha_tipo(
     grouped: dict[tuple[str, date, int], _Accumulator] = {}
     for r in rows:
         acc = grouped.setdefault((r.serie, r.fecha, r.tipo), _Accumulator())
-        # Herencia 40->20: un total (tipo=15) de un modelo especial también
-        # cuenta como "columna 10" — así nace la duplicación intencional que
-        # ve el sistema de facturación (ver CONTADORES_CARACTERIZACION.md).
-        if r.clase == "10" or (r.clase == "20" and r.tipo == 15):
+        # Un total (tipo=15, clase="20") de un modelo especial NO carga la
+        # columna 10: la app vieja lo duplicaba en ambas columnas, pero eso
+        # manda un "mono" mal etiquetado (CLASE_10=20) que SiGes rechaza por
+        # contador mono faltante/inválido. Caso real: equipo 0BLRBJLHC00001B
+        # (Envases Tinplate/Food Solution, modelo X4300LX) solo reporta
+        # clase 40 — nunca 10/20 por separado — así que cargar la columna 10
+        # acá sería un mono inventado, no un dato real.
+        if r.clase == "10":
             acc.clase_10, acc.contador_10 = r.clase, r.contador
         if r.clase == "20":
             acc.clase_20, acc.contador_20 = "20", r.contador
