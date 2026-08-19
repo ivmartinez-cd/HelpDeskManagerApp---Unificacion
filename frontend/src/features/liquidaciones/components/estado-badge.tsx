@@ -1,11 +1,12 @@
 import { Badge, type BadgeVariant } from "@/shared/components/ui/badge";
 import type { EstadoLiquidacion } from "../types/liquidaciones";
 
+/** Semáforo: amarillo = en trámite, rojo = requiere acción, verde = resuelta. */
 const ESTADO_CONFIG: Record<EstadoLiquidacion, { variant: BadgeVariant; label: string }> = {
-  abierta: { variant: "info", label: "Abierta" },
-  preliquidada: { variant: "accent", label: "Preliquidada" },
-  recibida: { variant: "neutral", label: "Recibida" },
-  observada: { variant: "warning", label: "Observada" },
+  abierta: { variant: "warning", label: "Abierta" },
+  preliquidada: { variant: "warning", label: "Preliquidada" },
+  recibida: { variant: "warning", label: "Recibida" },
+  observada: { variant: "danger", label: "Observada" },
   aprobada: { variant: "success", label: "Aprobada" },
   cerrada: { variant: "neutral", label: "Cerrada" },
 };
