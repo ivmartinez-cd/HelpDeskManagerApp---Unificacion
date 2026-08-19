@@ -25,8 +25,10 @@ from src.modules.liquidaciones.presentation.dependencies import (
     build_create_tabla_km,
     build_delete_tabla_km,
     build_update_tabla_km,
+    build_vincular_tabla_km_spst,
 )
 from src.modules.liquidaciones.presentation.schemas.config_schemas import (
+    ResultadoVinculoTablaKmSpstOut,
     TablaKmIn,
     TablaKmOut,
 )
@@ -95,6 +97,20 @@ async def delete_tabla_km(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     await build_delete_tabla_km(db).execute(tabla_km_id)
+
+
+@router.post("/tabla-km/vincular-spst", response_model=ResultadoVinculoTablaKmSpstOut)
+async def vincular_spst(
+    prestador_id: UUID = Query(alias="prestadorId"),
+    dry_run: bool = Query(default=True, alias="dryRun"),
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db),
+) -> ResultadoVinculoTablaKmSpstOut:
+    """Vincula filas de Tabla KM sin `spst_id` al SPST del mismo prestador cuya
+    zona/localidad matchea la localidad del cliente — ver
+    `domain/services/vincular_tabla_km_spst.py`. Dry-run por default."""
+    resultado = await build_vincular_tabla_km_spst(db).execute(prestador_id, dry_run=dry_run)
+    return ResultadoVinculoTablaKmSpstOut.from_dto(resultado)
 
 
 @router.get("/tabla-km/export")

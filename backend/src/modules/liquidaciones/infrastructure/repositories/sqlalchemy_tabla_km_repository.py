@@ -151,6 +151,18 @@ class SqlAlchemyTablaKmRepository:
         await self._session.refresh(row)
         return _to_entity(row)
 
+    async def update_vinculo_spst(
+        self, tabla_km_id: UUID, *, spst_id: UUID | None
+    ) -> TablaKm | None:
+        row = await self._session.get(TablaKmModel, tabla_km_id)
+        if row is None:
+            return None
+        row.spst_id = spst_id
+        row.updated_at = datetime.now(UTC)
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
     async def update_vinculo_siges(
         self,
         tabla_km_id: UUID,

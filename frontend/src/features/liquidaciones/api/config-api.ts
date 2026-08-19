@@ -3,6 +3,7 @@ import type {
   ImportExcelMaestroResult,
   PrestadorLiquidacion,
   ReglaAlerta,
+  ResultadoVinculoTablaKmSpst,
   Spst,
   TablaKm,
   Tarifario,
@@ -162,4 +163,9 @@ export const configApi = {
     fd.append("file", file);
     return httpClient.postForm<{ creados: number }>("/api/liquidaciones/tabla-km/import", fd);
   },
+
+  vincularSpstTablaKm: (prestadorId: string, dryRun: boolean) =>
+    httpClient.post<ResultadoVinculoTablaKmSpst>(
+      `/api/liquidaciones/tabla-km/vincular-spst?prestadorId=${prestadorId}&dryRun=${dryRun}`,
+    ),
 };

@@ -13,6 +13,7 @@ from src.modules.liquidaciones.presentation.dependencies.config import (
     build_update_spst,
     build_update_tabla_km,
     build_update_tarifario,
+    build_vincular_tabla_km_spst,
 )
 from src.modules.liquidaciones.presentation.dependencies.geolocalizacion import (
     build_aplicar_calcular_distancias,
@@ -110,4 +111,5 @@ __all__ = [
     "build_vincular_spst_siges",
     "build_update_tabla_km",
     "build_update_tarifario",
+    "build_vincular_tabla_km_spst",
 ]

@@ -29,6 +29,10 @@ from src.modules.liquidaciones.application.use_cases.config_tarifarios import (
     DeleteTarifario,
     UpdateTarifario,
 )
+from src.modules.liquidaciones.application.use_cases.vincular_tabla_km_spst import (
+    VincularTablaKmSpst,
+    VincularTablaKmSpstPorts,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
@@ -113,3 +117,12 @@ def build_update_tabla_km(session: AsyncSession) -> UpdateTablaKm:
 
 def build_delete_tabla_km(session: AsyncSession) -> DeleteTablaKm:
     return DeleteTablaKm(_tabla_km_ports(session))
+
+
+def build_vincular_tabla_km_spst(session: AsyncSession) -> VincularTablaKmSpst:
+    return VincularTablaKmSpst(
+        VincularTablaKmSpstPorts(
+            tabla_km=SqlAlchemyTablaKmRepository(session),
+            spsts=SqlAlchemySpstRepository(session),
+        )
+    )

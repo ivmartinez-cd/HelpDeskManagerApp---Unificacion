@@ -284,6 +284,24 @@ export interface TablaKm {
   updatedAt: string;
 }
 
+export interface PropuestaVinculoSpst {
+  tablaKmId: string;
+  empresaNombre: string;
+  sucursalNombre: string;
+  localidadCliente: string | null;
+  spstId: string | null;
+  spstNombre: string | null;
+}
+
+export interface ResultadoVinculoTablaKmSpst {
+  dryRun: boolean;
+  totalSinVincular: number;
+  conPropuesta: number;
+  sinPropuesta: number;
+  vinculadas: number;
+  ejemplos: PropuestaVinculoSpst[];
+}
+
 export interface Liquidacion {
   id: string;
   prestadorId: string;

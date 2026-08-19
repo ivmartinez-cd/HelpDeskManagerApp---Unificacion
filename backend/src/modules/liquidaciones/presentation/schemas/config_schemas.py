@@ -7,6 +7,9 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.modules.liquidaciones.application.use_cases.vincular_tabla_km_spst import (
+    ResultadoVinculoTablaKmSpst,
+)
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import (
@@ -14,6 +17,9 @@ from src.modules.liquidaciones.domain.entities.tabla_km import (
     TablaKm,
 )
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
+from src.modules.liquidaciones.domain.services.vincular_tabla_km_spst import (
+    PropuestaVinculoSpst,
+)
 
 # ─── Prestadores ─────────────────────────────────────────────────────────────
 
@@ -232,4 +238,49 @@ class TablaKmOut(BaseModel):
             geocode_formatted_address=e.geocode_formatted_address,
             created_at=e.created_at,
             updated_at=e.updated_at,
+        )
+
+
+# ─── Vínculo Tabla KM ↔ SPST por localidad ─────────────────────────────────
+
+
+class PropuestaVinculoSpstOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    tabla_km_id: uuid.UUID = Field(serialization_alias="tablaKmId")
+    empresa_nombre: str = Field(serialization_alias="empresaNombre")
+    sucursal_nombre: str = Field(serialization_alias="sucursalNombre")
+    localidad_cliente: str | None = Field(serialization_alias="localidadCliente")
+    spst_id: uuid.UUID | None = Field(serialization_alias="spstId")
+    spst_nombre: str | None = Field(serialization_alias="spstNombre")
+
+    @classmethod
+    def from_entity(cls, e: PropuestaVinculoSpst) -> PropuestaVinculoSpstOut:
+        return cls(
+            tabla_km_id=e.tabla_km_id,
+            empresa_nombre=e.empresa_nombre,
+            sucursal_nombre=e.sucursal_nombre,
+            localidad_cliente=e.localidad_cliente,
+            spst_id=e.spst_id,
+            spst_nombre=e.spst_nombre,
+        )
+
+
+class ResultadoVinculoTablaKmSpstOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    dry_run: bool = Field(serialization_alias="dryRun")
+    total_sin_vincular: int = Field(serialization_alias="totalSinVincular")
+    con_propuesta: int = Field(serialization_alias="conPropuesta")
+    sin_propuesta: int = Field(serialization_alias="sinPropuesta")
+    vinculadas: int
+    ejemplos: list[PropuestaVinculoSpstOut]
+
+    @classmethod
+    def from_dto(cls, dto: ResultadoVinculoTablaKmSpst) -> ResultadoVinculoTablaKmSpstOut:
+        return cls(
+            dry_run=dto.dry_run,
+            total_sin_vincular=dto.total_sin_vincular,
+            con_propuesta=dto.con_propuesta,
+            sin_propuesta=dto.sin_propuesta,
+            vinculadas=dto.vinculadas,
+            ejemplos=[PropuestaVinculoSpstOut.from_entity(e) for e in dto.ejemplos],
         )

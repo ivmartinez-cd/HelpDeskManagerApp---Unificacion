@@ -98,6 +98,12 @@ class TablaKmRepository(Protocol):
         longitud_destino: float | None = None,
     ) -> TablaKm | None: ...
 
+    async def update_vinculo_spst(
+        self, tabla_km_id: UUID, *, spst_id: UUID | None
+    ) -> TablaKm | None:
+        """Solo el vínculo a SPST — no toca domicilio, km ni viático."""
+        ...
+
     async def update_vinculo_siges(
         self,
         tabla_km_id: UUID,

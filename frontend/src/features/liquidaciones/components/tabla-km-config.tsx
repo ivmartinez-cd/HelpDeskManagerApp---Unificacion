@@ -25,6 +25,7 @@ function kmSortValue(t: TablaKm, key: KmSortKey) {
 import { CsvImportModal, EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
 import { SigesTablaKmModal } from "./siges-tabla-km-modal";
 import { TablaKmWizard } from "./tabla-km-wizard";
+import { VincularSpstModal } from "./vincular-spst-modal";
 
 export function TablaKmConfig() {
   const [entradas, setEntradas] = useState<TablaKm[]>([]);
@@ -44,6 +45,7 @@ export function TablaKmConfig() {
   const [sigesOpen, setSigesOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [vincularSpstOpen, setVincularSpstOpen] = useState(false);
 
   const { sort, toggleSort } = useTableSort<KmSortKey>({
     initial: { key: "empresa", direction: "asc" },
@@ -146,6 +148,15 @@ export function TablaKmConfig() {
           </BrandButton>
           <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
+          <BrandButton
+            size="sm"
+            variant="outline"
+            disabled={!filtroPst}
+            onClick={() => setVincularSpstOpen(true)}
+            title="Vincular filas sin SPST por coincidencia de localidad — necesario para que el motor resuelva precios por zona"
+          >
+            Vincular SPST
+          </BrandButton>
           <BrandButton
             size="sm"
             variant="outline"
@@ -253,6 +264,13 @@ export function TablaKmConfig() {
           prestador={pstSeleccionado}
           onClose={() => setWizardOpen(false)}
           onAplicado={loadEntradas}
+        />
+      )}
+      {vincularSpstOpen && filtroPst && (
+        <VincularSpstModal
+          prestadorId={filtroPst}
+          onClose={() => setVincularSpstOpen(false)}
+          onVinculado={loadEntradas}
         />
       )}
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar entrada">
