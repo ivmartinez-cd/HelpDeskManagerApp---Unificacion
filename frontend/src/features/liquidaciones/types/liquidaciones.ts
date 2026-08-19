@@ -501,3 +501,23 @@ export interface HallazgoTier1 {
   latitud: number;
   longitud: number;
 }
+
+/** Tier 1b: segunda opinión de Nominatim, solo sobre lo que Georef ya marcó
+ * incompatible. Dos fuentes de acuerdo = confirmado, sin gastar Google. */
+export interface ResultadoConsultarNominatim {
+  consultadas: number;
+  yaEnCache: number;
+  pendientesPorTope: number;
+}
+
+export interface HallazgoTier1b {
+  sigesSucursalId: number;
+  empresaNombre: string;
+  sucursalNombre: string;
+  provinciaDeclarada: string | null;
+  provinciaGeoref: string;
+  provinciaNominatim: string;
+  latitud: number;
+  longitud: number;
+  atribucion: string;
+}

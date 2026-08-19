@@ -8,8 +8,10 @@ import type {
   GeocodificarResultado,
   HallazgoTier0,
   HallazgoTier1,
+  HallazgoTier1b,
   PinSospechoso,
   ResultadoConsultarGeoref,
+  ResultadoConsultarNominatim,
   SucursalCoordenadas,
   TablaKm,
 } from "../types/liquidaciones";
@@ -68,6 +70,17 @@ export const geolocalizacionApi = {
   listGeovalidacionTier1: (prestadorId: string) =>
     fetchCatalogoCompleto<HallazgoTier1>(
       `/api/liquidaciones/siges/prestador/${prestadorId}/geovalidacion/tier1`,
+      new URLSearchParams(),
+    ),
+
+  consultarNominatim: (prestadorId: string) =>
+    httpClient.post<ResultadoConsultarNominatim>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/geovalidacion/tier1b/consultar-nominatim`,
+    ),
+
+  listGeovalidacionTier1b: (prestadorId: string) =>
+    fetchCatalogoCompleto<HallazgoTier1b>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/geovalidacion/tier1b`,
       new URLSearchParams(),
     ),
 
