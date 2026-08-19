@@ -49,6 +49,11 @@ export const gestionApi = {
 
   listFeriados: () =>
     httpClient.get<Page<Feriado>>(`${BASE}/feriados`).then((p) => p.items),
+  /** Sin permiso de vacaciones: la fecha de un feriado es dato público,
+   * la consumen otros módulos (Home) para sus propios cálculos de días
+   * hábiles. */
+  listFeriadosPublicos: () =>
+    httpClient.get<Page<Feriado>>(`${BASE}/feriados/publicos`).then((p) => p.items),
   createFeriado: (payload: FeriadoPayload) =>
     httpClient.post<Feriado>(`${BASE}/feriados`, payload),
   updateFeriado: (id: string, payload: FeriadoPayload) =>

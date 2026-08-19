@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.auth.presentation.dependencies.identity import get_current_identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.vacaciones.application.use_cases.gestionar_feriados import (
     CreateFeriado,
@@ -58,6 +59,20 @@ async def list_feriados(
     _identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
 ) -> Page[FeriadoResponse]:
+    feriados = await ListFeriados(_deps(db)).execute()
+    return Page.of([FeriadoResponse.from_entity(f) for f in feriados], page=page, size=size)
+
+
+@router.get("/publicos")
+async def list_feriados_publicos(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=_DEFAULT_SIZE, ge=1, le=500),
+    _identity: Identity = Depends(get_current_identity),
+    db: AsyncSession = Depends(get_db),
+) -> Page[FeriadoResponse]:
+    """Fecha y nombre del feriado, sin permiso de vacaciones: la información
+    es pública (calendario nacional), la usan otros módulos (Home/Contadores)
+    para tener en cuenta feriados en sus propios cálculos."""
     feriados = await ListFeriados(_deps(db)).execute()
     return Page.of([FeriadoResponse.from_entity(f) for f in feriados], page=page, size=size)
 
