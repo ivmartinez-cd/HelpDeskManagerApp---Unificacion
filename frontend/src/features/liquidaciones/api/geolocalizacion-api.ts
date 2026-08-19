@@ -7,7 +7,9 @@ import type {
   GeocodeCandidato,
   GeocodificarResultado,
   HallazgoTier0,
+  HallazgoTier1,
   PinSospechoso,
+  ResultadoConsultarGeoref,
   SucursalCoordenadas,
   TablaKm,
 } from "../types/liquidaciones";
@@ -55,6 +57,17 @@ export const geolocalizacionApi = {
   listGeovalidacionTier0: (prestadorId: string) =>
     fetchCatalogoCompleto<HallazgoTier0>(
       `/api/liquidaciones/siges/prestador/${prestadorId}/geovalidacion/tier0`,
+      new URLSearchParams(),
+    ),
+
+  consultarGeoref: (prestadorId: string) =>
+    httpClient.post<ResultadoConsultarGeoref>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/geovalidacion/tier1/consultar-georef`,
+    ),
+
+  listGeovalidacionTier1: (prestadorId: string) =>
+    fetchCatalogoCompleto<HallazgoTier1>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/geovalidacion/tier1`,
       new URLSearchParams(),
     ),
 

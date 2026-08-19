@@ -482,3 +482,22 @@ export interface HallazgoTier0 {
   codigo: string;
   detalle: string;
 }
+
+/** Tier 1 de geovalidación: reverse geocoding de Georef (gratis) comparado
+ * contra la provincia declarada en Siges. */
+export interface ResultadoConsultarGeoref {
+  consultadas: number;
+  yaEnCache: number;
+  sinCoordenadas: number;
+  pendientesPorTope: number;
+}
+
+export interface HallazgoTier1 {
+  sigesSucursalId: number;
+  empresaNombre: string;
+  sucursalNombre: string;
+  provinciaDeclarada: string | null;
+  provinciaGeoref: string;
+  latitud: number;
+  longitud: number;
+}
