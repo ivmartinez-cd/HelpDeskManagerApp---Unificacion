@@ -10,6 +10,9 @@ from src.modules.auth.application.dtos.results import Identity
 from src.modules.contadores.application.dtos.get_calendar_events_request import (
     GetCalendarEventsRequest,
 )
+from src.modules.contadores.application.use_cases.filtrar_pendientes_por_periodo_real import (
+    FiltrarPendientesPorPeriodoReal,
+)
 from src.modules.contadores.application.use_cases.get_calendar_events import (
     GetCalendarEventsUseCase,
 )
@@ -28,6 +31,9 @@ from src.modules.contadores.presentation.calendario_routers._deps import (
     MAX_PAGE_SIZE,
     POOL_BACKLOG_OPERADOR_IDS,
     require_view,
+)
+from src.modules.contadores.presentation.dependencies import (
+    get_estado_cierre_grupos_gateway_or_none,
 )
 from src.modules.contadores.presentation.schemas.calendario_schemas import (
     CalendarEventSchema,
@@ -102,7 +108,9 @@ async def get_calendario_pendientes(
     db: AsyncSession = Depends(get_db),
 ) -> Page[CalendarEventSchema]:
     """Backlog de clientes de días anteriores que siguen en el calendario
-    (pendientes de arrastre). Misma visibilidad que GET /calendario."""
+    (pendientes de arrastre), cruzado contra el período real de Siges: si un
+    cliente ya facturó o ya rodó al mes en curso, sale de la lista (ver
+    FiltrarPendientesPorPeriodoReal). Misma visibilidad que GET /calendario."""
     repo = SqlAlchemyCalendarEventRepository(db)
     overrides = SqlAlchemyAsignacionOverrideRepository(db)
     use_case = GetPendingClientsUseCase(GetCalendarEventsUseCase(repo, overrides), repo)
@@ -113,5 +121,8 @@ async def get_calendario_pendientes(
         cutoff_days=DEFAULT_BACKLOG_DAYS,
         exclude_operador_ids=POOL_BACKLOG_OPERADOR_IDS,
     )
+    gateway = get_estado_cierre_grupos_gateway_or_none()
+    if gateway is not None:
+        anotados = await FiltrarPendientesPorPeriodoReal(gateway).execute(anotados)
     schema_events = [CalendarEventSchema.from_anotado(a) for a in anotados]
     return Page.of(schema_events, page=page, size=size)

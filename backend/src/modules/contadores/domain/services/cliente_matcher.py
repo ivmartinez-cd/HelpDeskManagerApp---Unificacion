@@ -15,6 +15,7 @@ import unicodedata
 from src.modules.contadores.domain.ports.parque_cliente_port import EmpresaSiges
 
 _MIN_LARGO_CONTENCION = 5
+_SEPARADORES_RE = re.compile(r"\s*[-–/|]\s*")
 
 
 def normalizar_nombre(nombre: str) -> str:
@@ -68,3 +69,38 @@ def _match_por_contencion(norm: str, por_norm: dict[str, list[EmpresaSiges]]) ->
         for empresa in empresas
     ]
     return [candidatos[0].id] if len(candidatos) == 1 else []
+
+
+def flex_nombre(normalizado: str) -> str:
+    """Sobre un nombre ya pasado por `normalizar_nombre`, equipara
+    separadores tipográficos a un espacio: 'ROEMMERS - MAPRIMED' ≈
+    'ROEMMERS / MAPRIMED'."""
+    return re.sub(r"\s+", " ", _SEPARADORES_RE.sub(" ", normalizado)).strip()
+
+
+class IndiceNombres[T]:
+    """Índice de nombres libres (claves ya normalizadas con
+    `normalizar_nombre`) con su variante flex precalculada, para cruzar
+    contra otro nombre libre por exacto/flex/contención única
+    (`buscar_por_nombre`) sin repetir el armado por cada búsqueda."""
+
+    def __init__(self, valores: dict[str, T]) -> None:
+        self.exacto = valores
+        self.flex = {flex_nombre(k): v for k, v in valores.items()}
+
+
+def buscar_por_nombre[T](nombre: str | None, indice: IndiceNombres[T]) -> T | None:
+    """Exacto normalizado > flex (separadores equivalentes) > contención
+    única (≥5 caracteres). Ambiguo, corto o sin candidato → sin cruce."""
+    if not nombre or not indice.exacto:
+        return None
+    norm = normalizar_nombre(nombre)
+    if norm in indice.exacto:
+        return indice.exacto[norm]
+    flex = flex_nombre(norm)
+    if flex in indice.flex:
+        return indice.flex[flex]
+    if len(flex) < _MIN_LARGO_CONTENCION:
+        return None
+    candidatos = [v for k, v in indice.flex.items() if flex in k or k in flex]
+    return candidatos[0] if len(candidatos) == 1 else None

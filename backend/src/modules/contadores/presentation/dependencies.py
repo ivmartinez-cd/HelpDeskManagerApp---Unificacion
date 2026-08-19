@@ -12,6 +12,9 @@ from src.modules.contadores.infrastructure.siges.pyodbc_anexos_pendientes_gatewa
 from src.modules.contadores.infrastructure.siges.pyodbc_equipos_sin_real_gateway import (
     PyodbcEquiposSinRealGateway,
 )
+from src.modules.contadores.infrastructure.siges.pyodbc_estado_cierre_grupos_gateway import (
+    PyodbcEstadoCierreGruposGateway,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_operador_gateway import (
     PyodbcOperadorGateway,
 )
@@ -36,6 +39,10 @@ _EQUIPOS_SIN_REAL_CACHE_TTL_SECONDS = 600.0
 # interacción de la UI.
 _ANEXOS_PENDIENTES_CACHE_TTL_SECONDS = 300.0
 
+# Mismo criterio que anexos pendientes: consulta liviana, TTL corto para no
+# repetirla en cada carga de la card de Inicio.
+_ESTADO_CIERRE_GRUPOS_CACHE_TTL_SECONDS = 300.0
+
 
 @lru_cache
 def get_operador_catalog_gateway() -> PyodbcOperadorGateway:
@@ -56,6 +63,28 @@ def get_anexos_pendientes_gateway() -> PyodbcAnexosPendientesGateway:
     return PyodbcAnexosPendientesGateway(
         require_mercurio_runner(), _ANEXOS_PENDIENTES_CACHE_TTL_SECONDS
     )
+
+
+@lru_cache
+def get_estado_cierre_grupos_gateway() -> PyodbcEstadoCierreGruposGateway:
+    return PyodbcEstadoCierreGruposGateway(
+        require_mercurio_runner(), _ESTADO_CIERRE_GRUPOS_CACHE_TTL_SECONDS
+    )
+
+
+def get_estado_cierre_grupos_gateway_or_none() -> PyodbcEstadoCierreGruposGateway | None:
+    """Variante para la card de Inicio: sin Siges, el backlog de pendientes
+    degrada a mostrarse sin filtrar en vez de fallar (mismo criterio que
+    `get_parque_cliente_gateway_or_none`)."""
+    try:
+        return get_estado_cierre_grupos_gateway()
+    except ExternalServiceError as exc:
+        logger.warning(
+            "Siges (MERCURIO) no configurado; el backlog de pendientes de la "
+            "card de Inicio va sin cruce contra el período real",
+            exc_info=exc,
+        )
+        return None
 
 
 @lru_cache

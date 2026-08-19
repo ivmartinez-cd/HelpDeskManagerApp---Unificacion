@@ -2,6 +2,8 @@
 
 from src.modules.contadores.domain.ports.parque_cliente_port import EmpresaSiges
 from src.modules.contadores.domain.services.cliente_matcher import (
+    IndiceNombres,
+    buscar_por_nombre,
     match_clientes,
     normalizar_nombre,
 )
@@ -70,3 +72,36 @@ def test_alias_multiempresa_devuelve_todas() -> None:
         ["Salta Refrescos"], [], alias={"Salta Refrescos": [68, 69, 585]}
     )
     assert resultado == {"Salta Refrescos": [68, 69, 585]}
+
+
+class TestBuscarPorNombre:
+    """Cruce genérico de nombres libres (grupo Siges ↔ cliente Gestión):
+    exacto > flex (separadores) > contención única; ambiguo o corto queda
+    sin cruce."""
+
+    def _indice(self, nombres: dict[str, str]) -> IndiceNombres[str]:
+        return IndiceNombres({normalizar_nombre(k): v for k, v in nombres.items()})
+
+    def test_match_exacto(self) -> None:
+        indice = self._indice({"Chubb": "Barbara Romero"})
+        assert buscar_por_nombre("Chubb", indice) == "Barbara Romero"
+
+    def test_flex_equipara_separadores(self) -> None:
+        indice = self._indice({"Roemmers / Maprimed": "Soledad Miguez"})
+        assert buscar_por_nombre("Roemmers - Maprimed", indice) == "Soledad Miguez"
+
+    def test_contencion_unica(self) -> None:
+        indice = self._indice({"Galicia Seguros Retiro": "Op A", "Chubb": "Op B"})
+        assert buscar_por_nombre("Galicia Seguros", indice) == "Op A"
+
+    def test_contencion_ambigua_queda_sin_cruce(self) -> None:
+        indice = self._indice({"Galicia Seguros": "Op A", "Galicia Retiro": "Op B"})
+        assert buscar_por_nombre("Galicia", indice) is None
+
+    def test_nombre_corto_no_matchea_por_contencion(self) -> None:
+        indice = self._indice({"ASP Logistica Central": "Op A"})
+        assert buscar_por_nombre("ASP", indice) is None
+
+    def test_sin_nombre_o_sin_indice(self) -> None:
+        assert buscar_por_nombre(None, self._indice({"Chubb": "Op"})) is None
+        assert buscar_por_nombre("Chubb", self._indice({})) is None
