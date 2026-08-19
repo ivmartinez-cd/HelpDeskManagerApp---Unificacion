@@ -143,6 +143,7 @@ export function InicioDashboard() {
             data={liquidacionesPendientes.data}
             loading={liquidacionesPendientes.loading}
             error={liquidacionesPendientes.error}
+            onSynced={liquidacionesPendientes.refetch}
           />
         );
       case "parque":
