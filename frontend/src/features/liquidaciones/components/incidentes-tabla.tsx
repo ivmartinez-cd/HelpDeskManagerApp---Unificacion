@@ -11,6 +11,8 @@ import { ESTADO_ALERTA_STYLES } from "../lib/alerta-estados";
 import { formatARS, formatFecha } from "../lib/format";
 import { incidentUrl } from "@/shared/utils/incident-link";
 
+const CODIGO_ALT010 = "ALT010";
+
 export function computeRutasCompartidas(incidentes: Incidente[]): Set<string> {
   const ids = new Set<string>();
   const byFecha = new Map<string, Incidente[]>();
@@ -41,23 +43,6 @@ export function computeRutasCompartidas(incidentes: Incidente[]): Set<string> {
             otro.sucursalNombre.trim().toLowerCase();
         if (mismaLocalidad || mismaDestino) ids.add(inc.id);
       }
-    }
-  }
-  return ids;
-}
-
-export function computeSeriesDuplicadas(incidentes: Incidente[]): Set<string> {
-  const ids = new Set<string>();
-  const bySerie = new Map<string, string[]>();
-  for (const inc of incidentes) {
-    if (!inc.nroSerie) continue;
-    const list = bySerie.get(inc.nroSerie) ?? [];
-    list.push(inc.id);
-    bySerie.set(inc.nroSerie, list);
-  }
-  for (const incIds of bySerie.values()) {
-    if (incIds.length > 1) {
-      for (const id of incIds) ids.add(id);
     }
   }
   return ids;
@@ -133,17 +118,16 @@ function IncidenteRow({
   alertasInc,
   expanded,
   isRutaCompartida,
-  isSeriesDuplicada,
   onToggle,
 }: {
   incidente: Incidente;
   alertasInc: Alerta[];
   expanded: boolean;
   isRutaCompartida: boolean;
-  isSeriesDuplicada: boolean;
   onToggle: () => void;
 }) {
   const tdCls = "py-3 px-4 font-body text-sm text-foreground";
+  const serieDuplicada = alertasInc.find((a) => a.tipoAlerta === CODIGO_ALT010);
   const diff =
     incidente.costoServicioEsperado !== null
       ? incidente.costoServicioCobrado - incidente.costoServicioEsperado
@@ -179,10 +163,13 @@ function IncidenteRow({
         </td>
         <td className={tdCls}>
           {incidente.nroSerie ? (
-            <span className={cn(isSeriesDuplicada && "font-semibold text-warning")}>
+            <span className={cn(serieDuplicada && "font-semibold text-warning")}>
               {incidente.nroSerie}
-              {isSeriesDuplicada && (
-                <span className="ml-1" title="Nro de serie duplicado en esta liquidación">
+              {serieDuplicada && (
+                <span
+                  className="ml-1"
+                  title={serieDuplicada.descripcion ?? "Serie duplicada (ALT010)"}
+                >
                   ⚠
                 </span>
               )}
@@ -296,7 +283,6 @@ export function IncidentesTabla({
   });
 
   const rutasCompartidas = useMemo(() => computeRutasCompartidas(allIncidentes), [allIncidentes]);
-  const seriesDuplicadas = useMemo(() => computeSeriesDuplicadas(allIncidentes), [allIncidentes]);
 
   const sorted = useMemo(() => {
     return [...incidentes].sort((a, b) => {
@@ -373,7 +359,6 @@ export function IncidentesTabla({
                 alertasInc={alertasByInc[inc.id] ?? []}
                 expanded={expandedIds.has(inc.id)}
                 isRutaCompartida={rutasCompartidas.has(inc.id)}
-                isSeriesDuplicada={seriesDuplicadas.has(inc.id)}
                 onToggle={() => toggleExpanded(inc.id)}
               />
             ))}
