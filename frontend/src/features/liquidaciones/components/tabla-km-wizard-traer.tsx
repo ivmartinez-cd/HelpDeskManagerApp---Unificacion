@@ -58,6 +58,40 @@ function ListaSucursales({ sucursales }: { sucursales: SucursalSiges[] }) {
   );
 }
 
+function agruparPorEmpresa(filas: FilaNoEncontrada[]): [string, string[]][] {
+  const grupos = new Map<string, string[]>();
+  for (const f of filas) grupos.set(f.empresaNombre, [...(grupos.get(f.empresaNombre) ?? []), f.sucursalNombre]);
+  return [...grupos.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+}
+
+function ListaNoEncontradas({ filas }: { filas: FilaNoEncontrada[] }) {
+  return (
+    <ul className="max-h-[28vh] overflow-y-auto rounded-[6px] border border-border bg-card px-3 py-2 flex flex-col gap-1.5">
+      {agruparPorEmpresa(filas).map(([empresa, sucursales]) => (
+        <li key={empresa}>
+          <p className="font-semibold text-foreground">{empresa} <span className="font-normal text-muted-foreground">({sucursales.length})</span></p>
+          <ul className="ml-3 flex flex-col">
+            {sucursales.sort((a, b) => a.localeCompare(b)).map((s) => <li key={s}>{s}</li>)}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ListaCambios({ cambios }: { cambios: Refresco["cambios"] }) {
+  return (
+    <ul className="max-h-[24vh] overflow-y-auto rounded-[6px] border border-border bg-card px-3 py-2 flex flex-col gap-1">
+      {cambios.map((c) => (
+        <li key={`${c.empresaNombre}::${c.sucursalNombre}`}>
+          <span className="font-semibold text-foreground">{c.empresaNombre} — {c.sucursalNombre}</span>:{" "}
+          <span className="line-through">{c.domicilioAntes ?? "—"}</span> → {c.domicilioDespues ?? "—"}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function ResumenTraido({ r }: { r: ResultadoTraer }) {
   const { refresco, n1 } = r;
   return (
@@ -74,19 +108,23 @@ function ResumenTraido({ r }: { r: ResultadoTraer }) {
         </p>
       )}
       <VerDetalle etiqueta="ver qué cambió">
-        <p>{refresco.sinCambios} filas sin cambios · {n1.sinCambios} nombres ya estaban al día.</p>
-        {refresco.cambios.map((c) => (
-          <p key={`${c.empresaNombre}::${c.sucursalNombre}`}>
-            <span className="font-semibold text-foreground">{c.sucursalNombre}</span>:{" "}
-            <span className="line-through">{c.domicilioAntes ?? "—"}</span> → {c.domicilioDespues ?? "—"}
-          </p>
-        ))}
-        {refresco.noEncontradasDetalle.length > 0 && (
-          <p className="mt-1">
-            No encontradas en Gestión (sus domicilios no se actualizaron):{" "}
-            {refresco.noEncontradasDetalle.map((f) => `${f.empresaNombre} — ${f.sucursalNombre}`).join("; ")}
-          </p>
-        )}
+        <div className="flex flex-col gap-3">
+          <p>{plural(refresco.sinCambios, "fila sin cambios", "filas sin cambios")} · {n1.sinCambios} nombres ya estaban al día.</p>
+          {refresco.cambios.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <p className="font-semibold text-foreground">Domicilios actualizados ({refresco.cambios.length})</p>
+              <ListaCambios cambios={refresco.cambios} />
+            </div>
+          )}
+          {refresco.noEncontradasDetalle.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <p className="font-semibold text-foreground">
+                No encontradas en Gestión ({refresco.noEncontradasDetalle.length}) — sus domicilios no se actualizaron
+              </p>
+              <ListaNoEncontradas filas={refresco.noEncontradasDetalle} />
+            </div>
+          )}
+        </div>
       </VerDetalle>
     </div>
   );
