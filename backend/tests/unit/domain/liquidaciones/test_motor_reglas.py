@@ -251,6 +251,59 @@ class TestAlt004ServicioDuplicado:
         assert alertas[0].datos_contexto["liquidaciones_previas"] == [str(liq_previa)]
 
 
+class TestAlt010SerieDuplicada:
+    def test_no_dispara_sin_serie(self) -> None:
+        incidente = make_incidente(nro_serie=None, tipo="correctivo")
+        resultado = ejecutar_motor_reglas(
+            [incidente], [incidente], reglas_activas_default(), [], [], []
+        )
+        assert [a for a in resultado.alertas if a.tipo_alerta == "ALT010"] == []
+
+    def test_no_dispara_mismo_tipo_misma_serie(self) -> None:
+        fecha = date(2026, 1, 10)
+        inc1 = make_incidente(nro_serie="SN-1", tipo="correctivo", fecha_cierre=fecha)
+        inc2 = make_incidente(nro_serie="SN-1", tipo="correctivo", fecha_cierre=fecha)
+        resultado = ejecutar_motor_reglas(
+            [inc1], [inc1, inc2], reglas_activas_default(), [], [], []
+        )
+        assert [a for a in resultado.alertas if a.tipo_alerta == "ALT010"] == []
+
+    def test_no_dispara_misma_serie_distinto_periodo(self) -> None:
+        preventivo = make_incidente(
+            nro_serie="SN-1", tipo="preventivo", fecha_cierre=date(2026, 1, 5)
+        )
+        correctivo = make_incidente(
+            nro_serie="SN-1", tipo="correctivo", fecha_cierre=date(2026, 2, 5)
+        )
+        resultado = ejecutar_motor_reglas(
+            [correctivo], [preventivo, correctivo], reglas_activas_default(), [], [], []
+        )
+        assert [a for a in resultado.alertas if a.tipo_alerta == "ALT010"] == []
+
+    def test_dispara_preventivo_y_correctivo_misma_serie_mismo_periodo(self) -> None:
+        preventivo = make_incidente(
+            numero_incidente="100",
+            nro_serie="SN-1",
+            tipo="preventivo",
+            fecha_cierre=date(2026, 1, 5),
+        )
+        correctivo = make_incidente(
+            numero_incidente="200",
+            nro_serie="SN-1",
+            tipo="correctivo",
+            fecha_cierre=date(2026, 1, 20),
+        )
+        resultado = ejecutar_motor_reglas(
+            [correctivo], [preventivo, correctivo], reglas_activas_default(), [], [], []
+        )
+        alertas = [a for a in resultado.alertas if a.tipo_alerta == "ALT010"]
+        assert len(alertas) == 1
+        assert alertas[0].datos_contexto["nro_serie"] == "SN-1"
+        assert alertas[0].datos_contexto["incidentes_relacionados"] == ["100"]
+        assert alertas[0].datos_contexto["serie_duplicada"] is True
+        assert alertas[0].riesgo == 90.0
+
+
 class TestAlt005RutaCompartida:
     def _escenario_corredor(
         self,

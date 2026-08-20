@@ -29,11 +29,16 @@ from src.modules.liquidaciones.domain.entities.regla_alerta import (
     CODIGO_ALT005_RUTA_COMPARTIDA,
     CODIGO_ALT008_TARIFARIO_INEXISTENTE,
     CODIGO_ALT009_PAR_EMPRESA_SUCURSAL,
+    CODIGO_ALT010_SERIE_DUPLICADA,
     ReglaAlerta,
 )
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
-from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
+from src.modules.liquidaciones.domain.entities.tarifario import (
+    TIPO_CORRECTIVO,
+    TIPO_PREVENTIVO,
+    Tarifario,
+)
 from src.modules.liquidaciones.domain.services.motor_reglas import (
     alt001_precio,
     alt002_km,
@@ -42,6 +47,7 @@ from src.modules.liquidaciones.domain.services.motor_reglas import (
     alt005_ruta_individual,
     alt008_tarifario,
     alt009_spst,
+    alt010_serie_duplicada,
 )
 from src.modules.liquidaciones.domain.services.motor_reglas._resolucion import (
     indexar_tablas_km,
@@ -68,6 +74,7 @@ _EVALUADORES_POR_INCIDENTE = (
     CODIGO_ALT005_RUTA_COMPARTIDA,
     CODIGO_ALT008_TARIFARIO_INEXISTENTE,
     CODIGO_ALT009_PAR_EMPRESA_SUCURSAL,
+    CODIGO_ALT010_SERIE_DUPLICADA,
 )
 
 
@@ -153,7 +160,10 @@ def _evaluar_regla(
         return _evaluar_alt005(incidente, tabla_km, contexto)
     if codigo == CODIGO_ALT008_TARIFARIO_INEXISTENTE:
         return alt008_tarifario.evaluar_alt008(incidente, tarifario)
-    return alt009_spst.evaluar_alt009(incidente, tabla_km)
+    if codigo == CODIGO_ALT009_PAR_EMPRESA_SUCURSAL:
+        return alt009_spst.evaluar_alt009(incidente, tabla_km)
+    coincidencias = _coincidencias_alt010(incidente, contexto.incidentes_prestador)
+    return alt010_serie_duplicada.evaluar_alt010(incidente, coincidencias)
 
 
 def _evaluar_alt005(
@@ -207,6 +217,26 @@ def _duplicados_alt004(
         i
         for i in incidentes_prestador
         if i.id != incidente.id and i.numero_incidente == incidente.numero_incidente
+    ]
+
+
+def _coincidencias_alt010(
+    incidente: Incidente, incidentes_prestador: Sequence[Incidente]
+) -> list[Incidente]:
+    if not incidente.nro_serie or incidente.fecha_cierre is None:
+        return []
+    if incidente.tipo not in (TIPO_PREVENTIVO, TIPO_CORRECTIVO):
+        return []
+    tipo_opuesto = TIPO_CORRECTIVO if incidente.tipo == TIPO_PREVENTIVO else TIPO_PREVENTIVO
+    periodo = (incidente.fecha_cierre.year, incidente.fecha_cierre.month)
+    return [
+        i
+        for i in incidentes_prestador
+        if i.id != incidente.id
+        and i.nro_serie == incidente.nro_serie
+        and i.tipo == tipo_opuesto
+        and i.fecha_cierre is not None
+        and (i.fecha_cierre.year, i.fecha_cierre.month) == periodo
     ]
 
 
