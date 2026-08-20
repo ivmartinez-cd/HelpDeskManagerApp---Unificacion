@@ -21,6 +21,10 @@ from src.modules.liquidaciones.application.use_cases.geocodificar_sucursales imp
     GeocodificarPorts,
     GeocodificarSucursales,
 )
+from src.modules.liquidaciones.application.use_cases.geovalidacion_csv import (
+    GenerarWorklistCsv,
+    WorklistCsvPorts,
+)
 from src.modules.liquidaciones.application.use_cases.geovalidacion_tier0 import (
     EvaluarTier0Geovalidacion,
     GeovalidacionTier0Ports,
@@ -276,6 +280,16 @@ def build_calcular_worklist_tier2(session: AsyncSession) -> CalcularWorklistTier
             geocode_cache=SqlAlchemyGeocodeCacheRepository(session),
             evaluar_tier0=build_evaluar_tier0(session),
             listar_tier1b=build_listar_hallazgos_tier1b(session),
+        )
+    )
+
+
+def build_generar_worklist_csv(session: AsyncSession) -> GenerarWorklistCsv:
+    return GenerarWorklistCsv(
+        WorklistCsvPorts(
+            calcular_worklist=build_calcular_worklist_tier2(session),
+            listar_tier1b=build_listar_hallazgos_tier1b(session),
+            listar_pines=build_listar_pines_sospechosos(session),
         )
     )
 

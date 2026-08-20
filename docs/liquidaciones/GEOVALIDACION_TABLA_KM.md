@@ -177,6 +177,19 @@ algunas direcciones se repetían entre sucursales distintas) y confirmaron **69 
 sospechosos** (discrepancia > 5 km entre el pin de Siges y el geocode real del
 domicilio declarado), con discrepancias de hasta **2239 km**. Costo real ≈ $1,34.
 
+## CSV export para Gestión (cierre)
+
+Siges es read-only — la corrección real la hace un humano en Gestión. `GenerarWorklist
+Csv` (`application/use_cases/geovalidacion_csv.py`, read-only, no llama a ningún
+proveedor) junta las 3 fuentes de evidencia ya calculadas en un solo listado: Tier 0
+certeza absoluta (con pin sugerido = swap para `latlon_invertidas`), Tier 1b confirmado
+por dos fuentes, y Tier 2 confirmado por Google (con el pin sugerido real del geocode).
+Endpoint `GET .../geovalidacion/worklist/export` (`text/csv`, columnas `ID_SUCURSAL,
+EMPRESA, SUCURSAL, DOMICILIO, TIER, EVIDENCIA, LATITUD_ACTUAL, LONGITUD_ACTUAL,
+LATITUD_SUGERIDA, LONGITUD_SUGERIDA`). Probado en real: **265 filas exportadas** (4
+Tier 0 + 192 Tier 1b + 69 Tier 2), verificado con parseo CSV real (no naive). Botón
+"Exportar CSV para Gestión" en la sección worklist del wizard.
+
 ## Pendiente
 
 - Calibrar `umbral_distancia_base_km` de Tier 0 con evidencia real (300 km es
@@ -188,9 +201,7 @@ domicilio declarado), con discrepancias de hasta **2239 km**. Costo real ≈ $1,
   medición de Fase 0 (0 resultados en 4 pruebas reales), así que su valor inmediato es
   bajo frente al reverse. El reverse (implementado) es "la validación más barata y
   contundente" que preveía el plan.
-- CSV export para Gestión (Siges es read-only — la corrección real la hace un humano
-  ahí) — no implementado todavía.
 - Worklist visual final combinando los 69 pines confirmados de Tier 2 con los 4 de
   certeza absoluta de Tier 0 en una sola vista rankeada (hoy quedan en pantallas
   separadas: la sección "Worklist final" para certeza absoluta y "Pines vs. dirección
-  escrita" para los confirmados por Google).
+  escrita" para los confirmados por Google; el CSV sí los junta a los 3).

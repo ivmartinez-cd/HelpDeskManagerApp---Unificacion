@@ -44,6 +44,8 @@ class ItemWorklist:
     sucursal_nombre: str
     domicilio: str | None
     motivos: list[str]
+    latitud: float | None
+    longitud: float | None
 
 
 @dataclass(frozen=True)
@@ -97,7 +99,9 @@ def _items_de(
             motivos_por_id.setdefault(h.siges_sucursal_id, []).append(h.codigo)
     por_id = {h.siges_sucursal_id: h for h in hallazgos}
     return [
-        ItemWorklist(sid, por_id[sid].empresa_nombre, por_id[sid].sucursal_nombre,
-                      por_id[sid].domicilio, motivos)
+        ItemWorklist(
+            sid, por_id[sid].empresa_nombre, por_id[sid].sucursal_nombre,
+            por_id[sid].domicilio, motivos, por_id[sid].latitud, por_id[sid].longitud,
+        )
         for sid, motivos in motivos_por_id.items()
     ]

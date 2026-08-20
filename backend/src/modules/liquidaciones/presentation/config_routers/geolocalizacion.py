@@ -9,6 +9,7 @@ Google a <10) en vez de Page[T] — mismo criterio que los reportes de sync
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +18,10 @@ from src.modules.liquidaciones.application.use_cases.resolver_coordenadas import
     ESTADO_RESUELTA,
     SucursalConCandidatos,
 )
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (
+    SqlAlchemyPrestadorRepository,
+)
+from src.modules.liquidaciones.presentation import _liq_csv_export as csv_export
 from src.modules.liquidaciones.presentation.config_routers._deps import (
     require_update,
     require_view,
@@ -31,6 +36,7 @@ from src.modules.liquidaciones.presentation.dependencies import (
     build_corregir_pin,
     build_diagnosticar_asistente_km,
     build_evaluar_tier0,
+    build_generar_worklist_csv,
     build_geocodificar_sucursales,
     build_listar_coordenadas_pendientes,
     build_listar_hallazgos_tier1,
@@ -348,6 +354,21 @@ async def geovalidacion_worklist(
     (`estimacionLlamadasGoogle`). No llama a Google, solo estima."""
     resultado = await build_calcular_worklist_tier2(db).execute(prestador_id)
     return ResultadoWorklistTier2Out.from_dto(resultado)
+
+
+@router.get("/siges/prestador/{prestador_id}/geovalidacion/worklist/export")
+async def geovalidacion_worklist_export(
+    prestador_id: UUID,
+    _: Identity = require_view,
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """CSV para Gestión (Siges es read-only): junta Tier 0 certeza absoluta +
+    Tier 1b confirmado por dos fuentes + Tier 2 confirmado por Google en un
+    solo listado con Id_Sucursal, pin actual y pin sugerido."""
+    prestador = await SqlAlchemyPrestadorRepository(db).get_by_id(prestador_id)
+    clave = prestador.nombre_corto if prestador else str(prestador_id)
+    filas = await build_generar_worklist_csv(db).execute(prestador_id)
+    return csv_export.export_worklist_geovalidacion(filas, clave)
 
 
 @router.post("/tabla-km/{tabla_km_id}/buscar-lugar", response_model=BuscarLugarOut)

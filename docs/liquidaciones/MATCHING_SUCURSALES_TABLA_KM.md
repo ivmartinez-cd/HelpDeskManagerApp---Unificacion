@@ -80,9 +80,28 @@ Mecanismo genérico para cualquier PST — SAN JUAN es el piloto de verificació
 caso especial en el código. Confirmado con el usuario antes de implementar (0.4.a-d):
 auto-vincular N1, paso nuevo del wizard, alcance genérico, tabla de descartes.
 
+## Verificación de regresión (Fase 3, 2026-08-19)
+
+- **N0 sobre PENTACOM (PST de control)**: `backend/scripts/regresion_n0_pentacom.py`
+  reproduce el criterio de match exacto de `RefrescarDatosSiges` sin escribir nada —
+  da **247 encontradas / 276 filas**, coincide exacto con el número de referencia del
+  plan. El matching N1/N2 agregado no tocó `normalizar_nombre` ni alteró en absoluto
+  el comportamiento N0 para otros prestadores.
+- **ALT002 y km intactos**: se reanalizó en real la liquidación `08829e1c...`
+  (SAN JUAN, 2026-07, 250 incidentes, 53 alertas) vía `POST /{id}/reanalyze` —
+  incluye datos de `tabla_kms` que el auto-vínculo N1 modificó (82 filas). Resultado:
+  **53 alertas antes y después, mismo desglose por regla (ALT001=11, ALT002=23,
+  ALT005=6, ALT009=13), y las 23 descripciones de ALT002 comparadas una por una son
+  idénticas bit a bit** (mismo km cobrado, mismo esperado, misma sucursal). Confirma
+  por código (`update_domicilio` no toca `kms_recorrido`/`kms_a_facturar`/coordenadas)
+  y por evidencia real que tocar el vínculo Siges no afecta el cálculo de km ni las
+  alertas ya generadas.
+
 ## Pendiente
 
-- Piloto end-to-end real (ejecutar N1 + revisar N2 sobre SAN JUAN en producción de
-  dev) — no corrido todavía, queda a criterio del usuario disparar la escritura real.
-- Fase 2 (geovalidación de coordenadas con Georef/Nominatim/Google) — no arrancada.
-- Regresión formal contra PENTACOM (control N0) — pendiente de correr y documentar.
+- Fase 2 (geovalidación de coordenadas) — ver
+  `docs/liquidaciones/GEOVALIDACION_TABLA_KM.md`, Tier 0/1/1b/2 ya cerrados y
+  ejecutados en real.
+- Piloto end-to-end N1/N2 sobre SAN JUAN — ejecutado en real (ver historial de
+  commits): 82 filas auto-vinculadas por N1; los 64 candidatos N2 quedan pendientes
+  de revisión manual caso por caso desde el wizard (no se auto-confirman, por diseño).

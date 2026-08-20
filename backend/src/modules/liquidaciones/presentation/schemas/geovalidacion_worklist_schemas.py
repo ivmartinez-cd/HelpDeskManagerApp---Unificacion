@@ -17,6 +17,8 @@ class ItemWorklistOut(BaseModel):
     sucursal_nombre: str = Field(serialization_alias="sucursalNombre")
     domicilio: str | None
     motivos: list[str]
+    latitud: float | None
+    longitud: float | None
 
     @classmethod
     def from_dto(cls, i: ItemWorklist) -> ItemWorklistOut:
@@ -26,6 +28,8 @@ class ItemWorklistOut(BaseModel):
             sucursal_nombre=i.sucursal_nombre,
             domicilio=i.domicilio,
             motivos=i.motivos,
+            latitud=i.latitud,
+            longitud=i.longitud,
         )
 
 

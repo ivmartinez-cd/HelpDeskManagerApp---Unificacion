@@ -9,6 +9,7 @@ import io
 
 from fastapi.responses import StreamingResponse
 
+from src.modules.liquidaciones.application.use_cases.geovalidacion_csv import FilaWorklistCsv
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
@@ -93,3 +94,29 @@ def export_tabla_km(rows: list[TablaKm], prestador_map: dict[str, str]) -> Strea
         ])
     buf.seek(0)
     return _csv_response(buf, "tabla_km.csv")
+
+
+def export_worklist_geovalidacion(
+    rows: list[FilaWorklistCsv], prestador_clave: str
+) -> StreamingResponse:
+    """Siges es read-only — la corrección real la hace un humano en Gestión.
+    Junta la evidencia de los 3 tiers (0/1b/2) en un solo listado con
+    Id_Sucursal + pin actual + pin sugerido (cuando hay uno)."""
+    buf = io.StringIO()
+    buf.write(_BOM)
+    w = csv.writer(buf)
+    w.writerow([
+        "ID_SUCURSAL", "EMPRESA", "SUCURSAL", "DOMICILIO", "TIER", "EVIDENCIA",
+        "LATITUD_ACTUAL", "LONGITUD_ACTUAL", "LATITUD_SUGERIDA", "LONGITUD_SUGERIDA",
+    ])
+    for r in rows:
+        w.writerow([
+            r.siges_sucursal_id, r.empresa_nombre, r.sucursal_nombre, r.domicilio or "",
+            r.tier, r.evidencia,
+            r.latitud_actual if r.latitud_actual is not None else "",
+            r.longitud_actual if r.longitud_actual is not None else "",
+            r.latitud_sugerida if r.latitud_sugerida is not None else "",
+            r.longitud_sugerida if r.longitud_sugerida is not None else "",
+        ])
+    buf.seek(0)
+    return _csv_response(buf, f"geovalidacion_{prestador_clave}.csv")
