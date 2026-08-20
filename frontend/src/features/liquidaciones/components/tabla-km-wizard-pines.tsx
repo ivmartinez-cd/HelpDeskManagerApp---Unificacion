@@ -278,6 +278,7 @@ function SeccionWorklistTier2({ prestadorId, tope, onAuditado }: {
 }) {
   const [worklist, setWorklist] = useState<ResultadoWorklistTier2 | null>(null);
   const [auditando, setAuditando] = useState(false);
+  const [exportando, setExportando] = useState(false);
 
   const refresh = () =>
     liquidacionesApi.getWorklistTier2(prestadorId).then(setWorklist).catch(() => setWorklist(null));
@@ -294,6 +295,15 @@ function SeccionWorklistTier2({ prestadorId, tope, onAuditado }: {
     } finally { setAuditando(false); }
   };
 
+  const exportarCsv = async () => {
+    setExportando(true);
+    try {
+      await liquidacionesApi.exportWorklistCsv(prestadorId);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Error al exportar el CSV");
+    } finally { setExportando(false); }
+  };
+
   return (
     <Tarjeta
       numero="1d"
@@ -304,6 +314,9 @@ function SeccionWorklistTier2({ prestadorId, tope, onAuditado }: {
         <div className="flex h-16 items-center justify-center"><Spinner /></div>
       ) : (
         <div className="flex flex-col gap-3">
+          <BrandButton size="sm" variant="outline" loading={exportando} onClick={exportarCsv} className="self-start">
+            Exportar CSV para Gestión
+          </BrandButton>
           {worklist.certezaAbsoluta.length > 0 && (
             <div className="flex flex-col gap-1.5">
               <p className="font-body text-xs font-semibold text-foreground">

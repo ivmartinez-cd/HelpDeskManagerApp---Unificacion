@@ -102,6 +102,12 @@ export const geolocalizacionApi = {
       `/api/liquidaciones/siges/prestador/${prestadorId}/geovalidacion/worklist`,
     ),
 
+  exportWorklistCsv: (prestadorId: string) =>
+    httpClient.downloadFile(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/geovalidacion/worklist/export`,
+      "geovalidacion.csv",
+    ),
+
   corregirPin: (prestadorId: string, sigesSucursalId: number) =>
     httpClient.post<void>(
       `/api/liquidaciones/siges/prestador/${prestadorId}/sucursal/${sigesSucursalId}/corregir-pin`,
