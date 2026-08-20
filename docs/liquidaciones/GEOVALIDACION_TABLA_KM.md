@@ -1,10 +1,11 @@
 # Geovalidación de coordenadas (Fase 2)
 
 Ver `docs/MASTER_PROMPT_MATCHING_SUCURSALES_GEOVALIDACION.md` para el plan completo.
-Este doc cubre lo implementado hasta ahora: **Tier 0** (saneo geométrico puro),
-**Tier 1** (reverse geocoding de Georef, solo la comparación de provincia — el geocode
-de direcciones de Georef queda pendiente, ver más abajo) y **Tier 1b** (segunda opinión
-de Nominatim, confirmación por dos fuentes). Tier 2 (Google) — no arrancado.
+Este doc cubre lo implementado: **Tier 0** (saneo geométrico puro), **Tier 1**
+(reverse geocoding de Georef, solo la comparación de provincia — el geocode de
+direcciones de Georef queda pendiente, ver más abajo), **Tier 1b** (segunda opinión de
+Nominatim, confirmación por dos fuentes) y la **worklist final de Tier 2** (residuo
+real, reusando la integración Google ya existente en el sistema).
 
 ## Tier 0 — saneo puro, cero llamadas
 
@@ -135,6 +136,47 @@ UI: sección "Segunda opinión (Nominatim / OpenStreetMap)" en el paso "Pines", 
 Tier 1 — cada hallazgo confirmado se muestra con fondo distinto (severidad alta) y la
 atribución ODbL visible.
 
+## Tier 2 — worklist final (residuo real, Google solo si hace falta)
+
+**Decisión de diseño**: la integración con Google Geocoding para geovalidación **ya
+existía en el sistema** antes de esta fase — `GeocodificarSucursales`
+(`geocodificar-faltantes`, sucursales sin pin) y `AuditarPines`/`ListarPinesSospechosos`
+(`auditar-pines`, pin vs. domicilio escrito), ambas con cache/tope/confirmación humana.
+No se reimplementó: se construyó la pieza que realmente faltaba — la **worklist** que
+calcula el residuo real y acota `AuditarPines` a solo esos casos (parámetro nuevo
+`solo_ids`, retrocompatible — sin él, `AuditarPines` sigue auditando todo el prestador
+como antes).
+
+`domain/services/geovalidacion_worklist.py` (`calcular_residuo`, dominio puro): separa
+los hallazgos de Tier 0 en **certeza absoluta** (`fuera_de_argentina`/
+`latlon_invertidas` — geométricamente ya se sabe que están mal, no necesitan ninguna
+verificación) y **candidatos genuinos a Tier 2** (`pin_compartido`/`lejos_de_base`
+que Tier 1b NO pudo confirmar por dos fuentes gratis). `sin_coordenadas` queda afuera
+del todo — esas van por `geocodificar-faltantes`, no por auditar-pines.
+
+### Resultado medido (SAN JUAN, 2026-08-19)
+
+De los 663 hallazgos de Tier 0, el residuo real es **4 con certeza absoluta** (van
+directo a "corregir en Gestión", sin gastar nada) y **299 sucursales que genuinamente
+necesitarían Google** para verificar — muy por debajo de las 862 que costaría auditar
+el prestador completo (estimación del diagnóstico general), y lejísimos de las 948
+sucursales totales. Verificado con el endpoint real
+(`GET .../geovalidacion/worklist`, cero llamadas, solo estima).
+
+Endpoints: `GET .../geovalidacion/worklist` (residuo + estimación, solo lectura) y
+`POST .../auditar-pines` con body opcional `{"sigesSucursalIds": [...]}` para acotar
+la corrida real al residuo. UI: sección "Worklist final (Tier 2 — Google, solo el
+residuo)" en el paso "Pines", con el mismo modal de confirmación de costo
+(`BotonConsumoGoogle`) que ya usan el resto de las acciones que gastan Google en este
+módulo.
+
+**Ejecutado en real 2026-08-19** (autorizado explícitamente por el usuario, con el
+número exacto ya visible): 2 corridas de `auditar-pines` acotadas al residuo (299 ids)
+consumieron **268 llamadas reales** (200 + 68 — menos que la estimación de 299 porque
+algunas direcciones se repetían entre sucursales distintas) y confirmaron **69 pines
+sospechosos** (discrepancia > 5 km entre el pin de Siges y el geocode real del
+domicilio declarado), con discrepancias de hasta **2239 km**. Costo real ≈ $1,34.
+
 ## Pendiente
 
 - Calibrar `umbral_distancia_base_km` de Tier 0 con evidencia real (300 km es
@@ -146,8 +188,9 @@ atribución ODbL visible.
   medición de Fase 0 (0 resultados en 4 pruebas reales), así que su valor inmediato es
   bajo frente al reverse. El reverse (implementado) es "la validación más barata y
   contundente" que preveía el plan.
-- Tier 2 (Google): solo residuo tras Tier 0/1/1b, cero llamadas sin autorización
-  explícita del usuario. Con las 192 sucursales ya confirmadas por dos fuentes
-  gratuitas, el residuo real que necesitaría Google es chico (los 43 `sin_coordenadas`
-  de Tier 0 y los casos que Georef no pudo cubrir).
-- Worklist final combinada (Tier 0 + 1 + 1b + 2) con export CSV para Gestión.
+- CSV export para Gestión (Siges es read-only — la corrección real la hace un humano
+  ahí) — no implementado todavía.
+- Worklist visual final combinando los 69 pines confirmados de Tier 2 con los 4 de
+  certeza absoluta de Tier 0 en una sola vista rankeada (hoy quedan en pantallas
+  separadas: la sección "Worklist final" para certeza absoluta y "Pines vs. dirección
+  escrita" para los confirmados por Google).

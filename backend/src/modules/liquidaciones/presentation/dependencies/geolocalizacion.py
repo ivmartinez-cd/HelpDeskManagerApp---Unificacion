@@ -35,6 +35,10 @@ from src.modules.liquidaciones.application.use_cases.geovalidacion_tier1b import
     GeovalidacionTier1bPorts,
     ListarHallazgosTier1b,
 )
+from src.modules.liquidaciones.application.use_cases.geovalidacion_worklist import (
+    CalcularWorklistTier2,
+    WorklistTier2Ports,
+)
 from src.modules.liquidaciones.application.use_cases.pines_sospechosos import (
     AuditarPines,
     CorregirPin,
@@ -262,6 +266,18 @@ def build_consultar_nominatim_pendientes(session: AsyncSession) -> ConsultarNomi
 
 def build_listar_hallazgos_tier1b(session: AsyncSession) -> ListarHallazgosTier1b:
     return ListarHallazgosTier1b(_tier1b_ports(session))
+
+
+def build_calcular_worklist_tier2(session: AsyncSession) -> CalcularWorklistTier2:
+    return CalcularWorklistTier2(
+        WorklistTier2Ports(
+            prestadores=SqlAlchemyPrestadorRepository(session),
+            siges=siges_catalogo_gateway(),
+            geocode_cache=SqlAlchemyGeocodeCacheRepository(session),
+            evaluar_tier0=build_evaluar_tier0(session),
+            listar_tier1b=build_listar_hallazgos_tier1b(session),
+        )
+    )
 
 
 def build_diagnosticar_asistente_km(session: AsyncSession) -> DiagnosticarAsistenteKm:

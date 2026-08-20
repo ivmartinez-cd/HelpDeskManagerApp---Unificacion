@@ -76,9 +76,11 @@ class ListarPinesSospechosos:
     def __init__(self, ports: PinesPorts) -> None:
         self._ports = ports
 
-    async def execute(self, prestador_id: UUID) -> list[PinSospechoso]:
+    async def execute(
+        self, prestador_id: UUID, solo_ids: frozenset[int] | None = None
+    ) -> list[PinSospechoso]:
         sospechosos: list[PinSospechoso] = []
-        for sucursal, coords, direccion in await _con_pin(self._ports, prestador_id):
+        for sucursal, coords, direccion in await _con_pin(self._ports, prestador_id, solo_ids):
             candidatos = await self._ports.geocode_cache.get(direccion)
             if not candidatos:
                 continue
@@ -90,14 +92,21 @@ class ListarPinesSospechosos:
 
 
 class AuditarPines:
+    """`solo_ids`, cuando se pasa, acota la corrida a ese subconjunto de
+    sucursales — el residuo real de Tier 2 (ver `geovalidacion_worklist.py`),
+    en vez de auditar el prestador completo. Sin `solo_ids`, comportamiento
+    sin cambios."""
+
     def __init__(self, ports: PinesPorts, tope_llamadas: int) -> None:
         self._ports = ports
         self._tope = tope_llamadas
 
-    async def execute(self, prestador_id: UUID) -> AuditarPinesResultado:
+    async def execute(
+        self, prestador_id: UUID, solo_ids: frozenset[int] | None = None
+    ) -> AuditarPinesResultado:
         geocodificadas = ya_en_cache = pendientes = llamadas = 0
-        sin_direccion = await self._contar_sin_direccion(prestador_id)
-        for _, _, direccion in await _con_pin(self._ports, prestador_id):
+        sin_direccion = await self._contar_sin_direccion(prestador_id, solo_ids)
+        for _, _, direccion in await _con_pin(self._ports, prestador_id, solo_ids):
             if await self._ports.geocode_cache.get(direccion) is not None:
                 ya_en_cache += 1
                 continue
@@ -116,7 +125,9 @@ class AuditarPines:
             llamadas_google=llamadas,
         )
 
-    async def _contar_sin_direccion(self, prestador_id: UUID) -> int:
+    async def _contar_sin_direccion(
+        self, prestador_id: UUID, solo_ids: frozenset[int] | None
+    ) -> int:
         prestador = await validar_prestador_vinculado_siges(
             self._ports.prestadores, prestador_id
         )
@@ -126,18 +137,21 @@ class AuditarPines:
         return sum(
             1
             for s in sucursales
-            if parse_latlon_siges(s.latitud, s.longitud) is not None
+            if (solo_ids is None or s.siges_sucursal_id in solo_ids)
+            and parse_latlon_siges(s.latitud, s.longitud) is not None
             and armar_direccion(s.domicilio, s.localidad, s.provincia) is None
         )
 
 
 async def _con_pin(
-    ports: PinesPorts, prestador_id: UUID
+    ports: PinesPorts, prestador_id: UUID, solo_ids: frozenset[int] | None = None
 ) -> list[tuple[SigesSucursalCliente, tuple[float, float], str]]:
     prestador = await validar_prestador_vinculado_siges(ports.prestadores, prestador_id)
     sucursales = await ports.siges.list_sucursales_de_prestador(
         prestador.siges_empresa_id  # type: ignore[arg-type]
     )
+    if solo_ids is not None:
+        sucursales = [s for s in sucursales if s.siges_sucursal_id in solo_ids]
     resultado = []
     for s in sucursales:
         coords = parse_latlon_siges(s.latitud, s.longitud)

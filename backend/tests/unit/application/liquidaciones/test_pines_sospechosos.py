@@ -91,6 +91,21 @@ class TestAuditarPines:
         assert await ports.geocode_cache.get(_DIRECCION) == [_LEJOS]
 
     @pytest.mark.asyncio
+    async def test_solo_ids_acota_la_corrida_al_residuo(self) -> None:
+        geocoding = FakeGeocodingGateway({_DIRECCION: [_LEJOS]})
+        otra_direccion = "Rivadavia 500, CABA, Capital Federal, Argentina"
+        sucursales = [_sucursal(1), _sucursal(2, domicilio="Rivadavia 500")]
+        ports, prestador_id = _armar(sucursales, geocoding)
+
+        resultado = await AuditarPines(ports, tope_llamadas=10).execute(
+            prestador_id, solo_ids=frozenset({1})
+        )
+
+        assert resultado.geocodificadas == 1
+        assert geocoding.llamadas == [_DIRECCION]
+        assert await ports.geocode_cache.get(otra_direccion) is None
+
+    @pytest.mark.asyncio
     async def test_segunda_corrida_no_llama_a_google(self) -> None:
         geocoding = FakeGeocodingGateway({_DIRECCION: [_LEJOS]})
         ports, prestador_id = _armar([_sucursal()], geocoding)

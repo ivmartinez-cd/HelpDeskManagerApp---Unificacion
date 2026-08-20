@@ -9,7 +9,7 @@ Google a <10) en vez de Page[T] — mismo criterio que los reportes de sync
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
@@ -25,6 +25,7 @@ from src.modules.liquidaciones.presentation.dependencies import (
     build_aplicar_calcular_distancias,
     build_auditar_pines,
     build_buscar_lugar_fila,
+    build_calcular_worklist_tier2,
     build_consultar_georef_pendientes,
     build_consultar_nominatim_pendientes,
     build_corregir_pin,
@@ -70,6 +71,9 @@ from src.modules.liquidaciones.presentation.schemas.geovalidacion_tier1b_schemas
     HallazgoTier1bOut,
     ResultadoConsultarNominatimOut,
 )
+from src.modules.liquidaciones.presentation.schemas.geovalidacion_worklist_schemas import (
+    ResultadoWorklistTier2Out,
+)
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
@@ -78,6 +82,15 @@ router = APIRouter()
 
 class BuscarLugarOut(BaseModel):
     candidatos: list[GeocodeCandidatoOut]
+
+
+class AuditarPinesIn(BaseModel):
+    """`sigesSucursalIds`, cuando se manda, acota la auditoría a ese
+    subconjunto — el residuo real de Tier 2 (ver `geovalidacion/worklist`),
+    en vez del prestador completo. `None`/vacío = comportamiento sin cambios."""
+
+    model_config = ConfigDict(populate_by_name=True)
+    siges_sucursal_ids: list[int] | None = Field(default=None, alias="sigesSucursalIds")
 
 
 @router.get(
@@ -307,11 +320,34 @@ async def corregir_pin(
 )
 async def auditar_pines(
     prestador_id: UUID,
+    body: AuditarPinesIn | None = None,
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db),
 ) -> AuditarPinesOut:
-    resultado = await build_auditar_pines(db).execute(prestador_id)
+    solo_ids = (
+        frozenset(body.siges_sucursal_ids)
+        if body is not None and body.siges_sucursal_ids
+        else None
+    )
+    resultado = await build_auditar_pines(db).execute(prestador_id, solo_ids)
     return AuditarPinesOut.from_dto(resultado)
+
+
+@router.get(
+    "/siges/prestador/{prestador_id}/geovalidacion/worklist",
+    response_model=ResultadoWorklistTier2Out,
+)
+async def geovalidacion_worklist(
+    prestador_id: UUID,
+    _: Identity = require_view,
+    db: AsyncSession = Depends(get_db),
+) -> ResultadoWorklistTier2Out:
+    """Residuo real tras Tier 0+1+1b — separa lo que ya tiene certeza
+    absoluta (corregir directo, sin Google) de lo que genuinamente
+    ameritaría Tier 2, con la estimación de llamadas nuevas a Google
+    (`estimacionLlamadasGoogle`). No llama a Google, solo estima."""
+    resultado = await build_calcular_worklist_tier2(db).execute(prestador_id)
+    return ResultadoWorklistTier2Out.from_dto(resultado)
 
 
 @router.post("/tabla-km/{tabla_km_id}/buscar-lugar", response_model=BuscarLugarOut)
