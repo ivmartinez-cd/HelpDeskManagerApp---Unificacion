@@ -115,9 +115,9 @@
 
 @layer base {
   :root {
-    --background: hsl(0 0% 97%);
+    --background: hsl(28 40% 92%);
     --foreground: hsl(240 10% 4%);
-    --card: hsl(0 0% 100%);
+    --card: hsl(28 45% 96%);
     --card-foreground: hsl(240 10% 4%);
     --popover: hsl(0 0% 100%);
     --popover-foreground: hsl(240 10% 4%);
@@ -178,7 +178,7 @@
     --border: hsl(240 5% 15%);
     --input: hsl(240 5% 15%);
     --ring: hsl(24 95% 53%);
-    --tint-alpha: 13%;
+    --tint-alpha: 22%;
     --accent-text-weight: 100%;
   }
 }

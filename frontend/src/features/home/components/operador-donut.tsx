@@ -1,6 +1,8 @@
 "use client";
 
 import { ArcElement, Chart as ChartJS, Tooltip } from "chart.js";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
 import { fmtInt, fmtPct } from "../utils/inicio-format";
 
@@ -29,6 +31,17 @@ export function OperadorDonut({
   centerSub: string;
   tooltipUnidad: string;
 }) {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  // Evita hidratación SSR/CSR mismatch (el tema real solo se conoce en el
+  // cliente, vía localStorage/prefers-color-scheme) — mismo patrón que ThemeToggle.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), []);
+  // El borde separa gajos de color similar (p. ej. oliva y dorado): en oscuro
+  // un borde casi negro se pierde contra ellos, hace falta uno claro
+  // (feedback usuario, 2026-08-20).
+  const wedgeBorderColor = mounted && resolvedTheme === "dark" ? "hsl(0 0% 98%)" : "hsl(240 10% 7%)";
+
   return (
     <>
       <div className="relative mx-auto my-1.5 flex h-[130px] w-[130px] items-center justify-center">
@@ -40,7 +53,7 @@ export function OperadorDonut({
                 data: rows.map((r) => r.valor),
                 backgroundColor: rows.map((r) => r.color),
                 borderWidth: 2,
-                borderColor: "hsl(240 10% 7%)",
+                borderColor: wedgeBorderColor,
                 hoverOffset: 5,
               },
             ],
