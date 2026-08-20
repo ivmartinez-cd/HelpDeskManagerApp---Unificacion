@@ -175,7 +175,7 @@ function sumarGoogle(mapa: Map<number, PinRoto>, pines: PinSospechoso[]): void {
     pin.vaAlCsv = true;
     agregarEvidencia(pin, {
       fuente: "google",
-      texto: `El pin de Gestión está a ${p.discrepanciaKm.toFixed(p.discrepanciaKm >= 10 ? 0 : 1)} km de la dirección escrita (${p.direccion}). Según Google.`,
+      texto: `El pin de Gestión está a ${p.discrepanciaKm.toFixed(p.discrepanciaKm >= 10 ? 0 : 1)} km de la dirección escrita, según Google.`,
       detalle: `Tier 2 · Google Geocoding: ${p.formattedAddress} · precisión ${p.locationType}`,
     });
   }

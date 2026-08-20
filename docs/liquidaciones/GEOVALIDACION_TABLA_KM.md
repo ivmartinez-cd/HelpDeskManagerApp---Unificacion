@@ -53,11 +53,17 @@ rankeado por severidad (alta primero), sin costo, se puede pedir en cada request
 límite de llamadas (no hay proveedor externo de por medio). No persiste nada: Tier 0 es
 barato de recalcular, así que no hace falta cachear ni una tabla de hallazgos.
 
-UI: sección "Geovalidación básica (Tier 0)" arriba del paso "Pines" del wizard APB
-(`tabla-km-wizard-pines.tsx`) — cada hallazgo con severidad, motivo legible y link a
-Google Maps para verificar a ojo. Sin acción de "corregir" todavía: Tier 0 no tiene un
-candidato sugerido (no llamó a ningún geocoder), así que la única acción es investigar
-y corregir en Gestión o cargar un override local vía el flujo de coordenadas existente.
+UI (desde el rediseño 2026-08-20, ver `REDISENO_UX_ASISTENTE_KM.md`): los hallazgos de
+Tier 0 ya no tienen sección propia. Los de certeza absoluta (`fuera_de_argentina`,
+`latlon_invertidas`) aparecen como ítems "pin imposible" en la bandeja única del
+momento "Revisar pendientes" del Asistente de KM (`tabla-km-wizard-bandeja-pines.tsx`,
+composición en `lib/asistente-km-bandeja.ts`), con texto llano ("El pin está fuera de
+Argentina", "Latitud y longitud parecen intercambiadas"), link "Ver en el mapa" y el
+código técnico en "ver detalle técnico". `pin_compartido`/`lejos_de_base` sin confirmar
+se agrupan en un solo ítem "N sucursales comparten pin… — Verificar con Google";
+`sin_coordenadas` va por el ítem "N sucursales no tienen ubicación". Tier 0 no tiene
+candidato sugerido: la acción sigue siendo corregir en Gestión (el ítem dice "Va al CSV
+para Gestión") o cargar un override local.
 
 ## Tier 1 — reverse geocoding de Georef (gratis, sin auth)
 
@@ -97,9 +103,13 @@ en Chubut, Tucumán, Buenos Aires, Neuquén, Santa Fe y Córdoba. Endpoints:
 `POST .../geovalidacion/tier1/consultar-georef` (escribe cache) y
 `GET .../geovalidacion/tier1` (`Page[HallazgoTier1]`, solo lectura).
 
-UI: sección "Provincia del pin vs. Gestión (Georef)" en el paso "Pines" del wizard,
-debajo de Tier 0 — botón "Consultar Georef" (repetirlo solo consulta lo pendiente) y
-lista de discrepancias con el link a Maps.
+UI (rediseño 2026-08-20): `consultar-georef` ya no es un botón — corre solo tras
+"Empezar" en la pantalla de chequeos del Asistente de KM ("Comparamos la provincia de
+cada pin con datos oficiales (sin costo)", `hooks/use-asistente-km.ts`); si queda
+residuo por tope, la bandeja muestra "Quedan N pines por chequear — Seguir chequeando".
+Las discrepancias que Nominatim todavía no confirmó aparecen como ítems "pin dudoso"
+("Según datos oficiales el pin cae en X… Falta la segunda opinión") con el nombre
+Georef solo en "ver detalle técnico".
 
 ## Tier 1b — segunda opinión de Nominatim (gratis)
 
@@ -132,9 +142,12 @@ Fe, y el resto repartido en 12 provincias más). Endpoints:
 `POST .../geovalidacion/tier1b/consultar-nominatim` y
 `GET .../geovalidacion/tier1b` (`Page[HallazgoTier1b]`).
 
-UI: sección "Segunda opinión (Nominatim / OpenStreetMap)" en el paso "Pines", debajo de
-Tier 1 — cada hallazgo confirmado se muestra con fondo distinto (severidad alta) y la
-atribución ODbL visible.
+UI (rediseño 2026-08-20): `consultar-nominatim` también corre solo tras "Empezar"
+("Pedimos una segunda opinión sobre los pines dudosos (sin costo)"). Cada confirmación
+es un ítem destacado "pin en otra provincia" de la bandeja ("El pin está en X, pero su
+dirección dice Y. Dos fuentes independientes lo confirman."), con la atribución ODbL
+al pie de la bandeja siempre que haya al menos un ítem derivado de Nominatim y además
+dentro de su "ver detalle técnico" (`atribucion` del schema).
 
 ## Tier 2 — worklist final (residuo real, Google solo si hace falta)
 
@@ -165,10 +178,12 @@ sucursales totales. Verificado con el endpoint real
 
 Endpoints: `GET .../geovalidacion/worklist` (residuo + estimación, solo lectura) y
 `POST .../auditar-pines` con body opcional `{"sigesSucursalIds": [...]}` para acotar
-la corrida real al residuo. UI: sección "Worklist final (Tier 2 — Google, solo el
-residuo)" en el paso "Pines", con el mismo modal de confirmación de costo
-(`BotonConsumoGoogle`) que ya usan el resto de las acciones que gastan Google en este
-módulo.
+la corrida real al residuo. UI (rediseño 2026-08-20): el residuo es el ítem agrupado
+"N sucursales comparten pin con otras o están muy lejos de la base" de la bandeja, cuyo
+botón "Verificar estas N con Google" llama a `auditar-pines` acotado por ids a través del
+mismo `BotonConsumoGoogle` (costo visible antes) que el resto de las acciones pagas. Los
+pines que Google confirmó distintos de la dirección escrita son ítems "N km de
+diferencia" con "Usar la dirección escrita" (`corregir-pin`).
 
 **Ejecutado en real 2026-08-19** (autorizado explícitamente por el usuario, con el
 número exacto ya visible): 2 corridas de `auditar-pines` acotadas al residuo (299 ids)
@@ -188,7 +203,8 @@ Endpoint `GET .../geovalidacion/worklist/export` (`text/csv`, columnas `ID_SUCUR
 EMPRESA, SUCURSAL, DOMICILIO, TIER, EVIDENCIA, LATITUD_ACTUAL, LONGITUD_ACTUAL,
 LATITUD_SUGERIDA, LONGITUD_SUGERIDA`). Probado en real: **265 filas exportadas** (4
 Tier 0 + 192 Tier 1b + 69 Tier 2), verificado con parseo CSV real (no naive). Botón
-"Exportar CSV para Gestión" en la sección worklist del wizard.
+"Exportar CSV para Gestión" al pie del momento "Revisar pendientes" del asistente y
+repetido en la pantalla de cierre (`BotonExportarCsv`, `tabla-km-wizard-bandeja.tsx`).
 
 ## Calibración de `umbral_distancia_base_km` (2026-08-19)
 
@@ -206,7 +222,14 @@ No se generalizó a una constante universal: sigue siendo un parámetro por
 corrida/PST (`evaluar_tier0(..., umbral_distancia_base_km=...)`) — un PST con radio
 de operación real distinto puede necesitar otro valor.
 
-## Worklist visual combinada (2026-08-19)
+## Worklist visual combinada (2026-08-19) — superada el 2026-08-20
+
+> Histórico. El 2026-08-20 el Asistente de KM se rehizo entero (ver
+> `REDISENO_UX_ASISTENTE_KM.md`): los 4 archivos `tabla-km-wizard-pines*.tsx` descriptos
+> acá ya no existen; su contenido vive en la bandeja única (`tabla-km-wizard-bandeja*.tsx`)
+> y en la composición pura `lib/asistente-km-bandeja.ts`, que junta en UN ítem por sucursal
+> todas las evidencias (Tier 0 certeza, Tier 1/1b, Google) en vez de repetir la sucursal
+> por sección. Se conserva el texto original como registro de la decisión intermedia.
 
 La sección "Worklist final" del wizard (`tabla-km-wizard-pines-worklist.tsx`) junta en
 una sola vista rankeada lo que antes quedaba en dos pantallas separadas: los hallazgos

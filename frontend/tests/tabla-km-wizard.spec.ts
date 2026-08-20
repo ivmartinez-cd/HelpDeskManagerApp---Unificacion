@@ -37,7 +37,7 @@ const COORDENADAS = [{
   ],
 }];
 const TIER1B = [{ sigesSucursalId: 2, empresaNombre: "CEVA", sucursalNombre: "San Juan", provinciaDeclarada: "San Juan", provinciaGeoref: "La Pampa", provinciaNominatim: "La Pampa", latitud: -38.416, longitud: -63.616, atribucion: "Data © OpenStreetMap contributors, ODbL 1.0" }];
-const TIER1 = TIER1B.map(({ provinciaNominatim: _n, atribucion: _a, ...h }) => h);
+const TIER1 = [{ sigesSucursalId: 2, empresaNombre: "CEVA", sucursalNombre: "San Juan", provinciaDeclarada: "San Juan", provinciaGeoref: "La Pampa", latitud: -38.416, longitud: -63.616 }];
 const WORKLIST = {
   certezaAbsoluta: [{ sigesSucursalId: 1, empresaNombre: "Gobierno de San Juan", sucursalNombre: "Escuela 20 de Junio", domicilio: "La Madrid y Mendoza S/N", motivos: ["fuera_de_argentina"], latitud: 40.4167, longitud: -3.7032 }],
   requiereVerificacion: [
@@ -47,6 +47,19 @@ const WORKLIST = {
   estimacionLlamadasGoogle: 2,
 };
 const PINES = [{ sigesSucursalId: 40, empresaNombre: "Gobierno de San Juan", sucursalNombre: "ENI N.º 65", direccion: "Rio Gallegos S/N 52, CHIMBAS", latitudSiges: -31.49, longitudSiges: -68.53, latitudGeocode: -51.62, longitudGeocode: -69.21, formattedAddress: "Rio Gallegos, Santa Cruz", locationType: "APPROXIMATE", discrepanciaKm: 2239.026 }];
+
+const REFRESCO = {
+  actualizadas: 1, sinCambios: 0, noEncontradas: 1, vinculadas: 1,
+  cambios: [{ empresaNombre: "Gobierno de San Juan", sucursalNombre: "Escuela 20 de Junio", domicilioAntes: "La Madrid S/N", domicilioDespues: "La Madrid y Mendoza S/N" }],
+  noEncontradasDetalle: [{ empresaNombre: "Gobierno de San Juan", sucursalNombre: "Escuela Vieja Cerrada" }],
+};
+const PREVIEW = {
+  id: "prev-1", prestadorId: PID, sinUbicar: 1, sinRuta: 0, elementosGoogle: 4, sinActividad: 0, createdAt: "2026-08-20T00:00:00Z",
+  filas: [
+    { accion: "actualizar", tablaKmId: "1", empresaNombre: "Gobierno de San Juan", sucursalNombre: "Escuela 20 de Junio", coordsOrigen: "siges", latitudDestino: -31.5, longitudDestino: -68.5, kmsIda: 10.2, kmsVuelta: 10.4, kmsTotal: 20.6, umbralViatico: 30, aplicaViatico: false, kmsAFacturar: 0, kmsRecorridoActual: 0, kmsAFacturarActual: 0 },
+    { accion: "crear", tablaKmId: null, empresaNombre: "CEVA", sucursalNombre: "San Juan", coordsOrigen: "geocode", latitudDestino: -31.6, longitudDestino: -68.6, kmsIda: 40, kmsVuelta: 40, kmsTotal: 80, umbralViatico: 30, aplicaViatico: true, kmsAFacturar: 80, kmsRecorridoActual: null, kmsAFacturarActual: null },
+  ],
+};
 
 const page1 = <T,>(items: T[]) => ({ items, total: items.length, page: 1, size: 1000 });
 const json = (body: unknown) => ({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
@@ -71,6 +84,11 @@ async function mockear(page: Page, escrituras: string[]) {
     if (p.endsWith("/pines-sospechosos")) return route.fulfill(json(page1(PINES)));
     if (p.endsWith("/consultar-georef")) return route.fulfill(json({ consultadas: 0, yaEnCache: 3, sinCoordenadas: 0, pendientesPorTope: 0 }));
     if (p.endsWith("/consultar-nominatim")) return route.fulfill(json({ consultadas: 0, yaEnCache: 1, pendientesPorTope: 0 }));
+    if (p.endsWith("/refrescar-datos-sucursales")) return route.fulfill(json(REFRESCO));
+    if (p.endsWith("/matching/auto-vincular-n1")) return route.fulfill(json({ vinculadas: 2, sinCambios: 3, detalle: [] }));
+    if (req.method() === "POST" && p.endsWith("/api/liquidaciones/tabla-km")) return route.fulfill(json({ ...TABLA_KM_MOCK[0], id: "nuevo" }));
+    if (p.endsWith("/calcular-distancias/preview")) return route.fulfill(json(PREVIEW));
+    if (p.endsWith("/calcular-distancias/aplicar")) return route.fulfill(json({ creadas: 1, actualizadas: 1 }));
     return route.continue();
   });
 }
@@ -108,7 +126,7 @@ test("asistente de KM: intro, chequeos gratis, Traer de Gestión y bandeja únic
   await dialog.getByRole("button", { name: /Revisar pendientes/ }).click();
   await expect(dialog.getByText("El pin está fuera de Argentina")).toBeVisible();
   await expect(dialog.getByText("El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.")).toBeVisible();
-  await expect(dialog.getByText(/2239 km de la dirección escrita/)).toBeVisible();
+  await expect(dialog.getByText(/2239 km de la dirección escrita, según Google/)).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Usar la dirección escrita" })).toBeVisible();
   await expect(dialog.getByText('¿"Escuela ANTONIO QUARANTA" es esta sucursal de Gestión?')).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Sí, es esta" })).toHaveCount(1);
@@ -122,4 +140,47 @@ test("asistente de KM: intro, chequeos gratis, Traer de Gestión y bandeja únic
   await dialog.getByRole("radio", { name: "Nombres" }).click();
   await expect(dialog.getByText("El pin está fuera de Argentina")).toHaveCount(0);
   await expect(dialog.getByRole("button", { name: "Sí, es esta" })).toHaveCount(1);
+});
+
+test("asistente de KM: Traer de Gestión agrupa refrescar + vincular + importar, y el cierre tras aplicar km", async ({ page }) => {
+  await setFakeSession(page);
+  const escrituras: string[] = [];
+  await mockear(page, escrituras);
+
+  await page.goto("/liquidaciones/configuracion/tabla-km");
+  await page.waitForLoadState("networkidle");
+  await page.selectOption('select[aria-label="Filtrar por PST"]', PID);
+  await page.getByRole("button", { name: /Asistente de KM/ }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Empezar" }).click();
+
+  // Un solo botón: refrescar → N1 → importar la nueva con actividad (nunca el ex-cliente).
+  await dialog.getByRole("button", { name: "Traer de Gestión", exact: true }).click();
+  await expect(dialog.getByText(/Listo: actualizamos 1 domicilio, completamos 1 vínculo, importamos 1 sucursal y vinculamos 2 por nombre automáticamente\./)).toBeVisible();
+  await expect(dialog.getByText("1 fila de tu tabla no aparece en Gestión — están en Revisar pendientes.")).toBeVisible();
+  const posts = escrituras.filter((e) => !e.includes("/consultar-"));
+  expect(posts).toEqual([
+    `POST /api/liquidaciones/siges/prestador/${PID}/refrescar-datos-sucursales`,
+    `POST /api/liquidaciones/siges/prestador/${PID}/matching/auto-vincular-n1`,
+    "POST /api/liquidaciones/tabla-km",
+  ]);
+  await page.screenshot({ path: "test-results/tabla-km-wizard-traer-listo.png" });
+
+  // La fila sin candidato aparece en la bandeja gracias al refresco.
+  await dialog.getByRole("button", { name: "Revisar pendientes →" }).click();
+  await expect(dialog.getByText('No encontramos "Escuela Vieja Cerrada" en Gestión')).toBeVisible();
+
+  // Calcular km: gate sin ubicar → calcular igual → modal de costo → preview → aplicar → cierre.
+  await dialog.getByRole("button", { name: /Calcular km/ }).last().click();
+  await dialog.getByRole("button", { name: /Calcular igual/ }).click();
+  await dialog.getByRole("button", { name: "Calcular km", exact: true }).click();
+  await page.getByRole("button", { name: "Sí, consultar Google" }).click();
+  await expect(dialog.getByText("1 filas nuevas · 1 a actualizar · 1 sin ubicar · 4 consultas usadas")).toBeVisible();
+  await expect(dialog.getByRole("columnheader", { name: "Origen del pin" })).toBeVisible();
+  await dialog.getByRole("button", { name: "Aplicar a la Tabla KM…" }).click();
+  await page.getByRole("button", { name: "Aplicar", exact: true }).click();
+  await expect(dialog.getByText("Listo: tu Tabla KM quedó al día.")).toBeVisible();
+  await expect(dialog.getByText("1 fila nueva y 1 actualizada. El umbral de viático y las observaciones no se tocaron.")).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Exportar CSV para Gestión" })).toBeVisible();
+  await page.screenshot({ path: "test-results/tabla-km-wizard-cierre.png" });
 });

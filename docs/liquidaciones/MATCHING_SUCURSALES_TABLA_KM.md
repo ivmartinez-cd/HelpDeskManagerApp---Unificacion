@@ -70,9 +70,19 @@ para confirmar (42%)**, **5 sin candidato (3%, alta manual o baja)**.
   descarte en `matching_descartes_tabla_km` (migración `9c3e5a71f2d4`) — el mismo
   candidato no vuelve a proponerse para esa fila en corridas futuras (decisión 0.4.d).
 
-UI: paso "Sin match" del wizard APB (`tabla-km-wizard-matching.tsx`), entre Importar y
-Ubicar — resolver el matching primero evita intentar geocodificar con datos de una fila
-que en realidad ya tiene domicilio real en Siges, solo que bajo otro símbolo/abreviatura.
+UI (desde el rediseño 2026-08-20, ver `REDISENO_UX_ASISTENTE_KM.md`; el paso "Sin
+match" y `tabla-km-wizard-matching.tsx` ya no existen): N1 corre dentro del botón único
+"Traer de Gestión" del momento 1 del Asistente de KM (`tabla-km-wizard-traer.tsx`:
+refrescar → `auto-vincular-n1` → importar nuevas activas), y el resumen dice "vinculamos
+N por nombre automáticamente". Cada propuesta N2 es un ítem de la bandeja única del
+momento "Revisar pendientes" (`tabla-km-wizard-bandeja-nombres.tsx`): "¿'{nombre local}'
+es esta sucursal de Gestión?" con "Sí, es esta" (`confirmar`) / "No es esta"
+(`rechazar`) por candidato, "Ver N candidatos más" y el score/motivo técnico en "ver
+detalle". Las filas sin ningún candidato aparecen como "No encontramos '{nombre}' en
+Gestión" (fuente: `noEncontradasDetalle` del refresco) con la indicación de corregir el
+nombre en la Tabla KM. Resolver el matching antes de calcular sigue siendo el orden
+natural (momento 2 antes del 3): evita geocodificar filas que ya tienen domicilio real en
+Siges bajo otro símbolo/abreviatura.
 
 ## Alcance y decisiones tomadas (2026-08-19)
 

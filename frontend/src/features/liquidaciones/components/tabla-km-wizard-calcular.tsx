@@ -102,7 +102,6 @@ export function MomentoCalcular({ prestador, estado, preview, setPreview, onApli
   const aCrear = preview?.filas.filter((f) => f.accion === "crear").length ?? 0;
   const aActualizar = preview?.filas.filter((f) => f.accion === "actualizar").length ?? 0;
   const gateSinUbicar = estado.sinCoordenadas > 0 && !calcularIgual && !preview;
-  const sobreTope = estado.estimacionDistancias > estado.topePorCorrida;
 
   return (
     <div className="flex flex-col gap-4">
@@ -128,17 +127,9 @@ export function MomentoCalcular({ prestador, estado, preview, setPreview, onApli
       )}
 
       {!preview && !gateSinUbicar && (
-        <div className="flex flex-col gap-2">
-          <BotonConsumoGoogle estimacion={estado.estimacionDistancias} tope={estado.topePorCorrida} bloquearSobreTope loading={calculando} onEjecutar={calcular}>
-            Calcular km
-          </BotonConsumoGoogle>
-          {sobreTope && (
-            <p className="font-body text-xs text-muted-foreground">
-              Calcular los km de estas {estado.estimacionDistancias / 2} sucursales necesita ~{estado.estimacionDistancias} consultas a
-              Google y el límite por corrida es {estado.topePorCorrida}. No se puede hacer de una sola vez — avisale al administrador.
-            </p>
-          )}
-        </div>
+        <BotonConsumoGoogle estimacion={estado.estimacionDistancias} tope={estado.topePorCorrida} bloquearSobreTope loading={calculando} onEjecutar={calcular}>
+          Calcular km
+        </BotonConsumoGoogle>
       )}
 
       {error && <p className="font-body text-sm text-destructive">{error}</p>}
