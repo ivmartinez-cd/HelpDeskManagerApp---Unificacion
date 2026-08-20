@@ -8,9 +8,12 @@ import type {
   CoberturaEntityType,
   CoberturaEstadoUi,
   CoberturaOperadorOption,
+  FilaCoberturas,
+  Intercambio,
 } from "../types/coberturas";
 import { COBERTURA_CONFIG } from "../lib/config";
-import { deriveEstado } from "../lib/estado";
+import { agruparFilas, estadoFila, filaCoincide } from "../lib/intercambios";
+import { CancelarCoberturaModal } from "./cancelar-cobertura-modal";
 import { CoberturaModal } from "./cobertura-modal";
 import { CoberturasTabla } from "./coberturas-tabla";
 import { useSession } from "@/services/session-provider";
@@ -20,7 +23,6 @@ import {
   BrandInput,
   BrandSkeleton,
 } from "@/shared/components/ui/brand-form";
-import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 
 const FILTROS: { value: "todos" | CoberturaEstadoUi; label: string }[] = [
@@ -50,7 +52,8 @@ export function CoberturasView({ entityType }: { entityType: CoberturaEntityType
   const [pagina, setPagina] = useState(1);
   const [creando, setCreando] = useState(false);
   const [editando, setEditando] = useState<Cobertura | null>(null);
-  const [cancelando, setCancelando] = useState<Cobertura | null>(null);
+  const [editandoIntercambio, setEditandoIntercambio] = useState<Intercambio | null>(null);
+  const [cancelando, setCancelando] = useState<FilaCoberturas | null>(null);
   const [cancelandoBusy, setCancelandoBusy] = useState(false);
 
   const load = useCallback(
@@ -86,15 +89,14 @@ export function CoberturasView({ entityType }: { entityType: CoberturaEntityType
     [alcanceOptions],
   );
 
+  // Un intercambio (ADR-026) son dos filas del listado plano: se agrupan
+  // en una sola antes de filtrar y paginar.
   const filtradas = useMemo(() => {
     if (!coberturas) return [];
     const q = busqueda.trim().toLowerCase();
-    return coberturas.filter((c) => {
-      if (filtroEstado !== "todos" && deriveEstado(c) !== filtroEstado) return false;
-      if (!q) return true;
-      return [c.ausenteNombre, c.reemplazanteNombre, c.ausenteId, c.reemplazanteId]
-        .filter((v): v is string => v !== null)
-        .some((v) => v.toLowerCase().includes(q));
+    return agruparFilas(coberturas).filter((fila) => {
+      if (filtroEstado !== "todos" && estadoFila(fila) !== filtroEstado) return false;
+      return !q || filaCoincide(fila, q);
     });
   }, [coberturas, filtroEstado, busqueda]);
 
@@ -102,11 +104,20 @@ export function CoberturasView({ entityType }: { entityType: CoberturaEntityType
   const paginaActual = Math.min(pagina, totalPaginas);
   const visibles = filtradas.slice((paginaActual - 1) * POR_PAGINA, paginaActual * POR_PAGINA);
 
+  const handleEditar = (fila: FilaCoberturas) => {
+    if (fila.tipo === "cobertura") setEditando(fila.cobertura);
+    else setEditandoIntercambio(fila.intercambio);
+  };
+
   const handleCancelar = () => {
     if (!cancelando) return;
     setCancelandoBusy(true);
-    config.api
-      .cancel(cancelando.id)
+    const peticion =
+      cancelando.tipo === "cobertura"
+        ? config.api.cancel(cancelando.cobertura.id)
+        : (config.intercambios?.cancel(cancelando.intercambio.id) ??
+          Promise.reject(new Error("Este módulo no habilita intercambios.")));
+    peticion
       .then(() => {
         setCancelando(null);
         return load();
@@ -210,7 +221,7 @@ export function CoberturasView({ entityType }: { entityType: CoberturaEntityType
               alcanceUnidad={config.alcanceUnidad}
               canEdit={puedeMutar}
               canCancel={puedeMutar}
-              onEdit={setEditando}
+              onEdit={handleEditar}
               onCancel={setCancelando}
             />
           )}
@@ -245,45 +256,35 @@ export function CoberturasView({ entityType }: { entityType: CoberturaEntityType
         </>
       )}
 
-      {(creando || editando) && (
+      {(creando || editando || editandoIntercambio) && (
         <CoberturaModal
           config={config}
           operadores={operadores}
           alcanceOptions={alcanceOptions}
           cobertura={editando}
+          intercambio={editandoIntercambio}
           onClose={() => {
             setCreando(false);
             setEditando(null);
+            setEditandoIntercambio(null);
           }}
           onSaved={() => {
             setCreando(false);
             setEditando(null);
+            setEditandoIntercambio(null);
             void load();
           }}
         />
       )}
 
       {cancelando && (
-        <BrandModal isOpen onClose={() => setCancelando(null)} title="Cancelar cobertura" widthPx={440}>
-          <p className="font-body text-sm text-foreground">
-            ¿Cancelar la cobertura de{" "}
-            <span className="font-semibold">{cancelando.ausenteNombre ?? cancelando.ausenteId}</span>?
-            Sus {config.alcanceUnidad} vuelven al operador original de inmediato. La regla queda
-            registrada como cancelada, no se borra.
-          </p>
-          <div className="mt-5 flex justify-end gap-2">
-            <BrandButton variant="outline" onClick={() => setCancelando(null)}>
-              Volver
-            </BrandButton>
-            <BrandButton
-              onClick={handleCancelar}
-              loading={cancelandoBusy}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              Cancelar cobertura
-            </BrandButton>
-          </div>
-        </BrandModal>
+        <CancelarCoberturaModal
+          fila={cancelando}
+          alcanceUnidad={config.alcanceUnidad}
+          busy={cancelandoBusy}
+          onVolver={() => setCancelando(null)}
+          onConfirmar={handleCancelar}
+        />
       )}
     </div>
   );

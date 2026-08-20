@@ -182,6 +182,8 @@ class AsignacionOverrideResponse(BaseModel):
     slot_ids: list[uuid.UUID] = Field(serialization_alias="slotIds")
     estado: str
     motivo: str | None
+    # Par de coberturas cruzadas al que pertenece (ADR-026); null en una común.
+    intercambio_id: uuid.UUID | None = Field(default=None, serialization_alias="intercambioId")
 
     @classmethod
     def from_dto(cls, dto: AsignacionOverrideDTO) -> "AsignacionOverrideResponse":
@@ -197,6 +199,7 @@ class AsignacionOverrideResponse(BaseModel):
             slot_ids=dto.slot_ids,
             estado=dto.estado,
             motivo=dto.motivo,
+            intercambio_id=dto.intercambio_id,
         )
 
 

@@ -31,6 +31,7 @@ class SqlAlchemyAsignacionOverrideRepository:
             estado=override.estado,
             motivo=override.motivo,
             created_by_user_id=override.created_by_user_id,
+            intercambio_id=override.intercambio_id,
         )
         if not alcance_total:
             model.slots = [
@@ -88,6 +89,18 @@ class SqlAlchemyAsignacionOverrideRepository:
             grouped.setdefault(r.operador_ausente_id, []).append(_to_entity(r))
         return grouped
 
+    async def list_by_intercambio(
+        self, intercambio_id: uuid.UUID
+    ) -> list[TurnoAsignacionOverride]:
+        stmt = (
+            select(TurnoAsignacionOverrideModel)
+            .options(selectinload(TurnoAsignacionOverrideModel.slots))
+            .where(TurnoAsignacionOverrideModel.intercambio_id == intercambio_id)
+            .order_by(TurnoAsignacionOverrideModel.id)  # solo determinismo, sin semántica
+        )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_entity(r) for r in rows]
+
     async def update(self, override: TurnoAsignacionOverride) -> None:
         stmt = (
             select(TurnoAsignacionOverrideModel)
@@ -144,4 +157,5 @@ def _to_entity(model: TurnoAsignacionOverrideModel) -> TurnoAsignacionOverride:
         estado=estado,
         motivo=model.motivo,
         created_by_user_id=model.created_by_user_id,
+        intercambio_id=model.intercambio_id,
     )

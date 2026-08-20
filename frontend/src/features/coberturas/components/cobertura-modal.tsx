@@ -2,9 +2,15 @@
 
 import { useState } from "react";
 import { ApiError } from "@/services/http-client";
-import type { AlcanceOption, Cobertura, CoberturaOperadorOption } from "../types/coberturas";
+import type {
+  AlcanceOption,
+  Cobertura,
+  CoberturaOperadorOption,
+  Intercambio,
+} from "../types/coberturas";
 import type { CoberturaConfig } from "../lib/config";
 import { formatFechaCorta, hoyIso } from "../lib/estado";
+import { IntercambioForm } from "./intercambio-form";
 import { BrandButton, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { SearchableSelect } from "@/shared/components/ui/searchable-select";
@@ -18,6 +24,8 @@ interface CoberturaModalProps {
   alcanceOptions: AlcanceOption[];
   /** Con cobertura = modo edición (update in-place, mismo id); sin ella, alta. */
   cobertura?: Cobertura | null;
+  /** Con intercambio = edición del par (ADR-026); excluyente con `cobertura`. */
+  intercambio?: Intercambio | null;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -26,15 +34,23 @@ interface CoberturaModalProps {
  * activa/programada (ADR-013, actualización 2026-08-14) — una cancelada es
  * un registro histórico y el backend rechaza editarla. El solapamiento no
  * es un warning como pedía el handoff: el backend lo rechaza con 409, acá
- * se muestra ese error en el banner del modal. */
+ * se muestra ese error en el banner del modal.
+ *
+ * Si el módulo habilita intercambios (`config.intercambios`, hoy solo
+ * turnos — ADR-026), el alta muestra arriba el toggle Cobertura |
+ * Intercambio y en modo intercambio delega el cuerpo a `IntercambioForm`. */
 export function CoberturaModal({
   config,
   operadores,
   alcanceOptions,
   cobertura = null,
+  intercambio = null,
   onClose,
   onSaved,
 }: CoberturaModalProps) {
+  const [tipo, setTipo] = useState<"cobertura" | "intercambio">(
+    intercambio ? "intercambio" : "cobertura",
+  );
   const [ausenteId, setAusenteId] = useState<string | null>(cobertura?.ausenteId ?? null);
   const [reemplazanteId, setReemplazanteId] = useState<string | null>(
     cobertura?.reemplazanteId ?? null,
@@ -90,18 +106,49 @@ export function CoberturaModal({
       .finally(() => setSaving(false));
   };
 
+  const title = intercambio
+    ? "Editar intercambio"
+    : cobertura
+      ? "Editar cobertura"
+      : "Nueva cobertura";
+  // El toggle solo tiene sentido en el alta: una regla existente ya es una
+  // cosa o la otra.
+  const mostrarToggle = Boolean(config.intercambios) && !cobertura && !intercambio;
+
   return (
-    <BrandModal
-      isOpen
-      onClose={onClose}
-      title={cobertura ? "Editar cobertura" : "Nueva cobertura"}
-      widthPx={560}
-      error={saveError}
-    >
+    <BrandModal isOpen onClose={onClose} title={title} widthPx={560} error={saveError}>
       <p className="-mt-2 mb-5 font-body text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {config.subtitulo}
       </p>
 
+      {mostrarToggle && (
+        <div className="mb-5">
+          <SegmentedControl
+            label="Tipo"
+            options={[
+              { value: "cobertura", label: "Cobertura" },
+              { value: "intercambio", label: "Intercambio" },
+            ]}
+            value={tipo}
+            onChange={(v) => {
+              setTipo(v as "cobertura" | "intercambio");
+              setSaveError(null);
+            }}
+          />
+        </div>
+      )}
+
+      {tipo === "intercambio" && config.intercambios ? (
+        <IntercambioForm
+          api={config.intercambios}
+          operadores={operadores}
+          alcanceOptions={alcanceOptions}
+          intercambio={intercambio}
+          onError={setSaveError}
+          onClose={onClose}
+          onSaved={onSaved}
+        />
+      ) : (
       <div className="flex flex-col gap-4">
         <SearchableSelect
           label="¿Quién falta?"
@@ -199,6 +246,7 @@ export function CoberturaModal({
           </BrandButton>
         </div>
       </div>
+      )}
     </BrandModal>
   );
 }

@@ -89,7 +89,9 @@ class TurnoAsignacionOverrideModel(Base):
     """Cobertura temporal de turnos (ver ADR-013) -- no reemplaza filas de
     `turno_asignacion`, se resuelve en lectura. `alcance_total=True` cubre
     todas las franjas del operador ausente; si es `False`, el alcance está
-    en las filas de `turno_asignacion_override_slot`."""
+    en las filas de `turno_asignacion_override_slot`. `intercambio_id`
+    (ADR-026) agrupa el par de overrides cruzados de un intercambio de
+    turnos; NULL en una cobertura común."""
 
     __tablename__ = "turno_asignacion_override"
     __table_args__ = (CheckConstraint("desde <= hasta", name="ck_override_rango_valido"),)
@@ -113,6 +115,9 @@ class TurnoAsignacionOverrideModel(Base):
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("now()")
+    )
+    intercambio_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True, index=True
     )
 
     slots: Mapped[list["TurnoAsignacionOverrideSlotModel"]] = relationship(

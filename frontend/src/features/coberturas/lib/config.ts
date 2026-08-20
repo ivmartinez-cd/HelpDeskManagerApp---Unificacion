@@ -1,5 +1,6 @@
 import { coberturasContadoresApi, coberturasPstApi, coberturasTurnosApi } from "../api/coberturas-api";
-import type { CoberturaEntityType, CoberturasApi } from "../types/coberturas";
+import { intercambiosTurnosApi } from "../api/intercambios-api";
+import type { CoberturaEntityType, CoberturasApi, IntercambiosApi } from "../types/coberturas";
 
 /** Textos y cableado por módulo. El handoff original planteaba la variante
  * PST como "un PST cubre a otro PST", pero el dominio real (ADR-013) es
@@ -9,6 +10,10 @@ import type { CoberturaEntityType, CoberturasApi } from "../types/coberturas";
  * diseño (tabla, badges, modal) sigue el handoff tal cual. */
 export interface CoberturaConfig {
   api: CoberturasApi;
+  /** Intercambio de turnos (ADR-026): habilita el toggle Cobertura |
+   * Intercambio en el modal y el agrupado en la tabla. Solo turnos por
+   * decisión del usuario (2026-08-20); el dominio lo permitiría en los tres. */
+  intercambios?: IntercambiosApi;
   subtitulo: string;
   /** unidad del alcance parcial, para la columna ("3 clientes" / "3 PST") */
   alcanceUnidad: string;
@@ -66,6 +71,7 @@ export const COBERTURA_CONFIG: Record<CoberturaEntityType, CoberturaConfig> = {
   },
   turno: {
     api: coberturasTurnosApi,
+    intercambios: intercambiosTurnosApi,
     subtitulo: "Turnos / Operadores",
     alcanceUnidad: "franjas",
     alcanceItemSingular: "una franja",

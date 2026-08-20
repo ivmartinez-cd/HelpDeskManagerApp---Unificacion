@@ -78,6 +78,9 @@ from src.modules.sla.presentation.sla_router import router as sla_router
 from src.modules.turnos.presentation.grilla_variantes_router import (
     router as turnos_grilla_variantes_router,
 )
+from src.modules.turnos.presentation.intercambios_router import (
+    router as turnos_intercambios_router,
+)
 from src.modules.turnos.presentation.turnos_router import router as turnos_router
 from src.modules.vacaciones.presentation.auditoria_router import (
     router as vacaciones_auditoria_router,
@@ -220,6 +223,7 @@ def create_app() -> FastAPI:
     app.include_router(insumos_health_router)
     app.include_router(turnos_router)
     app.include_router(turnos_grilla_variantes_router)
+    app.include_router(turnos_intercambios_router)
     app.include_router(sla_router)
     app.include_router(sla_pendientes_router)
     app.include_router(prestadores_router)

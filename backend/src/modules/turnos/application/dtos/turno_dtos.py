@@ -141,3 +141,30 @@ class AsignacionOverrideDTO:
     slot_ids: list[uuid.UUID]
     estado: str
     motivo: str | None
+    intercambio_id: uuid.UUID | None = None
+    """Par de coberturas cruzadas al que pertenece (ADR-026); `None` en una común."""
+
+
+@dataclass(frozen=True, slots=True)
+class IntercambioCommand:
+    """Intercambio de turnos (ADR-026): A toma las franjas de B y B las de A
+    durante el rango. `slot_ids_a` = franjas de A que pasa a cubrir B (`None`
+    = todas); `slot_ids_b`, simétrico. Sirve para alta y edición."""
+
+    operador_a_id: uuid.UUID
+    operador_b_id: uuid.UUID
+    desde: date
+    hasta: date
+    slot_ids_a: list[uuid.UUID] | None
+    slot_ids_b: list[uuid.UUID] | None
+    motivo: str | None
+    created_by_user_id: uuid.UUID
+    intercambio_id: uuid.UUID | None = None
+    """Alta: `None` (se genera). Edición: el id del par a reemplazar in-place."""
+
+
+@dataclass(frozen=True, slots=True)
+class IntercambioDTO:
+    intercambio_id: uuid.UUID
+    coberturas: list[AsignacionOverrideDTO]
+    """Siempre dos: [A ausente → B cubre, B ausente → A cubre]."""

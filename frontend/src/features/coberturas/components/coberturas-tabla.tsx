@@ -1,9 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
-import { Ban, Pencil } from "lucide-react";
-import type { Cobertura, CoberturaOperadorOption } from "../types/coberturas";
-import { deriveEstado, ESTADO_META, formatFechaCorta } from "../lib/estado";
+import { ArrowLeftRight, Ban, Pencil } from "lucide-react";
+import type {
+  Cobertura,
+  CoberturaOperadorOption,
+  FilaCoberturas,
+  Intercambio,
+} from "../types/coberturas";
+import { ESTADO_META, formatFechaCorta } from "../lib/estado";
+import { estadoFila, filaKey, nombreOperadorA, nombreOperadorB } from "../lib/intercambios";
 import { BrandBadge } from "@/shared/components/ui/brand-form";
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
@@ -15,14 +21,14 @@ const COBERTURAS_SORT_KEYS: readonly CoberturasSortKey[] = [
 ];
 
 interface CoberturasTablaProps {
-  rows: Cobertura[];
+  rows: FilaCoberturas[];
   operadorMeta: Map<string, CoberturaOperadorOption>;
   alcanceLabelOf: (id: string) => string;
   alcanceUnidad: string;
   canEdit: boolean;
   canCancel: boolean;
-  onEdit: (cobertura: Cobertura) => void;
-  onCancel: (cobertura: Cobertura) => void;
+  onEdit: (fila: FilaCoberturas) => void;
+  onCancel: (fila: FilaCoberturas) => void;
 }
 
 function OperadorCell({
@@ -48,6 +54,67 @@ function OperadorCell({
   );
 }
 
+/** La "cobertura de referencia" de una fila: la común, o la ida del
+ * intercambio (las dos mitades comparten fechas, estado y motivo). */
+function referencia(fila: FilaCoberturas): Cobertura {
+  return fila.tipo === "cobertura" ? fila.cobertura : fila.intercambio.ida;
+}
+
+function descripcionFila(fila: FilaCoberturas): string {
+  if (fila.tipo === "cobertura") {
+    return `cobertura de ${fila.cobertura.ausenteNombre ?? fila.cobertura.ausenteId}`;
+  }
+  const i = fila.intercambio;
+  return `intercambio de ${nombreOperadorA(i)} y ${nombreOperadorB(i)}`;
+}
+
+function AlcanceCell({
+  fila,
+  alcanceLabelOf,
+  alcanceUnidad,
+}: {
+  fila: FilaCoberturas;
+  alcanceLabelOf: (id: string) => string;
+  alcanceUnidad: string;
+}) {
+  const mitades: Cobertura[] =
+    fila.tipo === "cobertura" ? [fila.cobertura] : [fila.intercambio.ida, fila.intercambio.vuelta];
+  if (mitades.every((c) => c.alcanceTotal)) return <>Total</>;
+  const items = mitades.flatMap((c) => (c.alcanceTotal ? [] : c.alcanceItems));
+  return (
+    <span title={items.map(alcanceLabelOf).join(", ")}>
+      {items.length} {alcanceUnidad}
+    </span>
+  );
+}
+
+function IntercambioCell({
+  intercambio,
+  operadorMeta,
+}: {
+  intercambio: Intercambio;
+  operadorMeta: Map<string, CoberturaOperadorOption>;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <OperadorCell
+        id={intercambio.ida.ausenteId}
+        nombre={intercambio.ida.ausenteNombre}
+        meta={operadorMeta.get(intercambio.ida.ausenteId)}
+      />
+      <ArrowLeftRight
+        className="h-4 w-4 shrink-0 text-brand-orange"
+        aria-label="intercambia con"
+      />
+      <OperadorCell
+        id={intercambio.vuelta.ausenteId}
+        nombre={intercambio.vuelta.ausenteNombre}
+        meta={operadorMeta.get(intercambio.vuelta.ausenteId)}
+      />
+    </div>
+  );
+}
+
 export function CoberturasTabla({
   rows,
   operadorMeta,
@@ -65,12 +132,13 @@ export function CoberturasTabla({
   });
 
   const sorted = useMemo(() => {
-    const getSv = (c: Cobertura) => {
+    const getSv = (fila: FilaCoberturas) => {
+      const c = referencia(fila);
       switch (sort.key) {
         case "ausente": return c.ausenteNombre ?? c.ausenteId;
         case "reemplazante": return c.reemplazanteNombre ?? c.reemplazanteId;
         case "desde": return c.desde;
-        case "estado": return deriveEstado(c);
+        case "estado": return estadoFila(fila);
       }
     };
     return [...rows].sort((a, b) => compareSortValues(getSv(a), getSv(b), sort.direction));
@@ -91,43 +159,40 @@ export function CoberturasTabla({
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {sorted.map((c) => {
-            const estado = deriveEstado(c);
+          {sorted.map((fila) => {
+            const c = referencia(fila);
+            const estado = estadoFila(fila);
             const meta = ESTADO_META[estado];
             // Solo las reglas aún en juego se pueden editar/cancelar: una
             // vencida o cancelada es un registro histórico (ADR-013).
             const mutable = estado === "activa" || estado === "programada";
             const editable = canEdit && mutable;
             const cancelable = canCancel && mutable;
-            const alcanceLabels = c.alcanceItems.map(alcanceLabelOf);
+            const descripcion = descripcionFila(fila);
             return (
-              <tr key={c.id} className="font-body text-sm">
-                <td className="px-4 py-3">
-                  <OperadorCell
-                    id={c.ausenteId}
-                    nombre={c.ausenteNombre}
-                    meta={operadorMeta.get(c.ausenteId)}
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <OperadorCell
-                    id={c.reemplazanteId}
-                    nombre={c.reemplazanteNombre}
-                    meta={operadorMeta.get(c.reemplazanteId)}
-                  />
-                </td>
+              <tr key={filaKey(fila)} className="font-body text-sm">
+                {fila.tipo === "cobertura" ? (
+                  <>
+                    <td className="px-4 py-3">
+                      <OperadorCell id={c.ausenteId} nombre={c.ausenteNombre} meta={operadorMeta.get(c.ausenteId)} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <OperadorCell id={c.reemplazanteId} nombre={c.reemplazanteNombre} meta={operadorMeta.get(c.reemplazanteId)} />
+                    </td>
+                  </>
+                ) : (
+                  // Un intercambio no tiene "ausente" ni "reemplazante": ocupa las
+                  // dos columnas con A ⇄ B (ADR-026).
+                  <td className="px-4 py-3" colSpan={2}>
+                    <IntercambioCell intercambio={fila.intercambio} operadorMeta={operadorMeta} />
+                  </td>
+                )}
                 <td className="px-4 py-3 leading-tight text-muted-foreground">
                   <p>{formatFechaCorta(c.desde)}</p>
                   <p>→ {formatFechaCorta(c.hasta)}</p>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {c.alcanceTotal ? (
-                    "Total"
-                  ) : (
-                    <span title={alcanceLabels.join(", ")}>
-                      {c.alcanceItems.length} {alcanceUnidad}
-                    </span>
-                  )}
+                  <AlcanceCell fila={fila} alcanceLabelOf={alcanceLabelOf} alcanceUnidad={alcanceUnidad} />
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">{c.motivo ?? "—"}</td>
                 <td className="px-4 py-3">
@@ -140,9 +205,9 @@ export function CoberturasTabla({
                     {editable && (
                       <button
                         type="button"
-                        onClick={() => onEdit(c)}
-                        aria-label={`Editar cobertura de ${c.ausenteNombre ?? c.ausenteId}`}
-                        title="Editar cobertura"
+                        onClick={() => onEdit(fila)}
+                        aria-label={`Editar ${descripcion}`}
+                        title={fila.tipo === "cobertura" ? "Editar cobertura" : "Editar intercambio"}
                         className="rounded-[8px] p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       >
                         <Pencil className="h-4 w-4" />
@@ -151,9 +216,9 @@ export function CoberturasTabla({
                     {cancelable && (
                       <button
                         type="button"
-                        onClick={() => onCancel(c)}
-                        aria-label={`Cancelar cobertura de ${c.ausenteNombre ?? c.ausenteId}`}
-                        title="Cancelar cobertura"
+                        onClick={() => onCancel(fila)}
+                        aria-label={`Cancelar ${descripcion}`}
+                        title={fila.tipo === "cobertura" ? "Cancelar cobertura" : "Cancelar intercambio"}
                         className="rounded-[8px] p-2 text-destructive transition-colors hover:bg-destructive/10"
                       >
                         <Ban className="h-4 w-4" />

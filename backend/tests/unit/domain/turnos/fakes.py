@@ -137,6 +137,11 @@ class FakeAsignacionOverrideRepository:
                 grouped.setdefault(o.operador_ausente_id, []).append(o)
         return grouped
 
+    async def list_by_intercambio(
+        self, intercambio_id: uuid.UUID
+    ) -> list[TurnoAsignacionOverride]:
+        return [o for o in self.rows.values() if o.intercambio_id == intercambio_id]
+
     async def update(self, override: TurnoAsignacionOverride) -> None:
         if override.id in self.rows:
             self.rows[override.id] = override

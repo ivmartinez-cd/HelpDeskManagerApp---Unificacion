@@ -45,6 +45,7 @@ function fromContadoresWire(w: ContadoresOverrideWire): Cobertura {
     alcanceItems: w.clientes,
     estado: w.estado,
     motivo: w.motivo,
+    intercambioId: null,
   };
 }
 
@@ -132,6 +133,7 @@ function fromPrestadoresWire(w: PrestadoresOverrideWire): Cobertura {
     alcanceItems: w.prestadorIds,
     estado: w.estado,
     motivo: w.motivo,
+    intercambioId: null,
   };
 }
 
@@ -205,6 +207,8 @@ interface TurnosOverrideWire {
   slotIds: string[];
   estado: "ACTIVA" | "CANCELADA";
   motivo: string | null;
+  /** ADR-026: par de coberturas cruzadas (intercambio); null en una común. */
+  intercambioId: string | null;
 }
 
 function fromTurnosWire(w: TurnosOverrideWire): Cobertura {
@@ -220,6 +224,7 @@ function fromTurnosWire(w: TurnosOverrideWire): Cobertura {
     alcanceItems: w.slotIds,
     estado: w.estado,
     motivo: w.motivo,
+    intercambioId: w.intercambioId ?? null,
   };
 }
 

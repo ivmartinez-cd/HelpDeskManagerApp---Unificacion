@@ -43,6 +43,26 @@ class OverlappingOverrideError(BusinessRuleViolationError):
         )
 
 
+# --- Intercambio de turnos (ADR-026) ----------------------------------------------
+
+
+class IntercambioNotFoundError(NotFoundError):
+    default_code: ClassVar[str] = "INTERCAMBIO_NOT_FOUND"
+
+    def __init__(self) -> None:
+        super().__init__("Intercambio de turnos no encontrado")
+
+
+class OverrideEsIntercambioError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "OVERRIDE_ES_INTERCAMBIO"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Esta cobertura forma parte de un intercambio -- se edita por el intercambio, "
+            "nunca una mitad sola"
+        )
+
+
 # --- Grilla variante (modo vacaciones, ADR-025) ---------------------------------
 
 

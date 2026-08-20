@@ -13,6 +13,7 @@ from src.modules.turnos.domain.errors import (
     AsignacionOverrideNotFoundError,
     InvalidOverrideRangeError,
     OverlappingOverrideError,
+    OverrideEsIntercambioError,
     OverrideMismoOperadorError,
     OverrideNoEditableError,
 )
@@ -46,6 +47,9 @@ class UpdateAsignacionOverride:
             raise AsignacionOverrideNotFoundError()
         if existing.estado != "ACTIVA":
             raise OverrideNoEditableError()
+        if existing.intercambio_id is not None:
+            # Una mitad de intercambio (ADR-026) se edita por el par completo.
+            raise OverrideEsIntercambioError()
         _validar_campos(command)
 
         alcance: Literal["TOTAL"] | frozenset[uuid.UUID] = (

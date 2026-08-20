@@ -181,3 +181,50 @@ async def test_cancelar_no_borra_el_registro(db_session: AsyncSession) -> None:
     assert cancelada is not None
     assert cancelada.estado == "CANCELADA"
     assert await repo.list_activos_por_ausente(ausente) == []
+
+
+async def test_intercambio_id_round_trip_y_list_by_intercambio(db_session: AsyncSession) -> None:
+    """ADR-026: las dos mitades comparten `intercambio_id`; una cobertura común lo deja en None."""
+    repo = SqlAlchemyAsignacionOverrideRepository(db_session)
+    majo = await _app_user(db_session, full_name="Majo")
+    luna = await _app_user(db_session, full_name="Luna")
+    creador = await _app_user(db_session, full_name="Creador")
+    intercambio_id = uuid.uuid4()
+
+    for ausente, cubre in ((majo, luna), (luna, majo)):
+        await repo.create(
+            AsignacionOverride(
+                id=uuid.uuid4(),
+                operador_ausente_id=ausente,
+                operador_reemplazante_id=cubre,
+                desde=date(2026, 8, 20),
+                hasta=date(2026, 8, 20),
+                alcance="TOTAL",
+                estado="ACTIVA",
+                motivo="Intercambio",
+                created_by_user_id=creador,
+                intercambio_id=intercambio_id,
+            )
+        )
+    comun = AsignacionOverride(
+        id=uuid.uuid4(),
+        operador_ausente_id=majo,
+        operador_reemplazante_id=creador,
+        desde=date(2026, 9, 1),
+        hasta=date(2026, 9, 1),
+        alcance="TOTAL",
+        estado="ACTIVA",
+        motivo=None,
+        created_by_user_id=creador,
+    )
+    await repo.create(comun)
+
+    par = await repo.list_by_intercambio(intercambio_id)
+    assert {(o.operador_ausente_id, o.operador_reemplazante_id) for o in par} == {
+        (majo, luna),
+        (luna, majo),
+    }
+    assert all(o.intercambio_id == intercambio_id for o in par)
+    leida = await repo.get_by_id(comun.id)
+    assert leida is not None and leida.intercambio_id is None
+    assert await repo.list_by_intercambio(uuid.uuid4()) == []

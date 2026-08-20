@@ -31,10 +31,18 @@ class AsignacionOverrideRepository(Protocol):
         `GetCurrentShifts`, mismo criterio que `AsignacionRepository.list_by_slots`."""
         ...
 
+    async def list_by_intercambio(
+        self, intercambio_id: uuid.UUID
+    ) -> list[TurnoAsignacionOverride]:
+        """Las dos coberturas cruzadas de un intercambio (ADR-026); vacío si
+        el id no existe. El orden no es significativo (ambas se crean en la
+        misma transacción) -- los casos de uso no dependen de él."""
+        ...
+
     async def update(self, override: TurnoAsignacionOverride) -> None:
         """Reemplaza los datos de la cobertura (mismo `id`), incluido el
-        alcance. No toca `created_by_user_id` ni `estado` -- la única
-        transición de estado es `cancelar`."""
+        alcance. No toca `created_by_user_id`, `estado` ni `intercambio_id`
+        -- la única transición de estado es `cancelar`."""
         ...
 
     async def cancelar(self, override_id: uuid.UUID) -> None: ...

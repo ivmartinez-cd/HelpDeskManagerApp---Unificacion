@@ -28,4 +28,5 @@ def build_asignacion_override_dto(
         slot_ids=slot_ids,
         estado=override.estado,
         motivo=override.motivo,
+        intercambio_id=override.intercambio_id,
     )
