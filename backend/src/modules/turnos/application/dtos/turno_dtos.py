@@ -99,3 +99,45 @@ class ReplaceAssignmentsCommand:
     slot_id: uuid.UUID
     user_ids: list[uuid.UUID]
     vigente_desde: date
+
+
+@dataclass(frozen=True, slots=True)
+class CreateAsignacionOverrideCommand:
+    operador_ausente_id: uuid.UUID
+    operador_reemplazante_id: uuid.UUID
+    desde: date
+    hasta: date
+    slot_ids: list[uuid.UUID] | None
+    """`None` = alcance TOTAL; lista vacía o con ids = alcance por franja puntual."""
+    motivo: str | None
+    created_by_user_id: uuid.UUID
+
+
+@dataclass(frozen=True, slots=True)
+class UpdateAsignacionOverrideCommand:
+    """Edición in-place de una cobertura ACTIVA (ver ADR-013, actualización
+    2026-08-14). Sin `created_by_user_id`: se conserva el del alta."""
+
+    override_id: uuid.UUID
+    operador_ausente_id: uuid.UUID
+    operador_reemplazante_id: uuid.UUID
+    desde: date
+    hasta: date
+    slot_ids: list[uuid.UUID] | None
+    """`None` = alcance TOTAL; lista vacía o con ids = alcance por franja puntual."""
+    motivo: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class AsignacionOverrideDTO:
+    id: uuid.UUID
+    operador_ausente_id: uuid.UUID
+    operador_ausente_nombre: str | None
+    operador_reemplazante_id: uuid.UUID
+    operador_reemplazante_nombre: str | None
+    desde: date
+    hasta: date
+    alcance_total: bool
+    slot_ids: list[uuid.UUID]
+    estado: str
+    motivo: str | None

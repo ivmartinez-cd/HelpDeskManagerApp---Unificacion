@@ -1,7 +1,19 @@
 import uuid
-from datetime import date, time
+from datetime import date, datetime, time
 
-from sqlalchemy import Boolean, Date, ForeignKey, Integer, SmallInteger, String, Time, text
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    SmallInteger,
+    String,
+    Time,
+    text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -46,6 +58,15 @@ class TurnoSlotModel(Base):
 
 class TurnoAsignacionModel(Base):
     __tablename__ = "turno_asignacion"
+    __table_args__ = (
+        Index(
+            "ux_turno_asignacion_slot_user_abierta",
+            "slot_id",
+            "user_id",
+            unique=True,
+            postgresql_where=text("vigente_hasta IS NULL"),
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
@@ -62,3 +83,62 @@ class TurnoAsignacionModel(Base):
     vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     slot: Mapped["TurnoSlotModel"] = relationship("TurnoSlotModel", back_populates="asignaciones")
+
+
+class TurnoAsignacionOverrideModel(Base):
+    """Cobertura temporal de turnos (ver ADR-013) -- no reemplaza filas de
+    `turno_asignacion`, se resuelve en lectura. `alcance_total=True` cubre
+    todas las franjas del operador ausente; si es `False`, el alcance está
+    en las filas de `turno_asignacion_override_slot`."""
+
+    __tablename__ = "turno_asignacion_override"
+    __table_args__ = (CheckConstraint("desde <= hasta", name="ck_override_rango_valido"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    operador_ausente_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("app_user.id", ondelete="CASCADE"), nullable=False
+    )
+    operador_reemplazante_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("app_user.id", ondelete="CASCADE"), nullable=False
+    )
+    desde: Mapped[date] = mapped_column(Date, nullable=False)
+    hasta: Mapped[date] = mapped_column(Date, nullable=False)
+    alcance_total: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    estado: Mapped[str] = mapped_column(String(20), nullable=False, server_default="ACTIVA")
+    motivo: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_by_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("app_user.id", ondelete="RESTRICT"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=text("now()")
+    )
+
+    slots: Mapped[list["TurnoAsignacionOverrideSlotModel"]] = relationship(
+        "TurnoAsignacionOverrideSlotModel",
+        back_populates="override",
+        cascade="all, delete-orphan",
+    )
+
+
+class TurnoAsignacionOverrideSlotModel(Base):
+    """Alcance por franja puntual de una cobertura (solo tiene filas cuando
+    `alcance_total=False` en la cobertura padre). FK a `turno_slot` con
+    CASCADE: si se borra la franja, el alcance parcial que la referenciaba
+    pierde sentido."""
+
+    __tablename__ = "turno_asignacion_override_slot"
+
+    override_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("turno_asignacion_override.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    slot_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("turno_slot.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    override: Mapped["TurnoAsignacionOverrideModel"] = relationship(
+        "TurnoAsignacionOverrideModel", back_populates="slots"
+    )

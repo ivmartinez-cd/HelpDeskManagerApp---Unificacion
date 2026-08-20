@@ -22,8 +22,8 @@ class SqlAlchemyAsignacionOverrideRepository:
             id=override.id,
             operador_ausente_id=override.operador_ausente_id,
             operador_reemplazante_id=override.operador_reemplazante_id,
-            vigente_desde=override.vigente_desde,
-            vigente_hasta=override.vigente_hasta,
+            vigente_desde=override.desde,
+            vigente_hasta=override.hasta,
             alcance_total=alcance_total,
             estado=override.estado,
             motivo=override.motivo,
@@ -100,8 +100,8 @@ class SqlAlchemyAsignacionOverrideRepository:
             return
         row.operador_ausente_id = override.operador_ausente_id
         row.operador_reemplazante_id = override.operador_reemplazante_id
-        row.vigente_desde = override.vigente_desde
-        row.vigente_hasta = override.vigente_hasta
+        row.vigente_desde = override.desde
+        row.vigente_hasta = override.hasta
         row.alcance_total = override.alcance == "TOTAL"
         row.motivo = override.motivo
         # Dos flushes: delete-orphan borra las hijas viejas antes de insertar
@@ -135,8 +135,8 @@ def _to_entity(model: AsignacionOverrideModel) -> AsignacionOverride:
         id=model.id,
         operador_ausente_id=model.operador_ausente_id,
         operador_reemplazante_id=model.operador_reemplazante_id,
-        vigente_desde=model.vigente_desde,
-        vigente_hasta=model.vigente_hasta,
+        desde=model.vigente_desde,
+        hasta=model.vigente_hasta,
         alcance=alcance,
         estado=estado,
         motivo=model.motivo,

@@ -31,5 +31,5 @@ class ListAsignacionOverrides:
         por_id = {op.id: op for op in operadores}
         return [
             build_asignacion_override_dto(o, por_id)
-            for o in sorted(overrides, key=lambda o: o.vigente_desde, reverse=True)
+            for o in sorted(overrides, key=lambda o: o.desde, reverse=True)
         ]

@@ -85,3 +85,21 @@ async def test_desasignar_todos_cierra_la_vigencia_sin_insertar_nada() -> None:
 
     assert len(repo.rows) == 1
     assert repo.rows[old_asig.id].vigente_hasta == date(2026, 2, 28)
+
+
+async def test_operador_repetido_en_user_ids_crea_una_sola_asignacion() -> None:
+    """Un mismo operador no puede quedar asignado dos veces al mismo slot -- si
+    llega repetido en el comando (ej. estado sucio del frontend), se deduplica."""
+    slot_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    repo = FakeAsignacionRepository()
+
+    use_case = ReplaceSlotAssignments(ReplaceSlotAssignmentsDependencies(asignaciones=repo))
+    await use_case.execute(
+        ReplaceAssignmentsCommand(
+            slot_id=slot_id, user_ids=[user_id, user_id], vigente_desde=date(2026, 3, 1)
+        )
+    )
+
+    rows = [a for a in repo.rows.values() if a.user_id == user_id]
+    assert len(rows) == 1

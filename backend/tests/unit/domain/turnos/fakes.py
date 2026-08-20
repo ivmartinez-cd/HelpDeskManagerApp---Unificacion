@@ -6,6 +6,9 @@ from datetime import date, timedelta
 from src.modules.turnos.domain.entities.asignacion import Asignacion
 from src.modules.turnos.domain.entities.casilla import Casilla
 from src.modules.turnos.domain.entities.slot import Slot
+from src.modules.turnos.domain.repositories.asignacion_override_repository import (
+    TurnoAsignacionOverride,
+)
 from src.modules.turnos.domain.repositories.user_provider import UserInfo
 
 
@@ -58,20 +61,19 @@ class FakeSlotRepository:
 class FakeAsignacionRepository:
     def __init__(self) -> None:
         self.rows: dict[uuid.UUID, Asignacion] = {}
-        self.list_by_slot_calls = 0
         self.list_by_slots_calls = 0
 
-    async def list_by_slot(self, slot_id: uuid.UUID) -> list[Asignacion]:
-        self.list_by_slot_calls += 1
-        return [a for a in self.rows.values() if a.slot_id == slot_id]
-
     async def list_by_slots(
-        self, slot_ids: list[uuid.UUID]
+        self, slot_ids: list[uuid.UUID], target_date: date
     ) -> dict[uuid.UUID, list[Asignacion]]:
         self.list_by_slots_calls += 1
         grouped: dict[uuid.UUID, list[Asignacion]] = {}
         for a in self.rows.values():
-            if a.slot_id in slot_ids:
+            if (
+                a.slot_id in slot_ids
+                and a.vigente_desde <= target_date
+                and (a.vigente_hasta is None or a.vigente_hasta >= target_date)
+            ):
                 grouped.setdefault(a.slot_id, []).append(a)
         return grouped
 
@@ -100,6 +102,46 @@ class FakeAsignacionRepository:
     async def delete_by_slot(self, slot_id: uuid.UUID) -> None:
         for a_id in [a.id for a in self.rows.values() if a.slot_id == slot_id]:
             del self.rows[a_id]
+
+
+class FakeAsignacionOverrideRepository:
+    def __init__(self) -> None:
+        self.rows: dict[uuid.UUID, TurnoAsignacionOverride] = {}
+
+    async def create(self, override: TurnoAsignacionOverride) -> None:
+        self.rows[override.id] = override
+
+    async def list_all(self) -> list[TurnoAsignacionOverride]:
+        return list(self.rows.values())
+
+    async def get_by_id(self, override_id: uuid.UUID) -> TurnoAsignacionOverride | None:
+        return self.rows.get(override_id)
+
+    async def list_activos_por_ausente(
+        self, operador_ausente_id: uuid.UUID
+    ) -> list[TurnoAsignacionOverride]:
+        return [
+            o
+            for o in self.rows.values()
+            if o.operador_ausente_id == operador_ausente_id and o.estado == "ACTIVA"
+        ]
+
+    async def list_activos_por_ausentes(
+        self, operador_ausente_ids: list[uuid.UUID]
+    ) -> dict[uuid.UUID, list[TurnoAsignacionOverride]]:
+        grouped: dict[uuid.UUID, list[TurnoAsignacionOverride]] = {}
+        for o in self.rows.values():
+            if o.operador_ausente_id in operador_ausente_ids and o.estado == "ACTIVA":
+                grouped.setdefault(o.operador_ausente_id, []).append(o)
+        return grouped
+
+    async def update(self, override: TurnoAsignacionOverride) -> None:
+        if override.id in self.rows:
+            self.rows[override.id] = override
+
+    async def cancelar(self, override_id: uuid.UUID) -> None:
+        if override_id in self.rows:
+            self.rows[override_id].estado = "CANCELADA"
 
 
 class FakeUserProvider:

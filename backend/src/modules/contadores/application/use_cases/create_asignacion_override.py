@@ -10,7 +10,6 @@ from src.modules.contadores.application.use_cases.asignacion_override_dto_builde
     build_asignacion_override_dto,
 )
 from src.modules.contadores.application.use_cases.asignacion_override_reglas import (
-    hay_solapamiento,
     validar_en_catalogo,
 )
 from src.modules.contadores.domain.entities.asignacion_override import AsignacionOverride
@@ -25,6 +24,7 @@ from src.modules.contadores.domain.repositories.asignacion_override_repository i
 from src.modules.contadores.domain.repositories.calendar_event_repository import (
     CalendarEventRepository,
 )
+from src.shared.domain.services.asignacion_override_resolver import hay_solapamiento
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,8 +64,8 @@ class CreateAsignacionOverride:
             id=uuid.uuid4(),
             operador_ausente_id=request.operador_ausente_id,
             operador_reemplazante_id=request.operador_reemplazante_id,
-            vigente_desde=request.vigente_desde,
-            vigente_hasta=request.vigente_hasta,
+            desde=request.vigente_desde,
+            hasta=request.vigente_hasta,
             alcance=alcance,
             estado="ACTIVA",
             motivo=request.motivo,

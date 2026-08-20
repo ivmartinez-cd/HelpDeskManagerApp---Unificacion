@@ -5,6 +5,10 @@ from datetime import date, time
 from src.modules.turnos.domain.entities.asignacion import Asignacion
 from src.modules.turnos.domain.entities.casilla import Casilla
 from src.modules.turnos.domain.entities.slot import Slot
+from src.modules.turnos.domain.repositories.asignacion_override_repository import (
+    TurnoAsignacionOverride,
+)
+from src.shared.domain.services.asignacion_override_resolver import resolver_operador_efectivo
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,6 +36,7 @@ class TurnoResolver:
         asignaciones: list[Asignacion],
         target_date: date,
         target_time: time,
+        overrides_por_ausente: dict[uuid.UUID, list[TurnoAsignacionOverride]] | None = None,
     ) -> list[ResolvedSlotShift]:
         dia_semana = target_date.weekday()
         casillas_dict = {c.id: c for c in casillas if c.is_active}
@@ -40,7 +45,9 @@ class TurnoResolver:
         ]
         active_slots.sort(key=lambda s: (casillas_dict[s.casilla_id].sort_order, s.hora_inicio))
 
-        slot_users = self._map_slot_users(asignaciones, target_date)
+        slot_users = self._map_slot_users(
+            asignaciones, target_date, overrides_por_ausente or {}
+        )
         return [
             self._build_resolved_shift(
                 slot=slot,
@@ -53,7 +60,10 @@ class TurnoResolver:
         ]
 
     def _map_slot_users(
-        self, asignaciones: list[Asignacion], target_date: date
+        self,
+        asignaciones: list[Asignacion],
+        target_date: date,
+        overrides_por_ausente: dict[uuid.UUID, list[TurnoAsignacionOverride]],
     ) -> dict[uuid.UUID, list[uuid.UUID]]:
         mapping: dict[uuid.UUID, list[uuid.UUID]] = {}
         for a in asignaciones:
@@ -61,7 +71,32 @@ class TurnoResolver:
             is_active_end = a.vigente_hasta is None or a.vigente_hasta >= target_date
             if is_active_start and is_active_end:
                 mapping.setdefault(a.slot_id, []).append(a.user_id)
-        return mapping
+        if not overrides_por_ausente:
+            return mapping
+        return {
+            slot_id: list(
+                dict.fromkeys(
+                    self._operador_efectivo(
+                        user_id, slot_id, target_date, overrides_por_ausente
+                    )
+                    for user_id in user_ids
+                )
+            )
+            for slot_id, user_ids in mapping.items()
+        }
+
+    def _operador_efectivo(
+        self,
+        user_id: uuid.UUID,
+        slot_id: uuid.UUID,
+        target_date: date,
+        overrides_por_ausente: dict[uuid.UUID, list[TurnoAsignacionOverride]],
+    ) -> uuid.UUID:
+        efectivo = resolver_operador_efectivo(
+            user_id, slot_id, target_date, overrides_por_ausente.get(user_id, [])
+        )
+        assert efectivo is not None  # `user_id` (operador_original) nunca es None acá
+        return efectivo
 
     def _build_resolved_shift(
         self,

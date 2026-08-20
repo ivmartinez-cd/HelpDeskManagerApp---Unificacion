@@ -8,11 +8,21 @@ from src.modules.auth.domain.well_known_permissions import MANAGE_ADMIN
 from src.modules.auth.presentation.dependencies.identity import get_current_identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.turnos.application.dtos.turno_dtos import (
+    CreateAsignacionOverrideCommand,
     CreateCasillaCommand,
     CreateSlotCommand,
     ReplaceAssignmentsCommand,
+    UpdateAsignacionOverrideCommand,
     UpdateCasillaCommand,
     UpdateSlotCommand,
+)
+from src.modules.turnos.application.use_cases.cancel_asignacion_override import (
+    CancelAsignacionOverride,
+    CancelAsignacionOverrideDependencies,
+)
+from src.modules.turnos.application.use_cases.create_asignacion_override import (
+    CreateAsignacionOverride,
+    CreateAsignacionOverrideDependencies,
 )
 from src.modules.turnos.application.use_cases.delete_casilla import (
     DeleteCasilla,
@@ -26,6 +36,10 @@ from src.modules.turnos.application.use_cases.get_current_shifts import (
     GetCurrentShifts,
     GetCurrentShiftsDependencies,
 )
+from src.modules.turnos.application.use_cases.list_asignacion_overrides import (
+    ListAsignacionOverrides,
+    ListAsignacionOverridesDependencies,
+)
 from src.modules.turnos.application.use_cases.list_casillas import (
     ListCasillas,
     ListCasillasDependencies,
@@ -38,6 +52,10 @@ from src.modules.turnos.application.use_cases.replace_slot_assignments import (
     ReplaceSlotAssignments,
     ReplaceSlotAssignmentsDependencies,
 )
+from src.modules.turnos.application.use_cases.update_asignacion_override import (
+    UpdateAsignacionOverride,
+    UpdateAsignacionOverrideDependencies,
+)
 from src.modules.turnos.application.use_cases.upsert_casilla import (
     UpsertCasilla,
     UpsertCasillaDependencies,
@@ -45,6 +63,9 @@ from src.modules.turnos.application.use_cases.upsert_casilla import (
 from src.modules.turnos.application.use_cases.upsert_slot import (
     UpsertSlot,
     UpsertSlotDependencies,
+)
+from src.modules.turnos.infrastructure.repositories.sqlalchemy_asignacion_override_repository import (  # noqa: E501
+    SqlAlchemyAsignacionOverrideRepository,
 )
 from src.modules.turnos.infrastructure.repositories.sqlalchemy_asignacion_repository import (
     SqlAlchemyAsignacionRepository,
@@ -59,8 +80,10 @@ from src.modules.turnos.infrastructure.repositories.sqlalchemy_user_provider imp
     SqlAlchemyUserProvider,
 )
 from src.modules.turnos.presentation.schemas.turno_schemas import (
+    AsignacionOverrideResponse,
     CasillaRequest,
     CasillaResponse,
+    CreateAsignacionOverrideRequest,
     ReplaceAssignmentsRequest,
     ResolvedShiftResponse,
     SlotRequest,
@@ -91,6 +114,7 @@ async def get_current_shifts(
         slots=SqlAlchemySlotRepository(db),
         asignaciones=SqlAlchemyAsignacionRepository(db),
         users=SqlAlchemyUserProvider(db),
+        overrides=SqlAlchemyAsignacionOverrideRepository(db),
     )
     shifts = await GetCurrentShifts(deps).execute()
     return Page.of(
@@ -239,6 +263,83 @@ async def replace_slot_assignments(
             vigente_desde=payload.vigente_desde,
         )
     )
+
+
+@router.get("/overrides")
+async def list_overrides(
+    _identity: Identity = _require_manage_admin,
+    db: AsyncSession = Depends(get_db),
+) -> Page[AsignacionOverrideResponse]:
+    deps = ListAsignacionOverridesDependencies(
+        overrides=SqlAlchemyAsignacionOverrideRepository(db),
+        users=SqlAlchemyUserProvider(db),
+    )
+    items = await ListAsignacionOverrides(deps).execute()
+    return Page.of(
+        [AsignacionOverrideResponse.from_dto(i) for i in items], page=1, size=_DEFAULT_SIZE
+    )
+
+
+@router.post("/overrides", status_code=status.HTTP_201_CREATED)
+async def create_override(
+    payload: CreateAsignacionOverrideRequest,
+    identity: Identity = _require_manage_admin,
+    db: AsyncSession = Depends(get_db),
+) -> AsignacionOverrideResponse:
+    deps = CreateAsignacionOverrideDependencies(
+        overrides=SqlAlchemyAsignacionOverrideRepository(db),
+        users=SqlAlchemyUserProvider(db),
+    )
+    dto = await CreateAsignacionOverride(deps).execute(
+        CreateAsignacionOverrideCommand(
+            operador_ausente_id=payload.operador_ausente_id,
+            operador_reemplazante_id=payload.operador_reemplazante_id,
+            desde=payload.desde,
+            hasta=payload.hasta,
+            slot_ids=payload.slot_ids,
+            motivo=payload.motivo,
+            created_by_user_id=identity.user.id,
+        )
+    )
+    return AsignacionOverrideResponse.from_dto(dto)
+
+
+@router.put("/overrides/{override_id}")
+async def update_override(
+    override_id: uuid.UUID,
+    # Mismo body que el alta -- el id va en el path y el creador no cambia.
+    payload: CreateAsignacionOverrideRequest,
+    _identity: Identity = _require_manage_admin,
+    db: AsyncSession = Depends(get_db),
+) -> AsignacionOverrideResponse:
+    deps = UpdateAsignacionOverrideDependencies(
+        overrides=SqlAlchemyAsignacionOverrideRepository(db),
+        users=SqlAlchemyUserProvider(db),
+    )
+    dto = await UpdateAsignacionOverride(deps).execute(
+        UpdateAsignacionOverrideCommand(
+            override_id=override_id,
+            operador_ausente_id=payload.operador_ausente_id,
+            operador_reemplazante_id=payload.operador_reemplazante_id,
+            desde=payload.desde,
+            hasta=payload.hasta,
+            slot_ids=payload.slot_ids,
+            motivo=payload.motivo,
+        )
+    )
+    return AsignacionOverrideResponse.from_dto(dto)
+
+
+@router.post("/overrides/{override_id}/cancelar", status_code=status.HTTP_204_NO_CONTENT)
+async def cancel_override(
+    override_id: uuid.UUID,
+    _identity: Identity = _require_manage_admin,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    deps = CancelAsignacionOverrideDependencies(
+        overrides=SqlAlchemyAsignacionOverrideRepository(db)
+    )
+    await CancelAsignacionOverride(deps).execute(override_id)
 
 
 @router.get("/users")

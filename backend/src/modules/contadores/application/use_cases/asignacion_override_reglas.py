@@ -1,10 +1,12 @@
 """Validaciones de invariantes de overrides (ADR-013), compartidas entre
-alta (`CreateAsignacionOverride`) y edición (`UpdateAsignacionOverride`)."""
+alta (`CreateAsignacionOverride`) y edición (`UpdateAsignacionOverride`).
 
-from datetime import date
-from typing import Literal
+`hay_solapamiento` vive en `src.shared.domain.services.asignacion_override_resolver`
+desde que turnos se sumó como tercer módulo con el mismo patrón (ver ADR-013,
+"revisar esta decisión si aparece un tercer módulo") -- acá solo queda
+`validar_en_catalogo`, que es una regla propia de contadores (usernames de
+Gestión sin FK, ver docstring)."""
 
-from src.modules.contadores.domain.entities.asignacion_override import AsignacionOverride
 from src.modules.contadores.domain.entities.operador import Operador
 from src.modules.contadores.domain.errors import OperadorNoEncontradoError
 
@@ -16,22 +18,3 @@ def validar_en_catalogo(usernames: tuple[str, ...], operadores: dict[str, Operad
     for username in usernames:
         if username not in operadores:
             raise OperadorNoEncontradoError(username)
-
-
-def hay_solapamiento(
-    desde: date,
-    hasta: date,
-    alcance: Literal["TOTAL"] | frozenset[str],
-    existentes: list[AsignacionOverride],
-) -> bool:
-    """Dos overrides del mismo operador ausente conflictúan si sus rangos de
-    fecha se superponen y comparten al menos un cliente en alcance (o alguno
-    es TOTAL, que cubre cualquier cliente)."""
-    for existente in existentes:
-        if existente.vigente_desde > hasta or desde > existente.vigente_hasta:
-            continue
-        if alcance == "TOTAL" or existente.alcance == "TOTAL":
-            return True
-        if alcance & existente.alcance:
-            return True
-    return False

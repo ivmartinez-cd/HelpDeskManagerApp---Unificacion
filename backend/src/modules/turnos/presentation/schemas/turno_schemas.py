@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.modules.turnos.application.dtos.turno_dtos import (
     AsignacionDTO,
+    AsignacionOverrideDTO,
     CasillaDTO,
     OperatorShiftView,
     ResolvedShiftDTO,
@@ -158,7 +159,53 @@ class UserOptionResponse(BaseModel):
 
     id: uuid.UUID
     full_name: str = Field(serialization_alias="fullName")
+    color: str | None = None
 
     @classmethod
     def from_info(cls, info: UserInfo) -> "UserOptionResponse":
-        return cls(id=info.id, full_name=info.full_name)
+        return cls(id=info.id, full_name=info.full_name, color=info.color)
+
+
+class AsignacionOverrideResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: uuid.UUID
+    operador_ausente_id: uuid.UUID = Field(serialization_alias="operadorAusenteId")
+    operador_ausente_nombre: str | None = Field(serialization_alias="operadorAusenteNombre")
+    operador_reemplazante_id: uuid.UUID = Field(serialization_alias="operadorReemplazanteId")
+    operador_reemplazante_nombre: str | None = Field(
+        serialization_alias="operadorReemplazanteNombre"
+    )
+    desde: date
+    hasta: date
+    alcance_total: bool = Field(serialization_alias="alcanceTotal")
+    slot_ids: list[uuid.UUID] = Field(serialization_alias="slotIds")
+    estado: str
+    motivo: str | None
+
+    @classmethod
+    def from_dto(cls, dto: AsignacionOverrideDTO) -> "AsignacionOverrideResponse":
+        return cls(
+            id=dto.id,
+            operador_ausente_id=dto.operador_ausente_id,
+            operador_ausente_nombre=dto.operador_ausente_nombre,
+            operador_reemplazante_id=dto.operador_reemplazante_id,
+            operador_reemplazante_nombre=dto.operador_reemplazante_nombre,
+            desde=dto.desde,
+            hasta=dto.hasta,
+            alcance_total=dto.alcance_total,
+            slot_ids=dto.slot_ids,
+            estado=dto.estado,
+            motivo=dto.motivo,
+        )
+
+
+class CreateAsignacionOverrideRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    operador_ausente_id: uuid.UUID = Field(validation_alias="operadorAusenteId")
+    operador_reemplazante_id: uuid.UUID = Field(validation_alias="operadorReemplazanteId")
+    desde: date
+    hasta: date
+    slot_ids: list[uuid.UUID] | None = Field(default=None, validation_alias="slotIds")
+    motivo: str | None = None

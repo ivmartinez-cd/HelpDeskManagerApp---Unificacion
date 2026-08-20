@@ -170,7 +170,11 @@ export function CoberturaModal({
             onChange={setAlcanceItems}
             allowCustom={config.multiAllowCustom}
             placeholder={config.multiPlaceholder}
-            error={alcanceItems.length === 0 ? `Seleccioná al menos un ${config.alcanceUnidad === "PST" ? "PST" : "cliente"}.` : undefined}
+            error={
+              alcanceItems.length === 0
+                ? `Seleccioná al menos ${config.alcanceItemSingular}.`
+                : undefined
+            }
           />
         )}
 

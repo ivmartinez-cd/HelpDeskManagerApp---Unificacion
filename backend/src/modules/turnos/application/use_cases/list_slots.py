@@ -1,10 +1,14 @@
 import uuid
 from dataclasses import dataclass
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from src.modules.turnos.application.dtos.turno_dtos import AsignacionDTO, SlotDTO
 from src.modules.turnos.domain.repositories.asignacion_repository import AsignacionRepository
 from src.modules.turnos.domain.repositories.slot_repository import SlotRepository
 from src.modules.turnos.domain.repositories.user_provider import UserProvider
+
+_ARGENTINA_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
 
 
 @dataclass(frozen=True, slots=True)
@@ -15,19 +19,22 @@ class ListSlotsDependencies:
 
 
 class ListSlots:
-    """Caso de uso: lista los slots de franjas horarias con sus asignaciones."""
+    """Caso de uso: lista los slots de franjas horarias con sus asignaciones vigentes."""
 
     def __init__(self, deps: ListSlotsDependencies) -> None:
         self._deps = deps
 
-    async def execute(self, *, casilla_id: uuid.UUID | None = None) -> list[SlotDTO]:
+    async def execute(
+        self, *, casilla_id: uuid.UUID | None = None, target_date: date | None = None
+    ) -> list[SlotDTO]:
         if casilla_id:
             slots = await self._deps.slots.list_by_casilla(casilla_id)
         else:
             slots = await self._deps.slots.list_all()
 
+        effective_date = target_date or datetime.now(_ARGENTINA_TZ).date()
         asignaciones_by_slot = await self._deps.asignaciones.list_by_slots(
-            [slot.id for slot in slots]
+            [slot.id for slot in slots], effective_date
         )
         # Nombres resueltos por id, no filtrados por activo: un operador desactivado
         # con una asignación vieja/vigente tiene que seguir mostrando su nombre acá

@@ -14,17 +14,19 @@ class SqlAlchemyAsignacionRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def list_by_slot(self, slot_id: uuid.UUID) -> list[Asignacion]:
-        stmt = select(TurnoAsignacionModel).where(TurnoAsignacionModel.slot_id == slot_id)
-        rows = (await self._session.execute(stmt)).scalars().all()
-        return [_to_asignacion_entity(r) for r in rows]
-
     async def list_by_slots(
-        self, slot_ids: list[uuid.UUID]
+        self, slot_ids: list[uuid.UUID], target_date: date
     ) -> dict[uuid.UUID, list[Asignacion]]:
         if not slot_ids:
             return {}
-        stmt = select(TurnoAsignacionModel).where(TurnoAsignacionModel.slot_id.in_(slot_ids))
+        stmt = select(TurnoAsignacionModel).where(
+            TurnoAsignacionModel.slot_id.in_(slot_ids),
+            TurnoAsignacionModel.vigente_desde <= target_date,
+            or_(
+                TurnoAsignacionModel.vigente_hasta.is_(None),
+                TurnoAsignacionModel.vigente_hasta >= target_date,
+            ),
+        )
         rows = (await self._session.execute(stmt)).scalars().all()
         grouped: dict[uuid.UUID, list[Asignacion]] = {}
         for r in rows:
@@ -59,6 +61,12 @@ class SqlAlchemyAsignacionRepository:
                 await self._session.delete(row)
             else:
                 row.vigente_hasta = close_at
+        # Flush explícito: si un mismo operador se reasigna el mismo día, la fila
+        # vieja se borra y la nueva se inserta con el mismo (slot_id, user_id) --
+        # sin este flush, el unit-of-work de SQLAlchemy puede emitir el INSERT
+        # antes que el DELETE dentro del mismo flush y violar transitoriamente
+        # el índice único parcial (vigente_hasta IS NULL).
+        await self._session.flush()
         for a in asignaciones:
             model = TurnoAsignacionModel(
                 id=a.id,

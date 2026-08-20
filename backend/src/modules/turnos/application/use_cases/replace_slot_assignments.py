@@ -18,6 +18,7 @@ class ReplaceSlotAssignments:
         self._deps = deps
 
     async def execute(self, command: ReplaceAssignmentsCommand) -> None:
+        unique_user_ids = list(dict.fromkeys(command.user_ids))
         new_asignaciones = [
             Asignacion(
                 id=uuid.uuid4(),
@@ -26,7 +27,7 @@ class ReplaceSlotAssignments:
                 vigente_desde=command.vigente_desde,
                 vigente_hasta=None,
             )
-            for u_id in command.user_ids
+            for u_id in unique_user_ids
         ]
         await self._deps.asignaciones.replace_for_slot(
             command.slot_id, command.vigente_desde, new_asignaciones

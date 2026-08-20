@@ -8,7 +8,7 @@ from src.modules.contadores.application.dtos.calendar_event_anotado import (
 from src.modules.contadores.domain.entities.asignacion_override import AsignacionOverride
 from src.modules.contadores.domain.entities.calendar_event import CalendarEvent
 from src.modules.contadores.domain.entities.operador import Operador
-from src.modules.contadores.domain.services.operador_efectivo import resolver_override_aplicable
+from src.shared.domain.services.asignacion_override_resolver import resolver_override_aplicable
 
 
 def anotar_eventos(
@@ -56,8 +56,8 @@ def _build_cobertura(
         operador_reemplazante_id=override.operador_reemplazante_id,
         operador_reemplazante_nombre=reemplazante.nombre if reemplazante else None,
         operador_reemplazante_color=reemplazante.color if reemplazante else None,
-        vigente_desde=override.vigente_desde,
-        vigente_hasta=override.vigente_hasta,
+        vigente_desde=override.desde,
+        vigente_hasta=override.hasta,
         alcance_total=override.alcance == "TOTAL",
     )
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { Edit2, Plus, Trash2, Users } from "lucide-react";
+import { CalendarClock, Edit2, Plus, Trash2, Users } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { turnosApi } from "../../api/turnos-api";
 import type { Casilla, Slot, UserOption } from "../../types/turnos";
@@ -99,7 +100,7 @@ export function CasillasManager() {
       setEditingSlot(slot);
       setHoraInicio(slot.horaInicio.slice(0, 5));
       setHoraFin(slot.horaFin.slice(0, 5));
-      setSelectedUserIds(slot.asignaciones.map((a) => a.userId));
+      setSelectedUserIds(Array.from(new Set(slot.asignaciones.map((a) => a.userId))));
     } else {
       setEditingSlot(null);
       setHoraInicio("08:00");
@@ -209,18 +210,26 @@ export function CasillasManager() {
           )}
         </div>
 
-        <Button
-          onClick={() => {
-            setEditingCasilla(null);
-            setCasillaNombre("");
-            setCasillaModalOpen(true);
-          }}
-          size="sm"
-          className="gap-1.5"
-        >
-          <Plus className="h-4 w-4" />
-          Nueva Casilla
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href="/admin/turnos/coberturas">
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <CalendarClock className="h-4 w-4" />
+              Modo vacaciones
+            </Button>
+          </Link>
+          <Button
+            onClick={() => {
+              setEditingCasilla(null);
+              setCasillaNombre("");
+              setCasillaModalOpen(true);
+            }}
+            size="sm"
+            className="gap-1.5"
+          >
+            <Plus className="h-4 w-4" />
+            Nueva Casilla
+          </Button>
+        </div>
       </div>
 
       {selectedCasillaId && (

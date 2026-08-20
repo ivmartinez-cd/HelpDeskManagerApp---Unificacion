@@ -3,12 +3,15 @@
 import uuid
 from datetime import date, time
 
+import pytest
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.infrastructure.models.user_model import AppUser
 from src.modules.turnos.domain.entities.asignacion import Asignacion
 from src.modules.turnos.domain.entities.casilla import Casilla
 from src.modules.turnos.domain.entities.slot import Slot
+from src.modules.turnos.infrastructure.models.turno_models import TurnoAsignacionModel
 from src.modules.turnos.infrastructure.repositories.sqlalchemy_asignacion_repository import (
     SqlAlchemyAsignacionRepository,
 )
@@ -140,10 +143,15 @@ async def test_asignaciones_listados_por_slot_y_por_fecha(db_session: AsyncSessi
     await repo.replace_for_slot(slot.id, date(2026, 1, 1), [vigente])
     await repo.replace_for_slot(otro_slot.id, date(2025, 1, 1), [cerrada])
 
-    assert [a.id for a in await repo.list_by_slot(slot.id)] == [vigente.id]
-    agrupadas = await repo.list_by_slots([slot.id, otro_slot.id])
-    assert set(agrupadas) == {slot.id, otro_slot.id}
-    assert await repo.list_by_slots([]) == {}
+    en_2026 = await repo.list_by_slots([slot.id, otro_slot.id], date(2026, 8, 14))
+    assert set(en_2026) == {slot.id}
+    assert [a.id for a in en_2026[slot.id]] == [vigente.id]
+
+    en_2025 = await repo.list_by_slots([slot.id, otro_slot.id], date(2025, 6, 1))
+    assert set(en_2025) == {otro_slot.id}
+    assert [a.id for a in en_2025[otro_slot.id]] == [cerrada.id]
+
+    assert await repo.list_by_slots([], date(2026, 8, 14)) == {}
 
     activas = await repo.list_active_on_date(date(2026, 8, 14))
     assert [a.id for a in activas] == [vigente.id]
@@ -161,9 +169,13 @@ async def test_replace_for_slot_cierra_el_tramo_abierto(db_session: AsyncSession
     reemplazo = _asignacion(slot.id, user_id, desde=date(2026, 6, 1))
     await repo.replace_for_slot(slot.id, date(2026, 6, 1), [reemplazo])
 
-    filas = {a.id: a for a in await repo.list_by_slot(slot.id)}
-    assert filas[original.id].vigente_hasta == date(2026, 5, 31)
-    assert filas[reemplazo.id].vigente_hasta is None
+    antes = await repo.list_by_slots([slot.id], date(2026, 5, 31))
+    assert [a.id for a in antes[slot.id]] == [original.id]
+    assert antes[slot.id][0].vigente_hasta == date(2026, 5, 31)
+
+    despues = await repo.list_by_slots([slot.id], date(2026, 6, 1))
+    assert [a.id for a in despues[slot.id]] == [reemplazo.id]
+    assert despues[slot.id][0].vigente_hasta is None
 
 
 async def test_replace_for_slot_borra_tramos_que_nunca_cubrieron_un_dia(
@@ -179,10 +191,43 @@ async def test_replace_for_slot_borra_tramos_que_nunca_cubrieron_un_dia(
     reemplazo = _asignacion(slot.id, user_id, desde=date(2026, 8, 14))
     await repo.replace_for_slot(slot.id, date(2026, 8, 14), [reemplazo])
 
-    assert [a.id for a in await repo.list_by_slot(slot.id)] == [reemplazo.id]
+    resultado = await repo.list_by_slots([slot.id], date(2026, 8, 14))
+    assert [a.id for a in resultado[slot.id]] == [reemplazo.id]
 
     await repo.delete_by_slot(slot.id)
-    assert await repo.list_by_slot(slot.id) == []
+    assert await repo.list_by_slots([slot.id], date(2026, 8, 14)) == {}
+
+
+async def test_no_permite_dos_asignaciones_abiertas_del_mismo_operador_en_el_slot(
+    db_session: AsyncSession,
+) -> None:
+    """Índice único parcial (slot_id, user_id) WHERE vigente_hasta IS NULL -- la
+    causa raíz de los operadores duplicados en la tabla de admin ahora es
+    imposible a nivel de schema, no solo evitada por el caso de uso."""
+    slot = await _slot_con_casilla(db_session)
+    user_id = await _app_user(db_session)
+    db_session.add(
+        TurnoAsignacionModel(
+            id=uuid.uuid4(),
+            slot_id=slot.id,
+            user_id=user_id,
+            vigente_desde=date(2026, 8, 14),
+            vigente_hasta=None,
+        )
+    )
+    await db_session.flush()
+
+    db_session.add(
+        TurnoAsignacionModel(
+            id=uuid.uuid4(),
+            slot_id=slot.id,
+            user_id=user_id,
+            vigente_desde=date(2026, 8, 14),
+            vigente_hasta=None,
+        )
+    )
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
 
 
 async def test_user_provider_resuelve_ids_y_lista_activos(db_session: AsyncSession) -> None:

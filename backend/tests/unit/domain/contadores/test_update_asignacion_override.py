@@ -31,8 +31,8 @@ def _existente(**overrides: object) -> AsignacionOverride:
         "id": uuid.uuid4(),
         "operador_ausente_id": _AUSENTE,
         "operador_reemplazante_id": _REEMPLAZANTE,
-        "vigente_desde": date(2026, 8, 1),
-        "vigente_hasta": date(2026, 8, 15),
+        "desde": date(2026, 8, 1),
+        "hasta": date(2026, 8, 15),
         "alcance": "TOTAL",
         "estado": "ACTIVA",
         "motivo": "vacaciones",
@@ -147,9 +147,7 @@ async def test_no_conflictua_consigo_mismo_al_conservar_las_fechas() -> None:
 @pytest.mark.asyncio
 async def test_rechaza_solapamiento_con_otro_override_del_mismo_ausente() -> None:
     existing = _existente()
-    otro = _existente(
-        id=uuid.uuid4(), vigente_desde=date(2026, 9, 1), vigente_hasta=date(2026, 9, 10)
-    )
+    otro = _existente(id=uuid.uuid4(), desde=date(2026, 9, 1), hasta=date(2026, 9, 10))
     deps = _deps(existing, activos=[existing, otro])
 
     with pytest.raises(OverlappingOverrideError):

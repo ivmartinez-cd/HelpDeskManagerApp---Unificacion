@@ -6,7 +6,7 @@
  * este shape para que los componentes sean un único código parametrizado
  * (`entityType`), como pide el handoff. */
 
-export type CoberturaEntityType = "contador" | "pst";
+export type CoberturaEntityType = "contador" | "pst" | "turno";
 
 /** Estado persistido en DB (ADR-013): solo ACTIVA/CANCELADA. Los estados
  * visibles Programada/Vencida se derivan por fecha en `lib/estado.ts`. */

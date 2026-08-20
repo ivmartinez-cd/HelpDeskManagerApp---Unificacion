@@ -187,3 +187,109 @@ export const coberturasPstApi: CoberturasApi = {
         ),
       ),
 };
+
+// ── Turnos — wire camelCase (serialization_alias en los schemas) ───────────
+
+/** Nombres tal como los serializa `AsignacionOverrideResponse` de
+ * `turnos/presentation/schemas/turno_schemas.py` (camelCase vía
+ * serialization_alias, mismo criterio que prestadores). */
+interface TurnosOverrideWire {
+  id: string;
+  operadorAusenteId: string;
+  operadorAusenteNombre: string | null;
+  operadorReemplazanteId: string;
+  operadorReemplazanteNombre: string | null;
+  desde: string;
+  hasta: string;
+  alcanceTotal: boolean;
+  slotIds: string[];
+  estado: "ACTIVA" | "CANCELADA";
+  motivo: string | null;
+}
+
+function fromTurnosWire(w: TurnosOverrideWire): Cobertura {
+  return {
+    id: w.id,
+    ausenteId: w.operadorAusenteId,
+    ausenteNombre: w.operadorAusenteNombre,
+    reemplazanteId: w.operadorReemplazanteId,
+    reemplazanteNombre: w.operadorReemplazanteNombre,
+    desde: w.desde,
+    hasta: w.hasta,
+    alcanceTotal: w.alcanceTotal,
+    alcanceItems: w.slotIds,
+    estado: w.estado,
+    motivo: w.motivo,
+  };
+}
+
+const DIAS_SEMANA_ABREV = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+interface TurnosCasillaWire {
+  id: string;
+  nombre: string;
+}
+
+interface TurnosSlotWire {
+  id: string;
+  casillaId: string;
+  horaInicio: string;
+  horaFin: string;
+  diaSemana: number;
+}
+
+export const coberturasTurnosApi: CoberturasApi = {
+  list: () =>
+    httpClient.get<Page<TurnosOverrideWire>>("/api/turnos/overrides").then((p) =>
+      p.items.map(fromTurnosWire),
+    ),
+
+  create: (payload: CreateCoberturaPayload) =>
+    httpClient
+      .post<TurnosOverrideWire>("/api/turnos/overrides", {
+        operadorAusenteId: payload.ausenteId,
+        operadorReemplazanteId: payload.reemplazanteId,
+        desde: payload.desde,
+        hasta: payload.hasta,
+        slotIds: payload.alcanceItems,
+        motivo: payload.motivo,
+      })
+      .then(fromTurnosWire),
+
+  update: (id: string, payload: CreateCoberturaPayload) =>
+    httpClient
+      .put<TurnosOverrideWire>(`/api/turnos/overrides/${id}`, {
+        operadorAusenteId: payload.ausenteId,
+        operadorReemplazanteId: payload.reemplazanteId,
+        desde: payload.desde,
+        hasta: payload.hasta,
+        slotIds: payload.alcanceItems,
+        motivo: payload.motivo,
+      })
+      .then(fromTurnosWire),
+
+  cancel: (id: string) => httpClient.post<void>(`/api/turnos/overrides/${id}/cancelar`),
+
+  listOperadores: () =>
+    httpClient
+      .get<Page<{ id: string; fullName: string; color: string | null }>>("/api/turnos/users")
+      .then((p) => p.items.map((o) => ({ id: o.id, nombre: o.fullName, color: o.color }))),
+
+  // Alcance parcial = franjas concretas (slot). El label compuesto necesita
+  // el nombre de casilla, que no viaja en /slots -- se arma con /casillas.
+  listAlcanceOptions: () =>
+    Promise.all([
+      httpClient.get<Page<TurnosCasillaWire>>("/api/turnos/casillas"),
+      httpClient.get<Page<TurnosSlotWire>>("/api/turnos/slots"),
+    ]).then(([casillasPage, slotsPage]): AlcanceOption[] => {
+      const casillaNombrePorId = new Map(
+        casillasPage.items.map((c) => [c.id, c.nombre] as const),
+      );
+      return slotsPage.items.map((s) => ({
+        id: s.id,
+        label: `${casillaNombrePorId.get(s.casillaId) ?? "?"} · ${
+          DIAS_SEMANA_ABREV[s.diaSemana] ?? "?"
+        } ${s.horaInicio.slice(0, 5)}-${s.horaFin.slice(0, 5)}`,
+      }));
+    }),
+};

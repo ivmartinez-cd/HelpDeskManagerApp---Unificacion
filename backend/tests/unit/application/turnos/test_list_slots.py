@@ -40,7 +40,6 @@ async def test_lista_asignaciones_en_un_solo_batch_no_n_mas_1() -> None:
 
     assert len(result) == 4
     assert asignaciones_repo.list_by_slots_calls == 1
-    assert asignaciones_repo.list_by_slot_calls == 0
 
 
 async def test_resuelve_nombre_de_operador_desactivado() -> None:
@@ -74,3 +73,42 @@ async def test_resuelve_nombre_de_operador_desactivado() -> None:
     result = await use_case.execute()
 
     assert result[0].asignaciones[0].user_name == "Operador Desactivado"
+
+
+async def test_no_muestra_asignaciones_vencidas() -> None:
+    """Una asignación ya cerrada (`vigente_hasta` en el pasado) no debe listarse
+    como si estuviera vigente -- causa raíz de los operadores "duplicados" en la
+    tabla de admin (la fila vieja y la nueva conviven visualmente)."""
+    casilla_id = uuid.uuid4()
+    slot = _slot(casilla_id, time(8))
+    slots_repo = FakeSlotRepository()
+    slots_repo.rows[slot.id] = slot
+
+    vencido_user_id = uuid.uuid4()
+    vigente_user_id = uuid.uuid4()
+    asignaciones_repo = FakeAsignacionRepository()
+    vencida = Asignacion(
+        id=uuid.uuid4(),
+        slot_id=slot.id,
+        user_id=vencido_user_id,
+        vigente_desde=date(2026, 8, 11),
+        vigente_hasta=date(2026, 8, 18),
+    )
+    vigente = Asignacion(
+        id=uuid.uuid4(),
+        slot_id=slot.id,
+        user_id=vigente_user_id,
+        vigente_desde=date(2026, 8, 19),
+        vigente_hasta=None,
+    )
+    asignaciones_repo.rows[vencida.id] = vencida
+    asignaciones_repo.rows[vigente.id] = vigente
+
+    use_case = ListSlots(
+        ListSlotsDependencies(
+            slots=slots_repo, asignaciones=asignaciones_repo, users=FakeUserProvider()
+        )
+    )
+    result = await use_case.execute(target_date=date(2026, 8, 19))
+
+    assert [a.user_id for a in result[0].asignaciones] == [vigente_user_id]

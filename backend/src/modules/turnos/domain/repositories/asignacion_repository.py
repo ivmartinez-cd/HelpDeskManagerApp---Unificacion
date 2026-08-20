@@ -8,13 +8,11 @@ from src.modules.turnos.domain.entities.asignacion import Asignacion
 class AsignacionRepository(Protocol):
     """Puerto de persistencia para asignaciones de usuario a slots."""
 
-    async def list_by_slot(self, slot_id: uuid.UUID) -> list[Asignacion]: ...
-
     async def list_by_slots(
-        self, slot_ids: list[uuid.UUID]
+        self, slot_ids: list[uuid.UUID], target_date: date
     ) -> dict[uuid.UUID, list[Asignacion]]:
-        """Batch de `list_by_slot` -- evita N+1 al listar todos los slots de una
-        casilla (o de todas)."""
+        """Asignaciones vigentes en `target_date` para cada slot -- evita N+1 al listar
+        todos los slots de una casilla (o de todas)."""
         ...
 
     async def list_active_on_date(self, target_date: date) -> list[Asignacion]: ...
