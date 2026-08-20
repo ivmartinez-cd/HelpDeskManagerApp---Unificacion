@@ -529,6 +529,8 @@ export interface ItemWorklistTier2 {
   sucursalNombre: string;
   domicilio: string | null;
   motivos: string[];
+  latitud: number | null;
+  longitud: number | null;
 }
 
 export interface ResultadoWorklistTier2 {

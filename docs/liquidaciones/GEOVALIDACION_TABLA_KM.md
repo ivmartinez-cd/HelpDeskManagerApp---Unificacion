@@ -206,6 +206,23 @@ No se generalizó a una constante universal: sigue siendo un parámetro por
 corrida/PST (`evaluar_tier0(..., umbral_distancia_base_km=...)`) — un PST con radio
 de operación real distinto puede necesitar otro valor.
 
+## Worklist visual combinada (2026-08-19)
+
+La sección "Worklist final" del wizard (`tabla-km-wizard-pines-worklist.tsx`) junta en
+una sola vista rankeada lo que antes quedaba en dos pantallas separadas: los hallazgos
+de certeza absoluta de Tier 0 (dominio puro, sin ambigüedad) primero, y después los
+pines que Tier 2/Google confirmó que difieren de la dirección escrita — los mismos 2
+grupos que ya juntaba el CSV. Cada ítem de certeza absoluta linkea a Maps si tiene pin;
+cada pin confirmado conserva el botón "Usar la dirección escrita" para corregir sin
+tocar Gestión. Se agregó también un botón de auditoría completa con Google (antes vivía
+en una tarjeta aparte, "Pines vs. dirección escrita", ahora eliminada) — pasa por el
+mismo `BotonConsumoGoogle` de estimación previa que el resto de las acciones pagas.
+
+Se dividió `tabla-km-wizard-pines.tsx` (466 líneas, superaba el máximo de 300) en 4
+archivos por responsabilidad: `-tier0.tsx` (incluye el componente compartido
+`Tarjeta`), `-tier1.tsx` (Georef + Nominatim), `-worklist.tsx` (la vista combinada) y el
+orquestador `PasoPines` que solo compone los 4.
+
 ## Pendiente
 
 - Tier 1, geocode de direcciones (`/direcciones` de Georef): no implementado en esta
@@ -213,7 +230,3 @@ de operación real distinto puede necesitar otro valor.
   medición de Fase 0 (0 resultados en 4 pruebas reales), así que su valor inmediato es
   bajo frente al reverse. El reverse (implementado) es "la validación más barata y
   contundente" que preveía el plan.
-- Worklist visual final combinando los 69 pines confirmados de Tier 2 con los 4 de
-  certeza absoluta de Tier 0 en una sola vista rankeada (hoy quedan en pantallas
-  separadas: la sección "Worklist final" para certeza absoluta y "Pines vs. dirección
-  escrita" para los confirmados por Google; el CSV sí los junta a los 3).
