@@ -23,7 +23,7 @@ import { insumosApi } from "@/features/insumos/api/insumos-api";
 import type { DashboardResponse } from "@/features/insumos/types/dashboard";
 import { liquidacionesApi } from "@/features/liquidaciones/api/liquidaciones-api";
 import { turnosApi } from "@/features/turnos/api/turnos-api";
-import type { ResolvedShift } from "@/features/turnos/types/turnos";
+import type { CurrentShifts } from "@/features/turnos/types/turnos";
 import { periodoOffset } from "../utils/inicio-format";
 
 export interface Remote<T> {
@@ -65,7 +65,7 @@ function useRemote<T>(enabled: boolean, fetcher: () => Promise<T>, label: string
   return { ...state, refetch: () => setTick((t) => t + 1) };
 }
 
-export function useTurnosHoy(): Remote<ResolvedShift[]> {
+export function useTurnosHoy(): Remote<CurrentShifts> {
   return useRemote(true, () => turnosApi.getCurrentShifts(), "los turnos del día");
 }
 

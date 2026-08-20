@@ -17,6 +17,20 @@ export interface ResolvedShift {
   isNext: boolean;
 }
 
+/** Cabecera de la grilla de vacaciones vigente hoy (ADR-025), para el badge
+ * de la home. `null` cuando rige la grilla titular. */
+export interface VarianteActiva {
+  id: string;
+  motivo: string | null;
+  desde: string;
+  hasta: string;
+}
+
+export interface CurrentShifts {
+  shifts: ResolvedShift[];
+  varianteActiva: VarianteActiva | null;
+}
+
 export interface Casilla {
   id: string;
   nombre: string;

@@ -77,7 +77,14 @@ export function InicioDashboard() {
   function renderCard(id: string) {
     switch (id) {
       case "turnos":
-        return <TurnosTimelineCard shifts={turnos.data ?? []} loading={turnos.loading} error={turnos.error} />;
+        return (
+          <TurnosTimelineCard
+            shifts={turnos.data?.shifts ?? []}
+            varianteActiva={turnos.data?.varianteActiva ?? null}
+            loading={turnos.loading}
+            error={turnos.error}
+          />
+        );
       case "clientes-hoy":
         return (
           <ClientesHoyCard

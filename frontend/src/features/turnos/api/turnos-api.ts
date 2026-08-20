@@ -3,11 +3,13 @@ import type {
   Casilla,
   CreateCasillaPayload,
   CreateSlotPayload,
+  CurrentShifts,
   ResolvedShift,
   Slot,
   UpdateCasillaPayload,
   UpdateSlotPayload,
   UserOption,
+  VarianteActiva,
 } from "../types/turnos";
 
 interface Page<T> {
@@ -17,9 +19,15 @@ interface Page<T> {
   size: number;
 }
 
+/** `/current` es un `Page` + `varianteActiva` (aditivo, ADR-025). */
+type CurrentShiftsWire = Page<ResolvedShift> & { varianteActiva?: VarianteActiva | null };
+
 export const turnosApi = {
-  getCurrentShifts: () =>
-    httpClient.get<Page<ResolvedShift>>("/api/turnos/current").then((p) => p.items),
+  getCurrentShifts: (): Promise<CurrentShifts> =>
+    httpClient.get<CurrentShiftsWire>("/api/turnos/current").then((p) => ({
+      shifts: p.items,
+      varianteActiva: p.varianteActiva ?? null,
+    })),
 
   listCasillas: () =>
     httpClient.get<Page<Casilla>>("/api/turnos/casillas").then((p) => p.items),

@@ -75,7 +75,7 @@ export const COBERTURA_CONFIG: Record<CoberturaEntityType, CoberturaConfig> = {
     multiPlaceholder: "Buscá una franja…",
     multiAllowCustom: false,
     footerCopy:
-      "Al vencer la vigencia, las franjas vuelven automáticamente a su operador original. El modo vacaciones no modifica la Configuración de Turnos ni su historial.",
+      "Al vencer la vigencia, las franjas vuelven automáticamente a su operador original. Las coberturas no modifican la Configuración de Turnos ni su historial. Para re-cortar horarios o crear/eliminar franjas durante una ausencia, usá el Modo vacaciones.",
     notaVuelta: (hasta, ausente) =>
       `Esta cobertura es temporal y no modifica la Configuración de Turnos. Al finalizar el ${hasta}, las franjas vuelven a ${ausente} automáticamente.`,
     permisoCrear: { moduleKey: "admin", actionKey: "manage" },

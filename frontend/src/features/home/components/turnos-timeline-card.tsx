@@ -1,8 +1,9 @@
 "use client";
 
-import { Clock } from "lucide-react";
+import { CalendarClock, Clock } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import type { ResolvedShift } from "@/features/turnos/types/turnos";
+import { formatDiaMes } from "@/features/turnos/lib/variante-estado";
+import type { ResolvedShift, VarianteActiva } from "@/features/turnos/types/turnos";
 import { FALLBACK_COLOR, accentText, tint } from "../utils/inicio-format";
 import { DashboardCard } from "./dashboard-card";
 
@@ -73,10 +74,14 @@ function buildTracks(shifts: ResolvedShift[], start: number, span: number): Trac
 
 export function TurnosTimelineCard({
   shifts,
+  varianteActiva = null,
   loading,
   error,
 }: {
   shifts: ResolvedShift[];
+  /** Grilla de vacaciones vigente hoy (ADR-025): badge en el header; el
+   * timeline en sí no cambia, ya renderiza lo que `/current` resuelva. */
+  varianteActiva?: VarianteActiva | null;
   loading: boolean;
   error: string | null;
 }) {
@@ -111,20 +116,31 @@ export function TurnosTimelineCard({
       loading={loading}
       error={error}
       headerRight={
-        <span
-          className={
-            inHours
-              ? "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-500/[0.13] px-2.5 py-1 font-heading text-[10.5px] font-bold text-emerald-500"
-              : "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 font-heading text-[10.5px] font-bold text-muted-foreground"
-          }
-        >
+        <div className="flex shrink-0 items-center gap-1.5">
+          {varianteActiva && (
+            <span
+              title={varianteActiva.motivo ?? "Grilla de vacaciones"}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand-orange/[0.13] px-2.5 py-1 font-heading text-[10.5px] font-bold text-brand-orange"
+            >
+              <CalendarClock className="h-3 w-3" />
+              Grilla de vacaciones hasta el {formatDiaMes(varianteActiva.hasta)}
+            </span>
+          )}
           <span
             className={
-              inHours ? "h-1.5 w-1.5 rounded-full bg-emerald-500" : "h-1.5 w-1.5 rounded-full bg-muted-foreground"
+              inHours
+                ? "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-500/[0.13] px-2.5 py-1 font-heading text-[10.5px] font-bold text-emerald-500"
+                : "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 font-heading text-[10.5px] font-bold text-muted-foreground"
             }
-          />
-          {inHours ? `Ahora ${hhmm}` : `Fuera de horario · ${hhmm}`}
-        </span>
+          >
+            <span
+              className={
+                inHours ? "h-1.5 w-1.5 rounded-full bg-emerald-500" : "h-1.5 w-1.5 rounded-full bg-muted-foreground"
+              }
+            />
+            {inHours ? `Ahora ${hhmm}` : `Fuera de horario · ${hhmm}`}
+          </span>
+        </div>
       }
     >
       {shifts.length === 0 ? (

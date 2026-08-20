@@ -123,6 +123,19 @@ export interface Solicitud {
   aprobaciones: Aprobacion[];
 }
 
+/** Aviso de impacto en turnos al aprobar (ADR-025): el empleado tiene
+ * franjas de turno en el rango. No crea nada; alimenta el CTA hacia el
+ * editor del modo vacaciones. */
+export interface AfectaTurnos {
+  userId: string;
+  desde: string;
+  hasta: string;
+}
+
+export interface DecisionResult extends Solicitud {
+  afectaTurnos: AfectaTurnos | null;
+}
+
 export interface SolicitudPayload {
   empleadoId?: string;
   startDate: string;

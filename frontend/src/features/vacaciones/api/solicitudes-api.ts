@@ -1,6 +1,7 @@
 import { httpClient } from "@/services/http-client";
 import type {
   DashboardResumen,
+  DecisionResult,
   EstadoSolicitud,
   EventoCalendario,
   Page,
@@ -35,7 +36,7 @@ export const solicitudesApi = {
     httpClient.put<Solicitud>(`${BASE}/solicitudes/${id}`, payload),
   remove: (id: string) => httpClient.delete<void>(`${BASE}/solicitudes/${id}`),
   decide: (id: string, decision: "APPROVED" | "REJECTED", comment: string | null) =>
-    httpClient.post<Solicitud>(`${BASE}/solicitudes/${id}/decision`, {
+    httpClient.post<DecisionResult>(`${BASE}/solicitudes/${id}/decision`, {
       decision,
       comment,
     }),

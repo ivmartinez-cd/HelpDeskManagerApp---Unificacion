@@ -214,7 +214,7 @@ export function CasillasManager() {
           <Link href="/admin/turnos/coberturas">
             <Button variant="outline" size="sm" className="gap-1.5">
               <CalendarClock className="h-4 w-4" />
-              Modo vacaciones
+              Coberturas
             </Button>
           </Link>
           <Button

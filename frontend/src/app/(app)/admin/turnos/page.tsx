@@ -1,4 +1,4 @@
-import { CasillasManager } from "@/features/turnos/components/admin/casillas-manager";
+import { TurnosAdminTabs } from "@/features/turnos/components/admin/turnos-admin-tabs";
 
 export const metadata = {
   title: "Turnos de Operadores",
@@ -12,11 +12,12 @@ export default function AdminTurnosPage() {
           Configuración de Turnos de Operadores
         </h1>
         <p className="mt-1 font-body text-sm text-muted-foreground">
-          Gestión de casillas, franjas horarias y enroque de asignaciones de operadores.
+          Gestión de casillas, franjas horarias y enroque de asignaciones de operadores. Modo
+          vacaciones: grilla alternativa con vigencia, sin tocar la titular.
         </p>
       </div>
 
-      <CasillasManager />
+      <TurnosAdminTabs />
     </div>
   );
 }

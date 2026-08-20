@@ -1,23 +1,84 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronRight, ClipboardCheck } from "lucide-react";
+import Link from "next/link";
+import { CalendarClock, ChevronRight, ClipboardCheck, X } from "lucide-react";
 import { ApiError } from "@/services/http-client";
 import {
   BrandButton,
   BrandEmptyState,
   BrandSelect,
   BrandSkeleton,
+  brandButtonClasses,
 } from "@/shared/components/ui/brand-form";
 import { solicitudesApi } from "../api/solicitudes-api";
-import { formatRango, iniciales } from "../lib/fechas";
-import type { Saldo, Solicitud } from "../types/vacaciones";
+import { formatFecha, formatRango, iniciales } from "../lib/fechas";
+import type { DecisionResult, Saldo, Solicitud } from "../types/vacaciones";
 import { SolicitudEstadoBadge } from "./solicitud-estado-badge";
+
+/** Link al editor del modo vacaciones de turnos (ADR-025), precargado por
+ * query params con el ausente y el rango aprobado. */
+export function hrefArmarGrillaCobertura(decision: DecisionResult): string {
+  const q = new URLSearchParams({
+    tab: "vacaciones",
+    ausente: decision.afectaTurnos?.userId ?? "",
+    desde: decision.startDate,
+    hasta: decision.endDate,
+    motivo: `Vacaciones ${decision.empleadoNombre}`,
+  });
+  return `/admin/turnos?${q.toString()}`;
+}
+
+function AvisoAfectaTurnos({
+  decision,
+  onClose,
+}: {
+  decision: DecisionResult;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap items-center justify-between gap-4 rounded-[12px] border border-brand-orange/20 bg-brand-orange/10 px-5 py-4"
+    >
+      <div className="flex items-start gap-3">
+        <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-brand-orange" />
+        <div className="flex flex-col gap-0.5">
+          <p className="font-body text-sm font-semibold text-foreground">
+            {decision.empleadoNombre} tiene turnos de casilla entre el{" "}
+            {formatFecha(decision.startDate)} y el {formatFecha(decision.endDate)}.
+          </p>
+          <p className="font-body text-xs text-muted-foreground">
+            La aprobación quedó registrada. La grilla de cobertura no se arma sola: re-cortar
+            franjas exige criterio humano. Podés armarla ahora en el Modo vacaciones de Turnos.
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Link
+          href={hrefArmarGrillaCobertura(decision)}
+          className={brandButtonClasses({ size: "sm" })}
+        >
+          Armar grilla de cobertura →
+        </Link>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar aviso de turnos"
+          className="rounded-[8px] p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function AprobacionesView() {
   const [solicitudes, setSolicitudes] = useState<Solicitud[] | null>(null);
   const [soloPendientes, setSoloPendientes] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [avisoTurnos, setAvisoTurnos] = useState<DecisionResult | null>(null);
 
   const load = useCallback(
     () =>
@@ -88,6 +149,10 @@ export function AprobacionesView() {
         </div>
       )}
 
+      {avisoTurnos && (
+        <AvisoAfectaTurnos decision={avisoTurnos} onClose={() => setAvisoTurnos(null)} />
+      )}
+
       {solicitudes !== null && !error && (
         <>
           <section className="flex flex-col gap-3">
@@ -105,7 +170,14 @@ export function AprobacionesView() {
               />
             ) : (
               listadas.map((s) => (
-                <AprobacionCard key={s.id} solicitud={s} onDecided={() => void load()} />
+                <AprobacionCard
+                  key={s.id}
+                  solicitud={s}
+                  onDecided={(res) => {
+                    setAvisoTurnos(res.afectaTurnos ? res : null);
+                    void load();
+                  }}
+                />
               ))
             )}
           </section>
@@ -171,7 +243,7 @@ function AprobacionCard({
   onDecided,
 }: {
   solicitud: Solicitud;
-  onDecided: () => void;
+  onDecided: (resultado: DecisionResult) => void;
 }) {
   const [expandida, setExpandida] = useState(false);
   const [comment, setComment] = useState("");
