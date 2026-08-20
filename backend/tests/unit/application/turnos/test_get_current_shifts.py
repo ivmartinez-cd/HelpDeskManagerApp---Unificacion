@@ -15,6 +15,7 @@ from tests.unit.domain.turnos.fakes import (
     FakeAsignacionOverrideRepository,
     FakeAsignacionRepository,
     FakeCasillaRepository,
+    FakeGrillaVarianteRepository,
     FakeSlotRepository,
     FakeUserProvider,
 )
@@ -70,12 +71,14 @@ async def test_muestra_al_reemplazante_cuando_hay_una_cobertura_activa() -> None
             asignaciones=asignaciones_repo,
             users=users_repo,
             overrides=overrides_repo,
+            variantes=FakeGrillaVarianteRepository(),
         )
     )
     result = await use_case.execute(
         now_datetime=datetime(2026, 8, 25, 9, 0, tzinfo=_ARGENTINA_TZ)
     )
 
-    assert len(result) == 1
-    assert [op.user_id for op in result[0].operadores] == [reemplazante]
-    assert result[0].operadores[0].user_name == "Luna Torres"
+    assert result.variante_activa is None
+    assert len(result.shifts) == 1
+    assert [op.user_id for op in result.shifts[0].operadores] == [reemplazante]
+    assert result.shifts[0].operadores[0].user_name == "Luna Torres"

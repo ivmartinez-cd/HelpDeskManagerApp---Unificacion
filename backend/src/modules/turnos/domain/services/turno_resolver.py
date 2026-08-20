@@ -4,11 +4,41 @@ from datetime import date, time
 
 from src.modules.turnos.domain.entities.asignacion import Asignacion
 from src.modules.turnos.domain.entities.casilla import Casilla
+from src.modules.turnos.domain.entities.grilla_variante import GrillaVariante
 from src.modules.turnos.domain.entities.slot import Slot
 from src.modules.turnos.domain.repositories.asignacion_override_repository import (
     TurnoAsignacionOverride,
 )
 from src.shared.domain.services.asignacion_override_resolver import resolver_operador_efectivo
+
+
+def materializar_variante(variante: GrillaVariante) -> tuple[list[Slot], list[Asignacion]]:
+    """Convierte la variante en `Slot`/`Asignacion` con los ids de la variante,
+    para reusar el mismo camino de resolución (vigencia + overrides) que la
+    grilla titular. Las asignaciones se acotan a la vigencia de la variante."""
+    slots = [
+        Slot(
+            id=vs.id,
+            casilla_id=vs.casilla_id,
+            hora_inicio=vs.hora_inicio,
+            hora_fin=vs.hora_fin,
+            dia_semana=vs.dia_semana,
+            sort_order=vs.sort_order,
+        )
+        for vs in variante.slots
+    ]
+    asignaciones = [
+        Asignacion(
+            id=uuid.uuid5(vs.id, str(user_id)),
+            slot_id=vs.id,
+            user_id=user_id,
+            vigente_desde=variante.desde,
+            vigente_hasta=variante.hasta,
+        )
+        for vs in variante.slots
+        for user_id in vs.user_ids
+    ]
+    return slots, asignaciones
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,7 +56,16 @@ class ResolvedSlotShift:
 
 
 class TurnoResolver:
-    """Calcula el estado actual y próximo de turnos para una fecha y hora."""
+    """Calcula el estado actual y próximo de turnos para una fecha y hora.
+
+    Si se pasa una `variante` (grilla de vacaciones, ADR-025) vigente en
+    `target_date`, las franjas y asignaciones del día salen de la variante en
+    lugar de la grilla titular (`slots`/`asignaciones` se ignoran). Los
+    overrides ADR-013 de alcance TOTAL siguen aplicando sobre la variante
+    (cubren por persona); los de alcance parcial referencian `turno_slot.id`
+    titulares y, como las franjas de la variante tienen ids propios, NO
+    aplican mientras la variante está vigente -- asimetría documentada en el
+    ADR, no un descuido."""
 
     def resolve_shifts(
         self,
@@ -37,7 +76,10 @@ class TurnoResolver:
         target_date: date,
         target_time: time,
         overrides_por_ausente: dict[uuid.UUID, list[TurnoAsignacionOverride]] | None = None,
+        variante: GrillaVariante | None = None,
     ) -> list[ResolvedSlotShift]:
+        if variante is not None and variante.vigente_en(target_date):
+            slots, asignaciones = materializar_variante(variante)
         dia_semana = target_date.weekday()
         casillas_dict = {c.id: c for c in casillas if c.is_active}
         active_slots = [

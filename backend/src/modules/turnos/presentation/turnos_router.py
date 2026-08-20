@@ -73,11 +73,18 @@ from src.modules.turnos.infrastructure.repositories.sqlalchemy_asignacion_reposi
 from src.modules.turnos.infrastructure.repositories.sqlalchemy_casilla_repository import (
     SqlAlchemyCasillaRepository,
 )
+from src.modules.turnos.infrastructure.repositories.sqlalchemy_grilla_variante_repository import (  # noqa: E501
+    SqlAlchemyGrillaVarianteRepository,
+)
 from src.modules.turnos.infrastructure.repositories.sqlalchemy_slot_repository import (
     SqlAlchemySlotRepository,
 )
 from src.modules.turnos.infrastructure.repositories.sqlalchemy_user_provider import (
     SqlAlchemyUserProvider,
+)
+from src.modules.turnos.presentation.schemas.grilla_variante_schemas import (
+    CurrentShiftsResponse,
+    VarianteActivaResponse,
 )
 from src.modules.turnos.presentation.schemas.turno_schemas import (
     AsignacionOverrideResponse,
@@ -108,17 +115,29 @@ async def get_current_shifts(
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
     _identity: Identity = Depends(get_current_identity),
     db: AsyncSession = Depends(get_db),
-) -> Page[ResolvedShiftResponse]:
+) -> CurrentShiftsResponse:
     deps = GetCurrentShiftsDependencies(
         casillas=SqlAlchemyCasillaRepository(db),
         slots=SqlAlchemySlotRepository(db),
         asignaciones=SqlAlchemyAsignacionRepository(db),
         users=SqlAlchemyUserProvider(db),
         overrides=SqlAlchemyAsignacionOverrideRepository(db),
+        variantes=SqlAlchemyGrillaVarianteRepository(db),
     )
-    shifts = await GetCurrentShifts(deps).execute()
-    return Page.of(
-        [ResolvedShiftResponse.from_dto(s) for s in shifts], page=page, size=size
+    result = await GetCurrentShifts(deps).execute()
+    paged = Page.of(
+        [ResolvedShiftResponse.from_dto(s) for s in result.shifts], page=page, size=size
+    )
+    return CurrentShiftsResponse(
+        items=paged.items,
+        total=paged.total,
+        page=paged.page,
+        size=paged.size,
+        variante_activa=(
+            VarianteActivaResponse.from_dto(result.variante_activa)
+            if result.variante_activa is not None
+            else None
+        ),
     )
 
 

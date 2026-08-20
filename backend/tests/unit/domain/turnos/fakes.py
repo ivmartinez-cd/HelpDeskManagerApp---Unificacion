@@ -5,10 +5,12 @@ from datetime import date, timedelta
 
 from src.modules.turnos.domain.entities.asignacion import Asignacion
 from src.modules.turnos.domain.entities.casilla import Casilla
+from src.modules.turnos.domain.entities.grilla_variante import GrillaVariante
 from src.modules.turnos.domain.entities.slot import Slot
 from src.modules.turnos.domain.repositories.asignacion_override_repository import (
     TurnoAsignacionOverride,
 )
+from src.modules.turnos.domain.repositories.ausencias_lookup import AusenciaAprobada
 from src.modules.turnos.domain.repositories.user_provider import UserInfo
 
 
@@ -142,6 +144,48 @@ class FakeAsignacionOverrideRepository:
     async def cancelar(self, override_id: uuid.UUID) -> None:
         if override_id in self.rows:
             self.rows[override_id].estado = "CANCELADA"
+
+
+class FakeGrillaVarianteRepository:
+    def __init__(self) -> None:
+        self.rows: dict[uuid.UUID, GrillaVariante] = {}
+
+    async def create(self, variante: GrillaVariante) -> None:
+        self.rows[variante.id] = variante
+
+    async def update(self, variante: GrillaVariante) -> None:
+        if variante.id in self.rows:
+            self.rows[variante.id] = variante
+
+    async def get_by_id(self, variante_id: uuid.UUID) -> GrillaVariante | None:
+        return self.rows.get(variante_id)
+
+    async def list_all(self) -> list[GrillaVariante]:
+        return list(self.rows.values())
+
+    async def list_activas(self) -> list[GrillaVariante]:
+        return [v for v in self.rows.values() if v.estado == "ACTIVA"]
+
+    async def find_vigente(self, fecha: date) -> GrillaVariante | None:
+        return next((v for v in self.rows.values() if v.vigente_en(fecha)), None)
+
+    async def cancelar(self, variante_id: uuid.UUID) -> None:
+        if variante_id in self.rows:
+            self.rows[variante_id].estado = "CANCELADA"
+
+
+class FakeAusenciasLookup:
+    def __init__(self) -> None:
+        self.rows: list[AusenciaAprobada] = []
+
+    async def ausencias_aprobadas_en(
+        self, user_ids: list[uuid.UUID], desde: date, hasta: date
+    ) -> list[AusenciaAprobada]:
+        return [
+            a
+            for a in self.rows
+            if a.user_id in user_ids and not (a.desde > hasta or desde > a.hasta)
+        ]
 
 
 class FakeUserProvider:

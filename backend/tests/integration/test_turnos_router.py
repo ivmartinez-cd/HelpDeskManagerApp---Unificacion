@@ -27,6 +27,11 @@ async def test_turnos_current_unauthenticated_returns_401() -> None:
         ("DELETE", f"/api/turnos/slots/{uuid.uuid4()}"),
         ("POST", f"/api/turnos/slots/{uuid.uuid4()}/asignaciones"),
         ("GET", "/api/turnos/users"),
+        ("GET", "/api/turnos/grilla-variantes"),
+        ("POST", "/api/turnos/grilla-variantes"),
+        ("POST", "/api/turnos/grilla-variantes/precarga"),
+        ("PUT", f"/api/turnos/grilla-variantes/{uuid.uuid4()}"),
+        ("POST", f"/api/turnos/grilla-variantes/{uuid.uuid4()}/cancelar"),
     ],
 )
 async def test_turnos_admin_endpoints_unauthenticated_returns_401(
