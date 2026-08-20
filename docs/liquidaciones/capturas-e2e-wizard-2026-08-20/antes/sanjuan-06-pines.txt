@@ -1,0 +1,9441 @@
+Asistente de KM — SAN JUAN
+✓
+DIAGNÓSTICO
+2
+IMPORTAR
+3
+SIN MATCH
+4
+UBICAR
+5
+DISTANCIAS
+6
+PINES
+
+1 · Geovalidación básica (Tier 0)
+
+Coordenadas ausentes, fuera de Argentina, invertidas, pines compartidos entre sucursales distintas y muy lejos de la base. No consulta ningún servicio externo.
+
+NO USA GOOGLE
+
+Gobierno de San Juan — Escuela 20 de Junio
+
+ALTA
+
+(40.41672790000001, -3.7032905) fuera del rectángulo continental+insular
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Martin Yanzon
+
+ALTA
+
+(-68.2523437390409, -31.7627837731883) cae fuera de Argentina; invertido cae dentro
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Miguel Cane de Bauchaceta
+
+ALTA
+
+(1.0, 1.0) fuera del rectángulo continental+insular
+
+VER PIN EN MAPS
+
+Zucamor Cuyo — San Juan
+
+ALTA
+
+(1.0, 1.0) fuera del rectángulo continental+insular
+
+VER PIN EN MAPS
+
+ADIUM — San Juan
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 67 13 de Junio
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Velodromo Vicente Alejo Chancay
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Banco Santander Río — 567 - San Juan Rivadavia
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 37
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+CCU — San Juan
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ALBERGUE PCIA. DE SAN LUIS
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — DRA. LETICIA A. DE SORMANI
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — E.P.E.T. N° 6 LA BEBIDA
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Cura Brochero
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Multiple de Iglesia Felipe Rojas
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 54 Santa Rosa
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 57 Sunyay
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 66 Pequeños Granaderos
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Esc. MAR ARGENTINO
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agro 25 de Mayo
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agrotecnica Cornelio Saavedra
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Albergue Pcia. de San Luis
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Autonomia B. del Bono
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Bachillerato Columna Cabot
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela BARTOLOME DEL BONO
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Constancio C. Vigil
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cruce de los Andes
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dalmacio Velez Sarsfield
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Docentes Sanjuaninos
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela E. Larreta
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela El Jardin de Mimosaurio
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Eusebio S. Zapata
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Exp. de Nivel Medio Divisadero
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Florencia Nightingale
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Grads. de San Martin
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Granaderos de San Martin
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Hilario Ascasubi
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela J.Jose de Vertiz
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Malvinas Argentinas
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela MANUEL ALBERTI
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Maria Curie
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Movil Nro. 22 Casuarinas
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Padre Federico Maggio
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Ed. Tec. N.º 1
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Neuquen
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pte. Mitre
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pte. Quintana
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Rafael Arrieta (Anexo)
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela RAMON BARRERA
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Ricardo Guiraldes
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Saturnino Segurola
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Oscar Otiñano
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Segundino J. Navarro
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sup. de Sarmiento (Anexo)
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Tec. Augusto B. Sarmiento
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Tec. Maria C. de Tinto
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Victorina Lenoir de Navarro
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 11 Saturnino Segurola
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 4
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 5 Dr. A. Einstein
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 8 Pte. Mitre
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 9
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ Nro 32
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Unidad De Gestion Iglesia
+
+MEDIA
+
+Mismo pin que otras 54 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Agroindustrial 25 de Mayo
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Segundino Navarro
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ALBERGUE BUENAVENTURA COLLADO
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Multiple de Valle Fertil - Anexo Astica
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Esc. Benito Linch
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agrotecnica Ejercito Argentino
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Albergue Casa del Niño
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela albergue H. de Magallanes
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Albergue Reconquista de BA
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Baldes de las Chilcas
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Bethsabe Pelliza de Espinoza
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela de la Patria
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dra. Julieta Lanteri
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Fragata Pte. Sarmiento
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Franklin Rawson
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Fray Cayetano Rodriguez
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Presbitero C. de Quiroga
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sargento Cabral
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Astica
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Tec. Cap. Lab. Pedro. P. de Quiroga
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Tec. de Valle Fertil
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 56 Maria E. Vidart de Maurin
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 7
+
+MEDIA
+
+Mismo pin que otras 20 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ALBERGUE CASA DEL NIÑO
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Valle Fertil
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Anexo N.º 2 del Centro de Formación Profesional N.º 1 de Rawson
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pedro Echague
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Taller Hermanas Carmelitas
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Antenor Flores Vidal
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Antonio Flores Vidal
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Casa de Gobierno de S.J.
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — E.P.E.T. N° 4
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE C.A.R.E.M.
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Jose A. Terry
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Nicolas Echezarreta
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pedro de Marquez
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sabino Pignatari
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sup. Mariano Moreno
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Unidad de Gestion - Esc. Sarmiento
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — UNIDAD DE GESTION ABC
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Unidad de Gestion Central
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Unidad de Gestion P
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Natura — Débora Aragón
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Natura — Karen Rodriguez
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Natura — MARIA ROMINA ZAPATA LIMA
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Pedidos Ya — AR_181_San_Juan_Centro
+
+MEDIA
+
+Mismo pin que otras 15 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Casa de Supervision de Valle Fertil
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Formosa
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Unidad De Gestion Valle Fertil
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — CENS Juan de Garay
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juan Jufre
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — CENS Soldados de Malvinas
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Independencia Argentina
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Soldados de Malvinas
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Parque Rivadavia Norte
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — CENS Zona Oeste
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Martina Chapanay
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 20 Pilpintu
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 40 Adriana Vega
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 50 Prof. Margarira Ravioli
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 55 Los Pinos
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 65
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agustin V. Gnecco
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. Manuel Alvar Lopez
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Gral. Estanislao Soler
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Paso de Valle Hermoso
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Prov. Chimbas I
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. San Juan de Dios (Penitenciario)
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Tec. Juan R. de Velazco
+
+MEDIA
+
+Mismo pin que otras 13 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — CENTRO CIVICO
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — E.P.E.T. N° 5
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Sistemas CC
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — CENTRO DE FORMACION PROFESIONAL N.º 1 DE RAWSON
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Colegio Superior Nº 1 de Rawson, Profesora IOLE LEBE PALMOLELLI DE MASCOTTI
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Dra. Carolina T. Garcia
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 34 Magdalena Guemes
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 36 Milo Lockett
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 42 El Jardin de Francesco
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 75 Elena Santa Cruz
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela 11 de Septiembre
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela 14 de Febrero
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agrotecnica Los Pioneros
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela America
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Antonio de la Torre
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Barrio Ejercito de los Andes
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Candelaria A. de Godoy
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Capitan Carlos Moyano
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cecilio Avila
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cristobal Colon
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Fray Luis Beltran
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juan XXIII
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juana C. Aberastain
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Leopoldo Corretjer
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Maestro Jose J. Berrutti
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Medanos de Oro
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Monotecnica N.º 14
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Niñas de Ayohuma
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Patricias Mendocinas
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. De Misiones
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Rosario Peñaloza
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela S. J. Eudes
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Alas Argentinas
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Barrio Valle Grande
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. N.º 134
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sup. N.º 1 de Rawson
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 44
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 50
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 52 Alas Argentinas
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+JVA — San Martin
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Peñaflor — San Martin - San Juan
+
+MEDIA
+
+Mismo pin que otras 37 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — CLOTILDE GUILLEN DE REZZANO
+
+MEDIA
+
+Mismo pin que otras 10 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela BENITO JUAREZ
+
+MEDIA
+
+Mismo pin que otras 10 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Francisco Javier Muñiz
+
+MEDIA
+
+Mismo pin que otras 10 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Luis Pasteur
+
+MEDIA
+
+Mismo pin que otras 10 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Martin Gil
+
+MEDIA
+
+Mismo pin que otras 10 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Multiple Calingasta
+
+MEDIA
+
+Mismo pin que otras 10 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela R. Escalada de San Martin
+
+MEDIA
+
+Mismo pin que otras 10 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Saturnino Araoz
+
+MEDIA
+
+Mismo pin que otras 10 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela secundaria Calingasta
+
+MEDIA
+
+Mismo pin que otras 10 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Tte. Cnel. Alvarez Condarco
+
+MEDIA
+
+Mismo pin que otras 10 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — UNIDAD DE GESTION CALINGASTA
+
+MEDIA
+
+Mismo pin que otras 10 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Colegio Prov. de Concepcion
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Fray J. Santa Maria De Oro
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Gabinete Interdisciplinario Dr. Carlos Veronelli
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — GABINETES TECNICOS INTERDISCIPLINARIOS
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Colegio Sec. Juan Pablo Echague
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 82
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juan Dolores Godoy
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — CRISTOBAL COLON
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Deposito Central JUAN GAS
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Deposito Rawson
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — DR. BERNARDO HOUSSAY
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Teresa de Asencio
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 38
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Angel Rogelio Gonzalez
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela CIRILO SARMIENTO
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose Alejandro Segovia
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Mary Mann
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela rural Marambio
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sup. Tec. de Angaco
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 14 Dr. Houssay
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — E.P.E.T. N° 3 SAN JUAN
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Prov. Tec. N.º 3 Rawson
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Cristo de la Quebrada
+
+MEDIA
+
+Mismo pin que otras 11 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Multiple de los Berros
+
+MEDIA
+
+Mismo pin que otras 11 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 14 Alfonsina Storni
+
+MEDIA
+
+Mismo pin que otras 11 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 25
+
+MEDIA
+
+Mismo pin que otras 11 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Albergue D. French
+
+MEDIA
+
+Mismo pin que otras 11 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. Albert Einstein
+
+MEDIA
+
+Mismo pin que otras 11 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Falucho
+
+MEDIA
+
+Mismo pin que otras 11 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose L. Radice
+
+MEDIA
+
+Mismo pin que otras 11 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose M. del Carril
+
+MEDIA
+
+Mismo pin que otras 11 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Josefa R. de Garcia
+
+MEDIA
+
+Mismo pin que otras 11 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 1 Juan Eugenio Seru
+
+MEDIA
+
+Mismo pin que otras 11 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Juan Eugenio Seru
+
+MEDIA
+
+Mismo pin que otras 11 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Dr. Otoniel Fernandez
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE MULTIPLE DE 25 DE MAYO
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Dr. Ramon Peñafort
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 11
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 39 Hebe S. Martin de Duprat
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 51 Tiempo del Sol
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela De Educ. Inicial N.º 68
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. del Chaco
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Prim. Barrio Valle Grande
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Teresa de Ascencio de Mallea
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuelas Primaria Alas Argentinas
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 51 - PROVINCIA DEL CHACO
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Juana A. de Padilla
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Jorge H. Yacante
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE MARIA MONTESSORI
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 72 Antonio Giles
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE MULTIPLE CALINGASTA
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 74
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI Manuel Belgrano
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.° 24 San Juan Pablo II
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 56
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI Papa Francisco (ex ENI N°29)
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ESCUELA DE COMERCIO ALFONSINA STORNI
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dra. Leticia A. de Sormani
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juan de Dios Flores
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juan Dios de Flores
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juan Lavalle
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Prim. Los Manantiales
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Rep. Argentina (Anexo)
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Rep. de Bolivia
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Rep. del Paraguay
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Romulo Giuffra
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. CAUCETE
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 53 Andina
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 54 Rep. de Bolivia
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Taller Carmelitas descalzas
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.° 37 Dr. Washinton Chavez
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI Nro 58
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. ALEJANDRO FLEMING
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Abejitas de Sta. Rita
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agroindustrial Videla Cuello
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agrotecnica de Huaco
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agrotecnica Manuel Belgrano
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cap. Frag. H. Buchardo
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela de Nivel Medio Pampa Vieja
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dean G. Funes
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. Daniel S. Aubane
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Esteban A. Gascon
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Federico Cantoni
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Fronteras Argentinas
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Gabriel Albarracin
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juan de Echedgaray
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Monseñor Tomas S. Cruz
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Presbitero P. Lopez del Campo
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Prov. de Entre Rios
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela rural ALTE. RAMON GONZALEZ FERNANDEZ
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela rural Dr. Calcagno
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela rural J. Gutierrez
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela rural Marcos Sastre
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela rural Ruben Dario
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 16 Jose Marmol
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 19 Albergue J. V. Gonzalez
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — UNIDAD DE GESTION JACHAL
+
+MEDIA
+
+Mismo pin que otras 26 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 19 Tani Tani
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Esc. Juan Gregorio de las Heras
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Benita Davila de los Rios
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. Tec. N.º 1 Albardon
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pte. Nestor Kirchner
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 22 Margarita de Escudero
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Julia Leon
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Tecnica Pablo Pizzurno
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 23
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Barrio Franklin Rawson
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 28 San Juan Bautista
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Eugenia Belin Sarmiento
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 3 Mafalda
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 81 Huellitas de amor
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Benjamin Lenoir
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Elvira de la Riestra de Lainez
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sup. de Form. Ullum
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 31 Patricias Sanjuaninas
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Clara Rosa Cortinez
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 41 Dante Saavedra
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela LEONOR SANCHEZ DE ARANCIBIA
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 43 Mafalda
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 76 Laura Lewin
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela 12 de Agosto
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Contralmirante E. Videla
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. A. Schweitzer
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. Carlos Saavedra
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. Carlos Saavedra Lamas
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dra. F. Rios de Paez
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela España
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Ing. Domingo Krawse
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jorge Washington
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Luis Vernet
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Martin M. de Guemes
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pedro Alvarez
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pedro de Valdivia
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela R. Tagore
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sixto Salinas Rivera
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Virginia M. de Parkes
+
+MEDIA
+
+Mismo pin que otras 17 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 48 Portal Pie de Palo
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela A. Maria de Aguado
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ Nro 35 Julio Verne
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 59 Edgardo Mendoza
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Abenhamar Rodrigo
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 64
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Gral. Antonio G. Balcarce
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 7 Ayac Yanen
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Carlos Pellegrini
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela D. Matheu
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose Aristobulo Garcia
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 71 Risas del Sol
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI Nro 90
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 79
+
+MEDIA
+
+Mismo pin que otras 5 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. Amable Jones
+
+MEDIA
+
+Mismo pin que otras 5 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Graciela C. de Cantoni
+
+MEDIA
+
+Mismo pin que otras 5 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Mariano Necochea
+
+MEDIA
+
+Mismo pin que otras 5 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. N.° 174
+
+MEDIA
+
+Mismo pin que otras 5 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N° 39 sede Francisco de Villagra
+
+MEDIA
+
+Mismo pin que otras 5 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 80 Cielo Alto
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Mercedes Nieva de Castro
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. de Zonda
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 46 Mercedes N. de Castro
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Esc. de Fruticultura y Enologia
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Obrero Argentino
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Esc. Hector Conte Grand
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ 49 sede en Rosario Vera Peñaloza
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Esc. Nocturna Tambor de Tacuari
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Miguel de Azcuenaga
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Esc. Prilidiano Pueyrredon
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Mar Argentino
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela 12 de octubre
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 25 Luis Pasteur
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agrotecnica G. A. Doblas
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agrotecnica Gonzalo Doblas
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Rafael A. Arrieta
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 53 Yubel
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Baldomero F. Moreno
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 31 P. Cayetano de Quiroga
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Batalla de Chacabuco
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela de Cap. Lab. N.º 25 Hellen Keller
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Yapeyu
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Combate de San Lorenzo
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela rural Rafael Alberto Arrieta
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Comodoro Rivadavia
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cte. T. Espora
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juana de Ibarbourou
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela de Educ. Fisica
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela N.° 20 Roque Saenz Peña
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela de Educ. Popular
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 38 Ed. Popular
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela de Formacion Tec. N.º 18
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela San Martin (oficina de Transformar la Secundaria)
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. J. C. Navarro
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juan Ignacio Gorriti
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. Juan C. Albarracin
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Prov. de la Capital
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — PCIA. DE STA. FE
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. LUIS AGOTE
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Secundaria Procesa Sarmiento de Lenoir
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ Nro 32 Luis Agote (Anexo)
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Educ. Especial Zonda
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Rafael Obligado
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela FLORENTINO AMEGHINO
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 40 Florentino Ameghino
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Froilan Ferrero
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Justo J. de Urquiza
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Maestro Argentino
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Jose Rudecindo Rojo
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sup. Sarmiento (Anexo)
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Gral. Mariano Acha
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Gdor. Eloy Camus
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 30 Gob. Eloy Camus
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Gral. San Martin
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Gral. San Martin
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Hipolito Vieytes
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Luis Jofre
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Suboficial Mayor Segundo Antenor Yubel
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela John Kennedy
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela John Kennedy (anexo)
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juan E. Seru
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Manuel Belgrano
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela La Capilla
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Paso de los Patos
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Calingasta
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — SATURNINO MARIA DE LASPIUR
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Unidad de Gestion Calingasta Zona T
+
+MEDIA
+
+Mismo pin que otras 4 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Madre T. de Calcuta
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Prov. Tec. N.º 4
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Miguel Cane de Bauchaceta
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Zucamor Cuyo — San Juan
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Monseñor Silvino Martinez
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Tec. Domingo C. Vallve
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — INET Jurisdiccion San Juan
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Niquivil
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 18 Jose M. Zapiola
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Nocturna M. E. Rufino Leon
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Nocturna M. E. Rufino Leon (Anexo)
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Nocturna S. de Malvinas
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Rep. Oriental del Uruguay
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Nucleo Gendarmeria Nac.
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — NUCLEO GENDARMERIA NACIONAL
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Corrientes
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 39 Pcia. de Corrientes
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Salta
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Roque Saenz Peña
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcial. Tec. N.° 7
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Prov. Tec. N.º 7
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pte. Umberto Illia
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Secundaria Arturo Illia
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Tierra del Fuego
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 28 Tierra del Fuego
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Gabinete Central Educacion Especial
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Junta De Clasificacion De Gabinetes
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JUNTA PRIMARIA
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+ADIUM — San Juan
+
+MEDIA
+
+614 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+AGENCIA CALIDAD SAN JUAN — Centro Cívico
+
+MEDIA
+
+761 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Banco Santander Río — 567 - San Juan Rivadavia
+
+MEDIA
+
+1595 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+CCU — San Juan
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ALBERGUE PCIA. DE SAN LUIS
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — C.E.N.S. TOMAS A. EDISON (Esc. Republica de Chile)
+
+MEDIA
+
+621 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — CENS Soldados de Malvinas
+
+MEDIA
+
+674 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — CENTRO DE FORMACION PROFESIONAL N.º 1 DE RAWSON
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Colegio Superior Nº 1 de Rawson, Profesora IOLE LEBE PALMOLELLI DE MASCOTTI
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Deposito Gral. Mosconi
+
+MEDIA
+
+620 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — DRA. LETICIA A. DE SORMANI
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — E.P.E.T. N° 6 LA BEBIDA
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — E.P.E.T. N° 8 SAN JUAN
+
+MEDIA
+
+508 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE bilingue para sordos
+
+MEDIA
+
+1340 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Cristo de la Quebrada
+
+MEDIA
+
+1562 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Cura Brochero
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Dr. Otoniel Fernandez
+
+MEDIA
+
+1052 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Dra. Carolina T. Garcia
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE MULTIPLE DE 25 DE MAYO
+
+MEDIA
+
+1052 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Multiple de Iglesia Felipe Rojas
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Multiple de los Berros
+
+MEDIA
+
+1562 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 14 Alfonsina Storni
+
+MEDIA
+
+1562 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 25
+
+MEDIA
+
+1562 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 32
+
+MEDIA
+
+1004 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 34 Magdalena Guemes
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 36 Milo Lockett
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 39
+
+MEDIA
+
+1341 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 42 El Jardin de Francesco
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 48 Portal Pie de Palo
+
+MEDIA
+
+658 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 52 Ruth Harft
+
+MEDIA
+
+1145 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 54 Santa Rosa
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 57 Sunyay
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 66 Pequeños Granaderos
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 67 13 de Junio
+
+MEDIA
+
+614 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 75 Elena Santa Cruz
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 8 Quinoa
+
+MEDIA
+
+812 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI Nro 32 Camino del Inca
+
+MEDIA
+
+1004 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Esc 17 DE AGOSTO
+
+MEDIA
+
+429 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Esc. MAR ARGENTINO
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela 11 de Septiembre
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela 14 de Febrero
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela 20 de Junio
+
+MEDIA
+
+10410 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela A. Maria de Aguado
+
+MEDIA
+
+658 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agro 25 de Mayo
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agrotecnica Cornelio Saavedra
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agrotecnica Los Pioneros
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agrotecnica Sarmiento
+
+MEDIA
+
+1563 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Albergue D. French
+
+MEDIA
+
+1562 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Albergue J. M. Estrada
+
+MEDIA
+
+1340 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Albergue Pcia. de San Luis
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Albergue Rodeo
+
+MEDIA
+
+1004 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela America
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela ANTARTIDA ARGENTINA
+
+MEDIA
+
+741 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Antonio de la Torre
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Antonio Pulenta
+
+MEDIA
+
+658 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Augusto Pulenta
+
+MEDIA
+
+640 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Autonomia B. del Bono
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Bachillerato Columna Cabot
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Barrio Ejercito de los Andes
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela BARTOLOME DEL BONO
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cacique Angaco
+
+MEDIA
+
+402 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Candelaria A. de Godoy
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Capitan Carlos Moyano
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Carlos Maria de Alvear
+
+MEDIA
+
+1341 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cecilio Avila
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Ceferino Namuncura
+
+MEDIA
+
+990 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Comodoro Rivadavia
+
+MEDIA
+
+1052 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Constancio C. Vigil
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cristobal Colon
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cruce de los Andes
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cte. T. Espora
+
+MEDIA
+
+1052 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dalmacio Velez Sarsfield
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Docentes Sanjuaninos
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Domingo de Oro
+
+MEDIA
+
+696 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. Albert Einstein
+
+MEDIA
+
+1562 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. Carlos Doncel
+
+MEDIA
+
+1563 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. Saturnino Salas
+
+MEDIA
+
+1004 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela E. Larreta
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela El Jardin de Mimosaurio
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela El Rincon
+
+MEDIA
+
+1004 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Eusebio S. Zapata
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Exp. de Nivel Medio Divisadero
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Falucho
+
+MEDIA
+
+1562 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Florencia Nightingale
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Fray Luis Beltran
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Gabriela Mistral
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Gendarme Argentino
+
+MEDIA
+
+988 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Grads. de San Martin
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Granaderos de San Martin
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Hilario Ascasubi
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Independencia Argentina
+
+MEDIA
+
+674 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Ing. Felix Aguilar
+
+MEDIA
+
+587 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela J.Jose de Vertiz
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose Hernandez
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose L. Radice
+
+MEDIA
+
+1562 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose M. del Carril
+
+MEDIA
+
+1562 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose Maria Paz
+
+MEDIA
+
+742 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose P. Cortinez
+
+MEDIA
+
+1067 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Josefa R. de Garcia
+
+MEDIA
+
+1562 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juan XXIII
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juana C. Aberastain
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juana de Ibarbourou
+
+MEDIA
+
+1052 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Leopoldo Corretjer
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Maestro Jose J. Berrutti
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Malvinas Argentinas
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela MANUEL ALBERTI
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Mar Argentino
+
+MEDIA
+
+1056 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Maria Curie
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Martin Yanzon
+
+MEDIA
+
+4711 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Medanos de Oro
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Miguel Cane de Bauchaceta
+
+MEDIA
+
+8140 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Monotecnica N.º 14
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Movil Iglesia
+
+MEDIA
+
+727 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Movil Nro. 22 Casuarinas
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Niñas de Ayohuma
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Olegario V. Andrade
+
+MEDIA
+
+759 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Padre Federico Maggio
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pascual Chena
+
+MEDIA
+
+1053 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Patricias Mendocinas
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Paulo VI
+
+MEDIA
+
+975 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Catamarca
+
+MEDIA
+
+1003 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Corrientes
+
+MEDIA
+
+574 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Ed. Tec. N.º 1
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. De Misiones
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Neuquen
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Salta
+
+MEDIA
+
+1592 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de San Juan
+
+MEDIA
+
+887 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcial. Tec. N.º 6 La Bebida
+
+MEDIA
+
+1595 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Periodista Luis J. Bates
+
+MEDIA
+
+587 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Prov. Tec. N.º 8 Santa Lucia
+
+MEDIA
+
+850 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pte. Mitre
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pte. Quintana
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Rafael Arrieta (Anexo)
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela RAMON BARRERA
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Ricardo Guiraldes
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Roque S. Peña
+
+MEDIA
+
+984 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Roque Saenz Peña
+
+MEDIA
+
+1592 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Rosario Peñaloza
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela S. J. Eudes
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela San Juan de la Frontera
+
+MEDIA
+
+1595 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Saturnino Segurola
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Alas Argentinas
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Angualasto
+
+MEDIA
+
+741 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Barrio Valle Grande
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Martin Yanzon
+
+MEDIA
+
+1123 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. N.º 134
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Oscar Otiñano
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Rep. Argentina
+
+MEDIA
+
+1026 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Tamberias
+
+MEDIA
+
+991 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Zonda
+
+MEDIA
+
+1384 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Segundino J. Navarro
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Soldados de Malvinas
+
+MEDIA
+
+674 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sup. de Sarmiento (Anexo)
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sup. N.º 1 de Rawson
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Tec. Augusto B. Sarmiento
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Tec. Maria C. de Tinto
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Victorina Lenoir de Navarro
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 1 Juan Eugenio Seru
+
+MEDIA
+
+1562 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 11 Saturnino Segurola
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 34 Jose Maria Paz
+
+MEDIA
+
+742 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 37
+
+MEDIA
+
+1595 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 39 Pcia. de Corrientes
+
+MEDIA
+
+574 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 4
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 43 Policia de la Pcia. San Juan
+
+MEDIA
+
+998 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 44
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 5 Dr. A. Einstein
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 50
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 52 Alas Argentinas
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 6 17 de Agosto
+
+MEDIA
+
+429 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 8 Pte. Mitre
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 9
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 9 Martin Yanzon
+
+MEDIA
+
+1123 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ Nro 32
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ Nro 35 Julio Verne
+
+MEDIA
+
+658 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Juan Eugenio Seru
+
+MEDIA
+
+1562 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Municipalidad de Rawson
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Parque Rivadavia Norte
+
+MEDIA
+
+674 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Unidad De Gestion Iglesia
+
+MEDIA
+
+885 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — UNIDAD DE GESTION ZONA "Y"
+
+MEDIA
+
+1071 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Velodromo Vicente Alejo Chancay
+
+MEDIA
+
+614 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+JVA — San Martin
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Natura — Rocío Romero
+
+MEDIA
+
+741 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Peñaflor — San Martin - San Juan
+
+MEDIA
+
+1342 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Zucamor Cuyo — San Juan
+
+MEDIA
+
+8140 km de la base de despacho (umbral 350 km)
+
+VER PIN EN MAPS
+
+Arcos Dorados (Mc Donalds) — JN2 - San Juan 2 (15)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — SJN - San Juan (231)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Central
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco Superviellle — 251 - San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Brinks Argentina S.A. — San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Casetic — San Juan 2
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Cepas Argentinas — San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Chubb — San Juan 2
+
+BAJA
+
+Sin pin cargado en Gestión
+
+DELPHI PACKARD ARGENTINA S.A. — Central
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — Administración San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — Base de Transferencia
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 193
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 194
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 407
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 408
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 410
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 412
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 413
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 414
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 415
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 417
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 815
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Efectivo Si — EFECTIVO SI - Hiper Libertad San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Galeno — San Juan 2 (ART) (NO USAR)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Garbarino — Local Comercial
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Gobierno de San Juan - Minist. de Desarrollo Humano y Promoción Social — Central
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Indumentaria Andina - Hanesbrands — San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+JRASA — SM 407 Entre Ríos
+
+BAJA
+
+Sin pin cargado en Gestión
+
+JRASA — SM 419 Depósito San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+JRASA — SM 544 San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Manpower — San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Molinos Río de la Plata — Los Robles
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Molinos Río de la Plata — Santa Lucía
+
+BAJA
+
+Sin pin cargado en Gestión
+
+NO USAR - PST San Juan - Grupo MAURE — San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — C.S. San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Carrefour San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Libertad San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pentacom - San Juan — San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pertenecer SRL — San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+REDPATH — San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Sancor Cooperativas Limitada — Operador Comercial (Lac. San Juan)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Walmart — 1006 - SC San Juan
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Walmart — 1081 - CH+ Rawson SJ
+
+BAJA
+
+Sin pin cargado en Gestión
+
+1b · Provincia del pin vs. Gestión (Georef)
+
+Compara la provincia declarada en Gestión contra la que devuelve el reverse geocoding de Georef (API del Estado argentino, gratuita) para el pin. Repetir esta acción solo consulta lo que todavía no está en cache.
+
+GRATIS, NO ES GOOGLE
+Consultar Georef
+
+ADIUM — San Juan
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Neuquén según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+AGENCIA CALIDAD SAN JUAN — Centro Cívico
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Santa Fe según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Banco Santander Río — 567 - San Juan Rivadavia
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+CCU — San Juan
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ALBERGUE PCIA. DE SAN LUIS
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — C.E.N.S. TOMAS A. EDISON (Esc. Republica de Chile)
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Tucumán según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — CENS Soldados de Malvinas
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — CENTRO DE FORMACION PROFESIONAL N.º 1 DE RAWSON
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Colegio Superior Nº 1 de Rawson, Profesora IOLE LEBE PALMOLELLI DE MASCOTTI
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Deposito Gral. Mosconi
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Tucumán según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — DRA. LETICIA A. DE SORMANI
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — E.P.E.T. N° 6 LA BEBIDA
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — E.P.E.T. N° 8 SAN JUAN
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Córdoba según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE bilingue para sordos
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Cristo de la Quebrada
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Cura Brochero
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Dr. Otoniel Fernandez
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Dra. Carolina T. Garcia
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE MULTIPLE DE 25 DE MAYO
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Multiple de Iglesia Felipe Rojas
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — EEE Multiple de los Berros
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 14 Alfonsina Storni
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 25
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 32
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Ciudad Autónoma de Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 34 Magdalena Guemes
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 36 Milo Lockett
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 39
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 42 El Jardin de Francesco
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 48 Portal Pie de Palo
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Santa Fe según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 52 Ruth Harft
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Corrientes según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 54 Santa Rosa
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 57 Sunyay
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 66 Pequeños Granaderos
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 67 13 de Junio
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Neuquén según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 75 Elena Santa Cruz
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 8 Quinoa
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Salta según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI Nro 32 Camino del Inca
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Ciudad Autónoma de Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Esc 17 DE AGOSTO
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Córdoba según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Esc. MAR ARGENTINO
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela 11 de Septiembre
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela 14 de Febrero
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela A. Maria de Aguado
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Santa Fe según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agro 25 de Mayo
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agrotecnica Cornelio Saavedra
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agrotecnica Los Pioneros
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Agrotecnica Sarmiento
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Albergue D. French
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Albergue J. M. Estrada
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Albergue Pcia. de San Luis
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Albergue Rodeo
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Ciudad Autónoma de Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela America
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela ANTARTIDA ARGENTINA
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Santa Fe según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Antonio de la Torre
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Antonio Pulenta
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Santa Fe según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Augusto Pulenta
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Santa Fe según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Autonomia B. del Bono
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Autonomia Ciudad de Bailen
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en San Luis según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Bachillerato Columna Cabot
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Barrio Ejercito de los Andes
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela BARTOLOME DEL BONO
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Batalla de Chacabuco
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Mendoza según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cacique Angaco
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Córdoba según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Candelaria A. de Godoy
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Capitan Carlos Moyano
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Carlos Maria de Alvear
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cecilio Avila
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Ceferino Namuncura
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Comodoro Rivadavia
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Constancio C. Vigil
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cristobal Colon
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cruce de los Andes
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Cte. T. Espora
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dalmacio Velez Sarsfield
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela de Cap. Lab. N.º 25 Hellen Keller
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Mendoza según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Docentes Sanjuaninos
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Domingo de Oro
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. Albert Einstein
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. Carlos Doncel
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. J. C. Navarro
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en San Luis según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Dr. Saturnino Salas
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Ciudad Autónoma de Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela E. Larreta
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela El Jardin de Mimosaurio
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela El Rincon
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Ciudad Autónoma de Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Eusebio S. Zapata
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Exp. de Nivel Medio Divisadero
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Falucho
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Florencia Nightingale
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Fray Luis Beltran
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Gabriela Mistral
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Gendarme Argentino
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Salta según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Grads. de San Martin
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Granaderos de San Martin
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Hilario Ascasubi
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Independencia Argentina
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Ing. Felix Aguilar
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Santiago del Estero según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela J.Jose de Vertiz
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose de Cupertino
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Mendoza según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose Hernandez
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose L. Radice
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose M. del Carril
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose Maria Paz
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Jose P. Cortinez
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Corrientes según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Josefa R. de Garcia
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juan Ignacio Gorriti
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en San Luis según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juan XXIII
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juana C. Aberastain
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Juana de Ibarbourou
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Leopoldo Corretjer
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Maestro Jose J. Berrutti
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Malvinas Argentinas
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela MANUEL ALBERTI
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Mar Argentino
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Maria Curie
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Medanos de Oro
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Monotecnica N.º 14
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Movil Iglesia
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Santa Fe según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Movil Nro. 22 Casuarinas
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Niñas de Ayohuma
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Nocturna Maria E. R. Leon
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Mendoza según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Olegario V. Andrade
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Santa Fe según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Padre Federico Maggio
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pascual Chena
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Patricias Mendocinas
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Paulo VI
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Entre Ríos según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Catamarca
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Ciudad Autónoma de Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Corrientes
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Tucumán según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Ed. Tec. N.º 1
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. De Misiones
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Neuquen
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de Salta
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcia. de San Juan
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pcial. Tec. N.º 6 La Bebida
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Periodista Luis J. Bates
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Santiago del Estero según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Prov. Tec. N.º 8 Santa Lucia
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pte. Mitre
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Pte. Quintana
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Rafael Arrieta (Anexo)
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela RAMON BARRERA
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Ricardo Guiraldes
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Roque S. Peña
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Roque Saenz Peña
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Rosario Peñaloza
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela S. J. Eudes
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela San Juan de la Frontera
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Saturnino Segurola
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Alas Argentinas
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Angualasto
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Santa Fe según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Barrio Valle Grande
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Martin Yanzon
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Río Negro según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. N.º 134
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Oscar Otiñano
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Rep. Argentina
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chaco según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Tamberias
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sec. Zonda
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Misiones según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Segundino J. Navarro
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Soldados de Malvinas
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sup. de Sarmiento (Anexo)
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sup. N.º 1 de Rawson
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Sup. Tec. de San Martin
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Mendoza según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Tec. Augusto B. Sarmiento
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Tec. Maria C. de Tinto
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Victorina Lenoir de Navarro
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Yapeyu
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Mendoza según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 1 Juan Eugenio Seru
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 11 Saturnino Segurola
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 12 Auton. Cdad. de Bailen
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Mendoza según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 34 Jose Maria Paz
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 37
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 39 Pcia. de Corrientes
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Tucumán según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 4
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 43 Policia de la Pcia. San Juan
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Ciudad Autónoma de Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 44
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 5 Dr. A. Einstein
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 50
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 52 Alas Argentinas
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 6 17 de Agosto
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Córdoba según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 8 Pte. Mitre
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 9
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ N.º 9 Martin Yanzon
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Río Negro según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ Nro 32
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — JINZ Nro 35 Julio Verne
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Santa Fe según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Juan Eugenio Seru
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Municipalidad de Rawson
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Parque Rivadavia Norte
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Buenos Aires según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Unidad De Gestion Iglesia
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — UNIDAD DE GESTION ZONA "Y"
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Corrientes según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Velodromo Vicente Alejo Chancay
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Neuquén según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+JRASA — SM 412 Av. Libertad
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: Santiago del Estero — el pin cae en San Juan según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+JVA — San Isidro
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Mendoza según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+JVA — San Martin
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Natura — Rocío Romero
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Peñaflor — San Martin - San Juan
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: San Juan — el pin cae en Chubut según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+1c · Segunda opinión (Nominatim / OpenStreetMap)
+
+Solo consulta las sucursales que Georef ya marcó con provincia distinta — si Nominatim coincide, son dos fuentes independientes de acuerdo, evidencia fuerte sin gastar Google.
+
+GRATIS, NO ES GOOGLE
+Consultar Nominatim
+
+ADIUM — San Juan
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Neuquén
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+AGENCIA CALIDAD SAN JUAN — Centro Cívico
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Santa Fe
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Banco Santander Río — 567 - San Juan Rivadavia
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+CCU — San Juan
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ALBERGUE PCIA. DE SAN LUIS
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — C.E.N.S. TOMAS A. EDISON (Esc. Republica de Chile)
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Tucumán
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — CENS Soldados de Malvinas
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — CENTRO DE FORMACION PROFESIONAL N.º 1 DE RAWSON
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Colegio Superior Nº 1 de Rawson, Profesora IOLE LEBE PALMOLELLI DE MASCOTTI
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Deposito Gral. Mosconi
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Tucumán
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — DRA. LETICIA A. DE SORMANI
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — E.P.E.T. N° 6 LA BEBIDA
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — E.P.E.T. N° 8 SAN JUAN
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Córdoba
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — EEE bilingue para sordos
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — EEE Cristo de la Quebrada
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — EEE Cura Brochero
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — EEE Dr. Otoniel Fernandez
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — EEE Dra. Carolina T. Garcia
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — EEE MULTIPLE DE 25 DE MAYO
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — EEE Multiple de Iglesia Felipe Rojas
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — EEE Multiple de los Berros
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 14 Alfonsina Storni
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 25
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 32
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Ciudad Autónoma de Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 34 Magdalena Guemes
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 36 Milo Lockett
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 39
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 42 El Jardin de Francesco
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 48 Portal Pie de Palo
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Santa Fe
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 52 Ruth Harft
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Corrientes
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 54 Santa Rosa
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 57 Sunyay
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 66 Pequeños Granaderos
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 67 13 de Junio
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Neuquén
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 75 Elena Santa Cruz
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI N.º 8 Quinoa
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Salta
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — ENI Nro 32 Camino del Inca
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Ciudad Autónoma de Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Esc 17 DE AGOSTO
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Córdoba
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Esc. MAR ARGENTINO
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela 11 de Septiembre
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela 14 de Febrero
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela A. Maria de Aguado
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Santa Fe
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Agro 25 de Mayo
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Agrotecnica Cornelio Saavedra
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Agrotecnica Los Pioneros
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Agrotecnica Sarmiento
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Albergue D. French
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Albergue J. M. Estrada
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Albergue Pcia. de San Luis
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Albergue Rodeo
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Ciudad Autónoma de Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela America
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela ANTARTIDA ARGENTINA
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Santa Fe
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Antonio de la Torre
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Antonio Pulenta
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Santa Fe
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Augusto Pulenta
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Santa Fe
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Autonomia B. del Bono
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Autonomia Ciudad de Bailen
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en San Luis
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Bachillerato Columna Cabot
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Barrio Ejercito de los Andes
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela BARTOLOME DEL BONO
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Batalla de Chacabuco
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Mendoza
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Cacique Angaco
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Córdoba
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Candelaria A. de Godoy
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Capitan Carlos Moyano
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Carlos Maria de Alvear
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Cecilio Avila
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Ceferino Namuncura
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Comodoro Rivadavia
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Constancio C. Vigil
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Cristobal Colon
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Cruce de los Andes
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Cte. T. Espora
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Dalmacio Velez Sarsfield
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela de Cap. Lab. N.º 25 Hellen Keller
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Mendoza
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Docentes Sanjuaninos
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Domingo de Oro
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Dr. Albert Einstein
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Dr. Carlos Doncel
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Dr. J. C. Navarro
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en San Luis
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Dr. Saturnino Salas
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Ciudad Autónoma de Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela E. Larreta
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela El Jardin de Mimosaurio
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela El Rincon
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Ciudad Autónoma de Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Eusebio S. Zapata
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Exp. de Nivel Medio Divisadero
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Falucho
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Florencia Nightingale
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Fray Luis Beltran
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Gabriela Mistral
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Gendarme Argentino
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Salta
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Grads. de San Martin
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Granaderos de San Martin
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Hilario Ascasubi
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Independencia Argentina
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Ing. Felix Aguilar
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Santiago del Estero
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela J.Jose de Vertiz
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Jose de Cupertino
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Mendoza
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Jose Hernandez
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Jose L. Radice
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Jose M. del Carril
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Jose Maria Paz
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Jose P. Cortinez
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Corrientes
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Josefa R. de Garcia
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Juan Ignacio Gorriti
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en San Luis
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Juan XXIII
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Juana C. Aberastain
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Juana de Ibarbourou
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Leopoldo Corretjer
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Maestro Jose J. Berrutti
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Malvinas Argentinas
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela MANUEL ALBERTI
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Mar Argentino
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Maria Curie
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Medanos de Oro
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Monotecnica N.º 14
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Movil Iglesia
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Santa Fe
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Movil Nro. 22 Casuarinas
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Niñas de Ayohuma
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Nocturna Maria E. R. Leon
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Mendoza
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Olegario V. Andrade
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Santa Fe
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Padre Federico Maggio
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Pascual Chena
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Patricias Mendocinas
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Paulo VI
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Entre Ríos
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Pcia. de Catamarca
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Ciudad Autónoma de Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Pcia. de Corrientes
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Tucumán
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Pcia. de Ed. Tec. N.º 1
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Pcia. De Misiones
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Pcia. de Neuquen
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Pcia. de Salta
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Pcia. de San Juan
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Pcial. Tec. N.º 6 La Bebida
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Periodista Luis J. Bates
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Santiago del Estero
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Prov. Tec. N.º 8 Santa Lucia
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Pte. Mitre
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Pte. Quintana
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Rafael Arrieta (Anexo)
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela RAMON BARRERA
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Ricardo Guiraldes
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Roque S. Peña
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Roque Saenz Peña
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Rosario Peñaloza
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela S. J. Eudes
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela San Juan de la Frontera
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Saturnino Segurola
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Sec. Alas Argentinas
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Sec. Angualasto
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Santa Fe
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Sec. Barrio Valle Grande
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Sec. Martin Yanzon
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Río Negro
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Sec. N.º 134
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Sec. Oscar Otiñano
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Sec. Rep. Argentina
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chaco
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Sec. Tamberias
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Sec. Zonda
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Misiones
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Segundino J. Navarro
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Soldados de Malvinas
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Sup. de Sarmiento (Anexo)
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Sup. N.º 1 de Rawson
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Sup. Tec. de San Martin
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Mendoza
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Tec. Augusto B. Sarmiento
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Tec. Maria C. de Tinto
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Victorina Lenoir de Navarro
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Escuela Yapeyu
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Mendoza
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 1 Juan Eugenio Seru
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 11 Saturnino Segurola
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 12 Auton. Cdad. de Bailen
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Mendoza
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 34 Jose Maria Paz
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 37
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 39 Pcia. de Corrientes
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Tucumán
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 4
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 43 Policia de la Pcia. San Juan
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Ciudad Autónoma de Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 44
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 5 Dr. A. Einstein
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 50
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 52 Alas Argentinas
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 6 17 de Agosto
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Córdoba
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 8 Pte. Mitre
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 9
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ N.º 9 Martin Yanzon
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Río Negro
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ Nro 32
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — JINZ Nro 35 Julio Verne
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Santa Fe
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Juan Eugenio Seru
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Municipalidad de Rawson
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Parque Rivadavia Norte
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Buenos Aires
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Unidad De Gestion Iglesia
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — UNIDAD DE GESTION ZONA "Y"
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Corrientes
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Gobierno de San Juan — Velodromo Vicente Alejo Chancay
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Neuquén
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+JRASA — SM 412 Av. Libertad
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: Santiago del Estero — Georef y Nominatim coinciden: el pin está en San Juan
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+JVA — San Isidro
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Mendoza
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+JVA — San Martin
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Natura — Rocío Romero
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Peñaflor — San Martin - San Juan
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: San Juan — Georef y Nominatim coinciden: el pin está en Chubut
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+1d · Worklist final — a corregir en Gestión
+
+Lo que Georef y Nominatim ya confirmaron con certeza no necesita Google. Certeza absoluta (Tier 0) + pines que Google confirmó que difieren de la dirección escrita: nunca el prestador completo.
+
+Exportar CSV para Gestión
+Verificar todos los pines con Google
+~560 CONSULTAS A GOOGLE
+
+Gobierno de San Juan — Escuela 20 de Junio
+
+CORREGIR EN GESTIÓN
+
+La Madrid y Mendoza S/N 0 · fuera_de_argentina, lejos_de_base
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Martin Yanzon
+
+CORREGIR EN GESTIÓN
+
+Calle 4 S/N 0 · latlon_invertidas, lejos_de_base
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — Escuela Miguel Cane de Bauchaceta
+
+CORREGIR EN GESTIÓN
+
+Paraje Bauchaceta S/N 0 · fuera_de_argentina, pin_compartido, lejos_de_base
+
+VER PIN EN MAPS
+
+Zucamor Cuyo — San Juan
+
+CORREGIR EN GESTIÓN
+
+Gral. Mosconi Sur 3580 · fuera_de_argentina, pin_compartido, lejos_de_base
+
+VER PIN EN MAPS
+
+Gobierno de San Juan — ENI N.º 65
+
+2239.0 KM DE DIFERENCIA
+
+Rio Gallegos S/N 52, CHIMBAS, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Sec. Barrio Valle Grande
+
+1336.7 KM DE DIFERENCIA
+
+Proyectada 23 S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+AGENCIA CALIDAD SAN JUAN — Centro Cívico
+
+759.4 KM DE DIFERENCIA
+
+Av. Libertador y Las Heras S/N, SAN JUAN, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Deposito Central JUAN GAS
+
+606.9 KM DE DIFERENCIA
+
+Ruta 40 y Calle 5 S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Deposito Rawson
+
+606.9 KM DE DIFERENCIA
+
+Ruta 40 y calle 5 S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+JRASA — SM 412 Av. Libertad
+
+590.3 KM DE DIFERENCIA
+
+Av. Libertador 5091, VILLA RIVADAVIA, Santiago del Estero, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Secundaria Procesa Sarmiento de Lenoir
+
+202.6 KM DE DIFERENCIA
+
+Ruta Nac. 20 km 16 S/N, 9 DE JULIO, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Gral. San Martin
+
+144.6 KM DE DIFERENCIA
+
+Aberastain 532, JACHAL, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Gral. San Martin
+
+144.6 KM DE DIFERENCIA
+
+Aberastain 536, JACHAL, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Batalla de Chacabuco
+
+140.3 KM DE DIFERENCIA
+
+Ruta Nacional 149 S/N, CALINGASTA, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Presbitero P. Lopez del Campo
+
+140.3 KM DE DIFERENCIA
+
+Juan B. Alberdi S/N, JACHAL, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela rural Dr. Calcagno
+
+138.0 KM DE DIFERENCIA
+
+Paso de los Andes S/N, JACHAL, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Multiple Calingasta
+
+84.6 KM DE DIFERENCIA
+
+Hipolito Irigoyen S/N, CALINGASTA, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Rep. del Paraguay
+
+62.0 KM DE DIFERENCIA
+
+Ruta Nacional 141 km 63 S/N, CAUCETE, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Angel Rogelio Gonzalez
+
+59.9 KM DE DIFERENCIA
+
+Fray Justo Santa María de Oro S/N, ANGACO NORTE, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela R. Escalada de San Martin
+
+52.6 KM DE DIFERENCIA
+
+Florida S/N, CALINGASTA, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Jose Alejandro Segovia
+
+43.7 KM DE DIFERENCIA
+
+Aguilera y Zapata S/N, ANGACO NORTE, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Dr. ALEJANDRO FLEMING
+
+43.7 KM DE DIFERENCIA
+
+Gran China S/N, JACHAL, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Sup. Tec. de Angaco
+
+42.6 KM DE DIFERENCIA
+
+Eva Peron y Alem S/N, ANGACO NORTE, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Manuel Belgrano
+
+41.8 KM DE DIFERENCIA
+
+SM Del Carril y Circunvalacion S/N, SAN JUAN, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Fronteras Argentinas
+
+39.0 KM DE DIFERENCIA
+
+Chubut S/N, JACHAL, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela BENITO LYNCH
+
+38.8 KM DE DIFERENCIA
+
+San Pedro y F. Costa S/N, SAN AGUSTIN DEL VALLE FERTIL, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — UNIDAD DE GESTION CALINGASTA
+
+37.2 KM DE DIFERENCIA
+
+Hipolito Hirigoyen S/N, CALINGASTA, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Mary Mann
+
+36.5 KM DE DIFERENCIA
+
+21 de Febrero S/N, ANGACO NORTE, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Francisco Javier Muñiz
+
+35.9 KM DE DIFERENCIA
+
+Pte. Roca S/N, CALINGASTA, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Martin Gil
+
+35.9 KM DE DIFERENCIA
+
+Pte. Roca S/N, CALINGASTA, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Dean G. Funes
+
+35.8 KM DE DIFERENCIA
+
+Prolongacion Martin Fierro S/N, JACHAL, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela rural Marcos Sastre
+
+35.8 KM DE DIFERENCIA
+
+San Martin S/N, JACHAL, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Antenor Flores Vidal
+
+35.0 KM DE DIFERENCIA
+
+La Falda s/n El Fical, JACHAL, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Antonio Flores Vidal
+
+35.0 KM DE DIFERENCIA
+
+La Falda S/N, JACHAL, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Monseñor Tomas S. Cruz
+
+34.8 KM DE DIFERENCIA
+
+Mons. Tomas S.Cruz S/N, JACHAL, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Esc. Juan Gregorio de las Heras
+
+31.5 KM DE DIFERENCIA
+
+Las Heras y Huarpes S/N, EST ALBARDON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — ENI N.° 24 San Juan Pablo II
+
+27.3 KM DE DIFERENCIA
+
+De la Roza y G. Rawson S/N, CAUCETE, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Agrotecnica de Huaco
+
+22.5 KM DE DIFERENCIA
+
+Rivadavia S/N, HUACO, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Federico Cantoni
+
+22.5 KM DE DIFERENCIA
+
+Rivadavia S/N, JACHAL, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Combate de San Lorenzo
+
+21.5 KM DE DIFERENCIA
+
+Yapeyu y Divisoria S/N, SAN MARTIN, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Prim. Barrio Valle Grande
+
+17.6 KM DE DIFERENCIA
+
+Proyectada 23 Valle Grande S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Dra. F. Rios de Paez
+
+17.4 KM DE DIFERENCIA
+
+Ruta N.º 40 y Cantoni S/N, POCITO, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela España
+
+17.0 KM DE DIFERENCIA
+
+Patricias Sanjuaninas S/N, POCITO, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — ENI N.º 76 Laura Lewin
+
+16.7 KM DE DIFERENCIA
+
+Av Uñac Y Mariano Moreno S/N, POCITO, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — ENI N.º 39 Hebe S. Martin de Duprat
+
+14.1 KM DE DIFERENCIA
+
+Magallanes S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — ENI N.º 11
+
+14.0 KM DE DIFERENCIA
+
+Yapeyu 2980, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuelas Primaria Alas Argentinas
+
+13.5 KM DE DIFERENCIA
+
+Calle Alvear Sur, esquina Fermín Rodríguez, Villa Cenobia Bustos 3290, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — EEE Dr. Ramon Peñafort
+
+13.2 KM DE DIFERENCIA
+
+Ramela S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Maestro Argentino
+
+12.9 KM DE DIFERENCIA
+
+Callejon Pedro Gil S/N, POCITO, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Dr. A. Schweitzer
+
+12.4 KM DE DIFERENCIA
+
+Mendoza km 25 S/N, POCITO, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — ENI N.º 51 Tiempo del Sol
+
+12.3 KM DE DIFERENCIA
+
+Tierra del Fuego y Aberastain S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Teresa de Ascencio de Mallea
+
+12.2 KM DE DIFERENCIA
+
+Bahía Blanca y Aguilar S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela De Educ. Inicial N.º 68
+
+10.3 KM DE DIFERENCIA
+
+Proyectada 23 S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — ENI N.º 40 Adriana Vega
+
+9.7 KM DE DIFERENCIA
+
+Neuquen S/N, CHIMBAS, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Agustin V. Gnecco
+
+9.7 KM DE DIFERENCIA
+
+Neuquen S/N, CHIMBAS, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Gral. Estanislao Soler
+
+9.7 KM DE DIFERENCIA
+
+Neuquen S/N, CHIMBAS, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Pte. Nestor Kirchner
+
+9.7 KM DE DIFERENCIA
+
+Proyectada S/N, EST ALBARDON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Mariano Necochea
+
+9.2 KM DE DIFERENCIA
+
+Roger Balet (Este) 2663, SANTA LUCIA, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Nicolas Echezarreta
+
+9.0 KM DE DIFERENCIA
+
+San Juan 7306, RIVADAVIA, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Pedro de Marquez
+
+9.0 KM DE DIFERENCIA
+
+San Juan 7306, RIVADAVIA, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Sec. CAUCETE
+
+8.3 KM DE DIFERENCIA
+
+Jaime Bornet y Correa S/N, CAUCETE, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+JRASA — SM 414 Sarmiento 3
+
+6.4 KM DE DIFERENCIA
+
+Blvd. Sarmiento 420, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Sec. San Juan de Dios (Penitenciario)
+
+6.3 KM DE DIFERENCIA
+
+Benavides 6195, CHIMBAS, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — ENI N.º 55 Los Pinos
+
+6.2 KM DE DIFERENCIA
+
+Patagonia y Belgrano S/N, CHIMBAS, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Pcia. del Chaco
+
+5.7 KM DE DIFERENCIA
+
+General Acha y Calle 5 S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — ENI N.º 79
+
+5.7 KM DE DIFERENCIA
+
+Fray Mamerto Esquiu S/N, SANTA LUCIA, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Dr. Amable Jones
+
+5.7 KM DE DIFERENCIA
+
+Fray Mamerto Esquiu S/N, SANTA LUCIA, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Sec. N.° 174
+
+5.7 KM DE DIFERENCIA
+
+Fray Mamerto Esquiu S/N, SANTA LUCIA, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Froilan Ferrero
+
+5.7 KM DE DIFERENCIA
+
+Furque y Picon S/N, POCITO, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Escuela Sup. Sarmiento (Anexo)
+
+5.7 KM DE DIFERENCIA
+
+Furque y Picon S/N, POCITO, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — JINZ N° 39 sede Francisco de Villagra
+
+5.5 KM DE DIFERENCIA
+
+Hernan Cortez y Maipu S/N, SANTA LUCIA, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — ENI N.º 50 Prof. Margarira Ravioli
+
+5.3 KM DE DIFERENCIA
+
+Calle Padre Mariano Yanelli S/N, CHIMBAS, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+
+Gobierno de San Juan — Esc. Hector Conte Grand
+
+5.2 KM DE DIFERENCIA
+
+Calle 10 y Alfonso XIII S/N, MEDANO DE ORO, San Juan, Argentina
+
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Auditar residuo con Google (299 sucursales)
+SIN COSTO — TODO ESTÁ EN CACHÉ
+← Anterior
+Finalizar

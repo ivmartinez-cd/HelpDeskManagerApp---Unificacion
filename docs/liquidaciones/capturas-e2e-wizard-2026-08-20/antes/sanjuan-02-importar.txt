@@ -1,0 +1,25 @@
+Asistente de KM — SAN JUAN
+✓
+DIAGNÓSTICO
+2
+IMPORTAR
+3
+SIN MATCH
+4
+UBICAR
+5
+DISTANCIAS
+6
+PINES
+
+Estas son las sucursales de clientes que este prestador atiende según Gestión. Al importarlas se crean en tu Tabla KM con km en 0 — el km se calcula después, en el paso Distancias. Este paso no consulta Google.
+
+0 NUEVAS ACTIVAS
+27 EX-CLIENTES
+173 YA CARGADAS
+Mostrar también ex-clientes (sin liquidaciones en 24 meses)
+
+No hay clientes activos nuevos para importar. Usá "Mostrar también ex-clientes" si querés importar clientes sin actividad reciente.
+
+← Anterior
+Siguiente →

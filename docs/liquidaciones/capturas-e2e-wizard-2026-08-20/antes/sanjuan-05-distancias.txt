@@ -1,0 +1,24 @@
+Asistente de KM — SAN JUAN
+✓
+DIAGNÓSTICO
+2
+IMPORTAR
+3
+SIN MATCH
+4
+UBICAR
+5
+DISTANCIAS
+6
+PINES
+
+Se van a calcular los km de ida y vuelta (con Google Maps) para 869 sucursales con ubicación. Primero ves el resultado; nada se guarda hasta que apliques.
+
+Hay 2 sucursales sin ubicación en el mapa
+
+Si calculás ahora, esas 2 van a quedar sin km. Lo recomendado es ubicarlas primero en el paso anterior.
+
+Ir a Ubicar primero (recomendado)
+Calcular igual — las 2 quedan sin km
+← Anterior
+Siguiente →

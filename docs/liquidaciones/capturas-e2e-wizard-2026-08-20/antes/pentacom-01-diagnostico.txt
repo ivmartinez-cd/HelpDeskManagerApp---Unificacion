@@ -1,0 +1,36 @@
+Asistente de KM — PENTACOM
+1
+DIAGNÓSTICO
+2
+IMPORTAR
+3
+SIN MATCH
+4
+UBICAR
+🔒
+DISTANCIAS
+✓
+PINES
+
+Esto es lo que el asistente encontró revisando tu Tabla KM contra Gestión. Nada de lo que ves acá gastó consultas de Google — el costo de cada acción se muestra antes de ejecutarla.
+
+Falta la sucursal base de despacho
+
+Es el punto desde donde sale el técnico — sin ella no se pueden calcular km. Se configura en Configuración → Prestadores → Cordoba - Pentacom S.A., campo Sucursal base.
+
+132 sucursales nuevas para importar desde Gestión
+
+Ir a Importar
+
+71 sucursales sin ubicación en el mapa
+
+Sin ubicación no se les puede calcular km. Buscarlas cuesta ~70 consultas a Google.
+
+Ir a Ubicar
+
+29 filas de tu tabla no aparecen en Gestión
+
+Puede que el nombre tenga un símbolo o una abreviatura distinta — el paso "Sin match" propone a qué sucursal de Gestión corresponde cada una.
+
+Ver cuáles
+Siguiente →

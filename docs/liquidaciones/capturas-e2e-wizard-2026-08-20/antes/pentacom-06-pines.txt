@@ -1,0 +1,2259 @@
+Asistente de KM — PENTACOM
+✓
+DIAGNÓSTICO
+2
+IMPORTAR
+3
+SIN MATCH
+4
+UBICAR
+🔒
+DISTANCIAS
+6
+PINES
+
+1 · Geovalidación básica (Tier 0)
+
+Coordenadas ausentes, fuera de Argentina, invertidas, pines compartidos entre sucursales distintas y muy lejos de la base. No consulta ningún servicio externo.
+
+NO USA GOOGLE
+
+CCU — CD Cordoba
+
+ALTA
+
+(-64.1620176, -31.4694201) cae fuera de Argentina; invertido cae dentro
+
+VER PIN EN MAPS
+
+Mediterranea Tecnologica — Central
+
+ALTA
+
+(-64.231548, -31.362368) cae fuera de Argentina; invertido cae dentro
+
+VER PIN EN MAPS
+
+Mercado Libre SRL — SVC Cordoba
+
+ALTA
+
+(36.778261, -119.417932) fuera del rectángulo continental+insular
+
+VER PIN EN MAPS
+
+Molino Cañuelas — Agro - Rio IV
+
+ALTA
+
+(-64.36088, -33.119326) cae fuera de Argentina; invertido cae dentro
+
+VER PIN EN MAPS
+
+Molino Cañuelas — Suc. Charras - SUC CERRADA
+
+ALTA
+
+(36.778261, -119.417932) fuera del rectángulo continental+insular
+
+VER PIN EN MAPS
+
+Nación Servicios SA — San Francisco
+
+ALTA
+
+(36.778261, -119.417932) fuera del rectángulo continental+insular
+
+VER PIN EN MAPS
+
+Tiendas Gourmet — Patio Olmos
+
+ALTA
+
+(36.778261, -119.417932) fuera del rectángulo continental+insular
+
+VER PIN EN MAPS
+
+Atanor — Fabrica Rio III
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+JRASA — SM 690 Río III
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Avex S.A. — La Casona
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Granja Tres Arroyos — Avex Faena
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Banco Credicoop — 502 Peatonal Cordoba
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Bravucona — Estrada
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+EANA — Córdoba - Aeropuerto Internacional Ing. Ambrosio Taravella
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+IRSA — Córdoba Shopping
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Lisicki Litvin — Córdoba
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Natura — Milagros Valdez
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Natura — Romina Cerutti
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Natura — Tamara Rojas
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Pedidos Ya — AR_14_Cordillera
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Pedidos Ya — AR_15_25deMayo
+
+MEDIA
+
+Mismo pin que otras 9 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Banco Credicoop — 509 Carlos Paz
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Correo Argentino — VILLA CARLOS PAZ
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Banco Santander Río — 216 - VILLA BELGRANO
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Galeno - COLONOS — Centro Medico Cordoba- ART
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Banco Santander Río — 265 - RIO TERCERO-CORDOBA
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Galeno — Sucursal Rio Tercero
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Bravucona — Patio Olmos
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Mas Vision — Patio Olmos
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+CEVA — Córdoba
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Granja Tres Arroyos — Avex Molino
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+CEVA — Córdoba CEVA
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gefco — Cordoba - FIAT
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Gefco — FIAT
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Sika — Cordoba - FIAT Ferreyra
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Conectar SRL — Brinkmann
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Sancor Cooperativas Limitada — Brinkmann
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Generación Mediterránea — RIO CUARTO
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Granja Tres Arroyos — Avex Rio Cuarto
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Natura — Bianca Fiocchi
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Granja Tres Arroyos — Avex Incubación
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+OPDEA — Lara Filippano
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Integral Insumos — Apro Agro
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Sancor Cooperativas Limitada — La Carlota
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+JRASA — SM 447 9 de Julio
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+JRASA — SM 448 Carcano (SUCURSAL INACTIVA)
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+JRASA — SM 449 Acceso (SUCURSAL INACTIVA)
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+JRASA — SM 454 Uruguay
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+JRASA — SM 452 La Falda
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Sancor Cooperativas Limitada — Córdoba - Concesionario CASTRO
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+JRASA — SM 464 San Francisco (SUCURSAL INACTIVA)
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Sancor Cooperativas Limitada — San Francisco - EMPREMUT S.C.
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+JRASA — SM 478 Bell Ville
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+JRASA — SM 506 Bell Ville (SUCURSAL INACTIVA)
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+JRASA — SM 709 R. Martinolli 2(SUCURSAL INACTIVA)
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Nobleza Piccardo — Córdoba
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Los Grobo Agropecuaria — Jesus María (Planta)
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Telecom Argentina — Central Telecom Jesus Maria
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Mercado Libre SRL — SVC Cordoba
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Molino Cañuelas — Suc. Charras - SUC CERRADA
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Nación Servicios SA — San Francisco
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Tiendas Gourmet — Patio Olmos
+
+MEDIA
+
+Mismo pin que otras 3 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Molino Cañuelas — Av. Córdoba
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Tiendas Gourmet — Córdoba
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Molino Cañuelas — Suc. Laboulaye
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Nutrien — Laboulaye - Córdoba
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+SPST Pentacom - Laboulaye — Laboulaye
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Musimundo — Local 73 Córdoba
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Tarshop — Córdoba II
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Peñaflor — Córdoba
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Transportes La Sevillanita — Córdoba
+
+MEDIA
+
+Mismo pin que otras 1 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Saputo — Parque Industrial Villa Maria
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Supercemento — Villa Maria (Provisoria)
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Tech Pack S.R.L. — SVC Villa Maria
+
+MEDIA
+
+Mismo pin que otras 2 sucursal(es) con domicilio distinto
+
+VER PIN EN MAPS
+
+Ace Seguros — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — ANC - Av. Nuñez (161)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — C2C - Carrefour 2 Cordoba (162)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — CAC - Av. Colon (163)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — CSC - Cordoba Shopping Center (164)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — L2C - Libertad 1100 Hiper Libertad (125)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — LIC - Hipermercado Libertad Córdoba (166)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — NCS - Nuevo Centro Shopping (167)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — NVC - Nuñez y Victorino Cordoba (168)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — P9C - Peatonal 9 de Julio (169)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — PEC - Plaza España (170)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — PJC - Paseo del Jockey (159)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — R4C - Rio cuarto Cordoba (160)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — RVC - Ruta 20 Córdoba (171)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — SPC - Patio Olmos Córdoba (172)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — VAC - Villa Allende Cordoba (129)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — VCP - Villa Carlos Paz (144)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — W1C - Wallmart Cordoba (173)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Arcos Dorados (Mc Donalds) — W2C - Wal . Mart Cordoba 2 (174)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+ARSA — Congelados Centro
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Assist Card — Aeropuerto de Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Assist Card — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Avex S.A. — Las Malvinas (Congelados Centro)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Avex S.A. — Reduccion
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Baby Cottons — Cordoba Shopping
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Baby Cottons — Patio Olmos
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco de Córdoba — Catedral
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco de Córdoba — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco de Córdoba — Fuerza Aerea
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco de Córdoba — Mercado Norte
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco de Córdoba — Tribunales
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Albardon
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Caucete
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Ferro
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Hiperlibertad
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Jachal
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Libertador
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Maipu
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Mendoza
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Mercado
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Pocito
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Rivadavia
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Rodeo del Medio
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Sarmiento
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Stock
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Tribunales
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco San Juan — Unisys
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco Santander Río — 531 - CRUZ DEL EJE
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco Santander Río — 712 - CITIBANK - Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco Santander Río — 713 - CITIBANK - Cerro de las Rosas
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco Santander Río — 714 - CITIBANK - Río Cuarto
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco Santander Río — Dependencia de 713 - CITIBANK - Ciudad Empresaria (BAW)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco Santander Río — Instituto universitario Aeronautico Argentino
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco Santander Río — Nodo 205 Ambrosio Olmos
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Banco Santander Río — Universidad Católica de Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Benvenuto — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Brinks Argentina S.A. — Cordoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Caja de Valores — Cordoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Celsur Logistica S.A. — Despacho P&A
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Cencosud — E 190 CD Córdoba - SUCURSAL CERRADA
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Chubb — Córdoba 2
+
+BAJA
+
+Sin pin cargado en Gestión
+
+DHL Express — Cordoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+DHL Express — Cordoba II
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 028
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 029
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 032
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 033
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 060
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 113
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 114
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 195
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 232
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 233
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 432
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 434
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 435
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 436
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 437
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 438
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 439
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 440
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 441
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 442
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 443
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 444
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 445
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 447
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 448
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 449
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 450
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 451
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 452
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 453
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 454
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 455
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 456
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 457
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 458
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 459
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 460
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 461
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 462
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 463
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 464
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 465
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 466
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 468
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 469
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 470
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 471
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 472
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 473
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 474
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 475
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 476
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 477
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 478
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 479
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 480
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 481
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 482
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 483
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 484
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 485
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 486
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 487
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 490
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 491
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 492
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 493
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 494
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 496
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 497
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 498
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 499
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 501
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 503
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 504
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 506
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 511
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 583
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 651
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 690
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 709
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 725
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 779 Centro de Distribución Cba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 812
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 842
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 843
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Disco — SM 888
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Efectivo Si — EFECTIVO SI - Cordoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Efectivo Si — EFECTIVO SI - Hiper Libertad Cordoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Efectivo Si — EFECTIVO SI - Rio Cuarto
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Efectivo Si — EFECTIVO SI - Villa Maria
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Finangroup — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Finangroup — Nuevo Centro Shopping
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Finangroup — Río Cuarto - Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Galeno — CM Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Galeno — Córdoba 3 (ART) (NO USAR)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Galeno — Sucursal Rio Cuarto
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Galeno - COLONOS — Centro Medico Cordoba (ANEXO)- ART
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Galeno - COLONOS — Cordoba 2
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Galeno - COLONOS — Nueva Cordoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Garbarino — Carlos Paz
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Garbarino — Villa Carlos Paz
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Grupo Piero — Cordoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Grupo Pilar S.A. — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Integral Insumos — Brinkmann
+
+BAJA
+
+Sin pin cargado en Gestión
+
+JRASA — SM 438 General Paz
+
+BAJA
+
+Sin pin cargado en Gestión
+
+JRASA — SM 443 Vélez II
+
+BAJA
+
+Sin pin cargado en Gestión
+
+JRASA — SM 457 Sabattini
+
+BAJA
+
+Sin pin cargado en Gestión
+
+JRASA — SM 493 Los Paraísos
+
+BAJA
+
+Sin pin cargado en Gestión
+
+JRASA — SM 496 Arguello
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Kadicard — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Ledesma — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Los Grobo Agropecuaria — La Carlota
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Los Grobo Agropecuaria — Río IV
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Los Grobo Agropecuaria — Villa Maria
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Manpower — CBA. Administracion Centro
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Manpower — Cerro de las Rosas
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Mediterranea Tecnologica — Bertolino
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Megatlon — Córdoba - Barrio Jardin
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Megatlon — Córdoba - Centro
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Megatlon — Córdoba - Cerro de las Rosas
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Molinos Río de la Plata — Córdoba 1
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Molinos Río de la Plata — Córdoba 2
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Molinos Río de la Plata — Planta Colombo (Chaco)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Musimundo — Local 82 Córdoba Shopping Center
+
+BAJA
+
+Sin pin cargado en Gestión
+
+OCA — ALTA GRACIA
+
+BAJA
+
+Sin pin cargado en Gestión
+
+OCA — Centro de Imposición Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+OCA — CORDOBA II
+
+BAJA
+
+Sin pin cargado en Gestión
+
+OCA — CRUZ DEL EJE
+
+BAJA
+
+Sin pin cargado en Gestión
+
+OCA — GRAN CORDOBA
+
+BAJA
+
+Sin pin cargado en Gestión
+
+OCA — JESUS MARIA
+
+BAJA
+
+Sin pin cargado en Gestión
+
+OCA — LABOULAYE
+
+BAJA
+
+Sin pin cargado en Gestión
+
+OCA — Operador Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+OCA — SAN FRANCISCO
+
+BAJA
+
+Sin pin cargado en Gestión
+
+OCA — SAVANTH PHARMA
+
+BAJA
+
+Sin pin cargado en Gestión
+
+OCA — VILLA DOLORES
+
+BAJA
+
+Sin pin cargado en Gestión
+
+OTIS — Córdoba (de 8 a 17)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Base Operativa - Técnicos Instaladores Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — C.S. CORDOBA III
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — C.S. LIBERTAD CORDOBA NORTE BP
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Carrefour Cordoba Colon
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Carrefour Cordoba Jardin
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Carrefour Cordoba Juan B Justo
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Carrefour Granaderos
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Carrefour Recta Martinioli
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Dino Alto Verde
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Dino Ruta 20
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Dino San Vicente
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Libertad Cordoba J.Rios
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Libertad Cordoba Lugones
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Libertad Cordoba Ruta 9
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Mariano Max II
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Mariano Max V
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Walmart Cordoba Este
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Walmart Cordoba Oeste
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Walmart Cordoba Sur
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pago Facil — Walmart Rio Cuarto
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Pertenecer SRL — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Praxair Argentina SRL — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Praxair Argentina SRL — Río IV
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Prestador - Cliente — Laboulaye
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Prestador - Cliente — Marcos Juarez
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Prestador - Cliente — San Francisco
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Prestador - Cliente — Villa Maria (Puerto Noria)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Quickfood S.A. — Las Malvinas (Congelados Centro)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Química Estrella — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Química Estrella — Planta Colombo (Chaco)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Refinor — Quilino
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Salta Refrescos ATANOR — Ingenio Marapa
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Sancor Cooperativas Limitada — Córdoba - Concesionario ABRATTE
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Sancor Cooperativas Limitada — Córdoba - Concesionario LUDUEÑA
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Sancor Cooperativas Limitada — Villa Vaudagna
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Saputo — Cordoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Saputo — Tio Pujio
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Sika — Córdoba (No esta mas)
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Sinteplast — Cordoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Tarjetas del Mar — Laboulaye
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Telecom Argentina — Deposito Concentración Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Transfarmaco — Córdoba I
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Transfarmaco — Córdoba II
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Unilever — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Universal Assistance — Cordoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Walmart — 1002 - SC Rio IV
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Walmart — 1010 - SC Córdoba Sur
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Walmart — 1056 - CH+ Villanueva
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Walmart — 1060 - CH+ Fuerza Aerea
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Walmart — 1097 - CH+ Donato Cordoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Walmart — 3605 - SC Córdoba Oeste
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Walmart — 3606 - SC Córdoba Este
+
+BAJA
+
+Sin pin cargado en Gestión
+
+Zurich — Córdoba
+
+BAJA
+
+Sin pin cargado en Gestión
+
+1b · Provincia del pin vs. Gestión (Georef)
+
+Compara la provincia declarada en Gestión contra la que devuelve el reverse geocoding de Georef (API del Estado argentino, gratuita) para el pin. Repetir esta acción solo consulta lo que todavía no está en cache.
+
+GRATIS, NO ES GOOGLE
+Consultar Georef
+
+CEVA — Córdoba
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: Córdoba — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+Granja Tres Arroyos — Avex Molino
+
+PROVINCIA DISTINTA
+
+Declarada en Gestión: Córdoba — el pin cae en La Pampa según Georef (dato oficial del Estado)
+
+VER PIN EN MAPS
+
+1c · Segunda opinión (Nominatim / OpenStreetMap)
+
+Solo consulta las sucursales que Georef ya marcó con provincia distinta — si Nominatim coincide, son dos fuentes independientes de acuerdo, evidencia fuerte sin gastar Google.
+
+GRATIS, NO ES GOOGLE
+Consultar Nominatim
+
+CEVA — Córdoba
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: Córdoba — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+Granja Tres Arroyos — Avex Molino
+
+CONFIRMADO POR 2 FUENTES
+
+Declarada: Córdoba — Georef y Nominatim coinciden: el pin está en La Pampa
+
+VER PIN EN MAPS
+
+Data © OpenStreetMap contributors, ODbL 1.0 — http://osm.org/copyright
+
+1d · Worklist final — a corregir en Gestión
+
+Lo que Georef y Nominatim ya confirmaron con certeza no necesita Google. Certeza absoluta (Tier 0) + pines que Google confirmó que difieren de la dirección escrita: nunca el prestador completo.
+
+Exportar CSV para Gestión
+Verificar todos los pines con Google
+~261 CONSULTAS A GOOGLE
+
+CCU — CD Cordoba
+
+CORREGIR EN GESTIÓN
+
+Av. Circunvalacion S/N 0 · latlon_invertidas
+
+VER PIN EN MAPS
+
+Mediterranea Tecnologica — Central
+
+CORREGIR EN GESTIÓN
+
+BV.ORTIZ DE OCAMPO 362 · latlon_invertidas
+
+VER PIN EN MAPS
+
+Mercado Libre SRL — SVC Cordoba
+
+CORREGIR EN GESTIÓN
+
+Avenida Circunvalación 2735 · fuera_de_argentina, pin_compartido
+
+VER PIN EN MAPS
+
+Molino Cañuelas — Agro - Rio IV
+
+CORREGIR EN GESTIÓN
+
+Estrada 624 · latlon_invertidas
+
+VER PIN EN MAPS
+
+Molino Cañuelas — Suc. Charras - SUC CERRADA
+
+CORREGIR EN GESTIÓN
+
+Av. Independencia s/n 0 · fuera_de_argentina, pin_compartido
+
+VER PIN EN MAPS
+
+Nación Servicios SA — San Francisco
+
+CORREGIR EN GESTIÓN
+
+25 DE mayo 1720 · fuera_de_argentina, pin_compartido
+
+VER PIN EN MAPS
+
+Tiendas Gourmet — Patio Olmos
+
+CORREGIR EN GESTIÓN
+
+Velez Sarsfield y Bv. San Juan 0 · fuera_de_argentina, pin_compartido
+
+VER PIN EN MAPS
+Auditar residuo con Google (61 sucursales)
+~61 CONSULTAS A GOOGLE
+← Anterior
+Finalizar

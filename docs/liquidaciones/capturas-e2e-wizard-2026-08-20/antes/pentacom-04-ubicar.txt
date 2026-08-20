@@ -1,0 +1,36 @@
+Asistente de KM — PENTACOM
+✓
+DIAGNÓSTICO
+2
+IMPORTAR
+3
+SIN MATCH
+4
+UBICAR
+🔒
+DISTANCIAS
+✓
+PINES
+
+2a · Actualizar datos desde Gestión
+
+Trae el domicilio actual de cada sucursal y completa el vínculo con Gestión. No consulta Google.
+
+NO USA GOOGLE
+Actualizar desde Gestión
+
+2b · Buscar ubicaciones faltantes
+
+Busca en el mapa las sucursales que no tienen ubicación en Gestión. Las inequívocas se guardan solas; las dudosas pasan al punto 2c.
+
+Buscar ubicaciones (71 sucursales)
+~70 CONSULTAS A GOOGLE
+
+2c · Elegir la ubicación correcta
+
+Google devolvió más de una opción para estas direcciones. Elegir no consulta Google.
+
+✓ No hay direcciones pendientes de elección.
+
+← Anterior
+Siguiente →

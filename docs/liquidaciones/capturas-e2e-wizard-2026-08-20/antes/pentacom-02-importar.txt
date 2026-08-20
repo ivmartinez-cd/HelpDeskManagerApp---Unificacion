@@ -1,0 +1,160 @@
+Asistente de KM — PENTACOM
+✓
+DIAGNÓSTICO
+2
+IMPORTAR
+3
+SIN MATCH
+4
+UBICAR
+🔒
+DISTANCIAS
+✓
+PINES
+
+Estas son las sucursales de clientes que este prestador atiende según Gestión. Al importarlas se crean en tu Tabla KM con km en 0 — el km se calcula después, en el paso Distancias. Este paso no consulta Google.
+
+34 NUEVAS ACTIVAS
+50 EX-CLIENTES
+116 YA CARGADAS
+Mostrar también ex-clientes (sin liquidaciones en 24 meses)
+
+360 ENERGY · CORDOBA - PARQUE INDUSTRIAL FERREYRA
+
+Juan R. Estomba y Manuel Savio 0 · FERREYRA · Córdoba
+
+ADIUM · Delegación Comercial Córdoba
+
+Avda. Luis de Tejeda Nro. 4217 Piso:2 Dpto:6 · CORDOBA · Córdoba
+
+ARSA · Congelados Centro
+
+Av. Malvinas Argentinas Km 8 · CORDOBA · Córdoba
+
+ARSA · UOI SANCOR
+
+BULNES ESQ. MACHONI 0 · CORDOBA · Córdoba
+
+Assist Card · Proveedor Assist Card
+
+Pablo Cabrera 781 · VILLA ALLENDE · Córdoba
+
+Atanor · Fabrica Rio III
+
+Casilla De Correo NRO 12 · RIO TERCERO · Córdoba
+
+Banco Credicoop · 505 Dalmacio Velez Sarsfield
+
+Velez Sarsfield 4104 · CORDOBA · Córdoba
+
+Banco Credicoop · 506 Alta Cordoba
+
+Mariano Fragueiro 2134 Piso: Dpto:L2 · CORDOBA · Córdoba
+
+Banco Industrial · CORDOBA - 27
+
+FIGUEROA ALCORTA 75 · CORDOBA · Córdoba
+
+Banco Industrial · CORDOBA CENTRO - 32
+
+SUCRE 165 · CORDOBA · Córdoba
+
+Banco Santander Río · 437 - ROTONDA LAS FLORES-CORDO
+
+AV. VELEZ SARFIELD 3523 · CORDOBA · Córdoba
+
+Banco Santander Río · 712 - CITIBANK - Córdoba
+
+Avda. Rivadavia 104 · CORDOBA · Córdoba
+
+Banco Santander Río · 713 - CITIBANK - Cerro de las Rosas
+
+Avda. Rafael Nuñez 4208 · CORDOBA · Córdoba
+
+Banco Santander Río · 714 - CITIBANK - Río Cuarto
+
+Constitución 876 · RIO CUARTO · Córdoba
+
+Banco Santander Río · Dependencia de 713 - CITIBANK - Ciudad Empresaria (BAW)
+
+Av La Voz del interior 6868 · CORDOBA · Córdoba
+
+Banco Santander Río · Instituto universitario Aeronautico Argentino
+
+AV. FUERZA AÉREA ARGENTINA 6500 · CORDOBA · Córdoba
+
+Banco Santander Río · Nodo 205 Ambrosio Olmos
+
+Av. Hipolito Yrigoyen 592 · CORDOBA · Córdoba
+
+Banco Santander Río · PDV Nuevo Centro Shopping
+
+Duarte Quirós 1400 Piso:1 Dpto: · CORDOBA · Córdoba
+
+Banco Santander Río · Universidad Nac de Cordoba
+
+AV. HAYA DE LA TORRE S/N 0 · CORDOBA · Córdoba
+
+Banco Santander Río · Universidad Siglo XXI
+
+CALLE DE LOS LATINOS 8555 · CORDOBA · Córdoba
+
+Bravucona · Estrada
+
+José Manuel Estrada 97 · CORDOBA · Córdoba
+
+Bravucona · Paraná
+
+Paraná 420 · CORDOBA · Córdoba
+
+Bravucona · Patio Olmos
+
+Av. Vélez Sarsfield 361 · CORDOBA · Córdoba
+
+Bravucona · Rafael Nuñez
+
+Gdor. Victorino Rodríguez 3993 · CORDOBA · Córdoba
+
+Cartocor · Deposito Sucre
+
+Ulderico Barboni 501 · CORDOBA · Córdoba
+
+CEVA · Córdoba
+
+Av. Renault Argentina 2520 · SANTA ISABEL · Córdoba
+
+CEVA · Córdoba CEVA
+
+Ruta 9 km 695 0 · FERREYRA · Córdoba
+
+Chubb · Córdoba 2
+
+Corrientes 91 Piso:2 Dpto: · CORDOBA · Córdoba
+
+CORVEN · IMSA
+
+Pje. Pedro de la Gasca 1706 · CORDOBA · Córdoba
+
+DADA LOGISTICA · UCOMA - Mopar
+
+Gral. Manuel Savio 4509 · FERREYRA · Córdoba
+
+DADA LOGISTICA · UCOMA - Paragolpes
+
+Av. Amadeo Sabattini 5301 · FERREYRA · Córdoba
+
+DADA LOGISTICA · UCOMA - Ruedas
+
+Gral. Manuel Savio 4509 · FERREYRA · Córdoba
+
+DHL Exel · Córdoba
+
+Cno La Carbonada 4500 · CORDOBA · Córdoba
+
+Dia % · Tienda 1060 Villa Maria
+
+Leandro N. Alem 429 · VILLA MARIA · Córdoba
+
+Importar 34 sucursales nuevas
+← Anterior
+Siguiente →

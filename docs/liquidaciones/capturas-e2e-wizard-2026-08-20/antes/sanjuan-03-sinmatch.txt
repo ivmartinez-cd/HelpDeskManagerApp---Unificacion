@@ -1,0 +1,1198 @@
+Asistente de KM — SAN JUAN
+✓
+DIAGNÓSTICO
+2
+IMPORTAR
+3
+SIN MATCH
+4
+UBICAR
+5
+DISTANCIAS
+6
+PINES
+
+Estas filas de tu Tabla KM no aparecen con el mismo nombre en Gestión — puede ser un símbolo distinto (Nº vs N°), una abreviatura, o que la sucursal cambió de nombre. Acá revisás candidato por candidato: nada se vincula sin que lo confirmes.
+
+3a · Vincular automáticamente (símbolo/abreviatura)
+
+Sucursales que difieren solo en el símbolo del número (Nº/N°/N.º) o en una abreviatura de palabra (Sec./Sup./Pcia....) — misma confianza que un match exacto. No consulta Google.
+
+NO USA GOOGLE
+Vincular automáticamente
+
+3b · Confirmar candidatos
+
+Cada candidato muestra qué difiere del nombre local — confirmá el correcto o rechazalo si no es esa sucursal.
+
+Gobierno de San Juan — Escuela ANTONIO QUARANTA
+
+Escuela Antonio Pulenta
+
+Laprida e Independencia S/N 0 · difieren en — local trae: quaranta; Siges trae: pulenta
+
+65%
+Rechazar
+Confirmar
+
+Escuela Antonio Torres
+
+General Acha (Sur) 426 · difieren en — local trae: quaranta; Siges trae: torres
+
+57%
+Rechazar
+Confirmar
+
+Escuela Antonio Torres UEPA
+
+General Acha (Sur) 426 · difieren en — local trae: quaranta; Siges trae: torres uepa
+
+52%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Marcos Sastre "Emer"
+
+Escuela rural Marcos Sastre
+
+San Martin S/N 0 · difieren en — local trae: emer; Siges trae: rural
+
+69%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Ruben Dario "EMER"
+
+Escuela rural Ruben Dario
+
+Alfonso Hernandez S/N 0 · difieren en — local trae: emer; Siges trae: rural
+
+67%
+Rechazar
+Confirmar
+
+Banco Santander Río — Nodo 770 - SAN JUAN
+
+770 - SAN JUAN
+
+Mendoza 170 · difieren en — local trae: nodo
+
+79%
+Rechazar
+Confirmar
+
+179 - SAN JUAN
+
+MENDOZA 170 · difieren en — local trae: 770 nodo; Siges trae: 179
+
+53%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Normal Superior Gral Manuel Belgrano
+
+Escuela Manuel Belgrano
+
+SM Del Carril y Circunvalacion S/N 0 · difieren en — local trae: gral normal sup
+
+61%
+Rechazar
+Confirmar
+
+Escuela Normal Sup. Gral. San Martin
+
+Estados Unidos (Sur) 500 · difieren en — local trae: belgrano manuel; Siges trae: martin san
+
+60%
+Rechazar
+Confirmar
+
+Escuela Agrotecnica Manuel Belgrano
+
+Ruta Nac N.º 150 km 3 S/N 0 · difieren en — local trae: gral normal sup; Siges trae: agrotecnica
+
+58%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Normal Superior FJ Santa Maria de Oro
+
+Escuela Fray J. Santa Maria De Oro
+
+Alberdi 175 · difieren en — local trae: fj normal sup; Siges trae: fray j
+
+65%
+Rechazar
+Confirmar
+
+Escuela F. Justo Santa Maria de Oro
+
+Laprida S/N 0 · difieren en — local trae: fj normal sup; Siges trae: f justo
+
+63%
+Rechazar
+Confirmar
+
+Escuela Normal Sup. Sarmiento
+
+Avenida Alem (Sur) 31 · difieren en — local trae: de fj maria oro santa; Siges trae: sarmiento
+
+51%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ "Bienvenida Sarmiento" Normal Superior Sarmiento
+
+JINZ Bienvenida Sarmiento
+
+Francisco N. Laprida (Oeste) 440 · difieren en — local trae: normal sup
+
+66%
+Rechazar
+Confirmar
+
+Escuela Normal Sup. Sarmiento
+
+Avenida Alem (Sur) 31 · difieren en — local trae: bienvenida jinz; Siges trae: esc
+
+57%
+Rechazar
+Confirmar
+
+Escuela Bienvenida Sarmiento
+
+Ruta Nac. 150 km 10 S/N 0 · difieren en — local trae: jinz normal sup; Siges trae: esc
+
+47%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Paula Albarracin de Sarmiento
+
+Esc. Paula A. de Sarmiento
+
+Av. San Martín (Oeste) 315 Piso:PB Dpto: · difieren en — local trae: albarracin; Siges trae: a
+
+74%
+Rechazar
+Confirmar
+
+Escuela Paula A. De Sarmiento
+
+Santa Fe (este) 252 · difieren en — local trae: albarracin; Siges trae: a
+
+74%
+Rechazar
+Confirmar
+
+Escuela Sup. de Sarmiento (Anexo)
+
+Ruta Prov. N.º 319 S/N 0 · difieren en — local trae: albarracin paula; Siges trae: anexo sup
+
+51%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Hebe Almeida de Gargiulo (Policia Federal)
+
+Escuela Policia Federal Argentina
+
+Bandera Argentina (Este) 690 · difieren en — local trae: almeida de gargiulo hebe; Siges trae: argentina
+
+45%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Secundaria Comercio Nocturna Dr Santiago Cortinez
+
+Escuela Sec. Dr. Santiago Cortinez
+
+Santa Fe (Este) 252 · difieren en — local trae: comercio nocturna
+
+73%
+Rechazar
+Confirmar
+
+Escuela Nocturna Dr. Aman Rawson
+
+San Martín 904 · difieren en — local trae: comercio cortinez santiago sec; Siges trae: aman rawson
+
+45%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Fray Justo Sta. Maria De Oro
+
+Escuela F. Justo Santa Maria de Oro
+
+Laprida S/N 0 · difieren en — local trae: fray sta; Siges trae: f santa
+
+73%
+Rechazar
+Confirmar
+
+Escuela Fray J. Santa Maria De Oro
+
+Alberdi 175 · difieren en — local trae: justo sta; Siges trae: j santa
+
+72%
+Rechazar
+Confirmar
+
+JINZ N.º 41 Fray Justo St. M. de Oro
+
+Alberti 175 · difieren en — local trae: esc maria sta; Siges trae: 41 jinz m n st
+
+51%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela De Educacion Inicial Barrio Valle Grande Nro 68
+
+Escuela De Educ. Inicial N.º 68
+
+Proyectada 23 S/N 0 · difieren en — local trae: barrio educacion grande valle; Siges trae: educ
+
+57%
+Rechazar
+Confirmar
+
+Escuela Sec. Barrio Valle Grande
+
+Proyectada 23 S/N 0 · difieren en — local trae: 68 de educacion inicial n; Siges trae: sec
+
+54%
+Rechazar
+Confirmar
+
+Escuela Prim. Barrio Valle Grande
+
+Proyectada 23 Valle Grande S/N 0 · difieren en — local trae: 68 de educacion inicial n; Siges trae: prim
+
+52%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — ISFD Normal Superior Gral San Martin
+
+Escuela Normal Sup. Gral. San Martin
+
+Estados Unidos (Sur) 500 · difieren en — local trae: isfd; Siges trae: esc
+
+81%
+Rechazar
+Confirmar
+
+ISFD Gral. San Martin
+
+Estados Unidos (Sur) 500 · difieren en — local trae: normal sup
+
+73%
+Rechazar
+Confirmar
+
+Gral. San Martin
+
+Aberastain 536 · difieren en — local trae: isfd normal sup
+
+58%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Gral De La NaciN³n Enrique Mosconi
+
+Escuela Gral. De La Nac. Enrique Mosconi
+
+Periodistas Argentinos (Oeste) 5983 · difieren en — local trae: nacin3n; Siges trae: nac
+
+84%
+Rechazar
+Confirmar
+
+Escuela Sec. Gral. Ing. Enrique Mosconi
+
+Jorge Luis Borges SN 0 · difieren en — local trae: de la nacin3n; Siges trae: ing sec
+
+61%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — ESCUELA BOERO
+
+Escuela Jose Marmol
+
+Ruta Prov. 491 S/N 0 · difieren en — local trae: boero; Siges trae: jose marmol
+
+46%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Vicecomodoro Gustavo Marambio
+
+Escuela rural Isla Vicecomodoro Gustavo Marambio
+
+Calle Lozano S/N 0 · difieren en — Siges trae: isla rural
+
+77%
+Rechazar
+Confirmar
+
+Escuela rural Marambio
+
+Sta. Elena y Divisoria S/N 0 · difieren en — local trae: gustavo vicecomodoro; Siges trae: rural
+
+50%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Secunadaria Barrio Valle Grande
+
+Escuela Sec. Barrio Valle Grande
+
+Proyectada 23 S/N 0 · difieren en — local trae: secunadaria; Siges trae: sec
+
+76%
+Rechazar
+Confirmar
+
+Escuela Prim. Barrio Valle Grande
+
+Proyectada 23 Valle Grande S/N 0 · difieren en — local trae: secunadaria; Siges trae: prim
+
+73%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Sec. Dr. Juan Carlos Navarro
+
+Escuela Dr. J. C. Navarro
+
+Ruta Nac. 20 S/N 0 · difieren en — local trae: carlos juan sec; Siges trae: c j
+
+55%
+Rechazar
+Confirmar
+
+Escuela Dr. Carlos Saavedra
+
+Av. Uñac S/N 0 · difieren en — local trae: juan navarro sec; Siges trae: saavedra
+
+53%
+Rechazar
+Confirmar
+
+Escuela Dr. Juan C. Albarracin
+
+Av. españa (Sur) 1420 · difieren en — local trae: carlos navarro sec; Siges trae: albarracin c
+
+52%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Carlos N. Vergara EMER
+
+Escuela rural Carlos N. Vergara
+
+Anacleto Gil S/N 0 · difieren en — local trae: emer; Siges trae: rural
+
+73%
+Rechazar
+Confirmar
+
+Escuela Dr. Carlos Saavedra
+
+Av. Uñac S/N 0 · difieren en — local trae: emer n vergara; Siges trae: dr saavedra
+
+47%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — PROCESA SARMIENTO DE LENOIR
+
+Escuela Secundaria Procesa Sarmiento de Lenoir
+
+Ruta Nac. 20 km 16 S/N 0 · difieren en — Siges trae: esc sec
+
+78%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Anexo Rafael Arrieta
+
+Escuela Rafael Arrieta (Anexo)
+
+Ruta 279 S/N 0 · coincidencia total tras normalizar
+
+88%
+Rechazar
+Confirmar
+
+Escuela Rafael A. Arrieta
+
+Divisoria S/N 0 · difieren en — local trae: anexo; Siges trae: a
+
+72%
+Rechazar
+Confirmar
+
+Escuela rural Rafael Alberto Arrieta
+
+Divisoria (Este) S/N 0 · difieren en — local trae: anexo; Siges trae: alberto rural
+
+60%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela de Capacitacion Laboral Nº 25 Hellen Keller
+
+Escuela de Cap. Lab. N.º 25 Hellen Keller
+
+Ruta Nac.149 S/N 0 · difieren en — local trae: capacitacion laboral; Siges trae: cap lab
+
+70%
+Rechazar
+Confirmar
+
+Escuela Técnica de Capacitación Laboral Tambor de Tacuari
+
+RASTREADOR CALIVAR . Villa Obrera 553 · difieren en — local trae: 25 hellen keller n; Siges trae: tacuari tambor tec
+
+50%
+Rechazar
+Confirmar
+
+Escuela Técnica de Capacitación Laboral Madres Sanjuaninas
+
+Cabo Raúl Cuello y Clemente Sarmiento Barrio Balcarce 0 · difieren en — local trae: 25 hellen keller n; Siges trae: madres sanjuaninas tec
+
+50%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela de Educacion Especial Multiple de Iglesia Felipe Rojas
+
+EEE Multiple de Iglesia Felipe Rojas
+
+Laprida y Juan Pablo II S/N 0 · difieren en — local trae: educacion esc especial; Siges trae: eee
+
+66%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ Nº 6 Escuela 17 de Agosto
+
+JINZ N.º 6 17 de Agosto
+
+Sarmiento S/N 0 · difieren en — local trae: esc
+
+89%
+Rechazar
+Confirmar
+
+Esc 17 DE AGOSTO
+
+Sarmiento S/N 0 · difieren en — local trae: 6 jinz n
+
+69%
+Rechazar
+Confirmar
+
+Escuela 17 de Agosto
+
+Sarmiento S/N - LAS FLORES 0 · difieren en — local trae: 6 jinz n
+
+69%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ Nº 8
+
+JINZ N.º 8 Pte. Mitre
+
+Principal S/N 0 · difieren en — Siges trae: mitre pte
+
+60%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Dr. Calcagno "EMER"
+
+Escuela rural Dr. Calcagno
+
+Paso de los Andes S/N 0 · difieren en — local trae: emer; Siges trae: rural
+
+67%
+Rechazar
+Confirmar
+
+Escuela Dr. Anacleto Gil EMER
+
+Ruta Provincial 295 S/N 0 · difieren en — local trae: calcagno; Siges trae: anacleto gil
+
+57%
+Rechazar
+Confirmar
+
+Escuela Dr. LUIS AGOTE
+
+Ruta Nacional 20 km 13 S/N 0 · difieren en — local trae: calcagno emer; Siges trae: agote luis
+
+49%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Juan Huarpe "Emer"
+
+Escuela rural Juan Huarpe
+
+Pinchagual S/N 0 · difieren en — local trae: emer; Siges trae: rural
+
+67%
+Rechazar
+Confirmar
+
+Escuela Juan Jufre
+
+Jufree y S. María de Oro S/N 0 · difieren en — local trae: emer huarpe; Siges trae: jufre
+
+55%
+Rechazar
+Confirmar
+
+Escuela Juan Larrea
+
+Laprida y San Isidro S/N 0 · difieren en — local trae: emer huarpe; Siges trae: larrea
+
+53%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ N.º 58 Cte. Espora
+
+Escuela Cte. T. Espora
+
+La Plata y calle 6 S/N 0 · difieren en — local trae: 58 jinz n; Siges trae: esc t
+
+45%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ N.º 47 Escuela Rodriguez
+
+JINZ N.º 47 Rodriguez
+
+Oratorio S/N 0 · difieren en — local trae: esc
+
+86%
+Rechazar
+Confirmar
+
+JINZ N.º 47 Escuela Arturo Capdevila
+
+F. Barrientos y Arenales S/N 0 · difieren en — local trae: rodriguez; Siges trae: arturo capdevila
+
+60%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela J. Gutierrez "Emer"
+
+Escuela rural J. Gutierrez
+
+Callejon del Alto S/N 0 · difieren en — local trae: emer; Siges trae: rural
+
+67%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ N.º 15 Jose Marmol
+
+JINZ N.º 15 Juan Larrea
+
+Laprida y San Isidro S/N 0 · difieren en — local trae: jose marmol; Siges trae: juan larrea
+
+51%
+Rechazar
+Confirmar
+
+Escuela Jose Marmol
+
+Ruta Prov. 491 S/N 0 · difieren en — local trae: 15 jinz n; Siges trae: esc
+
+50%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ N.º 35
+
+JINZ Nro 35 Julio Verne
+
+Av. Sarmiento S/N 0 · difieren en — Siges trae: julio verne
+
+59%
+Rechazar
+Confirmar
+
+JINZ Nro 35 Esc. Rep. del Peru
+
+Belgrano S/N 0 · difieren en — Siges trae: del esc peru rep
+
+47%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ N.º 57 Prov. de San Luis
+
+ALBERGUE PCIA. DE SAN LUIS
+
+San Antonio S/N 0 · difieren en — local trae: 57 jinz n; Siges trae: albergue
+
+57%
+Rechazar
+Confirmar
+
+Escuela Albergue Pcia. de San Luis
+
+San Antonio S/N 0 · difieren en — local trae: 57 jinz n; Siges trae: albergue esc
+
+52%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — PEDRO BONIFACIO PALACIOS
+
+Escuela Pedro Bonifacio Palacios
+
+EX RUTA 40 NIQUIVIL - TAMBERIAS 0 · difieren en — Siges trae: esc
+
+84%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Francisca Rios de Paez
+
+Escuela Dra. F. Rios de Paez
+
+Ruta N.º 40 y Cantoni S/N 0 · difieren en — local trae: francisca; Siges trae: dra f
+
+67%
+Rechazar
+Confirmar
+
+Escuela Prov. de Entre Rios
+
+Chepical S/N 0 · difieren en — local trae: francisca paez; Siges trae: entre pcia
+
+46%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela 24 de Septiembre EMER
+
+Escuela rural 24 de Septiembre
+
+Eugenio Flores S/N 0 · difieren en — local trae: emer; Siges trae: rural
+
+73%
+Rechazar
+Confirmar
+
+Escuela 11 de Septiembre
+
+Almafuerte S/N 0 · difieren en — local trae: 24 emer; Siges trae: 11
+
+65%
+Rechazar
+Confirmar
+
+Escuela Primaria Barrio 7 de Septiembre
+
+Necochea y Callejon de la Vega 0 · difieren en — local trae: 24 emer; Siges trae: 7 barrio prim
+
+51%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Pedro Palacios
+
+Escuela Pedro Bonifacio Palacios
+
+EX RUTA 40 NIQUIVIL - TAMBERIAS 0 · difieren en — Siges trae: bonifacio
+
+77%
+Rechazar
+Confirmar
+
+Escuela Pedro Alvarez
+
+Calle 13 S/N 0 · difieren en — local trae: palacios; Siges trae: alvarez
+
+61%
+Rechazar
+Confirmar
+
+Escuela Pedro Echague
+
+e/ San Lorenzo y Pedro Echague S/N 0 · difieren en — local trae: palacios; Siges trae: echague
+
+54%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Juan. Pringles "Emer"
+
+Escuela rural Juan Pringles
+
+El Bosque y Campodoico S/N 0 · difieren en — local trae: emer; Siges trae: rural
+
+69%
+Rechazar
+Confirmar
+
+Escuela Juan E. Seru
+
+Salvador M. del Carril S/N 0 · difieren en — local trae: emer pringles; Siges trae: e seru
+
+52%
+Rechazar
+Confirmar
+
+Escuela Juan Jufre
+
+Jufree y S. María de Oro S/N 0 · difieren en — local trae: emer pringles; Siges trae: jufre
+
+49%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Pedro Valenzuela Emer
+
+Escuela rural Pedro Valenzuela
+
+Enfermera Medina S/N 0 · difieren en — local trae: emer; Siges trae: rural
+
+70%
+Rechazar
+Confirmar
+
+Escuela Pedro Alvarez
+
+Calle 13 S/N 0 · difieren en — local trae: emer valenzuela; Siges trae: alvarez
+
+52%
+Rechazar
+Confirmar
+
+Escuela Pedro Echague
+
+e/ San Lorenzo y Pedro Echague S/N 0 · difieren en — local trae: emer valenzuela; Siges trae: echague
+
+50%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ N.º 55 Escuela Jose Maria
+
+JINZ N.º 55 Jose Maria
+
+Patricias Sanjuaninas S/N 0 · difieren en — local trae: esc
+
+87%
+Rechazar
+Confirmar
+
+Escuela Jose Maria Paz
+
+General Acha S/N 0 · difieren en — local trae: 55 jinz n; Siges trae: paz
+
+57%
+Rechazar
+Confirmar
+
+Escuela Jose Maria de los Rios
+
+Patricias Sanjuaninas S/N 0 · difieren en — local trae: 55 jinz n; Siges trae: de los rios
+
+47%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Nuevo Cuyo
+
+Escuela Barrio Nuevo Cuyo
+
+Proyectada y Comercio S/N 0 · difieren en — Siges trae: barrio
+
+78%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Parque Rivadavia Norte
+
+Parque Rivadavia Norte
+
+Eva de Peron S/N 0 · difieren en — local trae: esc
+
+84%
+Rechazar
+Confirmar
+
+Escuela Sec. Rivadavia
+
+Pueyrredón Sur - Rodríguez Pinto 775 · difieren en — local trae: norte parque; Siges trae: sec
+
+54%
+Rechazar
+Confirmar
+
+Escuela Prov. de Rivadavia
+
+Meglioli 146 · difieren en — local trae: norte parque; Siges trae: de pcia
+
+53%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ N.º 43 Escuela Policia de la Pcia. San Juan
+
+JINZ N.º 43 Policia de la Pcia. San Juan
+
+Avellaneda y Victoria S/N 0 · difieren en — local trae: esc
+
+93%
+Rechazar
+Confirmar
+
+Escuela Policia de la Pcia. de San Juan
+
+Avellaneda 2951 · difieren en — local trae: 43 jinz n
+
+77%
+Rechazar
+Confirmar
+
+Escuela Pcia. de San Juan
+
+Mitre y 25 de Mayo S/N 0 · difieren en — local trae: 43 jinz la n policia
+
+58%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ N.º 53 Esc. Andina
+
+JINZ N.º 53 Andina
+
+Colon y Ruta N°. 270 S/N 0 · difieren en — local trae: esc
+
+85%
+Rechazar
+Confirmar
+
+Escuela Andina
+
+Colon y Ruta 270 S/N 0 · difieren en — local trae: 53 jinz n
+
+56%
+Rechazar
+Confirmar
+
+JINZ N.º 53 Yubel
+
+Bustos y Divisoria S/N 0 · difieren en — local trae: andina esc; Siges trae: yubel
+
+54%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ N.º 32 Anexo Escuela Luis Agote
+
+JINZ Nro 32 Luis Agote (Anexo)
+
+Ruta 20 km 13 S/N 0 · difieren en — local trae: esc
+
+78%
+Rechazar
+Confirmar
+
+Escuela Dr. LUIS AGOTE
+
+Ruta Nacional 20 km 13 S/N 0 · difieren en — local trae: 32 anexo jinz n; Siges trae: dr
+
+50%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ N.º 26 Escuela P. Valdivia
+
+JINZ N.º 26 P. Valdivia
+
+Bazañez Zaballa S/N 0 · difieren en — local trae: esc
+
+87%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ N.º 37 Sede
+
+JINZ N.º 37
+
+Av. Lib. San Martin 7437 · difieren en — local trae: sede
+
+76%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — JINZ N.º 10 José M. del Carril
+
+Escuela Jose M. del Carril
+
+Aranda S/N 0 · difieren en — local trae: 10 jinz n; Siges trae: esc
+
+62%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — E.P.E.T. N.º 1
+
+E.P.E.T. N° 1 ING. ROGELIO BOERO
+
+Manuel Belgrano (Este) 250 · difieren en — Siges trae: boero ing rogelio
+
+47%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Buenaventura Luna Emer
+
+Escuela rural Buenaventura Luna
+
+Calle Olivares S/N 0 · difieren en — local trae: emer; Siges trae: rural
+
+70%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — E.P.E.T Nº 1 - ALBARDON
+
+Escuela Pcia. Tec. N.º 1 Albardon
+
+Esmeralda y Proyectada S/N 0 · difieren en — local trae: epet; Siges trae: esc pcia tec
+
+60%
+Rechazar
+Confirmar
+
+E.P.E.T. N° 1 ING. ROGELIO BOERO
+
+Manuel Belgrano (Este) 250 · difieren en — local trae: albardon; Siges trae: boero ing rogelio
+
+50%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Oscar Humberto Otiñano
+
+Escuela Sec. Oscar Otiñano
+
+25 de Mayo y Mitre S/N 0 · difieren en — local trae: humberto; Siges trae: sec
+
+67%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela de Educación Popular
+
+Escuela de Educ. Popular
+
+Balcarce (Este) 2262 · difieren en — local trae: educacion; Siges trae: educ
+
+73%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela anexo Superior de Sarmiento
+
+Escuela Sup. de Sarmiento (Anexo)
+
+Ruta Prov. N.º 319 S/N 0 · coincidencia total tras normalizar
+
+89%
+Rechazar
+Confirmar
+
+Escuela Sup. Sarmiento (Anexo)
+
+Furque y Picon S/N 0 · difieren en — local trae: de
+
+76%
+Rechazar
+Confirmar
+
+Escuela Normal Sup. Sarmiento
+
+Avenida Alem (Sur) 31 · difieren en — local trae: anexo de; Siges trae: normal
+
+62%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Presbítero M. Iannelli
+
+Escuela Pte. M. Iannelli
+
+Juan J.Bustos 904 · difieren en — local trae: presbitero; Siges trae: pte
+
+71%
+Rechazar
+Confirmar
+
+Escuela Presbitero Medina Suarez
+
+Ruta 506 S/N 0 · difieren en — local trae: iannelli m; Siges trae: medina suarez
+
+53%
+Rechazar
+Confirmar
+
+Escuela Presbitero C. de Quiroga
+
+Ruta Nacional 510 S/N 0 · difieren en — local trae: iannelli m; Siges trae: c de quiroga
+
+48%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Francisco de Villagra
+
+JINZ N° 39 sede Francisco de Villagra
+
+Hernan Cortez y Maipu S/N 0 · difieren en — local trae: esc; Siges trae: 39 jinz n sede
+
+57%
+Rechazar
+Confirmar
+
+Escuela Francisco N. Laprida
+
+San Luis 626 · difieren en — local trae: de villagra; Siges trae: laprida n
+
+55%
+Rechazar
+Confirmar
+
+Escuela Francisco Javier Muñiz
+
+Pte. Roca S/N 0 · difieren en — local trae: de villagra; Siges trae: javier muniz
+
+50%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Normal Sup. Gral. Manuel Belgrano
+
+Escuela Manuel Belgrano
+
+SM Del Carril y Circunvalacion S/N 0 · difieren en — local trae: gral normal sup
+
+61%
+Rechazar
+Confirmar
+
+Escuela Normal Sup. Gral. San Martin
+
+Estados Unidos (Sur) 500 · difieren en — local trae: belgrano manuel; Siges trae: martin san
+
+60%
+Rechazar
+Confirmar
+
+Escuela Agrotecnica Manuel Belgrano
+
+Ruta Nac N.º 150 km 3 S/N 0 · difieren en — local trae: gral normal sup; Siges trae: agrotecnica
+
+58%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Ernestina E. de Andino
+
+Escuela Ernestina Echegaray de Andino
+
+Colon y 20 de Junio S/N 0 · difieren en — local trae: e; Siges trae: echegaray
+
+75%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Arturo Capdevila
+
+JINZ N.º 47 Escuela Arturo Capdevila
+
+F. Barrientos y Arenales S/N 0 · difieren en — Siges trae: 47 jinz n
+
+67%
+Rechazar
+Confirmar
+
+Escuela Arturo Beruti
+
+San Lorenzo S/N 0 · difieren en — local trae: capdevila; Siges trae: beruti
+
+58%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Presbitero Cayetano de Quiroga
+
+Escuela Presbitero C. de Quiroga
+
+Ruta Nacional 510 S/N 0 · difieren en — local trae: cayetano; Siges trae: c
+
+77%
+Rechazar
+Confirmar
+
+JINZ N.º 31 P. Cayetano de Quiroga
+
+Quiroga y Ruta 510 S/N 0 · difieren en — local trae: esc presbitero; Siges trae: 31 jinz n p
+
+49%
+Rechazar
+Confirmar
+
+Escuela Adan Quiroga
+
+Cte. Cabot S/N 0 · difieren en — local trae: cayetano de presbitero; Siges trae: adan
+
+46%
+Rechazar
+Confirmar
+
+Gobierno de San Juan — Escuela Pedro. P. de Quiroga
+
+Escuela Tec. Cap. Lab. Pedro. P. de Quiroga
+
+Tucuman S/N 0 · difieren en — Siges trae: cap lab tec
+
+71%
+Rechazar
+Confirmar
+
+Escuela Presbitero C. de Quiroga
+
+Ruta Nacional 510 S/N 0 · difieren en — local trae: p pedro; Siges trae: c presbitero
+
+61%
+Rechazar
+Confirmar
+
+Escuela Pedro de Marquez
+
+San Juan 7306 · difieren en — local trae: p quiroga; Siges trae: marquez
+
+59%
+Rechazar
+Confirmar
+← Anterior
+Siguiente →

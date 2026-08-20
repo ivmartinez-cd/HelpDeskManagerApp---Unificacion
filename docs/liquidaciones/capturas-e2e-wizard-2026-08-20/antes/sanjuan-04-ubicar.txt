@@ -1,0 +1,326 @@
+Asistente de KM — SAN JUAN
+✓
+DIAGNÓSTICO
+2
+IMPORTAR
+3
+SIN MATCH
+4
+UBICAR
+5
+DISTANCIAS
+6
+PINES
+
+2a · Actualizar datos desde Gestión
+
+Trae el domicilio actual de cada sucursal y completa el vínculo con Gestión. No consulta Google.
+
+NO USA GOOGLE
+Actualizar desde Gestión
+
+2b · Buscar ubicaciones faltantes
+
+Busca en el mapa las sucursales que no tienen ubicación en Gestión. Las inequívocas se guardan solas; las dudosas pasan al punto 2c.
+
+Buscar ubicaciones (2 sucursales)
+SIN COSTO — TODO ESTÁ EN CACHÉ
+
+2c · Elegir la ubicación correcta
+
+Google devolvió más de una opción para estas direcciones. Elegir no consulta Google.
+
+Arcos Dorados (Mc Donalds) — JN2 - San Juan 2 (15)
+
+ELEGÍ UNA OPCIÓN
+
+Av. Jose Ignacio Rozas 806, RIVADAVIA, San Juan, Argentina
+
+Jose Bonifacio Bolaños, J5406 Rivadavia, San Juan, Argentina
+
+-31.524922, -68.579301 · GEOMETRIC_CENTER · match parcial
+
+VER EN MAPS
+Usar
+
+José Hernandez, J5400 Rivadavia, San Juan, Argentina
+
+-31.527164, -68.598301 · GEOMETRIC_CENTER · match parcial
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Cepas Argentinas — San Juan
+
+ELEGÍ UNA OPCIÓN
+
+Rastreador Calivar 239, SAN JUAN, San Juan, Argentina
+
+Rastreador Calivar Nte. 239, J5400 Rivadavia, San Juan, Argentina
+
+-31.527929, -68.594749 · ROOFTOP
+
+VER EN MAPS
+Usar
+
+Rastreador Calivar Sur 239, J5400 Rivadavia, San Juan, Argentina
+
+-31.532672, -68.594006 · RANGE_INTERPOLATED
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Disco — SM 193
+
+ELEGÍ UNA OPCIÓN
+
+Av. Libertador 2359, DESAMPARADOS, San Juan, Argentina
+
+Roger Ballet y Av. Libertador, J5406 San Juan, Argentina
+
+-31.528546, -68.561464 · GEOMETRIC_CENTER · match parcial
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Disco — SM 412
+
+ELEGÍ UNA OPCIÓN
+
+Av. Libertador 5091, VILLA RIVADAVIA, Santiago del Estero, Argentina
+
+Av. del Libertador 5091, G4200 Santiago del Estero, Argentina
+
+-27.765427, -64.286258 · RANGE_INTERPOLATED · match parcial
+
+VER EN MAPS
+Usar
+
+Av. Rivadavia, G4200 Santiago del Estero, Argentina
+
+-27.787275, -64.269455 · GEOMETRIC_CENTER · match parcial
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Disco — SM 414
+
+ELEGÍ UNA OPCIÓN
+
+Blvd. Sarmiento 420, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+Blvd. Sarmiento Oeste 420, J5425 Villa Krause, San Juan, Argentina
+
+-31.583154, -68.540761 · ROOFTOP · match parcial
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Disco — SM 815
+
+ELEGÍ UNA OPCIÓN
+
+República del Líbano 297, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+República del Líbano 297, J5425 Rawson, San Juan, Argentina
+
+-31.568638, -68.525458 · ROOFTOP · match parcial
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Gobierno de San Juan - Minist. de Desarrollo Humano y Promoción Social — Central
+
+ELEGÍ UNA OPCIÓN
+
+SAN JUAN, San Juan, Argentina
+
+San Juan, San Juan Province, Argentina
+
+-31.535107, -68.538594 · APPROXIMATE
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+JRASA — SM 544 San Juan
+
+ELEGÍ UNA OPCIÓN
+
+Libertador Gral. San Martín 4681, VILLA RIVADAVIA, Santiago del Estero, Argentina
+
+Rivadavia Department, Santiago del Estero Province, Argentina
+
+-30.070771, -62.356516 · APPROXIMATE · match parcial
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Molinos Río de la Plata — Los Robles
+
+ELEGÍ UNA OPCIÓN
+
+Ruta 20, SANTA LUCIA, San Juan, Argentina
+
+RN20, Santa Lucía, San Juan, Argentina
+
+-31.543730, -68.491497 · GEOMETRIC_CENTER
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Molinos Río de la Plata — Santa Lucía
+
+ELEGÍ UNA OPCIÓN
+
+Ruta 20, SANTA LUCIA, San Juan, Argentina
+
+RN20, Santa Lucía, San Juan, Argentina
+
+-31.543730, -68.491497 · GEOMETRIC_CENTER
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+NO USAR - PST San Juan - Grupo MAURE — San Juan
+
+ELEGÍ UNA OPCIÓN
+
+Barrio Solares de San Juan II Casa 54, SAN JUAN, San Juan, Argentina
+
+J5400, San Juan Province, Argentina
+
+-31.551251, -68.505030 · GEOMETRIC_CENTER · match parcial
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Pago Facil — C.S. San Juan
+
+ELEGÍ UNA OPCIÓN
+
+Av. Libertador este 315, SAN JUAN, San Juan, Argentina
+
+San Juan, San Juan Province, Argentina
+
+-31.535107, -68.538594 · APPROXIMATE · match parcial
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Pago Facil — Libertad San Juan
+
+ELEGÍ UNA OPCIÓN
+
+Av. Circunvalacion y S. Ortiz, SAN JUAN, San Juan, Argentina
+
+Av. Circunvalación, San Juan, Argentina
+
+-31.522320, -68.539054 · GEOMETRIC_CENTER · match parcial
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Pertenecer SRL — San Juan
+
+ELEGÍ UNA OPCIÓN
+
+Av. Libertador 391, SAN JUAN, San Juan, Argentina
+
+Roger Ballet y Av. Libertador, J5406 San Juan, Argentina
+
+-31.528546, -68.561464 · GEOMETRIC_CENTER · match parcial
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Sancor Cooperativas Limitada — Operador Comercial (Lac. San Juan)
+
+ELEGÍ UNA OPCIÓN
+
+Quiroz (E) 623, SAN JUAN, San Juan, Argentina
+
+San Juan, San Juan Province, Argentina
+
+-31.535107, -68.538594 · APPROXIMATE · match parcial
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Walmart — 1006 - SC San Juan
+
+ELEGÍ UNA OPCIÓN
+
+Av. Ignacio de la Rosa S/N, Depto Rivadavia, San Juan, SAN JUAN, San Juan, Argentina
+
+Av. José Ignacio de la Roza, J5400 San Juan, Argentina
+
+-31.538325, -68.560230 · GEOMETRIC_CENTER · match parcial
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+
+Walmart — 1081 - CH+ Rawson SJ
+
+ELEGÍ UNA OPCIÓN
+
+Av. Doctor Ortega y Las Vicentinas – Rawson – SAN JUAN, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+Doctor Ortega & Las Vicentinas, J5425 Villa Krause, San Juan, Argentina
+
+-31.575955, -68.543222 · GEOMETRIC_CENTER · match parcial
+
+VER EN MAPS
+Usar
+LATITUD MANUAL
+LONGITUD MANUAL
+Usar manual
+← Anterior
+Siguiente →

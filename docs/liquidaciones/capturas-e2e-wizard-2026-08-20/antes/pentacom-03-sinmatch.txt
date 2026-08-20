@@ -1,0 +1,132 @@
+Asistente de KM — PENTACOM
+✓
+DIAGNÓSTICO
+2
+IMPORTAR
+3
+SIN MATCH
+4
+UBICAR
+🔒
+DISTANCIAS
+✓
+PINES
+
+Estas filas de tu Tabla KM no aparecen con el mismo nombre en Gestión — puede ser un símbolo distinto (Nº vs N°), una abreviatura, o que la sucursal cambió de nombre. Acá revisás candidato por candidato: nada se vincula sin que lo confirmes.
+
+3a · Vincular automáticamente (símbolo/abreviatura)
+
+Sucursales que difieren solo en el símbolo del número (Nº/N°/N.º) o en una abreviatura de palabra (Sec./Sup./Pcia....) — misma confianza que un match exacto. No consulta Google.
+
+NO USA GOOGLE
+Vincular automáticamente
+
+3b · Confirmar candidatos
+
+Cada candidato muestra qué difiere del nombre local — confirmá el correcto o rechazalo si no es esa sucursal.
+
+Nutrien — Baigorria - Córdoba
+
+Cabrera - Córdoba
+
+Ruta 158 y Camino Tegua 0 · difieren en — local trae: baigorria; Siges trae: cabrera
+
+53%
+Rechazar
+Confirmar
+
+Cnel Baigorria
+
+Ruta 36 KM 633 0 · difieren en — local trae: cordoba; Siges trae: cnel
+
+48%
+Rechazar
+Confirmar
+
+Jesús María - Córdoba
+
+Ruta 9 Km 757 · difieren en — local trae: baigorria; Siges trae: jesus maria
+
+46%
+Rechazar
+Confirmar
+
+Nutrien — Monte Buey - Córdoba
+
+Monte Buey - Córdoba CERRADA
+
+San Lorenzo 631 · difieren en — Siges trae: cerrada
+
+79%
+Rechazar
+Confirmar
+
+Efectivo Si — Villa Maria
+
+EFECTIVO SI - Villa Maria
+
+Corrientes 1081 · difieren en — Siges trae: efectivo si
+
+58%
+Rechazar
+Confirmar
+
+Granja Tres Arroyos — Avex Reducción
+
+Avex Incubación
+
+Jorge Luis Borges 1701 · difieren en — local trae: reduccion; Siges trae: incubacion
+
+50%
+Rechazar
+Confirmar
+
+Nutrien — Tancacha
+
+Tancacha CERRADA
+
+9 de julio 1250 · difieren en — Siges trae: cerrada
+
+60%
+Rechazar
+Confirmar
+
+Natura — PAOLA RODRIGUEZ
+
+Paola Carolina Rodriguez Ceruti
+
+BILIBISCATE 2658 Piso:PB Dpto: · difieren en — Siges trae: carolina ceruti
+
+58%
+Rechazar
+Confirmar
+
+Sika — Córdoba
+
+Planta Cordoba
+
+11 de Septiembre 4432 · difieren en — Siges trae: planta
+
+60%
+Rechazar
+Confirmar
+
+Supercemento — Cordoba  Cosquin
+
+Córdoba
+
+Obrador Chacra de la Merced KM 4 · difieren en — local trae: cosquin
+
+58%
+Rechazar
+Confirmar
+
+Cordoba Circunvalacion
+
+Av. Circunvalación Sur 4498 · difieren en — local trae: cosquin; Siges trae: circunvalacion
+
+45%
+Rechazar
+Confirmar
+← Anterior
+Siguiente →
