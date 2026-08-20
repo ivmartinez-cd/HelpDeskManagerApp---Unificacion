@@ -13,6 +13,10 @@ from src.modules.liquidaciones.application.use_cases._reconciliar_liquidacion im
     ReconciliarLiquidacion,
     ReconciliarLiquidacionPorts,
 )
+from src.modules.liquidaciones.application.use_cases.actualizar_estado_alerta import (
+    ActualizarEstadoAlerta,
+    ActualizarEstadoAlertaPorts,
+)
 from src.modules.liquidaciones.application.use_cases.actualizar_estado_local import (
     ActualizarEstadoLocal,
     ActualizarEstadoLocalPorts,
@@ -113,6 +117,15 @@ def build_list_liquidaciones(session: AsyncSession) -> ListLiquidaciones:
 def build_actualizar_estado_local(session: AsyncSession) -> ActualizarEstadoLocal:
     return ActualizarEstadoLocal(
         ActualizarEstadoLocalPorts(liquidaciones=SqlAlchemyLiquidacionRepository(session))
+    )
+
+
+def build_actualizar_estado_alerta(session: AsyncSession) -> ActualizarEstadoAlerta:
+    return ActualizarEstadoAlerta(
+        ActualizarEstadoAlertaPorts(
+            alertas=SqlAlchemyAlertaRepository(session),
+            incidentes=SqlAlchemyIncidenteRepository(session),
+        )
     )
 
 

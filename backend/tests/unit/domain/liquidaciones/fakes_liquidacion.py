@@ -224,6 +224,11 @@ class FakeIncidenteRepository:
                 eliminados += 1
         return eliminados
 
+    async def update_estado_validacion(self, incidente_id: UUID, estado: str) -> None:
+        row = self.rows.get(incidente_id)
+        if row is not None:
+            self.rows[incidente_id] = dataclasses.replace(row, estado_validacion=estado)
+
 
 class FakeAlertaRepository:
     def __init__(self) -> None:

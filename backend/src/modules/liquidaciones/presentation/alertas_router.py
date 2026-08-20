@@ -1,7 +1,9 @@
 """Gestión de alertas ALT por liquidación — la TL revisa/resuelve/descarta.
 
-Router propio (liquidaciones_router.py está al límite §4). Mismo patrón que el
-PATCH de observaciones: repo directo, 404 si la alerta no pertenece a la
+Router propio (liquidaciones_router.py está al límite §4). A diferencia del
+PATCH de observaciones (repo directo), este pasa por `ActualizarEstadoAlerta`
+porque además recalcula `estado_validacion` del incidente dueño — no es un
+simple update de un solo campo. 404 si la alerta no pertenece a la
 liquidación. La justificación obligatoria al descartar la valida el schema."""
 
 from uuid import UUID
@@ -12,8 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.liquidaciones.domain.well_known_permissions import UPDATE
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_alerta_repository import (
-    SqlAlchemyAlertaRepository,
+from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
+    build_actualizar_estado_alerta,
 )
 from src.modules.liquidaciones.presentation.schemas.liquidacion_detalle_schemas import (
     AlertaEstadoIn,
@@ -34,7 +36,7 @@ async def update_estado_alerta(
     _: Identity = _require_update,
     db: AsyncSession = Depends(get_db),
 ) -> AlertaOut:
-    updated = await SqlAlchemyAlertaRepository(db).update_estado(
+    updated = await build_actualizar_estado_alerta(db).execute(
         liquidacion_id,
         alerta_id,
         estado=body.estado,

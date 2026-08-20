@@ -5,6 +5,7 @@ import uuid
 from datetime import date, datetime
 from typing import Any
 
+from src.modules.liquidaciones.domain.entities.alerta import Alerta
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
 from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
@@ -131,6 +132,23 @@ def make_incidente(**overrides: Any) -> Incidente:
     }
     defaults.update(overrides)
     return Incidente(**defaults)
+
+
+def make_alerta(**overrides: Any) -> Alerta:
+    defaults: dict[str, Any] = {
+        "id": uuid.uuid4(),
+        "incidente_id": uuid.uuid4(),
+        "liquidacion_id": uuid.uuid4(),
+        "tipo_alerta": "ALT001",
+        "descripcion": "Alerta de prueba",
+        "datos_contexto": None,
+        "riesgo": 80.0,
+        "estado": "pendiente",
+        "fecha_generacion": NOW,
+        "justificacion": None,
+    }
+    defaults.update(overrides)
+    return Alerta(**defaults)
 
 
 def make_regla(**overrides: Any) -> ReglaAlerta:

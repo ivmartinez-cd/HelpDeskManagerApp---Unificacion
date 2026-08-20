@@ -113,6 +113,14 @@ class SqlAlchemyIncidenteRepository:
         )
         return int(result.rowcount)
 
+    async def update_estado_validacion(self, incidente_id: UUID, estado: str) -> None:
+        stmt = (
+            update(IncidenteModel)
+            .where(IncidenteModel.id == incidente_id)
+            .values(estado_validacion=estado)
+        )
+        await self._session.execute(stmt)
+
 
 def _a_model(liquidacion_id: UUID, incidente: IncidenteImportado) -> IncidenteModel:
     return IncidenteModel(

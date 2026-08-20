@@ -58,3 +58,10 @@ class IncidenteRepository(Protocol):
         """Elimina incidentes que AyC dejó de reportar — cascada a sus alertas y
         observaciones asociadas (`ON DELETE CASCADE`). Devuelve la cantidad eliminada."""
         ...
+
+    async def update_estado_validacion(self, incidente_id: UUID, estado: str) -> None:
+        """UPDATE puntual de `estado_validacion` — lo usa el triage de alertas
+        (`recalcular_estado_incidente`) para reflejar que la TL ya resolvió o
+        descartó todas las alertas del incidente, sin tocar los `*_esperado`
+        que sí fija `apply_evaluacion`."""
+        ...
