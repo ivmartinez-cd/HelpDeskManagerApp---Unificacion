@@ -137,6 +137,32 @@ async def test_reanalizar_preserva_el_triage_de_la_tl() -> None:
     assert regenerada.justificacion == "Diferencia acordada con el PST"
 
 
+async def test_reanalizar_deja_ok_el_incidente_cuya_unica_alerta_fue_descartada() -> None:
+    """Regresión: re-analizar no debe reabrir como "con_alertas" un incidente cuya
+    única alerta ya fue descartada/resuelta por la TL, aunque el motor siga
+    encontrando el mismo hallazgo (la condición de datos no cambió)."""
+    world = World()
+    prestador_id = uuid.uuid4()
+    liquidacion = make_liquidacion(prestador_id=prestador_id)
+    world.liquidaciones.rows[liquidacion.id] = liquidacion
+    world.tarifarios.rows = [make_tarifario(prestador_id=prestador_id, costo_servicio=1500.0)]
+    incidente = make_incidente(liquidacion_id=liquidacion.id, costo_servicio_cobrado=1800.0)
+    world.incidentes.rows[incidente.id] = incidente
+
+    await world.use_case.execute(liquidacion.id)
+    assert world.incidentes.rows[incidente.id].estado_validacion == "con_alertas"
+
+    alerta = world.alertas.por_liquidacion[liquidacion.id][0]
+    await world.alertas.update_estado(
+        liquidacion.id, alerta.id,
+        estado="descartada", justificacion="Diferencia acordada con el PST",
+    )
+
+    await world.use_case.execute(liquidacion.id)
+
+    assert world.incidentes.rows[incidente.id].estado_validacion == "ok"
+
+
 async def test_reanalizar_regenera_pendientes_sin_arrastre() -> None:
     """Una alerta que la TL NO trabajó (pendiente) se regenera limpia."""
     world = World()

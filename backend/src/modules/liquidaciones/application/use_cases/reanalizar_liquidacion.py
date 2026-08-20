@@ -4,15 +4,27 @@ Re-corre el motor de reglas sobre una liquidación ya importada. El legacy
 (`ejecutar_motor`) solo actualiza `total_alertas` al terminar — `total_incidentes` y
 `total_importe` se fijan al importar y no se tocan acá (confirmado leyendo el router
 real del legacy, ver la nota en `LiquidacionRepository.update_total_alertas`).
+
+`estado_validacion` del incidente NO sale del `hallazgos` crudo del motor
+(`motor.py::_evaluar_incidentes` solo sabe "encontre algo" / "no encontre nada",
+ignora el triage previo de la TL) - sale de conciliar ese hallazgo con las alertas
+ya resueltas/descartadas (`conciliar_alertas` + `recalcular_estado_incidente`), igual
+que hace `ActualizarEstadoAlerta`. Sin esto, re-analizar una liquidacion reabre como
+"con_alertas" incidentes que la TL ya habia cerrado - la alerta regenerada arrastra
+su `estado` correctamente, pero el incidente quedaba desincronizado.
 """
 
-from dataclasses import dataclass
+from collections import defaultdict
+from dataclasses import dataclass, replace
 from uuid import UUID
 
 from src.modules.liquidaciones.application.dtos.reanalizar_liquidacion import (
     ReanalizarLiquidacionResultado,
 )
-from src.modules.liquidaciones.domain.entities.incidente import Incidente
+from src.modules.liquidaciones.domain.entities.incidente import (
+    ESTADO_VALIDACION_OK,
+    Incidente,
+)
 from src.modules.liquidaciones.domain.errors import LiquidacionNoEncontradaError
 from src.modules.liquidaciones.domain.repositories.alerta_repository import AlertaRepository
 from src.modules.liquidaciones.domain.repositories.incidente_repository import (
@@ -32,9 +44,14 @@ from src.modules.liquidaciones.domain.repositories.tabla_km_repository import Ta
 from src.modules.liquidaciones.domain.repositories.tarifario_repository import (
     TarifarioRepository,
 )
-from src.modules.liquidaciones.domain.services.conciliar_alertas import conciliar_alertas
+from src.modules.liquidaciones.domain.services.conciliar_alertas import (
+    AlertaConciliada,
+    conciliar_alertas,
+)
 from src.modules.liquidaciones.domain.services.motor_reglas.motor import ejecutar_motor_reglas
+from src.modules.liquidaciones.domain.services.triage_alertas import recalcular_estado_incidente
 from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado import (
+    IncidenteEvaluado,
     ResultadoMotorReglas,
 )
 
@@ -83,13 +100,33 @@ class ReanalizarLiquidacion:
         )
 
     async def _persistir(self, liquidacion_id: UUID, resultado: ResultadoMotorReglas) -> None:
-        await self._ports.incidentes.apply_evaluacion(resultado.incidentes_evaluados)
         # El triage previo de la TL (estado ≠ pendiente + justificación) sobrevive
-        # al reemplazo — ver conciliar_alertas.
+        # al reemplazo — ver conciliar_alertas. El estado_validacion del incidente se
+        # deriva de las alertas YA conciliadas, no del hallazgo crudo del motor.
         existentes = await self._ports.alertas.list_by_liquidacion(liquidacion_id)
         conciliadas = conciliar_alertas(existentes, resultado.alertas)
+        incidentes_evaluados = _conciliar_estado_incidentes(
+            resultado.incidentes_evaluados, conciliadas
+        )
+        await self._ports.incidentes.apply_evaluacion(incidentes_evaluados)
         await self._ports.alertas.replace_for_liquidacion(liquidacion_id, conciliadas)
         await self._ports.observaciones.replace_for_liquidacion(
             liquidacion_id, resultado.observaciones
         )
         await self._ports.liquidaciones.update_total_alertas(liquidacion_id, len(resultado.alertas))
+
+
+def _conciliar_estado_incidentes(
+    incidentes_evaluados: list[IncidenteEvaluado], conciliadas: list[AlertaConciliada]
+) -> list[IncidenteEvaluado]:
+    estados_por_incidente: dict[UUID, list[str]] = defaultdict(list)
+    for c in conciliadas:
+        estados_por_incidente[c.generada.incidente_id].append(c.estado)
+    resultado = []
+    for evaluado in incidentes_evaluados:
+        estados = estados_por_incidente.get(evaluado.incidente_id, [])
+        nuevo_estado = (
+            recalcular_estado_incidente(estados) if estados else ESTADO_VALIDACION_OK
+        )
+        resultado.append(replace(evaluado, estado_validacion=nuevo_estado))
+    return resultado
