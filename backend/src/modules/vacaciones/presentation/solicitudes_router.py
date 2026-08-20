@@ -57,6 +57,9 @@ from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_exclusion_rep
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_feriado_repository import (
     SqlAlchemyFeriadoRepository,
 )
+from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_impacto_turnos_lookup import (  # noqa: E501
+    SqlAlchemyImpactoTurnosLookup,
+)
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_sector_repository import (
     SqlAlchemySectorRepository,
 )
@@ -71,6 +74,7 @@ from src.modules.vacaciones.presentation.dependencies.actor import get_actor_vac
 from src.modules.vacaciones.presentation.schemas.solicitud_schemas import (
     CrearSolicitudRequest,
     DecisionRequest,
+    DecisionResponse,
     EditarSolicitudRequest,
     SolapamientosResponse,
     SolicitudResponse,
@@ -211,16 +215,18 @@ async def decidir_solicitud(
     _identity: Identity = _require_approve,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db),
-) -> SolicitudResponse:
+) -> DecisionResponse:
     deps = DecidirSolicitudDependencies(
         solicitudes=SqlAlchemySolicitudRepository(db),
         empleados=SqlAlchemyEmpleadoRepository(db),
         aprobaciones=SqlAlchemyAprobacionRepository(db),
         notificador=_notificador(db),
         auditoria=SqlAlchemyRegistradorAuditoria(db, actor.user_id),
+        impacto_turnos=SqlAlchemyImpactoTurnosLookup(db),
     )
-    await DecidirSolicitud(deps).execute(solicitud_id, body.to_command(), actor)
-    return await _leer_una(db, solicitud_id, actor)
+    resultado = await DecidirSolicitud(deps).execute(solicitud_id, body.to_command(), actor)
+    dto = await ObtenerSolicitud(_read_deps(db)).execute(solicitud_id, actor)
+    return DecisionResponse.from_decision(dto, resultado.afecta_turnos)
 
 
 @router.get("/{solicitud_id}/solapamientos")

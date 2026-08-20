@@ -37,6 +37,7 @@ from tests.unit.application.vacaciones.fakes import (
     FakeEmpleadoRepo,
     FakeExclusionRepo,
     FakeFeriadoRepo,
+    FakeImpactoTurnosLookup,
     FakeNotificador,
     FakeSectorRepo,
     FakeSolicitudRepo,
@@ -202,7 +203,8 @@ class TestDecidirSolicitud:
             pendiente.id, DecidirSolicitudCommand(decision="APPROVED", comment="OK"), jefe
         )
 
-        assert decidida.status is EstadoSolicitud.APPROVED
+        assert decidida.solicitud.status is EstadoSolicitud.APPROVED
+        assert decidida.afecta_turnos is None  # empleado sin cuenta vinculada
         assert len(self.aprobaciones.items) == 1
         assert self.aprobaciones.items[0].comment == "OK"
         assert len(esc.notificador.decisiones) == 1
@@ -222,7 +224,7 @@ class TestDecidirSolicitud:
             DecidirSolicitudCommand(decision="REJECTED", comment=None),
             make_actor(es_admin=True),
         )
-        assert decidida.status is EstadoSolicitud.REJECTED
+        assert decidida.solicitud.status is EstadoSolicitud.REJECTED
         assert len(self.aprobaciones.items) == 1  # historial acumula
 
     @pytest.mark.asyncio
@@ -236,3 +238,59 @@ class TestDecidirSolicitud:
             await DecidirSolicitud(self._deps(esc)).execute(
                 pendiente.id, DecidirSolicitudCommand(decision="APPROVED"), ajeno
             )
+
+    @pytest.mark.asyncio
+    async def test_aprobar_avisa_afecta_turnos_si_el_empleado_vinculado_tiene_franjas(
+        self,
+    ) -> None:
+        """ADR-025: el aviso alimenta el CTA de Aprobaciones; no crea la grilla."""
+        esc = _Escenario()
+        self.aprobaciones = FakeAprobacionRepo()
+        user_id = uuid.uuid4()
+        esc.empleado.user_id = user_id
+        pendiente = make_solicitud(
+            empleado_id=esc.empleado.id, start_date=date(2026, 8, 24), end_date=date(2026, 8, 28)
+        )
+        esc.solicitudes.items[pendiente.id] = pendiente
+        lookup = FakeImpactoTurnosLookup({user_id})
+        deps = DecidirSolicitudDependencies(
+            solicitudes=esc.solicitudes,
+            empleados=FakeEmpleadoRepo([esc.empleado]),
+            aprobaciones=self.aprobaciones,
+            notificador=esc.notificador,
+            impacto_turnos=lookup,
+        )
+
+        aprobada = await DecidirSolicitud(deps).execute(
+            pendiente.id, DecidirSolicitudCommand(decision="APPROVED"), make_actor(es_admin=True)
+        )
+
+        assert aprobada.afecta_turnos is not None
+        assert (aprobada.afecta_turnos.user_id, aprobada.afecta_turnos.desde) == (
+            user_id,
+            date(2026, 8, 24),
+        )
+        assert lookup.consultas == [(user_id, date(2026, 8, 24), date(2026, 8, 28))]
+
+    @pytest.mark.asyncio
+    async def test_rechazar_no_consulta_turnos_ni_avisa(self) -> None:
+        esc = _Escenario()
+        self.aprobaciones = FakeAprobacionRepo()
+        esc.empleado.user_id = uuid.uuid4()
+        pendiente = make_solicitud(empleado_id=esc.empleado.id)
+        esc.solicitudes.items[pendiente.id] = pendiente
+        lookup = FakeImpactoTurnosLookup({esc.empleado.user_id})
+        deps = DecidirSolicitudDependencies(
+            solicitudes=esc.solicitudes,
+            empleados=FakeEmpleadoRepo([esc.empleado]),
+            aprobaciones=self.aprobaciones,
+            notificador=esc.notificador,
+            impacto_turnos=lookup,
+        )
+
+        rechazada = await DecidirSolicitud(deps).execute(
+            pendiente.id, DecidirSolicitudCommand(decision="REJECTED"), make_actor(es_admin=True)
+        )
+
+        assert rechazada.afecta_turnos is None
+        assert lookup.consultas == []

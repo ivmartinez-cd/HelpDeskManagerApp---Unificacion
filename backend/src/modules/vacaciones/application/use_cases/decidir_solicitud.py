@@ -1,9 +1,14 @@
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from src.modules.vacaciones.application.dtos.solicitud_dtos import DecidirSolicitudCommand
+from src.modules.vacaciones.application.dtos.solicitud_dtos import (
+    AfectaTurnosAviso,
+    DecidirSolicitudCommand,
+    DecisionResultado,
+)
 from src.modules.vacaciones.domain.entities.aprobacion import Aprobacion, Decision
+from src.modules.vacaciones.domain.entities.empleado import Empleado
 from src.modules.vacaciones.domain.entities.registro_auditoria import (
     ACCION_APPROVE,
     ACCION_REJECT,
@@ -22,6 +27,10 @@ from src.modules.vacaciones.domain.repositories.auditoria import (
     RegistradorAuditoriaNulo,
 )
 from src.modules.vacaciones.domain.repositories.empleado_repository import EmpleadoRepository
+from src.modules.vacaciones.domain.repositories.impacto_turnos_lookup import (
+    ImpactoTurnosLookup,
+    ImpactoTurnosLookupNulo,
+)
 from src.modules.vacaciones.domain.repositories.notificador import (
     DecisionNotif,
     Notificador,
@@ -43,11 +52,15 @@ class DecidirSolicitudDependencies:
     aprobaciones: AprobacionRepository
     notificador: Notificador
     auditoria: RegistradorAuditoria = RegistradorAuditoriaNulo()
+    impacto_turnos: ImpactoTurnosLookup = field(default_factory=ImpactoTurnosLookupNulo)
 
 
 class DecidirSolicitud:
     """Aprobar/rechazar. Paridad legacy: no chequea el status actual (permite
-    re-decidir una solicitud ya decidida) y siempre agrega al historial."""
+    re-decidir una solicitud ya decidida) y siempre agrega al historial. Al
+    aprobar, si el empleado tiene cuenta vinculada con franjas de turno en el
+    rango, devuelve el aviso `afecta_turnos` (ADR-025) -- no crea la grilla de
+    cobertura: eso exige criterio humano."""
 
     def __init__(self, deps: DecidirSolicitudDependencies) -> None:
         self._deps = deps
@@ -57,7 +70,7 @@ class DecidirSolicitud:
         solicitud_id: uuid.UUID,
         command: DecidirSolicitudCommand,
         actor: ActorVacaciones,
-    ) -> Solicitud:
+    ) -> DecisionResultado:
         solicitud = await self._deps.solicitudes.get_by_id(solicitud_id)
         if solicitud is None:
             raise SolicitudNoEncontradaError(solicitud_id)
@@ -77,13 +90,28 @@ class DecidirSolicitud:
             else EstadoSolicitud.REJECTED
         )
         await self._deps.solicitudes.save(solicitud)
+        await self._registrar(solicitud, empleado, decision, command.comment, actor)
+        await self._notificar(solicitud, empleado, decision, command.comment)
+        return DecisionResultado(
+            solicitud=solicitud,
+            afecta_turnos=await self._impacto_en_turnos(solicitud, empleado, decision),
+        )
+
+    async def _registrar(
+        self,
+        solicitud: Solicitud,
+        empleado: Empleado,
+        decision: Decision,
+        comment: str | None,
+        actor: ActorVacaciones,
+    ) -> None:
         await self._deps.aprobaciones.add(
             Aprobacion(
                 id=uuid.uuid4(),
                 solicitud_id=solicitud.id,
                 approver_user_id=actor.user_id,
                 decision=decision,
-                comment=command.comment,
+                comment=comment,
                 created_at=datetime.now(UTC),
             )
         )
@@ -96,9 +124,13 @@ class DecidirSolicitud:
                 "startDate": solicitud.start_date.isoformat(),
                 "endDate": solicitud.end_date.isoformat(),
                 "days": solicitud.days_requested,
-                "comment": command.comment,
+                "comment": comment,
             },
         )
+
+    async def _notificar(
+        self, solicitud: Solicitud, empleado: Empleado, decision: Decision, comment: str | None
+    ) -> None:
         await self._deps.notificador.notificar_decision(
             DecisionNotif(
                 empleado_nombre=empleado.nombre_completo,
@@ -106,7 +138,20 @@ class DecidirSolicitud:
                 aprobada=decision is Decision.APPROVED,
                 start_date=solicitud.start_date,
                 end_date=solicitud.end_date,
-                comment=command.comment,
+                comment=comment,
             )
         )
-        return solicitud
+
+    async def _impacto_en_turnos(
+        self, solicitud: Solicitud, empleado: Empleado, decision: Decision
+    ) -> AfectaTurnosAviso | None:
+        if decision is not Decision.APPROVED or empleado.user_id is None:
+            return None
+        afecta = await self._deps.impacto_turnos.tiene_turnos_en(
+            empleado.user_id, solicitud.start_date, solicitud.end_date
+        )
+        if not afecta:
+            return None
+        return AfectaTurnosAviso(
+            user_id=empleado.user_id, desde=solicitud.start_date, hasta=solicitud.end_date
+        )

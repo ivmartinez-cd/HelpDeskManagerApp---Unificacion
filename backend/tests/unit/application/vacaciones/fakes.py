@@ -398,6 +398,18 @@ class FakeNotificador:
         self.decisiones.append(notif)
 
 
+class FakeImpactoTurnosLookup:
+    """`users_con_turnos` = usuarios que tienen franjas en cualquier rango."""
+
+    def __init__(self, users_con_turnos: set[uuid.UUID] | None = None) -> None:
+        self.users_con_turnos = users_con_turnos or set()
+        self.consultas: list[tuple[uuid.UUID, date, date]] = []
+
+    async def tiene_turnos_en(self, user_id: uuid.UUID, desde: date, hasta: date) -> bool:
+        self.consultas.append((user_id, desde, hasta))
+        return user_id in self.users_con_turnos
+
+
 class FixedClock:
     def __init__(self, fecha: date) -> None:
         self._fecha = fecha

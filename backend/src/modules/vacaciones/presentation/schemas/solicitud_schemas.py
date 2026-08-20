@@ -4,6 +4,7 @@ from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.modules.vacaciones.application.dtos.solicitud_dtos import (
+    AfectaTurnosAviso,
     AprobacionDTO,
     CrearSolicitudCommand,
     DecidirSolicitudCommand,
@@ -70,6 +71,37 @@ class SolicitudResponse(BaseModel):
             status=s.status.value,
             created_at=s.created_at,
             aprobaciones=[AprobacionResponse.from_dto(a) for a in dto.aprobaciones],
+        )
+
+
+class AfectaTurnosResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    user_id: uuid.UUID = Field(serialization_alias="userId")
+    desde: date
+    hasta: date
+
+    @classmethod
+    def from_dto(cls, dto: AfectaTurnosAviso) -> "AfectaTurnosResponse":
+        return cls(user_id=dto.user_id, desde=dto.desde, hasta=dto.hasta)
+
+
+class DecisionResponse(SolicitudResponse):
+    """`SolicitudResponse` + aviso de impacto en turnos (ADR-025). Aditivo:
+    `null` cuando se rechaza o el empleado no tiene turnos en el rango."""
+
+    afecta_turnos: AfectaTurnosResponse | None = Field(
+        default=None, serialization_alias="afectaTurnos"
+    )
+
+    @classmethod
+    def from_decision(
+        cls, solicitud: SolicitudDTO, afecta: AfectaTurnosAviso | None
+    ) -> "DecisionResponse":
+        base = SolicitudResponse.from_dto(solicitud)
+        return cls(
+            **base.model_dump(),
+            afecta_turnos=AfectaTurnosResponse.from_dto(afecta) if afecta else None,
         )
 
 

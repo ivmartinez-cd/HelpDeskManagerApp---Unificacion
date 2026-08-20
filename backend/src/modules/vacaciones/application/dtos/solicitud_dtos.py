@@ -32,6 +32,22 @@ class DecidirSolicitudCommand:
 
 
 @dataclass(frozen=True, slots=True)
+class AfectaTurnosAviso:
+    """El empleado aprobado tiene franjas de turno en el rango (ADR-025). No
+    crea nada: alimenta el CTA "Armar grilla de cobertura" del frontend."""
+
+    user_id: uuid.UUID
+    desde: date
+    hasta: date
+
+
+@dataclass(frozen=True, slots=True)
+class DecisionResultado:
+    solicitud: Solicitud
+    afecta_turnos: AfectaTurnosAviso | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ListarSolicitudesQuery:
     status: EstadoSolicitud | None = None
     empleado_id: uuid.UUID | None = None

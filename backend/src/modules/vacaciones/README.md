@@ -16,6 +16,18 @@ Pendiente: la migración de datos reales (abajo) y el paralelo con VacaSync/apag
 del ABM pasó de "Gestión Humana" a **"Personal"**. Solo cambió el `label`: la key
 `vacaciones`, la ruta `/vacaciones` y los paths de API siguen igual.
 
+## Integración con turnos — modo vacaciones (ADR-025, 2026-08-20)
+
+- Puerto `ImpactoTurnosLookup` (`domain/repositories/impacto_turnos_lookup.py`) implementado en
+  `infrastructure/repositories/sqlalchemy_impacto_turnos_lookup.py` leyendo `turno_asignacion`
+  + `turno_slot` (patrón `PrestadorLookup` de sla; contrato import-linter
+  `vacaciones-domain-app-independent-from-turnos`).
+- `DecidirSolicitud` devuelve `DecisionResultado(solicitud, afecta_turnos)`: al **aprobar**, si el
+  empleado tiene `user_id` vinculado (D3) con franjas de turno en el rango, viaja
+  `afectaTurnos {userId, desde, hasta}` en la respuesta de `POST /solicitudes/{id}/decision`
+  (aditivo sobre `SolicitudResponse`). **No se crea la grilla de cobertura automáticamente**: el
+  frontend muestra un banner con CTA hacia el editor del modo vacaciones de `/admin/turnos`.
+
 ## Entrega 3 — decisiones y paridades
 
 - **Reportes** (`/api/vacaciones/reportes` + `/excel` + `/pdf`, pantalla

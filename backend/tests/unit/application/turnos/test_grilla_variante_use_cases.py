@@ -111,12 +111,12 @@ async def test_crear_persiste_y_devuelve_advertencias_de_hueco_con_nombres() -> 
     assert dto.estado == "ACTIVA"
     assert [s.casilla_nombre for s in dto.slots] == ["INSUMOS", "ST"]
     assert dto.slots[0].operadores[0].user_name == "Mariano Gomez"
-    hueco = next(a for a in dto.advertencias if a.tipo == "HUECO")
-    assert (hueco.casilla_nombre, hueco.hora_inicio, hueco.hora_fin) == (
-        "INSUMOS",
-        time(8),
-        time(8, 30),
-    )
+    huecos_insumos_lunes = [
+        (a.hora_inicio, a.hora_fin)
+        for a in dto.advertencias
+        if a.tipo == "HUECO" and a.casilla_nombre == "INSUMOS" and a.dia_semana == 0
+    ]
+    assert huecos_insumos_lunes == [(time(8), time(8, 30)), (time(11), time(18))]
 
 
 async def test_crear_rechaza_solape_de_vigencia_con_otra_activa() -> None:
