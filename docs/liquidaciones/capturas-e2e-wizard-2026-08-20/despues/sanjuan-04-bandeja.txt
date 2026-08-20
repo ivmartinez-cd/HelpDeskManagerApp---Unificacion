@@ -1,0 +1,3667 @@
+Asistente de KM — SAN JUAN
+1
+TRAER DE GESTIÓN
+2
+REVISAR PENDIENTES
+3
+CALCULAR KM
+
+Quedan 261 pines rotos (261 van al CSV para Gestión), 61 nombres por confirmar, 19 ubicaciones por resolver, 299 pines a verificar.
+
+Todos
+Pines rotos
+Nombres
+Ubicaciones
+
+AGENCIA CALIDAD SAN JUAN — Centro Cívico
+
+759 KM DE DIFERENCIA
+
+Dirección: Av. Libertador y Las Heras S/N, SAN JUAN, San Juan, Argentina
+
+El pin de Gestión está a 759 km de la dirección escrita, según Google.
+El pin está en Santa Fe, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 65
+
+2239 KM DE DIFERENCIA
+
+Dirección: Rio Gallegos S/N 52, CHIMBAS, San Juan, Argentina
+
+El pin de Gestión está a 2239 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sec. Barrio Valle Grande
+
+1337 KM DE DIFERENCIA
+
+Dirección: Proyectada 23 S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+El pin de Gestión está a 1337 km de la dirección escrita, según Google.
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Deposito Central JUAN GAS
+
+607 KM DE DIFERENCIA
+
+Dirección: Ruta 40 y Calle 5 S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+El pin de Gestión está a 607 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Deposito Rawson
+
+607 KM DE DIFERENCIA
+
+Dirección: Ruta 40 y calle 5 S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+El pin de Gestión está a 607 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Secundaria Procesa Sarmiento de Lenoir
+
+203 KM DE DIFERENCIA
+
+Dirección: Ruta Nac. 20 km 16 S/N, 9 DE JULIO, San Juan, Argentina
+
+El pin de Gestión está a 203 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Gral. San Martin
+
+145 KM DE DIFERENCIA
+
+Dirección: Aberastain 532, JACHAL, San Juan, Argentina
+
+El pin de Gestión está a 145 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Gral. San Martin
+
+145 KM DE DIFERENCIA
+
+Dirección: Aberastain 536, JACHAL, San Juan, Argentina
+
+El pin de Gestión está a 145 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Batalla de Chacabuco
+
+140 KM DE DIFERENCIA
+
+Dirección: Ruta Nacional 149 S/N, CALINGASTA, San Juan, Argentina
+
+El pin de Gestión está a 140 km de la dirección escrita, según Google.
+El pin está en Mendoza, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Presbitero P. Lopez del Campo
+
+140 KM DE DIFERENCIA
+
+Dirección: Juan B. Alberdi S/N, JACHAL, San Juan, Argentina
+
+El pin de Gestión está a 140 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela rural Dr. Calcagno
+
+138 KM DE DIFERENCIA
+
+Dirección: Paso de los Andes S/N, JACHAL, San Juan, Argentina
+
+El pin de Gestión está a 138 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Multiple Calingasta
+
+85 KM DE DIFERENCIA
+
+Dirección: Hipolito Irigoyen S/N, CALINGASTA, San Juan, Argentina
+
+El pin de Gestión está a 85 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Rep. del Paraguay
+
+62 KM DE DIFERENCIA
+
+Dirección: Ruta Nacional 141 km 63 S/N, CAUCETE, San Juan, Argentina
+
+El pin de Gestión está a 62 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Angel Rogelio Gonzalez
+
+60 KM DE DIFERENCIA
+
+Dirección: Fray Justo Santa María de Oro S/N, ANGACO NORTE, San Juan, Argentina
+
+El pin de Gestión está a 60 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela R. Escalada de San Martin
+
+53 KM DE DIFERENCIA
+
+Dirección: Florida S/N, CALINGASTA, San Juan, Argentina
+
+El pin de Gestión está a 53 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Jose Alejandro Segovia
+
+44 KM DE DIFERENCIA
+
+Dirección: Aguilera y Zapata S/N, ANGACO NORTE, San Juan, Argentina
+
+El pin de Gestión está a 44 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Dr. ALEJANDRO FLEMING
+
+44 KM DE DIFERENCIA
+
+Dirección: Gran China S/N, JACHAL, San Juan, Argentina
+
+El pin de Gestión está a 44 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sup. Tec. de Angaco
+
+43 KM DE DIFERENCIA
+
+Dirección: Eva Peron y Alem S/N, ANGACO NORTE, San Juan, Argentina
+
+El pin de Gestión está a 43 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Manuel Belgrano
+
+42 KM DE DIFERENCIA
+
+Dirección: SM Del Carril y Circunvalacion S/N, SAN JUAN, San Juan, Argentina
+
+El pin de Gestión está a 42 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Fronteras Argentinas
+
+39 KM DE DIFERENCIA
+
+Dirección: Chubut S/N, JACHAL, San Juan, Argentina
+
+El pin de Gestión está a 39 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela BENITO LYNCH
+
+39 KM DE DIFERENCIA
+
+Dirección: San Pedro y F. Costa S/N, SAN AGUSTIN DEL VALLE FERTIL, San Juan, Argentina
+
+El pin de Gestión está a 39 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — UNIDAD DE GESTION CALINGASTA
+
+37 KM DE DIFERENCIA
+
+Dirección: Hipolito Hirigoyen S/N, CALINGASTA, San Juan, Argentina
+
+El pin de Gestión está a 37 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Mary Mann
+
+37 KM DE DIFERENCIA
+
+Dirección: 21 de Febrero S/N, ANGACO NORTE, San Juan, Argentina
+
+El pin de Gestión está a 37 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Francisco Javier Muñiz
+
+36 KM DE DIFERENCIA
+
+Dirección: Pte. Roca S/N, CALINGASTA, San Juan, Argentina
+
+El pin de Gestión está a 36 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Martin Gil
+
+36 KM DE DIFERENCIA
+
+Dirección: Pte. Roca S/N, CALINGASTA, San Juan, Argentina
+
+El pin de Gestión está a 36 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Dean G. Funes
+
+36 KM DE DIFERENCIA
+
+Dirección: Prolongacion Martin Fierro S/N, JACHAL, San Juan, Argentina
+
+El pin de Gestión está a 36 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela rural Marcos Sastre
+
+36 KM DE DIFERENCIA
+
+Dirección: San Martin S/N, JACHAL, San Juan, Argentina
+
+El pin de Gestión está a 36 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Antenor Flores Vidal
+
+35 KM DE DIFERENCIA
+
+Dirección: La Falda s/n El Fical, JACHAL, San Juan, Argentina
+
+El pin de Gestión está a 35 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Antonio Flores Vidal
+
+35 KM DE DIFERENCIA
+
+Dirección: La Falda S/N, JACHAL, San Juan, Argentina
+
+El pin de Gestión está a 35 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Monseñor Tomas S. Cruz
+
+35 KM DE DIFERENCIA
+
+Dirección: Mons. Tomas S.Cruz S/N, JACHAL, San Juan, Argentina
+
+El pin de Gestión está a 35 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Esc. Juan Gregorio de las Heras
+
+31 KM DE DIFERENCIA
+
+Dirección: Las Heras y Huarpes S/N, EST ALBARDON, San Juan, Argentina
+
+El pin de Gestión está a 31 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.° 24 San Juan Pablo II
+
+27 KM DE DIFERENCIA
+
+Dirección: De la Roza y G. Rawson S/N, CAUCETE, San Juan, Argentina
+
+El pin de Gestión está a 27 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Agrotecnica de Huaco
+
+23 KM DE DIFERENCIA
+
+Dirección: Rivadavia S/N, HUACO, San Juan, Argentina
+
+El pin de Gestión está a 23 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Federico Cantoni
+
+23 KM DE DIFERENCIA
+
+Dirección: Rivadavia S/N, JACHAL, San Juan, Argentina
+
+El pin de Gestión está a 23 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Combate de San Lorenzo
+
+22 KM DE DIFERENCIA
+
+Dirección: Yapeyu y Divisoria S/N, SAN MARTIN, San Juan, Argentina
+
+El pin de Gestión está a 22 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Prim. Barrio Valle Grande
+
+18 KM DE DIFERENCIA
+
+Dirección: Proyectada 23 Valle Grande S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+El pin de Gestión está a 18 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Dra. F. Rios de Paez
+
+17 KM DE DIFERENCIA
+
+Dirección: Ruta N.º 40 y Cantoni S/N, POCITO, San Juan, Argentina
+
+El pin de Gestión está a 17 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela España
+
+17 KM DE DIFERENCIA
+
+Dirección: Patricias Sanjuaninas S/N, POCITO, San Juan, Argentina
+
+El pin de Gestión está a 17 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 76 Laura Lewin
+
+17 KM DE DIFERENCIA
+
+Dirección: Av Uñac Y Mariano Moreno S/N, POCITO, San Juan, Argentina
+
+El pin de Gestión está a 17 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 39 Hebe S. Martin de Duprat
+
+14 KM DE DIFERENCIA
+
+Dirección: Magallanes S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+El pin de Gestión está a 14 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 11
+
+14 KM DE DIFERENCIA
+
+Dirección: Yapeyu 2980, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+El pin de Gestión está a 14 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuelas Primaria Alas Argentinas
+
+13 KM DE DIFERENCIA
+
+Dirección: Calle Alvear Sur, esquina Fermín Rodríguez, Villa Cenobia Bustos 3290, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+El pin de Gestión está a 13 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — EEE Dr. Ramon Peñafort
+
+13 KM DE DIFERENCIA
+
+Dirección: Ramela S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+El pin de Gestión está a 13 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Maestro Argentino
+
+13 KM DE DIFERENCIA
+
+Dirección: Callejon Pedro Gil S/N, POCITO, San Juan, Argentina
+
+El pin de Gestión está a 13 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Dr. A. Schweitzer
+
+12 KM DE DIFERENCIA
+
+Dirección: Mendoza km 25 S/N, POCITO, San Juan, Argentina
+
+El pin de Gestión está a 12 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 51 Tiempo del Sol
+
+12 KM DE DIFERENCIA
+
+Dirección: Tierra del Fuego y Aberastain S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+El pin de Gestión está a 12 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Teresa de Ascencio de Mallea
+
+12 KM DE DIFERENCIA
+
+Dirección: Bahía Blanca y Aguilar S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+El pin de Gestión está a 12 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela De Educ. Inicial N.º 68
+
+10 KM DE DIFERENCIA
+
+Dirección: Proyectada 23 S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+El pin de Gestión está a 10 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 40 Adriana Vega
+
+10 KM DE DIFERENCIA
+
+Dirección: Neuquen S/N, CHIMBAS, San Juan, Argentina
+
+El pin de Gestión está a 9.7 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Agustin V. Gnecco
+
+10 KM DE DIFERENCIA
+
+Dirección: Neuquen S/N, CHIMBAS, San Juan, Argentina
+
+El pin de Gestión está a 9.7 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Gral. Estanislao Soler
+
+10 KM DE DIFERENCIA
+
+Dirección: Neuquen S/N, CHIMBAS, San Juan, Argentina
+
+El pin de Gestión está a 9.7 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pte. Nestor Kirchner
+
+10 KM DE DIFERENCIA
+
+Dirección: Proyectada S/N, EST ALBARDON, San Juan, Argentina
+
+El pin de Gestión está a 9.7 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Mariano Necochea
+
+9 KM DE DIFERENCIA
+
+Dirección: Roger Balet (Este) 2663, SANTA LUCIA, San Juan, Argentina
+
+El pin de Gestión está a 9.2 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Nicolas Echezarreta
+
+9 KM DE DIFERENCIA
+
+Dirección: San Juan 7306, RIVADAVIA, San Juan, Argentina
+
+El pin de Gestión está a 9.0 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pedro de Marquez
+
+9 KM DE DIFERENCIA
+
+Dirección: San Juan 7306, RIVADAVIA, San Juan, Argentina
+
+El pin de Gestión está a 9.0 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sec. CAUCETE
+
+8 KM DE DIFERENCIA
+
+Dirección: Jaime Bornet y Correa S/N, CAUCETE, San Juan, Argentina
+
+El pin de Gestión está a 8.3 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sec. San Juan de Dios (Penitenciario)
+
+6 KM DE DIFERENCIA
+
+Dirección: Benavides 6195, CHIMBAS, San Juan, Argentina
+
+El pin de Gestión está a 6.3 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 55 Los Pinos
+
+6 KM DE DIFERENCIA
+
+Dirección: Patagonia y Belgrano S/N, CHIMBAS, San Juan, Argentina
+
+El pin de Gestión está a 6.2 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pcia. del Chaco
+
+6 KM DE DIFERENCIA
+
+Dirección: General Acha y Calle 5 S/N, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+El pin de Gestión está a 5.7 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 79
+
+6 KM DE DIFERENCIA
+
+Dirección: Fray Mamerto Esquiu S/N, SANTA LUCIA, San Juan, Argentina
+
+El pin de Gestión está a 5.7 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Dr. Amable Jones
+
+6 KM DE DIFERENCIA
+
+Dirección: Fray Mamerto Esquiu S/N, SANTA LUCIA, San Juan, Argentina
+
+El pin de Gestión está a 5.7 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sec. N.° 174
+
+6 KM DE DIFERENCIA
+
+Dirección: Fray Mamerto Esquiu S/N, SANTA LUCIA, San Juan, Argentina
+
+El pin de Gestión está a 5.7 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Froilan Ferrero
+
+6 KM DE DIFERENCIA
+
+Dirección: Furque y Picon S/N, POCITO, San Juan, Argentina
+
+El pin de Gestión está a 5.7 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sup. Sarmiento (Anexo)
+
+6 KM DE DIFERENCIA
+
+Dirección: Furque y Picon S/N, POCITO, San Juan, Argentina
+
+El pin de Gestión está a 5.7 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N° 39 sede Francisco de Villagra
+
+5 KM DE DIFERENCIA
+
+Dirección: Hernan Cortez y Maipu S/N, SANTA LUCIA, San Juan, Argentina
+
+El pin de Gestión está a 5.5 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 50 Prof. Margarira Ravioli
+
+5 KM DE DIFERENCIA
+
+Dirección: Calle Padre Mariano Yanelli S/N, CHIMBAS, San Juan, Argentina
+
+El pin de Gestión está a 5.3 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Esc. Hector Conte Grand
+
+5 KM DE DIFERENCIA
+
+Dirección: Calle 10 y Alfonso XIII S/N, MEDANO DE ORO, San Juan, Argentina
+
+El pin de Gestión está a 5.2 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+JRASA — SM 412 Av. Libertad
+
+590 KM DE DIFERENCIA
+
+Dirección: Av. Libertador 5091, VILLA RIVADAVIA, Santiago del Estero, Argentina
+
+El pin de Gestión está a 590 km de la dirección escrita, según Google.
+El pin está en San Juan, pero su dirección dice Santiago del Estero. Dos fuentes independientes lo confirman.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+JRASA — SM 414 Sarmiento 3
+
+6 KM DE DIFERENCIA
+
+Dirección: Blvd. Sarmiento 420, BARRIO OBRERO RAWSON, San Juan, Argentina
+
+El pin de Gestión está a 6.4 km de la dirección escrita, según Google.
+VER PIN DE GESTIÓN
+VER DIRECCIÓN ESCRITA
+Usar la dirección escrita
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela 20 de Junio
+
+PIN IMPOSIBLE
+
+Dirección: La Madrid y Mendoza S/N 0
+
+El pin está fuera de Argentina
+El pin está muy lejos de la sucursal base del prestador
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Martin Yanzon
+
+PIN IMPOSIBLE
+
+Dirección: Calle 4 S/N 0
+
+Latitud y longitud parecen intercambiadas
+El pin está muy lejos de la sucursal base del prestador
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Miguel Cane de Bauchaceta
+
+PIN IMPOSIBLE
+
+Dirección: Paraje Bauchaceta S/N 0
+
+El pin está fuera de Argentina
+Comparte el pin con otras sucursales de domicilio distinto
+El pin está muy lejos de la sucursal base del prestador
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Zucamor Cuyo — San Juan
+
+PIN IMPOSIBLE
+
+Dirección: Gral. Mosconi Sur 3580
+
+El pin está fuera de Argentina
+Comparte el pin con otras sucursales de domicilio distinto
+El pin está muy lejos de la sucursal base del prestador
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+ADIUM — San Juan
+
+PIN EN OTRA PROVINCIA
+El pin está en Neuquén, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Banco Santander Río — 567 - San Juan Rivadavia
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+CCU — San Juan
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ALBERGUE PCIA. DE SAN LUIS
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — C.E.N.S. TOMAS A. EDISON (Esc. Republica de Chile)
+
+PIN EN OTRA PROVINCIA
+El pin está en Tucumán, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — CENS Soldados de Malvinas
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — CENTRO DE FORMACION PROFESIONAL N.º 1 DE RAWSON
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Colegio Superior Nº 1 de Rawson, Profesora IOLE LEBE PALMOLELLI DE MASCOTTI
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Deposito Gral. Mosconi
+
+PIN EN OTRA PROVINCIA
+El pin está en Tucumán, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — DRA. LETICIA A. DE SORMANI
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — E.P.E.T. N° 6 LA BEBIDA
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — E.P.E.T. N° 8 SAN JUAN
+
+PIN EN OTRA PROVINCIA
+El pin está en Córdoba, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — EEE bilingue para sordos
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — EEE Cristo de la Quebrada
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — EEE Cura Brochero
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — EEE Dr. Otoniel Fernandez
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — EEE Dra. Carolina T. Garcia
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — EEE MULTIPLE DE 25 DE MAYO
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — EEE Multiple de Iglesia Felipe Rojas
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — EEE Multiple de los Berros
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 14 Alfonsina Storni
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 25
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 32
+
+PIN EN OTRA PROVINCIA
+El pin está en Ciudad Autónoma de Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 34 Magdalena Guemes
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 36 Milo Lockett
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 39
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 42 El Jardin de Francesco
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 48 Portal Pie de Palo
+
+PIN EN OTRA PROVINCIA
+El pin está en Santa Fe, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 52 Ruth Harft
+
+PIN EN OTRA PROVINCIA
+El pin está en Corrientes, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 54 Santa Rosa
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 57 Sunyay
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 66 Pequeños Granaderos
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 67 13 de Junio
+
+PIN EN OTRA PROVINCIA
+El pin está en Neuquén, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 75 Elena Santa Cruz
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI N.º 8 Quinoa
+
+PIN EN OTRA PROVINCIA
+El pin está en Salta, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — ENI Nro 32 Camino del Inca
+
+PIN EN OTRA PROVINCIA
+El pin está en Ciudad Autónoma de Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Esc 17 DE AGOSTO
+
+PIN EN OTRA PROVINCIA
+El pin está en Córdoba, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Esc. MAR ARGENTINO
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela 11 de Septiembre
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela 14 de Febrero
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela A. Maria de Aguado
+
+PIN EN OTRA PROVINCIA
+El pin está en Santa Fe, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Agro 25 de Mayo
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Agrotecnica Cornelio Saavedra
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Agrotecnica Los Pioneros
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Agrotecnica Sarmiento
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Albergue D. French
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Albergue J. M. Estrada
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Albergue Pcia. de San Luis
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Albergue Rodeo
+
+PIN EN OTRA PROVINCIA
+El pin está en Ciudad Autónoma de Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela America
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela ANTARTIDA ARGENTINA
+
+PIN EN OTRA PROVINCIA
+El pin está en Santa Fe, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Antonio de la Torre
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Antonio Pulenta
+
+PIN EN OTRA PROVINCIA
+El pin está en Santa Fe, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Augusto Pulenta
+
+PIN EN OTRA PROVINCIA
+El pin está en Santa Fe, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Autonomia B. del Bono
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Autonomia Ciudad de Bailen
+
+PIN EN OTRA PROVINCIA
+El pin está en San Luis, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Bachillerato Columna Cabot
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Barrio Ejercito de los Andes
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela BARTOLOME DEL BONO
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Cacique Angaco
+
+PIN EN OTRA PROVINCIA
+El pin está en Córdoba, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Candelaria A. de Godoy
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Capitan Carlos Moyano
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Carlos Maria de Alvear
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Cecilio Avila
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Ceferino Namuncura
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Comodoro Rivadavia
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Constancio C. Vigil
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Cristobal Colon
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Cruce de los Andes
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Cte. T. Espora
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Dalmacio Velez Sarsfield
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela de Cap. Lab. N.º 25 Hellen Keller
+
+PIN EN OTRA PROVINCIA
+El pin está en Mendoza, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Docentes Sanjuaninos
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Domingo de Oro
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Dr. Albert Einstein
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Dr. Carlos Doncel
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Dr. J. C. Navarro
+
+PIN EN OTRA PROVINCIA
+El pin está en San Luis, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Dr. Saturnino Salas
+
+PIN EN OTRA PROVINCIA
+El pin está en Ciudad Autónoma de Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela E. Larreta
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela El Jardin de Mimosaurio
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela El Rincon
+
+PIN EN OTRA PROVINCIA
+El pin está en Ciudad Autónoma de Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Eusebio S. Zapata
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Exp. de Nivel Medio Divisadero
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Falucho
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Florencia Nightingale
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Fray Luis Beltran
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Gabriela Mistral
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Gendarme Argentino
+
+PIN EN OTRA PROVINCIA
+El pin está en Salta, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Grads. de San Martin
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Granaderos de San Martin
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Hilario Ascasubi
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Independencia Argentina
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Ing. Felix Aguilar
+
+PIN EN OTRA PROVINCIA
+El pin está en Santiago del Estero, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela J.Jose de Vertiz
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Jose de Cupertino
+
+PIN EN OTRA PROVINCIA
+El pin está en Mendoza, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Jose Hernandez
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Jose L. Radice
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Jose M. del Carril
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Jose Maria Paz
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Jose P. Cortinez
+
+PIN EN OTRA PROVINCIA
+El pin está en Corrientes, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Josefa R. de Garcia
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Juan Ignacio Gorriti
+
+PIN EN OTRA PROVINCIA
+El pin está en San Luis, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Juan XXIII
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Juana C. Aberastain
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Juana de Ibarbourou
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Leopoldo Corretjer
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Maestro Jose J. Berrutti
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Malvinas Argentinas
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela MANUEL ALBERTI
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Mar Argentino
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Maria Curie
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Medanos de Oro
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Monotecnica N.º 14
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Movil Iglesia
+
+PIN EN OTRA PROVINCIA
+El pin está en Santa Fe, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Movil Nro. 22 Casuarinas
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Niñas de Ayohuma
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Nocturna Maria E. R. Leon
+
+PIN EN OTRA PROVINCIA
+El pin está en Mendoza, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Olegario V. Andrade
+
+PIN EN OTRA PROVINCIA
+El pin está en Santa Fe, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Padre Federico Maggio
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pascual Chena
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Patricias Mendocinas
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Paulo VI
+
+PIN EN OTRA PROVINCIA
+El pin está en Entre Ríos, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pcia. de Catamarca
+
+PIN EN OTRA PROVINCIA
+El pin está en Ciudad Autónoma de Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pcia. de Corrientes
+
+PIN EN OTRA PROVINCIA
+El pin está en Tucumán, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pcia. de Ed. Tec. N.º 1
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pcia. De Misiones
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pcia. de Neuquen
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pcia. de Salta
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pcia. de San Juan
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pcial. Tec. N.º 6 La Bebida
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Periodista Luis J. Bates
+
+PIN EN OTRA PROVINCIA
+El pin está en Santiago del Estero, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Prov. Tec. N.º 8 Santa Lucia
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pte. Mitre
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Pte. Quintana
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Rafael Arrieta (Anexo)
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela RAMON BARRERA
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Ricardo Guiraldes
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Roque S. Peña
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Roque Saenz Peña
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Rosario Peñaloza
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela S. J. Eudes
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela San Juan de la Frontera
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Saturnino Segurola
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sec. Alas Argentinas
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sec. Angualasto
+
+PIN EN OTRA PROVINCIA
+El pin está en Santa Fe, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sec. Martin Yanzon
+
+PIN EN OTRA PROVINCIA
+El pin está en Río Negro, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sec. N.º 134
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sec. Oscar Otiñano
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sec. Rep. Argentina
+
+PIN EN OTRA PROVINCIA
+El pin está en Chaco, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sec. Tamberias
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sec. Zonda
+
+PIN EN OTRA PROVINCIA
+El pin está en Misiones, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Segundino J. Navarro
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Soldados de Malvinas
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sup. de Sarmiento (Anexo)
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sup. N.º 1 de Rawson
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Sup. Tec. de San Martin
+
+PIN EN OTRA PROVINCIA
+El pin está en Mendoza, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Tec. Augusto B. Sarmiento
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Tec. Maria C. de Tinto
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Victorina Lenoir de Navarro
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Escuela Yapeyu
+
+PIN EN OTRA PROVINCIA
+El pin está en Mendoza, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 1 Juan Eugenio Seru
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 11 Saturnino Segurola
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 12 Auton. Cdad. de Bailen
+
+PIN EN OTRA PROVINCIA
+El pin está en Mendoza, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 34 Jose Maria Paz
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 37
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 39 Pcia. de Corrientes
+
+PIN EN OTRA PROVINCIA
+El pin está en Tucumán, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 4
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 43 Policia de la Pcia. San Juan
+
+PIN EN OTRA PROVINCIA
+El pin está en Ciudad Autónoma de Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 44
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 5 Dr. A. Einstein
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 50
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 52 Alas Argentinas
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 6 17 de Agosto
+
+PIN EN OTRA PROVINCIA
+El pin está en Córdoba, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 8 Pte. Mitre
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 9
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ N.º 9 Martin Yanzon
+
+PIN EN OTRA PROVINCIA
+El pin está en Río Negro, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ Nro 32
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — JINZ Nro 35 Julio Verne
+
+PIN EN OTRA PROVINCIA
+El pin está en Santa Fe, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Juan Eugenio Seru
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Municipalidad de Rawson
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Parque Rivadavia Norte
+
+PIN EN OTRA PROVINCIA
+El pin está en Buenos Aires, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Unidad De Gestion Iglesia
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — UNIDAD DE GESTION ZONA "Y"
+
+PIN EN OTRA PROVINCIA
+El pin está en Corrientes, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Gobierno de San Juan — Velodromo Vicente Alejo Chancay
+
+PIN EN OTRA PROVINCIA
+El pin está en Neuquén, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+JVA — San Isidro
+
+PIN EN OTRA PROVINCIA
+El pin está en Mendoza, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+JVA — San Martin
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Natura — Rocío Romero
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Peñaflor — San Martin - San Juan
+
+PIN EN OTRA PROVINCIA
+El pin está en Chubut, pero su dirección dice San Juan. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+¿"Escuela ANTONIO QUARANTA" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Antonio Pulenta
+
+Laprida e Independencia S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Marcos Sastre "Emer"" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela rural Marcos Sastre
+
+San Martin S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Escuela Ruben Dario "EMER"" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela rural Ruben Dario
+
+Alfonso Hernandez S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Nodo 770 - SAN JUAN" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Banco Santander Río. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+770 - SAN JUAN
+
+Mendoza 170
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"Escuela Normal Superior Gral Manuel Belgrano" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Manuel Belgrano
+
+SM Del Carril y Circunvalacion S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Normal Superior FJ Santa Maria de Oro" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Fray J. Santa Maria De Oro
+
+Alberdi 175
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"JINZ "Bienvenida Sarmiento" Normal Superior Sarmiento" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ Bienvenida Sarmiento
+
+Francisco N. Laprida (Oeste) 440
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Paula Albarracin de Sarmiento" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Esc. Paula A. de Sarmiento
+
+Av. San Martín (Oeste) 315 Piso:PB Dpto:
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Hebe Almeida de Gargiulo (Policia Federal)" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Policia Federal Argentina
+
+Bandera Argentina (Este) 690
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Escuela Secundaria Comercio Nocturna Dr Santiago Cortinez" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Sec. Dr. Santiago Cortinez
+
+Santa Fe (Este) 252
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"Escuela Fray Justo Sta. Maria De Oro" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela F. Justo Santa Maria de Oro
+
+Laprida S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela De Educacion Inicial Barrio Valle Grande Nro 68" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela De Educ. Inicial N.º 68
+
+Proyectada 23 S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"ISFD Normal Superior Gral San Martin" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Normal Sup. Gral. San Martin
+
+Estados Unidos (Sur) 500
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Gral De La NaciN³n Enrique Mosconi" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Gral. De La Nac. Enrique Mosconi
+
+Periodistas Argentinos (Oeste) 5983
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"ESCUELA BOERO" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Jose Marmol
+
+Ruta Prov. 491 S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Escuela Vicecomodoro Gustavo Marambio" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela rural Isla Vicecomodoro Gustavo Marambio
+
+Calle Lozano S/N 0
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"Escuela Secunadaria Barrio Valle Grande" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Sec. Barrio Valle Grande
+
+Proyectada 23 S/N 0
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"Escuela Sec. Dr. Juan Carlos Navarro" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Dr. J. C. Navarro
+
+Ruta Nac. 20 S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Carlos N. Vergara EMER" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela rural Carlos N. Vergara
+
+Anacleto Gil S/N 0
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"PROCESA SARMIENTO DE LENOIR" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Secundaria Procesa Sarmiento de Lenoir
+
+Ruta Nac. 20 km 16 S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Escuela Anexo Rafael Arrieta" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Rafael Arrieta (Anexo)
+
+Ruta 279 S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela de Capacitacion Laboral Nº 25 Hellen Keller" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela de Cap. Lab. N.º 25 Hellen Keller
+
+Ruta Nac.149 S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela de Educacion Especial Multiple de Iglesia Felipe Rojas" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+EEE Multiple de Iglesia Felipe Rojas
+
+Laprida y Juan Pablo II S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"JINZ Nº 6 Escuela 17 de Agosto" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ N.º 6 17 de Agosto
+
+Sarmiento S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"JINZ Nº 8" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ N.º 8 Pte. Mitre
+
+Principal S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Escuela Dr. Calcagno "EMER"" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela rural Dr. Calcagno
+
+Paso de los Andes S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Juan Huarpe "Emer"" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela rural Juan Huarpe
+
+Pinchagual S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"JINZ N.º 58 Cte. Espora" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Cte. T. Espora
+
+La Plata y calle 6 S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"JINZ N.º 47 Escuela Rodriguez" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ N.º 47 Rodriguez
+
+Oratorio S/N 0
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"Escuela J. Gutierrez "Emer"" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela rural J. Gutierrez
+
+Callejon del Alto S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"JINZ N.º 15 Jose Marmol" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ N.º 15 Juan Larrea
+
+Laprida y San Isidro S/N 0
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"JINZ N.º 35" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ Nro 35 Julio Verne
+
+Av. Sarmiento S/N 0
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"JINZ N.º 57 Prov. de San Luis" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+ALBERGUE PCIA. DE SAN LUIS
+
+San Antonio S/N 0
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"PEDRO BONIFACIO PALACIOS" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Pedro Bonifacio Palacios
+
+EX RUTA 40 NIQUIVIL - TAMBERIAS 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Escuela Francisca Rios de Paez" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Dra. F. Rios de Paez
+
+Ruta N.º 40 y Cantoni S/N 0
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"Escuela 24 de Septiembre EMER" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela rural 24 de Septiembre
+
+Eugenio Flores S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Pedro Palacios" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Pedro Bonifacio Palacios
+
+EX RUTA 40 NIQUIVIL - TAMBERIAS 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Juan. Pringles "Emer"" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela rural Juan Pringles
+
+El Bosque y Campodoico S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Pedro Valenzuela Emer" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela rural Pedro Valenzuela
+
+Enfermera Medina S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"JINZ N.º 55 Escuela Jose Maria" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ N.º 55 Jose Maria
+
+Patricias Sanjuaninas S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Nuevo Cuyo" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Barrio Nuevo Cuyo
+
+Proyectada y Comercio S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Escuela Parque Rivadavia Norte" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Parque Rivadavia Norte
+
+Eva de Peron S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"JINZ N.º 43 Escuela Policia de la Pcia. San Juan" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ N.º 43 Policia de la Pcia. San Juan
+
+Avellaneda y Victoria S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"JINZ N.º 53 Esc. Andina" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ N.º 53 Andina
+
+Colon y Ruta N°. 270 S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"JINZ N.º 32 Anexo Escuela Luis Agote" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ Nro 32 Luis Agote (Anexo)
+
+Ruta 20 km 13 S/N 0
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"JINZ N.º 26 Escuela P. Valdivia" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ N.º 26 P. Valdivia
+
+Bazañez Zaballa S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"JINZ N.º 37 Sede" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ N.º 37
+
+Av. Lib. San Martin 7437
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"JINZ N.º 10 José M. del Carril" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Jose M. del Carril
+
+Aranda S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"E.P.E.T. N.º 1" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+E.P.E.T. N° 1 ING. ROGELIO BOERO
+
+Manuel Belgrano (Este) 250
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Escuela Buenaventura Luna Emer" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela rural Buenaventura Luna
+
+Calle Olivares S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"E.P.E.T Nº 1 - ALBARDON" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Pcia. Tec. N.º 1 Albardon
+
+Esmeralda y Proyectada S/N 0
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"Escuela Oscar Humberto Otiñano" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Sec. Oscar Otiñano
+
+25 de Mayo y Mitre S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Escuela de Educación Popular" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela de Educ. Popular
+
+Balcarce (Este) 2262
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Escuela anexo Superior de Sarmiento" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Sup. de Sarmiento (Anexo)
+
+Ruta Prov. N.º 319 S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Presbítero M. Iannelli" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Pte. M. Iannelli
+
+Juan J.Bustos 904
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Francisco de Villagra" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ N° 39 sede Francisco de Villagra
+
+Hernan Cortez y Maipu S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Normal Sup. Gral. Manuel Belgrano" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Manuel Belgrano
+
+SM Del Carril y Circunvalacion S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Ernestina E. de Andino" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Ernestina Echegaray de Andino
+
+Colon y 20 de Junio S/N 0
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Escuela Arturo Capdevila" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+JINZ N.º 47 Escuela Arturo Capdevila
+
+F. Barrientos y Arenales S/N 0
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+¿"Escuela Presbitero Cayetano de Quiroga" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Presbitero C. de Quiroga
+
+Ruta Nacional 510 S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Escuela Pedro. P. de Quiroga" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Gobierno de San Juan. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Escuela Tec. Cap. Lab. Pedro. P. de Quiroga
+
+Tucuman S/N 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+Arcos Dorados (Mc Donalds) — JN2 - San Juan 2 (15)
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Av. Jose Ignacio Rozas 806, RIVADAVIA, San Juan, Argentina. Google encontró 2 opciones:
+
+Jose Bonifacio Bolaños, J5406 Rivadavia, San Juan, Argentina
+
+centro de la zona · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+
+José Hernandez, J5400 Rivadavia, San Juan, Argentina
+
+centro de la zona · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Cepas Argentinas — San Juan
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Rastreador Calivar 239, SAN JUAN, San Juan, Argentina. Google encontró 2 opciones:
+
+Rastreador Calivar Nte. 239, J5400 Rivadavia, San Juan, Argentina
+
+ubicación exacta
+
+VER EN EL MAPA
+Usar
+
+Rastreador Calivar Sur 239, J5400 Rivadavia, San Juan, Argentina
+
+ubicación aproximada
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Disco — SM 193
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Av. Libertador 2359, DESAMPARADOS, San Juan, Argentina. Google encontró 1 opción:
+
+Roger Ballet y Av. Libertador, J5406 San Juan, Argentina
+
+centro de la zona · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Disco — SM 412
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Av. Libertador 5091, VILLA RIVADAVIA, Santiago del Estero, Argentina. Google encontró 2 opciones:
+
+Av. del Libertador 5091, G4200 Santiago del Estero, Argentina
+
+ubicación aproximada · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+
+Av. Rivadavia, G4200 Santiago del Estero, Argentina
+
+centro de la zona · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Disco — SM 414
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Blvd. Sarmiento 420, BARRIO OBRERO RAWSON, San Juan, Argentina. Google encontró 1 opción:
+
+Blvd. Sarmiento Oeste 420, J5425 Villa Krause, San Juan, Argentina
+
+ubicación exacta · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Disco — SM 815
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: República del Líbano 297, BARRIO OBRERO RAWSON, San Juan, Argentina. Google encontró 1 opción:
+
+República del Líbano 297, J5425 Rawson, San Juan, Argentina
+
+ubicación exacta · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Gobierno de San Juan - Minist. de Desarrollo Humano y Promoción Social — Central
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: SAN JUAN, San Juan, Argentina. Google encontró 1 opción:
+
+San Juan, San Juan Province, Argentina
+
+ubicación aproximada
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+JRASA — SM 544 San Juan
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Libertador Gral. San Martín 4681, VILLA RIVADAVIA, Santiago del Estero, Argentina. Google encontró 1 opción:
+
+Rivadavia Department, Santiago del Estero Province, Argentina
+
+ubicación aproximada · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Molinos Río de la Plata — Los Robles
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Ruta 20, SANTA LUCIA, San Juan, Argentina. Google encontró 1 opción:
+
+RN20, Santa Lucía, San Juan, Argentina
+
+centro de la zona
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Molinos Río de la Plata — Santa Lucía
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Ruta 20, SANTA LUCIA, San Juan, Argentina. Google encontró 1 opción:
+
+RN20, Santa Lucía, San Juan, Argentina
+
+centro de la zona
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+NO USAR - PST San Juan - Grupo MAURE — San Juan
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Barrio Solares de San Juan II Casa 54, SAN JUAN, San Juan, Argentina. Google encontró 1 opción:
+
+J5400, San Juan Province, Argentina
+
+centro de la zona · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Pago Facil — C.S. San Juan
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Av. Libertador este 315, SAN JUAN, San Juan, Argentina. Google encontró 1 opción:
+
+San Juan, San Juan Province, Argentina
+
+ubicación aproximada · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Pago Facil — Libertad San Juan
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Av. Circunvalacion y S. Ortiz, SAN JUAN, San Juan, Argentina. Google encontró 1 opción:
+
+Av. Circunvalación, San Juan, Argentina
+
+centro de la zona · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Pertenecer SRL — San Juan
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Av. Libertador 391, SAN JUAN, San Juan, Argentina. Google encontró 1 opción:
+
+Roger Ballet y Av. Libertador, J5406 San Juan, Argentina
+
+centro de la zona · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Sancor Cooperativas Limitada — Operador Comercial (Lac. San Juan)
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Quiroz (E) 623, SAN JUAN, San Juan, Argentina. Google encontró 1 opción:
+
+San Juan, San Juan Province, Argentina
+
+ubicación aproximada · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Walmart — 1006 - SC San Juan
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Av. Ignacio de la Rosa S/N, Depto Rivadavia, San Juan, SAN JUAN, San Juan, Argentina. Google encontró 1 opción:
+
+Av. José Ignacio de la Roza, J5400 San Juan, Argentina
+
+centro de la zona · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+Walmart — 1081 - CH+ Rawson SJ
+
+ELEGÍ LA UBICACIÓN
+
+Dirección: Av. Doctor Ortega y Las Vicentinas – Rawson – SAN JUAN, BARRIO OBRERO RAWSON, San Juan, Argentina. Google encontró 1 opción:
+
+Doctor Ortega & Las Vicentinas, J5425 Villa Krause, San Juan, Argentina
+
+centro de la zona · coincidencia parcial
+
+VER EN EL MAPA
+Usar
+Cargar coordenadas a mano ▾
+ver detalle técnico ▾
+
+299 sucursales comparten pin con otras o están muy lejos de la base
+
+A VERIFICAR
+No se puede confirmar gratis si el pin está bien. Verificarlas compara el pin de Gestión con la dirección escrita; las que difieran aparecen acá con la opción de usar la dirección escrita.
+Verificar estas 299 con Google
+SIN COSTO — TODO ESTÁ EN CACHÉ
+ver detalle técnico ▾
+
+2 sucursales no tienen ubicación
+
+SIN UBICACIÓN
+
+Sin ubicación no se les puede calcular km. Buscarlas usa la dirección escrita en Gestión: las inequívocas se guardan solas y las dudosas aparecen acá para que elijas.
+
+Buscar ubicaciones
+SIN COSTO — TODO ESTÁ EN CACHÉ
+
+Datos de mapa © OpenStreetMap contributors (ODbL)
+
+Para corregir en Gestión: 261 sucursales
+
+Exportar CSV para Gestión
+Más chequeos ▾
+← Anterior
+Siguiente →

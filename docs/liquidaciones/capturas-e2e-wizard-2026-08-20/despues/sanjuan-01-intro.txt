@@ -1,0 +1,31 @@
+Asistente de KM — SAN JUAN
+1
+TRAER DE GESTIÓN
+2
+REVISAR PENDIENTES
+3
+CALCULAR KM
+
+Este asistente deja tu Tabla KM al día en tres momentos:
+
+①
+
+Traer de Gestión
+
+Actualiza domicilios y vínculos, importa las sucursales nuevas con actividad y vincula sola las que solo difieren en un símbolo o una abreviatura. No consulta Google.
+
+②
+
+Revisar pendientes
+
+Una sola lista con lo que necesita tu decisión: nombres por confirmar, ubicaciones por elegir y pines que los chequeos automáticos marcaron como rotos. Lo que haya que corregir en Gestión se exporta en un CSV.
+
+③
+
+Calcular km
+
+Calcula ida y vuelta con Google Maps, te muestra el resultado y recién cuando aplicás se guarda. El umbral de viático y las observaciones no se tocan.
+
+Nada consulta Google sin mostrarte antes cuántas consultas cuesta.
+
+Empezar

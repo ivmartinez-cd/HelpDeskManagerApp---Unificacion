@@ -1,0 +1,21 @@
+Asistente de KM — SAN JUAN
+1
+TRAER DE GESTIÓN
+2
+REVISAR PENDIENTES
+3
+CALCULAR KM
+
+Gestión tiene 871 sucursales activas de este prestador. Tu Tabla KM tiene 616 filas.
+
+Al traer de Gestión vamos a:
+
+actualizar domicilios y vínculos de las 616 filas
+importar 427 sucursales nuevas con actividad
+vincular automáticamente los nombres que solo difieren en un símbolo o una abreviatura
+
+No consulta Google.
+
+Traer de Gestión
+ver detalle ▾
+Siguiente →
