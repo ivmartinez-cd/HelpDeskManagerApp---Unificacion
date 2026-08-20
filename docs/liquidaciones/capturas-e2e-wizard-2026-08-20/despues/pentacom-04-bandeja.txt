@@ -1,0 +1,310 @@
+Asistente de KM — PENTACOM
+1
+TRAER DE GESTIÓN
+2
+REVISAR PENDIENTES
+🔒
+CALCULAR KM
+
+Quedan 16 pines rotos (16 van al CSV para Gestión), 8 nombres por confirmar, 71 ubicaciones por resolver, 58 pines a verificar.
+
+Quedan 267 pines por chequear (sin costo).
+
+Seguir chequeando
+Todos
+Pines rotos
+Nombres
+Ubicaciones
+
+CCU — CD Cordoba
+
+PIN IMPOSIBLE
+
+Dirección: Av. Circunvalacion S/N 0
+
+Latitud y longitud parecen intercambiadas
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Mediterranea Tecnologica — Central
+
+PIN IMPOSIBLE
+
+Dirección: BV.ORTIZ DE OCAMPO 362
+
+Latitud y longitud parecen intercambiadas
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Mercado Libre SRL — SVC Cordoba
+
+PIN IMPOSIBLE
+
+Dirección: Avenida Circunvalación 2735
+
+El pin está fuera de Argentina
+Comparte el pin con otras sucursales de domicilio distinto
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Molino Cañuelas — Agro - Rio IV
+
+PIN IMPOSIBLE
+
+Dirección: Estrada 624
+
+Latitud y longitud parecen intercambiadas
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Molino Cañuelas — Suc. Charras - SUC CERRADA
+
+PIN IMPOSIBLE
+
+Dirección: Av. Independencia s/n 0
+
+El pin está fuera de Argentina
+Comparte el pin con otras sucursales de domicilio distinto
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Nación Servicios SA — San Francisco
+
+PIN IMPOSIBLE
+
+Dirección: 25 DE mayo 1720
+
+El pin está fuera de Argentina
+Comparte el pin con otras sucursales de domicilio distinto
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Tiendas Gourmet — Patio Olmos
+
+PIN IMPOSIBLE
+
+Dirección: Velez Sarsfield y Bv. San Juan 0
+
+El pin está fuera de Argentina
+Comparte el pin con otras sucursales de domicilio distinto
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Campo Austral S.A. — Camino Pozo Tigre
+
+PIN EN OTRA PROVINCIA
+El pin está en Formosa, pero su dirección dice Córdoba. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Celsur Logistica S.A. — Saint Gobain Cordoba
+
+PIN EN OTRA PROVINCIA
+El pin está en Misiones, pero su dirección dice Córdoba. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+CEVA — Córdoba
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice Córdoba. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Granja Tres Arroyos — Avex Molino
+
+PIN EN OTRA PROVINCIA
+El pin está en La Pampa, pero su dirección dice Córdoba. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+Integral Insumos — Apro Agro
+
+PIN EN OTRA PROVINCIA
+El pin está en Córdoba, pero su dirección dice Santa Fe. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+JRASA — SM 452 La Falda
+
+PIN EN OTRA PROVINCIA
+El pin está en Córdoba, pero su dirección dice Santiago del Estero. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+JRASA — SM 456 Jesús María
+
+PIN EN OTRA PROVINCIA
+El pin está en Córdoba, pero su dirección dice La Rioja. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+JRASA — SM 464 San Francisco (SUCURSAL INACTIVA)
+
+PIN EN OTRA PROVINCIA
+El pin está en Córdoba, pero su dirección dice Santiago del Estero. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+JRASA — SM 468 R. Martinolli(SUCURSAL INACTIVA)
+
+PIN EN OTRA PROVINCIA
+El pin está en Córdoba, pero su dirección dice Tucumán. Dos fuentes independientes lo confirman.
+VER EN EL MAPA
+Va al CSV para Gestión
+ver detalle técnico ▾
+
+¿"Baigorria - Córdoba" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Nutrien. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Cabrera - Córdoba
+
+Ruta 158 y Camino Tegua 0
+
+No es esta
+Sí, es esta
+Ver 2 candidatos más ▾
+ver detalle técnico ▾
+
+¿"Monte Buey - Córdoba" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Nutrien. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Monte Buey - Córdoba CERRADA
+
+San Lorenzo 631
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Villa Maria" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Efectivo Si. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+EFECTIVO SI - Villa Maria
+
+Corrientes 1081
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Avex Reducción" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Granja Tres Arroyos. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Avex Incubación
+
+Jorge Luis Borges 1701
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Tancacha" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Nutrien. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Tancacha CERRADA
+
+9 de julio 1250
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"PAOLA RODRIGUEZ" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Natura. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Paola Carolina Rodriguez Ceruti
+
+BILIBISCATE 2658 Piso:PB Dpto:
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Córdoba" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Sika. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Planta Cordoba
+
+11 de Septiembre 4432
+
+No es esta
+Sí, es esta
+ver detalle técnico ▾
+
+¿"Cordoba  Cosquin" es esta sucursal de Gestión?
+
+NOMBRE
+
+Empresa: Supercemento. Si no es ninguna, respondé "No es esta" y no se vuelve a proponer.
+
+Córdoba
+
+Obrador Chacra de la Merced KM 4
+
+No es esta
+Sí, es esta
+Ver 1 candidato más ▾
+ver detalle técnico ▾
+
+58 sucursales comparten pin con otras o están muy lejos de la base
+
+A VERIFICAR
+No se puede confirmar gratis si el pin está bien. Verificarlas compara el pin de Gestión con la dirección escrita; las que difieran aparecen acá con la opción de usar la dirección escrita.
+Verificar estas 58 con Google
+~58 CONSULTAS A GOOGLE
+ver detalle técnico ▾
+
+71 sucursales no tienen ubicación
+
+SIN UBICACIÓN
+
+Sin ubicación no se les puede calcular km. Buscarlas usa la dirección escrita en Gestión: las inequívocas se guardan solas y las dudosas aparecen acá para que elijas.
+
+Buscar ubicaciones
+~70 CONSULTAS A GOOGLE
+
+Datos de mapa © OpenStreetMap contributors (ODbL)
+
+Para corregir en Gestión: 16 sucursales
+
+Exportar CSV para Gestión
+Más chequeos ▾
+← Anterior
+Siguiente →

@@ -1,9 +1,9 @@
 # Rediseño UX del Asistente de KM — Fase 0 (relevamiento + propuesta)
 
 Estado: **Fase 1 implementada y Fase 2 verificada el 2026-08-20** (rama `feat/asistente-km-ux`,
-commits `2b259d5` docs Fase 0 · `068d8f2` rediseño · `0e3844f` pulido + specs). Pendiente: recorrido
-en vivo con PENTACOM (requiere OK: "Empezar" dispara llamadas reales a Georef, gratis) y validación
-final del usuario mirando las capturas. Ver §8.
+commits `2b259d5` docs Fase 0 · `068d8f2` rediseño · `0e3844f` pulido + specs). Recorridos en vivo
+PENTACOM y SAN JUAN hechos (capturas `despues/`). Pendiente: validación final del usuario mirando
+las capturas y la rama. Ver §8.
 
 Alcance de este doc: inventario real del wizard actual (pantalla por pantalla, con PENTACOM
 y SAN JUAN en vivo), propuesta de rediseño organizada por el modelo mental del operador
@@ -572,6 +572,12 @@ Backend: cero cambios.
 repo (`/home/ivan/proyectos/helpdesk-manager`); los archivos de la rama se copiaron ahí para
 rebuildear el frontend. Ver memoria `project_docker_runs_in_wsl_separate_repo_copy`.
 
-**Pendiente**: recorrido en vivo con PENTACOM (sus pines no están todos en cache: "Empezar" haría
-llamadas reales a Georef, gratuitas, ~329 pines) y validación final del usuario con las capturas
-antes/después.
+**Recorrido en vivo PENTACOM** (autorizado por el usuario; "Empezar" hizo llamadas reales a Georef —
+gratuitas, tope 200 por corrida — y la bandeja mostró "Quedan 267 pines por chequear (sin costo)" con
+el botón "Seguir chequeando"): 20 archivos en `despues/pentacom-*`. Resultado real: "Quedan 16 pines
+rotos (16 van al CSV para Gestión), 8 nombres por confirmar, 71 ubicaciones por resolver, 58 pines a
+verificar"; Momento 3 bloqueado con el tooltip "Falta la sucursal base de despacho" (🔒), banner
+bloqueante en Momento 1. Únicas requests no-GET: login + los dos chequeos gratis.
+
+**Pendiente**: validación final del usuario con las capturas antes/después y decisión sobre el
+merge de la rama.
