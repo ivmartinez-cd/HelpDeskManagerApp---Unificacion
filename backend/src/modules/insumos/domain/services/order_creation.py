@@ -149,9 +149,12 @@ class CanalDirectoOrderCreation:
     async def _seed_cache(
         self, new_id: int, order: OrderRequest, machine: CdMachine, verified: CdSupply
     ) -> None:
-        """Sembrar supply_serial_cache ahora, no esperar al próximo ciclo del scan: los
-        pedidos con origen Interno no aparecen en getTopSupplies/portal, así que esta
-        tabla es la única fuente que ve este pedido para el anti-duplicados."""
+        """Sembrar supply_serial_cache ahora, no esperar al próximo ciclo del scan: el
+        gate anti-duplicados en creación (find_active_supply_by_serial/supply_lookup)
+        solo consulta esta tabla, no llama a getTopSupplies en vivo. Aunque el pedido
+        (origen Proactivo) ya sea visible ahí, sin este seed quedaría invisible para ese
+        gate hasta el próximo ciclo del scan — la misma ventana de duplicado que existía
+        con origen Interno."""
         line = order.lines[0]
         description = await self._gateway.get_supply_description(new_id)
         entry = CachedSupply(

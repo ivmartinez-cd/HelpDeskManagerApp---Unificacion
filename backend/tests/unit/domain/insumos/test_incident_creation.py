@@ -46,7 +46,7 @@ async def test_create_incident_ok_devuelve_id_sin_check_digit() -> None:
     assert payload["NroSerie"] == "SERIE1"
     assert payload["NroIncidenteCliente"] == "SDS-123"
     assert payload["Ingreso"] != "guardia" and payload["Ingreso"]
-    assert payload["origen_id"] == "3"  # cae al default de settings (origen_id="")
+    assert payload["origen_id"] == "6"  # cae al default de settings (origen_id="")
 
 
 async def test_create_incident_usa_origen_id_propio_si_viene() -> None:

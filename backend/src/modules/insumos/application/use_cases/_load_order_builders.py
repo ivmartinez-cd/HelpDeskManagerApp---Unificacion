@@ -22,6 +22,7 @@ from src.modules.insumos.domain.entities.processed_request import ProcessedReque
 from src.modules.insumos.domain.repositories.insight_gateway import InsightGateway, JsonDict
 from src.modules.insumos.domain.services.maintenance_kit import is_maintenance_kit
 from src.modules.insumos.domain.services.stale_replacement import is_stale_replaced
+from src.modules.insumos.domain.services.zone_delivery_notice import SucursalOverride
 from src.modules.insumos.domain.value_objects.incident_request import IncidentRequest
 from src.modules.insumos.domain.value_objects.insight_datetime import parse_insight_utc
 from src.modules.insumos.domain.value_objects.order_reference import order_reference
@@ -173,6 +174,21 @@ def build_detalle(resolved: ResolvedRequest, observaciones: str) -> str:
     if observaciones.strip():
         detalle = f"{observaciones.strip()} {detalle}".strip()
     return detalle
+
+
+def compose_audit_detail(base: str | None, zone_override: SucursalOverride) -> str | None:
+    """Detail del audit CREATED: lo que ya traía el caller (swap_note, "Pre-Correctivo
+    (kit de mantenimiento)") más el aviso de cambio de sucursal si corresponde — única
+    constancia visible en el Historial cuando el pedido se creó sin que nadie viera el
+    modal recordatorio (ej. auto-carga)."""
+    parts = [base] if base else []
+    if zone_override.requiere_cambio:
+        parts.append(
+            f"Pendiente cambio de sucursal a {zone_override.sucursal}"
+            if zone_override.sucursal
+            else "Pendiente cambio de sucursal (ver observación de zona)"
+        )
+    return " · ".join(parts) or None
 
 
 def build_processed_request(

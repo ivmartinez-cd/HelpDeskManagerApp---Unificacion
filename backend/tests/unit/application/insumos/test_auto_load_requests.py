@@ -132,6 +132,20 @@ async def test_ya_cargada_se_saltea() -> None:
     assert load_order.calls == []
 
 
+async def test_zona_con_aviso_de_sucursal_se_saltea() -> None:
+    """Se aparta del legacy a propósito: la auto-carga excluye estas solicitudes en vez
+    de dejarlas solo con constancia en el Historial, para que no salga un despacho a la
+    sucursal equivocada sin que nadie lo vea a tiempo. Quedan para carga manual."""
+    use_case, _, load_order = _use_case(
+        [_row(1, requiere_cambio_sucursal=True)], _settings()
+    )
+
+    result = await use_case.execute()
+
+    assert result.considered == 0
+    assert load_order.calls == []
+
+
 async def test_no_elegible_por_umbral_se_saltea() -> None:
     """days_left/percent_left altos: ninguno de los dos criterios de is_autoload_eligible
     se cumple (max_days=3, min_percent=15 en _settings)."""

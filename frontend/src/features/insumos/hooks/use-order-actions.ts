@@ -3,9 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { insumosApi } from "../api/insumos-api";
+import type {
+  BulkSucursalState,
+  SucursalNoticeState,
+} from "../components/dashboard/dashboard-sucursal-modals";
 import { isLoaded } from "../components/dashboard/request-status";
 import type { RequestRow } from "../types";
+import { partitionBySucursalNotice } from "../utils/sucursal-filter";
 import type { DashboardData } from "./use-dashboard-data";
+import { useSucursalNotice } from "./use-sucursal-notice";
 
 /** Acciones de negocio del Dashboard (cargar / descartar, individual y en
  * lote) + el estado de los 5 modales de conflicto.
@@ -73,6 +79,13 @@ export interface OrderActions {
   rowErrors: ReadonlyMap<number, string>;
   batchProgress: Record<number, { current: number; total: number } | null>;
   batchRunning: Record<number, boolean>;
+  /** Aviso recordatorio post-carga individual (ver dashboard-sucursal-modals.tsx). */
+  sucursalNotice: SucursalNoticeState;
+  closeSucursalNotice: () => void;
+  /** Exclusión previa a "Cargar seleccionados" cuando hay filas con el aviso. */
+  bulkSucursalModal: BulkSucursalState;
+  confirmBulkSucursal: () => Promise<void>;
+  cancelBulkSucursal: () => void;
   closeModal: () => void;
   loadSingle: (row: RequestRow, customerId: number, customerName: string) => Promise<void>;
   loadSelected: (customerId: number, customerName: string) => Promise<void>;
@@ -93,6 +106,14 @@ export function useOrderActions(data: DashboardData): OrderActions {
     Record<number, { current: number; total: number } | null>
   >({});
   const [batchRunning, setBatchRunning] = useState<Record<number, boolean>>({});
+  const {
+    notice: sucursalNotice,
+    setNotice: setSucursalNotice,
+    closeNotice: closeSucursalNotice,
+    bulk: bulkSucursal,
+    setBulk: setBulkSucursal,
+    clearBulk: cancelBulkSucursal,
+  } = useSucursalNotice();
 
   // Los callbacks de abajo se declaran con deps vacías (identidad estable para
   // no re-renderizar cada fila de la tabla en cada tick del countdown), así que
@@ -159,6 +180,17 @@ export function useOrderActions(data: DashboardData): OrderActions {
 
         toast.success(`Pedido creado: ${response.orderId ?? "sin número"}`);
         if (response.warn) toast.warning(response.warn);
+        // Zona con instrucción de entrega alternativa ("CARGAR PARA SUCURSAL: ..."):
+        // el pedido ya se creó, esto es un recordatorio para cambiarla a mano en CD.
+        if (response.requiereCambioSucursal) {
+          setSucursalNotice({
+            visible: true,
+            orderId: response.orderId ?? null,
+            supplyUrl: response.supplyUrl ?? null,
+            sucursal: response.sucursalEntrega ?? null,
+            observacion: response.observacionZona ?? "",
+          });
+        }
         return "success";
       } catch (err) {
         const message = errorMessage(err);
@@ -173,7 +205,7 @@ export function useOrderActions(data: DashboardData): OrderActions {
         });
       }
     },
-    [setRowError],
+    [setRowError, setSucursalNotice],
   );
 
   const loadSingle = useCallback(
@@ -190,14 +222,8 @@ export function useOrderActions(data: DashboardData): OrderActions {
     [runLoad],
   );
 
-  const loadSelected = useCallback(
-    async (customerId: number, customerName: string) => {
-      const current = dataRef.current;
-      const selectedIds = current.selected[customerId];
-      if (!selectedIds || selectedIds.size === 0) return;
-      const rows = (current.requestsByCustomer[customerId] ?? []).filter(
-        (row) => selectedIds.has(row.requestId) && !isLoaded(row),
-      );
+  const runSelectedBatchLoad = useCallback(
+    async (customerId: number, customerName: string, rows: RequestRow[]) => {
       if (rows.length === 0) return;
 
       setBatchRunning((state) => ({ ...state, [customerId]: true }));
@@ -239,6 +265,44 @@ export function useOrderActions(data: DashboardData): OrderActions {
     },
     [runLoad],
   );
+
+  const loadSelected = useCallback(
+    async (customerId: number, customerName: string) => {
+      const current = dataRef.current;
+      const selectedIds = current.selected[customerId];
+      if (!selectedIds || selectedIds.size === 0) return;
+      const rows = (current.requestsByCustomer[customerId] ?? []).filter(
+        (row) => selectedIds.has(row.requestId) && !isLoaded(row),
+      );
+      if (rows.length === 0) return;
+
+      // Zonas con instrucción de entrega alternativa quedan fuera del lote: se
+      // avisan y se cargan de a una para no perder el recordatorio de sucursal.
+      const { included, excluded } = partitionBySucursalNotice(rows);
+      if (excluded.length > 0) {
+        setBulkSucursal({
+          visible: true,
+          excluded,
+          includedCount: included.length,
+          includedRows: included,
+          customerId,
+          customerName,
+        });
+        return;
+      }
+
+      await runSelectedBatchLoad(customerId, customerName, rows);
+    },
+    [runSelectedBatchLoad, setBulkSucursal],
+  );
+
+  /** El usuario confirmó "Cargar los N restantes" en el modal de exclusión por sucursal. */
+  const confirmBulkSucursal = useCallback(async () => {
+    const { includedRows, customerId, customerName } = bulkSucursal;
+    cancelBulkSucursal();
+    if (!customerId || includedRows.length === 0) return;
+    await runSelectedBatchLoad(customerId, customerName ?? "", includedRows);
+  }, [bulkSucursal, cancelBulkSucursal, runSelectedBatchLoad]);
 
   const dismissSingle = useCallback(
     async (row: RequestRow, customerId: number, customerName: string): Promise<boolean> => {
@@ -360,6 +424,11 @@ export function useOrderActions(data: DashboardData): OrderActions {
     rowErrors,
     batchProgress,
     batchRunning,
+    sucursalNotice,
+    closeSucursalNotice,
+    bulkSucursalModal: bulkSucursal,
+    confirmBulkSucursal,
+    cancelBulkSucursal,
     closeModal,
     loadSingle,
     loadSelected,

@@ -7,7 +7,11 @@ errores ahora son de dominio (FamiliaSinInsumosError en vez de RuntimeError).
 
 import pytest
 
-from src.modules.insumos.domain.errors import FamiliaSinInsumosError, InsumoAmbiguoError
+from src.modules.insumos.domain.errors import (
+    FamiliaSinInsumosError,
+    InsumoAmbiguoError,
+    InsumoNoConfiguradoError,
+)
 from src.modules.insumos.domain.services.insumo_matching import InsumoQuery, select_insumo_id
 
 
@@ -141,3 +145,28 @@ def test_color_match_cuando_el_nombre_de_la_opcion_esta_en_espanol() -> None:
 def test_waste_type_filter() -> None:
     options = {"701": "Waste Toner Collection", "702": "Black Toner"}
     assert select_insumo_id(options, _query("Waste", description="Unidad de recogida")) == "701"
+
+
+def test_waste_no_candidates_raises_insumo_no_configurado() -> None:
+    """Caso real (serie BRCST47008, SKU W9048MC): la familia 'HP E786' en Canal Directo
+    solo tiene drums y toners cargados, sin ningún insumo tipo waste — no es ambigüedad
+    (nada de lo disponible es correcto), es que falta cargar el insumo en el catálogo de
+    la familia. Debe distinguirse de InsumoAmbiguoError para que el frontend no invite al
+    operador a forzar un drum/toner como si fuera una opción válida."""
+    options = {
+        "4518": "Drum HP E786 - Black",
+        "4519": "Drum HP E786 - CMY",
+        "4514": "HP E786 Black - Toner",
+        "4515": "HP E786 Cyan - Toner",
+        "4517": "HP E786 Magenta - Toner",
+        "4516": "HP E786 Yellow - Toner",
+    }
+    query = _query(
+        "HP E786",
+        device_serial="BRCST47008",
+        requested_sku="W9048MC",
+        description="Unidad de recogida de tner HP W9048",
+    )
+    with pytest.raises(InsumoNoConfiguradoError, match="ningún insumo de tipo waste") as exc_info:
+        select_insumo_id(options, query)
+    assert {o["id"] for o in exc_info.value.options} == set(options)

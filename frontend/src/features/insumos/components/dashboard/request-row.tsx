@@ -72,7 +72,20 @@ export function RequestRow({
         <td className={`${CELL} whitespace-nowrap tabular-nums text-muted-foreground`}>
           {row.time}
         </td>
-        <td className={CELL}>{row.store || EMPTY_VALUE}</td>
+        <td className={CELL}>
+          {row.store || EMPTY_VALUE}
+          {row.requiereCambioSucursal && (
+            <span
+              title={
+                row.observacionZona ||
+                "Esta zona tiene una instrucción de entrega distinta a la ubicación del equipo."
+              }
+              className="ml-1.5 inline-flex items-center rounded-[6px] bg-[rgba(234,179,8,.15)] px-1.5 py-0.5 text-[10px] font-bold text-[#a16207] dark:text-[#facc15]"
+            >
+              🚚{row.sucursalEntrega ? ` → ${row.sucursalEntrega}` : ""}
+            </span>
+          )}
+        </td>
         <td className={CELL}>
           <a
             href={row.consumableUrl}

@@ -43,6 +43,9 @@ interface ConfirmationModalProps {
   confirmText?: string;
   /** Deshabilita el botón primario y muestra spinner mientras corre la acción. */
   loading?: boolean;
+  /** Deshabilita el botón primario SIN spinner — para "no hay nada que confirmar
+   * todavía" (ej. exclusión masiva con 0 filas incluidas), a diferencia de `loading`. */
+  confirmDisabled?: boolean;
   /** Error a mostrar arriba del cuerpo (lo pinta `BrandModal`). */
   error?: string | null;
   /** Contenido extra entre el cuerpo y el footer (campos del modal, p.ej. la
@@ -80,6 +83,7 @@ export function ConfirmationModal({
   hideCancel = false,
   confirmText = "ELIMINAR",
   loading = false,
+  confirmDisabled = false,
   error = null,
   extra,
   widthPx = 420,
@@ -98,7 +102,7 @@ export function ConfirmationModal({
   }
 
   const needsTyping = variant === "destructive";
-  const confirmEnabled = !loading && (!needsTyping || typed === confirmText);
+  const confirmEnabled = !loading && !confirmDisabled && (!needsTyping || typed === confirmText);
   const Icon = variant === "destructive" ? Trash2 : AlertTriangle;
 
   return (

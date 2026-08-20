@@ -60,7 +60,9 @@ class Settings(BaseSettings):
 
     # Canal Directo (pedidos SOAP wsAyC + contactos globales de fallback).
     cd_base_url: str = "https://webagentes.canaldirecto.com.ar"
-    cd_origen_id: str = "3"  # 3 = Interno — el objetivo entero de usar el SOAP
+    # 6 = Proactivo, alta 2026-08 exclusiva para esta app: a diferencia de 3 (Interno,
+    # valor original), es visible en getTopSupplies/AyC/portal — ver order_settings.py.
+    cd_origen_id: str = "6"
     cd_motivo_id: str = "1"
     cd_solicitante_apellido: str = ""
     cd_solicitante_nombre: str = ""

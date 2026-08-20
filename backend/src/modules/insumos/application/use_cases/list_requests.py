@@ -15,11 +15,17 @@ from src.modules.insumos.application.use_cases._request_association import (
     AssociationContext,
     RequestAssociation,
 )
+from src.modules.insumos.application.use_cases._zone_delivery_notices import (
+    attach_zone_delivery_notices,
+)
 from src.modules.insumos.application.use_cases.get_dashboard import GetDashboardPorts
 from src.modules.insumos.application.use_cases.validation_window import ValidationWindow
 from src.modules.insumos.domain.repositories.insight_gateway import JsonDict
 from src.modules.insumos.domain.repositories.request_validation_repository import (
     RequestValidationRepository,
+)
+from src.modules.insumos.domain.repositories.zone_contact_repository import (
+    ZoneContactRepository,
 )
 from src.modules.insumos.domain.services.autoload_eligibility import (
     is_autoload_eligible,
@@ -52,6 +58,7 @@ class ListRequestsPorts:
     validations: RequestValidationRepository
     supply_lookup: CanalDirectoSupplyLookup
     validation_window: ValidationWindow
+    zone_contacts: ZoneContactRepository
 
 
 @dataclass(frozen=True)
@@ -84,6 +91,7 @@ class ListRequests:
             )
         )
         await association.associate(rows)
+        await attach_zone_delivery_notices(rows, self._ports.zone_contacts)
         rows.sort(key=lambda r: r.days_left)
         return rows
 

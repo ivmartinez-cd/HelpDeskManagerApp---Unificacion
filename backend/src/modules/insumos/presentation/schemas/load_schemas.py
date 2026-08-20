@@ -32,6 +32,13 @@ class LoadResponse(BaseModel):
         default=None, serialization_alias="conflictData"
     )
     options: list[dict[str, str]] | None = None
+    # Presente cuando ok=True y la zona tiene instrucción de entrega alternativa: el
+    # frontend abre el modal recordatorio de cambio de sucursal (ver RequestRowOut).
+    requiere_cambio_sucursal: bool = Field(
+        default=False, serialization_alias="requiereCambioSucursal"
+    )
+    sucursal_entrega: str | None = Field(default=None, serialization_alias="sucursalEntrega")
+    observacion_zona: str | None = Field(default=None, serialization_alias="observacionZona")
 
     @classmethod
     def from_result(cls, result: LoadOrderResult) -> "LoadResponse":
@@ -44,4 +51,7 @@ class LoadResponse(BaseModel):
             conflict_type=result.conflict_type,
             conflict_data=result.conflict_data or None,
             options=result.insumo_options or None,
+            requiere_cambio_sucursal=result.requiere_cambio_sucursal,
+            sucursal_entrega=result.sucursal_entrega,
+            observacion_zona=result.observacion_zona,
         )

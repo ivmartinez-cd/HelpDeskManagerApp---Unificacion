@@ -43,3 +43,12 @@ class RequestRow:
     supply_id: str | None = None
     supply_url: str | None = None
     supply_status: str | None = None
+    # Aviso de entrega alternativa (zona con observación "CARGAR PARA SUCURSAL: ...").
+    # No hay forma de fijar la sucursal de entrega por SOAP (ver zone_delivery_notice.py),
+    # así que esto solo alimenta un aviso — el operador cambia la sucursal a mano en
+    # Canal Directo después de cargar. requiere_cambio_sucursal=True con sucursal_entrega
+    # None significa que el patrón matcheó pero no se pudo extraer un nombre legible; ahí
+    # la UI muestra observacion_zona completa.
+    requiere_cambio_sucursal: bool = False
+    sucursal_entrega: str | None = None
+    observacion_zona: str | None = None

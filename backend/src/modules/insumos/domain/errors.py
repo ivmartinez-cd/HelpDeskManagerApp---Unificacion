@@ -64,6 +64,21 @@ class InsumoAmbiguoError(BusinessRuleViolationError):
         self.options = options
 
 
+class InsumoNoConfiguradoError(BusinessRuleViolationError):
+    """El tipo de insumo pedido (waste/drum/developer/staple/toner, según la descripción)
+    no tiene NINGÚN candidato en la familia de Canal Directo — no es ambigüedad (nada de
+    lo disponible es correcto), es que falta cargar ese insumo en el catálogo de la
+    familia. A diferencia de InsumoAmbiguoError, el frontend NO debe ofrecer un selector
+    manual acá: todas las `options` son de otro tipo (ej. drums/toners cuando lo pedido
+    era una tolva de desecho) y forzar cualquiera crearía un pedido incorrecto."""
+
+    default_code = "INSUMO_NO_CONFIGURADO"
+
+    def __init__(self, message: str, *, options: list[dict[str, str]]) -> None:
+        super().__init__(message, details={"options": options})
+        self.options = options
+
+
 class DatosDeContactoIncompletosError(BusinessRuleViolationError):
     """No se pudieron completar los contactos del pedido con ninguna de las tres capas
     (zona → último pedido de la sucursal → config global)."""

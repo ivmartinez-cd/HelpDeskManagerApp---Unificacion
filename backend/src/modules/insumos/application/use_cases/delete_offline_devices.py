@@ -83,15 +83,23 @@ class DeleteOfflineDevices:
         for device_id in requested_ids:
             device = by_id.get(device_id)
             if device is None or device_id not in snapshot.deletable_ids:
+                reason = self._rejection_reason(device_id, device, snapshot.outage_device_ids)
+                logger.warning(
+                    "delete_offline: equipo %d rechazado, no es candidato válido (%s)",
+                    device_id,
+                    reason,
+                    extra={
+                        "device_id": device_id,
+                        "serial": device.serial if device else "",
+                        "reason": reason,
+                    },
+                )
                 results.append(
                     DeleteResult(
                         device_id=device_id,
                         serial=device.serial if device else "",
                         ok=False,
-                        error=(
-                            "El equipo no es un candidato válido para baja "
-                            "(verificalo de nuevo)."
-                        ),
+                        error=f"El equipo no es un candidato válido para baja ({reason}).",
                     )
                 )
                 continue
@@ -121,6 +129,17 @@ class DeleteOfflineDevices:
                 )
 
         return DeleteOfflineDevicesResult(results=results, dry_run=self._dry_run)
+
+    @staticmethod
+    def _rejection_reason(
+        device_id: int, device: OfflineDevice | None, outage_device_ids: set[int]
+    ) -> str:
+        """Motivo del rechazo, derivado del snapshot ya cargado — sin consultas extra."""
+        if device is None:
+            return "ya no está en el listado de equipos offline"
+        if device_id in outage_device_ids:
+            return "excluido por caída masiva de colector"
+        return f"cdStatus={device.cd_status!r}, esperado BODEGA"
 
     def _build_audit(self, device: OfflineDevice, now: datetime) -> AuditRecord:
         days = calendar_days_offline(device.last_contact, now, self._tz)

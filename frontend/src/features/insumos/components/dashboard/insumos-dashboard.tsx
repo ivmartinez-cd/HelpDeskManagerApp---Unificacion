@@ -18,6 +18,7 @@ import { ConsumableDetailModal } from "./consumable-detail-modal";
 import { CustomerRequestsTable } from "./customer-requests-table";
 import { DashboardModals } from "./dashboard-modals";
 import { DashboardTiles } from "./dashboard-tiles";
+import { BulkSucursalExclusionModal, SucursalNoticeModal } from "./dashboard-sucursal-modals";
 
 /** Dashboard de Insumos: solicitudes de HP SDS todavía no cargadas en Canal
  * Directo, agrupadas por cliente. Compone los 4 hooks del módulo (datos +
@@ -174,6 +175,13 @@ export function InsumosDashboard({ deepLinkCustomerId }: InsumosDashboardProps) 
         busy={actions.modalBusy}
         onClose={actions.closeModal}
         onConfirm={(selectedInsumoId) => void actions.confirmModal(selectedInsumoId)}
+      />
+
+      <SucursalNoticeModal state={actions.sucursalNotice} onClose={actions.closeSucursalNotice} />
+      <BulkSucursalExclusionModal
+        state={actions.bulkSucursalModal}
+        onConfirm={() => void actions.confirmBulkSucursal()}
+        onCancel={actions.cancelBulkSucursal}
       />
 
       {/* `key` por solicitud: abrir el detalle de otra fila monta una

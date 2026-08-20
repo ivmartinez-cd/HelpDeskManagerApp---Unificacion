@@ -23,7 +23,9 @@ from src.modules.insumos.domain.repositories.insight_gateway import JsonDict
 from src.modules.insumos.domain.services.supply_lookup import CanalDirectoSupplyLookup
 from src.modules.insumos.domain.services.validation_diagnosis import ValidationDiagnosis
 from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply, CdSupply
+from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.pending_validation import PendingValidation
+from src.modules.insumos.domain.value_objects.zone_contacts import ZoneContacts
 from tests.unit.domain.insumos.fakes import (
     FakeCustomerConfigRepository,
     FakeInsightGateway,
@@ -33,6 +35,7 @@ from tests.unit.domain.insumos.fakes import (
     FakeRequestValidationRepository,
     FakeSupplyCacheRepository,
     FakeWsAycGateway,
+    FakeZoneContactRepository,
     settings,
 )
 
@@ -70,6 +73,7 @@ class World:
         self.settings_repo = FakeInsumosSettingsRepository()
         self.audit = FakeOrderAuditRepository()
         self.validations = FakeRequestValidationRepository()
+        self.zone_contacts = FakeZoneContactRepository()
 
         self.customers.customers = [CustomerConfig(customer_id=8, name="Cliente Test")]
         self.insight.requests_by_customer = {8: []}
@@ -105,6 +109,7 @@ class World:
             validations=self.validations,
             supply_lookup=CanalDirectoSupplyLookup(self.wsayc, self.supply_cache, order_settings),
             validation_window=self.window,
+            zone_contacts=self.zone_contacts,  # type: ignore[arg-type]
         )
         config = ListRequestsConfig(
             order_settings=order_settings,
@@ -340,3 +345,53 @@ async def test_error_de_un_cliente_no_rompe_el_listado_global() -> None:
 
     assert [r.request_id for r in rows] == [1]
     assert rows[0].customer_name == "Sano"
+
+
+# --- aviso de cambio de sucursal ---------------------------------------------------------
+
+
+async def test_fila_de_zona_con_aviso_de_sucursal_trae_el_flag() -> None:
+    world = World()
+    world.zone_contacts.zones[(8, "HANGAR")] = ZoneContacts(
+        solicitante=ContactInfo(apellido="Perez", nombre="Juan"),
+        destinatario=ContactInfo(),
+        observaciones="CARGAR PARA SUCURSAL: OFICINA SALTA.",
+    )
+    world.insight.requests_by_customer = {8: [_insight_request(1)]}
+
+    rows = await world.use_case.execute(customer_id=8)
+
+    assert rows[0].requiere_cambio_sucursal is True
+    assert rows[0].sucursal_entrega == "OFICINA SALTA"
+    assert rows[0].observacion_zona == "CARGAR PARA SUCURSAL: OFICINA SALTA."
+
+
+async def test_fila_sin_observacion_de_zona_no_trae_aviso() -> None:
+    world = World()
+    world.insight.requests_by_customer = {8: [_insight_request(1)]}
+
+    rows = await world.use_case.execute(customer_id=8)
+
+    assert rows[0].requiere_cambio_sucursal is False
+    assert rows[0].sucursal_entrega is None
+    assert rows[0].observacion_zona is None
+
+
+async def test_zona_especifica_sin_solicitante_cae_a_la_zona_default() -> None:
+    """Misma cadena de fallback que load_order._resolve_zone_contacts: una zona
+    específica sin solicitante con nombre no cuenta — el aviso tiene que salir de la
+    zona default ('') que load_order realmente va a usar al cargar el pedido."""
+    world = World()
+    world.zone_contacts.zones[(8, "HANGAR")] = ZoneContacts(
+        solicitante=ContactInfo(), destinatario=ContactInfo(), observaciones="no debería usarse"
+    )
+    world.zone_contacts.zones[(8, "")] = ZoneContacts(
+        solicitante=ContactInfo(apellido="Default"),
+        destinatario=ContactInfo(),
+        observaciones="CARGAR PARA SUCURSAL: PLANTA CENTRAL.",
+    )
+    world.insight.requests_by_customer = {8: [_insight_request(1)]}
+
+    rows = await world.use_case.execute(customer_id=8)
+
+    assert rows[0].sucursal_entrega == "PLANTA CENTRAL"

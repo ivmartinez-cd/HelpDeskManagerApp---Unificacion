@@ -66,8 +66,10 @@ class CdSupply:
 
 @dataclass(frozen=True)
 class CachedSupply:
-    """Entrada de supply_serial_cache — la única fuente que ve pedidos de origen
-    Interno (getTopSupplies y el portal los excluyen)."""
+    """Entrada de supply_serial_cache. Cubre el remanente de pedidos con origen Interno
+    (getTopSupplies y el portal los excluyen) y, sembrada al crear (_seed_cache), los
+    pedidos nuevos con origen Proactivo — el gate anti-duplicados en creación solo
+    consulta esta tabla, no llama a getTopSupplies en vivo."""
 
     supply_id: int
     serial: str

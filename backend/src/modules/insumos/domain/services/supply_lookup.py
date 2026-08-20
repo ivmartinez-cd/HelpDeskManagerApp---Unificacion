@@ -34,9 +34,12 @@ class CanalDirectoSupplyLookup:
         self, device_serial: str, raise_on_error: bool = False
     ) -> list[ActiveSupplyView]:
         """Pedidos activos para una serie, combinando dos fuentes (ninguna sola alcanza):
-        el cache local (única vía que ve pedidos de origen Interno) y getTopSupplies
-        (pedidos cargados a mano en el portal). raise_on_error=True (autocarga) solo
-        propaga si AMBAS fuentes fallan: con una alcanza para no arriesgar duplicado."""
+        el cache local (sembrado al crear; sigue siendo necesario porque el gate
+        anti-duplicados no llama a getTopSupplies en vivo, y porque cubre el remanente
+        con origen Interno, que getTopSupplies sigue excluyendo) y getTopSupplies
+        (pedidos con origen Proactivo de esta app y los cargados a mano en el portal).
+        raise_on_error=True (autocarga) solo propaga si AMBAS fuentes fallan: con una
+        alcanza para no arriesgar duplicado."""
         serial = clean_serial(device_serial)
         if not serial:
             return []

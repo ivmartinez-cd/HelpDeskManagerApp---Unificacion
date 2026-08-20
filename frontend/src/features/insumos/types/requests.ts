@@ -52,6 +52,14 @@ export interface RequestRow {
   supplyId?: string | null;
   supplyUrl?: string | null;
   supplyStatus?: string | null;
+  /** Aviso de entrega alternativa (zona con observación "CARGAR PARA SUCURSAL: ...").
+   * No hay forma de fijar la sucursal de entrega por SOAP, así que esto solo alimenta
+   * un aviso — ver detect_sucursal_override en el backend. sucursalEntrega es null si
+   * el patrón matcheó pero no se pudo extraer un nombre legible; ahí se muestra
+   * observacionZona completa igual. */
+  requiereCambioSucursal: boolean;
+  sucursalEntrega?: string | null;
+  observacionZona?: string | null;
 }
 
 /** `SupplyStatusEventOut`: un estado del pedido en CD y cuándo la app lo
@@ -115,6 +123,11 @@ export interface LoadResponse {
   /** Opciones de insumo para elegir cuando el SKU es ambiguo — cada opción es
    * un mapa plano de strings; se pasa la elegida como `overrideInsumoId`. */
   options?: Record<string, string>[] | null;
+  /** Presente cuando ok=true y la zona tiene instrucción de entrega alternativa: el
+   * frontend abre el modal recordatorio de cambio de sucursal. */
+  requiereCambioSucursal?: boolean;
+  sucursalEntrega?: string | null;
+  observacionZona?: string | null;
 }
 
 export interface CancelResponse {

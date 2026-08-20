@@ -7,6 +7,8 @@ modela ese contrato; presentation solo lo serializa.
 
 from dataclasses import dataclass, field
 
+from src.modules.insumos.domain.services.zone_delivery_notice import SucursalOverride
+
 CONFLICT_PENDING_VALIDATION = "pending_validation"
 CONFLICT_TODAY_ORDER = "today_order"
 CONFLICT_ACTIVE_SUPPLY = "active_supply"
@@ -38,10 +40,33 @@ class LoadOrderResult:
     conflict_type: str | None = None
     conflict_data: dict[str, object] = field(default_factory=dict)
     insumo_options: list[dict[str, str]] = field(default_factory=list)
+    # Presente cuando ok=True y la zona tiene instrucción de entrega alternativa: el
+    # frontend abre el modal recordatorio de cambio de sucursal (no bloquea la carga,
+    # ver zone_delivery_notice.py — no hay forma de fijar la sucursal por SOAP).
+    requiere_cambio_sucursal: bool = False
+    sucursal_entrega: str | None = None
+    observacion_zona: str | None = None
 
 
-def success(order_id: str, supply_url: str | None, warn: str | None = None) -> LoadOrderResult:
-    return LoadOrderResult(ok=True, order_id=order_id, supply_url=supply_url, warn=warn)
+_SIN_AVISO = SucursalOverride(requiere_cambio=False, sucursal=None, observacion="")
+
+
+def success(
+    order_id: str,
+    supply_url: str | None,
+    warn: str | None = None,
+    zone_override: SucursalOverride | None = None,
+) -> LoadOrderResult:
+    override = zone_override or _SIN_AVISO
+    return LoadOrderResult(
+        ok=True,
+        order_id=order_id,
+        supply_url=supply_url,
+        warn=warn,
+        requiere_cambio_sucursal=override.requiere_cambio,
+        sucursal_entrega=override.sucursal,
+        observacion_zona=override.observacion or None,
+    )
 
 
 def failure(error: str) -> LoadOrderResult:

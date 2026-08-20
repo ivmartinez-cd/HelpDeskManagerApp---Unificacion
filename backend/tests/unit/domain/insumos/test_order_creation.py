@@ -62,10 +62,10 @@ async def test_create_order_ok_devuelve_id_con_digito_verificador() -> None:
     # origen_id viaja en la RAÍZ del payload (no solo anidado en Supply) — es el objetivo
     # entero de usar el SOAP: wsAyC_server.php lee $supply['origen_id'].
     payload = gateway.persisted_payloads[0]
-    assert payload["origen_id"] == "3"
+    assert payload["origen_id"] == "6"
     supply_section = payload["Supply"]
     assert isinstance(supply_section, dict)
-    assert supply_section["origen_id"] == "3"
+    assert supply_section["origen_id"] == "6"
     assert supply_section["Revision"] == "1"
     assert supply_section["NroIncidenteCliente"] == "SDS-123"
     assert payload["Detail"] == [
@@ -74,8 +74,9 @@ async def test_create_order_ok_devuelve_id_con_digito_verificador() -> None:
 
 
 async def test_create_order_siembra_supply_cache() -> None:
-    """Sembrar supply_serial_cache al crear, sin esperar al próximo ciclo del scan (los
-    pedidos con origen Interno no aparecen en getTopSupplies)."""
+    """Sembrar supply_serial_cache al crear, sin esperar al próximo ciclo del scan: el
+    gate anti-duplicados en creación solo consulta el cache local, no llama a
+    getTopSupplies en vivo, aunque el pedido (origen Proactivo) ya sea visible ahí."""
     gateway = FakeWsAycGateway()
     cache = FakeSupplyCacheRepository()
     service = _service(gateway, cache)

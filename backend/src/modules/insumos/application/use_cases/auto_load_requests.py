@@ -106,7 +106,16 @@ class AutoLoadRequests:
 
 
 def _eligible(row: RequestRow, settings: InsumosSettings) -> bool:
-    if row.order_id is not None or row.validation_pending or row.percent_left is None:
+    if (
+        row.order_id is not None
+        or row.validation_pending
+        or row.percent_left is None
+        # Zona con aviso de cambio de sucursal: se aparta del legacy a propósito (que
+        # no excluía, solo dejaba constancia en el Historial) — evita que un despacho
+        # a la sucursal equivocada salga sin que nadie lo vea a tiempo. Queda para
+        # carga manual, igual que en "Cargar seleccionados".
+        or row.requiere_cambio_sucursal
+    ):
         return False
     return is_autoload_eligible(
         row.days_left, row.percent_left, settings.autoload_max_days, settings.autoload_min_percent

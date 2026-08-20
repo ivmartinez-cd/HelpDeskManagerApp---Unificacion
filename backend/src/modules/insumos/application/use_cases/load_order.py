@@ -27,6 +27,7 @@ from src.modules.insumos.application.use_cases._load_order_builders import (
     build_incident_request,
     build_order_request,
     build_processed_request,
+    compose_audit_detail,
     resolve_from_insight,
     update_insight_on_success,
 )
@@ -37,9 +38,11 @@ from src.modules.insumos.application.use_cases._load_order_context import (
 from src.modules.insumos.domain.entities.audit_record import ORDER_TYPE_INCIDENT
 from src.modules.insumos.domain.errors import (
     InsumoAmbiguoError,
+    InsumoNoConfiguradoError,
     OrderAlreadyInProgressError,
     SerieNoActivaEnCanalDirectoError,
 )
+from src.modules.insumos.domain.services.zone_delivery_notice import detect_sucursal_override
 from src.modules.insumos.domain.value_objects.incident_request import IncidentRequest
 from src.modules.insumos.domain.value_objects.order_request import OrderRequest
 from src.modules.insumos.domain.value_objects.zone_contacts import ZoneContacts
@@ -84,6 +87,8 @@ class LoadOrder:
             return await self._handle_inactive_device(command, resolved)
         except InsumoAmbiguoError as exc:
             return self._handle_ambiguous_supply(command, resolved, exc)
+        except InsumoNoConfiguradoError as exc:
+            return self._handle_insumo_no_configurado(command, resolved, exc)
         except Exception:
             return await self._handle_creation_failed(command, resolved)
 
@@ -120,6 +125,24 @@ class LoadOrder:
             insumo_options=exc.options,
         )
 
+    def _handle_insumo_no_configurado(
+        self,
+        command: LoadOrderCommand,
+        resolved: ResolvedRequest,
+        exc: InsumoNoConfiguradoError,
+    ) -> LoadOrderResult:
+        """A diferencia de _handle_ambiguous_supply, acá ninguna de las opciones de la
+        familia es válida (falta cargar el insumo en el catálogo de Canal Directo) — no
+        se ofrece selector manual: sin conflict_type ni insumo_options, el frontend cae
+        al camino genérico de error en vez de abrir el modal de selección."""
+        logger.info(
+            "Insumo no configurado en CD para request %s (serie %s): %s",
+            command.hp_request_id,
+            resolved.device_serial,
+            exc,
+        )
+        return failure(str(exc))
+
     async def _handle_creation_failed(
         self, command: LoadOrderCommand, resolved: ResolvedRequest
     ) -> LoadOrderResult:
@@ -138,6 +161,7 @@ class LoadOrder:
     ) -> LoadOrderResult:
         zona = await self._resolve_zone_contacts(command.customer_id, resolved.store_name)
         swap_note = await self._ports.validations.get_swap_note(command.hp_request_id)
+        zone_override = detect_sucursal_override(zona.observaciones if zona else None)
         order = build_order_request(command, resolved, zona)
         order_id = await self._create(command, order)
         if not order_id.startswith(_DRYRUN_PREFIX):
@@ -146,10 +170,17 @@ class LoadOrder:
             )
             # Pendiente: resolver la alerta activa (request_alerts) al instante.
         await self._ports.audit.record(
-            build_audit_created(command, resolved, order_id, detail=swap_note or None)
+            build_audit_created(
+                command,
+                resolved,
+                order_id,
+                detail=compose_audit_detail(swap_note, zone_override),
+            )
         )
         await self._mark_insight_actioned(command, order_id)
-        return success(order_id, self._supply_url_for(order_id), resolved.warn)
+        return success(
+            order_id, self._supply_url_for(order_id), resolved.warn, zone_override
+        )
 
     async def _create(self, command: LoadOrderCommand, order: OrderRequest) -> str:
         if command.dry_run:
@@ -167,6 +198,7 @@ class LoadOrder:
         hace para incidentes)."""
         try:
             zona = await self._resolve_zone_contacts(command.customer_id, resolved.store_name)
+            zone_override = detect_sucursal_override(zona.observaciones if zona else None)
             incident = build_incident_request(command, resolved, zona)
             incident_id = await self._create_incident(command, incident)
             if not incident_id.startswith(_DRYRUN_PREFIX):
@@ -178,11 +210,13 @@ class LoadOrder:
                     command,
                     resolved,
                     incident_id,
-                    detail="Pre-Correctivo (kit de mantenimiento)",
+                    detail=compose_audit_detail(
+                        "Pre-Correctivo (kit de mantenimiento)", zone_override
+                    ),
                     order_type=ORDER_TYPE_INCIDENT,
                 )
             )
-            return success(incident_id, None, resolved.warn)
+            return success(incident_id, None, resolved.warn, zone_override)
         except Exception:
             return await self._handle_creation_failed(command, resolved)
 

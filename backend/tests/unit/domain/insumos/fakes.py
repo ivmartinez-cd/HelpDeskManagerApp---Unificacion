@@ -62,7 +62,7 @@ from src.modules.insumos.domain.value_objects.pending_validation import (
     PendingValidationWork,
     ValidationStart,
 )
-from src.modules.insumos.domain.value_objects.zone_contacts import ZoneContacts
+from src.modules.insumos.domain.value_objects.zone_contacts import ZoneContactRow, ZoneContacts
 
 HAPPY_MACHINE = CdMachine(
     familia_id="255", familia_name="HP E50145/52645", empresa_id="8", sucursal_id="13840"
@@ -88,7 +88,7 @@ def settings(**overrides: object) -> CanalDirectoOrderSettings:
             email="dest@e.com",
             sector="Depósito",
         ),
-        "origen_id": "3",
+        "origen_id": "6",
         "motivo_id": "1",
     }
     base.update(overrides)
@@ -564,6 +564,18 @@ class FakeZoneContactRepository:
 
     async def get(self, customer_id: int, zone: str) -> ZoneContacts | None:
         return self.zones.get((customer_id, zone))
+
+    async def list_all(self, customer_id: int) -> list[ZoneContactRow]:
+        return [
+            ZoneContactRow(
+                zone=zone,
+                sol_apellido=contacts.solicitante.apellido,
+                sol_nombre=contacts.solicitante.nombre,
+                observaciones=contacts.observaciones,
+            )
+            for (cid, zone), contacts in self.zones.items()
+            if cid == customer_id
+        ]
 
 
 class FakeInsightGateway:

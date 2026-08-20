@@ -14,7 +14,11 @@ import logging
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from src.modules.insumos.domain.errors import FamiliaSinInsumosError, InsumoAmbiguoError
+from src.modules.insumos.domain.errors import (
+    FamiliaSinInsumosError,
+    InsumoAmbiguoError,
+    InsumoNoConfiguradoError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +51,16 @@ _WASTE_DESC_WORDS = (
 # Centinela del tipo "toner": se filtra por exclusión (todo lo que NO es drum/developer/
 # waste/staples), no por keywords propias.
 _TONER: tuple[str, ...] = ()
+
+# Etiquetas legibles para InsumoNoConfiguradoError — identidad de tupla, no igualdad
+# (mismo motivo que la comparación `type_keywords is _TONER` de _filter_by_type).
+_TYPE_LABELS: dict[int, str] = {
+    id(_WASTE_OPT): "waste/tolva de desecho",
+    id(_STAPLE_OPT): "staples/grapas",
+    id(_DEVELOPER_OPT): "developer/revelador",
+    id(_DRUM_OPT): "drum/tambor",
+    id(_TONER): "toner/cartucho",
+}
 
 
 @dataclass(frozen=True)
@@ -118,9 +132,25 @@ def _match_by_type_and_color(options: InsumoOptions, query: InsumoQuery) -> str 
     que comparten en el nombre. Si el color sigue ambiguo dentro del tipo, se lanza
     InsumoAmbiguoError con los candidatos (caso real: solicitud 970568, dos Cyan de
     distinta capacidad).
+
+    Caso aparte: si la descripción identifica un tipo y la familia no tiene NINGÚN
+    insumo de ese tipo, no es ambigüedad → InsumoNoConfiguradoError (falta cargar el
+    insumo en el catálogo de Canal Directo, no hay nada válido para elegir).
     """
     desc_lower = query.description.lower()
-    candidates = _filter_by_type(options, desc_lower)
+    type_keywords = _type_keywords_for_description(desc_lower)
+    candidates = _filter_by_type(options, type_keywords)
+
+    if type_keywords is not None and not candidates:
+        raise InsumoNoConfiguradoError(
+            f"Familia '{query.familia_name}' (serie {query.device_serial}) no tiene "
+            f"ningún insumo de tipo {_TYPE_LABELS[id(type_keywords)]} configurado en "
+            f"Canal Directo (SKU='{query.requested_sku}', desc='{query.description}'). "
+            "Falta cargar ese insumo en el catálogo de la familia en Canal Directo — no "
+            "es un problema de matching.",
+            options=_insumo_options(options),
+        )
+
     if len(candidates) == 1:
         chosen = next(iter(candidates))
         _log_selection(query, chosen, f"seleccionado por tipo (desc={query.description!r})")
@@ -142,9 +172,10 @@ def _match_by_type_and_color(options: InsumoOptions, query: InsumoQuery) -> str 
     return None
 
 
-def _filter_by_type(options: InsumoOptions, desc_lower: str) -> InsumoOptions:
+def _filter_by_type(
+    options: InsumoOptions, type_keywords: tuple[str, ...] | None
+) -> InsumoOptions:
     """Candidatos del tipo que indica la descripción de Insight (sin filtrar si no es claro)."""
-    type_keywords = _type_keywords_for_description(desc_lower)
     if type_keywords is None:
         return options
     if type_keywords is _TONER:

@@ -34,7 +34,9 @@ from src.modules.insumos.domain.services.incident_creation import CanalDirectoIn
 from src.modules.insumos.domain.services.order_creation import CanalDirectoOrderCreation
 from src.modules.insumos.domain.services.supply_request_matching import SupplyMatchResolver
 from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply, CdSupply
+from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.pending_validation import PendingValidation
+from src.modules.insumos.domain.value_objects.zone_contacts import ZoneContacts
 from tests.unit.domain.insumos.fakes import (
     FakeInsightGateway,
     FakeOrderAuditRepository,
@@ -142,6 +144,38 @@ async def test_carga_ok_crea_registra_y_audita() -> None:
     assert created[0].hp_request_time == datetime(2026, 8, 10, 10, 0, tzinfo=UTC)
     # El claim siempre se libera, haya salido bien o mal.
     assert world.claims.released == [("SERIE1", "CF230A")]
+
+
+async def test_zona_con_aviso_de_sucursal_no_bloquea_la_carga() -> None:
+    """El pedido se crea igual — el aviso es un recordatorio, no un bloqueo (Canal
+    Directo no admite fijar la sucursal de entrega por SOAP)."""
+    world = World()
+    world.zone_contacts.zones[(8, "HANGAR")] = ZoneContacts(
+        solicitante=ContactInfo(apellido="Perez", nombre="Juan"),
+        destinatario=ContactInfo(),
+        observaciones="CARGAR PARA SUCURSAL: OFICINA SALTA.",
+    )
+
+    result = await world.use_case.execute(_command())
+
+    assert result.ok
+    assert result.order_id == "441770-3"
+    assert result.requiere_cambio_sucursal is True
+    assert result.sucursal_entrega == "OFICINA SALTA"
+    assert result.observacion_zona == "CARGAR PARA SUCURSAL: OFICINA SALTA."
+    created = [r for r in world.audit.records if r.event == EVENT_CREATED]
+    assert created[0].detail is not None and "Pendiente cambio de sucursal" in created[0].detail
+    assert "OFICINA SALTA" in created[0].detail
+
+
+async def test_zona_sin_aviso_no_setea_el_flag() -> None:
+    world = World()
+
+    result = await world.use_case.execute(_command())
+
+    assert result.requiere_cambio_sucursal is False
+    assert result.sucursal_entrega is None
+    assert result.observacion_zona is None
 
 
 async def test_dry_run_no_persiste_pero_audita_como_simulacion() -> None:
@@ -398,6 +432,22 @@ async def test_insumo_ambiguo_devuelve_opciones_para_el_operador() -> None:
     ]
 
 
+async def test_insumo_no_configurado_no_ofrece_selector() -> None:
+    """A diferencia de InsumoAmbiguoError, el frontend no debe recibir conflictType ni
+    insumo_options: todas las opciones de la familia son de otro tipo (drum/toner) y
+    ofrecer un selector invitaría a forzar un pedido incorrecto."""
+    world = World()
+    world.wsayc.article_parts = {"1": "Drum HP E786 - Black", "2": "HP E786 Black - Toner"}
+    world.insight.consumable_requests[0]["consumable"]["description"] = "Unidad de recogida"
+
+    result = await world.use_case.execute(_command())
+
+    assert not result.ok
+    assert result.conflict_type is None
+    assert result.insumo_options == []
+    assert result.error is not None and "waste" in result.error
+
+
 async def test_kit_de_mantenimiento_crea_incidente_via_soap() -> None:
     """Los kits de mantenimiento van como incidente (persistNewIncident, tipo 101
     Correctivo — ver docstring de incident_creation.py) en vez de pedido de insumo."""
@@ -422,6 +472,28 @@ async def test_kit_de_mantenimiento_crea_incidente_via_soap() -> None:
     created = [r for r in world.audit.records if r.event == EVENT_CREATED]
     assert created[0].order_type == ORDER_TYPE_INCIDENT
     assert created[0].detail == "Pre-Correctivo (kit de mantenimiento)"
+
+
+async def test_kit_de_mantenimiento_con_aviso_de_sucursal_compone_el_detail() -> None:
+    world = World()
+    world.insight.consumable_requests[0]["consumable"]["reorderPart"] = {
+        "type": "MAINTENANCE_KIT"
+    }
+    world.zone_contacts.zones[(8, "HANGAR")] = ZoneContacts(
+        solicitante=ContactInfo(apellido="Perez", nombre="Juan"),
+        destinatario=ContactInfo(),
+        observaciones="CARGAR PARA SUCURSAL: OFICINA SALTA.",
+    )
+
+    result = await world.use_case.execute(_command())
+
+    assert result.ok
+    assert result.requiere_cambio_sucursal is True
+    assert result.sucursal_entrega == "OFICINA SALTA"
+    created = [r for r in world.audit.records if r.event == EVENT_CREATED]
+    assert created[0].detail == (
+        "Pre-Correctivo (kit de mantenimiento) · Pendiente cambio de sucursal a OFICINA SALTA"
+    )
 
 
 async def test_kit_de_mantenimiento_dry_run_no_persiste() -> None:

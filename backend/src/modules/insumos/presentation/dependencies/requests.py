@@ -132,6 +132,7 @@ def build_list_requests(session: AsyncSession) -> ListRequests:
                 diagnosis=ValidationDiagnosis(insight, wsayc),
             )
         ),
+        zone_contacts=SqlAlchemyZoneContactRepository(session),
     )
     config = ListRequestsConfig(
         order_settings=cd_settings, insight_base_url=settings.insight_base_url

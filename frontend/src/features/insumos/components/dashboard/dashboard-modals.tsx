@@ -37,7 +37,7 @@ interface InfoRow {
   detail: ReactNode;
 }
 
-function InfoGrid({ rows }: { rows: InfoRow[] }) {
+export function InfoGrid({ rows }: { rows: InfoRow[] }) {
   return (
     <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 font-body text-[13px]">
       {rows.map((row, index) => (
@@ -50,7 +50,7 @@ function InfoGrid({ rows }: { rows: InfoRow[] }) {
   );
 }
 
-function SectionLabel({ children }: { children: ReactNode }) {
+export function SectionLabel({ children }: { children: ReactNode }) {
   return (
     <h3 className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
       {children}

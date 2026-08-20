@@ -138,14 +138,17 @@ export function useOfflineDevices() {
       setDeleting(true);
       try {
         const result = await insumosApi.deleteOfflineDevices(payload);
-        const ok = result.results.filter((r) => r.ok).length;
-        const fail = result.results.filter((r) => !r.ok).length;
+        const failed = result.results.filter((r) => !r.ok);
+        const ok = result.results.length - failed.length;
         if (result.dryRun) {
-          toast.info(`Dry-run: ${ok} baja(s) simulada(s)${fail > 0 ? `, ${fail} error(es)` : ""}.`);
-        } else if (fail === 0) {
+          toast.info(`Dry-run: ${ok} baja(s) simulada(s)${failed.length > 0 ? `, ${failed.length} error(es)` : ""}.`);
+        } else if (failed.length === 0) {
           toast.success(`${ok} equipo(s) dado(s) de baja en SDS.`);
         } else {
-          toast.warning(`${ok} baja(s) OK, ${fail} error(es). Revisá los detalles.`);
+          // Motivo real por equipo, no solo el conteo — sin esto es imposible saber
+          // desde la UI si rechazó por no ser candidato o por una falla real de baja.
+          const detail = failed.map((r) => `${r.serial}: ${r.error ?? "error desconocido"}`).join(" · ");
+          toast.warning(`${ok} baja(s) OK, ${failed.length} error(es) — ${detail}`, { duration: 8000 });
         }
         await refresh(true);
         return true;

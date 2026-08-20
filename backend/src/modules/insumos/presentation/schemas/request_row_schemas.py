@@ -47,6 +47,9 @@ class RequestRowOut(BaseModel):
     supply_id: str | None = Field(default=None, serialization_alias="supplyId")
     supply_url: str | None = Field(default=None, serialization_alias="supplyUrl")
     supply_status: str | None = Field(default=None, serialization_alias="supplyStatus")
+    requiere_cambio_sucursal: bool = Field(serialization_alias="requiereCambioSucursal")
+    sucursal_entrega: str | None = Field(default=None, serialization_alias="sucursalEntrega")
+    observacion_zona: str | None = Field(default=None, serialization_alias="observacionZona")
 
     @classmethod
     def from_row(cls, row: RequestRow) -> "RequestRowOut":
