@@ -276,9 +276,13 @@ test.describe("Modo vacaciones (grilla variante de turnos)", () => {
     const tracks = dialog.getByText(/^Turnos (INSUMOS|ST)$/);
     await expect(tracks).toHaveText(["Turnos INSUMOS", "Turnos ST"]);
     await expect(dialog.getByText("8:30–11h")).toBeVisible();
-    // ST 8–9 es angosta (<12% del eje): no muestra el rango, sí el tooltip completo
+    // ST 8–9 es angosta (1 h = 10 % del eje): rango siempre visible, nombre de pila,
+    // y el tooltip conserva el nombre completo
+    await expect(dialog.getByText("8–9h")).toBeVisible();
+    await expect(dialog.getByText("Mariana", { exact: true })).toBeVisible();
     await expect(dialog.getByTitle("Mariana Rodriguez · 08:00–09:00")).toBeVisible();
-    await expect(dialog.getByText("Mariana Rodriguez")).toHaveCount(2); // franja + leyenda
+    await expect(dialog.getByText("Mariana Rodriguez")).toHaveCount(1); // solo la leyenda
+    await expect(dialog.getByText("17–18h")).toBeVisible(); // INSUMOS Victor, también angosta
     await expect(dialog.getByText("Maria Jose Vela")).toHaveCount(0);
     // Sin pestañas de día cuando los 5 días son idénticos
     await expect(dialog.getByRole("radio", { name: "Martes" })).toHaveCount(0);

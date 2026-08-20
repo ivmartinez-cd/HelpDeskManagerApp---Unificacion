@@ -29,8 +29,15 @@ interface Segmento {
   bg: string;
   range: string;
   label: string;
+  /** Solo nombres de pila, para franjas angostas ("Victor" en vez de "Victor Paez"). */
+  labelCorto: string;
   tip: string;
 }
+
+/** Debajo de este ancho (% del eje) el nombre completo no entra: se muestra
+ * el nombre de pila y el rango en tipografía más chica; el tooltip conserva
+ * todo. Una franja de 1 h sobre el eje 08–18 es el 10 %. */
+const ANCHO_ANGOSTO_PCT = 14;
 
 interface Track {
   name: string;
@@ -78,6 +85,8 @@ function buildTracks(
           const hasta = toHours(s.horaFin);
           const color = s.operadores[0]?.color ?? FALLBACK_COLOR;
           const nombres = s.operadores.map((o) => o.userName).join(" · ") || "Sin asignar";
+          const nombresCortos =
+            s.operadores.map((o) => o.userName.trim().split(/\s+/)[0]).join(" · ") || "Sin asignar";
           const widthPct = ((hasta - desde) / span) * 100;
           return {
             key: s.key,
@@ -88,6 +97,7 @@ function buildTracks(
             bg: tint(color),
             range: `${fmtHora(desde)}–${fmtHora(hasta)}h`,
             label: nombres,
+            labelCorto: nombresCortos,
             tip: `${nombres} · ${s.horaInicio.slice(0, 5)}–${s.horaFin.slice(0, 5)}`,
           };
         }),
@@ -141,26 +151,33 @@ export function TurnosTimeline({
             {track.name}
           </div>
           <div className="relative h-[46px] overflow-hidden rounded-[9px] bg-white/[.03]">
-            {track.segs.map((seg) => (
-              <div
-                key={seg.key}
-                title={seg.tip}
-                className="absolute inset-y-0 flex flex-col justify-center overflow-hidden border-r-2 border-card px-2"
-                style={{ left: seg.left, width: seg.width, background: seg.bg }}
-              >
-                {seg.widthPct >= 12 && (
+            {track.segs.map((seg) => {
+              const angosta = seg.widthPct < ANCHO_ANGOSTO_PCT;
+              return (
+                <div
+                  key={seg.key}
+                  title={seg.tip}
+                  className={`absolute inset-y-0 flex flex-col justify-center overflow-hidden border-r-2 border-card ${
+                    angosta ? "px-1" : "px-2"
+                  }`}
+                  style={{ left: seg.left, width: seg.width, background: seg.bg }}
+                >
                   <span
-                    className="truncate font-heading text-[10px] font-bold"
+                    className={`truncate font-heading font-bold ${angosta ? "text-[9px]" : "text-[10px]"}`}
                     style={{ color: accentText(seg.color) }}
                   >
                     {seg.range}
                   </span>
-                )}
-                <span className="truncate font-body text-[11.5px] font-semibold text-foreground">
-                  {seg.label}
-                </span>
-              </div>
-            ))}
+                  <span
+                    className={`truncate font-body font-semibold text-foreground ${
+                      angosta ? "text-[10.5px]" : "text-[11.5px]"
+                    }`}
+                  >
+                    {angosta ? seg.labelCorto : seg.label}
+                  </span>
+                </div>
+              );
+            })}
             {inHours && nowH !== null && (
               <div
                 className="absolute -inset-y-0.5 w-0.5 bg-white shadow-[0_0_8px_rgba(255,255,255,.6)]"
