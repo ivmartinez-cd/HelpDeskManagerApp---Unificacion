@@ -94,16 +94,37 @@ Desde 2026-08-13 (commit `e0576cd`) ni el backend ni el frontend recargan códig
 decisión deliberada, no una limitación: el `--reload` de uvicorn podía relanzar los background
 jobs con cada guardado (así se disparó el mail real del incidente 2026-08-12). El código sigue
 bind-monteado (`./backend:/app`, `./frontend:/app`), pero editar un archivo **no tiene ningún
-efecto** hasta reiniciar el contenedor:
+efecto** hasta reiniciar el contenedor.
+
+**Docker corre en WSL (Ubuntu-24.04), no en Windows, y los contenedores montan una COPIA del
+repo en Linux** (`/home/ivan/proyectos/helpdesk-manager`), no esta carpeta de Windows (leer
+`/mnt/c` desde WSL es lento; desde 2026-08-20). Por eso `docker` no existe en el PATH de Windows
+y un `docker restart` a secas rebuildea código viejo. El único paso a recordar es el script
+`scripts/wsl/sincronizar-y-reiniciar.sh`, que copia frontend/backend/.env a la copia de Linux
+(rsync, segundos) y reinicia el servicio:
+
+```
+# desde PowerShell o cmd (Git Bash convierte /mnt/c/... en ruta de Windows: anteponer MSYS_NO_PATHCONV=1)
+wsl.exe -d Ubuntu-24.04 -- bash /mnt/c/Users/imartinez.CDSA/Desktop/Proyectos/HelpDeskManager-Unificacion/scripts/wsl/sincronizar-y-reiniciar.sh frontend
+wsl.exe -d Ubuntu-24.04 -- bash /mnt/c/Users/imartinez.CDSA/Desktop/Proyectos/HelpDeskManager-Unificacion/scripts/wsl/sincronizar-y-reiniciar.sh backend
+wsl.exe -d Ubuntu-24.04 -- bash /mnt/c/Users/imartinez.CDSA/Desktop/Proyectos/HelpDeskManager-Unificacion/scripts/wsl/sincronizar-y-reiniciar.sh solo-sync
+```
 
 - **Backend** (`helpdesk-manager-backend`): uvicorn corre sin `--reload`. Tras editar
-  `backend/`, `docker restart helpdesk-manager-backend` (re-corre el entrypoint:
-  `alembic upgrade head` + uvicorn). Recordar que `docker restart` NO relee `.env` — para
-  cambios de variables de entorno hace falta `docker compose up -d --force-recreate backend`.
+  `backend/`, `… sincronizar-y-reiniciar.sh backend` (sync + `docker restart`, que re-corre el
+  entrypoint: `alembic upgrade head` + uvicorn; el script aborta si `DISABLE_BACKGROUND_JOBS`
+  no está en `true` y avisa si el log muestra jobs iniciados). Recordar que `docker restart` NO
+  relee `.env` — para cambios de variables de entorno hace falta, dentro de WSL y parado en
+  `/home/ivan/proyectos/helpdesk-manager`, `docker compose up -d --force-recreate backend`
+  (después de `… solo-sync` para que el `.env` copiado sea el nuevo).
 - **Frontend** (`helpdesk-manager-frontend`): el contenedor corre `next build && next start`
   (build de producción al arrancar). Tras editar `frontend/`,
-  `docker restart helpdesk-manager-frontend` re-corre el build completo — tarda bastante más
-  que un dev server; esperar a que `/` vuelva a responder 200 antes de probar.
+  `… sincronizar-y-reiniciar.sh frontend` re-corre el build completo — tarda bastante más que
+  un dev server; el script espera a que `/login` vuelva a responder 200 antes de devolver.
+- Cualquier otro comando `docker …` / `docker compose …` se ejecuta vía
+  `wsl.exe -d Ubuntu-24.04 -- bash -c "…"`, parado en la copia de Linux.
+- Playwright local (`frontend/`): el puerto 3001 lo ocupa otro contenedor del usuario
+  (`stc_api`); usar `PW_PORT=3011 npx playwright test …`.
 
 **Cómo verificar**: no asumir que un cambio está servido solo porque el navegador lo muestra
 (el navegador tiene su propia caché). Antes de dar por buena una captura o un test visual:
