@@ -8,6 +8,7 @@ import type { Casilla, Slot, UserOption } from "../../types/turnos";
 import type { GrillaVariante, VarianteEstadoUi } from "../../types/grilla-variantes";
 import { deriveEstadoVariante, formatFecha } from "../../lib/variante-estado";
 import { VarianteEditor, type PrecargaInicial } from "./variante-editor";
+import { VariantePreviewModal } from "./variante-preview-modal";
 import { VariantesTabla } from "./variantes-tabla";
 import { BrandButton, BrandEmptyState, BrandSkeleton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
@@ -42,6 +43,7 @@ export function ModoVacacionesView({ precargaInicial = null }: ModoVacacionesVie
     | { modo: "edicion"; variante: GrillaVariante }
   >(() => (precargaInicial ? { modo: "alta", precarga: precargaInicial } : { modo: "cerrado" }));
   const [cancelando, setCancelando] = useState<GrillaVariante | null>(null);
+  const [previsualizando, setPrevisualizando] = useState<GrillaVariante | null>(null);
   const [cancelandoBusy, setCancelandoBusy] = useState(false);
   const [ultimaGuardada, setUltimaGuardada] = useState<GrillaVariante | null>(null);
 
@@ -176,6 +178,7 @@ export function ModoVacacionesView({ precargaInicial = null }: ModoVacacionesVie
           ) : (
             <VariantesTabla
               rows={filtradas}
+              onPreview={setPrevisualizando}
               onEdit={(v) => setEditor({ modo: "edicion", variante: v })}
               onCancel={setCancelando}
             />
@@ -186,6 +189,14 @@ export function ModoVacacionesView({ precargaInicial = null }: ModoVacacionesVie
             reversión anticipada y queda registrada.
           </p>
         </>
+      )}
+
+      {previsualizando && (
+        <VariantePreviewModal
+          variante={previsualizando}
+          ordenCasillas={casillas.map((c) => c.nombre)}
+          onClose={() => setPrevisualizando(null)}
+        />
       )}
 
       {cancelando && (

@@ -236,6 +236,54 @@ test.describe("Modo vacaciones (grilla variante de turnos)", () => {
     }).toPass();
   });
 
+  test("vista previa: 'Ver grilla' abre el timeline de Turnos del día con la variante (L–V iguales)", async ({
+    page,
+  }) => {
+    // Grilla esperada del caso Majo, igual los 5 días
+    const plan = [
+      [INSUMOS, "INSUMOS", "08:30:00", "11:00:00", MARIANO],
+      [INSUMOS, "INSUMOS", "11:00:00", "13:00:00", LUNA],
+      [INSUMOS, "INSUMOS", "13:00:00", "17:00:00", MARIANO],
+      [INSUMOS, "INSUMOS", "17:00:00", "18:00:00", VICTOR],
+      [ST, "ST", "08:00:00", "09:00:00", MARIANA],
+      [ST, "ST", "09:00:00", "14:00:00", VICTOR],
+      [ST, "ST", "14:00:00", "18:00:00", LUNA],
+    ] as const;
+    const conSlots = {
+      ...VARIANTE_GUARDADA,
+      slots: [0, 1, 2, 3, 4].flatMap((dia) =>
+        plan.map(([casillaId, casillaNombre, horaInicio, horaFin, user], i) => ({
+          id: `ffffffff-0000-0000-00${dia}0-00000000000${i + 1}`,
+          casillaId,
+          casillaNombre,
+          diaSemana: dia,
+          horaInicio,
+          horaFin,
+          sortOrder: i,
+          operadores: [op(user)],
+        })),
+      ),
+    };
+    await mockTurnos(page, [conSlots]);
+
+    await page.goto("/admin/turnos?tab=vacaciones");
+    await page.getByRole("button", { name: "Ver grilla Vacaciones M. J. Vela" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Grilla de vacaciones · Vacaciones M. J. Vela" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText("Vigencia 24/08/2026 → 28/08/2026 · Lunes a viernes (igual todos los días)")).toBeVisible();
+    // Tracks en el orden del admin (INSUMOS antes que ST aunque ST arranque 8:00)
+    const tracks = dialog.getByText(/^Turnos (INSUMOS|ST)$/);
+    await expect(tracks).toHaveText(["Turnos INSUMOS", "Turnos ST"]);
+    await expect(dialog.getByText("8:30–11h")).toBeVisible();
+    // ST 8–9 es angosta (<12% del eje): no muestra el rango, sí el tooltip completo
+    await expect(dialog.getByTitle("Mariana Rodriguez · 08:00–09:00")).toBeVisible();
+    await expect(dialog.getByText("Mariana Rodriguez")).toHaveCount(2); // franja + leyenda
+    await expect(dialog.getByText("Maria Jose Vela")).toHaveCount(0);
+    // Sin pestañas de día cuando los 5 días son idénticos
+    await expect(dialog.getByRole("radio", { name: "Martes" })).toHaveCount(0);
+  });
+
   test("home: badge 'Grilla de vacaciones hasta el DD/MM' cuando /current trae varianteActiva", async ({
     page,
   }) => {

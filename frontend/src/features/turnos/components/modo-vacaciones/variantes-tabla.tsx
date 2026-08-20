@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, Pencil } from "lucide-react";
+import { Ban, Eye, Pencil } from "lucide-react";
 import type { GrillaVariante } from "../../types/grilla-variantes";
 import {
   ESTADO_VARIANTE_META,
@@ -11,6 +11,7 @@ import { BrandBadge } from "@/shared/components/ui/brand-form";
 
 interface VariantesTablaProps {
   rows: GrillaVariante[];
+  onPreview: (variante: GrillaVariante) => void;
   onEdit: (variante: GrillaVariante) => void;
   onCancel: (variante: GrillaVariante) => void;
 }
@@ -19,7 +20,7 @@ interface VariantesTablaProps {
  * estados Programada/Vigente/Vencida se derivan por fecha en el cliente (la
  * DB solo persiste ACTIVA/CANCELADA, ADR-025). Solo las que siguen en juego
  * se editan/cancelan: una vencida o cancelada es registro histórico. */
-export function VariantesTabla({ rows, onEdit, onCancel }: VariantesTablaProps) {
+export function VariantesTabla({ rows, onPreview, onEdit, onCancel }: VariantesTablaProps) {
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
       <table className="w-full min-w-[720px] text-left">
@@ -69,6 +70,15 @@ export function VariantesTabla({ rows, onEdit, onCancel }: VariantesTablaProps) 
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => onPreview(v)}
+                      aria-label={`Ver grilla ${etiqueta}`}
+                      title="Ver cómo queda Turnos del día"
+                      className="rounded-[8px] p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
                     {mutable && (
                       <button
                         type="button"
