@@ -38,6 +38,19 @@ tras el paso puntuación→espacio, sin igualar nunca a su forma plana (`ENI`, `
   **N2 SIEMPRE requiere confirmación humana — no hay excepción, no auto-vincula nunca**,
   ni siquiera con score 1.0 por texto (solo N1, que es estructuralmente distinto:
   igualdad exacta bajo la normalización determinística, no un score).
+- **N2 por dirección** (2026-08-20, pedido del usuario tras probar el asistente rediseñado):
+  misma empresa + misma **dirección normalizada** (`clave_direccion`: domicilio sin sufijos
+  Piso/Dpto ni altura "0" — reusa `normalizar_domicilio` — más localidad, ambos sin acentos,
+  mayúsculas ni puntuación) propone el candidato **aunque el nombre no se parezca en nada**:
+  es el caso de la sucursal renombrada en Gestión (p. ej. "Escuela ANTONIO QUARANTA" →
+  "Escuela Mariano Ianelli", misma dirección). Sigue siendo N2: **siempre confirmación
+  humana** (dos sucursales distintas pueden compartir domicilio), respeta el ancla por número
+  y el tope de 3 candidatos; van primero en el ranking (después de N1, que nunca deja de ser
+  el primero para que el auto-vínculo siga funcionando). Direcciones vacías o genéricas
+  ("S/N 0", solo números) no generan clave ni candidatos. El candidato viaja con
+  `mismaDireccion: true` y motivo "misma dirección · …"; el asistente lo muestra con la
+  etiqueta "misma dirección". Tests en `test_matching_sucursales_tabla_km.py`
+  (`TestClaveDireccion`, `TestProponerPorDireccion`).
 
 ## Por qué el umbral prioriza recall
 

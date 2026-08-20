@@ -8,18 +8,25 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
 )
 from src.modules.liquidaciones.domain.services.matching_sucursales_tabla_km import (
     FilaSinMatch,
+    clave_direccion,
     normalizar_nombre_fuerte,
     proponer_matches_tabla_km,
 )
 
 
-def _siges(id_: int, empresa: str, sucursal: str) -> SigesSucursalCliente:
+def _siges(
+    id_: int,
+    empresa: str,
+    sucursal: str,
+    domicilio: str | None = None,
+    localidad: str | None = None,
+) -> SigesSucursalCliente:
     return SigesSucursalCliente(
         siges_sucursal_id=id_,
         empresa_nombre=empresa,
         sucursal_nombre=sucursal,
-        domicilio=None,
-        localidad=None,
+        domicilio=domicilio,
+        localidad=localidad,
         provincia=None,
     )
 
@@ -152,3 +159,103 @@ class TestProponerMatchesTablaKm:
         assert propuestas[fila_id][0].siges_sucursal_id == 10
         assert propuestas[fila_id][0].nivel == "N1"
         assert len(propuestas[fila_id]) <= 3
+
+
+class TestClaveDireccion:
+    def test_normaliza_sufijos_acentos_y_localidad(self) -> None:
+        assert clave_direccion("Laprida e Independencia S/N 0", "San Juan") == clave_direccion(
+            "LAPRIDA E INDEPENDENCIA s/n Piso: Dpto:", "SAN JUAN"
+        )
+
+    def test_direccion_generica_no_genera_clave(self) -> None:
+        assert clave_direccion("S/N 0", "San Juan") is None
+        assert clave_direccion(None, "San Juan") is None
+        assert clave_direccion("0", None) is None
+
+    def test_localidad_distinta_es_otra_clave(self) -> None:
+        assert clave_direccion("San Martín 120", "Rawson") != clave_direccion(
+            "San Martín 120", "Chimbas"
+        )
+
+
+class TestProponerPorDireccion:
+    def test_renombrada_con_misma_direccion_se_propone_como_n2(self) -> None:
+        # Caso real pedido por el usuario (2026-08-20): la escuela cambió de nombre en
+        # Gestión pero conserva la dirección. Por nombre el score es ~0.
+        fila_id = uuid.uuid4()
+        filas = [
+            FilaSinMatch(
+                fila_id,
+                "Gobierno de San Juan",
+                "Escuela ANTONIO QUARANTA",
+                "Laprida e Independencia S/N 0",
+                "SAN JUAN",
+            )
+        ]
+        candidatos = [
+            _siges(
+                7,
+                "Gobierno de San Juan",
+                "Escuela Mariano Ianelli",
+                "Laprida e Independencia S/N 0",
+                "San Juan",
+            ),
+            _siges(
+                8, "Gobierno de San Juan", "Escuela Antonio Torres", "General Acha 426", "San Juan"
+            ),
+        ]
+
+        propuestas = proponer_matches_tabla_km(filas, candidatos)
+
+        top = propuestas[fila_id][0]
+        assert top.siges_sucursal_id == 7
+        assert top.nivel == "N2"
+        assert top.misma_direccion is True
+        assert top.motivo.startswith("misma dirección")
+
+    def test_direccion_nunca_auto_vincula(self) -> None:
+        fila_id = uuid.uuid4()
+        filas = [
+            FilaSinMatch(fila_id, "Natura", "Paola Rodriguez", "Bilibiscate 2658", "Córdoba")
+        ]
+        candidatos = [_siges(1, "Natura", "Romina Cerutti", "Bilibiscate 2658", "Córdoba")]
+
+        propuestas = proponer_matches_tabla_km(filas, candidatos)
+
+        assert all(c.nivel == "N2" for c in propuestas[fila_id])
+
+    def test_n1_sigue_primero_aunque_otro_comparta_direccion(self) -> None:
+        fila_id = uuid.uuid4()
+        filas = [
+            FilaSinMatch(fila_id, "Gobierno de San Juan", "E.N.I. Nº 60", "Mitre 100", "Rawson")
+        ]
+        candidatos = [
+            _siges(1, "Gobierno de San Juan", "Escuela Albergue", "Mitre 100", "Rawson"),
+            _siges(2, "Gobierno de San Juan", "ENI N.º 60", "Otra calle 5", "Rawson"),
+        ]
+
+        propuestas = proponer_matches_tabla_km(filas, candidatos)
+
+        assert propuestas[fila_id][0].siges_sucursal_id == 2
+        assert propuestas[fila_id][0].nivel == "N1"
+
+    def test_numero_distinto_gana_a_la_direccion(self) -> None:
+        fila_id = uuid.uuid4()
+        filas = [
+            FilaSinMatch(fila_id, "Gobierno de San Juan", "ENI N.º 4", "Mitre 100", "Rawson")
+        ]
+        candidatos = [_siges(1, "Gobierno de San Juan", "ENI N.º 8", "Mitre 100", "Rawson")]
+
+        assert proponer_matches_tabla_km(filas, candidatos) == {}
+
+    def test_direccion_generica_no_propone(self) -> None:
+        fila_id = uuid.uuid4()
+        # Nombres sin ningún parecido: solo la dirección podría proponerlos, y es genérica.
+        filas = [
+            FilaSinMatch(fila_id, "Gobierno de San Juan", "Escuela Uno", "S/N 0", "Rawson")
+        ]
+        candidatos = [
+            _siges(1, "Gobierno de San Juan", "Jardin Maternal Arcoiris", "S/N 0", "Rawson")
+        ]
+
+        assert proponer_matches_tabla_km(filas, candidatos) == {}

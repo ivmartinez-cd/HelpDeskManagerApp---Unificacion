@@ -24,8 +24,9 @@ const SUCURSALES = [
 const PROPUESTAS = [{
   tablaKmId: "1", empresaNombre: "Gobierno de San Juan", sucursalNombre: "Escuela ANTONIO QUARANTA",
   candidatos: [
-    { sigesSucursalId: 10, sucursalNombre: "Escuela Antonio Pulenta", domicilio: "Laprida e Independencia S/N", score: 0.65, motivo: "difieren en — local trae: quaranta; Siges trae: pulenta" },
-    { sigesSucursalId: 11, sucursalNombre: "Escuela Antonio Torres", domicilio: "General Acha 426", score: 0.57, motivo: "difieren en — local trae: quaranta; Siges trae: torres" },
+    { sigesSucursalId: 12, sucursalNombre: "Escuela Mariano Ianelli", domicilio: "Laprida e Independencia S/N", score: 0.2, motivo: "misma dirección · difieren en — local trae: antonio quaranta; Siges trae: ianelli mariano", mismaDireccion: true },
+    { sigesSucursalId: 10, sucursalNombre: "Escuela Antonio Pulenta", domicilio: "Laprida e Independencia S/N", score: 0.65, motivo: "difieren en — local trae: quaranta; Siges trae: pulenta", mismaDireccion: false },
+    { sigesSucursalId: 11, sucursalNombre: "Escuela Antonio Torres", domicilio: "General Acha 426", score: 0.57, motivo: "difieren en — local trae: quaranta; Siges trae: torres", mismaDireccion: false },
   ],
 }];
 const COORDENADAS = [{
@@ -130,6 +131,8 @@ test("asistente de KM: intro, chequeos gratis, Traer de Gestión y bandeja únic
   await expect(dialog.getByRole("button", { name: "Usar la dirección escrita" })).toBeVisible();
   await expect(dialog.getByText('¿"Escuela ANTONIO QUARANTA" es esta sucursal de Gestión?')).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Sí, es esta" })).toHaveCount(1);
+  await expect(dialog.getByText("Escuela Mariano Ianelli")).toBeVisible();
+  await expect(dialog.getByText("misma dirección", { exact: true })).toBeVisible();
   await expect(dialog.getByText("Datos de mapa © OpenStreetMap contributors (ODbL)")).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Exportar CSV para Gestión" })).toBeVisible();
   // Nada de jerga técnica en la vista por defecto.

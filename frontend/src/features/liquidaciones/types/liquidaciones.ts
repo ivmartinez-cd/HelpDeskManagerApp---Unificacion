@@ -460,6 +460,8 @@ export interface CandidatoN2Match {
   domicilio: string | null;
   score: number;
   motivo: string;
+  /** Misma dirección normalizada que la fila local (sucursal renombrada). */
+  mismaDireccion: boolean;
 }
 
 export interface PropuestaN2Match {

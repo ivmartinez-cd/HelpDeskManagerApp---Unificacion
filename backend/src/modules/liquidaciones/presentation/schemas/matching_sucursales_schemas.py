@@ -51,6 +51,7 @@ class CandidatoN2Out(BaseModel):
     domicilio: str | None
     score: float
     motivo: str
+    misma_direccion: bool = Field(serialization_alias="mismaDireccion")
 
     @classmethod
     def from_dto(cls, c: CandidatoN2Detalle) -> CandidatoN2Out:
@@ -60,6 +61,7 @@ class CandidatoN2Out(BaseModel):
             domicilio=c.domicilio,
             score=round(c.score, 3),
             motivo=c.motivo,
+            misma_direccion=c.misma_direccion,
         )
 
 

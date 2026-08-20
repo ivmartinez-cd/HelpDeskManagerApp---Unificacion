@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/shared/components/ui/badge";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { NombreCandidato, NombreSinCandidato } from "../lib/asistente-km-bandeja";
@@ -29,7 +30,10 @@ function Candidato({ tablaKmId, candidato, principal, onResuelto }: {
   return (
     <div className="flex items-center justify-between gap-3 rounded-[6px] border border-border/70 bg-muted/20 px-3 py-2">
       <div className="min-w-0">
-        <p className="truncate font-body text-sm font-semibold text-foreground">{candidato.sucursalNombre}</p>
+        <p className="flex items-center gap-2 font-body text-sm font-semibold text-foreground">
+          <span className="truncate">{candidato.sucursalNombre}</span>
+          {candidato.mismaDireccion && <Badge variant="success">misma dirección</Badge>}
+        </p>
         <p className="truncate font-body text-xs text-muted-foreground">{candidato.domicilio ?? "sin domicilio en Gestión"}</p>
       </div>
       <div className="flex flex-shrink-0 items-center gap-2">
@@ -74,7 +78,11 @@ export function ItemNombreCandidato({ item, onCambio }: { item: NombreCandidato;
         </ul>
       }
     >
-      <p className="mb-2 text-xs">Empresa: {propuesta.empresaNombre}. Si no es ninguna, respondé &quot;No es esta&quot; y no se vuelve a proponer.</p>
+      <p className="mb-2 text-xs">
+        Empresa: {propuesta.empresaNombre}.
+        {propuesta.candidatos.some((c) => c.mismaDireccion) && " Hay una sucursal de Gestión con la misma dirección: puede ser esta misma, renombrada."}
+        {" "}Si no es ninguna, respondé &quot;No es esta&quot; y no se vuelve a proponer.
+      </p>
       <div className="flex flex-col gap-1.5">
         {visibles.map((c, i) => (
           <Candidato key={c.sigesSucursalId} tablaKmId={propuesta.tablaKmId} candidato={c} principal={i === 0} onResuelto={onCambio} />

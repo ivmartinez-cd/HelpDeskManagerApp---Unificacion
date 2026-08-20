@@ -26,7 +26,7 @@ case "$SVC" in frontend|backend|solo-sync) ;; *) echo "Uso: $0 frontend|backend|
 EXCL=(--exclude node_modules --exclude .next --exclude .venv --exclude .git --exclude __pycache__
       --exclude '*.pyc' --exclude test-results --exclude playwright-report --exclude .pytest_cache
       --exclude .ruff_cache --exclude .mypy_cache --exclude var/
-      --exclude next-env.d.ts --exclude tsconfig.tsbuildinfo)
+      --exclude next-env.d.ts --exclude tsconfig.tsbuildinfo --exclude .import_linter_cache)
 
 echo "== Sincronizando $WIN → $LIN"
 rsync -rlt --delete --itemize-changes "${EXCL[@]}" "$WIN/frontend/" "$LIN/frontend/" | grep -E '^[<>ch*]' | sed 's/^/  frontend: /' || true

@@ -61,6 +61,13 @@ async def _sin_match_n0(
     return sin_match, sucursales
 
 
+def _a_fila_sin_match(f: TablaKm) -> FilaSinMatch:
+    # Domicilio/localidad locales alimentan el ancla por dirección (N2).
+    return FilaSinMatch(
+        f.id, f.empresa_nombre, f.sucursal_nombre, f.domicilio_cliente, f.localidad_cliente
+    )
+
+
 @dataclass(frozen=True)
 class VinculoN1Aplicado:
     tabla_km_id: UUID
@@ -89,7 +96,7 @@ class AutoVincularMatchesN1TablaKm:
 
     async def execute(self, prestador_id: UUID) -> ResultadoAutoVinculoN1:
         sin_match, sucursales = await _sin_match_n0(self._ports, prestador_id)
-        filas_n1 = [FilaSinMatch(f.id, f.empresa_nombre, f.sucursal_nombre) for f in sin_match]
+        filas_n1 = [_a_fila_sin_match(f) for f in sin_match]
         propuestas = proponer_matches_tabla_km(filas_n1, sucursales)
         por_id = {s.siges_sucursal_id: s for s in sucursales}
         por_fila = {f.id: f for f in sin_match}
@@ -123,6 +130,7 @@ class CandidatoN2Detalle:
     domicilio: str | None
     score: float
     motivo: str
+    misma_direccion: bool
 
 
 @dataclass(frozen=True)
@@ -144,7 +152,7 @@ class ListarPropuestasN2TablaKm:
 
     async def execute(self, prestador_id: UUID) -> list[PropuestaN2]:
         sin_match, sucursales = await _sin_match_n0(self._ports, prestador_id)
-        filas = [FilaSinMatch(f.id, f.empresa_nombre, f.sucursal_nombre) for f in sin_match]
+        filas = [_a_fila_sin_match(f) for f in sin_match]
         propuestas = proponer_matches_tabla_km(filas, sucursales)
         descartados = await self._ports.descartes.list_descartados_por_fila(
             [f.id for f in filas]
@@ -182,4 +190,5 @@ def _a_detalle(candidato: CandidatoPropuesto, siges: SigesSucursalCliente) -> Ca
         siges.domicilio,
         candidato.score,
         candidato.motivo,
+        candidato.misma_direccion,
     )

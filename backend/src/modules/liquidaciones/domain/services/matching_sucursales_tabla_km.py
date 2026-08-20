@@ -9,7 +9,12 @@ que además unifica símbolo de número (Nº/N°/N.º/Nro → "n"), siglas con p
 (Secundaria/Superior/Provincia/Nacional/Primaria/República/Presidente/Técnica/
 General/Escuela). Aprobado para auto-vínculo (decisión 0.4.a). N2 (acá):
 comparador difuso con score compuesto — SIEMPRE requiere confirmación humana,
-nunca auto-vincula (regla de negocio explícita, no ambigua).
+nunca auto-vincula (regla de negocio explícita, no ambigua). N2 por dirección
+(2026-08-20, pedido del usuario): misma empresa + misma dirección normalizada
+(domicilio + localidad) propone el candidato aunque el nombre no se parezca en
+nada (sucursal renombrada, p. ej. "Escuela ANTONIO QUARANTA" → "Escuela Mariano
+Ianelli"); también SIEMPRE con confirmación humana — dos sucursales distintas
+pueden compartir domicilio.
 """
 
 import re
@@ -22,6 +27,7 @@ from uuid import UUID
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesSucursalCliente,
 )
+from src.modules.liquidaciones.domain.services.geolocalizacion import normalizar_domicilio
 
 NivelMatch = Literal["N1", "N2"]
 
@@ -130,6 +136,8 @@ class FilaSinMatch:
     id: UUID
     empresa_nombre: str
     sucursal_nombre: str
+    domicilio: str | None = None
+    localidad: str | None = None
 
 
 @dataclass(frozen=True)
@@ -138,6 +146,31 @@ class CandidatoPropuesto:
     score: float
     nivel: NivelMatch
     motivo: str
+    # Ancla por dirección (N2): misma dirección normalizada que la fila local.
+    misma_direccion: bool = False
+
+
+# Tokens que no identifican una dirección por sí solos ("S/N", "sin número").
+_TOKENS_DIRECCION_VACIOS = frozenset({"s", "n", "sn", "sin", "numero", "nro"})
+
+
+def _tokens_direccion(texto: str) -> list[str]:
+    sin_compat = unicodedata.normalize("NFKD", texto)
+    sin_acentos = "".join(ch for ch in sin_compat if not unicodedata.combining(ch))
+    alfanumerico = "".join(ch if ch.isalnum() else " " for ch in sin_acentos.lower())
+    return [t for t in alfanumerico.split() if t not in _TOKENS_DIRECCION_VACIOS]
+
+
+def clave_direccion(domicilio: str | None, localidad: str | None) -> str | None:
+    """Clave de comparación de dirección: domicilio (sin sufijos Piso/Dpto ni
+    altura '0', ver `normalizar_domicilio`) + localidad, ambos sin acentos,
+    mayúsculas ni puntuación. `None` si el domicilio no identifica nada (vacío,
+    "S/N 0", solo números): esas direcciones no deben generar candidatos."""
+    dom = _tokens_direccion(normalizar_domicilio(domicilio)) if domicilio else []
+    if not any(len(t) >= 3 and not t.isdigit() for t in dom):
+        return None
+    loc = _tokens_direccion(localidad) if localidad else []
+    return " ".join(dom) + "|" + " ".join(loc)
 
 
 _MOTIVO_N1 = "símbolo/abreviatura normalizados (misma sucursal)"
@@ -163,9 +196,11 @@ def proponer_matches_tabla_km(
     """Para cada fila local sin match en N0, top-N candidatos Siges de la
     MISMA empresa (normalizada), rankeados por score. Nivel N1 = igualdad
     exacta bajo `normalizar_nombre_fuerte` (auto-vinculable, decisión 0.4.a);
-    N2 = score >= UMBRAL_N2 (SIEMPRE requiere confirmación humana). Un
-    candidato con número de sucursal distinto al de la fila local nunca se
-    propone (ancla dura, ver `_numero_sucursal`)."""
+    N2 = score >= UMBRAL_N2 o misma dirección normalizada (ver
+    `clave_direccion`) — N2 SIEMPRE requiere confirmación humana. Un candidato
+    con número de sucursal distinto al de la fila local nunca se propone
+    (ancla dura, ver `_numero_sucursal`). Orden: N1 primero (lo consume
+    `AutoVincularMatchesN1TablaKm`), después misma dirección, después score."""
     por_empresa: dict[str, list[SigesSucursalCliente]] = {}
     for s in sucursales_siges:
         por_empresa.setdefault(normalizar_nombre_fuerte(s.empresa_nombre), []).append(s)
@@ -186,6 +221,7 @@ def _candidatos_para_fila(
 ) -> list[CandidatoPropuesto]:
     local_fuerte = normalizar_nombre_fuerte(fila.sucursal_nombre)
     numero_local = _numero_sucursal(local_fuerte)
+    clave_local = clave_direccion(fila.domicilio, fila.localidad)
     evaluados: list[CandidatoPropuesto] = []
     for c in candidatos_empresa:
         siges_fuerte = normalizar_nombre_fuerte(c.sucursal_nombre)
@@ -195,9 +231,25 @@ def _candidatos_para_fila(
         if local_fuerte == siges_fuerte:
             evaluados.append(CandidatoPropuesto(c.siges_sucursal_id, 1.0, "N1", _MOTIVO_N1))
             continue
-        score = _score(local_fuerte, siges_fuerte)
-        if score >= UMBRAL_N2:
-            motivo = _motivo_n2(local_fuerte, siges_fuerte)
-            evaluados.append(CandidatoPropuesto(c.siges_sucursal_id, score, "N2", motivo))
-    evaluados.sort(key=lambda c: c.score, reverse=True)
+        candidato = _evaluar_n2(c, local_fuerte, siges_fuerte, clave_local)
+        if candidato is not None:
+            evaluados.append(candidato)
+    evaluados.sort(key=lambda c: (c.nivel != "N1", not c.misma_direccion, -c.score))
     return evaluados[:TOP_N_CANDIDATOS]
+
+
+def _evaluar_n2(
+    c: SigesSucursalCliente, local_fuerte: str, siges_fuerte: str, clave_local: str | None
+) -> CandidatoPropuesto | None:
+    score = _score(local_fuerte, siges_fuerte)
+    misma_direccion = clave_local is not None and clave_local == clave_direccion(
+        c.domicilio, c.localidad
+    )
+    if misma_direccion:
+        motivo = "misma dirección · " + _motivo_n2(local_fuerte, siges_fuerte)
+        return CandidatoPropuesto(c.siges_sucursal_id, score, "N2", motivo, True)
+    if score >= UMBRAL_N2:
+        return CandidatoPropuesto(
+            c.siges_sucursal_id, score, "N2", _motivo_n2(local_fuerte, siges_fuerte)
+        )
+    return None
