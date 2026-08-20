@@ -260,7 +260,7 @@ async def geocodificar_faltantes(
 async def listar_coordenadas(
     prestador_id: UUID,
     page: int = Query(default=1, ge=1),
-    size: int = Query(default=100, ge=1, le=500),
+    size: int = Query(default=100, ge=1, le=1000),
     _: Identity = require_view,
     db: AsyncSession = Depends(get_db),
 ) -> Page[SucursalCoordenadasOut]:
@@ -299,7 +299,7 @@ async def resolver_coordenadas(
 async def listar_pines_sospechosos(
     prestador_id: UUID,
     page: int = Query(default=1, ge=1),
-    size: int = Query(default=100, ge=1, le=500),
+    size: int = Query(default=100, ge=1, le=1000),
     _: Identity = require_view,
     db: AsyncSession = Depends(get_db),
 ) -> Page[PinSospechosoOut]:

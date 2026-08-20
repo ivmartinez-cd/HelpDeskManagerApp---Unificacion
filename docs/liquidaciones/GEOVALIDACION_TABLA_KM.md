@@ -223,6 +223,15 @@ archivos por responsabilidad: `-tier0.tsx` (incluye el componente compartido
 `Tarjeta`), `-tier1.tsx` (Georef + Nominatim), `-worklist.tsx` (la vista combinada) y el
 orquestador `PasoPines` que solo compone los 4.
 
+**Bug real encontrado al verificar en vivo**: `GET .../pines-sospechosos` (y también
+`GET .../coordenadas`) topeaban `size` en 500 (`le=500`), pero el helper compartido del
+frontend `fetchCatalogoCompleto` siempre pide `size=1000` — cualquier llamada a esos dos
+endpoints devolvía 400, y el componente lo atrapaba silenciosamente como lista vacía.
+Preexistente (no introducido por esta ronda): la sección de pines sospechosos nunca
+había cargado datos reales por este camino desde que se armó. Corregido a `le=1000`,
+igual que los otros 3 endpoints de este mismo router — confirmado en vivo: 69/69 pines
+de SAN JUAN cargan en una sola página.
+
 ## Pendiente
 
 - Tier 1, geocode de direcciones (`/direcciones` de Georef): no implementado en esta
