@@ -521,3 +521,18 @@ export interface HallazgoTier1b {
   longitud: number;
   atribucion: string;
 }
+
+/** Worklist final (Tier 2): residuo real tras Tier 0+1+1b. */
+export interface ItemWorklistTier2 {
+  sigesSucursalId: number;
+  empresaNombre: string;
+  sucursalNombre: string;
+  domicilio: string | null;
+  motivos: string[];
+}
+
+export interface ResultadoWorklistTier2 {
+  certezaAbsoluta: ItemWorklistTier2[];
+  requiereVerificacion: ItemWorklistTier2[];
+  estimacionLlamadasGoogle: number;
+}

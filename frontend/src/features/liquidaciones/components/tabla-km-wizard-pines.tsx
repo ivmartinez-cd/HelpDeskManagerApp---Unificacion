@@ -8,7 +8,7 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type {
   AuditarPinesResult, EstadoAsistenteKm, HallazgoTier0, HallazgoTier1, HallazgoTier1b,
-  PinSospechoso, ResultadoConsultarGeoref, ResultadoConsultarNominatim,
+  PinSospechoso, ResultadoConsultarGeoref, ResultadoConsultarNominatim, ResultadoWorklistTier2,
 } from "../types/liquidaciones";
 import { BotonConsumoGoogle } from "./tabla-km-wizard-confirmar-google";
 
@@ -253,6 +253,91 @@ function SeccionTier1b({ prestadorId }: { prestadorId: string }) {
   );
 }
 
+function ItemWorklistTier2Row({ item, variante }: {
+  item: ResultadoWorklistTier2["certezaAbsoluta"][number]; variante: "certeza" | "verificar";
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-[6px] border border-border/70 bg-muted/20 px-3 py-2">
+      <div className="min-w-0">
+        <p className="font-body text-sm font-semibold text-foreground truncate">
+          {item.empresaNombre} — {item.sucursalNombre}
+        </p>
+        <p className="font-body text-xs text-muted-foreground truncate">
+          {item.domicilio ?? "sin domicilio"} · {item.motivos.join(", ")}
+        </p>
+      </div>
+      <Badge variant={variante === "certeza" ? "danger" : "warning"}>
+        {variante === "certeza" ? "corregir en Gestión" : "sin confirmar"}
+      </Badge>
+    </div>
+  );
+}
+
+function SeccionWorklistTier2({ prestadorId, tope, onAuditado }: {
+  prestadorId: string; tope: number; onAuditado: () => void;
+}) {
+  const [worklist, setWorklist] = useState<ResultadoWorklistTier2 | null>(null);
+  const [auditando, setAuditando] = useState(false);
+
+  const refresh = () =>
+    liquidacionesApi.getWorklistTier2(prestadorId).then(setWorklist).catch(() => setWorklist(null));
+  useEffect(() => { void refresh(); }, [prestadorId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const auditarResiduo = async () => {
+    if (!worklist) return;
+    setAuditando(true);
+    try {
+      const ids = worklist.requiereVerificacion.map((i) => i.sigesSucursalId);
+      await liquidacionesApi.auditarPines(prestadorId, ids);
+      await refresh();
+      onAuditado();
+    } finally { setAuditando(false); }
+  };
+
+  return (
+    <Tarjeta
+      numero="1d"
+      titulo="Worklist final (Tier 2 — Google, solo el residuo)"
+      descripcion="Lo que Georef y Nominatim ya confirmaron con certeza no necesita Google. Esto es SOLO lo que sigue sin resolver — nunca el prestador completo."
+    >
+      {!worklist ? (
+        <div className="flex h-16 items-center justify-center"><Spinner /></div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {worklist.certezaAbsoluta.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <p className="font-body text-xs font-semibold text-foreground">
+                {worklist.certezaAbsoluta.length} con certeza absoluta — corregir directo en Gestión
+              </p>
+              <div className="flex max-h-[20vh] flex-col gap-1.5 overflow-y-auto pr-1">
+                {worklist.certezaAbsoluta.map((i) => (
+                  <ItemWorklistTier2Row key={i.sigesSucursalId} item={i} variante="certeza" />
+                ))}
+              </div>
+            </div>
+          )}
+          {worklist.requiereVerificacion.length > 0 ? (
+            <BotonConsumoGoogle
+              size="sm"
+              variant="outline"
+              estimacion={worklist.estimacionLlamadasGoogle}
+              tope={tope}
+              loading={auditando}
+              onEjecutar={auditarResiduo}
+            >
+              Auditar residuo con Google ({worklist.requiereVerificacion.length} sucursales)
+            </BotonConsumoGoogle>
+          ) : (
+            <p className="font-body text-sm text-muted-foreground italic">
+              ✓ Sin residuo pendiente de verificar con Google.
+            </p>
+          )}
+        </div>
+      )}
+    </Tarjeta>
+  );
+}
+
 function PinSospechosoItem({ pin, prestadorId, onCorregido }: {
   pin: PinSospechoso; prestadorId: string; onCorregido: () => void;
 }) {
@@ -317,6 +402,11 @@ export function PasoPines({ prestadorId, estado, onCambio }: {
       <SeccionTier0 prestadorId={prestadorId} />
       <SeccionTier1 prestadorId={prestadorId} />
       <SeccionTier1b prestadorId={prestadorId} />
+      <SeccionWorklistTier2
+        prestadorId={prestadorId}
+        tope={estado.topePorCorrida}
+        onAuditado={() => { setKey(k => k + 1); onCambio(); }}
+      />
 
       <Tarjeta
         numero="2"

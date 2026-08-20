@@ -12,6 +12,7 @@ import type {
   PinSospechoso,
   ResultadoConsultarGeoref,
   ResultadoConsultarNominatim,
+  ResultadoWorklistTier2,
   SucursalCoordenadas,
   TablaKm,
 } from "../types/liquidaciones";
@@ -90,9 +91,15 @@ export const geolocalizacionApi = {
       new URLSearchParams(),
     ),
 
-  auditarPines: (prestadorId: string) =>
+  auditarPines: (prestadorId: string, sigesSucursalIds?: number[]) =>
     httpClient.post<AuditarPinesResult>(
       `/api/liquidaciones/siges/prestador/${prestadorId}/auditar-pines`,
+      sigesSucursalIds ? { sigesSucursalIds } : undefined,
+    ),
+
+  getWorklistTier2: (prestadorId: string) =>
+    httpClient.get<ResultadoWorklistTier2>(
+      `/api/liquidaciones/siges/prestador/${prestadorId}/geovalidacion/worklist`,
     ),
 
   corregirPin: (prestadorId: string, sigesSucursalId: number) =>
