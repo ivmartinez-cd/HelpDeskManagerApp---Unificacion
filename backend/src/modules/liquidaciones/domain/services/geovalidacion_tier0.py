@@ -115,12 +115,17 @@ def _evaluar_distancia_base(
 def evaluar_tier0(
     sucursales: list[SucursalParaValidar],
     base: tuple[float, float] | None = None,
-    umbral_distancia_base_km: float = 300.0,
+    umbral_distancia_base_km: float = 350.0,
 ) -> list[HallazgoTier0]:
     """Corre las 5 reglas de Tier 0 sobre TODAS las sucursales del PST. Una
-    sucursal puede tener más de un hallazgo. `umbral_distancia_base_km` es
-    provisorio (300 km, sin evidencia calibrada todavía) — a ajustar en la
-    medición real por PST antes de usarlo para descartar casos."""
+    sucursal puede tener más de un hallazgo. `umbral_distancia_base_km`
+    calibrado con la distribución real de SAN JUAN (2026-08-19, 905
+    sucursales con pin): hay un hueco natural sin ninguna sucursal entre 284
+    km (la más lejana genuinamente dentro de la provincia) y 402 km (la más
+    cercana entre las que ya tienen pin roto confirmado en otra provincia) —
+    350 es el punto medio redondeado. Sigue siendo un parámetro por
+    corrida/PST, no una constante universal: un PST con radio de operación
+    real distinto puede necesitar otro valor."""
     hallazgos = [h for s in sucursales if (h := _evaluar_una(s)) is not None]
     hallazgos.extend(_evaluar_pines_compartidos(sucursales))
     if base is not None:

@@ -21,7 +21,7 @@ PST (no solo las que ya tienen fila en Tabla KM). Reglas:
 - `pin_compartido` (media): mismo pin (redondeado a 5 decimales) compartido por 2+
   sucursales con domicilio distinto — patrón "todas cargadas al centro".
 - `lejos_de_base` (media): distancia haversine a la sucursal base del PST mayor al
-  umbral (`umbral_distancia_base_km`, default 300 km, **provisorio, sin calibrar**).
+  umbral (`umbral_distancia_base_km`, default **350 km, calibrado** — ver abajo).
 
 **Desviación consciente del texto del master prompt**: NO se implementó la regla
 "provincia declarada incompatible con el pin a nivel bounding box provincial" en Tier 0.
@@ -190,12 +190,24 @@ LATITUD_SUGERIDA, LONGITUD_SUGERIDA`). Probado en real: **265 filas exportadas**
 Tier 0 + 192 Tier 1b + 69 Tier 2), verificado con parseo CSV real (no naive). Botón
 "Exportar CSV para Gestión" en la sección worklist del wizard.
 
+## Calibración de `umbral_distancia_base_km` (2026-08-19)
+
+`backend/scripts/calibrar_umbral_distancia_base_san_juan.py` midió la distancia real
+base→sucursal de las 905 sucursales de SAN JUAN con pin. Resultado: **hueco natural
+sin ninguna sucursal entre 284 km y 402 km** — 721 sucursales caen en 0-284 km (el
+radio real de la provincia, hasta zonas rurales como Valle Fértil/Jáchal) y las 184
+restantes saltan directo a 402 km+ (todas con pin roto ya confirmado en otra
+provincia/continente por Tier 0/1/1b). El umbral provisorio de 300 km ya caía dentro
+de ese hueco por casualidad — se ajustó a **350 km** (punto medio exacto) para que
+quede documentado con evidencia real en vez de arbitrario. Verificado que el cambio
+no altera ningún conteo real (663 hallazgos, mismo desglose exacto antes/después).
+
+No se generalizó a una constante universal: sigue siendo un parámetro por
+corrida/PST (`evaluar_tier0(..., umbral_distancia_base_km=...)`) — un PST con radio
+de operación real distinto puede necesitar otro valor.
+
 ## Pendiente
 
-- Calibrar `umbral_distancia_base_km` de Tier 0 con evidencia real (300 km es
-  provisorio — el propio San Juan tiene sucursales del Gobierno provincial hasta
-  1600 km, posiblemente el umbral deba ser más generoso o dividirse por tipo de
-  empresa).
 - Tier 1, geocode de direcciones (`/direcciones` de Georef): no implementado en esta
   ronda — ya se había confirmado cobertura pobre de calles para San Juan en la
   medición de Fase 0 (0 resultados en 4 pruebas reales), así que su valor inmediato es

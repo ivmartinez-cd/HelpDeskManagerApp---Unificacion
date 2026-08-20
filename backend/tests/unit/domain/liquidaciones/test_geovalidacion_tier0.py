@@ -96,6 +96,16 @@ class TestEvaluarTier0:
         lejos = _sucursal(1, lat=-38.0, lon=-57.5)
         assert evaluar_tier0([lejos], base=None) == []
 
+    def test_umbral_default_calibrado_con_san_juan(self) -> None:
+        # Calibración real 2026-08-19: hueco natural sin ninguna sucursal
+        # entre 284 km (la más lejana real, dentro de la provincia) y 402 km
+        # (la más cercana entre las que ya tienen pin roto confirmado en
+        # otra provincia) — 350 (el default) cae justo en el medio.
+        base = (_LAT_SJ, _LON_SJ)
+        dentro_del_hueco = _sucursal(1, lat=-34.6, lon=-68.5)  # ~314 km
+        hallazgos = evaluar_tier0([dentro_del_hueco], base=base)
+        assert hallazgos == []
+
     def test_una_sucursal_puede_tener_mas_de_un_hallazgo(self) -> None:
         base = (_LAT_SJ, _LON_SJ)
         # Fuera de Argentina Y lejos de la base.
