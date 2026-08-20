@@ -4,6 +4,10 @@ import { defineConfig, devices } from "@playwright/test";
 // en vez del backend real de Docker. El mock responde /api/auth/me y /api/auth/modules.
 process.env.BACKEND_URL = "http://127.0.0.1:18099";
 
+// Puerto del Next.js de test: 3001 por defecto; `PW_PORT` permite correr en otro
+// cuando 3001 está ocupado en la máquina (p. ej. por otro contenedor).
+const PORT = process.env.PW_PORT ?? "3001";
+
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
@@ -14,7 +18,7 @@ export default defineConfig({
   globalSetup: "./tests/global-setup",
   globalTeardown: "./tests/global-teardown",
   use: {
-    baseURL: "http://localhost:3001",
+    baseURL: `http://localhost:${PORT}`,
     trace: "on-first-retry",
   },
   projects: [
@@ -24,11 +28,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npx next dev --turbopack -p 3001",
+    command: `npx next dev --turbopack -p ${PORT}`,
     // /login es ruta pública (sin layout de auth) — el health check de Playwright
     // ocurre antes del globalSetup, así que no debe pasar por el layout de app
     // o generaría un redirect cacheado antes de que el mock backend esté listo.
-    url: "http://localhost:3001/login",
+    url: `http://localhost:${PORT}/login`,
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,
     stdout: "pipe",

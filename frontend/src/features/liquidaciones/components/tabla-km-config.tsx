@@ -162,7 +162,7 @@ export function TablaKmConfig() {
             variant="outline"
             disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
             onClick={() => setWizardOpen(true)}
-            title="Guía paso a paso: geocodificar → calcular km → auditar pines"
+            title="Traer sucursales de Gestión, revisar pendientes y calcular km"
           >
             Asistente de KM →
           </BrandButton>

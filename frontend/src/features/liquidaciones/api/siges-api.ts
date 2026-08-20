@@ -45,6 +45,19 @@ export const sigesApi = {
     return httpClient.get<Page<SucursalSiges>>(`/api/liquidaciones/siges/sucursales?${qs}`);
   },
 
+  /** Todas las sucursales del PST en Siges, paginando de a 200 (tope `le=200`
+   * del endpoint). El Asistente de KM las necesita completas para contar qué
+   * importar — con una sola página los conteos eran falsos (SAN JUAN: 948). */
+  listarTodasSucursalesSiges: async (prestadorId: string): Promise<SucursalSiges[]> => {
+    const items: SucursalSiges[] = [];
+    for (let page = 1; ; page++) {
+      const qs = new URLSearchParams({ prestadorId, q: "", size: "200", page: String(page) });
+      const pagina = await httpClient.get<Page<SucursalSiges>>(`/api/liquidaciones/siges/sucursales?${qs}`);
+      items.push(...pagina.items);
+      if (items.length >= pagina.total || pagina.items.length === 0) return items;
+    }
+  },
+
   listSucursalesPropiasPrestatdor: (prestadorId: string) =>
     httpClient.get<SucursalPropia[]>(
       `/api/liquidaciones/siges/prestador/${prestadorId}/sucursales-propia`,

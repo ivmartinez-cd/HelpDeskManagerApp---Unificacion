@@ -1,218 +1,178 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
-import { Spinner } from "@/shared/components/ui/spinner";
 import { Tooltip } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
-import { liquidacionesApi } from "../api/liquidaciones-api";
-import type {
-  CalculoKmPreview, EstadoAsistenteKm, PrestadorLiquidacion,
-} from "../types/liquidaciones";
-import { PasoCalcular } from "./tabla-km-wizard-calcular";
-import { PasoDiagnostico } from "./tabla-km-wizard-diagnostico";
-import { PasoGeocodificar } from "./tabla-km-wizard-geocodificar";
-import { PasoImportar } from "./tabla-km-wizard-importar";
-import { PasoMatching } from "./tabla-km-wizard-matching";
-import { PasoPines } from "./tabla-km-wizard-pines";
-import { LABEL_PASO, PASOS_WIZARD, type PasoWizard } from "./tabla-km-wizard-tipos";
+import { useAsistenteKm, type DatosAsistente } from "../hooks/use-asistente-km";
+import { componerBandeja, consecuenciaPendientes, resumirBandeja, type ResumenBandeja } from "../lib/asistente-km-bandeja";
+import type { AplicarDistanciasResult, CalculoKmPreview, PrestadorLiquidacion } from "../types/liquidaciones";
+import { MomentoRevisar } from "./tabla-km-wizard-bandeja";
+import { MomentoCalcular } from "./tabla-km-wizard-calcular";
+import { PantallaCierre } from "./tabla-km-wizard-cierre";
+import { PantallaChequeos, PantallaIntro } from "./tabla-km-wizard-intro";
+import { LABEL_MOMENTO, MOMENTOS, type FaseWizard, type Momento } from "./tabla-km-wizard-tipos";
+import { MomentoTraer } from "./tabla-km-wizard-traer";
 
 type EstadoPaso = "actual" | "bloqueado" | "pendiente" | "ok";
 
-function estadoDePaso(
-  paso: PasoWizard, actual: PasoWizard, e: EstadoAsistenteKm | null,
+function estadoDeMomento(
+  momento: Momento, fase: FaseWizard, datos: DatosAsistente | null, resumen: ResumenBandeja | null,
 ): { estado: EstadoPaso; motivo?: string } {
-  if (paso === actual) return { estado: "actual" };
-  if (!e || paso === "diagnostico") return { estado: "ok" };
-  if (!e.vinculadoSiges) {
-    return { estado: "bloqueado", motivo: "Primero vinculá el prestador a Gestión (ver Diagnóstico)." };
+  if (momento === fase) return { estado: "actual" };
+  if (fase === "cierre") return { estado: "ok" };
+  if (!datos || !resumen) return { estado: "bloqueado" };
+  const e = datos.estado;
+  if (!e.vinculadoSiges && momento !== "traer") {
+    return { estado: "bloqueado", motivo: "Primero vinculá el prestador a Gestión (ver Traer de Gestión)." };
   }
-  switch (paso) {
-    case "importar":
+  switch (momento) {
+    case "traer":
       return { estado: e.sucursalesNuevasPorImportar > 0 ? "pendiente" : "ok" };
-    case "matching":
-      return { estado: e.noEncontradasEnSiges > 0 ? "pendiente" : "ok" };
-    case "ubicar":
-      return {
-        estado: e.sinCoordenadas + e.ambiguasPendientes > 0 ? "pendiente" : "ok",
-      };
-    case "distancias":
+    case "revisar":
+      return { estado: resumen.pinesRotos + resumen.nombres + resumen.ubicaciones + resumen.sinUbicacion > 0 ? "pendiente" : "ok" };
+    case "calcular":
       if (!e.baseConfigurada || !e.baseConCoordenadas) {
         return {
           estado: "bloqueado",
           motivo: !e.baseConfigurada
-            ? "Falta la sucursal base de despacho (ver Diagnóstico)."
-            : "La sucursal base no tiene ubicación en Gestión (ver Diagnóstico).",
+            ? "Falta la sucursal base de despacho (ver Traer de Gestión)."
+            : "La sucursal base no tiene ubicación en Gestión (ver Traer de Gestión).",
         };
       }
       return { estado: e.filasSinKm > 0 ? "pendiente" : "ok" };
-    case "pines":
-      return { estado: e.pinesSospechososCacheados > 0 ? "pendiente" : "ok" };
-    default:
-      return { estado: "ok" };
   }
 }
 
-/** Consecuencia concreta de avanzar dejando pendientes — reemplaza al viejo
- * "Omitir este paso" ciego. `null` = se puede avanzar sin preguntar. */
-function consecuenciaDeAvanzar(paso: PasoWizard, e: EstadoAsistenteKm | null): string | null {
-  if (!e) return null;
-  if (paso === "importar" && e.sucursalesNuevasPorImportar > 0) {
-    return `Quedan ${e.sucursalesNuevasPorImportar} sucursales sin importar: no van a tener fila en tu Tabla KM ni km calculado hasta que las importes.`;
+/** Consecuencia concreta de avanzar dejando pendientes. `null` = se puede avanzar sin preguntar. */
+function consecuenciaDeAvanzar(fase: FaseWizard, datos: DatosAsistente | null, resumen: ResumenBandeja | null): string | null {
+  if (!datos || !resumen) return null;
+  if (fase === "traer" && datos.estado.sucursalesNuevasPorImportar > 0) {
+    return `Quedan ${datos.estado.sucursalesNuevasPorImportar} sucursales sin importar: no van a tener fila en tu Tabla KM ni km calculado hasta que las traigas de Gestión.`;
   }
-  if (paso === "matching" && e.noEncontradasEnSiges > 0) {
-    return `Quedan ${e.noEncontradasEnSiges} filas sin vincular a una sucursal de Gestión: no van a poder ubicarse ni calcular km hasta que las resuelvas.`;
-  }
-  if (paso === "ubicar" && e.sinCoordenadas + e.ambiguasPendientes > 0) {
-    const partes = [];
-    if (e.sinCoordenadas > 0) partes.push(`${e.sinCoordenadas} sucursales sin ubicación`);
-    if (e.ambiguasPendientes > 0) partes.push(`${e.ambiguasPendientes} direcciones sin resolver`);
-    return `Quedan ${partes.join(" y ")}: esas sucursales van a quedar SIN km cuando calcules distancias.`;
-  }
+  if (fase === "revisar") return consecuenciaPendientes(resumen);
   return null;
 }
 
-function Indicador({ actual, estado, irA }: {
-  actual: PasoWizard;
-  estado: EstadoAsistenteKm | null;
-  irA: (p: PasoWizard) => void;
+function Indicador({ fase, datos, resumen, irA }: {
+  fase: FaseWizard; datos: DatosAsistente | null; resumen: ResumenBandeja | null; irA: (m: Momento) => void;
 }) {
   return (
-    <div className="mb-6 flex items-center justify-center">
-      {PASOS_WIZARD.map((paso, i) => {
-        const info = estadoDePaso(paso, actual, estado);
+    <ol className="mb-6 flex items-center justify-center" aria-label="Momentos del asistente">
+      {MOMENTOS.map((momento, i) => {
+        const info = estadoDeMomento(momento, fase, datos, resumen);
         const boton = (
           <button
             type="button"
             disabled={info.estado === "bloqueado"}
-            onClick={() => irA(paso)}
+            aria-current={info.estado === "actual" ? "step" : undefined}
+            onClick={() => irA(momento)}
             className="flex flex-col items-center gap-1 disabled:cursor-not-allowed"
           >
-            <div className={cn(
+            <span className={cn(
               "flex h-8 w-8 items-center justify-center rounded-full font-heading text-sm font-bold transition-colors",
               info.estado === "actual" && "bg-brand-orange text-white",
-              info.estado === "ok" && "bg-emerald-500/15 text-emerald-500",
+              info.estado === "ok" && "bg-success/15 text-success",
               info.estado === "pendiente" && "bg-brand-orange/15 text-brand-orange border-2 border-brand-orange/50",
               info.estado === "bloqueado" && "border-2 border-border text-muted-foreground opacity-50",
             )}>
-              {info.estado === "ok" ? "✓" : info.estado === "bloqueado" ? "🔒" : i + 1}
-            </div>
+              {info.estado === "ok" ? "✓" : info.estado === "bloqueado" && info.motivo ? "🔒" : i + 1}
+            </span>
             <span className={cn(
               "font-body text-[10px] font-bold uppercase tracking-[.06em]",
               info.estado === "actual" ? "text-brand-orange" : "text-muted-foreground",
             )}>
-              {LABEL_PASO[paso]}
+              {LABEL_MOMENTO[momento]}
             </span>
           </button>
         );
         return (
-          <div key={paso} className="flex items-center">
-            {info.motivo
-              ? <Tooltip content={<span className="font-body text-xs">{info.motivo}</span>}>{boton}</Tooltip>
-              : boton}
-            {i < PASOS_WIZARD.length - 1 && (
-              <div className="mb-5 mx-3 h-[2px] w-10 flex-shrink-0 rounded-full bg-border" />
-            )}
-          </div>
+          <li key={momento} className="flex items-center">
+            {info.motivo ? <Tooltip content={<span className="font-body text-xs">{info.motivo}</span>}>{boton}</Tooltip> : boton}
+            {i < MOMENTOS.length - 1 && <div className="mb-5 mx-3 h-[2px] w-14 flex-shrink-0 rounded-full bg-border" />}
+          </li>
         );
       })}
-    </div>
+    </ol>
   );
 }
 
+/** Asistente de KM — rediseño 2026-08-20 (docs/liquidaciones/REDISENO_UX_ASISTENTE_KM.md):
+ * intro → chequeos gratis → Traer de Gestión → Revisar pendientes → Calcular km → cierre. */
 export function TablaKmWizard({ prestador, onClose, onAplicado }: {
   prestador: PrestadorLiquidacion; onClose: () => void; onAplicado: () => void;
 }) {
-  const [paso, setPaso] = useState<PasoWizard>("diagnostico");
-  const [estado, setEstado] = useState<EstadoAsistenteKm | null>(null);
-  const [errorEstado, setErrorEstado] = useState<string | null>(null);
+  const [fase, setFase] = useState<FaseWizard>("intro");
   const [preview, setPreview] = useState<CalculoKmPreview | null>(null);
-  const [salidaPendiente, setSalidaPendiente] = useState<PasoWizard | null>(null);
+  const [aplicado, setAplicado] = useState<AplicarDistanciasResult | null>(null);
+  const [salidaPendiente, setSalidaPendiente] = useState<Momento | null>(null);
+  const { datos, error, progreso, recargar, correrChequeosGratis, registrarNoEncontradas } = useAsistenteKm(prestador.id);
 
-  const refrescarEstado = useCallback(() => {
-    liquidacionesApi.estadoAsistenteKm(prestador.id)
-      .then((e) => { setEstado(e); setErrorEstado(null); })
-      .catch(() => setErrorEstado("No se pudo leer el estado del asistente. Cerrá y volvé a abrir."));
-  }, [prestador.id]);
-  useEffect(() => { refrescarEstado(); }, [refrescarEstado]);
+  const resumen = useMemo(() => (datos ? resumirBandeja(componerBandeja(datos.bandeja)) : null), [datos]);
 
-  const cambio = () => { onAplicado(); refrescarEstado(); };
-
-  const irA = (destino: PasoWizard) => {
-    if (estadoDePaso(destino, paso, estado).estado === "bloqueado") return;
-    setPaso(destino);
+  const empezar = async () => {
+    setFase("chequeos");
+    await correrChequeosGratis();
+    setFase("traer");
   };
-  const idx = PASOS_WIZARD.indexOf(paso);
-  const siguiente = PASOS_WIZARD[idx + 1] as PasoWizard | undefined;
+  const cambio = async () => { onAplicado(); await recargar(); };
+  const irA = (destino: Momento) => {
+    if (estadoDeMomento(destino, fase, datos, resumen).estado === "bloqueado") return;
+    setFase(destino);
+  };
+  const idx = MOMENTOS.indexOf(fase as Momento);
+  const siguiente = idx >= 0 ? MOMENTOS[idx + 1] : undefined;
   const avanzar = () => {
     if (!siguiente) return;
-    const consecuencia = consecuenciaDeAvanzar(paso, estado);
-    if (consecuencia) setSalidaPendiente(siguiente);
+    if (consecuenciaDeAvanzar(fase, datos, resumen)) setSalidaPendiente(siguiente);
     else irA(siguiente);
   };
+  const alAplicar = async (res: AplicarDistanciasResult) => { setAplicado(res); await cambio(); setFase("cierre"); };
 
   return (
     <BrandModal isOpen onClose={onClose} title={`Asistente de KM — ${prestador.nombreCorto}`} widthPx={900}>
-      <Indicador actual={paso} estado={estado} irA={irA} />
+      <Indicador fase={fase} datos={datos} resumen={resumen} irA={irA} />
       <div className="min-h-[300px]">
-        {errorEstado && <p className="font-body text-sm text-destructive">{errorEstado}</p>}
-        {!estado && !errorEstado && (
-          <div className="flex h-40 flex-col items-center justify-center gap-3">
-            <Spinner />
-            <p className="font-body text-sm text-muted-foreground">Revisando el estado de tu Tabla KM… (no consulta Google)</p>
-          </div>
-        )}
-        {estado && paso === "diagnostico" && (
-          <PasoDiagnostico estado={estado} nombrePrestador={prestador.nombre} irA={irA} />
-        )}
-        {estado && paso === "importar" && (
-          <PasoImportar prestadorId={prestador.id} onCambio={cambio} />
-        )}
-        {estado && paso === "matching" && (
-          <PasoMatching prestadorId={prestador.id} onCambio={cambio} />
-        )}
-        {estado && paso === "ubicar" && (
-          <PasoGeocodificar prestadorId={prestador.id} estado={estado} onCambio={cambio} />
-        )}
-        {estado && paso === "distancias" && (
-          <PasoCalcular
-            prestador={prestador} estado={estado} preview={preview}
-            setPreview={setPreview} onCambio={cambio} irAUbicar={() => irA("ubicar")}
+        {error && <p className="mb-3 font-body text-sm text-destructive">{error}</p>}
+        {fase === "intro" && <PantallaIntro onEmpezar={empezar} />}
+        {fase === "chequeos" && <PantallaChequeos progreso={progreso} />}
+        {fase === "traer" && datos && (
+          <MomentoTraer
+            prestadorId={prestador.id} nombrePrestador={prestador.nombre} datos={datos}
+            onCambio={cambio} registrarNoEncontradas={registrarNoEncontradas} irARevisar={() => irA("revisar")}
           />
         )}
-        {estado && paso === "pines" && (
-          <PasoPines prestadorId={prestador.id} estado={estado} onCambio={cambio} />
+        {fase === "revisar" && datos && (
+          <MomentoRevisar
+            prestadorId={prestador.id} datos={datos} pendientesPorTope={progreso.pendientesPorTope}
+            onCambio={cambio} onSeguirChequeando={correrChequeosGratis}
+          />
+        )}
+        {fase === "calcular" && datos && (
+          <MomentoCalcular
+            prestador={prestador} estado={datos.estado} preview={preview} setPreview={setPreview}
+            onAplicado={alAplicar} irARevisar={() => irA("revisar")}
+          />
+        )}
+        {fase === "cierre" && aplicado && resumen && (
+          <PantallaCierre prestadorId={prestador.id} aplicado={aplicado} resumen={resumen} irARevisar={() => setFase("revisar")} onClose={onClose} />
         )}
       </div>
-      <div className="mt-4 flex items-center justify-end gap-2 border-t border-border pt-4">
-        {idx > 0 && <BrandButton variant="outline" onClick={() => setPaso(PASOS_WIZARD[idx - 1])}>← Anterior</BrandButton>}
-        {siguiente
-          ? (
-            <BrandButton
-              onClick={avanzar}
-              disabled={!estado || estadoDePaso(siguiente, paso, estado).estado === "bloqueado"}
-            >
-              Siguiente →
-            </BrandButton>
-          )
-          : <BrandButton onClick={onClose}>Finalizar</BrandButton>}
-      </div>
-      <BrandModal
-        isOpen={salidaPendiente !== null}
-        onClose={() => setSalidaPendiente(null)}
-        title="Este paso quedó incompleto"
-        widthPx={460}
-      >
+      {idx >= 0 && (
+        <div className="mt-4 flex items-center justify-end gap-2 border-t border-border pt-4">
+          {idx > 0 && <BrandButton variant="outline" onClick={() => setFase(MOMENTOS[idx - 1])}>← Anterior</BrandButton>}
+          {siguiente
+            ? <BrandButton onClick={avanzar} disabled={!datos || estadoDeMomento(siguiente, fase, datos, resumen).estado === "bloqueado"}>Siguiente →</BrandButton>
+            : <BrandButton variant="outline" onClick={onClose}>Cerrar</BrandButton>}
+        </div>
+      )}
+      <BrandModal isOpen={salidaPendiente !== null} onClose={() => setSalidaPendiente(null)} title="Este momento quedó incompleto" widthPx={460}>
         <div className="flex flex-col gap-4">
-          <p className="font-body text-sm text-foreground">{consecuenciaDeAvanzar(paso, estado)}</p>
+          <p className="font-body text-sm text-foreground">{consecuenciaDeAvanzar(fase, datos, resumen)}</p>
           <div className="flex justify-end gap-2">
-            <BrandButton variant="outline" onClick={() => setSalidaPendiente(null)}>
-              Quedarme y terminarlo
-            </BrandButton>
-            <BrandButton onClick={() => { const destino = salidaPendiente; setSalidaPendiente(null); if (destino) irA(destino); }}>
-              Continuar igual
-            </BrandButton>
+            <BrandButton variant="outline" onClick={() => setSalidaPendiente(null)}>Quedarme y terminarlo</BrandButton>
+            <BrandButton onClick={() => { const destino = salidaPendiente; setSalidaPendiente(null); if (destino) irA(destino); }}>Continuar igual</BrandButton>
           </div>
         </div>
       </BrandModal>
