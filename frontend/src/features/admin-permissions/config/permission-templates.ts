@@ -28,6 +28,7 @@ const VIEW_ALL: readonly (readonly [string, string])[] = [
   ["analisis-log-hp", "view"],
   ["turnos", "view"],
   ["vacaciones", "view"],
+  ["wati", "view"],
 ];
 
 // Operador: sin Liquidación (ni siquiera consulta) — decisión del usuario
@@ -58,6 +59,7 @@ const TEAM_LEADER: readonly (readonly [string, string])[] = [
   ["turnos", "manage"],
   ["vacaciones", "approve"],
   ["vacaciones", "manage"],
+  ["wati", "update"],
 ];
 
 export const PERMISSION_TEMPLATES: readonly PermissionTemplate[] = [

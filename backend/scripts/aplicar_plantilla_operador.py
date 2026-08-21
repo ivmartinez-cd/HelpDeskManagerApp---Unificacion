@@ -51,6 +51,8 @@ PLANTILLA_OPERADOR: tuple[tuple[str, str], ...] = (
     ("turnos", "view"),
     ("vacaciones", "view"),
     ("vacaciones", "create"),
+    # WhatsApp sin responder (módulo wati, ae5de3e): consulta para todos los operadores.
+    ("wati", "view"),
 )
 
 
