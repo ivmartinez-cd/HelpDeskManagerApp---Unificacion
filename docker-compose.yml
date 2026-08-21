@@ -38,6 +38,23 @@ services:
       db:
         condition: service_healthy
 
+  # Mail catcher de desarrollo: el backend manda por SMTP a mailpit:1025 y los
+  # mails quedan en http://localhost:8025 — nunca salen de la máquina. Es la
+  # red de seguridad de verdad (además de DISABLE_BACKGROUND_JOBS) contra mails
+  # reales a Canal Directo desde dev. Requiere en .env: SMTP_HOST=mailpit,
+  # SMTP_PORT=1025, SMTP_STARTTLS=false, SMTP_USER/SMTP_PASS vacíos.
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: helpdesk-mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"   # UI web + API
+      - "1025:1025"   # SMTP (también accesible desde el host)
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
   frontend:
     build: ./frontend
     container_name: helpdesk-manager-frontend

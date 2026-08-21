@@ -6,8 +6,10 @@ from src.shared.infrastructure.config.settings import Settings
 
 
 class SmtpMailer:
-    """SMTP real vía STARTTLS. `smtplib` es síncrono — se corre en un thread
-    aparte para no bloquear el loop de asyncio."""
+    """SMTP real vía STARTTLS (SMTP_STARTTLS=true, default) con login si hay
+    SMTP_USER. En dev apunta a Mailpit (sin TLS ni auth) y nada sale de la
+    máquina. `smtplib` es síncrono — se corre en un thread aparte para no
+    bloquear el loop de asyncio."""
 
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
@@ -33,7 +35,10 @@ class SmtpMailer:
         return message
 
     def _send_sync(self, message: EmailMessage) -> None:
-        with smtplib.SMTP(self._settings.smtp_host, self._settings.smtp_port, timeout=10) as smtp:
-            smtp.starttls()
-            smtp.login(self._settings.smtp_user, self._settings.smtp_pass.get_secret_value())
+        settings = self._settings
+        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as smtp:
+            if settings.smtp_starttls:
+                smtp.starttls()
+            if settings.smtp_user:
+                smtp.login(settings.smtp_user, settings.smtp_pass.get_secret_value())
             smtp.send_message(message)

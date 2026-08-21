@@ -1,5 +1,6 @@
 # Secrets
 .env
+.env.bak*
 .env.production
 *.env.local
 
@@ -42,3 +43,11 @@ Sidebar Navegacion.zip
 
 # Transferencias entre PCs (dump + .env con credenciales reales)
 hdm_transfer_*.zip
+
+# Dumps de DB y scripts de restore locales (datos reales de producción — nunca commitear)
+*.sql
+*.dump
+restore.sh
+
+# Backups locales de .git
+.git.bak-*/

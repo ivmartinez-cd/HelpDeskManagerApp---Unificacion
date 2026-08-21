@@ -7,10 +7,16 @@ Regla dura, no opcional, para toda sesión de trabajo en este repo — no solo l
 - SDSInsumos (el legacy) sigue productivo mientras se migra a este monorepo. La DB de dev
   (`helpdesk-db`) está sembrada con datos reales de producción (ver memoria
   `project_insumos_dev_seeded_from_prod_backup`), incluidos destinatarios de mail reales de
-  logística (`app_settings.logistics_mail_to`), y `.env` tiene credenciales SMTP reales y
-  funcionales (`SMTP_HOST=smtp.gmail.com`, cuenta real de Canal Directo). **Nada de esto es un
-  mock**: cualquier job o llamada que se dispare de verdad tiene efectos reales sobre gente real
-  y sobre Canal Directo en producción.
+  logística (`app_settings.logistics_mail_to`). **Nada de esto es un mock**: cualquier job o
+  llamada que se dispare de verdad tiene efectos reales sobre gente real y sobre Canal Directo
+  en producción.
+- **Mails en dev van a Mailpit, no a Gmail (desde 2026-08-21).** `.env` apunta
+  `SMTP_HOST=mailpit` / `SMTP_PORT=1025` / `SMTP_STARTTLS=false` al servicio `mailpit` del
+  compose; todo mail que dispare el backend queda en http://localhost:8025 y nunca sale de la
+  máquina. Las credenciales reales de Gmail quedaron comentadas con prefijo `[prod]` en `.env` —
+  **no descomentarlas en dev**. Esto es una red de seguridad extra, no reemplaza la regla de
+  abajo: SOAP/Insight/wsAyC siguen siendo reales, y un job de fondo que escriba contra ellos
+  sigue teniendo efectos reales aunque el mail quede atrapado.
 - **Incidente real (2026-08-12)**: editar en vivo código de jobs de fondo
   (`poller_alerts.py`/`background_jobs.py`) con el contenedor `helpdesk-manager-backend`
   corriendo con sus jobs activos disparó un mail real de "poller caído" a destinatarios reales

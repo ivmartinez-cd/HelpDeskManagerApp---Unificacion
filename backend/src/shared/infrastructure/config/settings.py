@@ -28,10 +28,13 @@ class Settings(BaseSettings):
     argon2_parallelism: int = 4
 
     # SMTP_HOST vacío = mailer de consola (dev); con host, SmtpMailer real.
+    # En dev el host es el contenedor `mailpit` (compose): SMTP_STARTTLS=false y
+    # sin usuario — ningún mail sale de la máquina. Default true = producción.
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""
     smtp_pass: SecretStr = SecretStr("")
+    smtp_starttls: bool = True
     smtp_from: str = "HelpDesk Manager <no-reply@cdsa.com.ar>"
 
     contadores_output_dir: str = "var/contadores/outputs"
