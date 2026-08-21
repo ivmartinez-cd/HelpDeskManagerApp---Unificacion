@@ -52,7 +52,11 @@ export const analisisLogHpApi = {
   listClients: () => httpClient.get<FleetClient[]>(`${BASE_SDS}/clients`),
 
   getCdsIncidents: (serial: string) =>
-    httpClient.get<CdsIncident[]>(`${BASE_SDS}/devices/${encodeURIComponent(serial)}/cds-incidents`),
+    httpClient
+      .get<Page<CdsIncident>>(
+        `${BASE_SDS}/devices/${encodeURIComponent(serial)}/cds-incidents?size=100`,
+      )
+      .then((p) => p.items),
 
   // CPMD
   getCpmdPdfUrl: (modelFamily: string) =>

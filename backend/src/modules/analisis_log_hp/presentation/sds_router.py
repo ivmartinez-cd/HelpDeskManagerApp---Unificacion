@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
@@ -32,9 +31,13 @@ from src.modules.analisis_log_hp.presentation.schemas.analysis_schemas import (
     SdsExtractRequest,
     SdsExtractResponse,
 )
+from src.modules.analisis_log_hp.presentation.schemas.cds_incident_schemas import (
+    CdsIncidentSchema,
+)
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/analisis-log-hp/sds", tags=["analisis-log-hp"])
 
@@ -124,6 +127,14 @@ async def refresh_hp_cache(
     return {"baseline": baseline}
 
 
+@router.get("/clients")
+async def get_clients(
+    _: Identity = _require_view,
+) -> list[dict[str, Any]]:
+    uc = GetClients(get_hp_insight_gateway())
+    return await uc.execute()
+
+
 @router.get("/clients/{customer_id}/devices")
 async def get_client_devices(
     customer_id: int,
@@ -133,19 +144,17 @@ async def get_client_devices(
     return await uc.execute(customer_id)
 
 
-@router.get("/clients")
-async def get_clients(
-    _: Identity = _require_view,
-) -> list[dict[str, Any]]:
-    uc = GetClients(get_hp_insight_gateway())
-    return await uc.execute()
-
-
-@router.get("/devices/{serial}/cds-incidents")
+@router.get("/devices/{serial}/cds-incidents", response_model=Page[CdsIncidentSchema])
 async def get_cds_incidents(
     serial: str,
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=50, ge=1, le=100),
     _: Identity = _require_view,
-) -> list[dict[str, Any]]:
+) -> Page[CdsIncidentSchema]:
+    # `GetCdsIncidents` ya acota a los últimos 15 (12 meses, tope del legacy) —
+    # size/page cubren el contrato de §11, en la práctica siempre entra en una página.
     uc = GetCdsIncidents(get_cds_wsayc_gateway())
     incidents = await uc.execute(serial)
-    return [asdict(i) for i in incidents]
+    return Page.of(
+        [CdsIncidentSchema.from_entity(i) for i in incidents], page=page, size=size
+    )
