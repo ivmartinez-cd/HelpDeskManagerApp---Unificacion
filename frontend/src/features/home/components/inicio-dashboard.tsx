@@ -63,6 +63,7 @@ export function InicioDashboard() {
     wati:         modules.some((m) => m.key === "wati"),
     gestionPrestadores: can("prestadores", "update"),
     gestionVacaciones: can("vacaciones", "approve") || can("vacaciones", "manage"),
+    gestionContadores: can("contadores", "manage"),
   };
 
   const columnasVisibles = COLUMNS

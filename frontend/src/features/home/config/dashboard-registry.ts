@@ -13,6 +13,7 @@ export interface ModuleAccess {
    * no las ve (pedido del usuario, 2026-08-21). */
   gestionPrestadores: boolean; // prestadores.update → "Distribución del parque"
   gestionVacaciones: boolean; // vacaciones.approve|manage → "Próximos días del equipo"
+  gestionContadores: boolean; // contadores.manage → "Contadores por operador"
 }
 
 export interface CardDef {
@@ -36,7 +37,7 @@ export const CARDS: CardDef[] = [
   { id: "wati-pendientes",   col: "planificacion", order: 1, guard: (m) => m.wati },
   { id: "clientes-hoy",      col: "planificacion", order: 2, guard: (m) => m.contadores },
   { id: "insumos",           col: "planificacion", order: 3, guard: (m) => m.insumos },
-  { id: "contadores-donut",  col: "contadores",    order: 0, guard: (m) => m.contadores },
+  { id: "contadores-donut",  col: "contadores",    order: 0, guard: (m) => m.gestionContadores },
   { id: "pendientes-antig",  col: "contadores",    order: 1, guard: (m) => m.contadores },
   { id: "cierre-mensual",    col: "contadores",    order: 2, guard: (m) => m.contadores },
   { id: "heatmap-semana",    col: "contadores",    order: 3, guard: (m) => m.contadores },
