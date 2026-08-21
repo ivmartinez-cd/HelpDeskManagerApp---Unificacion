@@ -28,16 +28,16 @@ export const COLUMNS: { key: ColKey; fraction: string }[] = [
 export const CARDS: CardDef[] = [
   { id: "turnos",            col: "planificacion", order: 0, guard: ()  => true },
   { id: "clientes-hoy",      col: "planificacion", order: 1, guard: (m) => m.contadores },
-  { id: "heatmap-semana",    col: "planificacion", order: 2, guard: (m) => m.contadores },
+  { id: "insumos",           col: "planificacion", order: 2, guard: (m) => m.insumos },
   { id: "contadores-donut",  col: "contadores",    order: 0, guard: (m) => m.contadores },
   { id: "pendientes-antig",  col: "contadores",    order: 1, guard: (m) => m.contadores },
   { id: "cierre-mensual",    col: "contadores",    order: 2, guard: (m) => m.contadores },
+  { id: "heatmap-semana",    col: "contadores",    order: 3, guard: (m) => m.contadores },
   { id: "sla-mes",           col: "sla",           order: 0, guard: (m) => m.sla },
   { id: "pendientes-cerrar", col: "sla",           order: 1, guard: (m) => m.sla },
   { id: "liquidaciones",     col: "admin",         order: 0, guard: (m) => m.liquidaciones },
   { id: "parque",            col: "admin",         order: 1, guard: (m) => m.prestadores },
-  { id: "insumos",           col: "admin",         order: 2, guard: (m) => m.insumos },
-  { id: "proximos-equipo",   col: "admin",         order: 3, guard: (m) => m.vacaciones },
+  { id: "proximos-equipo",   col: "admin",         order: 2, guard: (m) => m.vacaciones },
 ];
 
 export function cardsForCol(col: ColKey, access: ModuleAccess): CardDef[] {

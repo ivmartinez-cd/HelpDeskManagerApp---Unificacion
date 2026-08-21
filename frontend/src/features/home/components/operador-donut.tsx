@@ -23,11 +23,15 @@ export interface DonutRow {
 export function OperadorDonut({
   rows,
   total,
+  centerValue,
   centerSub,
   tooltipUnidad,
 }: {
   rows: DonutRow[];
   total: number;
+  /** Texto central de la dona; por defecto el total. Usar para mostrar un
+   * dato más relevante que el total crudo (p. ej. el % de cumplimiento). */
+  centerValue?: string;
   centerSub: string;
   tooltipUnidad: string;
 }) {
@@ -72,7 +76,7 @@ export function OperadorDonut({
         />
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <span className="font-heading text-[18px] font-extrabold leading-none text-foreground">
-            {fmtInt(total)}
+            {centerValue ?? fmtInt(total)}
           </span>
           <span className="font-body text-[10.5px] text-muted-foreground">{centerSub}</span>
         </div>

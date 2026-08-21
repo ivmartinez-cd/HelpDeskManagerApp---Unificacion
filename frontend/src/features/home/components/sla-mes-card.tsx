@@ -154,7 +154,8 @@ export function SlaMesCard({
           <OperadorDonut
             rows={slaRows(actual)}
             total={actual.total}
-            centerSub="incidentes"
+            centerValue={`${fmtPct(actual.pct_correctos)}%`}
+            centerSub="cumplimiento"
             tooltipUnidad="incidentes"
           />
           <div className="grid grid-cols-3 gap-2">
