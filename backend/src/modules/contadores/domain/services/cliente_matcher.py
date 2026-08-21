@@ -26,6 +26,25 @@ def normalizar_nombre(nombre: str) -> str:
     return re.sub(r"\s+", " ", sin_puntuacion)
 
 
+# El cruce automático (exacto/flex/contención ≥5 caracteres) no resuelve
+# siglas cortas ni abreviaturas: "JBS" (3) y "Arag"/"ELEA" (4) quedan bajo el
+# mínimo de contención, y "HOSP. ITALIANO..." no comparte prefijo tokenizado
+# con "Hospital Italiano...". Verificado a mano contra Siges (2026-08-19).
+# Mismo criterio que `contadores_cliente_siges_map`: alias manual solo para
+# lo que el cruce automático no resuelve. Compartido entre
+# FiltrarPendientesPorPeriodoReal (cliente → ¿tiene grupo sin cerrar?) y
+# FiltrarPendientesPeriodoPorOperador (grupo → ¿es de este operador?).
+ALIAS_CLIENTE_GRUPO_NORM: dict[str, str] = {
+    normalizar_nombre(cliente): normalizar_nombre(grupo)
+    for cliente, grupo in {
+        "JBS": "JBS Leather Argentina S.A.",
+        "ELEA": "Laboratorio Elea Phoenix SA",
+        "Arag": "Arag S.R.L.",
+        "HOSP. ITALIANO DE LA PLATA": "Hospital Italiano De La Plata",
+    }.items()
+}
+
+
 def match_clientes(
     clientes: list[str],
     empresas: list[EmpresaSiges],

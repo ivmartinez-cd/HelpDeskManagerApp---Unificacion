@@ -49,6 +49,8 @@ class GetResumenClientesOperador:
         *,
         hoy: date,
         dias_ventana: int,
+        is_superadmin: bool,
+        full_name: str,
         exclude_operador_ids: frozenset[str] = frozenset(),
     ) -> ResumenClientesOperadorDTO:
         desde = hoy
@@ -56,6 +58,8 @@ class GetResumenClientesOperador:
         clientes_por_operador = await self._clientes_por_operador(
             desde, hasta, exclude_operador_ids
         )
+        if not is_superadmin:
+            clientes_por_operador = await self._solo_propio(clientes_por_operador, full_name)
         todos = sorted({c for clientes in clientes_por_operador.values() for c in clientes})
         cruce = await self._cruce_con_impresoras(todos)
         operadores = await self._armar_filas(clientes_por_operador, cruce)
@@ -79,6 +83,17 @@ class GetResumenClientesOperador:
                 continue
             agrupado.setdefault(event.operador_id, set()).add(event.cliente)
         return agrupado
+
+    async def _solo_propio(
+        self, clientes_por_operador: dict[str, set[str]], full_name: str
+    ) -> dict[str, set[str]]:
+        """Mismo criterio que `GetPendingClientsUseCase`: un operador regular
+        ve solo su propia cartera, no la de los operadores que cubre por
+        override ni la de los demás."""
+        operador = await self._deps.calendar.find_operador_by_nombre(full_name)
+        if operador is None or operador.id not in clientes_por_operador:
+            return {}
+        return {operador.id: clientes_por_operador[operador.id]}
 
     async def _cruce_con_impresoras(self, clientes: list[str]) -> dict[str, int] | None:
         """`cliente` → impresoras (solo los que cruzaron). None = Siges caído."""

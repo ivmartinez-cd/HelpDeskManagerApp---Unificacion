@@ -16,6 +16,7 @@ import logging
 from src.modules.contadores.application.dtos.calendar_event_anotado import CalendarEventAnotado
 from src.modules.contadores.domain.ports.estado_cierre_grupos_port import EstadoCierreGruposPort
 from src.modules.contadores.domain.services.cliente_matcher import (
+    ALIAS_CLIENTE_GRUPO_NORM,
     IndiceNombres,
     buscar_por_nombre,
     normalizar_nombre,
@@ -23,22 +24,6 @@ from src.modules.contadores.domain.services.cliente_matcher import (
 from src.shared.domain.errors import ExternalServiceError
 
 logger = logging.getLogger(__name__)
-
-# El cruce automático (exacto/flex/contención ≥5 caracteres) no resuelve
-# siglas cortas ni abreviaturas: "JBS" (3) y "Arag"/"ELEA" (4) quedan bajo el
-# mínimo de contención, y "HOSP. ITALIANO..." no comparte prefijo tokenizado
-# con "Hospital Italiano...". Verificado a mano contra Siges (2026-08-19).
-# Mismo criterio que `contadores_cliente_siges_map`: alias manual solo para
-# lo que el cruce automático no resuelve.
-_ALIAS_CLIENTE_GRUPO_NORM: dict[str, str] = {
-    normalizar_nombre(cliente): normalizar_nombre(grupo)
-    for cliente, grupo in {
-        "JBS": "JBS Leather Argentina S.A.",
-        "ELEA": "Laboratorio Elea Phoenix SA",
-        "Arag": "Arag S.R.L.",
-        "HOSP. ITALIANO DE LA PLATA": "Hospital Italiano De La Plata",
-    }.items()
-}
 
 
 class FiltrarPendientesPorPeriodoReal:
@@ -70,5 +55,5 @@ class FiltrarPendientesPorPeriodoReal:
         directo = buscar_por_nombre(cliente, indice)
         if directo is not None or not cliente:
             return directo
-        grupo_alias = _ALIAS_CLIENTE_GRUPO_NORM.get(normalizar_nombre(cliente))
+        grupo_alias = ALIAS_CLIENTE_GRUPO_NORM.get(normalizar_nombre(cliente))
         return None if grupo_alias is None else indice.exacto.get(grupo_alias)

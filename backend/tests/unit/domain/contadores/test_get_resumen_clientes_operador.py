@@ -27,13 +27,16 @@ def _event(event_id: str, cliente: str | None, operador_id: str | None) -> Calen
     )
 
 
-def _calendar_mock(events: list[CalendarEvent]) -> AsyncMock:
+def _calendar_mock(
+    events: list[CalendarEvent], operador_propio: Operador | None = None
+) -> AsyncMock:
     mock = AsyncMock()
     mock.list_events.return_value = events
     mock.list_operadores.return_value = [
         Operador(id="vipaez", nombre="Victor Paez", color="#888200"),
         Operador(id="mpollero", nombre="Marina Pollero", color="#123456"),
     ]
+    mock.find_operador_by_nombre.return_value = operador_propio
     return mock
 
 
@@ -73,7 +76,9 @@ async def test_agrupa_clientes_distintos_y_suma_impresoras() -> None:
         calendar=_calendar_mock(events), alias=_alias_mock(), parque=parque
     )
 
-    resumen = await GetResumenClientesOperador(deps).execute(hoy=_HOY, dias_ventana=90)
+    resumen = await GetResumenClientesOperador(deps).execute(
+        hoy=_HOY, dias_ventana=90, is_superadmin=True, full_name="Cualquiera"
+    )
 
     # cartera: ventana futura desde hoy, no el mes calendario
     assert resumen.desde == _HOY
@@ -98,7 +103,9 @@ async def test_cliente_sin_cruce_se_informa_y_no_suma() -> None:
         calendar=_calendar_mock(events), alias=_alias_mock(), parque=parque
     )
 
-    resumen = await GetResumenClientesOperador(deps).execute(hoy=_HOY, dias_ventana=90)
+    resumen = await GetResumenClientesOperador(deps).execute(
+        hoy=_HOY, dias_ventana=90, is_superadmin=True, full_name="Cualquiera"
+    )
 
     fila = resumen.operadores[0]
     assert fila.clientes == 2
@@ -116,7 +123,9 @@ async def test_alias_multiempresa_suma_todas_las_empresas() -> None:
         parque=parque,
     )
 
-    resumen = await GetResumenClientesOperador(deps).execute(hoy=_HOY, dias_ventana=90)
+    resumen = await GetResumenClientesOperador(deps).execute(
+        hoy=_HOY, dias_ventana=90, is_superadmin=True, full_name="Cualquiera"
+    )
 
     assert resumen.operadores[0].impresoras == 149
     assert resumen.operadores[0].sin_cruce == []
@@ -133,7 +142,11 @@ async def test_operador_pool_excluido() -> None:
     )
 
     resumen = await GetResumenClientesOperador(deps).execute(
-        hoy=_HOY, dias_ventana=90, exclude_operador_ids=frozenset({"contadores"})
+        hoy=_HOY,
+        dias_ventana=90,
+        is_superadmin=True,
+        full_name="Cualquiera",
+        exclude_operador_ids=frozenset({"contadores"}),
     )
 
     assert [f.operador_id for f in resumen.operadores] == ["vipaez"]
@@ -148,7 +161,9 @@ async def test_siges_caido_degrada_a_solo_clientes() -> None:
         calendar=_calendar_mock(events), alias=_alias_mock(), parque=parque
     )
 
-    resumen = await GetResumenClientesOperador(deps).execute(hoy=_HOY, dias_ventana=90)
+    resumen = await GetResumenClientesOperador(deps).execute(
+        hoy=_HOY, dias_ventana=90, is_superadmin=True, full_name="Cualquiera"
+    )
 
     fila = resumen.operadores[0]
     assert (fila.clientes, fila.impresoras, fila.sin_cruce) == (1, None, [])
@@ -162,7 +177,61 @@ async def test_sin_gateway_configurado_degrada_a_solo_clientes() -> None:
         calendar=_calendar_mock(events), alias=_alias_mock(), parque=None
     )
 
-    resumen = await GetResumenClientesOperador(deps).execute(hoy=_HOY, dias_ventana=90)
+    resumen = await GetResumenClientesOperador(deps).execute(
+        hoy=_HOY, dias_ventana=90, is_superadmin=True, full_name="Cualquiera"
+    )
 
     assert resumen.operadores[0].impresoras is None
     assert resumen.total_impresoras is None
+
+
+class TestVisibilidadOperadorRegular:
+    """Un operador regular (no superadmin) ve solo su propia cartera — mismo
+    criterio que GetPendingClientsUseCase."""
+
+    @pytest.mark.asyncio
+    async def test_operador_regular_solo_ve_su_propia_cartera(self) -> None:
+        events = [
+            _event("1", "ACME", "vipaez"),
+            _event("2", "Globex", "mpollero"),
+        ]
+        parque = _parque_mock(
+            empresas=[
+                EmpresaSiges(id=1, den_comercial="ACME"),
+                EmpresaSiges(id=2, den_comercial="Globex"),
+            ],
+            impresoras={1: 10, 2: 3},
+        )
+        operador = Operador(id="vipaez", nombre="Victor Paez", color="#888200")
+        deps = GetResumenClientesOperadorDependencies(
+            calendar=_calendar_mock(events, operador_propio=operador),
+            alias=_alias_mock(),
+            parque=parque,
+        )
+
+        resumen = await GetResumenClientesOperador(deps).execute(
+            hoy=_HOY, dias_ventana=90, is_superadmin=False, full_name="Victor Paez"
+        )
+
+        assert [f.operador_id for f in resumen.operadores] == ["vipaez"]
+        assert resumen.total_clientes == 1
+        assert resumen.total_impresoras == 10
+
+    @pytest.mark.asyncio
+    async def test_sin_operador_propio_no_muestra_nada(self) -> None:
+        events = [_event("1", "ACME", "vipaez")]
+        parque = _parque_mock(
+            empresas=[EmpresaSiges(id=1, den_comercial="ACME")], impresoras={1: 10}
+        )
+        deps = GetResumenClientesOperadorDependencies(
+            calendar=_calendar_mock(events, operador_propio=None),
+            alias=_alias_mock(),
+            parque=parque,
+        )
+
+        resumen = await GetResumenClientesOperador(deps).execute(
+            hoy=_HOY, dias_ventana=90, is_superadmin=False, full_name="Sin Mapear"
+        )
+
+        assert resumen.operadores == []
+        assert resumen.total_clientes == 0

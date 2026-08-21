@@ -7,6 +7,9 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.contadores.application.use_cases.filtrar_pendientes_periodo_por_operador import (
+    FiltrarPendientesPeriodoPorOperador,
+)
 from src.modules.contadores.application.use_cases.get_clientes_pendientes_periodo import (
     GetClientesPendientesPeriodo,
 )
@@ -50,13 +53,14 @@ router = APIRouter()
 
 @router.get("/calendario/resumen-clientes", response_model=ResumenClientesOperadorResponse)
 async def get_resumen_clientes_operador(
-    _: Identity = require_view,
+    identity: Identity = require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ResumenClientesOperadorResponse:
     """Card de Inicio: cartera de clientes por operador (ventana futura del
     calendario — la misma que sincroniza el sync, ver el docstring del use
     case) e impresoras cruzadas contra Siges por nombre. Los operadores pool
-    se excluyen igual que en el backlog de pendientes."""
+    se excluyen igual que en el backlog de pendientes. Un operador regular ve
+    solo su propia cartera; el superadmin ve el desglose de todos."""
     deps = GetResumenClientesOperadorDependencies(
         calendar=SqlAlchemyCalendarEventRepository(db),
         alias=SqlAlchemyClienteSigesMapRepository(db),
@@ -65,6 +69,8 @@ async def get_resumen_clientes_operador(
     dto = await GetResumenClientesOperador(deps).execute(
         hoy=datetime.now(UTC).date(),
         dias_ventana=DEFAULT_SYNC_WINDOW_DAYS,
+        is_superadmin=identity.user.is_superadmin,
+        full_name=identity.user.full_name,
         exclude_operador_ids=POOL_BACKLOG_OPERADOR_IDS,
     )
     return ResumenClientesOperadorResponse.model_validate(dto)
@@ -75,15 +81,26 @@ async def get_resumen_clientes_operador(
     response_model=ClientesPendientesPeriodoResponse,
 )
 async def get_clientes_pendientes_periodo_anterior(
-    _: Identity = require_view,
+    identity: Identity = require_view,
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ClientesPendientesPeriodoResponse:
     """Card de Inicio: arrastre real del cierre que acaba de pasar (clientes
     con anexo de Impresión pendiente de exactamente el período inmediato
-    anterior), sin depender del backlog de calendario de Gestión."""
+    anterior), sin depender del backlog de calendario de Gestión. Recortado a
+    la cartera del operador (el superadmin ve todos) — ver
+    FiltrarPendientesPeriodoPorOperador."""
     gateway = get_clientes_pendientes_periodo_gateway_or_none()
     resultado = None if gateway is None else await GetClientesPendientesPeriodo(gateway).execute()
     if resultado is None:
         return ClientesPendientesPeriodoResponse(periodo=None, cantidad=None, grupos=None)
+    repo = SqlAlchemyCalendarEventRepository(db)
+    resultado = await FiltrarPendientesPeriodoPorOperador(repo).execute(
+        resultado,
+        is_superadmin=identity.user.is_superadmin,
+        full_name=identity.user.full_name,
+        hoy=datetime.now(UTC).date(),
+        dias_ventana=DEFAULT_SYNC_WINDOW_DAYS,
+    )
     return ClientesPendientesPeriodoResponse(
         periodo=resultado.periodo,
         cantidad=resultado.cantidad,
