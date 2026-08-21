@@ -42,12 +42,18 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   // (gateado por botón, no por ruta).
   { prefix: "/turnos", anyOf: [p("turnos", "view")] },
 
-  // Gestión de Personal: espejo del submenú (vacaciones-nav-submenu.tsx).
+  // Gestión de Personal: espejo del submenú (vacaciones-nav-submenu.tsx). Un
+  // operador (view + create) ve por ahora SOLO Solicitudes (decisión del
+  // usuario 2026-08-21); dashboard, asistencias y gestión humana son del TL/admin.
   { prefix: "/vacaciones/solicitudes", anyOf: [p("vacaciones", "manage"), p("vacaciones", "create")] },
   { prefix: "/vacaciones/aprobaciones", anyOf: [p("vacaciones", "manage"), p("vacaciones", "approve")] },
+  { prefix: "/vacaciones/asistencias", anyOf: [p("vacaciones", "manage"), p("vacaciones", "approve")] },
+  { prefix: "/vacaciones/gestion", anyOf: [p("vacaciones", "manage")] },
   { prefix: "/vacaciones/reportes", anyOf: [p("vacaciones", "manage")] },
   { prefix: "/vacaciones/auditoria", anyOf: [p("vacaciones", "manage")] },
   { prefix: "/vacaciones/configuracion", anyOf: [p("vacaciones", "manage")] },
+  // Dashboard del equipo (raíz del módulo): TL/admin.
+  { prefix: "/vacaciones", exact: true, anyOf: [p("vacaciones", "manage"), p("vacaciones", "approve")] },
   { prefix: "/vacaciones", anyOf: [p("vacaciones", "view")] },
 
   // Contadores: el hub raíz ("Automatización": DB3, proyección, FTP, SDS, ERS…)

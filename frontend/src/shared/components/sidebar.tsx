@@ -29,6 +29,7 @@ import { cn } from "@/shared/utils/cn";
 import { ChangePasswordModal } from "@/features/auth/components/change-password-modal";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useSession } from "@/services/session-provider";
+import { canAccessPath } from "@/shared/config/route-permissions";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { WatiHeaderLink } from "@/features/wati/components/wati-header-link";
 
@@ -52,7 +53,18 @@ export function Sidebar({
    * `null` = sin configurar, el ícono no se muestra. */
   watiUrl?: string | null;
 }) {
-  const { user, modules } = useSession();
+  const { user, modules, can } = useSession();
+  // Destino del ítem de nivel superior de cada módulo: la raíz del módulo, salvo
+  // que la ruta raíz pida más permiso del que tiene el usuario (mapa central de
+  // rutas, ADR-029) — entonces la primera sub-pantalla accesible. Ej.: operador
+  // de Gestión de Personal sin acceso al dashboard → Solicitudes.
+  const hrefDeModulo = (module: { key: string; route: string }): string => {
+    if (module.key === "contadores") return "/contadores/calendario";
+    if (module.key === "vacaciones" && !canAccessPath(module.route, can)) {
+      return "/vacaciones/solicitudes";
+    }
+    return module.route;
+  };
   // Configuración es un módulo más para el backend (sort_order en la tabla
   // Module), pero en la nav siempre tiene que quedar al final del todo.
   const sortedModules = [...modules].sort((a, b) =>
@@ -296,7 +308,7 @@ export function Sidebar({
                     )}
                   >
                     <Link
-                      href={isContadores ? "/contadores/calendario" : module.route}
+                      href={hrefDeModulo(module)}
                       onClick={closeMobile}
                       aria-current={active ? "page" : undefined}
                       className="flex flex-1 items-center gap-2.5 px-3 py-2.5 font-body text-sm no-underline"
