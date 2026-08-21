@@ -86,7 +86,7 @@ export default function AdminUsersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <BrandBadge variant={item.isSuperadmin ? "accent" : "neutral"}>
-                      {item.isSuperadmin ? "Superadmin" : "Usuario"}
+                      {item.isSuperadmin ? "Administrador" : "Usuario"}
                     </BrandBadge>
                   </td>
                   <td className="px-4 py-3">

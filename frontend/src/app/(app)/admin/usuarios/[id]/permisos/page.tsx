@@ -63,7 +63,7 @@ export default function UserPermissionsPage({ params }: PageProps) {
 
       {targetUser?.isSuperadmin && (
         <p className="mb-4 rounded-[10px] bg-brand-orange/10 px-4 py-3 font-body text-xs font-bold uppercase tracking-wide text-brand-orange">
-          Este usuario es superadmin: ya tiene acceso a todo, sin importar esta grilla.
+          Este usuario es Administrador (superadmin): ya tiene acceso a todo, sin importar esta grilla.
         </p>
       )}
 

@@ -151,7 +151,7 @@ export function Sidebar({
                 {user.fullName}
               </span>
               <span className="font-body text-xs text-muted-foreground">
-                {user.isSuperadmin ? "Superadmin" : "Usuario"}
+                {user.isSuperadmin ? "Administrador" : "Usuario"}
               </span>
             </span>
           </button>
