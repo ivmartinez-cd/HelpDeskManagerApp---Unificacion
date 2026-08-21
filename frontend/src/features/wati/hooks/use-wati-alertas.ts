@@ -41,6 +41,7 @@ function mostrarToast(p: ConversacionPendiente, nivel: NivelEspera, inboxUrl: st
     id: clave(p, nivel),
     description: descripcion,
     duration: Infinity,
+    closeButton: true,
     action: inboxUrl
       ? { label: "Abrir WATI", onClick: () => window.open(inboxUrl, "_blank", "noopener") }
       : undefined,
@@ -53,7 +54,10 @@ function mostrarToast(p: ConversacionPendiente, nivel: NivelEspera, inboxUrl: st
  * espera: una vez al llegar a "atención" y otra al llegar a "crítico", no
  * en cada refresco. El registro de avisados vive en sessionStorage para
  * sobrevivir a una recarga de la pestaña; cuando un chat deja de estar
- * pendiente se olvida, así que si vuelve a esperar se avisa de nuevo. */
+ * pendiente (lo respondieron o lo cerraron) su aviso se retira solo y se
+ * olvida, así que si vuelve a esperar se avisa de nuevo. Al pasar a
+ * "crítico" el aviso rojo reemplaza al amarillo. El toast también se puede
+ * descartar con la X o con "Abrir WATI". */
 export function useWatiAlertas(pendientes: ConversacionPendiente[], inboxUrl: string | null) {
   const avisadas = useRef<Set<string> | null>(null);
 
@@ -67,13 +71,20 @@ export function useWatiAlertas(pendientes: ConversacionPendiente[], inboxUrl: st
       if (nivel === "ok") continue;
       const k = clave(p, nivel);
       vigentes.add(k);
-      if (nivel === "critico") vigentes.add(clave(p, "atencion"));
+      if (nivel === "critico") {
+        vigentes.add(clave(p, "atencion"));
+        toast.dismiss(clave(p, "atencion"));
+      }
       if (set.has(k)) continue;
       set.add(k);
       mostrarToast(p, nivel, inboxUrl);
       nuevos += 1;
     }
-    for (const k of [...set]) if (!vigentes.has(k)) set.delete(k);
+    for (const k of [...set]) {
+      if (vigentes.has(k)) continue;
+      set.delete(k);
+      toast.dismiss(k);
+    }
     guardarAvisadas(set);
     if (nuevos > 0) sonarAviso();
   }, [pendientes, inboxUrl]);
