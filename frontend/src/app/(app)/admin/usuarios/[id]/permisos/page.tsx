@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { adminUsersApi, type AdminUser } from "@/features/admin-users/api/admin-users-api";
+import { PERMISSION_TEMPLATES } from "@/features/admin-permissions/config/permission-templates";
 import { useUserPermissions } from "@/features/admin-permissions/hooks/use-user-permissions";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { ApiError } from "@/services/http-client";
@@ -16,8 +17,18 @@ interface PageProps {
 export default function UserPermissionsPage({ params }: PageProps) {
   const { id } = use(params);
   const [targetUser, setTargetUser] = useState<AdminUser | null>(null);
-  const { modules, actions, isGranted, toggle, dirty, loading, saving, save } =
-    useUserPermissions(id);
+  const {
+    modules,
+    actions,
+    isGranted,
+    toggle,
+    applyTemplate,
+    clearAll,
+    dirty,
+    loading,
+    saving,
+    save,
+  } = useUserPermissions(id);
 
   useEffect(() => {
     adminUsersApi
@@ -54,6 +65,31 @@ export default function UserPermissionsPage({ params }: PageProps) {
         <p className="mb-4 rounded-[10px] bg-brand-orange/10 px-4 py-3 font-body text-xs font-bold uppercase tracking-wide text-brand-orange">
           Este usuario es superadmin: ya tiene acceso a todo, sin importar esta grilla.
         </p>
+      )}
+
+      {!loading && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="font-body text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Aplicar perfil
+          </span>
+          {PERMISSION_TEMPLATES.map((template) => (
+            <BrandButton
+              key={template.key}
+              size="sm"
+              variant="outline"
+              title={template.description}
+              onClick={() => applyTemplate(template.grants)}
+            >
+              {template.label}
+            </BrandButton>
+          ))}
+          <BrandButton size="sm" variant="outline" onClick={clearAll} title="Destildar todo">
+            Quitar todo
+          </BrandButton>
+          <span className="font-body text-xs text-muted-foreground">
+            Las plantillas reemplazan la selección; revisá la grilla y guardá.
+          </span>
+        </div>
       )}
 
       {!loading && (

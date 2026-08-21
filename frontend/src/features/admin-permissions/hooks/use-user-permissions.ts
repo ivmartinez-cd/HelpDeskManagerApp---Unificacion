@@ -72,6 +72,24 @@ export function useUserPermissions(userId: string) {
     return granted.has(grantKey(module, action));
   }
 
+  /** Reemplaza la selección por una plantilla (ver permission-templates.ts),
+   * ignorando los pares que el catálogo no declara. Solo toca el estado local:
+   * el admin revisa y después guarda. */
+  function applyTemplate(grants: readonly (readonly [string, string])[]): void {
+    const applicable = new Set(
+      modules.flatMap((m) => m.actions.map((a) => grantKey(m.key, a))),
+    );
+    setGranted(
+      new Set(
+        grants.map(([module, action]) => grantKey(module, action)).filter((k) => applicable.has(k)),
+      ),
+    );
+  }
+
+  function clearAll(): void {
+    setGranted(new Set());
+  }
+
   const dirty =
     granted.size !== initialGranted.size ||
     [...granted].some((k) => !initialGranted.has(k));
@@ -97,5 +115,16 @@ export function useUserPermissions(userId: string) {
     }
   }
 
-  return { modules, actions, isGranted, toggle, dirty, loading, saving, save };
+  return {
+    modules,
+    actions,
+    isGranted,
+    toggle,
+    applyTemplate,
+    clearAll,
+    dirty,
+    loading,
+    saving,
+    save,
+  };
 }
