@@ -26,6 +26,9 @@ class Identity:
     user: UserView
     permissions: frozenset[PermissionView]
     session_id: uuid.UUID
+    # Funciones (pantallas/cards) concedidas, por clave (ADR-032). Vacío para
+    # quien no tiene ninguna; el superadmin se resuelve en `require_feature`.
+    features: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True, slots=True)

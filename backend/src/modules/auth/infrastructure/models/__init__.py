@@ -2,8 +2,10 @@ from src.modules.auth.infrastructure.models.permission_models import (
     Action,
     Module,
     ModuleAction,
+    ModuleFeature,
     PermissionAudit,
     PermissionGrant,
+    UserFeatureGrant,
     UserModuleScope,
 )
 from src.modules.auth.infrastructure.models.route_visit_model import UserRouteVisit
@@ -21,9 +23,11 @@ __all__ = [
     "LoginAttempt",
     "Module",
     "ModuleAction",
+    "ModuleFeature",
     "PasswordResetToken",
     "PermissionAudit",
     "PermissionGrant",
+    "UserFeatureGrant",
     "UserModuleScope",
     "UserRouteVisit",
     "UserSession",

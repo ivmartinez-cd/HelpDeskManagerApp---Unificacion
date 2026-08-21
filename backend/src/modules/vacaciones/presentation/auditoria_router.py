@@ -4,13 +4,13 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
-from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.auth.presentation.dependencies.features import require_feature
 from src.modules.vacaciones.application.use_cases.listar_auditoria import (
     ListarAuditoria,
     ListarAuditoriaDependencies,
 )
 from src.modules.vacaciones.domain.repositories.auditoria import FiltrosAuditoria
-from src.modules.vacaciones.domain.well_known_permissions import MANAGE
+from src.modules.vacaciones.domain.well_known_features import AUDITORIA
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_auditoria import (
     SqlAlchemyAuditoriaRepository,
 )
@@ -26,7 +26,8 @@ from src.shared.presentation.schemas.pagination import Page
 router = APIRouter(prefix="/api/vacaciones/auditoria", tags=["vacaciones"])
 
 _DEFAULT_SIZE = 50
-_require_manage = Depends(require_permission(MANAGE))
+# Función concedible por usuario (ADR-032): antes vacaciones.manage.
+_require_manage = Depends(require_feature(AUDITORIA))
 
 
 @router.get("")

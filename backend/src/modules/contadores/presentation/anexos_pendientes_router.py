@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
-from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.auth.presentation.dependencies.features import require_feature
 from src.modules.contadores.application.dtos.list_anexos_pendientes_request import (
     FiltroEstado,
     ListAnexosPendientesRequest,
@@ -23,7 +23,7 @@ from src.modules.contadores.application.use_cases.list_anexos_pendientes import 
 from src.modules.contadores.application.use_cases.operador_por_empresa import (
     MapaOperadorPorEmpresa,
 )
-from src.modules.contadores.domain.well_known_permissions import VIEW
+from src.modules.contadores.domain.well_known_features import ANEXOS
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_calendario_repository import (
     SqlAlchemyCalendarEventRepository,
 )
@@ -43,7 +43,8 @@ from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/contadores", tags=["contadores-anexos-pendientes"])
 
-_require_view = Depends(require_permission(VIEW))
+# Función concedible por usuario (ADR-032): antes contadores.view.
+_require_view = Depends(require_feature(ANEXOS))
 # El reporte se imprime entero: el default alcanza para el universo real
 # (~50 filas) sin renunciar al contrato paginado (§11, catálogo chico).
 _MAX_PAGE_SIZE = 500

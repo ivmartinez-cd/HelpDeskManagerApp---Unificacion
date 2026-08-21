@@ -1,10 +1,14 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.application.mappers import to_identity
 from src.modules.auth.domain.entities.session import Session
 from src.modules.auth.domain.errors import NotAuthenticatedError
+from src.modules.auth.domain.repositories.feature_grant_repository import (
+    FeatureGrantRepository,
+    FeatureGrantRepositoryNulo,
+)
 from src.modules.auth.domain.repositories.permission_repository import PermissionRepository
 from src.modules.auth.domain.repositories.session_repository import SessionRepository
 from src.modules.auth.domain.repositories.user_repository import UserRepository
@@ -20,6 +24,7 @@ class GetCurrentIdentityDependencies:
     users: UserRepository
     permissions: PermissionRepository
     tokens: SessionTokenGenerator
+    features: FeatureGrantRepository = field(default_factory=FeatureGrantRepositoryNulo)
 
 
 class GetCurrentIdentity:
@@ -40,7 +45,8 @@ class GetCurrentIdentity:
             raise NotAuthenticatedError()
         await self._extend_if_stale(session, now)
         permissions = await self._deps.permissions.get_for_user(user.id)
-        return to_identity(user, permissions, session_id=session.id)
+        features = await self._deps.features.get_for_user(user.id)
+        return to_identity(user, permissions, session_id=session.id, features=features)
 
     async def _extend_if_stale(self, session: Session, now: datetime) -> None:
         """Vencimiento deslizante: solo escribe si pasó más de una hora desde

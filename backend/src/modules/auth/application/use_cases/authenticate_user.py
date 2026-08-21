@@ -1,5 +1,5 @@
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
 from src.modules.auth.application.dtos.commands import LoginCommand
@@ -11,6 +11,10 @@ from src.modules.auth.domain.errors import (
     AccountDisabledError,
     InvalidCredentialsError,
     TooManyAttemptsError,
+)
+from src.modules.auth.domain.repositories.feature_grant_repository import (
+    FeatureGrantRepository,
+    FeatureGrantRepositoryNulo,
 )
 from src.modules.auth.domain.repositories.login_attempt_repository import LoginAttemptRepository
 from src.modules.auth.domain.repositories.permission_repository import PermissionRepository
@@ -33,6 +37,7 @@ class AuthenticateUserDependencies:
     login_attempts: LoginAttemptRepository
     hasher: PasswordHasher
     tokens: SessionTokenGenerator
+    features: FeatureGrantRepository = field(default_factory=FeatureGrantRepositoryNulo)
 
 
 class AuthenticateUser:
@@ -44,7 +49,8 @@ class AuthenticateUser:
         user = await self._verify_credentials(command)
         session, token = await self._open_session(user.id)
         permissions = await self._deps.permissions.get_for_user(user.id)
-        identity = to_identity(user, permissions, session_id=session.id)
+        features = await self._deps.features.get_for_user(user.id)
+        identity = to_identity(user, permissions, session_id=session.id, features=features)
         return AuthenticatedSession(identity=identity, session_token=token)
 
     async def _guard_rate_limit(self, email: str) -> None:

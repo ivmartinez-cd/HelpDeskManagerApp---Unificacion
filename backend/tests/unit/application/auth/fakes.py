@@ -10,9 +10,11 @@ from src.modules.auth.domain.entities.route_visit_count import RouteVisitCount
 from src.modules.auth.domain.entities.session import Session
 from src.modules.auth.domain.entities.user import User
 from src.modules.auth.domain.value_objects.email import Email
+from src.modules.auth.domain.value_objects.feature_set import FeatureSet
 from src.modules.auth.domain.value_objects.password_hash import PasswordHash
 from src.modules.auth.domain.value_objects.permission_set import PermissionSet
 from src.modules.auth.domain.value_objects.raw_password import RawPassword
+from src.shared.domain.value_objects.feature_key import FeatureKey
 from src.shared.domain.value_objects.module_key import ModuleKey
 from src.shared.domain.value_objects.permission import Permission
 
@@ -134,6 +136,9 @@ class RecordedDiff:
 class FakePermissionAuditRepository:
     def __init__(self) -> None:
         self.diffs: list[RecordedDiff] = []
+        self.feature_diffs: list[
+            tuple[uuid.UUID, uuid.UUID, frozenset[FeatureKey], frozenset[FeatureKey]]
+        ] = []
 
     async def record_diff(
         self,
@@ -144,6 +149,31 @@ class FakePermissionAuditRepository:
         removed: frozenset[Permission],
     ) -> None:
         self.diffs.append(RecordedDiff(actor_user_id, target_user_id, added, removed))
+
+    async def record_feature_diff(
+        self,
+        *,
+        actor_user_id: uuid.UUID,
+        target_user_id: uuid.UUID,
+        added: frozenset[FeatureKey],
+        removed: frozenset[FeatureKey],
+    ) -> None:
+        self.feature_diffs.append((actor_user_id, target_user_id, added, removed))
+
+
+class FakeFeatureGrantRepository:
+    def __init__(self) -> None:
+        self.by_user: dict[uuid.UUID, FeatureSet] = {}
+        self.replaced: list[tuple[uuid.UUID, FeatureSet, uuid.UUID]] = []
+
+    async def get_for_user(self, user_id: uuid.UUID) -> FeatureSet:
+        return self.by_user.get(user_id, FeatureSet())
+
+    async def replace_for_user(
+        self, user_id: uuid.UUID, features: FeatureSet, *, granted_by: uuid.UUID
+    ) -> None:
+        self.by_user[user_id] = features
+        self.replaced.append((user_id, features, granted_by))
 
 
 @dataclass(slots=True)

@@ -4,6 +4,14 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.auth.application.use_cases.features import (
+    GetUserFeatures,
+    GetUserFeaturesDependencies,
+    ListFeatureCatalog,
+    ListFeatureCatalogDependencies,
+    ReplaceUserFeatures,
+    ReplaceUserFeaturesDependencies,
+)
 from src.modules.auth.application.use_cases.get_user_permissions import (
     GetUserPermissions,
     GetUserPermissionsDependencies,
@@ -21,6 +29,10 @@ from src.modules.auth.application.use_cases.replace_user_permissions import (
     ReplaceUserPermissionsDependencies,
 )
 from src.modules.auth.domain.well_known_permissions import MANAGE_ADMIN
+from src.modules.auth.infrastructure.repositories.sqlalchemy_feature_repositories import (
+    SqlAlchemyFeatureCatalogRepository,
+    SqlAlchemyFeatureGrantRepository,
+)
 from src.modules.auth.infrastructure.repositories.sqlalchemy_module_catalog_repository import (
     SqlAlchemyModuleCatalogRepository,
 )
@@ -34,6 +46,11 @@ from src.modules.auth.presentation.dependencies.permissions import require_permi
 from src.modules.auth.presentation.schemas.catalog_schemas import (
     ActionCatalogResponse,
     ModuleCatalogResponse,
+)
+from src.modules.auth.presentation.schemas.feature_schemas import (
+    FeatureCatalogResponse,
+    FeaturesResponse,
+    ReplaceFeaturesRequest,
 )
 from src.modules.auth.presentation.schemas.permission_schemas import (
     PermissionsResponse,
@@ -107,3 +124,48 @@ async def replace_user_permissions(
     )
     permissions = await SqlAlchemyPermissionRepository(db).get_for_user(user_id)
     return PermissionsResponse.from_domain(permissions)
+
+
+# --- Funciones (pantallas/cards) por usuario — ADR-032 ---------------------------
+
+
+@router.get("/catalog/features")
+async def list_features(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=_CATALOGO_SIZE, ge=1, le=500),
+    _: Identity = _require_manage_admin,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> Page[FeatureCatalogResponse]:
+    deps = ListFeatureCatalogDependencies(catalog=SqlAlchemyFeatureCatalogRepository(db))
+    entries = await ListFeatureCatalog(deps).execute()
+    return Page.of(
+        [FeatureCatalogResponse.from_domain(entry) for entry in entries], page=page, size=size
+    )
+
+
+@router.get("/users/{user_id}/features")
+async def get_user_features(
+    user_id: uuid.UUID,
+    _: Identity = _require_manage_admin,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> FeaturesResponse:
+    deps = GetUserFeaturesDependencies(features=SqlAlchemyFeatureGrantRepository(db))
+    return FeaturesResponse.from_domain(await GetUserFeatures(deps).execute(user_id))
+
+
+@router.put("/users/{user_id}/features")
+async def replace_user_features(
+    user_id: uuid.UUID,
+    payload: ReplaceFeaturesRequest,
+    identity: Identity = _require_manage_admin,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> FeaturesResponse:
+    deps = ReplaceUserFeaturesDependencies(
+        features=SqlAlchemyFeatureGrantRepository(db),
+        audit=SqlAlchemyPermissionAuditRepository(db),
+    )
+    await ReplaceUserFeatures(deps).execute(
+        target_user_id=user_id, desired=payload.to_domain(), actor_user_id=identity.user.id
+    )
+    features = await SqlAlchemyFeatureGrantRepository(db).get_for_user(user_id)
+    return FeaturesResponse.from_domain(features)

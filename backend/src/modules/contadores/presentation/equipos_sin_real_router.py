@@ -10,7 +10,8 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.auth.application.dtos.results import Identity, PermissionView
+from src.modules.auth.application.dtos.results import Identity
+from src.modules.auth.presentation.dependencies.features import tiene_feature
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.contadores.application.dtos.list_equipos_sin_real_request import (
     ListEquiposSinRealRequest,
@@ -25,7 +26,8 @@ from src.modules.contadores.application.use_cases.list_equipos_sin_real import (
 from src.modules.contadores.application.use_cases.operador_por_empresa import (
     MapaOperadorPorEmpresa,
 )
-from src.modules.contadores.domain.well_known_permissions import MANAGE, VIEW
+from src.modules.contadores.domain.well_known_features import SIN_REAL_TODOS
+from src.modules.contadores.domain.well_known_permissions import VIEW
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_calendario_repository import (
     SqlAlchemyCalendarEventRepository,
 )
@@ -47,15 +49,14 @@ router = APIRouter(prefix="/api/contadores", tags=["contadores-equipos-sin-real"
 
 _require_view = Depends(require_permission(VIEW))
 _MAX_PAGE_SIZE = 500
-_MANAGE = PermissionView(module=MANAGE.module.value, action=MANAGE.action.value)
 
 
 def _solo_operador(identity: Identity) -> str | None:
-    """Sin `contadores.manage` (y sin ser superadmin) el usuario ve solo los
-    equipos de SUS clientes: el cruce con el catálogo de operadores de
-    contadores es por nombre (ADR-009), así que se filtra por `full_name`.
-    Con `manage` o superadmin, `None` = todos (decisión del usuario 2026-08-21)."""
-    if identity.user.is_superadmin or _MANAGE in identity.permissions:
+    """Sin la función "ver todos" (ADR-032) el usuario ve solo los equipos de
+    SUS clientes: el cruce con el catálogo de operadores de contadores es por
+    nombre (ADR-009), así que se filtra por `full_name`. Con la función (o
+    superadmin), `None` = todos."""
+    if tiene_feature(identity, SIN_REAL_TODOS):
         return None
     return identity.user.full_name
 

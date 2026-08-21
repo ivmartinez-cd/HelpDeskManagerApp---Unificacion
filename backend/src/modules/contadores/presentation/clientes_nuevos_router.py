@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
-from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.auth.presentation.dependencies.features import require_feature
 from src.modules.contadores.application.dtos.cliente_nuevo_dtos import ClienteNuevoRequest
 from src.modules.contadores.application.use_cases.create_cliente_nuevo import (
     CreateClienteNuevoUseCase,
@@ -27,7 +27,7 @@ from src.modules.contadores.application.use_cases.update_cliente_nuevo import (
     DeleteClienteNuevoUseCase,
     UpdateClienteNuevoUseCase,
 )
-from src.modules.contadores.domain.well_known_permissions import MANAGE
+from src.modules.contadores.domain.well_known_features import CLIENTES_NUEVOS
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_cliente_nuevo_repository import (  # noqa: E501
     SqlAlchemyClienteNuevoRepository,
 )
@@ -44,7 +44,8 @@ from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/contadores/clientes-nuevos", tags=["contadores-clientes-nuevos"])
 
-_require_manage = Depends(require_permission(MANAGE))
+# Función concedible por usuario (ADR-032): antes contadores.manage.
+_require_manage = Depends(require_feature(CLIENTES_NUEVOS))
 # Son decenas de fichas por año: el listado se pide entero y se filtra en la
 # UI, cumpliendo igual el contrato de paginación.
 _MAX_PAGE_SIZE = 500

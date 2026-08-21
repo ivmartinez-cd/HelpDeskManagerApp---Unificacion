@@ -93,6 +93,49 @@ class PermissionGrant(Base):
     )
 
 
+class ModuleFeature(Base):
+    """Catálogo de funciones (pantallas/cards) por módulo (ADR-032) — seeded
+    por migración, no editable desde la UI. Se conceden por usuario en
+    `user_feature_grant`, además de las acciones de `permission_grant`."""
+
+    __tablename__ = "module_feature"
+    __table_args__ = (
+        CheckConstraint(f"key ~ '{_KEY_FORMAT}'", name="ck_module_feature_key_format"),
+    )
+
+    key: Mapped[str] = mapped_column(String, primary_key=True)
+    module_key: Mapped[str] = mapped_column(
+        ForeignKey("module.key", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    label: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=False, server_default=text("''"))
+    sort_order: Mapped[int] = mapped_column(
+        SmallInteger, nullable=False, server_default=text("100")
+    )
+
+
+class UserFeatureGrant(Base):
+    """1 fila = 1 función concedida a 1 usuario. Ausencia de fila = no la tiene."""
+
+    __tablename__ = "user_feature_grant"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("app_user.id", ondelete="CASCADE"), primary_key=True
+    )
+    feature_key: Mapped[str] = mapped_column(
+        ForeignKey("module_feature.key", onupdate="CASCADE", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    granted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=text("now()")
+    )
+    granted_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("app_user.id", ondelete="SET NULL")
+    )
+
+
 class UserModuleScope(Base):
     """Alcance sectorial PREVISTO, SIN LÓGICA en esta fase (ver ADR de auth)."""
 

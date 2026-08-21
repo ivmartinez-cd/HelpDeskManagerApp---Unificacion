@@ -7,6 +7,9 @@ from src.modules.auth.application.use_cases.get_current_identity import (
     GetCurrentIdentityDependencies,
 )
 from src.modules.auth.domain.errors import NotAuthenticatedError
+from src.modules.auth.infrastructure.repositories.sqlalchemy_feature_repositories import (
+    SqlAlchemyFeatureGrantRepository,
+)
 from src.modules.auth.infrastructure.repositories.sqlalchemy_permission_repository import (
     SqlAlchemyPermissionRepository,
 )
@@ -32,5 +35,6 @@ async def get_current_identity(
         users=SqlAlchemyUserRepository(db),
         permissions=SqlAlchemyPermissionRepository(db),
         tokens=SecureTokenGenerator(),
+        features=SqlAlchemyFeatureGrantRepository(db),
     )
     return await GetCurrentIdentity(deps).execute(token)

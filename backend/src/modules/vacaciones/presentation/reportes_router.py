@@ -3,13 +3,13 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
-from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.auth.presentation.dependencies.features import require_feature
 from src.modules.vacaciones.application.dtos.reporte_dtos import ReporteVacacionesDTO
 from src.modules.vacaciones.application.use_cases.reporte_vacaciones import (
     ReporteVacaciones,
     ReporteVacacionesDependencies,
 )
-from src.modules.vacaciones.domain.well_known_permissions import MANAGE
+from src.modules.vacaciones.domain.well_known_features import REPORTES
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_cargo_repository import (
     SqlAlchemyCargoRepository,
 )
@@ -38,7 +38,8 @@ from src.shared.infrastructure.database.session import get_db
 
 router = APIRouter(prefix="/api/vacaciones/reportes", tags=["vacaciones"])
 
-_require_manage = Depends(require_permission(MANAGE))
+# Función concedible por usuario (ADR-032): antes vacaciones.manage.
+_require_manage = Depends(require_feature(REPORTES))
 
 
 async def _generar(db: AsyncSession) -> ReporteVacacionesDTO:

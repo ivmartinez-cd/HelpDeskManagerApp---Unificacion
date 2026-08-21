@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.auth.presentation.dependencies.features import require_feature
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.vacaciones.application.use_cases.actualizar_config import (
     ActualizarConfig,
@@ -22,6 +23,7 @@ from src.modules.vacaciones.application.use_cases.gestionar_exclusiones import (
     ListarExclusiones,
 )
 from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
+from src.modules.vacaciones.domain.well_known_features import CONFIGURACION
 from src.modules.vacaciones.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_auditoria import (
     SqlAlchemyRegistradorAuditoria,
@@ -62,6 +64,8 @@ router = APIRouter(prefix="/api/vacaciones", tags=["vacaciones"])
 _DEFAULT_SIZE = 200
 _require_view = Depends(require_permission(VIEW))
 _require_manage = Depends(require_permission(MANAGE))
+# Pantalla Configuración: función concedible por usuario (ADR-032).
+_require_config = Depends(require_feature(CONFIGURACION))
 
 
 def _ciclos_deps(db: AsyncSession) -> CiclosDependencies:
@@ -117,7 +121,7 @@ async def saldo_empleado(
 
 @router.get("/config")
 async def get_config(
-    _identity: Identity = _require_manage,
+    _identity: Identity = _require_config,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ConfigResponse:
     config = await SqlAlchemyConfigRepository(db).get()
@@ -127,7 +131,7 @@ async def get_config(
 @router.put("/config")
 async def update_config(
     body: ConfigUpdateRequest,
-    identity: Identity = _require_manage,
+    identity: Identity = _require_config,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ConfigResponse:
     deps = ActualizarConfigDependencies(

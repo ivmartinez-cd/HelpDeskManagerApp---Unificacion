@@ -25,6 +25,8 @@ class IdentityResponse(BaseModel):
 
     user: UserResponse
     permissions: list[PermissionResponse]
+    # Funciones (pantallas/cards) concedidas, por clave (ADR-032).
+    features: list[str] = []
 
     @classmethod
     def from_domain(cls, identity: Identity) -> "IdentityResponse":
@@ -38,4 +40,4 @@ class IdentityResponse(BaseModel):
         permissions = [
             PermissionResponse(module=p.module, action=p.action) for p in identity.permissions
         ]
-        return cls(user=user, permissions=permissions)
+        return cls(user=user, permissions=permissions, features=sorted(identity.features))

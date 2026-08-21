@@ -30,6 +30,9 @@ from src.modules.auth.application.use_cases.revoke_session import (
 )
 from src.modules.auth.infrastructure.argon2_password_hasher import Argon2PasswordHasher
 from src.modules.auth.infrastructure.mailer_factory import get_mailer
+from src.modules.auth.infrastructure.repositories.sqlalchemy_feature_repositories import (
+    SqlAlchemyFeatureGrantRepository,
+)
 from src.modules.auth.infrastructure.repositories.sqlalchemy_login_attempt_repository import (
     SqlAlchemyLoginAttemptRepository,
 )
@@ -78,6 +81,7 @@ async def login(
         sessions=SqlAlchemySessionRepository(db),
         permissions=SqlAlchemyPermissionRepository(db),
         login_attempts=SqlAlchemyLoginAttemptRepository(db),
+        features=SqlAlchemyFeatureGrantRepository(db),
         hasher=Argon2PasswordHasher(),
         tokens=tokens,
     )
