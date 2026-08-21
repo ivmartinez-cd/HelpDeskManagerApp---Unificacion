@@ -115,7 +115,10 @@ export function payloadDesdeFicha(f: ClienteNuevo): ClienteNuevoPayload {
 }
 
 /** Precarga desde una sugerencia de Siges: lo que el mail de Comercial
- * repite (cliente, contrato, firma, vendedor) ya viene cargado. */
+ * repite (cliente, contrato, firma, vendedor) ya viene cargado. "Equipos
+ * previstos" NO se precarga con lo instalado: es la cantidad comprometida
+ * (viene del mail) y tiene que ser independiente de lo que Siges ya muestra,
+ * si no "Listo para STC" se enciende solo. */
 export function payloadDesdeCandidato(c: CandidatoClienteNuevo): ClienteNuevoPayload {
   return {
     ...PAYLOAD_VACIO,
@@ -124,7 +127,6 @@ export function payloadDesdeCandidato(c: CandidatoClienteNuevo): ClienteNuevoPay
     contrato_nro: c.contrato_nro,
     fecha_firma: c.fecha_firma,
     vendedor: c.vendedor,
-    equipos_previstos: c.equipos_instalados > 0 ? c.equipos_instalados : null,
   };
 }
 

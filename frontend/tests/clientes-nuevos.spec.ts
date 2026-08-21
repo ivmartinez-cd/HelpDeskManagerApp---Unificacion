@@ -192,5 +192,7 @@ test.describe("Contadores › Clientes nuevos", () => {
     await expect(dialog.getByLabel("Contrato N°")).toHaveValue("FURLONG DEMO");
     await expect(dialog.getByLabel("Fecha de firma")).toHaveValue("2026-07-01");
     await expect(dialog.getByText("Cruzada con ID_Empresa 1411", { exact: false })).toBeVisible();
+    // Los previstos salen del mail, no de lo ya instalado en Siges.
+    await expect(dialog.getByLabel("Equipos previstos")).toHaveValue("");
   });
 });
