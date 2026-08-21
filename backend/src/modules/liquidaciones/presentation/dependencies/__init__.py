@@ -18,24 +18,22 @@ from src.modules.liquidaciones.presentation.dependencies.config import (
 from src.modules.liquidaciones.presentation.dependencies.geolocalizacion import (
     build_aplicar_calcular_distancias,
     build_auditar_pines,
-    build_buscar_lugar_fila,
+    build_corregir_pin,
+    build_diagnosticar_asistente_km,
+    build_geocodificar_sucursales,
+    build_listar_coordenadas_pendientes,
+    build_listar_pines_sospechosos,
+    build_preview_calcular_distancias,
+    build_resolver_coordenadas,
+)
+from src.modules.liquidaciones.presentation.dependencies.geovalidacion import (
     build_calcular_worklist_tier2,
     build_consultar_georef_pendientes,
     build_consultar_nominatim_pendientes,
-    build_corregir_pin,
-    build_diagnosticar_asistente_km,
     build_evaluar_tier0,
     build_generar_worklist_csv,
-    build_geocodificar_sucursales,
-    build_listar_coordenadas_pendientes,
     build_listar_hallazgos_tier1,
     build_listar_hallazgos_tier1b,
-    build_listar_pines_sospechosos,
-    build_preview_calcular_distancias,
-    build_recalcular_km_fila,
-    build_refrescar_datos_siges,
-    build_resolver_coordenadas,
-    build_resolver_coordenadas_fila,
 )
 from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
     build_actualizar_estado_local,
@@ -64,6 +62,12 @@ from src.modules.liquidaciones.presentation.dependencies.siges import (
     build_sync_tarifarios_desde_siges,
     build_vincular_prestador_siges,
     build_vincular_spst_siges,
+)
+from src.modules.liquidaciones.presentation.dependencies.tabla_km_geo import (
+    build_buscar_lugar_fila,
+    build_recalcular_km_fila,
+    build_refrescar_datos_siges,
+    build_resolver_coordenadas_fila,
 )
 
 __all__ = [

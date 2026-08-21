@@ -1,4 +1,11 @@
-"""Factories de los casos de uso de geolocalización y cálculo de distancias.
+"""Factories de geolocalización a nivel prestador: estado del asistente,
+cálculo de distancias, geocodificación de sucursales, coordenadas y pines
+sospechosos.
+
+Las factories del pipeline de geovalidación (Tier 0/1/1b/worklist) viven en
+`geovalidacion.py` y las de acciones sobre filas de Tabla KM en
+`tabla_km_geo.py` — separadas de este archivo porque juntas superaban el
+tamaño máximo de archivo (§4).
 
 Reusa el gateway pyodbc y el de Distance Matrix de `dependencies/siges.py`
 (singletons de proceso); el de geocoding es otro singleton con la misma key.
@@ -8,10 +15,11 @@ from functools import lru_cache
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.liquidaciones.application.use_cases.calcular_distancias_siges import (
-    AplicarCalcularDistancias,
+from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
     CalcularDistanciasPorts,
-    PreviewCalcularDistancias,
+)
+from src.modules.liquidaciones.application.use_cases.aplicar_calcular_distancias import (
+    AplicarCalcularDistancias,
 )
 from src.modules.liquidaciones.application.use_cases.estado_asistente_km import (
     DiagnosticarAsistenteKm,
@@ -21,56 +29,22 @@ from src.modules.liquidaciones.application.use_cases.geocodificar_sucursales imp
     GeocodificarPorts,
     GeocodificarSucursales,
 )
-from src.modules.liquidaciones.application.use_cases.geovalidacion_csv import (
-    GenerarWorklistCsv,
-    WorklistCsvPorts,
-)
-from src.modules.liquidaciones.application.use_cases.geovalidacion_tier0 import (
-    EvaluarTier0Geovalidacion,
-    GeovalidacionTier0Ports,
-)
-from src.modules.liquidaciones.application.use_cases.geovalidacion_tier1 import (
-    ConsultarGeorefReversePendientes,
-    GeovalidacionTier1Ports,
-    ListarHallazgosTier1,
-)
-from src.modules.liquidaciones.application.use_cases.geovalidacion_tier1b import (
-    ConsultarNominatimPendientes,
-    GeovalidacionTier1bPorts,
-    ListarHallazgosTier1b,
-)
-from src.modules.liquidaciones.application.use_cases.geovalidacion_worklist import (
-    CalcularWorklistTier2,
-    WorklistTier2Ports,
-)
 from src.modules.liquidaciones.application.use_cases.pines_sospechosos import (
     AuditarPines,
     CorregirPin,
     ListarPinesSospechosos,
     PinesPorts,
 )
+from src.modules.liquidaciones.application.use_cases.preview_calcular_distancias import (
+    PreviewCalcularDistancias,
+)
 from src.modules.liquidaciones.application.use_cases.resolver_coordenadas import (
     CoordenadasPorts,
     ListarCoordenadasPendientes,
     ResolverCoordenadas,
 )
-from src.modules.liquidaciones.application.use_cases.tabla_km_lugares import (
-    BuscarLugarFila,
-    RecalcularKmFila,
-    ResolverCoordenadasFila,
-    TablaKmLugaresPorts,
-)
-from src.modules.liquidaciones.application.use_cases.tabla_km_refrescar_siges import (
-    RefrescarDatosSiges,
-)
-from src.modules.liquidaciones.infrastructure.georef.httpx_georef_gateway import (
-    HttpxGeorefGateway,
-)
 from src.modules.liquidaciones.infrastructure.google_maps.httpx_geocoding_gateway import (
     HttpxGeocodingGateway,
-)
-from src.modules.liquidaciones.infrastructure.nominatim.httpx_nominatim_gateway import (
-    HttpxNominatimGateway,
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_calculo_km_preview_repository import (  # noqa: E501
     SqlAlchemyCalculoKmPreviewRepository,
@@ -78,14 +52,8 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_calculo_km
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_geocode_cache_repository import (  # noqa: E501
     SqlAlchemyGeocodeCacheRepository,
 )
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_georef_reverse_cache_repository import (  # noqa: E501
-    SqlAlchemyGeorefReverseCacheRepository,
-)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_incidente_repository import (  # noqa: E501
     SqlAlchemyIncidenteRepository,
-)
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_nominatim_reverse_cache_repository import (  # noqa: E501
-    SqlAlchemyNominatimReverseCacheRepository,
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
@@ -106,19 +74,6 @@ from src.shared.infrastructure.config.settings import get_settings
 @lru_cache
 def _geocoding_gateway() -> HttpxGeocodingGateway:
     return HttpxGeocodingGateway(get_settings().google_maps_api_key)
-
-
-@lru_cache
-def _georef_gateway() -> HttpxGeorefGateway:
-    return HttpxGeorefGateway()
-
-
-@lru_cache
-def _nominatim_gateway() -> HttpxNominatimGateway:
-    """Singleton de proceso — el rate limit de 1 req/s de Nominatim se aplica
-    en la instancia (lock + timestamp), así que TIENE que ser la misma para
-    todas las llamadas del proceso."""
-    return HttpxNominatimGateway()
 
 
 def _tope() -> int:
@@ -194,104 +149,6 @@ def build_auditar_pines(session: AsyncSession) -> AuditarPines:
 
 def build_corregir_pin(session: AsyncSession) -> CorregirPin:
     return CorregirPin(_pines_ports(session))
-
-
-def _lugares_ports(session: AsyncSession) -> TablaKmLugaresPorts:
-    return TablaKmLugaresPorts(
-        prestadores=SqlAlchemyPrestadorRepository(session),
-        tabla_km=SqlAlchemyTablaKmRepository(session),
-        siges=siges_catalogo_gateway(),
-        geocode_cache=SqlAlchemyGeocodeCacheRepository(session),
-        geocoding=_geocoding_gateway(),
-        google_maps=siges_google_maps_gateway(),
-    )
-
-
-def build_buscar_lugar_fila(session: AsyncSession) -> BuscarLugarFila:
-    return BuscarLugarFila(_lugares_ports(session))
-
-
-def build_refrescar_datos_siges(session: AsyncSession) -> RefrescarDatosSiges:
-    return RefrescarDatosSiges(_lugares_ports(session))
-
-
-def build_resolver_coordenadas_fila(session: AsyncSession) -> ResolverCoordenadasFila:
-    return ResolverCoordenadasFila(_lugares_ports(session))
-
-
-def build_recalcular_km_fila(session: AsyncSession) -> RecalcularKmFila:
-    return RecalcularKmFila(_lugares_ports(session))
-
-
-def build_evaluar_tier0(session: AsyncSession) -> EvaluarTier0Geovalidacion:
-    """Sin gateways de red — Tier 0 es dominio puro sobre datos ya locales
-    (Siges read-only), se puede recalcular en cada request sin costo."""
-    return EvaluarTier0Geovalidacion(
-        GeovalidacionTier0Ports(
-            prestadores=SqlAlchemyPrestadorRepository(session),
-            siges=siges_catalogo_gateway(),
-        )
-    )
-
-
-def _tier1_ports(session: AsyncSession) -> GeovalidacionTier1Ports:
-    return GeovalidacionTier1Ports(
-        prestadores=SqlAlchemyPrestadorRepository(session),
-        siges=siges_catalogo_gateway(),
-        georef=_georef_gateway(),
-        georef_cache=SqlAlchemyGeorefReverseCacheRepository(session),
-    )
-
-
-def build_consultar_georef_pendientes(session: AsyncSession) -> ConsultarGeorefReversePendientes:
-    settings = get_settings()
-    return ConsultarGeorefReversePendientes(
-        _tier1_ports(session), settings.georef_max_calls_per_run, settings.georef_pausa_segundos
-    )
-
-
-def build_listar_hallazgos_tier1(session: AsyncSession) -> ListarHallazgosTier1:
-    return ListarHallazgosTier1(_tier1_ports(session))
-
-
-def _tier1b_ports(session: AsyncSession) -> GeovalidacionTier1bPorts:
-    return GeovalidacionTier1bPorts(
-        tier1=_tier1_ports(session),
-        nominatim=_nominatim_gateway(),
-        nominatim_cache=SqlAlchemyNominatimReverseCacheRepository(session),
-    )
-
-
-def build_consultar_nominatim_pendientes(session: AsyncSession) -> ConsultarNominatimPendientes:
-    return ConsultarNominatimPendientes(
-        _tier1b_ports(session), get_settings().nominatim_max_calls_per_run
-    )
-
-
-def build_listar_hallazgos_tier1b(session: AsyncSession) -> ListarHallazgosTier1b:
-    return ListarHallazgosTier1b(_tier1b_ports(session))
-
-
-def build_calcular_worklist_tier2(session: AsyncSession) -> CalcularWorklistTier2:
-    return CalcularWorklistTier2(
-        WorklistTier2Ports(
-            prestadores=SqlAlchemyPrestadorRepository(session),
-            siges=siges_catalogo_gateway(),
-            geocode_cache=SqlAlchemyGeocodeCacheRepository(session),
-            evaluar_tier0=build_evaluar_tier0(session),
-            listar_tier1b=build_listar_hallazgos_tier1b(session),
-        )
-    )
-
-
-def build_generar_worklist_csv(session: AsyncSession) -> GenerarWorklistCsv:
-    return GenerarWorklistCsv(
-        WorklistCsvPorts(
-            calcular_worklist=build_calcular_worklist_tier2(session),
-            listar_tier1b=build_listar_hallazgos_tier1b(session),
-            listar_pines=build_listar_pines_sospechosos(session),
-        )
-    )
 
 
 def build_diagnosticar_asistente_km(session: AsyncSession) -> DiagnosticarAsistenteKm:
