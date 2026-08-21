@@ -65,7 +65,7 @@ export default function RootLayout({
             Saltar al contenido principal
           </a>
           <main id="main-content">{children}</main>
-          <Toaster richColors position="top-right" />
+          <Toaster richColors position="top-right" closeButton />
         </ThemeProvider>
       </body>
     </html>
