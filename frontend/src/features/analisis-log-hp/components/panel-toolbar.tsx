@@ -17,6 +17,7 @@ interface Props {
   exportingPdf: boolean;
   onSave: () => void;
   saving: boolean;
+  canSave: boolean;
 }
 
 const BTN =
@@ -24,7 +25,7 @@ const BTN =
 
 export function PanelToolbar({
   deviceId, dateFilter, onDateFilterChange, onBack,
-  onEws, onRefresh, refreshing, onCpmd, onExportPdf, exportingPdf, onSave, saving,
+  onEws, onRefresh, refreshing, onCpmd, onExportPdf, exportingPdf, onSave, saving, canSave,
 }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -56,10 +57,12 @@ export function PanelToolbar({
         {exportingPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
         Exportar PDF
       </button>
-      <button type="button" onClick={onSave} disabled={saving} className={BTN}>
-        {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-        Guardar
-      </button>
+      {canSave && (
+        <button type="button" onClick={onSave} disabled={saving} className={BTN}>
+          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+          Guardar
+        </button>
+      )}
     </div>
   );
 }

@@ -11,7 +11,7 @@ from src.modules.analisis_log_hp.application.use_cases.cpmd import (
     GetCpmdManualById,
     UploadCpmdManual,
 )
-from src.modules.analisis_log_hp.domain.well_known_permissions import VIEW
+from src.modules.analisis_log_hp.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.analisis_log_hp.presentation.cpmd_storage import cpmd_dir, save_cpmd_pdf
 from src.modules.analisis_log_hp.presentation.dependencies import get_cpmd_manual_repo
 from src.modules.auth.application.dtos.results import Identity
@@ -21,6 +21,7 @@ from src.shared.infrastructure.database.session import get_db
 router = APIRouter(prefix="/api/analisis-log-hp/cpmd", tags=["analisis-log-hp"])
 
 _require_view = Depends(require_permission(VIEW))
+_require_manage = Depends(require_permission(MANAGE))
 
 
 @router.get("/pdf-url")
@@ -41,7 +42,7 @@ async def upload_manual(
     file: UploadFile = File(...),
     keywords: str = Form(...),
     label: str = Form(...),
-    _: Identity = _require_view,
+    _: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, int]:
     filename = await save_cpmd_pdf(file)

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ApiError } from "@/services/http-client";
+import { useSession } from "@/services/session-provider";
 import type { AnalysisResult, SdsExtractResult, Severity } from "../types/analisis-log-hp";
 import { analisisLogHpApi } from "../api/analisis-log-hp-api";
 import { useExportPdf } from "../hooks/use-export-pdf";
@@ -50,6 +51,10 @@ export function HpLogsPanel({
   onBack,
   onAnalysisUpdate,
 }: Props) {
+  // Guardar análisis y subir manuales CPMD son analisis-log-hp.manage — los botones
+  // se ocultan/redirigen, el backend igual corta (ver well_known_permissions.py).
+  const { can } = useSession();
+  const puedeEditar = can("analisis-log-hp", "manage");
   const [activeSeverities, setActiveSeverities] = useState<Set<Severity>>(new Set());
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [diagnosis, setDiagnosis] = useState<string | null>(null);
@@ -108,7 +113,8 @@ export function HpLogsPanel({
       window.open(url, "_blank");
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 404) {
-        setCpmdModalOpen(true);
+        if (puedeEditar) setCpmdModalOpen(true);
+        else alert("No hay manual CPMD cargado para este modelo. Pedile a un admin que lo suba.");
       }
     }
   }
@@ -162,6 +168,7 @@ export function HpLogsPanel({
           exportingPdf={exportingPdf}
           onSave={handleSave}
           saving={saving}
+          canSave={puedeEditar}
         />
       </div>
 

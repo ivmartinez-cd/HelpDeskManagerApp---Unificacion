@@ -19,7 +19,7 @@ from src.modules.analisis_log_hp.application.use_cases.saved_analyses import (
     ListSavedAnalyses,
     UpdateSavedAnalysis,
 )
-from src.modules.analisis_log_hp.domain.well_known_permissions import VIEW
+from src.modules.analisis_log_hp.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.analisis_log_hp.presentation.dependencies import (
     get_error_code_repo,
     get_saved_analysis_repo,
@@ -42,6 +42,7 @@ router = APIRouter(
 )
 
 _require_view = Depends(require_permission(VIEW))
+_require_manage = Depends(require_permission(MANAGE))
 
 
 def _saved_to_response(s: Any) -> SavedAnalysisResponse:
@@ -77,7 +78,7 @@ async def list_saved_analyses(
 @router.post("", response_model=SavedAnalysisDetailResponse, status_code=201)
 async def create_saved_analysis(
     body: CreateSavedAnalysisRequest,
-    _: Identity = _require_view,
+    _: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SavedAnalysisDetailResponse:
 
@@ -114,7 +115,7 @@ async def get_saved_analysis(
 async def update_saved_analysis(
     id: UUID,
     body: CreateSavedAnalysisRequest,
-    _: Identity = _require_view,
+    _: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SavedAnalysisDetailResponse:
     from src.modules.analisis_log_hp.domain.entities.incident import Incident
@@ -139,7 +140,7 @@ async def update_saved_analysis(
 @router.delete("/{id}", status_code=204)
 async def delete_saved_analysis(
     id: UUID,
-    _: Identity = _require_view,
+    _: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     uc = DeleteSavedAnalysis(get_saved_analysis_repo(db), get_telemetry_repo(db))

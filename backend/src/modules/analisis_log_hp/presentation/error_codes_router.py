@@ -11,7 +11,7 @@ from src.modules.analisis_log_hp.application.use_cases.get_solution_proxy import
     GetSolutionProxy,
 )
 from src.modules.analisis_log_hp.application.use_cases.upsert_error_code import UpsertErrorCode
-from src.modules.analisis_log_hp.domain.well_known_permissions import VIEW
+from src.modules.analisis_log_hp.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.analisis_log_hp.presentation.dependencies import (
     get_error_code_repo,
     get_hp_portal_gateway,
@@ -28,6 +28,7 @@ from src.shared.presentation.schemas.pagination import Page
 router = APIRouter(prefix="/api/analisis-log-hp/error-codes", tags=["analisis-log-hp"])
 
 _require_view = Depends(require_permission(VIEW))
+_require_manage = Depends(require_permission(MANAGE))
 
 
 @router.get("", response_model=Page[ErrorCodeSchema])
@@ -50,7 +51,7 @@ async def list_error_codes(
 @router.post("/upsert", response_model=ErrorCodeSchema)
 async def upsert_error_code(
     body: UpsertErrorCodeRequest,
-    _: Identity = _require_view,
+    _: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ErrorCodeSchema:
     uc = UpsertErrorCode(get_error_code_repo(db), get_hp_portal_gateway())
