@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# pre-commit — dos controles rápidos (≈2 s):
+#  1) No commitear trabajo AJENO: si hay varias sesiones de Claude sobre este checkout, el
+#     registro .claude/sessions/edits.tsv sabe quién editó cada archivo por última vez. Si un
+#     archivo staged fue editado más recientemente por OTRA sesión, se rechaza el commit.
+#     Override consciente: ALLOW_FOREIGN=1 git commit …   (o sacar el archivo del stage).
+#  2) Backend: lint-imports + ruff (archivos staged) + mypy, dentro del contenedor. El pytest
+#     completo corre en pre-push (make check).
+# Saltear todo: git commit --no-verify (solo si sabés por qué).
+set -u
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+BACKEND=helpdesk-manager-backend
+REG=.claude/sessions/edits.tsv
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+[[ -z "$staged" ]] && exit 0
+
+red()  { printf '\033[31m✘ %s\033[0m\n' "$*"; }
+yel()  { printf '\033[33m! %s\033[0m\n' "$*"; }
+
+# --- 1) archivos de otra sesión de Claude ----------------------------------
+me="${CLAUDE_CODE_SESSION_ID:-}"; me="${me:0:8}"
+if [[ -f "$REG" ]]; then
+  cutoff=$(( $(date +%s) - 120 * 60 ))
+  foreign=""
+  while IFS= read -r f; do
+    last=$(awk -F'\t' -v f="$f" -v c="$cutoff" '$4 == f && $1 >= c { l = $2 } END { print l }' "$REG")
+    [[ -z "$last" ]] && continue
+    if [[ -n "$me" && "$last" != "$me" ]]; then
+      foreign+="    $f   (última edición: sesión $last)"$'\n'
+    elif [[ -z "$me" ]]; then
+      foreign+="    $f   (editado por la sesión de Claude $last)"$'\n'
+    fi
+  done <<<"$staged"
+  if [[ -n "$foreign" ]]; then
+    if [[ -n "$me" && -z "${ALLOW_FOREIGN:-}" ]]; then
+      red "pre-commit: hay archivos staged cuya última edición es de OTRA sesión de Claude:"
+      printf '%s' "$foreign"
+      echo "  Sacalos del stage (git restore --staged <archivo>) y commiteá solo lo tuyo."
+      echo "  Si es intencional (coordinado con esa sesión): ALLOW_FOREIGN=1 git commit …"
+      exit 1
+    elif [[ -z "$me" ]]; then
+      yel "pre-commit: commit manual con archivos que editaron sesiones de Claude (aviso, no bloqueo):"
+      printf '%s' "$foreign"
+    fi
+  fi
+fi
+
+# --- 2) backend: lint-imports + ruff + mypy -----------------------------------
+if grep -q '^backend/' <<<"$staged"; then
+  if docker exec "$BACKEND" true 2>/dev/null; then
+    out=$(docker exec "$BACKEND" uv run lint-imports 2>&1) || { red "lint-imports"; echo "$out" | tail -20; exit 1; }
+    pyfiles=$(grep -E '^backend/.*\.py$' <<<"$staged" | sed 's#^backend/##' | tr '\n' ' ')
+    if [[ -n "${pyfiles// /}" ]]; then
+      # shellcheck disable=SC2086
+      docker exec "$BACKEND" uv run ruff check $pyfiles || { red "ruff (archivos staged)"; exit 1; }
+    fi
+    out=$(docker exec "$BACKEND" uv run mypy src 2>&1) || { red "mypy src"; echo "$out" | tail -20; exit 1; }
+  else
+    yel "pre-commit: el contenedor $BACKEND no responde — salteo lint-imports/ruff/mypy. Correr 'make check' antes de pushear."
+  fi
+fi
+exit 0

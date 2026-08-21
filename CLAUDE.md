@@ -89,7 +89,8 @@ en una auditoría aparte. Concretamente:
   ```
   Si algo de esto falla, no está terminado. `lint-imports` en particular es la única forma
   confiable de verificar la dirección de dependencias entre capas — no alcanza con revisar a
-  ojo.
+  ojo. Atajo equivalente desde la raíz del repo (WSL): `make check` (corre los cuatro dentro
+  del contenedor); el `pre-push` de git lo corre solo antes de cada push.
 - Las desviaciones conscientes del texto literal de la guía se documentan como ADR en
   `backend/docs/adr/` (ver `007-vocabulario-de-permisos-en-shared-excepcion-de-presentation.md`
   como ejemplo) — una excepción sin ADR es una violación, no una decisión.
@@ -167,3 +168,28 @@ Existen dos mecanismos de coordinación; usarlos, no asumir que se está solo:
 
 Si un aviso del registro se refiere a un archivo que hay que modificar sí o sí y la otra sesión
 sigue activa, decírselo al usuario antes de seguir, no resolverlo pisando.
+
+## Guardas automáticas de git (se cumplen solas, no son opcionales)
+
+Además de las reglas de arriba hay tres guardas mecánicas. No intentar rodearlas; si una
+bloquea algo que de verdad hace falta, explicárselo al usuario y que decida él.
+
+- **`claude-git-guard`** (hook PreToolUse de Claude sobre `Bash`, en
+  `.claude/settings.local.json`): **deniega** `git add -A` / `--all` / `.`, `git commit -a` /
+  `-am` y `git push --force`. Motivo: con varias sesiones sobre el mismo checkout, esos
+  comandos suben trabajo ajeno o reescriben historia compartida. Siempre `git add <archivos
+  propios>` explícito y `git commit` sin `-a`.
+- **`.githooks/pre-commit`** (≈2 s): rechaza el commit si algún archivo staged fue editado más
+  recientemente por **otra** sesión de Claude (según el registro de sesiones); override
+  consciente y coordinado: `ALLOW_FOREIGN=1 git commit …`. Si hay cambios en `backend/`, corre
+  `lint-imports` + `ruff` (archivos staged) + `mypy` dentro del contenedor.
+- **`.githooks/pre-push`** (≈30 s): lista los commits que se van a subir (leerlos, no pushear a
+  ciegas), corre `make check` completo (lint-imports + ruff + mypy + pytest) y, si hay cambios
+  en `frontend/`, el eslint del frontend. Si algo falla, no se pushea. Si el lint del frontend
+  falla con salida vacía, otra sesión estaba reiniciando el contenedor — reintentar.
+- Los hooks de git se activan por clon con `make hooks` (`git config core.hooksPath
+  .githooks`). `--no-verify` existe, pero usarlo es una decisión del usuario, no de Claude.
+
+`make check` es la forma canónica de correr la verificación del módulo que exige
+`ARCHITECTURE_GUIDE.md`; `make help` lista el resto de atajos (`status`, `restart-*`,
+`recreate-backend`, `logs-*`, `mailpit`).

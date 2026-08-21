@@ -5,8 +5,8 @@ BACKEND  := helpdesk-manager-backend
 FRONTEND := helpdesk-manager-frontend
 EXEC     := docker exec $(BACKEND)
 
-.PHONY: help status check lint-imports ruff mypy test restart-backend restart-frontend \
-        recreate-backend logs-backend logs-frontend mailpit up ps
+.PHONY: help status check lint-imports ruff mypy test lint-frontend hooks restart-backend \
+        restart-frontend recreate-backend logs-backend logs-frontend mailpit up ps
 
 help:  ## Lista los targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[1m%-18s\033[0m %s\n", $$1, $$2}'
@@ -29,6 +29,13 @@ mypy:  ## mypy src
 
 test:  ## pytest tests/unit -q
 	$(EXEC) uv run pytest tests/unit -q
+
+lint-frontend:  ## eslint del frontend (dentro del contenedor)
+	docker exec $(FRONTEND) npm run -s lint
+
+hooks:  ## Activa los hooks de git del repo (.githooks: pre-commit y pre-push) en este clon
+	git config core.hooksPath .githooks
+	@echo "✔ core.hooksPath=.githooks (pre-commit: archivos ajenos + lint/ruff/mypy; pre-push: make check + lint frontend)"
 
 # --- Contenedores ---
 restart-backend:  ## docker restart del backend (exige DISABLE_BACKGROUND_JOBS=true)

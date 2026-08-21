@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# pre-push — la puerta antes de GitHub:
+#  1) muestra qué commits se van a subir (para revisar el git log, no pushear a ciegas);
+#  2) corre `make check` completo (lint-imports + ruff + mypy + pytest, ≈20 s) y bloquea si falla;
+#  3) corre el lint del frontend si hay cambios en frontend/ entre los commits a subir.
+# Saltear: git push --no-verify (solo si sabés por qué y lo decís).
+set -u
+cd "$(git rev-parse --show-toplevel)" || exit 1
+remote="${1:-origin}"
+FRONTEND=helpdesk-manager-frontend
+
+red() { printf '\033[31m✘ %s\033[0m\n' "$*"; }
+yel() { printf '\033[33m! %s\033[0m\n' "$*"; }
+ok()  { printf '\033[32m✔ %s\033[0m\n' "$*"; }
+
+z40='0000000000000000000000000000000000000000'
+ranges=()
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [[ -z "${local_sha:-}" || "$local_sha" == "$z40" ]] && continue   # borrado de rama
+  if [[ "$remote_sha" == "$z40" ]]; then
+    ranges+=("$local_sha")                  # rama nueva: todo su historial
+  else
+    ranges+=("$remote_sha..$local_sha")
+  fi
+done
+((${#ranges[@]} == 0)) && exit 0
+
+echo "pre-push → $remote. Commits a subir:"
+touches_frontend=0
+for r in "${ranges[@]}"; do
+  git log --oneline --no-decorate "$r" 2>/dev/null | sed 's/^/    /'
+  if git diff --name-only "$r" 2>/dev/null | grep -q '^frontend/'; then touches_frontend=1; fi
+done
+echo
+
+log=$(mktemp)
+if make -s check >"$log" 2>&1; then
+  ok "make check (lint-imports, ruff, mypy, pytest)"
+else
+  red "make check falló — no se pushea:"; tail -30 "$log"; rm -f "$log"; exit 1
+fi
+rm -f "$log"
+
+if ((touches_frontend)); then
+  if docker exec "$FRONTEND" true 2>/dev/null; then
+    if docker exec "$FRONTEND" npm run -s lint >"$log" 2>&1; then
+      ok "frontend lint"
+    else
+      red "frontend lint falló — no se pushea:"
+      if [[ -s "$log" ]]; then tail -30 "$log"; else
+        yel "(salida vacía: probablemente otra sesión estaba reiniciando $FRONTEND — reintentá el push en un minuto)"
+      fi
+      rm -f "$log"; exit 1
+    fi
+  else
+    yel "contenedor $FRONTEND no responde — salteo el lint del frontend"
+  fi
+fi
+exit 0
