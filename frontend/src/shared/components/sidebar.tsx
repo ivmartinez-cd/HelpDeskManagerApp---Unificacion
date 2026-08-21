@@ -18,6 +18,7 @@ import {
   UserRound,
   Wrench,
   type LucideIcon,
+  MessageCircle,
 } from "lucide-react";
 import { ThemeToggle } from "@/shared/components/theme-toggle";
 import { ContadoresNavSubmenu } from "@/shared/components/contadores-nav-submenu";
@@ -37,6 +38,7 @@ const MODULE_ICONS: Record<string, LucideIcon> = {
   vacaciones: UserRound,
   turnos: Clock,
   "analisis-log-hp": FileSearch,
+  wati: MessageCircle,
   admin: Settings,
 };
 

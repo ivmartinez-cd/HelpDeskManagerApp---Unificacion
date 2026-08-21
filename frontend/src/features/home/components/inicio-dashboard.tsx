@@ -31,6 +31,8 @@ import { CierreMensualCard } from "./cierre-mensual-card";
 import { PendientesAntiguedadCard } from "./pendientes-antiguedad-card";
 import { PendientesACerrarCard } from "@/features/sla/components/pendientes-a-cerrar-card";
 import { ProximosEquipoCard } from "@/features/vacaciones/components/proximos-equipo-card";
+import { WatiPendientesCard } from "@/features/wati/components/wati-pendientes-card";
+import { useWatiPendientes } from "@/features/wati/hooks/use-wati-pendientes";
 import { SlaMesCard } from "./sla-mes-card";
 import { TurnosTimelineCard } from "./turnos-timeline-card";
 
@@ -57,6 +59,7 @@ export function InicioDashboard() {
     insumos:      modules.some((m) => m.key === "insumos"),
     liquidaciones: modules.some((m) => m.key === "liquidaciones"),
     vacaciones:   modules.some((m) => m.key === "vacaciones"),
+    wati:         modules.some((m) => m.key === "wati"),
   };
 
   const columnasVisibles = COLUMNS
@@ -80,6 +83,7 @@ export function InicioDashboard() {
   const insumosDashboard  = useInsumosDashboard(access.insumos);
   const liquidacionesPendientes = useLiquidacionesPendientes(access.liquidaciones);
   const proximosEquipo    = useProximosEquipo(access.vacaciones);
+  const watiPendientes    = useWatiPendientes(access.wati);
 
   function renderCard(id: string) {
     switch (id) {
@@ -175,6 +179,15 @@ export function InicioDashboard() {
             dashboard={insumosDashboard.data}
             loading={insumosDashboard.loading}
             error={insumosDashboard.error}
+          />
+        );
+      case "wati-pendientes":
+        return (
+          <WatiPendientesCard
+            resumen={watiPendientes.resumen}
+            pendientes={watiPendientes.pendientes}
+            loading={watiPendientes.loading}
+            error={watiPendientes.error}
           />
         );
       case "proximos-equipo":

@@ -63,6 +63,7 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { prefix: "/sla", anyOf: [p("sla", "view")] },
   { prefix: "/preventivos", anyOf: [p("preventivos", "view")] },
   { prefix: "/analisis-log-hp", anyOf: [p("analisis-log-hp", "view")] },
+  { prefix: "/wati", anyOf: [p("wati", "view")] },
 ];
 
 function matches(rule: RouteRule, pathname: string): boolean {

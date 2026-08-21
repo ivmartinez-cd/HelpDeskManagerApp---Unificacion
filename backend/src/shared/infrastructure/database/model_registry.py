@@ -12,3 +12,4 @@ from src.modules.preventivos.infrastructure import models as _preventivos_models
 from src.modules.sla.infrastructure import models as _sla_models  # noqa: F401
 from src.modules.turnos.infrastructure import models as _turnos_models  # noqa: F401
 from src.modules.vacaciones.infrastructure import models as _vacaciones_models  # noqa: F401
+from src.modules.wati.infrastructure import models as _wati_models  # noqa: F401

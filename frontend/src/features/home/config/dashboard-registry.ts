@@ -7,6 +7,7 @@ export interface ModuleAccess {
   insumos: boolean;
   liquidaciones: boolean;
   vacaciones: boolean;
+  wati: boolean;
 }
 
 export interface CardDef {
@@ -27,8 +28,9 @@ export const COLUMNS: { key: ColKey; fraction: string }[] = [
 
 export const CARDS: CardDef[] = [
   { id: "turnos",            col: "planificacion", order: 0, guard: ()  => true },
-  { id: "clientes-hoy",      col: "planificacion", order: 1, guard: (m) => m.contadores },
-  { id: "insumos",           col: "planificacion", order: 2, guard: (m) => m.insumos },
+  { id: "wati-pendientes",   col: "planificacion", order: 1, guard: (m) => m.wati },
+  { id: "clientes-hoy",      col: "planificacion", order: 2, guard: (m) => m.contadores },
+  { id: "insumos",           col: "planificacion", order: 3, guard: (m) => m.insumos },
   { id: "contadores-donut",  col: "contadores",    order: 0, guard: (m) => m.contadores },
   { id: "pendientes-antig",  col: "contadores",    order: 1, guard: (m) => m.contadores },
   { id: "cierre-mensual",    col: "contadores",    order: 2, guard: (m) => m.contadores },

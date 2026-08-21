@@ -171,6 +171,23 @@ class Settings(BaseSettings):
     # por entorno, no un default (mismo criterio que el modo test de CLAUDE.md).
     vacaciones_mail_enabled: bool = False
 
+    # Módulo wati — chats de WhatsApp esperando respuesta (polling de solo
+    # lectura contra la API V1 de WATI; no hay webhook porque IT no expone URL
+    # pública). WATI_URL es la misma variable que usa el frontend para el ícono
+    # del header: acá sirve para linkear al Team Inbox desde la card.
+    # Token: generarlo en Connector → API con scopes de solo lectura
+    # (contacts:read, conversations:read) y con fecha de vencimiento.
+    wati_api_base_url: str = "https://live-mt-server.wati.io"
+    wati_tenant_id: str = ""
+    wati_api_token: SecretStr = SecretStr("")
+    wati_url: str = ""
+    wati_poll_interval_minutes: int = 3
+    wati_ventana_horas: int = 48
+    wati_max_contactos_por_ciclo: int = 60
+    # Rate limit publicado por WATI: 10 req / 10 s en getContacts/getMessages.
+    wati_request_spacing_seconds: float = 1.1
+    wati_timeout_seconds: float = 20.0
+
     # Módulo analisis-log-hp — diagnóstico IA con Anthropic.
     # Sin clave configurada los endpoints de IA responden 502 con mensaje claro.
     anthropic_api_key: str = ""

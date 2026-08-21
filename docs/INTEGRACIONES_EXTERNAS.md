@@ -192,6 +192,25 @@ fresco por request en producción).
 
 ---
 
+## 14. WATI (API de WhatsApp Business, httpx, solo lectura)
+
+- **Dónde**: `modules/wati/infrastructure/wati_api/httpx_wati_gateway.py` (singleton de proceso
+  en `presentation/dependencies.get_wati_gateway`).
+- **Qué**: `GET /{tenant}/api/v1/getContacts` y `GET /{tenant}/api/v1/getMessages/{numero}`
+  sobre `WATI_API_BASE_URL` (`https://live-mt-server.wati.io`). Bearer token con scopes de solo
+  lectura (`contacts:read`, `conversations:read`). El módulo **nunca escribe** en WATI.
+- **Por qué polling y no webhook**: el webhook necesita URL pública HTTPS y el dominio
+  `*.cdsa.com.ar` es interno; IT no expone la app. Job `wati_sync` cada
+  `WATI_POLL_INTERVAL_MINUTES` (3) con lista de vigilancia (contactos con `lastUpdated` en las
+  últimas 48 h ∪ conversaciones abiertas), tope `WATI_MAX_CONTACTOS_POR_CICLO` (60).
+- **Rate limit**: 10 req / 10 s publicado por WATI; el gateway serializa las llamadas con
+  `WATI_REQUEST_SPACING_SECONDS` (1.1) entre una y otra.
+- **Peculiaridades verificadas (2026-08-21)**: WATI/proxy devuelve 403 al User-Agent por defecto
+  de Python → UA propio; `lastUpdated` del contacto marca el inicio de la conversación (bot), no
+  el último mensaje; los eventos `ticket` de `getMessages` traen asignación ("Chat is now
+  assigned to <email>") y cierre ("The chat has been closed by agent …"); el bot aparece como
+  `operatorName: "Bot"`; salida a Internet vía `HTTPS_PROXY` (httpx `trust_env`).
+
 ## Locks entre workers
 
 Resuelto con advisory locks de Postgres (ADR-008) — fuera del alcance de este mapa.

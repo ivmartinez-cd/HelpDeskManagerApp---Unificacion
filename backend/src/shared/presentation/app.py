@@ -110,6 +110,7 @@ from src.modules.vacaciones.presentation.reportes_router import (
 from src.modules.vacaciones.presentation.solicitudes_router import (
     router as vacaciones_solicitudes_router,
 )
+from src.modules.wati.presentation.pendientes_router import router as wati_pendientes_router
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.cross_module.auth_operador_color_lookup import (
     SqlAlchemyOperadorColorLookup,
@@ -164,6 +165,9 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
         tasks += start_liquidaciones_background_jobs(
             settings.liquidaciones_reconciliar_interval_minutes
         )
+        from src.modules.wati.presentation.background_jobs import start_wati_background_jobs
+
+        tasks += start_wati_background_jobs(settings.wati_poll_interval_minutes)
         logger.info("background_jobs: %d job(s) iniciados", len(tasks))
     try:
         yield
@@ -247,6 +251,7 @@ def create_app() -> FastAPI:
     app.include_router(vacaciones_ausencias_router)
     app.include_router(vacaciones_auditoria_router)
     app.include_router(vacaciones_reportes_router)
+    app.include_router(wati_pendientes_router)
     app.include_router(pi_analysis_router)
     app.include_router(pi_cpmd_router)
     app.include_router(pi_error_codes_router)
