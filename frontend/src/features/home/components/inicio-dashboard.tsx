@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useSession } from "@/services/session-provider";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
+import { cn } from "@/shared/utils/cn";
+import { useAutoGrid } from "../hooks/use-auto-grid";
+import { celdaDe } from "../utils/grid-packing";
 import {
   useCalendarioHome,
   useClientesPendientesPeriodoAnterior,
@@ -188,6 +191,7 @@ export function InicioDashboard() {
   }
 
   const cardsTabActual = columnasVisibles.find((c) => c.key === tabActual)?.cards ?? [];
+  const { containerRef, itemRefs, layout } = useAutoGrid(cardsTabActual.length);
 
   return (
     <div className="flex h-full flex-col gap-3 px-7 py-4">
@@ -212,10 +216,28 @@ export function InicioDashboard() {
         </div>
       )}
 
-      <div className="grid min-h-0 flex-1 auto-rows-min items-start grid-cols-1 gap-3 overflow-y-auto thin-scrollbar pb-3 lg:grid-cols-2">
-        {cardsTabActual.map((card) => (
-          <div key={card.id}>{renderCard(card.id)}</div>
-        ))}
+      {/* Grid auto-ajustable (use-auto-grid): columnas y reparto se eligen
+          midiendo el alto disponible y el de cada card, para que la pestaña
+          entre sin scroll en cualquier resolución. Las cards se colocan con
+          grid-row/grid-column explícitos, así cambiar de reparto no las
+          desmonta. Solo si ni con el máximo de columnas entra, aparece scroll. */}
+      <div ref={containerRef} className="min-h-0 flex-1">
+        <div
+          className={cn(
+            "grid h-full content-start items-start gap-3 overflow-y-auto thin-scrollbar",
+            !layout.medido && "invisible",
+          )}
+          style={{ gridTemplateColumns: `repeat(${layout.cols}, minmax(0, 1fr))` }}
+        >
+          {cardsTabActual.map((card, i) => {
+            const { col, row } = celdaDe(layout.sizes, i);
+            return (
+              <div key={card.id} ref={itemRefs[i]} style={{ gridColumn: col, gridRow: row }}>
+                {renderCard(card.id)}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
