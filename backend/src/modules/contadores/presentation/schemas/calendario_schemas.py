@@ -156,6 +156,16 @@ class ResumenClientesOperadorResponse(BaseModel):
     operadores: list[OperadorClientesSchema]
 
 
+class ClientesPendientesPeriodoResponse(BaseModel):
+    """Card de Inicio: arrastre real del cierre que acaba de pasar. Todos
+    los campos en `None` cuando Siges no respondió — no se inventa un cero
+    ni una lista vacía."""
+
+    periodo: str | None
+    cantidad: int | None
+    grupos: list[str] | None
+
+
 class EmpresaSigesSchema(BaseModel):
     """Resultado de búsqueda de empresas para resolver un cliente sin cruce."""
 

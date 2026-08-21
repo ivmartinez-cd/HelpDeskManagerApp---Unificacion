@@ -7,6 +7,9 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.contadores.application.use_cases.get_clientes_pendientes_periodo import (
+    GetClientesPendientesPeriodo,
+)
 from src.modules.contadores.application.use_cases.get_resumen_clientes_operador import (
     GetResumenClientesOperador,
     GetResumenClientesOperadorDependencies,
@@ -29,10 +32,12 @@ from src.modules.contadores.presentation.calendario_routers._deps import (
     require_view,
 )
 from src.modules.contadores.presentation.dependencies import (
+    get_clientes_pendientes_periodo_gateway_or_none,
     get_parque_cliente_gateway,
     get_parque_cliente_gateway_or_none,
 )
 from src.modules.contadores.presentation.schemas.calendario_schemas import (
+    ClientesPendientesPeriodoResponse,
     EmpresaSigesSchema,
     ResumenClientesOperadorResponse,
     SetClienteSigesMapRequest,
@@ -63,6 +68,27 @@ async def get_resumen_clientes_operador(
         exclude_operador_ids=POOL_BACKLOG_OPERADOR_IDS,
     )
     return ResumenClientesOperadorResponse.model_validate(dto)
+
+
+@router.get(
+    "/calendario/pendientes-periodo-anterior",
+    response_model=ClientesPendientesPeriodoResponse,
+)
+async def get_clientes_pendientes_periodo_anterior(
+    _: Identity = require_view,
+) -> ClientesPendientesPeriodoResponse:
+    """Card de Inicio: arrastre real del cierre que acaba de pasar (clientes
+    con anexo de Impresión pendiente de exactamente el período inmediato
+    anterior), sin depender del backlog de calendario de Gestión."""
+    gateway = get_clientes_pendientes_periodo_gateway_or_none()
+    resultado = None if gateway is None else await GetClientesPendientesPeriodo(gateway).execute()
+    if resultado is None:
+        return ClientesPendientesPeriodoResponse(periodo=None, cantidad=None, grupos=None)
+    return ClientesPendientesPeriodoResponse(
+        periodo=resultado.periodo,
+        cantidad=resultado.cantidad,
+        grupos=list(resultado.grupos),
+    )
 
 
 @router.get("/calendario/empresas-siges", response_model=Page[EmpresaSigesSchema])

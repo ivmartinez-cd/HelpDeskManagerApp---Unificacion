@@ -2,6 +2,7 @@ import { httpClient } from "@/services/http-client";
 import type {
   CalendarEvent,
   CalendarFilterParams,
+  ClientesPendientesPeriodo,
   EmpresaSiges,
   MiOperador,
   Operador,
@@ -226,6 +227,13 @@ export const contadoresApi = {
   // operador. El backend excluye los operadores pool.
   getResumenClientesOperador: () =>
     httpClient.get<ResumenClientesOperador>("/api/contadores/calendario/resumen-clientes"),
+  // Card de Inicio: arrastre real del cierre que acaba de pasar (clientes con
+  // anexo pendiente de exactamente el período inmediato anterior), estable
+  // frente al backlog de calendario que fluctúa por eventos sin cerrar.
+  getClientesPendientesPeriodoAnterior: () =>
+    httpClient.get<ClientesPendientesPeriodo>(
+      "/api/contadores/calendario/pendientes-periodo-anterior",
+    ),
   // Resolución de clientes sin cruce: búsqueda en vivo de empresas en Siges
   // y guardado del mapeo manual (requiere contadores:manage).
   searchEmpresasSiges: (q: string) =>

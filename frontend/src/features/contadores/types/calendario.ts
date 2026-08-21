@@ -95,6 +95,15 @@ export interface ResumenClientesOperador {
   operadores: OperadorClientes[];
 }
 
+export interface ClientesPendientesPeriodo {
+  /** YYYYMM del período inmediato anterior. null si Siges no respondió. */
+  periodo: string | null;
+  /** null si Siges no respondió: no se inventa un cero. */
+  cantidad: number | null;
+  /** Nombres de los grupos económicos pendientes. null si Siges no respondió. */
+  grupos: string[] | null;
+}
+
 export interface EmpresaSiges {
   id: number;
   den_comercial: string;

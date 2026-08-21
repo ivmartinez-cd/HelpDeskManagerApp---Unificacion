@@ -5,6 +5,7 @@ import { useSession } from "@/services/session-provider";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import {
   useCalendarioHome,
+  useClientesPendientesPeriodoAnterior,
   useContadoresResumen,
   useInsumosDashboard,
   useLiquidacionesPendientes,
@@ -69,6 +70,7 @@ export function InicioDashboard() {
   const turnos            = useTurnosHoy();
   const calendario        = useCalendarioHome(access.contadores);
   const contadoresResumen = useContadoresResumen(access.contadores);
+  const pendientesPeriodo = useClientesPendientesPeriodoAnterior(access.contadores);
   const slaHistoria       = useSlaHistoria(access.sla);
   const parque            = useParqueResumen(access.prestadores);
   const pendientesResumen = usePendientesResumen(access.sla);
@@ -130,6 +132,8 @@ export function InicioDashboard() {
           <CierreMensualCard
             pendientes={calendario.data?.pendientes ?? []}
             resumen={contadoresResumen.data}
+            pendientesPeriodoAnterior={pendientesPeriodo.data}
+            pendientesPeriodoAnteriorLoading={pendientesPeriodo.loading}
             loading={calendario.loading || contadoresResumen.loading}
             error={calendario.error ?? contadoresResumen.error}
           />

@@ -9,6 +9,9 @@ from functools import lru_cache
 from src.modules.contadores.infrastructure.siges.pyodbc_anexos_pendientes_gateway import (
     PyodbcAnexosPendientesGateway,
 )
+from src.modules.contadores.infrastructure.siges.pyodbc_clientes_pendientes_periodo_gateway import (  # noqa: E501
+    PyodbcClientesPendientesPeriodoGateway,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_equipos_sin_real_gateway import (
     PyodbcEquiposSinRealGateway,
 )
@@ -42,6 +45,10 @@ _ANEXOS_PENDIENTES_CACHE_TTL_SECONDS = 300.0
 # Mismo criterio que anexos pendientes: consulta liviana, TTL corto para no
 # repetirla en cada carga de la card de Inicio.
 _ESTADO_CIERRE_GRUPOS_CACHE_TTL_SECONDS = 300.0
+
+# Mismo criterio: consulta liviana (agrega por grupo, filtra por período
+# exacto), TTL corto para no repetirla en cada carga de la card de Inicio.
+_CLIENTES_PENDIENTES_PERIODO_CACHE_TTL_SECONDS = 300.0
 
 
 @lru_cache
@@ -82,6 +89,30 @@ def get_estado_cierre_grupos_gateway_or_none() -> PyodbcEstadoCierreGruposGatewa
         logger.warning(
             "Siges (MERCURIO) no configurado; el backlog de pendientes de la "
             "card de Inicio va sin cruce contra el período real",
+            exc_info=exc,
+        )
+        return None
+
+
+@lru_cache
+def get_clientes_pendientes_periodo_gateway() -> PyodbcClientesPendientesPeriodoGateway:
+    return PyodbcClientesPendientesPeriodoGateway(
+        require_mercurio_runner(), _CLIENTES_PENDIENTES_PERIODO_CACHE_TTL_SECONDS
+    )
+
+
+def get_clientes_pendientes_periodo_gateway_or_none() -> (
+    PyodbcClientesPendientesPeriodoGateway | None
+):
+    """Variante para la card de Inicio: sin Siges, el arrastre del cierre
+    anterior degrada a "sin dato" en vez de fallar (mismo criterio que
+    `get_estado_cierre_grupos_gateway_or_none`)."""
+    try:
+        return get_clientes_pendientes_periodo_gateway()
+    except ExternalServiceError as exc:
+        logger.warning(
+            "Siges (MERCURIO) no configurado; la card de Inicio no puede mostrar "
+            "el arrastre del cierre anterior",
             exc_info=exc,
         )
         return None

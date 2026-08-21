@@ -5,6 +5,7 @@ import { accesosApi } from "@/features/home/api/accesos-api";
 import { contadoresApi } from "@/features/contadores/api/contadores-api";
 import type {
   CalendarEvent,
+  ClientesPendientesPeriodo,
   Operador,
   ResumenClientesOperador,
 } from "@/features/contadores/types/calendario";
@@ -87,6 +88,16 @@ export function useContadoresResumen(enabled: boolean): Remote<ResumenClientesOp
     enabled,
     () => contadoresApi.getResumenClientesOperador(),
     "los contadores por operador",
+  );
+}
+
+export function useClientesPendientesPeriodoAnterior(
+  enabled: boolean,
+): Remote<ClientesPendientesPeriodo> {
+  return useRemote(
+    enabled,
+    () => contadoresApi.getClientesPendientesPeriodoAnterior(),
+    "el arrastre del cierre anterior",
   );
 }
 
