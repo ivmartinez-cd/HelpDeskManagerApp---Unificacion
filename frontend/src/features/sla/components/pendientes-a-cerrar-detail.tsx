@@ -157,7 +157,7 @@ export function PendientesACerrarDetail() {
               Pendientes a Cerrar
             </h1>
             <p className="font-body text-sm text-muted-foreground">
-              Incidentes Finalizados (estado 500) que aún no fueron cerrados en Siges.
+              Incidentes Finalizados (estado 500) que aún no fueron cerrados.
             </p>
           </div>
         </div>

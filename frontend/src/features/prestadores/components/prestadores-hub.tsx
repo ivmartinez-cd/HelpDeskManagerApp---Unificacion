@@ -103,7 +103,7 @@ export function PrestadoresHub() {
           <div className="flex gap-2">
             <BrandButton variant="outline" loading={syncing} onClick={handleSync}>
               <RefreshCw className="h-4 w-4" />
-              Sincronizar desde Siges
+              Sincronizar
             </BrandButton>
             {canCreate && (
               <BrandButton onClick={() => setCreating(true)}>

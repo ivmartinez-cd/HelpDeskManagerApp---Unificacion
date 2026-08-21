@@ -46,7 +46,7 @@ export function ClienteCruceModal({ clientes, onClose, onSaved }: ClienteCruceMo
         .then(setResultados)
         .catch((err: unknown) => {
           console.error("Error buscando empresas en Siges:", err);
-          setError(err instanceof Error ? err.message : "No se pudo buscar en Siges.");
+          setError(err instanceof Error ? err.message : "No se pudo buscar.");
         })
         .finally(() => setBuscando(false));
     }, DEBOUNCE_MS);
@@ -124,7 +124,7 @@ export function ClienteCruceModal({ clientes, onClose, onSaved }: ClienteCruceMo
             {activo && (
               <>
                 <BrandInput
-                  label={`Empresa en Siges para "${activo}"`}
+                  label={`Empresa para "${activo}"`}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   hint="Buscá por denominación comercial. Podés marcar varias: el cliente suma todas."
@@ -136,7 +136,7 @@ export function ClienteCruceModal({ clientes, onClose, onSaved }: ClienteCruceMo
                   </div>
                 ) : resultados.length === 0 && query.trim().length >= 2 ? (
                   <span className="font-body text-[12.5px] text-muted-foreground">
-                    Sin resultados en Siges para esa búsqueda.
+                    Sin resultados para esa búsqueda.
                   </span>
                 ) : (
                   <ul className="flex max-h-56 flex-col gap-1 overflow-y-auto">

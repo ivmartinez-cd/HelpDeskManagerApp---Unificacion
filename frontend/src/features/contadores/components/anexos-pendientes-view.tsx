@@ -82,7 +82,7 @@ export function AnexosPendientesView() {
       const kpis = contadoresApi.getAnexosPendientesResumen().then(setResumen);
       return Promise.all([lista, kpis]).catch((err: unknown) => {
         console.error("Error al cargar anexos sin facturar:", err);
-        setError("No se pudo consultar Siges. Reintentá en unos segundos.");
+        setError("No se pudo consultar. Reintentá en unos segundos.");
       });
     },
     [estado, busquedaAplicada],
@@ -105,8 +105,7 @@ export function AnexosPendientesView() {
             Anexos sin facturar
           </h1>
           <p className="font-body text-sm text-muted-foreground">
-            Cierre de contadores: anexos de Impresión con el período abierto · Fuente: Siges
-            (solo lectura)
+            Cierre de contadores: anexos de Impresión con el período abierto · Solo lectura
             {resumen && <> · Período en proceso: {formatPeriodo(resumen.periodo_referencia)}</>}
           </p>
         </div>
@@ -180,7 +179,7 @@ export function AnexosPendientesView() {
               { hasta: 20, texto: "Un momento más, ya casi está…" },
               { texto: "La base está lenta hoy — seguimos esperando la respuesta…" },
             ]}
-            nota="La primera carga cruza los procesos de facturación en Siges. Después queda en caché 5 minutos y la página responde al instante."
+            nota="La primera carga cruza los procesos de facturación. Después queda en caché 5 minutos y la página responde al instante."
           />
           <div className="flex flex-col gap-2">
             {Array.from({ length: 8 }, (_, i) => (

@@ -87,15 +87,15 @@ export function ContadoresDonutCard({
                 </div>
               ))}
               <span className="font-body text-[11px] text-amber-600">
-                Siges no respondió: se muestran solo los clientes, sin impresoras.
+                No respondió: se muestran solo los clientes, sin impresoras.
               </span>
             </div>
           )}
           {sinCruce.length > 0 && (
             <div className="mt-2.5 flex items-center justify-between gap-2">
               <span className="font-body text-[11px] text-muted-foreground">
-                {sinCruce.length} {sinCruce.length === 1 ? "cliente" : "clientes"} sin cruce con
-                Siges — sus impresoras no están sumadas.
+                {sinCruce.length} {sinCruce.length === 1 ? "cliente" : "clientes"} sin cruce —
+                sus impresoras no están sumadas.
               </span>
               {canManage && (
                 <button

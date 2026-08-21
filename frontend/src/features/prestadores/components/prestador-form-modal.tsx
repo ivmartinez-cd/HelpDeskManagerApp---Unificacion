@@ -72,7 +72,7 @@ export function PrestadorFormModal({
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <BrandInput
-          label="ID de Siges (ID_Empresa)"
+          label="ID (ID_Empresa)"
           type="number"
           value={sigesEmpresaId}
           onChange={(e) => setSigesEmpresaId(e.target.value)}
@@ -80,7 +80,7 @@ export function PrestadorFormModal({
           hint={
             isEdit
               ? "No se puede cambiar una vez creado."
-              : "Verificar contra Siges antes de cargar — es la clave que vincula este PST con SLA."
+              : "Verificar antes de cargar — es la clave que vincula este PST con SLA."
           }
           required
         />

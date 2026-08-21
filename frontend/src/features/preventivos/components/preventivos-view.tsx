@@ -120,7 +120,7 @@ export function PreventivosView() {
       })
       .catch((err: unknown) => {
         console.error("Error al cargar zonas de preventivos:", err);
-        setError("No se pudo consultar el catálogo de zonas en Siges. Reintentá.");
+        setError("No se pudo consultar el catálogo de zonas. Reintentá.");
       });
   }, [tieneModulo]);
 
@@ -145,7 +145,7 @@ export function PreventivosView() {
         })
         .catch((err: unknown) => {
           console.error("Error al cargar preventivos:", err);
-          setError("No se pudo consultar el parque en Siges. Reintentá.");
+          setError("No se pudo consultar el parque. Reintentá.");
         });
     },
     [zona, estado, soloHabilitados, busquedaAplicada, pagina],
@@ -219,7 +219,7 @@ export function PreventivosView() {
             Preventivos por zona
           </h1>
           <p className="font-body text-sm text-muted-foreground">
-            Parque local con su último preventivo y vencimiento · Fuente: Siges (solo lectura)
+            Parque local con su último preventivo y vencimiento · Solo lectura
             · Habilitar = marca interna para despachar al técnico, no toca Gestión.
           </p>
         </div>
@@ -368,7 +368,7 @@ export function PreventivosView() {
 
           <p className="rounded-[8px] bg-muted/30 px-4 py-3 font-body text-xs text-muted-foreground">
             Vencimiento = último preventivo cerrado en Gestión + la frecuencia de la sucursal
-            (TipoPreventivo de Siges). &quot;Sin preventivo&quot; / &quot;sin frecuencia&quot;
+            (TipoPreventivo). &quot;Sin preventivo&quot; / &quot;sin frecuencia&quot;
             se muestran explícitos, sin inventar fechas. La habilitación se limpia sola cuando
             aparece un preventivo posterior. Datos cacheados 5 minutos; &quot;Actualizar&quot;
             fuerza una consulta nueva.

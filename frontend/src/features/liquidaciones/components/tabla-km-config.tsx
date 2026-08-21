@@ -142,9 +142,9 @@ export function TablaKmConfig() {
             variant="outline"
             disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
             onClick={() => setSigesOpen(true)}
-            title="Buscar sucursales del PST en Siges y precargar los datos en una entrada nueva"
+            title="Buscar sucursales del PST y precargar los datos en una entrada nueva"
           >
-            Agregar desde Siges
+            Agregar sucursal
           </BrandButton>
           <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>

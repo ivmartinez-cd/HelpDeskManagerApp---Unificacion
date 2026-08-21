@@ -34,7 +34,7 @@ export function SigesTablaKmModal({
       setResultados(page.items);
       setTotal(page.total);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error al consultar Siges");
+      setError(err instanceof Error ? err.message : "Error al consultar");
     } finally {
       setBuscando(false);
     }
@@ -52,14 +52,14 @@ export function SigesTablaKmModal({
     <BrandModal
       isOpen
       onClose={onClose}
-      title="Agregar desde Siges"
+      title="Agregar sucursal"
       error={error}
       widthPx={580}
     >
       <div className="flex flex-col gap-4">
         <p className="font-body text-sm text-muted-foreground">
-          Sucursales de cliente asignadas a este PST en Siges. Elegí una para precargar la
-          entrada nueva — el km recorrido se completa a mano (no existe en Siges) y las
+          Sucursales de cliente asignadas a este PST. Elegí una para precargar la
+          entrada nueva — el km recorrido se completa a mano (no está disponible) y las
           entradas ya cargadas no se tocan.
         </p>
         <form onSubmit={handleBuscar} className="flex items-end gap-2">
@@ -90,7 +90,7 @@ export function SigesTablaKmModal({
                   </p>
                   <p className="truncate font-body text-xs text-muted-foreground">
                     {[s.domicilio, s.localidad, s.provincia].filter(Boolean).join(" · ") ||
-                      "Sin domicilio cargado en Siges"}
+                      "Sin domicilio cargado"}
                   </p>
                 </div>
                 {s.yaCargada ? (

@@ -35,7 +35,7 @@ function etapaPorSegundos(segundos: number, etapas: EtapaCarga[]): string {
 export function SigesLoadingModal({
   etapas,
   nota,
-  titulo = "Consultando Siges",
+  titulo = "Consultando…",
   aparicionMs = 1000,
 }: SigesLoadingModalProps) {
   const [visible, setVisible] = useState(false);

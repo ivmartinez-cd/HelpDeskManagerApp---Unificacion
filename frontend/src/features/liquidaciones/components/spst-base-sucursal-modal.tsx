@@ -60,7 +60,7 @@ export function SpstBaseSucursalModal({
     >
       <div className="flex flex-col gap-4">
         <p className="font-body text-sm text-muted-foreground">
-          Seleccioná la sucursal de Siges desde donde este SPST despacha.
+          Seleccioná la sucursal desde donde este SPST despacha.
           Se usa como punto de origen para el cálculo de distancias de las filas asignadas a este SPST.
         </p>
 
@@ -94,7 +94,7 @@ export function SpstBaseSucursalModal({
           </div>
         ) : (
           <p className="font-body text-sm text-muted-foreground italic">
-            No se encontraron sucursales propias del PST en Siges.
+            No se encontraron sucursales propias del PST.
           </p>
         )}
 

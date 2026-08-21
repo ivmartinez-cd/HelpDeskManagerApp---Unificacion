@@ -25,7 +25,7 @@ export function AnexosPendientesPrintSheet({
         Cierre de contadores — Anexos sin facturar
       </h1>
       <p className="mb-3 text-[11px] text-neutral-600">
-        Anexos de Impresión con período abierto (EN PROCESO / DEMORADO) · Fuente: Siges
+        Anexos de Impresión con período abierto (EN PROCESO / DEMORADO)
         {resumen && <> · Período en proceso: {formatPeriodo(resumen.periodo_referencia)}</>} ·
         Impreso el {new Date().toLocaleString("es-AR")}
       </p>

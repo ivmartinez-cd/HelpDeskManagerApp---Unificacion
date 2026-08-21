@@ -238,7 +238,7 @@ export function SlaDetail() {
               { hasta: 3, texto: "Buscando el resumen del período…" },
               {
                 hasta: 15,
-                texto: "El período no tenía datos precalculados — consultando Siges en vivo…",
+                texto: "El período no tenía datos precalculados — consultando en vivo…",
               },
               { hasta: 35, texto: "Cruzando incidentes y tiempos del período…" },
               { texto: "Un momento más — la consulta completa ronda los 40 segundos…" },
@@ -254,7 +254,7 @@ export function SlaDetail() {
       {refreshing && (
         <SigesLoadingModal
           etapas={[
-            { hasta: 10, texto: "Recalculando el período contra Siges en vivo…" },
+            { hasta: 10, texto: "Recalculando el período en vivo…" },
             { hasta: 25, texto: "Cruzando incidentes y tiempos del período…" },
             { hasta: 40, texto: "Un momento más, ya casi está…" },
             { texto: "La base está lenta hoy — seguimos esperando la respuesta…" },

@@ -50,7 +50,7 @@ export function CierreMensualCard({
     <DashboardCard
       icon={CalendarCheck2}
       title="Cierre mensual"
-      subtitle="Contadores del mes · Validación TL"
+      subtitle="Contadores del mes · Validación de cierre"
       loading={loading}
       error={error}
       headerRight={

@@ -244,7 +244,7 @@ export function TarifariosConfig() {
           </p>
         </div>
         <div className="flex gap-2">
-          <BrandButton size="sm" variant="outline" onClick={() => setSigesOpen(true)}>Sincronizar Siges</BrandButton>
+          <BrandButton size="sm" variant="outline" onClick={() => setSigesOpen(true)}>Sincronizar</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
           <BrandButton size="sm" onClick={() => abrirModal(null)}>+ Nueva tarifa</BrandButton>

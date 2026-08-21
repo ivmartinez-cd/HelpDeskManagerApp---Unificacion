@@ -60,7 +60,7 @@ export function PrestadorBaseSucursalModal({
         <p className="font-body text-sm text-muted-foreground">
           Seleccioná la sede del PST desde donde se calculan las distancias a los clientes.
           La sucursal debe tener coordenadas cargadas en Gestión. Si el PST tiene varias sedes,
-          cada cliente usa automáticamente la base que Siges le asigna por su grupo de costos.
+          cada cliente usa automáticamente la base asignada por su grupo de costos.
         </p>
 
         {loadingList ? (
@@ -93,8 +93,8 @@ export function PrestadorBaseSucursalModal({
           </div>
         ) : (
           <p className="font-body text-sm text-muted-foreground italic">
-            No se encontraron sucursales propias del PST en Siges.
-            Verificá que el vínculo Siges del prestador esté configurado.
+            No se encontraron sucursales propias del PST.
+            Verificá que el vínculo del prestador esté configurado.
           </p>
         )}
 

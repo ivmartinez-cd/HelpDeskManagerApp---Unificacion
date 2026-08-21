@@ -114,7 +114,7 @@ export function PrestadoresConfig() {
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-xl font-extrabold text-foreground">Prestadores</h1>
         <div className="flex gap-2">
-          <BrandButton size="sm" variant="outline" onClick={() => setSigesOpen(true)}>Sincronizar Siges</BrandButton>
+          <BrandButton size="sm" variant="outline" onClick={() => setSigesOpen(true)}>Sincronizar</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={() => setExcelOpen(true)}>Cargar Excel maestro</BrandButton>
           <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
@@ -135,7 +135,7 @@ export function PrestadoresConfig() {
                   <th className={thCls}>Nombre</th>
                   <th className={thCls}>CUIT</th>
                   <th className={thCls}>Región</th>
-                  <th className={thCls}>Siges</th>
+                  <th className={thCls}>Vínculo</th>
                   <th className={thCls}>Estado</th>
                   <th className={`${thCls} text-right`}>Acciones</th>
                 </tr>
@@ -161,7 +161,7 @@ export function PrestadoresConfig() {
                       <button onClick={() => setFormPrestador(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
                       {p.sigesEmpresaId != null && (
                         <button onClick={() => setBasePrestador(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">
-                          {p.sigesBaseSucursalId != null ? "Distancias" : "Base Siges"}
+                          {p.sigesBaseSucursalId != null ? "Distancias" : "Base"}
                         </button>
                       )}
                       <button onClick={() => handleToggle(p)} className={`font-body text-sm hover:underline mr-3 ${p.activo ? "text-destructive" : "text-success"}`}>

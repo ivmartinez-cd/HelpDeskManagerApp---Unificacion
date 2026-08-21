@@ -47,7 +47,7 @@ function entradaAForm(
 }
 
 const LABEL_COORDS_ORIGEN: Record<string, string> = {
-  siges: "Siges",
+  siges: "Sistema",
   geocode: "Geocodificado",
   manual: "Manual",
 };

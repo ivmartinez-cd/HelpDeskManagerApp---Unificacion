@@ -33,7 +33,7 @@ function ResultadoSync({ resultado }: { resultado: SyncSigesResult }) {
           <p className={`${seccionCls} mt-2`}>Nombres distintos (no se pisan)</p>
           {resultado.nombresDistintos.map((d) => (
             <p key={d.localId} className="font-body text-xs text-muted-foreground">
-              {d.localNombre} · en Siges: {d.sigesDenComercial}
+              {d.localNombre} · remoto: {d.sigesDenComercial}
             </p>
           ))}
         </>
@@ -42,7 +42,7 @@ function ResultadoSync({ resultado }: { resultado: SyncSigesResult }) {
         Sin cambios: {resultado.sinCambios}
         {resultado.sinVinculo.length > 0 && ` · Sin vínculo: ${resultado.sinVinculo.join(", ")}`}
         {resultado.vinculoRoto.length > 0 &&
-          ` · Vínculo roto (no está activa en Siges): ${resultado.vinculoRoto.join(", ")}`}
+          ` · Vínculo roto (ya no está activa): ${resultado.vinculoRoto.join(", ")}`}
       </p>
     </div>
   );
@@ -77,7 +77,7 @@ export function SigesSyncModal({
           setError(null);
         })
         .catch((err: unknown) => {
-          setError(err instanceof Error ? err.message : "Error al consultar Siges");
+          setError(err instanceof Error ? err.message : "Error al consultar");
         }),
     [],
   );
@@ -125,7 +125,7 @@ export function SigesSyncModal({
   };
 
   return (
-    <BrandModal isOpen={isOpen} onClose={handleClose} title="Sincronizar con Siges" error={error}>
+    <BrandModal isOpen={isOpen} onClose={handleClose} title="Sincronizar" error={error}>
       {propuestas === null || resultado === null ? (
         <div className="flex h-32 items-center justify-center">
           {!error && <Spinner />}
@@ -163,7 +163,7 @@ export function SigesSyncModal({
           {propuestas.disponibles.length > 0 && (
             <div>
               <p className={`${seccionCls} mb-1`}>
-                En Siges sin vínculo local ({propuestas.disponibles.length}) — el alta sigue
+                Sin vínculo local ({propuestas.disponibles.length}) — el alta sigue
                 siendo manual
               </p>
               <div className="max-h-36 overflow-y-auto">

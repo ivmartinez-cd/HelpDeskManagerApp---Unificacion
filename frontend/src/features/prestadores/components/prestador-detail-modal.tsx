@@ -70,7 +70,7 @@ export function PrestadorDetailModal({
             <BrandBadge variant={prestador.isActive ? "success" : "neutral"}>
               {prestador.isActive ? "Activo" : "Inactivo"}
             </BrandBadge>
-            <BrandBadge variant="neutral">Siges #{prestador.sigesEmpresaId}</BrandBadge>
+            <BrandBadge variant="neutral">#{prestador.sigesEmpresaId}</BrandBadge>
           </div>
 
           <div className="grid grid-cols-2 gap-3 font-body text-sm">

@@ -21,7 +21,7 @@ export function Bloqueantes({ estado, nombrePrestador }: { estado: EstadoAsisten
     return (
       <Aviso tono="bloqueo">
         <strong>Este prestador no está vinculado a Gestión.</strong> Sin ese vínculo el asistente no
-        puede leer sus sucursales. Se configura en Configuración → Prestadores → {nombrePrestador} → Vincular con Siges.
+        puede leer sus sucursales. Se configura en Configuración → Prestadores → {nombrePrestador} → Vincular.
       </Aviso>
     );
   }

@@ -106,7 +106,7 @@ export function EquiposSinRealView() {
         .catch((err: unknown) => {
           console.error("Error al cargar equipos sin contador real:", err);
           setError(
-            "No se pudo consultar Siges. La consulta puede tardar (~10s la primera vez); reintentá.",
+            "No se pudo consultar. La consulta puede tardar (~10s la primera vez); reintentá.",
           );
         });
     },
@@ -133,7 +133,7 @@ export function EquiposSinRealView() {
             Equipos sin contador real
           </h1>
           <p className="font-body text-sm text-muted-foreground">
-            Parque que sigue facturando con estimados · Fuente: Siges (solo lectura) · Para el
+            Parque que sigue facturando con estimados · Solo lectura · Para el
             laburo mes a mes de recuperación de reales.
           </p>
         </div>

@@ -74,7 +74,7 @@ function ZonaMapRow({ zona, onMapeada }: { zona: ZonaSigesEstado; onMapeada: () 
           onChange={(e) => setSeleccion(e.target.value)}
         >
           <option value={ZONA_GENERICA}>Zona genérica (tarifario sin zona)</option>
-          <option value={USAR_NOMBRE_SIGES}>Usar el nombre de Siges tal cual</option>
+          <option value={USAR_NOMBRE_SIGES}>Usar el nombre tal cual</option>
           {opciones.map((z) => (
             <option key={z} value={z}>
               {z}
@@ -116,7 +116,7 @@ function ResultadoSyncTarifarios({ resultado }: { resultado: SyncTarifariosResul
             <p key={i} className="font-body text-xs text-muted-foreground">
               {c.prestador} · {c.tipoServicio}
               {c.zona ? ` · ${c.zona}` : ""} · desde {c.vigenciaDesde}: {c.campo} local{" "}
-              {c.valorLocal} vs Siges {c.valorSiges}
+              {c.valorLocal} vs {c.valorSiges}
             </p>
           ))}
         </>
@@ -124,7 +124,7 @@ function ResultadoSyncTarifarios({ resultado }: { resultado: SyncTarifariosResul
       <p className="font-body text-xs text-muted-foreground mt-2">
         Sin cambios: {resultado.sinCambios}
         {resultado.prestadoresSinVinculo.length > 0 &&
-          ` · Sin vínculo Siges: ${resultado.prestadoresSinVinculo.join(", ")}`}
+          ` · Sin vínculo: ${resultado.prestadoresSinVinculo.join(", ")}`}
       </p>
     </div>
   );
@@ -152,7 +152,7 @@ export function SigesTarifariosModal({
           setError(null);
         })
         .catch((err: unknown) => {
-          setError(err instanceof Error ? err.message : "Error al consultar Siges");
+          setError(err instanceof Error ? err.message : "Error al consultar");
         }),
     [],
   );
@@ -177,7 +177,7 @@ export function SigesTarifariosModal({
   const mapeadas = zonas?.zonas.filter((z) => z.mapeada) ?? [];
 
   return (
-    <BrandModal isOpen onClose={onClose} title="Sincronizar tarifarios con Siges" error={error}>
+    <BrandModal isOpen onClose={onClose} title="Sincronizar tarifarios" error={error}>
       {zonas === null || resultado === null ? (
         <div className="flex h-32 items-center justify-center">{!error && <Spinner />}</div>
       ) : (
@@ -185,7 +185,7 @@ export function SigesTarifariosModal({
           {sinMapear.length > 0 && (
             <div>
               <p className={`${seccionCls} mb-1`}>
-                Zonas de Siges sin mapear ({sinMapear.length}) — sus tarifas no se sincronizan
+                Zonas sin mapear ({sinMapear.length}) — sus tarifas no se sincronizan
                 hasta confirmar el mapeo
               </p>
               {sinMapear.map((z) => (
