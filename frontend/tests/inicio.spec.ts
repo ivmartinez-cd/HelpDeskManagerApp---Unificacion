@@ -85,7 +85,9 @@ test.describe("Inicio", () => {
     await mockAccesos(page, []);
     await page.goto("/");
 
-    await expect(page.getByText("Hoy te toca:")).toBeVisible();
+    // La franja mock cubre todo el día, así que siempre está "en curso" →
+    // leyenda "Ahora estás en:" (si ninguna estuviera en curso diría "Hoy te toca:").
+    await expect(page.getByText("Ahora estás en:")).toBeVisible();
     await expect(page.getByText("INSUMOS 00:00–23:59")).toBeVisible();
   });
 
@@ -95,6 +97,7 @@ test.describe("Inicio", () => {
     await mockAccesos(page, []);
     await page.goto("/");
 
+    await expect(page.getByText("Ahora estás en:")).not.toBeVisible();
     await expect(page.getByText("Hoy te toca:")).not.toBeVisible();
   });
 

@@ -209,14 +209,17 @@ export function InicioDashboard() {
 
   return (
     <div className="flex h-full flex-col gap-3 px-7 py-4">
-      <div className="flex-none">
-        <h1 className="font-heading text-[25px] font-extrabold text-foreground">Inicio</h1>
-        <p className="mt-0.5 font-body text-sm text-muted-foreground">
-          Panel principal con turnos de operadores y planificación diaria.
-        </p>
+      <div className="flex flex-none flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-heading text-[25px] font-extrabold text-foreground">Inicio</h1>
+          <p className="mt-0.5 font-body text-sm text-muted-foreground">
+            Panel principal con turnos de operadores y planificación diaria.
+          </p>
+        </div>
+        {/* Banner personal de turno a la derecha del título (pedido 2026-08-21). */}
+        <MiTurnoBanner shifts={turnos.data?.shifts ?? []} loading={turnos.loading} />
       </div>
 
-      <MiTurnoBanner shifts={turnos.data?.shifts ?? []} loading={turnos.loading} />
       <MisChatsWatiBanner />
       <AccesosDirectos />
 
