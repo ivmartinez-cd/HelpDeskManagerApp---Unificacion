@@ -1,7 +1,9 @@
 """Tests de ReconciliarLiquidacionIndividual — orquestación best-effort para
 una sola liquidación (disparada al abrir su detalle). Cada motivo de "no hacer
 nada" tiene que devolver `reconciliada=False` sin levantar excepción — abrir el
-detalle nunca puede fallar por esto."""
+detalle nunca puede fallar por esto. Excepción: estado terminal ya no es un
+"no hacer nada" — delega en `ReconciliarLiquidacion`, que igual intenta traer
+extra/factura (ver ese módulo)."""
 
 import uuid
 from datetime import date
@@ -20,7 +22,10 @@ from src.modules.liquidaciones.application.use_cases.reconciliar_liquidacion_ind
 )
 from src.modules.liquidaciones.domain.entities.liquidacion import ESTADO_APROBADA
 from src.modules.liquidaciones.domain.services.numeracion_ayc import numero_liquidacion
-from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import CdLiquidacion
+from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
+    CdLiquidacion,
+    CdLiquidacionDetalle,
+)
 from src.shared.domain.errors import ExternalServiceError
 from tests.unit.domain.liquidaciones.factories import (
     make_liquidacion,
@@ -49,6 +54,7 @@ class FakeCdGateway:
         self.liquidaciones_por_empresa: dict[int, list[CdLiquidacion]] = {}
         self.detalle_falla = False
         self.detalles_pedidos: list[int] = []
+        self.detalle: CdLiquidacionDetalle | None = None
 
     async def get_liquidaciones(self, empresa_cd_id: int, top: int = 200) -> list[CdLiquidacion]:
         return self.liquidaciones_por_empresa.get(empresa_cd_id, [])
@@ -60,7 +66,7 @@ class FakeCdGateway:
         return []
 
     async def get_detalle(self, liquidacion_ayc_id: int):
-        return None
+        return self.detalle
 
 
 def make_cd_liq(ayc_id: int, *, cant_incidentes: int = 0) -> CdLiquidacion:
@@ -134,7 +140,7 @@ async def test_sin_numero_liquidacion_no_reconcilia() -> None:
     assert world.gateway.detalles_pedidos == []
 
 
-async def test_estado_terminal_no_reconcilia() -> None:
+async def test_estado_terminal_no_pide_incidentes_pero_reconcilia_extra_y_factura() -> None:
     world = World()
     liq = world.con_liquidacion(
         numero_liquidacion=numero_liquidacion(1), estado=ESTADO_APROBADA
@@ -143,7 +149,27 @@ async def test_estado_terminal_no_reconcilia() -> None:
 
     resultado = await world.use_case.execute(liq.id)
 
-    assert resultado.reconciliada is False
+    assert resultado.reconciliada is True
+    assert resultado.estado_actualizado is False
+    assert world.gateway.detalles_pedidos == []
+    assert world.liquidaciones.rows[liq.id].estado == ESTADO_APROBADA
+
+
+async def test_estado_terminal_actualiza_factura_si_ayc_la_reporta() -> None:
+    world = World()
+    liq = world.con_liquidacion(
+        numero_liquidacion=numero_liquidacion(1), estado=ESTADO_APROBADA, numero_factura=None
+    )
+    world.gateway.liquidaciones_por_empresa[CD_ID] = [make_cd_liq(1)]
+    world.gateway.detalle = CdLiquidacionDetalle(
+        concepto_extra=None, monto_extra=None, numero_factura="2-1575"
+    )
+
+    resultado = await world.use_case.execute(liq.id)
+
+    assert resultado.factura_actualizada is True
+    assert world.liquidaciones.rows[liq.id].numero_factura == "2-1575"
+    assert world.liquidaciones.rows[liq.id].estado == ESTADO_APROBADA
     assert world.gateway.detalles_pedidos == []
 
 

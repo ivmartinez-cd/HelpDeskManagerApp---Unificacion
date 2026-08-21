@@ -2,10 +2,15 @@
 sola liquidación, desde la pantalla de detalle al abrirla (a diferencia de
 `SincronizarLiquidaciones`, que recorre todos los prestadores vinculados).
 
-Best-effort a propósito: si la liquidación no tiene vínculo AyC, está en estado
-terminal, el prestador no está vinculado, AyC ya no la reporta, o el SOAP del
-detalle falla, no hace nada y no propaga error — abrir el detalle nunca debe
-fallar por esto, es un refresh silencioso, no una acción explícita del usuario.
+Best-effort a propósito: si la liquidación no tiene vínculo AyC, el prestador
+no está vinculado, AyC ya no la reporta, o el SOAP de incidentes falla, no hace
+nada y no propaga error — abrir el detalle nunca debe fallar por esto, es un
+refresh silencioso, no una acción explícita del usuario.
+
+Si la liquidación está en estado terminal (aprobada/cerrada) se salta el
+listado de incidentes (`get_incidentes`, no hace falta, `ReconciliarLiquidacion`
+lo ignoraría igual) pero se delega igual — el extra/factura sí se intenta traer
+para liquidaciones terminales, ver docstring de `ReconciliarLiquidacion`.
 """
 
 from dataclasses import dataclass
@@ -48,8 +53,6 @@ class ReconciliarLiquidacionIndividual:
         liquidacion = await self._ports.liquidaciones.get_by_id(liquidacion_id)
         if liquidacion is None or not liquidacion.numero_liquidacion:
             return _SIN_RECONCILIAR
-        if liquidacion.estado in _ESTADOS_TERMINALES:
-            return _SIN_RECONCILIAR
 
         prestador = await self._ports.prestadores.get_by_id(liquidacion.prestador_id)
         if prestador is None or prestador.cd_prestador_id is None:
@@ -61,6 +64,9 @@ class ReconciliarLiquidacionIndividual:
         )
         if cd_liq is None:
             return _SIN_RECONCILIAR
+
+        if liquidacion.estado in _ESTADOS_TERMINALES:
+            return await self._ports.reconciliar.execute(liquidacion, cd_liq, [])
 
         try:
             filas_cd = await self._ports.cd_gateway.get_incidentes(cd_liq.id)

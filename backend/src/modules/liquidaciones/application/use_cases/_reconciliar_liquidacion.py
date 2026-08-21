@@ -6,10 +6,17 @@ motor de reglas), pisa su `estado` con el que reporta AyC y trae su ítem extra 
 número de factura (`Extra`/`DetalleExtra`/`FacturaLocal`/`FacturaNro` de
 `getLiquidationById`, P4) cuando AyC tiene alguno cargado — la contraparte de
 `_procesar` en `sincronizar_liquidaciones.py`, que solo crea liquidaciones
-nuevas. Nunca se llama para liquidaciones en estado terminal (aprobada/cerrada):
-esas quedan congeladas, ni se les pide el detalle SOAP — el extra/factura de una
-liquidación ya cerrada/aprobada tampoco se trae por esta vía (decisión
-consciente: no reabrir liquidaciones ya cerradas para esto).
+nuevas.
+
+Una liquidación en estado terminal (aprobada/cerrada) nunca reconcilia
+incidentes/alertas ni pisa su `estado` — eso queda congelado para siempre
+(decisión consciente: no reabrir liquidaciones ya cerradas). El extra/factura
+es la excepción: en la práctica AyC suele cargar la factura en el mismo
+momento en que aprueba la liquidación, así que si también se lo bloqueara acá
+ese dato nunca llegaría a sincronizarse (hallazgo 2026-08-21, liquidaciones
+3905-7/3929-7 aprobadas/cerradas sin factura local pese a tenerla en AyC) — una
+liquidación terminal sigue trayendo extra/factura vía `_solo_extra_y_factura`,
+sin tocar nada más.
 
 Orden fijo dentro de una liquidación: bajas → cambios → altas → recálculo de
 totales → reanálisis → pisar estado → traer extra/factura. El motor de reglas
@@ -91,7 +98,7 @@ class ReconciliarLiquidacion:
         self, liquidacion: Liquidacion, cd_liq: CdLiquidacion, remotos: list[IncidenteImportado]
     ) -> ReconciliarLiquidacionResultado:
         if liquidacion.estado in _ESTADOS_TERMINALES:
-            return ReconciliarLiquidacionResultado(reconciliada=False)
+            return await self._solo_extra_y_factura(liquidacion, cd_liq)
         if len(remotos) != cd_liq.cant_incidentes:
             return ReconciliarLiquidacionResultado(reconciliada=False)
 
@@ -112,6 +119,20 @@ class ReconciliarLiquidacion:
             cambios=len(diff.cambios),
             bajas=len(diff.bajas),
             estado_actualizado=estado_actualizado,
+            extra_actualizado=extra_actualizado,
+            factura_actualizada=factura_actualizada,
+        )
+
+    async def _solo_extra_y_factura(
+        self, liquidacion: Liquidacion, cd_liq: CdLiquidacion
+    ) -> ReconciliarLiquidacionResultado:
+        """Liquidación terminal: nunca toca incidentes, alertas ni `estado`
+        (`_pisar_estado` ni se llama), solo intenta traer extra/factura."""
+        extra_actualizado, factura_actualizada = await self._actualizar_extra_y_factura(
+            liquidacion, cd_liq
+        )
+        return ReconciliarLiquidacionResultado(
+            reconciliada=True,
             extra_actualizado=extra_actualizado,
             factura_actualizada=factura_actualizada,
         )

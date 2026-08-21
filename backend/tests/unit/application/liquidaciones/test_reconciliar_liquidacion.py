@@ -230,7 +230,7 @@ async def test_triage_no_sobrevive_a_una_baja() -> None:
     assert world.alertas.por_liquidacion[liq.id] == []
 
 
-async def test_guard_estado_terminal_no_reconcilia() -> None:
+async def test_guard_estado_terminal_no_toca_incidentes_ni_estado() -> None:
     world = World()
     liq = world.con_liquidacion(estado=ESTADO_APROBADA)
     local = world.con_incidente(liq.id, numero_incidente="1", costo_servicio_cobrado=1000.0)
@@ -238,8 +238,36 @@ async def test_guard_estado_terminal_no_reconcilia() -> None:
 
     resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
 
-    assert resultado.reconciliada is False
+    assert resultado.altas == 0
+    assert resultado.cambios == 0
+    assert resultado.bajas == 0
+    assert resultado.estado_actualizado is False
     assert world.incidentes.rows[local.id].costo_servicio_cobrado == 1000.0
+    assert world.liquidaciones.rows[liq.id].estado == ESTADO_APROBADA
+
+
+async def test_estado_terminal_igual_trae_factura_y_extra_de_ayc() -> None:
+    """El caso real que motivó separar el guard: en AyC la factura se carga en
+    el mismo momento en que se aprueba la liquidación — si esto también
+    quedara bloqueado, ese dato nunca llegaría a sincronizarse."""
+    world = World()
+    liq = world.con_liquidacion(
+        estado=ESTADO_APROBADA, numero_factura=None, concepto_extra=None, monto_extra=None
+    )
+    world.cd_gateway.detalles_por_liquidacion[1] = CdLiquidacionDetalle(
+        concepto_extra="Adicional", monto_extra=500.0, numero_factura="2-1575"
+    )
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [])
+
+    assert resultado.reconciliada is True
+    assert resultado.extra_actualizado is True
+    assert resultado.factura_actualizada is True
+    actualizada = world.liquidaciones.rows[liq.id]
+    assert actualizada.numero_factura == "2-1575"
+    assert actualizada.concepto_extra == "Adicional"
+    assert actualizada.monto_extra == 500.0
+    assert actualizada.estado == ESTADO_APROBADA
 
 
 async def test_guard_cantidad_declarada_no_coincide_no_reconcilia() -> None:
