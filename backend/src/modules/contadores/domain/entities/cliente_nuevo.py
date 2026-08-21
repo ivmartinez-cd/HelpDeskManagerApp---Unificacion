@@ -93,16 +93,19 @@ class ClienteNuevo:
 @dataclass(frozen=True, slots=True)
 class ResumenSigesClienteNuevo:
     """Lo que Siges sabe de una empresa, anotado sobre la ficha en lectura.
-    `equipos_instalados` = máquinas con "Alta en Cliente" (`MaquinaUFisica`,
-    motivo 1) en esa empresa — el registro de instalas real, no el incidente
-    tipo 103 (ver SIGES_READONLY_CATALOGO_DATOS.md §3 "cliente nuevo")."""
+    `equipos_despachados` = máquinas con "Alta en Cliente" (`MaquinaUFisica`,
+    motivo 1): lo carga Equipamiento al despachar, NO confirma instalación
+    (en el interior el equipo puede seguir en viaje). `equipos_instalados` =
+    de esas, las que el PST ya confirmó: incidente 103 cerrado o toma real
+    posterior al alta (ver SIGES_READONLY_CATALOGO_DATOS.md §3)."""
 
     empresa_id: int
+    equipos_despachados: int
+    ultimo_despacho: date | None
     equipos_instalados: int
-    instalas: int
-    primera_instalacion: date | None
     ultima_instalacion: date | None
     equipos_con_toma: int
+    instalas: int
     contrato_nro: str | None
     fecha_firma: date | None
     vendedor: str | None
@@ -121,13 +124,14 @@ class CandidatoClienteNuevo:
     fecha_firma: date | None
     vendedor: str | None
     rubro: str
-    equipos_instalados: int
+    equipos_despachados: int
 
 
 def listo_para_stc(ficha: ClienteNuevo, resumen: ResumenSigesClienteNuevo | None) -> bool:
     """Aviso, no transición: la ficha sigue esperando instalación pero Siges ya
-    muestra equipos instalados (todos los previstos si se cargó la cantidad,
-    o al menos uno si no). La TL decide cuándo pasarla a STC pendiente."""
+    muestra equipos instalados CONFIRMADOS (todos los previstos si se cargó la
+    cantidad, o al menos uno si no). Los despachados no cuentan: pueden estar
+    en viaje. La TL decide cuándo pasarla a STC pendiente."""
     if resumen is None or ficha.estado != ESTADO_ESPERANDO_INSTALACION:
         return False
     if resumen.equipos_instalados <= 0:

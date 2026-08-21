@@ -4,7 +4,13 @@ import { useMemo } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import type { Operador } from "../types/calendario";
 import type { ClienteNuevo } from "../types/clientes-nuevos";
-import { ESTADO_META, RUBRO_LABEL, formatFecha, textoInstalados } from "../lib/clientes-nuevos";
+import {
+  ESTADO_META,
+  RUBRO_LABEL,
+  formatFecha,
+  textoEnViaje,
+  textoInstalados,
+} from "../lib/clientes-nuevos";
 import { BrandBadge } from "@/shared/components/ui/brand-form";
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
@@ -79,9 +85,12 @@ function InstaladosCell({ f }: { f: ClienteNuevo }) {
     <div className="flex flex-col gap-1 leading-tight">
       <span className="font-body text-sm tabular-nums text-foreground">{textoInstalados(f)}</span>
       {f.listo_para_stc && <BrandBadge variant="accent">Listo para STC</BrandBadge>}
+      {textoEnViaje(f) && (
+        <span className="font-body text-xs text-warning">{textoEnViaje(f)}</span>
+      )}
       {f.siges && f.siges.equipos_con_toma > 0 && (
         <span className="font-body text-xs text-muted-foreground">
-          {f.siges.equipos_con_toma} con toma · {f.siges.instalas} instala
+          {f.siges.equipos_con_toma} con toma real · {f.siges.instalas} instala
           {f.siges.instalas === 1 ? "" : "s"}
         </span>
       )}

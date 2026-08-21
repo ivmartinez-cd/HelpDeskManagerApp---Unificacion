@@ -8,15 +8,18 @@ export type EstadoClienteNuevo =
   | "CERRADO";
 
 /** Lo que Siges sabe de la empresa cruzada (anotado en lectura, puede faltar
- * si la ficha no está cruzada o Siges no respondió). `equipos_instalados` =
- * máquinas con "Alta en Cliente" (registro de instalas real). */
+ * si la ficha no está cruzada o Siges no respondió). `equipos_despachados` =
+ * "Alta en Cliente" (Equipamiento al despachar; puede seguir en viaje);
+ * `equipos_instalados` = confirmadas por el PST (incidente 103 cerrado o
+ * toma real posterior al alta). */
 export interface ResumenSigesClienteNuevo {
   empresa_id: number;
+  equipos_despachados: number;
+  ultimo_despacho: string | null;
   equipos_instalados: number;
-  instalas: number;
-  primera_instalacion: string | null;
   ultima_instalacion: string | null;
   equipos_con_toma: number;
+  instalas: number;
   contrato_nro: string | null;
   fecha_firma: string | null;
   vendedor: string | null;
@@ -72,7 +75,7 @@ export interface CandidatoClienteNuevo {
   fecha_firma: string | null;
   vendedor: string | null;
   rubro: string;
-  equipos_instalados: number;
+  equipos_despachados: number;
 }
 
 export interface CandidatosClientesNuevos {

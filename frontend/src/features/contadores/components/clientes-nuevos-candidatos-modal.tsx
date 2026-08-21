@@ -80,9 +80,9 @@ export function ClientesNuevosCandidatosModal({ onClose, onElegir }: Props) {
                 </div>
                 <p className="truncate font-body text-xs text-muted-foreground">
                   {c.contrato_nro ?? "Sin N° de contrato"} · firma {formatFecha(c.fecha_firma)}
-                  {c.vendedor ? ` · ${c.vendedor}` : ""} · {c.equipos_instalados} equipo
-                  {c.equipos_instalados === 1 ? "" : "s"} instalado
-                  {c.equipos_instalados === 1 ? "" : "s"}
+                  {c.vendedor ? ` · ${c.vendedor}` : ""} · {c.equipos_despachados} equipo
+                  {c.equipos_despachados === 1 ? "" : "s"} despachado
+                  {c.equipos_despachados === 1 ? "" : "s"}
                 </p>
               </div>
               <BrandButton size="sm" variant="outline" onClick={() => onElegir(c)}>

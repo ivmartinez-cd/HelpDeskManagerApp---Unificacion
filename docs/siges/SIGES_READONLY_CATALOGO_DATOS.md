@@ -384,9 +384,15 @@ instalación, seguimiento). Scripts: `backend/scripts/explore_siges_nuevos_clien
   `MaquinaMotivoMov` (1 Alta en Cliente, 2 Baja en Cliente, 3/4 Backup, 5/6 Reparación, 7/8
   Demo, 9 Cambio Sector/Sucursal, 10 Ingreso por Compra, 11 Alta para Presupuesto, 12
   Inclusión a contrato, 13 Reemplazo por garantía, 14 Recambio por fallas, 98 Migración).
-  `Maquina.ID_UFisica` apunta al movimiento vigente. **Instalación = fila con
-  `ID_MotivoMov = 1`** (`Fecha_Movim` = fecha de instalación, `Usuario_Mod` = quien la cargó, p.
-  ej. `equipamiento`); `dbo.MaquinaInstalacion (ID_UFisica, NroInstala)` agrupa las máquinas de
+  `Maquina.ID_UFisica` apunta al movimiento vigente. **Despacho = fila con
+  `ID_MotivoMov = 1`** — ⚠️ la carga `equipamiento` **al despachar** (mismo día: toma tipo 8
+  "Contador Inicial" e incidente 103 en 200 Derivado), así que NO confirma que el equipo esté
+  instalado (interior = puede seguir en viaje). **Instalación confirmada** = además el
+  incidente 103 de esa máquina está cerrado (500/600/700/710; a veces sin `Fecha_Cierre`, con
+  `PlanillaIT=1`) o hay una toma real (`ID_TipoToma NOT IN (8,13,14,19)`) posterior al alta.
+  Medido 90 días: 1065 altas, 331 con 103 cerrado, 400 con toma real, 493 confirmadas; las
+  547 sin señal son cargas masivas de `cnavarro` (Natura 226, Exolgan 114…) o despachos
+  recientes. EXPRESO BILETTA al 21/08: 12 despachadas, 7 confirmadas, 5 en 200 Derivado; `dbo.MaquinaInstalacion (ID_UFisica, NroInstala)` agrupa las máquinas de
   una misma "Instala Nro" (96 % de las altas de los últimos 6 meses la tienen; es el número
   que se ve en `MaquinaHist.Observ` "Des-Instalación Nro. N"). Volumen: 230-1060 altas/mes en
   60-76 empresas. Verificado con EXPRESO BILETTA: 11 máquinas en 4 instalas (32772-32775,

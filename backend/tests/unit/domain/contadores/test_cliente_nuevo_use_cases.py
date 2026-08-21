@@ -123,11 +123,12 @@ def _request(**overrides: object) -> ClienteNuevoRequest:
 def _resumen(empresa_id: int = 1416, instalados: int = 11) -> ResumenSigesClienteNuevo:
     return ResumenSigesClienteNuevo(
         empresa_id=empresa_id,
+        equipos_despachados=12,
+        ultimo_despacho=date(2026, 8, 21),
         equipos_instalados=instalados,
-        instalas=4,
-        primera_instalacion=date(2026, 8, 6),
         ultima_instalacion=date(2026, 8, 21),
-        equipos_con_toma=11,
+        equipos_con_toma=7,
+        instalas=5,
         contrato_nro="SOD36CDSI00837",
         fecha_firma=date(2026, 7, 28),
         vendedor="Adrián Vanrell",

@@ -40,11 +40,12 @@ class ClienteNuevoIn(BaseModel):
 
 class ResumenSigesSchema(BaseModel):
     empresa_id: int
+    equipos_despachados: int
+    ultimo_despacho: date | None
     equipos_instalados: int
-    instalas: int
-    primera_instalacion: date | None
     ultima_instalacion: date | None
     equipos_con_toma: int
+    instalas: int
     contrato_nro: str | None
     fecha_firma: date | None
     vendedor: str | None
@@ -54,11 +55,12 @@ class ResumenSigesSchema(BaseModel):
     def from_entity(cls, r: ResumenSigesClienteNuevo) -> ResumenSigesSchema:
         return cls(
             empresa_id=r.empresa_id,
+            equipos_despachados=r.equipos_despachados,
+            ultimo_despacho=r.ultimo_despacho,
             equipos_instalados=r.equipos_instalados,
-            instalas=r.instalas,
-            primera_instalacion=r.primera_instalacion,
             ultima_instalacion=r.ultima_instalacion,
             equipos_con_toma=r.equipos_con_toma,
+            instalas=r.instalas,
             contrato_nro=r.contrato_nro,
             fecha_firma=r.fecha_firma,
             vendedor=r.vendedor,
@@ -119,7 +121,7 @@ class CandidatoClienteNuevoSchema(BaseModel):
     fecha_firma: date | None
     vendedor: str | None
     rubro: str
-    equipos_instalados: int
+    equipos_despachados: int
 
     @classmethod
     def from_entity(cls, c: CandidatoClienteNuevo) -> CandidatoClienteNuevoSchema:
@@ -130,7 +132,7 @@ class CandidatoClienteNuevoSchema(BaseModel):
             fecha_firma=c.fecha_firma,
             vendedor=c.vendedor,
             rubro=c.rubro,
-            equipos_instalados=c.equipos_instalados,
+            equipos_despachados=c.equipos_despachados,
         )
 
 

@@ -218,10 +218,12 @@ export function ClientesNuevosView() {
             />
           )}
           <p className="rounded-[8px] bg-muted/30 px-4 py-3 font-body text-xs text-muted-foreground">
-            &quot;Instalados&quot; son las máquinas con alta en cliente registrada en Siges
-            (instalas reales, no la orden de trabajo). &quot;Listo para STC&quot; avisa cuando ya
-            están todos los equipos previstos (o al menos uno si no se cargó cantidad) y la ficha
-            sigue esperando instalación — el pase de estado lo hacés vos. Los datos de Siges se
+            &quot;Instalados&quot; son las máquinas cuya instalación ya confirmó el PST en Siges
+            (incidente de instalación cerrado o primera toma real); las que Equipamiento dio de
+            alta al despachar pero todavía no se confirmaron aparecen como &quot;despachadas sin
+            confirmar&quot; (pueden estar en viaje). &quot;Listo para STC&quot; avisa cuando ya están
+            instalados todos los equipos previstos (o al menos uno si no se cargó cantidad) y la
+            ficha sigue esperando instalación — el pase de estado lo hacés vos. Los datos de Siges se
             cachean 5 minutos; &quot;Actualizar Siges&quot; fuerza una consulta nueva.
           </p>
         </>

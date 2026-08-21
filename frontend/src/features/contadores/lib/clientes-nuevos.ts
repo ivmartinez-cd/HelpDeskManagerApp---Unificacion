@@ -130,7 +130,8 @@ export function payloadDesdeCandidato(c: CandidatoClienteNuevo): ClienteNuevoPay
   };
 }
 
-/** Texto de avance de instalación: "11 / 10 · últ. 21/08/2026" o "—". */
+/** Texto de avance de instalación: "7 / 10 · últ. 21/08/2026" o "—". Cuenta
+ * solo instaladas confirmadas; las despachadas en viaje van aparte. */
 export function textoInstalados(f: ClienteNuevo): string {
   if (!f.siges) return f.siges_empresa_id ? "Siges sin respuesta" : "Sin cruce";
   const previstos = f.equipos_previstos ? ` / ${f.equipos_previstos}` : "";
@@ -138,4 +139,13 @@ export function textoInstalados(f: ClienteNuevo): string {
     ? ` · últ. ${formatFecha(f.siges.ultima_instalacion)}`
     : "";
   return `${f.siges.equipos_instalados}${previstos}${ultima}`;
+}
+
+/** "5 despachadas en viaje · últ. 10/08/2026" cuando hay altas sin confirmar. */
+export function textoEnViaje(f: ClienteNuevo): string | null {
+  if (!f.siges) return null;
+  const enViaje = f.siges.equipos_despachados - f.siges.equipos_instalados;
+  if (enViaje <= 0) return null;
+  const ultimo = f.siges.ultimo_despacho ? ` · últ. ${formatFecha(f.siges.ultimo_despacho)}` : "";
+  return `${enViaje} despachada${enViaje === 1 ? "" : "s"} sin confirmar${ultimo}`;
 }

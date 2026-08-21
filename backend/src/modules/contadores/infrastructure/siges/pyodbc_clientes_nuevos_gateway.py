@@ -43,7 +43,7 @@ class PyodbcClientesNuevosGateway:
             ids = sorted(empresa_ids)
             rows = await self._runner.fetch_all(
                 build_resumen_instalaciones_sql(len(ids)),
-                ids,
+                ids + ids,  # el IN aparece dos veces en la consulta (CTE y SELECT final)
                 gateway=_GATEWAY,
                 log_message="Fallo la consulta de instalaciones de clientes nuevos contra Siges",
             )
@@ -97,11 +97,12 @@ def _limpio(valor: str | None) -> str | None:
 def _to_resumen(row: Any) -> ResumenSigesClienteNuevo:
     return ResumenSigesClienteNuevo(
         empresa_id=row.empresa_id,
+        equipos_despachados=row.equipos_despachados or 0,
+        ultimo_despacho=_fecha(row.ultimo_despacho),
         equipos_instalados=row.equipos_instalados or 0,
-        instalas=row.instalas or 0,
-        primera_instalacion=_fecha(row.primera_instalacion),
         ultima_instalacion=_fecha(row.ultima_instalacion),
         equipos_con_toma=row.equipos_con_toma or 0,
+        instalas=row.instalas or 0,
         contrato_nro=_limpio(row.contrato_nro),
         fecha_firma=_fecha(row.fecha_firma),
         vendedor=_limpio(row.vendedor),
@@ -117,5 +118,5 @@ def _to_candidato(row: Any) -> CandidatoClienteNuevo:
         fecha_firma=_fecha(row.fecha_firma),
         vendedor=_limpio(row.vendedor),
         rubro=rubro_por_empresa_admin(row.id_empresa_admin),
-        equipos_instalados=row.equipos_instalados or 0,
+        equipos_despachados=row.equipos_despachados or 0,
     )

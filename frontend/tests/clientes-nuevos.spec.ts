@@ -4,11 +4,12 @@ import { expect, test, type Page } from "@playwright/test";
 
 const SIGES_BILETTA = {
   empresa_id: 1416,
+  equipos_despachados: 12,
+  ultimo_despacho: "2026-08-21",
   equipos_instalados: 11,
-  instalas: 4,
-  primera_instalacion: "2026-08-06",
   ultima_instalacion: "2026-08-21",
-  equipos_con_toma: 11,
+  equipos_con_toma: 7,
+  instalas: 5,
   contrato_nro: "SOD36CDSI00837",
   fecha_firma: "2026-07-28",
   vendedor: "Adrián Vanrell",
@@ -77,7 +78,7 @@ const CANDIDATOS = {
       fecha_firma: "2026-07-01",
       vendedor: "Adrián Vanrell",
       rubro: "IMPRESION",
-      equipos_instalados: 0,
+      equipos_despachados: 0,
     },
   ],
   firmado_desde: "2026-04-23",
@@ -125,6 +126,7 @@ test.describe("Contadores › Clientes nuevos", () => {
     await expect(page.getByText("CARTOCOR")).toBeHidden();
     await expect(page.getByText("Listo para STC", { exact: true })).toBeVisible();
     await expect(page.getByText("11 / 10 · últ. 21/08/2026")).toBeVisible();
+    await expect(page.getByText("1 despachada sin confirmar · últ. 21/08/2026")).toBeVisible();
     await expect(page.getByText("Marcela Rodríguez")).toHaveCount(2);
     await expect(page.getByText("STC enviado", { exact: true }).first()).toBeVisible();
 
