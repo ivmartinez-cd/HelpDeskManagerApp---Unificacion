@@ -24,6 +24,8 @@ export interface AdvertenciaCobertura {
   userName: string | null;
   desde: string | null;
   hasta: string | null;
+  /** OPERADOR_AUSENTE: qué lo ausenta ('Vacaciones', 'Horario 08:00–17:00'…). */
+  detalle?: string | null;
 }
 
 export interface VarianteSlot {

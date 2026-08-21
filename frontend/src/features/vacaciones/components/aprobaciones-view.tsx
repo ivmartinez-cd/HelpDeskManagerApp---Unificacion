@@ -14,17 +14,31 @@ import {
 import { solicitudesApi } from "../api/solicitudes-api";
 import { formatFecha, formatRango, iniciales } from "../lib/fechas";
 import type { DecisionResult, Saldo, Solicitud } from "../types/vacaciones";
+import { NovedadesPendientes, type AvisoTurnos } from "./novedades-aprobacion";
 import { SolicitudEstadoBadge } from "./solicitud-estado-badge";
 
 /** Link al editor del modo vacaciones de turnos (ADR-025), precargado por
  * query params con el ausente y el rango aprobado. */
-export function hrefArmarGrillaCobertura(decision: DecisionResult): string {
+/** Vacaciones aprobadas con impacto en turnos → aviso genérico (también lo
+ * producen las novedades: home office / cambio de horario). */
+function avisoDeVacaciones(decision: DecisionResult): AvisoTurnos | null {
+  if (!decision.afectaTurnos) return null;
+  return {
+    empleadoNombre: decision.empleadoNombre,
+    startDate: decision.startDate,
+    endDate: decision.endDate,
+    afectaTurnos: decision.afectaTurnos,
+    motivo: `Vacaciones ${decision.empleadoNombre}`,
+  };
+}
+
+export function hrefArmarGrillaCobertura(decision: AvisoTurnos): string {
   const q = new URLSearchParams({
     tab: "vacaciones",
-    ausente: decision.afectaTurnos?.userId ?? "",
+    ausente: decision.afectaTurnos.userId,
     desde: decision.startDate,
     hasta: decision.endDate,
-    motivo: `Vacaciones ${decision.empleadoNombre}`,
+    motivo: decision.motivo,
   });
   return `/turnos?${q.toString()}`;
 }
@@ -33,7 +47,7 @@ function AvisoAfectaTurnos({
   decision,
   onClose,
 }: {
-  decision: DecisionResult;
+  decision: AvisoTurnos;
   onClose: () => void;
 }) {
   return (
@@ -78,7 +92,7 @@ export function AprobacionesView() {
   const [solicitudes, setSolicitudes] = useState<Solicitud[] | null>(null);
   const [soloPendientes, setSoloPendientes] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [avisoTurnos, setAvisoTurnos] = useState<DecisionResult | null>(null);
+  const [avisoTurnos, setAvisoTurnos] = useState<AvisoTurnos | null>(null);
 
   const load = useCallback(
     () =>
@@ -117,7 +131,8 @@ export function AprobacionesView() {
             Aprobaciones
           </h1>
           <p className="font-body text-sm text-muted-foreground">
-            Revisá, aprobá o rechazá las solicitudes de vacaciones
+            Revisá, aprobá o rechazá las solicitudes de vacaciones, home office y cambios de
+            horario
           </p>
         </div>
         <div className="min-w-[180px]">
@@ -153,11 +168,13 @@ export function AprobacionesView() {
         <AvisoAfectaTurnos decision={avisoTurnos} onClose={() => setAvisoTurnos(null)} />
       )}
 
+      <NovedadesPendientes onDecided={setAvisoTurnos} />
+
       {solicitudes !== null && !error && (
         <>
           <section className="flex flex-col gap-3">
             <h2 className="font-heading text-sm font-bold uppercase tracking-[.05em] text-foreground">
-              Pendientes de aprobación{" "}
+              Vacaciones pendientes de aprobación{" "}
               <span className="ml-1 rounded-[20px] bg-amber-500/15 px-2 py-0.5 font-body text-xs text-amber-600 dark:text-amber-400">
                 {pendientes.length}
               </span>
@@ -174,7 +191,7 @@ export function AprobacionesView() {
                   key={s.id}
                   solicitud={s}
                   onDecided={(res) => {
-                    setAvisoTurnos(res.afectaTurnos ? res : null);
+                    setAvisoTurnos(avisoDeVacaciones(res));
                     void load();
                   }}
                 />

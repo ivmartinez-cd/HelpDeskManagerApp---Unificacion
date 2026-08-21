@@ -2,6 +2,7 @@ import { httpClient } from "@/services/http-client";
 import type {
   Ausencia,
   AusenciaPayload,
+  DecisionAusenciaResult,
   DescuentoRow,
   EstadoSolicitud,
   Page,
@@ -32,6 +33,10 @@ export const asistenciasApi = {
   update: (id: string, payload: Omit<AusenciaPayload, "empleadoIds">) =>
     httpClient.put<{ id: string }>(`${BASE}/${id}`, payload),
   remove: (id: string) => httpClient.delete<void>(`${BASE}/${id}`),
+  /** Aprobar/rechazar una baja pedida por un empleado (home office, cambio
+   * de horario): mismo circuito que las solicitudes de vacaciones. */
+  decide: (id: string, decision: "APPROVED" | "REJECTED", comment: string | null) =>
+    httpClient.post<DecisionAusenciaResult>(`${BASE}/${id}/decision`, { decision, comment }),
   reporteDescuentos: (year: number, month: number, departmentId?: string) => {
     const q = new URLSearchParams({ year: String(year), month: String(month) });
     if (departmentId) q.set("departmentId", departmentId);

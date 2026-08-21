@@ -121,7 +121,9 @@ export function AsistenciasView() {
         <>
           {tab === "calendario" && (
             <AsistenciasCalendario
-              ausencias={ausencias ?? []}
+              // Solo lo aprobado pinta el calendario; las PENDING/REJECTED
+              // (pedidos de home office / cambio de horario) se ven en el listado.
+              ausencias={(ausencias ?? []).filter((a) => a.status === "APPROVED")}
               empleados={empleados}
               feriados={feriadosSet}
               esAdminOJefe={puedeRegistrar}

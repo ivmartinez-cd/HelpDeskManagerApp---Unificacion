@@ -2,6 +2,9 @@ export interface OperatorShift {
   userId: string;
   userName: string;
   color?: string | null;
+  /** Novedad aprobada del día que afecta al operador ('Home office',
+   * 'Horario 08:00–17:00', 'Vacaciones'…); null = jornada normal. */
+  nota?: string | null;
 }
 
 export interface ResolvedShift {

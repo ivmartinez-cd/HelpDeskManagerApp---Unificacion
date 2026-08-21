@@ -8,8 +8,9 @@ import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { asistenciasApi } from "../api/asistencias-api";
 import { formatFecha, iniciales } from "../lib/fechas";
-import { TIPO_AUSENCIA } from "../lib/tipos-ausencia";
+import { TIPO_AUSENCIA, horarioTexto } from "../lib/tipos-ausencia";
 import type { Ausencia, TipoAusencia } from "../types/vacaciones";
+import { SolicitudEstadoBadge } from "./solicitud-estado-badge";
 
 type AusenciaSortKey = "empleado" | "fecha" | "tipo" | "duracion";
 const AUSENCIA_SORT_KEYS: readonly AusenciaSortKey[] = ["empleado", "fecha", "tipo", "duracion"];
@@ -173,10 +174,15 @@ export function AsistenciasListado({
                         style={{ backgroundColor: TIPO_AUSENCIA[a.tipo].color }}
                       />
                       <span className="text-foreground">{TIPO_AUSENCIA[a.tipo].label}</span>
+                      {a.status !== "APPROVED" && <SolicitudEstadoBadge estado={a.status} />}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {a.halfDay ? "Medio día" : `${a.daysCount} día${a.daysCount === 1 ? "" : "s"}`}
+                    {horarioTexto(a)
+                      ? `${horarioTexto(a)} · ${a.daysCount} día${a.daysCount === 1 ? "" : "s"}`
+                      : a.halfDay
+                        ? "Medio día"
+                        : `${a.daysCount} día${a.daysCount === 1 ? "" : "s"}`}
                   </td>
                   <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground" title={a.reason ?? ""}>
                     {a.reason ?? "—"}

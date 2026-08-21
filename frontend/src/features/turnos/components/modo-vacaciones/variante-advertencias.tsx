@@ -69,9 +69,15 @@ export function VarianteAdvertencias({
             <li key={`a${i}`} className="flex items-start gap-2 font-body text-xs text-foreground">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
               <span>
-                {a.userName ?? a.userId} tiene vacaciones aprobadas del{" "}
-                {a.desde ? formatDiaMes(a.desde) : "?"} al {a.hasta ? formatDiaMes(a.hasta) : "?"}
-                : no va a poder cubrir esos días
+                {a.userName ?? a.userId}:{" "}
+                {a.detalle?.startsWith("Horario")
+                  ? `${a.detalle.toLowerCase()} aprobado`
+                  : `${(a.detalle ?? "Vacaciones").toLowerCase()} aprobada`}{" "}
+                del {a.desde ? formatDiaMes(a.desde) : "?"} al{" "}
+                {a.hasta ? formatDiaMes(a.hasta) : "?"}
+                {a.detalle?.startsWith("Horario")
+                  ? ": fuera de ese horario no va a poder cubrir"
+                  : ": no va a poder cubrir esos días"}
               </span>
             </li>
           ))}

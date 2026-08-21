@@ -28,6 +28,9 @@ export function AusenciaModal({ ausencia, empleados, esAdmin, onClose, onSaved }
   const [halfDay, setHalfDay] = useState(ausencia?.halfDay ?? false);
   const [reason, setReason] = useState(ausencia?.reason ?? "");
   const [status, setStatus] = useState<EstadoSolicitud>(ausencia?.status ?? "APPROVED");
+  // Solo CAMBIO_HORARIO (2026-08-21): rango horario del día, ej. 08:00–17:00.
+  const [horaDesde, setHoraDesde] = useState(ausencia?.horaDesde?.slice(0, 5) ?? "08:00");
+  const [horaHasta, setHoraHasta] = useState(ausencia?.horaHasta?.slice(0, 5) ?? "17:00");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +62,8 @@ export function AusenciaModal({ ausencia, empleados, esAdmin, onClose, onSaved }
       tipo,
       reason: reason || null,
       halfDay: tipo === "DESCUENTO_DIA" ? halfDay : false,
+      horaDesde: tipo === "CAMBIO_HORARIO" ? horaDesde : null,
+      horaHasta: tipo === "CAMBIO_HORARIO" ? horaHasta : null,
     };
     const req = ausencia
       ? asistenciasApi.update(ausencia.id, {
@@ -146,6 +151,23 @@ export function AusenciaModal({ ausencia, empleados, esAdmin, onClose, onSaved }
             </option>
           ))}
         </BrandSelect>
+
+        {tipo === "CAMBIO_HORARIO" && (
+          <div className="grid grid-cols-2 gap-3">
+            <BrandInput
+              label="Horario desde"
+              type="time"
+              value={horaDesde}
+              onChange={(e) => setHoraDesde(e.target.value)}
+            />
+            <BrandInput
+              label="Horario hasta"
+              type="time"
+              value={horaHasta}
+              onChange={(e) => setHoraHasta(e.target.value)}
+            />
+          </div>
+        )}
 
         <label
           className={`flex items-center gap-2.5 font-body text-sm ${

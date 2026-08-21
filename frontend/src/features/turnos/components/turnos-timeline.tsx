@@ -130,10 +130,14 @@ export function TurnosTimeline({
     [shifts, start, span, ordenCasillas],
   );
 
-  const operadores = new Map<string, { name: string; color: string }>();
+  const operadores = new Map<string, { name: string; color: string; nota: string | null }>();
   for (const s of shifts) {
     for (const op of s.operadores) {
-      operadores.set(op.userId, { name: op.userName, color: op.color ?? FALLBACK_COLOR });
+      operadores.set(op.userId, {
+        name: op.userName,
+        color: op.color ?? FALLBACK_COLOR,
+        nota: op.nota ?? null,
+      });
     }
   }
   const inHours = nowH !== null && nowH >= start && nowH <= end;
@@ -199,6 +203,14 @@ export function TurnosTimeline({
           <div key={op.name} className="flex items-center gap-1.5">
             <span className="h-[9px] w-[9px] rounded-[3px]" style={{ background: op.color }} />
             <span className="font-body text-[12px] font-semibold text-muted-foreground">{op.name}</span>
+            {op.nota && (
+              <span
+                title="Novedad aprobada en Gestión de Personal para hoy"
+                className="rounded-full bg-warning/15 px-1.5 py-px font-body text-[10px] font-bold text-warning"
+              >
+                {op.nota}
+              </span>
+            )}
           </div>
         ))}
       </div>
