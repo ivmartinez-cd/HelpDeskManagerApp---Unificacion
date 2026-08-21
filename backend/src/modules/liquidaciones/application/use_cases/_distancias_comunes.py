@@ -16,12 +16,21 @@ from src.modules.liquidaciones.domain.errors import (
     PrestadorSinVinculoSigesError,
     TopeLlamadasGoogleError,
 )
+from src.modules.liquidaciones.domain.repositories.calculo_km_preview_repository import (
+    CalculoKmPreviewRepository,
+)
+from src.modules.liquidaciones.domain.repositories.google_maps_gateway import GoogleMapsGateway
+from src.modules.liquidaciones.domain.repositories.incidente_repository import IncidenteRepository
 from src.modules.liquidaciones.domain.repositories.prestador_repository import PrestadorRepository
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesCatalogoGateway,
     SigesSucursalCliente,
     SigesSucursalPropia,
 )
+from src.modules.liquidaciones.domain.repositories.sucursal_coordenadas_repository import (
+    SucursalCoordenadasRepository,
+)
+from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
 from src.modules.liquidaciones.domain.services.geolocalizacion import armar_direccion
 from src.modules.liquidaciones.domain.services.vinculacion_siges import (
     nombres_compatibles,
@@ -29,6 +38,20 @@ from src.modules.liquidaciones.domain.services.vinculacion_siges import (
 )
 
 _MAPS_BASE = "https://www.google.com/maps/dir/?api=1"
+
+
+@dataclass(frozen=True)
+class CalcularDistanciasPorts:
+    """Compartido por `PreviewCalcularDistancias` y `AplicarCalcularDistancias`
+    (preview_calcular_distancias.py / aplicar_calcular_distancias.py)."""
+
+    prestadores: PrestadorRepository
+    tabla_km: TablaKmRepository
+    siges: SigesCatalogoGateway
+    google_maps: GoogleMapsGateway
+    sucursal_coords: SucursalCoordenadasRepository
+    previews: CalculoKmPreviewRepository
+    incidentes: IncidenteRepository
 
 
 def es_empresa_activa(empresa_nombre: str, activos_norm: set[str]) -> bool:

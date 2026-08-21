@@ -6,9 +6,13 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from src.modules.liquidaciones.application.use_cases.calcular_distancias_siges import (
-    AplicarCalcularDistancias,
+from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
     CalcularDistanciasPorts,
+)
+from src.modules.liquidaciones.application.use_cases.aplicar_calcular_distancias import (
+    AplicarCalcularDistancias,
+)
+from src.modules.liquidaciones.application.use_cases.preview_calcular_distancias import (
     PreviewCalcularDistancias,
 )
 from src.modules.liquidaciones.domain.errors import (

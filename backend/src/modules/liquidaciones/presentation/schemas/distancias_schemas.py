@@ -7,7 +7,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.modules.liquidaciones.application.use_cases.calcular_distancias_siges import (
+from src.modules.liquidaciones.application.use_cases.aplicar_calcular_distancias import (
     AplicarDistanciasResultado,
 )
 from src.modules.liquidaciones.domain.entities.calculo_km_preview import (

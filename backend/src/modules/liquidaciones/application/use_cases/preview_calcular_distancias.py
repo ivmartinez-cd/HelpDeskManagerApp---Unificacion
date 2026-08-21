@@ -1,9 +1,10 @@
-"""Cálculo de distancias PST↔sucursal en dos pasos (preview → apply).
+"""Preview del cálculo de distancias PST↔sucursal (paso 1 de 2, ver
+`aplicar_calcular_distancias.py` para el paso 2 — separados porque juntos
+superaban el tamaño máximo de archivo, §4).
 
 El preview llama a Google (ida y vuelta reales por destino) y persiste la
-propuesta SIN tocar tabla_km; el apply materializa esa propuesta sin volver a
-llamar a Google. Convención Fase 0 (2026-08-15): `kms_recorrido` y
-`kms_a_facturar` son el TOTAL ida+vuelta; `umbral_viatico` se compara contra
+propuesta SIN tocar tabla_km. Convención Fase 0 (2026-08-15): `kms_recorrido`
+y `kms_a_facturar` son el TOTAL ida+vuelta; `umbral_viatico` se compara contra
 ese total y NUNCA se pisa en filas existentes (tampoco `observaciones`).
 
 Destinos: coords de Siges cuando existen (`coords_origen='siges'`); si no, la
@@ -17,17 +18,16 @@ del prestador. El `latitud_base`/`longitud_base` de cada `PreviewFila` registra
 qué base se usó (confirmado en PST SAN JUAN y INFOMAC, 2026-08-16)."""
 
 from collections import defaultdict
-from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
+    CalcularDistanciasPorts,
     Destino,
     build_costo_bases,
     calcular_kms_a_facturar,
     coords_base_default,
     desde_periodo_hace_meses,
     es_empresa_activa,
-    maps_url_ida_vuelta,
     parse_latlon_siges,
     validar_prestador_para_distancias,
     verificar_tope,
@@ -41,23 +41,9 @@ from src.modules.liquidaciones.domain.entities.calculo_km_preview import (
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import SucursalCoordenadas
 from src.modules.liquidaciones.domain.entities.tabla_km import UMBRAL_VIATICO_DEFAULT, TablaKm
-from src.modules.liquidaciones.domain.errors import (
-    PreviewNoEncontradoError,
-)
-from src.modules.liquidaciones.domain.repositories.calculo_km_preview_repository import (
-    CalculoKmPreviewRepository,
-)
-from src.modules.liquidaciones.domain.repositories.google_maps_gateway import GoogleMapsGateway
-from src.modules.liquidaciones.domain.repositories.incidente_repository import IncidenteRepository
-from src.modules.liquidaciones.domain.repositories.prestador_repository import PrestadorRepository
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
-    SigesCatalogoGateway,
     SigesSucursalCliente,
 )
-from src.modules.liquidaciones.domain.repositories.sucursal_coordenadas_repository import (
-    SucursalCoordenadasRepository,
-)
-from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
 from src.modules.liquidaciones.domain.services.geolocalizacion import (
     PROCEDENCIA_MANUAL,
     PROCEDENCIA_SIGES,
@@ -65,23 +51,6 @@ from src.modules.liquidaciones.domain.services.geolocalizacion import (
 from src.modules.liquidaciones.domain.services.vinculacion_siges import normalizar_nombre
 
 _GOOGLE_BATCH = 25
-
-
-@dataclass(frozen=True)
-class CalcularDistanciasPorts:
-    prestadores: PrestadorRepository
-    tabla_km: TablaKmRepository
-    siges: SigesCatalogoGateway
-    google_maps: GoogleMapsGateway
-    sucursal_coords: SucursalCoordenadasRepository
-    previews: CalculoKmPreviewRepository
-    incidentes: IncidenteRepository
-
-
-@dataclass(frozen=True)
-class AplicarDistanciasResultado:
-    creadas: int
-    actualizadas: int
 
 
 class PreviewCalcularDistancias:
@@ -188,80 +157,6 @@ class PreviewCalcularDistancias:
                 continue
             filas.append(_armar_fila(destino, base, ida, vuelta, existentes))
         return sin_ruta
-
-
-class AplicarCalcularDistancias:
-    def __init__(self, ports: CalcularDistanciasPorts) -> None:
-        self._ports = ports
-
-    async def execute(self, preview_id: UUID) -> AplicarDistanciasResultado:
-        preview = await self._ports.previews.get_by_id(preview_id)
-        if preview is None:
-            raise PreviewNoEncontradoError(preview_id)
-        await validar_prestador_para_distancias(
-            self._ports.prestadores, preview.prestador_id
-        )
-        creadas = actualizadas = 0
-        for fila in preview.filas:
-            c, a = await self._aplicar_fila(preview.prestador_id, fila)
-            creadas += c
-            actualizadas += a
-        await self._ports.previews.delete(preview_id)
-        return AplicarDistanciasResultado(creadas=creadas, actualizadas=actualizadas)
-
-    async def _aplicar_fila(
-        self, prestador_id: UUID, fila: PreviewFila
-    ) -> tuple[int, int]:
-        base = (fila.latitud_base, fila.longitud_base)
-        url = maps_url_ida_vuelta(
-            base,
-            (fila.latitud_destino, fila.longitud_destino),
-            domicilio=fila.domicilio,
-            localidad=fila.localidad,
-            provincia=fila.provincia,
-        )
-        if fila.accion == ACCION_ACTUALIZAR and fila.tabla_km_id is not None:
-            actualizada = await self._ports.tabla_km.update_distancias(
-                fila.tabla_km_id,
-                kms_ida=fila.kms_ida,
-                kms_vuelta=fila.kms_vuelta,
-                kms_recorrido=fila.kms_total,
-                aplica_viatico=fila.aplica_viatico,
-                kms_a_facturar=fila.kms_a_facturar,
-                url_maps=url,
-                latitud_destino=fila.latitud_destino,
-                longitud_destino=fila.longitud_destino,
-                coords_origen=fila.coords_origen,
-                siges_sucursal_id=fila.siges_sucursal_id,
-                id_costo_servicios=fila.id_costo_servicios,
-            )
-            return (0, 1) if actualizada else (0, 0)
-        await self._crear_fila(prestador_id, fila, url)
-        return 1, 0
-
-    async def _crear_fila(self, prestador_id: UUID, fila: PreviewFila, url: str) -> None:
-        await self._ports.tabla_km.create(
-            prestador_id=prestador_id,
-            spst_id=None,
-            empresa_nombre=fila.empresa_nombre,
-            sucursal_nombre=fila.sucursal_nombre,
-            observaciones=None,
-            domicilio_cliente=fila.domicilio,
-            localidad_cliente=fila.localidad,
-            provincia_cliente=fila.provincia,
-            kms_recorrido=fila.kms_total,
-            umbral_viatico=fila.umbral_viatico,
-            aplica_viatico=fila.aplica_viatico,
-            kms_a_facturar=fila.kms_a_facturar,
-            url_maps=url,
-            latitud_destino=fila.latitud_destino,
-            longitud_destino=fila.longitud_destino,
-            kms_ida=fila.kms_ida,
-            kms_vuelta=fila.kms_vuelta,
-            coords_origen=fila.coords_origen,
-            siges_sucursal_id=fila.siges_sucursal_id,
-            id_costo_servicios=fila.id_costo_servicios,
-        )
 
 
 def _resolver_destino(
