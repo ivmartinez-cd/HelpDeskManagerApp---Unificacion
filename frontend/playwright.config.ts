@@ -12,6 +12,16 @@ process.env.WATI_URL = "https://wati.example.test/inbox";
 // cuando 3001 está ocupado en la máquina (p. ej. por otro contenedor).
 const PORT = process.env.PW_PORT ?? "3001";
 
+// La máquina de desarrollo tiene proxy HTTP corporativo por variables de entorno
+// (http_proxy/https_proxy); Chromium las hereda y manda http://localhost:PORT al
+// proxy, que lo rechaza (todas las navegaciones terminan en net::ERR_ABORTED).
+// Un `no_proxy` con `<local>` no alcanza para Chromium en Linux. Los tests solo
+// hablan con localhost (Next de prueba + mock backend), así que se quitan acá
+// para el webServer y el navegador lanzado por Playwright.
+for (const key of ["http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY", "all_proxy", "ALL_PROXY"]) {
+  delete process.env[key];
+}
+
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,

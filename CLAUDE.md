@@ -127,8 +127,17 @@ bash scripts/wsl/reiniciar.sh backend
   vuelva a responder 200 antes de devolver.
 - Cualquier comando `docker …` / `docker compose …` se corre directo en la terminal WSL, parado
   en el repo — ya no hace falta pasar por `wsl.exe` desde Windows.
-- Playwright local (`frontend/`): el puerto 3001 lo ocupa otro contenedor del usuario
-  (`stc_api`); usar `PW_PORT=3011 npx playwright test …`.
+- Playwright local (`frontend/`): corre en el **host WSL**, no en el contenedor (la imagen es
+  Alpine y no soporta los navegadores). Setup hecho el 2026-08-21: node por nvm
+  (`export PATH=$HOME/.nvm/versions/node/v24.19.0/bin:$PATH`, en shells no interactivos no está
+  en el PATH), `npm ci` en `frontend/`, Chromium en `~/.cache/ms-playwright/` y las libs de
+  sistema por `apt`. El puerto 3001 lo ocupa otro contenedor del usuario (`stc_api`); usar
+  `PW_PORT=3011 ./node_modules/.bin/playwright test …` parado en `frontend/`. Gotchas:
+  `frontend/node_modules` y `frontend/.next` son puntos de montaje de volúmenes de Docker
+  (los crea como directorios vacíos de root; si vuelven a quedar así tras un `compose up`,
+  `rmdir` + `mkdir` como usuario propio — el contenedor usa sus volúmenes y no se entera); y
+  `playwright.config.ts` borra `http_proxy`/`https_proxy` del entorno porque el proxy
+  corporativo rechaza `localhost` y todas las navegaciones terminan en `net::ERR_ABORTED`.
 
 **Cómo verificar**: no asumir que un cambio está servido solo porque el navegador lo muestra
 (el navegador tiene su propia caché). Antes de dar por buena una captura o un test visual:
