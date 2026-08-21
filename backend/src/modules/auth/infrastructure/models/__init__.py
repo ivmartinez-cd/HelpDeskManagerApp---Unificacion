@@ -6,6 +6,7 @@ from src.modules.auth.infrastructure.models.permission_models import (
     PermissionGrant,
     UserModuleScope,
 )
+from src.modules.auth.infrastructure.models.route_visit_model import UserRouteVisit
 from src.modules.auth.infrastructure.models.session_model import (
     LoginAttempt,
     PasswordResetToken,
@@ -24,5 +25,6 @@ __all__ = [
     "PermissionAudit",
     "PermissionGrant",
     "UserModuleScope",
+    "UserRouteVisit",
     "UserSession",
 ]

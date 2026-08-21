@@ -106,6 +106,27 @@ class CannotDemoteSelfError(BusinessRuleViolationError):
         super().__init__("No podés quitarte tu propio permiso de administración")
 
 
+class InvalidRoutePathError(ValidationError):
+    """Ver `RoutePath` (ADR-028) — la ruta no matchea la gramática de
+    navegación esperada (esquema/query string/traversal/segmento inválido)."""
+
+    default_code = "INVALID_ROUTE_PATH"
+
+    def __init__(self, raw_value: str) -> None:
+        super().__init__(f"Ruta inválida: {raw_value!r}")
+
+
+class UnknownRouteError(ValidationError):
+    """El primer segmento de la ruta no corresponde a ningún módulo
+    habilitado del catálogo — el frontend solo debería postear su propia
+    whitelist, así que esto es señal de un catálogo desincronizado."""
+
+    default_code = "UNKNOWN_ROUTE"
+
+    def __init__(self, raw_value: str) -> None:
+        super().__init__(f"Ruta no reconocida: {raw_value!r}")
+
+
 class ForbiddenError(ApplicationError):
     """Fail-closed: la ausencia de grant o un módulo deshabilitado dan este
     mismo error. `is_superadmin` evita el chequeo de grant (bootstrap: el

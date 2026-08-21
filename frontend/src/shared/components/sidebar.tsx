@@ -28,6 +28,7 @@ import { ChangePasswordModal } from "@/features/auth/components/change-password-
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useSession } from "@/services/session-provider";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
+import { WatiHeaderLink } from "@/features/wati/components/wati-header-link";
 
 const MODULE_ICONS: Record<string, LucideIcon> = {
   contadores: BarChart2,
@@ -37,7 +38,16 @@ const MODULE_ICONS: Record<string, LucideIcon> = {
   admin: Settings,
 };
 
-export function Sidebar({ children }: { children: ReactNode }) {
+export function Sidebar({
+  children,
+  watiUrl = null,
+}: {
+  children: ReactNode;
+  /** URL del tenant de WATI, leída server-side en `app/(app)/layout.tsx`
+   * (`WATI_URL`, no `NEXT_PUBLIC_*` -- ver docstring de `WatiHeaderLink`).
+   * `null` = sin configurar, el ícono no se muestra. */
+  watiUrl?: string | null;
+}) {
   const { user, modules } = useSession();
   // Configuración es un módulo más para el backend (sort_order en la tabla
   // Module), pero en la nav siempre tiene que quedar al final del todo.
@@ -116,6 +126,7 @@ export function Sidebar({ children }: { children: ReactNode }) {
         </div>
 
         <div className="flex flex-none items-center gap-1 sm:gap-3">
+          <WatiHeaderLink url={watiUrl} />
           <Bell className="hidden h-5 w-5 text-muted-foreground sm:block" aria-hidden="true" />
           <div className="hidden h-[22px] w-px bg-border sm:block" />
           <button

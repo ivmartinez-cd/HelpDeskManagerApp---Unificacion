@@ -15,6 +15,8 @@ import {
   useTurnosHoy,
 } from "../hooks/use-inicio-data";
 import { COLUMNS, cardsForCol, type ColKey, type ModuleAccess } from "../config/dashboard-registry";
+import { AccesosDirectos } from "./accesos-directos";
+import { MiTurnoBanner } from "./mi-turno-banner";
 import { ClientesHoyCard } from "./clientes-hoy-card";
 import { ContadoresDonutCard } from "./contadores-donut-card";
 import { HeatmapSemanaCard } from "./heatmap-semana-card";
@@ -191,6 +193,9 @@ export function InicioDashboard() {
           Panel principal con turnos de operadores y planificación diaria.
         </p>
       </div>
+
+      <MiTurnoBanner shifts={turnos.data?.shifts ?? []} loading={turnos.loading} />
+      <AccesosDirectos />
 
       {columnasVisibles.length > 1 && (
         <div className="flex-none">

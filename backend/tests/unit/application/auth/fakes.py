@@ -3,15 +3,17 @@
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from src.modules.auth.domain.entities.password_reset_token import PasswordResetToken
+from src.modules.auth.domain.entities.route_visit_count import RouteVisitCount
 from src.modules.auth.domain.entities.session import Session
 from src.modules.auth.domain.entities.user import User
 from src.modules.auth.domain.value_objects.email import Email
 from src.modules.auth.domain.value_objects.password_hash import PasswordHash
 from src.modules.auth.domain.value_objects.permission_set import PermissionSet
 from src.modules.auth.domain.value_objects.raw_password import RawPassword
+from src.shared.domain.value_objects.module_key import ModuleKey
 from src.shared.domain.value_objects.permission import Permission
 
 
@@ -214,6 +216,51 @@ class FakeMailer:
         self, *, to: str, subject: str, body: str, html_body: str | None = None
     ) -> None:
         self.sent.append(SentMail(to=to, subject=subject, body=body))
+
+
+class FakeModuleCatalogRepository:
+    """Solo `is_enabled` importa para RecordRouteVisit -- `list_all`/
+    `list_actions` no se implementan porque ningún test los ejercita."""
+
+    def __init__(self, enabled: set[str] | None = None) -> None:
+        self.enabled = enabled if enabled is not None else {"sla", "insumos", "liquidaciones"}
+
+    async def is_enabled(self, module: ModuleKey) -> bool:
+        return module.value in self.enabled
+
+
+@dataclass(slots=True)
+class FakeRouteVisitRepository:
+    rows: dict[tuple[uuid.UUID, date, str], int] = field(default_factory=dict)
+    purged: list[tuple[uuid.UUID, date]] = field(default_factory=list)
+
+    async def increment(
+        self, *, user_id: uuid.UUID, route: str, day: date, max_routes_per_day: int
+    ) -> None:
+        distintas = {r for (u, d, r) in self.rows if u == user_id and d == day}
+        if route not in distintas and len(distintas) >= max_routes_per_day:
+            return
+        key = (user_id, day, route)
+        self.rows[key] = self.rows.get(key, 0) + 1
+
+    async def purge_before(self, *, user_id: uuid.UUID, cutoff: date) -> None:
+        self.purged.append((user_id, cutoff))
+        self.rows = {
+            k: v for k, v in self.rows.items() if not (k[0] == user_id and k[1] < cutoff)
+        }
+
+    async def top_routes(
+        self, *, user_id: uuid.UUID, since: date, limit: int
+    ) -> list[RouteVisitCount]:
+        totals: dict[str, int] = {}
+        last: dict[str, date] = {}
+        for (u, d, r), count in self.rows.items():
+            if u != user_id or d < since:
+                continue
+            totals[r] = totals.get(r, 0) + count
+            last[r] = max(last.get(r, d), d)
+        ranked = sorted(totals.items(), key=lambda kv: (-kv[1], kv[0]))[:limit]
+        return [RouteVisitCount(route=r, visits=c, last_visit=last[r]) for r, c in ranked]
 
 
 class FakeOperadorColorLookup:

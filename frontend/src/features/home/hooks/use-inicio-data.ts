@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { accesosApi } from "@/features/home/api/accesos-api";
 import { contadoresApi } from "@/features/contadores/api/contadores-api";
 import type {
   CalendarEvent,
@@ -67,6 +68,14 @@ function useRemote<T>(enabled: boolean, fetcher: () => Promise<T>, label: string
 
 export function useTurnosHoy(): Remote<CurrentShifts> {
   return useRemote(true, () => turnosApi.getCurrentShifts(), "los turnos del día");
+}
+
+/** Ranking personal de rutas más visitadas (30 días, backend). Si falla o
+ * viene vacío (usuario nuevo, sin historial todavía), `accesos-directos.tsx`
+ * completa con el respaldo fijo del catálogo — no hace falta que este hook
+ * degrade a nada especial. */
+export function useAccesosRanking(): Remote<string[]> {
+  return useRemote(true, () => accesosApi.getTopRoutes(6), "los accesos directos");
 }
 
 export function useParqueResumen(enabled: boolean): Remote<PrestadoresResumen> {

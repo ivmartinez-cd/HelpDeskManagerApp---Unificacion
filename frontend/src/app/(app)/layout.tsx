@@ -2,10 +2,16 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import type { IdentityResponse, ModuleSummary, Page } from "@/features/auth/api/auth-api";
+import { RouteTracker } from "@/shared/components/route-tracker";
 import { Sidebar } from "@/shared/components/sidebar";
 import { SessionProvider } from "@/services/session-provider";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:8012";
+// Server-side (no NEXT_PUBLIC_*): el contenedor de frontend corre
+// `next build && next start` (ver CLAUDE.md, sin hot reload), así que una
+// NEXT_PUBLIC_ quedaría horneada en el build y cambiarla exigiría rebuild
+// completo. Leída acá, alcanza con editar .env y recrear el contenedor.
+const WATI_URL = process.env.WATI_URL || null;
 
 async function fetchFromBackend<T>(path: string, cookieHeader: string): Promise<T | null> {
   const response = await fetch(`${BACKEND_URL}${path}`, {
@@ -31,7 +37,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <SessionProvider user={identity.user} permissions={identity.permissions} modules={modules}>
-      <Sidebar>{children}</Sidebar>
+      <RouteTracker />
+      <Sidebar watiUrl={WATI_URL}>{children}</Sidebar>
     </SessionProvider>
   );
 }
