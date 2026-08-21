@@ -16,6 +16,7 @@ export function useLogin() {
       await authApi.login({ email, password });
       toast.success("Bienvenido");
       router.push("/");
+      router.refresh();
     } catch (error) {
       const message = error instanceof ApiError ? error.message : "Error de red";
       toast.error(message);
