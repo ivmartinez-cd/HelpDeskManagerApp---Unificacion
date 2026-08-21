@@ -32,7 +32,8 @@ import { PendientesAntiguedadCard } from "./pendientes-antiguedad-card";
 import { PendientesACerrarCard } from "@/features/sla/components/pendientes-a-cerrar-card";
 import { ProximosEquipoCard } from "@/features/vacaciones/components/proximos-equipo-card";
 import { WatiPendientesCard } from "@/features/wati/components/wati-pendientes-card";
-import { useWatiPendientes } from "@/features/wati/hooks/use-wati-pendientes";
+import { MisChatsWatiBanner } from "@/features/wati/components/mis-chats-wati-banner";
+import { useWatiPendientes } from "@/features/wati/providers/wati-pendientes-provider";
 import { SlaMesCard } from "./sla-mes-card";
 import { TurnosTimelineCard } from "./turnos-timeline-card";
 
@@ -83,7 +84,7 @@ export function InicioDashboard() {
   const insumosDashboard  = useInsumosDashboard(access.insumos);
   const liquidacionesPendientes = useLiquidacionesPendientes(access.liquidaciones);
   const proximosEquipo    = useProximosEquipo(access.vacaciones);
-  const watiPendientes    = useWatiPendientes(access.wati);
+  const watiPendientes    = useWatiPendientes();
 
   function renderCard(id: string) {
     switch (id) {
@@ -216,6 +217,7 @@ export function InicioDashboard() {
       </div>
 
       <MiTurnoBanner shifts={turnos.data?.shifts ?? []} loading={turnos.loading} />
+      <MisChatsWatiBanner />
       <AccesosDirectos />
 
       {columnasVisibles.length > 1 && (

@@ -19,7 +19,7 @@ const REFRESH_MS = 60 * 1000;
  * minutos; acá solo se relee el estado, no se llama a WATI). El refresco
  * periódico no vuelve a poner `loading` para que la card no parpadee —
  * mismo patrón que `useRemote` de Inicio: un `tick` dispara el efecto. */
-export function useWatiPendientes(enabled: boolean): WatiPendientesState {
+export function useWatiPendientesPolling(enabled: boolean): WatiPendientesState {
   const [tick, setTick] = useState(0);
   const [resumen, setResumen] = useState<WatiPendientesResumen | null>(null);
   const [pendientes, setPendientes] = useState<ConversacionPendiente[]>([]);

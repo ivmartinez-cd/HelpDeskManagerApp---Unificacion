@@ -5,6 +5,7 @@ import type { IdentityResponse, ModuleSummary, Page } from "@/features/auth/api/
 import { AccessDeniedToast, RouteGuard } from "@/shared/components/route-guard";
 import { RouteTracker } from "@/shared/components/route-tracker";
 import { Sidebar } from "@/shared/components/sidebar";
+import { WatiPendientesProvider } from "@/features/wati/providers/wati-pendientes-provider";
 import { SessionProvider } from "@/services/session-provider";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:8012";
@@ -42,11 +43,15 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <Suspense fallback={null}>
         <AccessDeniedToast />
       </Suspense>
-      <Sidebar watiUrl={WATI_URL}>
-        {/* Guard de ruta por permiso (ADR-029): adentro del Sidebar para que
-            la nav siga visible mientras redirige a Inicio. */}
-        <RouteGuard>{children}</RouteGuard>
-      </Sidebar>
+      {/* Poller único de chats de WhatsApp pendientes + avisos por umbral, en
+          toda la app (badge del header, banner de Inicio, card, /wati). */}
+      <WatiPendientesProvider>
+        <Sidebar watiUrl={WATI_URL}>
+          {/* Guard de ruta por permiso (ADR-029): adentro del Sidebar para que
+              la nav siga visible mientras redirige a Inicio. */}
+          <RouteGuard>{children}</RouteGuard>
+        </Sidebar>
+      </WatiPendientesProvider>
     </SessionProvider>
   );
 }

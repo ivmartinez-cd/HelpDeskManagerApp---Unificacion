@@ -7,7 +7,7 @@ import { BrandButton, BrandStatTile } from "@/shared/components/ui/brand-form";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { StatsTable, type StatsColumn } from "@/shared/components/ui/stats-table";
 import { watiApi } from "../api/wati-api";
-import { useWatiPendientes } from "../hooks/use-wati-pendientes";
+import { useWatiPendientes } from "../providers/wati-pendientes-provider";
 import type { ConversacionPendiente } from "../types/wati";
 import {
   COLOR_NIVEL,
@@ -83,7 +83,7 @@ const columns: StatsColumn<ConversacionPendiente>[] = [
  * (permiso wati.update). */
 export function WatiPendientesDetail() {
   const { can } = useSession();
-  const { resumen, pendientes, loading, error, refetch } = useWatiPendientes(true);
+  const { resumen, pendientes, loading, error, refetch } = useWatiPendientes();
   const [sincronizando, setSincronizando] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
