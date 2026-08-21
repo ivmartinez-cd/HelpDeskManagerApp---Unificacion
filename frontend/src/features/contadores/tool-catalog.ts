@@ -1,5 +1,4 @@
 import {
-  Calendar,
   ChartColumn,
   Database,
   FileSpreadsheet,
@@ -30,13 +29,6 @@ export interface ToolDef {
 /** Catálogo único de las herramientas de Contadores — fuente de verdad
  * para el hub "Centro de Contadores" y para tool-launcher-modal.tsx. */
 export const TOOLS: ToolDef[] = [
-  {
-    key: "calendario",
-    label: "Calendario de Planificación",
-    navLabel: "Calendario de Rutas",
-    icon: Calendar,
-    description: "Visualiza la agenda de clientes y visitas de tomadores de contadores por operador.",
-  },
   {
     key: "proyeccion",
     label: "Proyección",
