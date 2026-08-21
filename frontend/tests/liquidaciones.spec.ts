@@ -264,12 +264,19 @@ test.describe("Módulo de Liquidaciones", () => {
     await expect(page.getByRole("link", { name: "← Lista de liquidaciones" })).toBeVisible();
   });
 
+  // El select de estado manual solo existe para liquidaciones sin número de
+  // AyC (las vinculadas a Canal Directo cambian de estado por la barra AyC:
+  // aprobar/observar/anular — ver liquidacion-detalle.tsx). Estos dos tests
+  // usan una liquidación local (numeroLiquidacion: null).
+  const LIQUIDACION_LOCAL = { ...LIQUIDACION, numeroLiquidacion: null };
+  const DETALLE_LOCAL = { ...DETALLE_RESPONSE, liquidacion: LIQUIDACION_LOCAL };
+
   test("detalle muestra el select de estado con el valor actual", async ({ page }) => {
     await page.route(`**/api/liquidaciones/${LIQ_ID}`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(DETALLE_RESPONSE),
+        body: JSON.stringify(DETALLE_LOCAL),
       });
     });
 
@@ -285,7 +292,7 @@ test.describe("Módulo de Liquidaciones", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(DETALLE_RESPONSE),
+        body: JSON.stringify(DETALLE_LOCAL),
       });
     });
 
@@ -295,7 +302,7 @@ test.describe("Módulo de Liquidaciones", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ ...LIQUIDACION, estado: "recibida" }),
+        body: JSON.stringify({ ...LIQUIDACION_LOCAL, estado: "recibida" }),
       });
     });
 
@@ -379,7 +386,18 @@ test.describe("Módulo de Liquidaciones", () => {
   });
 
   test("detalle: nro de serie duplicado muestra advertencia ⚠", async ({ page }) => {
-    // Dos incidentes con el mismo nroSerie "SN-ABC-123"
+    // Dos incidentes con el mismo nroSerie "SN-ABC-123". La detección ya no es
+    // del cliente: la hace el motor de reglas del backend y llega como alerta
+    // ALT010 por incidente (incidentes-tabla.tsx, CODIGO_ALT010); el ⚠ usa la
+    // descripción de la alerta como title.
+    const DESCRIPCION = "Nro de serie duplicado en esta liquidación";
+    const alt010 = (incidenteId: string, id: string) => ({
+      ...ALERTA,
+      id,
+      incidenteId,
+      tipoAlerta: "ALT010",
+      descripcion: DESCRIPCION,
+    });
     await page.route(`**/api/liquidaciones/${LIQ_ID}`, async (route) => {
       await route.fulfill({
         status: 200,
@@ -387,7 +405,10 @@ test.describe("Módulo de Liquidaciones", () => {
         body: JSON.stringify({
           ...DETALLE_RESPONSE,
           incidentes: [INCIDENTE, INCIDENTE_SIN_TABLA],
-          alertas: [],
+          alertas: [
+            alt010(INCIDENTE.id, "a1a1a1a1-0000-0000-0000-000000000001"),
+            alt010(INCIDENTE_SIN_TABLA.id, "a1a1a1a1-0000-0000-0000-000000000002"),
+          ],
         }),
       });
     });
@@ -395,7 +416,7 @@ test.describe("Módulo de Liquidaciones", () => {
     await page.goto(`/liquidaciones/${LIQ_ID}`);
 
     // Ambos tienen nroSerie "SN-ABC-123" → deben mostrar ⚠
-    const warnings = page.getByTitle("Nro de serie duplicado en esta liquidación");
+    const warnings = page.getByTitle(DESCRIPCION);
     await expect(warnings).toHaveCount(2);
   });
 

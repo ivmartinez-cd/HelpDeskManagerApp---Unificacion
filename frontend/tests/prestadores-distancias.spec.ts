@@ -72,7 +72,11 @@ async function setFakeSession(page: import("@playwright/test").Page) {
   }]);
 }
 
-test("botón Base Siges aparece solo para prestadores con vínculo Siges", async ({ page }) => {
+// Los labels de la fila son "Base" (con vínculo a Gestión, sin base cargada) y
+// "Distancias" (con base cargada); "Siges" dejó de mencionarse en la UI
+// (commit 72a50ecf). Los botones de mutación además exigen `liquidaciones.update`
+// (ADR-029) — el mock de sesión es superadmin, así que se renderizan.
+test("botón Base aparece solo para prestadores con vínculo a Gestión", async ({ page }) => {
   await setFakeSession(page);
   await page.route("**/api/liquidaciones/prestadores**", (route) => {
     route.fulfill({
@@ -85,18 +89,26 @@ test("botón Base Siges aparece solo para prestadores con vínculo Siges", async
   await page.goto("/liquidaciones/configuracion/prestadores");
   await page.waitForLoadState("networkidle");
 
-  // INFOMAC tiene sigesEmpresaId pero sin base → debe decir "Base Siges"
-  await expect(page.getByRole("row", { name: /INFOMAC/ })).toContainText("Base Siges");
-  // TECNI tiene sigesEmpresaId y con base → debe decir "Distancias"
-  await expect(page.getByRole("row", { name: /TECNI/ })).toContainText("Distancias");
+  // INFOMAC tiene sigesEmpresaId pero sin base → botón "Base"
+  await expect(
+    page.getByRole("row", { name: /INFOMAC/ }).getByRole("button", { name: "Base", exact: true }),
+  ).toBeVisible();
+  // TECNI tiene sigesEmpresaId y con base → botón "Distancias"
+  await expect(
+    page.getByRole("row", { name: /TECNI/ }).getByRole("button", { name: "Distancias" }),
+  ).toBeVisible();
   // SINVIN no tiene vínculo → no debe mostrar ninguno de los dos
-  await expect(page.getByRole("row", { name: /SINVIN/ })).not.toContainText("Base Siges");
-  await expect(page.getByRole("row", { name: /SINVIN/ })).not.toContainText("Distancias");
+  await expect(
+    page.getByRole("row", { name: /SINVIN/ }).getByRole("button", { name: "Base", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("row", { name: /SINVIN/ }).getByRole("button", { name: "Distancias" }),
+  ).toHaveCount(0);
 
   await page.screenshot({ path: "test-results/prestadores-botones.png", fullPage: false });
 });
 
-test("modal de sucursales abre al clickear Base Siges", async ({ page }) => {
+test("modal de sucursales abre al clickear Base", async ({ page }) => {
   await setFakeSession(page);
   await page.route("**/api/liquidaciones/prestadores**", (route) => {
     route.fulfill({
@@ -120,8 +132,11 @@ test("modal de sucursales abre al clickear Base Siges", async ({ page }) => {
   await page.goto("/liquidaciones/configuracion/prestadores");
   await page.waitForLoadState("networkidle");
 
-  // Click "Base Siges" de INFOMAC
-  await page.getByRole("row", { name: /INFOMAC/ }).getByRole("button", { name: "Base Siges" }).click();
+  // Click "Base" de INFOMAC
+  await page
+    .getByRole("row", { name: /INFOMAC/ })
+    .getByRole("button", { name: "Base", exact: true })
+    .click();
 
   // Modal debe abrirse con el título correcto
   await expect(page.getByRole("dialog")).toContainText("Sucursal base — INFOMAC");

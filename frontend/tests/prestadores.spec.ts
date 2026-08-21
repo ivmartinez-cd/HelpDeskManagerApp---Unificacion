@@ -162,15 +162,13 @@ test.describe("Módulo de Prestadores", () => {
     await expect(page.getByText("BAHIA SERVICE")).toBeHidden();
   });
 
-  test("hub muestra Nuevo PST y Sincronizar desde Siges para el superadmin", async ({
-    page,
-  }) => {
+  test("hub muestra Nuevo PST y Sincronizar para el superadmin", async ({ page }) => {
     await page.goto("/prestadores");
 
+    // "Siges" ya no se menciona en la UI (commit 72a50ecf): el botón dice
+    // "Sincronizar" a secas y el badge del detalle es "#<id>".
     await expect(page.getByRole("button", { name: "Nuevo PST" })).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Sincronizar desde Siges" }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Sincronizar" })).toBeVisible();
   });
 
   test("expandir un grupo muestra la tabla con contacto principal y equipos", async ({
@@ -229,7 +227,7 @@ test.describe("Módulo de Prestadores", () => {
 
     await page.goto("/prestadores");
 
-    await page.getByRole("button", { name: "Sincronizar desde Siges" }).click();
+    await page.getByRole("button", { name: "Sincronizar" }).click();
 
     await expect(async () => {
       expect(syncCalled).toBe(true);
@@ -259,7 +257,8 @@ test.describe("Módulo de Prestadores", () => {
     const dialog = page.getByRole("dialog", { name: "BAHIA SERVICE" });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByText("Activo", { exact: true })).toBeVisible();
-    await expect(dialog.getByText("Siges #765")).toBeVisible();
+    // Badge del id de empresa en Gestión, sin la palabra "Siges" (commit 72a50ecf).
+    await expect(dialog.getByText("#765", { exact: true })).toBeVisible();
 
     // Historial: tramo vigente + tramo histórico cerrado (fechas es-AR en UTC)
     await expect(dialog.getByText(/01\/03\/2026 \(vigente\)/)).toBeVisible();

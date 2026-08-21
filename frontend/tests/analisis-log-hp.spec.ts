@@ -194,11 +194,13 @@ test.describe("Módulo Análisis de Log HP", () => {
 
     await expect(page.getByRole("heading", { name: "Panel de errores" })).toBeVisible();
 
-    // KPI labels (uppercase en CSS — buscar por texto exacto del DOM)
-    await expect(page.getByText("Último error crítico", { exact: false })).toBeVisible();
-    await expect(page.getByText("Errores críticos", { exact: false })).toBeVisible();
-    await expect(page.getByText("Incidencias activas", { exact: false })).toBeVisible();
-    await expect(page.getByText("Tasa de errores", { exact: false })).toBeVisible();
+    // KPI labels (uppercase en CSS — buscar por texto exacto del DOM). Cada
+    // label aparece dos veces (span del KPI + div de leyenda/tooltip): alcanza
+    // con que el primero sea visible.
+    await expect(page.getByText("Último error crítico", { exact: false }).first()).toBeVisible();
+    await expect(page.getByText("Errores críticos", { exact: false }).first()).toBeVisible();
+    await expect(page.getByText("Incidencias activas", { exact: false }).first()).toBeVisible();
+    await expect(page.getByText("Tasa de errores", { exact: false }).first()).toBeVisible();
 
     // El código del último error crítico
     await expect(page.getByText("13.DA.EE").first()).toBeVisible();
@@ -227,8 +229,9 @@ test.describe("Módulo Análisis de Log HP", () => {
 
     await expect(page.getByRole("heading", { name: "Panel de errores" })).toBeVisible();
     await expect(page.getByText("Timeline de errores", { exact: false })).toBeVisible();
-    // Los filtros de rango temporal
-    await expect(page.getByRole("button", { name: "Todo" })).toBeVisible();
+    // Los filtros de rango temporal. `exact`: hay otro botón cuyo nombre contiene
+    // "Todo" (filtro desplegable); la pill de rango es la que dice exactamente "Todo".
+    await expect(page.getByRole("button", { name: "Todo", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "7 días" })).toBeVisible();
   });
 
