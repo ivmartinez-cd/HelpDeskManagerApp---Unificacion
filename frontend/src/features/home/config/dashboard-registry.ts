@@ -8,6 +8,11 @@ export interface ModuleAccess {
   liquidaciones: boolean;
   vacaciones: boolean;
   wati: boolean;
+  /** Cards de gestión del equipo (pestaña Administración): no alcanza con
+   * tener el módulo, piden una acción de gestión. Un operador con solo `view`
+   * no las ve (pedido del usuario, 2026-08-21). */
+  gestionPrestadores: boolean; // prestadores.update → "Distribución del parque"
+  gestionVacaciones: boolean; // vacaciones.approve|manage → "Próximos días del equipo"
 }
 
 export interface CardDef {
@@ -38,8 +43,8 @@ export const CARDS: CardDef[] = [
   { id: "sla-mes",           col: "sla",           order: 0, guard: (m) => m.sla },
   { id: "pendientes-cerrar", col: "sla",           order: 1, guard: (m) => m.sla },
   { id: "liquidaciones",     col: "admin",         order: 0, guard: (m) => m.liquidaciones },
-  { id: "parque",            col: "admin",         order: 1, guard: (m) => m.prestadores },
-  { id: "proximos-equipo",   col: "admin",         order: 2, guard: (m) => m.vacaciones },
+  { id: "parque",            col: "admin",         order: 1, guard: (m) => m.gestionPrestadores },
+  { id: "proximos-equipo",   col: "admin",         order: 2, guard: (m) => m.gestionVacaciones },
 ];
 
 export function cardsForCol(col: ColKey, access: ModuleAccess): CardDef[] {
