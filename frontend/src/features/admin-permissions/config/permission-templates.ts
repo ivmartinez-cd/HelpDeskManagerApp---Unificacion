@@ -30,8 +30,10 @@ const VIEW_ALL: readonly (readonly [string, string])[] = [
   ["vacaciones", "view"],
 ];
 
+// Operador: sin Liquidación (ni siquiera consulta) — decisión del usuario
+// 2026-08-21 al configurar a los operadores de mesa de ayuda.
 const OPERADOR: readonly (readonly [string, string])[] = [
-  ...VIEW_ALL,
+  ...VIEW_ALL.filter(([module]) => module !== "liquidaciones"),
   ["contadores", "export"],
   ["insumos", "create"],
   ["insumos", "update"],
@@ -42,6 +44,7 @@ const OPERADOR: readonly (readonly [string, string])[] = [
 
 const TEAM_LEADER: readonly (readonly [string, string])[] = [
   ...OPERADOR,
+  ["liquidaciones", "view"],
   ["contadores", "manage"],
   ["insumos", "delete"],
   ["prestadores", "create"],
@@ -68,7 +71,7 @@ export const PERMISSION_TEMPLATES: readonly PermissionTemplate[] = [
     key: "operador",
     label: "Operador",
     description:
-      "Mesa de ayuda: contadores (herramientas), insumos (solicitudes), SLA, preventivos y sus propias vacaciones.",
+      "Mesa de ayuda: contadores (herramientas), insumos (solicitudes), SLA, preventivos y sus propias vacaciones. Sin Liquidación.",
     grants: OPERADOR,
   },
   {

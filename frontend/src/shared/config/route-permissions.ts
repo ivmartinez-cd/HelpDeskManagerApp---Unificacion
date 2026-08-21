@@ -59,6 +59,13 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { prefix: "/contadores", anyOf: [p("contadores", "view")] },
   { prefix: "/insumos", anyOf: [p("insumos", "view")] },
   { prefix: "/liquidaciones", anyOf: [p("liquidaciones", "view")] },
+  // Coberturas de prestadores: solo para quien las opera (crear/editar); con
+  // `view` a secas se ve el directorio de PST pero no esta pantalla
+  // (decisión del usuario, 2026-08-21: los operadores no la ven).
+  {
+    prefix: "/prestadores/coberturas",
+    anyOf: [p("prestadores", "create"), p("prestadores", "update")],
+  },
   { prefix: "/prestadores", anyOf: [p("prestadores", "view")] },
   { prefix: "/sla", anyOf: [p("sla", "view")] },
   { prefix: "/preventivos", anyOf: [p("preventivos", "view")] },

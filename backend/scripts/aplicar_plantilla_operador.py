@@ -44,7 +44,7 @@ PLANTILLA_OPERADOR: tuple[tuple[str, str], ...] = (
     ("sla", "view"),
     ("sla", "update"),
     ("prestadores", "view"),
-    ("liquidaciones", "view"),
+    # Sin liquidaciones: decisión del usuario 2026-08-21 (ni consulta).
     ("preventivos", "view"),
     ("preventivos", "update"),
     ("analisis-log-hp", "view"),
