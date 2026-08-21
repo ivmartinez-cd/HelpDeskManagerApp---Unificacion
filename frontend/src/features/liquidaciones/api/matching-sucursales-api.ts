@@ -4,6 +4,7 @@ import type {
   ResultadoAutoVinculoN1,
   TablaKm,
 } from "../types/liquidaciones";
+import { fetchCatalogoCompleto } from "./_shared";
 
 /** Matching de sucursales Tabla KM ↔ Siges (Fase 1). */
 export const matchingSucursalesApi = {
@@ -13,8 +14,9 @@ export const matchingSucursalesApi = {
     ),
 
   listPropuestasN2: (prestadorId: string) =>
-    httpClient.get<PropuestaN2Match[]>(
+    fetchCatalogoCompleto<PropuestaN2Match>(
       `/api/liquidaciones/siges/prestador/${prestadorId}/matching/propuestas`,
+      new URLSearchParams(),
     ),
 
   confirmarVinculo: (tablaKmId: string, sigesSucursalId: number) =>

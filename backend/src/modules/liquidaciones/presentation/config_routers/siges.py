@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.liquidaciones.presentation.config_routers._deps import (
+    CATALOGO_SIZE,
     require_update,
     require_view,
 )
@@ -110,15 +111,19 @@ async def sync_tarifarios_desde_siges(
 
 @router.get(
     "/siges/prestador/{prestador_id}/sucursales-propia",
-    response_model=list[SucursalPropiaOut],
+    response_model=Page[SucursalPropiaOut],
 )
 async def sucursales_propias_prestador(
     prestador_id: UUID,
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
-) -> list[SucursalPropiaOut]:
+) -> Page[SucursalPropiaOut]:
     sucursales = await build_listar_sucursales_propias(db).execute(prestador_id)
-    return [SucursalPropiaOut.from_entity(s) for s in sucursales]
+    return Page.of(
+        [SucursalPropiaOut.from_entity(s) for s in sucursales], page=page, size=size
+    )
 
 
 @router.get("/siges/sucursales", response_model=Page[SucursalSigesOut])
@@ -151,15 +156,17 @@ async def vincular_prestador_siges(
 
 @router.get(
     "/siges/prestador/{prestador_id}/cuadriculas",
-    response_model=list[CuadriculaOut],
+    response_model=Page[CuadriculaOut],
 )
 async def listar_cuadriculas(
     prestador_id: UUID,
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
-) -> list[CuadriculaOut]:
+) -> Page[CuadriculaOut]:
     resultado = await build_listar_cuadriculas(db).execute(prestador_id)
-    return [CuadriculaOut.from_dto(c) for c in resultado]
+    return Page.of([CuadriculaOut.from_dto(c) for c in resultado], page=page, size=size)
 
 
 @router.put(

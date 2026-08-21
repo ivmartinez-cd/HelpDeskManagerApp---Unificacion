@@ -18,6 +18,11 @@ import type {
 } from "../types/liquidaciones";
 import { fetchCatalogoCompleto } from "./_shared";
 
+interface CuadriculaMap {
+  cuadricula: string;
+  sigesBaseSucursalId: number | null;
+}
+
 /** Geolocalización / distancias (two-step preview→aplicar) y pines. */
 export const geolocalizacionApi = {
   estadoAsistenteKm: (prestadorId: string) =>
@@ -114,8 +119,9 @@ export const geolocalizacionApi = {
     ),
 
   listCuadriculas: (prestadorId: string) =>
-    httpClient.get<{ cuadricula: string; sigesBaseSucursalId: number | null }[]>(
+    fetchCatalogoCompleto<CuadriculaMap>(
       `/api/liquidaciones/siges/prestador/${prestadorId}/cuadriculas`,
+      new URLSearchParams(),
     ),
 
   mapearCuadricula: (prestadorId: string, cuadricula: string, sigesBaseSucursalId: number) =>

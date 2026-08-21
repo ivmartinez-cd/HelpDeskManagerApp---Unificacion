@@ -9,7 +9,7 @@ import type {
   SyncTarifariosResult,
   ZonasSiges,
 } from "../types/liquidaciones";
-import type { Page } from "./_shared";
+import { fetchCatalogoCompleto, type Page } from "./_shared";
 
 /** Vínculo y sync contra Siges (ADR-014). */
 export const sigesApi = {
@@ -59,8 +59,9 @@ export const sigesApi = {
   },
 
   listSucursalesPropiasPrestatdor: (prestadorId: string) =>
-    httpClient.get<SucursalPropia[]>(
+    fetchCatalogoCompleto<SucursalPropia>(
       `/api/liquidaciones/siges/prestador/${prestadorId}/sucursales-propia`,
+      new URLSearchParams(),
     ),
 
   vincularBaseSucursal: (prestadorId: string, sigesBaseSucursalId: number | null) =>
