@@ -1,25 +1,16 @@
 "use client";
 
-import { CalendarClock, Edit2, Plus, Trash2, Users } from "lucide-react";
+import { CalendarClock, Edit2, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { turnosApi } from "../../api/turnos-api";
 import type { Casilla, Slot, UserOption } from "../../types/turnos";
 import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
-import { Modal } from "@/shared/components/ui/modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useSession } from "@/services/session-provider";
-
-const DIAS_SEMANA = [
-  "Lunes",
-  "Martes",
-  "Miércoles",
-  "Jueves",
-  "Viernes",
-  "Sábado",
-  "Domingo",
-];
+import { CasillaFormModal } from "./casilla-form-modal";
+import { SlotFormModal } from "./slot-form-modal";
+import { SlotsTable } from "./slots-table";
 
 export function CasillasManager() {
   // turnos.view abre la grilla; toda mutación (casillas, franjas, asignaciones)
@@ -244,209 +235,39 @@ export function CasillasManager() {
       </div>
 
       {selectedCasillaId && (
-        <div className="flex flex-col gap-4">
-          {/* Días de la semana */}
-          <div className="flex flex-wrap items-center gap-1 border-b border-border/50 pb-2">
-            {DIAS_SEMANA.map((dia, idx) => (
-              <button
-                key={dia}
-                onClick={() => setSelectedDia(idx)}
-                className={`rounded-[6px] px-3 py-1.5 font-body text-xs font-semibold transition-colors ${
-                  selectedDia === idx
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                {dia}
-              </button>
-            ))}
-          </div>
-
-          {/* Tabla de Franjas Horarias */}
-          <div className="flex items-center justify-between">
-            <span className="font-heading text-sm font-bold text-foreground">
-              Horarios para {DIAS_SEMANA[selectedDia]}
-            </span>
-            {puedeEditar && (
-              <Button onClick={() => handleOpenSlotModal()} size="sm" variant="outline" className="gap-1.5">
-                <Plus className="h-3.5 w-3.5" />
-                Agregar Franja
-              </Button>
-            )}
-          </div>
-
-          <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
-            <table className="w-full text-left font-body text-xs">
-              <thead className="border-b border-border bg-muted/50 font-heading text-muted-foreground">
-                <tr>
-                  <th className="p-3 font-semibold">Hora Inicio</th>
-                  <th className="p-3 font-semibold">Hora Fin</th>
-                  <th className="p-3 font-semibold">Operadores Asignados</th>
-                  <th className="p-3 text-right font-semibold">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {activeSlots.length > 0 ? (
-                  activeSlots.map((s) => (
-                    <tr key={s.id} className="hover:bg-muted/30">
-                      <td className="p-3 font-mono font-medium">{s.horaInicio.slice(0, 5)}</td>
-                      <td className="p-3 font-mono font-medium">{s.horaFin.slice(0, 5)}</td>
-                      <td className="p-3">
-                        <div className="flex flex-wrap gap-1">
-                          {s.asignaciones.length > 0 ? (
-                            s.asignaciones.map((a) => (
-                              <span
-                                key={a.id}
-                                className="rounded-full bg-brand-orange/10 text-brand-orange border border-brand-orange/20 px-2.5 py-0.5 font-medium"
-                              >
-                                {a.userName || "Desconocido"}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="italic text-muted-foreground">Sin operadores</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-3 text-right">
-                        {puedeEditar && (
-                          <div className="flex justify-end items-center gap-2">
-                            <button
-                              onClick={() => handleOpenSlotModal(s)}
-                              className="p-1 text-muted-foreground hover:text-foreground"
-                              title="Editar franja/asignaciones"
-                            >
-                              <Users className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteSlot(s.id)}
-                              className="p-1 text-muted-foreground hover:text-destructive"
-                              title="Eliminar franja"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="p-6 text-center text-muted-foreground">
-                      No hay horarios configurados para este día.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <SlotsTable
+          selectedDia={selectedDia}
+          setSelectedDia={setSelectedDia}
+          activeSlots={activeSlots}
+          puedeEditar={puedeEditar}
+          onAddSlot={() => handleOpenSlotModal()}
+          onEditSlot={handleOpenSlotModal}
+          onDeleteSlot={handleDeleteSlot}
+        />
       )}
 
-      {/* Modal Casilla */}
-      <Modal
+      <CasillaFormModal
         isOpen={casillaModalOpen}
+        isEditing={editingCasilla !== null}
+        nombre={casillaNombre}
+        setNombre={setCasillaNombre}
         onClose={() => setCasillaModalOpen(false)}
-        title={editingCasilla ? "Editar Casilla" : "Nueva Casilla"}
-      >
-        <form onSubmit={handleSaveCasilla} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label className="font-body text-xs font-semibold text-foreground">
-              Nombre de la Casilla (ej. INSUMOS, ST)
-            </label>
-            <Input
-              value={casillaNombre}
-              onChange={(e) => setCasillaNombre(e.target.value)}
-              placeholder="Nombre"
-              required
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setCasillaModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit">Guardar</Button>
-          </div>
-        </form>
-      </Modal>
+        onSubmit={handleSaveCasilla}
+      />
 
-      {/* Modal Slot & Asignación */}
-      <Modal
+      <SlotFormModal
         isOpen={slotModalOpen}
+        isEditing={editingSlot !== null}
+        horaInicio={horaInicio}
+        setHoraInicio={setHoraInicio}
+        horaFin={horaFin}
+        setHoraFin={setHoraFin}
+        users={users}
+        selectedUserIds={selectedUserIds}
+        setSelectedUserIds={setSelectedUserIds}
         onClose={() => setSlotModalOpen(false)}
-        title={editingSlot ? "Editar Franja Horaria" : "Nueva Franja Horaria"}
-      >
-        <form onSubmit={handleSaveSlot} className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-foreground">
-                Hora Inicio (HH:MM)
-              </label>
-              <Input
-                type="time"
-                value={horaInicio}
-                onChange={(e) => setHoraInicio(e.target.value)}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-foreground">
-                Hora Fin (HH:MM)
-              </label>
-              <Input
-                type="time"
-                value={horaFin}
-                onChange={(e) => setHoraFin(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="font-body text-xs font-semibold text-foreground">
-              Seleccionar Operadores para este horario
-            </label>
-            <div className="max-h-48 overflow-y-auto rounded-[8px] border border-border bg-muted/30 p-2.5 flex flex-col gap-1.5">
-              {users.map((u) => {
-                const checked = selectedUserIds.includes(u.id);
-                return (
-                  <label
-                    key={u.id}
-                    className="flex items-center gap-2 cursor-pointer rounded-md p-1.5 hover:bg-muted"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedUserIds([...selectedUserIds, u.id]);
-                        } else {
-                          setSelectedUserIds(selectedUserIds.filter((id) => id !== u.id));
-                        }
-                      }}
-                      className="rounded border-border text-brand-orange focus:ring-brand-orange"
-                    />
-                    <span className="font-body text-xs text-foreground font-medium">
-                      {u.fullName}
-                    </span>
-                  </label>
-                );
-              })}
-              {users.length === 0 && (
-                <span className="font-body text-xs text-muted-foreground">
-                  No hay operadores disponibles.
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setSlotModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit">Guardar</Button>
-          </div>
-        </form>
-      </Modal>
+        onSubmit={handleSaveSlot}
+      />
     </div>
   );
 }
