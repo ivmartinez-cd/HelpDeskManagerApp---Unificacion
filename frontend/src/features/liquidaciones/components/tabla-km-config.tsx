@@ -8,6 +8,7 @@ import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
+import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, SucursalSiges, TablaKm } from "../types/liquidaciones";
 
@@ -28,6 +29,10 @@ import { TablaKmWizard } from "./tabla-km-wizard";
 import { VincularSpstModal } from "./vincular-spst-modal";
 
 export function TablaKmConfig() {
+  // Mutaciones = liquidaciones.update; descarga CSV = liquidaciones.export (ADR-029).
+  const { can } = useSession();
+  const puedeEditar = can("liquidaciones", "update");
+  const puedeExportar = can("liquidaciones", "export");
   const [entradas, setEntradas] = useState<TablaKm[]>([]);
   // Prestador al que corresponden las `entradas` ya cargadas — si no coincide con
   // `filtroPst` es que hay un fetch en vuelo para la nueva selección (deriva el
@@ -137,36 +142,46 @@ export function TablaKmConfig() {
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           {/* Paso 1: agregar filas */}
-          <BrandButton
-            size="sm"
-            variant="outline"
-            disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
-            onClick={() => setSigesOpen(true)}
-            title="Buscar sucursales del PST y precargar los datos en una entrada nueva"
-          >
-            Agregar sucursal
-          </BrandButton>
-          <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
-          <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
-          <BrandButton
-            size="sm"
-            variant="outline"
-            disabled={!filtroPst}
-            onClick={() => setVincularSpstOpen(true)}
-            title="Vincular filas sin SPST por coincidencia de localidad — necesario para que el motor resuelva precios por zona"
-          >
-            Vincular SPST
-          </BrandButton>
-          <BrandButton
-            size="sm"
-            variant="outline"
-            disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
-            onClick={() => setWizardOpen(true)}
-            title="Traer sucursales de Gestión, revisar pendientes y calcular km"
-          >
-            Asistente de KM →
-          </BrandButton>
-          <BrandButton size="sm" onClick={() => { setEditing(null); setPlantilla(null); setModalOpen(true); }}>+ Nueva entrada</BrandButton>
+          {puedeEditar && (
+            <>
+              <BrandButton
+                size="sm"
+                variant="outline"
+                disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
+                onClick={() => setSigesOpen(true)}
+                title="Buscar sucursales del PST y precargar los datos en una entrada nueva"
+              >
+                Agregar sucursal
+              </BrandButton>
+              <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
+            </>
+          )}
+          {puedeExportar && (
+            <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
+          )}
+          {puedeEditar && (
+            <>
+              <BrandButton
+                size="sm"
+                variant="outline"
+                disabled={!filtroPst}
+                onClick={() => setVincularSpstOpen(true)}
+                title="Vincular filas sin SPST por coincidencia de localidad — necesario para que el motor resuelva precios por zona"
+              >
+                Vincular SPST
+              </BrandButton>
+              <BrandButton
+                size="sm"
+                variant="outline"
+                disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
+                onClick={() => setWizardOpen(true)}
+                title="Traer sucursales de Gestión, revisar pendientes y calcular km"
+              >
+                Asistente de KM →
+              </BrandButton>
+              <BrandButton size="sm" onClick={() => { setEditing(null); setPlantilla(null); setModalOpen(true); }}>+ Nueva entrada</BrandButton>
+            </>
+          )}
         </div>
       </div>
 
@@ -242,8 +257,12 @@ export function TablaKmConfig() {
                           : <span className="inline-block rounded-full bg-muted px-2 py-0.5 font-body text-[10px] font-bold uppercase tracking-wide text-muted-foreground">No</span>}
                       </td>
                       <td className={`${tdCls} text-right`}>
-                        <button onClick={() => { setEditing(t); setModalOpen(true); }} className="mr-3 font-body text-sm text-brand-orange hover:underline">Editar</button>
-                        <button onClick={() => setDeletingId(t.id)} className="font-body text-sm text-destructive hover:underline">Eliminar</button>
+                        {puedeEditar && (
+                          <>
+                            <button onClick={() => { setEditing(t); setModalOpen(true); }} className="mr-3 font-body text-sm text-brand-orange hover:underline">Editar</button>
+                            <button onClick={() => setDeletingId(t.id)} className="font-body text-sm text-destructive hover:underline">Eliminar</button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   );

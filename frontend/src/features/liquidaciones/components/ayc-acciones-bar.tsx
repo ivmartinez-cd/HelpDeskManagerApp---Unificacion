@@ -4,6 +4,7 @@ import { type ReactNode, useState } from "react";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { Liquidacion } from "../types/liquidaciones";
 
@@ -64,8 +65,15 @@ export function AyCAccionesBar({ liquidacion, onActualizado, onAnulado }: Props)
   const [accion, setAccion] = useState<Accion | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Espejo de liquidaciones_ayc_router.py: aprobar/observar = approve, anular =
+  // delete; "eliminar solo localmente" es DELETE /{id} = update.
+  const { can } = useSession();
+  const acciones = (["aprobar", "observar", "anular"] as Accion[]).filter((a) =>
+    a === "anular" ? can("liquidaciones", "delete") : can("liquidaciones", "approve"),
+  );
+  const puedeBorrarLocal = can("liquidaciones", "update");
 
-  if (!liquidacion.numeroLiquidacion) return null;
+  if (!liquidacion.numeroLiquidacion || acciones.length === 0) return null;
 
   const cfg = accion ? CONFIG[accion] : null;
 
@@ -118,7 +126,7 @@ export function AyCAccionesBar({ liquidacion, onActualizado, onAnulado }: Props)
   return (
     <>
       <div className="flex items-center gap-2">
-        {(["aprobar", "observar", "anular"] as Accion[]).map((a) => (
+        {acciones.map((a) => (
           <button
             key={a}
             onClick={() => open(a)}
@@ -142,7 +150,7 @@ export function AyCAccionesBar({ liquidacion, onActualizado, onAnulado }: Props)
             {cfg.mensaje(liquidacion.numeroLiquidacion!)}
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            {accion === "anular" && error && (
+            {accion === "anular" && error && puedeBorrarLocal && (
               <button
                 onClick={() => void handleForceLocalDelete()}
                 disabled={loading}

@@ -12,6 +12,8 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { useSession } from "@/services/session-provider";
+import { canAccessPath } from "@/shared/config/route-permissions";
 import { cn } from "@/shared/utils/cn";
 import { useInsumosNavCounts } from "@/features/insumos/hooks/use-insumos-nav-counts";
 
@@ -154,10 +156,17 @@ function NavLinkRow({
 export function InsumosNavSubmenu({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const counts = useInsumosNavCounts();
+  const { can } = useSession();
+  // Mapa central de permisos por ruta (ADR-029): hoy todo /insumos/* se abre
+  // con `view`, pero si una pantalla pasa a pedir otra acción se oculta sola.
+  const sections = SECTIONS.map((s) => ({
+    ...s,
+    links: s.links.filter((l) => canAccessPath(l.href, can)),
+  })).filter((s) => s.links.length > 0);
 
   return (
     <div className="flex flex-col gap-3 py-1.5 pb-2 pl-4 pr-1">
-      {SECTIONS.map((section) => (
+      {sections.map((section) => (
         <div key={section.label} className="flex flex-col gap-px">
           <p className="px-2 pb-1 font-body text-[10px] font-bold uppercase tracking-[.08em] text-muted-foreground/70">
             {section.label}

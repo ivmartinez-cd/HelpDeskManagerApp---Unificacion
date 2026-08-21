@@ -417,6 +417,26 @@ describe('CreateUserUseCase', () => {
 - [ ] Rate limiting configurado (si expuesto a internet)
 - [ ] Queries parametrizadas (sin SQL injection)
 
+### Autorización por módulo (este repo)
+
+Los permisos son usuario × módulo × acción sobre un catálogo en tablas (ADR-005/007/029). Un
+módulo o pantalla nueva **no está terminado** hasta tener las cuatro patas — la auditoría del
+2026-08-21 encontró un módulo entero (`turnos`) y varias pantallas sin ellas:
+
+1. **Catálogo**: migración que siembra `module` + `module_action` (y que tenga `downgrade`).
+   Sin fila en `module_action` el permiso no se puede conceder desde la UI de admin.
+2. **Backend**: `modules/<m>/domain/well_known_permissions.py` con las `Permission` del módulo
+   y `Depends(require_permission(...))` en **cada** endpoint — nunca un permiso "prestado" de
+   otro módulo (`admin.manage`, etc.). Solo-sesión (`get_current_identity`) únicamente cuando
+   la información es de verdad para cualquier usuario logueado, y documentado en el router.
+3. **Frontend — ruta**: entrada en `frontend/src/shared/config/route-permissions.ts` (la
+   consumen el `RouteGuard` del layout y los submenús del sidebar).
+4. **Frontend — acciones**: `can(modulo, accion)` en cada botón de mutación, espejando el
+   permiso que pide el endpoint que dispara.
+
+No sembrar acciones "por si acaso": una fila del catálogo que ningún `require_permission`
+chequea es un permiso que se puede tildar y no hace nada.
+
 ---
 
 ## 9. Control de Versiones

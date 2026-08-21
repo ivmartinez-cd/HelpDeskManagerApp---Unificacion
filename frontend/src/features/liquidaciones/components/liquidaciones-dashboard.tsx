@@ -6,6 +6,7 @@ import { ExternalLink } from "lucide-react";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import { toast } from "sonner";
+import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
 import { formatARS, formatFecha } from "../lib/format";
@@ -20,6 +21,8 @@ function formatPeriodo(periodo: string): string {
 }
 
 export function LiquidacionesDashboard() {
+  const { can } = useSession();
+  const puedeCrear = can("liquidaciones", "create");
   const [liquidaciones, setLiquidaciones] = useState<Liquidacion[]>([]);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,19 +128,25 @@ export function LiquidacionesDashboard() {
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-xl font-extrabold text-foreground">Liquidaciones PST</h1>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => void handleSincronizar()}
-            disabled={syncing}
-            className="rounded-[8px] border border-border bg-card px-4 py-2.5 font-body text-sm font-semibold text-foreground transition-opacity hover:opacity-70 disabled:opacity-50"
-          >
-            {syncing ? "Sincronizando..." : "↻ Sincronizar CD"}
-          </button>
-          <button
-            onClick={() => setImportOpen(true)}
-            className="rounded-[8px] bg-brand-orange px-4 py-2.5 font-body text-sm font-semibold text-white transition-opacity hover:opacity-90"
-          >
-            + Importar liquidación
-          </button>
+          {/* Sincronizar e importar crean liquidaciones: liquidaciones.create
+              (liquidaciones_ayc_router.py / liquidaciones_router.py). */}
+          {puedeCrear && (
+            <>
+              <button
+                onClick={() => void handleSincronizar()}
+                disabled={syncing}
+                className="rounded-[8px] border border-border bg-card px-4 py-2.5 font-body text-sm font-semibold text-foreground transition-opacity hover:opacity-70 disabled:opacity-50"
+              >
+                {syncing ? "Sincronizando..." : "↻ Sincronizar CD"}
+              </button>
+              <button
+                onClick={() => setImportOpen(true)}
+                className="rounded-[8px] bg-brand-orange px-4 py-2.5 font-body text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              >
+                + Importar liquidación
+              </button>
+            </>
+          )}
         </div>
       </div>
 

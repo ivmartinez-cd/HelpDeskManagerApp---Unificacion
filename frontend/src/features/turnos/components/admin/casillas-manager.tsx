@@ -9,6 +9,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Modal } from "@/shared/components/ui/modal";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { useSession } from "@/services/session-provider";
 
 const DIAS_SEMANA = [
   "Lunes",
@@ -21,6 +22,10 @@ const DIAS_SEMANA = [
 ];
 
 export function CasillasManager() {
+  // turnos.view abre la grilla; toda mutación (casillas, franjas, asignaciones)
+  // es turnos.manage (ADR-029) — los botones se ocultan, el backend igual corta.
+  const { can } = useSession();
+  const puedeEditar = can("turnos", "manage");
   const [casillas, setCasillas] = useState<Casilla[]>([]);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
@@ -183,24 +188,28 @@ export function CasillasManager() {
               >
                 {c.nombre}
               </button>
-              <button
-                onClick={() => {
-                  setEditingCasilla(c);
-                  setCasillaNombre(c.nombre);
-                  setCasillaModalOpen(true);
-                }}
-                className="p-1 text-muted-foreground hover:text-foreground"
-                title="Editar nombre de casilla"
-              >
-                <Edit2 className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={() => handleDeleteCasilla(c.id)}
-                className="p-1 text-muted-foreground hover:text-destructive"
-                title="Eliminar casilla"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              {puedeEditar && (
+                <>
+                  <button
+                    onClick={() => {
+                      setEditingCasilla(c);
+                      setCasillaNombre(c.nombre);
+                      setCasillaModalOpen(true);
+                    }}
+                    className="p-1 text-muted-foreground hover:text-foreground"
+                    title="Editar nombre de casilla"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCasilla(c.id)}
+                    className="p-1 text-muted-foreground hover:text-destructive"
+                    title="Eliminar casilla"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              )}
             </div>
           ))}
           {casillas.length === 0 && (
@@ -211,24 +220,26 @@ export function CasillasManager() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href="/admin/turnos/coberturas">
+          <Link href="/turnos/coberturas">
             <Button variant="outline" size="sm" className="gap-1.5">
               <CalendarClock className="h-4 w-4" />
               Coberturas
             </Button>
           </Link>
-          <Button
-            onClick={() => {
-              setEditingCasilla(null);
-              setCasillaNombre("");
-              setCasillaModalOpen(true);
-            }}
-            size="sm"
-            className="gap-1.5"
-          >
-            <Plus className="h-4 w-4" />
-            Nueva Casilla
-          </Button>
+          {puedeEditar && (
+            <Button
+              onClick={() => {
+                setEditingCasilla(null);
+                setCasillaNombre("");
+                setCasillaModalOpen(true);
+              }}
+              size="sm"
+              className="gap-1.5"
+            >
+              <Plus className="h-4 w-4" />
+              Nueva Casilla
+            </Button>
+          )}
         </div>
       </div>
 
@@ -256,10 +267,12 @@ export function CasillasManager() {
             <span className="font-heading text-sm font-bold text-foreground">
               Horarios para {DIAS_SEMANA[selectedDia]}
             </span>
-            <Button onClick={() => handleOpenSlotModal()} size="sm" variant="outline" className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" />
-              Agregar Franja
-            </Button>
+            {puedeEditar && (
+              <Button onClick={() => handleOpenSlotModal()} size="sm" variant="outline" className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" />
+                Agregar Franja
+              </Button>
+            )}
           </div>
 
           <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
@@ -295,22 +308,24 @@ export function CasillasManager() {
                         </div>
                       </td>
                       <td className="p-3 text-right">
-                        <div className="flex justify-end items-center gap-2">
-                          <button
-                            onClick={() => handleOpenSlotModal(s)}
-                            className="p-1 text-muted-foreground hover:text-foreground"
-                            title="Editar franja/asignaciones"
-                          >
-                            <Users className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteSlot(s.id)}
-                            className="p-1 text-muted-foreground hover:text-destructive"
-                            title="Eliminar franja"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        {puedeEditar && (
+                          <div className="flex justify-end items-center gap-2">
+                            <button
+                              onClick={() => handleOpenSlotModal(s)}
+                              className="p-1 text-muted-foreground hover:text-foreground"
+                              title="Editar franja/asignaciones"
+                            >
+                              <Users className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSlot(s.id)}
+                              className="p-1 text-muted-foreground hover:text-destructive"
+                              title="Eliminar franja"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))

@@ -24,3 +24,7 @@ APPROVE = Permission(_MODULE, ActionKey("approve"))
 # Anular (voidLiquidation en wsAyC) es destructivo — permiso separado de APPROVE.
 # Requiere la migración `<rev>_seed_liquidaciones_delete_permission.py`.
 DELETE = Permission(_MODULE, ActionKey("delete"))
+# Exportar CSV de la configuración (prestadores/SPST/tarifarios/tabla KM) y el
+# worklist de geovalidación. Sembrado desde el inicio pero sin enforcement hasta
+# ADR-029: antes esos endpoints pedían solo `view`.
+EXPORT = Permission(_MODULE, ActionKey("export"))

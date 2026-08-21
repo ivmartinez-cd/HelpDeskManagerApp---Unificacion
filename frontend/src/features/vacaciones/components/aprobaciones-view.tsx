@@ -26,7 +26,7 @@ export function hrefArmarGrillaCobertura(decision: DecisionResult): string {
     hasta: decision.endDate,
     motivo: `Vacaciones ${decision.empleadoNombre}`,
   });
-  return `/admin/turnos?${q.toString()}`;
+  return `/turnos?${q.toString()}`;
 }
 
 function AvisoAfectaTurnos({

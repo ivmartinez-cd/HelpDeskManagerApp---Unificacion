@@ -15,7 +15,7 @@ const TABS = [
 
 type Tab = "titular" | "vacaciones";
 
-/** /admin/turnos: grilla titular (casillas/franjas/enroque) y modo vacaciones
+/** /turnos: grilla titular (casillas/franjas/enroque) y modo vacaciones
  * (ADR-025) como pestañas — mismo SegmentedControl que el dashboard de Inicio.
  * `?tab=vacaciones&ausente=&desde=&hasta=&motivo=` abre el editor precargado
  * (CTA "Armar grilla de cobertura" de Aprobaciones). */

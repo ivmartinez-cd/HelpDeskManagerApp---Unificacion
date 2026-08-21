@@ -13,7 +13,7 @@ export default function AdminHomePage() {
           Configuración
         </h1>
         <p className="mt-1 font-body text-sm text-muted-foreground">
-          Administración de usuarios, permisos y turnos de operadores.
+          Administración de usuarios y permisos.
         </p>
       </div>
 
@@ -33,8 +33,11 @@ export default function AdminHomePage() {
           </div>
         </Link>
 
+        {/* Turnos es módulo propio desde ADR-029 (/turnos, permiso turnos.*);
+            queda el acceso directo acá porque históricamente vivía en
+            Configuración. El guard de ruta redirige si falta turnos.view. */}
         <Link
-          href="/admin/turnos"
+          href="/turnos"
           className="flex items-center gap-4 rounded-[12px] border border-border bg-card p-6 transition-colors hover:bg-muted"
         >
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[9px] bg-brand-orange/[0.12] text-brand-orange">
@@ -43,7 +46,7 @@ export default function AdminHomePage() {
           <div>
             <p className="font-heading text-sm font-bold text-foreground">Turnos de Operadores</p>
             <p className="mt-0.5 font-body text-xs text-muted-foreground">
-              Casillas, franjas horarias y enroque de operadores.
+              Casillas, franjas horarias y enroque de operadores (módulo Turnos).
             </p>
           </div>
         </Link>

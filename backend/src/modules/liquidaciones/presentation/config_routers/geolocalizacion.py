@@ -23,6 +23,7 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_
 )
 from src.modules.liquidaciones.presentation import _liq_csv_export as csv_export
 from src.modules.liquidaciones.presentation.config_routers._deps import (
+    require_export,
     require_update,
     require_view,
 )
@@ -359,7 +360,7 @@ async def geovalidacion_worklist(
 @router.get("/siges/prestador/{prestador_id}/geovalidacion/worklist/export")
 async def geovalidacion_worklist_export(
     prestador_id: UUID,
-    _: Identity = require_view,
+    _: Identity = require_export,
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """CSV para Gestión (Siges es read-only): junta Tier 0 certeza absoluta +

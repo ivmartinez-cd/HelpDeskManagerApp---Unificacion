@@ -13,6 +13,7 @@ import { VariantesTabla } from "./variantes-tabla";
 import { BrandButton, BrandEmptyState, BrandSkeleton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
+import { useSession } from "@/services/session-provider";
 
 const FILTROS: { value: "todas" | VarianteEstadoUi; label: string }[] = [
   { value: "todas", label: "Todas" },
@@ -27,10 +28,14 @@ interface ModoVacacionesViewProps {
   precargaInicial?: PrecargaInicial | null;
 }
 
-/** Sección "Modo vacaciones" de /admin/turnos (ADR-025): listado de grillas
+/** Sección "Modo vacaciones" de /turnos (ADR-025): listado de grillas
  * de vacaciones (vigente + programadas + historial) con cancelar/editar, y el
  * editor de variante. Modales/editor por estado local, no por ruta. */
 export function ModoVacacionesView({ precargaInicial = null }: ModoVacacionesViewProps) {
+  // Crear/editar/cancelar grillas es turnos.manage (ADR-029); con view solo se
+  // listan y previsualizan.
+  const { can } = useSession();
+  const puedeEditar = can("turnos", "manage");
   const [variantes, setVariantes] = useState<GrillaVariante[] | null>(null);
   const [casillas, setCasillas] = useState<Casilla[]>([]);
   const [titular, setTitular] = useState<Slot[]>([]);
@@ -103,7 +108,7 @@ export function ModoVacacionesView({ precargaInicial = null }: ModoVacacionesVie
           Se aplica en lectura sobre Turnos del día y, al vencer, la grilla titular vuelve sola — sin
           acción ni job. Para reemplazar solo a una persona sin cambiar horarios, usá Coberturas.
         </p>
-        {editor.modo === "cerrado" && (
+        {puedeEditar && editor.modo === "cerrado" && (
           <BrandButton onClick={() => setEditor({ modo: "alta", precarga: null })}>
             <Plus className="h-4 w-4" />
             Nueva grilla de vacaciones
@@ -124,7 +129,7 @@ export function ModoVacacionesView({ precargaInicial = null }: ModoVacacionesVie
         </p>
       )}
 
-      {editor.modo !== "cerrado" && (
+      {puedeEditar && editor.modo !== "cerrado" && (
         <VarianteEditor
           variante={editor.modo === "edicion" ? editor.variante : null}
           precargaInicial={editor.modo === "alta" ? editor.precarga : null}
@@ -178,6 +183,7 @@ export function ModoVacacionesView({ precargaInicial = null }: ModoVacacionesVie
           ) : (
             <VariantesTabla
               rows={filtradas}
+              canMutar={puedeEditar}
               onPreview={setPrevisualizando}
               onEdit={(v) => setEditor({ modo: "edicion", variante: v })}
               onCancel={setCancelando}

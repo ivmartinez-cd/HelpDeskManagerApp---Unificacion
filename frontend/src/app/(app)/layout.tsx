@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import type { IdentityResponse, ModuleSummary, Page } from "@/features/auth/api/auth-api";
+import { AccessDeniedToast, RouteGuard } from "@/shared/components/route-guard";
 import { RouteTracker } from "@/shared/components/route-tracker";
 import { Sidebar } from "@/shared/components/sidebar";
 import { SessionProvider } from "@/services/session-provider";
@@ -38,7 +39,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <SessionProvider user={identity.user} permissions={identity.permissions} modules={modules}>
       <RouteTracker />
-      <Sidebar watiUrl={WATI_URL}>{children}</Sidebar>
+      <Suspense fallback={null}>
+        <AccessDeniedToast />
+      </Suspense>
+      <Sidebar watiUrl={WATI_URL}>
+        {/* Guard de ruta por permiso (ADR-029): adentro del Sidebar para que
+            la nav siga visible mientras redirige a Inicio. */}
+        <RouteGuard>{children}</RouteGuard>
+      </Sidebar>
     </SessionProvider>
   );
 }

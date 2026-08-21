@@ -27,7 +27,8 @@ export function LiquidacionesTabla({
 }: {
   items: Liquidacion[];
   prestadorMap: Record<string, PrestadorLiquidacion>;
-  onDelete: (id: string) => void;
+  /** `undefined` = sin permiso `liquidaciones.update`: no se muestra "Eliminar". */
+  onDelete?: (id: string) => void;
 }) {
   const { sort, toggleSort } = useTableSort<LiqSortKey>({
     initial: { key: "fecha", direction: "desc" },
@@ -120,12 +121,14 @@ export function LiquidacionesTabla({
                     )}
                   </td>
                   <td className={tdCls}>
-                    <button
-                      onClick={() => onDelete(liq.id)}
-                      className="font-body text-sm text-destructive transition-opacity hover:opacity-70"
-                    >
-                      Eliminar
-                    </button>
+                    {onDelete && (
+                      <button
+                        onClick={() => onDelete(liq.id)}
+                        className="font-body text-sm text-destructive transition-opacity hover:opacity-70"
+                      >
+                        Eliminar
+                      </button>
+                    )}
                   </td>
                 </tr>
               );

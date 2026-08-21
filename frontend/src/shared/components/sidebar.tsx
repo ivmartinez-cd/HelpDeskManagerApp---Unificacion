@@ -8,6 +8,7 @@ import {
   Bell,
   ChevronDown,
   Circle,
+  Clock,
   FileSearch,
   Home,
   LogOut,
@@ -34,6 +35,7 @@ const MODULE_ICONS: Record<string, LucideIcon> = {
   contadores: BarChart2,
   insumos: Package,
   vacaciones: UserRound,
+  turnos: Clock,
   "analisis-log-hp": FileSearch,
   admin: Settings,
 };
@@ -73,6 +75,15 @@ export function Sidebar({
       m.key !== "preventivos" &&
       m.key !== "analisis-log-hp",
   );
+  // El grupo "Servicio Técnico" no es un módulo del catálogo: se muestra solo si
+  // el usuario tiene al menos uno de los módulos que agrupa (ADR-029; antes
+  // aparecía siempre, apuntando a una ruta inexistente para quien no tenía nada).
+  const servicioTecnicoVisible =
+    !!prestadoresModule ||
+    !!liquidacionesModule ||
+    !!slaModule ||
+    !!preventivosModule ||
+    !!analisisLogHpModule;
   const { logout, loading } = useLogout();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -180,10 +191,10 @@ export function Sidebar({
               Inicio
             </Link>
 
-            {/* Servicio Técnico: hardcodeado como Inicio, pero expandible cuando
-                el módulo sla está habilitado — mismo patrón que Prestadores +
+            {/* Servicio Técnico: grupo hardcodeado (no es módulo), expandible con
+                los módulos que agrupa — mismo patrón que Prestadores +
                 Liquidaciones pero en sentido inverso (el padre es el hardcodeado). */}
-            {(() => {
+            {servicioTecnicoVisible && (() => {
               const stcActive =
                 isActive("/servicio-tecnico") ||
                 (!!slaModule && isActive("/sla")) ||
@@ -193,7 +204,7 @@ export function Sidebar({
                 (!!analisisLogHpModule && isActive("/analisis-log-hp"));
               const stcHasSubmenu =
                 !!slaModule || !!prestadoresModule || !!preventivosModule || !!analisisLogHpModule;
-              const stcSubmenuExpanded = submenuOverride["stc"] ?? stcActive;
+              const stcSubmenuExpanded = submenuOverride["servicio-tecnico"] ?? stcActive;
               const stcHref = prestadoresModule
                 ? "/prestadores"
                 : slaModule
@@ -222,7 +233,10 @@ export function Sidebar({
                       <button
                         type="button"
                         onClick={() =>
-                          setSubmenuOverride((prev) => ({ ...prev, stc: !stcSubmenuExpanded }))
+                          setSubmenuOverride((prev) => ({
+                            ...prev,
+                            "servicio-tecnico": !stcSubmenuExpanded,
+                          }))
                         }
                         aria-expanded={stcSubmenuExpanded}
                         aria-label={

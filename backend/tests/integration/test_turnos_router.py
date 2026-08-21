@@ -37,9 +37,9 @@ async def test_turnos_current_unauthenticated_returns_401() -> None:
 async def test_turnos_admin_endpoints_unauthenticated_returns_401(
     method: str, path: str
 ) -> None:
-    """Los endpoints de admin (listar/crear/editar/borrar casillas y slots,
-    reasignar) exigen `admin:manage` -- sin sesión, 401 antes de llegar a chequear
-    el permiso. No hay hoy infraestructura de test para armar una sesión
+    """Los endpoints del módulo (listar/crear/editar/borrar casillas y slots,
+    reasignar) exigen `turnos.view`/`turnos.manage` (ADR-029) -- sin sesión, 401
+    antes de llegar a chequear el permiso. No hay hoy infraestructura de test para armar una sesión
     autenticada sin el grant y confirmar el 403 (ningún otro test de integración
     del repo lo hace todavía); este test cubre el primer paso, fail-closed sin
     auth."""

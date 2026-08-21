@@ -104,7 +104,7 @@ test.describe("Coberturas de turnos: intercambio (ADR-026)", () => {
 
   test("el par se agrupa en una sola fila A ⇄ B y la común queda aparte", async ({ page }) => {
     await mockTurnos(page);
-    await page.goto("/admin/turnos/coberturas");
+    await page.goto("/turnos/coberturas");
 
     await expect(page.getByRole("heading", { name: "Coberturas" })).toBeVisible();
     // Dos filas: el intercambio (una sola, aunque son dos coberturas) y la común.
@@ -135,7 +135,7 @@ test.describe("Coberturas de turnos: intercambio (ADR-026)", () => {
       }
     });
 
-    await page.goto("/admin/turnos/coberturas");
+    await page.goto("/turnos/coberturas");
     await page.getByRole("button", { name: "Nueva cobertura" }).click();
     const dialog = page.getByRole("dialog", { name: "Nueva cobertura" });
     await dialog.getByRole("radio", { name: "Intercambio" }).click();
@@ -184,7 +184,7 @@ test.describe("Coberturas de turnos: intercambio (ADR-026)", () => {
       });
     });
 
-    await page.goto("/admin/turnos/coberturas");
+    await page.goto("/turnos/coberturas");
     await page.getByRole("button", { name: "Nueva cobertura" }).click();
     const dialog = page.getByRole("dialog", { name: "Nueva cobertura" });
     await dialog.getByRole("radio", { name: "Intercambio" }).click();
@@ -229,7 +229,7 @@ test.describe("Coberturas de turnos: intercambio (ADR-026)", () => {
       await route.fulfill({ status: 204 });
     });
 
-    await page.goto("/admin/turnos/coberturas");
+    await page.goto("/turnos/coberturas");
     await page
       .getByRole("button", { name: "Cancelar intercambio de Maria Jose Vela y Luna Perez" })
       .click();
@@ -246,7 +246,7 @@ test.describe("Coberturas de turnos: intercambio (ADR-026)", () => {
     page,
   }) => {
     await mockTurnos(page);
-    await page.goto("/admin/turnos/coberturas");
+    await page.goto("/turnos/coberturas");
     await page
       .getByRole("button", { name: "Editar intercambio de Maria Jose Vela y Luna Perez" })
       .click();

@@ -76,6 +76,14 @@ const MODULES_MOCK = [
     isEnabled: true,
   },
   {
+    key: "turnos",
+    label: "Turnos",
+    route: "/turnos",
+    icon: "clock",
+    sortOrder: 35,
+    isEnabled: true,
+  },
+  {
     key: "analisis-log-hp",
     label: "Análisis de Log HP",
     route: "/analisis-log-hp",

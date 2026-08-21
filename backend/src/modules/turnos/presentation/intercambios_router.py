@@ -1,7 +1,8 @@
 """Intercambio de turnos (ADR-026): dos coberturas ADR-013 cruzadas que se
 crean, editan y cancelan juntas. Router aparte porque `turnos_router.py`
 ya supera el tamaño máximo de archivo (§4); mismo prefijo `/api/turnos` y
-mismo permiso `admin:manage` que el resto del admin de turnos."""
+mismo permiso `turnos.manage` que el resto de las mutaciones del módulo
+(ADR-029)."""
 
 import uuid
 
@@ -9,7 +10,6 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
-from src.modules.auth.domain.well_known_permissions import MANAGE_ADMIN
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.turnos.application.dtos.turno_dtos import IntercambioCommand
 from src.modules.turnos.application.use_cases.cancel_intercambio import (
@@ -21,6 +21,7 @@ from src.modules.turnos.application.use_cases.intercambio_support import (
     IntercambioDependencies,
 )
 from src.modules.turnos.application.use_cases.update_intercambio import UpdateIntercambio
+from src.modules.turnos.domain.well_known_permissions import MANAGE
 from src.modules.turnos.infrastructure.repositories.sqlalchemy_asignacion_override_repository import (  # noqa: E501
     SqlAlchemyAsignacionOverrideRepository,
 )
@@ -35,7 +36,7 @@ from src.shared.infrastructure.database.session import get_db
 
 router = APIRouter(prefix="/api/turnos/intercambios", tags=["turnos"])
 
-_require_manage_admin = Depends(require_permission(MANAGE_ADMIN))
+_require_manage = Depends(require_permission(MANAGE))
 
 
 def _deps(db: AsyncSession) -> IntercambioDependencies:
@@ -66,7 +67,7 @@ def _command(
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_intercambio(
     payload: IntercambioRequest,
-    identity: Identity = _require_manage_admin,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> IntercambioResponse:
     dto = await CreateIntercambio(_deps(db)).execute(_command(payload, identity.user.id))
@@ -77,7 +78,7 @@ async def create_intercambio(
 async def update_intercambio(
     intercambio_id: uuid.UUID,
     payload: IntercambioRequest,
-    identity: Identity = _require_manage_admin,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> IntercambioResponse:
     # `created_by_user_id` del comando no se usa en la edición (se conserva el
@@ -91,7 +92,7 @@ async def update_intercambio(
 @router.post("/{intercambio_id}/cancelar", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_intercambio(
     intercambio_id: uuid.UUID,
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> None:
     deps = CancelIntercambioDependencies(overrides=SqlAlchemyAsignacionOverrideRepository(db))

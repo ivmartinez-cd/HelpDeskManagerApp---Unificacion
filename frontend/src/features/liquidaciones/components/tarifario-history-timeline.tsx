@@ -72,9 +72,9 @@ function VariacionBadge({ actual, anterior }: { actual: number; anterior: number
 }
 
 function TarifarioHistoryTimeline({
-  grupo, onEdit, onDelete,
+  grupo, canEdit, onEdit, onDelete,
 }: {
-  grupo: GrupoTarifa; onEdit: (t: Tarifario) => void; onDelete: (id: string) => void;
+  grupo: GrupoTarifa; canEdit: boolean; onEdit: (t: Tarifario) => void; onDelete: (id: string) => void;
 }) {
   return (
     <div className="mt-4 rounded-[12px] border-t border-dashed border-border bg-muted/20 p-4 pt-4">
@@ -126,22 +126,24 @@ function TarifarioHistoryTimeline({
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => onEdit(tarifa)}
-                    aria-label="Editar tarifa"
-                    className="rounded-[6px] p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-brand-orange"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={() => onDelete(tarifa.id)}
-                    aria-label="Eliminar tarifa"
-                    className="rounded-[6px] p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                {canEdit && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => onEdit(tarifa)}
+                      aria-label="Editar tarifa"
+                      className="rounded-[6px] p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-brand-orange"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => onDelete(tarifa.id)}
+                      aria-label="Eliminar tarifa"
+                      className="rounded-[6px] p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -152,9 +154,11 @@ function TarifarioHistoryTimeline({
 }
 
 export function GrupoTarifaRow({
-  grupo, onActualizar, onEdit, onDelete,
+  grupo, canEdit = true, onActualizar, onEdit, onDelete,
 }: {
   grupo: GrupoTarifa;
+  /** `liquidaciones.update` (ADR-029): sin esto el historial es solo lectura. */
+  canEdit?: boolean;
   onActualizar: (grupo: GrupoTarifa) => void;
   onEdit: (t: Tarifario) => void;
   onDelete: (id: string) => void;
@@ -209,9 +213,11 @@ export function GrupoTarifaRow({
               </span>
             </div>
             <div className="ml-1 flex items-center gap-1.5">
-              <BrandButton size="sm" variant="outline" onClick={() => onActualizar(grupo)}>
-                Actualizar
-              </BrandButton>
+              {canEdit && (
+                <BrandButton size="sm" variant="outline" onClick={() => onActualizar(grupo)}>
+                  Actualizar
+                </BrandButton>
+              )}
               <BrandButton size="sm" variant="outline" onClick={() => setHistorialAbierto((v) => !v)}>
                 <History className="h-3.5 w-3.5" />
                 Historial ({grupo.historial.length})
@@ -223,7 +229,7 @@ export function GrupoTarifaRow({
       </div>
 
       {historialAbierto && (
-        <TarifarioHistoryTimeline grupo={grupo} onEdit={onEdit} onDelete={onDelete} />
+        <TarifarioHistoryTimeline grupo={grupo} canEdit={canEdit} onEdit={onEdit} onDelete={onDelete} />
       )}
     </div>
   );

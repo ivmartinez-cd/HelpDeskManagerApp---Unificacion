@@ -18,6 +18,7 @@ from src.modules.liquidaciones.presentation import _liq_csv as csv_helpers
 from src.modules.liquidaciones.presentation import _liq_csv_export as csv_export
 from src.modules.liquidaciones.presentation.config_routers._deps import (
     CATALOGO_SIZE,
+    require_export,
     require_update,
     require_view,
 )
@@ -115,7 +116,7 @@ async def vincular_spst(
 
 @router.get("/tabla-km/export")
 async def export_tabla_km_csv(
-    _: Identity = require_view,
+    _: Identity = require_export,
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     prestadores = await SqlAlchemyPrestadorRepository(db).list_all()

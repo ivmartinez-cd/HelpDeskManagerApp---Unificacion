@@ -16,6 +16,8 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { useSession } from "@/services/session-provider";
+import { canAccessPath } from "@/shared/config/route-permissions";
 import { cn } from "@/shared/utils/cn";
 
 interface NavLinkDef {
@@ -157,7 +159,13 @@ export function ServicioTecnicoNavSubmenu({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const sections = buildSections({ hasPrestadores, hasLiquidaciones, hasSla, hasPreventivos, hasAnalisisLogHp });
+  const { can } = useSession();
+  // Los flags `has*` dicen qué módulos tiene el usuario; el mapa central de
+  // permisos por ruta (ADR-029) filtra además los ítems cuya pantalla pide
+  // una acción específica.
+  const sections = buildSections({ hasPrestadores, hasLiquidaciones, hasSla, hasPreventivos, hasAnalisisLogHp })
+    .map((s) => ({ ...s, links: s.links.filter((l) => canAccessPath(l.href, can)) }))
+    .filter((s) => s.links.length > 0);
 
   return (
     <div className="flex flex-col gap-3 py-1.5 pb-2 pl-4 pr-1">

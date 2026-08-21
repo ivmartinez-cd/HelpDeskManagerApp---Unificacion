@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type ChangeEvent } from "react";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
 import { LiquidacionesImportModal } from "./liquidaciones-import-modal";
@@ -21,6 +22,10 @@ const ESTADOS: { value: string; label: string }[] = [
 const PAGE_SIZE = 50;
 
 export function LiquidacionesLista() {
+  // Importar = liquidaciones.create; DELETE /{id} (baja local) = update (ADR-029).
+  const { can } = useSession();
+  const puedeImportar = can("liquidaciones", "create");
+  const puedeEliminar = can("liquidaciones", "update");
   const [liquidaciones, setLiquidaciones] = useState<Liquidacion[]>([]);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [periodos, setPeriodos] = useState<string[]>([]);
@@ -91,12 +96,14 @@ export function LiquidacionesLista() {
     <div className="flex flex-col gap-5 p-6">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-xl font-extrabold text-foreground">Liquidaciones</h1>
-        <button
-          onClick={() => setImportOpen(true)}
-          className="rounded-[8px] bg-brand-orange px-4 py-2.5 font-body text-sm font-semibold text-white transition-opacity hover:opacity-90"
-        >
-          + Importar
-        </button>
+        {puedeImportar && (
+          <button
+            onClick={() => setImportOpen(true)}
+            className="rounded-[8px] bg-brand-orange px-4 py-2.5 font-body text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            + Importar
+          </button>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -159,7 +166,7 @@ export function LiquidacionesLista() {
           <LiquidacionesTabla
             items={liquidaciones}
             prestadorMap={prestadorMap}
-            onDelete={setDeletingId}
+            onDelete={puedeEliminar ? setDeletingId : undefined}
           />
 
           {total > PAGE_SIZE && (

@@ -13,8 +13,8 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_
 from src.modules.liquidaciones.presentation import _liq_csv as csv_helpers
 from src.modules.liquidaciones.presentation import _liq_csv_export as csv_export
 from src.modules.liquidaciones.presentation.config_routers._deps import (
+    require_export,
     require_update,
-    require_view,
 )
 from src.modules.liquidaciones.presentation.dependencies import (
     build_create_prestador,
@@ -122,7 +122,7 @@ async def delete_prestador(
 
 @router.get("/prestadores/export")
 async def export_prestadores_csv(
-    _: Identity = require_view,
+    _: Identity = require_export,
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     rows = await SqlAlchemyPrestadorRepository(db).list_all()

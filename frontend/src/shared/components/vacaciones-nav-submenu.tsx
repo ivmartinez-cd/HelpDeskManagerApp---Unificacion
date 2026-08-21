@@ -17,14 +17,17 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useSession } from "@/services/session-provider";
+import { canAccessPath } from "@/shared/config/route-permissions";
 import { cn } from "@/shared/utils/cn";
 
 /** Submenú de Gestión de Personal (module key `vacaciones`) — mismo lenguaje
  * visual que ContadoresNavSubmenu, con títulos de sección del handoff
  * (Vacaciones / Asistencias / Gestión Humana / Configuración). Los ítems se
- * filtran por permiso: Aprobaciones requiere `approve` y los de Gestión
- * Humana muestran su contenido según `manage` (la página es visible con
- * `view` para consultar catálogos). Gestión Humana son 4 accesos directos
+ * filtran por permiso según el mapa central ruta → permiso (ADR-029,
+ * `shared/config/route-permissions.ts`): Solicitudes pide `create` o `manage`,
+ * Aprobaciones `approve` o `manage`, Reportes/Auditoría/Configuración `manage`;
+ * Gestión Humana es visible con `view` (la página muestra su contenido según
+ * `manage`, para consultar catálogos). Gestión Humana son 4 accesos directos
  * (Empleados/Sectores/Cargos/Feriados) sobre la misma ruta `/vacaciones/gestion`
  * con `?tab=`, como en el handoff (07-Gestion-Humana) — antes era un solo
  * link a "Personal" que siempre abría en Empleados, y Feriados quedaba sin
@@ -47,8 +50,8 @@ interface NavGroupDef {
 export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { user, can } = useSession();
-  const esAdmin = user.isSuperadmin || can("vacaciones", "manage");
+  const { can } = useSession();
+  const puedeAbrir = (href: string) => canAccessPath(href, can);
   const enGestion = pathname === "/vacaciones/gestion";
   const tabGestion = enGestion ? (searchParams.get("tab") ?? "empleados") : null;
 
@@ -56,24 +59,29 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
     {
       titulo: "Vacaciones",
       items: [
-        { href: "/vacaciones", label: "Dashboard", icon: LayoutDashboard, visible: true },
+        {
+          href: "/vacaciones",
+          label: "Dashboard",
+          icon: LayoutDashboard,
+          visible: puedeAbrir("/vacaciones"),
+        },
         {
           href: "/vacaciones/solicitudes",
           label: "Solicitudes",
           icon: CalendarCheck2,
-          visible: esAdmin || can("vacaciones", "create"),
+          visible: puedeAbrir("/vacaciones/solicitudes"),
         },
         {
           href: "/vacaciones/aprobaciones",
           label: "Aprobaciones",
           icon: ClipboardCheck,
-          visible: esAdmin || can("vacaciones", "approve"),
+          visible: puedeAbrir("/vacaciones/aprobaciones"),
         },
         {
           href: "/vacaciones/reportes",
           label: "Reportes",
           icon: BarChart3,
-          visible: esAdmin,
+          visible: puedeAbrir("/vacaciones/reportes"),
         },
       ],
     },
@@ -84,7 +92,7 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
           href: "/vacaciones/asistencias",
           label: "Registro de asistencias",
           icon: CalendarX2,
-          visible: true,
+          visible: puedeAbrir("/vacaciones/asistencias"),
         },
       ],
     },
@@ -95,28 +103,28 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
           href: "/vacaciones/gestion",
           label: "Empleados",
           icon: Users,
-          visible: true,
+          visible: puedeAbrir("/vacaciones/gestion"),
           active: tabGestion === "empleados",
         },
         {
           href: "/vacaciones/gestion?tab=sectores",
           label: "Sectores",
           icon: Building2,
-          visible: true,
+          visible: puedeAbrir("/vacaciones/gestion"),
           active: tabGestion === "sectores",
         },
         {
           href: "/vacaciones/gestion?tab=cargos",
           label: "Cargos",
           icon: Briefcase,
-          visible: true,
+          visible: puedeAbrir("/vacaciones/gestion"),
           active: tabGestion === "cargos",
         },
         {
           href: "/vacaciones/gestion?tab=feriados",
           label: "Feriados",
           icon: PartyPopper,
-          visible: true,
+          visible: puedeAbrir("/vacaciones/gestion"),
           active: tabGestion === "feriados",
         },
       ],
@@ -128,13 +136,13 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
           href: "/vacaciones/auditoria",
           label: "Auditoría",
           icon: ScrollText,
-          visible: esAdmin,
+          visible: puedeAbrir("/vacaciones/auditoria"),
         },
         {
           href: "/vacaciones/configuracion",
           label: "Configuración",
           icon: Settings,
-          visible: esAdmin,
+          visible: puedeAbrir("/vacaciones/configuracion"),
         },
       ],
     },

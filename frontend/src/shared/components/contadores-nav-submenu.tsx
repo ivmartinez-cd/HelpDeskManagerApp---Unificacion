@@ -10,6 +10,8 @@ import {
   Workflow,
   type LucideIcon,
 } from "lucide-react";
+import { useSession } from "@/services/session-provider";
+import { canAccessPath } from "@/shared/config/route-permissions";
 import { cn } from "@/shared/utils/cn";
 
 /** Submenú de Contadores — mismo lenguaje visual que `InsumosNavSubmenu`
@@ -26,6 +28,7 @@ export function ContadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tool = searchParams.get("tool");
+  const { can } = useSession();
 
   const links: NavLinkDef[] = [
     {
@@ -58,7 +61,7 @@ export function ContadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }
       icon: Workflow,
       active: pathname === "/contadores" && tool !== "calendario",
     },
-  ];
+  ].filter((l) => canAccessPath(l.href, can)); // mapa central de permisos por ruta (ADR-029)
 
   return (
     <div className="flex flex-col gap-px py-1.5 pb-2 pl-4 pr-1">

@@ -6,6 +6,7 @@ import { BrandButton, BrandFileInput } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Spst } from "../types/liquidaciones";
 import { SpstBaseSucursalModal } from "./spst-base-sucursal-modal";
@@ -49,6 +50,10 @@ function CsvImportModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClo
 }
 
 export function SpstsConfig() {
+  // Mutaciones = liquidaciones.update; descarga CSV = liquidaciones.export (ADR-029).
+  const { can } = useSession();
+  const puedeEditar = can("liquidaciones", "update");
+  const puedeExportar = can("liquidaciones", "export");
   const [spsts, setSpsts] = useState<Spst[]>([]);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,9 +116,13 @@ export function SpstsConfig() {
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-xl font-extrabold text-foreground">SPSTs</h1>
         <div className="flex gap-2">
-          <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
-          <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
-          <BrandButton size="sm" onClick={() => setFormSpst(null)}>Nuevo SPST</BrandButton>
+          {puedeExportar && <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>}
+          {puedeEditar && (
+            <>
+              <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
+              <BrandButton size="sm" onClick={() => setFormSpst(null)}>Nuevo SPST</BrandButton>
+            </>
+          )}
         </div>
       </div>
 
@@ -155,14 +164,18 @@ export function SpstsConfig() {
                         <Badge variant={s.activo ? "success" : "neutral"}>{s.activo ? "Activo" : "Inactivo"}</Badge>
                       </td>
                       <td className={`${tdCls} text-right`}>
-                        <button onClick={() => setBaseSucursalSpst(s)} className={`font-body text-sm hover:underline mr-3 ${s.sigesBaseSucursalId ? "text-success" : "text-muted-foreground"}`}>
-                          Base despacho
-                        </button>
-                        <button onClick={() => setFormSpst(s)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
-                        <button onClick={() => handleToggle(s)} className={`font-body text-sm hover:underline mr-3 ${s.activo ? "text-destructive" : "text-success"}`}>
-                          {s.activo ? "Desactivar" : "Activar"}
-                        </button>
-                        <button onClick={() => setDeletingId(s.id)} className="font-body text-sm text-destructive hover:underline">Eliminar</button>
+                        {puedeEditar && (
+                          <>
+                            <button onClick={() => setBaseSucursalSpst(s)} className={`font-body text-sm hover:underline mr-3 ${s.sigesBaseSucursalId ? "text-success" : "text-muted-foreground"}`}>
+                              Base despacho
+                            </button>
+                            <button onClick={() => setFormSpst(s)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
+                            <button onClick={() => handleToggle(s)} className={`font-body text-sm hover:underline mr-3 ${s.activo ? "text-destructive" : "text-success"}`}>
+                              {s.activo ? "Desactivar" : "Activar"}
+                            </button>
+                            <button onClick={() => setDeletingId(s.id)} className="font-body text-sm text-destructive hover:underline">Eliminar</button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   );

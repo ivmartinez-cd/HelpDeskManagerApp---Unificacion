@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
     // Red" aunque el backend nunca haya fallado.
     proxyTimeout: 180_000,
   },
+  async redirects() {
+    // Turnos dejó de colgar de Configuración al pasar a ser módulo de permisos
+    // propio (ADR-029); links viejos (favoritos, mails) siguen llegando.
+    return [
+      { source: "/admin/turnos", destination: "/turnos", permanent: false },
+      { source: "/admin/turnos/:path*", destination: "/turnos/:path*", permanent: false },
+    ];
+  },
   async rewrites() {
     let backendUrl = process.env.BACKEND_URL || "http://127.0.0.1:8012";
     backendUrl = backendUrl

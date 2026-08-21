@@ -12,6 +12,7 @@ import {
 } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Tarifario } from "../types/liquidaciones";
 import { agruparTarifarios, GrupoTarifaRow, type GrupoTarifa } from "./tarifario-history-timeline";
@@ -160,6 +161,10 @@ function CsvImportModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClo
 }
 
 export function TarifariosConfig() {
+  // Mutaciones = liquidaciones.update; descarga CSV = liquidaciones.export (ADR-029).
+  const { can } = useSession();
+  const puedeEditar = can("liquidaciones", "update");
+  const puedeExportar = can("liquidaciones", "export");
   const [tarifarios, setTarifarios] = useState<Tarifario[]>([]);
   // Prestador al que corresponden los `tarifarios` ya cargados — si no coincide con
   // `filtroPst` es que hay un fetch en vuelo para la nueva selección (deriva el
@@ -244,10 +249,14 @@ export function TarifariosConfig() {
           </p>
         </div>
         <div className="flex gap-2">
-          <BrandButton size="sm" variant="outline" onClick={() => setSigesOpen(true)}>Sincronizar</BrandButton>
-          <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
-          <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
-          <BrandButton size="sm" onClick={() => abrirModal(null)}>+ Nueva tarifa</BrandButton>
+          {puedeEditar && <BrandButton size="sm" variant="outline" onClick={() => setSigesOpen(true)}>Sincronizar</BrandButton>}
+          {puedeExportar && <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>}
+          {puedeEditar && (
+            <>
+              <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
+              <BrandButton size="sm" onClick={() => abrirModal(null)}>+ Nueva tarifa</BrandButton>
+            </>
+          )}
         </div>
       </div>
 
@@ -271,6 +280,7 @@ export function TarifariosConfig() {
               <GrupoTarifaRow
                 key={`${grupo.tipoServicio}::${grupo.zona ?? ""}`}
                 grupo={grupo}
+                canEdit={puedeEditar}
                 onActualizar={handleActualizar}
                 onEdit={(t) => abrirModal(t)}
                 onDelete={setDeletingId}

@@ -6,6 +6,7 @@ import { BrandButton, BrandFileInput } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion } from "../types/liquidaciones";
 import { PrestadorBaseSucursalModal } from "./prestador-base-sucursal-modal";
@@ -62,6 +63,10 @@ function CsvImportModal({
 }
 
 export function PrestadoresConfig() {
+  // Mutaciones = liquidaciones.update; descarga CSV = liquidaciones.export (ADR-029).
+  const { can } = useSession();
+  const puedeEditar = can("liquidaciones", "update");
+  const puedeExportar = can("liquidaciones", "export");
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loading, setLoading] = useState(true);
   // `undefined` = cerrado; `null` = alta; un prestador = edición.
@@ -114,11 +119,15 @@ export function PrestadoresConfig() {
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-xl font-extrabold text-foreground">Prestadores</h1>
         <div className="flex gap-2">
-          <BrandButton size="sm" variant="outline" onClick={() => setSigesOpen(true)}>Sincronizar</BrandButton>
-          <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>
-          <BrandButton size="sm" variant="outline" onClick={() => setExcelOpen(true)}>Cargar Excel maestro</BrandButton>
-          <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
-          <BrandButton size="sm" onClick={() => setFormPrestador(null)}>Nuevo prestador</BrandButton>
+          {puedeEditar && <BrandButton size="sm" variant="outline" onClick={() => setSigesOpen(true)}>Sincronizar</BrandButton>}
+          {puedeExportar && <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>}
+          {puedeEditar && (
+            <>
+              <BrandButton size="sm" variant="outline" onClick={() => setExcelOpen(true)}>Cargar Excel maestro</BrandButton>
+              <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
+              <BrandButton size="sm" onClick={() => setFormPrestador(null)}>Nuevo prestador</BrandButton>
+            </>
+          )}
         </div>
       </div>
 
@@ -158,16 +167,20 @@ export function PrestadoresConfig() {
                       <Badge variant={p.activo ? "success" : "neutral"}>{p.activo ? "Activo" : "Inactivo"}</Badge>
                     </td>
                     <td className={`${tdCls} text-right`}>
-                      <button onClick={() => setFormPrestador(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
-                      {p.sigesEmpresaId != null && (
-                        <button onClick={() => setBasePrestador(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">
-                          {p.sigesBaseSucursalId != null ? "Distancias" : "Base"}
-                        </button>
+                      {puedeEditar && (
+                        <>
+                          <button onClick={() => setFormPrestador(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
+                          {p.sigesEmpresaId != null && (
+                            <button onClick={() => setBasePrestador(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">
+                              {p.sigesBaseSucursalId != null ? "Distancias" : "Base"}
+                            </button>
+                          )}
+                          <button onClick={() => handleToggle(p)} className={`font-body text-sm hover:underline mr-3 ${p.activo ? "text-destructive" : "text-success"}`}>
+                            {p.activo ? "Desactivar" : "Activar"}
+                          </button>
+                          <button onClick={() => setDeletingId(p.id)} className="font-body text-sm text-destructive hover:underline">Eliminar</button>
+                        </>
                       )}
-                      <button onClick={() => handleToggle(p)} className={`font-body text-sm hover:underline mr-3 ${p.activo ? "text-destructive" : "text-success"}`}>
-                        {p.activo ? "Desactivar" : "Activar"}
-                      </button>
-                      <button onClick={() => setDeletingId(p.id)} className="font-body text-sm text-destructive hover:underline">Eliminar</button>
                     </td>
                   </tr>
                 ))}

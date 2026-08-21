@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
-from src.modules.auth.domain.well_known_permissions import MANAGE_ADMIN
 from src.modules.auth.presentation.dependencies.identity import get_current_identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.turnos.application.dtos.turno_dtos import (
@@ -64,6 +63,7 @@ from src.modules.turnos.application.use_cases.upsert_slot import (
     UpsertSlot,
     UpsertSlotDependencies,
 )
+from src.modules.turnos.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.turnos.infrastructure.repositories.sqlalchemy_asignacion_override_repository import (  # noqa: E501
     SqlAlchemyAsignacionOverrideRepository,
 )
@@ -106,7 +106,10 @@ router = APIRouter(prefix="/api/turnos", tags=["turnos"])
 # §11) pero con default generoso porque alimentan la grilla del home/el panel de
 # admin completo, no una tabla paginada.
 _DEFAULT_SIZE = 200
-_require_manage_admin = Depends(require_permission(MANAGE_ADMIN))
+# turnos.view para consultar, turnos.manage para toda mutación (ADR-029).
+# `/current` queda solo-sesión: es la card de Inicio de cada operador.
+_require_view = Depends(require_permission(VIEW))
+_require_manage = Depends(require_permission(MANAGE))
 
 
 @router.get("/current")
@@ -145,7 +148,7 @@ async def get_current_shifts(
 async def list_casillas(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
 ) -> Page[CasillaResponse]:
     deps = ListCasillasDependencies(casillas=SqlAlchemyCasillaRepository(db))
@@ -156,7 +159,7 @@ async def list_casillas(
 @router.post("/casillas", status_code=status.HTTP_201_CREATED)
 async def create_casilla(
     payload: CasillaRequest,
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> CasillaResponse:
     deps = UpsertCasillaDependencies(casillas=SqlAlchemyCasillaRepository(db))
@@ -175,7 +178,7 @@ async def create_casilla(
 async def update_casilla(
     casilla_id: uuid.UUID,
     payload: CasillaRequest,
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> CasillaResponse:
     # Solo `nombre` es editable acá -- ver el docstring de UpdateCasillaCommand.
@@ -191,7 +194,7 @@ async def update_casilla(
 @router.delete("/casillas/{casilla_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_casilla(
     casilla_id: uuid.UUID,
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> None:
     deps = DeleteCasillaDependencies(casillas=SqlAlchemyCasillaRepository(db))
@@ -203,7 +206,7 @@ async def list_slots(
     casilla_id: uuid.UUID | None = None,
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
 ) -> Page[SlotResponse]:
     deps = ListSlotsDependencies(
@@ -218,7 +221,7 @@ async def list_slots(
 @router.post("/slots", status_code=status.HTTP_201_CREATED)
 async def create_slot(
     payload: SlotRequest,
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> SlotResponse:
     deps = UpsertSlotDependencies(slots=SqlAlchemySlotRepository(db))
@@ -238,7 +241,7 @@ async def create_slot(
 async def update_slot(
     slot_id: uuid.UUID,
     payload: SlotRequest,
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> SlotResponse:
     # `payload.sort_order` se ignora a propósito -- ver UpdateSlotCommand.
@@ -257,7 +260,7 @@ async def update_slot(
 @router.delete("/slots/{slot_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_slot(
     slot_id: uuid.UUID,
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> None:
     deps = DeleteSlotDependencies(
@@ -271,7 +274,7 @@ async def delete_slot(
 async def replace_slot_assignments(
     slot_id: uuid.UUID,
     payload: ReplaceAssignmentsRequest,
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> None:
     deps = ReplaceSlotAssignmentsDependencies(asignaciones=SqlAlchemyAsignacionRepository(db))
@@ -286,7 +289,7 @@ async def replace_slot_assignments(
 
 @router.get("/overrides")
 async def list_overrides(
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
 ) -> Page[AsignacionOverrideResponse]:
     deps = ListAsignacionOverridesDependencies(
@@ -302,7 +305,7 @@ async def list_overrides(
 @router.post("/overrides", status_code=status.HTTP_201_CREATED)
 async def create_override(
     payload: CreateAsignacionOverrideRequest,
-    identity: Identity = _require_manage_admin,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> AsignacionOverrideResponse:
     deps = CreateAsignacionOverrideDependencies(
@@ -328,7 +331,7 @@ async def update_override(
     override_id: uuid.UUID,
     # Mismo body que el alta -- el id va en el path y el creador no cambia.
     payload: CreateAsignacionOverrideRequest,
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> AsignacionOverrideResponse:
     deps = UpdateAsignacionOverrideDependencies(
@@ -352,7 +355,7 @@ async def update_override(
 @router.post("/overrides/{override_id}/cancelar", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_override(
     override_id: uuid.UUID,
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db),
 ) -> None:
     deps = CancelAsignacionOverrideDependencies(
@@ -365,7 +368,7 @@ async def cancel_override(
 async def list_assignable_users(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
-    _identity: Identity = _require_manage_admin,
+    _identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db),
 ) -> Page[UserOptionResponse]:
     provider = SqlAlchemyUserProvider(db)

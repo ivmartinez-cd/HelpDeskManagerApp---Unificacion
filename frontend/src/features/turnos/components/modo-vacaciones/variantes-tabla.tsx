@@ -11,6 +11,8 @@ import { BrandBadge } from "@/shared/components/ui/brand-form";
 
 interface VariantesTablaProps {
   rows: GrillaVariante[];
+  /** `turnos.manage` (ADR-029): sin esto solo se previsualiza. */
+  canMutar?: boolean;
   onPreview: (variante: GrillaVariante) => void;
   onEdit: (variante: GrillaVariante) => void;
   onCancel: (variante: GrillaVariante) => void;
@@ -20,7 +22,13 @@ interface VariantesTablaProps {
  * estados Programada/Vigente/Vencida se derivan por fecha en el cliente (la
  * DB solo persiste ACTIVA/CANCELADA, ADR-025). Solo las que siguen en juego
  * se editan/cancelan: una vencida o cancelada es registro histórico. */
-export function VariantesTabla({ rows, onPreview, onEdit, onCancel }: VariantesTablaProps) {
+export function VariantesTabla({
+  rows,
+  canMutar = true,
+  onPreview,
+  onEdit,
+  onCancel,
+}: VariantesTablaProps) {
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
       <table className="w-full min-w-[720px] text-left">
@@ -38,7 +46,7 @@ export function VariantesTabla({ rows, onPreview, onEdit, onCancel }: VariantesT
           {rows.map((v) => {
             const estado = deriveEstadoVariante(v);
             const meta = ESTADO_VARIANTE_META[estado];
-            const mutable = estado === "vigente" || estado === "programada";
+            const mutable = canMutar && (estado === "vigente" || estado === "programada");
             const etiqueta = v.motivo ?? `grilla del ${formatFecha(v.desde)}`;
             const huecos = v.advertencias.filter((a) => a.tipo === "HUECO").length;
             return (

@@ -139,7 +139,7 @@ test.describe("Modo vacaciones (grilla variante de turnos)", () => {
       },
     );
 
-    await page.goto("/admin/turnos");
+    await page.goto("/turnos");
     await page.getByRole("radio", { name: "Modo vacaciones" }).click();
     await expect(page.getByText("No hay grillas de vacaciones")).toBeVisible();
     await page.getByRole("button", { name: "Nueva grilla de vacaciones" }).click();
@@ -224,7 +224,7 @@ test.describe("Modo vacaciones (grilla variante de turnos)", () => {
       await r.fulfill({ status: 204 });
     });
 
-    await page.goto("/admin/turnos?tab=vacaciones");
+    await page.goto("/turnos?tab=vacaciones");
     await expect(page.getByLabel("Estado: Vigente")).toBeVisible();
     await expect(page.getByLabel("Estado: Cancelada")).toBeVisible();
 
@@ -266,7 +266,7 @@ test.describe("Modo vacaciones (grilla variante de turnos)", () => {
     };
     await mockTurnos(page, [conSlots]);
 
-    await page.goto("/admin/turnos?tab=vacaciones");
+    await page.goto("/turnos?tab=vacaciones");
     await page.getByRole("button", { name: "Ver grilla Vacaciones M. J. Vela" }).click();
 
     const dialog = page.getByRole("dialog", { name: "Grilla de vacaciones · Vacaciones M. J. Vela" });
@@ -369,7 +369,7 @@ test.describe("Modo vacaciones (grilla variante de turnos)", () => {
     const cta = banner.getByRole("link", { name: "Armar grilla de cobertura →" });
     await expect(cta).toHaveAttribute(
       "href",
-      `/admin/turnos?tab=vacaciones&ausente=${MAJO}&desde=2026-08-24&hasta=2026-08-28&motivo=Vacaciones+Maria+Jose+Vela`,
+      `/turnos?tab=vacaciones&ausente=${MAJO}&desde=2026-08-24&hasta=2026-08-28&motivo=Vacaciones+Maria+Jose+Vela`,
     );
   });
 });
