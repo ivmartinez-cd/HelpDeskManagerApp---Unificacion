@@ -62,7 +62,9 @@ export default function UserPermissionsPage({ params }: PageProps) {
             <thead>
               <tr className="border-b border-border text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-3">Módulo</th>
-                <th className="px-4 py-3">Alcance</th>
+                {/* Sin columna "Alcance": `user_module_scope` (alcance por sector)
+                    existe en la DB pero no tiene lógica (ADR-029, deuda conocida);
+                    mostrar un select deshabilitado solo confundía al admin. */}
                 {actions.map((action) => (
                   <th key={action.key} className="px-4 py-3 text-center">
                     {action.label}
@@ -80,15 +82,6 @@ export default function UserPermissionsPage({ params }: PageProps) {
                         Módulo aún no habilitado
                       </p>
                     )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <select
-                      disabled
-                      title="El alcance por sector se activa cuando se migre el módulo de vacaciones"
-                      className="rounded-[8px] border border-border bg-card px-2 py-1 text-xs text-muted-foreground disabled:opacity-50"
-                    >
-                      <option>Global</option>
-                    </select>
                   </td>
                   {actions.map((action) => {
                     const applicable = module.actions.includes(action.key);

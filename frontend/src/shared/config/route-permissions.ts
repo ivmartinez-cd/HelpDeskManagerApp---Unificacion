@@ -10,9 +10,10 @@
  * una ruta sin entrada acá **no se bloquea** (fail-open a nivel página): una
  * pantalla nueva sin mapear sigue siendo usable y el backend la protege igual.
  *
- * Orden: se toma la primera entrada cuyo `prefix` matchea (`===` o `/…`), así
- * que lo específico va antes que lo general (`/vacaciones/aprobaciones` antes
- * que `/vacaciones`). `anyOf` = alcanza con uno de los permisos listados.
+ * Orden: se toma la primera entrada cuyo `prefix` matchea (`===` o `/…`; con
+ * `exact: true` solo `===`), así que lo específico va antes que lo general
+ * (`/vacaciones/aprobaciones` antes que `/vacaciones`). `anyOf` = alcanza con
+ * uno de los permisos listados.
  *
  * Regla al agregar un módulo o pantalla: seed en el catálogo (migración) +
  * `well_known_permissions.py` + entrada acá + `can()` en los botones de
@@ -26,6 +27,9 @@ export interface RequiredPermission {
 interface RouteRule {
   prefix: string;
   anyOf: RequiredPermission[];
+  /** Solo la ruta exacta, no sus sub-rutas (para un hub cuya raíz pide más
+   * permiso que sus hijas). */
+  exact?: boolean;
 }
 
 const p = (module: string, action: string): RequiredPermission => ({ module, action });
@@ -46,6 +50,11 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { prefix: "/vacaciones/configuracion", anyOf: [p("vacaciones", "manage")] },
   { prefix: "/vacaciones", anyOf: [p("vacaciones", "view")] },
 
+  // Contadores: el hub raíz ("Automatización": DB3, proyección, FTP, SDS, ERS…)
+  // son todas herramientas cuyos endpoints exigen `contadores.export`
+  // (tools/ftp_clients/sds/ers routers); calendario, coberturas, equipos sin
+  // real y anexos se abren con `view`.
+  { prefix: "/contadores", exact: true, anyOf: [p("contadores", "export")] },
   // Resto: la página entera se abre con view; las acciones se gatean adentro.
   { prefix: "/contadores", anyOf: [p("contadores", "view")] },
   { prefix: "/insumos", anyOf: [p("insumos", "view")] },
@@ -56,15 +65,16 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { prefix: "/analisis-log-hp", anyOf: [p("analisis-log-hp", "view")] },
 ];
 
-function matches(prefix: string, pathname: string): boolean {
-  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+function matches(rule: RouteRule, pathname: string): boolean {
+  if (pathname === rule.prefix) return true;
+  return !rule.exact && pathname.startsWith(`${rule.prefix}/`);
 }
 
 /** Primera regla que aplica al pathname (sin query string), o `null` si la
  * ruta no está mapeada (solo login). */
 export function ruleForPath(pathname: string): RouteRule | null {
   const clean = pathname.split("?")[0] ?? pathname;
-  return ROUTE_RULES.find((r) => matches(r.prefix, clean)) ?? null;
+  return ROUTE_RULES.find((r) => matches(r, clean)) ?? null;
 }
 
 /** `can` es el de `useSession()` (ya contempla superadmin). */
