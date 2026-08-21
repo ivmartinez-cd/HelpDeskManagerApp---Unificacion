@@ -9,6 +9,9 @@ from functools import lru_cache
 from src.modules.contadores.infrastructure.siges.pyodbc_anexos_pendientes_gateway import (
     PyodbcAnexosPendientesGateway,
 )
+from src.modules.contadores.infrastructure.siges.pyodbc_clientes_nuevos_gateway import (
+    PyodbcClientesNuevosGateway,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_clientes_pendientes_periodo_gateway import (  # noqa: E501
     PyodbcClientesPendientesPeriodoGateway,
 )
@@ -49,6 +52,11 @@ _ESTADO_CIERRE_GRUPOS_CACHE_TTL_SECONDS = 300.0
 # Mismo criterio: consulta liviana (agrega por grupo, filtra por período
 # exacto), TTL corto para no repetirla en cada carga de la card de Inicio.
 _CLIENTES_PENDIENTES_PERIODO_CACHE_TTL_SECONDS = 300.0
+
+# Fichas de clientes nuevos: dos consultas livianas (instalaciones por empresa
+# y candidatos por primer contrato), TTL corto para que "Actualizar" sea
+# barato y la pantalla no repita la consulta en cada filtro.
+_CLIENTES_NUEVOS_CACHE_TTL_SECONDS = 300.0
 
 
 @lru_cache
@@ -133,6 +141,27 @@ def get_parque_cliente_gateway_or_none() -> PyodbcParqueClienteGateway | None:
     except ExternalServiceError as exc:
         logger.warning(
             "Siges (MERCURIO) no configurado; la card de clientes va sin impresoras",
+            exc_info=exc,
+        )
+        return None
+
+
+@lru_cache
+def get_clientes_nuevos_gateway() -> PyodbcClientesNuevosGateway:
+    return PyodbcClientesNuevosGateway(
+        require_mercurio_runner(), _CLIENTES_NUEVOS_CACHE_TTL_SECONDS
+    )
+
+
+def get_clientes_nuevos_gateway_or_none() -> PyodbcClientesNuevosGateway | None:
+    """Sin Siges las fichas se siguen pudiendo cargar y editar: solo falta la
+    anotación de instalaciones y la lista de candidatos queda vacía."""
+    try:
+        return get_clientes_nuevos_gateway()
+    except ExternalServiceError as exc:
+        logger.warning(
+            "Siges (MERCURIO) no configurado; las fichas de clientes nuevos van sin "
+            "instalaciones ni candidatos",
             exc_info=exc,
         )
         return None

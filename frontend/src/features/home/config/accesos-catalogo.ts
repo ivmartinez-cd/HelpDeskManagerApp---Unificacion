@@ -15,6 +15,7 @@ import {
   ScrollText,
   UserRoundCheck,
   Users,
+  UserPlus,
   type LucideIcon,
 } from "lucide-react";
 
@@ -37,6 +38,7 @@ export const ACCESOS_CATALOGO: AccesoDirecto[] = [
   { href: "/contadores/coberturas", label: "Coberturas", icon: UserRoundCheck, moduleKey: "contadores" },
   { href: "/contadores/equipos-sin-real", label: "Sin contador real", icon: Gauge, moduleKey: "contadores" },
   { href: "/contadores/anexos-pendientes", label: "Anexos sin facturar", icon: ReceiptText, moduleKey: "contadores" },
+  { href: "/contadores/clientes-nuevos", label: "Clientes nuevos", icon: UserPlus, moduleKey: "contadores" },
   { href: "/insumos", label: "Solicitudes", icon: ClipboardList, moduleKey: "insumos" },
   { href: "/insumos/historial", label: "Historial de pedidos", icon: History, moduleKey: "insumos" },
   { href: "/insumos/equipos-nuevos", label: "Equipos sin registrar", icon: Monitor, moduleKey: "insumos" },

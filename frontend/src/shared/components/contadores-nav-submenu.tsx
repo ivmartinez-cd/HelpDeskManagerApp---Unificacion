@@ -8,6 +8,7 @@ import {
   ReceiptText,
   UserRoundCheck,
   Workflow,
+  UserPlus,
   type LucideIcon,
 } from "lucide-react";
 import { useSession } from "@/services/session-provider";
@@ -54,6 +55,12 @@ export function ContadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }
       label: "Anexos sin facturar",
       icon: ReceiptText,
       active: pathname === "/contadores/anexos-pendientes",
+    },
+    {
+      href: "/contadores/clientes-nuevos",
+      label: "Clientes nuevos",
+      icon: UserPlus,
+      active: pathname === "/contadores/clientes-nuevos",
     },
     {
       href: "/contadores",

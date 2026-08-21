@@ -1,4 +1,5 @@
 from src.modules.contadores.infrastructure.models.calendar_event_model import CalendarEventModel
+from src.modules.contadores.infrastructure.models.cliente_nuevo_model import ClienteNuevoModel
 from src.modules.contadores.infrastructure.models.cliente_siges_map_model import (
     ClienteSigesMapModel,
 )
@@ -10,6 +11,7 @@ from src.modules.contadores.infrastructure.models.operador_model import Operador
 
 __all__ = [
     "CalendarEventModel",
+    "ClienteNuevoModel",
     "ClienteSigesMapModel",
     "FtpClientModel",
     "MeterClientConfigModel",

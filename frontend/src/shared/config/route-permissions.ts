@@ -65,6 +65,7 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   // con `manage` (decisión del usuario 2026-08-21: los operadores no los ven).
   { prefix: "/contadores/coberturas", anyOf: [p("contadores", "manage")] },
   { prefix: "/contadores/anexos-pendientes", anyOf: [p("contadores", "manage")] },
+  { prefix: "/contadores/clientes-nuevos", anyOf: [p("contadores", "manage")] },
   // Resto: la página entera se abre con view; las acciones se gatean adentro.
   { prefix: "/contadores", anyOf: [p("contadores", "view")] },
   { prefix: "/insumos", anyOf: [p("insumos", "view")] },

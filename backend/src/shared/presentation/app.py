@@ -32,6 +32,9 @@ from src.modules.contadores.presentation.anexos_pendientes_router import (
 from src.modules.contadores.presentation.calendario_router import (
     router as calendario_router,
 )
+from src.modules.contadores.presentation.clientes_nuevos_router import (
+    router as clientes_nuevos_router,
+)
 from src.modules.contadores.presentation.equipos_sin_real_router import (
     router as equipos_sin_real_router,
 )
@@ -211,6 +214,7 @@ def create_app() -> FastAPI:
     app.include_router(route_visits_router)
     app.include_router(contadores_tools_router)
     app.include_router(ftp_clients_router)
+    app.include_router(clientes_nuevos_router)
     app.include_router(sds_router)
     app.include_router(ers_router)
     app.include_router(equipos_sin_real_router)

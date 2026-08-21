@@ -312,6 +312,101 @@ Investigación para la feature "preventivos por zona de distribución". Scripts:
   pantalla "de impresoras" tiene que filtrar por prefijo (preventivos usa
   `LIKE 'PRT %' OR 'MFP %'`); el rubro no alcanza (ver nota PrintBox más arriba).
 
+### Señales de "cliente nuevo" / "instalación nueva" (confirmado 2026-08-21)
+
+Investigado para una alerta de calendario de onboarding de clientes nuevos (mensajes de
+instalación, seguimiento). Scripts: `backend/scripts/explore_siges_nuevos_clientes.py` y
+`..._ronda2.py` (solo lectura, verifican roles antes de leer).
+
+- **`Empresa` NO tiene fecha de alta.** Sus 29 columnas no incluyen ninguna fecha de creación;
+  `Fecha_Mod`/`Usuario_Mod` en las vistas emuladas (`Empresa`, `Sucursal`, `Anexo`, `Contrato`)
+  traen la hora del refresh de la réplica (`Usuario_Mod='emulado'`, todas las filas con el mismo
+  timestamp) → inservibles como señal temporal. `FechaRestriccionServicio` es sentinel
+  (1999-01-01) en la mayoría. `ID_Empresa` sí es secuencial (1395…1417 son los clientes más
+  nuevos) → sirve como watermark, pero no da fecha.
+- **Mejor señal de cliente nuevo: `dbo.Contrato.FechaFirmaContrato`** (`ID_Contrato`,
+  `ID_Empresa`, `ID_EmpresaAdmin`, `NombreContrato`, `Estado` 1/2/3, `Duracion`,
+  `Cancelabilidad`, `FechaFirmaContrato`, `Id_Vendedor`→`Vendedor`). "Primer contrato de la
+  empresa" = cliente nuevo: ~2-6 contratos firmados por mes, 19 empresas con primer contrato en
+  los últimos 12 meses (SWEET DREAM 2026-08-10, EXPRESO BILETTA 2026-07-28, FURLONG 2026-07-01,
+  TU NEUMATICO/NEUMATICOS ROSMI 2026-06-25, Siemens, GHS PHARMA, Exanet, Boston Cred, FCA…).
+  Secuencia real observada: firma → 1-4 semanas → primer `Incidente` tipo 103 (instalación) →
+  primera toma en `Contadores` el mismo día (EXPRESO BILETTA: 07-28 → 08-06 → 08-06; SWEET
+  DREAM: 08-10 → 08-14). FURLONG y FCA tienen contrato y todavía ninguna instalación.
+- **Fecha real de alta del cliente: reporte legacy
+  `http://sitesphp.cdsa.com.ar/laprida/Operaciones/AltaGrupoEconomico/RUN.php`** ("ALTAS DE
+  GRUPOS ECONOMICOS", sin login, `POST` con `FORM_Parametros:FDesde`/`FHasta` en `dd/mm/aaaa` +
+  `FORM_Parametros:Procesar=Procesar`; host `192.168.176.246`, alcanzable desde WSL y desde el
+  contenedor del backend sin proxy). Devuelve por fila **grupo económico, fecha de alta y
+  usuario que lo dio de alta** (mrosa, avanrell, glagues, eamielan, smiguez, erodriguez,
+  iperezsr — coinciden con `Empresa.EmailSeguimiento`). 2026-02→08: 12 altas (SWEET DREAM
+  08-06, EXPRESO BILETTA 07-30, TU NEUMATICO y ROSMI 07-01, FURLONG 06-30, GHS PHARMA 06-08,
+  EXANET 05-26, SIEMENS 05-21, Boston Cred 04-01, FCA 03-25, BP 03-06, Transporte Caccia
+  02-26). Es la señal **más temprana** (precede al contrato: BP y Caccia todavía no tienen
+  contrato firmado). **No es replicable desde SigesReadOnly**: `dbo.GrupoEconomico` ahí es una
+  VIEW emulada (`id`, `descripcion`, `Estado`, `Fecha_Mod`, `Usuario_Mod`, `userftp`,
+  `passftp`) con `Fecha_Mod`/`Usuario_Mod` pisados por el refresh; `id` es secuencial
+  (718 = SWEET DREAM) y `Empresa.ID_GrupoE` → `GrupoEconomico.id` (526 grupos de 1 empresa,
+  ~120 multi-empresa). ⚠️ la vista expone `userftp`/`passftp` en claro: no loguearlos ni
+  volcarlos a la app.
+- **Impresión vs cartelería en un contrato**: `Contrato` no tiene columna de rubro; lo
+  discrimina **`Contrato.ID_EmpresaAdmin`** (empresa propia de CD que administra): `681` =
+  `CD4 (Directar)` → cartelería digital (histórico activo: 35 contratos LFD/1138 pantallas +
+  24 contratos `Reproductor Carteleria Digital`/678); `121` = `CD3 (CDSISA)` → impresión
+  (219 contratos PRT/8101 máq., 274 MFP/8008) más algo de IT (NTB, Headset, CEL, SCN, PC);
+  `1` = `CD1 (CDSA)` → mayormente hardware IT (NTB, Dock, Monitor); `2` = `CD2 (PS)`.
+  `NombreContrato` suele repetirlo en el código (`COD36CDSI…`/`COP36CDSA…` vs
+  `COP36DIRAR…`), pero es texto libre (licitaciones, "X DEMO"). Confirmación fina: prefijo de
+  `ArtGen.Descripcion` de las máquinas del contrato (`Maquina.ID_Anexo` → `Anexo.ID_Contrato`):
+  `MFP`/`PRT`/`PLT` = impresión, `LFD`/`Reproductor` = cartelería. Hay contratos mixtos
+  (Enap Sipetrol bajo 121 con Dock/D10QRLS/MFP/LFD).
+  A nivel **grupo económico** no hay rubro propio (ni en `GrupoEconomico` ni en el reporte de
+  sitesphp): se deriva por `Empresa.ID_GrupoE` → contratos de sus empresas (`ID_EmpresaAdmin`)
+  o por su parque; un grupo recién dado de alta sin contrato ni máquinas (BP, Transporte Caccia
+  al 2026-08-21) queda "sin rubro" hasta que se firme. `Empresa.ID_Actividad` → `Actividad`
+  es el rubro del cliente (industria), no el de CD. Catálogo `dbo.Rubro` (artículos): 4
+  Impresoras, 7 Cartelería, 8 Printing Software, 9 Cómputo, 1 Toner, 2 Opcionales, 3 Repuestos
+  — alternativa al prefijo de `ArtGen`, con la salvedad PrintBox ya anotada. De los 14 grupos
+  dados de alta desde 2025-12 solo SWEET DREAM (718) y TGS (706) son cartelería (681 / LFD,
+  Reproductor); el resto es impresión (121 / MFP, PRT, PLT).
+- **Instalaciones: `Incidente.ID_Tipo_Incidente = 103` ('Instalación-Desinstalación')**,
+  200-375 por mes. Columnas útiles: `ID_Empresa`, `ID_Sucursal`, `ID_Maquina`, `ID_Anexo`,
+  `ID_Tecnico` (PST), `Fecha_Ingreso`, `Fecha_Vto`, `Fecha_Cierre`, `ID_Estado_Incidente`
+  (catálogo `Estado_Incidente`: 110 Pendiente, 200 Derivado, 300 En Curso, 500 Finalizado,
+  600 Cerrado, 700 Resuelto, 900 Anulado), `Visita_a`, `Solicitante`, `emailSolicitante`.
+  El tipo 103 **no distingue** instalación de desinstalación por sí solo (`IncidenteCausa`:
+  0 Indeterminado, 100 Equipo, 500 Configuracion/Instalacion, 600 Otros — no discrimina);
+  la desinstalación queda en texto libre de `MaquinaHist.Observ` ("Des-Instalación Nro. N").
+  Proxy práctico: instalación = 103 cuya máquina/sucursal no tenía actividad previa.
+- **Registro real de instalas (no el incidente): `dbo.MaquinaUFisica`** (`ID`, `ID_Maquina`,
+  `ID_Empresa`, `ID_Sucursal`, `ID_Sector`, `Fecha_Movim`, `ID_MotivoMov`, `Estado`,
+  `Fecha_Mod`, `Usuario_Mod`) = movimientos de ubicación física de cada máquina, con catálogo
+  `MaquinaMotivoMov` (1 Alta en Cliente, 2 Baja en Cliente, 3/4 Backup, 5/6 Reparación, 7/8
+  Demo, 9 Cambio Sector/Sucursal, 10 Ingreso por Compra, 11 Alta para Presupuesto, 12
+  Inclusión a contrato, 13 Reemplazo por garantía, 14 Recambio por fallas, 98 Migración).
+  `Maquina.ID_UFisica` apunta al movimiento vigente. **Instalación = fila con
+  `ID_MotivoMov = 1`** (`Fecha_Movim` = fecha de instalación, `Usuario_Mod` = quien la cargó, p.
+  ej. `equipamiento`); `dbo.MaquinaInstalacion (ID_UFisica, NroInstala)` agrupa las máquinas de
+  una misma "Instala Nro" (96 % de las altas de los últimos 6 meses la tienen; es el número
+  que se ve en `MaquinaHist.Observ` "Des-Instalación Nro. N"). Volumen: 230-1060 altas/mes en
+  60-76 empresas. Verificado con EXPRESO BILETTA: 11 máquinas en 4 instalas (32772-32775,
+  32875) del 06-08 al 21-08, una fila de `Incidente` tipo 103 por máquina creada el mismo día.
+  Lo usa `contadores` (fichas de clientes nuevos, `clientes_nuevos_query.py`).
+- **Sucursal nueva de cliente existente**: `MIN(Incidente.Fecha_Ingreso)` por `ID_Sucursal`
+  con tipo 103 (Sucursal tampoco tiene fecha de alta; `Id_Sucursal` también es secuencial).
+- **`Anexo.FechaInicio`** marca inicio de facturación de anexos nuevos (7-16 por mes, puede
+  ser futuro: anexos con inicio 2026-09-01 ya cargados); `Anexo.Observ` suele tener "F. Contrato /
+  Inicio de la facturacion" en texto libre.
+- **Responsable interno del cliente**: `Empresa.EmailSeguimiento` trae el mail del operador de
+  Canal Directo que sigue la cuenta (smiguez@ 267 empresas, bromero@ 73, erodriguez@ 71,
+  lnowakowski@ 53, avanrell@ 27…; a veces varios separados por `;`, 216 vacíos). Junto con
+  `Contrato.Id_Vendedor` → `Vendedor.Mail`, es la forma de saber a quién avisar. También
+  `ContactoFactura`, `EmailIncidente`, `HabilitaEmailIncidente`.
+- Tablas de historial vistas y descartadas para esto: `MaquinaHist` (snapshot por cambio de
+  máquina, 379k filas, texto libre), `ObjetoHist` (repuestos), `Auditlog` (solo remitos DigiX),
+  `AnexoMovimientoLog` (movimiento de máquinas entre anexos, último 2023), `MaquinaMotivoMov`
+  (catálogo sin tabla de movimientos con fecha visible), `MaquinaInstalacion` (solo un contador).
+
 ## 4. Candidatas exploradas — columnas confirmadas, dato real pendiente [CANDIDATA]
 
 Útiles para casos de uso futuros que no sean el Calendario de Contadores. Ninguna de estas fue

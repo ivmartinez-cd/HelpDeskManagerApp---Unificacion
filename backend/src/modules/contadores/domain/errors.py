@@ -113,3 +113,28 @@ class OverlappingOverrideError(BusinessRuleViolationError):
             "Ya existe un override activo para ese operador ausente con fechas superpuestas "
             "y alcance en común"
         )
+
+
+class ClienteNuevoNotFoundError(NotFoundError):
+    default_code = "CLIENTE_NUEVO_NOT_FOUND"
+
+    def __init__(self) -> None:
+        super().__init__("Ficha de cliente nuevo no encontrada")
+
+
+class DuplicateClienteNuevoError(BusinessRuleViolationError):
+    default_code = "DUPLICATE_CLIENTE_NUEVO"
+
+    def __init__(self, cliente: str) -> None:
+        super().__init__(f"Ya existe una ficha abierta para el cliente {cliente!r}")
+
+
+class InvalidClienteNuevoError(ValidationError):
+    default_code = "INVALID_CLIENTE_NUEVO"
+
+
+class InvalidEstadoClienteNuevoError(ValidationError):
+    default_code = "INVALID_ESTADO_CLIENTE_NUEVO"
+
+    def __init__(self, estado: str) -> None:
+        super().__init__(f"Estado de ficha inválido: {estado!r}")
