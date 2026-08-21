@@ -88,6 +88,12 @@ async def login(
         user_agent=request.headers.get("user-agent"),
     )
     result = await AuthenticateUser(deps).execute(command)
+    # Commit explícito ANTES de devolver la cookie. El commit de `get_db` corre al
+    # cerrar la dependencia, y con FastAPI >= 0.118 (scope por defecto "request")
+    # eso pasa DESPUÉS de enviar la respuesta: el cliente recibía la cookie y
+    # pegaba a /api/auth/me antes de que la sesión estuviera commiteada → 401 y
+    # rebote a /login (reproducido 15/15 bajo carga, 2026-08-21).
+    await db.commit()
     set_session_cookies(response, session_token=result.session_token, csrf_token=tokens.generate())
     return IdentityResponse.from_domain(result.identity)
 
