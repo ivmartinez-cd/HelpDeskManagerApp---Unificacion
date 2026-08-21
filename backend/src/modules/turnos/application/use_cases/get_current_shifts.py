@@ -1,5 +1,6 @@
-from dataclasses import dataclass
-from datetime import datetime
+import uuid
+from dataclasses import dataclass, field
+from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from src.modules.turnos.application.dtos.grilla_variante_dtos import (
@@ -12,6 +13,10 @@ from src.modules.turnos.domain.repositories.asignacion_override_repository impor
     AsignacionOverrideRepository,
 )
 from src.modules.turnos.domain.repositories.asignacion_repository import AsignacionRepository
+from src.modules.turnos.domain.repositories.ausencias_lookup import (
+    AusenciasLookup,
+    AusenciasLookupNulo,
+)
 from src.modules.turnos.domain.repositories.casilla_repository import CasillaRepository
 from src.modules.turnos.domain.repositories.grilla_variante_repository import (
     GrillaVarianteRepository,
@@ -31,6 +36,9 @@ class GetCurrentShiftsDependencies:
     users: UserProvider
     overrides: AsignacionOverrideRepository
     variantes: GrillaVarianteRepository
+    # Novedades aprobadas del día (home office, cambio de horario, vacaciones…)
+    # para anotar a cada operador; vacío = sin anotaciones (tests, scripts).
+    ausencias: AusenciasLookup = field(default_factory=AusenciasLookupNulo)
 
 
 class GetCurrentShifts:
@@ -68,11 +76,28 @@ class GetCurrentShifts:
             variante=variante,
         )
         return CurrentShiftsDTO(
-            shifts=await self._to_dtos(resolved),
+            shifts=await self._to_dtos(resolved, await self._notas_del_dia(resolved, target_date)),
             variante_activa=_variante_activa(variante),
         )
 
-    async def _to_dtos(self, resolved: list[ResolvedSlotShift]) -> list[ResolvedShiftDTO]:
+    async def _notas_del_dia(
+        self, resolved: list[ResolvedSlotShift], target_date: date
+    ) -> dict[uuid.UUID, str]:
+        """user_id → detalle de la novedad aprobada que lo alcanza hoy
+        ('Home office', 'Horario 08:00–17:00', 'Vacaciones'…). Si hay más de
+        una, gana la primera (ordenadas por el lookup)."""
+        user_ids = list({u_id for shift in resolved for u_id in shift.user_ids})
+        novedades = await self._deps.ausencias.ausencias_aprobadas_en(
+            user_ids, target_date, target_date
+        )
+        notas: dict[uuid.UUID, str] = {}
+        for novedad in novedades:
+            notas.setdefault(novedad.user_id, novedad.detalle)
+        return notas
+
+    async def _to_dtos(
+        self, resolved: list[ResolvedSlotShift], notas: dict[uuid.UUID, str]
+    ) -> list[ResolvedShiftDTO]:
         all_user_ids = {u_id for shift in resolved for u_id in shift.user_ids}
         user_info_map = await self._deps.users.get_users_by_ids(list(all_user_ids))
         return [
@@ -93,6 +118,7 @@ class GetCurrentShifts:
                         if u_id in user_info_map
                         else "Desconocido",
                         color=user_info_map[u_id].color if u_id in user_info_map else None,
+                        nota=notas.get(u_id),
                     )
                     for u_id in shift.user_ids
                 ],

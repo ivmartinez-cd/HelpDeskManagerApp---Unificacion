@@ -65,6 +65,7 @@ class AdvertenciaCoberturaResponse(BaseModel):
     user_name: str | None = Field(default=None, serialization_alias="userName")
     desde: date | None = None
     hasta: date | None = None
+    detalle: str | None = None
 
     @classmethod
     def from_dto(cls, dto: AdvertenciaCoberturaDTO) -> "AdvertenciaCoberturaResponse":
@@ -79,6 +80,7 @@ class AdvertenciaCoberturaResponse(BaseModel):
             user_name=dto.user_name,
             desde=dto.desde,
             hasta=dto.hasta,
+            detalle=dto.detalle,
         )
 
 

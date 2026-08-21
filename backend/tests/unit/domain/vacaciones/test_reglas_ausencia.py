@@ -107,3 +107,37 @@ class TestVerificarPuedeCambiarEstado:
         verificar_puede_cambiar_estado(make_actor(es_admin=True))
         with pytest.raises(OperacionNoPermitidaError):
             verificar_puede_cambiar_estado(make_actor(empleado_id=uuid.uuid4()))
+
+
+# --- Solicitudes de home office / cambio de horario (2026-08-21) ---------------
+
+from datetime import time as _time  # noqa: E402
+
+from src.modules.vacaciones.domain.entities.ausencia import (  # noqa: E402
+    TipoAusencia as _Tipo,
+)
+from src.modules.vacaciones.domain.services.reglas_ausencia import (  # noqa: E402
+    estado_inicial,
+    validar_horario,
+)
+from src.shared.domain.errors import ValidationError as _ValidationError  # noqa: E402
+
+
+def test_estado_inicial_admin_y_jefe_aprobada_empleado_pendiente() -> None:
+    assert estado_inicial(make_actor(es_admin=True)) is EstadoSolicitud.APPROVED
+    assert estado_inicial(make_actor(sector_gestionado_id=uuid.uuid4())) is EstadoSolicitud.APPROVED
+    assert estado_inicial(make_actor(empleado_id=uuid.uuid4())) is EstadoSolicitud.PENDING
+
+
+def test_cambio_de_horario_exige_rango_valido() -> None:
+    validar_horario(_Tipo.CAMBIO_HORARIO, _time(8, 0), _time(17, 0))
+    with pytest.raises(_ValidationError):
+        validar_horario(_Tipo.CAMBIO_HORARIO, None, None)
+    with pytest.raises(_ValidationError):
+        validar_horario(_Tipo.CAMBIO_HORARIO, _time(17, 0), _time(8, 0))
+
+
+def test_otros_tipos_no_llevan_horario() -> None:
+    validar_horario(_Tipo.HOME_OFFICE, None, None)
+    with pytest.raises(_ValidationError):
+        validar_horario(_Tipo.HOME_OFFICE, _time(8, 0), _time(17, 0))

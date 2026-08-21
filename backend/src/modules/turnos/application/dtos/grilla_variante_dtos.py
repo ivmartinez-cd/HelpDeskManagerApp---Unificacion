@@ -54,6 +54,7 @@ class AdvertenciaCoberturaDTO:
     hora_fin: time | None = None
     user_id: uuid.UUID | None = None
     user_name: str | None = None
+    detalle: str | None = None
     desde: date | None = None
     hasta: date | None = None
 

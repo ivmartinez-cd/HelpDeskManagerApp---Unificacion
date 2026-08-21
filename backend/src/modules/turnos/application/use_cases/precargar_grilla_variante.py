@@ -53,7 +53,7 @@ class PrecargarGrillaVariante:
             desde=desde,
             hasta=hasta,
             slots=[ctx.slot(s, casillas[s.casilla_id], asignaciones.get(s.id, [])) for s in slots],
-            advertencias=[ctx.ausencia(a) for a in ausencias],
+            advertencias=[ctx.ausencia(a) for a in ausencias if a.impide_cobertura],
         )
 
     async def _cargar_titular(
@@ -102,4 +102,5 @@ class _Contexto:
             user_name=self.nombre(a.user_id),
             desde=a.desde,
             hasta=a.hasta,
+            detalle=a.detalle,
         )

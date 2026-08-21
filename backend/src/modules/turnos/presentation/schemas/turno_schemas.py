@@ -20,10 +20,11 @@ class OperatorShiftResponse(BaseModel):
     user_id: uuid.UUID = Field(serialization_alias="userId")
     user_name: str = Field(serialization_alias="userName")
     color: str | None = None
+    nota: str | None = None
 
     @classmethod
     def from_dto(cls, dto: OperatorShiftView) -> "OperatorShiftResponse":
-        return cls(user_id=dto.user_id, user_name=dto.user_name, color=dto.color)
+        return cls(user_id=dto.user_id, user_name=dto.user_name, color=dto.color, nota=dto.nota)
 
 
 class ResolvedShiftResponse(BaseModel):

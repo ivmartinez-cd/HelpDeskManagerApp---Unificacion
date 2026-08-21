@@ -38,6 +38,9 @@ class OperatorShiftView:
     user_id: uuid.UUID
     user_name: str
     color: str | None
+    # Novedad aprobada del día que afecta al operador ('Home office',
+    # 'Horario 08:00–17:00', 'Vacaciones'…); None = jornada normal.
+    nota: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

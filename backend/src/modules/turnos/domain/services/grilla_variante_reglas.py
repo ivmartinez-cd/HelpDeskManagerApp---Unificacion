@@ -35,6 +35,8 @@ class AdvertenciaCobertura:
     user_id: uuid.UUID | None = None
     desde: date | None = None
     hasta: date | None = None
+    # OPERADOR_AUSENTE: qué lo ausenta ('Vacaciones', 'Horario 08:00–17:00'…).
+    detalle: str | None = None
 
 
 Intervalo = tuple[time, time]

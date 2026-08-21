@@ -7,6 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.vacaciones.application.dtos.ausencia_dtos import ListarAusenciasQuery
+from src.modules.vacaciones.application.use_cases.decidir_ausencia import (
+    DecidirAusencia,
+    DecidirAusenciaDependencies,
+)
 from src.modules.vacaciones.application.use_cases.gestionar_ausencias import (
     AusenciasDependencies,
     CrearAusencias,
@@ -40,6 +44,9 @@ from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_empleado_repo
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_feriado_repository import (
     SqlAlchemyFeriadoRepository,
 )
+from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_impacto_turnos_lookup import (  # noqa: E501
+    SqlAlchemyImpactoTurnosLookup,
+)
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_sector_repository import (
     SqlAlchemySectorRepository,
 )
@@ -50,6 +57,8 @@ from src.modules.vacaciones.presentation.dependencies.actor import get_actor_vac
 from src.modules.vacaciones.presentation.schemas.ausencia_schemas import (
     AusenciaResponse,
     CrearAusenciaRequest,
+    DecidirAusenciaRequest,
+    DecisionAusenciaResponse,
     DescuentoRowResponse,
     EditarAusenciaRequest,
 )
@@ -156,3 +165,25 @@ async def eliminar_ausencia(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await EliminarAusencia(_write_deps(db, actor)).execute(ausencia_id, actor)
+
+
+@router.post("/{ausencia_id}/decision")
+async def decidir_ausencia(
+    ausencia_id: uuid.UUID,
+    body: DecidirAusenciaRequest,
+    _identity: Identity = _require_approve,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> DecisionAusenciaResponse:
+    """Aprobar/rechazar una baja pedida por un empleado (home office, cambio de
+    horario…): mismo circuito que las solicitudes de vacaciones."""
+    deps = DecidirAusenciaDependencies(
+        ausencias=SqlAlchemyAusenciaRepository(db),
+        empleados=SqlAlchemyEmpleadoRepository(db),
+        auditoria=SqlAlchemyRegistradorAuditoria(db, actor.user_id),
+        impacto_turnos=SqlAlchemyImpactoTurnosLookup(db),
+    )
+    resultado = await DecidirAusencia(deps).execute(ausencia_id, body.to_command(), actor)
+    return DecisionAusenciaResponse.build(
+        resultado.ausencia.id, resultado.ausencia.status.value, resultado.afecta_turnos
+    )

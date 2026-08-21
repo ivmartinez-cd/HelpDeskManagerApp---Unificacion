@@ -4,7 +4,13 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.turnos.domain.repositories.ausencias_lookup import AusenciaAprobada
+from src.modules.turnos.domain.repositories.ausencias_lookup import (
+    TIPO_VACACIONES,
+    AusenciaAprobada,
+)
+from src.modules.vacaciones.infrastructure.models.ausencia_model import (
+    VacacionesAusenciaModel,
+)
 from src.modules.vacaciones.infrastructure.models.empleado_model import VacacionesEmpleadoModel
 from src.modules.vacaciones.infrastructure.models.solicitud_model import (
     VacacionesSolicitudModel,
@@ -17,8 +23,9 @@ class SqlAlchemyAusenciasLookup:
     """Adaptador cruzado hacia vacaciones -- legal porque el contrato
     `turnos-domain-app-independent-from-vacaciones` solo prohíbe la dependencia
     desde domain/application (mismo patrón que `SqlAlchemyPrestadorLookup` en
-    sla). Lee solicitudes APROBADAS de empleados con cuenta vinculada
-    (`vacaciones_empleado.user_id`, D3 del README de vacaciones)."""
+    sla). Lee solicitudes de vacaciones APROBADAS y bajas APROBADAS
+    (enfermedad, home office, cambio de horario…) de empleados con cuenta
+    vinculada (`vacaciones_empleado.user_id`, D3 del README de vacaciones)."""
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
@@ -28,6 +35,13 @@ class SqlAlchemyAusenciasLookup:
     ) -> list[AusenciaAprobada]:
         if not user_ids:
             return []
+        vacaciones = await self._vacaciones(user_ids, desde, hasta)
+        bajas = await self._bajas(user_ids, desde, hasta)
+        return sorted(vacaciones + bajas, key=lambda a: (a.desde, a.tipo))
+
+    async def _vacaciones(
+        self, user_ids: list[uuid.UUID], desde: date, hasta: date
+    ) -> list[AusenciaAprobada]:
         stmt = (
             select(
                 VacacionesEmpleadoModel.user_id,
@@ -44,11 +58,47 @@ class SqlAlchemyAusenciasLookup:
                 VacacionesSolicitudModel.start_date <= hasta,
                 VacacionesSolicitudModel.end_date >= desde,
             )
-            .order_by(VacacionesSolicitudModel.start_date)
         )
         rows = (await self._session.execute(stmt)).all()
         return [
-            AusenciaAprobada(user_id=user_id, desde=start, hasta=end)
+            AusenciaAprobada(user_id=user_id, desde=start, hasta=end, tipo=TIPO_VACACIONES)
             for user_id, start, end in rows
+            if user_id is not None
+        ]
+
+    async def _bajas(
+        self, user_ids: list[uuid.UUID], desde: date, hasta: date
+    ) -> list[AusenciaAprobada]:
+        stmt = (
+            select(
+                VacacionesEmpleadoModel.user_id,
+                VacacionesAusenciaModel.start_date,
+                VacacionesAusenciaModel.end_date,
+                VacacionesAusenciaModel.tipo,
+                VacacionesAusenciaModel.hora_desde,
+                VacacionesAusenciaModel.hora_hasta,
+            )
+            .join(
+                VacacionesAusenciaModel,
+                VacacionesAusenciaModel.empleado_id == VacacionesEmpleadoModel.id,
+            )
+            .where(
+                VacacionesEmpleadoModel.user_id.in_(user_ids),
+                VacacionesAusenciaModel.status == _APROBADA,
+                VacacionesAusenciaModel.start_date <= hasta,
+                VacacionesAusenciaModel.end_date >= desde,
+            )
+        )
+        rows = (await self._session.execute(stmt)).all()
+        return [
+            AusenciaAprobada(
+                user_id=user_id,
+                desde=start,
+                hasta=end,
+                tipo=tipo,
+                hora_desde=hora_desde,
+                hora_hasta=hora_hasta,
+            )
+            for user_id, start, end, tipo, hora_desde, hora_hasta in rows
             if user_id is not None
         ]

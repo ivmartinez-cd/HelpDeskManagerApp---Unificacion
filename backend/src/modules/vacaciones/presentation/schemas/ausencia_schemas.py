@@ -1,14 +1,17 @@
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.modules.vacaciones.application.dtos.ausencia_dtos import (
     AusenciaDTO,
     CrearAusenciaCommand,
+    DecidirAusenciaCommand,
     DescuentoRowDTO,
     EditarAusenciaCommand,
 )
+from src.modules.vacaciones.application.dtos.solicitud_dtos import AfectaTurnosAviso
+from src.modules.vacaciones.domain.entities.aprobacion import Decision
 from src.modules.vacaciones.domain.entities.ausencia import TipoAusencia
 from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud
 
@@ -30,6 +33,9 @@ class AusenciaResponse(BaseModel):
     reason: str | None
     status: str
     created_at: datetime = Field(serialization_alias="createdAt")
+    # Solo CAMBIO_HORARIO (HH:MM:SS); null en el resto.
+    hora_desde: time | None = Field(default=None, serialization_alias="horaDesde")
+    hora_hasta: time | None = Field(default=None, serialization_alias="horaHasta")
 
     @classmethod
     def from_dto(cls, dto: AusenciaDTO) -> "AusenciaResponse":
@@ -49,6 +55,8 @@ class AusenciaResponse(BaseModel):
             reason=a.reason,
             status=a.status.value,
             created_at=a.created_at,
+            hora_desde=a.hora_desde,
+            hora_hasta=a.hora_hasta,
         )
 
 
@@ -60,6 +68,10 @@ class _RangoAusencia(BaseModel):
     tipo: TipoAusencia
     reason: str | None = Field(default=None, max_length=500)
     half_day: bool = Field(default=False, alias="halfDay")
+    # Solo CAMBIO_HORARIO; la regla de negocio (obligatorio para ese tipo,
+    # prohibido para el resto, hasta > desde) vive en `validar_horario`.
+    hora_desde: time | None = Field(default=None, alias="horaDesde")
+    hora_hasta: time | None = Field(default=None, alias="horaHasta")
 
     @model_validator(mode="after")
     def _rango_valido(self) -> "_RangoAusencia":
@@ -79,6 +91,8 @@ class CrearAusenciaRequest(_RangoAusencia):
             tipo=self.tipo,
             reason=self.reason,
             half_day=self.half_day,
+            hora_desde=self.hora_desde,
+            hora_hasta=self.hora_hasta,
         )
 
 
@@ -93,7 +107,52 @@ class EditarAusenciaRequest(_RangoAusencia):
             reason=self.reason,
             half_day=self.half_day,
             status=self.status,
+            hora_desde=self.hora_desde,
+            hora_hasta=self.hora_hasta,
         )
+
+
+class DecidirAusenciaRequest(BaseModel):
+    decision: Decision
+    comment: str | None = Field(default=None, max_length=500)
+
+    def to_command(self) -> DecidirAusenciaCommand:
+        return DecidirAusenciaCommand(decision=self.decision.value, comment=self.comment)
+
+
+class AfectaTurnosAusenciaResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    user_id: uuid.UUID = Field(serialization_alias="userId")
+    desde: date
+    hasta: date
+
+
+class DecisionAusenciaResponse(BaseModel):
+    """Resultado de aprobar/rechazar una baja pedida por un empleado. `afectaTurnos`
+    (ADR-025) viene cuando se aprueba y el empleado tiene franjas de turno en el
+    rango: alimenta el CTA "Armar grilla de cobertura" del frontend."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: uuid.UUID
+    status: str
+    afecta_turnos: AfectaTurnosAusenciaResponse | None = Field(
+        default=None, serialization_alias="afectaTurnos"
+    )
+
+    @classmethod
+    def build(
+        cls, ausencia_id: uuid.UUID, status: str, afecta: AfectaTurnosAviso | None
+    ) -> "DecisionAusenciaResponse":
+        aviso = (
+            AfectaTurnosAusenciaResponse(
+                user_id=afecta.user_id, desde=afecta.desde, hasta=afecta.hasta
+            )
+            if afecta
+            else None
+        )
+        return cls(id=ausencia_id, status=status, afecta_turnos=aviso)
 
 
 class DescuentoRowResponse(BaseModel):

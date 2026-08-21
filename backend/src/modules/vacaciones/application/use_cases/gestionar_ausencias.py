@@ -1,6 +1,8 @@
-"""Ciclo de vida de las bajas (absence.controller legacy): nacen APPROVED,
-valida solape contra bajas del mismo tipo y contra solicitudes de vacaciones
-activas; editar/eliminar es del dueño o del admin.
+"""Ciclo de vida de las bajas (absence.controller legacy): las que carga
+admin/jefe nacen APPROVED y las que pide un empleado para sí nacen PENDING
+(las decide `DecidirAusencia`); valida solape contra bajas del mismo tipo y
+contra solicitudes de vacaciones activas; editar/eliminar es del dueño o del
+admin.
 """
 
 import uuid
@@ -18,7 +20,6 @@ from src.modules.vacaciones.domain.entities.registro_auditoria import (
     ACCION_UPDATE,
     ENTIDAD_AUSENCIA,
 )
-from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud
 from src.modules.vacaciones.domain.errors import (
     AusenciaNoEncontradaError,
     SolapamientoAusenciaError,
@@ -38,7 +39,9 @@ from src.modules.vacaciones.domain.repositories.solicitud_repository import (
 )
 from src.modules.vacaciones.domain.services.reglas_ausencia import (
     dias_de_baja,
+    estado_inicial,
     resolver_empleados_destino,
+    validar_horario,
     verificar_puede_cambiar_estado,
     verificar_puede_modificar_ausencia,
 )
@@ -80,6 +83,7 @@ def _metadata(ausencia: Ausencia, empleado_nombre: str) -> dict[str, object]:
         "startDate": ausencia.start_date.isoformat(),
         "endDate": ausencia.end_date.isoformat(),
         "days": ausencia.days_count,
+        "schedule": ausencia.horario_texto,
     }
 
 
@@ -97,6 +101,7 @@ class CrearAusencias:
         dias = dias_de_baja(command.start_date, command.end_date)
         if dias <= 0:
             raise ValidationError("El rango de fechas no es válido")
+        validar_horario(command.tipo, command.hora_desde, command.hora_hasta)
         for empleado_id in destinos:
             await _validar_solape(
                 self._deps, empleado_id, command.tipo, command.start_date, command.end_date
@@ -112,8 +117,10 @@ class CrearAusencias:
                 half_day=command.half_day,
                 tipo=command.tipo,
                 reason=command.reason,
-                status=EstadoSolicitud.APPROVED,
+                status=estado_inicial(actor),
                 created_at=datetime.now(UTC),
+                hora_desde=command.hora_desde,
+                hora_hasta=command.hora_hasta,
             )
             await self._deps.ausencias.add(ausencia)
             await self._deps.auditoria.registrar(
@@ -142,6 +149,7 @@ class EditarAusencia:
         dias = dias_de_baja(command.start_date, command.end_date)
         if dias <= 0:
             raise ValidationError("El rango de fechas no es válido")
+        validar_horario(command.tipo, command.hora_desde, command.hora_hasta)
         cambia_agenda = (
             command.tipo is not ausencia.tipo
             or command.start_date != ausencia.start_date
@@ -163,6 +171,8 @@ class EditarAusencia:
         ausencia.tipo = command.tipo
         ausencia.reason = command.reason
         ausencia.status = command.status or ausencia.status
+        ausencia.hora_desde = command.hora_desde
+        ausencia.hora_hasta = command.hora_hasta
         await self._deps.ausencias.save(ausencia)
         await self._registrar(ausencia)
         return ausencia

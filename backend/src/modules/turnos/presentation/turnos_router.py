@@ -70,6 +70,9 @@ from src.modules.turnos.infrastructure.repositories.sqlalchemy_asignacion_overri
 from src.modules.turnos.infrastructure.repositories.sqlalchemy_asignacion_repository import (
     SqlAlchemyAsignacionRepository,
 )
+from src.modules.turnos.infrastructure.repositories.sqlalchemy_ausencias_lookup import (
+    SqlAlchemyAusenciasLookup,
+)
 from src.modules.turnos.infrastructure.repositories.sqlalchemy_casilla_repository import (
     SqlAlchemyCasillaRepository,
 )
@@ -126,6 +129,7 @@ async def get_current_shifts(
         users=SqlAlchemyUserProvider(db),
         overrides=SqlAlchemyAsignacionOverrideRepository(db),
         variantes=SqlAlchemyGrillaVarianteRepository(db),
+        ausencias=SqlAlchemyAusenciasLookup(db),
     )
     result = await GetCurrentShifts(deps).execute()
     paged = Page.of(

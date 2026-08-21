@@ -34,6 +34,8 @@ def _to_entity(row: VacacionesAusenciaModel) -> Ausencia:
         reason=row.reason,
         status=EstadoSolicitud(row.status),
         created_at=row.created_at,
+        hora_desde=row.hora_desde,
+        hora_hasta=row.hora_hasta,
     )
 
 
@@ -134,3 +136,5 @@ def _apply(row: VacacionesAusenciaModel, ausencia: Ausencia) -> None:
     row.tipo = ausencia.tipo.value
     row.reason = ausencia.reason
     row.status = ausencia.status.value
+    row.hora_desde = ausencia.hora_desde
+    row.hora_hasta = ausencia.hora_hasta

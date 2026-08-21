@@ -89,9 +89,14 @@ async def calcular_advertencias(
     )
     advertencias += [
         AdvertenciaCobertura(
-            tipo="OPERADOR_AUSENTE", user_id=a.user_id, desde=a.desde, hasta=a.hasta
+            tipo="OPERADOR_AUSENTE",
+            user_id=a.user_id,
+            desde=a.desde,
+            hasta=a.hasta,
+            detalle=a.detalle,
         )
         for a in ausencias
+        if a.impide_cobertura  # home office no saca a nadie de la grilla
     ]
     return advertencias
 
@@ -182,4 +187,5 @@ def advertencia_dto(
         user_name=user.full_name if user else None,
         desde=a.desde,
         hasta=a.hasta,
+        detalle=a.detalle,
     )

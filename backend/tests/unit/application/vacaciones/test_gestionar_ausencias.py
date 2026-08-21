@@ -80,13 +80,14 @@ def _command(**overrides: object) -> CrearAusenciaCommand:
 
 
 class TestCrearAusencias:
-    async def test_empleado_crea_la_propia_aprobada(self) -> None:
+    async def test_empleado_crea_la_propia_pendiente(self) -> None:
+        """Un empleado pide para sí → PENDING; la decide la TL (2026-08-21)."""
         empleado = make_empleado()
         deps, auditoria = _deps([empleado])
         actor = make_actor(empleado_id=empleado.id)
         creadas = await CrearAusencias(deps).execute(_command(), actor)
         assert len(creadas) == 1
-        assert creadas[0].status is EstadoSolicitud.APPROVED
+        assert creadas[0].status is EstadoSolicitud.PENDING
         assert creadas[0].days_count == 2
         assert auditoria.registros[0][0:2] == ("CREATE", "Absence")
 

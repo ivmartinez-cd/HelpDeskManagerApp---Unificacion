@@ -6,8 +6,9 @@ toca bajas PENDING y nunca cambia el estado.
 """
 
 import uuid
+from datetime import time
 
-from src.modules.vacaciones.domain.entities.ausencia import Ausencia
+from src.modules.vacaciones.domain.entities.ausencia import Ausencia, TipoAusencia
 from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud
 from src.modules.vacaciones.domain.errors import (
     OperacionNoPermitidaError,
@@ -47,3 +48,23 @@ def verificar_puede_modificar_ausencia(
 def verificar_puede_cambiar_estado(actor: ActorVacaciones) -> None:
     if not actor.es_admin:
         raise OperacionNoPermitidaError("Sólo un administrador puede cambiar el estado")
+
+
+def estado_inicial(actor: ActorVacaciones) -> EstadoSolicitud:
+    """Admin/jefe registran hechos → APPROVED. Un empleado pide para sí →
+    PENDING, y la decide quien tiene `approve` (decisión del usuario 2026-08-21:
+    los operadores pasan siempre por la TL)."""
+    if actor.es_admin or actor.es_jefe_de_sector:
+        return EstadoSolicitud.APPROVED
+    return EstadoSolicitud.PENDING
+
+
+def validar_horario(tipo: TipoAusencia, hora_desde: time | None, hora_hasta: time | None) -> None:
+    """CAMBIO_HORARIO exige un rango horario válido; el resto no lo lleva."""
+    if tipo is TipoAusencia.CAMBIO_HORARIO:
+        if hora_desde is None or hora_hasta is None:
+            raise ValidationError("El cambio de horario necesita hora desde y hora hasta")
+        if hora_hasta <= hora_desde:
+            raise ValidationError("La hora hasta debe ser posterior a la hora desde")
+    elif hora_desde is not None or hora_hasta is not None:
+        raise ValidationError("El horario solo aplica a un cambio de horario")
