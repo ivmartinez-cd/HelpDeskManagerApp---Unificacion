@@ -92,7 +92,7 @@ async def list_ausencias(
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=500),
     _identity: Identity = _require_view,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[AusenciaResponse]:
     query = ListarAusenciasQuery(
         status=status_filter, tipo=tipo, empleado_id=empleado_id, desde=desde, hasta=hasta
@@ -110,7 +110,7 @@ async def reporte_descuentos(
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=500),
     _identity: Identity = _require_approve,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[DescuentoRowResponse]:
     deps = ReporteDescuentosDependencies(
         ausencias=SqlAlchemyAusenciaRepository(db),
@@ -128,7 +128,7 @@ async def crear_ausencias(
     body: CrearAusenciaRequest,
     _identity: Identity = _require_create,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, list[uuid.UUID]]:
     creadas = await CrearAusencias(_write_deps(db, actor)).execute(body.to_command(), actor)
     return {"ids": [a.id for a in creadas]}
@@ -140,7 +140,7 @@ async def editar_ausencia(
     body: EditarAusenciaRequest,
     _identity: Identity = _require_create,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, uuid.UUID]:
     ausencia = await EditarAusencia(_write_deps(db, actor)).execute(
         ausencia_id, body.to_command(), actor
@@ -153,6 +153,6 @@ async def eliminar_ausencia(
     ausencia_id: uuid.UUID,
     _identity: Identity = _require_create,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await EliminarAusencia(_write_deps(db, actor)).execute(ausencia_id, actor)

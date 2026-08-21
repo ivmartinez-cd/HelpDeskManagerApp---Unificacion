@@ -64,7 +64,7 @@ async def list_tabla_km(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[TablaKmOut]:
     rows = await SqlAlchemyTablaKmRepository(db).list_all(prestador_id=prestador_id, q=q)
     return Page.of([TablaKmOut.from_entity(t) for t in rows], page=page, size=size)
@@ -74,7 +74,7 @@ async def list_tabla_km(
 async def create_tabla_km(
     body: TablaKmIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> TablaKmOut:
     row = await build_create_tabla_km(db).execute(_datos(body))
     return TablaKmOut.from_entity(row)
@@ -85,7 +85,7 @@ async def update_tabla_km(
     tabla_km_id: UUID,
     body: TablaKmIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> TablaKmOut:
     updated = await build_update_tabla_km(db).execute(tabla_km_id, _datos(body))
     return TablaKmOut.from_entity(updated)
@@ -95,7 +95,7 @@ async def update_tabla_km(
 async def delete_tabla_km(
     tabla_km_id: UUID,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await build_delete_tabla_km(db).execute(tabla_km_id)
 
@@ -105,7 +105,7 @@ async def vincular_spst(
     prestador_id: UUID = Query(alias="prestadorId"),
     dry_run: bool = Query(default=True, alias="dryRun"),
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ResultadoVinculoTablaKmSpstOut:
     """Vincula filas de Tabla KM sin `spst_id` al SPST del mismo prestador cuya
     zona/localidad matchea la localidad del cliente — ver
@@ -117,7 +117,7 @@ async def vincular_spst(
 @router.get("/tabla-km/export")
 async def export_tabla_km_csv(
     _: Identity = require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> StreamingResponse:
     prestadores = await SqlAlchemyPrestadorRepository(db).list_all()
     pmap = {str(p.id): p.nombre_corto for p in prestadores}
@@ -129,7 +129,7 @@ async def export_tabla_km_csv(
 async def import_tabla_km_csv(
     file: UploadFile = File(...),
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, int]:
     return await csv_helpers.import_tabla_km(
         file, SqlAlchemyTablaKmRepository(db), SqlAlchemyPrestadorRepository(db)

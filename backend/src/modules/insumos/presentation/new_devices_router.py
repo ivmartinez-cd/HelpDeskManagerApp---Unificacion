@@ -34,7 +34,7 @@ async def list_new_devices(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=500, ge=1, le=500),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[NewDeviceRowOut]:
     """Equipos sin monitorear de clientes habilitados (no generan avisos de insumos),
     más nuevo primero. Default de `size` generoso como en /requests: la tabla muestra
@@ -47,7 +47,7 @@ async def list_new_devices(
 @router.get("/new-devices/summary", response_model=NewDevicesSummaryOut)
 async def new_devices_summary(
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> NewDevicesSummaryOut:
     """Solo el contador de pendientes sin ignorar — el badge de la barra lateral."""
     return NewDevicesSummaryOut(pending_count=await build_count_new_devices(db).execute())
@@ -58,7 +58,7 @@ async def set_device_dismissed(
     device_id: int,
     body: DismissRequestBody,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> DismissDeviceResponse:
     """Marca o desmarca un equipo como ignorado (p.ej. equipos fuera de contrato)."""
     if not await build_dismiss_new_device(db).execute(device_id, body.dismissed):
@@ -69,7 +69,7 @@ async def set_device_dismissed(
 @router.post("/new-devices/sync", response_model=SyncNewDevicesResponse)
 async def sync_new_devices(
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SyncNewDevicesResponse:
     """Fuerza la sincronización del inventario contra la Insight API. Es la misma
     operación que corre el poller: refresca clientes, detecta equipos nuevos y poda

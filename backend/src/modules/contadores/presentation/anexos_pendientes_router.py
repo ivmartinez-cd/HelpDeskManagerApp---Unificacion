@@ -68,7 +68,7 @@ async def list_anexos_pendientes(
     search: str | None = Query(default=None, max_length=120),
     refresh: bool = Query(default=False, description="Fuerza re-consultar Siges"),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[AnexoPendienteSchema]:
     result = await ListAnexosPendientesUseCase(
         get_anexos_pendientes_gateway(), _operador_mapa(db)

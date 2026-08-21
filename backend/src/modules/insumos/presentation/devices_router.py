@@ -38,7 +38,7 @@ async def get_device_supplies(
     limit: int = Query(default=3, ge=1, le=20),
     dry_run: bool = Query(default=False, alias="dryRun"),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> DeviceSuppliesResponse:
     """Últimos `limit` pedidos de insumos en Canal Directo para la serie dada
     (SOAP + cache local + pedidos propios). Con dryRun=true solo se loguea la

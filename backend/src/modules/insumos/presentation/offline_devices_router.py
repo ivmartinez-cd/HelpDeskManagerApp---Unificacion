@@ -48,7 +48,7 @@ async def list_offline_devices(
     size: int = Query(default=500, ge=1, le=500),
     customer_id: int | None = Query(default=None, alias="customerId"),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[OfflineDeviceOut]:
     """Equipos offline con su veredicto de Canal Directo y estado de outage."""
     uc = await build_list_offline_devices(db)
@@ -72,7 +72,7 @@ async def list_offline_outages(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=100, ge=1, le=500),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[MassOutageOut]:
     """Caídas de colector y salidas masivas detectadas en el inventario actual."""
     uc = await build_list_offline_outages(db)
@@ -83,7 +83,7 @@ async def list_offline_outages(
 @router.get("/offline-devices/summary", response_model=OfflineSummaryOut)
 async def offline_devices_summary(
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> OfflineSummaryOut:
     """Contador de candidatos a baja — usado por el badge de la barra lateral."""
     uc = await build_count_offline_candidates(db)
@@ -94,7 +94,7 @@ async def offline_devices_summary(
 async def verify_offline_devices(
     body: VerifyBody,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> VerifyResponse:
     """Consulta Canal Directo (SOAP) para los equipos pendientes de re-verificación.
     limit obligatorio (le=50) para mantener la duración del request acotada.
@@ -109,7 +109,7 @@ async def set_offline_dismissed(
     device_id: int,
     body: OfflineDismissBody,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> OfflineDismissResponse:
     """Marca o desmarca un equipo como descartado de la vista offline."""
     if not await build_dismiss_offline_device(db).execute(device_id, body.dismissed):
@@ -121,7 +121,7 @@ async def set_offline_dismissed(
 async def delete_offline_devices(
     body: DeleteBody,
     _: Identity = _require_delete,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> DeleteResponse:
     """Da de baja los equipos seleccionados en el PortalWeb de SDS.
 

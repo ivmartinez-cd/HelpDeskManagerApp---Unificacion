@@ -27,7 +27,7 @@ _require_view = Depends(require_permission(VIEW))
 async def get_pdf_url(
     model_family: str = Query(...),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, str]:
     uc = FindCpmdManual(get_cpmd_manual_repo(db))
     manual = await uc.execute(model_family)
@@ -42,7 +42,7 @@ async def upload_manual(
     keywords: str = Form(...),
     label: str = Form(...),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, int]:
     filename = await save_cpmd_pdf(file)
     kw_list = [k.strip() for k in keywords.split(",") if k.strip()]
@@ -55,7 +55,7 @@ async def upload_manual(
 async def get_manual_file(
     manual_id: int,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> FileResponse:
     uc = GetCpmdManualById(get_cpmd_manual_repo(db))
     manual = await uc.execute(manual_id)

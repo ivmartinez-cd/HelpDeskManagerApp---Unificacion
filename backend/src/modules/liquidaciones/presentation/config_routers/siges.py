@@ -59,7 +59,7 @@ router = APIRouter()
 @router.get("/siges/propuestas", response_model=PropuestasVinculoOut)
 async def propuestas_vinculo_siges(
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PropuestasVinculoOut:
     resultado = await build_proponer_vinculos_siges(db).execute()
     return PropuestasVinculoOut.from_dto(resultado)
@@ -69,7 +69,7 @@ async def propuestas_vinculo_siges(
 async def sync_config_desde_siges(
     dry_run: bool = Query(default=True, alias="dryRun"),
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SyncSigesOut:
     resultado = await build_sync_config_desde_siges(db).execute(dry_run=dry_run)
     return SyncSigesOut.from_dto(resultado)
@@ -78,7 +78,7 @@ async def sync_config_desde_siges(
 @router.get("/siges/zonas", response_model=ZonasSigesOut)
 async def estado_zonas_siges(
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ZonasSigesOut:
     resultado = await build_estado_zonas_siges(db).execute()
     return ZonasSigesOut.from_dto(resultado)
@@ -88,7 +88,7 @@ async def estado_zonas_siges(
 async def mapear_zona_siges(
     body: MapearZonaIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ZonaMapOut:
     mapa = await build_mapear_zona_siges(db).execute(
         body.prestador_id,
@@ -102,7 +102,7 @@ async def mapear_zona_siges(
 async def sync_tarifarios_desde_siges(
     dry_run: bool = Query(default=True, alias="dryRun"),
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SyncTarifariosOut:
     resultado = await build_sync_tarifarios_desde_siges(db).execute(dry_run=dry_run)
     return SyncTarifariosOut.from_dto(resultado)
@@ -115,7 +115,7 @@ async def sync_tarifarios_desde_siges(
 async def sucursales_propias_prestador(
     prestador_id: UUID,
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> list[SucursalPropiaOut]:
     sucursales = await build_listar_sucursales_propias(db).execute(prestador_id)
     return [SucursalPropiaOut.from_entity(s) for s in sucursales]
@@ -128,7 +128,7 @@ async def buscar_sucursales_siges(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=50, ge=1, le=200),
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[SucursalSigesOut]:
     sucursales = await build_buscar_sucursales_siges(db).execute(prestador_id, q=q)
     return Page.of(
@@ -141,7 +141,7 @@ async def vincular_prestador_siges(
     prestador_id: UUID,
     body: VincularSigesIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PrestadorOut:
     actualizado = await build_vincular_prestador_siges(db).execute(
         prestador_id, siges_empresa_id=body.siges_empresa_id
@@ -156,7 +156,7 @@ async def vincular_prestador_siges(
 async def listar_cuadriculas(
     prestador_id: UUID,
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> list[CuadriculaOut]:
     resultado = await build_listar_cuadriculas(db).execute(prestador_id)
     return [CuadriculaOut.from_dto(c) for c in resultado]
@@ -171,7 +171,7 @@ async def mapear_cuadricula(
     cuadricula: str,
     body: MapearCuadriculaIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> CuadriculaMapOut:
     resultado = await build_mapear_cuadricula(db).execute(
         prestador_id, cuadricula=cuadricula,
@@ -188,7 +188,7 @@ async def eliminar_mapeo_cuadricula(
     prestador_id: UUID,
     cuadricula: str,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await build_eliminar_mapeo_cuadricula(db).execute(prestador_id, cuadricula=cuadricula)
 
@@ -198,7 +198,7 @@ async def vincular_spst_siges(
     spst_id: UUID,
     body: VincularSigesIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SpstOut:
     actualizado = await build_vincular_spst_siges(db).execute(
         spst_id, siges_empresa_id=body.siges_empresa_id

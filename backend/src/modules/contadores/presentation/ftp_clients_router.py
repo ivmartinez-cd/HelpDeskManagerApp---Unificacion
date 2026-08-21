@@ -50,7 +50,7 @@ async def list_ftp_clients(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=1000, ge=1, le=_MAX_PAGE_SIZE),
     _: Identity = _require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[FtpClientOut]:
     """Lista todos los clientes FTP ordenados por nombre."""
     repo = SqlAlchemyFtpClientRepository(db)
@@ -62,7 +62,7 @@ async def list_ftp_clients(
 async def create_ftp_client(
     body: FtpClientIn,
     _: Identity = _require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> FtpClientOut:
     """Crea un nuevo cliente FTP."""
     if not body.password:
@@ -79,7 +79,7 @@ async def create_ftp_client(
 async def get_ftp_client(
     client_id: uuid.UUID,
     _: Identity = _require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> FtpClientOut:
     """Devuelve un cliente FTP por ID."""
     repo = SqlAlchemyFtpClientRepository(db)
@@ -92,7 +92,7 @@ async def update_ftp_client(
     client_id: uuid.UUID,
     body: FtpClientIn,
     _: Identity = _require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> FtpClientOut:
     """Actualiza un cliente FTP existente."""
     repo = SqlAlchemyFtpClientRepository(db)
@@ -105,7 +105,7 @@ async def update_ftp_client(
 async def delete_ftp_client(
     client_id: uuid.UUID,
     _: Identity = _require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     """Elimina un cliente FTP."""
     repo = SqlAlchemyFtpClientRepository(db)
@@ -117,7 +117,7 @@ async def process_ftp_client(
     client_id: uuid.UUID,
     body: ProcessFtpClientRequest,
     _: Identity = _require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ProcessFtpClientResponse:
     """Descarga el DB3 más reciente del cliente vía FTP y genera el CSV de exportación.
 

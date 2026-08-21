@@ -38,7 +38,7 @@ async def get_estadisticas(
     start_date: date | None = _start,
     end_date: date | None = _end,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> EstadisticasResponse:
     """Tendencia diaria de pedidos y rankings de clientes/SKUs, con comparativa contra
     el período inmediatamente anterior del mismo largo."""
@@ -53,7 +53,7 @@ async def get_estadisticas_cliente(
     start_date: date | None = _start,
     end_date: date | None = _end,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> CustomerDetailResponse:
     """Detalle del cliente: éxito/error, tiempo de atención en horas hábiles, tránsito
     logístico de Canal Directo, equipos y consumibles más pedidos."""

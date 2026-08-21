@@ -46,7 +46,7 @@ async def list_spsts(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[SpstOut]:
     rows = await SqlAlchemySpstRepository(db).list_all(
         prestador_id=prestador_id, solo_activos=solo_activos
@@ -58,7 +58,7 @@ async def list_spsts(
 async def create_spst(
     body: SpstIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SpstOut:
     spst = await build_create_spst(db).execute(
         prestador_id=body.prestador_id,
@@ -76,7 +76,7 @@ async def update_spst(
     spst_id: UUID,
     body: SpstIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SpstOut:
     updated = await build_update_spst(db).execute(
         spst_id,
@@ -94,7 +94,7 @@ async def toggle_spst_activo(
     spst_id: UUID,
     body: ToggleActivoIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SpstOut:
     updated = await build_toggle_spst_activo(db).execute(spst_id, activo=body.activo)
     return SpstOut.from_entity(updated)
@@ -105,7 +105,7 @@ async def vincular_base_sucursal_spst(
     spst_id: UUID,
     body: VincularBaseSucursalIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SpstOut:
     updated = await SqlAlchemySpstRepository(db).vincular_base_sucursal(
         spst_id, siges_base_sucursal_id=body.siges_base_sucursal_id
@@ -120,7 +120,7 @@ async def vincular_base_sucursal_spst(
 async def delete_spst(
     spst_id: UUID,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await build_delete_spst(db).execute(spst_id)
 
@@ -128,7 +128,7 @@ async def delete_spst(
 @router.get("/spsts/export")
 async def export_spsts_csv(
     _: Identity = require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> StreamingResponse:
     prest_repo = SqlAlchemyPrestadorRepository(db)
     spst_repo = SqlAlchemySpstRepository(db)
@@ -141,7 +141,7 @@ async def export_spsts_csv(
 async def import_spsts_csv(
     file: UploadFile = File(...),
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, int]:
     return await csv_helpers.import_spsts(
         file, SqlAlchemySpstRepository(db), SqlAlchemyPrestadorRepository(db)

@@ -82,7 +82,7 @@ async def list_empleados(
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=500),
     _identity: Identity = _require_view,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[EmpleadoListItemResponse]:
     query = ListEmpleadosQuery(search=search, department_id=department_id, status=estado)
     items = await ListEmpleados(_deps(db)).execute(query, actor)
@@ -95,7 +95,7 @@ async def list_empleados(
 async def create_empleado(
     body: EmpleadoRequest,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> EmpleadoResponse:
     empleado = await CreateEmpleado(_deps(db, identity)).execute(body.to_command())
     return EmpleadoResponse.from_entity(empleado)
@@ -106,7 +106,7 @@ async def update_empleado(
     empleado_id: uuid.UUID,
     body: EmpleadoRequest,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> EmpleadoResponse:
     empleado = await UpdateEmpleado(_deps(db, identity)).execute(
         empleado_id, body.to_command()
@@ -118,6 +118,6 @@ async def update_empleado(
 async def delete_empleado(
     empleado_id: uuid.UUID,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await DeleteEmpleado(_deps(db, identity)).execute(empleado_id)

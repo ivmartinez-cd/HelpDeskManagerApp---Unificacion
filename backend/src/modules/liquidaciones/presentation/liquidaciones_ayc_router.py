@@ -42,7 +42,7 @@ _require_delete = Depends(require_permission(DELETE))
 async def sincronizar_liquidaciones(
     prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
     _: Identity = _require_create,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SincronizarOut:
     """Sin `prestadorId` sincroniza todos los prestadores vinculados; con él, solo
     ese (acota la corrida — el sync completo son miles de llamadas SOAP)."""
@@ -55,7 +55,7 @@ async def backfill_estado_liquidaciones(
     dry_run: bool = Query(default=True, alias="dryRun"),
     prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
     _: Identity = _require_create,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> BackfillEstadoOut:
     """Actualiza el `estado` de las liquidaciones `abierta` con su estado real en AyC.
 
@@ -72,7 +72,7 @@ async def backfill_estado_liquidaciones(
 async def aprobar_liquidacion(
     liquidacion_id: UUID,
     identity: Identity = _require_approve,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> LiquidacionOut:
     updated = await build_aprobar_liquidacion(db).execute(
         liquidacion_id, usuario=identity.user.full_name
@@ -84,7 +84,7 @@ async def aprobar_liquidacion(
 async def observar_liquidacion(
     liquidacion_id: UUID,
     identity: Identity = _require_approve,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> LiquidacionOut:
     updated = await build_observar_liquidacion(db).execute(
         liquidacion_id, usuario=identity.user.full_name
@@ -96,7 +96,7 @@ async def observar_liquidacion(
 async def anular_liquidacion(
     liquidacion_id: UUID,
     _: Identity = _require_delete,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     """Anula la liquidación en wsAyC (voidLiquidation) y la elimina localmente.
     Acción destructiva e irreversible desde nuestra app — el frontend pide confirmación
@@ -108,7 +108,7 @@ async def anular_liquidacion(
 async def reconciliar_liquidacion(
     liquidacion_id: UUID,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     """Reconciliación best-effort de UNA liquidación contra AyC — se dispara al
     abrir su detalle. VIEW alcanza: es un refresh silencioso en segundo plano,

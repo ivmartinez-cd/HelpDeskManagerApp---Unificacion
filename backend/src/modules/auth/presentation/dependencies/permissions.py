@@ -21,7 +21,7 @@ def require_permission(permission: Permission) -> Callable[..., Awaitable[Identi
 
     async def _check(
         identity: Identity = Depends(get_current_identity),
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_db, scope="function"),
     ) -> Identity:
         catalog = SqlAlchemyModuleCatalogRepository(db)
         if not await catalog.is_enabled(permission.module):

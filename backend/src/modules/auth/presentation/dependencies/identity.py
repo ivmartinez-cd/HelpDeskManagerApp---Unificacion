@@ -22,7 +22,7 @@ from src.shared.infrastructure.database.session import get_db
 
 
 async def get_current_identity(
-    request: Request, db: AsyncSession = Depends(get_db)
+    request: Request, db: AsyncSession = Depends(get_db, scope="function")
 ) -> Identity:
     token = request.cookies.get(get_settings().session_cookie_name)
     if not token:

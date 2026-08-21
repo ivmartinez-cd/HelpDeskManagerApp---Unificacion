@@ -86,7 +86,7 @@ async def list_grilla_variantes(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
     _identity: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[GrillaVarianteResponse]:
     items = await ListGrillaVariantes(_deps(db)).execute(solo_vigentes=vigentes)
     return Page.of(
@@ -98,7 +98,7 @@ async def list_grilla_variantes(
 async def create_grilla_variante(
     payload: GrillaVarianteRequest,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> GrillaVarianteResponse:
     dto = await CreateGrillaVariante(_deps(db)).execute(
         CreateGrillaVarianteCommand(
@@ -119,7 +119,7 @@ async def precargar_grilla_variante(
     desde: date = Query(),
     hasta: date = Query(),
     _identity: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PrecargaGrillaResponse:
     """Solo lectura: no persiste nada. POST porque es una operación de cálculo
     con parámetros, no un recurso."""
@@ -137,7 +137,7 @@ async def update_grilla_variante(
     variante_id: uuid.UUID,
     payload: GrillaVarianteRequest,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> GrillaVarianteResponse:
     dto = await UpdateGrillaVariante(_deps(db)).execute(
         UpdateGrillaVarianteCommand(
@@ -156,6 +156,6 @@ async def update_grilla_variante(
 async def cancel_grilla_variante(
     variante_id: uuid.UUID,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await CancelGrillaVariante(_deps(db)).execute(variante_id)

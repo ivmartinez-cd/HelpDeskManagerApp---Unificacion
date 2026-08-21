@@ -54,7 +54,7 @@ def audit_query(
 async def list_audit(
     query: ListAuditQuery = Depends(audit_query),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[AuditRowOut]:
     """Historial permanente de eventos (pedidos y acciones del sistema), más
     reciente primero. Filtrado y paginado en SQL — la tabla nunca se poda."""
@@ -68,7 +68,7 @@ async def list_audit(
 async def audit_summary(
     query: ListAuditQuery = Depends(audit_query),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AuditSummaryResponse:
     """Conteo por evento (y agregado por pestaña) para los badges del
     Historial — ignora `scope`, siempre cuenta todos los eventos."""

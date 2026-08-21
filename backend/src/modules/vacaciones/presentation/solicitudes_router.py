@@ -148,7 +148,7 @@ async def list_solicitudes(
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=500),
     _identity: Identity = _require_view,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[SolicitudResponse]:
     query = ListarSolicitudesQuery(
         status=estado,
@@ -166,7 +166,7 @@ async def get_solicitud(
     solicitud_id: uuid.UUID,
     _identity: Identity = _require_view,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SolicitudResponse:
     return await _leer_una(db, solicitud_id, actor)
 
@@ -176,7 +176,7 @@ async def crear_solicitud(
     body: CrearSolicitudRequest,
     _identity: Identity = _require_create,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SolicitudResponse:
     solicitud = await CrearSolicitud(_write_deps(db, actor)).execute(
         body.to_command(), actor
@@ -190,7 +190,7 @@ async def editar_solicitud(
     body: EditarSolicitudRequest,
     _identity: Identity = _require_create,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SolicitudResponse:
     await EditarSolicitud(_write_deps(db, actor)).execute(
         solicitud_id, body.to_command(), actor
@@ -203,7 +203,7 @@ async def eliminar_solicitud(
     solicitud_id: uuid.UUID,
     _identity: Identity = _require_create,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await EliminarSolicitud(_write_deps(db, actor)).execute(solicitud_id, actor)
 
@@ -214,7 +214,7 @@ async def decidir_solicitud(
     body: DecisionRequest,
     _identity: Identity = _require_approve,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> DecisionResponse:
     deps = DecidirSolicitudDependencies(
         solicitudes=SqlAlchemySolicitudRepository(db),
@@ -234,7 +234,7 @@ async def solapamientos(
     solicitud_id: uuid.UUID,
     _identity: Identity = _require_approve,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SolapamientosResponse:
     dto = await ListarSolapamientos(_read_deps(db)).execute(solicitud_id, actor)
     return SolapamientosResponse.from_dto(dto)

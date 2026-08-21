@@ -23,6 +23,6 @@ def post_echo(payload: EchoRequest) -> dict[str, str]:
 
 
 @router.get("/db")
-async def get_health_db(db: AsyncSession = Depends(get_db)) -> dict[str, str]:
+async def get_health_db(db: AsyncSession = Depends(get_db, scope="function")) -> dict[str, str]:
     await db.execute(text("SELECT 1"))
     return {"status": "ok"}

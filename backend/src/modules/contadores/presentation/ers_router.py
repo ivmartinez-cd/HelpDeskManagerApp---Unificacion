@@ -39,7 +39,7 @@ async def list_ers_clients(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=1000, ge=1, le=_MAX_PAGE_SIZE),
     _: Identity = _require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[ErsClientOut]:
     """Obtiene la lista de grupos de dispositivos desde ERS con su configuración suma_color."""
     config_repo = meter_config_repo_mod.SqlAlchemyMeterClientConfigRepository(db)
@@ -53,7 +53,7 @@ async def update_ers_client_config(
     customer_id: str,
     body: UpdateErsConfigIn,
     _: Identity = _require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ErsClientOut:
     """Guarda/actualiza la preferencia suma_color de un grupo ERS."""
     config_repo = meter_config_repo_mod.SqlAlchemyMeterClientConfigRepository(db)
@@ -69,7 +69,7 @@ async def update_ers_client_config(
 async def process_ers_meters(
     body: ProcessErsMetersRequest,
     _: Identity = _require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ProcessErsMetersResponse:
     """Obtiene los contadores de ERS para un grupo y los exporta a CSV."""
     config_repo = meter_config_repo_mod.SqlAlchemyMeterClientConfigRepository(db)

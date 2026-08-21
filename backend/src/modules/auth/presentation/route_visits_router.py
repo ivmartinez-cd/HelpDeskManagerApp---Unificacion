@@ -37,7 +37,7 @@ _DEFAULT_TOP = 6
 async def record_visit(
     payload: RecordRouteVisitRequest,
     identity: Identity = Depends(get_current_identity),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     """Registra que el usuario logueado visitó `route` hoy. El `user_id`
     sale siempre de la sesión, nunca del body -- nadie puede escribir en
@@ -55,7 +55,7 @@ async def record_visit(
 async def top_visits(
     size: int = Query(default=_DEFAULT_TOP, ge=1, le=20),
     identity: Identity = Depends(get_current_identity),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[RouteVisitResponse]:
     """Ranking personal de accesos directos (ventana de 30 días, ADR-028).
     `page` queda fijo en 1: es un ranking, no una colección navegable."""

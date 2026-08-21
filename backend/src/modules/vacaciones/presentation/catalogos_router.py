@@ -85,7 +85,7 @@ async def list_sectores(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=500),
     _identity: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[SectorResponse]:
     sectores = await ListSectores(_sector_deps(db)).execute()
     return Page.of([SectorResponse.from_dto(s) for s in sectores], page=page, size=size)
@@ -95,7 +95,7 @@ async def list_sectores(
 async def create_sector(
     body: SectorRequest,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, uuid.UUID]:
     sector = await CreateSector(_sector_deps(db, identity)).execute(body.to_command())
     return {"id": sector.id}
@@ -106,7 +106,7 @@ async def update_sector(
     sector_id: uuid.UUID,
     body: SectorRequest,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, uuid.UUID]:
     sector = await UpdateSector(_sector_deps(db, identity)).execute(
         sector_id, body.to_command()
@@ -118,7 +118,7 @@ async def update_sector(
 async def delete_sector(
     sector_id: uuid.UUID,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await DeleteSector(_sector_deps(db, identity)).execute(sector_id)
 
@@ -128,7 +128,7 @@ async def list_usuarios(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=500),
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[JefeSectorResponse]:
     """Cuentas activas de la plataforma para los selects de jefe de sector y
     vínculo empleado↔usuario (solo Gestión Humana)."""
@@ -143,7 +143,7 @@ async def list_cargos(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=500),
     _identity: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[CargoResponse]:
     cargos = await ListCargos(_cargo_deps(db)).execute()
     return Page.of([CargoResponse.from_dto(c) for c in cargos], page=page, size=size)
@@ -153,7 +153,7 @@ async def list_cargos(
 async def create_cargo(
     body: CargoRequest,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, uuid.UUID]:
     cargo = await CreateCargo(_cargo_deps(db, identity)).execute(body.to_command())
     return {"id": cargo.id}
@@ -164,7 +164,7 @@ async def update_cargo(
     cargo_id: uuid.UUID,
     body: CargoRequest,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, uuid.UUID]:
     cargo = await UpdateCargo(_cargo_deps(db, identity)).execute(
         cargo_id, body.to_command()
@@ -176,6 +176,6 @@ async def update_cargo(
 async def delete_cargo(
     cargo_id: uuid.UUID,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await DeleteCargo(_cargo_deps(db, identity)).execute(cargo_id)

@@ -37,7 +37,7 @@ router = APIRouter()
 @router.get("/calendario/sync/status", response_model=SyncStatusResponse)
 async def get_sync_status(
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SyncStatusResponse:
     repo = SqlAlchemyCalendarEventRepository(db)
     last_synced_at = await repo.last_synced_at()
@@ -48,7 +48,7 @@ async def get_sync_status(
 @router.post("/calendario/sync", response_model=SyncCalendarioResponse)
 async def sync_calendario(
     _: Identity = require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SyncCalendarioResponse:
     today = datetime.now(UTC).date()
     window = timedelta(days=DEFAULT_SYNC_WINDOW_DAYS)

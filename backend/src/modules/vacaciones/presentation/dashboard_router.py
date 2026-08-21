@@ -52,7 +52,7 @@ _require_view = Depends(require_permission(VIEW))
 async def dashboard_resumen(
     _identity: Identity = _require_view,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> DashboardResumenResponse:
     deps = DashboardDependencies(
         empleados=SqlAlchemyEmpleadoRepository(db),
@@ -74,7 +74,7 @@ async def calendario(
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
     _identity: Identity = _require_view,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[EventoCalendarioResponse]:
     deps = CalendarioDependencies(
         solicitudes=SqlAlchemySolicitudRepository(db),

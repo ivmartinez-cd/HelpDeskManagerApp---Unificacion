@@ -107,7 +107,7 @@ class AuditarPinesIn(BaseModel):
 async def estado_asistente_km(
     prestador_id: UUID,
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> EstadoAsistenteKmOut:
     """Diagnóstico read-only del wizard: qué falta y cuánto costaría cada
     acción en llamadas Google — sin consumir ninguna."""
@@ -124,7 +124,7 @@ async def geovalidacion_tier0(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=500, ge=1, le=1000),
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[HallazgoTier0Out]:
     """Worklist de saneo geométrico (Tier 0): coordenadas ausentes/inválidas,
     fuera de Argentina, lat/lon invertidas, pin compartido entre sucursales
@@ -141,7 +141,7 @@ async def geovalidacion_tier0(
 async def consultar_georef(
     prestador_id: UUID,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ResultadoConsultarGeorefOut:
     """Reverse geocoding de Georef (gratis, sin auth) para sucursales con pin
     todavía sin cachear — secuencial, con pausa y tope por corrida. Repetir
@@ -159,7 +159,7 @@ async def geovalidacion_tier1(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=500, ge=1, le=1000),
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[HallazgoTier1Out]:
     """Sucursales donde la provincia declarada en Siges no coincide con la
     que devolvió el reverse de Georef para el pin — solo sobre lo ya
@@ -175,7 +175,7 @@ async def geovalidacion_tier1(
 async def consultar_nominatim(
     prestador_id: UUID,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ResultadoConsultarNominatimOut:
     """Segunda opinión de Nominatim (OpenStreetMap, gratis), SOLO sobre lo
     que Georef ya marcó con provincia incompatible — rate limit de 1 req/s
@@ -193,7 +193,7 @@ async def geovalidacion_tier1b(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=500, ge=1, le=1000),
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[HallazgoTier1bOut]:
     """Hallazgos confirmados por DOS fuentes independientes (Georef +
     Nominatim de acuerdo) — solo sobre lo ya consultado, no llama a nada."""
@@ -208,7 +208,7 @@ async def geovalidacion_tier1b(
 async def preview_calcular_distancias(
     prestador_id: UUID,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> CalculoKmPreviewOut:
     preview = await build_preview_calcular_distancias(db).execute(prestador_id)
     return CalculoKmPreviewOut.from_entity(preview)
@@ -222,7 +222,7 @@ async def aplicar_calcular_distancias(
     prestador_id: UUID,
     body: AplicarDistanciasIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AplicarDistanciasOut:
     resultado = await build_aplicar_calcular_distancias(db).execute(body.preview_id)
     return AplicarDistanciasOut.from_resultado(resultado)
@@ -235,7 +235,7 @@ async def aplicar_calcular_distancias(
 async def refrescar_datos_sucursales(
     prestador_id: UUID,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> RefrescarDireccionesOut:
     resultado = await build_refrescar_datos_siges(db).execute(prestador_id)
     return RefrescarDireccionesOut.from_dto(resultado)
@@ -248,7 +248,7 @@ async def refrescar_datos_sucursales(
 async def geocodificar_faltantes(
     prestador_id: UUID,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> GeocodificarResultadoOut:
     resultado = await build_geocodificar_sucursales(db).execute(prestador_id)
     return GeocodificarResultadoOut.from_dto(resultado)
@@ -263,7 +263,7 @@ async def listar_coordenadas(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=100, ge=1, le=1000),
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[SucursalCoordenadasOut]:
     filas = await build_listar_coordenadas_pendientes(db).execute(prestador_id)
     return Page.of(
@@ -280,7 +280,7 @@ async def resolver_coordenadas(
     siges_sucursal_id: int,
     body: ResolverCoordenadasIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SucursalCoordenadasOut:
     resuelta = await build_resolver_coordenadas(db).execute(
         siges_sucursal_id,
@@ -302,7 +302,7 @@ async def listar_pines_sospechosos(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=100, ge=1, le=1000),
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[PinSospechosoOut]:
     pines = await build_listar_pines_sospechosos(db).execute(prestador_id)
     return Page.of([PinSospechosoOut.from_dto(p) for p in pines], page=page, size=size)
@@ -316,7 +316,7 @@ async def corregir_pin(
     prestador_id: UUID,
     siges_sucursal_id: int,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await build_corregir_pin(db).execute(prestador_id, siges_sucursal_id)
 
@@ -329,7 +329,7 @@ async def auditar_pines(
     prestador_id: UUID,
     body: AuditarPinesIn | None = None,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AuditarPinesOut:
     solo_ids = (
         frozenset(body.siges_sucursal_ids)
@@ -347,7 +347,7 @@ async def auditar_pines(
 async def geovalidacion_worklist(
     prestador_id: UUID,
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ResultadoWorklistTier2Out:
     """Residuo real tras Tier 0+1+1b — separa lo que ya tiene certeza
     absoluta (corregir directo, sin Google) de lo que genuinamente
@@ -361,7 +361,7 @@ async def geovalidacion_worklist(
 async def geovalidacion_worklist_export(
     prestador_id: UUID,
     _: Identity = require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> StreamingResponse:
     """CSV para Gestión (Siges es read-only): junta Tier 0 certeza absoluta +
     Tier 1b confirmado por dos fuentes + Tier 2 confirmado por Google en un
@@ -376,7 +376,7 @@ async def geovalidacion_worklist_export(
 async def buscar_lugar_fila(
     tabla_km_id: UUID,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> BuscarLugarOut:
     candidatos = await build_buscar_lugar_fila(db).execute(tabla_km_id)
     return BuscarLugarOut(
@@ -389,7 +389,7 @@ async def resolver_coordenadas_fila(
     tabla_km_id: UUID,
     body: ResolverCoordenadasIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> TablaKmOut:
     fila = await build_resolver_coordenadas_fila(db).execute(
         tabla_km_id,
@@ -404,7 +404,7 @@ async def resolver_coordenadas_fila(
 async def recalcular_km_fila(
     tabla_km_id: UUID,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> TablaKmOut:
     fila = await build_recalcular_km_fila(db).execute(tabla_km_id)
     return TablaKmOut.from_entity(fila)

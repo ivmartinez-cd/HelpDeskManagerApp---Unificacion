@@ -41,7 +41,7 @@ _require_create = Depends(require_permission(CREATE))
 @router.get("/dashboard", response_model=DashboardResponse)
 async def dashboard(
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> DashboardResponse:
     """Resumen global de solicitudes pendientes de todos los clientes habilitados."""
     result = await build_get_dashboard(db).execute(
@@ -56,7 +56,7 @@ async def list_requests(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=500, ge=1, le=500),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[RequestRowOut]:
     """Solicitudes OUTSTANDING (de un cliente o de todos los habilitados), enriquecidas
     con equipo, severidad, validación y el pedido asociado en CD. El default de `size`
@@ -73,7 +73,7 @@ async def list_pending_orders(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=500, ge=1, le=500),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[PendingOrderRowOut]:
     """Pedidos propios que siguen circulando en Canal Directo (seguimiento día a día),
     más viejos primero. Mismo criterio de `size` generoso que /requests: la pestaña
@@ -87,7 +87,7 @@ async def load_request(
     request_id: int,
     body: LoadRequestBody,
     _: Identity = _require_create,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> LoadResponse:
     """Crea el pedido para la solicitud dada. Responde 200 siempre: los errores de
     negocio viajan como ok=false (+error/conflictType), igual que en el legacy."""
@@ -108,7 +108,7 @@ async def load_request(
 async def cancel_request(
     request_id: int,
     _: Identity = _require_create,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> CancelResponse:
     """Anula en Canal Directo el pedido asociado y libera el registro local.
     Responde 200 siempre; errores de negocio como ok=false + error."""
@@ -121,7 +121,7 @@ async def dismiss_request(
     request_id: int,
     body: DismissRequestBody,
     _: Identity = _require_create,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> DismissResponse:
     """Descarta la solicitud directamente en HP SDS (status_update=DELETE)."""
     command = DismissCommand(
@@ -140,7 +140,7 @@ async def reconcile_request(
     request_id: int,
     body: ReconcileRequestBody,
     _: Identity = _require_create,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ReconcileResponse:
     """Vincula un pedido que ya existe en Canal Directo pero que la app no registró
     como propio (verificación post-creación fallida). Nunca crea un pedido nuevo."""

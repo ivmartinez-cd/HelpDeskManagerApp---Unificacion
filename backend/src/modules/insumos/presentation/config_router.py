@@ -29,7 +29,7 @@ _require_update = Depends(require_permission(UPDATE))
 @router.get("/config", response_model=ConfigResponse)
 async def get_config(
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ConfigResponse:
     """Parámetros de operación vigentes (umbrales, auto-carga, offline, alertas)."""
     return ConfigResponse.from_view(await build_get_insumos_config(db).execute())
@@ -39,7 +39,7 @@ async def get_config(
 async def put_config(
     body: ConfigRequestBody,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SaveConfigResponse:
     """Guarda los parámetros. Responde 200 siempre: los rangos inválidos viajan como
     ok=false + error para mostrar en el formulario, igual que en el legacy."""

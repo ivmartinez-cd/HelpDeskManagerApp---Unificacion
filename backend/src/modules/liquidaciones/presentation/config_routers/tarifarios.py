@@ -45,7 +45,7 @@ async def list_tarifarios(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[TarifarioOut]:
     repo = SqlAlchemyTarifarioRepository(db)
     rows = await (repo.list_by_prestador(prestador_id) if prestador_id else repo.list_all())
@@ -56,7 +56,7 @@ async def list_tarifarios(
 async def create_tarifario(
     body: TarifarioIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> TarifarioOut:
     tarifario = await build_create_tarifario(db).execute(
         prestador_id=body.prestador_id,
@@ -75,7 +75,7 @@ async def update_tarifario(
     tarifario_id: UUID,
     body: TarifarioIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> TarifarioOut:
     updated = await build_update_tarifario(db).execute(
         tarifario_id,
@@ -94,7 +94,7 @@ async def update_tarifario(
 async def delete_tarifario(
     tarifario_id: UUID,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await build_delete_tarifario(db).execute(tarifario_id)
 
@@ -102,7 +102,7 @@ async def delete_tarifario(
 @router.get("/tarifarios/export")
 async def export_tarifarios_csv(
     _: Identity = require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> StreamingResponse:
     prestadores = await SqlAlchemyPrestadorRepository(db).list_all()
     pmap = {str(p.id): p.nombre_corto for p in prestadores}
@@ -114,7 +114,7 @@ async def export_tarifarios_csv(
 async def import_tarifarios_csv(
     file: UploadFile = File(...),
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, int]:
     return await csv_helpers.import_tarifarios(
         file, build_create_tarifario(db), SqlAlchemyPrestadorRepository(db)

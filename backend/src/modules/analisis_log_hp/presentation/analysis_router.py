@@ -40,7 +40,7 @@ _require_view = Depends(require_permission(VIEW))
 async def preview_analysis(
     body: AnalysisRequest,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AnalysisResponse:
     uc = AnalyzeLog(get_error_code_repo(db))
     result = await uc.execute(body.logs)
@@ -80,7 +80,7 @@ async def preview_analysis(
 async def validate_log(
     body: ValidateRequest,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ValidateResponse:
     uc = ValidateLog(get_error_code_repo(db))
     codes_new = await uc.execute(body.logs)

@@ -51,7 +51,7 @@ router = APIRouter()
 @router.get("/calendario/resumen-clientes", response_model=ResumenClientesOperadorResponse)
 async def get_resumen_clientes_operador(
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ResumenClientesOperadorResponse:
     """Card de Inicio: cartera de clientes por operador (ventana futura del
     calendario — la misma que sincroniza el sync, ver el docstring del use
@@ -110,7 +110,7 @@ async def search_empresas_siges(
 async def set_cliente_siges_map(
     payload: SetClienteSigesMapRequest,
     _: Identity = require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     """Reemplaza el mapeo manual de un cliente de Gestión a empresa(s) de
     Siges (lista vacía = desmapear). El cruce automático queda para los que

@@ -42,7 +42,7 @@ router = APIRouter()
 async def create_prestador(
     body: PrestadorIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PrestadorOut:
     prestador = await build_create_prestador(db).execute(
         nombre=body.nombre,
@@ -58,7 +58,7 @@ async def update_prestador(
     prestador_id: UUID,
     body: PrestadorIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PrestadorOut:
     updated = await build_update_prestador(db).execute(
         prestador_id,
@@ -75,7 +75,7 @@ async def toggle_prestador_activo(
     prestador_id: UUID,
     body: ToggleActivoIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PrestadorOut:
     updated = await build_toggle_prestador_activo(db).execute(prestador_id, activo=body.activo)
     return PrestadorOut.from_entity(updated)
@@ -86,7 +86,7 @@ async def vincular_base_sucursal_prestador(
     prestador_id: UUID,
     body: VincularBaseSucursalIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PrestadorOut:
     updated = await SqlAlchemyPrestadorRepository(db).vincular_base_sucursal(
         prestador_id, siges_base_sucursal_id=body.siges_base_sucursal_id
@@ -101,7 +101,7 @@ async def vincular_cd_prestador(
     prestador_id: UUID,
     body: VincularCdIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PrestadorOut:
     updated = await SqlAlchemyPrestadorRepository(db).vincular_cd(
         prestador_id, cd_prestador_id=body.cd_prestador_id
@@ -115,7 +115,7 @@ async def vincular_cd_prestador(
 async def delete_prestador(
     prestador_id: UUID,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await build_delete_prestador(db).execute(prestador_id)
 
@@ -123,7 +123,7 @@ async def delete_prestador(
 @router.get("/prestadores/export")
 async def export_prestadores_csv(
     _: Identity = require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> StreamingResponse:
     rows = await SqlAlchemyPrestadorRepository(db).list_all()
     return csv_export.export_prestadores(rows)
@@ -133,7 +133,7 @@ async def export_prestadores_csv(
 async def import_prestadores_csv(
     file: UploadFile = File(...),
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, int]:
     return await csv_helpers.import_prestadores(file, SqlAlchemyPrestadorRepository(db))
 
@@ -144,7 +144,7 @@ async def import_prestadores_csv(
 async def importar_excel_maestro(
     file: UploadFile = File(...),
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ImportarPrestadorMaestroOut:
     contenido = await file.read()
     resultado = await build_importar_prestador_maestro(db).execute(

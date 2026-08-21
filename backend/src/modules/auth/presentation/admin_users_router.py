@@ -46,7 +46,7 @@ async def list_users(
     size: int = Query(default=20, ge=1, le=_MAX_PAGE_SIZE),
     q: str | None = Query(default=None),
     _: Identity = _require_manage_admin,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PaginatedUsersResponse:
     users, total = await SqlAlchemyUserRepository(db).list_page(page=page, size=size, query=q)
     items = [AdminUserResponse.from_domain(user) for user in users]
@@ -57,7 +57,7 @@ async def list_users(
 async def get_user(
     user_id: uuid.UUID,
     _: Identity = _require_manage_admin,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AdminUserResponse:
     user = await SqlAlchemyUserRepository(db).get_by_id(user_id)
     if user is None:
@@ -69,7 +69,7 @@ async def get_user(
 async def create_user(
     payload: CreateUserRequest,
     _: Identity = _require_manage_admin,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     operador_colors: OperadorColorLookup = Depends(get_operador_color_lookup),
 ) -> AdminUserResponse:
     deps = CreateUserDependencies(
@@ -87,7 +87,7 @@ async def update_user(
     user_id: uuid.UUID,
     payload: UpdateUserRequest,
     _: Identity = _require_manage_admin,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AdminUserResponse:
     deps = UpdateUserDependencies(users=SqlAlchemyUserRepository(db))
     user = await UpdateUser(deps).execute(
@@ -103,7 +103,7 @@ async def update_user(
 async def trigger_password_reset(
     user_id: uuid.UUID,
     _: Identity = _require_manage_admin,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, str]:
     user = await SqlAlchemyUserRepository(db).get_by_id(user_id)
     if user is None:

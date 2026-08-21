@@ -63,7 +63,7 @@ async def list_customers(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[CustomerOut]:
     customers = await build_list_customers(db).execute()
     return Page.of([CustomerOut.from_domain(c) for c in customers], page=page, size=size)
@@ -74,7 +74,7 @@ async def patch_customer(
     customer_id: int,
     body: CustomerPatchBody,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> OkResponse:
     await build_toggle_customer(db).execute(customer_id, body.enabled)
     return OkResponse()
@@ -84,7 +84,7 @@ async def patch_customer(
 async def bulk_toggle_customers(
     body: BulkToggleBody,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> OkResponse:
     await build_bulk_toggle_customers(db).execute(body.enabled)
     return OkResponse()
@@ -93,7 +93,7 @@ async def bulk_toggle_customers(
 @router.post("/sync-customers", response_model=SyncCustomersResponse)
 async def sync_customers(
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SyncCustomersResponse:
     try:
         customers = await get_insight_gateway().get_customers()
@@ -112,7 +112,7 @@ async def get_customer_contacts(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[ZoneContactOut]:
     rows = await build_get_zone_contacts(db).execute(customer_id)
     return Page.of([ZoneContactOut.from_domain(r) for r in rows], page=page, size=size)
@@ -123,7 +123,7 @@ async def put_customer_contacts(
     customer_id: int,
     body: ZoneContactBody,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> OkResponse:
     await build_set_zone_contact(db).execute(customer_id, body.to_domain_row())
     return OkResponse()
@@ -134,7 +134,7 @@ async def delete_customer_contacts(
     customer_id: int,
     zone: str = Query(default=""),
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> OkResponse:
     await build_delete_zone_contact(db).execute(customer_id, zone)
     return OkResponse()
@@ -144,7 +144,7 @@ async def delete_customer_contacts(
 async def seed_default_contacts(
     body: SeedDefaultContactsBody,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SeedResponse:
     updated = await build_bulk_seed_contacts(db).execute(
         body.customer_ids, body.to_domain_row()
@@ -160,7 +160,7 @@ async def import_contacts_from_supply(
     customer_id: int,
     body: ImportFromSupplyBody,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ImportContactsResponse:
     supply_id = body.parsed_supply_id()
     if supply_id is None:
@@ -208,7 +208,7 @@ async def get_customer_zones(
 async def preview_zone_contacts_import(
     customer_id: int,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ZoneContactPreviewResponse:
     try:
         rows = await build_preview_zone_contacts_import(db).execute(customer_id)
@@ -234,7 +234,7 @@ async def apply_zone_contacts_import(
     customer_id: int,
     body: ZoneContactApplyBody,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ZoneContactApplyResponse:
     requested = [ZoneOverwriteRequest(zone=r.zone, overwrite=r.overwrite) for r in body.rows]
     try:

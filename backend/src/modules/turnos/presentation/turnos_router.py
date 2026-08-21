@@ -117,7 +117,7 @@ async def get_current_shifts(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
     _identity: Identity = Depends(get_current_identity),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> CurrentShiftsResponse:
     deps = GetCurrentShiftsDependencies(
         casillas=SqlAlchemyCasillaRepository(db),
@@ -149,7 +149,7 @@ async def list_casillas(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
     _identity: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[CasillaResponse]:
     deps = ListCasillasDependencies(casillas=SqlAlchemyCasillaRepository(db))
     casillas = await ListCasillas(deps).execute(include_inactive=True)
@@ -160,7 +160,7 @@ async def list_casillas(
 async def create_casilla(
     payload: CasillaRequest,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> CasillaResponse:
     deps = UpsertCasillaDependencies(casillas=SqlAlchemyCasillaRepository(db))
     c = await UpsertCasilla(deps).create(
@@ -179,7 +179,7 @@ async def update_casilla(
     casilla_id: uuid.UUID,
     payload: CasillaRequest,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> CasillaResponse:
     # Solo `nombre` es editable acá -- ver el docstring de UpdateCasillaCommand.
     # `payload.color`/`sort_order`/`is_active` se ignoran a propósito (siguen
@@ -195,7 +195,7 @@ async def update_casilla(
 async def delete_casilla(
     casilla_id: uuid.UUID,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     deps = DeleteCasillaDependencies(casillas=SqlAlchemyCasillaRepository(db))
     await DeleteCasilla(deps).execute(casilla_id)
@@ -207,7 +207,7 @@ async def list_slots(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
     _identity: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[SlotResponse]:
     deps = ListSlotsDependencies(
         slots=SqlAlchemySlotRepository(db),
@@ -222,7 +222,7 @@ async def list_slots(
 async def create_slot(
     payload: SlotRequest,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SlotResponse:
     deps = UpsertSlotDependencies(slots=SqlAlchemySlotRepository(db))
     s = await UpsertSlot(deps).create(
@@ -242,7 +242,7 @@ async def update_slot(
     slot_id: uuid.UUID,
     payload: SlotRequest,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SlotResponse:
     # `payload.sort_order` se ignora a propósito -- ver UpdateSlotCommand.
     deps = UpsertSlotDependencies(slots=SqlAlchemySlotRepository(db))
@@ -261,7 +261,7 @@ async def update_slot(
 async def delete_slot(
     slot_id: uuid.UUID,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     deps = DeleteSlotDependencies(
         slots=SqlAlchemySlotRepository(db),
@@ -275,7 +275,7 @@ async def replace_slot_assignments(
     slot_id: uuid.UUID,
     payload: ReplaceAssignmentsRequest,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     deps = ReplaceSlotAssignmentsDependencies(asignaciones=SqlAlchemyAsignacionRepository(db))
     await ReplaceSlotAssignments(deps).execute(
@@ -290,7 +290,7 @@ async def replace_slot_assignments(
 @router.get("/overrides")
 async def list_overrides(
     _identity: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[AsignacionOverrideResponse]:
     deps = ListAsignacionOverridesDependencies(
         overrides=SqlAlchemyAsignacionOverrideRepository(db),
@@ -306,7 +306,7 @@ async def list_overrides(
 async def create_override(
     payload: CreateAsignacionOverrideRequest,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AsignacionOverrideResponse:
     deps = CreateAsignacionOverrideDependencies(
         overrides=SqlAlchemyAsignacionOverrideRepository(db),
@@ -332,7 +332,7 @@ async def update_override(
     # Mismo body que el alta -- el id va en el path y el creador no cambia.
     payload: CreateAsignacionOverrideRequest,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AsignacionOverrideResponse:
     deps = UpdateAsignacionOverrideDependencies(
         overrides=SqlAlchemyAsignacionOverrideRepository(db),
@@ -356,7 +356,7 @@ async def update_override(
 async def cancel_override(
     override_id: uuid.UUID,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     deps = CancelAsignacionOverrideDependencies(
         overrides=SqlAlchemyAsignacionOverrideRepository(db)
@@ -369,7 +369,7 @@ async def list_assignable_users(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
     _identity: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[UserOptionResponse]:
     provider = SqlAlchemyUserProvider(db)
     users = await provider.list_all_active_users()

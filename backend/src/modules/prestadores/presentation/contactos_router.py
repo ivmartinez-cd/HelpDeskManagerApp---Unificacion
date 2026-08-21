@@ -53,7 +53,7 @@ async def create_contacto(
     prestador_id: uuid.UUID,
     payload: UpsertContactoRequest,
     _: Identity = _require_create,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ContactoResponse:
     deps = UpsertContactoDependencies(contactos=SqlAlchemyContactoRepository(db))
     dto = await UpsertContacto(deps).execute(_upsert_command(prestador_id, None, payload))
@@ -66,7 +66,7 @@ async def update_contacto(
     contacto_id: uuid.UUID,
     payload: UpsertContactoRequest,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ContactoResponse:
     deps = UpsertContactoDependencies(contactos=SqlAlchemyContactoRepository(db))
     dto = await UpsertContacto(deps).execute(_upsert_command(prestador_id, contacto_id, payload))
@@ -78,7 +78,7 @@ async def delete_contacto(
     prestador_id: uuid.UUID,
     contacto_id: uuid.UUID,
     _: Identity = _require_delete,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     deps = DeleteContactoDependencies(contactos=SqlAlchemyContactoRepository(db))
     await DeleteContacto(deps).execute(contacto_id)

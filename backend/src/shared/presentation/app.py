@@ -125,7 +125,7 @@ logger = logging.getLogger(__name__)
 
 
 async def _provide_operador_color_lookup(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> OperadorColorLookup:
     """Override real de `get_operador_color_lookup` (auth) — este archivo es
     el único punto del repo con permiso para conocer tanto a auth como a

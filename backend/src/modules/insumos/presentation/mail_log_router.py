@@ -21,7 +21,7 @@ async def list_mail_log(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=100, ge=1, le=500),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[MailLogRowOut]:
     """Últimos mails enviados (o intentados) por la app: backup diario, alerta de
     poller caído/recuperado y aviso de pedidos Pendientes por vencer. Paginado en SQL

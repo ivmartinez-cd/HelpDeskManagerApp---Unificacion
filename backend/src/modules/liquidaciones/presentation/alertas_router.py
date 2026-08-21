@@ -34,7 +34,7 @@ async def update_estado_alerta(
     alerta_id: UUID,
     body: AlertaEstadoIn,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AlertaOut:
     updated = await build_actualizar_estado_alerta(db).execute(
         liquidacion_id,

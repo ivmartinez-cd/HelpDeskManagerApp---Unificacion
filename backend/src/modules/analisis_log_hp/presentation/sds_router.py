@@ -45,7 +45,7 @@ _require_view = Depends(require_permission(VIEW))
 async def extract_logs(
     body: SdsExtractRequest,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SdsExtractResponse:
     uc = ExtractSdsLogs(get_hp_portal_gateway(), get_error_code_repo(db), get_hp_insight_gateway())
     result = await uc.execute(body.serial, days=body.days)

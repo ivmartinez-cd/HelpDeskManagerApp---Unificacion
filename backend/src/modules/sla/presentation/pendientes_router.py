@@ -36,7 +36,7 @@ async def get_resumen(
         description="Ver los PST de otro operador en vez de los propios",
     ),
     identity: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PendientesResumenResponse:
     """Conteo de incidentes pendientes a cerrar por PST — lee el snapshot
     cacheado. Filtra por los PST del operador logueado. Superadmin ve todos."""
@@ -60,7 +60,7 @@ async def list_pendientes(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_MAX_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
     identity: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[IncidenteSinCerrarSchema]:
     """Detalle de incidentes pendientes a cerrar, ordenados por días en estado
     descendente (los más viejos primero).
@@ -84,7 +84,7 @@ async def list_pendientes(
 @router.post("/actualizar", response_model=PendientesResumenResponse)
 async def refresh(
     identity: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PendientesResumenResponse:
     """Fuerza una consulta en vivo a MERCURIO y actualiza el snapshot."""
     await build_refresh_pendientes_snapshot(db).execute()

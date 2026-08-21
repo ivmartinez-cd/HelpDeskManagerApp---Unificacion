@@ -39,7 +39,7 @@ async def list_auditoria(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=200),
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[RegistroAuditoriaResponse]:
     deps = ListarAuditoriaDependencies(
         auditoria=SqlAlchemyAuditoriaRepository(db),

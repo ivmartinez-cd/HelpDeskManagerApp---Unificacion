@@ -69,7 +69,7 @@ async def list_prestadores(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[PrestadorLiquidacionOut]:
     rows = await SqlAlchemyPrestadorRepository(db).list_all(solo_activos=solo_activos)
     return Page.of(
@@ -85,7 +85,7 @@ async def list_liquidaciones(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=50, ge=1, le=1000),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[LiquidacionOut]:
     liquidaciones = await build_list_liquidaciones(db).execute(
         prestador_id=prestador_id, estado=estado, periodo=periodo
@@ -100,7 +100,7 @@ async def list_periodos(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[str]:
     """Valores distintos de período (YYYY-MM) para poblar el dropdown de filtros."""
     periodos = await SqlAlchemyLiquidacionRepository(db).list_periodos()
@@ -112,7 +112,7 @@ async def importar_liquidacion(
     file: UploadFile = File(...),
     prestador_id: UUID = Form(alias="prestadorId"),
     _: Identity = _require_create,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ImportarLiquidacionOut:
     contenido = await file.read()
     resultado = await build_importar_liquidacion(db).execute(
@@ -124,7 +124,7 @@ async def importar_liquidacion(
 @router.get("/resumen", response_model=ResumenLiquidacionesOut)
 async def get_resumen_liquidaciones(
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ResumenLiquidacionesOut:
     """Conteo de liquidaciones pendientes (abierta/preliquidada/recibida/observada)."""
     filas = await SqlAlchemyLiquidacionRepository(db).count_pendientes_por_prestador()
@@ -139,7 +139,7 @@ async def update_estado_liquidacion(
     liquidacion_id: UUID,
     body: EstadoIn,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> LiquidacionOut:
     """Solo para liquidaciones SIN vínculo AyC (`numero_liquidacion` nulo) — las
     vinculadas tienen su estado gobernado por AyC (reconciliación automática,
@@ -155,7 +155,7 @@ async def update_extra_liquidacion(
     liquidacion_id: UUID,
     body: ExtraIn,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> LiquidacionOut:
     updated = await SqlAlchemyLiquidacionRepository(db).update_extra(
         liquidacion_id, body.concepto_extra, body.monto_extra
@@ -174,7 +174,7 @@ async def update_estado_observacion(
     observacion_id: UUID,
     body: ObservacionEstadoIn,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ObservacionOut:
     updated = await SqlAlchemyObservacionRepository(db).update_estado(
         liquidacion_id, observacion_id, body.estado
@@ -188,7 +188,7 @@ async def update_estado_observacion(
 async def delete_liquidacion(
     liquidacion_id: UUID,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     # Baja local únicamente — para liquidaciones sin numero_liquidacion (CSV sin AyC ID).
     # Para liquidaciones con vínculo AyC, usar POST /{id}/anular.
@@ -201,7 +201,7 @@ async def delete_liquidacion(
 async def get_liquidacion_detalle(
     liquidacion_id: UUID,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> LiquidacionDetalleOut:
     detalle = await build_get_liquidacion_detalle(db).execute(liquidacion_id)
     return LiquidacionDetalleOut.from_dto(detalle)
@@ -211,7 +211,7 @@ async def get_liquidacion_detalle(
 async def reanalyze_liquidacion(
     liquidacion_id: UUID,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ReanalizarLiquidacionOut:
     resultado = await build_reanalizar_liquidacion(db).execute(liquidacion_id)
     return ReanalizarLiquidacionOut.from_dto(resultado)

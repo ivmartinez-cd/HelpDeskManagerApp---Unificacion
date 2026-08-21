@@ -37,7 +37,7 @@ _periodo = Query(..., ge=200001, le=210012, description="Período mensual AAAAMM
 async def get_resumen(
     periodo: int = _periodo,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SlaResumenResponse:
     """Cumplimiento del período (Correcto vs. Vencido) + desglose de vencidos
     por técnico/PST — lee el snapshot cacheado, no consulta MERCURIO en vivo
@@ -61,7 +61,7 @@ async def list_incidentes_vencidos(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_MAX_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
     identity: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[IncidenteVencidoSchema]:
     """Detalle de los incidentes vencidos del período, para la tabla agrupada
     por técnico de la pantalla de SLA.
@@ -95,7 +95,7 @@ async def _resolver_filtro_operador(
 async def refresh_resumen(
     periodo: int = _periodo,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SlaResumenResponse:
     """Fuerza una consulta en vivo a MERCURIO y guarda el snapshot nuevo —
     mismo camino que corre el job de fondo cada SLA_REFRESH_INTERVAL_MINUTES,

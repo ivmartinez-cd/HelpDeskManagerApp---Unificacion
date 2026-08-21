@@ -64,7 +64,7 @@ async def list_saved_analyses(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=50, ge=1, le=200),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[SavedAnalysisResponse]:
     uc = ListSavedAnalyses(get_saved_analysis_repo(db))
     result = await uc.execute(page, size)
@@ -78,7 +78,7 @@ async def list_saved_analyses(
 async def create_saved_analysis(
     body: CreateSavedAnalysisRequest,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SavedAnalysisDetailResponse:
 
     from src.modules.analisis_log_hp.domain.entities.incident import Incident
@@ -104,7 +104,7 @@ async def create_saved_analysis(
 async def get_saved_analysis(
     id: UUID,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SavedAnalysisDetailResponse:
     uc = GetSavedAnalysis(get_saved_analysis_repo(db))
     return _saved_to_detail(await uc.execute(id))
@@ -115,7 +115,7 @@ async def update_saved_analysis(
     id: UUID,
     body: CreateSavedAnalysisRequest,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SavedAnalysisDetailResponse:
     from src.modules.analisis_log_hp.domain.entities.incident import Incident
     incidents = [
@@ -140,7 +140,7 @@ async def update_saved_analysis(
 async def delete_saved_analysis(
     id: UUID,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     uc = DeleteSavedAnalysis(get_saved_analysis_repo(db), get_telemetry_repo(db))
     await uc.execute(id)
@@ -151,7 +151,7 @@ async def compare_with_log(
     id: UUID,
     body: CompareLogsRequest,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, Any]:
     analyze_uc = AnalyzeLog(get_error_code_repo(db))
     analyze_result = await analyze_uc.execute(body.logs)
@@ -178,7 +178,7 @@ async def compare_two_snapshots(
     id: UUID,
     target_id: UUID,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, Any]:
     uc = CompareSnapshots(get_saved_analysis_repo(db))
     result = await uc.execute(id, target_id)
@@ -193,7 +193,7 @@ async def compare_two_snapshots(
 async def get_device_health(
     id: UUID,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> DeviceHealthResponse:
     uc = GetAnalysisHealth(get_saved_analysis_repo(db), get_telemetry_repo(db))
     result = await uc.execute(id)

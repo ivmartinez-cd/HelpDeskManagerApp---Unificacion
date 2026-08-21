@@ -82,7 +82,7 @@ async def list_equipos(
     size: int = Query(default=50, ge=1, le=_MAX_PAGE_SIZE),
     refresh: bool = Query(default=False, description="Fuerza re-consultar Siges"),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> EquiposPreventivosPage:
     use_case = ListEquiposPorZonaUseCase(
         ListEquiposPorZonaDependencies(
@@ -116,7 +116,7 @@ async def habilitar_equipo(
     siges_maquina_id: int,
     body: HabilitarEquipoBody,
     identity: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> HabilitacionSchema:
     info = await HabilitarEquipoUseCase(SqlAlchemyHabilitacionRepository(db)).execute(
         HabilitarEquipoRequest(
@@ -133,7 +133,7 @@ async def habilitar_equipo(
 async def deshabilitar_equipo(
     siges_maquina_id: int,
     identity: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Response:
     await DeshabilitarEquipoUseCase(SqlAlchemyHabilitacionRepository(db)).execute(
         DeshabilitarEquipoRequest(

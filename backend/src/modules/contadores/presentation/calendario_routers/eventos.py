@@ -56,7 +56,7 @@ async def get_calendario_events(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=500, ge=1, le=MAX_PAGE_SIZE),
     identity: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[CalendarEventSchema]:
     repo = SqlAlchemyCalendarEventRepository(db)
     overrides = SqlAlchemyAsignacionOverrideRepository(db)
@@ -75,7 +75,7 @@ async def get_calendario_events(
 @router.get("/calendario/operadores", response_model=Page[OperadorSchema])
 async def get_calendario_operadores(
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[OperadorSchema]:
     """Catálogo local de operadores para alimentar el combobox de filtro del
     Calendario (solo superadmin lo usa — ver GetCalendarEventsUseCase)."""
@@ -88,7 +88,7 @@ async def get_calendario_operadores(
 @router.get("/calendario/mi-operador", response_model=MiOperadorResponse)
 async def get_mi_operador(
     identity: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> MiOperadorResponse:
     repo = SqlAlchemyCalendarEventRepository(db)
     operador = await GetMiOperadorUseCase(repo).execute(
@@ -105,7 +105,7 @@ async def get_calendario_pendientes(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=500, ge=1, le=MAX_PAGE_SIZE),
     identity: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[CalendarEventSchema]:
     """Backlog de clientes de días anteriores que siguen en el calendario
     (pendientes de arrastre), cruzado contra el período real de Siges: si un

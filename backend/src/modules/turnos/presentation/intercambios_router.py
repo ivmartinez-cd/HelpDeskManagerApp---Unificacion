@@ -68,7 +68,7 @@ def _command(
 async def create_intercambio(
     payload: IntercambioRequest,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> IntercambioResponse:
     dto = await CreateIntercambio(_deps(db)).execute(_command(payload, identity.user.id))
     return IntercambioResponse.from_dto(dto)
@@ -79,7 +79,7 @@ async def update_intercambio(
     intercambio_id: uuid.UUID,
     payload: IntercambioRequest,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> IntercambioResponse:
     # `created_by_user_id` del comando no se usa en la edición (se conserva el
     # del alta); se pasa el actual solo para completar el comando.
@@ -93,7 +93,7 @@ async def update_intercambio(
 async def cancel_intercambio(
     intercambio_id: uuid.UUID,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     deps = CancelIntercambioDependencies(overrides=SqlAlchemyAsignacionOverrideRepository(db))
     await CancelIntercambio(deps).execute(intercambio_id)

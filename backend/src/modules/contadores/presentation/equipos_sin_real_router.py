@@ -72,7 +72,7 @@ async def list_equipos_sin_real(
     search: str | None = Query(default=None, max_length=120),
     refresh: bool = Query(default=False, description="Fuerza re-consultar Siges (~10s)"),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[EquipoSinRealSchema]:
     deps = ListEquiposSinRealDependencies(
         port=get_equipos_sin_real_gateway(), operador_mapa=_operador_mapa(db)

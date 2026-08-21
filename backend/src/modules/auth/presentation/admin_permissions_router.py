@@ -55,7 +55,7 @@ async def list_modules(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_CATALOGO_SIZE, ge=1, le=500),
     _: Identity = _require_manage_admin,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[ModuleCatalogResponse]:
     deps = ListModuleCatalogDependencies(catalog=SqlAlchemyModuleCatalogRepository(db))
     entries = await ListModuleCatalog(deps).execute()
@@ -69,7 +69,7 @@ async def list_actions(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_CATALOGO_SIZE, ge=1, le=500),
     _: Identity = _require_manage_admin,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[ActionCatalogResponse]:
     deps = ListActionCatalogDependencies(catalog=SqlAlchemyModuleCatalogRepository(db))
     entries = await ListActionCatalog(deps).execute()
@@ -82,7 +82,7 @@ async def list_actions(
 async def get_user_permissions(
     user_id: uuid.UUID,
     _: Identity = _require_manage_admin,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PermissionsResponse:
     deps = GetUserPermissionsDependencies(permissions=SqlAlchemyPermissionRepository(db))
     permissions = await GetUserPermissions(deps).execute(user_id)
@@ -94,7 +94,7 @@ async def replace_user_permissions(
     user_id: uuid.UUID,
     payload: ReplacePermissionsRequest,
     identity: Identity = _require_manage_admin,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PermissionsResponse:
     deps = ReplaceUserPermissionsDependencies(
         permissions=SqlAlchemyPermissionRepository(db),

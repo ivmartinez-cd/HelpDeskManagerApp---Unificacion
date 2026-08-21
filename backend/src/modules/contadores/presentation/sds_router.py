@@ -42,7 +42,7 @@ async def list_sds_clients(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=1000, ge=1, le=_MAX_PAGE_SIZE),
     _: Identity = _require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[SdsClientOut]:
     """Obtiene la lista de clientes activos desde la API de SDS con su configuración suma_color."""
     config_repo = meter_config_repo_mod.SqlAlchemyMeterClientConfigRepository(db)
@@ -56,7 +56,7 @@ async def update_sds_client_config(
     customer_id: str,
     body: UpdateSdsConfigIn,
     _: Identity = _require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SdsClientOut:
     """Guarda/actualiza la preferencia suma_color de un cliente SDS."""
     config_repo = meter_config_repo_mod.SqlAlchemyMeterClientConfigRepository(db)
@@ -72,7 +72,7 @@ async def update_sds_client_config(
 async def process_sds_meters(
     body: ProcessSdsMetersRequest,
     _: Identity = _require_export,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ProcessSdsMetersResponse:
     """Obtiene los contadores de SDS para un cliente y los exporta a CSV."""
     config_repo = meter_config_repo_mod.SqlAlchemyMeterClientConfigRepository(db)

@@ -21,7 +21,7 @@ _MANAGE = PermissionView(module="vacaciones", action="manage")
 
 async def get_actor_vacaciones(
     identity: Identity = Depends(get_current_identity),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ActorVacaciones:
     es_admin = identity.user.is_superadmin or _MANAGE in identity.permissions
     sector = await SqlAlchemySectorManagerRepository(db).get_sector_de_usuario(

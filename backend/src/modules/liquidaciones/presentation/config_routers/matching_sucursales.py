@@ -37,7 +37,7 @@ router = APIRouter()
 async def auto_vincular_n1(
     prestador_id: UUID,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ResultadoAutoVinculoN1Out:
     """Vincula en bloque las filas con match exacto bajo normalización fuerte
     (símbolo/abreviatura) — aprobado como auto-vínculo (decisión 0.4.a).
@@ -53,7 +53,7 @@ async def auto_vincular_n1(
 async def listar_propuestas_n2(
     prestador_id: UUID,
     _: Identity = require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> list[PropuestaN2Out]:
     """Candidatos difusos (N2) pendientes de confirmación humana — nunca se
     auto-vinculan. Excluye los ya descartados por un operador."""
@@ -66,7 +66,7 @@ async def confirmar_vinculo(
     tabla_km_id: UUID,
     body: ConfirmarVinculoIn,
     _: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> TablaKmOut:
     fila = await build_confirmar_vinculo(db).execute(tabla_km_id, body.siges_sucursal_id)
     return TablaKmOut.from_entity(fila)
@@ -77,7 +77,7 @@ async def rechazar_propuesta(
     tabla_km_id: UUID,
     body: RechazarPropuestaIn,
     identity: Identity = require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await build_rechazar_propuesta(db).execute(
         tabla_km_id, body.siges_sucursal_id, identity.user.email

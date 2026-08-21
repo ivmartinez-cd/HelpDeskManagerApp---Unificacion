@@ -70,7 +70,7 @@ async def login(
     payload: LoginRequest,
     request: Request,
     response: Response,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> IdentityResponse:
     tokens = SecureTokenGenerator()
     deps = AuthenticateUserDependencies(
@@ -88,12 +88,9 @@ async def login(
         user_agent=request.headers.get("user-agent"),
     )
     result = await AuthenticateUser(deps).execute(command)
-    # Commit explícito ANTES de devolver la cookie. El commit de `get_db` corre al
-    # cerrar la dependencia, y con FastAPI >= 0.118 (scope por defecto "request")
-    # eso pasa DESPUÉS de enviar la respuesta: el cliente recibía la cookie y
-    # pegaba a /api/auth/me antes de que la sesión estuviera commiteada → 401 y
-    # rebote a /login (reproducido 15/15 bajo carga, 2026-08-21).
-    await db.commit()
+    # La sesión queda commiteada antes de que salga la respuesta porque `get_db`
+    # se declara con scope="function" (ADR-030). Con el scope por defecto el
+    # cliente recibía la cookie y pegaba a /api/auth/me antes del commit → 401.
     set_session_cookies(response, session_token=result.session_token, csrf_token=tokens.generate())
     return IdentityResponse.from_domain(result.identity)
 
@@ -108,7 +105,7 @@ async def my_modules(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=200, ge=1, le=500),
     identity: Identity = Depends(get_current_identity),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[ModuleCatalogResponse]:
     """Arma el sidebar: a diferencia de /admin/catalog/modules (que requiere
     admin:manage y expone todo el catálogo para editar la matriz), esto es
@@ -127,7 +124,7 @@ async def my_modules(
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
-    request: Request, response: Response, db: AsyncSession = Depends(get_db)
+    request: Request, response: Response, db: AsyncSession = Depends(get_db, scope="function")
 ) -> None:
     token = request.cookies.get(get_settings().session_cookie_name)
     if token:
@@ -149,7 +146,7 @@ _FORGOT_PASSWORD_MESSAGE = (
 
 @router.post("/password/forgot", status_code=status.HTTP_202_ACCEPTED)
 async def forgot_password(
-    payload: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)
+    payload: ForgotPasswordRequest, db: AsyncSession = Depends(get_db, scope="function")
 ) -> dict[str, str]:
     settings = get_settings()
     deps = RequestPasswordResetDependencies(
@@ -171,7 +168,9 @@ class ResetPasswordRequest(BaseModel):
 
 
 @router.post("/password/reset", status_code=status.HTTP_204_NO_CONTENT)
-async def reset_password(payload: ResetPasswordRequest, db: AsyncSession = Depends(get_db)) -> None:
+async def reset_password(
+    payload: ResetPasswordRequest, db: AsyncSession = Depends(get_db, scope="function")
+) -> None:
     deps = ResetPasswordDependencies(
         users=SqlAlchemyUserRepository(db),
         reset_tokens=SqlAlchemyResetTokenRepository(db),
@@ -193,7 +192,7 @@ class ChangePasswordRequest(BaseModel):
 async def change_password(
     payload: ChangePasswordRequest,
     identity: Identity = Depends(get_current_identity),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     deps = ChangePasswordDependencies(
         users=SqlAlchemyUserRepository(db),

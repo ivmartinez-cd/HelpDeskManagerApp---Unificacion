@@ -87,7 +87,7 @@ async def list_ciclos(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=500),
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[CicloResponse]:
     dtos = await ListarCiclos(_ciclos_deps(db)).execute(year)
     return Page.of([CicloResponse.from_dto(d) for d in dtos], page=page, size=size)
@@ -96,7 +96,7 @@ async def list_ciclos(
 @router.post("/ciclos/abrir-proximo")
 async def abrir_ciclos_proximo(
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AbrirCiclosResponse:
     resultado = await AbrirCiclosProximoAnio(_ciclos_deps(db)).execute()
     return AbrirCiclosResponse.from_dto(resultado)
@@ -108,7 +108,7 @@ async def saldo_empleado(
     year: int | None = Query(default=None),
     _identity: Identity = _require_view,
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SaldoResponse:
     target = year if year is not None else SystemClock().hoy().year
     saldo = await ObtenerSaldoEmpleado(_ciclos_deps(db)).execute(empleado_id, target, actor)
@@ -118,7 +118,7 @@ async def saldo_empleado(
 @router.get("/config")
 async def get_config(
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ConfigResponse:
     config = await SqlAlchemyConfigRepository(db).get()
     return ConfigResponse.from_config(config)
@@ -128,7 +128,7 @@ async def get_config(
 async def update_config(
     body: ConfigUpdateRequest,
     identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ConfigResponse:
     deps = ActualizarConfigDependencies(
         config=SqlAlchemyConfigRepository(db),
@@ -143,7 +143,7 @@ async def list_exclusiones(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=500),
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[ExclusionResponse]:
     dtos = await ListarExclusiones(_exclusiones_deps(db)).execute()
     return Page.of([ExclusionResponse.from_dto(d) for d in dtos], page=page, size=size)
@@ -153,7 +153,7 @@ async def list_exclusiones(
 async def crear_exclusion(
     body: ExclusionRequest,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, uuid.UUID]:
     exclusion = await CrearExclusion(_exclusiones_deps(db)).execute(
         body.empleado_a_id, body.empleado_b_id
@@ -165,6 +165,6 @@ async def crear_exclusion(
 async def eliminar_exclusion(
     exclusion_id: uuid.UUID,
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await EliminarExclusion(_exclusiones_deps(db)).execute(exclusion_id)

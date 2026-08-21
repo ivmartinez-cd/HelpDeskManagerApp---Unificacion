@@ -57,7 +57,7 @@ async def _generar(db: AsyncSession) -> ReporteVacacionesDTO:
 @router.get("")
 async def get_reporte(
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ReporteVacacionesResponse:
     return ReporteVacacionesResponse.from_dto(await _generar(db))
 
@@ -65,7 +65,7 @@ async def get_reporte(
 @router.get("/excel")
 async def get_reporte_excel(
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> StreamingResponse:
     return export_excel(await _generar(db))
 
@@ -73,6 +73,6 @@ async def get_reporte_excel(
 @router.get("/pdf")
 async def get_reporte_pdf(
     _identity: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> StreamingResponse:
     return export_pdf(await _generar(db), timezone=get_settings().app_timezone)

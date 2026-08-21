@@ -104,7 +104,7 @@ async def list_prestadores(
         description="Agrupa por operador efectivo a esta fecha (default: hoy)",
     ),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PrestadoresResumenResponse:
     deps = ListPrestadoresAgrupadosDependencies(
         prestadores=SqlAlchemyPrestadorRepository(db),
@@ -122,7 +122,7 @@ async def list_operadores(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[OperadorOptionResponse]:
     users = await SqlAlchemyUserProvider(db).list_all_active_users()
     return Page.of(
@@ -133,7 +133,7 @@ async def list_operadores(
 @router.post("/sync", response_model=SyncResultResponse)
 async def sync_desde_siges(
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SyncResultResponse:
     """Actualiza razón social/denominación/CUIT de los PST ya conocidos desde
     Siges. No crea ni desactiva PST — eso es siempre una acción explícita."""
@@ -149,7 +149,7 @@ async def sync_desde_siges(
 async def get_prestador(
     prestador_id: uuid.UUID,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PrestadorResponse:
     deps = GetPrestadorDependencies(
         prestadores=SqlAlchemyPrestadorRepository(db),
@@ -164,7 +164,7 @@ async def get_prestador(
 async def create_prestador(
     payload: CreatePrestadorRequest,
     _: Identity = _require_create,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PrestadorResponse:
     deps = CreatePrestadorDependencies(
         prestadores=SqlAlchemyPrestadorRepository(db),
@@ -188,7 +188,7 @@ async def update_prestador(
     prestador_id: uuid.UUID,
     payload: UpdatePrestadorRequest,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PrestadorResponse:
     deps = UpdatePrestadorDependencies(
         prestadores=SqlAlchemyPrestadorRepository(db),
@@ -211,7 +211,7 @@ async def set_prestador_active(
     prestador_id: uuid.UUID,
     payload: SetActiveRequest,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     deps = SetPrestadorActiveDependencies(prestadores=SqlAlchemyPrestadorRepository(db))
     await SetPrestadorActive(deps).execute(
@@ -224,7 +224,7 @@ async def assign_operador(
     prestador_id: uuid.UUID,
     payload: AssignOperadorRequest,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PrestadorResponse:
     deps = AssignOperadorDependencies(
         prestadores=SqlAlchemyPrestadorRepository(db),
@@ -246,7 +246,7 @@ async def list_historial(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[AsignacionHistorialResponse]:
     deps = ListAsignacionHistorialDependencies(
         asignaciones=SqlAlchemyAsignacionHistorialRepository(db),

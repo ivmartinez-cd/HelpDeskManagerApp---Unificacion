@@ -35,7 +35,7 @@ async def list_error_codes(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=50, ge=1, le=200),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[ErrorCodeSchema]:
     repo = get_error_code_repo(db)
     result = await repo.list_page(page, size)
@@ -51,7 +51,7 @@ async def list_error_codes(
 async def upsert_error_code(
     body: UpsertErrorCodeRequest,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ErrorCodeSchema:
     uc = UpsertErrorCode(get_error_code_repo(db), get_hp_portal_gateway())
     result = await uc.execute(
@@ -67,7 +67,7 @@ async def upsert_error_code(
 async def solution_proxy(
     code: str,
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, Any]:
     uc = GetSolutionProxy(get_error_code_repo(db), get_hp_portal_gateway())
     content = await uc.execute(code)

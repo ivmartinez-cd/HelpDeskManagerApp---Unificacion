@@ -56,7 +56,7 @@ _DEFAULT_SIZE = 200
 @router.get("/overrides")
 async def list_overrides(
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[AsignacionOverrideResponse]:
     deps = ListAsignacionOverridesDependencies(
         overrides=SqlAlchemyAsignacionOverrideRepository(db),
@@ -72,7 +72,7 @@ async def list_overrides(
 async def create_override(
     payload: CreateAsignacionOverrideRequest,
     identity: Identity = _require_create,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AsignacionOverrideResponse:
     deps = CreateAsignacionOverrideDependencies(
         overrides=SqlAlchemyAsignacionOverrideRepository(db),
@@ -98,7 +98,7 @@ async def update_override(
     # Mismo body que el alta — el id va en el path y el creador no cambia.
     payload: CreateAsignacionOverrideRequest,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AsignacionOverrideResponse:
     deps = UpdateAsignacionOverrideDependencies(
         overrides=SqlAlchemyAsignacionOverrideRepository(db),
@@ -122,7 +122,7 @@ async def update_override(
 async def cancel_override(
     override_id: uuid.UUID,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     deps = CancelAsignacionOverrideDependencies(
         overrides=SqlAlchemyAsignacionOverrideRepository(db)

@@ -29,7 +29,7 @@ async def list_alerts(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=200, ge=1, le=500),
     _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[AlertRowOut]:
     """Alertas escaladas sin reconocer, la más antigua primero. Escala las vencidas al
     momento — el `total` del envelope es el `escalatedCount` del legacy."""
@@ -41,7 +41,7 @@ async def list_alerts(
 async def acknowledge_alerts(
     body: AcknowledgeRequestBody,
     _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AcknowledgeResponse:
     """Reconoce a mano una o varias alertas escaladas (el operario ya las está
     gestionando pero todavía no puede cargar el pedido)."""
