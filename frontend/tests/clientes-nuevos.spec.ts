@@ -71,13 +71,13 @@ const OPERADORES = [
 const CANDIDATOS = {
   candidatos: [
     {
-      empresa_id: 1417,
-      cliente: "SWEET DREAM",
-      contrato_nro: "COP36DIRAR00838",
-      fecha_firma: "2026-08-10",
-      vendedor: "Micaela Rosa",
-      rubro: "CARTELERIA",
-      equipos_instalados: 1,
+      empresa_id: 1411,
+      cliente: "FURLONG",
+      contrato_nro: "FURLONG DEMO",
+      fecha_firma: "2026-07-01",
+      vendedor: "Adrián Vanrell",
+      rubro: "IMPRESION",
+      equipos_instalados: 0,
     },
   ],
   firmado_desde: "2026-04-23",
@@ -183,14 +183,14 @@ test.describe("Contadores › Clientes nuevos", () => {
     await page.goto("/contadores/clientes-nuevos");
     await page.getByRole("button", { name: "Sugerencias de Siges" }).click();
     const sugerencias = page.getByRole("dialog", { name: "Sugerencias de Siges" });
-    await expect(sugerencias.getByText("SWEET DREAM")).toBeVisible();
-    await expect(sugerencias.getByText("Cartelería", { exact: true })).toBeVisible();
+    await expect(sugerencias.getByText("FURLONG", { exact: true })).toBeVisible();
+    await expect(sugerencias.getByText("Impresión", { exact: true })).toBeVisible();
     await sugerencias.getByRole("button", { name: "Crear ficha" }).click();
 
     const dialog = page.getByRole("dialog", { name: "Nueva ficha de cliente" });
-    await expect(dialog.getByLabel("Cliente", { exact: true })).toHaveValue("SWEET DREAM");
-    await expect(dialog.getByLabel("Contrato N°")).toHaveValue("COP36DIRAR00838");
-    await expect(dialog.getByLabel("Fecha de firma")).toHaveValue("2026-08-10");
-    await expect(dialog.getByText("Cruzada con ID_Empresa 1417", { exact: false })).toBeVisible();
+    await expect(dialog.getByLabel("Cliente", { exact: true })).toHaveValue("FURLONG");
+    await expect(dialog.getByLabel("Contrato N°")).toHaveValue("FURLONG DEMO");
+    await expect(dialog.getByLabel("Fecha de firma")).toHaveValue("2026-07-01");
+    await expect(dialog.getByText("Cruzada con ID_Empresa 1411", { exact: false })).toBeVisible();
   });
 });

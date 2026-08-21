@@ -275,12 +275,17 @@ async def test_candidatos_excluye_empresas_con_ficha() -> None:
         CandidatoClienteNuevo(
             1417, "SWEET DREAM", "COP36DIRAR00838", date(2026, 8, 10), "MR", RUBRO_CARTELERIA, 1
         ),
+        CandidatoClienteNuevo(
+            1411, "FURLONG", "FURLONG DEMO", date(2026, 7, 1), "AV", RUBRO_IMPRESION, 0
+        ),
     ]
     deps = ListClientesNuevosDependencies(repo=repo, siges=FakeSiges(candidatos=candidatos))
     result = await ListCandidatosClientesNuevosUseCase(deps).execute(
         hoy=date(2026, 8, 21), dias=120
     )
-    assert [c.empresa_id for c in result.candidatos] == [1417]
+    # SWEET DREAM es cartelería (CD4): no es de Contadores; solo quedan los de impresión
+    # sin ficha (BILETTA ya tiene ficha).
+    assert [c.empresa_id for c in result.candidatos] == [1411]
     assert result.firmado_desde == date(2026, 4, 23)
 
     sin_siges = ListClientesNuevosDependencies(repo=repo, siges=None)

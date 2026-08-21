@@ -46,7 +46,7 @@ export function ClientesNuevosCandidatosModal({ onClose, onElegir }: Props) {
       <p className="-mt-2 mb-4 font-body text-xs text-muted-foreground">
         Empresas cliente con su <strong>primer contrato</strong> firmado
         {desde ? ` desde el ${formatFecha(desde)}` : ` en los últimos ${DIAS} días`} y sin ficha.
-        El rubro sale de quién administra el contrato (CD3 = impresión, CD4 = cartelería).
+        Solo impresión: los contratos de cartelería (CD4/Directar) no se listan.
       </p>
       {candidatos === null && !error && (
         <div className="flex flex-col gap-2">

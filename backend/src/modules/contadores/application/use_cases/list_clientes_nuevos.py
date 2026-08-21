@@ -20,6 +20,7 @@ from src.modules.contadores.domain.repositories.cliente_nuevo_repository import 
 from src.modules.contadores.domain.repositories.clientes_nuevos_siges_port import (
     ClientesNuevosSigesPort,
 )
+from src.modules.contadores.domain.services.rubro_empresa_admin import RUBRO_CARTELERIA
 from src.shared.domain.errors import ExternalServiceError
 
 logger = logging.getLogger(__name__)
@@ -68,7 +69,9 @@ class ListClientesNuevosUseCase:
 
 class ListCandidatosClientesNuevosUseCase:
     """Empresas de Siges con primer contrato reciente que todavía no tienen
-    ficha — para que la TL las cargue con un clic en vez de tipear el mail."""
+    ficha — para que la TL las cargue con un clic en vez de tipear el mail.
+    Los contratos de cartelería (CD4/Directar) no son de Contadores: se
+    excluyen (pedido del usuario 2026-08-21)."""
 
     def __init__(self, deps: ListClientesNuevosDependencies) -> None:
         self._deps = deps
@@ -82,6 +85,10 @@ class ListCandidatosClientesNuevosUseCase:
         candidatos = await self._deps.siges.candidatos_desde(desde, force_refresh=force_refresh)
         con_ficha = await self._deps.repo.list_siges_empresa_ids()
         return CandidatosClientesNuevosResult(
-            candidatos=[c for c in candidatos if c.empresa_id not in con_ficha],
+            candidatos=[
+                c
+                for c in candidatos
+                if c.empresa_id not in con_ficha and c.rubro != RUBRO_CARTELERIA
+            ],
             firmado_desde=desde,
         )
