@@ -191,7 +191,28 @@ bloquea algo que de verdad hace falta, explicárselo al usuario y que decida él
   .githooks`). `--no-verify` existe, pero usarlo es una decisión del usuario, no de Claude.
 
 `make check` es la forma canónica de correr la verificación del módulo que exige
-`ARCHITECTURE_GUIDE.md`; `make help` lista el resto de atajos (`status`, `restart-*`,
+`ARCHITECTURE_GUIDE.md`.
+
+### Cuándo pushear (decisión del usuario, 2026-08-21)
+
+`main` es la rama de trabajo y el remoto (`origin` en GitHub; a futuro el Gitea de Canal
+Directo) es el **respaldo**: lo que no está pusheado existe solo en el disco de esta PC. Regla:
+
+- **Pushear al cerrar cada bloque de trabajo** (feature terminada y probada, fin de una
+  migración) **y siempre al final del día de trabajo**, antes del `wsl --shutdown`.
+- **Hacerlo proactivamente cuando se detecte la condición**, sin esperar a que el usuario lo
+  pida de nuevo: el hook de arranque avisa si hay **≥5 commits sin pushear o el más viejo
+  tiene más de 24 h**; `hd-status` muestra lo mismo. En ese caso, al terminar la tarea en
+  curso (no en el medio), correr `git push origin main` y decirlo en el resumen final — el
+  `pre-push` garantiza que no suba nada que rompa `make check`. Si el push falla por el hook,
+  reportarlo y no usar `--no-verify`.
+- **Una sola sesión pushea.** Si `git status`/el registro de sesiones muestran que otra
+  sesión está commiteando en ese momento, esperar a que termine o coordinar por
+  `SendMessage`; pushear en paralelo desde varias sesiones solo duplica el `pre-push`.
+- No pushear después de cada commit chico (el `pre-push` tarda ~45 s; el ruido no aporta), ni
+  hacer `force push` jamás (bloqueado por `claude-git-guard`).
+
+`make help` lista el resto de atajos (`status`, `restart-*`,
 `recreate-backend`, `logs-*`, `mailpit`, `typecheck-frontend`). Antes de una migración o un
 script que toque datos: `make db-backup TAG=<motivo>` (pg_dump a `backups/`, ignorado por git);
 para volver atrás, `make db-restore FILE=backups/<archivo>.dump` (pide confirmación, detiene el
