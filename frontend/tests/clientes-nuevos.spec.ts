@@ -125,8 +125,7 @@ test.describe("Contadores › Clientes nuevos", () => {
     // La cerrada no entra en el filtro "Abiertas" por defecto.
     await expect(page.getByText("CARTOCOR")).toBeHidden();
     await expect(page.getByText("Listo para STC", { exact: true })).toBeVisible();
-    await expect(page.getByText("11 / 10 · últ. 21/08/2026")).toBeVisible();
-    await expect(page.getByText("1 despachada sin confirmar · últ. 21/08/2026")).toBeVisible();
+    await expect(page.getByText("11 / 12 instaladas · últ. 21/08/2026")).toBeVisible();
     await expect(page.getByText("Marcela Rodríguez")).toHaveCount(2);
     await expect(page.getByText("STC enviado", { exact: true }).first()).toBeVisible();
 

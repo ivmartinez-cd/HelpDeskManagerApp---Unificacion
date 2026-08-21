@@ -130,22 +130,28 @@ export function payloadDesdeCandidato(c: CandidatoClienteNuevo): ClienteNuevoPay
   };
 }
 
-/** Texto de avance de instalación: "7 / 10 · últ. 21/08/2026" o "—". Cuenta
- * solo instaladas confirmadas; las despachadas en viaje van aparte. */
+/** Avance de instalación: "6 / 12 instaladas · últ. 21/08/2026" = confirmadas
+ * por el PST sobre despachadas por Equipamiento (decisión del usuario
+ * 2026-08-21: un solo número para no marear a la TL; lo demás queda en el
+ * tooltip). */
 export function textoInstalados(f: ClienteNuevo): string {
   if (!f.siges) return f.siges_empresa_id ? "Siges sin respuesta" : "Sin cruce";
-  const previstos = f.equipos_previstos ? ` / ${f.equipos_previstos}` : "";
+  if (f.siges.equipos_despachados === 0) return "Sin despachos";
   const ultima = f.siges.ultima_instalacion
     ? ` · últ. ${formatFecha(f.siges.ultima_instalacion)}`
     : "";
-  return `${f.siges.equipos_instalados}${previstos}${ultima}`;
+  return `${f.siges.equipos_instalados} / ${f.siges.equipos_despachados} instaladas${ultima}`;
 }
 
-/** "5 despachadas en viaje · últ. 10/08/2026" cuando hay altas sin confirmar. */
-export function textoEnViaje(f: ClienteNuevo): string | null {
-  if (!f.siges) return null;
-  const enViaje = f.siges.equipos_despachados - f.siges.equipos_instalados;
-  if (enViaje <= 0) return null;
-  const ultimo = f.siges.ultimo_despacho ? ` · últ. ${formatFecha(f.siges.ultimo_despacho)}` : "";
-  return `${enViaje} despachada${enViaje === 1 ? "" : "s"} sin confirmar${ultimo}`;
+/** Detalle para el tooltip de la celda: despachos, tomas reales y órdenes. */
+export function detalleInstalados(f: ClienteNuevo): string {
+  if (!f.siges) return "";
+  const partes = [
+    `${f.siges.equipos_despachados} despachadas por Equipamiento`,
+    f.siges.ultimo_despacho ? `último despacho ${formatFecha(f.siges.ultimo_despacho)}` : null,
+    `${f.siges.equipos_con_toma} con toma real`,
+    `${f.siges.instalas} órdenes de instalación`,
+    f.equipos_previstos ? `${f.equipos_previstos} previstas según el mail` : null,
+  ];
+  return partes.filter(Boolean).join(" · ");
 }
