@@ -57,6 +57,8 @@ class ListEquiposSinRealUseCase:
             for e in snapshot.equipos
             if e.meses_sin_real >= request.min_meses
         ]
+        if request.solo_operador_nombre:
+            anotados = filtrar_por_operador(anotados, request.solo_operador_nombre)
         if request.search:
             anotados = _filtrar(anotados, request.search)
         anotados = _ordenar(anotados, request.sort_by, request.sort_dir == "desc")
@@ -66,6 +68,18 @@ class ListEquiposSinRealUseCase:
         if self._deps.operador_mapa is None:
             return {}
         return await self._deps.operador_mapa.build(hoy=datetime.now(UTC).date())
+
+
+def filtrar_por_operador(
+    anotados: list[EquipoSinRealAnotado], operador_nombre: str
+) -> list[EquipoSinRealAnotado]:
+    """Solo los equipos cuyo cliente está asignado a ese operador (cruce por
+    nombre, insensible a mayúsculas). Los equipos sin operador resuelto quedan
+    afuera: no se puede afirmar que sean de nadie."""
+    nombre = operador_nombre.casefold()
+    return [
+        a for a in anotados if a.operador is not None and a.operador.nombre.casefold() == nombre
+    ]
 
 
 def _filtrar(anotados: list[EquipoSinRealAnotado], search: str) -> list[EquipoSinRealAnotado]:

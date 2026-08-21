@@ -55,6 +55,10 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   // (tools/ftp_clients/sds/ers routers); calendario, coberturas, equipos sin
   // real y anexos se abren con `view`.
   { prefix: "/contadores", exact: true, anyOf: [p("contadores", "export")] },
+  // Coberturas y anexos sin facturar son gestión del equipo/facturación: solo
+  // con `manage` (decisión del usuario 2026-08-21: los operadores no los ven).
+  { prefix: "/contadores/coberturas", anyOf: [p("contadores", "manage")] },
+  { prefix: "/contadores/anexos-pendientes", anyOf: [p("contadores", "manage")] },
   // Resto: la página entera se abre con view; las acciones se gatean adentro.
   { prefix: "/contadores", anyOf: [p("contadores", "view")] },
   { prefix: "/insumos", anyOf: [p("insumos", "view")] },

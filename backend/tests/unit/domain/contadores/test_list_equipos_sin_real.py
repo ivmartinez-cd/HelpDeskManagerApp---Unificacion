@@ -166,3 +166,26 @@ def test_severidad_umbrales() -> None:
 def test_imp_prom_3m_trunca_como_el_legacy() -> None:
     equipo = _equipo("S3", "Calico", 3, im=(194, 232, 992))
     assert equipo.imp_prom_3m == 472
+
+
+@pytest.mark.asyncio
+async def test_solo_operador_deja_solo_sus_clientes_y_excluye_sin_operador() -> None:
+    """Un operador sin `contadores.manage` ve solo los equipos de clientes
+    asignados a su nombre (cruce por nombre, insensible a mayúsculas); los
+    equipos sin operador resuelto quedan afuera."""
+    result = await _use_case().execute(
+        ListEquiposSinRealRequest(min_meses=1, solo_operador_nombre="victor PAEZ")
+    )
+    assert [a.equipo.serie for a in result.equipos] == ["S1"]
+
+
+@pytest.mark.asyncio
+async def test_resumen_acotado_al_operador() -> None:
+    use_case = GetEquiposSinRealResumenUseCase(
+        _FakePort(_UNIVERSO),
+        operador_mapa=_FakeMapa(_MAPA),  # type: ignore[arg-type]
+    )
+    todos = await use_case.execute()
+    solo = await use_case.execute(solo_operador_nombre="Ana Gomez")
+    assert todos.total == 4
+    assert (solo.total, solo.medios, solo.criticos) == (1, 1, 0)

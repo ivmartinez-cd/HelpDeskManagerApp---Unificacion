@@ -12,3 +12,8 @@ class ListEquiposSinRealRequest:
     sort_by: SortBy = "meses"
     sort_dir: SortDir = "desc"
     force_refresh: bool = False
+    # Nombre del operador (catálogo de contadores, cruzado por nombre con el
+    # usuario logueado, ADR-009): cuando viene, solo se listan los equipos de
+    # clientes asignados a ese operador — es lo que ve un operador sin
+    # `contadores.manage` (decisión del usuario 2026-08-21). `None` = todos.
+    solo_operador_nombre: str | None = None

@@ -10,7 +10,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.auth.application.dtos.results import Identity
+from src.modules.auth.application.dtos.results import Identity, PermissionView
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.contadores.application.dtos.list_equipos_sin_real_request import (
     ListEquiposSinRealRequest,
@@ -25,7 +25,7 @@ from src.modules.contadores.application.use_cases.list_equipos_sin_real import (
 from src.modules.contadores.application.use_cases.operador_por_empresa import (
     MapaOperadorPorEmpresa,
 )
-from src.modules.contadores.domain.well_known_permissions import VIEW
+from src.modules.contadores.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_calendario_repository import (
     SqlAlchemyCalendarEventRepository,
 )
@@ -47,6 +47,17 @@ router = APIRouter(prefix="/api/contadores", tags=["contadores-equipos-sin-real"
 
 _require_view = Depends(require_permission(VIEW))
 _MAX_PAGE_SIZE = 500
+_MANAGE = PermissionView(module=MANAGE.module.value, action=MANAGE.action.value)
+
+
+def _solo_operador(identity: Identity) -> str | None:
+    """Sin `contadores.manage` (y sin ser superadmin) el usuario ve solo los
+    equipos de SUS clientes: el cruce con el catálogo de operadores de
+    contadores es por nombre (ADR-009), así que se filtra por `full_name`.
+    Con `manage` o superadmin, `None` = todos (decisión del usuario 2026-08-21)."""
+    if identity.user.is_superadmin or _MANAGE in identity.permissions:
+        return None
+    return identity.user.full_name
 
 
 def _operador_mapa(db: AsyncSession) -> MapaOperadorPorEmpresa | None:
@@ -71,7 +82,7 @@ async def list_equipos_sin_real(
     min_meses: int = Query(default=3, ge=1),
     search: str | None = Query(default=None, max_length=120),
     refresh: bool = Query(default=False, description="Fuerza re-consultar Siges (~10s)"),
-    _: Identity = _require_view,
+    identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[EquipoSinRealSchema]:
     deps = ListEquiposSinRealDependencies(
@@ -84,6 +95,7 @@ async def list_equipos_sin_real(
             sort_by=sort_by,
             sort_dir=sort_dir,
             force_refresh=refresh,
+            solo_operador_nombre=_solo_operador(identity),
         )
     )
     schemas = [EquipoSinRealSchema.from_anotado(a) for a in result.equipos]
@@ -92,10 +104,13 @@ async def list_equipos_sin_real(
 
 @router.get("/equipos-sin-real/resumen", response_model=EquiposSinRealResumenSchema)
 async def get_equipos_sin_real_resumen(
-    _: Identity = _require_view,
+    identity: Identity = _require_view,
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> EquiposSinRealResumenSchema:
-    use_case = GetEquiposSinRealResumenUseCase(get_equipos_sin_real_gateway())
-    resumen = await use_case.execute()
+    use_case = GetEquiposSinRealResumenUseCase(
+        get_equipos_sin_real_gateway(), operador_mapa=_operador_mapa(db)
+    )
+    resumen = await use_case.execute(solo_operador_nombre=_solo_operador(identity))
     return EquiposSinRealResumenSchema(
         total=resumen.total,
         criticos=resumen.criticos,

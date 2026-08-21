@@ -18,6 +18,7 @@ import {
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
 import { useTableSort } from "@/shared/hooks/use-table-sort";
+import { useSession } from "@/services/session-provider";
 
 const POR_PAGINA = 50;
 const SORT_KEYS: readonly EquiposSinRealSortKey[] = [
@@ -60,6 +61,11 @@ function formatConsultadoEn(iso: string): string {
 }
 
 export function EquiposSinRealView() {
+  // Sin `contadores.manage` el backend ya devuelve solo los equipos de los
+  // clientes asignados al usuario (cruce por nombre de operador); acá solo se
+  // avisa en el subtítulo.
+  const { can } = useSession();
+  const puedeVerTodo = can("contadores", "manage");
   const [rows, setRows] = useState<EquipoSinReal[] | null>(null);
   const [total, setTotal] = useState(0);
   const [resumen, setResumen] = useState<EquiposSinRealResumen | null>(null);
@@ -135,6 +141,7 @@ export function EquiposSinRealView() {
           <p className="font-body text-sm text-muted-foreground">
             Parque que sigue facturando con estimados · Solo lectura · Para el
             laburo mes a mes de recuperación de reales.
+            {!puedeVerTodo && " · Solo los clientes asignados a vos."}
           </p>
         </div>
         <div className="flex items-center gap-3">
