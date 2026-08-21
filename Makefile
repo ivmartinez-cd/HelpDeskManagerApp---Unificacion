@@ -3,10 +3,14 @@
 
 BACKEND  := helpdesk-manager-backend
 FRONTEND := helpdesk-manager-frontend
+DB       := helpdesk-db
 EXEC     := docker exec $(BACKEND)
+PGUSER   ?= helpdesk
+PGDB     ?= helpdesk
 
-.PHONY: help status check lint-imports ruff mypy test lint-frontend hooks restart-backend \
-        restart-frontend recreate-backend logs-backend logs-frontend mailpit up ps
+.PHONY: help status check lint-imports ruff mypy test lint-frontend typecheck-frontend hooks \
+        db-backup db-restore restart-backend restart-frontend recreate-backend \
+        logs-backend logs-frontend mailpit up ps
 
 help:  ## Lista los targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[1m%-18s\033[0m %s\n", $$1, $$2}'
@@ -32,6 +36,29 @@ test:  ## pytest tests/unit -q
 
 lint-frontend:  ## eslint del frontend (dentro del contenedor)
 	docker exec $(FRONTEND) npm run -s lint
+
+typecheck-frontend:  ## tsc --noEmit del frontend (≈15 s; next build lo hace recién al reiniciar)
+	docker exec $(FRONTEND) npx tsc --noEmit
+
+# --- Base de datos de dev (datos reales sembrados: respaldar antes de migraciones riesgosas) ---
+db-backup:  ## pg_dump formato custom a backups/helpdesk-db_<fecha>[_TAG].dump  (make db-backup TAG=pre-migracion-x)
+	@mkdir -p backups
+	@f=backups/helpdesk-db_$$(date +%Y-%m-%d_%H%M)$(if $(TAG),_$(TAG),).dump; \
+	docker exec $(DB) pg_dump -U $(PGUSER) -d $(PGDB) -Fc >"$$f" && echo "✔ $$f ($$(du -h "$$f" | cut -f1))"
+
+db-restore:  ## Restaura FILE=backups/<x>.dump|.sql sobre la DB de dev — DESTRUCTIVO, pide confirmación
+	@test -n "$(FILE)" || { echo "Uso: make db-restore FILE=backups/<archivo>.dump  (o .sql plano)"; exit 2; }
+	@test -f "$(FILE)" || { echo "✘ no existe $(FILE)"; exit 2; }
+	@printf 'Esto PISA la base "%s" con %s (el backend se detiene mientras tanto). ¿Seguir? [s/N] ' "$(PGDB)" "$(FILE)"; \
+	read -r r; [ "$$r" = s ] || [ "$$r" = S ] || { echo "abortado"; exit 1; }
+	docker stop $(BACKEND) >/dev/null
+	docker cp "$(FILE)" $(DB):/tmp/restore.in
+	@case "$(FILE)" in \
+	  *.sql) docker exec $(DB) psql -U $(PGUSER) -d $(PGDB) -q -v ON_ERROR_STOP=0 -f /tmp/restore.in 2>&1 | tail -5 ;; \
+	  *)     docker exec $(DB) pg_restore -U $(PGUSER) -d $(PGDB) --clean --if-exists --no-owner --no-privileges /tmp/restore.in 2>&1 | tail -5 ;; \
+	esac
+	docker exec $(DB) rm -f /tmp/restore.in
+	docker start $(BACKEND) >/dev/null && echo "✔ restaurado desde $(FILE); backend arrancando (corre alembic upgrade head)"
 
 hooks:  ## Activa los hooks de git del repo (.githooks: pre-commit y pre-push) en este clon
 	git config core.hooksPath .githooks

@@ -183,13 +183,16 @@ bloquea algo que de verdad hace falta, explicárselo al usuario y que decida él
   recientemente por **otra** sesión de Claude (según el registro de sesiones); override
   consciente y coordinado: `ALLOW_FOREIGN=1 git commit …`. Si hay cambios en `backend/`, corre
   `lint-imports` + `ruff` (archivos staged) + `mypy` dentro del contenedor.
-- **`.githooks/pre-push`** (≈30 s): lista los commits que se van a subir (leerlos, no pushear a
+- **`.githooks/pre-push`** (≈45 s): lista los commits que se van a subir (leerlos, no pushear a
   ciegas), corre `make check` completo (lint-imports + ruff + mypy + pytest) y, si hay cambios
-  en `frontend/`, el eslint del frontend. Si algo falla, no se pushea. Si el lint del frontend
-  falla con salida vacía, otra sesión estaba reiniciando el contenedor — reintentar.
+  en `frontend/`, eslint + `tsc --noEmit` del frontend. Si algo falla, no se pushea. Si un paso
+  del frontend falla con salida vacía, otra sesión estaba reiniciando el contenedor — reintentar.
 - Los hooks de git se activan por clon con `make hooks` (`git config core.hooksPath
   .githooks`). `--no-verify` existe, pero usarlo es una decisión del usuario, no de Claude.
 
 `make check` es la forma canónica de correr la verificación del módulo que exige
 `ARCHITECTURE_GUIDE.md`; `make help` lista el resto de atajos (`status`, `restart-*`,
-`recreate-backend`, `logs-*`, `mailpit`).
+`recreate-backend`, `logs-*`, `mailpit`, `typecheck-frontend`). Antes de una migración o un
+script que toque datos: `make db-backup TAG=<motivo>` (pg_dump a `backups/`, ignorado por git);
+para volver atrás, `make db-restore FILE=backups/<archivo>.dump` (pide confirmación, detiene el
+backend mientras restaura).

@@ -43,15 +43,16 @@ rm -f "$log"
 
 if ((touches_frontend)); then
   if docker exec "$FRONTEND" true 2>/dev/null; then
-    if docker exec "$FRONTEND" npm run -s lint >"$log" 2>&1; then
-      ok "frontend lint"
-    else
-      red "frontend lint falló — no se pushea:"
+    fe_fail() {  # $1 = nombre del paso
+      red "frontend $1 falló — no se pushea:"
       if [[ -s "$log" ]]; then tail -30 "$log"; else
         yel "(salida vacía: probablemente otra sesión estaba reiniciando $FRONTEND — reintentá el push en un minuto)"
       fi
       rm -f "$log"; exit 1
-    fi
+    }
+    if docker exec "$FRONTEND" npm run -s lint >"$log" 2>&1; then ok "frontend lint"; else fe_fail "lint"; fi
+    # tsc: next build también chequea tipos, pero recién al reiniciar el contenedor — acá falla antes
+    if docker exec "$FRONTEND" npx tsc --noEmit >"$log" 2>&1; then ok "frontend tsc --noEmit"; else fe_fail "tsc"; fi
   else
     yel "contenedor $FRONTEND no responde — salteo el lint del frontend"
   fi
