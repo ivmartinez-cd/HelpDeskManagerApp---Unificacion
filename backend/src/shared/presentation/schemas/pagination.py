@@ -4,8 +4,7 @@ from pydantic import BaseModel
 class Page[T](BaseModel):
     """Envelope de paginación genérico (ARCHITECTURE_GUIDE.md §11, regla 3:
     "Paginación obligatoria en todo endpoint que retorne colecciones").
-    Mismo shape que `PaginatedUsersResponse` (auth) pero reutilizable, para
-    no duplicarlo en cada módulo que liste algo."""
+    No duplicar este shape por módulo."""
 
     items: list[T]
     total: int

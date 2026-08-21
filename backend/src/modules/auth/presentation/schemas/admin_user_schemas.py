@@ -30,13 +30,6 @@ class AdminUserResponse(BaseModel):
         )
 
 
-class PaginatedUsersResponse(BaseModel):
-    items: list[AdminUserResponse]
-    total: int
-    page: int
-    size: int
-
-
 class CreateUserRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 

@@ -28,11 +28,11 @@ from src.modules.auth.presentation.dependencies.permissions import require_permi
 from src.modules.auth.presentation.schemas.admin_user_schemas import (
     AdminUserResponse,
     CreateUserRequest,
-    PaginatedUsersResponse,
     UpdateUserRequest,
 )
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/admin/users", tags=["admin"])
 
@@ -47,10 +47,10 @@ async def list_users(
     q: str | None = Query(default=None),
     _: Identity = _require_manage_admin,
     db: AsyncSession = Depends(get_db, scope="function"),
-) -> PaginatedUsersResponse:
+) -> Page[AdminUserResponse]:
     users, total = await SqlAlchemyUserRepository(db).list_page(page=page, size=size, query=q)
     items = [AdminUserResponse.from_domain(user) for user in users]
-    return PaginatedUsersResponse(items=items, total=total, page=page, size=size)
+    return Page(items=items, total=total, page=page, size=size)
 
 
 @router.get("/{user_id}")
