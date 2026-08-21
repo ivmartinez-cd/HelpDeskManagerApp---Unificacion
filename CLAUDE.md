@@ -138,3 +138,32 @@ curl -s http://localhost:3000/<ruta> | grep <algo del cambio nuevo>
 
 No dejar los contenedores apagados al terminar — son los servidores que quedan corriendo entre
 sesiones para poder probar en el navegador.
+
+## Varias sesiones de Claude en paralelo sobre el mismo checkout
+
+El usuario trabaja habitualmente con **varias sesiones de Claude Code abiertas a la vez** (3 o
+4, cada una en su ventana, lanzadas con `~/.local/bin/dev` / `hdm`), todas sobre **este mismo
+checkout** — no hay worktrees ni ramas por sesión. Consecuencia: `git status` mezcla el trabajo
+en curso de todas, y un archivo puede estar siendo editado por otra sesión en este momento.
+
+Existen dos mecanismos de coordinación; usarlos, no asumir que se está solo:
+
+1. **Registro de ediciones entre sesiones (automático, por hooks).** Hooks en
+   `.claude/settings.local.json` corren `~/.local/bin/claude-session-registry`: cada
+   `Edit`/`Write` de cualquier sesión queda anotado en `.claude/sessions/edits.tsv` (hora,
+   sesión, módulo, archivo), y antes de editar un archivo que **otra** sesión tocó hace poco
+   llega un aviso por `additionalContext` (mismo archivo = aviso fuerte; mismo módulo = aviso
+   suave). Al arrancar una sesión también llega el resumen de las demás. Qué hacer cuando
+   aparece el aviso: releer el archivo (pudo cambiar), no pisar ni revertir ni reformatear lo
+   ajeno, y **no commitear archivos que no sean de la propia tarea** — al commitear, agregar
+   explícitamente los archivos propios (`git add <archivos>`), nunca `git add -A`/`git add .`.
+   Para ver el registro a mano: `hd-status` o `claude-session-registry status`.
+2. **Comunicación directa entre sesiones.** `ListAgents` lista las otras sesiones de Claude
+   abiertas en esta máquina; `SendMessage` les manda un mensaje y pueden responder. Usarlo
+   cuando el registro muestra que otra sesión está en el mismo módulo/archivo y hace falta
+   coordinar (quién toca qué, si algo está a medio hacer, si se puede reiniciar un contenedor
+   que la otra está usando), o cuando un `reiniciar.sh`/`compose up` va a cortar el stack que
+   las demás están probando.
+
+Si un aviso del registro se refiere a un archivo que hay que modificar sí o sí y la otra sesión
+sigue activa, decírselo al usuario antes de seguir, no resolverlo pisando.
