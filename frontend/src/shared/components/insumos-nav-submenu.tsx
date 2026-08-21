@@ -156,12 +156,12 @@ function NavLinkRow({
 export function InsumosNavSubmenu({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const counts = useInsumosNavCounts();
-  const { can } = useSession();
+  const { can, hasFeature } = useSession();
   // Mapa central de permisos por ruta (ADR-029): hoy todo /insumos/* se abre
   // con `view`, pero si una pantalla pasa a pedir otra acción se oculta sola.
   const sections = SECTIONS.map((s) => ({
     ...s,
-    links: s.links.filter((l) => canAccessPath(l.href, can)),
+    links: s.links.filter((l) => canAccessPath(l.href, { can, hasFeature })),
   })).filter((s) => s.links.length > 0);
 
   return (

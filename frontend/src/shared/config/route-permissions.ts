@@ -1,23 +1,29 @@
-/** Mapa central ruta → permiso requerido (ADR-029).
+/** Mapa central ruta → requisito de acceso (ADR-029, ADR-032).
  *
  * Única fuente de verdad del frontend para "¿esta persona puede abrir esta
  * URL?". Lo consumen:
  *  - `RouteGuard` (layout de `(app)`): redirige a `/` con toast si no alcanza.
  *  - los submenús del sidebar: ocultan los ítems a los que no se puede entrar.
  *
- * El enforcement real sigue siendo el backend (`require_permission`): esto es
- * UX, para que nadie aterrice en una pantalla que solo devuelve 403. Por eso
- * una ruta sin entrada acá **no se bloquea** (fail-open a nivel página): una
- * pantalla nueva sin mapear sigue siendo usable y el backend la protege igual.
+ * El enforcement real sigue siendo el backend (`require_permission` /
+ * `require_feature`): esto es UX, para que nadie aterrice en una pantalla que
+ * solo devuelve 403. Por eso una ruta sin entrada acá **no se bloquea**
+ * (fail-open a nivel página): una pantalla nueva sin mapear sigue siendo
+ * usable y el backend la protege igual.
+ *
+ * Dos tipos de requisito:
+ *  - `anyOf`: alcanza con una de las acciones (módulo × acción) listadas.
+ *  - `feature`: la pantalla es una "función" concedible por usuario desde la
+ *    grilla de permisos (ADR-032). Es lo que permite "a este operador sí
+ *    Coberturas, a aquel no" sin tocar código.
  *
  * Orden: se toma la primera entrada cuyo `prefix` matchea (`===` o `/…`; con
  * `exact: true` solo `===`), así que lo específico va antes que lo general
- * (`/vacaciones/aprobaciones` antes que `/vacaciones`). `anyOf` = alcanza con
- * uno de los permisos listados.
+ * (`/vacaciones/aprobaciones` antes que `/vacaciones`).
  *
  * Regla al agregar un módulo o pantalla: seed en el catálogo (migración) +
- * `well_known_permissions.py` + entrada acá + `can()` en los botones de
- * mutación. Ver ARCHITECTURE_GUIDE.md §8 "Autorización por módulo". */
+ * `well_known_permissions.py`/`well_known_features.py` + entrada acá + `can()`
+ * en los botones de mutación. Ver ARCHITECTURE_GUIDE.md §8. */
 
 export interface RequiredPermission {
   module: string;
@@ -26,7 +32,10 @@ export interface RequiredPermission {
 
 interface RouteRule {
   prefix: string;
-  anyOf: RequiredPermission[];
+  /** Acciones: alcanza con una. Vacío si la ruta se rige por `feature`. */
+  anyOf?: RequiredPermission[];
+  /** Función concedible por usuario (clave de `module_feature`). */
+  feature?: string;
   /** Solo la ruta exacta, no sus sub-rutas (para un hub cuya raíz pide más
    * permiso que sus hijas). */
   exact?: boolean;
@@ -42,41 +51,30 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   // (gateado por botón, no por ruta).
   { prefix: "/turnos", anyOf: [p("turnos", "view")] },
 
-  // Gestión de Personal: espejo del submenú (vacaciones-nav-submenu.tsx). Un
-  // operador (view + create) ve por ahora SOLO Solicitudes (decisión del
-  // usuario 2026-08-21); dashboard, asistencias y gestión humana son del TL/admin.
+  // Gestión de Personal. Solicitudes/Aprobaciones son acciones; el resto son
+  // funciones concedibles por usuario (ADR-032).
   { prefix: "/vacaciones/solicitudes", anyOf: [p("vacaciones", "manage"), p("vacaciones", "create")] },
   { prefix: "/vacaciones/aprobaciones", anyOf: [p("vacaciones", "manage"), p("vacaciones", "approve")] },
-  { prefix: "/vacaciones/asistencias", anyOf: [p("vacaciones", "manage"), p("vacaciones", "approve")] },
-  { prefix: "/vacaciones/gestion", anyOf: [p("vacaciones", "manage")] },
-  { prefix: "/vacaciones/reportes", anyOf: [p("vacaciones", "manage")] },
-  { prefix: "/vacaciones/auditoria", anyOf: [p("vacaciones", "manage")] },
-  { prefix: "/vacaciones/configuracion", anyOf: [p("vacaciones", "manage")] },
-  // Dashboard del equipo (raíz del módulo): TL/admin.
-  { prefix: "/vacaciones", exact: true, anyOf: [p("vacaciones", "manage"), p("vacaciones", "approve")] },
+  { prefix: "/vacaciones/asistencias", feature: "vacaciones-asistencias" },
+  { prefix: "/vacaciones/gestion", feature: "vacaciones-gestion-humana" },
+  { prefix: "/vacaciones/reportes", feature: "vacaciones-reportes" },
+  { prefix: "/vacaciones/auditoria", feature: "vacaciones-auditoria" },
+  { prefix: "/vacaciones/configuracion", feature: "vacaciones-configuracion" },
+  { prefix: "/vacaciones", exact: true, feature: "vacaciones-dashboard" },
   { prefix: "/vacaciones", anyOf: [p("vacaciones", "view")] },
 
   // Contadores: el hub raíz ("Automatización": DB3, proyección, FTP, SDS, ERS…)
-  // son todas herramientas cuyos endpoints exigen `contadores.export`
-  // (tools/ftp_clients/sds/ers routers); calendario, coberturas, equipos sin
-  // real y anexos se abren con `view`.
+  // son todas herramientas cuyos endpoints exigen `contadores.export`.
   { prefix: "/contadores", exact: true, anyOf: [p("contadores", "export")] },
-  // Coberturas y anexos sin facturar son gestión del equipo/facturación: solo
-  // con `manage` (decisión del usuario 2026-08-21: los operadores no los ven).
-  { prefix: "/contadores/coberturas", anyOf: [p("contadores", "manage")] },
-  { prefix: "/contadores/anexos-pendientes", anyOf: [p("contadores", "manage")] },
-  { prefix: "/contadores/clientes-nuevos", anyOf: [p("contadores", "manage")] },
+  // Pantallas concedibles por usuario (ADR-032).
+  { prefix: "/contadores/coberturas", feature: "contadores-coberturas" },
+  { prefix: "/contadores/anexos-pendientes", feature: "contadores-anexos" },
+  { prefix: "/contadores/clientes-nuevos", feature: "contadores-clientes-nuevos" },
   // Resto: la página entera se abre con view; las acciones se gatean adentro.
   { prefix: "/contadores", anyOf: [p("contadores", "view")] },
   { prefix: "/insumos", anyOf: [p("insumos", "view")] },
   { prefix: "/liquidaciones", anyOf: [p("liquidaciones", "view")] },
-  // Coberturas de prestadores: solo para quien las opera (crear/editar); con
-  // `view` a secas se ve el directorio de PST pero no esta pantalla
-  // (decisión del usuario, 2026-08-21: los operadores no la ven).
-  {
-    prefix: "/prestadores/coberturas",
-    anyOf: [p("prestadores", "create"), p("prestadores", "update")],
-  },
+  { prefix: "/prestadores/coberturas", feature: "prestadores-coberturas" },
   { prefix: "/prestadores", anyOf: [p("prestadores", "view")] },
   { prefix: "/sla", anyOf: [p("sla", "view")] },
   { prefix: "/preventivos", anyOf: [p("preventivos", "view")] },
@@ -96,12 +94,22 @@ export function ruleForPath(pathname: string): RouteRule | null {
   return ROUTE_RULES.find((r) => matches(r, clean)) ?? null;
 }
 
-/** `can` es el de `useSession()` (ya contempla superadmin). */
-export function canAccessPath(
-  pathname: string,
-  can: (module: string, action: string) => boolean,
-): boolean {
+/** Acceso a una ruta con los chequeos de la sesión (`can` / `hasFeature` de
+ * `useSession()`, que ya contemplan superadmin). */
+export interface AccessChecks {
+  can: (module: string, action: string) => boolean;
+  hasFeature: (feature: string) => boolean;
+}
+
+export function canAccessPath(pathname: string, checks: AccessChecks): boolean {
   const rule = ruleForPath(pathname);
   if (!rule) return true;
-  return rule.anyOf.some((perm) => can(perm.module, perm.action));
+  if (rule.feature) return checks.hasFeature(rule.feature);
+  return (rule.anyOf ?? []).some((perm) => checks.can(perm.module, perm.action));
+}
+
+/** Módulo al que pertenece la regla (para el toast de "sin permiso"). */
+export function moduleForRule(rule: RouteRule): string {
+  if (rule.anyOf && rule.anyOf.length > 0) return rule.anyOf[0].module;
+  return rule.feature?.split("-")[0] ?? "";
 }

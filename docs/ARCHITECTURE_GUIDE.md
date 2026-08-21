@@ -437,6 +437,14 @@ módulo o pantalla nueva **no está terminado** hasta tener las cuatro patas —
 No sembrar acciones "por si acaso": una fila del catálogo que ningún `require_permission`
 chequea es un permiso que se puede tildar y no hace nada.
 
+**Funciones por usuario (ADR-032)**: si una pantalla o card debe poder concederse a un usuario
+independientemente de las acciones del módulo, es una "función": fila en `module_feature`
+(migración, con backfill si reemplaza una regla de código), constante en
+`modules/<m>/domain/well_known_features.py`, `require_feature` en el endpoint cuando expone
+datos propios, entrada `feature:` en `route-permissions.ts` (o guard de card) y alta en
+`FUNCIONES_TL` de las plantillas. Las acciones siguen decidiendo crear/editar/aprobar; las
+funciones, qué se ve.
+
 ---
 
 ## 9. Control de Versiones

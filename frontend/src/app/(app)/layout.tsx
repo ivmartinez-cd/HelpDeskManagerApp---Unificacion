@@ -38,7 +38,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     (await fetchFromBackend<Page<ModuleSummary>>("/api/auth/modules", cookieHeader))?.items ?? [];
 
   return (
-    <SessionProvider user={identity.user} permissions={identity.permissions} modules={modules}>
+    <SessionProvider
+      user={identity.user}
+      permissions={identity.permissions}
+      features={identity.features ?? []}
+      modules={modules}
+    >
       <RouteTracker />
       <Suspense fallback={null}>
         <AccessDeniedToast />

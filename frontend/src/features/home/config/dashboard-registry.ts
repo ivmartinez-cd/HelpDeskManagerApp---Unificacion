@@ -8,12 +8,11 @@ export interface ModuleAccess {
   liquidaciones: boolean;
   vacaciones: boolean;
   wati: boolean;
-  /** Cards de gestión del equipo (pestaña Administración): no alcanza con
-   * tener el módulo, piden una acción de gestión. Un operador con solo `view`
-   * no las ve (pedido del usuario, 2026-08-21). */
-  gestionPrestadores: boolean; // prestadores.update → "Distribución del parque"
-  gestionVacaciones: boolean; // vacaciones.approve|manage → "Próximos días del equipo"
-  gestionContadores: boolean; // contadores.manage → "Contadores por operador"
+  /** Cards concedibles por usuario como "funciones" (ADR-032): no alcanza con
+   * tener el módulo, se tildan en la grilla de permisos. */
+  cardParque: boolean; // feature prestadores-card-parque → "Distribución del parque"
+  cardEquipo: boolean; // feature vacaciones-card-equipo → "Próximos días del equipo"
+  cardOperadores: boolean; // feature contadores-card-operadores → "Contadores por operador"
 }
 
 export interface CardDef {
@@ -37,15 +36,15 @@ export const CARDS: CardDef[] = [
   { id: "wati-pendientes",   col: "planificacion", order: 1, guard: (m) => m.wati },
   { id: "clientes-hoy",      col: "planificacion", order: 2, guard: (m) => m.contadores },
   { id: "insumos",           col: "planificacion", order: 3, guard: (m) => m.insumos },
-  { id: "contadores-donut",  col: "contadores",    order: 0, guard: (m) => m.gestionContadores },
+  { id: "contadores-donut",  col: "contadores",    order: 0, guard: (m) => m.cardOperadores },
   { id: "pendientes-antig",  col: "contadores",    order: 1, guard: (m) => m.contadores },
   { id: "cierre-mensual",    col: "contadores",    order: 2, guard: (m) => m.contadores },
   { id: "heatmap-semana",    col: "contadores",    order: 3, guard: (m) => m.contadores },
   { id: "sla-mes",           col: "sla",           order: 0, guard: (m) => m.sla },
   { id: "pendientes-cerrar", col: "sla",           order: 1, guard: (m) => m.sla },
   { id: "liquidaciones",     col: "admin",         order: 0, guard: (m) => m.liquidaciones },
-  { id: "parque",            col: "admin",         order: 1, guard: (m) => m.gestionPrestadores },
-  { id: "proximos-equipo",   col: "admin",         order: 2, guard: (m) => m.gestionVacaciones },
+  { id: "parque",            col: "admin",         order: 1, guard: (m) => m.cardParque },
+  { id: "proximos-equipo",   col: "admin",         order: 2, guard: (m) => m.cardEquipo },
 ];
 
 export function cardsForCol(col: ColKey, access: ModuleAccess): CardDef[] {

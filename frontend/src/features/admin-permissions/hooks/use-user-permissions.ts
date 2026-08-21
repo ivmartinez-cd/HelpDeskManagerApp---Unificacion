@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   adminPermissionsApi,
   type ActionCatalogItem,
+  type FeatureCatalogItem,
   type ModuleCatalogItem,
   type PermissionItem,
 } from "@/features/admin-permissions/api/admin-permissions-api";
@@ -18,29 +19,45 @@ function errorMessage(error: unknown): string {
   return error instanceof ApiError ? error.message : "Error de red";
 }
 
+function sameSet(a: Set<string>, b: Set<string>): boolean {
+  return a.size === b.size && [...a].every((k) => b.has(k));
+}
+
+/** Estado de la grilla de permisos de un usuario: acciones (módulo × acción)
+ * y funciones (pantallas/cards, ADR-032). Se guardan juntas con "Guardar". */
 export function useUserPermissions(userId: string) {
   const [modules, setModules] = useState<ModuleCatalogItem[]>([]);
   const [actions, setActions] = useState<ActionCatalogItem[]>([]);
+  const [features, setFeatures] = useState<FeatureCatalogItem[]>([]);
   const [granted, setGranted] = useState<Set<string>>(new Set());
   const [initialGranted, setInitialGranted] = useState<Set<string>>(new Set());
+  const [grantedFeatures, setGrantedFeatures] = useState<Set<string>>(new Set());
+  const [initialFeatures, setInitialFeatures] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
     try {
-      const [modulesResult, actionsResult, permissionsResult] = await Promise.all([
-        adminPermissionsApi.modules(),
-        adminPermissionsApi.actions(),
-        adminPermissionsApi.getUserPermissions(userId),
-      ]);
+      const [modulesResult, actionsResult, featuresResult, permissionsResult, userFeatures] =
+        await Promise.all([
+          adminPermissionsApi.modules(),
+          adminPermissionsApi.actions(),
+          adminPermissionsApi.features(),
+          adminPermissionsApi.getUserPermissions(userId),
+          adminPermissionsApi.getUserFeatures(userId),
+        ]);
       setModules(modulesResult);
       setActions(actionsResult);
+      setFeatures(featuresResult);
       const grantedSet = new Set(
         permissionsResult.grants.map((grant) => grantKey(grant.module, grant.action)),
       );
       setGranted(grantedSet);
       setInitialGranted(grantedSet);
+      const featureSet = new Set(userFeatures.features);
+      setGrantedFeatures(featureSet);
+      setInitialFeatures(featureSet);
     } catch (error) {
       toast.error(errorMessage(error));
     } finally {
@@ -59,11 +76,17 @@ export function useUserPermissions(userId: string) {
     setGranted((current) => {
       const next = new Set(current);
       const k = grantKey(module, action);
-      if (next.has(k)) {
-        next.delete(k);
-      } else {
-        next.add(k);
-      }
+      if (next.has(k)) next.delete(k);
+      else next.add(k);
+      return next;
+    });
+  }
+
+  function toggleFeature(feature: string): void {
+    setGrantedFeatures((current) => {
+      const next = new Set(current);
+      if (next.has(feature)) next.delete(feature);
+      else next.add(feature);
       return next;
     });
   }
@@ -72,27 +95,33 @@ export function useUserPermissions(userId: string) {
     return granted.has(grantKey(module, action));
   }
 
+  function hasFeature(feature: string): boolean {
+    return grantedFeatures.has(feature);
+  }
+
   /** Reemplaza la selección por una plantilla (ver permission-templates.ts),
-   * ignorando los pares que el catálogo no declara. Solo toca el estado local:
-   * el admin revisa y después guarda. */
-  function applyTemplate(grants: readonly (readonly [string, string])[]): void {
-    const applicable = new Set(
-      modules.flatMap((m) => m.actions.map((a) => grantKey(m.key, a))),
-    );
+   * ignorando los pares/funciones que el catálogo no declara. Solo toca el
+   * estado local: el admin revisa y después guarda. */
+  function applyTemplate(
+    grants: readonly (readonly [string, string])[],
+    templateFeatures: readonly string[] = [],
+  ): void {
+    const applicable = new Set(modules.flatMap((m) => m.actions.map((a) => grantKey(m.key, a))));
     setGranted(
       new Set(
         grants.map(([module, action]) => grantKey(module, action)).filter((k) => applicable.has(k)),
       ),
     );
+    const catalog = new Set(features.map((f) => f.key));
+    setGrantedFeatures(new Set(templateFeatures.filter((f) => catalog.has(f))));
   }
 
   function clearAll(): void {
     setGranted(new Set());
+    setGrantedFeatures(new Set());
   }
 
-  const dirty =
-    granted.size !== initialGranted.size ||
-    [...granted].some((k) => !initialGranted.has(k));
+  const dirty = !sameSet(granted, initialGranted) || !sameSet(grantedFeatures, initialFeatures);
 
   async function save(): Promise<void> {
     setSaving(true);
@@ -101,12 +130,18 @@ export function useUserPermissions(userId: string) {
         const [module, action] = k.split(":");
         return { module, action };
       });
-      const response = await adminPermissionsApi.replaceUserPermissions(userId, grants);
+      const [permissionsResponse, featuresResponse] = await Promise.all([
+        adminPermissionsApi.replaceUserPermissions(userId, grants),
+        adminPermissionsApi.replaceUserFeatures(userId, [...grantedFeatures]),
+      ]);
       const grantedSet = new Set(
-        response.grants.map((g) => grantKey(g.module, g.action)),
+        permissionsResponse.grants.map((g) => grantKey(g.module, g.action)),
       );
       setGranted(grantedSet);
       setInitialGranted(grantedSet);
+      const featureSet = new Set(featuresResponse.features);
+      setGrantedFeatures(featureSet);
+      setInitialFeatures(featureSet);
       toast.success("Permisos actualizados");
     } catch (error) {
       toast.error(errorMessage(error));
@@ -118,8 +153,11 @@ export function useUserPermissions(userId: string) {
   return {
     modules,
     actions,
+    features,
     isGranted,
+    hasFeature,
     toggle,
+    toggleFeature,
     applyTemplate,
     clearAll,
     dirty,

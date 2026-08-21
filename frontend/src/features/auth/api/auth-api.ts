@@ -16,6 +16,8 @@ export interface PermissionSummary {
 export interface IdentityResponse {
   user: UserSummary;
   permissions: PermissionSummary[];
+  /** Funciones (pantallas/cards) concedidas por usuario, por clave (ADR-032). */
+  features?: string[];
 }
 
 export interface ModuleSummary {

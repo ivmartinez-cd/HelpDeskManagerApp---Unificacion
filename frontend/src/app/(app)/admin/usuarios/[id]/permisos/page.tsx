@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { Fragment, use, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { adminUsersApi, type AdminUser } from "@/features/admin-users/api/admin-users-api";
@@ -20,8 +20,11 @@ export default function UserPermissionsPage({ params }: PageProps) {
   const {
     modules,
     actions,
+    features,
     isGranted,
+    hasFeature,
     toggle,
+    toggleFeature,
     applyTemplate,
     clearAll,
     dirty,
@@ -78,7 +81,7 @@ export default function UserPermissionsPage({ params }: PageProps) {
               size="sm"
               variant="outline"
               title={template.description}
-              onClick={() => applyTemplate(template.grants)}
+              onClick={() => applyTemplate(template.grants, template.features)}
             >
               {template.label}
             </BrandButton>
@@ -109,8 +112,11 @@ export default function UserPermissionsPage({ params }: PageProps) {
               </tr>
             </thead>
             <tbody>
-              {modules.map((module) => (
-                <tr key={module.key} className="border-b border-border last:border-0">
+              {modules.map((module) => {
+                const funciones = features.filter((f) => f.module === module.key);
+                return (
+                <Fragment key={module.key}>
+                <tr className={funciones.length === 0 ? "border-b border-border last:border-0" : ""}>
                   <td className="px-4 py-3">
                     <p className="font-semibold text-foreground">{module.label}</p>
                     {!module.isEnabled && (
@@ -139,7 +145,39 @@ export default function UserPermissionsPage({ params }: PageProps) {
                     );
                   })}
                 </tr>
-              ))}
+                {funciones.length > 0 && (
+                  <tr className="border-b border-border last:border-0 bg-muted/20">
+                    <td className="px-4 pb-3 pt-1 align-top">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                        Pantallas y funciones
+                      </p>
+                    </td>
+                    <td className="px-4 pb-3 pt-1" colSpan={actions.length}>
+                      <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+                        {funciones.map((f) => (
+                          <label
+                            key={f.key}
+                            title={f.description}
+                            className="inline-flex cursor-pointer items-center gap-2 font-body text-xs text-foreground"
+                          >
+                            <input
+                              type="checkbox"
+                              className="h-3.5 w-3.5 accent-brand-orange"
+                              checked={hasFeature(f.key)}
+                              disabled={targetUser?.isSuperadmin}
+                              onChange={() => toggleFeature(f.key)}
+                              aria-label={`${module.label} · ${f.label}`}
+                            />
+                            {f.label}
+                          </label>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>

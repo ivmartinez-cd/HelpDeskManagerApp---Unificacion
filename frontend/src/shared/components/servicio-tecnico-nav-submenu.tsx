@@ -159,12 +159,12 @@ export function ServicioTecnicoNavSubmenu({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const { can } = useSession();
+  const { can, hasFeature } = useSession();
   // Los flags `has*` dicen qué módulos tiene el usuario; el mapa central de
   // permisos por ruta (ADR-029) filtra además los ítems cuya pantalla pide
   // una acción específica.
   const sections = buildSections({ hasPrestadores, hasLiquidaciones, hasSla, hasPreventivos, hasAnalisisLogHp })
-    .map((s) => ({ ...s, links: s.links.filter((l) => canAccessPath(l.href, can)) }))
+    .map((s) => ({ ...s, links: s.links.filter((l) => canAccessPath(l.href, { can, hasFeature })) }))
     .filter((s) => s.links.length > 0);
 
   return (

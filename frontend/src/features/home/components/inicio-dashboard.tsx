@@ -51,7 +51,7 @@ const COL_LABELS: Record<ColKey, string> = {
  * cards de una sección para que se vean grandes en vez de apretadas
  * lado a lado. */
 export function InicioDashboard() {
-  const { modules, can } = useSession();
+  const { modules, hasFeature } = useSession();
 
   const access: ModuleAccess = {
     contadores:   modules.some((m) => m.key === "contadores"),
@@ -61,9 +61,9 @@ export function InicioDashboard() {
     liquidaciones: modules.some((m) => m.key === "liquidaciones"),
     vacaciones:   modules.some((m) => m.key === "vacaciones"),
     wati:         modules.some((m) => m.key === "wati"),
-    gestionPrestadores: can("prestadores", "update"),
-    gestionVacaciones: can("vacaciones", "approve") || can("vacaciones", "manage"),
-    gestionContadores: can("contadores", "manage"),
+    cardParque: hasFeature("prestadores-card-parque"),
+    cardEquipo: hasFeature("vacaciones-card-equipo"),
+    cardOperadores: hasFeature("contadores-card-operadores"),
   };
 
   const columnasVisibles = COLUMNS
@@ -82,11 +82,11 @@ export function InicioDashboard() {
   const contadoresResumen = useContadoresResumen(access.contadores);
   const pendientesPeriodo = useClientesPendientesPeriodoAnterior(access.contadores);
   const slaHistoria       = useSlaHistoria(access.sla);
-  const parque            = useParqueResumen(access.gestionPrestadores);
+  const parque            = useParqueResumen(access.cardParque);
   const pendientesResumen = usePendientesResumen(access.sla);
   const insumosDashboard  = useInsumosDashboard(access.insumos);
   const liquidacionesPendientes = useLiquidacionesPendientes(access.liquidaciones);
-  const proximosEquipo    = useProximosEquipo(access.gestionVacaciones);
+  const proximosEquipo    = useProximosEquipo(access.cardEquipo);
   const watiPendientes    = useWatiPendientes();
 
   function renderCard(id: string) {

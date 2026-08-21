@@ -16,7 +16,28 @@ export interface PermissionTemplate {
   description: string;
   /** `[module, action]` */
   grants: readonly (readonly [string, string])[];
+  /** Funciones (pantallas/cards) concedibles por usuario (ADR-032), por clave. */
+  features?: readonly string[];
 }
+
+/** Todas las funciones del catálogo: lo que hoy ve un TL. Si se agrega una
+ * función nueva al catálogo, sumarla acá (y al script de backfill). */
+const FUNCIONES_TL: readonly string[] = [
+  "contadores-coberturas",
+  "contadores-anexos",
+  "contadores-clientes-nuevos",
+  "contadores-sin-real-todos",
+  "contadores-card-operadores",
+  "prestadores-coberturas",
+  "prestadores-card-parque",
+  "vacaciones-dashboard",
+  "vacaciones-asistencias",
+  "vacaciones-gestion-humana",
+  "vacaciones-reportes",
+  "vacaciones-auditoria",
+  "vacaciones-configuracion",
+  "vacaciones-card-equipo",
+];
 
 const VIEW_ALL: readonly (readonly [string, string])[] = [
   ["contadores", "view"],
@@ -82,6 +103,7 @@ export const PERMISSION_TEMPLATES: readonly PermissionTemplate[] = [
     description:
       "Operador + administrar contadores y turnos, prestadores, liquidaciones (aprobar/anular/CSV) y vacaciones del equipo.",
     grants: TEAM_LEADER,
+    features: FUNCIONES_TL,
   },
   {
     // No se llama "Administrador" para no confundirlo con el superadmin
@@ -91,5 +113,6 @@ export const PERMISSION_TEMPLATES: readonly PermissionTemplate[] = [
     label: "Team leader + Configuración",
     description: "Team leader + Configuración (usuarios y permisos). No es superadmin.",
     grants: [...TEAM_LEADER, ["admin", "manage"]],
+    features: FUNCIONES_TL,
   },
 ];

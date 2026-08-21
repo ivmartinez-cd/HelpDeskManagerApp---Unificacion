@@ -29,7 +29,7 @@ export function ContadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tool = searchParams.get("tool");
-  const { can } = useSession();
+  const { can, hasFeature } = useSession();
 
   const links: NavLinkDef[] = [
     {
@@ -68,7 +68,7 @@ export function ContadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }
       icon: Workflow,
       active: pathname === "/contadores" && tool !== "calendario",
     },
-  ].filter((l) => canAccessPath(l.href, can)); // mapa central de permisos por ruta (ADR-029)
+  ].filter((l) => canAccessPath(l.href, { can, hasFeature })); // mapa central de permisos por ruta (ADR-029)
 
   return (
     <div className="flex flex-col gap-px py-1.5 pb-2 pl-4 pr-1">

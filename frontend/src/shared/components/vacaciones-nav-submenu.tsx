@@ -50,8 +50,8 @@ interface NavGroupDef {
 export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { can } = useSession();
-  const puedeAbrir = (href: string) => canAccessPath(href, can);
+  const { can, hasFeature } = useSession();
+  const puedeAbrir = (href: string) => canAccessPath(href, { can, hasFeature });
   const enGestion = pathname === "/vacaciones/gestion";
   const tabGestion = enGestion ? (searchParams.get("tab") ?? "empleados") : null;
 

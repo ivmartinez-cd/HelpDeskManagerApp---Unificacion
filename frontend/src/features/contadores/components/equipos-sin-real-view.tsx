@@ -61,11 +61,11 @@ function formatConsultadoEn(iso: string): string {
 }
 
 export function EquiposSinRealView() {
-  // Sin `contadores.manage` el backend ya devuelve solo los equipos de los
-  // clientes asignados al usuario (cruce por nombre de operador); acá solo se
-  // avisa en el subtítulo.
-  const { can } = useSession();
-  const puedeVerTodo = can("contadores", "manage");
+  // Sin la función "ver todos" (ADR-032) el backend ya devuelve solo los equipos
+  // de los clientes asignados al usuario (cruce por nombre de operador); acá
+  // solo se avisa en el subtítulo.
+  const { hasFeature } = useSession();
+  const puedeVerTodo = hasFeature("contadores-sin-real-todos");
   const [rows, setRows] = useState<EquipoSinReal[] | null>(null);
   const [total, setTotal] = useState(0);
   const [resumen, setResumen] = useState<EquiposSinRealResumen | null>(null);

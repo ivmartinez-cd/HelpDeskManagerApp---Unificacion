@@ -4,7 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useSession } from "@/services/session-provider";
-import { canAccessPath, ruleForPath } from "@/shared/config/route-permissions";
+import { canAccessPath, moduleForRule, ruleForPath } from "@/shared/config/route-permissions";
 
 /** Query param con el que `RouteGuard` manda a Inicio cuando la ruta pedida
  * excede los permisos; `AccessDeniedToast` lo consume y limpia la URL. */
@@ -19,13 +19,13 @@ const DENIED_PARAM = "sin-permiso";
 export function RouteGuard({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { can } = useSession();
-  const allowed = canAccessPath(pathname, can);
+  const { can, hasFeature } = useSession();
+  const allowed = canAccessPath(pathname, { can, hasFeature });
 
   useEffect(() => {
     if (allowed) return;
     const rule = ruleForPath(pathname);
-    const moduleKey = rule?.anyOf[0]?.module ?? "";
+    const moduleKey = rule ? moduleForRule(rule) : "";
     router.replace(`/?${DENIED_PARAM}=${encodeURIComponent(moduleKey)}`);
   }, [allowed, pathname, router]);
 

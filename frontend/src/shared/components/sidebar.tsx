@@ -53,14 +53,14 @@ export function Sidebar({
    * `null` = sin configurar, el ícono no se muestra. */
   watiUrl?: string | null;
 }) {
-  const { user, modules, can } = useSession();
+  const { user, modules, can, hasFeature } = useSession();
   // Destino del ítem de nivel superior de cada módulo: la raíz del módulo, salvo
   // que la ruta raíz pida más permiso del que tiene el usuario (mapa central de
   // rutas, ADR-029) — entonces la primera sub-pantalla accesible. Ej.: operador
   // de Gestión de Personal sin acceso al dashboard → Solicitudes.
   const hrefDeModulo = (module: { key: string; route: string }): string => {
     if (module.key === "contadores") return "/contadores/calendario";
-    if (module.key === "vacaciones" && !canAccessPath(module.route, can)) {
+    if (module.key === "vacaciones" && !canAccessPath(module.route, { can, hasFeature })) {
       return "/vacaciones/solicitudes";
     }
     return module.route;
