@@ -5,6 +5,7 @@ from typing import Protocol
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
     CdIncidenteRow,
     CdLiquidacion,
+    CdLiquidacionDetalle,
 )
 
 
@@ -15,6 +16,18 @@ class CdLiquidacionesGateway(Protocol):
         """Lista las últimas `top` liquidaciones del prestador identificado por `empresa_cd_id`.
 
         [] si hay error de red/SOAP (se loguea allá).
+        """
+        ...
+
+    async def get_detalle(self, liquidacion_ayc_id: int) -> CdLiquidacionDetalle | None:
+        """Ítem extra y número de factura cargados en AyC para esta liquidación,
+        vía `getLiquidationById`.
+
+        `None` solo si la llamada SOAP falla (se loguea allá) — best-effort,
+        nunca bloquea el resto de la reconciliación por esto. Si la llamada
+        funciona pero AyC no tiene extra/factura cargados, esos campos del
+        value object vienen en `None` individualmente (`get_detalle` en sí no
+        es `None`).
         """
         ...
 

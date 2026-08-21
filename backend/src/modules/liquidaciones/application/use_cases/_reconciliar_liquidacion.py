@@ -2,17 +2,22 @@
 
 Actualiza in-place los incidentes de una liquidación que ya existe localmente
 cuando AyC reporta cambios (costos, km, y los campos descriptivos que consume el
-motor de reglas) y pisa su `estado` con el que reporta AyC — la contraparte de
+motor de reglas), pisa su `estado` con el que reporta AyC y trae su ítem extra y
+número de factura (`Extra`/`DetalleExtra`/`FacturaLocal`/`FacturaNro` de
+`getLiquidationById`, P4) cuando AyC tiene alguno cargado — la contraparte de
 `_procesar` en `sincronizar_liquidaciones.py`, que solo crea liquidaciones
 nuevas. Nunca se llama para liquidaciones en estado terminal (aprobada/cerrada):
-esas quedan congeladas, ni se les pide el detalle SOAP.
+esas quedan congeladas, ni se les pide el detalle SOAP — el extra/factura de una
+liquidación ya cerrada/aprobada tampoco se trae por esta vía (decisión
+consciente: no reabrir liquidaciones ya cerradas para esto).
 
 Orden fijo dentro de una liquidación: bajas → cambios → altas → recálculo de
-totales → pisar estado → reanálisis. El motor de reglas corre al final, sobre
-el set de incidentes ya reconciliado — si reanalizara antes de las bajas,
-regeneraría alertas para incidentes que está por borrar. El estado se pisa con
-el que reportaba AyC *antes* de reconciliar los incidentes (`cd_liq`, no se
-vuelve a consultar) — evaluar el guard de estado terminal contra el estado
+totales → reanálisis → pisar estado → traer extra/factura. El motor de reglas
+corre sobre el set de incidentes ya reconciliado, antes de pisar estado y traer
+el extra/factura (ninguno de los dos afecta al motor) — si reanalizara antes de
+las bajas, regeneraría alertas para incidentes que está por borrar. El estado se
+pisa con el que reportaba AyC *antes* de reconciliar los incidentes (`cd_liq`,
+no se vuelve a consultar) — evaluar el guard de estado terminal contra el estado
 local previo, no el nuevo, así una liquidación recién marcada `aprobada` en AyC
 también recibe esta última reconciliación de incidentes.
 
@@ -33,6 +38,9 @@ from src.modules.liquidaciones.domain.entities.liquidacion import (
     ESTADO_CERRADA,
     Liquidacion,
 )
+from src.modules.liquidaciones.domain.repositories.cd_liquidaciones_gateway import (
+    CdLiquidacionesGateway,
+)
 from src.modules.liquidaciones.domain.repositories.incidente_repository import (
     IncidenteRepository,
 )
@@ -44,7 +52,10 @@ from src.modules.liquidaciones.domain.services.reconciliar_incidentes import (
     DiffIncidentes,
     reconciliar_incidentes,
 )
-from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import CdLiquidacion
+from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
+    CdLiquidacion,
+    CdLiquidacionDetalle,
+)
 from src.modules.liquidaciones.domain.value_objects.incidente_importado import IncidenteImportado
 
 _ESTADOS_TERMINALES = frozenset({ESTADO_APROBADA, ESTADO_CERRADA})
@@ -58,6 +69,7 @@ class ReconciliarLiquidacionPorts:
     incidentes: IncidenteRepository
     liquidaciones: LiquidacionRepository
     reanalizar: ReanalizarLiquidacion
+    cd_gateway: CdLiquidacionesGateway
 
 
 @dataclass(frozen=True)
@@ -67,6 +79,8 @@ class ReconciliarLiquidacionResultado:
     cambios: int = 0
     bajas: int = 0
     estado_actualizado: bool = False
+    extra_actualizado: bool = False
+    factura_actualizada: bool = False
 
 
 class ReconciliarLiquidacion:
@@ -89,12 +103,17 @@ class ReconciliarLiquidacion:
         if diff.altas or diff.cambios or diff.bajas:
             await self._aplicar(liquidacion.id, diff)
         estado_actualizado = await self._pisar_estado(liquidacion, cd_liq)
+        extra_actualizado, factura_actualizada = await self._actualizar_extra_y_factura(
+            liquidacion, cd_liq
+        )
         return ReconciliarLiquidacionResultado(
             reconciliada=True,
             altas=len(diff.altas),
             cambios=len(diff.cambios),
             bajas=len(diff.bajas),
             estado_actualizado=estado_actualizado,
+            extra_actualizado=extra_actualizado,
+            factura_actualizada=factura_actualizada,
         )
 
     async def _aplicar(self, liquidacion_id: UUID, diff: DiffIncidentes) -> None:
@@ -113,6 +132,47 @@ class ReconciliarLiquidacion:
         await self._ports.liquidaciones.update_totales(
             liquidacion_id, len(actuales), total_importe
         )
+
+    async def _actualizar_extra_y_factura(
+        self, liquidacion: Liquidacion, cd_liq: CdLiquidacion
+    ) -> tuple[bool, bool]:
+        """Una sola llamada a `get_detalle` cubre ambos campos. Nunca borra un
+        ítem extra cargado a mano cuando AyC no tiene ninguno (`concepto_extra`/
+        `monto_extra` en `None`): la carga manual sigue siendo el fallback
+        acordado con la TL (P4). El número de factura no tiene contraparte
+        manual — si AyC no la reporta (`numero_factura=None`), no hay nada que
+        pisar."""
+        detalle = await self._ports.cd_gateway.get_detalle(cd_liq.id)
+        if detalle is None:
+            return False, False
+        extra_actualizado = await self._actualizar_extra(liquidacion, detalle)
+        factura_actualizada = await self._actualizar_factura(liquidacion, detalle)
+        return extra_actualizado, factura_actualizada
+
+    async def _actualizar_extra(
+        self, liquidacion: Liquidacion, detalle: CdLiquidacionDetalle
+    ) -> bool:
+        if detalle.monto_extra is None:
+            return False
+        if (
+            detalle.concepto_extra == liquidacion.concepto_extra
+            and detalle.monto_extra == liquidacion.monto_extra
+        ):
+            return False
+        await self._ports.liquidaciones.update_extra(
+            liquidacion.id, detalle.concepto_extra, detalle.monto_extra
+        )
+        return True
+
+    async def _actualizar_factura(
+        self, liquidacion: Liquidacion, detalle: CdLiquidacionDetalle
+    ) -> bool:
+        if detalle.numero_factura is None or detalle.numero_factura == liquidacion.numero_factura:
+            return False
+        await self._ports.liquidaciones.update_numero_factura(
+            liquidacion.id, detalle.numero_factura
+        )
+        return True
 
     async def _pisar_estado(self, liquidacion: Liquidacion, cd_liq: CdLiquidacion) -> bool:
         nuevo = estado_local_desde_ayc(estado_id=cd_liq.estado_id, nombre=cd_liq.estado)

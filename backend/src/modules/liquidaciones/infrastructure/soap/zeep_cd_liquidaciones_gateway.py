@@ -19,6 +19,7 @@ from src.modules.liquidaciones.domain.services.numeracion_ayc import numero_liqu
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
     CdIncidenteRow,
     CdLiquidacion,
+    CdLiquidacionDetalle,
 )
 from src.shared.domain.errors import ExternalServiceError
 from src.shared.infrastructure.wsayc.client_provider import (
@@ -73,6 +74,20 @@ class ZeepCdLiquidacionesGateway:
             raise ExternalServiceError(
                 f"getLiquidationDetails(id={liquidacion_id}) falló"
             ) from exc
+
+    async def get_detalle(self, liquidacion_ayc_id: int) -> CdLiquidacionDetalle | None:
+        try:
+            raw = await asyncio.to_thread(
+                lambda: self._service().getLiquidationById(id=str(liquidacion_ayc_id))
+            )
+            return _parse_detalle(raw)
+        except Exception as exc:
+            logger.warning(
+                "SOAP getLiquidationById(id=%d) falló al pedir el detalle",
+                liquidacion_ayc_id,
+                exc_info=exc,
+            )
+            return None
 
     async def set_estado(
         self, liquidacion_ayc_id: int, nuevo_estado: str, usuario: str
@@ -195,6 +210,44 @@ def _parse_incidente_row(row: dict[str, Any]) -> CdIncidenteRow:
         rubro=row.get("Rubro", "Impresoras"),
         pasa_it=str(row.get("PlanillaIT", "1")) == "1",
     )
+
+
+def _parse_detalle(raw: str) -> CdLiquidacionDetalle | None:
+    if not raw:
+        return None
+    datos = json.loads(raw)
+    liq = datos.get("Liquidation", datos)
+    monto = _safe_float(liq.get("Extra", "0")) or None
+    concepto = _fix_mojibake(str(liq.get("DetalleExtra", "")).strip()) or None if monto else None
+    numero_factura = _armar_numero_factura(liq.get("FacturaLocal", ""), liq.get("FacturaNro", ""))
+    return CdLiquidacionDetalle(
+        concepto_extra=concepto, monto_extra=monto, numero_factura=numero_factura
+    )
+
+
+def _armar_numero_factura(punto_venta: str, numero: str) -> str | None:
+    """`f"{FacturaLocal}-{FacturaNro}"`, mismo formato sin padding que ya usa
+    `getTopLiquidations` en su campo `NroFactura` (verificado: liquidación real
+    3928, `FacturaLocal="2"`+`FacturaNro="144"` → `"2-144"`, idéntico al
+    `NroFactura` que trae `getTopLiquidations` para la misma liquidación).
+    `""` en cualquiera de los dos es "todavía no facturada"."""
+    punto_venta = str(punto_venta).strip()
+    numero = str(numero).strip()
+    if not punto_venta or not numero:
+        return None
+    return f"{punto_venta}-{numero}"
+
+
+def _fix_mojibake(texto: str) -> str:
+    """AyC devuelve algunos `DetalleExtra` con acentos double-encoded (UTF-8
+    reinterpretado como Latin-1 y re-codificado — ej. "CiÂ­vico" en vez de
+    "Ci\xadvico") — verificado contra la liquidación real 3929-7 (2026-08-20).
+    Revierte esa vuelta de más; si el texto ya es UTF-8 válido de una sola
+    pasada, el roundtrip falla y se devuelve el original sin tocar."""
+    try:
+        return texto.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return texto
 
 
 def _parse_fecha_liquidacion(valor: str) -> date | None:

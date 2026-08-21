@@ -132,6 +132,21 @@ class SqlAlchemyLiquidacionRepository:
         await self._session.refresh(row)
         return _to_entity(row)
 
+    async def update_numero_factura(
+        self, liquidacion_id: UUID, numero_factura: str
+    ) -> Liquidacion | None:
+        row = await self._session.get(LiquidacionModel, liquidacion_id)
+        if row is None:
+            return None
+        stmt = (
+            update(LiquidacionModel)
+            .where(LiquidacionModel.id == liquidacion_id)
+            .values(numero_factura=numero_factura)
+        )
+        await self._session.execute(stmt)
+        await self._session.refresh(row)
+        return _to_entity(row)
+
     async def update_total_alertas(self, liquidacion_id: UUID, total_alertas: int) -> None:
         stmt = (
             update(LiquidacionModel)
@@ -192,4 +207,5 @@ def _to_entity(row: LiquidacionModel) -> Liquidacion:
         total_importe=row.total_importe,
         concepto_extra=row.concepto_extra,
         monto_extra=row.monto_extra,
+        numero_factura=row.numero_factura,
     )

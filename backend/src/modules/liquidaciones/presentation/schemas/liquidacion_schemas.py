@@ -89,6 +89,7 @@ class LiquidacionOut(BaseModel):
     total_importe: float = Field(serialization_alias="totalImporte")
     concepto_extra: str | None = Field(None, serialization_alias="conceptoExtra")
     monto_extra: float | None = Field(None, serialization_alias="montoExtra")
+    numero_factura: str | None = Field(None, serialization_alias="numeroFactura")
 
     @classmethod
     def from_entity(cls, e: Liquidacion) -> "LiquidacionOut":
@@ -106,4 +107,5 @@ class LiquidacionOut(BaseModel):
             total_importe=e.total_importe,
             concepto_extra=e.concepto_extra,
             monto_extra=e.monto_extra,
+            numero_factura=e.numero_factura,
         )

@@ -56,6 +56,7 @@ from src.modules.liquidaciones.domain.repositories.liquidacion_repository import
 from src.modules.liquidaciones.domain.repositories.prestador_repository import (
     PrestadorRepository,
 )
+from src.modules.liquidaciones.domain.services.detectar_anuladas import detectar_anuladas
 from src.modules.liquidaciones.domain.services.importacion.metadata import extraer_periodo
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import CdLiquidacion
 from src.shared.domain.errors import ExternalServiceError
@@ -67,10 +68,6 @@ logger = logging.getLogger(__name__)
 _ESTADOS_PENDIENTES = frozenset(
     {ESTADO_ABIERTA, ESTADO_PRELIQUIDADA, ESTADO_RECIBIDA, ESTADO_OBSERVADA}
 )
-
-# Nombres de estado que AyC puede devolver para una liquidación anulada, en caso de que
-# getTopLiquidations las incluya con estado explícito en lugar de omitirlas.
-_ESTADOS_CD_ANULADOS = frozenset({"anulada", "anulado", "cancelada", "void", "voided"})
 
 
 @dataclass(frozen=True)
@@ -91,6 +88,8 @@ class _Contadores:
     anuladas: int = 0
     reconciliadas: int = 0
     estados_actualizados: int = 0
+    extras_actualizados: int = 0
+    facturas_actualizadas: int = 0
 
 
 class SincronizarLiquidaciones:
@@ -119,7 +118,8 @@ class SincronizarLiquidaciones:
             )
             logger.info(
                 "sync CD %s: %d creadas, %d ya existentes, %d fallidas, %d anuladas, "
-                "%d reconciliadas, %d estados actualizados",
+                "%d reconciliadas, %d estados actualizados, %d extras actualizados, "
+                "%d facturas actualizadas",
                 prestador.nombre_corto,
                 parciales.creadas,
                 parciales.ya_existentes,
@@ -127,6 +127,8 @@ class SincronizarLiquidaciones:
                 parciales.anuladas,
                 parciales.reconciliadas,
                 parciales.estados_actualizados,
+                parciales.extras_actualizados,
+                parciales.facturas_actualizadas,
             )
             totales.creadas += parciales.creadas
             totales.ya_existentes += parciales.ya_existentes
@@ -134,6 +136,8 @@ class SincronizarLiquidaciones:
             totales.anuladas += parciales.anuladas
             totales.reconciliadas += parciales.reconciliadas
             totales.estados_actualizados += parciales.estados_actualizados
+            totales.extras_actualizados += parciales.extras_actualizados
+            totales.facturas_actualizadas += parciales.facturas_actualizadas
 
         return SincronizarLiquidacionesResultado(
             creadas=totales.creadas,
@@ -143,6 +147,8 @@ class SincronizarLiquidaciones:
             anuladas=totales.anuladas,
             reconciliadas=totales.reconciliadas,
             estados_actualizados=totales.estados_actualizados,
+            extras_actualizados=totales.extras_actualizados,
+            facturas_actualizadas=totales.facturas_actualizadas,
         )
 
     async def _sincronizar_prestador(
@@ -163,6 +169,10 @@ class SincronizarLiquidaciones:
                     contadores.reconciliadas += 1
                     if resultado.estado_actualizado:
                         contadores.estados_actualizados += 1
+                    if resultado.extra_actualizado:
+                        contadores.extras_actualizados += 1
+                    if resultado.factura_actualizada:
+                        contadores.facturas_actualizadas += 1
             elif await self._procesar(cd_liq, prestador):
                 existentes.add(cd_liq.numero_liquidacion)
                 contadores.creadas += 1
@@ -197,61 +207,40 @@ class SincronizarLiquidaciones:
         remotos = [a_importado(r) for r in filas_cd]
         resultado = await self._ports.reconciliar.execute(liquidacion, cd_liq, remotos)
         cambios = resultado.altas or resultado.cambios or resultado.bajas
-        if resultado.reconciliada and (cambios or resultado.estado_actualizado):
+        if resultado.reconciliada and (
+            cambios
+            or resultado.estado_actualizado
+            or resultado.extra_actualizado
+            or resultado.factura_actualizada
+        ):
             logger.info(
                 "sync CD: %s reconciliada — %d altas, %d cambios, %d bajas, "
-                "estado actualizado=%s",
+                "estado actualizado=%s, extra actualizado=%s, factura actualizada=%s",
                 cd_liq.numero_liquidacion,
                 resultado.altas,
                 resultado.cambios,
                 resultado.bajas,
                 resultado.estado_actualizado,
+                resultado.extra_actualizado,
+                resultado.factura_actualizada,
             )
         return resultado
 
     async def _detectar_y_eliminar_anuladas(
         self, liqs: list[CdLiquidacion], prestador: Prestador, locales: list[Liquidacion]
     ) -> int:
-        """Elimina localmente las liquidaciones pendientes que AyC ya no reporta como vigentes.
-
-        No hace llamadas SOAP extra: reutiliza `liqs` y `locales` ya obtenidas por
-        `_sincronizar_prestador` (la misma lista que arma `por_numero` para reconciliar).
-        Guarda contra SOAP vacío: si `liqs` está vacío (fallo de red u otro error),
-        no toca nada — evita eliminar falsamente todo el historial local del prestador.
-
-        Detecta dos comportamientos posibles de AyC:
-        - Que omita las anuladas del response (la más común): ausencia en `liqs`.
-        - Que las incluya con un estado explícito (ej. "Anulada"): campo `estado`.
-        """
-        if not liqs:
-            return 0
-
-        cd_vigentes = {
-            cd_liq.numero_liquidacion
-            for cd_liq in liqs
-            if cd_liq.estado.lower() not in _ESTADOS_CD_ANULADOS
-        }
-        # Límite superior del window: el ID numérico más alto retornado por AyC.
-        # Solo se eliminan locales con ID ≤ ese máximo para no tocar liquidaciones
-        # más viejas que el top-N del SOAP (que podrían estar fuera del window).
-        max_cd_id = max(cd_liq.id for cd_liq in liqs)
-
-        eliminadas = 0
-        for liq in locales:
-            assert liq.numero_liquidacion is not None
-            try:
-                local_ayc_id = int(liq.numero_liquidacion.split("-")[0])
-            except (ValueError, IndexError):
-                continue
-            if local_ayc_id <= max_cd_id and liq.numero_liquidacion not in cd_vigentes:
-                await self._ports.liquidaciones.delete(liq.id)
-                eliminadas += 1
-                logger.info(
-                    "sync CD %s: liquidación %s eliminada localmente (no vigente en AyC)",
-                    prestador.nombre_corto,
-                    liq.numero_liquidacion,
-                )
-        return eliminadas
+        """Elimina localmente las liquidaciones pendientes que AyC ya no reporta como
+        vigentes (`detectar_anuladas`, diff puro). No hace llamadas SOAP extra:
+        reutiliza `liqs`/`locales` ya obtenidas por `_sincronizar_prestador`."""
+        anuladas = detectar_anuladas(liqs, locales)
+        for liq in anuladas:
+            await self._ports.liquidaciones.delete(liq.id)
+            logger.info(
+                "sync CD %s: liquidación %s eliminada localmente (no vigente en AyC)",
+                prestador.nombre_corto,
+                liq.numero_liquidacion,
+            )
+        return len(anuladas)
 
     async def _procesar(self, cd_liq: CdLiquidacion, prestador: Prestador) -> bool:
         """Crea la liquidación con sus incidentes. False (sin crear) si el detalle

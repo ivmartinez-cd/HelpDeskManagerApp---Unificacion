@@ -82,7 +82,12 @@ class TestCicloReconciliar:
             async def execute(self, **kwargs: object) -> SimpleNamespace:
                 llamadas.append(kwargs)
                 return SimpleNamespace(
-                    creadas=0, reconciliadas=5, estados_actualizados=2, fallidas=0
+                    creadas=0,
+                    reconciliadas=5,
+                    estados_actualizados=2,
+                    extras_actualizados=1,
+                    facturas_actualizadas=1,
+                    fallidas=0,
                 )
 
         monkeypatch.setattr(bj, "get_sessionmaker", lambda: lambda: session)

@@ -174,6 +174,7 @@ def build_reconciliar_liquidacion(session: AsyncSession) -> ReconciliarLiquidaci
             incidentes=SqlAlchemyIncidenteRepository(session),
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
             reanalizar=build_reanalizar_liquidacion(session),
+            cd_gateway=_cd_gateway(),
         )
     )
 

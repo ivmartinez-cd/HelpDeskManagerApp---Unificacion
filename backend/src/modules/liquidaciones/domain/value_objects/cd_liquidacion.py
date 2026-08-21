@@ -19,6 +19,20 @@ class CdLiquidacion:
 
 
 @dataclass(frozen=True)
+class CdLiquidacionDetalle:
+    """Detalle adicional de la liquidación que solo viaja en `getLiquidationById`,
+    no en `getTopLiquidations`: ítem extra (seguros, documentación, ajustes) y
+    número de factura del prestador. Cada campo es independiente — puede haber
+    factura sin extra, o extra sin factura todavía (liquidación aún no
+    facturada: `FacturaNro=""`). `monto_extra=None`/`concepto_extra=None` es
+    "sin extra cargado" (AyC reporta `Extra="0"`), no cero."""
+
+    concepto_extra: str | None
+    monto_extra: float | None
+    numero_factura: str | None
+
+
+@dataclass(frozen=True)
 class CdIncidenteRow:
     id: int
     tipo: str

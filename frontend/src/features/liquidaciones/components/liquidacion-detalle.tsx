@@ -180,6 +180,12 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
               </a>
             </>
           )}
+          {liquidacion.numeroFactura && (
+            <>
+              <span>·</span>
+              <span>Factura {liquidacion.numeroFactura}</span>
+            </>
+          )}
         </div>
 
         {/* Row 3: KPIs | cambiar estado + acciones */}

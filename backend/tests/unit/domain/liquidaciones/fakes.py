@@ -16,6 +16,7 @@ from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
     CdIncidenteRow,
     CdLiquidacion,
+    CdLiquidacionDetalle,
 )
 from src.modules.liquidaciones.domain.value_objects.incidente_importado import (
     ResultadoImportacion,
@@ -201,12 +202,25 @@ class FakeCdLiquidacionesGateway:
         self.set_estado_raises: Exception | None = None
         self.void_raises: Exception | None = None
         self.liquidaciones_por_empresa: dict[int, list[CdLiquidacion]] = {}
+        self.detalles_por_liquidacion: dict[int, CdLiquidacionDetalle] = {}
+        self.detalle_falla: set[int] = set()
 
     async def get_liquidaciones(self, empresa_cd_id: int, top: int = 200) -> list[CdLiquidacion]:
         return self.liquidaciones_por_empresa.get(empresa_cd_id, [])
 
     async def get_incidentes(self, liquidacion_id: int) -> list[CdIncidenteRow]:
         return []
+
+    async def get_detalle(self, liquidacion_ayc_id: int) -> CdLiquidacionDetalle | None:
+        """Default: `CdLiquidacionDetalle` vacío (todo `None`) — igual que AyC
+        cuando no hay extra ni factura cargados. `detalle_falla` simula el
+        fallo SOAP real (`get_detalle` en `None`)."""
+        if liquidacion_ayc_id in self.detalle_falla:
+            return None
+        return self.detalles_por_liquidacion.get(
+            liquidacion_ayc_id,
+            CdLiquidacionDetalle(concepto_extra=None, monto_extra=None, numero_factura=None),
+        )
 
     async def set_estado(self, liquidacion_ayc_id: int, nuevo_estado: str, usuario: str) -> None:
         if self.set_estado_raises is not None:

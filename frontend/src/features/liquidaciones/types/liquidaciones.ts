@@ -316,6 +316,7 @@ export interface Liquidacion {
   totalImporte: number;
   conceptoExtra: string | null;
   montoExtra: number | null;
+  numeroFactura: string | null;
 }
 
 export interface LiquidacionPage {

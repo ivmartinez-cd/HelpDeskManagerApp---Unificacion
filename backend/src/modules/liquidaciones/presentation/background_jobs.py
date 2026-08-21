@@ -44,10 +44,12 @@ async def _ciclo_reconciliar() -> None:
         await session.commit()
     logger.info(
         "liquidaciones_reconciliar: OK — creadas=%d reconciliadas=%d "
-        "estados_actualizados=%d fallidas=%d",
+        "estados_actualizados=%d extras_actualizados=%d facturas_actualizadas=%d fallidas=%d",
         resultado.creadas,
         resultado.reconciliadas,
         resultado.estados_actualizados,
+        resultado.extras_actualizados,
+        resultado.facturas_actualizadas,
         resultado.fallidas,
     )
 

@@ -40,3 +40,4 @@ class Liquidacion:
     total_importe: float
     concepto_extra: str | None = None
     monto_extra: float | None = None
+    numero_factura: str | None = None

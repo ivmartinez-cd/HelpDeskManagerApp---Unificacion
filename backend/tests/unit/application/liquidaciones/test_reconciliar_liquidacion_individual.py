@@ -59,6 +59,9 @@ class FakeCdGateway:
             raise ExternalServiceError("getLiquidationDetails falló")
         return []
 
+    async def get_detalle(self, liquidacion_ayc_id: int):
+        return None
+
 
 def make_cd_liq(ayc_id: int, *, cant_incidentes: int = 0) -> CdLiquidacion:
     return CdLiquidacion(
@@ -95,6 +98,7 @@ class World:
                 incidentes=self.incidentes,
                 liquidaciones=self.liquidaciones,
                 reanalizar=reanalizar,
+                cd_gateway=self.gateway,
             )
         )
         self.use_case = ReconciliarLiquidacionIndividual(

@@ -63,6 +63,14 @@ class LiquidacionRepository(Protocol):
         monto_extra: float | None,
     ) -> Liquidacion | None: ...
 
+    async def update_numero_factura(
+        self, liquidacion_id: UUID, numero_factura: str
+    ) -> Liquidacion | None:
+        """Solo lo escribe la reconciliación contra AyC (`FacturaLocal`-`FacturaNro`
+        de `getLiquidationById`) — a diferencia de `update_extra`, no hay carga
+        manual: sin PATCH de usuario para este campo."""
+        ...
+
     async def update_total_alertas(self, liquidacion_id: UUID, total_alertas: int) -> None:
         """El único campo que `ejecutar_motor` del legacy tocaba al final de una
         corrida (import o reanalyze) — `total_incidentes`/`total_importe` se fijan al

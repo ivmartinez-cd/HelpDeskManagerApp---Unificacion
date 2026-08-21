@@ -14,7 +14,10 @@ from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion impo
     ReanalizarLiquidacionPorts,
 )
 from src.modules.liquidaciones.domain.entities.liquidacion import ESTADO_APROBADA
-from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import CdLiquidacion
+from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
+    CdLiquidacion,
+    CdLiquidacionDetalle,
+)
 from src.modules.liquidaciones.domain.value_objects.incidente_importado import IncidenteImportado
 from tests.unit.domain.liquidaciones.factories import (
     make_incidente,
@@ -23,6 +26,7 @@ from tests.unit.domain.liquidaciones.factories import (
     reglas_activas_default,
 )
 from tests.unit.domain.liquidaciones.fakes import (
+    FakeCdLiquidacionesGateway,
     FakeReglaAlertaRepository,
     FakeSpstRepository,
     FakeTablaKmRepository,
@@ -78,6 +82,7 @@ class World:
         self.incidentes = FakeIncidenteRepository()
         self.alertas = FakeAlertaRepository()
         self.tarifarios = FakeTarifarioRepository()
+        self.cd_gateway = FakeCdLiquidacionesGateway()
         self.reanalizar = ReanalizarLiquidacion(
             ReanalizarLiquidacionPorts(
                 liquidaciones=self.liquidaciones,
@@ -95,6 +100,7 @@ class World:
                 incidentes=self.incidentes,
                 liquidaciones=self.liquidaciones,
                 reanalizar=self.reanalizar,
+                cd_gateway=self.cd_gateway,
             )
         )
 
@@ -318,3 +324,90 @@ async def test_estado_ayc_desconocido_no_se_pisa() -> None:
 
     assert resultado.estado_actualizado is False
     assert world.liquidaciones.rows[liq.id].estado == "recibida"
+
+
+async def test_extra_se_trae_desde_ayc() -> None:
+    world = World()
+    liq = world.con_liquidacion(concepto_extra=None, monto_extra=None)
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
+    world.cd_gateway.detalles_por_liquidacion[1] = CdLiquidacionDetalle(
+        concepto_extra="Adicional Factura NRO 0002-00001573", monto_extra=1499999.0,
+        numero_factura=None,
+    )
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.extra_actualizado is True
+    actualizada = world.liquidaciones.rows[liq.id]
+    assert actualizada.concepto_extra == "Adicional Factura NRO 0002-00001573"
+    assert actualizada.monto_extra == 1499999.0
+
+
+async def test_extra_no_pisa_carga_manual_cuando_ayc_no_tiene_nada() -> None:
+    """`get_detalle` trae `monto_extra=None` cuando AyC reporta `Extra="0"` —
+    la carga manual de la TL (fallback acordado en P4) tiene que sobrevivir
+    intacta."""
+    world = World()
+    liq = world.con_liquidacion(concepto_extra="Seguro de viaje", monto_extra=500.0)
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.extra_actualizado is False
+    actualizada = world.liquidaciones.rows[liq.id]
+    assert actualizada.concepto_extra == "Seguro de viaje"
+    assert actualizada.monto_extra == 500.0
+
+
+async def test_extra_sin_cambios_no_reporta_actualizacion() -> None:
+    world = World()
+    liq = world.con_liquidacion(concepto_extra="Ajuste", monto_extra=1000.0)
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
+    world.cd_gateway.detalles_por_liquidacion[1] = CdLiquidacionDetalle(
+        concepto_extra="Ajuste", monto_extra=1000.0, numero_factura=None
+    )
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.extra_actualizado is False
+
+
+async def test_numero_factura_se_trae_desde_ayc() -> None:
+    world = World()
+    liq = world.con_liquidacion(numero_factura=None)
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
+    world.cd_gateway.detalles_por_liquidacion[1] = CdLiquidacionDetalle(
+        concepto_extra=None, monto_extra=None, numero_factura="2-1575"
+    )
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.factura_actualizada is True
+    assert world.liquidaciones.rows[liq.id].numero_factura == "2-1575"
+
+
+async def test_numero_factura_no_se_toca_cuando_ayc_no_la_reporta() -> None:
+    """`FacturaLocal`/`FacturaNro` vacíos (liquidación aún no facturada) →
+    `numero_factura=None` en `get_detalle` — no hay contraparte manual que
+    preservar, pero tampoco hay nada que escribir."""
+    world = World()
+    liq = world.con_liquidacion(numero_factura=None)
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.factura_actualizada is False
+    assert world.liquidaciones.rows[liq.id].numero_factura is None
+
+
+async def test_numero_factura_sin_cambios_no_reporta_actualizacion() -> None:
+    world = World()
+    liq = world.con_liquidacion(numero_factura="2-1575")
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
+    world.cd_gateway.detalles_por_liquidacion[1] = CdLiquidacionDetalle(
+        concepto_extra=None, monto_extra=None, numero_factura="2-1575"
+    )
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.factura_actualizada is False

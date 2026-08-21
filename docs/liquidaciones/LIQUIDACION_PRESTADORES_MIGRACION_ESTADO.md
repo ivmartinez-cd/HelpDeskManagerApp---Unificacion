@@ -669,6 +669,81 @@ los incidentes importados.
   (number), y un "Total ajustado" = `totalImporte + montoExtra` cuando hay
   un ítem cargado.
 
+### P4 (seguimiento) — Traer el ítem extra desde wsAyC en la reconciliación `CERRADO` (2026-08-20)
+
+El PATCH manual de arriba sigue existiendo como fallback (decisión original de
+P4: "si algún día se toma desde web agentes, que la carga manual quede como
+fallback") — esto agrega el camino automático. Encontrado por un caso real:
+la liquidación 3929-7 (`CERRADA`) tiene `Extra`/`DetalleExtra` cargado del
+lado de AyC pero nunca se reflejaba en el módulo nuevo.
+
+- **wsAyC sí expone el dato**: `getLiquidationById` devuelve `Extra`/`DetalleExtra`
+  a nivel liquidación (verificado en vivo contra la 3929-7: `Extra="1499999"`,
+  `DetalleExtra="Adicional Factura NRO 0002-00001573 Servicios Cívico Julio
+  2026"`). `Extra="0"`/`DetalleExtra=" "` es "sin ítem cargado", no ausencia
+  del campo. **Hallazgo adicional**: `getTopLiquidations` (que `get_liquidaciones`
+  ya llama sin costo extra) también trae `Extra`/`DetalleExtra` en cada fila —
+  quedó sin usar en esta implementación (se optó por el método dedicado
+  `get_detalle` vía `getLiquidationById`, más explícito); portarlo a leer
+  directo de `getTopLiquidations` ahorraría la llamada SOAP adicional por
+  liquidación, queda como optimización futura si el volumen lo justifica.
+- **Alcance consciente — solo liquidaciones no terminales**: el fetch vive en
+  `ReconciliarLiquidacion._actualizar_extra_y_factura` (colaborador ya usado
+  por el botón manual y el job de 120 min), que nunca corre para
+  `aprobada`/`cerrada` — se decidió explícitamente NO reabrir liquidaciones ya
+  cerradas para esto, así que 3929-7 sigue sin backfill retroactivo (fuera de
+  alcance a propósito).
+- **Nunca pisa una carga manual cuando AyC no tiene nada**: `get_detalle`
+  trae `concepto_extra`/`monto_extra` en `None` para `Extra="0"` (o el value
+  object entero en `None` ante fallo SOAP, best-effort, logueado); solo se
+  actualiza cuando AyC reporta un valor real.
+- **Mojibake en `DetalleExtra`**: algunos vienen con acentos double-encoded
+  (verificado con la 3929-7: "Cí\xadvico" llega como "CiÂ­vico") —
+  `_fix_mojibake` revierte el roundtrip UTF-8↔Latin-1; si el texto ya es UTF-8
+  válido de una pasada, el fix falla silenciosamente y devuelve el original.
+- Nuevo `CdLiquidacionDetalle` (value object), `get_detalle` en el
+  gateway/Protocol, contador `extras_actualizados` en
+  `SincronizarLiquidacionesResultado` (propagado a `SincronizarOut`/frontend).
+  Extraído además `detectar_anuladas` a `domain/services/` (antes vivía inline
+  en `sincronizar_liquidaciones.py`, que se pasó de las 300 líneas de
+  `ARCHITECTURE_GUIDE.md` §4 al agregar esto).
+- Verificado: `lint-imports`/`ruff`/`mypy`/`pytest` en el contenedor; smoke
+  test real contra wsAyC de producción (`POST /{id}/reconciliar` sobre 3932-1,
+  no terminal, `Extra="0"` real) — 204 OK, `getLiquidationById` se llamó, no
+  tocó `concepto_extra`/`monto_extra` (correcto).
+
+### P4 (seguimiento 2) — Traer también el número de factura desde wsAyC `CERRADO` (2026-08-20)
+
+Mismo mecanismo que el extra (una sola llamada a `get_detalle` cubre ambos),
+pedido explícito del usuario al ver el resultado de arriba.
+
+- **Migración** `a1f3c7e9b2d4`: columna `numero_factura` (Text, nullable) en
+  `liquidaciones`. **Sin carga manual** — a diferencia de `concepto_extra`/
+  `monto_extra`, no hay PATCH de usuario para este campo, solo lo escribe la
+  reconciliación automática (`LiquidacionRepository.update_numero_factura`).
+- **Formato verificado contra el WS real**: `getLiquidationById` trae
+  `FacturaLocal`/`FacturaNro` por separado (ej. liquidación 3928:
+  `FacturaLocal="2"`, `FacturaNro="144"`); `_armar_numero_factura` los combina
+  como `f"{FacturaLocal}-{FacturaNro}"` → `"2-144"`, confirmado idéntico al
+  campo `NroFactura` que trae `getTopLiquidations` para la misma liquidación
+  (formato simple, sin padding de ceros). Cualquiera de los dos vacío
+  (liquidación aún no facturada) → `numero_factura=None`.
+- `CdLiquidacionDetalle` ganó el campo `numero_factura`; `ReconciliarLiquidacion`
+  ahora tiene `_actualizar_extra_y_factura` (una llamada a `get_detalle`, dos
+  sub-actualizaciones independientes) y el resultado ganó `factura_actualizada`
+  + contador `facturas_actualizadas` (mismo patrón que `extras_actualizados`,
+  propagado a `SincronizarOut`/frontend).
+- **Frontend**: número de factura mostrado en el header del detalle, junto al
+  remito (`liquidacion-detalle.tsx`) — solo si `numeroFactura` no es null.
+- Verificado: `lint-imports`/`ruff`/`mypy`/`pytest` (1759 tests) + `tsc --noEmit`
+  del frontend, todo en el contenedor; migración aplicada en vivo
+  (`alembic upgrade head`, columna confirmada en Postgres real); smoke test
+  real contra wsAyC (`POST /{id}/reconciliar` sobre 3 liquidaciones no
+  terminales reales, 204 OK las 3, sin tocar `numero_factura` porque ninguna
+  tiene factura emitida todavía — no había caso real disponible para probar el
+  camino positivo end-to-end, pero el parseo (`_armar_numero_factura`) está
+  validado unitariamente contra datos reales del WS (liquidación 3928)).
+
 ### P3 / P8 — Hipervínculo a web agentes `CERRADO` (commit `23ec993`)
 
 `webagentes.canaldirecto.com.ar` se alimenta del mismo WS SOAP que el PST usa
