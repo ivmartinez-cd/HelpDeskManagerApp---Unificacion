@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, Download, Plus } from "lucide-react";
 import { ApiError } from "@/services/http-client";
 import { grillaVariantesApi } from "../../api/grilla-variantes-api";
 import type { Casilla, Slot, UserOption } from "../../types/turnos";
@@ -17,11 +16,12 @@ import {
   franjasSinOperador,
   huecosDeCobertura,
 } from "../../lib/variante-validacion";
-import { formatDiaMes, hhmm, hoyIso } from "../../lib/variante-estado";
+import { formatDiaMes, hhmm } from "../../lib/variante-estado";
 import { VarianteAdvertencias } from "./variante-advertencias";
-import { VarianteFranjaFila } from "./variante-franja-fila";
-import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
-import { SearchableSelect } from "@/shared/components/ui/searchable-select";
+import { VarianteDiaTabs } from "./variante-dia-tabs";
+import { VarianteFranjasPorDia } from "./variante-franjas-por-dia";
+import { VarianteIdentificacionFields } from "./variante-identificacion-fields";
+import { BrandButton } from "@/shared/components/ui/brand-form";
 
 export interface PrecargaInicial {
   ausenteId: string | null;
@@ -228,133 +228,42 @@ export function VarianteEditor({
         </p>
       )}
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_160px_160px_auto]">
-        <SearchableSelect
-          label="¿Quién falta?"
-          options={opcionesAusente}
-          value={ausenteId}
-          onChange={setAusenteId}
-          placeholder="Buscá operador…"
-          disabled={Boolean(variante)}
-        />
-        <BrandInput
-          label="Desde"
-          type="date"
-          value={desde}
-          min={variante ? undefined : hoyIso()}
-          onChange={(e) => setDesde(e.target.value)}
-        />
-        <BrandInput
-          label="Hasta"
-          type="date"
-          value={hasta}
-          min={desde || hoyIso()}
-          onChange={(e) => setHasta(e.target.value)}
-        />
-        <div className="flex items-end">
-          <BrandButton
-            type="button"
-            variant="outline"
-            onClick={precargar}
-            loading={precargando}
-            disabled={!ausenteId || !desde || !hasta || rangoInvalido}
-            title="Trae la grilla titular con las franjas del ausente marcadas como huecos a resolver"
-          >
-            <Download className="h-4 w-4" />
-            Precargar
-          </BrandButton>
-        </div>
-      </div>
-      {rangoInvalido && (
-        <p className="font-body text-xs text-destructive">La fecha de fin es anterior a la de inicio.</p>
-      )}
+      <VarianteIdentificacionFields
+        esEdicion={Boolean(variante)}
+        opcionesAusente={opcionesAusente}
+        ausenteId={ausenteId}
+        setAusenteId={setAusenteId}
+        desde={desde}
+        setDesde={setDesde}
+        hasta={hasta}
+        setHasta={setHasta}
+        rangoInvalido={rangoInvalido}
+        precargar={precargar}
+        precargando={precargando}
+        motivo={motivo}
+        setMotivo={setMotivo}
+        origenTexto={origenTexto}
+        setOrigenTexto={setOrigenTexto}
+      />
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <BrandInput
-          label="Motivo"
-          value={motivo}
-          maxLength={200}
-          placeholder="Vacaciones M. J. Vela"
-          onChange={(e) => setMotivo(e.target.value)}
-        />
-        <BrandInput
-          label="Origen (opcional)"
-          value={origenTexto}
-          maxLength={200}
-          placeholder="Solicitud de vacaciones aprobada el 20/08"
-          hint="Texto libre para trazabilidad; no enlaza con Gestión de Personal."
-          onChange={(e) => setOrigenTexto(e.target.value)}
-        />
-      </div>
+      <VarianteDiaTabs
+        franjas={franjas}
+        diaActivo={diaActivo}
+        setDiaActivo={setDiaActivo}
+        hayFranjasDelDia={franjasDelDia.length > 0}
+        onCopiarALaborables={copiarDiaALaborables}
+      />
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2">
-        <div role="tablist" aria-label="Día de semana" className="flex flex-wrap items-center gap-1">
-          {DIAS_SEMANA.map((dia, idx) => {
-            const cantidad = franjas.filter((f) => f.diaSemana === idx).length;
-            return (
-              <button
-                key={dia}
-                type="button"
-                role="tab"
-                aria-selected={diaActivo === idx}
-                onClick={() => setDiaActivo(idx)}
-                className={`rounded-[6px] px-3 py-1.5 font-body text-xs font-semibold transition-colors ${
-                  diaActivo === idx
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                {dia}
-                {cantidad > 0 && <span className="ml-1 opacity-70">({cantidad})</span>}
-              </button>
-            );
-          })}
-        </div>
-        {diaActivo <= 4 && franjasDelDia.length > 0 && (
-          <BrandButton type="button" variant="outline" size="sm" onClick={copiarDiaALaborables}>
-            <Copy className="h-3.5 w-3.5" />
-            Aplicar este día a lunes–viernes
-          </BrandButton>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-4">
-        {casillas.map((casilla) => {
-          const filas = franjasDelDia
-            .filter((f) => f.casillaId === casilla.id)
-            .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
-          return (
-            <div key={casilla.id} className="flex flex-col gap-2" data-testid={`casilla-${casilla.nombre}`}>
-              <div className="flex items-center justify-between">
-                <span className="font-heading text-sm font-bold text-foreground">
-                  {casilla.nombre} · {DIAS_SEMANA[diaActivo]}
-                </span>
-                <BrandButton type="button" variant="outline" size="sm" onClick={() => agregar(casilla.id)}>
-                  <Plus className="h-3.5 w-3.5" />
-                  Agregar franja en {casilla.nombre}
-                </BrandButton>
-              </div>
-              {filas.length === 0 ? (
-                <p className="rounded-[10px] border border-dashed border-border px-4 py-3 font-body text-xs text-muted-foreground">
-                  Sin franjas para {casilla.nombre} este día.
-                </p>
-              ) : (
-                filas.map((f) => (
-                  <VarianteFranjaFila
-                    key={f.key}
-                    franja={f}
-                    casillaNombre={casilla.nombre}
-                    operadores={opcionesOperador}
-                    conError={keysConError.has(f.key)}
-                    onChange={(cambios) => actualizar(f.key, cambios)}
-                    onRemove={() => eliminar(f.key)}
-                  />
-                ))
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <VarianteFranjasPorDia
+        casillas={casillas}
+        diaLabel={DIAS_SEMANA[diaActivo]}
+        franjasDelDia={franjasDelDia}
+        opcionesOperador={opcionesOperador}
+        keysConError={keysConError}
+        onAgregar={agregar}
+        onActualizar={actualizar}
+        onEliminar={eliminar}
+      />
 
       <VarianteAdvertencias
         errores={errores}
