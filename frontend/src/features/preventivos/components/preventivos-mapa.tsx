@@ -1,0 +1,16 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import type { PuntoMapaPreventivo } from "../types/preventivos";
+import { BrandSkeleton } from "@/shared/components/ui/brand-form";
+
+// Leaflet toca `window` al montarse: sin esto el build de producción
+// (next build && next start, sin --reload — ver CLAUDE.md) rompe en SSR.
+const PreventivosMapaCanvas = dynamic(
+  () => import("./preventivos-mapa-canvas").then((m) => m.PreventivosMapaCanvas),
+  { ssr: false, loading: () => <BrandSkeleton className="h-[520px] w-full rounded-[12px]" /> },
+);
+
+export function PreventivosMapa({ puntos }: { puntos: PuntoMapaPreventivo[] }) {
+  return <PreventivosMapaCanvas puntos={puntos} />;
+}

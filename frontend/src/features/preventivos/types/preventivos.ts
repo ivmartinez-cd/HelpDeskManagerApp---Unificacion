@@ -56,3 +56,34 @@ export interface ListEquiposParams {
   size?: number;
   refresh?: boolean;
 }
+
+/** Una sucursal (no una máquina) para el mapa: `peor_estado` es el más
+ * urgente de su parque, mismo criterio que el orden de la tabla. */
+export interface PuntoMapaPreventivo {
+  id_sucursal: number;
+  cliente: string;
+  sucursal: string;
+  zona: string;
+  latitud: number | null;
+  longitud: number | null;
+  ubicado: boolean;
+  cant_maquinas: number;
+  cant_habilitadas: number;
+  peor_estado: EstadoPreventivo;
+  dias_vencido_max: number | null;
+}
+
+/** `Page` + sello de frescura + cuántas sucursales del filtro actual no
+ * tienen coordenada usable (se avisa, no se esconde). */
+export interface PuntosMapaPage extends Page<PuntoMapaPreventivo> {
+  consultado_en: string;
+  sin_ubicar: number;
+}
+
+export interface ListPuntosMapaParams {
+  zona: string;
+  estado?: EstadoPreventivo;
+  habilitado?: boolean;
+  q?: string;
+  refresh?: boolean;
+}

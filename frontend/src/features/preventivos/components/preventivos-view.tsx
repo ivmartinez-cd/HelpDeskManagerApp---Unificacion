@@ -1,15 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { RefreshCw, SearchX, Wrench } from "lucide-react";
-import { preventivosApi } from "../api/preventivos-api";
-import type {
-  EquipoPreventivo,
-  EstadoPreventivo,
-  ZonaParque,
-} from "../types/preventivos";
+import { POR_PAGINA, usePreventivosView } from "../hooks/use-preventivos-view";
+import { usePuntosMapa } from "../hooks/use-puntos-mapa";
+import { formatConsultadoEn, numberFormat } from "./preventivos-format";
+import { PreventivosMapa } from "./preventivos-mapa";
+import { PreventivosMapaLeyenda } from "./preventivos-mapa-leyenda";
 import { PreventivosTabla } from "./preventivos-tabla";
-import { useSession } from "@/services/session-provider";
+import { ZonaChips } from "./zona-chips";
 import {
   BrandButton,
   BrandEmptyState,
@@ -19,9 +17,6 @@ import {
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
 import { Switch } from "@/shared/components/ui/switch";
-import { cn } from "@/shared/utils/cn";
-
-const POR_PAGINA = 50;
 
 const FILTROS_ESTADO = [
   { value: "", label: "Todos" },
@@ -32,169 +27,47 @@ const FILTROS_ESTADO = [
   { value: "sin_frecuencia", label: "Sin frecuencia" },
 ];
 
-const numberFormat = new Intl.NumberFormat("es-AR");
-
-function formatConsultadoEn(iso: string): string {
-  return new Date(iso).toLocaleString("es-AR", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function ZonaChips({
-  zonas,
-  seleccionada,
-  onSelect,
-}: {
-  zonas: ZonaParque[];
-  seleccionada: string | null;
-  onSelect: (zona: string) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2" role="tablist" aria-label="Zona de distribución">
-      {zonas.map((z) => {
-        const activa = z.zona === seleccionada;
-        return (
-          <button
-            key={z.zona}
-            type="button"
-            role="tab"
-            aria-selected={activa}
-            onClick={() => onSelect(z.zona)}
-            className={cn(
-              "rounded-full border px-3.5 py-1.5 font-body text-xs font-bold transition-colors",
-              activa
-                ? "border-brand-orange bg-brand-orange/10 text-brand-orange"
-                : "border-border bg-card text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {z.zona}
-            <span className={cn("ml-1.5 font-semibold tabular-nums", !activa && "opacity-60")}>
-              {numberFormat.format(z.maquinas_activas)}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
+const FILTROS_VISTA = [
+  { value: "tabla", label: "Tabla" },
+  { value: "mapa", label: "Mapa" },
+];
 
 export function PreventivosView() {
-  const { user, modules, can } = useSession();
-  const tieneModulo = modules.some((m) => m.key === "preventivos");
-  const canUpdate = user.isSuperadmin || can("preventivos", "update");
+  const {
+    tieneModulo,
+    canUpdate,
+    zonas,
+    zona,
+    rows,
+    total,
+    consultadoEn,
+    error,
+    refreshing,
+    pendingId,
+    pagina,
+    estado,
+    soloHabilitados,
+    busqueda,
+    busquedaAplicada,
+    vista,
+    setVista,
+    setBusqueda,
+    setPagina,
+    load,
+    handleRefresh,
+    handleToggleHabilitacion,
+    handleSelectZona,
+    handleEstadoChange,
+    handleSoloHabilitadosChange,
+  } = usePreventivosView();
 
-  const [zonas, setZonas] = useState<ZonaParque[] | null>(null);
-  const [zona, setZona] = useState<string | null>(null);
-  const [rows, setRows] = useState<EquipoPreventivo[] | null>(null);
-  const [total, setTotal] = useState(0);
-  const [consultadoEn, setConsultadoEn] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [pendingId, setPendingId] = useState<number | null>(null);
-  const [pagina, setPagina] = useState(1);
-  const [estado, setEstado] = useState("");
-  const [soloHabilitados, setSoloHabilitados] = useState(false);
-  const [busqueda, setBusqueda] = useState("");
-  const [busquedaAplicada, setBusquedaAplicada] = useState("");
-
-  // La búsqueda espera 350ms de inactividad antes de pegarle al backend.
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setBusquedaAplicada(busqueda.trim());
-      setPagina(1);
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [busqueda]);
-
-  // Catálogo de zonas una sola vez; la primera queda seleccionada.
-  useEffect(() => {
-    if (!tieneModulo) return;
-    preventivosApi
-      .listZonas()
-      .then((lista) => {
-        setZonas(lista);
-        setZona((actual) => actual ?? lista[0]?.zona ?? null);
-      })
-      .catch((err: unknown) => {
-        console.error("Error al cargar zonas de preventivos:", err);
-        setError("No se pudo consultar el catálogo de zonas. Reintentá.");
-      });
-  }, [tieneModulo]);
-
-  const load = useCallback(
-    (refresh = false) => {
-      if (!zona) return Promise.resolve();
-      return preventivosApi
-        .listEquipos({
-          zona,
-          estado: (estado || undefined) as EstadoPreventivo | undefined,
-          habilitado: soloHabilitados ? true : undefined,
-          q: busquedaAplicada || undefined,
-          page: pagina,
-          size: POR_PAGINA,
-          refresh,
-        })
-        .then((page) => {
-          setRows(page.items);
-          setTotal(page.total);
-          setConsultadoEn(page.consultado_en);
-          setError(null);
-        })
-        .catch((err: unknown) => {
-          console.error("Error al cargar preventivos:", err);
-          setError("No se pudo consultar el parque. Reintentá.");
-        });
-    },
-    [zona, estado, soloHabilitados, busquedaAplicada, pagina],
-  );
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    void load(true).finally(() => setRefreshing(false));
-  };
-
-  /** Toggle optimista con rollback: el backend valida permiso igual. */
-  const handleToggleHabilitacion = (equipo: EquipoPreventivo) => {
-    if (!canUpdate || pendingId !== null || rows === null) return;
-    const previos = rows;
-    const optimista = equipo.habilitacion
-      ? null
-      : {
-          habilitado_por: user.fullName,
-          habilitado_en: new Date().toISOString(),
-          nota: null,
-        };
-    setPendingId(equipo.id_maquina);
-    setRows(
-      previos.map((r) =>
-        r.id_maquina === equipo.id_maquina ? { ...r, habilitacion: optimista } : r,
-      ),
-    );
-    const operacion = equipo.habilitacion
-      ? preventivosApi.deshabilitar(equipo.id_maquina).then(() => null)
-      : preventivosApi.habilitar(equipo.id_maquina);
-    operacion
-      .then((habilitacion) => {
-        setRows((actuales) =>
-          actuales?.map((r) =>
-            r.id_maquina === equipo.id_maquina ? { ...r, habilitacion } : r,
-          ) ?? actuales,
-        );
-      })
-      .catch((err: unknown) => {
-        console.error("Error al cambiar habilitación:", err);
-        setRows(previos);
-        setError("No se pudo guardar la habilitación. Reintentá.");
-      })
-      .finally(() => setPendingId(null));
-  };
+  const mapa = usePuntosMapa({
+    activo: vista === "mapa",
+    zona,
+    estado,
+    soloHabilitados,
+    busquedaAplicada,
+  });
 
   if (!tieneModulo) {
     return (
@@ -244,40 +117,29 @@ export function PreventivosView() {
         </div>
       )}
       {zonas !== null && (
-        <ZonaChips
-          zonas={zonas}
-          seleccionada={zona}
-          onSelect={(z) => {
-            if (z === zona) return;
-            setZona(z);
-            setPagina(1);
-            // La zona nueva puede tener la caché fría en el backend (2-7 s):
-            // vaciar la tabla dispara skeletons + modal en vez de dejar la
-            // zona anterior congelada sin feedback.
-            setRows(null);
-          }}
-        />
+        <ZonaChips zonas={zonas} seleccionada={zona} onSelect={handleSelectZona} />
       )}
 
       <div className="flex flex-wrap items-center gap-4">
+        <SegmentedControl
+          label="Vista"
+          size="sm"
+          options={FILTROS_VISTA}
+          value={vista}
+          onChange={(v) => setVista(v as "tabla" | "mapa")}
+        />
         <SegmentedControl
           label="Estado"
           size="sm"
           options={FILTROS_ESTADO}
           value={estado}
-          onChange={(v) => {
-            setEstado(v);
-            setPagina(1);
-          }}
+          onChange={handleEstadoChange}
         />
         <label className="flex items-center gap-2 font-body text-xs font-semibold text-muted-foreground">
           <Switch
             checked={soloHabilitados}
             label="Solo habilitados"
-            onCheckedChange={(v) => {
-              setSoloHabilitados(v);
-              setPagina(1);
-            }}
+            onCheckedChange={handleSoloHabilitadosChange}
           />
           Solo habilitados
         </label>
@@ -292,7 +154,7 @@ export function PreventivosView() {
         </div>
       </div>
 
-      {rows === null && !error && (
+      {vista === "tabla" && rows === null && !error && (
         <>
           {zona !== null && (
             <SigesLoadingModal
@@ -313,7 +175,7 @@ export function PreventivosView() {
         </>
       )}
 
-      {error && (
+      {vista === "tabla" && error && (
         <div className="flex items-center justify-between gap-4 rounded-[12px] border border-destructive/20 bg-destructive/10 px-5 py-4">
           <p className="font-body text-sm text-foreground">{error}</p>
           <BrandButton variant="outline" size="sm" onClick={() => void load()}>
@@ -322,7 +184,7 @@ export function PreventivosView() {
         </div>
       )}
 
-      {rows !== null && !error && (
+      {vista === "tabla" && rows !== null && !error && (
         <>
           {rows.length === 0 ? (
             <BrandEmptyState
@@ -373,6 +235,41 @@ export function PreventivosView() {
             aparece un preventivo posterior. Datos cacheados 5 minutos; &quot;Actualizar&quot;
             fuerza una consulta nueva.
           </p>
+        </>
+      )}
+
+      {vista === "mapa" && (
+        <>
+          {mapa.error && (
+            <div className="flex items-center justify-between gap-4 rounded-[12px] border border-destructive/20 bg-destructive/10 px-5 py-4">
+              <p className="font-body text-sm text-foreground">{mapa.error}</p>
+            </div>
+          )}
+          {!mapa.error && mapa.puntos === null && (
+            <BrandSkeleton className="h-[520px] w-full rounded-[12px]" />
+          )}
+          {!mapa.error && mapa.puntos !== null && (
+            <>
+              {mapa.puntos.length === 0 ? (
+                <BrandEmptyState
+                  icon={SearchX}
+                  title="Sin resultados"
+                  description="Ningún equipo de la zona cumple el filtro actual. Probá cambiar el estado o limpiar la búsqueda."
+                />
+              ) : (
+                <>
+                  {mapa.sinUbicar > 0 && (
+                    <p className="rounded-[8px] bg-muted/30 px-4 py-3 font-body text-xs text-muted-foreground">
+                      {numberFormat.format(mapa.sinUbicar)} sucursal(es) del filtro actual no
+                      tienen una coordenada válida en Siges y no se muestran en el mapa.
+                    </p>
+                  )}
+                  <PreventivosMapa puntos={mapa.puntos} />
+                  <PreventivosMapaLeyenda />
+                </>
+              )}
+            </>
+          )}
         </>
       )}
     </div>
