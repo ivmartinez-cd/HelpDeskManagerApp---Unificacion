@@ -374,3 +374,19 @@ integración apuntando a los repos legacy, dos Master Prompts obsoletos, un path
 5. Limpieza chica: warning de eslint en `hp-logs-panel.tsx`, `npm audit fix` (nanoid),
    `/api/health/echo`, identificadores SQLite en `db3_merge.py`, partir
    `use-inicio-data.ts`.
+
+---
+
+## Addendum 2026-08-22 (misma jornada): lo que se corrigió en el acto
+
+Solo lo que era propio de esta sesión o puramente documental; el resto queda como
+hallazgo abierto para decidir (tests de integración, gate de §4, cobertura de
+`analisis_log_hp`, `nanoid`, `hp-logs-panel.tsx`, `db3_merge.py`, `/health/echo`).
+
+| Hallazgo | Acción |
+|---|---|
+| §4 frontend: `features/home/hooks/use-inicio-data.ts` 317 líneas (regresión del rediseño de Inicio de hoy) | Partido: la lógica de rango "hoy"/semana de Contadores pasó a `use-calendario-home.ts` (124); `use-inicio-data.ts` queda en 201. `tsc` + eslint en verde; `use-dashboard-data.ts` importa del archivo nuevo |
+| §10: path erróneo en `ARCHITECTURE_GUIDE.md` §2 | Corregido a `docs/adr/003-estructura-modulo-capa.md` |
+| §10: `MASTER_PROMPT_NOTA_PERSONAL_INICIO.md` describe una Home que no existe y una feature no hecha | Encabezado "Estado: NO implementado" con el contexto actual |
+| §10: `MASTER_PROMPT_INCIDENTES_SIN_CERRAR_POR_PRESTADOR.md` describe un módulo `stc/` que no se construyó | Encabezado "Estado: reemplazado por `sla/pendientes-a-cerrar`" |
+| §10: `INTEGRACION_APPS_PLAN.md` apunta a los repos legacy | Encabezado "Estado: histórico" |

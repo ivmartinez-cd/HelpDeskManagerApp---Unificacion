@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useWatiPendientes } from "@/features/wati/providers/wati-pendientes-provider";
 import type { ModuleAccess } from "../config/dashboard-registry";
+import { useCalendarioHome } from "./use-calendario-home";
 import {
-  useCalendarioHome,
   useClientesPendientesPeriodoAnterior,
   useContadoresResumen,
   useInsumosDashboard,

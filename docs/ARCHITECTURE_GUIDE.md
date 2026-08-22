@@ -128,7 +128,7 @@ propia de tener varios módulos: **ningún módulo importa el `domain` o `applic
 otro módulo** — solo puede depender de `shared/`. Verificar esta regla con una herramienta
 de análisis de imports en CI (ej. `import-linter` en Python), no dejarla como convención de
 palabra. Justificar la elección por escrito con un ADR cuando se adopte esta variante (ver
-`HelpDeskManager-Unificacion/docs/adr/003-estructura-modulo-capa.md` como ejemplo).
+`docs/adr/003-estructura-modulo-capa.md` de este repo como ejemplo).
 
 #### Frontend (React / Vue / Angular)
 

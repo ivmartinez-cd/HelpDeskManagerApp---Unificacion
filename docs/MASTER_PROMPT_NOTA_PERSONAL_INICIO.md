@@ -1,5 +1,10 @@
 # Master Prompt — Nota personal en la pantalla de Inicio
 
+> **Estado (2026-08-22): NO implementado.** Además describe la Home anterior
+> (`ShiftDashboardCard`, `TodayClientsCard`, grilla en `page.tsx`); la Home actual es el
+> dashboard de `features/home/` (ver `MASTER_PROMPT_REDISENO_DASHBOARD_INICIO.md`). Si se
+> retoma, la card entraría como un panel más del registro `VIEWS`.
+
 Agregar a la pantalla de Inicio (`/`, `app/(app)/page.tsx`) una tarjeta de **nota personal**: cada
 usuario autenticado puede escribir texto libre que se guarda y persiste entre sesiones y dispositivos.
 Es una utilidad por-usuario (scratchpad), privada, NO un recurso compartido ni un módulo con permisos.

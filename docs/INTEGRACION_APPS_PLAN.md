@@ -1,5 +1,9 @@
 # Plan de unificación: HelpDesk Manager como plataforma definitiva
 
+> **Estado (2026-08-22): histórico.** Plan de integración original; las rutas a los repos
+> legacy (`HelpDeskManager-Web/…`, `SDSInsumos/…`, `.mcp.json`…) ya no existen en este
+> checkout. El estado vigente de cada módulo está en `docs/<modulo>/` y en los ADR.
+
 **Decisión tomada (confirmada por el usuario):** el nombre de la app padre se mantiene —
 **HelpDesk Manager**. Esta va a ser la app definitiva. Se reescribe todo a **un solo stack**,
 sin límite de tiempo autoimpuesto, siguiendo `ARCHITECTURE_GUIDE.md` (en esta misma carpeta).

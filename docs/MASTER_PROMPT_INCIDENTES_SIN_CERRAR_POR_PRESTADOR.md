@@ -1,5 +1,10 @@
 # Master Prompt — Card de "Incidentes finalizados sin cerrar" por prestador (Inicio + módulo STC)
 
+> **Estado (2026-08-22): reemplazado.** No se construyó el módulo `stc/` que describe este
+> prompt; la funcionalidad vive en `sla` (`/sla/pendientes-a-cerrar`, card "Pendientes a
+> cerrar" de Inicio, `backend/src/modules/sla/`). Las rutas y archivos citados abajo no
+> existen.
+
 Agregar a la pantalla de Inicio (`/`, `app/(app)/page.tsx`) una tarjeta que muestre, **por prestador
 (PST)**, la cantidad de incidentes que están **finalizados pero todavía no cerrados** en Siges. El
 superadmin ve todos los PST; cada usuario logueado ve solo los PST que tiene asignados (más los que
