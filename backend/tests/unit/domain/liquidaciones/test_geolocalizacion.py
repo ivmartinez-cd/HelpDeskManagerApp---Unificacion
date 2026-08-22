@@ -5,7 +5,6 @@ la rural del caso BAHIA→Las Horquetas: "Ruta Nacional 33 KM 167, GUAMINI")."""
 
 import pytest
 
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
 from src.modules.liquidaciones.domain.services.geolocalizacion import (
     UMBRAL_PIN_SOSPECHOSO_KM,
     armar_direccion,
@@ -14,6 +13,7 @@ from src.modules.liquidaciones.domain.services.geolocalizacion import (
     haversine_km,
     normalizar_domicilio,
 )
+from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
 
 
 def _candidato(

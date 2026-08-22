@@ -19,7 +19,7 @@ from src.modules.liquidaciones.application.use_cases.tabla_km_refrescar_siges im
     FilaNoEncontrada,
     RefrescarDireccionesResultado,
 )
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
+from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
 
 
 class GeocodeCandidatoOut(BaseModel):

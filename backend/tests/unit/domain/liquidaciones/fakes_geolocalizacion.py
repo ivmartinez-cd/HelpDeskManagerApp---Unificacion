@@ -13,7 +13,6 @@ from src.modules.liquidaciones.domain.entities.calculo_km_preview import (
 from src.modules.liquidaciones.domain.entities.cuadricula_base_map import CuadriculaBaseMap
 from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import SucursalCoordenadas
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
 from src.modules.liquidaciones.domain.repositories.georef_reverse_cache_repository import (
     ReverseCacheado,
 )
@@ -28,6 +27,7 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     SigesSucursalCliente,
     SigesSucursalPropia,
 )
+from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
 
 _AHORA = datetime(2026, 1, 1)
 

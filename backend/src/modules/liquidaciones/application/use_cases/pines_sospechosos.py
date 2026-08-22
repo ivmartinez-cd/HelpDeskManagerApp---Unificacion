@@ -15,13 +15,6 @@ from src.modules.liquidaciones.application.use_cases._distancias_comunes import 
     parse_latlon_siges,
     validar_prestador_vinculado_siges,
 )
-from src.modules.liquidaciones.domain.repositories.geocode_cache_repository import (
-    GeocodeCacheRepository,
-)
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import (
-    GeocodeCandidato,
-    GeocodingGateway,
-)
 from src.modules.liquidaciones.domain.repositories.prestador_repository import PrestadorRepository
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesCatalogoGateway,
@@ -37,6 +30,13 @@ from src.modules.liquidaciones.domain.services.geolocalizacion import (
     haversine_km,
 )
 from src.shared.domain.errors import ValidationError
+from src.shared.domain.repositories.geocode_cache_repository import (
+    GeocodeCacheRepository,
+)
+from src.shared.domain.repositories.geocoding_gateway import (
+    GeocodeCandidato,
+    GeocodingGateway,
+)
 
 
 @dataclass(frozen=True)

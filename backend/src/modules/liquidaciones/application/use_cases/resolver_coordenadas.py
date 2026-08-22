@@ -9,10 +9,6 @@ from uuid import UUID
 
 from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import SucursalCoordenadas
 from src.modules.liquidaciones.domain.errors import SucursalCoordenadasNoEncontradaError
-from src.modules.liquidaciones.domain.repositories.geocode_cache_repository import (
-    GeocodeCacheRepository,
-)
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
 from src.modules.liquidaciones.domain.repositories.sucursal_coordenadas_repository import (
     SucursalCoordenadasRepository,
 )
@@ -21,6 +17,10 @@ from src.modules.liquidaciones.domain.services.geolocalizacion import (
     PROCEDENCIA_MANUAL,
 )
 from src.shared.domain.errors import ValidationError
+from src.shared.domain.repositories.geocode_cache_repository import (
+    GeocodeCacheRepository,
+)
+from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
 
 ESTADO_RESUELTA = "resuelta"
 ESTADO_AMBIGUA = "ambigua"

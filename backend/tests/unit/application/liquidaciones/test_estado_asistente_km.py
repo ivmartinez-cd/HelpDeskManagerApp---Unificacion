@@ -15,11 +15,11 @@ from src.modules.liquidaciones.application.use_cases.estado_asistente_km import 
 )
 from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import SucursalCoordenadas
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesSucursalCliente,
     SigesSucursalPropia,
 )
+from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
 from tests.unit.domain.liquidaciones.factories import make_prestador
 from tests.unit.domain.liquidaciones.fakes import FakePrestadorRepository
 from tests.unit.domain.liquidaciones.fakes_geolocalizacion import (

@@ -9,7 +9,7 @@ preciso e inequívoco — el resto queda para revisión humana."""
 import math
 import re
 
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
+from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
 
 UMBRAL_PIN_SOSPECHOSO_KM = 5.0
 

@@ -1,20 +1,17 @@
-"""Caches de geolocalización contra Postgres real: reverse Georef, reverse
+"""Caches de geolocalización contra Postgres real: reverse Georef y reverse
 Nominatim (clave por coordenadas redondeadas, el "sin cobertura" también se
-cachea) y cache de geocodes por dirección normalizada (upsert del payload)."""
+cachea). El cache de geocodes por dirección es compartido — ver
+tests/integration/infrastructure/shared/test_sqlalchemy_geocode_cache_repository.py."""  # noqa: E501
 
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
 from src.modules.liquidaciones.domain.repositories.georeferenciacion_gateway import (
     UbicacionGeoref,
 )
 from src.modules.liquidaciones.domain.repositories.nominatim_gateway import (
     UbicacionNominatim,
-)
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_geocode_cache_repository import (  # noqa: E501
-    SqlAlchemyGeocodeCacheRepository,
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_georef_reverse_cache_repository import (  # noqa: E501
     SqlAlchemyGeorefReverseCacheRepository,
@@ -76,24 +73,3 @@ async def test_nominatim_cache_miss_put_hit_y_sin_cobertura(db_session: AsyncSes
     vacio = await repo.get(lat2, lon2)
     assert vacio is not None
     assert vacio.ubicacion is None
-
-
-async def test_geocode_cache_put_inserta_y_luego_reemplaza(db_session: AsyncSession) -> None:
-    repo = SqlAlchemyGeocodeCacheRepository(db_session)
-    direccion = f"av siempre viva 742 {uuid.uuid4().hex[:8]}"
-    assert await repo.get(direccion) is None
-
-    candidato = GeocodeCandidato(
-        formatted_address="Av. Siempre Viva 742, Springfield",
-        latitud=-31.5,
-        longitud=-68.5,
-        location_type="ROOFTOP",
-        tipos=("street_address",),
-        partial_match=True,
-    )
-    await repo.put(direccion, [candidato])
-    assert await repo.get(direccion) == [candidato]
-
-    # ZERO_RESULTS también se cachea (lista vacía) y pisa el payload anterior.
-    await repo.put(direccion, [])
-    assert await repo.get(direccion) == []

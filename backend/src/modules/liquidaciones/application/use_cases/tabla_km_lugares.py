@@ -23,13 +23,6 @@ from src.modules.liquidaciones.domain.errors import (
     FilaSinDomicilioError,
     TablaKmNoEncontradaError,
 )
-from src.modules.liquidaciones.domain.repositories.geocode_cache_repository import (
-    GeocodeCacheRepository,
-)
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import (
-    GeocodeCandidato,
-    GeocodingGateway,
-)
 from src.modules.liquidaciones.domain.repositories.google_maps_gateway import GoogleMapsGateway
 from src.modules.liquidaciones.domain.repositories.prestador_repository import PrestadorRepository
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
@@ -43,6 +36,13 @@ from src.modules.liquidaciones.domain.services.geolocalizacion import (
     armar_direccion,
 )
 from src.shared.domain.errors import ValidationError
+from src.shared.domain.repositories.geocode_cache_repository import (
+    GeocodeCacheRepository,
+)
+from src.shared.domain.repositories.geocoding_gateway import (
+    GeocodeCandidato,
+    GeocodingGateway,
+)
 
 
 @dataclass(frozen=True)

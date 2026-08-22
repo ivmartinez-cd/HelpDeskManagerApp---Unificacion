@@ -1,5 +1,8 @@
-"""Modelos de geolocalización: cache de geocodes, resoluciones de coordenadas
-por sucursal Siges sin pin, y previews del cálculo masivo de distancias."""
+"""Modelos de geolocalización: resoluciones de coordenadas por sucursal Siges
+sin pin, y previews del cálculo masivo de distancias. El cache de geocodes
+(antes `GeocodeCacheModel` acá) se movió a
+`shared/infrastructure/geocoding/geocode_cache_model.py` — es genérico,
+también lo usa preventivos."""
 
 import uuid
 from datetime import datetime
@@ -10,22 +13,6 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.shared.infrastructure.database.base import Base
-
-
-class GeocodeCacheModel(Base):
-    """Cache por dirección normalizada — una dirección ya consultada (aunque
-    haya dado ZERO_RESULTS) no se vuelve a pedir a Google."""
-
-    __tablename__ = "geocode_cache"
-
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
-    )
-    direccion_normalizada: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    candidatos: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False)
-    fecha_consulta: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=text("now()"), nullable=False
-    )
 
 
 class SucursalCoordenadasModel(Base):

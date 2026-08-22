@@ -17,15 +17,15 @@ from src.modules.liquidaciones.application.use_cases.geovalidacion_tier0 import 
 from src.modules.liquidaciones.application.use_cases.geovalidacion_tier1b import (
     ListarHallazgosTier1b,
 )
-from src.modules.liquidaciones.domain.repositories.geocode_cache_repository import (
-    GeocodeCacheRepository,
-)
 from src.modules.liquidaciones.domain.repositories.prestador_repository import PrestadorRepository
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesCatalogoGateway,
 )
 from src.modules.liquidaciones.domain.services.geolocalizacion import armar_direccion
 from src.modules.liquidaciones.domain.services.geovalidacion_worklist import calcular_residuo
+from src.shared.domain.repositories.geocode_cache_repository import (
+    GeocodeCacheRepository,
+)
 
 
 @dataclass(frozen=True)

@@ -11,8 +11,6 @@ Reusa el gateway pyodbc y el de Distance Matrix de `dependencies/siges.py`
 (singletons de proceso); el de geocoding es otro singleton con la misma key.
 El tope de llamadas viene de `GOOGLE_MAPS_MAX_CALLS_PER_RUN`."""
 
-from functools import lru_cache
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
@@ -43,14 +41,8 @@ from src.modules.liquidaciones.application.use_cases.resolver_coordenadas import
     ListarCoordenadasPendientes,
     ResolverCoordenadas,
 )
-from src.modules.liquidaciones.infrastructure.google_maps.httpx_geocoding_gateway import (
-    HttpxGeocodingGateway,
-)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_calculo_km_preview_repository import (  # noqa: E501
     SqlAlchemyCalculoKmPreviewRepository,
-)
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_geocode_cache_repository import (  # noqa: E501
-    SqlAlchemyGeocodeCacheRepository,
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_incidente_repository import (  # noqa: E501
     SqlAlchemyIncidenteRepository,
@@ -69,11 +61,10 @@ from src.modules.liquidaciones.presentation.dependencies.siges import (
     siges_google_maps_gateway,
 )
 from src.shared.infrastructure.config.settings import get_settings
-
-
-@lru_cache
-def _geocoding_gateway() -> HttpxGeocodingGateway:
-    return HttpxGeocodingGateway(get_settings().google_maps_api_key)
+from src.shared.infrastructure.geocoding.factories import require_geocoding_gateway
+from src.shared.infrastructure.geocoding.sqlalchemy_geocode_cache_repository import (  # noqa: E501
+    SqlAlchemyGeocodeCacheRepository,
+)
 
 
 def _tope() -> int:
@@ -107,7 +98,7 @@ def build_geocodificar_sucursales(session: AsyncSession) -> GeocodificarSucursal
             siges=siges_catalogo_gateway(),
             sucursal_coords=SqlAlchemySucursalCoordenadasRepository(session),
             geocode_cache=SqlAlchemyGeocodeCacheRepository(session),
-            geocoding=_geocoding_gateway(),
+            geocoding=require_geocoding_gateway(),
             incidentes=SqlAlchemyIncidenteRepository(session),
         ),
         _tope(),
@@ -134,7 +125,7 @@ def _pines_ports(session: AsyncSession) -> PinesPorts:
         prestadores=SqlAlchemyPrestadorRepository(session),
         siges=siges_catalogo_gateway(),
         geocode_cache=SqlAlchemyGeocodeCacheRepository(session),
-        geocoding=_geocoding_gateway(),
+        geocoding=require_geocoding_gateway(),
         sucursal_coords=SqlAlchemySucursalCoordenadasRepository(session),
     )
 

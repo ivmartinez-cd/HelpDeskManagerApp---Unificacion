@@ -5,10 +5,8 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
-from src.modules.liquidaciones.infrastructure.models.geolocalizacion_models import (
-    GeocodeCacheModel,
-)
+from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
+from src.shared.infrastructure.geocoding.geocode_cache_model import GeocodeCacheModel
 
 
 class SqlAlchemyGeocodeCacheRepository:

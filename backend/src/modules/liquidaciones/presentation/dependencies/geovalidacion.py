@@ -34,9 +34,6 @@ from src.modules.liquidaciones.infrastructure.georef.httpx_georef_gateway import
 from src.modules.liquidaciones.infrastructure.nominatim.httpx_nominatim_gateway import (
     HttpxNominatimGateway,
 )
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_geocode_cache_repository import (  # noqa: E501
-    SqlAlchemyGeocodeCacheRepository,
-)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_georef_reverse_cache_repository import (  # noqa: E501
     SqlAlchemyGeorefReverseCacheRepository,
 )
@@ -51,6 +48,9 @@ from src.modules.liquidaciones.presentation.dependencies.geolocalizacion import 
 )
 from src.modules.liquidaciones.presentation.dependencies.siges import siges_catalogo_gateway
 from src.shared.infrastructure.config.settings import get_settings
+from src.shared.infrastructure.geocoding.sqlalchemy_geocode_cache_repository import (  # noqa: E501
+    SqlAlchemyGeocodeCacheRepository,
+)
 
 
 @lru_cache

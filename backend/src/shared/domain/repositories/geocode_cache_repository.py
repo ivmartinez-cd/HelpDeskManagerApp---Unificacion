@@ -1,4 +1,5 @@
-"""Puerto del cache de geocodes por dirección normalizada.
+"""Puerto del cache de geocodes por dirección normalizada — compartido (ver
+geocoding_gateway.py).
 
 Una dirección ya consultada no se vuelve a pedir a Google (la key es paga y
 corporativa): `get` distingue miss (`None`) de "Google no encontró nada"
@@ -6,7 +7,7 @@ corporativa): `get` distingue miss (`None`) de "Google no encontró nada"
 
 from typing import Protocol
 
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
+from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
 
 
 class GeocodeCacheRepository(Protocol):

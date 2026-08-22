@@ -9,10 +9,10 @@ from src.modules.liquidaciones.application.use_cases.geocodificar_sucursales imp
     GeocodificarPorts,
     GeocodificarSucursales,
 )
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesSucursalCliente,
 )
+from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
 from tests.unit.domain.liquidaciones.factories import make_prestador
 from tests.unit.domain.liquidaciones.fakes import FakePrestadorRepository
 from tests.unit.domain.liquidaciones.fakes_geolocalizacion import (

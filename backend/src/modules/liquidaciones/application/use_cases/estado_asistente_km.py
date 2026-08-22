@@ -18,9 +18,6 @@ from src.modules.liquidaciones.application.use_cases._distancias_comunes import 
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import SucursalCoordenadas
 from src.modules.liquidaciones.domain.errors import PrestadorNoEncontradoError
-from src.modules.liquidaciones.domain.repositories.geocode_cache_repository import (
-    GeocodeCacheRepository,
-)
 from src.modules.liquidaciones.domain.repositories.incidente_repository import IncidenteRepository
 from src.modules.liquidaciones.domain.repositories.prestador_repository import PrestadorRepository
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
@@ -37,6 +34,9 @@ from src.modules.liquidaciones.domain.services.geolocalizacion import (
     haversine_km,
 )
 from src.modules.liquidaciones.domain.services.vinculacion_siges import normalizar_nombre
+from src.shared.domain.repositories.geocode_cache_repository import (
+    GeocodeCacheRepository,
+)
 
 
 @dataclass(frozen=True)

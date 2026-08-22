@@ -16,13 +16,6 @@ from src.modules.liquidaciones.application.use_cases._distancias_comunes import 
     parse_latlon_siges,
     validar_prestador_vinculado_siges,
 )
-from src.modules.liquidaciones.domain.repositories.geocode_cache_repository import (
-    GeocodeCacheRepository,
-)
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import (
-    GeocodeCandidato,
-    GeocodingGateway,
-)
 from src.modules.liquidaciones.domain.repositories.incidente_repository import IncidenteRepository
 from src.modules.liquidaciones.domain.repositories.prestador_repository import PrestadorRepository
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
@@ -38,6 +31,13 @@ from src.modules.liquidaciones.domain.services.geolocalizacion import (
     elegir_automatico,
 )
 from src.modules.liquidaciones.domain.services.vinculacion_siges import normalizar_nombre
+from src.shared.domain.repositories.geocode_cache_repository import (
+    GeocodeCacheRepository,
+)
+from src.shared.domain.repositories.geocoding_gateway import (
+    GeocodeCandidato,
+    GeocodingGateway,
+)
 
 
 @dataclass(frozen=True)

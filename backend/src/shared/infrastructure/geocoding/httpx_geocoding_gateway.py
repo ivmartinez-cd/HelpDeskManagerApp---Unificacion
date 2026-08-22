@@ -1,15 +1,16 @@
 """Adapter httpx del puerto GeocodingGateway — Google Geocoding API.
 
-Sin retries a propósito (misma política que el gateway de Distance Matrix): la
-key es paga y un error se reporta, no se reintenta en silencio."""
+Sin retries a propósito (misma política que el gateway de Distance Matrix de
+liquidaciones): la key es paga y un error se reporta, no se reintenta en
+silencio."""
 
 import logging
 from typing import Any
 
 import httpx
 
-from src.modules.liquidaciones.domain.repositories.geocoding_gateway import GeocodeCandidato
 from src.shared.domain.errors import ExternalServiceError
+from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
 
 _LOG = logging.getLogger(__name__)
 _GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
