@@ -8,7 +8,10 @@ EXEC     := docker exec $(BACKEND)
 PGUSER   ?= helpdesk
 PGDB     ?= helpdesk
 
-.PHONY: help status check lint-imports ruff mypy test lint-frontend typecheck-frontend hooks \
+TEST_DB  := helpdesk-db-test
+NET      := helpdesk-manager_default
+
+.PHONY: help status check lint-imports ruff mypy test test-integration sizes lint-frontend typecheck-frontend hooks \
         db-backup db-restore restart-backend restart-frontend recreate-backend \
         logs-backend logs-frontend mailpit up ps
 
@@ -19,7 +22,7 @@ status:  ## Estado del entorno (contenedores, modo test, jobs, git)
 	@hd-status
 
 # --- Verificación obligatoria antes de dar por terminado un módulo (CLAUDE.md) ---
-check: lint-imports ruff mypy test  ## lint-imports + ruff + mypy + pytest (dentro del backend)
+check: lint-imports ruff mypy test test-integration sizes  ## lint-imports + ruff + mypy + pytest unit + integración + tamaños §4
 	@echo "✔ check completo"
 
 lint-imports:  ## Contratos de capas/módulos (la regla más importante)
@@ -33,6 +36,14 @@ mypy:  ## mypy src
 
 test:  ## pytest tests/unit -q
 	$(EXEC) uv run pytest tests/unit -q
+
+test-integration:  ## pytest tests/integration (levanta helpdesk-db-test y lo conecta a la red del backend)
+	docker compose -f docker-compose.test.yml up -d --wait db-test
+	@docker network connect $(NET) $(TEST_DB) 2>/dev/null || true
+	$(EXEC) env DB_TEST_HOST=$(TEST_DB) DB_TEST_PORT=5432 uv run pytest tests/integration -q
+
+sizes:  ## Gate §4: función/clase/archivo por encima del límite que no esté en el inventario congelado (scripts/sizes-baseline.json)
+	python3 scripts/check_sizes.py
 
 lint-frontend:  ## eslint del frontend (dentro del contenedor)
 	docker exec $(FRONTEND) npm run -s lint

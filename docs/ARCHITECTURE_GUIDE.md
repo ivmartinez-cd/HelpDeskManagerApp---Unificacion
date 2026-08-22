@@ -216,6 +216,15 @@ order-processing/
 | Parámetros por función | 3 | Agrupar en objeto |
 | Profundidad de anidamiento | 3 niveles | Extraer a función o invertir condición |
 
+**Cómo se mide en este repo** (auditorías 2026-08-14/22): backend con AST sobre el span
+físico, sin migraciones Alembic; frontend por archivo. En componentes React el límite de
+20 líneas por función no se aplica al componente en sí (un componente JSX es una función
+de render, y medirlo así da cientos de "violaciones" sin valor): el límite que rige es el
+del archivo (300) más la regla de responsabilidad única — un componente no mezcla fetch,
+estado y layout; cuando pasa, se extraen hooks y sub-componentes. Los casos que excedían
+los límites al congelarse la deuda están en `scripts/sizes-baseline.json` (ADR-017/020) y
+`make check` corre `scripts/check_sizes.py`, que falla con cualquier caso nuevo.
+
 ### Patrones Prohibidos
 
 ```typescript

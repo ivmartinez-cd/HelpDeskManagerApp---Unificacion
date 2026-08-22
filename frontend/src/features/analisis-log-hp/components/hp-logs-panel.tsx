@@ -26,7 +26,6 @@ interface Props {
   serial: string;
   modelName: string;
   deviceId: string;
-  sdsResult: SdsExtractResult;
   analysis: AnalysisResult;
   onBack: () => void;
   onAnalysisUpdate?: (a: AnalysisResult, s: SdsExtractResult) => void;
@@ -46,7 +45,6 @@ export function HpLogsPanel({
   serial,
   modelName,
   deviceId,
-  sdsResult,
   analysis,
   onBack,
   onAnalysisUpdate,

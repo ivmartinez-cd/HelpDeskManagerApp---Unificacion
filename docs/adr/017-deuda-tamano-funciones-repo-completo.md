@@ -70,3 +70,25 @@ ADR-016 queda subsumido por esta ADR para lo general; su inventario específico 
   Mitigación: las 10 >50 son las únicas con complejidad real y están listadas acá — si
   en una futura auditoría siguen igual y además acumularon bugs, ese dato revierte esta
   decisión para ellas.
+
+## Addendum 2026-08-22: gate automático e inventario ampliado
+
+La auditoría del 2026-08-22 (`docs/AUDITORIA_ARCHITECTURE_GUIDE_2026-08-22.md`) midió que
+entre el 14/08 y el 22/08 entraron **75 funciones nuevas >20 líneas** (13 de >30), **2
+clases >200** (`Settings`, `SqlAlchemyTablaKmRepository`) y 1 archivo frontend >300 sin que
+nada lo detectara: el punto 3 de esta ADR ("límite vigente para código nuevo") no tenía
+herramienta que lo hiciera cumplir. Decisión:
+
+1. **Gate en `make check`**: `scripts/check_sizes.py` mide con AST (backend, sin
+   migraciones) y por archivo (frontend) y **falla** con cualquier función >20 / clase
+   >200 / archivo >300 que no esté en `scripts/sizes-baseline.json`. Corre en el `pre-push`
+   vía `make check`.
+2. **El inventario congelado pasa a ser ese JSON** (antes: el listado del informe del
+   14/08). Se generó con el estado del 2026-08-22, o sea **incluye** las 75+2 que entraron
+   sin gate — refactorizarlas en bloque tiene el mismo costo/riesgo que motivó esta ADR y
+   no reduce complejidad real; quedan bajo la misma regla de refactor oportunista (el
+   archivo que se toque baja del límite) y el gate impide que el inventario vuelva a
+   crecer. Regenerarlo (`--update`) es una decisión consciente que se acompaña con una
+   nota en esta ADR.
+3. Lo que sale del inventario por refactor se informa (`ℹ N entradas ya no exceden`) y se
+   poda con `--update` en el siguiente commit que lo toque.

@@ -44,7 +44,6 @@ export function HpLogsView() {
       serial={panel.serial}
       modelName={panel.modelName}
       deviceId={panel.deviceId}
-      sdsResult={panel.sdsResult}
       analysis={panel.analysis}
       onBack={handleBack}
       onAnalysisUpdate={handleAnalysisUpdate}

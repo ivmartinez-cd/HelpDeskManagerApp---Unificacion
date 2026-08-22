@@ -4,20 +4,25 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.liquidaciones.domain.entities.alerta import ESTADO_PENDIENTE
+from src.modules.liquidaciones.domain.services.conciliar_alertas import AlertaConciliada
 from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado import AlertaGenerada
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_alerta_repository import (
     SqlAlchemyAlertaRepository,
 )
 
 
-def _alerta_generada(incidente_id: uuid.UUID, tipo_alerta: str = "ALT001") -> AlertaGenerada:
-    return AlertaGenerada(
+def _alerta_generada(incidente_id: uuid.UUID, tipo_alerta: str = "ALT001") -> AlertaConciliada:
+    """El repo recibe la alerta ya conciliada con la decisión previa de la TL
+    (ADR-024); acá siempre es una alerta nueva: estado pendiente, sin justificación."""
+    generada = AlertaGenerada(
         incidente_id=incidente_id,
         tipo_alerta=tipo_alerta,
         descripcion="Descripción de alerta",
         riesgo=2.5,
         datos_contexto={"km_actual": 10.0},
     )
+    return AlertaConciliada(generada=generada, estado=ESTADO_PENDIENTE, justificacion=None)
 
 
 async def test_replace_for_liquidacion_creates_alertas(

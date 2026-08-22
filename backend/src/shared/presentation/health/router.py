@@ -19,6 +19,9 @@ def get_health() -> dict[str, str]:
 
 @router.post("/echo")
 def post_echo(payload: EchoRequest) -> dict[str, str]:
+    """Sonda del envelope de errores de validación (la usa
+    tests/integration/test_error_handling.py): un endpoint con body mínimo que
+    dispara un 422 reproducible. Sin auth a propósito — no expone datos."""
     return {"message": payload.message}
 
 

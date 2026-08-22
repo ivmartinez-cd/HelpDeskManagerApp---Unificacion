@@ -57,3 +57,13 @@ Se aplica al frontend el mismo criterio de ADR-017:
   es una violación, per CLAUDE.md) y con línea de base para detectar deuda nueva.
 - Riesgo asumido: igual que en ADR-017, "oportunista" puede volverse "nunca". La
   línea de base de esta tabla permite medirlo en cada pasada de auditoría.
+
+## Addendum 2026-08-22: mismo gate que el backend
+
+El inventario de archivos >300 del frontend vive ahora en `scripts/sizes-baseline.json`
+junto con el del backend (ADR-017, addendum de la misma fecha), medido con el mismo
+criterio que esta ADR (`wc -l`). `make check` corre `scripts/check_sizes.py` y falla con
+cualquier archivo nuevo que supere las 300 líneas. Estado al 2026-08-22: 10 archivos (4 del
+inventario original ya se partieron; `use-inicio-data.ts`, que había entrado hoy por
+encima, se partió el mismo día). Las funciones/componentes React no se miden por función
+(ver ARCHITECTURE_GUIDE.md §4, "Cómo se mide en este repo").

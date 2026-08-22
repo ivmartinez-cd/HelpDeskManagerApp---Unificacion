@@ -7,9 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 from src.shared.infrastructure.database import model_registry  # noqa: F401
 from src.shared.infrastructure.database.base import Base
 
+# Desde el host: localhost:5440 (puerto publicado por docker-compose.test.yml).
+# Desde el contenedor del backend (`make test-integration`): DB_TEST_HOST=helpdesk-db-test
+# y DB_TEST_PORT=5432, con el contenedor de test conectado a la red del backend.
+_DB_TEST_HOST = os.environ.get("DB_TEST_HOST", "localhost")
 _DB_TEST_PORT = os.environ.get("DB_TEST_PORT", "5440")
 _TEST_DATABASE_URL = (
-    f"postgresql+asyncpg://helpdesk_test:helpdesk_test@localhost:{_DB_TEST_PORT}/helpdesk_test"
+    "postgresql+asyncpg://helpdesk_test:helpdesk_test"
+    f"@{_DB_TEST_HOST}:{_DB_TEST_PORT}/helpdesk_test"
 )
 
 

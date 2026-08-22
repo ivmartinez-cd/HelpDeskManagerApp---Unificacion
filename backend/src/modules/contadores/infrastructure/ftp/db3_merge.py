@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import sqlite3
 from pathlib import Path
 
@@ -139,10 +140,24 @@ def _get_table_names(con: sqlite3.Connection) -> list[str]:
     return [r["name"] for r in rows]
 
 
+_IDENT = re.compile(r"^[A-Za-z0-9_]+$")
+
+
+def _ident(nombre: str) -> str:
+    """Nombre de tabla/columna seguro para interpolar entre comillas dobles.
+
+    Los nombres salen del `sqlite_master` del .db3 que llega por FTP (archivo
+    externo, no input de usuario); aun así §8 prohíbe concatenar identificadores
+    sin validar: un nombre con `"` o `;` rompería la consulta armada."""
+    if not _IDENT.match(nombre):
+        raise ValueError(f"Identificador SQLite inesperado en el .db3: {nombre!r}")
+    return nombre
+
+
 def _get_pk_info(con: sqlite3.Connection, table: str) -> tuple[list[str], str | None, bool]:
     """Devuelve (columnas, nombre_pk, es_pk_int_simple)."""
-    info = con.execute(f'PRAGMA table_info("{table}");').fetchall()
-    cols = [r["name"] for r in info]
+    info = con.execute(f'PRAGMA table_info("{_ident(table)}");').fetchall()
+    cols = [_ident(r["name"]) for r in info]
     pk_cols = [r for r in info if int(r["pk"] or 0) > 0]
     if len(pk_cols) == 1:
         pk_name = pk_cols[0]["name"]

@@ -46,8 +46,11 @@ def test_end_to_end_matches_live_verified_legacy_output(tmp_path) -> None:
 
     assert rows["SER001"]["CLASE_10"] == "10" and rows["SER001"]["CONTADOR_10"] == "1000"
     assert rows["SER001"]["CLASE_20"] == "20" and rows["SER001"]["CONTADOR_20"] == "200"
+    # Modelo especial (C4010ND) que solo reporta clase 40: el total va como
+    # COLOR en la primera columna y NO se duplica en la 20 (commit 3eb8a23,
+    # 2026-08-19: la app vieja lo duplicaba y SiGes rechazaba el mono inventado).
     assert rows["SER002"]["CLASE_10"] == "20" and rows["SER002"]["CONTADOR_10"] == "5000"
-    assert rows["SER002"]["CLASE_20"] == "20" and rows["SER002"]["CONTADOR_20"] == "5000"
+    assert rows["SER002"]["CLASE_20"] == "" and rows["SER002"]["CONTADOR_20"] == "0"
 
 
 def test_missing_file_is_reported_as_warning_not_a_crash(tmp_path) -> None:
