@@ -1,20 +1,30 @@
 import type { LucideIcon } from "lucide-react";
+import { RotateCw } from "lucide-react";
 import type { ReactNode } from "react";
-import { Spinner } from "@/shared/components/ui/spinner";
+import { cn } from "@/shared/utils/cn";
+import { DashboardCardSkeleton } from "./dashboard-card-skeleton";
 
 interface DashboardCardProps {
   icon?: LucideIcon;
   title: string;
   subtitle?: string;
-  /** Contenido a la derecha del header (badge, total, etc.). */
+  /** Contenido a la derecha del header (badge, total, acciones). */
   headerRight?: ReactNode;
   loading?: boolean;
   error?: string | null;
+  /** Si se pasa, el estado de error muestra "Reintentar". */
+  onRetry?: () => void;
+  /** Pie fijo (frescura + link), fuera del área con scroll. */
+  footer?: ReactNode;
+  /** Clases extra del cuerpo con scroll (p. ej. `@container`). */
+  bodyClassName?: string;
   children?: ReactNode;
 }
 
-/** Shell de card del dashboard de Inicio (handoff design_handoff_inicio):
- * caja de ícono 34px naranja, título Montserrat 15px + subtítulo, radio 14. */
+/** Shell único de las cards de Inicio. Llena SIEMPRE la celda que le toca
+ * (h-full, min-h-0): el alto lo dicta el grid de viewport fijo, y lo que no
+ * entra scrollea adentro del cuerpo — nunca la página. Header compacto
+ * (ícono 28, título 14), cuerpo `flex-1 overflow-y-auto`, pie opcional. */
 export function DashboardCard({
   icon: Icon,
   title,
@@ -22,35 +32,68 @@ export function DashboardCard({
   headerRight,
   loading,
   error,
+  onRetry,
+  footer,
+  bodyClassName,
   children,
 }: DashboardCardProps) {
   return (
-    <div className="flex w-full flex-col rounded-[14px] border border-border bg-card p-4">
-      <div className="flex items-center gap-2.5">
+    <section
+      aria-label={title}
+      className="flex h-full min-h-0 w-full flex-col rounded-[12px] border border-border bg-card p-3.5 short:p-3"
+    >
+      <header className="flex flex-none items-center gap-2.5">
         {Icon && (
-          <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-brand-orange/[0.15] text-brand-orange">
-            <Icon className="h-4 w-4" />
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-brand-orange/[0.12] text-brand-orange short:hidden">
+            <Icon className="h-[15px] w-[15px]" />
           </span>
         )}
-        <div className="flex min-w-0 flex-1 flex-col">
-          <h2 className="font-heading text-[15px] font-extrabold text-foreground">{title}</h2>
+        <div className="flex min-w-0 flex-1 flex-col leading-tight">
+          <h2 className="truncate font-heading text-[14px] font-bold text-foreground">{title}</h2>
           {subtitle && (
-            <span className="truncate font-body text-[12px] text-muted-foreground">
-              {subtitle}
-            </span>
+            <span className="truncate font-body text-[12px] text-muted-foreground short:hidden">{subtitle}</span>
           )}
         </div>
-        {headerRight}
+        {headerRight && <div className="flex shrink-0 items-center gap-1.5">{headerRight}</div>}
+      </header>
+
+      <div
+        className={cn(
+          "mt-2.5 flex min-h-0 flex-1 flex-col overflow-y-auto thin-scrollbar short:mt-2",
+          bodyClassName,
+        )}
+      >
+        {loading ? (
+          <DashboardCardSkeleton inline />
+        ) : error ? (
+          <CardError mensaje={error} onRetry={onRetry} />
+        ) : (
+          children
+        )}
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-6">
-          <Spinner />
-        </div>
-      ) : error ? (
-        <span className="pt-3 font-body text-[13px] text-destructive">{error}</span>
-      ) : (
-        children
+      {footer && !loading && (
+        <footer className="mt-2 flex flex-none flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-border/60 pt-2 short:mt-1.5 short:pt-1.5">
+          {footer}
+        </footer>
+      )}
+    </section>
+  );
+}
+
+function CardError({ mensaje, onRetry }: { mensaje: string; onRetry?: () => void }) {
+  return (
+    <div className="flex flex-col items-start gap-2 pt-1">
+      <span className="font-body text-[12.5px] text-destructive">{mensaje}</span>
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="inline-flex items-center gap-1.5 rounded-[8px] border border-border px-2.5 py-1 font-body text-[12px] font-semibold text-foreground hover:bg-muted"
+        >
+          <RotateCw className="h-3 w-3" />
+          Reintentar
+        </button>
       )}
     </div>
   );

@@ -10,33 +10,28 @@ import {
   Tooltip,
 } from "chart.js";
 import { Gauge, RotateCw } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
+import { useTheme } from "next-themes";
+import { useEffect, useMemo, useState } from "react";
 import { Line } from "react-chartjs-2";
 import { toast } from "sonner";
 import { slaApi } from "@/features/sla/api/sla-api";
-import type { SlaResumen } from "@/features/sla/types/sla";
 import { useSession } from "@/services/session-provider";
-import { brandButtonClasses } from "@/shared/components/ui/brand-form";
 import { cn } from "@/shared/utils/cn";
 import type { SlaHistoria } from "../hooks/use-inicio-data";
+import { chartTheme } from "../utils/chart-theme";
 import { fmtInt, fmtPct, periodoLabel } from "../utils/inicio-format";
 import { DashboardCard } from "./dashboard-card";
-import { OperadorDonut } from "./operador-donut";
+import { CardEmpty, CardLink, MiniStat } from "./dashboard-card-bits";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
-const ORANGE = "#F7941D";
-const RED = "#ef4444";
-
-function slaRows(resumen: SlaResumen) {
-  return [
-    { id: "correctos", nombre: "Correctos", color: ORANGE, valor: resumen.correctos },
-    { id: "vencidos", nombre: "Vencidos", color: RED, valor: resumen.vencidos },
-  ];
-}
-
 function Tendencia({ historia }: { historia: SlaHistoria }) {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), []);
+  const tema = useMemo(() => chartTheme(), [resolvedTheme, mounted]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const puntos = historia.resumenes
     .map((r, i) => (r && r.total > 0 ? { label: periodoLabel(historia.periodos[i]), pct: r.pct_correctos } : null))
     .filter((p): p is { label: string; pct: number } => p !== null);
@@ -45,18 +40,19 @@ function Tendencia({ historia }: { historia: SlaHistoria }) {
   const max = Math.ceil(Math.max(...puntos.map((p) => p.pct)));
 
   return (
-    <>
-      <div className="mb-1.5 mt-2.5 font-heading text-[10px] font-bold uppercase tracking-[.05em] text-muted-foreground">
+    <div className="flex min-h-0 flex-1 flex-col short:hidden">
+      <div className="mb-1 font-heading text-[10.5px] font-bold uppercase tracking-[.05em] text-muted-foreground">
         Tendencia · últimos {puntos.length} meses
       </div>
-      <div className="relative h-[44px]">
+      <div className="relative min-h-[40px] flex-1">
         <Line
+          key={resolvedTheme}
           data={{
             labels: puntos.map((p) => p.label),
             datasets: [
               {
                 data: puntos.map((p) => p.pct),
-                borderColor: ORANGE,
+                borderColor: tema.orange,
                 backgroundColor: (ctx) => {
                   const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 56);
                   g.addColorStop(0, "rgba(247,148,29,.35)");
@@ -68,7 +64,7 @@ function Tendencia({ historia }: { historia: SlaHistoria }) {
                 borderWidth: 2,
                 pointRadius: 0,
                 pointHoverRadius: 4,
-                pointBackgroundColor: ORANGE,
+                pointBackgroundColor: tema.orange,
               },
             ],
           }}
@@ -80,26 +76,31 @@ function Tendencia({ historia }: { historia: SlaHistoria }) {
               tooltip: { callbacks: { label: (c) => ` ${fmtPct(c.raw as number)}%` } },
             },
             scales: {
-              x: { grid: { display: false }, ticks: { color: "rgba(255,255,255,.3)", font: { size: 9 } } },
+              x: { grid: { display: false }, ticks: { color: tema.tick, font: { size: 10 } } },
               y: { display: false, min, max },
             },
           }}
         />
       </div>
-    </>
+    </div>
   );
 }
 
+/** SLA del mes: un porcentaje es un número + barra, no una dona de dos
+ * gajos (NN/g): valor grande, barra correctos/vencidos, comparación con el
+ * mes anterior y tendencia real de 6 meses. */
 export function SlaMesCard({
   historia,
   loading,
   error,
   onSynced,
+  onRetry,
 }: {
   historia: SlaHistoria | null;
   loading: boolean;
   error: string | null;
   onSynced?: () => void;
+  onRetry?: () => void;
 }) {
   const { user, can } = useSession();
   const canUpdate = user.isSuperadmin || can("sla", "update");
@@ -132,6 +133,7 @@ export function SlaMesCard({
       subtitle="Cumplimiento de acuerdos"
       loading={loading}
       error={error}
+      onRetry={onRetry}
       headerRight={
         <button
           type="button"
@@ -139,61 +141,50 @@ export function SlaMesCard({
           disabled={syncing || !historia || !canUpdate}
           title={canUpdate ? "Actualizar SLA (consulta completa a MERCURIO, ~40 s)" : "Sin permiso para actualizar"}
           aria-label="Actualizar SLA"
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border border-border text-muted-foreground transition-colors hover:border-brand-orange/60 hover:text-brand-orange disabled:opacity-50"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border border-border text-muted-foreground transition-colors hover:border-brand-orange/60 hover:text-brand-orange disabled:opacity-50"
         >
           <RotateCw className={cn("h-3.5 w-3.5", syncing && "animate-spin")} />
         </button>
       }
+      footer={<CardLink href="/sla">Ver detalle →</CardLink>}
     >
       {!actual || actual.total === 0 ? (
-        <span className="pt-3 font-body text-[13px] text-muted-foreground">
-          Sin incidentes en el período actual.
-        </span>
+        <CardEmpty>Sin incidentes en el período actual.</CardEmpty>
       ) : (
-        <>
-          <OperadorDonut
-            rows={slaRows(actual)}
-            total={actual.total}
-            centerValue={`${fmtPct(actual.pct_correctos)}%`}
-            centerSub="cumplimiento"
-            tooltipUnidad="incidentes"
-          />
-          <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-[8px] bg-white/[.03] px-2.5 py-[9px] text-center">
-              <div className="font-heading text-[9.5px] font-bold uppercase text-muted-foreground">
-                Vencidos
-              </div>
-              <div className="mt-0.5 font-heading text-[15px] font-extrabold" style={{ color: RED }}>
-                {fmtInt(actual.vencidos)}
-              </div>
-            </div>
-            <div className="rounded-[8px] bg-white/[.03] px-2.5 py-[9px] text-center">
-              <div className="font-heading text-[9.5px] font-bold uppercase text-muted-foreground">
-                Mes ant.
-              </div>
-              <div className="mt-0.5 font-heading text-[15px] font-extrabold text-foreground/60">
-                {anterior && anterior.total > 0 ? `${fmtPct(anterior.pct_correctos)}%` : "—"}
-              </div>
-            </div>
-            <div className="rounded-[8px] bg-white/[.03] px-2.5 py-[9px] text-center">
-              <div className="font-heading text-[9.5px] font-bold uppercase text-muted-foreground">
-                Variación
-              </div>
-              <div
-                className="mt-0.5 font-heading text-[15px] font-extrabold"
-                style={{ color: variacion === null ? undefined : variacion >= 0 ? "#22c55e" : "#f87171" }}
-              >
-                {variacion === null
-                  ? "—"
-                  : `${variacion >= 0 ? "▲" : "▼"} ${fmtPct(Math.abs(variacion))}%`}
-              </div>
-            </div>
+        <div className="flex min-h-0 flex-1 flex-col gap-2.5">
+          <div className="flex items-baseline gap-2">
+            <span className="font-heading text-[28px] font-extrabold leading-none tabular-nums text-foreground">
+              {fmtPct(actual.pct_correctos)}%
+            </span>
+            <span className="font-body text-[12px] text-muted-foreground">
+              {fmtInt(actual.correctos)} de {fmtInt(actual.total)} incidentes en término
+            </span>
+          </div>
+          <div
+            className="flex h-2 w-full overflow-hidden rounded-full bg-surface-2"
+            role="img"
+            aria-label={`${fmtPct(actual.pct_correctos)}% correctos, ${fmtInt(actual.vencidos)} vencidos`}
+          >
+            <span className="h-full bg-brand-orange" style={{ width: `${actual.pct_correctos}%` }} />
+            <span className="h-full bg-destructive" style={{ width: `${actual.pct_vencidos}%` }} />
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            <MiniStat label="Vencidos" value={fmtInt(actual.vencidos)} className="text-destructive" />
+            <MiniStat
+              label="Mes ant."
+              value={anterior && anterior.total > 0 ? `${fmtPct(anterior.pct_correctos)}%` : "—"}
+              className="text-foreground/70"
+            />
+            <MiniStat
+              label="Variación"
+              value={
+                variacion === null ? "—" : `${variacion >= 0 ? "▲" : "▼"} ${fmtPct(Math.abs(variacion))}`
+              }
+              className={variacion === null ? undefined : variacion >= 0 ? "text-success" : "text-destructive"}
+            />
           </div>
           {historia && <Tendencia historia={historia} />}
-          <Link href="/sla" className={cn(brandButtonClasses(), "mt-2.5 w-full")}>
-            Ver detalle →
-          </Link>
-        </>
+        </div>
       )}
     </DashboardCard>
   );

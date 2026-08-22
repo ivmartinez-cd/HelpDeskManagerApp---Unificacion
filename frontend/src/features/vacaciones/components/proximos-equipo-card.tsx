@@ -1,12 +1,10 @@
 "use client";
 
 import { CalendarDays } from "lucide-react";
-import Link from "next/link";
 import { DashboardCard } from "@/features/home/components/dashboard-card";
+import { CardEmpty, CardLink, CountBadge } from "@/features/home/components/dashboard-card-bits";
 import type { ProximosEquipo } from "@/features/home/hooks/use-inicio-data";
 import { formatRango, iniciales } from "../lib/fechas";
-
-const TOP_LISTA = 6;
 
 interface Item {
   id: string;
@@ -43,57 +41,49 @@ export function ProximosEquipoCard({
   data,
   loading,
   error,
+  onRetry,
 }: {
   data: ProximosEquipo | null;
   loading: boolean;
   error: string | null;
+  onRetry?: () => void;
 }) {
   const items = data ? armarLista(data) : [];
 
   return (
     <DashboardCard
       icon={CalendarDays}
-      title="Próximos días del equipo"
-      subtitle="Vacaciones y home office · próximas 3 semanas"
+      title="Equipo"
+      subtitle="Vacaciones y home office · 3 semanas"
       loading={loading}
       error={error}
-      headerRight={
-        !loading && !error && items.length > 0 ? (
-          <span className="shrink-0 rounded-full bg-brand-orange/15 px-2.5 py-0.5 font-heading text-[12px] font-bold text-brand-orange">
-            {items.length}
-          </span>
-        ) : undefined
-      }
+      onRetry={onRetry}
+      headerRight={items.length > 0 ? <CountBadge value={items.length} tone="brand" /> : undefined}
+      footer={<CardLink href="/vacaciones">Ver en Vacaciones →</CardLink>}
     >
       {items.length === 0 ? (
-        <span className="pt-3 font-body text-[13px] text-muted-foreground">
-          No hay vacaciones ni home office agendados en las próximas semanas.
-        </span>
+        <CardEmpty>Nada agendado en las próximas semanas.</CardEmpty>
       ) : (
-        <div className="mt-2.5 flex flex-col gap-1.5 border-t border-border/60 pt-2.5">
-          {items.slice(0, TOP_LISTA).map((item) => (
-            <div key={`${item.tipo}-${item.id}`} className="flex items-center gap-2.5">
+        <ul className="flex flex-col gap-1.5">
+          {items.map((item) => (
+            <li key={`${item.tipo}-${item.id}`} className="flex items-center gap-2">
               <span
                 className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-heading text-[9.5px] font-bold text-white"
                 style={{ backgroundColor: item.color }}
               >
                 {iniciales(item.nombre)}
               </span>
-              <span className="flex-1 truncate font-body text-[12.5px] font-semibold text-foreground/75">
-                {item.nombre}
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block truncate font-body text-[12.5px] font-semibold text-foreground/80">
+                  {item.nombre}
+                </span>
+                <span className="block truncate font-body text-[11px] text-muted-foreground">
+                  {item.tipo === "home_office" ? "Home office" : "Vacaciones"} · {formatRango(item.startDate, item.endDate)}
+                </span>
               </span>
-              <span className="shrink-0 font-body text-[11px] font-semibold text-muted-foreground">
-                {item.tipo === "home_office" ? "Home office" : "Vacaciones"} · {formatRango(item.startDate, item.endDate)}
-              </span>
-            </div>
+            </li>
           ))}
-          <Link
-            href="/vacaciones"
-            className="mt-1 font-body text-[12.5px] font-bold text-brand-orange hover:text-brand-orange-hover"
-          >
-            Ver en Vacaciones →
-          </Link>
-        </div>
+        </ul>
       )}
     </DashboardCard>
   );

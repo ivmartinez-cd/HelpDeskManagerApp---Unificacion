@@ -23,10 +23,9 @@ function accesiblesPara(hrefs: readonly string[], moduleKeys: Set<string>): Acce
   return result;
 }
 
-/** Fila de accesos directos: ranking personal real (30 días, backend) +
- * respaldo fijo del catálogo para completar hasta 6 mientras no hay
- * suficiente historial. No se muestra nada si el usuario no tiene acceso
- * a ningún módulo con accesos catalogados. */
+/** Accesos directos como chips de navegación en el encabezado (ranking
+ * personal real de 30 días + respaldo fijo hasta 6). Son navegación, no
+ * datos: por eso dejaron de ser cards con borde compitiendo con el dashboard. */
 export function AccesosDirectos() {
   const { modules } = useSession();
   const ranking = useAccesosRanking();
@@ -42,26 +41,20 @@ export function AccesosDirectos() {
   if (accesos.length === 0) return null;
 
   return (
-    <div className="flex-none">
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-        {accesos.map((acceso) => {
-          const Icon = acceso.icon;
-          return (
-            <Link
-              key={acceso.href}
-              href={acceso.href}
-              className="flex items-center gap-2 rounded-[10px] border border-border bg-card px-3 py-2.5 no-underline transition-colors hover:border-brand-orange/40"
-            >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-brand-orange/[0.13] text-brand-orange">
-                <Icon className="h-3.5 w-3.5" />
-              </span>
-              <span className="truncate font-body text-[12.5px] font-semibold text-foreground">
-                {acceso.label}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </div>
+    <nav aria-label="Accesos directos" className="flex flex-wrap items-center justify-end gap-1.5">
+      {accesos.map((acceso) => {
+        const Icon = acceso.icon;
+        return (
+          <Link
+            key={acceso.href}
+            href={acceso.href}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 font-body text-[12px] font-semibold text-foreground no-underline transition-colors hover:border-brand-orange/50 hover:text-brand-orange"
+          >
+            <Icon className="h-3.5 w-3.5 text-brand-orange" aria-hidden="true" />
+            <span className="truncate">{acceso.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

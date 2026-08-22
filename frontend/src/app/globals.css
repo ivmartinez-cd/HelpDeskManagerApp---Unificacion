@@ -10,6 +10,9 @@
 @font-face { font-family: 'RNS Sanz'; src: url('/fonts/RNSSanz-Black.otf'); font-weight: 900; font-style: normal; font-display: swap; }
 
 @custom-variant dark (&:is(.dark *));
+/* Pantallas bajas (notebooks 768 px, ventanas no maximizadas): el dashboard
+   de Inicio compacta paddings y valores para seguir entrando sin scroll. */
+@custom-variant short (@media (max-height: 820px));
 
 @theme {
   /* RNS Sanz no está en "Manual de marca.pdf" (solo Montserrat/Source Sans
@@ -39,6 +42,9 @@
 
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  /* Superficie interior de una card (pistas del timeline, tiles, hover de
+     filas): antes era `bg-white/[.03]`, invisible o sucio en tema claro. */
+  --color-surface-2: var(--surface-2);
 
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
@@ -151,6 +157,12 @@
        color crudo del operador como texto queda pegado al tinte — se oscurece
        mezclando negro para mantener contraste (feedback usuario, 2026-08-18). */
     --accent-text-weight: 55%;
+    --surface-2: hsl(28 30% 92%);
+    /* Chart.js no lee clases de Tailwind: ticks/grilla/celda vacía salen de
+       estos tokens por tema (antes `rgba(255,255,255,.4)`, invisible en claro). */
+    --chart-tick: hsl(240 4% 45%);
+    --chart-grid: hsl(240 6% 86%);
+    --chart-empty: hsl(28 20% 90%);
   }
   .dark {
     --background: hsl(240 10% 4%);
@@ -180,6 +192,10 @@
     --ring: hsl(24 95% 53%);
     --tint-alpha: 22%;
     --accent-text-weight: 100%;
+    --surface-2: hsl(240 6% 11%);
+    --chart-tick: hsl(0 0% 62%);
+    --chart-grid: hsl(240 5% 18%);
+    --chart-empty: hsl(240 5% 12%);
   }
 }
 

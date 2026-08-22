@@ -35,7 +35,7 @@ export function accentText(color: string): string {
  * de blanco fijo: sobre el tinte naranja pálido de tema claro, blanco fijo
  * quedaba invisible (mismo bug de fondo que `tint()`). */
 export function heatCellStyle(n: number): { bg: string; text: string } {
-  if (n === 0) return { bg: "rgba(255,255,255,.03)", text: "transparent" };
+  if (n === 0) return { bg: "var(--chart-empty)", text: "transparent" };
   if (n <= 2) return { bg: "rgba(247,148,29,.14)", text: "color-mix(in srgb, var(--foreground) 75%, transparent)" };
   if (n <= 4) return { bg: "rgba(247,148,29,.38)", text: "color-mix(in srgb, var(--foreground) 75%, transparent)" };
   return { bg: "#F7941D", text: "#fff" };
@@ -54,6 +54,31 @@ export function agingDotColor(dias: number): string {
   if (dias >= 10) return "#ef4444";
   if (dias >= 5) return "#d69e08";
   return "#22c55e";
+}
+
+/** Minutos transcurridos desde un ISO; null si no hay fecha. */
+export function minutosDesde(iso: string | null | undefined, ahora = Date.now()): number | null {
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  return Number.isNaN(t) ? null : Math.max(0, Math.round((ahora - t) / 60_000));
+}
+
+/** Formato ÚNICO de frescura del dashboard: "hace un momento" / "hace 12 min" /
+ * "hace 3 h" / "hace 2 d". Antes cada card tenía el suyo. */
+export function textoHace(iso: string | null | undefined, ahora = Date.now()): string {
+  const mins = minutosDesde(iso, ahora);
+  if (mins === null) return "sin fecha";
+  if (mins < 2) return "hace un momento";
+  if (mins < 60) return `hace ${mins} min`;
+  const horas = Math.round(mins / 60);
+  if (horas < 48) return `hace ${horas} h`;
+  return `hace ${Math.round(horas / 24)} d`;
+}
+
+/** "Sábado 22 de agosto" para el encabezado de Inicio. */
+export function fechaLarga(d: Date): string {
+  const s = d.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 /** "AAAAMM" del mes actual desplazado `offset` meses (para /api/sla/resumen). */

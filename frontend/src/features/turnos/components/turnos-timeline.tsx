@@ -148,13 +148,13 @@ export function TurnosTimeline({
   }
 
   return (
-    <div className="flex flex-col pt-3">
+    <div className="flex flex-col pt-1">
       {tracks.map((track) => (
-        <div key={track.name} className="mb-3">
-          <div className="mb-1.5 font-heading text-[10.5px] font-bold uppercase tracking-[.06em] text-muted-foreground">
+        <div key={track.name} className="mb-2.5">
+          <div className="mb-1 font-heading text-[10.5px] font-bold uppercase tracking-[.06em] text-muted-foreground">
             {track.name}
           </div>
-          <div className="relative h-[46px] overflow-hidden rounded-[9px] bg-white/[.03]">
+          <div className="relative h-[44px] overflow-hidden rounded-[9px] bg-surface-2 short:h-[38px]">
             {track.segs.map((seg) => {
               const angosta = seg.widthPct < ANCHO_ANGOSTO_PCT;
               return (
@@ -184,7 +184,7 @@ export function TurnosTimeline({
             })}
             {inHours && nowH !== null && (
               <div
-                className="absolute -inset-y-0.5 w-0.5 bg-white shadow-[0_0_8px_rgba(255,255,255,.6)]"
+                className="absolute -inset-y-0.5 w-0.5 bg-foreground shadow-[0_0_6px_var(--foreground)]"
                 style={{ left: `${((nowH - start) / span) * 100}%` }}
               />
             )}
@@ -198,7 +198,7 @@ export function TurnosTimeline({
           </span>
         ))}
       </div>
-      <div className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1.5 border-t border-border/60 pt-3">
+      <div className="mt-2.5 flex flex-wrap gap-x-3.5 gap-y-1.5 border-t border-border/60 pt-2.5">
         {Array.from(operadores.values()).map((op) => (
           <div key={op.name} className="flex items-center gap-1.5">
             <span className="h-[9px] w-[9px] rounded-[3px]" style={{ background: op.color }} />

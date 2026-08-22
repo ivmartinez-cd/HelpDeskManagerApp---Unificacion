@@ -1,5 +1,3 @@
-export type ColKey = "planificacion" | "contadores" | "sla" | "admin";
-
 export interface ModuleAccess {
   contadores: boolean;
   sla: boolean;
@@ -10,43 +8,104 @@ export interface ModuleAccess {
   wati: boolean;
   /** Cards concedibles por usuario como "funciones" (ADR-032): no alcanza con
    * tener el módulo, se tildan en la grilla de permisos. */
-  cardParque: boolean; // feature prestadores-card-parque → "Distribución del parque"
+  cardParque: boolean; // feature prestadores-card-parque → KPI "Parque"
   cardEquipo: boolean; // feature vacaciones-card-equipo → "Próximos días del equipo"
-  cardOperadores: boolean; // feature contadores-card-operadores → "Contadores por operador"
+  cardOperadores: boolean; // feature contadores-card-operadores → barras de "Operadores"
 }
 
-export interface CardDef {
-  id: string;
-  col: ColKey;
-  order: number;
-  guard: (m: ModuleAccess) => boolean;
+export function moduleAccessFrom(
+  modules: { key: string }[],
+  hasFeature: (f: string) => boolean,
+): ModuleAccess {
+  const tiene = (k: string) => modules.some((m) => m.key === k);
+  return {
+    contadores: tiene("contadores"),
+    sla: tiene("sla"),
+    prestadores: tiene("prestadores"),
+    insumos: tiene("insumos"),
+    liquidaciones: tiene("liquidaciones"),
+    vacaciones: tiene("vacaciones"),
+    wati: tiene("wati"),
+    cardParque: hasFeature("prestadores-card-parque"),
+    cardEquipo: hasFeature("vacaciones-card-equipo"),
+    cardOperadores: hasFeature("contadores-card-operadores"),
+  };
 }
 
-/** Fuente de verdad del grid: inicio-dashboard.tsx arma grid-template-columns
- * con las fractions de las columnas visibles (sin tracks para columnas ocultas). */
-export const COLUMNS: { key: ColKey; fraction: string }[] = [
-  { key: "planificacion", fraction: "1.4fr" },
-  { key: "contadores",    fraction: "1fr" },
-  { key: "sla",           fraction: "0.9fr" },
-  { key: "admin",         fraction: "0.9fr" },
+export type CardId =
+  | "turnos"
+  | "clientes-hoy"
+  | "wati-pendientes"
+  | "insumos"
+  | "facturacion"
+  | "operadores"
+  | "sla-mes"
+  | "pendientes-cerrar"
+  | "liquidaciones"
+  | "proximos-equipo";
+
+export const CARD_GUARDS: Record<CardId, (m: ModuleAccess) => boolean> = {
+  turnos: () => true,
+  "clientes-hoy": (m) => m.contadores,
+  "wati-pendientes": (m) => m.wati,
+  insumos: (m) => m.insumos,
+  facturacion: (m) => m.contadores,
+  operadores: (m) => m.contadores,
+  "sla-mes": (m) => m.sla,
+  "pendientes-cerrar": (m) => m.sla,
+  liquidaciones: (m) => m.liquidaciones,
+  "proximos-equipo": (m) => m.cardEquipo,
+};
+
+export interface LayoutCell {
+  id: CardId;
+  /** Fracción de ancho dentro de la fila (fr). */
+  w: number;
+}
+
+export interface LayoutRow {
+  /** Fracción de alto dentro del cuerpo (fr). */
+  h: number;
+  cells: LayoutCell[];
+}
+
+/** Fuente de verdad del layout de viewport fijo (≥ xl). Tres filas de alto
+ * proporcional; cada fila reparte su ancho entre las cards visibles. Una card
+ * sin módulo desaparece y sus vecinas ocupan su lugar; una fila sin cards
+ * desaparece y las demás crecen — nunca queda un hueco. Para mover una card:
+ * editar acá, no el componente. */
+export const LAYOUT: LayoutRow[] = [
+  {
+    h: 1.15,
+    cells: [
+      { id: "turnos", w: 7 },
+      { id: "clientes-hoy", w: 5 },
+    ],
+  },
+  {
+    h: 1,
+    cells: [
+      { id: "wati-pendientes", w: 3 },
+      { id: "insumos", w: 3 },
+      { id: "facturacion", w: 3.4 },
+      { id: "sla-mes", w: 2.6 },
+    ],
+  },
+  {
+    h: 1,
+    cells: [
+      { id: "operadores", w: 4.6 },
+      { id: "pendientes-cerrar", w: 3 },
+      { id: "liquidaciones", w: 2.2 },
+      { id: "proximos-equipo", w: 2.2 },
+    ],
+  },
 ];
 
-export const CARDS: CardDef[] = [
-  { id: "turnos",            col: "planificacion", order: 0, guard: ()  => true },
-  { id: "wati-pendientes",   col: "planificacion", order: 1, guard: (m) => m.wati },
-  { id: "clientes-hoy",      col: "planificacion", order: 2, guard: (m) => m.contadores },
-  { id: "insumos",           col: "planificacion", order: 3, guard: (m) => m.insumos },
-  { id: "contadores-donut",  col: "contadores",    order: 0, guard: (m) => m.cardOperadores },
-  { id: "pendientes-antig",  col: "contadores",    order: 1, guard: (m) => m.contadores },
-  { id: "cierre-mensual",    col: "contadores",    order: 2, guard: (m) => m.contadores },
-  { id: "heatmap-semana",    col: "contadores",    order: 3, guard: (m) => m.contadores },
-  { id: "sla-mes",           col: "sla",           order: 0, guard: (m) => m.sla },
-  { id: "pendientes-cerrar", col: "sla",           order: 1, guard: (m) => m.sla },
-  { id: "liquidaciones",     col: "admin",         order: 0, guard: (m) => m.liquidaciones },
-  { id: "parque",            col: "admin",         order: 1, guard: (m) => m.cardParque },
-  { id: "proximos-equipo",   col: "admin",         order: 2, guard: (m) => m.cardEquipo },
-];
-
-export function cardsForCol(col: ColKey, access: ModuleAccess): CardDef[] {
-  return CARDS.filter((c) => c.col === col && c.guard(access)).sort((a, b) => a.order - b.order);
+/** Filas/celdas visibles para el acceso dado (sin filas vacías). */
+export function layoutVisible(access: ModuleAccess): LayoutRow[] {
+  return LAYOUT.map((row) => ({
+    ...row,
+    cells: row.cells.filter((c) => CARD_GUARDS[c.id](access)),
+  })).filter((row) => row.cells.length > 0);
 }

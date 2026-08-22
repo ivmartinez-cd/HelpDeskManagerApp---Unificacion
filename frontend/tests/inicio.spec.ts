@@ -106,9 +106,12 @@ test.describe("Inicio", () => {
     await mockAccesos(page, ["/liquidaciones/lista"]);
     await page.goto("/");
 
-    await expect(page.getByRole("link", { name: "Liquidaciones" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Calendario" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Anexos sin facturar" })).toBeVisible();
+    // Los accesos viven en su <nav>: los KPI tiles también son links
+    // ("Liquidaciones: 2") y ensuciarían un getByRole global.
+    const accesos = page.getByRole("navigation", { name: "Accesos directos" });
+    await expect(accesos.getByRole("link", { name: "Liquidaciones" })).toBeVisible();
+    await expect(accesos.getByRole("link", { name: "Calendario" })).toBeVisible();
+    await expect(accesos.getByRole("link", { name: "Anexos sin facturar" })).toBeVisible();
   });
 
   test("accesos directos: sin ranking todavía, se muestra el respaldo fijo completo", async ({
@@ -118,9 +121,10 @@ test.describe("Inicio", () => {
     await mockAccesos(page, []);
     await page.goto("/");
 
-    await expect(page.getByRole("link", { name: "Calendario" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Anexos sin facturar" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Liquidaciones" })).toBeVisible();
+    const accesos = page.getByRole("navigation", { name: "Accesos directos" });
+    await expect(accesos.getByRole("link", { name: "Calendario" })).toBeVisible();
+    await expect(accesos.getByRole("link", { name: "Anexos sin facturar" })).toBeVisible();
+    await expect(accesos.getByRole("link", { name: "Liquidaciones" })).toBeVisible();
   });
 
   test("el ícono de WATI se destaca dentro del horario de Servicio Técnico", async ({ page }) => {
@@ -140,4 +144,55 @@ test.describe("Inicio", () => {
     await expect(page.getByTitle("WATI", { exact: true })).toBeVisible();
     await expect(page.getByText("Revisar ahora")).not.toBeVisible();
   });
+});
+
+// Regla dura del dashboard (docs/MASTER_PROMPT_REDISENO_DASHBOARD_INICIO.md):
+// en escritorio (≥ xl) la pantalla entera cabe en el viewport, sin scroll de
+// página, en cualquier monitor y en los dos temas. Lo que no entra scrollea
+// adentro de su card. Acá el mock backend deja la mayoría de las cards en
+// error (404), pero el layout de viewport fijo tiene que cumplirse igual:
+// filas y celdas las dicta el viewport, no el contenido.
+const VIEWPORTS = [
+  { width: 1920, height: 1080 },
+  { width: 1536, height: 864 },
+  { width: 1440, height: 900 },
+  { width: 1366, height: 768 },
+  { width: 1280, height: 720 },
+];
+
+test.describe("Inicio — cabe en la pantalla sin scroll", () => {
+  test.beforeEach(async ({ context }) => {
+    await context.addCookies([
+      { name: "hdm_session", value: "playwright-test", domain: "localhost", path: "/" },
+    ]);
+  });
+
+  for (const tema of ["light", "dark"] as const) {
+    for (const vp of VIEWPORTS) {
+      test(`${vp.width}x${vp.height} · ${tema}`, async ({ page }) => {
+        await page.setViewportSize(vp);
+        await page.addInitScript((t) => window.localStorage.setItem("theme", t), tema);
+        await mockTurnos(page, [SHIFT_PROPIO_INSUMOS, SHIFT_ST_DE_OTRO_OPERADOR]);
+        await mockAccesos(page, []);
+        await page.goto("/");
+        await expect(page.getByTestId("dashboard-grid")).toBeVisible();
+        await expect(page.getByRole("status", { name: "Cargando" })).toHaveCount(0);
+
+        const medidas = await page.evaluate(() => {
+          const main = document.querySelector("main");
+          const grid = document.querySelector('[data-testid="dashboard-grid"]');
+          return {
+            documento: document.documentElement.scrollHeight - window.innerHeight,
+            main: main ? main.scrollHeight - main.clientHeight : 0,
+            grid: grid ? grid.scrollHeight - grid.clientHeight : 0,
+            tema: document.documentElement.classList.contains("dark") ? "dark" : "light",
+          };
+        });
+        expect(medidas.tema).toBe(tema);
+        expect(medidas.documento, "scroll del documento").toBeLessThanOrEqual(0);
+        expect(medidas.main, "scroll de <main>").toBeLessThanOrEqual(0);
+        expect(medidas.grid, "overflow del grid").toBeLessThanOrEqual(0);
+      });
+    }
+  }
 });

@@ -35,7 +35,15 @@ export interface Remote<T> {
   refetch: () => void;
 }
 
-function useRemote<T>(enabled: boolean, fetcher: () => Promise<T>, label: string): Remote<T> {
+/** Refresco periódico de todo Inicio (ver `useDashboardData`): cada hook
+ * recibe la misma `refreshKey`; cuando cambia, vuelve a pedir sin pasar por
+ * `loading` (el dato viejo se queda en pantalla hasta que llega el nuevo). */
+export function useRemote<T>(
+  enabled: boolean,
+  fetcher: () => Promise<T>,
+  label: string,
+  refreshKey = 0,
+): Remote<T> {
   const [tick, setTick] = useState(0);
   const [state, setState] = useState<Omit<Remote<T>, "refetch">>({
     data: null,
@@ -62,13 +70,13 @@ function useRemote<T>(enabled: boolean, fetcher: () => Promise<T>, label: string
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, tick]);
+  }, [enabled, tick, refreshKey]);
 
   return { ...state, refetch: () => setTick((t) => t + 1) };
 }
 
-export function useTurnosHoy(): Remote<CurrentShifts> {
-  return useRemote(true, () => turnosApi.getCurrentShifts(), "los turnos del día");
+export function useTurnosHoy(refreshKey = 0): Remote<CurrentShifts> {
+  return useRemote(true, () => turnosApi.getCurrentShifts(), "los turnos del día", refreshKey);
 }
 
 /** Ranking personal de rutas más visitadas (30 días, backend). Si falla o
@@ -79,25 +87,31 @@ export function useAccesosRanking(): Remote<string[]> {
   return useRemote(true, () => accesosApi.getTopRoutes(6), "los accesos directos");
 }
 
-export function useParqueResumen(enabled: boolean): Remote<PrestadoresResumen> {
-  return useRemote(enabled, () => prestadoresApi.getResumen(), "el parque por operador");
+export function useParqueResumen(enabled: boolean, refreshKey = 0): Remote<PrestadoresResumen> {
+  return useRemote(enabled, () => prestadoresApi.getResumen(), "el parque por operador", refreshKey);
 }
 
-export function useContadoresResumen(enabled: boolean): Remote<ResumenClientesOperador> {
+export function useContadoresResumen(
+  enabled: boolean,
+  refreshKey = 0,
+): Remote<ResumenClientesOperador> {
   return useRemote(
     enabled,
     () => contadoresApi.getResumenClientesOperador(),
     "los contadores por operador",
+    refreshKey,
   );
 }
 
 export function useClientesPendientesPeriodoAnterior(
   enabled: boolean,
+  refreshKey = 0,
 ): Remote<ClientesPendientesPeriodo> {
   return useRemote(
     enabled,
     () => contadoresApi.getClientesPendientesPeriodoAnterior(),
     "el arrastre del cierre anterior",
+    refreshKey,
   );
 }
 
@@ -110,7 +124,7 @@ export interface SlaHistoria {
 
 const SLA_MESES = 6;
 
-export function useSlaHistoria(enabled: boolean): Remote<SlaHistoria> {
+export function useSlaHistoria(enabled: boolean, refreshKey = 0): Remote<SlaHistoria> {
   const periodos = Array.from({ length: SLA_MESES }, (_, i) => periodoOffset(i - SLA_MESES + 1));
   return useRemote(
     enabled,
@@ -128,6 +142,7 @@ export function useSlaHistoria(enabled: boolean): Remote<SlaHistoria> {
       return { resumenes, periodos };
     },
     "el resumen SLA",
+    refreshKey,
   );
 }
 
@@ -206,22 +221,28 @@ function rangoSemana(now: Date): { start: string; end: string } {
   return { start: formatDateLocal(lunes), end: formatDateLocal(sabado) };
 }
 
-export function usePendientesResumen(enabled: boolean): Remote<PendientesResumen> {
-  return useRemote(enabled, () => pendientesApi.getResumen(), "los pendientes a cerrar");
+export function usePendientesResumen(enabled: boolean, refreshKey = 0): Remote<PendientesResumen> {
+  return useRemote(enabled, () => pendientesApi.getResumen(), "los pendientes a cerrar", refreshKey);
 }
 
-export function useInsumosDashboard(enabled: boolean): Remote<DashboardResponse> {
-  return useRemote(enabled, () => insumosApi.getDashboard(), "el dashboard de Insumos");
+export function useInsumosDashboard(enabled: boolean, refreshKey = 0): Remote<DashboardResponse> {
+  return useRemote(enabled, () => insumosApi.getDashboard(), "el dashboard de Insumos", refreshKey);
 }
 
-export function useLiquidacionesPendientes(enabled: boolean): Remote<{
+export interface LiquidacionesPendientes {
   pendientes: number;
   porPrestador: { nombreCorto: string; count: number }[];
-}> {
+}
+
+export function useLiquidacionesPendientes(
+  enabled: boolean,
+  refreshKey = 0,
+): Remote<LiquidacionesPendientes> {
   return useRemote(
     enabled,
     () => liquidacionesApi.getResumen(),
     "el resumen de liquidaciones",
+    refreshKey,
   );
 }
 
@@ -240,7 +261,7 @@ export interface ProximosEquipo {
 /** Próximos 21 días: vacaciones aprobadas y home office agendado, para la
  * card "Próximos días del equipo" de Inicio. Reusa /solicitudes y /ausencias
  * filtrando por start_date en rango (mismo semántica en ambos repos). */
-export function useProximosEquipo(enabled: boolean): Remote<ProximosEquipo> {
+export function useProximosEquipo(enabled: boolean, refreshKey = 0): Remote<ProximosEquipo> {
   return useRemote(
     enabled,
     async () => {
@@ -253,10 +274,11 @@ export function useProximosEquipo(enabled: boolean): Remote<ProximosEquipo> {
       return { vacaciones, homeOffice };
     },
     "los próximos días del equipo",
+    refreshKey,
   );
 }
 
-export function useCalendarioHome(enabled: boolean): Remote<CalendarioHome> {
+export function useCalendarioHome(enabled: boolean, refreshKey = 0): Remote<CalendarioHome> {
   return useRemote(
     enabled,
     async () => {
@@ -290,5 +312,6 @@ export function useCalendarioHome(enabled: boolean): Remote<CalendarioHome> {
       };
     },
     "la planificación de Contadores",
+    refreshKey,
   );
 }
