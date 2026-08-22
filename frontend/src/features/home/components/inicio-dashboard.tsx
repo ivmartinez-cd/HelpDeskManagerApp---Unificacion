@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { useSession } from "@/services/session-provider";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
@@ -22,20 +23,41 @@ import { COLUMNS, cardsForCol, type ColKey, type ModuleAccess } from "../config/
 import { AccesosDirectos } from "./accesos-directos";
 import { MiTurnoBanner } from "./mi-turno-banner";
 import { ClientesHoyCard } from "./clientes-hoy-card";
-import { ContadoresDonutCard } from "./contadores-donut-card";
+import { DashboardCardSkeleton } from "./dashboard-card-skeleton";
 import { HeatmapSemanaCard } from "./heatmap-semana-card";
 import { InsumosSinCargarCard } from "./insumos-sin-cargar-card";
-import { LiquidacionesPendientesCard } from "./liquidaciones-pendientes-card";
-import { ParqueDonutCard } from "./parque-donut-card";
 import { CierreMensualCard } from "./cierre-mensual-card";
-import { PendientesAntiguedadCard } from "./pendientes-antiguedad-card";
 import { PendientesACerrarCard } from "@/features/sla/components/pendientes-a-cerrar-card";
 import { ProximosEquipoCard } from "@/features/vacaciones/components/proximos-equipo-card";
 import { WatiPendientesCard } from "@/features/wati/components/wati-pendientes-card";
 import { MisChatsWatiBanner } from "@/features/wati/components/mis-chats-wati-banner";
 import { useWatiPendientes } from "@/features/wati/providers/wati-pendientes-provider";
-import { SlaMesCard } from "./sla-mes-card";
 import { TurnosTimelineCard } from "./turnos-timeline-card";
+
+// Estas 4 cards tiran de chart.js (vía OperadorDonut o directo, Line/Bar) —
+// code-split fuera del bundle inicial de /inicio, la ruta más transitada de
+// la app, en vez de pagar ese peso en cada login para gráficos secundarios
+// respecto a las tablas/listas de la pantalla.
+const ContadoresDonutCard = dynamic(
+  () => import("./contadores-donut-card").then((m) => m.ContadoresDonutCard),
+  { ssr: false, loading: DashboardCardSkeleton },
+);
+const LiquidacionesPendientesCard = dynamic(
+  () => import("./liquidaciones-pendientes-card").then((m) => m.LiquidacionesPendientesCard),
+  { ssr: false, loading: DashboardCardSkeleton },
+);
+const ParqueDonutCard = dynamic(
+  () => import("./parque-donut-card").then((m) => m.ParqueDonutCard),
+  { ssr: false, loading: DashboardCardSkeleton },
+);
+const PendientesAntiguedadCard = dynamic(
+  () => import("./pendientes-antiguedad-card").then((m) => m.PendientesAntiguedadCard),
+  { ssr: false, loading: DashboardCardSkeleton },
+);
+const SlaMesCard = dynamic(
+  () => import("./sla-mes-card").then((m) => m.SlaMesCard),
+  { ssr: false, loading: DashboardCardSkeleton },
+);
 
 const COL_LABELS: Record<ColKey, string> = {
   planificacion: "Planificación",
