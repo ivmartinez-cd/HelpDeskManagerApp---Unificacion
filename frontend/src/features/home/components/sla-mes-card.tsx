@@ -44,7 +44,9 @@ function Tendencia({ historia }: { historia: SlaHistoria }) {
       <div className="mb-1 font-heading text-[10.5px] font-bold uppercase tracking-[.05em] text-muted-foreground">
         Tendencia · últimos {puntos.length} meses
       </div>
-      <div className="relative min-h-[40px] flex-1">
+      {/* Tope de alto: en monitores 2K al 100 % la card es muy alta y la
+          sparkline estirada se veía desproporcionada. */}
+      <div className="relative max-h-[140px] min-h-[40px] flex-1">
         <Line
           key={resolvedTheme}
           data={{
