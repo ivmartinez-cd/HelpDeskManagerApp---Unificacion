@@ -178,7 +178,8 @@ de este handoff (y de la implementación del 2026-08-14):
 - **Ajuste por feedback de la TL (mismo día)**: dos vistas del grid — *Hoy* (Turnos, Clientes
   de hoy, WhatsApp, Insumos, Facturación) y *Seguimiento* (SLA, Operadores, Pendientes a
   cerrar, Liquidaciones, Equipo, Parque) — con la franja de KPIs (5, solo lo accionable)
-  siempre visible; los paneles sin novedades bajan a una tira "Sin novedades" al pie.
+  siempre visible; los paneles sin novedades bajan a una tira "Sin novedades" al pie; botón
+  "Personalizar" (vista inicial y paneles visibles por usuario, en el navegador).
 
 ## Archivos
 ```

@@ -59,6 +59,21 @@ export const CARD_GUARDS: Record<CardId, (m: ModuleAccess) => boolean> = {
   parque: (m) => m.cardParque,
 };
 
+/** Nombre de cada card tal como se muestra en "Personalizar". */
+export const CARD_LABELS: Record<CardId, string> = {
+  turnos: "Turnos del día",
+  "clientes-hoy": "Clientes de hoy",
+  "wati-pendientes": "WhatsApp sin responder",
+  insumos: "Insumos sin cargar",
+  facturacion: "Facturación sin cerrar",
+  operadores: "Operadores",
+  "sla-mes": "SLA del mes",
+  "pendientes-cerrar": "Pendientes a cerrar",
+  liquidaciones: "Liquidaciones",
+  "proximos-equipo": "Equipo",
+  parque: "Parque",
+};
+
 export interface LayoutCell {
   id: CardId;
   /** Fracción de ancho dentro de la fila (fr). */

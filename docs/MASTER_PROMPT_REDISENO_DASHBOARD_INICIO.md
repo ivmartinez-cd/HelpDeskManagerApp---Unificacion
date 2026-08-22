@@ -290,9 +290,14 @@ aplicó progressive disclosure sin volver a las pestañas por módulo:
   se muestra normal.
 - Tests: +2 casos de no-scroll para la vista Seguimiento (1920×1080 y 1366×768) que además
   verifican que la franja KPI siga visible.
-- Siguiente paso sugerido (no hecho): personalización por usuario (qué paneles ve cada uno y
-  vista por defecto), primero en `localStorage`, después como preferencia en DB (mismo
-  patrón que `docs/MASTER_PROMPT_NOTA_PERSONAL_INICIO.md`).
+- **Personalizar** (hecho el mismo día, `hooks/use-dashboard-prefs.ts` +
+  `components/personalizar-modal.tsx`): botón en el encabezado; cada usuario elige la vista con
+  la que abre Inicio y qué paneles ve (switch por panel, agrupados por vista; "Restablecer").
+  Persistido en `localStorage["inicio.prefs.<userId>"]` — primer paso sin backend; si se
+  quiere preferencia por cuenta (compartida entre equipos), el hook es el único lugar a
+  cambiar (mismo patrón que `docs/MASTER_PROMPT_NOTA_PERSONAL_INICIO.md`). Un panel oculto no
+  aparece ni en el grid ni en la tira "Sin novedades". Test: ocultar + vista inicial persisten
+  tras recargar; Restablecer vuelve a mostrar todo.
 
 ## Anexo A — Diagnóstico detallado de la pantalla actual
 

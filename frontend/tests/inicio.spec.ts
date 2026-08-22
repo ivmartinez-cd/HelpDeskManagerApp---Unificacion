@@ -196,6 +196,42 @@ test.describe("Inicio — cabe en la pantalla sin scroll", () => {
     }
   }
 
+  test("Personalizar: ocultar un panel y elegir la vista inicial persiste por usuario", async ({
+    page,
+  }) => {
+    await page.setViewportSize(VIEWPORTS[0]);
+    await mockTurnos(page, [SHIFT_PROPIO_INSUMOS]);
+    await mockAccesos(page, []);
+    await page.goto("/");
+    await expect(page.locator('[data-card="turnos"]')).toBeVisible();
+
+    await page.getByRole("button", { name: "Personalizar" }).click();
+    const modal = page.getByRole("dialog", { name: "Personalizar Inicio" });
+    await expect(modal).toBeVisible();
+    await modal.getByRole("switch", { name: "Mostrar Turnos del día" }).click();
+    await modal.getByRole("radio", { name: "Seguimiento" }).click();
+    await modal.getByRole("button", { name: "Listo" }).click();
+
+    await expect(page.locator('[data-card="turnos"]')).toHaveCount(0);
+
+    // Recargar: abre en Seguimiento y Turnos sigue oculto (localStorage por usuario).
+    await page.reload();
+    await expect(page.getByTestId("dashboard-grid")).toBeVisible();
+    await expect(page.getByRole("radio", { name: "Seguimiento" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await page.getByRole("radio", { name: "Hoy" }).click();
+    await expect(page.locator('[data-card="clientes-hoy"]')).toBeVisible();
+    await expect(page.locator('[data-card="turnos"]')).toHaveCount(0);
+
+    // Restablecer vuelve a mostrar todo.
+    await page.getByRole("button", { name: "Personalizar" }).click();
+    await page.getByRole("dialog", { name: "Personalizar Inicio" }).getByRole("button", { name: "Restablecer" }).click();
+    await page.getByRole("dialog", { name: "Personalizar Inicio" }).getByRole("button", { name: "Listo" }).click();
+    await expect(page.locator('[data-card="turnos"]')).toBeVisible();
+  });
+
   // La vista "Seguimiento" (SLA, Operadores, Pendientes a cerrar,
   // Liquidaciones, Equipo, Parque) cumple la misma regla.
   for (const vp of [VIEWPORTS[0], VIEWPORTS[3]]) {
