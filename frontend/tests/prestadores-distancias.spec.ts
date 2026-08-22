@@ -118,13 +118,15 @@ test("modal de sucursales abre al clickear Base", async ({ page }) => {
     });
   });
 
+  // Desde 04f9cc8 el endpoint devuelve el envelope Page[T] (§11) y el cliente lo
+  // pide con `?size=1000&page=1` (fetchCatalogoCompleto), de ahí el `**` final.
   await page.route(
-    "**/api/liquidaciones/siges/prestador/aaaaaaaa-0000-0000-0000-000000000001/sucursales-propia",
+    "**/api/liquidaciones/siges/prestador/aaaaaaaa-0000-0000-0000-000000000001/sucursales-propia**",
     (route) => {
       route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(SUCURSALES_MOCK),
+        body: JSON.stringify({ items: SUCURSALES_MOCK, total: SUCURSALES_MOCK.length, page: 1, size: 1000 }),
       });
     },
   );

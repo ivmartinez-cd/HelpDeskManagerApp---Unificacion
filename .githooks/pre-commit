@@ -4,7 +4,8 @@
 #     registro .claude/sessions/edits.tsv sabe quién editó cada archivo por última vez. Si un
 #     archivo staged fue editado más recientemente por OTRA sesión, se rechaza el commit.
 #     Override consciente: ALLOW_FOREIGN=1 git commit …   (o sacar el archivo del stage).
-#  1b) §4 tamaños: scripts/check_sizes.py --staged (función >20, clase >200, archivo >300 fuera del inventario).
+#  1b) §4 tamaños (scripts/check_sizes.py --staged) y §6/§8/§11 (scripts/check_guards.py --staged): solo
+#      casos fuera del inventario congelado (scripts/*-baseline.json).
 #  2) Backend: lint-imports + ruff (archivos staged) + mypy, dentro del contenedor. El pytest
 #     completo corre en pre-push (make check).
 # Saltear todo: git commit --no-verify (solo si sabés por qué).
@@ -50,6 +51,7 @@ fi
 # --- 1b) §4 tamaños sobre lo staged (ARCHITECTURE_GUIDE §4, inventario congelado ADR-017/020) --
 if grep -qE '^(backend|frontend)/src/' <<<"$staged"; then
   python3 scripts/check_sizes.py --staged || { red "§4 tamaños (archivos staged): dividir antes de commitear"; exit 1; }
+  python3 scripts/check_guards.py --staged || { red "§6/§8/§11 (archivos staged): ver mensaje de arriba"; exit 1; }
 fi
 
 # --- 2) backend: lint-imports + ruff + mypy -----------------------------------

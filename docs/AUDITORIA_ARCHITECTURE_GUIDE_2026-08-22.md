@@ -451,3 +451,21 @@ las 13 funciones nuevas >30 líneas y las 2 clases >200 (cubierto por el addendu
   en el pre-commit; el árbol de trabajo queda para `make sizes-wip`. Inventario: 389 → **340
   funciones de 21–47 líneas; 0 clases, 0 archivos** (ADR-017/020 actualizados).
 - Gates finales: lint-imports 26/26 · ruff · mypy · 2166 unit · 332 integración · sizes ✔.
+
+---
+
+## Addendum 5 (2026-08-22): gate §6/§8/§11 y specs Playwright stale
+
+- **`scripts/check_guards.py`** en `make check` (HEAD) y en el pre-commit (staged): `except`
+  silencioso (sin relanzar, loguear ni delegar en un handler con nombre), SQL por f-string o
+  concatenación, literales tipo secreto, `print(`/`console.log(`, `dangerouslySetInnerHTML`,
+  endpoints `list[...]` sin `Page[T]` y endpoints sin authz. Inventario aceptado
+  (`scripts/guards-baseline.json`, 23 entradas): los 6 passthrough de ADR-021, los 7 pre-auth/
+  health, los 9 f-strings con constantes/`int()`/identificadores validados. Cero casos nuevos
+  en HEAD. La guía §6 tiene la nota "cómo se verifica en este repo".
+- **Playwright**: los 3 specs que fallaban en `main` eran stale, no regresión: el commit
+  `04f9cc8` (21/08, paginación `Page[T]` de sucursales-propia/matching-propuestas, §11) cambió
+  el contrato y los mocks seguían devolviendo arrays pelados. Corregidos los mocks
+  (`tabla-km-wizard.spec.ts`, `prestadores-distancias.spec.ts`); 4/4 en verde. Queda como
+  lección: los specs con backend mock no ven los cambios de contrato hasta que alguien corre la
+  suite — correrla forma parte del cierre de cualquier cambio de API que consuma el frontend.

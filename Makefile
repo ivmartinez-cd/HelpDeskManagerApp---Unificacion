@@ -11,7 +11,7 @@ PGDB     ?= helpdesk
 TEST_DB  := helpdesk-db-test
 NET      := helpdesk-manager_default
 
-.PHONY: help status check lint-imports ruff mypy test test-integration sizes sizes-wip lint-frontend typecheck-frontend hooks \
+.PHONY: help status check lint-imports ruff mypy test test-integration sizes sizes-wip guards guards-wip lint-frontend typecheck-frontend hooks \
         db-backup db-restore restart-backend restart-frontend recreate-backend \
         logs-backend logs-frontend mailpit up ps
 
@@ -22,7 +22,7 @@ status:  ## Estado del entorno (contenedores, modo test, jobs, git)
 	@hd-status
 
 # --- Verificación obligatoria antes de dar por terminado un módulo (CLAUDE.md) ---
-check: lint-imports ruff mypy test test-integration sizes  ## lint-imports + ruff + mypy + pytest unit + integración + tamaños §4
+check: lint-imports ruff mypy test test-integration sizes guards  ## lint-imports + ruff + mypy + pytest unit + integración + gates §4 y §6/§8/§11
 	@echo "✔ check completo"
 
 lint-imports:  ## Contratos de capas/módulos (la regla más importante)
@@ -47,6 +47,12 @@ sizes:  ## Gate §4 sobre HEAD (lo que se pushea): función/clase/archivo fuera 
 
 sizes-wip:  ## Gate §4 sobre el árbol de trabajo (lo que tenés editado, incluido WIP ajeno)
 	python3 scripts/check_sizes.py
+
+guards:  ## Gate §6/§8/§11 sobre HEAD: excepts silenciosos, SQL por f-string, secretos, print/console.log, XSS, list sin Page, endpoint sin authz (scripts/guards-baseline.json)
+	python3 scripts/check_guards.py --committed
+
+guards-wip:  ## Gate §6/§8/§11 sobre el árbol de trabajo
+	python3 scripts/check_guards.py
 
 lint-frontend:  ## eslint del frontend (dentro del contenedor)
 	docker exec $(FRONTEND) npm run -s lint

@@ -351,6 +351,14 @@ catch (error) {
 
 ---
 
+**Cómo se verifica en este repo** (2026-08-22): `scripts/check_guards.py` (en `make check`
+sobre HEAD y en el pre-commit sobre lo staged) falla con cualquier `except Exception`/`except:`
+que no relance, no loguee ni delegue en un handler con nombre; con SQL armado por f-string o
+concatenación; con literales tipo secreto; con `print(`/`console.log(`; con
+`dangerouslySetInnerHTML`; con endpoints que devuelven `list[...]` sin `Page[T]` o sin
+`require_permission`/identidad. Lo ya aceptado (pre-auth, ADR-021, constantes en SQL) está en
+`scripts/guards-baseline.json`; agregar ahí algo nuevo es una decisión que se documenta.
+
 ## 7. Testing
 
 ### Pirámide de Testing

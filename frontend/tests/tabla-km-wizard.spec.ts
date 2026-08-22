@@ -76,7 +76,8 @@ async function mockear(page: Page, escrituras: string[]) {
     if (p.endsWith("/api/liquidaciones/spsts")) return route.fulfill(json(page1([])));
     if (p.endsWith("/asistente-km/estado")) return route.fulfill(json(ESTADO));
     if (p.endsWith("/siges/sucursales")) return route.fulfill(json({ items: SUCURSALES, total: SUCURSALES.length, page: 1, size: 200 }));
-    if (p.endsWith("/matching/propuestas")) return route.fulfill(json(PROPUESTAS));
+    // Desde 04f9cc8 /matching/propuestas también devuelve el envelope Page[T] (§11).
+    if (p.endsWith("/matching/propuestas")) return route.fulfill(json(page1(PROPUESTAS)));
     if (p.endsWith("/coordenadas")) return route.fulfill(json(page1(COORDENADAS)));
     if (p.endsWith("/geovalidacion/tier0")) return route.fulfill(json(page1([])));
     if (p.endsWith("/geovalidacion/tier1")) return route.fulfill(json(page1(TIER1)));
