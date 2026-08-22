@@ -469,3 +469,17 @@ las 13 funciones nuevas >30 líneas y las 2 clases >200 (cubierto por el addendu
   (`tabla-km-wizard.spec.ts`, `prestadores-distancias.spec.ts`); 4/4 en verde. Queda como
   lección: los specs con backend mock no ven los cambios de contrato hasta que alguien corre la
   suite — correrla forma parte del cierre de cualquier cambio de API que consuma el frontend.
+
+---
+
+## Addendum 6 (2026-08-22): tests de router para wati, preventivos, sla y turnos
+
+~120 tests de integración nuevos (`tests/integration/{test_wati_router,test_preventivos_router}.py`,
+`tests/integration/sla/`, `tests/integration/turnos/`, helper `router_testing.py`), mismo patrón
+que los de analisis_log_hp: 401 sin sesión, 403 por permiso/feature exacto, caminos felices
+con contrato (`Page[T]`, aliases), 400/404/409. Cobertura de `presentation` en los 4 módulos:
+92 → 96 % de líneas; routers de wati/preventivos/sla y los 6 de turnos al 100 %. Quedan fuera
+a propósito: factories reales contra WATI/MERCURIO y `background_jobs.py`. Dos observaciones
+de contrato anotadas en los tests (no cambiadas): `GET /api/sla/resumen?periodo=202613` devuelve
+400 `PERIODO_INVALIDO` (VO) y no `VALIDATION_ERROR`; `PUT /api/turnos/casillas/{id}` inexistente
+lanza `ValueError` sin mapear (sería 500) — candidato a 404 en el próximo toque del router.
