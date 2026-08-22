@@ -20,6 +20,7 @@ from src.modules.auth.presentation.admin_permissions_router import (
 )
 from src.modules.auth.presentation.admin_users_router import router as admin_users_router
 from src.modules.auth.presentation.auth_router import router as auth_router
+from src.modules.auth.presentation.dashboard_prefs_router import router as dashboard_prefs_router
 from src.modules.auth.presentation.route_visits_router import router as route_visits_router
 from src.modules.contadores.presentation.anexos_pendientes_router import (
     router as anexos_pendientes_router,
@@ -124,6 +125,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     admin_permissions_router,
     admin_users_router,
     route_visits_router,
+    dashboard_prefs_router,
     contadores_tools_router,
     ftp_clients_router,
     clientes_nuevos_router,

@@ -196,12 +196,27 @@ test.describe("Inicio — cabe en la pantalla sin scroll", () => {
     }
   }
 
-  test("Personalizar: ocultar un panel y elegir la vista inicial persiste por usuario", async ({
+  test("Personalizar: ocultar un panel y elegir la vista inicial persiste por cuenta", async ({
     page,
   }) => {
     await page.setViewportSize(VIEWPORTS[0]);
     await mockTurnos(page, [SHIFT_PROPIO_INSUMOS]);
     await mockAccesos(page, []);
+    // Servidor fake de /api/me/inicio-prefs (ADR-033): lo que se PUTea es lo
+    // que devuelve el GET siguiente, como el backend real.
+    let guardadas = { hiddenCards: [] as string[], initialView: "hoy" };
+    const puts: unknown[] = [];
+    await page.route("**/api/me/inicio-prefs", async (route) => {
+      if (route.request().method() === "PUT") {
+        guardadas = route.request().postDataJSON();
+        puts.push(guardadas);
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(guardadas),
+      });
+    });
     await page.goto("/");
     await expect(page.locator('[data-card="turnos"]')).toBeVisible();
 
@@ -214,7 +229,11 @@ test.describe("Inicio — cabe en la pantalla sin scroll", () => {
 
     await expect(page.locator('[data-card="turnos"]')).toHaveCount(0);
 
-    // Recargar: abre en Seguimiento y Turnos sigue oculto (localStorage por usuario).
+    // El servidor recibió el estado completo (idempotente: ocultos + vista).
+    expect(puts.length).toBeGreaterThanOrEqual(2);
+    expect(guardadas).toEqual({ hiddenCards: ["turnos"], initialView: "seguimiento" });
+
+    // Recargar: abre en Seguimiento y Turnos sigue oculto (lo devuelve el servidor).
     await page.reload();
     await expect(page.getByTestId("dashboard-grid")).toBeVisible();
     await expect(page.getByRole("radio", { name: "Seguimiento" })).toHaveAttribute(

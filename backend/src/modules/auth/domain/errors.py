@@ -7,6 +7,10 @@ from src.shared.domain.errors import (
 )
 
 
+class InvalidDashboardPrefsError(ValidationError):
+    default_code = "INVALID_DASHBOARD_PREFS"
+
+
 class InvalidEmailError(ValidationError):
     default_code = "INVALID_EMAIL"
 

@@ -1,3 +1,4 @@
+from src.modules.auth.infrastructure.models.dashboard_prefs_model import UserDashboardPrefs
 from src.modules.auth.infrastructure.models.permission_models import (
     Action,
     Module,
@@ -29,6 +30,7 @@ __all__ = [
     "PermissionGrant",
     "UserFeatureGrant",
     "UserModuleScope",
+    "UserDashboardPrefs",
     "UserRouteVisit",
     "UserSession",
 ]

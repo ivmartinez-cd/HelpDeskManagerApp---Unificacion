@@ -293,11 +293,12 @@ aplicó progressive disclosure sin volver a las pestañas por módulo:
 - **Personalizar** (hecho el mismo día, `hooks/use-dashboard-prefs.ts` +
   `components/personalizar-modal.tsx`): botón en el encabezado; cada usuario elige la vista con
   la que abre Inicio y qué paneles ve (switch por panel, agrupados por vista; "Restablecer").
-  Persistido en `localStorage["inicio.prefs.<userId>"]` — primer paso sin backend; si se
-  quiere preferencia por cuenta (compartida entre equipos), el hook es el único lugar a
-  cambiar (mismo patrón que `docs/MASTER_PROMPT_NOTA_PERSONAL_INICIO.md`). Un panel oculto no
-  aparece ni en el grid ni en la tira "Sin novedades". Test: ocultar + vista inicial persisten
-  tras recargar; Restablecer vuelve a mostrar todo.
+  Desde el 2026-08-23 se persiste **por cuenta** (`GET/PUT /api/me/inicio-prefs`, tabla
+  `user_dashboard_prefs`, ADR-033): el servidor es la fuente de verdad y `localStorage` queda
+  como caché/respaldo (`use-dashboard-prefs.ts` es el único lugar que conoce ambos). Un panel
+  oculto no aparece ni en el grid ni en la tira "Sin novedades". Test Playwright con servidor
+  fake del endpoint: ocultar + vista inicial se PUTean completos y sobreviven la recarga;
+  Restablecer vuelve a mostrar todo.
 
 ## Anexo A — Diagnóstico detallado de la pantalla actual
 

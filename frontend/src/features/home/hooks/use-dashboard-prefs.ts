@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { inicioPrefsApi, type InicioPrefsWire } from "../api/inicio-prefs-api";
 import { VIEWS, type CardId, type ViewKey } from "../config/dashboard-registry";
 
 export interface DashboardPrefs {
@@ -16,45 +17,80 @@ function storageKey(userId: string): string {
   return `inicio.prefs.${userId}`;
 }
 
-function leer(userId: string): DashboardPrefs {
+function normalizar(raw: Partial<InicioPrefsWire> | Partial<DashboardPrefs> | null): DashboardPrefs {
+  if (!raw) return PREFS_DEFAULT;
+  const ocultos = "hiddenCards" in raw ? raw.hiddenCards : "ocultos" in raw ? raw.ocultos : [];
+  const vista = "initialView" in raw ? raw.initialView : "vistaInicial" in raw ? raw.vistaInicial : "hoy";
+  return {
+    ocultos: Array.isArray(ocultos) ? (ocultos as CardId[]) : [],
+    vistaInicial: VIEWS.some((v) => v.key === vista) ? (vista as ViewKey) : "hoy",
+  };
+}
+
+function leerCache(userId: string): DashboardPrefs | null {
   try {
     const raw = window.localStorage.getItem(storageKey(userId));
-    if (!raw) return PREFS_DEFAULT;
-    const parsed = JSON.parse(raw) as Partial<DashboardPrefs>;
-    return {
-      ocultos: Array.isArray(parsed.ocultos) ? (parsed.ocultos as CardId[]) : [],
-      vistaInicial: VIEWS.some((v) => v.key === parsed.vistaInicial)
-        ? (parsed.vistaInicial as ViewKey)
-        : "hoy",
-    };
+    return raw ? normalizar(JSON.parse(raw) as Partial<DashboardPrefs>) : null;
   } catch {
-    return PREFS_DEFAULT;
+    return null;
   }
 }
 
-/** Preferencias de Inicio por usuario (paneles ocultos y vista inicial),
- * guardadas en el navegador bajo el id del usuario — primer paso sin backend
- * (ver docs/MASTER_PROMPT_REDISENO_DASHBOARD_INICIO.md); si después se pasa
- * a una preferencia en DB, este hook es el único lugar a cambiar. Se leen
- * después del montaje para no desincronizar el SSR; `cargadas` avisa cuándo
- * ya se puede confiar en ellas. */
+function escribirCache(userId: string, prefs: DashboardPrefs): void {
+  try {
+    window.localStorage.setItem(storageKey(userId), JSON.stringify(prefs));
+  } catch {
+    // Sin storage (modo privado, bloqueo): el servidor sigue siendo la fuente.
+  }
+}
+
+/** Preferencias de Inicio por CUENTA (ADR-033): el servidor
+ * (`/api/me/inicio-prefs`) es la fuente de verdad y viajan entre dispositivos;
+ * `localStorage` queda solo como caché para pintar al instante y como
+ * respaldo si el backend no responde. Se leen después del montaje para no
+ * desincronizar el SSR; `cargadas` avisa cuándo ya se puede confiar en ellas. */
 export function useDashboardPrefs(userId: string) {
   const [prefs, setPrefs] = useState<DashboardPrefs>(PREFS_DEFAULT);
   const [cargadas, setCargadas] = useState(false);
+  const ultimo = useRef<DashboardPrefs>(PREFS_DEFAULT);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPrefs(leer(userId));
-    setCargadas(true);
+    let alive = true;
+    const cache = leerCache(userId);
+    if (cache) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPrefs(cache);
+      ultimo.current = cache;
+    }
+    inicioPrefsApi
+      .get()
+      .then((wire) => {
+        if (!alive) return;
+        const desdeServidor = normalizar(wire);
+        ultimo.current = desdeServidor;
+        setPrefs(desdeServidor);
+        escribirCache(userId, desdeServidor);
+      })
+      .catch((err: unknown) => {
+        console.error("No se pudieron leer las preferencias de Inicio; se usa la caché local.", err);
+      })
+      .finally(() => {
+        if (alive) setCargadas(true);
+      });
+    return () => {
+      alive = false;
+    };
   }, [userId]);
 
   const guardar = (next: DashboardPrefs) => {
+    ultimo.current = next;
     setPrefs(next);
-    try {
-      window.localStorage.setItem(storageKey(userId), JSON.stringify(next));
-    } catch {
-      // Sin storage (modo privado, bloqueo): la preferencia dura la sesión.
-    }
+    escribirCache(userId, next);
+    inicioPrefsApi
+      .put({ hiddenCards: next.ocultos, initialView: next.vistaInicial })
+      .catch((err: unknown) => {
+        console.error("No se pudieron guardar las preferencias de Inicio en el servidor.", err);
+      });
   };
 
   return {
@@ -62,12 +98,12 @@ export function useDashboardPrefs(userId: string) {
     cargadas,
     setOculto: (id: CardId, oculto: boolean) =>
       guardar({
-        ...prefs,
+        ...ultimo.current,
         ocultos: oculto
-          ? [...new Set([...prefs.ocultos, id])]
-          : prefs.ocultos.filter((c) => c !== id),
+          ? [...new Set([...ultimo.current.ocultos, id])]
+          : ultimo.current.ocultos.filter((c) => c !== id),
       }),
-    setVistaInicial: (vistaInicial: ViewKey) => guardar({ ...prefs, vistaInicial }),
+    setVistaInicial: (vistaInicial: ViewKey) => guardar({ ...ultimo.current, vistaInicial }),
     restablecer: () => guardar(PREFS_DEFAULT),
   };
 }
