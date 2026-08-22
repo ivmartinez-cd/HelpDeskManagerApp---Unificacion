@@ -11,7 +11,7 @@ async function setFakeSession(page: import("@playwright/test").Page) {
   await page.context().addCookies([{ name: "hdm_session", value: "test-session-token", domain: "localhost", path: "/", httpOnly: true, secure: false }]);
 }
 
-test("modal editar muestra link Abrir en Maps", async ({ page }) => {
+test("modal editar muestra link Abrir en Maps @smoke", async ({ page }) => {
   await setFakeSession(page);
   await page.route("**/api/liquidaciones/prestadores**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: PRESTADORES_MOCK, total: 1, page: 1, size: 1000 }) }));
   await page.route("**/api/liquidaciones/tabla-km**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: TABLA_KM_MOCK, total: 1, page: 1, size: 1000 }) }));

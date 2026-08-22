@@ -142,7 +142,7 @@ test.describe("Módulo de Prestadores", () => {
 
   // ── Hub agrupado ──────────────────────────────────────────────────────────
 
-  test("hub muestra los KPIs y los grupos por operador colapsados", async ({ page }) => {
+  test("hub muestra los KPIs y los grupos por operador colapsados @smoke", async ({ page }) => {
     await page.goto("/prestadores");
 
     await expect(

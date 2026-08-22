@@ -99,7 +99,7 @@ async function setFakeSession(page: Page) {
   await page.context().addCookies([{ name: "hdm_session", value: "test-session-token", domain: "localhost", path: "/", httpOnly: true, secure: false }]);
 }
 
-test("asistente de KM: intro, chequeos gratis, Traer de Gestión y bandeja única", async ({ page }) => {
+test("asistente de KM: intro, chequeos gratis, Traer de Gestión y bandeja única @smoke", async ({ page }) => {
   await setFakeSession(page);
   const escrituras: string[] = [];
   await mockear(page, escrituras);

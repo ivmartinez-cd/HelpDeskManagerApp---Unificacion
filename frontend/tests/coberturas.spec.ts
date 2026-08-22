@@ -142,7 +142,7 @@ test.describe("Coberturas (overrides temporales de asignación)", () => {
     ]);
   });
 
-  test("contadores: listado muestra tabla con estados derivados y copy de pie", async ({ page }) => {
+  test("contadores: listado muestra tabla con estados derivados y copy de pie @smoke", async ({ page }) => {
     await mockContadores(page);
     await page.goto("/contadores/coberturas");
 

@@ -102,7 +102,7 @@ test.describe("Coberturas de turnos: intercambio (ADR-026)", () => {
     ]);
   });
 
-  test("el par se agrupa en una sola fila A ⇄ B y la común queda aparte", async ({ page }) => {
+  test("el par se agrupa en una sola fila A ⇄ B y la común queda aparte @smoke", async ({ page }) => {
     await mockTurnos(page);
     await page.goto("/turnos/coberturas");
 

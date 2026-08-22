@@ -20,7 +20,7 @@ async function setFakeSession(page: import("@playwright/test").Page) {
   await page.context().addCookies([{ name: "hdm_session", value: "test-session-token", domain: "localhost", path: "/", httpOnly: true, secure: false }]);
 }
 
-test("tabla KM layout mejorado", async ({ page }) => {
+test("tabla KM layout mejorado @smoke", async ({ page }) => {
   await setFakeSession(page);
 
   await page.route("**/api/liquidaciones/prestadores**", (route) =>

@@ -125,7 +125,7 @@ test.describe("Módulo Análisis de Log HP", () => {
   // Pantalla 1 — Bienvenida
   // -------------------------------------------------------------------------
 
-  test("debe mostrar la pantalla de bienvenida con título, toggle y estado vacío", async ({ page }) => {
+  test("debe mostrar la pantalla de bienvenida con título, toggle y estado vacío @smoke", async ({ page }) => {
     await page.goto("/analisis-log-hp");
 
     // Título en dos partes: "HP Logs" y "ANALYZER"

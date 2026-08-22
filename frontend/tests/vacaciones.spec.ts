@@ -187,7 +187,7 @@ test.describe("Vacaciones", () => {
     ]);
   });
 
-  test("el dashboard muestra KPIs y calendario", async ({ page }) => {
+  test("el dashboard muestra KPIs y calendario @smoke", async ({ page }) => {
     await mockVacaciones(page);
     await page.goto("/vacaciones");
 

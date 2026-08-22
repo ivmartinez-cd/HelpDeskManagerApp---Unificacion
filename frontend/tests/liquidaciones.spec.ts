@@ -181,7 +181,7 @@ test.describe("Módulo de Liquidaciones", () => {
 
   // ── Dashboard ─────────────────────────────────────────────────────────────
 
-  test("dashboard muestra los 4 KPI tiles y la tabla de últimas liquidaciones", async ({
+  test("dashboard muestra los 4 KPI tiles y la tabla de últimas liquidaciones @smoke", async ({
     page,
   }) => {
     await page.goto("/liquidaciones");

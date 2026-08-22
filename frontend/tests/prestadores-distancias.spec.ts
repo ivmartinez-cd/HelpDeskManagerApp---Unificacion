@@ -76,7 +76,7 @@ async function setFakeSession(page: import("@playwright/test").Page) {
 // "Distancias" (con base cargada); "Siges" dejó de mencionarse en la UI
 // (commit 72a50ecf). Los botones de mutación además exigen `liquidaciones.update`
 // (ADR-029) — el mock de sesión es superadmin, así que se renderizan.
-test("botón Base aparece solo para prestadores con vínculo a Gestión", async ({ page }) => {
+test("botón Base aparece solo para prestadores con vínculo a Gestión @smoke", async ({ page }) => {
   await setFakeSession(page);
   await page.route("**/api/liquidaciones/prestadores**", (route) => {
     route.fulfill({

@@ -47,7 +47,8 @@ export default defineConfig({
     // ocurre antes del globalSetup, así que no debe pasar por el layout de app
     // o generaría un redirect cacheado antes de que el mock backend esté listo.
     url: `http://localhost:${PORT}/login`,
-    timeout: 120_000,
+    // Filesystem lento en WSL: el primer compile de /login puede pasar los 2 min.
+    timeout: 300_000,
     reuseExistingServer: !process.env.CI,
     stdout: "pipe",
     stderr: "pipe",

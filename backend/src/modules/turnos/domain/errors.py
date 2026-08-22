@@ -3,6 +3,13 @@ from typing import ClassVar
 from src.shared.domain.errors import BusinessRuleViolationError, NotFoundError, ValidationError
 
 
+class CasillaNotFoundError(NotFoundError):
+    default_code: ClassVar[str] = "CASILLA_NOT_FOUND"
+
+    def __init__(self, casilla_id: object) -> None:
+        super().__init__(f"Casilla {casilla_id} no existe")
+
+
 class AsignacionOverrideNotFoundError(NotFoundError):
     default_code: ClassVar[str] = "ASIGNACION_OVERRIDE_NOT_FOUND"
 

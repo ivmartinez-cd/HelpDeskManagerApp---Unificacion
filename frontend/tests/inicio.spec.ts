@@ -80,7 +80,7 @@ test.describe("Inicio", () => {
     ]);
   });
 
-  test("el banner de turno muestra la casilla asignada al usuario logueado", async ({ page }) => {
+  test("el banner de turno muestra la casilla asignada al usuario logueado @smoke", async ({ page }) => {
     await mockTurnos(page, [SHIFT_PROPIO_INSUMOS]);
     await mockAccesos(page, []);
     await page.goto("/");

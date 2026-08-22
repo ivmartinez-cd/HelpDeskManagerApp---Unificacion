@@ -192,10 +192,15 @@ bloquea algo que de verdad hace falta, explicárselo al usuario y que decida él
   recientemente por **otra** sesión de Claude (según el registro de sesiones); override
   consciente y coordinado: `ALLOW_FOREIGN=1 git commit …`. Si hay cambios en `backend/`, corre
   `lint-imports` + `ruff` (archivos staged) + `mypy` dentro del contenedor.
-- **`.githooks/pre-push`** (≈45 s): lista los commits que se van a subir (leerlos, no pushear a
-  ciegas), corre `make check` completo (lint-imports + ruff + mypy + pytest) y, si hay cambios
-  en `frontend/`, eslint + `tsc --noEmit` del frontend. Si algo falla, no se pushea. Si un paso
-  del frontend falla con salida vacía, otra sesión estaba reiniciando el contenedor — reintentar.
+- **`.githooks/pre-push`** (≈1,5 min; +2–3 min con cambios de frontend): lista los commits que
+  se van a subir (leerlos, no pushear a ciegas), corre `make check` completo (lint-imports +
+  ruff + mypy + pytest unit + integración + gates `sizes`/`guards` sobre HEAD) y, si hay cambios
+  en `frontend/`, eslint + `tsc --noEmit` del frontend más el **smoke de Playwright**
+  (`--grep @smoke`, un test por spec, con un `next dev` de test en el puerto 3011 que el hook
+  levanta y apaga solo). Si algo falla, no se pushea. Si un paso del frontend falla con salida
+  vacía, otra sesión estaba reiniciando el contenedor — reintentar. La suite Playwright
+  completa sigue siendo a mano (`PW_PORT=3011 npx playwright test` en `frontend/`) y es parte
+  del cierre de cualquier cambio de API que consuma el frontend.
 - Los hooks de git se activan por clon con `make hooks` (`git config core.hooksPath
   .githooks`). `--no-verify` existe, pero usarlo es una decisión del usuario, no de Claude.
 

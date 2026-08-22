@@ -483,3 +483,20 @@ a propósito: factories reales contra WATI/MERCURIO y `background_jobs.py`. Dos 
 de contrato anotadas en los tests (no cambiadas): `GET /api/sla/resumen?periodo=202613` devuelve
 400 `PERIODO_INVALIDO` (VO) y no `VALIDATION_ERROR`; `PUT /api/turnos/casillas/{id}` inexistente
 lanza `ValueError` sin mapear (sería 500) — candidato a 404 en el próximo toque del router.
+
+---
+
+## Addendum 7 (2026-08-22): contratos anotados y smoke de Playwright en el pre-push
+
+- `PUT /api/turnos/casillas/{id}` inexistente: el use case lanzaba `ValueError` (500); ahora
+  `CasillaNotFoundError` (dominio, `NotFoundError` → 404 `CASILLA_NOT_FOUND`), con test de
+  router.
+- `GET /api/sla/resumen?periodo=202613`: decisión — queda como está. El borde valida el rango
+  numérico (`Query(ge/le)`); que el mes sea 1–12 es regla del VO `Periodo` y se devuelve como
+  400 `PERIODO_INVALIDO`, un código de dominio que el frontend puede mostrar; convertirlo en
+  `VALIDATION_ERROR` duplicaría la regla en el borde sin ganancia. Documentado en el test.
+- **Smoke de Playwright en el pre-push** (solo con cambios en `frontend/`): un test por spec
+  etiquetado `@smoke` (15), el hook levanta un `next dev` de test en 3011 (o reusa uno), corre
+  `playwright test --grep @smoke` y lo apaga. Cierra el único gate que faltaba: un cambio de
+  contrato de API que rompa la UI ya no pasa en silencio. La suite completa sigue siendo
+  a mano al cerrar cambios de API que consume el front (CLAUDE.md actualizado).

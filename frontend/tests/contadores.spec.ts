@@ -8,7 +8,7 @@ test.describe("Módulo de Contadores - Interfaz y Herramientas", () => {
     ]);
   });
 
-  test("debe mostrar el hub Centro de Contadores con las 7 herramientas al entrar sin ?tool=", async ({
+  test("debe mostrar el hub Centro de Contadores con las 7 herramientas al entrar sin ?tool= @smoke", async ({
     page,
   }) => {
     await page.goto("/contadores");

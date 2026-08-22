@@ -122,7 +122,7 @@ test.describe("Modo vacaciones (grilla variante de turnos)", () => {
     ]);
   });
 
-  test("editor: precarga el caso Majo, re-corta, avisa hueco (no bloquea) y guarda el payload completo", async ({
+  test("editor: precarga el caso Majo, re-corta, avisa hueco (no bloquea) y guarda el payload completo @smoke", async ({
     page,
   }) => {
     await mockTurnos(page);

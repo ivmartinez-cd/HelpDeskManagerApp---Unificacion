@@ -115,7 +115,7 @@ test.describe("Contadores › Clientes nuevos", () => {
     ]);
   });
 
-  test("listado: KPIs, fichas abiertas por defecto, aviso listo para STC", async ({ page }) => {
+  test("listado: KPIs, fichas abiertas por defecto, aviso listo para STC @smoke", async ({ page }) => {
     await mockClientesNuevos(page);
     await page.goto("/contadores/clientes-nuevos");
 

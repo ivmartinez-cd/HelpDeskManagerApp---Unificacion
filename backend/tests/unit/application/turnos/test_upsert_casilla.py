@@ -10,6 +10,7 @@ from src.modules.turnos.application.use_cases.upsert_casilla import (
     UpsertCasilla,
     UpsertCasillaDependencies,
 )
+from src.modules.turnos.domain.errors import CasillaNotFoundError
 from tests.unit.domain.turnos.fakes import FakeCasillaRepository
 
 
@@ -37,5 +38,5 @@ async def test_update_casilla_inexistente_falla() -> None:
     repo = FakeCasillaRepository()
     use_case = UpsertCasilla(UpsertCasillaDependencies(casillas=repo))
 
-    with pytest.raises(ValueError, match="no existe"):
+    with pytest.raises(CasillaNotFoundError, match="no existe"):
         await use_case.update(UpdateCasillaCommand(casilla_id=uuid.uuid4(), nombre="X"))

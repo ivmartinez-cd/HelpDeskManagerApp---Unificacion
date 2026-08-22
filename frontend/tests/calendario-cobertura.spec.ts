@@ -84,7 +84,7 @@ test.describe("Calendario: indicadores de cobertura (ADR-013 fase 2)", () => {
     ]);
   });
 
-  test("modo efectivo (default): badge CUBIERTO POR + leyenda, evento propio sin badge", async ({
+  test("modo efectivo (default): badge CUBIERTO POR + leyenda, evento propio sin badge @smoke", async ({
     page,
   }) => {
     await mockCalendario(page);

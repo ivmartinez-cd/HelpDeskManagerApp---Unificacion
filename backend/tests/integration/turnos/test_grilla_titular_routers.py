@@ -128,8 +128,18 @@ async def test_crear_editar_y_borrar_casilla(repos_titular: ReposTitular) -> Non
     assert editada.status_code == 200
     # Solo `nombre` es editable: color/orden se preservan aunque el body no los traiga.
     assert (editada.json()["nombre"], editada.json()["color"]) == ("SOPORTE", "#58595B")
+
     assert borrada.status_code == 204
     assert uuid.UUID(casilla_id) not in repos_titular.casillas.rows
+
+@pytest.mark.usefixtures("_sesion_manage", "repos_titular")
+async def test_editar_casilla_inexistente_es_404() -> None:
+    """Antes el use case lanzaba `ValueError` sin mapear (terminaba en 500)."""
+    async with client() as c:
+        response = await c.put(f"{PREFIX}/casillas/{uuid.uuid4()}", json={"nombre": "X"})
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "CASILLA_NOT_FOUND"
 
 
 @pytest.mark.usefixtures("_sesion_manage", "repos_titular")

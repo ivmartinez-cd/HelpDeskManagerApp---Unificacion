@@ -7,6 +7,7 @@ from src.modules.turnos.application.dtos.turno_dtos import (
     UpdateCasillaCommand,
 )
 from src.modules.turnos.domain.entities.casilla import Casilla
+from src.modules.turnos.domain.errors import CasillaNotFoundError
 from src.modules.turnos.domain.repositories.casilla_repository import CasillaRepository
 
 
@@ -41,7 +42,7 @@ class UpsertCasilla:
     async def update(self, command: UpdateCasillaCommand) -> CasillaDTO:
         existing = await self._deps.casillas.get_by_id(command.casilla_id)
         if existing is None:
-            raise ValueError(f"Casilla {command.casilla_id} no existe")
+            raise CasillaNotFoundError(command.casilla_id)
 
         casilla = Casilla(
             id=command.casilla_id,
