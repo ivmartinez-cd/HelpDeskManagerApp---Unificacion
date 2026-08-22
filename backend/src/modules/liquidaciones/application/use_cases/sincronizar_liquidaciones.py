@@ -32,6 +32,7 @@ from src.modules.liquidaciones.application.use_cases._reconciliar_liquidacion im
     ReconciliarLiquidacion,
     ReconciliarLiquidacionResultado,
 )
+from src.modules.liquidaciones.application.use_cases._sincronizar_contadores import Contadores
 from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion import (
     ReanalizarLiquidacion,
 )
@@ -58,7 +59,10 @@ from src.modules.liquidaciones.domain.repositories.prestador_repository import (
 )
 from src.modules.liquidaciones.domain.services.detectar_anuladas import detectar_anuladas
 from src.modules.liquidaciones.domain.services.importacion.metadata import extraer_periodo
-from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import CdLiquidacion
+from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
+    CdIncidenteRow,
+    CdLiquidacion,
+)
 from src.shared.domain.errors import ExternalServiceError
 
 logger = logging.getLogger(__name__)
@@ -80,18 +84,6 @@ class SincronizarLiquidacionesPorts:
     reconciliar: ReconciliarLiquidacion
 
 
-@dataclass
-class _Contadores:
-    creadas: int = 0
-    ya_existentes: int = 0
-    fallidas: int = 0
-    anuladas: int = 0
-    reconciliadas: int = 0
-    estados_actualizados: int = 0
-    extras_actualizados: int = 0
-    facturas_actualizadas: int = 0
-
-
 class SincronizarLiquidaciones:
     def __init__(self, ports: SincronizarLiquidacionesPorts) -> None:
         self._ports = ports
@@ -104,75 +96,38 @@ class SincronizarLiquidaciones:
         salta `_detectar_y_eliminar_anuladas` entero — la usa el job de fondo
         (`presentation/background_jobs.py`), que nunca borra sin que alguien esté
         mirando; el botón/endpoint manual la deja en `True`."""
+        prestadores_cd, sin_prestador = await self._prestadores_a_sincronizar(prestador_id)
+        existentes = await self._ports.liquidaciones.list_numeros_liquidacion()
+        totales = Contadores()
+        for prestador in prestadores_cd:
+            parciales = await self._sincronizar_prestador(
+                prestador, existentes, permitir_eliminar_anuladas=permitir_eliminar_anuladas
+            )
+            _log_parciales(prestador, parciales)
+            totales.sumar(parciales)
+        return totales.a_resultado(sin_prestador=sin_prestador)
+
+    async def _prestadores_a_sincronizar(
+        self, prestador_id: UUID | None
+    ) -> tuple[list[Prestador], int]:
+        """Prestadores vinculados a CD (acotados a `prestador_id` si viene) y la
+        cantidad de activos sin vínculo, que quedan fuera del sync."""
         prestadores_cd = await self._ports.prestadores.list_con_cd_id()
         if prestador_id is not None:
             prestadores_cd = [p for p in prestadores_cd if p.id == prestador_id]
         activos = await self._ports.prestadores.list_all(solo_activos=True)
         sin_prestador = sum(1 for p in activos if p.cd_prestador_id is None)
-
-        existentes = await self._ports.liquidaciones.list_numeros_liquidacion()
-        totales = _Contadores()
-        for prestador in prestadores_cd:
-            parciales = await self._sincronizar_prestador(
-                prestador, existentes, permitir_eliminar_anuladas=permitir_eliminar_anuladas
-            )
-            logger.info(
-                "sync CD %s: %d creadas, %d ya existentes, %d fallidas, %d anuladas, "
-                "%d reconciliadas, %d estados actualizados, %d extras actualizados, "
-                "%d facturas actualizadas",
-                prestador.nombre_corto,
-                parciales.creadas,
-                parciales.ya_existentes,
-                parciales.fallidas,
-                parciales.anuladas,
-                parciales.reconciliadas,
-                parciales.estados_actualizados,
-                parciales.extras_actualizados,
-                parciales.facturas_actualizadas,
-            )
-            totales.creadas += parciales.creadas
-            totales.ya_existentes += parciales.ya_existentes
-            totales.fallidas += parciales.fallidas
-            totales.anuladas += parciales.anuladas
-            totales.reconciliadas += parciales.reconciliadas
-            totales.estados_actualizados += parciales.estados_actualizados
-            totales.extras_actualizados += parciales.extras_actualizados
-            totales.facturas_actualizadas += parciales.facturas_actualizadas
-
-        return SincronizarLiquidacionesResultado(
-            creadas=totales.creadas,
-            ya_existentes=totales.ya_existentes,
-            sin_prestador=sin_prestador,
-            fallidas=totales.fallidas,
-            anuladas=totales.anuladas,
-            reconciliadas=totales.reconciliadas,
-            estados_actualizados=totales.estados_actualizados,
-            extras_actualizados=totales.extras_actualizados,
-            facturas_actualizadas=totales.facturas_actualizadas,
-        )
+        return prestadores_cd, sin_prestador
 
     async def _sincronizar_prestador(
         self, prestador: Prestador, existentes: set[str], *, permitir_eliminar_anuladas: bool
-    ) -> _Contadores:
-        assert prestador.cd_prestador_id is not None
-        contadores = _Contadores()
-        liqs = await self._ports.cd_gateway.get_liquidaciones(prestador.cd_prestador_id)
-        pendientes = await self._ports.liquidaciones.list_activas_por_prestador_con_numero(
-            prestador.id, _ESTADOS_PENDIENTES
-        )
-        por_numero = {liq.numero_liquidacion: liq for liq in pendientes}
+    ) -> Contadores:
+        contadores = Contadores()
+        liqs, pendientes, por_numero = await self._listados_remoto_y_local(prestador)
         for cd_liq in liqs:
             if cd_liq.numero_liquidacion in existentes:
                 contadores.ya_existentes += 1
-                resultado = await self._reconciliar(cd_liq, por_numero)
-                if resultado is not None and resultado.reconciliada:
-                    contadores.reconciliadas += 1
-                    if resultado.estado_actualizado:
-                        contadores.estados_actualizados += 1
-                    if resultado.extra_actualizado:
-                        contadores.extras_actualizados += 1
-                    if resultado.factura_actualizada:
-                        contadores.facturas_actualizadas += 1
+                contadores.registrar_reconciliacion(await self._reconciliar(cd_liq, por_numero))
             elif await self._procesar(cd_liq, prestador):
                 existentes.add(cd_liq.numero_liquidacion)
                 contadores.creadas += 1
@@ -183,6 +138,18 @@ class SincronizarLiquidaciones:
                 liqs, prestador, pendientes
             )
         return contadores
+
+    async def _listados_remoto_y_local(
+        self, prestador: Prestador
+    ) -> tuple[list[CdLiquidacion], list[Liquidacion], dict[str | None, Liquidacion]]:
+        """Los dos lados del cruce: lo que AyC reporta para el prestador, y las
+        liquidaciones locales no terminales (lista, y la misma indexada por número)."""
+        assert prestador.cd_prestador_id is not None
+        liqs = await self._ports.cd_gateway.get_liquidaciones(prestador.cd_prestador_id)
+        pendientes = await self._ports.liquidaciones.list_activas_por_prestador_con_numero(
+            prestador.id, _ESTADOS_PENDIENTES
+        )
+        return liqs, pendientes, {liq.numero_liquidacion: liq for liq in pendientes}
 
     async def _reconciliar(
         self, cd_liq: CdLiquidacion, pendientes_por_numero: dict[str | None, Liquidacion]
@@ -195,8 +162,21 @@ class SincronizarLiquidaciones:
         liquidacion = pendientes_por_numero.get(cd_liq.numero_liquidacion)
         if liquidacion is None:
             return None
+        filas_cd = await self._detalle_para_reconciliar(cd_liq)
+        if filas_cd is None:
+            return None
+        remotos = [a_importado(r) for r in filas_cd]
+        resultado = await self._ports.reconciliar.execute(liquidacion, cd_liq, remotos)
+        _log_reconciliada(cd_liq, resultado)
+        return resultado
+
+    async def _detalle_para_reconciliar(
+        self, cd_liq: CdLiquidacion
+    ) -> list[CdIncidenteRow] | None:
+        """Detalle SOAP de la liquidación, o None si falló (se reintenta en el
+        próximo sync — la reconciliación no se intenta con datos parciales)."""
         try:
-            filas_cd = await self._ports.cd_gateway.get_incidentes(cd_liq.id)
+            return await self._ports.cd_gateway.get_incidentes(cd_liq.id)
         except ExternalServiceError:
             logger.warning(
                 "sync CD: detalle SOAP falló al reconciliar %s — se reintenta en "
@@ -204,27 +184,6 @@ class SincronizarLiquidaciones:
                 cd_liq.numero_liquidacion,
             )
             return None
-        remotos = [a_importado(r) for r in filas_cd]
-        resultado = await self._ports.reconciliar.execute(liquidacion, cd_liq, remotos)
-        cambios = resultado.altas or resultado.cambios or resultado.bajas
-        if resultado.reconciliada and (
-            cambios
-            or resultado.estado_actualizado
-            or resultado.extra_actualizado
-            or resultado.factura_actualizada
-        ):
-            logger.info(
-                "sync CD: %s reconciliada — %d altas, %d cambios, %d bajas, "
-                "estado actualizado=%s, extra actualizado=%s, factura actualizada=%s",
-                cd_liq.numero_liquidacion,
-                resultado.altas,
-                resultado.cambios,
-                resultado.bajas,
-                resultado.estado_actualizado,
-                resultado.extra_actualizado,
-                resultado.factura_actualizada,
-            )
-        return resultado
 
     async def _detectar_y_eliminar_anuladas(
         self, liqs: list[CdLiquidacion], prestador: Prestador, locales: list[Liquidacion]
@@ -281,3 +240,42 @@ class SincronizarLiquidaciones:
         await self._ports.incidentes.bulk_create(liq.id, incidentes)
         await self._ports.reanalizar.execute(liq.id)
         return True
+
+
+def _log_parciales(prestador: Prestador, parciales: Contadores) -> None:
+    logger.info(
+        "sync CD %s: %d creadas, %d ya existentes, %d fallidas, %d anuladas, "
+        "%d reconciliadas, %d estados actualizados, %d extras actualizados, "
+        "%d facturas actualizadas",
+        prestador.nombre_corto,
+        parciales.creadas,
+        parciales.ya_existentes,
+        parciales.fallidas,
+        parciales.anuladas,
+        parciales.reconciliadas,
+        parciales.estados_actualizados,
+        parciales.extras_actualizados,
+        parciales.facturas_actualizadas,
+    )
+
+
+def _log_reconciliada(cd_liq: CdLiquidacion, resultado: ReconciliarLiquidacionResultado) -> None:
+    """Solo deja rastro cuando la reconciliación aplicó algo (diff de incidentes,
+    estado, extra o factura); las revisiones sin novedad no ensucian el log."""
+    novedades = (
+        resultado.altas, resultado.cambios, resultado.bajas,
+        resultado.estado_actualizado, resultado.extra_actualizado, resultado.factura_actualizada,
+    )
+    if not (resultado.reconciliada and any(novedades)):
+        return
+    logger.info(
+        "sync CD: %s reconciliada — %d altas, %d cambios, %d bajas, "
+        "estado actualizado=%s, extra actualizado=%s, factura actualizada=%s",
+        cd_liq.numero_liquidacion,
+        resultado.altas,
+        resultado.cambios,
+        resultado.bajas,
+        resultado.estado_actualizado,
+        resultado.extra_actualizado,
+        resultado.factura_actualizada,
+    )

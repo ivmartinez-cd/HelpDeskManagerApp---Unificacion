@@ -1,15 +1,24 @@
-"""Implementación Postgres del puerto TablaKmRepository (tabla tabla_kms)."""
+"""Implementación Postgres del puerto TablaKmRepository (tabla tabla_kms).
+
+Todas las escrituras parciales pasan por `_actualizar` con un `CambiosTablaKm`
+(ver `tabla_km_cambios.py`): cargar la fila, aplicar los cambios, flush +
+refresh y devolver la entidad — o None si la fila no existe."""
 
 import uuid
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.infrastructure.models.tabla_km_model import TablaKmModel
+from src.modules.liquidaciones.infrastructure.repositories.tabla_km_cambios import (
+    CambiosTablaKm,
+    aplicar_cambios,
+    vinculo_siges_si_presente,
+)
 
 
 class SqlAlchemyTablaKmRepository:
@@ -39,13 +48,7 @@ class SqlAlchemyTablaKmRepository:
         if prestador_id is not None:
             stmt = stmt.where(TablaKmModel.prestador_id == prestador_id)
         if q:
-            pattern = f"%{q.lower()}%"
-            stmt = stmt.where(
-                or_(
-                    func.lower(TablaKmModel.empresa_nombre).like(pattern),
-                    func.lower(TablaKmModel.sucursal_nombre).like(pattern),
-                )
-            )
+            stmt = stmt.where(_filtro_busqueda(q))
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
@@ -69,27 +72,18 @@ class SqlAlchemyTablaKmRepository:
         latitud_destino: float | None = None,
         longitud_destino: float | None = None,
     ) -> TablaKm | None:
-        row = await self._session.get(TablaKmModel, tabla_km_id)
-        if row is None:
-            return None
-        row.prestador_id = prestador_id
-        row.spst_id = spst_id
-        row.empresa_nombre = empresa_nombre
-        row.sucursal_nombre = sucursal_nombre
-        row.observaciones = observaciones
-        row.domicilio_cliente = domicilio_cliente
-        row.localidad_cliente = localidad_cliente
-        row.provincia_cliente = provincia_cliente
-        row.kms_recorrido = kms_recorrido
-        row.umbral_viatico = umbral_viatico
-        row.aplica_viatico = aplica_viatico
-        row.kms_a_facturar = kms_a_facturar
-        row.url_maps = url_maps
-        row.latitud_destino = latitud_destino
-        row.longitud_destino = longitud_destino
-        await self._session.flush()
-        await self._session.refresh(row)
-        return _to_entity(row)
+        # Edición completa desde el ABM; no toca `updated_at` (comportamiento heredado).
+        cambios = CambiosTablaKm(
+            prestador_id=prestador_id, spst_id=spst_id,
+            empresa_nombre=empresa_nombre, sucursal_nombre=sucursal_nombre,
+            observaciones=observaciones,
+            domicilio_cliente=domicilio_cliente, localidad_cliente=localidad_cliente,
+            provincia_cliente=provincia_cliente,
+            kms_recorrido=kms_recorrido, umbral_viatico=umbral_viatico,
+            aplica_viatico=aplica_viatico, kms_a_facturar=kms_a_facturar, url_maps=url_maps,
+            latitud_destino=latitud_destino, longitud_destino=longitud_destino,
+        )
+        return await self._actualizar(tabla_km_id, cambios)
 
     async def set_coordenadas(
         self,
@@ -101,18 +95,15 @@ class SqlAlchemyTablaKmRepository:
         geocode_formatted_address: str | None,
         geocode_fecha: datetime | None,
     ) -> TablaKm | None:
-        row = await self._session.get(TablaKmModel, tabla_km_id)
-        if row is None:
-            return None
-        row.latitud_destino = latitud
-        row.longitud_destino = longitud
-        row.coords_origen = coords_origen
-        row.geocode_formatted_address = geocode_formatted_address
-        row.geocode_fecha = geocode_fecha
-        row.updated_at = datetime.now(UTC)
-        await self._session.flush()
-        await self._session.refresh(row)
-        return _to_entity(row)
+        cambios = CambiosTablaKm(
+            latitud_destino=latitud,
+            longitud_destino=longitud,
+            coords_origen=coords_origen,
+            geocode_formatted_address=geocode_formatted_address,
+            geocode_fecha=geocode_fecha,
+            updated_at=datetime.now(UTC),
+        )
+        return await self._actualizar(tabla_km_id, cambios)
 
     async def update_distancias(
         self,
@@ -130,38 +121,20 @@ class SqlAlchemyTablaKmRepository:
         siges_sucursal_id: int | None = None,
         id_costo_servicios: int | None = None,
     ) -> TablaKm | None:
-        row = await self._session.get(TablaKmModel, tabla_km_id)
-        if row is None:
-            return None
-        row.kms_ida = kms_ida
-        row.kms_vuelta = kms_vuelta
-        row.kms_recorrido = kms_recorrido
-        row.aplica_viatico = aplica_viatico
-        row.kms_a_facturar = kms_a_facturar
-        row.url_maps = url_maps
-        row.latitud_destino = latitud_destino
-        row.longitud_destino = longitud_destino
-        row.coords_origen = coords_origen
-        if siges_sucursal_id is not None:
-            row.siges_sucursal_id = siges_sucursal_id
-        if id_costo_servicios is not None:
-            row.id_costo_servicios = id_costo_servicios
-        row.updated_at = datetime.now(UTC)
-        await self._session.flush()
-        await self._session.refresh(row)
-        return _to_entity(row)
+        cambios = CambiosTablaKm(
+            kms_ida=kms_ida, kms_vuelta=kms_vuelta, kms_recorrido=kms_recorrido,
+            aplica_viatico=aplica_viatico, kms_a_facturar=kms_a_facturar, url_maps=url_maps,
+            latitud_destino=latitud_destino, longitud_destino=longitud_destino,
+            coords_origen=coords_origen, updated_at=datetime.now(UTC),
+        )
+        cambios.update(vinculo_siges_si_presente(siges_sucursal_id, id_costo_servicios))
+        return await self._actualizar(tabla_km_id, cambios)
 
     async def update_vinculo_spst(
         self, tabla_km_id: UUID, *, spst_id: UUID | None
     ) -> TablaKm | None:
-        row = await self._session.get(TablaKmModel, tabla_km_id)
-        if row is None:
-            return None
-        row.spst_id = spst_id
-        row.updated_at = datetime.now(UTC)
-        await self._session.flush()
-        await self._session.refresh(row)
-        return _to_entity(row)
+        cambios = CambiosTablaKm(spst_id=spst_id, updated_at=datetime.now(UTC))
+        return await self._actualizar(tabla_km_id, cambios)
 
     async def update_vinculo_siges(
         self,
@@ -170,15 +143,12 @@ class SqlAlchemyTablaKmRepository:
         siges_sucursal_id: int,
         id_costo_servicios: int | None,
     ) -> TablaKm | None:
-        row = await self._session.get(TablaKmModel, tabla_km_id)
-        if row is None:
-            return None
-        row.siges_sucursal_id = siges_sucursal_id
-        row.id_costo_servicios = id_costo_servicios
-        row.updated_at = datetime.now(UTC)
-        await self._session.flush()
-        await self._session.refresh(row)
-        return _to_entity(row)
+        cambios = CambiosTablaKm(
+            siges_sucursal_id=siges_sucursal_id,
+            id_costo_servicios=id_costo_servicios,
+            updated_at=datetime.now(UTC),
+        )
+        return await self._actualizar(tabla_km_id, cambios)
 
     async def update_domicilio(
         self,
@@ -190,22 +160,17 @@ class SqlAlchemyTablaKmRepository:
         siges_sucursal_id: int | None = None,
         id_costo_servicios: int | None = None,
     ) -> TablaKm | None:
-        row = await self._session.get(TablaKmModel, tabla_km_id)
-        if row is None:
-            return None
-        row.domicilio_cliente = domicilio_cliente
-        row.localidad_cliente = localidad_cliente
-        row.provincia_cliente = provincia_cliente
-        row.geocode_formatted_address = None
-        row.geocode_fecha = None
-        if siges_sucursal_id is not None:
-            row.siges_sucursal_id = siges_sucursal_id
-        if id_costo_servicios is not None:
-            row.id_costo_servicios = id_costo_servicios
-        row.updated_at = datetime.now(UTC)
-        await self._session.flush()
-        await self._session.refresh(row)
-        return _to_entity(row)
+        # Cambió la dirección: el geocode previo deja de valer.
+        cambios = CambiosTablaKm(
+            domicilio_cliente=domicilio_cliente,
+            localidad_cliente=localidad_cliente,
+            provincia_cliente=provincia_cliente,
+            geocode_formatted_address=None,
+            geocode_fecha=None,
+            updated_at=datetime.now(UTC),
+        )
+        cambios.update(vinculo_siges_si_presente(siges_sucursal_id, id_costo_servicios))
+        return await self._actualizar(tabla_km_id, cambios)
 
     async def delete(self, tabla_km_id: UUID) -> bool:
         row = await self._session.get(TablaKmModel, tabla_km_id)
@@ -224,6 +189,23 @@ class SqlAlchemyTablaKmRepository:
         await self._session.flush()
         await self._session.refresh(model)
         return _to_entity(model)
+
+    async def _actualizar(self, tabla_km_id: UUID, cambios: CambiosTablaKm) -> TablaKm | None:
+        row = await self._session.get(TablaKmModel, tabla_km_id)
+        if row is None:
+            return None
+        aplicar_cambios(row, cambios)
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
+
+def _filtro_busqueda(q: str) -> ColumnElement[bool]:
+    pattern = f"%{q.lower()}%"
+    return or_(
+        func.lower(TablaKmModel.empresa_nombre).like(pattern),
+        func.lower(TablaKmModel.sucursal_nombre).like(pattern),
+    )
 
 
 def _to_entity(row: TablaKmModel) -> TablaKm:

@@ -4,6 +4,8 @@ Port exacto de las funciones del legacy (sds_web_service.py):
 - html_to_tsv: extrae la tabla de event logs del wrapper XML/CDATA → TSV 6 cols.
 - extract_help_urls: extrae URLs de ayuda por código de la misma tabla.
 - _parse_hp_operations: parsea la tabla de operaciones HP Smart.
+- extract_model_name / extract_device_id: resultado de la búsqueda por serial.
+- parse_cache_refresh_form: form (action + csrf) del refresh de caché HP.
 - _get_html_content: desenvuelve el wrapper XML/CDATA.
 - _cell_text: texto de celda sin links incrustados.
 """
@@ -16,6 +18,8 @@ from typing import Any
 
 from lxml import etree as _etree
 from lxml import html
+
+from src.shared.domain.errors import ExternalServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -141,3 +145,62 @@ def parse_hp_operations(page_text: str) -> list[dict[str, Any]]:
     except Exception as exc:
         logger.warning("parse_hp_operations: falló: %s", exc, exc_info=exc)
     return out
+
+
+_DEFAULT_MODEL_NAME = "Generico / Desconocido"
+_MODEL_LINK_RE = re.compile(
+    r'<a[^>]*?class="[^"]*?entity-name[^"]*?model[^"]*?"[^>]*?>\s*([^<]+?)\s*</a>',
+    re.IGNORECASE,
+)
+_MODEL_LINK_XPATH = '//a[contains(@class,"entity-name") and contains(@class,"model")]'
+_DEVICE_ID_RE = re.compile(r"/devices/(\d+)")
+
+
+def _model_name_by_regex(page_text: str) -> str | None:
+    m = _MODEL_LINK_RE.search(page_text)
+    return m.group(1).strip() if m else None
+
+
+def _model_name_by_xpath(page_text: str) -> str | None:
+    links = html.fromstring(page_text).xpath(_MODEL_LINK_XPATH)
+    return str(links[0].text_content()).strip() if links else None
+
+
+def extract_model_name(page_text: str) -> str:
+    """Nombre de modelo de la página de búsqueda del portal (default si no aparece)."""
+    model_name = _DEFAULT_MODEL_NAME
+    try:
+        found = _model_name_by_regex(page_text)
+        if found is None:
+            found = _model_name_by_xpath(page_text)
+        if found is not None:
+            model_name = found
+        model_name = " ".join(model_name.split())
+    except Exception as exc:
+        logger.warning("search_device: no se pudo extraer model_name", exc_info=exc)
+    return model_name
+
+
+def extract_device_id(final_url: str, page_text: str) -> str | None:
+    """device_id numérico: de la URL final si redirigió a /devices/N, si no del HTML."""
+    if "/devices/" in final_url:
+        m = _DEVICE_ID_RE.search(final_url)
+        if m:
+            return m.group(1)
+    matches = list(set(_DEVICE_ID_RE.findall(page_text)))
+    return matches[0] if matches else None
+
+
+def parse_cache_refresh_form(page_text: str, *, origin: str) -> tuple[str, dict[str, str]]:
+    """(action_url absoluta, data con __csrftoken) del form de refresh de caché HP."""
+    tree = html.fromstring(page_text)
+    forms = tree.xpath('//form[contains(@action, "/hpsmart/refresh/hpcache")]')
+    if not forms:
+        raise ExternalServiceError(
+            "La acción de actualización de caché no está disponible para este dispositivo"
+        )
+    action = forms[0].get("action") or ""
+    tokens = forms[0].xpath('.//input[@name="__csrftoken"]/@value')
+    action_url = action if action.startswith("http") else f"{origin}{action}"
+    data = {"__csrftoken": tokens[0]} if tokens else {}
+    return action_url, data

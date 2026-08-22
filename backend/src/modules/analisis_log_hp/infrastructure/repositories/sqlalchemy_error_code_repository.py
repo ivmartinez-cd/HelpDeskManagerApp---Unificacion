@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import Insert
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -105,26 +106,28 @@ class SqlAlchemyErrorCodeRepository:
             desc = data.get("description") or None
             if not url and not desc:
                 continue
-            stmt = pg_insert(ErrorCodeModel).values(
-                code=code, solution_url=url, description=desc
-            )
-            stmt = stmt.on_conflict_do_update(
-                index_elements=["code"],
-                set_={
-                    "solution_url": func.coalesce(
-                        func.nullif(stmt.excluded.solution_url, ""), ErrorCodeModel.solution_url
-                    ),
-                    "description": func.coalesce(
-                        func.nullif(stmt.excluded.description, ""), ErrorCodeModel.description
-                    ),
-                    "updated_at": func.now(),
-                },
-            )
-            await self._session.execute(stmt)
+            await self._session.execute(_solution_url_upsert_stmt(code, url, desc))
             count += 1
         if count:
             await self._session.flush()
         return count
+
+
+def _solution_url_upsert_stmt(code: str, url: str | None, desc: str | None) -> Insert:
+    """INSERT ... ON CONFLICT que solo pisa solution_url/description si vienen no vacíos."""
+    stmt = pg_insert(ErrorCodeModel).values(code=code, solution_url=url, description=desc)
+    return stmt.on_conflict_do_update(
+        index_elements=["code"],
+        set_={
+            "solution_url": func.coalesce(
+                func.nullif(stmt.excluded.solution_url, ""), ErrorCodeModel.solution_url
+            ),
+            "description": func.coalesce(
+                func.nullif(stmt.excluded.description, ""), ErrorCodeModel.description
+            ),
+            "updated_at": func.now(),
+        },
+    )
 
 
 def _to_entity(row: ErrorCodeModel) -> ErrorCode:

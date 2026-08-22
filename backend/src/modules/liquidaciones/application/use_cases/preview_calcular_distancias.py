@@ -18,6 +18,7 @@ del prestador. El `latitud_base`/`longitud_base` de cada `PreviewFila` registra
 qué base se usó (confirmado en PST SAN JUAN y INFOMAC, 2026-08-16)."""
 
 from collections import defaultdict
+from typing import TypedDict
 from uuid import UUID
 
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
@@ -111,7 +112,7 @@ class PreviewCalcularDistancias:
 
     async def _cargar_existentes(self, prestador_id: UUID) -> dict[tuple[str, str], TablaKm]:
         return {
-            (normalizar_nombre(f.empresa_nombre), normalizar_nombre(f.sucursal_nombre)): f
+            _clave_tabla_km(f.empresa_nombre, f.sucursal_nombre): f
             for f in await self._ports.tabla_km.list_by_prestador(prestador_id)
         }
 
@@ -178,6 +179,11 @@ def _resolver_destino(
     return None
 
 
+def _clave_tabla_km(empresa_nombre: str, sucursal_nombre: str) -> tuple[str, str]:
+    """Clave con la que el preview cruza sucursales de Siges contra filas de tabla_km."""
+    return normalizar_nombre(empresa_nombre), normalizar_nombre(sucursal_nombre)
+
+
 def _armar_fila(
     destino: Destino,
     base: tuple[float, float],
@@ -186,12 +192,34 @@ def _armar_fila(
     existentes: dict[tuple[str, str], TablaKm],
 ) -> PreviewFila:
     s = destino.sucursal
-    key = (normalizar_nombre(s.empresa_nombre), normalizar_nombre(s.sucursal_nombre))
-    existente = existentes.get(key)
-    total = round(ida + vuelta, 3)
-    umbral = existente.umbral_viatico if existente else UMBRAL_VIATICO_DEFAULT
-    aplica, kms_a_facturar = calcular_kms_a_facturar(total, umbral)
+    existente = existentes.get(_clave_tabla_km(s.empresa_nombre, s.sucursal_nombre))
     return PreviewFila(
+        coords_origen=destino.coords_origen,
+        latitud_destino=destino.coords[0],
+        longitud_destino=destino.coords[1],
+        latitud_base=base[0],
+        longitud_base=base[1],
+        **_identidad_fila(s, existente),
+        **_km_fila(ida, vuelta, existente),
+    )
+
+
+class _CamposIdentidad(TypedDict):
+    accion: str
+    tabla_km_id: UUID | None
+    siges_sucursal_id: int | None
+    empresa_nombre: str
+    sucursal_nombre: str
+    domicilio: str | None
+    localidad: str | None
+    provincia: str | None
+    id_costo_servicios: int | None
+
+
+def _identidad_fila(s: SigesSucursalCliente, existente: TablaKm | None) -> _CamposIdentidad:
+    """Qué fila toca el preview: actualizar la existente (conservando los nombres
+    que ya tiene cargados) o crear una nueva con los nombres de Siges."""
+    return _CamposIdentidad(
         accion=ACCION_ACTUALIZAR if existente else ACCION_CREAR,
         tabla_km_id=existente.id if existente else None,
         siges_sucursal_id=s.siges_sucursal_id,
@@ -200,11 +228,28 @@ def _armar_fila(
         domicilio=s.domicilio,
         localidad=s.localidad,
         provincia=s.provincia,
-        coords_origen=destino.coords_origen,
-        latitud_destino=destino.coords[0],
-        longitud_destino=destino.coords[1],
-        latitud_base=base[0],
-        longitud_base=base[1],
+        id_costo_servicios=s.id_costo_servicios,
+    )
+
+
+class _CamposKm(TypedDict):
+    kms_ida: float
+    kms_vuelta: float
+    kms_total: float
+    umbral_viatico: float
+    aplica_viatico: bool
+    kms_a_facturar: float
+    kms_recorrido_actual: float | None
+    kms_a_facturar_actual: float | None
+
+
+def _km_fila(ida: float, vuelta: float, existente: TablaKm | None) -> _CamposKm:
+    """Km propuestos (total ida+vuelta, convención Fase 0) contra el umbral de la
+    fila existente — o el default si es nueva — más los valores actuales para el diff."""
+    total = round(ida + vuelta, 3)
+    umbral = existente.umbral_viatico if existente else UMBRAL_VIATICO_DEFAULT
+    aplica, kms_a_facturar = calcular_kms_a_facturar(total, umbral)
+    return _CamposKm(
         kms_ida=round(ida, 3),
         kms_vuelta=round(vuelta, 3),
         kms_total=total,
@@ -213,5 +258,4 @@ def _armar_fila(
         kms_a_facturar=kms_a_facturar,
         kms_recorrido_actual=existente.kms_recorrido if existente else None,
         kms_a_facturar_actual=existente.kms_a_facturar if existente else None,
-        id_costo_servicios=s.id_costo_servicios,
     )

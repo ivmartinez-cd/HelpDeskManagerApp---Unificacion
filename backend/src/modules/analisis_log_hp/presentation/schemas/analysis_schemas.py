@@ -5,6 +5,10 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from src.modules.analisis_log_hp.domain.entities.incident import Incident
+from src.modules.analisis_log_hp.domain.entities.log_event import EnrichedEvent
+from src.modules.analisis_log_hp.domain.services.log_parser import ParserError
+
 
 class LogEventSchema(BaseModel):
     type: str
@@ -17,11 +21,24 @@ class LogEventSchema(BaseModel):
     code_description: str | None = None
     code_solution_url: str | None = None
 
+    @classmethod
+    def from_entity(cls, e: EnrichedEvent) -> LogEventSchema:
+        return cls(
+            type=e.type, code=e.code, timestamp=e.timestamp, counter=e.counter,
+            firmware=e.firmware, help_reference=e.help_reference,
+            code_severity=e.code_severity, code_description=e.code_description,
+            code_solution_url=e.code_solution_url,
+        )
+
 
 class ParserErrorSchema(BaseModel):
     line_number: int
     raw_line: str
     reason: str
+
+    @classmethod
+    def from_entity(cls, e: ParserError) -> ParserErrorSchema:
+        return cls(line_number=e.line_number, raw_line=e.raw_line, reason=e.reason)
 
 
 class IncidentSchema(BaseModel):
@@ -36,6 +53,16 @@ class IncidentSchema(BaseModel):
     counter_range: list[int]
     sds_link: str | None
     code_description: str | None = None
+
+    @classmethod
+    def from_entity(cls, i: Incident) -> IncidentSchema:
+        return cls(
+            id=i.id, code=i.code, classification=i.classification,
+            severity=i.severity, severity_weight=i.severity_weight,
+            occurrences=i.occurrences, start_time=i.start_time,
+            end_time=i.end_time, counter_range=list(i.counter_range),
+            sds_link=i.sds_link, code_description=i.code_description,
+        )
 
 
 class AnalysisRequest(BaseModel):

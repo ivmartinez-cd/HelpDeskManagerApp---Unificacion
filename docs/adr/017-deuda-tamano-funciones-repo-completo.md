@@ -92,3 +92,9 @@ herramienta que lo hiciera cumplir. Decisión:
    nota en esta ADR.
 3. Lo que sale del inventario por refactor se informa (`ℹ N entradas ya no exceden`) y se
    poda con `--update` en el siguiente commit que lo toque.
+
+**Poda del 2026-08-22 (misma jornada, después del gate)**: se refactorizaron las 13 funciones
+>30 líneas y las 2 clases >200 que habían entrado entre el 14/08 y el 22/08 (`analisis_log_hp`,
+`liquidaciones`, `insumos`, `turnos`, `Settings` en shared), con `make check` completo en
+verde antes y después y cobertura igual o mayor por módulo; el inventario pasó de 389 a 372
+entradas (360 funciones, 2 clases, 10 archivos frontend) regenerado con `--update`.

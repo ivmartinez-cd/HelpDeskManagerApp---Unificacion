@@ -86,28 +86,42 @@ def detect_sucursal_override(observaciones: str | None) -> SucursalOverride:
         return _SIN_AVISO
 
     try:
-        folded = _fold(text)
-        if not _ACTION_WORDS.search(folded):
-            return SucursalOverride(requiere_cambio=False, sucursal=None, observacion=text)
-
-        match = _SUCURSAL_WORD.search(folded)
-        if not match:
-            return SucursalOverride(requiere_cambio=False, sucursal=None, observacion=text)
-
-        candidate = text[match.end() :]
-        cut = len(candidate)
-        for ch in _STOP_CHARS:
-            idx = candidate.find(ch)
-            if idx != -1:
-                cut = min(cut, idx)
-        sucursal = candidate[:cut].strip(" \t-:") or None
-        return SucursalOverride(requiere_cambio=True, sucursal=sucursal, observacion=text)
+        return _analizar_observacion(text)
     except Exception:
-        logger.warning(
-            "detect_sucursal_override: fallo parseando observación, se avisa igual "
-            "(fail-open: un falso aviso sale más barato que un despacho al lugar "
-            "equivocado)",
-            extra={"observaciones": text},
-            exc_info=True,
-        )
-        return SucursalOverride(requiere_cambio=True, sucursal=None, observacion=text)
+        return _aviso_fail_open(text)
+
+
+def _aviso_fail_open(text: str) -> SucursalOverride:
+    """Se llama dentro del `except`: loguea el fallo (con traceback) y avisa igual."""
+    logger.warning(
+        "detect_sucursal_override: fallo parseando observación, se avisa igual "
+        "(fail-open: un falso aviso sale más barato que un despacho al lugar "
+        "equivocado)",
+        extra={"observaciones": text},
+        exc_info=True,
+    )
+    return SucursalOverride(requiere_cambio=True, sucursal=None, observacion=text)
+
+
+def _analizar_observacion(text: str) -> SucursalOverride:
+    """Camino feliz: busca verbo de despacho + "sucursal" y extrae el nombre que sigue."""
+    folded = _fold(text)
+    if not _ACTION_WORDS.search(folded):
+        return SucursalOverride(requiere_cambio=False, sucursal=None, observacion=text)
+
+    match = _SUCURSAL_WORD.search(folded)
+    if not match:
+        return SucursalOverride(requiere_cambio=False, sucursal=None, observacion=text)
+
+    sucursal = _extraer_nombre_sucursal(text[match.end() :])
+    return SucursalOverride(requiere_cambio=True, sucursal=sucursal, observacion=text)
+
+
+def _extraer_nombre_sucursal(candidate: str) -> str | None:
+    """Corta el texto que sigue a "sucursal" en el primer delimitador de `_STOP_CHARS`."""
+    cut = len(candidate)
+    for ch in _STOP_CHARS:
+        idx = candidate.find(ch)
+        if idx != -1:
+            cut = min(cut, idx)
+    return candidate[:cut].strip(" \t-:") or None

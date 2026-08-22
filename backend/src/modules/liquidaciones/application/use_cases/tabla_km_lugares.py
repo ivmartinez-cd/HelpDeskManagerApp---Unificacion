@@ -127,6 +127,20 @@ class ResolverCoordenadasFila:
         return actualizada
 
 
+@dataclass(frozen=True)
+class _Medicion:
+    """Lo que devolvió Google para una fila: base efectiva, destino y km por tramo."""
+
+    base: tuple[float, float]
+    destino: tuple[float, float]
+    ida: float
+    vuelta: float
+
+    @property
+    def total(self) -> float:
+        return round(self.ida + self.vuelta, 3)
+
+
 class RecalcularKmFila:
     def __init__(self, ports: TablaKmLugaresPorts) -> None:
         self._ports = ports
@@ -147,39 +161,37 @@ class RecalcularKmFila:
         ida, vuelta = tramos[0]
         if ida is None or vuelta is None:
             raise FilaSinCoordenadasError(tabla_km_id)
-        return await self._guardar(fila, base, destino, ida, vuelta)
+        return await self._guardar(fila, _Medicion(base, destino, ida, vuelta))
 
-    async def _guardar(
-        self,
-        fila: TablaKm,
-        base: tuple[float, float],
-        destino: tuple[float, float],
-        ida: float,
-        vuelta: float,
-    ) -> TablaKm:
-        total = round(ida + vuelta, 3)
-        aplica, kms_a_facturar = calcular_kms_a_facturar(total, fila.umbral_viatico)
+    async def _guardar(self, fila: TablaKm, medicion: _Medicion) -> TablaKm:
+        aplica, kms_a_facturar = calcular_kms_a_facturar(
+            medicion.total, fila.umbral_viatico
+        )
         actualizada = await self._ports.tabla_km.update_distancias(
             fila.id,
-            kms_ida=round(ida, 3),
-            kms_vuelta=round(vuelta, 3),
-            kms_recorrido=total,
+            kms_ida=round(medicion.ida, 3),
+            kms_vuelta=round(medicion.vuelta, 3),
+            kms_recorrido=medicion.total,
             aplica_viatico=aplica,
             kms_a_facturar=kms_a_facturar,
-            url_maps=maps_url_ida_vuelta(
-                base,
-                destino,
-                domicilio=fila.domicilio_cliente,
-                localidad=fila.localidad_cliente,
-                provincia=fila.provincia_cliente,
-            ),
-            latitud_destino=destino[0],
-            longitud_destino=destino[1],
+            url_maps=_url_maps_fila(fila, medicion),
+            latitud_destino=medicion.destino[0],
+            longitud_destino=medicion.destino[1],
             coords_origen=fila.coords_origen or "siges",
         )
         if actualizada is None:
             raise TablaKmNoEncontradaError(fila.id)
         return actualizada
+
+
+def _url_maps_fila(fila: TablaKm, medicion: _Medicion) -> str:
+    return maps_url_ida_vuelta(
+        medicion.base,
+        medicion.destino,
+        domicilio=fila.domicilio_cliente,
+        localidad=fila.localidad_cliente,
+        provincia=fila.provincia_cliente,
+    )
 
 
 def _resolver_base_recalculo(

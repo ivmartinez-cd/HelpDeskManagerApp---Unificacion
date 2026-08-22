@@ -116,26 +116,22 @@ def calculate_trend(
     return "estable"
 
 
-def diff_two_snapshots(
-    older_incidents: list[dict[str, Any]],
-    newer_incidents: list[dict[str, Any]],
-    diferencia_dias: int,
-) -> dict[str, Any]:
-    """Diff entre dos snapshots almacenados (sin re-parsear logs)."""
+class _SnapshotIncident:
+    """Adapta el dict de un incidente guardado a la forma que espera calculate_trend."""
 
-    class _Adapter:
-        def __init__(self, d: dict[str, Any]) -> None:
-            self.code = d.get("code", "")
-            self.occurrences = d.get("occurrences") or 0
-            self.severity = d.get("severity", "INFO")
+    def __init__(self, d: dict[str, Any]) -> None:
+        self.code = d.get("code", "")
+        self.occurrences = d.get("occurrences") or 0
+        self.severity = d.get("severity", "INFO")
 
-    older_by_code = {i["code"]: i for i in older_incidents}
-    newer_by_code = {i["code"]: i for i in newer_incidents}
-    older_codes = set(older_by_code)
-    newer_codes = set(newer_by_code)
 
+def _occurrence_changes(
+    older_by_code: dict[str, dict[str, Any]],
+    newer_by_code: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Cambios de ocurrencias entre los códigos presentes en ambos snapshots."""
     cambios: list[dict[str, Any]] = []
-    for code in older_codes & newer_codes:
+    for code in set(older_by_code) & set(newer_by_code):
         so = older_by_code[code].get("occurrences") or 0
         co = newer_by_code[code].get("occurrences") or 0
         if so != co:
@@ -143,13 +139,25 @@ def diff_two_snapshots(
                 "code": code, "saved_occurrences": so,
                 "current_occurrences": co, "delta": co - so,
             })
+    return cambios
 
+
+def diff_two_snapshots(
+    older_incidents: list[dict[str, Any]],
+    newer_incidents: list[dict[str, Any]],
+    diferencia_dias: int,
+) -> dict[str, Any]:
+    """Diff entre dos snapshots almacenados (sin re-parsear logs)."""
+    older_by_code = {i["code"]: i for i in older_incidents}
+    newer_by_code = {i["code"]: i for i in newer_incidents}
+    older_codes = set(older_by_code)
+    newer_codes = set(newer_by_code)
     diff: dict[str, Any] = {
         "codigos_nuevos": list(newer_codes - older_codes),
         "codigos_desaparecidos": list(older_codes - newer_codes),
-        "cambios_ocurrencias": cambios,
+        "cambios_ocurrencias": _occurrence_changes(older_by_code, newer_by_code),
         "diferencia_dias": diferencia_dias,
     }
-    current_map = {i["code"]: _Adapter(i) for i in newer_incidents}
+    current_map = {i["code"]: _SnapshotIncident(i) for i in newer_incidents}
     diff["tendencia"] = calculate_trend(older_incidents, current_map, diff)
     return diff

@@ -45,34 +45,12 @@ async def preview_analysis(
     uc = AnalyzeLog(get_error_code_repo(db))
     result = await uc.execute(body.logs)
     return AnalysisResponse(
-        events=[
-            LogEventSchema(
-                type=e.type, code=e.code, timestamp=e.timestamp, counter=e.counter,
-                firmware=e.firmware, help_reference=e.help_reference,
-                code_severity=e.code_severity, code_description=e.code_description,
-                code_solution_url=e.code_solution_url,
-            )
-            for e in result.events
-        ],
-        incidents=[
-            IncidentSchema(
-                id=i.id, code=i.code, classification=i.classification,
-                severity=i.severity, severity_weight=i.severity_weight,
-                occurrences=i.occurrences, start_time=i.start_time,
-                end_time=i.end_time, counter_range=list(i.counter_range),
-                sds_link=i.sds_link, code_description=i.code_description,
-            )
-            for i in result.analysis.incidents
-        ],
+        events=[LogEventSchema.from_entity(e) for e in result.events],
+        incidents=[IncidentSchema.from_entity(i) for i in result.analysis.incidents],
         global_severity=result.analysis.global_severity,
         events_count=result.analysis.events_count,
         codes_new=result.codes_new,
-        errors=[
-            ParserErrorSchema(
-                line_number=e.line_number, raw_line=e.raw_line, reason=e.reason
-            )
-            for e in result.report.errors
-        ],
+        errors=[ParserErrorSchema.from_entity(e) for e in result.report.errors],
     )
 
 

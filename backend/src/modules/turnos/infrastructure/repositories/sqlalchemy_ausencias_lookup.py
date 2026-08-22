@@ -1,7 +1,8 @@
 import uuid
 from datetime import date
+from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import Row, Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.turnos.domain.repositories.ausencias_lookup import (
@@ -69,36 +70,46 @@ class SqlAlchemyAusenciasLookup:
     async def _bajas(
         self, user_ids: list[uuid.UUID], desde: date, hasta: date
     ) -> list[AusenciaAprobada]:
-        stmt = (
-            select(
-                VacacionesEmpleadoModel.user_id,
-                VacacionesAusenciaModel.start_date,
-                VacacionesAusenciaModel.end_date,
-                VacacionesAusenciaModel.tipo,
-                VacacionesAusenciaModel.hora_desde,
-                VacacionesAusenciaModel.hora_hasta,
-            )
-            .join(
-                VacacionesAusenciaModel,
-                VacacionesAusenciaModel.empleado_id == VacacionesEmpleadoModel.id,
-            )
-            .where(
-                VacacionesEmpleadoModel.user_id.in_(user_ids),
-                VacacionesAusenciaModel.status == _APROBADA,
-                VacacionesAusenciaModel.start_date <= hasta,
-                VacacionesAusenciaModel.end_date >= desde,
-            )
-        )
+        stmt = _bajas_aprobadas_stmt(user_ids, desde, hasta)
         rows = (await self._session.execute(stmt)).all()
-        return [
-            AusenciaAprobada(
-                user_id=user_id,
-                desde=start,
-                hasta=end,
-                tipo=tipo,
-                hora_desde=hora_desde,
-                hora_hasta=hora_hasta,
-            )
-            for user_id, start, end, tipo, hora_desde, hora_hasta in rows
-            if user_id is not None
-        ]
+        return [_baja_desde_fila(row) for row in rows if row.user_id is not None]
+
+
+# Orden de columnas = orden de desempaquetado en `_baja_desde_fila`.
+_BAJA_COLUMNAS = (
+    VacacionesEmpleadoModel.user_id,
+    VacacionesAusenciaModel.start_date,
+    VacacionesAusenciaModel.end_date,
+    VacacionesAusenciaModel.tipo,
+    VacacionesAusenciaModel.hora_desde,
+    VacacionesAusenciaModel.hora_hasta,
+)
+
+
+def _bajas_aprobadas_stmt(user_ids: list[uuid.UUID], desde: date, hasta: date) -> Select[Any]:
+    """Bajas APROBADAS de empleados vinculados que se solapan con [desde, hasta]."""
+    return (
+        select(*_BAJA_COLUMNAS)
+        .join(
+            VacacionesAusenciaModel,
+            VacacionesAusenciaModel.empleado_id == VacacionesEmpleadoModel.id,
+        )
+        .where(
+            VacacionesEmpleadoModel.user_id.in_(user_ids),
+            VacacionesAusenciaModel.status == _APROBADA,
+            VacacionesAusenciaModel.start_date <= hasta,
+            VacacionesAusenciaModel.end_date >= desde,
+        )
+    )
+
+
+def _baja_desde_fila(row: Row[Any]) -> AusenciaAprobada:
+    user_id, start, end, tipo, hora_desde, hora_hasta = row
+    return AusenciaAprobada(
+        user_id=user_id,
+        desde=start,
+        hasta=end,
+        tipo=tipo,
+        hora_desde=hora_desde,
+        hora_hasta=hora_hasta,
+    )

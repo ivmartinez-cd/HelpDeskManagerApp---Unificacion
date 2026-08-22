@@ -411,3 +411,24 @@ Gates finales: `make check` → lint-imports 26/26 · ruff · mypy · **2106 uni
 `tsc` + `eslint --max-warnings=0` en verde. Sigue abierto, a propósito: refactor oportunista de
 las 13 funciones nuevas >30 líneas y las 2 clases >200 (cubierto por el addendum de ADR-017);
 `analisis_log_hp/presentation` 67.6 % está sobre el mínimo pero sin tests propios de router.
+
+---
+
+## Addendum 3 (2026-08-22): refactor §4 de lo que entró sin gate + tests de router
+
+- Las **13 funciones nuevas >30 líneas** y las **2 clases >200** de la Fase 1 quedaron bajo
+  el límite, sin cambiar firmas públicas ni contratos: `_capture_one` 48→15, `search_device`
+  43→14, `refresh_hp_cache` 42→16, `preview_analysis` 37→15, `diff_two_snapshots` 37→19,
+  `bulk_update_solution_urls` 32→17 (analisis_log_hp); `_reconciliar` 41→18,
+  `_sincronizar_prestador` 32→19 (anidamiento 4→3), `execute` 54→18, `_armar_fila` 37→18,
+  `_guardar` 31→19 (5→2 params), `update_distancias` 36→24 (resto es la firma del Protocol),
+  clase `SqlAlchemyTablaKmRepository` 212→177 (liquidaciones); `detect_sucursal_override`
+  39→17 (insumos); `_bajas` 36→6 con SQL compilado idéntico (turnos); clase `Settings` 219→16
+  vía mixins por tema en `settings_groups.py`, con `model_fields`/`model_config` verificados
+  idénticos antes/después (113 campos, mismos nombres de entorno).
+- `analisis_log_hp/presentation` tiene tests de router propios
+  (`tests/integration/test_analisis_log_hp_routers.py`, 14 casos: 401/403 por router, 400
+  `VALIDATION_ERROR`, caminos felices con fakes) → 75.0 %.
+- Gates: `make check` → 26/26 contratos · ruff · mypy · **2121 unit** · **316 integración** ·
+  sizes ✔ (inventario podado a 372, ver ADR-017). Cobertura por módulo igual o mayor
+  (liquidaciones infra 81.8→84.9, analisis_log_hp infra 98.5→98.9).

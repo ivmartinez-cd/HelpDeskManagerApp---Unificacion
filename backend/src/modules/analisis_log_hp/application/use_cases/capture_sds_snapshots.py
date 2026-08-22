@@ -14,15 +14,21 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any
 
 from src.modules.analisis_log_hp.application.use_cases.saved_analyses import (
     _build_telemetry,
     incident_to_summary,
 )
+from src.modules.analisis_log_hp.domain.entities.incident import AnalysisResult
+from src.modules.analisis_log_hp.domain.entities.saved_analysis import SavedAnalysis
 from src.modules.analisis_log_hp.domain.repositories.error_code_repository import (
     ErrorCodeRepository,
 )
-from src.modules.analisis_log_hp.domain.repositories.hp_portal_gateway import HpPortalGateway
+from src.modules.analisis_log_hp.domain.repositories.hp_portal_gateway import (
+    EventLogsResult,
+    HpPortalGateway,
+)
 from src.modules.analisis_log_hp.domain.repositories.saved_analysis_repository import (
     SavedAnalysisRepository,
 )
@@ -77,43 +83,10 @@ class CaptureSdsSnapshots:
 
     async def _capture_one(self, serial: str) -> SnapshotCaptureResult:
         try:
-            device = await self._portal.search_device(serial.strip().upper())
-            device_id = device["id"]
-
-            await self._portal.refresh_hp_cache(device_id)
-
-            logs = await self._portal.fetch_event_logs(device_id, days=30)
-            if logs.help_urls:
-                try:
-                    await self._error_code_repo.bulk_update_solution_urls(logs.help_urls)
-                except Exception as exc:
-                    logger.warning(
-                        "capture_sds: no se pudo actualizar catálogo serial=%s",
-                        serial, exc_info=exc,
-                    )
-
-            report = parse_log_text(normalize_log_text(logs.tsv))
-            unique_codes = list(dict.fromkeys(e.code for e in report.events))
-            catalog = await self._error_code_repo.get_by_codes(unique_codes)
-            events = enrich_events(report.events, catalog)
-            analysis = analyze_events(events)
-
+            analysis = await self._analyze_device(serial)
             if not analysis.incidents:
                 return SnapshotCaptureResult(serial=serial, skipped=True)
-
-            now = datetime.now(UTC)
-            turno = "mañana" if now.hour < 14 else "tarde"
-            name = f"Auto - {serial} - {now.strftime('%Y-%m-%d')} ({turno})"
-            summaries = [incident_to_summary(i) for i in analysis.incidents]
-            saved = await self._repo.create(
-                name=name,
-                equipment_identifier=serial,
-                incidents=summaries,
-                global_severity=analysis.global_severity,
-            )
-            await self._telemetry.add_events(
-                _build_telemetry(serial, saved.id, list(analysis.incidents))
-            )
+            saved = await self._persist_snapshot(serial, analysis)
             return SnapshotCaptureResult(
                 serial=serial,
                 skipped=False,
@@ -123,3 +96,49 @@ class CaptureSdsSnapshots:
         except Exception as exc:
             logger.error("capture_sds: falló para serial=%s", serial, exc_info=exc)
             return SnapshotCaptureResult(serial=serial, skipped=False, error=str(exc))
+
+    async def _fetch_logs(self, serial: str) -> EventLogsResult:
+        """Resuelve el equipo en el portal, refresca su caché HP y baja los logs."""
+        device = await self._portal.search_device(serial.strip().upper())
+        device_id = device["id"]
+        await self._portal.refresh_hp_cache(device_id)
+        logs = await self._portal.fetch_event_logs(device_id, days=30)
+        await self._update_catalog(serial, logs.help_urls)
+        return logs
+
+    async def _update_catalog(self, serial: str, help_urls: dict[str, dict[str, Any]]) -> None:
+        """Falla del catálogo no frena la captura: se loguea y se sigue."""
+        if not help_urls:
+            return
+        try:
+            await self._error_code_repo.bulk_update_solution_urls(help_urls)
+        except Exception as exc:
+            logger.warning(
+                "capture_sds: no se pudo actualizar catálogo serial=%s", serial, exc_info=exc
+            )
+
+    async def _analyze_device(self, serial: str) -> AnalysisResult:
+        logs = await self._fetch_logs(serial)
+        report = parse_log_text(normalize_log_text(logs.tsv))
+        unique_codes = list(dict.fromkeys(e.code for e in report.events))
+        catalog = await self._error_code_repo.get_by_codes(unique_codes)
+        events = enrich_events(report.events, catalog)
+        return analyze_events(events)
+
+    async def _persist_snapshot(self, serial: str, analysis: AnalysisResult) -> SavedAnalysis:
+        summaries = [incident_to_summary(i) for i in analysis.incidents]
+        saved = await self._repo.create(
+            name=_auto_snapshot_name(serial, datetime.now(UTC)),
+            equipment_identifier=serial,
+            incidents=summaries,
+            global_severity=analysis.global_severity,
+        )
+        await self._telemetry.add_events(
+            _build_telemetry(serial, saved.id, list(analysis.incidents))
+        )
+        return saved
+
+
+def _auto_snapshot_name(serial: str, now: datetime) -> str:
+    turno = "mañana" if now.hour < 14 else "tarde"
+    return f"Auto - {serial} - {now.strftime('%Y-%m-%d')} ({turno})"

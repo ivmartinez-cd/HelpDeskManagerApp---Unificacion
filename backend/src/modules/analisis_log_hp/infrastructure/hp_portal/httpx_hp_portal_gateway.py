@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import re
 import time
 from typing import Any
 
@@ -26,8 +25,11 @@ from lxml import html
 
 from src.modules.analisis_log_hp.domain.repositories.hp_portal_gateway import EventLogsResult
 from src.modules.analisis_log_hp.infrastructure.hp_portal.html_parser import (
+    extract_device_id,
     extract_help_urls,
+    extract_model_name,
     html_to_tsv,
+    parse_cache_refresh_form,
     parse_hp_operations,
 )
 from src.shared.domain.errors import ExternalServiceError
@@ -105,41 +107,12 @@ class HttpxHpPortalGateway:
             params=[("src", "powerSearch"), ("q", serial), ("s", "devices")],
         )
         resp.raise_for_status()
-
-        model_name = "Generico / Desconocido"
-        try:
-            m = re.search(
-                r'<a[^>]*?class="[^"]*?entity-name[^"]*?model[^"]*?"[^>]*?>\s*([^<]+?)\s*</a>',
-                resp.text, re.IGNORECASE,
-            )
-            if m:
-                model_name = m.group(1).strip()
-            else:
-                tree = html.fromstring(resp.text)
-                links = tree.xpath(
-                    '//a[contains(@class,"entity-name") and contains(@class,"model")]'
-                )
-                if links:
-                    model_name = links[0].text_content().strip()
-            model_name = " ".join(model_name.split())
-        except Exception as exc:
-            logger.warning("search_device: no se pudo extraer model_name", exc_info=exc)
-
-        device_id: str | None = None
-        url_str = str(resp.url)
-        if "/devices/" in url_str:
-            m2 = re.search(r"/devices/(\d+)", url_str)
-            if m2:
-                device_id = m2.group(1)
-        if not device_id:
-            matches = list(set(re.findall(r"/devices/(\d+)", resp.text)))
-            if matches:
-                device_id = matches[0]
+        model_name = extract_model_name(resp.text)
+        device_id = extract_device_id(str(resp.url), resp.text)
         if not device_id:
             raise ExternalServiceError(
                 f"Equipo con serial {serial!r} no encontrado en el portal SDS"
             )
-
         return {"id": device_id, "model_name": model_name}
 
     async def fetch_event_logs(self, device_id: str, days: int = 30) -> EventLogsResult:
@@ -192,34 +165,8 @@ class HttpxHpPortalGateway:
 
     async def refresh_hp_cache(self, device_id: str) -> list[dict[str, Any]]:
         await self._ensure_session()
-        try:
-            baseline_ops = await self.get_hp_operations(device_id)
-        except ExternalServiceError:
-            baseline_ops = []
-        baseline = [
-            {"operation": o["operation"], "sent": o.get("sent", "")}
-            for o in baseline_ops
-            if o.get("operation") in CACHE_OP_TYPES
-        ]
-
-        page_resp = await self._client.get(
-            f"{_BASE}/devices/{device_id}/hpsmart",
-            headers=self._ajax_headers(),
-        )
-        if page_resp.status_code != 200:
-            raise ExternalServiceError(f"Error al cargar panel hpsmart ({page_resp.status_code})")
-
-        tree = html.fromstring(page_resp.text)
-        forms = tree.xpath('//form[contains(@action, "/hpsmart/refresh/hpcache")]')
-        if not forms:
-            raise ExternalServiceError(
-                "La acción de actualización de caché no está disponible para este dispositivo"
-            )
-        action = forms[0].get("action") or ""
-        tokens = forms[0].xpath('.//input[@name="__csrftoken"]/@value')
-        action_url = action if action.startswith("http") else f"{_ORIGIN}{action}"
-        data = {"__csrftoken": tokens[0]} if tokens else {}
-
+        baseline = await self._cache_ops_baseline(device_id)
+        action_url, data = await self._load_cache_refresh_form(device_id)
         resp = await self._client.post(
             action_url, data=data,
             headers={
@@ -232,6 +179,32 @@ class HttpxHpPortalGateway:
         if resp.status_code not in (200, 204):
             raise ExternalServiceError(f"Error al disparar refresh de caché ({resp.status_code})")
         return baseline
+
+    async def _cache_ops_baseline(self, device_id: str) -> list[dict[str, Any]]:
+        """Operaciones de caché vigentes antes del refresh (vacío si no se pueden leer)."""
+        try:
+            baseline_ops = await self.get_hp_operations(device_id)
+        except ExternalServiceError as exc:
+            logger.warning(
+                "refresh_hp_cache: sin baseline de operaciones device_id=%s", device_id,
+                exc_info=exc,
+            )
+            baseline_ops = []
+        return [
+            {"operation": o["operation"], "sent": o.get("sent", "")}
+            for o in baseline_ops
+            if o.get("operation") in CACHE_OP_TYPES
+        ]
+
+    async def _load_cache_refresh_form(self, device_id: str) -> tuple[str, dict[str, str]]:
+        """(action_url, data) del formulario de refresh de caché del panel hpsmart."""
+        page_resp = await self._client.get(
+            f"{_BASE}/devices/{device_id}/hpsmart",
+            headers=self._ajax_headers(),
+        )
+        if page_resp.status_code != 200:
+            raise ExternalServiceError(f"Error al cargar panel hpsmart ({page_resp.status_code})")
+        return parse_cache_refresh_form(page_resp.text, origin=_ORIGIN)
 
     async def fetch_solution_content(self, url: str) -> str | None:
         await self._ensure_session()

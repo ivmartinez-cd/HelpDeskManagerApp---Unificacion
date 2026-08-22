@@ -1,12 +1,19 @@
-"""Parseo HTML/XML del portal SDS: tabla de event logs → TSV, URLs de ayuda y
-tabla de operaciones HP Smart."""
+"""Parseo HTML/XML del portal SDS: tabla de event logs → TSV, URLs de ayuda,
+tabla de operaciones HP Smart, resultado de búsqueda por serial y form de
+refresh de caché."""
+
+import pytest
 
 from src.modules.analisis_log_hp.infrastructure.hp_portal.html_parser import (
     _get_html_content,
+    extract_device_id,
     extract_help_urls,
+    extract_model_name,
     html_to_tsv,
+    parse_cache_refresh_form,
     parse_hp_operations,
 )
+from src.shared.domain.errors import ExternalServiceError
 
 _TABLA = """
 <table class="data"><thead><tr><th>Tipo</th></tr></thead><tbody>
@@ -89,3 +96,51 @@ class TestParseHpOperations:
 
     def test_entrada_vacia_devuelve_lista_vacia(self) -> None:
         assert parse_hp_operations("") == []
+
+
+class TestExtractModelName:
+    def test_por_regex_normaliza_espacios(self) -> None:
+        page = '<a class="entity-name model" href="#">  HP   LaserJet\n M404 </a>'
+        assert extract_model_name(page) == "HP LaserJet M404"
+
+    def test_por_xpath_si_el_regex_no_matchea(self) -> None:
+        page = '<a class="model entity-name"><span>Modelo</span> B</a>'
+        assert extract_model_name(page) == "Modelo B"
+
+    def test_sin_link_de_modelo_devuelve_default(self) -> None:
+        assert extract_model_name("<p>nada</p>") == "Generico / Desconocido"
+
+    def test_html_no_parseable_devuelve_default_sin_propagar(self) -> None:
+        assert extract_model_name("") == "Generico / Desconocido"
+
+
+class TestExtractDeviceId:
+    def test_prefiere_la_url_final_de_la_redireccion(self) -> None:
+        assert extract_device_id("https://x/devices/4242/hpsmart", 'href="/devices/1"') == "4242"
+
+    def test_url_sin_id_numerico_cae_al_html(self) -> None:
+        assert extract_device_id("https://x/devices/abc", 'href="/devices/99"') == "99"
+
+    def test_sin_id_en_ningun_lado_devuelve_none(self) -> None:
+        assert extract_device_id("https://x/search", "<p>sin resultados</p>") is None
+
+
+class TestParseCacheRefreshForm:
+    def test_action_relativa_se_vuelve_absoluta_con_csrf(self) -> None:
+        page = (
+            '<form action="/PortalWeb/devices/7/hpsmart/refresh/hpcache">'
+            '<input name="__csrftoken" value="tok"/></form>'
+        )
+        assert parse_cache_refresh_form(page, origin="https://o") == (
+            "https://o/PortalWeb/devices/7/hpsmart/refresh/hpcache", {"__csrftoken": "tok"}
+        )
+
+    def test_action_absoluta_sin_csrf(self) -> None:
+        page = '<form action="https://h/hpsmart/refresh/hpcache"></form>'
+        assert parse_cache_refresh_form(page, origin="https://o") == (
+            "https://h/hpsmart/refresh/hpcache", {}
+        )
+
+    def test_sin_formulario_falla(self) -> None:
+        with pytest.raises(ExternalServiceError, match="no está disponible"):
+            parse_cache_refresh_form("<div/>", origin="https://o")
