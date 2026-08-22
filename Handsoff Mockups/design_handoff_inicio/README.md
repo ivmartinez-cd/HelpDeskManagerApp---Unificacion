@@ -152,6 +152,30 @@ por archivo) sin backend nuevo: cada card consume endpoints ya migrados.
   Siges no responde, badge "N sin cruce" + modal Resolver, y gating por módulo (cada card/KPI
   solo aparece si el usuario ve ese módulo).
 
+## Decisiones de implementación (rediseño 2026-08-22)
+
+Análisis y plan en `docs/MASTER_PROMPT_REDISENO_DASHBOARD_INICIO.md`; capturas "antes" en
+`docs/home/capturas-analisis-2026-08-22/`. Motivo: la pantalla dejaba 45–60 % del alto vacío,
+las pestañas ocultaban 3/4 del estado y en 1366×768 ya había overflow. Lo que cambia respecto
+de este handoff (y de la implementación del 2026-08-14):
+
+- **Layout de viewport fijo** (`dashboard-registry.ts` → `LAYOUT`, `dashboard-grid.tsx`): tres
+  filas de alto proporcional; cada card llena su celda y scrollea adentro. Sin pestañas en
+  escritorio; por debajo de `xl` las filas se apilan y scrollea el `<main>`.
+- **Vuelve la franja de KPIs** (`kpi-tiles.ts`, `kpi-strip.tsx`), con el dato actual y su
+  contexto (sin sparklines inventadas; la única variación real es la de SLA).
+- **Fusiones**: "Cierre mensual" + "Pendientes por antigüedad" → *Facturación sin cerrar*;
+  "Contadores por operador" + "Clientes por operador · semana" → *Operadores*; "Distribución
+  del parque" → KPI *Parque*. Las donas se reemplazan por barras ordenadas (longitud, no
+  ángulo) y el % de SLA por número + barra.
+- **Un solo shell** (`dashboard-card.tsx`): ícono 28, título 14, cuerpo con scroll interno,
+  pie con frescura unificada (`Freshness`) y link textual; botón primario solo en WhatsApp y
+  solo con chats esperando. Colores semánticos por tokens (`--success/--warning/--destructive`),
+  Chart.js lee `--chart-tick/--chart-grid` (antes `rgba(255,255,255,…)`, invisible en claro).
+- Accesos directos pasan a chips de navegación en el encabezado; el banner personal de turno
+  vive en el header de "Turnos del día" y el de WhatsApp dentro de su card.
+- Refresco automático de todos los datos cada 5 min (`use-dashboard-data.ts`).
+
 ## Archivos
 ```
 design_handoff_inicio/
