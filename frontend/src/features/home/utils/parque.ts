@@ -31,7 +31,3 @@ export function agruparParque(resumen: PrestadoresResumen): ParqueFila[] {
     return b.valor - a.valor;
   });
 }
-
-export function totalParque(resumen: PrestadoresResumen): number {
-  return agruparParque(resumen).reduce((sum, f) => sum + f.valor, 0);
-}

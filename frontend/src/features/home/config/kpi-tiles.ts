@@ -1,7 +1,6 @@
 import { nivelEspera, textoEspera } from "@/features/wati/utils/espera";
 import type { DashboardData } from "../hooks/use-dashboard-data";
 import { AGING_BUCKETS, fmtInt, fmtPct } from "../utils/inicio-format";
-import { totalParque } from "../utils/parque";
 import type { ModuleAccess } from "./dashboard-registry";
 
 export type KpiTone = "neutral" | "ok" | "warn" | "bad";
@@ -126,37 +125,17 @@ function kpiLiquidaciones(d: DashboardData): KpiTile {
   );
 }
 
-function kpiClientesHoy(d: DashboardData): KpiTile {
-  const n = d.calendario.data?.hoy.length ?? 0;
-  return tile(
-    { id: "clientes-hoy", label: "Clientes hoy", href: "/contadores/calendario" },
-    d.calendario,
-    { value: fmtInt(n), context: n === 1 ? "visita planificada" : "visitas planificadas", tone: "neutral" },
-  );
-}
-
-function kpiParque(d: DashboardData): KpiTile {
-  const total = d.parque.data ? totalParque(d.parque.data) : 0;
-  return tile(
-    { id: "parque", label: "Parque", href: "/prestadores" },
-    d.parque,
-    { value: fmtInt(total), context: "impresoras en PST activos", tone: "neutral" },
-  );
-}
-
-/** Franja de estado de Inicio: un tile por módulo visible, en orden de
- * urgencia operativa. Sin historia inventada: cada tile muestra el dato
+/** Franja de estado de Inicio: solo lo accionable (5 tiles como máximo,
+ * feedback TL 2026-08-22), en orden de urgencia operativa. Sin historia inventada: cada tile muestra el dato
  * actual y su contexto; la única variación real es la de SLA (mes anterior). */
 export function buildKpiTiles(d: DashboardData, access: ModuleAccess): KpiTile[] {
   const tiles: (KpiTile | null)[] = [
     access.wati ? kpiWhatsapp(d) : null,
     access.insumos ? kpiInsumos(d) : null,
-    access.sla ? kpiPendientesCerrar(d) : null,
     access.contadores ? kpiFacturacion(d) : null,
+    access.sla ? kpiPendientesCerrar(d) : null,
     access.sla ? kpiSla(d) : null,
     access.liquidaciones ? kpiLiquidaciones(d) : null,
-    access.contadores ? kpiClientesHoy(d) : null,
-    access.cardParque ? kpiParque(d) : null,
   ];
   return tiles.filter((t): t is KpiTile => t !== null);
 }

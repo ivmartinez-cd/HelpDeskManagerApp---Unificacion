@@ -12,6 +12,7 @@ import { FacturacionSinCerrarCard } from "./facturacion-sin-cerrar-card";
 import { InsumosSinCargarCard } from "./insumos-sin-cargar-card";
 import { LiquidacionesPendientesCard } from "./liquidaciones-pendientes-card";
 import { OperadoresCard } from "./operadores-card";
+import { ParqueCard } from "./parque-card";
 import { TurnosTimelineCard } from "./turnos-timeline-card";
 
 // La única card que sigue tirando de chart.js (sparkline de tendencia) va
@@ -39,6 +40,7 @@ export function CardSlot({
     contadoresResumen,
     pendientesPeriodo,
     slaHistoria,
+    parque,
     pendientesResumen,
     insumosDashboard,
     liquidacionesPendientes,
@@ -154,6 +156,15 @@ export function CardSlot({
           loading={proximosEquipo.loading}
           error={proximosEquipo.error}
           onRetry={proximosEquipo.refetch}
+        />
+      );
+    case "parque":
+      return (
+        <ParqueCard
+          resumen={parque.data}
+          loading={parque.loading}
+          error={parque.error}
+          onRetry={parque.refetch}
         />
       );
     default:

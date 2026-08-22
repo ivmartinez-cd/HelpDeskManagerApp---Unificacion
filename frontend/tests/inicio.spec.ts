@@ -195,4 +195,30 @@ test.describe("Inicio — cabe en la pantalla sin scroll", () => {
       });
     }
   }
+
+  // La vista "Seguimiento" (SLA, Operadores, Pendientes a cerrar,
+  // Liquidaciones, Equipo, Parque) cumple la misma regla.
+  for (const vp of [VIEWPORTS[0], VIEWPORTS[3]]) {
+    test(`Seguimiento · ${vp.width}x${vp.height}`, async ({ page }) => {
+      await page.setViewportSize(vp);
+      await mockTurnos(page, [SHIFT_PROPIO_INSUMOS]);
+      await mockAccesos(page, []);
+      await page.goto("/");
+      await page.getByRole("radio", { name: "Seguimiento" }).click();
+      await expect(page.getByTestId("dashboard-grid")).toBeVisible();
+      await expect(page.getByRole("status", { name: "Cargando" })).toHaveCount(0);
+      // La franja de KPIs sigue visible: el estado global no se esconde.
+      await expect(page.getByTestId("kpi-strip")).toBeVisible();
+      const medidas = await page.evaluate(() => {
+        const main = document.querySelector("main");
+        const grid = document.querySelector('[data-testid="dashboard-grid"]');
+        return {
+          main: main ? main.scrollHeight - main.clientHeight : 0,
+          grid: grid ? grid.scrollHeight - grid.clientHeight : 0,
+        };
+      });
+      expect(medidas.main, "scroll de <main>").toBeLessThanOrEqual(0);
+      expect(medidas.grid, "overflow del grid").toBeLessThanOrEqual(0);
+    });
+  }
 });

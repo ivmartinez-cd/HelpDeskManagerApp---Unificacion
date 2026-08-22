@@ -256,18 +256,43 @@ grid y la franja KPI no tienen estado intermedio funcional). Archivos:
 Verificación "después" (Playwright contra el contenedor real, superadmin, datos reales;
 capturas `despues-*.png` en `docs/home/capturas-analisis-2026-08-22/`):
 
-| Resolución | Scroll página / main / grid | Alto vacío | Cards con scroll interno |
+| Resolución | Scroll página / main / grid | Alto vacío | Cards con scroll interno (vista Hoy / Seguimiento) |
 |---|---|---|---|
-| 1920×1080 | 0 / 0 / 0 | 0 | Clientes de hoy (lista), Facturación (lista "y N más") |
-| 1536×864 | 0 / 0 / 0 | 0 | + Turnos (leyenda), SLA (tendencia), Operadores (heatmap) |
-| 1440×900 | 0 / 0 / 0 | 0 | ídem |
-| 1366×768 | 0 / 0 / 0 | 0 | ídem + Insumos, Pendientes a cerrar (listas) |
-| 1280×720 | 0 / 0 / 0 | 0 | ídem |
+| 1920×1080 | 0 / 0 / 0 | 0 | ninguna / ninguna |
+| 1536×864 | 0 / 0 / 0 | 0 | Clientes de hoy, Facturación (listas) / ninguna |
+| 1440×900 | 0 / 0 / 0 | 0 | ídem / ninguna |
+| 1366×768 | 0 / 0 / 0 | 0 | ídem / ninguna |
+| 1280×720 | 0 / 0 / 0 | 0 | ídem / Operadores (heatmap) |
 
-Igual en claro y oscuro. Limitación conocida: por debajo de ~900 px de alto la pantalla es
+(Medido con las dos vistas del ajuste de abajo; `despues-results.json` tiene el detalle por
+card.) Igual en claro y oscuro. Limitación conocida: por debajo de ~900 px de alto la pantalla es
 densa — el encabezado, los subtítulos y el ícono de cada card se compactan (`short:`) y lo
 que no entra scrollea adentro de su card; la regla "sin scroll de página" se cumple en todas.
 `tsc`, eslint y los 16 tests de `inicio.spec.ts` en verde.
+
+### Ajuste por feedback de la TL (2026-08-22, mismo día): "mucha info de golpe"
+
+Con 8 tiles + 10 paneles del mismo peso en una pantalla la TL pidió algo más ordenado. Se
+aplicó progressive disclosure sin volver a las pestañas por módulo:
+
+- **Dos vistas** (`VIEWS` en `dashboard-registry.ts`, `SegmentedControl` bajo la franja KPI,
+  última elección recordada en `localStorage["inicio.vista"]`): **Hoy** = Turnos · Clientes de
+  hoy · WhatsApp · Insumos · Facturación sin cerrar; **Seguimiento** = SLA · Operadores ·
+  Pendientes a cerrar · Liquidaciones · Equipo · Parque (la dona del parque vuelve como card de
+  barras, ya no como KPI). La **franja de KPIs queda visible en las dos vistas**: el estado
+  global nunca se esconde, que era la objeción a las pestañas.
+- **Franja KPI de 5** (solo lo accionable): WhatsApp · Insumos · Facturación · Pend. a cerrar ·
+  SLA. Fuera: Clientes hoy (ya es card) y Parque (dato estático).
+- **Paneles sin novedades se callan** (`config/card-quiet.ts` + `components/quiet-strip.tsx`):
+  WhatsApp 0, Insumos 0, Facturación todo cerrado, Pendientes a cerrar 0, Liquidaciones 0,
+  Equipo sin agenda bajan a una tira "Sin novedades ✓ …" al pie de la vista y las demás
+  cards ocupan su lugar. Solo con dato cargado y sin error; mientras carga o si falló, la card
+  se muestra normal.
+- Tests: +2 casos de no-scroll para la vista Seguimiento (1920×1080 y 1366×768) que además
+  verifican que la franja KPI siga visible.
+- Siguiente paso sugerido (no hecho): personalización por usuario (qué paneles ve cada uno y
+  vista por defecto), primero en `localStorage`, después como preferencia en DB (mismo
+  patrón que `docs/MASTER_PROMPT_NOTA_PERSONAL_INICIO.md`).
 
 ## Anexo A — Diagnóstico detallado de la pantalla actual
 

@@ -1,722 +1,862 @@
 {
   "results": [
     {
+      "vista": "hoy",
       "size": "1920x1080",
       "theme": "light",
-      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-1920x1080-light.png",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-hoy-1920x1080-light.png",
       "dark": false,
       "docOverflow": 0,
       "mainOverflow": 0,
       "gridOverflow": 0,
-      "gridH": 853,
+      "gridH": 755,
       "cards": [
         {
           "id": "turnos",
           "w": 954,
-          "h": 303,
+          "h": 397,
           "bodyOverflow": 0
         },
         {
           "id": "clientes-hoy",
           "w": 682,
-          "h": 303,
-          "bodyOverflow": 57
-        },
-        {
-          "id": "wati-pendientes",
-          "w": 403,
-          "h": 263,
+          "h": 397,
           "bodyOverflow": 0
         },
         {
           "id": "insumos",
-          "w": 403,
-          "h": 263,
+          "w": 818,
+          "h": 346,
           "bodyOverflow": 0
         },
         {
           "id": "facturacion",
-          "w": 457,
-          "h": 263,
-          "bodyOverflow": 55
-        },
-        {
-          "id": "sla-mes",
-          "w": 349,
-          "h": 263,
-          "bodyOverflow": 25
-        },
-        {
-          "id": "operadores",
-          "w": 618,
-          "h": 263,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "pendientes-cerrar",
-          "w": 403,
-          "h": 263,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "liquidaciones",
-          "w": 296,
-          "h": 263,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "proximos-equipo",
-          "w": 296,
-          "h": 263,
+          "w": 818,
+          "h": 346,
           "bodyOverflow": 0
         }
       ]
     },
     {
+      "vista": "seguimiento",
+      "size": "1920x1080",
+      "theme": "light",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-seguimiento-1920x1080-light.png",
+      "dark": false,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 811,
+      "cards": [
+        {
+          "id": "sla-mes",
+          "w": 474,
+          "h": 444,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "operadores",
+          "w": 744,
+          "h": 444,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "pendientes-cerrar",
+          "w": 406,
+          "h": 444,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "liquidaciones",
+          "w": 541,
+          "h": 355,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "proximos-equipo",
+          "w": 541,
+          "h": 355,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "parque",
+          "w": 541,
+          "h": 355,
+          "bodyOverflow": 0
+        }
+      ]
+    },
+    {
+      "vista": "hoy",
       "size": "1920x1080",
       "theme": "dark",
-      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-1920x1080-dark.png",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-hoy-1920x1080-dark.png",
       "dark": true,
       "docOverflow": 0,
       "mainOverflow": 0,
       "gridOverflow": 0,
-      "gridH": 853,
+      "gridH": 755,
       "cards": [
         {
           "id": "turnos",
           "w": 954,
-          "h": 303,
+          "h": 397,
           "bodyOverflow": 0
         },
         {
           "id": "clientes-hoy",
           "w": 682,
-          "h": 303,
-          "bodyOverflow": 57
-        },
-        {
-          "id": "wati-pendientes",
-          "w": 403,
-          "h": 263,
+          "h": 397,
           "bodyOverflow": 0
         },
         {
           "id": "insumos",
-          "w": 403,
-          "h": 263,
+          "w": 818,
+          "h": 346,
           "bodyOverflow": 0
         },
         {
           "id": "facturacion",
+          "w": 818,
+          "h": 346,
+          "bodyOverflow": 0
+        }
+      ]
+    },
+    {
+      "vista": "seguimiento",
+      "size": "1920x1080",
+      "theme": "dark",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-seguimiento-1920x1080-dark.png",
+      "dark": true,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 811,
+      "cards": [
+        {
+          "id": "sla-mes",
+          "w": 474,
+          "h": 444,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "operadores",
+          "w": 744,
+          "h": 444,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "pendientes-cerrar",
+          "w": 406,
+          "h": 444,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "liquidaciones",
+          "w": 541,
+          "h": 355,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "proximos-equipo",
+          "w": 541,
+          "h": 355,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "parque",
+          "w": 541,
+          "h": 355,
+          "bodyOverflow": 0
+        }
+      ]
+    },
+    {
+      "vista": "hoy",
+      "size": "1536x864",
+      "theme": "light",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-hoy-1536x864-light.png",
+      "dark": false,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 539,
+      "cards": [
+        {
+          "id": "turnos",
+          "w": 730,
+          "h": 282,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "clientes-hoy",
+          "w": 522,
+          "h": 282,
+          "bodyOverflow": 77
+        },
+        {
+          "id": "insumos",
+          "w": 626,
+          "h": 245,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "facturacion",
+          "w": 626,
+          "h": 245,
+          "bodyOverflow": 73
+        }
+      ]
+    },
+    {
+      "vista": "seguimiento",
+      "size": "1536x864",
+      "theme": "light",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-seguimiento-1536x864-light.png",
+      "dark": false,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 595,
+      "cards": [
+        {
+          "id": "sla-mes",
+          "w": 362,
+          "h": 324,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "operadores",
+          "w": 568,
+          "h": 324,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "pendientes-cerrar",
+          "w": 310,
+          "h": 324,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "liquidaciones",
+          "w": 413,
+          "h": 259,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "proximos-equipo",
+          "w": 413,
+          "h": 259,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "parque",
+          "w": 413,
+          "h": 259,
+          "bodyOverflow": 0
+        }
+      ]
+    },
+    {
+      "vista": "hoy",
+      "size": "1536x864",
+      "theme": "dark",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-hoy-1536x864-dark.png",
+      "dark": true,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 539,
+      "cards": [
+        {
+          "id": "turnos",
+          "w": 730,
+          "h": 282,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "clientes-hoy",
+          "w": 522,
+          "h": 282,
+          "bodyOverflow": 77
+        },
+        {
+          "id": "insumos",
+          "w": 626,
+          "h": 245,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "facturacion",
+          "w": 626,
+          "h": 245,
+          "bodyOverflow": 73
+        }
+      ]
+    },
+    {
+      "vista": "seguimiento",
+      "size": "1536x864",
+      "theme": "dark",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-seguimiento-1536x864-dark.png",
+      "dark": true,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 595,
+      "cards": [
+        {
+          "id": "sla-mes",
+          "w": 362,
+          "h": 324,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "operadores",
+          "w": 568,
+          "h": 324,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "pendientes-cerrar",
+          "w": 310,
+          "h": 324,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "liquidaciones",
+          "w": 413,
+          "h": 259,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "proximos-equipo",
+          "w": 413,
+          "h": 259,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "parque",
+          "w": 413,
+          "h": 259,
+          "bodyOverflow": 0
+        }
+      ]
+    },
+    {
+      "vista": "hoy",
+      "size": "1440x900",
+      "theme": "light",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-hoy-1440x900-light.png",
+      "dark": false,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 543,
+      "cards": [
+        {
+          "id": "turnos",
+          "w": 674,
+          "h": 284,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "clientes-hoy",
+          "w": 482,
+          "h": 284,
+          "bodyOverflow": 75
+        },
+        {
+          "id": "insumos",
+          "w": 578,
+          "h": 247,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "facturacion",
+          "w": 578,
+          "h": 247,
+          "bodyOverflow": 71
+        }
+      ]
+    },
+    {
+      "vista": "seguimiento",
+      "size": "1440x900",
+      "theme": "light",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-seguimiento-1440x900-light.png",
+      "dark": false,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 599,
+      "cards": [
+        {
+          "id": "sla-mes",
+          "w": 334,
+          "h": 326,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "operadores",
+          "w": 524,
+          "h": 326,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "pendientes-cerrar",
+          "w": 286,
+          "h": 326,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "liquidaciones",
+          "w": 381,
+          "h": 261,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "proximos-equipo",
+          "w": 381,
+          "h": 261,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "parque",
+          "w": 381,
+          "h": 261,
+          "bodyOverflow": 0
+        }
+      ]
+    },
+    {
+      "vista": "hoy",
+      "size": "1440x900",
+      "theme": "dark",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-hoy-1440x900-dark.png",
+      "dark": true,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 543,
+      "cards": [
+        {
+          "id": "turnos",
+          "w": 674,
+          "h": 284,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "clientes-hoy",
+          "w": 482,
+          "h": 284,
+          "bodyOverflow": 75
+        },
+        {
+          "id": "insumos",
+          "w": 578,
+          "h": 247,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "facturacion",
+          "w": 578,
+          "h": 247,
+          "bodyOverflow": 71
+        }
+      ]
+    },
+    {
+      "vista": "seguimiento",
+      "size": "1440x900",
+      "theme": "dark",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-seguimiento-1440x900-dark.png",
+      "dark": true,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 599,
+      "cards": [
+        {
+          "id": "sla-mes",
+          "w": 334,
+          "h": 326,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "operadores",
+          "w": 524,
+          "h": 326,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "pendientes-cerrar",
+          "w": 286,
+          "h": 326,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "liquidaciones",
+          "w": 381,
+          "h": 261,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "proximos-equipo",
+          "w": 381,
+          "h": 261,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "parque",
+          "w": 381,
+          "h": 261,
+          "bodyOverflow": 0
+        }
+      ]
+    },
+    {
+      "vista": "hoy",
+      "size": "1366x768",
+      "theme": "light",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-hoy-1366x768-light.png",
+      "dark": false,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 441,
+      "cards": [
+        {
+          "id": "turnos",
+          "w": 637,
+          "h": 231,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "clientes-hoy",
+          "w": 455,
+          "h": 231,
+          "bodyOverflow": 108
+        },
+        {
+          "id": "insumos",
+          "w": 546,
+          "h": 200,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "facturacion",
+          "w": 546,
+          "h": 200,
+          "bodyOverflow": 97
+        }
+      ]
+    },
+    {
+      "vista": "seguimiento",
+      "size": "1366x768",
+      "theme": "light",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-seguimiento-1366x768-light.png",
+      "dark": false,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 491,
+      "cards": [
+        {
+          "id": "sla-mes",
+          "w": 316,
+          "h": 267,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "operadores",
+          "w": 496,
+          "h": 267,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "pendientes-cerrar",
+          "w": 271,
+          "h": 267,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "liquidaciones",
+          "w": 361,
+          "h": 214,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "proximos-equipo",
+          "w": 361,
+          "h": 214,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "parque",
+          "w": 361,
+          "h": 214,
+          "bodyOverflow": 0
+        }
+      ]
+    },
+    {
+      "vista": "hoy",
+      "size": "1366x768",
+      "theme": "dark",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-hoy-1366x768-dark.png",
+      "dark": true,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 441,
+      "cards": [
+        {
+          "id": "turnos",
+          "w": 637,
+          "h": 231,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "clientes-hoy",
+          "w": 455,
+          "h": 231,
+          "bodyOverflow": 108
+        },
+        {
+          "id": "insumos",
+          "w": 546,
+          "h": 200,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "facturacion",
+          "w": 546,
+          "h": 200,
+          "bodyOverflow": 97
+        }
+      ]
+    },
+    {
+      "vista": "seguimiento",
+      "size": "1366x768",
+      "theme": "dark",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-seguimiento-1366x768-dark.png",
+      "dark": true,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 491,
+      "cards": [
+        {
+          "id": "sla-mes",
+          "w": 316,
+          "h": 267,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "operadores",
+          "w": 496,
+          "h": 267,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "pendientes-cerrar",
+          "w": 271,
+          "h": 267,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "liquidaciones",
+          "w": 361,
+          "h": 214,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "proximos-equipo",
+          "w": 361,
+          "h": 214,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "parque",
+          "w": 361,
+          "h": 214,
+          "bodyOverflow": 0
+        }
+      ]
+    },
+    {
+      "vista": "hoy",
+      "size": "1280x720",
+      "theme": "light",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-hoy-1280x720-light.png",
+      "dark": false,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 393,
+      "cards": [
+        {
+          "id": "turnos",
+          "w": 587,
+          "h": 205,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "clientes-hoy",
+          "w": 419,
+          "h": 205,
+          "bodyOverflow": 134
+        },
+        {
+          "id": "insumos",
+          "w": 503,
+          "h": 178,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "facturacion",
+          "w": 503,
+          "h": 178,
+          "bodyOverflow": 120
+        }
+      ]
+    },
+    {
+      "vista": "seguimiento",
+      "size": "1280x720",
+      "theme": "light",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-seguimiento-1280x720-light.png",
+      "dark": false,
+      "docOverflow": 0,
+      "mainOverflow": 0,
+      "gridOverflow": 0,
+      "gridH": 443,
+      "cards": [
+        {
+          "id": "sla-mes",
+          "w": 291,
+          "h": 241,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "operadores",
           "w": 457,
-          "h": 263,
-          "bodyOverflow": 55
-        },
-        {
-          "id": "sla-mes",
-          "w": 349,
-          "h": 263,
-          "bodyOverflow": 25
-        },
-        {
-          "id": "operadores",
-          "w": 618,
-          "h": 263,
-          "bodyOverflow": 0
+          "h": 241,
+          "bodyOverflow": 85
         },
         {
           "id": "pendientes-cerrar",
-          "w": 403,
-          "h": 263,
+          "w": 249,
+          "h": 241,
           "bodyOverflow": 0
         },
         {
           "id": "liquidaciones",
-          "w": 296,
-          "h": 263,
+          "w": 332,
+          "h": 192,
           "bodyOverflow": 0
         },
         {
           "id": "proximos-equipo",
-          "w": 296,
-          "h": 263,
+          "w": 332,
+          "h": 192,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "parque",
+          "w": 332,
+          "h": 192,
           "bodyOverflow": 0
         }
       ]
     },
     {
-      "size": "1536x864",
-      "theme": "light",
-      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-1536x864-light.png",
-      "dark": false,
-      "docOverflow": 0,
-      "mainOverflow": 0,
-      "gridOverflow": 0,
-      "gridH": 637,
-      "cards": [
-        {
-          "id": "turnos",
-          "w": 730,
-          "h": 224,
-          "bodyOverflow": 55
-        },
-        {
-          "id": "clientes-hoy",
-          "w": 522,
-          "h": 224,
-          "bodyOverflow": 135
-        },
-        {
-          "id": "wati-pendientes",
-          "w": 307,
-          "h": 195,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "insumos",
-          "w": 307,
-          "h": 195,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "facturacion",
-          "w": 348,
-          "h": 195,
-          "bodyOverflow": 240
-        },
-        {
-          "id": "sla-mes",
-          "w": 266,
-          "h": 195,
-          "bodyOverflow": 127
-        },
-        {
-          "id": "operadores",
-          "w": 471,
-          "h": 195,
-          "bodyOverflow": 169
-        },
-        {
-          "id": "pendientes-cerrar",
-          "w": 307,
-          "h": 195,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "liquidaciones",
-          "w": 225,
-          "h": 195,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "proximos-equipo",
-          "w": 225,
-          "h": 195,
-          "bodyOverflow": 0
-        }
-      ]
-    },
-    {
-      "size": "1536x864",
-      "theme": "dark",
-      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-1536x864-dark.png",
-      "dark": true,
-      "docOverflow": 0,
-      "mainOverflow": 0,
-      "gridOverflow": 0,
-      "gridH": 637,
-      "cards": [
-        {
-          "id": "turnos",
-          "w": 730,
-          "h": 224,
-          "bodyOverflow": 55
-        },
-        {
-          "id": "clientes-hoy",
-          "w": 522,
-          "h": 224,
-          "bodyOverflow": 135
-        },
-        {
-          "id": "wati-pendientes",
-          "w": 307,
-          "h": 195,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "insumos",
-          "w": 307,
-          "h": 195,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "facturacion",
-          "w": 348,
-          "h": 195,
-          "bodyOverflow": 240
-        },
-        {
-          "id": "sla-mes",
-          "w": 266,
-          "h": 195,
-          "bodyOverflow": 127
-        },
-        {
-          "id": "operadores",
-          "w": 471,
-          "h": 195,
-          "bodyOverflow": 169
-        },
-        {
-          "id": "pendientes-cerrar",
-          "w": 307,
-          "h": 195,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "liquidaciones",
-          "w": 225,
-          "h": 195,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "proximos-equipo",
-          "w": 225,
-          "h": 195,
-          "bodyOverflow": 0
-        }
-      ]
-    },
-    {
-      "size": "1440x900",
-      "theme": "light",
-      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-1440x900-light.png",
-      "dark": false,
-      "docOverflow": 0,
-      "mainOverflow": 0,
-      "gridOverflow": 0,
-      "gridH": 641,
-      "cards": [
-        {
-          "id": "turnos",
-          "w": 674,
-          "h": 225,
-          "bodyOverflow": 53
-        },
-        {
-          "id": "clientes-hoy",
-          "w": 482,
-          "h": 225,
-          "bodyOverflow": 134
-        },
-        {
-          "id": "wati-pendientes",
-          "w": 283,
-          "h": 196,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "insumos",
-          "w": 283,
-          "h": 196,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "facturacion",
-          "w": 321,
-          "h": 196,
-          "bodyOverflow": 256
-        },
-        {
-          "id": "sla-mes",
-          "w": 245,
-          "h": 196,
-          "bodyOverflow": 125
-        },
-        {
-          "id": "operadores",
-          "w": 434,
-          "h": 196,
-          "bodyOverflow": 167
-        },
-        {
-          "id": "pendientes-cerrar",
-          "w": 283,
-          "h": 196,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "liquidaciones",
-          "w": 208,
-          "h": 196,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "proximos-equipo",
-          "w": 208,
-          "h": 196,
-          "bodyOverflow": 0
-        }
-      ]
-    },
-    {
-      "size": "1440x900",
-      "theme": "dark",
-      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-1440x900-dark.png",
-      "dark": true,
-      "docOverflow": 0,
-      "mainOverflow": 0,
-      "gridOverflow": 0,
-      "gridH": 641,
-      "cards": [
-        {
-          "id": "turnos",
-          "w": 674,
-          "h": 225,
-          "bodyOverflow": 53
-        },
-        {
-          "id": "clientes-hoy",
-          "w": 482,
-          "h": 225,
-          "bodyOverflow": 134
-        },
-        {
-          "id": "wati-pendientes",
-          "w": 283,
-          "h": 196,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "insumos",
-          "w": 283,
-          "h": 196,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "facturacion",
-          "w": 321,
-          "h": 196,
-          "bodyOverflow": 256
-        },
-        {
-          "id": "sla-mes",
-          "w": 245,
-          "h": 196,
-          "bodyOverflow": 125
-        },
-        {
-          "id": "operadores",
-          "w": 434,
-          "h": 196,
-          "bodyOverflow": 167
-        },
-        {
-          "id": "pendientes-cerrar",
-          "w": 283,
-          "h": 196,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "liquidaciones",
-          "w": 208,
-          "h": 196,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "proximos-equipo",
-          "w": 208,
-          "h": 196,
-          "bodyOverflow": 0
-        }
-      ]
-    },
-    {
-      "size": "1366x768",
-      "theme": "light",
-      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-1366x768-light.png",
-      "dark": false,
-      "docOverflow": 0,
-      "mainOverflow": 0,
-      "gridOverflow": 0,
-      "gridH": 531,
-      "cards": [
-        {
-          "id": "turnos",
-          "w": 637,
-          "h": 187,
-          "bodyOverflow": 65
-        },
-        {
-          "id": "clientes-hoy",
-          "w": 455,
-          "h": 187,
-          "bodyOverflow": 152
-        },
-        {
-          "id": "wati-pendientes",
-          "w": 268,
-          "h": 162,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "insumos",
-          "w": 268,
-          "h": 162,
-          "bodyOverflow": 5
-        },
-        {
-          "id": "facturacion",
-          "w": 304,
-          "h": 162,
-          "bodyOverflow": 270
-        },
-        {
-          "id": "sla-mes",
-          "w": 232,
-          "h": 162,
-          "bodyOverflow": 93
-        },
-        {
-          "id": "operadores",
-          "w": 411,
-          "h": 162,
-          "bodyOverflow": 164
-        },
-        {
-          "id": "pendientes-cerrar",
-          "w": 268,
-          "h": 162,
-          "bodyOverflow": 10
-        },
-        {
-          "id": "liquidaciones",
-          "w": 197,
-          "h": 162,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "proximos-equipo",
-          "w": 197,
-          "h": 162,
-          "bodyOverflow": 0
-        }
-      ]
-    },
-    {
-      "size": "1366x768",
-      "theme": "dark",
-      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-1366x768-dark.png",
-      "dark": true,
-      "docOverflow": 0,
-      "mainOverflow": 0,
-      "gridOverflow": 0,
-      "gridH": 531,
-      "cards": [
-        {
-          "id": "turnos",
-          "w": 637,
-          "h": 187,
-          "bodyOverflow": 65
-        },
-        {
-          "id": "clientes-hoy",
-          "w": 455,
-          "h": 187,
-          "bodyOverflow": 152
-        },
-        {
-          "id": "wati-pendientes",
-          "w": 268,
-          "h": 162,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "insumos",
-          "w": 268,
-          "h": 162,
-          "bodyOverflow": 5
-        },
-        {
-          "id": "facturacion",
-          "w": 304,
-          "h": 162,
-          "bodyOverflow": 270
-        },
-        {
-          "id": "sla-mes",
-          "w": 232,
-          "h": 162,
-          "bodyOverflow": 93
-        },
-        {
-          "id": "operadores",
-          "w": 411,
-          "h": 162,
-          "bodyOverflow": 164
-        },
-        {
-          "id": "pendientes-cerrar",
-          "w": 268,
-          "h": 162,
-          "bodyOverflow": 10
-        },
-        {
-          "id": "liquidaciones",
-          "w": 197,
-          "h": 162,
-          "bodyOverflow": 0
-        },
-        {
-          "id": "proximos-equipo",
-          "w": 197,
-          "h": 162,
-          "bodyOverflow": 0
-        }
-      ]
-    },
-    {
+      "vista": "hoy",
       "size": "1280x720",
-      "theme": "light",
-      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-1280x720-light.png",
-      "dark": false,
+      "theme": "dark",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-hoy-1280x720-dark.png",
+      "dark": true,
       "docOverflow": 0,
       "mainOverflow": 0,
       "gridOverflow": 0,
-      "gridH": 483,
+      "gridH": 393,
       "cards": [
         {
           "id": "turnos",
           "w": 587,
-          "h": 169,
-          "bodyOverflow": 83
+          "h": 205,
+          "bodyOverflow": 0
         },
         {
           "id": "clientes-hoy",
           "w": 419,
-          "h": 169,
-          "bodyOverflow": 170
-        },
-        {
-          "id": "wati-pendientes",
-          "w": 247,
-          "h": 147,
-          "bodyOverflow": 0
+          "h": 205,
+          "bodyOverflow": 134
         },
         {
           "id": "insumos",
-          "w": 247,
-          "h": 147,
-          "bodyOverflow": 20
-        },
-        {
-          "id": "facturacion",
-          "w": 279,
-          "h": 147,
-          "bodyOverflow": 285
-        },
-        {
-          "id": "sla-mes",
-          "w": 214,
-          "h": 147,
-          "bodyOverflow": 108
-        },
-        {
-          "id": "operadores",
-          "w": 378,
-          "h": 147,
-          "bodyOverflow": 179
-        },
-        {
-          "id": "pendientes-cerrar",
-          "w": 247,
-          "h": 147,
-          "bodyOverflow": 25
-        },
-        {
-          "id": "liquidaciones",
-          "w": 181,
-          "h": 147,
+          "w": 503,
+          "h": 178,
           "bodyOverflow": 0
         },
         {
-          "id": "proximos-equipo",
-          "w": 181,
-          "h": 147,
-          "bodyOverflow": 6
+          "id": "facturacion",
+          "w": 503,
+          "h": 178,
+          "bodyOverflow": 120
         }
       ]
     },
     {
+      "vista": "seguimiento",
       "size": "1280x720",
       "theme": "dark",
-      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-1280x720-dark.png",
+      "file": "/tmp/claude-1000/-home-ivan-proyectos-helpdesk-manager/6686e84b-2525-47dd-8e81-e97c48660b7b/scratchpad/after/inicio-seguimiento-1280x720-dark.png",
       "dark": true,
       "docOverflow": 0,
       "mainOverflow": 0,
       "gridOverflow": 0,
-      "gridH": 483,
+      "gridH": 443,
       "cards": [
         {
-          "id": "turnos",
-          "w": 587,
-          "h": 169,
-          "bodyOverflow": 83
-        },
-        {
-          "id": "clientes-hoy",
-          "w": 419,
-          "h": 169,
-          "bodyOverflow": 170
-        },
-        {
-          "id": "wati-pendientes",
-          "w": 247,
-          "h": 147,
+          "id": "sla-mes",
+          "w": 291,
+          "h": 241,
           "bodyOverflow": 0
         },
         {
-          "id": "insumos",
-          "w": 247,
-          "h": 147,
-          "bodyOverflow": 20
-        },
-        {
-          "id": "facturacion",
-          "w": 279,
-          "h": 147,
-          "bodyOverflow": 285
-        },
-        {
-          "id": "sla-mes",
-          "w": 214,
-          "h": 147,
-          "bodyOverflow": 108
-        },
-        {
           "id": "operadores",
-          "w": 378,
-          "h": 147,
-          "bodyOverflow": 179
+          "w": 457,
+          "h": 241,
+          "bodyOverflow": 85
         },
         {
           "id": "pendientes-cerrar",
-          "w": 247,
-          "h": 147,
-          "bodyOverflow": 25
+          "w": 249,
+          "h": 241,
+          "bodyOverflow": 0
         },
         {
           "id": "liquidaciones",
-          "w": 181,
-          "h": 147,
+          "w": 332,
+          "h": 192,
           "bodyOverflow": 0
         },
         {
           "id": "proximos-equipo",
-          "w": 181,
-          "h": 147,
-          "bodyOverflow": 6
+          "w": 332,
+          "h": 192,
+          "bodyOverflow": 0
+        },
+        {
+          "id": "parque",
+          "w": 332,
+          "h": 192,
+          "bodyOverflow": 0
         }
       ]
     }

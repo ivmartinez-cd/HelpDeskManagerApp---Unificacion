@@ -175,6 +175,10 @@ de este handoff (y de la implementación del 2026-08-14):
 - Accesos directos pasan a chips de navegación en el encabezado; el banner personal de turno
   vive en el header de "Turnos del día" y el de WhatsApp dentro de su card.
 - Refresco automático de todos los datos cada 5 min (`use-dashboard-data.ts`).
+- **Ajuste por feedback de la TL (mismo día)**: dos vistas del grid — *Hoy* (Turnos, Clientes
+  de hoy, WhatsApp, Insumos, Facturación) y *Seguimiento* (SLA, Operadores, Pendientes a
+  cerrar, Liquidaciones, Equipo, Parque) — con la franja de KPIs (5, solo lo accionable)
+  siempre visible; los paneles sin novedades bajan a una tira "Sin novedades" al pie.
 
 ## Archivos
 ```
