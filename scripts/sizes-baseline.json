@@ -5,7 +5,6 @@
   "file": 300
  },
  "entries": [
-  "file frontend/src/features/preventivos/components/preventivos-view.tsx (380)",
   "func backend/src/modules/analisis_log_hp/application/use_cases/extract_sds_logs.py::execute (24)",
   "func backend/src/modules/analisis_log_hp/application/use_cases/saved_analyses.py::execute (25)",
   "func backend/src/modules/analisis_log_hp/application/use_cases/saved_analyses.py::execute (41)",
