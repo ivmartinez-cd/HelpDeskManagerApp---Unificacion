@@ -15,6 +15,9 @@ from src.modules.preventivos.application.dtos.habilitar_request import (
 from src.modules.preventivos.application.dtos.list_equipos_request import (
     ListEquiposPorZonaRequest,
 )
+from src.modules.preventivos.application.dtos.punto_mapa_preventivo import (
+    ListPuntosMapaResult,
+)
 from src.modules.preventivos.application.use_cases.deshabilitar_equipo import (
     DeshabilitarEquipoUseCase,
 )
@@ -63,6 +66,31 @@ _require_update = Depends(require_permission(UPDATE))
 _MAX_PAGE_SIZE = 500
 
 
+def _build_equipos_use_case(db: AsyncSession) -> ListEquiposPorZonaUseCase:
+    return ListEquiposPorZonaUseCase(
+        ListEquiposPorZonaDependencies(
+            gateway=get_preventivos_gateway(),
+            habilitaciones=SqlAlchemyHabilitacionRepository(db),
+            zonas_excluidas=get_zonas_excluidas(),
+        )
+    )
+
+
+def _puntos_mapa_response(
+    result: ListPuntosMapaResult, *, page: int, size: int
+) -> PuntosMapaPage:
+    schemas = [PuntoMapaSchema.from_domain(p) for p in result.puntos]
+    base = Page.of(schemas, page=page, size=size)
+    return PuntosMapaPage(
+        items=base.items,
+        total=base.total,
+        page=base.page,
+        size=base.size,
+        consultado_en=result.consultado_en,
+        sin_ubicar=sum(1 for p in result.puntos if not p.ubicado),
+    )
+
+
 @router.get("/zonas", response_model=Page[ZonaSchema])
 async def list_zonas(
     page: int = Query(default=1, ge=1),
@@ -90,13 +118,7 @@ async def list_equipos(
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> EquiposPreventivosPage:
-    use_case = ListEquiposPorZonaUseCase(
-        ListEquiposPorZonaDependencies(
-            gateway=get_preventivos_gateway(),
-            habilitaciones=SqlAlchemyHabilitacionRepository(db),
-            zonas_excluidas=get_zonas_excluidas(),
-        )
-    )
+    use_case = _build_equipos_use_case(db)
     result = await use_case.execute(
         ListEquiposPorZonaRequest(
             zona=zona, estado=estado, habilitado=habilitado, search=q, force_refresh=refresh
@@ -125,29 +147,15 @@ async def list_puntos_mapa(
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PuntosMapaPage:
-    equipos_use_case = ListEquiposPorZonaUseCase(
-        ListEquiposPorZonaDependencies(
-            gateway=get_preventivos_gateway(),
-            habilitaciones=SqlAlchemyHabilitacionRepository(db),
-            zonas_excluidas=get_zonas_excluidas(),
-        )
+    use_case = ListPuntosMapaUseCase(
+        ListPuntosMapaDependencies(equipos_use_case=_build_equipos_use_case(db))
     )
-    use_case = ListPuntosMapaUseCase(ListPuntosMapaDependencies(equipos_use_case=equipos_use_case))
     result = await use_case.execute(
         ListEquiposPorZonaRequest(
             zona=zona, estado=estado, habilitado=habilitado, search=q, force_refresh=refresh
         )
     )
-    schemas = [PuntoMapaSchema.from_domain(p) for p in result.puntos]
-    base = Page.of(schemas, page=page, size=size)
-    return PuntosMapaPage(
-        items=base.items,
-        total=base.total,
-        page=base.page,
-        size=base.size,
-        consultado_en=result.consultado_en,
-        sin_ubicar=sum(1 for p in result.puntos if not p.ubicado),
-    )
+    return _puntos_mapa_response(result, page=page, size=size)
 
 
 @router.post(
