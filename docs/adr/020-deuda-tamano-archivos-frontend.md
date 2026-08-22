@@ -67,3 +67,8 @@ cualquier archivo nuevo que supere las 300 líneas. Estado al 2026-08-22: 10 arc
 inventario original ya se partieron; `use-inicio-data.ts`, que había entrado hoy por
 encima, se partió el mismo día). Las funciones/componentes React no se miden por función
 (ver ARCHITECTURE_GUIDE.md §4, "Cómo se mide en este repo").
+
+**2026-08-22, segundo lote**: los 10 archivos que quedaban >300 se partieron por extracción
+pura (sub-componentes, hooks en `features/<x>/hooks/`, helpers) sin cambiar markup, clases ni
+textos; `tsc`, `eslint --max-warnings=0` y la suite Playwright en verde. El inventario frontend
+queda **vacío**: todo archivo >300 a partir de ahora es violación que el gate bloquea.

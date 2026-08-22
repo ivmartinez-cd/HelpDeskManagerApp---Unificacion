@@ -98,3 +98,12 @@ herramienta que lo hiciera cumplir. Decisión:
 `liquidaciones`, `insumos`, `turnos`, `Settings` en shared), con `make check` completo en
 verde antes y después y cobertura igual o mayor por módulo; el inventario pasó de 389 a 372
 entradas (360 funciones, 2 clases, 10 archivos frontend) regenerado con `--update`.
+
+**Poda del 2026-08-22 (segundo lote)**: refactorizadas las 11 funciones >50 líneas, las 2
+clases >200 restantes (`HttpxSdsClientProvider` 222→122, `SqlAlchemyAuditStatisticsRepository`
+215→94) y los 3 anidamientos >3 (`list_active_customers`, `_import_file`,
+`build_availability_windows`), más `create_app` 83→10 y `EditarSolicitud.execute` 52→11; el
+inventario queda en **340 funciones de 21–47 líneas, 0 clases, 0 archivos backend**. El gate
+pasó a medir HEAD en `make check` (`--committed`) y lo staged en el pre-commit (`--staged`):
+con varias sesiones sobre el mismo checkout, medir el árbol de trabajo frenaba el push de una
+sesión por el WIP de otra.

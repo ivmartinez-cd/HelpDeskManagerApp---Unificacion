@@ -1,6 +1,7 @@
 """Ciclo de vida de solicitudes con repos fake: paridades del legacy."""
 
 import uuid
+from dataclasses import replace
 from datetime import date
 
 import pytest
@@ -21,11 +22,19 @@ from src.modules.vacaciones.application.use_cases.gestionar_solicitudes import (
     SolicitudesDependencies,
 )
 from src.modules.vacaciones.domain.entities.cargo import Cargo
+from src.modules.vacaciones.domain.entities.registro_auditoria import (
+    ACCION_CREATE,
+    ACCION_DELETE,
+    ACCION_UPDATE,
+    ENTIDAD_SOLICITUD,
+)
 from src.modules.vacaciones.domain.entities.sector import Sector
 from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud
 from src.modules.vacaciones.domain.errors import (
     AnioMuyLejanoError,
+    EmpleadoNoEncontradoError,
     OperacionNoPermitidaError,
+    SolicitudNoEncontradaError,
     SoloPendientesEditablesError,
 )
 from src.shared.domain.errors import ValidationError
@@ -39,6 +48,7 @@ from tests.unit.application.vacaciones.fakes import (
     FakeFeriadoRepo,
     FakeImpactoTurnosLookup,
     FakeNotificador,
+    FakeRegistradorAuditoria,
     FakeSectorRepo,
     FakeSolicitudRepo,
     FixedClock,
@@ -98,6 +108,31 @@ class TestCrearSolicitud:
         assert esc.notificador.nuevas[0].sector_nombre == "Soporte"
 
     @pytest.mark.asyncio
+    async def test_crear_registra_auditoria_con_metadata(self) -> None:
+        esc = _Escenario()
+        auditoria = FakeRegistradorAuditoria()
+        deps = replace(esc.deps, auditoria=auditoria)
+        actor = make_actor(empleado_id=esc.empleado.id)
+        command = CrearSolicitudCommand(
+            start_date=date(2026, 9, 7), end_date=date(2026, 9, 11)
+        )
+        solicitud = await CrearSolicitud(deps).execute(command, actor)
+
+        assert auditoria.registros == [
+            (
+                ACCION_CREATE,
+                ENTIDAD_SOLICITUD,
+                str(solicitud.id),
+                {
+                    "employee": esc.empleado.nombre_completo,
+                    "startDate": "2026-09-07",
+                    "endDate": "2026-09-11",
+                    "days": 7,
+                },
+            )
+        ]
+
+    @pytest.mark.asyncio
     async def test_no_admin_ignora_empleado_id_ajeno(self) -> None:
         esc = _Escenario()
         actor = make_actor(empleado_id=esc.empleado.id)
@@ -154,6 +189,71 @@ class TestEditarSolicitud:
         assert editada.status is EstadoSolicitud.PENDING
 
     @pytest.mark.asyncio
+    async def test_editar_aplica_campos_y_audita_rango_previo(self) -> None:
+        esc = _Escenario()
+        auditoria = FakeRegistradorAuditoria()
+        deps = replace(esc.deps, auditoria=auditoria)
+        existente = make_solicitud(
+            empleado_id=esc.empleado.id,
+            start_date=date(2026, 9, 7),
+            end_date=date(2026, 9, 10),
+            days_requested=4,
+        )
+        esc.solicitudes.items[existente.id] = existente
+        command = EditarSolicitudCommand(
+            start_date=date(2026, 10, 5),
+            end_date=date(2026, 10, 8),
+            charged_to_year=2026,
+            reason="Viaje",
+        )
+        editada = await EditarSolicitud(deps).execute(
+            existente.id, command, make_actor(empleado_id=esc.empleado.id)
+        )
+
+        assert (editada.start_date, editada.end_date) == (date(2026, 10, 5), date(2026, 10, 8))
+        assert (editada.charged_to_year, editada.reason) == (2026, "Viaje")
+        assert esc.solicitudes.items[existente.id] is editada
+        assert auditoria.registros == [
+            (
+                ACCION_UPDATE,
+                ENTIDAD_SOLICITUD,
+                str(existente.id),
+                {
+                    "employee": esc.empleado.nombre_completo,
+                    "startDate": "2026-10-05",
+                    "endDate": "2026-10-08",
+                    "days": 4,
+                    "previousStart": "2026-09-07",
+                    "previousEnd": "2026-09-10",
+                },
+            )
+        ]
+
+    @pytest.mark.asyncio
+    async def test_editar_inexistente_falla(self) -> None:
+        esc = _Escenario()
+        command = EditarSolicitudCommand(
+            start_date=date(2026, 9, 7), end_date=date(2026, 9, 10)
+        )
+        with pytest.raises(SolicitudNoEncontradaError):
+            await EditarSolicitud(esc.deps).execute(
+                uuid.uuid4(), command, make_actor(es_admin=True)
+            )
+
+    @pytest.mark.asyncio
+    async def test_editar_sin_empleado_falla(self) -> None:
+        esc = _Escenario()
+        huerfana = make_solicitud(empleado_id=uuid.uuid4())
+        esc.solicitudes.items[huerfana.id] = huerfana
+        command = EditarSolicitudCommand(
+            start_date=date(2026, 9, 7), end_date=date(2026, 9, 10)
+        )
+        with pytest.raises(EmpleadoNoEncontradoError):
+            await EditarSolicitud(esc.deps).execute(
+                huerfana.id, command, make_actor(es_admin=True)
+            )
+
+    @pytest.mark.asyncio
     async def test_tercero_no_puede_editar(self) -> None:
         esc = _Escenario()
         existente = make_solicitud(empleado_id=esc.empleado.id)
@@ -180,6 +280,36 @@ class TestEliminarSolicitud:
         # admin sí puede
         await EliminarSolicitud(esc.deps).execute(aprobada.id, make_actor(es_admin=True))
         assert aprobada.id not in esc.solicitudes.items
+
+    @pytest.mark.asyncio
+    async def test_eliminar_inexistente_falla(self) -> None:
+        esc = _Escenario()
+        with pytest.raises(SolicitudNoEncontradaError):
+            await EliminarSolicitud(esc.deps).execute(uuid.uuid4(), make_actor(es_admin=True))
+
+    @pytest.mark.asyncio
+    async def test_eliminar_registra_auditoria(self) -> None:
+        esc = _Escenario()
+        auditoria = FakeRegistradorAuditoria()
+        deps = replace(esc.deps, auditoria=auditoria)
+        pendiente = make_solicitud(empleado_id=esc.empleado.id)
+        esc.solicitudes.items[pendiente.id] = pendiente
+        await EliminarSolicitud(deps).execute(
+            pendiente.id, make_actor(empleado_id=esc.empleado.id)
+        )
+        assert auditoria.registros == [
+            (
+                ACCION_DELETE,
+                ENTIDAD_SOLICITUD,
+                str(pendiente.id),
+                {
+                    "employee": esc.empleado.nombre_completo,
+                    "startDate": "2026-08-03",
+                    "endDate": "2026-08-13",
+                    "days": 10,
+                },
+            )
+        ]
 
 
 class TestDecidirSolicitud:

@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-import csv
 import json
 import logging
-from datetime import timedelta
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 
 import httpx
 
 from src.modules.contadores.domain.entities.ers_client import ErsClient
+from src.modules.contadores.infrastructure.csv.auto_csv_writer import (
+    AutoCsvTarget,
+    write_auto_csv,
+)
 from src.modules.contadores.infrastructure.ers.ers_device_telemetry import (
     collect_device_rows,
     parse_max_date,
@@ -22,36 +26,51 @@ from src.shared.infrastructure.config.settings import Settings, get_settings
 
 logger = logging.getLogger(__name__)
 
+_BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/120.0.0.0 Safari/537.36"
+)
+
+
+@dataclass(frozen=True)
+class _ErsSession:
+    """Headers y cookies que salen del token cacheado; con ellos se firma cada request."""
+
+    headers: dict[str, str]
+    cookies: dict[str, str]
+
+
+@dataclass(frozen=True)
+class _MetersQuery:
+    """Qué contadores pedir: los dispositivos del grupo y la ventana de 30 días
+    que termina en `max_dt`."""
+
+    device_ids: list[str]
+    max_dt: datetime
+    min_dt: datetime
+    suma_color: bool
+
+    @classmethod
+    def build(cls, device_ids: list[str], max_date: str, suma_color: bool) -> _MetersQuery:
+        max_dt = parse_max_date(max_date)
+        return cls(device_ids, max_dt, max_dt - timedelta(days=30), suma_color)
+
 
 class HttpxErsClientProvider:
-    """Implementación de ErsClientProvider usando httpx y renovación de token
-    con Playwright para interactuar con Epson Remote Services (ERS)."""
+    """Implementación de ErsClientProvider usando httpx contra Epson Remote
+    Services (ERS); el token se renueva con httpx_ers_token_refresher."""
 
     def __init__(self, settings: Settings | None = None) -> None:
         self._settings = settings or get_settings()
 
     async def list_active_customers(self) -> list[ErsClient]:
-        data = await self._ensure_token()
         url = f"{self._settings.epson_ers_base_url}/device_groups/"
-        headers, cookies = self._build_request_params(data)
-        timeout = httpx.Timeout(self._settings.epson_ers_timeout_seconds)
-
-        try:
-            async with httpx.AsyncClient(timeout=timeout, cookies=cookies) as client:
-                resp = await client.get(url, headers=headers)
-                if resp.status_code in (401, 403):
-                    data = await self._ensure_token(force_refresh=True)
-                    headers, cookies = self._build_request_params(data)
-                    async with httpx.AsyncClient(timeout=timeout, cookies=cookies) as client2:
-                        resp = await client2.get(url, headers=headers)
-        except Exception as exc:
-            raise ExternalServiceError(f"Error al conectar con ERS: {exc}") from exc
-
-        if resp.status_code != 200:
-            raise ExternalServiceError(
-                f"Error al obtener grupos de ERS: {resp.status_code} - {resp.text}"
-            )
-
+        resp, _ = await self._get_with_token_retry(
+            url,
+            error_prefix="Error al conectar con ERS",
+            http_error_prefix="Error al obtener grupos de ERS",
+        )
         items: list[dict[str, Any]] = resp.json().get("items", [])
         clients = [
             ErsClient(
@@ -73,82 +92,68 @@ class HttpxErsClientProvider:
         output_dir: str,
         suma_color: bool = False,
     ) -> str:
-        data = await self._ensure_token()
         url = f"{self._settings.epson_ers_base_url}/device_groups/{group_id}/devices/"
-        headers, cookies = self._build_request_params(data)
-        timeout = httpx.Timeout(self._settings.epson_ers_timeout_seconds)
-
-        try:
-            async with httpx.AsyncClient(timeout=timeout, cookies=cookies) as client:
-                resp = await client.get(url, headers=headers)
-                if resp.status_code in (401, 403):
-                    data = await self._ensure_token(force_refresh=True)
-                    headers, cookies = self._build_request_params(data)
-                    async with httpx.AsyncClient(timeout=timeout, cookies=cookies) as client2:
-                        resp = await client2.get(url, headers=headers)
-        except Exception as exc:
-            raise ExternalServiceError(f"Error al obtener dispositivos ERS: {exc}") from exc
-
-        if resp.status_code != 200:
-            raise ExternalServiceError(
-                f"Error al obtener dispositivos ERS: {resp.status_code} - {resp.text}"
-            )
-
+        resp, session = await self._get_with_token_retry(
+            url, error_prefix="Error al obtener dispositivos ERS"
+        )
         device_ids: list[str] = resp.json().get("devices", [])
         if not device_ids:
             raise ExternalServiceError(
                 f"No se encontraron dispositivos en el grupo ERS '{group_name}'."
             )
-
-        max_dt = parse_max_date(max_date)
-        min_dt = max_dt - timedelta(days=30)
-
-        async with httpx.AsyncClient(timeout=timeout, cookies=cookies) as client:
-            rows = await collect_device_rows(
-                client=client,
-                headers=headers,
-                base_url=self._settings.epson_ers_base_url,
-                device_ids=device_ids,
-                max_dt=max_dt,
-                min_dt=min_dt,
-                suma_color=suma_color,
-            )
-
+        query = _MetersQuery.build(device_ids, max_date, suma_color)
+        rows = await self._collect_rows(session, query)
         if not rows:
-            msg = (
+            raise ExternalServiceError(
                 "No se encontraron contadores en el rango de fechas "
                 f"para el cliente '{group_name}'."
             )
-            raise ExternalServiceError(msg)
-
-        date_str = max_date.split("T")[0].replace("-", "")
-        safe_name = (
-            "".join([c for c in group_name if c.isalnum() or c in (" ", "_")])
-            .strip()
-            .replace(" ", "_")
+        target = AutoCsvTarget(
+            prefix="EPSON", name=group_name, max_date=max_date,
+            output_dir=output_dir, suma_color=suma_color,
         )
-        suffix = "_SumaColor" if suma_color else ""
-        filename = f"EPSON_{safe_name}_{date_str}{suffix}_AutoCSV.csv"
-        output_path = Path(output_dir) / filename
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        return str(write_auto_csv(rows, target))
 
-        fieldnames = [
-            "SERIE",
-            "FECHA",
-            "TIPO",
-            "CLASE_10",
-            "CONTADOR_10",
-            "CLASE_20",
-            "CONTADOR_20",
-            "MOTIVO",
-            "OBSERVACION",
-        ]
-        with open(output_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=";")
-            writer.writeheader()
-            writer.writerows(rows)
+    async def _get_with_token_retry(
+        self, url: str, *, error_prefix: str, http_error_prefix: str | None = None
+    ) -> tuple[httpx.Response, _ErsSession]:
+        """GET autenticado; ante 401/403 renueva el token una vez y reintenta. Devuelve
+        también la sesión vigente (la renovada, si hizo falta) para requests posteriores.
+        `error_prefix` encabeza el error de conexión; `http_error_prefix` (por defecto
+        el mismo) el de status distinto de 200."""
+        session = self._build_session(await self._ensure_token())
+        try:
+            resp = await self._get(url, session)
+            if resp.status_code in (401, 403):
+                session = self._build_session(await self._ensure_token(force_refresh=True))
+                resp = await self._get(url, session)
+        except Exception as exc:
+            raise ExternalServiceError(f"{error_prefix}: {exc}") from exc
 
-        return str(output_path)
+        if resp.status_code != 200:
+            prefix = http_error_prefix or error_prefix
+            raise ExternalServiceError(f"{prefix}: {resp.status_code} - {resp.text}")
+        return resp, session
+
+    async def _get(self, url: str, session: _ErsSession) -> httpx.Response:
+        timeout = httpx.Timeout(self._settings.epson_ers_timeout_seconds)
+        async with httpx.AsyncClient(timeout=timeout, cookies=session.cookies) as client:
+            return await client.get(url, headers=session.headers)
+
+    async def _collect_rows(
+        self, session: _ErsSession, query: _MetersQuery
+    ) -> list[dict[str, Any]]:
+        timeout = httpx.Timeout(self._settings.epson_ers_timeout_seconds)
+        async with httpx.AsyncClient(timeout=timeout, cookies=session.cookies) as client:
+            return await collect_device_rows(
+                client=client,
+                headers=session.headers,
+                base_url=self._settings.epson_ers_base_url,
+                device_ids=query.device_ids,
+                max_dt=query.max_dt,
+                min_dt=query.min_dt,
+                suma_color=query.suma_color,
+            )
 
     async def _ensure_token(self, force_refresh: bool = False) -> dict[str, Any]:
         file_path = Path(self._settings.epson_ers_token_file)
@@ -166,24 +171,17 @@ class HttpxErsClientProvider:
             token_file_path=str(file_path), settings=self._settings
         )
 
-    def _build_request_params(
-        self, token_data: dict[str, Any]
-    ) -> tuple[dict[str, str], dict[str, str]]:
-        token = token_data.get("token", "")
+    def _build_session(self, token_data: dict[str, Any]) -> _ErsSession:
         headers = {
             "accept": "application/json, text/plain, */*",
-            "authorization": token,
+            "authorization": token_data.get("token", ""),
             "referer": "https://www.remote-services.epson.com/devices",
-            "user-agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0.0.0 Safari/537.36"
-            ),
+            "user-agent": _BROWSER_USER_AGENT,
         }
         cookies_list = token_data.get("cookies", [])
-        cookies_dict = {
+        cookies = {
             c["name"]: c["value"]
             for c in cookies_list
             if "name" in c and "value" in c
         }
-        return headers, cookies_dict
+        return _ErsSession(headers=headers, cookies=cookies)

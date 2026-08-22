@@ -3,45 +3,14 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  BarChart2,
-  Bell,
-  ChevronDown,
-  Circle,
-  Clock,
-  FileSearch,
-  Home,
-  LogOut,
-  Menu,
-  Package,
-  Settings,
-  UserRound,
-  Wrench,
-  type LucideIcon,
-  MessageCircle,
-} from "lucide-react";
-import { ThemeToggle } from "@/shared/components/theme-toggle";
-import { ContadoresNavSubmenu } from "@/shared/components/contadores-nav-submenu";
-import { InsumosNavSubmenu } from "@/shared/components/insumos-nav-submenu";
-import { ServicioTecnicoNavSubmenu } from "@/shared/components/servicio-tecnico-nav-submenu";
-import { VacacionesNavSubmenu } from "@/shared/components/vacaciones-nav-submenu";
+import { Home } from "lucide-react";
+import { ModuleNavItem } from "@/shared/components/module-nav-item";
+import { ServicioTecnicoNavItem } from "@/shared/components/servicio-tecnico-nav-item";
+import { SidebarHeader } from "@/shared/components/sidebar-header";
 import { cn } from "@/shared/utils/cn";
 import { ChangePasswordModal } from "@/features/auth/components/change-password-modal";
-import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useSession } from "@/services/session-provider";
 import { canAccessPath } from "@/shared/config/route-permissions";
-import { UserAvatar } from "@/shared/components/ui/user-avatar";
-import { WatiHeaderLink } from "@/features/wati/components/wati-header-link";
-
-const MODULE_ICONS: Record<string, LucideIcon> = {
-  contadores: BarChart2,
-  insumos: Package,
-  vacaciones: UserRound,
-  turnos: Clock,
-  "analisis-log-hp": FileSearch,
-  wati: MessageCircle,
-  admin: Settings,
-};
 
 export function Sidebar({
   children,
@@ -98,7 +67,6 @@ export function Sidebar({
     !!slaModule ||
     !!preventivosModule ||
     !!analisisLogHpModule;
-  const { logout, loading } = useLogout();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
@@ -120,67 +88,17 @@ export function Sidebar({
   const isActive = (route: string) => pathname === route || pathname.startsWith(`${route}/`);
   const closeMobile = () => setMobileOpen(false);
   const isHome = pathname === "/";
+  const toggleSubmenu = (key: string) => (expanded: boolean) =>
+    setSubmenuOverride((prev) => ({ ...prev, [key]: expanded }));
 
   return (
     <div className="flex h-screen w-full flex-col">
-      <header className="flex h-16 flex-none items-center justify-between border-b border-border bg-card px-3 sm:px-4 lg:px-7">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-4">
-          <button
-            className="flex-none rounded-[8px] p-2 text-foreground hover:bg-muted lg:hidden"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Abrir menú"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          {/* eslint-disable-next-line @next/next/no-img-element -- SVG, next/image no aporta acá */}
-          <img
-            src="/isotipo.svg"
-            alt="Canal Directo"
-            className="h-[30px] w-auto flex-none object-contain sm:hidden"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element -- SVG, next/image no aporta acá */}
-          <img
-            src="/logo.svg"
-            alt="Canal Directo"
-            className="hidden h-[34px] w-auto flex-none object-contain sm:block"
-          />
-          <div className="hidden h-[22px] w-px bg-border sm:block" />
-          <span className="hidden font-heading text-[13px] font-bold tracking-[.06em] text-muted-foreground sm:block">
-            MESA DE AYUDA
-          </span>
-        </div>
-
-        <div className="flex flex-none items-center gap-1 sm:gap-3">
-          <WatiHeaderLink url={watiUrl} />
-          <Bell className="hidden h-5 w-5 text-muted-foreground sm:block" aria-hidden="true" />
-          <div className="hidden h-[22px] w-px bg-border sm:block" />
-          <button
-            onClick={() => setChangePasswordOpen(true)}
-            className="flex items-center gap-2.5 rounded-[8px] px-1.5 py-1 transition-colors hover:bg-muted"
-            title="Cambiar contraseña"
-          >
-            <UserAvatar fullName={user.fullName} color={user.color} />
-            <span className="hidden flex-col items-start leading-[1.25] sm:flex">
-              <span className="font-body text-[13px] font-semibold text-foreground">
-                {user.fullName}
-              </span>
-              <span className="font-body text-xs text-muted-foreground">
-                {user.isSuperadmin ? "Administrador" : "Usuario"}
-              </span>
-            </span>
-          </button>
-          <ThemeToggle />
-          <button
-            onClick={() => logout()}
-            disabled={loading}
-            className="rounded-[8px] p-2 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
-            title="Cerrar sesión"
-            aria-label="Cerrar sesión"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
-      </header>
+      <SidebarHeader
+        user={user}
+        watiUrl={watiUrl}
+        onOpenMobile={() => setMobileOpen(true)}
+        onOpenChangePassword={() => setChangePasswordOpen(true)}
+      />
 
       <div className="flex min-h-0 flex-1">
         <aside
@@ -205,83 +123,19 @@ export function Sidebar({
               Inicio
             </Link>
 
-            {/* Servicio Técnico: grupo hardcodeado (no es módulo), expandible con
-                los módulos que agrupa — mismo patrón que Prestadores +
-                Liquidaciones pero en sentido inverso (el padre es el hardcodeado). */}
-            {servicioTecnicoVisible && (() => {
-              const stcActive =
-                isActive("/servicio-tecnico") ||
-                (!!slaModule && isActive("/sla")) ||
-                (!!prestadoresModule && isActive("/prestadores")) ||
-                (!!liquidacionesModule && isActive("/liquidaciones")) ||
-                (!!preventivosModule && isActive("/preventivos")) ||
-                (!!analisisLogHpModule && isActive("/analisis-log-hp"));
-              const stcHasSubmenu =
-                !!slaModule || !!prestadoresModule || !!preventivosModule || !!analisisLogHpModule;
-              const stcSubmenuExpanded = submenuOverride["servicio-tecnico"] ?? stcActive;
-              const stcHref = prestadoresModule
-                ? "/prestadores"
-                : slaModule
-                  ? "/sla"
-                  : "/servicio-tecnico";
-              return (
-                <div className="flex flex-col">
-                  <div
-                    className={cn(
-                      "flex items-center rounded-[8px] transition-colors",
-                      stcActive
-                        ? "bg-brand-orange/[0.12] font-semibold text-brand-orange"
-                        : "text-muted-foreground hover:bg-muted",
-                    )}
-                  >
-                    <Link
-                      href={stcHref}
-                      onClick={closeMobile}
-                      aria-current={stcActive ? "page" : undefined}
-                      className="flex flex-1 items-center gap-2.5 px-3 py-2.5 font-body text-sm no-underline"
-                    >
-                      <Wrench className="h-4 w-4 flex-none" aria-hidden="true" />
-                      Servicio Técnico
-                    </Link>
-                    {stcHasSubmenu && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSubmenuOverride((prev) => ({
-                            ...prev,
-                            "servicio-tecnico": !stcSubmenuExpanded,
-                          }))
-                        }
-                        aria-expanded={stcSubmenuExpanded}
-                        aria-label={
-                          stcSubmenuExpanded
-                            ? "Colapsar submenú de Servicio Técnico"
-                            : "Expandir submenú de Servicio Técnico"
-                        }
-                        className="flex-none rounded-[6px] p-2 text-muted-foreground hover:text-foreground"
-                      >
-                        <ChevronDown
-                          className={cn(
-                            "h-3.5 w-3.5 transition-transform",
-                            !stcSubmenuExpanded && "-rotate-90",
-                          )}
-                        />
-                      </button>
-                    )}
-                  </div>
-                  {stcHasSubmenu && stcSubmenuExpanded && (
-                    <ServicioTecnicoNavSubmenu
-                      hasPrestadores={!!prestadoresModule}
-                      hasLiquidaciones={!!liquidacionesModule}
-                      hasSla={!!slaModule}
-                      hasPreventivos={!!preventivosModule}
-                      hasAnalisisLogHp={!!analisisLogHpModule}
-                      onNavigate={closeMobile}
-                    />
-                  )}
-                </div>
-              );
-            })()}
+            {servicioTecnicoVisible && (
+              <ServicioTecnicoNavItem
+                hasSla={!!slaModule}
+                hasPrestadores={!!prestadoresModule}
+                hasLiquidaciones={!!liquidacionesModule}
+                hasPreventivos={!!preventivosModule}
+                hasAnalisisLogHp={!!analisisLogHpModule}
+                isActive={isActive}
+                submenuOverride={submenuOverride["servicio-tecnico"]}
+                onToggleSubmenu={toggleSubmenu("servicio-tecnico")}
+                onNavigate={closeMobile}
+              />
+            )}
 
             {modules.length === 0 && (
               <p className="px-3 py-4 font-body text-xs text-muted-foreground">
@@ -289,69 +143,17 @@ export function Sidebar({
               </p>
             )}
 
-            {topLevelModules.map((module) => {
-              const isContadores = module.key === "contadores";
-              const isInsumos = module.key === "insumos";
-              const isVacaciones = module.key === "vacaciones";
-              const active = isActive(module.route);
-              const hasSubmenu = isContadores || isInsumos || isVacaciones;
-              const submenuExpanded = submenuOverride[module.key] ?? active;
-              const ModuleIcon = MODULE_ICONS[module.key] ?? Circle;
-              return (
-                <div key={module.key} className="flex flex-col">
-                  <div
-                    className={cn(
-                      "flex items-center rounded-[8px] transition-colors",
-                      active
-                        ? "bg-brand-orange/[0.12] font-semibold text-brand-orange"
-                        : "text-muted-foreground hover:bg-muted",
-                    )}
-                  >
-                    <Link
-                      href={hrefDeModulo(module)}
-                      onClick={closeMobile}
-                      aria-current={active ? "page" : undefined}
-                      className="flex flex-1 items-center gap-2.5 px-3 py-2.5 font-body text-sm no-underline"
-                    >
-                      <ModuleIcon className="h-4 w-4 flex-none" aria-hidden="true" />
-                      {module.label}
-                    </Link>
-                    {hasSubmenu && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSubmenuOverride((prev) => ({
-                            ...prev,
-                            [module.key]: !submenuExpanded,
-                          }))
-                        }
-                        aria-expanded={submenuExpanded}
-                        aria-label={
-                          submenuExpanded
-                            ? `Colapsar submenú de ${module.label}`
-                            : `Expandir submenú de ${module.label}`
-                        }
-                        className="flex-none rounded-[6px] p-2 text-muted-foreground hover:text-foreground"
-                      >
-                        <ChevronDown
-                          className={cn(
-                            "h-3.5 w-3.5 transition-transform",
-                            !submenuExpanded && "-rotate-90",
-                          )}
-                        />
-                      </button>
-                    )}
-                  </div>
-                  {isContadores && submenuExpanded && (
-                    <ContadoresNavSubmenu onNavigate={closeMobile} />
-                  )}
-                  {isInsumos && submenuExpanded && <InsumosNavSubmenu onNavigate={closeMobile} />}
-                  {isVacaciones && submenuExpanded && (
-                    <VacacionesNavSubmenu onNavigate={closeMobile} />
-                  )}
-                </div>
-              );
-            })}
+            {topLevelModules.map((module) => (
+              <ModuleNavItem
+                key={module.key}
+                module={module}
+                href={hrefDeModulo(module)}
+                active={isActive(module.route)}
+                submenuOverride={submenuOverride[module.key]}
+                onToggleSubmenu={toggleSubmenu(module.key)}
+                onNavigate={closeMobile}
+              />
+            ))}
           </nav>
 
           <div className="mt-auto border-t border-border px-3 pb-1 pt-3">

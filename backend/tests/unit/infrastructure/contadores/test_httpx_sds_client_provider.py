@@ -9,9 +9,9 @@ import pytest
 
 from src.modules.contadores.infrastructure.sds.httpx_sds_client_provider import (
     HttpxSdsClientProvider,
-    _calculate_min_date,
     _to_max_read_datetime_local,
 )
+from src.modules.contadores.infrastructure.sds.sds_export import calculate_min_date
 from src.shared.domain.errors import ExternalServiceError
 from tests.unit.infrastructure.contadores.settings_stub import make_settings
 
@@ -36,9 +36,9 @@ def test_to_max_read_datetime_local_agrega_fin_del_dia() -> None:
 
 
 def test_calculate_min_date_resta_30_dias_y_tolera_fechas_rotas() -> None:
-    minimo = _calculate_min_date("2026-08-31")
+    minimo = calculate_min_date("2026-08-31")
     assert minimo is not None and minimo.strftime("%Y-%m-%d") == "2026-08-01"
-    assert _calculate_min_date("") is None
+    assert calculate_min_date("") is None
 
 
 def _login_ok(request: httpx.Request) -> httpx.Response | None:

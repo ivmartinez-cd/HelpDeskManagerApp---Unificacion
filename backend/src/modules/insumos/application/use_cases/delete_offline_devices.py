@@ -79,56 +79,52 @@ class DeleteOfflineDevices:
         by_id = {d.device_id: d for d in snapshot.devices}
         now = datetime.now(UTC)
         results: list[DeleteResult] = []
-
         for device_id in requested_ids:
             device = by_id.get(device_id)
             if device is None or device_id not in snapshot.deletable_ids:
-                reason = self._rejection_reason(device_id, device, snapshot.outage_device_ids)
-                logger.warning(
-                    "delete_offline: equipo %d rechazado, no es candidato válido (%s)",
-                    device_id,
-                    reason,
-                    extra={
-                        "device_id": device_id,
-                        "serial": device.serial if device else "",
-                        "reason": reason,
-                    },
-                )
-                results.append(
-                    DeleteResult(
-                        device_id=device_id,
-                        serial=device.serial if device else "",
-                        ok=False,
-                        error=f"El equipo no es un candidato válido para baja ({reason}).",
-                    )
-                )
-                continue
-
-            try:
-                if not self._dry_run:
-                    await self._ports.portal.delete_device(device_id)
-                await self._ports.audit.record(self._build_audit(device, now))
-                if not self._dry_run:
-                    await self._ports.devices.delete_device(device_id)
-                results.append(DeleteResult(device_id=device_id, serial=device.serial, ok=True))
-            except Exception as exc:
-                logger.warning(
-                    "delete_offline: falló la baja del equipo %d (%s)",
-                    device_id,
-                    device.serial,
-                    extra={"device_id": device_id, "serial": device.serial},
-                    exc_info=exc,
-                )
-                results.append(
-                    DeleteResult(
-                        device_id=device_id,
-                        serial=device.serial,
-                        ok=False,
-                        error=str(exc),
-                    )
-                )
-
+                results.append(self._reject(device_id, device, snapshot.outage_device_ids))
+            else:
+                results.append(await self._delete_one(device, now))
         return DeleteOfflineDevicesResult(results=results, dry_run=self._dry_run)
+
+    @classmethod
+    def _reject(
+        cls, device_id: int, device: OfflineDevice | None, outage_device_ids: set[int]
+    ) -> DeleteResult:
+        reason = cls._rejection_reason(device_id, device, outage_device_ids)
+        serial = device.serial if device else ""
+        logger.warning(
+            "delete_offline: equipo %d rechazado, no es candidato válido (%s)",
+            device_id,
+            reason,
+            extra={"device_id": device_id, "serial": serial, "reason": reason},
+        )
+        return DeleteResult(
+            device_id=device_id,
+            serial=serial,
+            ok=False,
+            error=f"El equipo no es un candidato válido para baja ({reason}).",
+        )
+
+    async def _delete_one(self, device: OfflineDevice, now: datetime) -> DeleteResult:
+        """(b) portal → (c) auditoría (siempre) → (d) fila local; error → ok=False."""
+        device_id = device.device_id
+        try:
+            if not self._dry_run:
+                await self._ports.portal.delete_device(device_id)
+            await self._ports.audit.record(self._build_audit(device, now))
+            if not self._dry_run:
+                await self._ports.devices.delete_device(device_id)
+        except Exception as exc:
+            logger.warning(
+                "delete_offline: falló la baja del equipo %d (%s)",
+                device_id,
+                device.serial,
+                extra={"device_id": device_id, "serial": device.serial},
+                exc_info=exc,
+            )
+            return DeleteResult(device_id=device_id, serial=device.serial, ok=False, error=str(exc))
+        return DeleteResult(device_id=device_id, serial=device.serial, ok=True)
 
     @staticmethod
     def _rejection_reason(

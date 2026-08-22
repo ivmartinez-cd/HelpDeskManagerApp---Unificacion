@@ -7,127 +7,17 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.analisis_log_hp.presentation.analysis_router import (
-    router as pi_analysis_router,
-)
-from src.modules.analisis_log_hp.presentation.cpmd_router import router as pi_cpmd_router
-from src.modules.analisis_log_hp.presentation.error_codes_router import (
-    router as pi_error_codes_router,
-)
-from src.modules.analisis_log_hp.presentation.saved_analyses_router import (
-    router as pi_saved_analyses_router,
-)
-from src.modules.analisis_log_hp.presentation.sds_router import router as pi_sds_router
 from src.modules.auth.domain.repositories.operador_color_lookup import OperadorColorLookup
-from src.modules.auth.presentation.admin_permissions_router import (
-    router as admin_permissions_router,
-)
-from src.modules.auth.presentation.admin_users_router import router as admin_users_router
-from src.modules.auth.presentation.auth_router import router as auth_router
 from src.modules.auth.presentation.dependencies.operador_colors import get_operador_color_lookup
-from src.modules.auth.presentation.route_visits_router import router as route_visits_router
-from src.modules.contadores.presentation.anexos_pendientes_router import (
-    router as anexos_pendientes_router,
-)
-from src.modules.contadores.presentation.calendario_router import (
-    router as calendario_router,
-)
-from src.modules.contadores.presentation.clientes_nuevos_router import (
-    router as clientes_nuevos_router,
-)
-from src.modules.contadores.presentation.equipos_sin_real_router import (
-    router as equipos_sin_real_router,
-)
-from src.modules.contadores.presentation.ers_router import router as ers_router
-from src.modules.contadores.presentation.ftp_clients_router import router as ftp_clients_router
-from src.modules.contadores.presentation.sds_router import router as sds_router
-from src.modules.contadores.presentation.tools_router import router as contadores_tools_router
-from src.modules.insumos.presentation.alerts_router import router as insumos_alerts_router
-from src.modules.insumos.presentation.audit_router import router as insumos_audit_router
-from src.modules.insumos.presentation.config_router import router as insumos_config_router
-from src.modules.insumos.presentation.customers_router import router as insumos_customers_router
-from src.modules.insumos.presentation.devices_router import router as insumos_devices_router
-from src.modules.insumos.presentation.health_router import router as insumos_health_router
-from src.modules.insumos.presentation.mail_log_router import router as insumos_mail_log_router
-from src.modules.insumos.presentation.new_devices_router import (
-    router as insumos_new_devices_router,
-)
-from src.modules.insumos.presentation.offline_devices_router import (
-    router as insumos_offline_devices_router,
-)
-from src.modules.insumos.presentation.requests_router import router as insumos_requests_router
-from src.modules.insumos.presentation.statistics_router import (
-    router as insumos_statistics_router,
-)
-from src.modules.liquidaciones.presentation.alertas_router import (
-    router as liquidaciones_alertas_router,
-)
-from src.modules.liquidaciones.presentation.config_router import (
-    router as liquidaciones_config_router,
-)
-from src.modules.liquidaciones.presentation.liquidaciones_ayc_router import (
-    router as liquidaciones_ayc_router,
-)
-from src.modules.liquidaciones.presentation.liquidaciones_router import (
-    router as liquidaciones_router,
-)
-from src.modules.prestadores.presentation.prestadores_router import (
-    router as prestadores_router,
-)
-from src.modules.preventivos.presentation.preventivos_router import (
-    router as preventivos_router,
-)
-from src.modules.sla.presentation.pendientes_router import router as sla_pendientes_router
-from src.modules.sla.presentation.sla_router import router as sla_router
-from src.modules.turnos.presentation.casillas_router import router as turnos_casillas_router
-from src.modules.turnos.presentation.grilla_variantes_router import (
-    router as turnos_grilla_variantes_router,
-)
-from src.modules.turnos.presentation.intercambios_router import (
-    router as turnos_intercambios_router,
-)
-from src.modules.turnos.presentation.overrides_router import (
-    router as turnos_overrides_router,
-)
-from src.modules.turnos.presentation.slots_router import router as turnos_slots_router
-from src.modules.turnos.presentation.turnos_router import router as turnos_router
-from src.modules.vacaciones.presentation.auditoria_router import (
-    router as vacaciones_auditoria_router,
-)
-from src.modules.vacaciones.presentation.ausencias_router import (
-    router as vacaciones_ausencias_router,
-)
-from src.modules.vacaciones.presentation.catalogos_router import (
-    router as vacaciones_catalogos_router,
-)
-from src.modules.vacaciones.presentation.ciclos_router import (
-    router as vacaciones_ciclos_router,
-)
-from src.modules.vacaciones.presentation.dashboard_router import (
-    router as vacaciones_dashboard_router,
-)
-from src.modules.vacaciones.presentation.empleados_router import (
-    router as vacaciones_empleados_router,
-)
-from src.modules.vacaciones.presentation.feriados_router import (
-    router as vacaciones_feriados_router,
-)
-from src.modules.vacaciones.presentation.reportes_router import (
-    router as vacaciones_reportes_router,
-)
-from src.modules.vacaciones.presentation.solicitudes_router import (
-    router as vacaciones_solicitudes_router,
-)
-from src.modules.wati.presentation.pendientes_router import router as wati_pendientes_router
-from src.shared.infrastructure.config.settings import get_settings
+from src.shared.infrastructure.config.settings import Settings, get_settings
 from src.shared.infrastructure.cross_module.auth_operador_color_lookup import (
     SqlAlchemyOperadorColorLookup,
 )
 from src.shared.infrastructure.database.session import get_db
 from src.shared.infrastructure.logging_config import configure_logging
 from src.shared.presentation.errors.handlers import register_exception_handlers
-from src.shared.presentation.health.router import router as health_router
 from src.shared.presentation.middlewares.request_id import RequestIdMiddleware
+from src.shared.presentation.routers import ROUTERS
 
 logger = logging.getLogger(__name__)
 
@@ -141,42 +31,68 @@ async def _provide_operador_color_lookup(
     return SqlAlchemyOperadorColorLookup(db)
 
 
+def _jobs_insumos_y_sla(settings: Settings) -> list[asyncio.Task[None]]:
+    """Van juntos porque comparten el mailer (el poller de insumos avisa por mail)."""
+    from src.modules.auth.infrastructure.mailer_factory import get_mailer
+    from src.modules.insumos.application.jobs.poller_alerts import PollerAlerts
+    from src.modules.insumos.presentation.background_jobs import start_background_jobs
+    from src.modules.insumos.presentation.mail_dispatch import LoggedMailDispatcher
+    from src.modules.sla.presentation.background_jobs import start_sla_background_jobs
+
+    mailer = get_mailer()
+    poller_alerts = PollerAlerts(LoggedMailDispatcher(mailer))
+    tasks = start_background_jobs(mailer, poller_alerts, settings.poll_interval_minutes)
+    tasks += start_sla_background_jobs(settings.sla_refresh_interval_minutes)
+    return tasks
+
+
+def _jobs_analisis_log_hp(settings: Settings) -> list[asyncio.Task[None]]:
+    from src.modules.analisis_log_hp.presentation.background_jobs import (
+        start_analisis_log_hp_background_jobs,
+    )
+
+    return start_analisis_log_hp_background_jobs(settings.analisis_log_hp_snapshot_interval_minutes)
+
+
+def _jobs_contadores(settings: Settings) -> list[asyncio.Task[None]]:
+    from src.modules.contadores.presentation.background_jobs import (
+        start_contadores_background_jobs,
+    )
+
+    return start_contadores_background_jobs(settings.calendario_refresh_interval_minutes)
+
+
+def _jobs_liquidaciones(settings: Settings) -> list[asyncio.Task[None]]:
+    from src.modules.liquidaciones.presentation.background_jobs import (
+        start_liquidaciones_background_jobs,
+    )
+
+    return start_liquidaciones_background_jobs(settings.liquidaciones_reconciliar_interval_minutes)
+
+
+def _jobs_wati(settings: Settings) -> list[asyncio.Task[None]]:
+    from src.modules.wati.presentation.background_jobs import start_wati_background_jobs
+
+    return start_wati_background_jobs(settings.wati_poll_interval_minutes)
+
+
+def _iniciar_background_jobs(settings: Settings) -> list[asyncio.Task[None]]:
+    """Imports perezosos a propósito: los módulos de jobs no se cargan (ni sus
+    clientes externos) cuando `DISABLE_BACKGROUND_JOBS=true`. Mismo orden de
+    arranque de siempre: insumos, sla, analisis_log_hp, contadores,
+    liquidaciones, wati."""
+    if settings.disable_background_jobs:
+        return []
+    tasks = _jobs_insumos_y_sla(settings)
+    for arrancar in (_jobs_analisis_log_hp, _jobs_contadores, _jobs_liquidaciones, _jobs_wati):
+        tasks += arrancar(settings)
+    logger.info("background_jobs: %d job(s) iniciados", len(tasks))
+    return tasks
+
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
-    settings = get_settings()
-    tasks: list[asyncio.Task[None]] = []
-    if not settings.disable_background_jobs:
-        from src.modules.auth.infrastructure.mailer_factory import get_mailer
-        from src.modules.insumos.application.jobs.poller_alerts import PollerAlerts
-        from src.modules.insumos.presentation.background_jobs import start_background_jobs
-        from src.modules.insumos.presentation.mail_dispatch import LoggedMailDispatcher
-
-        mailer = get_mailer()
-        poller_alerts = PollerAlerts(LoggedMailDispatcher(mailer))
-        from src.modules.sla.presentation.background_jobs import start_sla_background_jobs
-
-        tasks = start_background_jobs(mailer, poller_alerts, settings.poll_interval_minutes)
-        tasks += start_sla_background_jobs(settings.sla_refresh_interval_minutes)
-        from src.modules.analisis_log_hp.presentation.background_jobs import (
-            start_analisis_log_hp_background_jobs,
-        )
-        tasks += start_analisis_log_hp_background_jobs(
-            settings.analisis_log_hp_snapshot_interval_minutes
-        )
-        from src.modules.contadores.presentation.background_jobs import (
-            start_contadores_background_jobs,
-        )
-        tasks += start_contadores_background_jobs(settings.calendario_refresh_interval_minutes)
-        from src.modules.liquidaciones.presentation.background_jobs import (
-            start_liquidaciones_background_jobs,
-        )
-        tasks += start_liquidaciones_background_jobs(
-            settings.liquidaciones_reconciliar_interval_minutes
-        )
-        from src.modules.wati.presentation.background_jobs import start_wati_background_jobs
-
-        tasks += start_wati_background_jobs(settings.wati_poll_interval_minutes)
-        logger.info("background_jobs: %d job(s) iniciados", len(tasks))
+    tasks = _iniciar_background_jobs(get_settings())
     try:
         yield
     finally:
@@ -187,88 +103,49 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
             logger.info("background_jobs: %d job(s) cancelados", len(tasks))
 
 
+def _origenes_cors(settings: Settings) -> list[str]:
+    return list(
+        filter(
+            None,
+            {
+                settings.cors_origin,
+                settings.frontend_url,
+                "http://localhost:3000",
+                "http://127.0.0.1:3000",
+                "http://localhost:3010",
+                "http://127.0.0.1:3010",
+            },
+        )
+    )
+
+
+def _registrar_middlewares(app: FastAPI, settings: Settings) -> None:
+    """CORS primero y RequestId después: el último agregado queda más afuera
+    en la pila de Starlette (RequestId envuelve a CORS)."""
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_origenes_cors(settings),
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    app.add_middleware(RequestIdMiddleware)
+
+
+def _registrar_routers(app: FastAPI) -> None:
+    for router in ROUTERS:
+        app.include_router(router)
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging(level="DEBUG" if settings.environment == "development" else "INFO")
 
     app = FastAPI(title="HelpDesk Manager API", version="0.1.0", lifespan=_lifespan)
     app.dependency_overrides[get_operador_color_lookup] = _provide_operador_color_lookup
-
-    origins = list(filter(None, {
-        settings.cors_origin,
-        settings.frontend_url,
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3010",
-        "http://127.0.0.1:3010",
-    }))
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-    app.add_middleware(RequestIdMiddleware)
+    _registrar_middlewares(app, settings)
     register_exception_handlers(app)
-    app.include_router(health_router)
-    app.include_router(auth_router)
-    app.include_router(admin_permissions_router)
-    app.include_router(admin_users_router)
-    app.include_router(route_visits_router)
-    app.include_router(contadores_tools_router)
-    app.include_router(ftp_clients_router)
-    app.include_router(clientes_nuevos_router)
-    app.include_router(sds_router)
-    app.include_router(ers_router)
-    app.include_router(equipos_sin_real_router)
-    app.include_router(anexos_pendientes_router)
-    app.include_router(calendario_router)
-    app.include_router(insumos_customers_router)
-    app.include_router(insumos_requests_router)
-    app.include_router(insumos_audit_router)
-    app.include_router(insumos_devices_router)
-    app.include_router(insumos_statistics_router)
-    app.include_router(insumos_mail_log_router)
-    app.include_router(insumos_config_router)
-    app.include_router(insumos_new_devices_router)
-    app.include_router(insumos_offline_devices_router)
-    app.include_router(insumos_alerts_router)
-    app.include_router(insumos_health_router)
-    app.include_router(turnos_router)
-    app.include_router(turnos_casillas_router)
-    app.include_router(turnos_slots_router)
-    app.include_router(turnos_overrides_router)
-    app.include_router(turnos_grilla_variantes_router)
-    app.include_router(turnos_intercambios_router)
-    app.include_router(sla_router)
-    app.include_router(sla_pendientes_router)
-    app.include_router(prestadores_router)
-    app.include_router(preventivos_router)
-    # config_router va ANTES: sus rutas son todas literales (/tarifarios, /spsts,
-    # /tabla-km, ...), mientras que liquidaciones_router tiene un catch-all
-    # GET/DELETE/PATCH /{liquidacion_id} que, registrado primero, interceptaba esos
-    # segmentos como si fueran un UUID (422 en vez de la respuesta real).
-    app.include_router(liquidaciones_config_router)
-    app.include_router(liquidaciones_alertas_router)
-    app.include_router(liquidaciones_ayc_router)
-    app.include_router(liquidaciones_router)
-    app.include_router(vacaciones_empleados_router)
-    app.include_router(vacaciones_catalogos_router)
-    app.include_router(vacaciones_feriados_router)
-    app.include_router(vacaciones_solicitudes_router)
-    app.include_router(vacaciones_dashboard_router)
-    app.include_router(vacaciones_ciclos_router)
-    app.include_router(vacaciones_ausencias_router)
-    app.include_router(vacaciones_auditoria_router)
-    app.include_router(vacaciones_reportes_router)
-    app.include_router(wati_pendientes_router)
-    app.include_router(pi_analysis_router)
-    app.include_router(pi_cpmd_router)
-    app.include_router(pi_error_codes_router)
-    app.include_router(pi_sds_router)
-    app.include_router(pi_saved_analyses_router)
+    _registrar_routers(app)
     return app
 
 

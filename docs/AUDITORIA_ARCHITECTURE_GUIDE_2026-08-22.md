@@ -432,3 +432,22 @@ las 13 funciones nuevas >30 líneas y las 2 clases >200 (cubierto por el addendu
 - Gates: `make check` → 26/26 contratos · ruff · mypy · **2121 unit** · **316 integración** ·
   sizes ✔ (inventario podado a 372, ver ADR-017). Cobertura por módulo igual o mayor
   (liquidaciones infra 81.8→84.9, analisis_log_hp infra 98.5→98.9).
+
+---
+
+## Addendum 4 (2026-08-22): deuda §4 de complejidad real saldada; gate sobre HEAD/staged
+
+- **Backend**: las 11 funciones >50 líneas → todas ≤30 (`export_meters_to_csv` SDS 106→27 y
+  ERS 85→30 con `sds_export.py` + `auto_csv_writer.py` compartido; `refresh_ers_token` 65→16;
+  `sync_pending` 67→4; `preview_zone_contacts` 65→17; `_row_from` 58→25; `delete/verify
+  _offline_devices._run` 55→12 / 52→15; `create_app` 83→10 con 326 rutas y middlewares
+  verificados idénticos; `EditarSolicitud.execute` 52→11); las 2 clases >200 → 122 y 94; los 3
+  anidamientos >3 → ≤3; SQL compilado verificado idéntico donde aplicaba. Tests agregados
+  antes de refactorizar donde faltaban (+~50). Cobertura por módulo igual o mayor
+  (contadores infra 77→83, insumos 83→85 total).
+- **Frontend**: los 10 archivos >300 partidos por extracción pura (máx. ahora 242); tsc,
+  eslint estricto y Playwright (suite completa) en verde.
+- **Gate**: `check_sizes.py --committed` en `make check` (HEAD, lo que se pushea) y `--staged`
+  en el pre-commit; el árbol de trabajo queda para `make sizes-wip`. Inventario: 389 → **340
+  funciones de 21–47 líneas; 0 clases, 0 archivos** (ADR-017/020 actualizados).
+- Gates finales: lint-imports 26/26 · ruff · mypy · 2166 unit · 332 integración · sizes ✔.

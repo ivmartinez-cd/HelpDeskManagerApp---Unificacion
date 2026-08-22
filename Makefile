@@ -11,7 +11,7 @@ PGDB     ?= helpdesk
 TEST_DB  := helpdesk-db-test
 NET      := helpdesk-manager_default
 
-.PHONY: help status check lint-imports ruff mypy test test-integration sizes lint-frontend typecheck-frontend hooks \
+.PHONY: help status check lint-imports ruff mypy test test-integration sizes sizes-wip lint-frontend typecheck-frontend hooks \
         db-backup db-restore restart-backend restart-frontend recreate-backend \
         logs-backend logs-frontend mailpit up ps
 
@@ -42,7 +42,10 @@ test-integration:  ## pytest tests/integration (levanta helpdesk-db-test y lo co
 	@docker network connect $(NET) $(TEST_DB) 2>/dev/null || true
 	$(EXEC) env DB_TEST_HOST=$(TEST_DB) DB_TEST_PORT=5432 uv run pytest tests/integration -q
 
-sizes:  ## Gate §4: función/clase/archivo por encima del límite que no esté en el inventario congelado (scripts/sizes-baseline.json)
+sizes:  ## Gate §4 sobre HEAD (lo que se pushea): función/clase/archivo fuera del inventario congelado (scripts/sizes-baseline.json)
+	python3 scripts/check_sizes.py --committed
+
+sizes-wip:  ## Gate §4 sobre el árbol de trabajo (lo que tenés editado, incluido WIP ajeno)
 	python3 scripts/check_sizes.py
 
 lint-frontend:  ## eslint del frontend (dentro del contenedor)

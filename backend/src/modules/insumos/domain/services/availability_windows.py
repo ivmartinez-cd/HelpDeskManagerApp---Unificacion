@@ -30,6 +30,20 @@ def _parse_iso(value: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
+def _streak_start(date: str, description: str) -> datetime:
+    """Inicio de una desconexión: la fecha de la alerta, corregida hacia atrás con el
+    "actual=N hrs" de la descripción cuando está presente."""
+    start = _parse_iso(date)
+    match = _ACTUAL_HOURS_RE.search(description)
+    if match:
+        start -= timedelta(hours=int(match.group(1)))
+    return start
+
+
+def _window(start: datetime, end: datetime) -> AvailabilityWindow:
+    return AvailabilityWindow(start=start.isoformat(), end=end.isoformat())
+
+
 def build_availability_windows(alerts: list[JsonDict]) -> list[AvailabilityWindow]:
     """A partir de las alertas AVAILABILITY (en cualquier orden), arma ventanas [start, end].
 
@@ -50,18 +64,10 @@ def build_availability_windows(alerts: list[JsonDict]) -> list[AvailabilityWindo
         date = alert.get("date")
         if not date:
             continue
-        if description.startswith(_UNAVAILABLE_PREFIX):
-            if streak_start is None:
-                start = _parse_iso(date)
-                match = _ACTUAL_HOURS_RE.search(description)
-                if match:
-                    start -= timedelta(hours=int(match.group(1)))
-                streak_start = start
+        if description.startswith(_UNAVAILABLE_PREFIX) and streak_start is None:
+            streak_start = _streak_start(date, description)
         elif description.startswith(_RESUMED_PREFIX) and streak_start is not None:
-            end = _parse_iso(date)
-            windows.append(
-                AvailabilityWindow(start=streak_start.isoformat(), end=end.isoformat())
-            )
+            windows.append(_window(streak_start, _parse_iso(date)))
             streak_start = None
 
     return windows

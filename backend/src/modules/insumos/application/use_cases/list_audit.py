@@ -31,6 +31,67 @@ _DRYRUN_PREFIX = "DRYRUN-"
 
 
 @dataclass(frozen=True)
+class _InitialSnapshot:
+    """device_id/initial_* con los que se muestra (y eventualmente se backfillea) la fila."""
+
+    device_id: int | None
+    percent: int | None
+    days: int | None
+    pages: int | None
+
+
+def _resolve_snapshot(
+    record: StoredAuditRecord,
+    tracked: dict[int, JsonDict],
+    backfill: list[AuditSnapshot],
+) -> _InitialSnapshot:
+    """Lo grabado, salvo que la fila venga incompleta y Insight todavía trackee la
+    solicitud: en ese caso se completa en vivo y se encola el backfill."""
+    insight_request = (
+        tracked.get(record.hp_request_id)
+        if needs_enrichment(record) and record.hp_request_id is not None
+        else None
+    )
+    if insight_request is None:
+        return _stored_snapshot(record)
+    live = _live_snapshot(insight_request)
+    if live.device_id is not None:
+        backfill.append(_backfill_entry(record.audit_id, live.device_id, live))
+    return live
+
+
+def _stored_snapshot(record: StoredAuditRecord) -> _InitialSnapshot:
+    return _InitialSnapshot(
+        device_id=record.device_id,
+        percent=record.initial_percent_left,
+        days=record.initial_days_left,
+        pages=record.initial_pages_left,
+    )
+
+
+def _backfill_entry(audit_id: int, device_id: int, live: _InitialSnapshot) -> AuditSnapshot:
+    return AuditSnapshot(
+        audit_id=audit_id,
+        device_id=int(device_id),
+        initial_percent_left=live.percent,
+        initial_days_left=live.days,
+        initial_pages_left=None,
+    )
+
+
+def _live_snapshot(insight_request: JsonDict) -> _InitialSnapshot:
+    # requestedLevel/requestedDaysLeft: el valor AL MOMENTO de tramitar la
+    # solicitud — no consumable.percentLeft, que es la lectura de HOY y haría
+    # que "% al cargar" muestre el nivel actual. Sin equivalente de páginas.
+    return _InitialSnapshot(
+        device_id=insight_request.get("deviceId"),
+        percent=insight_request.get("requestedLevel"),
+        days=insight_request.get("requestedDaysLeft"),
+        pages=None,
+    )
+
+
+@dataclass(frozen=True)
 class ListAuditPorts:
     audit: OrderAuditRepository
     insight: InsightGateway
@@ -54,53 +115,21 @@ class ListAudit:
         rows: list[AuditRow] = []
         backfill: list[AuditSnapshot] = []
         for record in records:
-            rows.append(self._row_from(record, tracked, backfill, closures))
+            snapshot = _resolve_snapshot(record, tracked, backfill)
+            rows.append(self._row_from(record, snapshot, closures))
         if backfill:
             await self._ports.audit.backfill_snapshots(backfill)
         return rows, total
 
     def _row_from(
-        self,
-        record: StoredAuditRecord,
-        tracked: dict[int, JsonDict],
-        backfill: list[AuditSnapshot],
-        closures: AuditClosures,
+        self, record: StoredAuditRecord, snapshot: _InitialSnapshot, closures: AuditClosures
     ) -> AuditRow:
-        device_id = record.device_id
-        percent, days, pages = (
-            record.initial_percent_left,
-            record.initial_days_left,
-            record.initial_pages_left,
-        )
-        insight_request = (
-            tracked.get(record.hp_request_id)
-            if needs_enrichment(record) and record.hp_request_id is not None
-            else None
-        )
-        if insight_request is not None:
-            device_id = insight_request.get("deviceId")
-            # requestedLevel/requestedDaysLeft: el valor AL MOMENTO de tramitar la
-            # solicitud — no consumable.percentLeft, que es la lectura de HOY y haría
-            # que "% al cargar" muestre el nivel actual. Sin equivalente de páginas.
-            percent = insight_request.get("requestedLevel")
-            days = insight_request.get("requestedDaysLeft")
-            pages = None
-            if device_id is not None:
-                backfill.append(
-                    AuditSnapshot(
-                        audit_id=record.audit_id,
-                        device_id=int(device_id),
-                        initial_percent_left=percent,
-                        initial_days_left=days,
-                        initial_pages_left=None,
-                    )
-                )
         return AuditRow(
             audit_id=record.audit_id,
             event=record.event,
             created_at=record.created_at,
             hp_request_id=record.hp_request_id,
-            device_id=device_id,
+            device_id=snapshot.device_id,
             customer_id=record.customer_id,
             customer_name=record.customer_name,
             device_serial=record.device_serial,
@@ -111,9 +140,9 @@ class ListAudit:
             detail=record.detail,
             dry_run=record.dry_run,
             hp_request_time=record.hp_request_time,
-            initial_percent_left=percent,
-            initial_days_left=days,
-            initial_pages_left=pages,
+            initial_percent_left=snapshot.percent,
+            initial_days_left=snapshot.days,
+            initial_pages_left=snapshot.pages,
             supply_url=self._supply_url_for(record.order_type, record.internal_order_id),
             action=action_for(record, closures),
         )

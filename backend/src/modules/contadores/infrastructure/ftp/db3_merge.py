@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import sqlite3
+from dataclasses import dataclass
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -166,6 +167,15 @@ def _get_pk_info(con: sqlite3.Connection, table: str) -> tuple[list[str], str | 
     return cols, None, False
 
 
+@dataclass(frozen=True)
+class _CopyPlan:
+    """Cómo copiar una tabla al merge: qué columnas leer y con qué INSERT escribirlas."""
+
+    table: str
+    columns: list[str]
+    insert_verb: str  # "INSERT" | "INSERT OR IGNORE"
+
+
 def _import_file(
     src_path: str,
     merged_con: sqlite3.Connection,
@@ -175,33 +185,43 @@ def _import_file(
     src_con.row_factory = sqlite3.Row
     try:
         for table in table_names:
-            exists = src_con.execute(
-                "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)
-            ).fetchone()
-            if not exists:
+            if not _table_exists(src_con, table):
                 continue
-
-            cols, pk, is_int_pk = _get_pk_info(merged_con, table)
-
-            if pk and is_int_pk and pk in cols:
-                cols_no_pk = [c for c in cols if c != pk]
-                if not cols_no_pk:
-                    continue
-                col_str = ", ".join(f'"{c}"' for c in cols_no_pk)
-                rows = src_con.execute(f'SELECT {col_str} FROM "{table}";').fetchall()
-                for row in rows:
-                    merged_con.execute(
-                        f'INSERT INTO "{table}" ({col_str}) VALUES ({",".join(["?"] * len(row))});',
-                        tuple(row),
-                    )
-            else:
-                col_str = ", ".join(f'"{c}"' for c in cols)
-                rows = src_con.execute(f'SELECT {col_str} FROM "{table}";').fetchall()
-                for row in rows:
-                    placeholders = ",".join(["?"] * len(row))
-                    merged_con.execute(
-                        f'INSERT OR IGNORE INTO "{table}" ({col_str}) VALUES ({placeholders});',
-                        tuple(row),
-                    )
+            plan = _plan_copy(merged_con, table)
+            if plan is not None:
+                _copy_rows(src_con, merged_con, plan)
     finally:
         src_con.close()
+
+
+def _table_exists(con: sqlite3.Connection, table: str) -> bool:
+    exists = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)
+    ).fetchone()
+    return exists is not None
+
+
+def _plan_copy(merged_con: sqlite3.Connection, table: str) -> _CopyPlan | None:
+    """Con PK INTEGER simple se inserta sin esa columna (se regenera y no choca);
+    con PK compuesta o no-integer, todas las columnas con INSERT OR IGNORE.
+    None si la tabla no tiene nada que copiar fuera de su PK."""
+    cols, pk, is_int_pk = _get_pk_info(merged_con, table)
+    if not (pk and is_int_pk and pk in cols):
+        return _CopyPlan(table, cols, "INSERT OR IGNORE")
+    cols_no_pk = [c for c in cols if c != pk]
+    if not cols_no_pk:
+        return None
+    return _CopyPlan(table, cols_no_pk, "INSERT")
+
+
+def _copy_rows(
+    src_con: sqlite3.Connection, merged_con: sqlite3.Connection, plan: _CopyPlan
+) -> None:
+    col_str = ", ".join(f'"{c}"' for c in plan.columns)
+    rows = src_con.execute(f'SELECT {col_str} FROM "{plan.table}";').fetchall()
+    for row in rows:
+        placeholders = ",".join(["?"] * len(row))
+        merged_con.execute(
+            f'{plan.insert_verb} INTO "{plan.table}" ({col_str}) VALUES ({placeholders});',
+            tuple(row),
+        )

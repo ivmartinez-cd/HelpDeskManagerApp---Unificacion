@@ -3,7 +3,7 @@ exacto del legacy — ver validador_solicitud)."""
 
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import date
 
 from src.modules.vacaciones.application.dtos.solicitud_dtos import (
     CrearSolicitudCommand,
@@ -12,6 +12,12 @@ from src.modules.vacaciones.application.dtos.solicitud_dtos import (
 from src.modules.vacaciones.application.use_cases.saldos_service import (
     SaldosDependencies,
     SaldosService,
+)
+from src.modules.vacaciones.application.use_cases.solicitud_datos import (
+    aplicar_edicion,
+    metadata_solicitud,
+    nueva_solicitud,
+    preparar_datos,
 )
 from src.modules.vacaciones.application.use_cases.solicitudes_context import (
     AgendaDependencies,
@@ -54,7 +60,6 @@ from src.modules.vacaciones.domain.repositories.solicitud_repository import (
     RangoSolapado,
     SolicitudRepository,
 )
-from src.modules.vacaciones.domain.services.dias_solicitados import dias_solicitados
 from src.modules.vacaciones.domain.services.scoping import (
     verificar_puede_modificar_solicitud,
 )
@@ -108,45 +113,17 @@ class CrearSolicitud:
     def __init__(self, deps: SolicitudesDependencies) -> None:
         self._deps = deps
 
-    async def execute(
-        self, command: CrearSolicitudCommand, actor: ActorVacaciones
-    ) -> Solicitud:
+    async def execute(self, command: CrearSolicitudCommand, actor: ActorVacaciones) -> Solicitud:
         empleado = await self._resolver_empleado(command, actor)
-        dias = await _calcular_dias(self._deps, command.start_date, command.end_date)
-        target = command.charged_to_year or command.start_date.year
-        hoy = self._deps.clock.hoy()
-        config = await self._deps.config.get()
-        # Año primero (paridad legacy): un año inválido no debe crear ciclos.
-        validar_anio_objetivo(target, hoy=hoy, es_admin=actor.es_admin, config=config)
-        datos = DatosSolicitud(
-            empleado=empleado,
-            start_date=command.start_date,
-            end_date=command.end_date,
-            dias=dias,
-            target_year=target,
-        )
-        rango = RangoSolapado(start=command.start_date, end=command.end_date)
-        agenda = await cargar_agenda(self._deps.agenda(), empleado, rango)
-        saldo = await self._deps.saldos().saldo_de(empleado, target)
-        ctx = ContextoCreacion(hoy=hoy, es_admin=actor.es_admin, config=config, saldo=saldo)
-        validar_creacion(datos, agenda, ctx)
-        solicitud = Solicitud(
-            id=uuid.uuid4(),
-            empleado_id=empleado.id,
-            start_date=command.start_date,
-            end_date=command.end_date,
-            days_requested=dias,
-            charged_to_year=target,
-            reason=command.reason,
-            status=EstadoSolicitud.PENDING,
-            created_at=datetime.now(UTC),
-        )
+        datos = await preparar_datos(self._deps.feriados, empleado, command)
+        await self._validar_creacion(datos, actor)
+        solicitud = nueva_solicitud(datos, command.reason)
         await self._deps.solicitudes.add(solicitud)
         await self._deps.auditoria.registrar(
             ACCION_CREATE,
             ENTIDAD_SOLICITUD,
             str(solicitud.id),
-            _metadata_solicitud(solicitud, empleado),
+            metadata_solicitud(solicitud, empleado),
         )
         await self._notificar(empleado, solicitud)
         return solicitud
@@ -165,6 +142,17 @@ class CrearSolicitud:
         if empleado is None:
             raise EmpleadoNoEncontradoError(empleado_id)
         return empleado
+
+    async def _validar_creacion(self, datos: DatosSolicitud, actor: ActorVacaciones) -> None:
+        hoy = self._deps.clock.hoy()
+        config = await self._deps.config.get()
+        # Año primero (paridad legacy): un año inválido no debe crear ciclos.
+        validar_anio_objetivo(datos.target_year, hoy=hoy, es_admin=actor.es_admin, config=config)
+        rango = RangoSolapado(start=datos.start_date, end=datos.end_date)
+        agenda = await cargar_agenda(self._deps.agenda(), datos.empleado, rango)
+        saldo = await self._deps.saldos().saldo_de(datos.empleado, datos.target_year)
+        ctx = ContextoCreacion(hoy=hoy, es_admin=actor.es_admin, config=config, saldo=saldo)
+        validar_creacion(datos, agenda, ctx)
 
     async def _notificar(self, empleado: Empleado, solicitud: Solicitud) -> None:
         sector = await self._deps.sectores.get_by_id(empleado.department_id)
@@ -192,6 +180,19 @@ class EditarSolicitud:
         command: EditarSolicitudCommand,
         actor: ActorVacaciones,
     ) -> Solicitud:
+        solicitud, empleado = await self._cargar_solicitud_y_empleado(solicitud_id, actor)
+        # Paridad legacy: la edición NO re-valida año ni apertura de ciclo.
+        datos = await preparar_datos(self._deps.feriados, empleado, command)
+        await self._validar_edicion(solicitud, datos, actor)
+        previo = (solicitud.start_date, solicitud.end_date)
+        aplicar_edicion(solicitud, datos, command.reason)
+        await self._deps.solicitudes.save(solicitud)
+        await self._auditar_edicion(solicitud, empleado, previo)
+        return solicitud
+
+    async def _cargar_solicitud_y_empleado(
+        self, solicitud_id: uuid.UUID, actor: ActorVacaciones
+    ) -> tuple[Solicitud, Empleado]:
         solicitud = await self._deps.solicitudes.get_by_id(solicitud_id)
         if solicitud is None:
             raise SolicitudNoEncontradaError(solicitud_id)
@@ -199,23 +200,18 @@ class EditarSolicitud:
         empleado = await self._deps.empleados.get_by_id(solicitud.empleado_id)
         if empleado is None:
             raise EmpleadoNoEncontradoError(solicitud.empleado_id)
-        dias = await _calcular_dias(self._deps, command.start_date, command.end_date)
-        # Paridad legacy: la edición NO re-valida año ni apertura de ciclo.
-        target = command.charged_to_year or command.start_date.year
-        datos = DatosSolicitud(
-            empleado=empleado,
-            start_date=command.start_date,
-            end_date=command.end_date,
-            dias=dias,
-            target_year=target,
-        )
+        return solicitud, empleado
+
+    async def _validar_edicion(
+        self, solicitud: Solicitud, datos: DatosSolicitud, actor: ActorVacaciones
+    ) -> None:
         rango = RangoSolapado(
-            start=command.start_date,
-            end=command.end_date,
+            start=datos.start_date,
+            end=datos.end_date,
             excluir_solicitud_id=solicitud.id,
         )
-        agenda = await cargar_agenda(self._deps.agenda(), empleado, rango)
-        saldo = await self._deps.saldos().saldo_de(empleado, target)
+        agenda = await cargar_agenda(self._deps.agenda(), datos.empleado, rango)
+        saldo = await self._deps.saldos().saldo_de(datos.empleado, datos.target_year)
         ctx = ContextoEdicion(
             es_admin=actor.es_admin,
             saldo=saldo,
@@ -223,21 +219,16 @@ class EditarSolicitud:
             dias_actuales=solicitud.days_requested,
         )
         validar_edicion(datos, agenda, ctx)
-        previous = (solicitud.start_date, solicitud.end_date)
-        solicitud.start_date = command.start_date
-        solicitud.end_date = command.end_date
-        solicitud.days_requested = dias
-        solicitud.charged_to_year = target
-        solicitud.reason = command.reason
-        solicitud.status = EstadoSolicitud.PENDING
-        await self._deps.solicitudes.save(solicitud)
-        metadata = _metadata_solicitud(solicitud, empleado)
-        metadata["previousStart"] = previous[0].isoformat()
-        metadata["previousEnd"] = previous[1].isoformat()
+
+    async def _auditar_edicion(
+        self, solicitud: Solicitud, empleado: Empleado, previo: tuple[date, date]
+    ) -> None:
+        metadata = metadata_solicitud(solicitud, empleado)
+        metadata["previousStart"] = previo[0].isoformat()
+        metadata["previousEnd"] = previo[1].isoformat()
         await self._deps.auditoria.registrar(
             ACCION_UPDATE, ENTIDAD_SOLICITUD, str(solicitud.id), metadata
         )
-        return solicitud
 
 
 class EliminarSolicitud:
@@ -257,19 +248,5 @@ class EliminarSolicitud:
             ACCION_DELETE,
             ENTIDAD_SOLICITUD,
             str(solicitud.id),
-            _metadata_solicitud(solicitud, empleado),
+            metadata_solicitud(solicitud, empleado),
         )
-
-
-async def _calcular_dias(deps: SolicitudesDependencies, start: date, end: date) -> int:
-    feriado_en_inicio = await deps.feriados.existe_no_deduce_en(start)
-    return dias_solicitados(start, end, feriado_no_deduce_en_inicio=feriado_en_inicio)
-
-
-def _metadata_solicitud(solicitud: Solicitud, empleado: Empleado | None) -> dict[str, object]:
-    return {
-        "employee": empleado.nombre_completo if empleado else "",
-        "startDate": solicitud.start_date.isoformat(),
-        "endDate": solicitud.end_date.isoformat(),
-        "days": solicitud.days_requested,
-    }

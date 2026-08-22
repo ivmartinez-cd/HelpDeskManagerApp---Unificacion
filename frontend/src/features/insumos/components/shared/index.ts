@@ -6,10 +6,10 @@
 export { ConfirmationModal, type ConfirmationVariant } from "./confirmation-modal";
 export {
   DateRangePicker,
-  DateRangePickerPopover,
   rangeForPreset,
   type DateRangePresetKey,
 } from "./date-range-picker";
+export { DateRangePickerPopover } from "./date-range-picker-popover";
 export { SortableHeader, type SortableColumn } from "./sortable-header";
 export { StatusBadge, toneForStatusKey, type StatusTone } from "./status-badge";
 export { TonerBar, tonerLevelColor, type TonerBarSize } from "./toner-bar";

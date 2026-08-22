@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 import base64
-import csv
 import logging
-from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Any, cast
 
 import httpx
 
 from src.modules.contadores.domain.entities.sds_client import SdsClient
+from src.modules.contadores.infrastructure.csv.auto_csv_writer import (
+    AutoCsvTarget,
+    write_auto_csv,
+)
+from src.modules.contadores.infrastructure.sds.sds_export import (
+    MeterRowContext,
+    build_meter_rows,
+    calculate_min_date,
+)
 from src.shared.domain.errors import ExternalServiceError
 from src.shared.infrastructure.config.settings import Settings, get_settings
 
@@ -38,18 +44,7 @@ class HttpxSdsClientProvider:
             raise ExternalServiceError(
                 f"Error al obtener clientes SDS: {response.status_code} - {response.text}"
             )
-
-        all_customers: list[dict[str, Any]] = response.json()
-        active = [
-            SdsClient(
-                id=str(c["id"]) if "id" in c else str(c.get("customerId", "")),
-                name=str(c.get("name", "")),
-                status=str(c.get("status", "ACTIVE")).upper(),
-            )
-            for c in all_customers
-            if str(c.get("status", "")).upper() == "ACTIVE"
-        ]
-        return sorted(active, key=lambda c: c.name)
+        return _to_active_clients(response.json())
 
     async def export_meters_to_csv(
         self,
@@ -63,113 +58,26 @@ class HttpxSdsClientProvider:
         token = await self._get_auth_token()
         meters = await self._get_device_meters(token, customer_id, max_date)
         if not meters:
-            msg = (
+            raise ExternalServiceError(
                 f"No se encontraron contadores para el cliente '{customer_name}' "
                 "en la fecha especificada."
             )
-            raise ExternalServiceError(msg)
-
-        min_dt = _calculate_min_date(max_date)
+        min_dt = calculate_min_date(max_date)
         serial_map = await self._get_device_serial_map(token, customer_id)
-
-        rows = []
-        for device in meters:
-            device_id = device.get("deviceId")
-            serie = serial_map.get(
-                device_id, str(device_id) if device_id is not None else ""
-            )
-
-            raw_date = str(
-                device.get("readingDate") or (str(device.get("readingDateTime", ""))[:10])
-            )
-            try:
-                device_dt = datetime.strptime(raw_date, "%Y-%m-%d")
-                if min_dt and device_dt < min_dt:
-                    continue
-                fecha = device_dt.strftime("%d/%m/%Y")
-            except Exception as exc:
-                logger.debug(
-                    "No se pudo parsear la fecha de un contador SDS, uso el valor crudo",
-                    extra={"customer_id": customer_id, "raw_date": raw_date},
-                    exc_info=exc,
-                )
-                fecha = raw_date
-
-            engine_cycles = int(device.get("engineCycles") or 0)
-            mono_pages = int(device.get("monoPages") or 0)
-            colour_pages = int(device.get("colourPages") or 0)
-            is_color = colour_pages > 0
-
-            if suma_color and is_color:
-                rows.append(
-                    {
-                        "SERIE": serie,
-                        "FECHA": fecha,
-                        "TIPO": 21,
-                        "CLASE_10": 20,
-                        "CONTADOR_10": engine_cycles,
-                        "CLASE_20": "",
-                        "CONTADOR_20": 0,
-                        "MOTIVO": "",
-                        "OBSERVACION": "",
-                    }
-                )
-            else:
-                rows.append(
-                    {
-                        "SERIE": serie,
-                        "FECHA": fecha,
-                        "TIPO": 21,
-                        "CLASE_10": 10,
-                        "CONTADOR_10": mono_pages,
-                        "CLASE_20": 20 if is_color else "",
-                        "CONTADOR_20": colour_pages if is_color else 0,
-                        "MOTIVO": "",
-                        "OBSERVACION": "",
-                    }
-                )
-
-        date_str = max_date.split("T")[0].replace("-", "")
-        safe_name = (
-            "".join([c for c in customer_name if c.isalnum() or c in (" ", "_")])
-            .strip()
-            .replace(" ", "_")
+        ctx = MeterRowContext(
+            customer_id=customer_id, serial_map=serial_map, min_dt=min_dt, suma_color=suma_color
         )
-        suffix = "_SumaColor" if suma_color else ""
-        filename = f"SDS_{safe_name}_{date_str}{suffix}_AutoCSV.csv"
-        output_path = Path(output_dir) / filename
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        fieldnames = [
-            "SERIE",
-            "FECHA",
-            "TIPO",
-            "CLASE_10",
-            "CONTADOR_10",
-            "CLASE_20",
-            "CONTADOR_20",
-            "MOTIVO",
-            "OBSERVACION",
-        ]
-        with open(output_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=";")
-            writer.writeheader()
-            writer.writerows(rows)
-
-        return str(output_path)
+        rows = build_meter_rows(meters, ctx)
+        target = AutoCsvTarget(
+            prefix="SDS", name=customer_name, max_date=max_date,
+            output_dir=output_dir, suma_color=suma_color,
+        )
+        return str(write_auto_csv(rows, target))
 
     async def _get_auth_token(self) -> str:
         url = f"{self._settings.sds_base_url}/login"
-        credentials = (
-            f"{self._settings.sds_api_key}:{self._settings.sds_api_secret.get_secret_value()}"
-        )
-        encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
-        headers = {
-            "Authorization": f"Basic {encoded_credentials}",
-            "Content-Type": "application/json",
-        }
+        headers = self._login_headers()
         timeout = httpx.Timeout(self._settings.sds_timeout_seconds)
-
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(url, headers=headers)
@@ -177,18 +85,21 @@ class HttpxSdsClientProvider:
             raise ExternalServiceError(f"Error al autenticar en SDS: {exc}") from exc
 
         if response.status_code == 200:
-            is_json = response.headers.get("content-type", "").startswith("application/json")
-            data = response.json() if is_json else {}
-            token = data.get("access_token") or data.get("token")
-            if token:
-                return f"Bearer {token}"
-            auth_header = response.headers.get("Authorization")
-            if auth_header:
-                return cast(str, auth_header)
-            raise ExternalServiceError("No se pudo extraer el token del response de login SDS.")
+            return _extract_login_token(response)
         raise ExternalServiceError(
             f"Error al autenticar en SDS: {response.status_code} - {response.text}"
         )
+
+    def _login_headers(self) -> dict[str, str]:
+        """Basic auth con api_key:api_secret, como exige el `/login` de SDS."""
+        credentials = (
+            f"{self._settings.sds_api_key}:{self._settings.sds_api_secret.get_secret_value()}"
+        )
+        encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+        return {
+            "Authorization": f"Basic {encoded_credentials}",
+            "Content-Type": "application/json",
+        }
 
     async def _get_device_meters(
         self, token: str, customer_id: str, max_date: str
@@ -231,13 +142,39 @@ class HttpxSdsClientProvider:
             return {}
 
         if response.status_code == 200:
-            devices = response.json()
-            return {
-                d["deviceId"]: str(d.get("serialNumber", ""))
-                for d in devices
-                if "deviceId" in d
-            }
+            return _to_serial_map(response.json())
         return {}
+
+
+def _to_active_clients(all_customers: list[dict[str, Any]]) -> list[SdsClient]:
+    active = [
+        SdsClient(
+            id=str(c["id"]) if "id" in c else str(c.get("customerId", "")),
+            name=str(c.get("name", "")),
+            status=str(c.get("status", "ACTIVE")).upper(),
+        )
+        for c in all_customers
+        if str(c.get("status", "")).upper() == "ACTIVE"
+    ]
+    return sorted(active, key=lambda c: c.name)
+
+
+def _to_serial_map(devices: list[dict[str, Any]]) -> dict[Any, str]:
+    return {d["deviceId"]: str(d.get("serialNumber", "")) for d in devices if "deviceId" in d}
+
+
+def _extract_login_token(response: httpx.Response) -> str:
+    """El token viene en el body JSON (`access_token`/`token`) o, si no, en el
+    header `Authorization` de la respuesta de login."""
+    is_json = response.headers.get("content-type", "").startswith("application/json")
+    data = response.json() if is_json else {}
+    token = data.get("access_token") or data.get("token")
+    if token:
+        return f"Bearer {token}"
+    auth_header = response.headers.get("Authorization")
+    if auth_header:
+        return cast(str, auth_header)
+    raise ExternalServiceError("No se pudo extraer el token del response de login SDS.")
 
 
 def _to_max_read_datetime_local(max_date: str) -> str:
@@ -247,21 +184,3 @@ def _to_max_read_datetime_local(max_date: str) -> str:
     agrega el final del día para incluir todas las lecturas de esa fecha."""
     date_part = max_date.split("T")[0]
     return f"{date_part}T23:59:59"
-
-
-def _calculate_min_date(max_date: str) -> datetime | None:
-    try:
-        date_part = max_date.split("T")[0]
-        if "-" in date_part:
-            y, m, d = date_part.split("-")
-            max_dt = datetime(int(y), int(m), int(d))
-        else:
-            max_dt = datetime.fromisoformat(date_part)
-        return max_dt - timedelta(days=30)
-    except Exception as exc:
-        logger.warning(
-            "No se pudo calcular la fecha mínima SDS, no se va a filtrar por fecha",
-            extra={"max_date": max_date},
-            exc_info=exc,
-        )
-        return None
