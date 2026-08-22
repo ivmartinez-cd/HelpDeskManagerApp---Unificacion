@@ -27,7 +27,10 @@ from src.modules.preventivos.domain.repositories.habilitacion_repository import 
 from src.modules.preventivos.domain.repositories.preventivos_query_gateway import (
     PreventivosQueryGateway,
 )
-from src.modules.preventivos.domain.services.vencimiento import calcular_vencimiento
+from src.modules.preventivos.domain.services.vencimiento import (
+    ORDEN_ESTADO_PRIORIDAD,
+    calcular_vencimiento,
+)
 from src.modules.preventivos.domain.services.zonas import zona_excluida
 
 # Las fechas de Siges son hora local de Argentina; "hoy" del cálculo de
@@ -35,14 +38,6 @@ from src.modules.preventivos.domain.services.zonas import zona_excluida
 _TZ_LOCAL = ZoneInfo("America/Argentina/Buenos_Aires")
 
 DESHABILITADO_POR_SISTEMA = "sistema (preventivo registrado)"
-
-_ORDEN_ESTADO = {
-    "vencido": 0,
-    "sin_preventivo": 1,
-    "por_vencer": 2,
-    "al_dia": 3,
-    "sin_frecuencia": 4,
-}
 
 
 @dataclass(frozen=True, slots=True)
@@ -157,4 +152,4 @@ def _orden_default(anotado: EquipoPreventivoAnotado) -> tuple[int, int, str, str
     else:
         secundario = 0
     cliente = anotado.equipo.cliente.lower()
-    return (_ORDEN_ESTADO[anotado.estado], secundario, cliente, anotado.equipo.serie)
+    return (ORDEN_ESTADO_PRIORIDAD[anotado.estado], secundario, cliente, anotado.equipo.serie)

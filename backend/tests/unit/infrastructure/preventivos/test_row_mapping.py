@@ -13,6 +13,7 @@ def _row(**overrides: Any) -> SimpleNamespace:
     alias de columna de la consulta, tipos crudos del driver)."""
     base: dict[str, Any] = {
         "id_maquina": 4321,
+        "id_sucursal": 987,
         "serie": "XYZ123   ",
         "modelo": "MFP Mono Samsung  ",
         "cliente": "Cliente SA",
@@ -20,6 +21,8 @@ def _row(**overrides: Any) -> SimpleNamespace:
         "zona": "SUR ",
         "frecuencia_dias": 180,
         "fecha_ultimo_preventivo": datetime(2026, 5, 3, 10, 15),
+        "latitud": "-34.603722",
+        "longitud": "-58.381592",
     }
     base.update(overrides)
     return SimpleNamespace(**base)
@@ -29,12 +32,15 @@ def test_mapea_una_fila_completa_recortando_char_fijos() -> None:
     equipo = map_equipo_row(_row())
 
     assert equipo.id_maquina == 4321
+    assert equipo.id_sucursal == 987
     assert equipo.serie == "XYZ123"
     assert equipo.modelo == "MFP Mono Samsung"
     assert equipo.cliente == "Cliente SA"
     assert equipo.sucursal == "Casa Central"
     assert equipo.zona == "SUR"
     assert equipo.frecuencia_dias == 180
+    assert equipo.latitud == -34.603722
+    assert equipo.longitud == -58.381592
 
 
 def test_fecha_ultimo_preventivo_pierde_la_hora() -> None:
@@ -49,6 +55,8 @@ def test_campos_null_no_rompen_el_mapeo() -> None:
             cliente=None,
             frecuencia_dias=None,
             fecha_ultimo_preventivo=None,
+            latitud=None,
+            longitud=None,
         )
     )
 
@@ -57,10 +65,26 @@ def test_campos_null_no_rompen_el_mapeo() -> None:
     assert equipo.cliente == ""
     assert equipo.frecuencia_dias is None
     assert equipo.fecha_ultimo_preventivo is None
+    assert equipo.latitud is None
+    assert equipo.longitud is None
 
 
 def test_frecuencia_cero_se_conserva_para_que_el_dominio_decida() -> None:
     assert map_equipo_row(_row(frecuencia_dias=0)).frecuencia_dias == 0
+
+
+def test_coordenada_con_coma_decimal_se_parsea() -> None:
+    equipo = map_equipo_row(_row(latitud="-34,6037", longitud="-58,3815"))
+
+    assert equipo.latitud == -34.6037
+    assert equipo.longitud == -58.3815
+
+
+def test_coordenada_vacia_o_no_numerica_queda_none() -> None:
+    equipo = map_equipo_row(_row(latitud="", longitud="no es un numero"))
+
+    assert equipo.latitud is None
+    assert equipo.longitud is None
 
 
 def test_mapea_fila_de_zona() -> None:

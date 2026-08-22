@@ -20,6 +20,7 @@ from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
 def _fila_equipo(id_maquina: int, zona: str = "SUR") -> SimpleNamespace:
     return SimpleNamespace(
         id_maquina=id_maquina,
+        id_sucursal=id_maquina,
         serie=f"S{id_maquina}",
         modelo="MFP Mono Samsung",
         cliente="Cliente SA",
@@ -27,6 +28,8 @@ def _fila_equipo(id_maquina: int, zona: str = "SUR") -> SimpleNamespace:
         zona=zona,
         frecuencia_dias=180,
         fecha_ultimo_preventivo=None,
+        latitud="-34.6",
+        longitud="-58.4",
     )
 
 

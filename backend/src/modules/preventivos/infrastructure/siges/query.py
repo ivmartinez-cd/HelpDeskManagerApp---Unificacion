@@ -36,6 +36,12 @@ parametrizadas — ARCHITECTURE_GUIDE §8). Fuentes confirmadas con dato real el
 
 Medido 2026-08-14 (rondas 3 y 11): 0.7-2.0 s por zona con el filtro de
 actividad — alcanza consulta en vivo, sin snapshot local.
+
+`Sucursal.Latitud`/`Longitud` (agregadas 2026-08-22 para el mapa de clientes)
+son texto libre, no siempre numérico: el parseo y la validación de rango
+quedan para `row_mapping`/`domain/services/coordenadas.py`, acá se traen tal
+cual. Cobertura medida sobre el universo real: 96.4% de las sucursales caen
+dentro del bbox de Argentina.
 """
 
 # Los dos parámetros de PARQUE_ZONA_SQL: (meses_actividad, meses_actividad,
@@ -72,13 +78,16 @@ _SOLO_IMPRESORAS_WHERE = """
 PARQUE_ZONA_SQL = f"""
 SELECT
     M.ID_Maquina AS id_maquina,
+    S.Id_Sucursal AS id_sucursal,
     M.Nro_Serie AS serie,
     AG.Descripcion AS modelo,
     E.Den_Comercial AS cliente,
     S.descripcion AS sucursal,
     S.Cuadricula AS zona,
     TP.Dias AS frecuencia_dias,
-    UP.fecha_ultimo_preventivo
+    UP.fecha_ultimo_preventivo,
+    S.Latitud AS latitud,
+    S.Longitud AS longitud
 FROM dbo.Maquina M
 INNER JOIN dbo.Sucursal S ON S.Id_Sucursal = M.ID_Sucursal
 INNER JOIN dbo.Empresa E ON E.ID_Empresa = M.ID_Empresa

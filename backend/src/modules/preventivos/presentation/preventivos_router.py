@@ -25,6 +25,10 @@ from src.modules.preventivos.application.use_cases.list_equipos_por_zona import 
     ListEquiposPorZonaDependencies,
     ListEquiposPorZonaUseCase,
 )
+from src.modules.preventivos.application.use_cases.list_puntos_mapa import (
+    ListPuntosMapaDependencies,
+    ListPuntosMapaUseCase,
+)
 from src.modules.preventivos.application.use_cases.list_zonas import (
     ListZonasDependencies,
     ListZonasUseCase,
@@ -45,6 +49,8 @@ from src.modules.preventivos.presentation.schemas.preventivos_schemas import (
     EquiposPreventivosPage,
     HabilitacionSchema,
     HabilitarEquipoBody,
+    PuntoMapaSchema,
+    PuntosMapaPage,
     ZonaSchema,
 )
 from src.shared.infrastructure.database.session import get_db
@@ -104,6 +110,43 @@ async def list_equipos(
         page=base.page,
         size=base.size,
         consultado_en=result.consultado_en,
+    )
+
+
+@router.get("/mapa", response_model=PuntosMapaPage)
+async def list_puntos_mapa(
+    zona: str = Query(min_length=1, max_length=20),
+    estado: EstadoPreventivo | None = Query(default=None),
+    habilitado: bool | None = Query(default=None),
+    q: str | None = Query(default=None, max_length=120),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=300, ge=1, le=_MAX_PAGE_SIZE),
+    refresh: bool = Query(default=False, description="Fuerza re-consultar Siges"),
+    _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> PuntosMapaPage:
+    equipos_use_case = ListEquiposPorZonaUseCase(
+        ListEquiposPorZonaDependencies(
+            gateway=get_preventivos_gateway(),
+            habilitaciones=SqlAlchemyHabilitacionRepository(db),
+            zonas_excluidas=get_zonas_excluidas(),
+        )
+    )
+    use_case = ListPuntosMapaUseCase(ListPuntosMapaDependencies(equipos_use_case=equipos_use_case))
+    result = await use_case.execute(
+        ListEquiposPorZonaRequest(
+            zona=zona, estado=estado, habilitado=habilitado, search=q, force_refresh=refresh
+        )
+    )
+    schemas = [PuntoMapaSchema.from_domain(p) for p in result.puntos]
+    base = Page.of(schemas, page=page, size=size)
+    return PuntosMapaPage(
+        items=base.items,
+        total=base.total,
+        page=base.page,
+        size=base.size,
+        consultado_en=result.consultado_en,
+        sin_ubicar=sum(1 for p in result.puntos if not p.ubicado),
     )
 
 

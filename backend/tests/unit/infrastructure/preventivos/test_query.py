@@ -12,6 +12,12 @@ def test_parque_zona_tiene_tres_placeholders_meses_meses_zona() -> None:
     assert PARQUE_ZONA_SQL.rstrip().endswith("S.Cuadricula = ?")
 
 
+def test_parque_zona_trae_sucursal_y_coordenadas_para_el_mapa() -> None:
+    assert "S.Id_Sucursal AS id_sucursal" in PARQUE_ZONA_SQL
+    assert "S.Latitud AS latitud" in PARQUE_ZONA_SQL
+    assert "S.Longitud AS longitud" in PARQUE_ZONA_SQL
+
+
 def test_zonas_tiene_dos_placeholders_de_meses() -> None:
     assert ZONAS_SQL.count("?") == 2
 

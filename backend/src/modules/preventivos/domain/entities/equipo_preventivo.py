@@ -13,9 +13,14 @@ class EquipoPreventivo:
     (por sucursal, no por máquina); 0 o None significa "sin frecuencia cargada"
     y el dominio NO inventa un vencimiento en ese caso.
     `fecha_ultimo_preventivo` es el último incidente tipo 102 en estado
-    terminal no anulado; None = nunca se registró un preventivo hecho."""
+    terminal no anulado; None = nunca se registró un preventivo hecho.
+    `latitud`/`longitud` son `Sucursal.Latitud`/`Longitud` parseadas (texto
+    libre en Siges, no siempre numérico ni cargado) — None cuando no hay valor
+    o no parsea; validarlas es responsabilidad de
+    `domain/services/coordenadas.py`, no de esta entidad."""
 
     id_maquina: int
+    id_sucursal: int
     serie: str
     modelo: str
     cliente: str
@@ -23,6 +28,8 @@ class EquipoPreventivo:
     zona: str
     frecuencia_dias: int | None
     fecha_ultimo_preventivo: date | None
+    latitud: float | None
+    longitud: float | None
 
 
 @dataclass(frozen=True, slots=True)

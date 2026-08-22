@@ -11,6 +11,17 @@ from src.modules.preventivos.domain.value_objects.vencimiento_preventivo import 
 # operador (planificar la visita), aunque todavía no esté vencido.
 UMBRAL_POR_VENCER_DIAS = 30
 
+# Menor número = más urgente. Ordena la tabla (vencidos primero, más atrasado
+# arriba) y decide el "peor estado" de una sucursal con varias máquinas en el
+# mapa — misma semántica, un solo lugar.
+ORDEN_ESTADO_PRIORIDAD: dict[str, int] = {
+    "vencido": 0,
+    "sin_preventivo": 1,
+    "por_vencer": 2,
+    "al_dia": 3,
+    "sin_frecuencia": 4,
+}
+
 
 def calcular_vencimiento(
     fecha_ultimo_preventivo: date | None,

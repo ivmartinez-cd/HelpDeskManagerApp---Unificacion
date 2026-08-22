@@ -15,21 +15,28 @@ from src.modules.preventivos.domain.entities.zona_parque import ZonaParque
 def build_equipo(
     id_maquina: int,
     *,
+    id_sucursal: int = 1,
     zona: str = "SUR",
     cliente: str = "Cliente",
+    sucursal: str = "Casa Central",
     serie: str | None = None,
     frecuencia_dias: int | None = 180,
     fecha_ultimo_preventivo: date | None = None,
+    latitud: float | None = -34.6,
+    longitud: float | None = -58.4,
 ) -> EquipoPreventivo:
     return EquipoPreventivo(
         id_maquina=id_maquina,
+        id_sucursal=id_sucursal,
         serie=serie if serie is not None else f"SERIE{id_maquina}",
         modelo="MFP Mono Samsung",
         cliente=cliente,
-        sucursal="Casa Central",
+        sucursal=sucursal,
         zona=zona,
         frecuencia_dias=frecuencia_dias,
         fecha_ultimo_preventivo=fecha_ultimo_preventivo,
+        latitud=latitud,
+        longitud=longitud,
     )
 
 

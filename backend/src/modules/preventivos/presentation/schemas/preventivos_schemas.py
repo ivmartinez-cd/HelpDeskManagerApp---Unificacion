@@ -6,6 +6,9 @@ from src.modules.preventivos.application.dtos.equipo_preventivo_anotado import (
     EquipoPreventivoAnotado,
     HabilitacionInfo,
 )
+from src.modules.preventivos.application.dtos.punto_mapa_preventivo import (
+    PuntoMapaPreventivo,
+)
 from src.modules.preventivos.domain.entities.zona_parque import ZonaParque
 from src.modules.preventivos.domain.value_objects.vencimiento_preventivo import (
     EstadoPreventivo,
@@ -68,6 +71,44 @@ class EquiposPreventivosPage(Page[EquipoPreventivoSchema]):
     """Page + sello de frescura de la caché del gateway ("actualizado hace X")."""
 
     consultado_en: datetime
+
+
+class PuntoMapaSchema(BaseModel):
+    id_sucursal: int
+    cliente: str
+    sucursal: str
+    zona: str
+    latitud: float | None
+    longitud: float | None
+    ubicado: bool
+    cant_maquinas: int
+    cant_habilitadas: int
+    peor_estado: EstadoPreventivo
+    dias_vencido_max: int | None
+
+    @classmethod
+    def from_domain(cls, punto: PuntoMapaPreventivo) -> "PuntoMapaSchema":
+        return cls(
+            id_sucursal=punto.id_sucursal,
+            cliente=punto.cliente,
+            sucursal=punto.sucursal,
+            zona=punto.zona,
+            latitud=punto.latitud,
+            longitud=punto.longitud,
+            ubicado=punto.ubicado,
+            cant_maquinas=punto.cant_maquinas,
+            cant_habilitadas=punto.cant_habilitadas,
+            peor_estado=punto.peor_estado,
+            dias_vencido_max=punto.dias_vencido_max,
+        )
+
+
+class PuntosMapaPage(Page[PuntoMapaSchema]):
+    """Page + sello de frescura + cuánto de lo filtrado no tiene una
+    coordenada usable (para que la UI lo avise, no lo esconda)."""
+
+    consultado_en: datetime
+    sin_ubicar: int
 
 
 class ZonaSchema(BaseModel):
