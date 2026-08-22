@@ -390,3 +390,24 @@ hallazgo abierto para decidir (tests de integración, gate de §4, cobertura de
 | §10: `MASTER_PROMPT_NOTA_PERSONAL_INICIO.md` describe una Home que no existe y una feature no hecha | Encabezado "Estado: NO implementado" con el contexto actual |
 | §10: `MASTER_PROMPT_INCIDENTES_SIN_CERRAR_POR_PRESTADOR.md` describe un módulo `stc/` que no se construyó | Encabezado "Estado: reemplazado por `sla/pendientes-a-cerrar`" |
 | §10: `INTEGRACION_APPS_PLAN.md` apunta a los repos legacy | Encabezado "Estado: histórico" |
+
+---
+
+## Addendum 2 (2026-08-22, misma jornada): corrección de los hallazgos
+
+Todo lo ALTO/MEDIO de la Fase 4 y lo barato de lo BAJO, re-medido con los mismos comandos.
+
+| Hallazgo | Acción | Antes → después |
+|---|---|---|
+| §7 suite de integración rota y sin gate | Los 4 tests de alertas construyen `AlertaConciliada` (ADR-024); el test de caracterización DB3 se actualizó al comportamiento deliberado de `3eb8a23` (el total de un modelo color no se duplica en la columna mono). `conftest` de integración lee `DB_TEST_HOST/DB_TEST_PORT`; `make test-integration` levanta `helpdesk-db-test`, lo une a la red del backend y corre `tests/integration` dentro del contenedor; **`make check` (y el `pre-push`) ahora corre unit + integración** | 5 FAILED → **0** (297 de integración en verde) |
+| §7 cobertura bajo mínimo | Tests nuevos (solo `backend/tests/`, sin tocar `src`): `analisis_log_hp` unit de dominio/aplicación/infraestructura (fakes, `MockTransport`, stub de Anthropic) + integración de sus 3 repos; `sla/application` (3 use cases); `wati` y `preventivos` infra (gateways, mappers, query); `vacaciones` y `liquidaciones` infra (repos de ausencias/cargos/aprobaciones/auditoría/usuarios, descartes, caches reverse, coordenadas, preview KM; clientes Google Maps y Siges con fakes); `insumos/portal_parsing` | Total **82.3 → 86.8 %**; infra **68.3 → 81.2 %**; celdas bajo mínimo **9 → 0**; tests **2078 → 2403** (`analisis_log_hp` dom 68.0→97.9, app 38.7→99.3, infra 29.0→98.5; sla/app 66.5→100; wati/infra 62.0→90+; preventivos/infra 48.3→82+; vacaciones/infra 65.1→84.6; liquidaciones/infra 68.0→81.8) |
+| §4 sin gate para código nuevo | `scripts/check_sizes.py` + `scripts/sizes-baseline.json` en `make check`; addendums en ADR-017/020; guía §4 "Cómo se mide en este repo" (React por archivo) | Sin gate → **gate en pre-push**; inventario 389 entradas congeladas (incluye lo que entró 14–22/08, documentado) |
+| §12 warning eslint | Prop `sdsResult` sin usar quitada de `HpLogsPanel`/`HpLogsView` | `eslint src --max-warnings=0`: 1 warning → **0** |
+| §8 `npm audit` nanoid high | `npm audit fix` (3.3.17 → 3.3.18) | 1 high → **0** |
+| §8 identificadores SQLite en `db3_merge.py` | `_ident()` valida `^[A-Za-z0-9_]+$` antes de interpolar | — |
+| §8/§1 `POST /api/health/echo` | Se conserva: es la sonda del envelope de validación que usa `test_error_handling.py`; documentado en el router | — |
+
+Gates finales: `make check` → lint-imports 26/26 · ruff · mypy · **2106 unit** · **297 integración** · sizes ✔;
+`tsc` + `eslint --max-warnings=0` en verde. Sigue abierto, a propósito: refactor oportunista de
+las 13 funciones nuevas >30 líneas y las 2 clases >200 (cubierto por el addendum de ADR-017);
+`analisis_log_hp/presentation` 67.6 % está sobre el mínimo pero sin tests propios de router.

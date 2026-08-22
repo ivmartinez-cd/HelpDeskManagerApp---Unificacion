@@ -52,3 +52,25 @@ async def test_mapea_los_campos_del_incidente() -> None:
 async def test_periodo_invalido_lanza_error() -> None:
     with pytest.raises(PeriodoInvalidoError):
         await _build_use_case(FakeSlaQueryGateway()).execute(202600)
+
+
+async def test_filtro_por_siges_ids_deja_solo_esos_tecnicos() -> None:
+    incidentes = [
+        build_incidente(1, "PST Trelew", RESULTADO_VENCIDO, id_tecnico=100),
+        build_incidente(2, "PST Zapala", RESULTADO_VENCIDO, id_tecnico=200),
+        build_incidente(3, "PST Trelew", RESULTADO_VENCIDO, id_tecnico=100),
+    ]
+    use_case = _build_use_case(FakeSlaQueryGateway(incidentes))
+
+    result = await use_case.execute(202608, siges_ids_filtro=[100])
+
+    assert [dto.id_incidente for dto in result] == [1, 3]
+
+
+async def test_filtro_vacio_no_devuelve_ningun_incidente() -> None:
+    incidentes = [build_incidente(1, "PST Trelew", RESULTADO_VENCIDO, id_tecnico=100)]
+    use_case = _build_use_case(FakeSlaQueryGateway(incidentes))
+
+    result = await use_case.execute(202608, siges_ids_filtro=[])
+
+    assert result == []
