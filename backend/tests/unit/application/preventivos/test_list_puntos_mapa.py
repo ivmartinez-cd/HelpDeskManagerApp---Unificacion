@@ -1,4 +1,5 @@
 from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from src.modules.preventivos.application.dtos.list_equipos_request import (
     ListEquiposPorZonaRequest,
@@ -21,6 +22,10 @@ from tests.unit.application.preventivos.fakes import (
 )
 
 _EXCLUIDAS: tuple[str, ...] = ()
+# Misma tz que usa el use case (list_equipos_por_zona.py) para "hoy": ancla
+# el test a una sola lectura de reloj en vez de dos (una acá, otra dentro del
+# use case), que podían discrepar en 1 día justo al cruzar la medianoche.
+_TZ_LOCAL = ZoneInfo("America/Argentina/Buenos_Aires")
 
 
 def _use_case(
@@ -64,8 +69,9 @@ async def test_colapsa_varias_maquinas_de_una_sucursal_en_un_punto() -> None:
 
 
 async def test_dias_vencido_max_es_el_peor_de_la_sucursal() -> None:
-    hace_400 = date.today() - timedelta(days=400)
-    hace_40 = date.today() - timedelta(days=40)
+    hoy = datetime.now(_TZ_LOCAL).date()
+    hace_400 = hoy - timedelta(days=400)
+    hace_40 = hoy - timedelta(days=40)
     equipos = [
         build_equipo(1, id_sucursal=10, frecuencia_dias=180, fecha_ultimo_preventivo=hace_400),
         build_equipo(2, id_sucursal=10, frecuencia_dias=180, fecha_ultimo_preventivo=hace_40),
@@ -74,6 +80,8 @@ async def test_dias_vencido_max_es_el_peor_de_la_sucursal() -> None:
 
     result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
 
+    # 400 - 180 = 220 días de atraso; anclado a `hoy` en vez de un número
+    # fijo para no depender de en qué instante exacto corre el test.
     assert result.puntos[0].dias_vencido_max == 220
 
 
