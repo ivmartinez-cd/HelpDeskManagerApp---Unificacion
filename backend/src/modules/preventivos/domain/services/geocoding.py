@@ -8,8 +8,10 @@ extraerlas a shared por tres líneas hubiera sido la abstracción prematura que
 la guía pide evitar; lo caro (el gateway HTTP y el cache) sí está en shared."""
 
 import re
+import statistics
 import unicodedata
 
+from src.modules.preventivos.domain.services.coordenadas import haversine_km
 from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
 
 # Los domicilios de Siges arrastran sufijos de formulario vacíos ("Piso: Dpto:",
@@ -26,9 +28,25 @@ _LOCATION_TYPES_PRECISOS = ("ROOFTOP", "RANGE_INTERPOLATED")
 # Nominatim confirmó 9 casos reales (Boedo, Monserrat, Nueva Pompeya,
 # Almagro, Rivadavia 789, Juan B. Justo x2, Av. Mosconi, Chiclana 3345) donde
 # la coordenada original de Siges era la correcta. `elegir_automatico` no
-# validaba localidad, solo precisión/unicidad — de ahí este chequeo.
+# validaba localidad, solo precisión/unicidad — de ahí este chequeo de texto.
 _CABA_ALIASES = frozenset({"caba", "ciudad autonoma de buenos aires", "capital federal"})
 _CABA_EN_RESULTADO = "autonoma de buenos aires"
+
+# Barrido 2026-08-23 (McDonald's Entre Ríos y Caseros → San Justo, Dia
+# Belgrano 664 Garín → Lomas de Zamora, KFC J.M.de Rosas San Justo → San
+# Martín, Dia Argerich Hurlingham → CABA, Tasa Panamericana Km57,5 Escobar →
+# Don Torcuato, Celsur Av. Gral. Perón Benavídez → Lanús): el chequeo de
+# CABA por texto no generaliza — un mismo nombre de calle/avenida se repite
+# en partidos distintos del Conurbano, y ni el `formatted_address` de Google
+# es confiable como filtro (el caso Garín devolvía "B1619 Garín" en el
+# `formatted_address` estando igual a 35km, porque ese código postal cubre
+# una zona amplia). En cambio, un chequeo geométrico contra otras sucursales
+# YA confiables de la misma (ciudad, provincia) sí detectó los 6 casos de
+# ese barrido. CABA se excluye de este chequeo (ver
+# `agrupar_referencias_por_ciudad`): sigue resuelta por el chequeo de texto
+# de arriba.
+_MIN_REFERENCIAS = 5
+_UMBRAL_REFERENCIAS_KM = 2.0
 
 
 def _sin_acentos(texto: str) -> str:
@@ -61,22 +79,65 @@ def armar_direccion(domicilio: str, ciudad: str, provincia: str) -> str | None:
     return ", ".join(partes)
 
 
+def clave_ubicacion(ciudad: str, provincia: str) -> tuple[str, str]:
+    """Clave normalizada (ciudad, provincia) para agrupar/consultar
+    referencias geográficas — misma normalización que usa `elegir_automatico`
+    para el chequeo de CABA."""
+    return (_normalizar(ciudad), _normalizar(provincia))
+
+
+def agrupar_referencias_por_ciudad(
+    entradas: list[tuple[str, str, float, float]],
+) -> dict[tuple[str, str], list[tuple[float, float]]]:
+    """Agrupa (ciudad, provincia, lat, lon) de sucursales ya confiables
+    (override vigente o raw de Siges válido) por `clave_ubicacion`, para
+    alimentar el chequeo geométrico de `elegir_automatico`. CABA se excluye
+    a propósito: es geográficamente demasiado grande/diversa para que un
+    solo centroide tenga sentido — probado en la auditoría 2026-08-23 con
+    dos casos correctos (Felfort, Finadiet) que aparecían como falso
+    positivo en el extremo débil de la lista; ahí sigue rigiendo el chequeo
+    de texto de CABA."""
+    agrupadas: dict[tuple[str, str], list[tuple[float, float]]] = {}
+    for ciudad, provincia, lat, lon in entradas:
+        clave = clave_ubicacion(ciudad, provincia)
+        if clave[0] in _CABA_ALIASES:
+            continue
+        agrupadas.setdefault(clave, []).append((lat, lon))
+    return agrupadas
+
+
+def _consistente_con_referencias(
+    lat: float, lon: float, referencias: tuple[tuple[float, float], ...]
+) -> bool:
+    if len(referencias) < _MIN_REFERENCIAS:
+        return True
+    lat_mediana = statistics.median(p[0] for p in referencias)
+    lon_mediana = statistics.median(p[1] for p in referencias)
+    return haversine_km(lat, lon, lat_mediana, lon_mediana) <= _UMBRAL_REFERENCIAS_KM
+
+
+def _localidad_consistente(
+    ciudad: str, unico: GeocodeCandidato, referencias: tuple[tuple[float, float], ...]
+) -> bool:
+    if _normalizar(ciudad) in _CABA_ALIASES:
+        return _CABA_EN_RESULTADO in _normalizar(unico.formatted_address)
+    return _consistente_con_referencias(unico.latitud, unico.longitud, referencias)
+
+
 def elegir_automatico(
-    candidatos: list[GeocodeCandidato], ciudad: str = ""
+    candidatos: list[GeocodeCandidato],
+    ciudad: str = "",
+    referencias: tuple[tuple[float, float], ...] = (),
 ) -> GeocodeCandidato | None:
-    """Único candidato y preciso, o nada: un ROOFTOP/RANGE_INTERPOLATED sin
-    partial_match, o una intersección exacta. Un candidato tipo `route` es el
-    centro geométrico de la ruta — jamás se auto-elige. Si la sucursal es de
-    CABA, el candidato tiene que caer efectivamente en CABA (no en un partido
-    del Conurbano con la misma calle) — ver nota de la auditoría arriba."""
+    """Único candidato y preciso, o nada. CABA se valida por texto; el resto
+    de las ciudades, por geometría contra `referencias` si hay suficientes —
+    ver notas de las auditorías arriba."""
     if len(candidatos) != 1:
         return None
     unico = candidatos[0]
     if unico.partial_match or "route" in unico.tipos:
         return None
-    if _normalizar(ciudad) in _CABA_ALIASES and _CABA_EN_RESULTADO not in _normalizar(
-        unico.formatted_address
-    ):
+    if not _localidad_consistente(ciudad, unico, referencias):
         return None
     if unico.location_type in _LOCATION_TYPES_PRECISOS or "intersection" in unico.tipos:
         return unico

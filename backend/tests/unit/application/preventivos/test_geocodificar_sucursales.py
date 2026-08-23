@@ -256,3 +256,64 @@ async def test_grupo_en_conflicto_no_se_reconcilia_aunque_un_miembro_este_cerca(
 
     assert resultado.reconciliadas == 0
     assert {1, 2} <= set(coords.resueltas)
+
+
+async def test_candidato_geograficamente_inconsistente_con_la_ciudad_es_ambiguo() -> None:
+    # Caso real (barrido 2026-08-23): "Belgrano 664, Garín" resolvía a un
+    # único candidato ROOFTOP a 35km de las demás sucursales de Garín — con
+    # suficientes referencias, ya no se auto-elige.
+    referencias = [
+        build_sucursal_geocoding(
+            100 + i, domicilio=f"Calle Referencia {i}", ciudad="Garin", provincia="Buenos Aires",
+            latitud=-34.42 + i * 0.001, longitud=-58.72 + i * 0.001,
+        )
+        for i in range(5)
+    ]
+    pendiente = build_sucursal_geocoding(
+        1, domicilio="Belgrano 664", ciudad="Garin", provincia="Buenos Aires",
+        latitud=0.0, longitud=0.0,
+    )
+    direccion = "Belgrano 664, Garin, Buenos Aires, Argentina"
+    candidato_lejano = GeocodeCandidato(
+        formatted_address="Cno. Gral. Belgrano 664, Lanús, Argentina",
+        latitud=-34.6886,
+        longitud=-58.3774,
+        location_type="ROOFTOP",
+    )
+    use_case, coords, _ = _use_case(
+        [*referencias, pendiente], por_direccion={direccion: [candidato_lejano]}
+    )
+
+    resultado = await use_case.execute()
+
+    assert resultado.ambiguas == 1
+    assert 1 not in coords.resueltas
+
+
+async def test_candidato_geograficamente_consistente_con_la_ciudad_se_resuelve() -> None:
+    referencias = [
+        build_sucursal_geocoding(
+            100 + i, domicilio=f"Calle Referencia {i}", ciudad="Garin", provincia="Buenos Aires",
+            latitud=-34.42 + i * 0.001, longitud=-58.72 + i * 0.001,
+        )
+        for i in range(5)
+    ]
+    pendiente = build_sucursal_geocoding(
+        1, domicilio="Belgrano 664", ciudad="Garin", provincia="Buenos Aires",
+        latitud=0.0, longitud=0.0,
+    )
+    direccion = "Belgrano 664, Garin, Buenos Aires, Argentina"
+    candidato_cercano = GeocodeCandidato(
+        formatted_address="Av. Belgrano 664, Garín, Argentina",
+        latitud=-34.4195,
+        longitud=-58.7286,
+        location_type="ROOFTOP",
+    )
+    use_case, coords, _ = _use_case(
+        [*referencias, pendiente], por_direccion={direccion: [candidato_cercano]}
+    )
+
+    resultado = await use_case.execute()
+
+    assert resultado.resueltas == 1
+    assert 1 in coords.resueltas

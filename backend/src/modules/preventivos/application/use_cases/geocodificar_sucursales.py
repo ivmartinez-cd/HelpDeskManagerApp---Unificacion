@@ -25,7 +25,17 @@ pero el grupo (por comparación con otro miembro) sigue sin ser confiable.
 Bug real encontrado el 2026-08-23: sin este chequeo, el caso Constituyentes
 (3 sucursales del mismo domicilio, una con el pin a 1.35km del resto) soltaba
 el override de las otras dos apenas su pin individual quedaba a metros del
-valor correcto, aunque el grupo seguía en conflicto."""
+valor correcto, aunque el grupo seguía en conflicto.
+
+Referencias geográficas para `elegir_automatico` (2026-08-23): antes de
+procesar las pendientes, se arma un mapa (ciudad, provincia) → coordenadas de
+sucursales ya confiables (override vigente, o raw de Siges válido si no hay
+override) — excluyendo sospechosos, que no son confiables. Cada candidato
+único que Google devuelve se valida contra esas referencias (ver
+domain/services/geocoding.py) antes de auto-elegirse; sin esto, un candidato
+"único y preciso" pero en el partido equivocado (misma calle, otro partido)
+se guardaba igual — así se colaron los bugs de Garín/San Justo/Hurlingham/
+Escobar/Benavídez encontrados ese día a mano."""
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -45,7 +55,12 @@ from src.modules.preventivos.domain.services.coordenadas import (
     coordenada_reconciliada,
     coordenada_valida,
 )
-from src.modules.preventivos.domain.services.geocoding import armar_direccion, elegir_automatico
+from src.modules.preventivos.domain.services.geocoding import (
+    agrupar_referencias_por_ciudad,
+    armar_direccion,
+    clave_ubicacion,
+    elegir_automatico,
+)
 from src.modules.preventivos.domain.services.pines_sospechosos import (
     detectar_domicilios_en_conflicto,
     detectar_pines_compartidos,
@@ -69,15 +84,14 @@ class GeocodificarSucursalesUseCase:
         self._llamadas = 0
 
     async def execute(self) -> GeocodificarResultado:
-        contadores = {"resueltas": 0, "ambiguas": 0, "sin_resultados": 0, "sin_direccion": 0}
         sucursales = await self._deps.query_gateway.list_sucursales_para_geocoding()
         sospechosos = detectar_pines_compartidos(sucursales) | detectar_domicilios_en_conflicto(
             sucursales
         )
-        for sucursal in await self._pendientes(sucursales, sospechosos):
-            if self._llamadas >= self._tope:
-                break
-            contadores[await self._procesar(sucursal)] += 1
+        overrides = await self._deps.sucursal_coordenadas.list_by_siges_sucursal_ids(
+            [s.id_sucursal for s in sucursales]
+        )
+        contadores = await self._procesar_pendientes(sucursales, sospechosos, overrides)
         reconciliadas = await self._reconciliar(sucursales, sospechosos)
         return GeocodificarResultado(
             resueltas=contadores["resueltas"],
@@ -87,18 +101,58 @@ class GeocodificarSucursalesUseCase:
             reconciliadas=reconciliadas,
         )
 
-    async def _pendientes(
-        self, sucursales: list[SucursalParaGeocoding], sospechosos: set[int]
+    async def _procesar_pendientes(
+        self,
+        sucursales: list[SucursalParaGeocoding],
+        sospechosos: set[int],
+        overrides: dict[int, SucursalCoordenadas],
+    ) -> dict[str, int]:
+        contadores = {"resueltas": 0, "ambiguas": 0, "sin_resultados": 0, "sin_direccion": 0}
+        referencias_por_ciudad = self._referencias_por_ciudad(sucursales, overrides, sospechosos)
+        for sucursal in self._pendientes(sucursales, sospechosos, overrides):
+            if self._llamadas >= self._tope:
+                break
+            contadores[await self._procesar(sucursal, referencias_por_ciudad)] += 1
+        return contadores
+
+    def _pendientes(
+        self,
+        sucursales: list[SucursalParaGeocoding],
+        sospechosos: set[int],
+        overrides: dict[int, SucursalCoordenadas],
     ) -> list[SucursalParaGeocoding]:
-        invalidas = [
+        return [
             s
             for s in sucursales
-            if not coordenada_valida(s.latitud, s.longitud) or s.id_sucursal in sospechosos
+            if (not coordenada_valida(s.latitud, s.longitud) or s.id_sucursal in sospechosos)
+            and s.id_sucursal not in overrides
         ]
-        resueltas = await self._deps.sucursal_coordenadas.list_by_siges_sucursal_ids(
-            [s.id_sucursal for s in invalidas]
-        )
-        return [s for s in invalidas if s.id_sucursal not in resueltas]
+
+    def _referencias_por_ciudad(
+        self,
+        sucursales: list[SucursalParaGeocoding],
+        overrides: dict[int, SucursalCoordenadas],
+        sospechosos: set[int],
+    ) -> dict[tuple[str, str], list[tuple[float, float]]]:
+        candidatas = (s for s in sucursales if s.id_sucursal not in sospechosos)
+        entradas = [
+            entrada
+            for entrada in (
+                self._entrada_referencia(s, overrides.get(s.id_sucursal)) for s in candidatas
+            )
+            if entrada is not None
+        ]
+        return agrupar_referencias_por_ciudad(entradas)
+
+    def _entrada_referencia(
+        self, sucursal: SucursalParaGeocoding, override: SucursalCoordenadas | None
+    ) -> tuple[str, str, float, float] | None:
+        if override is not None:
+            return (sucursal.ciudad, sucursal.provincia, override.latitud, override.longitud)
+        if coordenada_valida(sucursal.latitud, sucursal.longitud):
+            assert sucursal.latitud is not None and sucursal.longitud is not None
+            return (sucursal.ciudad, sucursal.provincia, sucursal.latitud, sucursal.longitud)
+        return None
 
     async def _reconciliar(
         self, sucursales: list[SucursalParaGeocoding], sospechosos: set[int]
@@ -118,14 +172,20 @@ class GeocodificarSucursalesUseCase:
                 reconciliadas += 1
         return reconciliadas
 
-    async def _procesar(self, sucursal: SucursalParaGeocoding) -> str:
+    async def _procesar(
+        self,
+        sucursal: SucursalParaGeocoding,
+        referencias_por_ciudad: dict[tuple[str, str], list[tuple[float, float]]],
+    ) -> str:
         direccion = armar_direccion(sucursal.domicilio, sucursal.ciudad, sucursal.provincia)
         if direccion is None:
             return "sin_direccion"
         candidatos = await self._candidatos(direccion)
         if not candidatos:
             return "sin_resultados"
-        elegido = elegir_automatico(candidatos, sucursal.ciudad)
+        clave = clave_ubicacion(sucursal.ciudad, sucursal.provincia)
+        referencias = tuple(referencias_por_ciudad.get(clave, ()))
+        elegido = elegir_automatico(candidatos, sucursal.ciudad, referencias)
         if elegido is None:
             return "ambiguas"
         await self._guardar(sucursal.id_sucursal, elegido)
