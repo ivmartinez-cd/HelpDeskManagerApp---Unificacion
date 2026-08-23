@@ -127,6 +127,9 @@ class FakeSucursalCoordenadasRepository:
     async def upsert(self, coordenadas: SucursalCoordenadas) -> None:
         self.resueltas[coordenadas.siges_sucursal_id] = coordenadas
 
+    async def delete(self, siges_sucursal_id: int) -> None:
+        self.resueltas.pop(siges_sucursal_id, None)
+
 
 class FakeGeocodingGateway:
     def __init__(self, por_direccion: dict[str, list[GeocodeCandidato]] | None = None) -> None:

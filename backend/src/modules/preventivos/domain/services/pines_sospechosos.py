@@ -12,9 +12,8 @@ por-fila (domain/services/coordenadas.py) no puede ver.
   consistencia. Caso real que disparó esta auditoría: tres locales en
   "Av. Constituyentes 6020" con pines a ~1.5km entre sí."""
 
-import math
-
 from src.modules.preventivos.domain.entities.sucursal_coordenadas import SucursalParaGeocoding
+from src.modules.preventivos.domain.services.coordenadas import haversine_km
 
 # Redondeo a 5 decimales (~1m): coincidencia exacta, no cercanía — dos
 # sucursales vecinas de verdad no deben marcarse por estar a metros.
@@ -63,17 +62,6 @@ def _hay_conflicto(grupo: list[SucursalParaGeocoding]) -> bool:
     assert base_lat is not None and base_lon is not None  # filtrado al armar el grupo
     for otro in grupo[1:]:
         assert otro.latitud is not None and otro.longitud is not None
-        if _haversine_km(base_lat, base_lon, otro.latitud, otro.longitud) > _UMBRAL_CONFLICTO_KM:
+        if haversine_km(base_lat, base_lon, otro.latitud, otro.longitud) > _UMBRAL_CONFLICTO_KM:
             return True
     return False
-
-
-def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    rad = math.pi / 180.0
-    d_lat = (lat2 - lat1) * rad
-    d_lon = (lon2 - lon1) * rad
-    a = (
-        math.sin(d_lat / 2) ** 2
-        + math.cos(lat1 * rad) * math.cos(lat2 * rad) * math.sin(d_lon / 2) ** 2
-    )
-    return 6371.0 * 2 * math.asin(math.sqrt(a))

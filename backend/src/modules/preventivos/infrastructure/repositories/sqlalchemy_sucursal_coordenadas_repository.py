@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 
+from sqlalchemy import delete as sa_delete
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,6 +31,13 @@ class SqlAlchemySucursalCoordenadasRepository:
             self._session.add(_to_model(coordenadas))
         else:
             _actualizar(row, coordenadas)
+        await self._session.flush()
+
+    async def delete(self, siges_sucursal_id: int) -> None:
+        stmt = sa_delete(SucursalCoordenadasModel).where(
+            SucursalCoordenadasModel.siges_sucursal_id == siges_sucursal_id
+        )
+        await self._session.execute(stmt)
         await self._session.flush()
 
     async def _row(self, siges_sucursal_id: int) -> SucursalCoordenadasModel | None:

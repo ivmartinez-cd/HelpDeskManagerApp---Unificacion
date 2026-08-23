@@ -63,10 +63,14 @@ export function usePuntosMapa({
     preventivosApi
       .geocodificarSucursales()
       .then((resultado) => {
+        const reconciliadasInfo =
+          resultado.reconciliadas > 0
+            ? `, ${numberFormat.format(resultado.reconciliadas)} reconciliadas (Siges se corrigió solo)`
+            : "";
         toast.success(
           `Geocodificación: ${numberFormat.format(resultado.resueltas)} resueltas, ` +
             `${numberFormat.format(resultado.ambiguas)} ambiguas, ` +
-            `${numberFormat.format(resultado.sin_resultados)} sin resultados`,
+            `${numberFormat.format(resultado.sin_resultados)} sin resultados${reconciliadasInfo}`,
         );
         setRefreshToken((t) => t + 1);
       })

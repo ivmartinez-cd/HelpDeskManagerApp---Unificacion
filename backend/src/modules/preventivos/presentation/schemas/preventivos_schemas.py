@@ -134,6 +134,7 @@ class GeocodificarResultadoSchema(BaseModel):
     ambiguas: int
     sin_resultados: int
     sin_direccion: int
+    reconciliadas: int
 
     @classmethod
     def from_domain(cls, resultado: GeocodificarResultado) -> "GeocodificarResultadoSchema":
@@ -142,4 +143,5 @@ class GeocodificarResultadoSchema(BaseModel):
             ambiguas=resultado.ambiguas,
             sin_resultados=resultado.sin_resultados,
             sin_direccion=resultado.sin_direccion,
+            reconciliadas=resultado.reconciliadas,
         )

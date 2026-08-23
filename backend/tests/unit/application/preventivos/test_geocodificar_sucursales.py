@@ -188,3 +188,71 @@ async def test_tope_de_llamadas_corta_la_corrida() -> None:
 
     assert len(geocoding.llamadas) == 1
     assert resultado.sin_resultados == 1
+
+
+async def test_siges_corregido_cerca_del_override_se_reconcilia() -> None:
+    # Caso real (2026-08-23): alguien corrige la coordenada directamente en
+    # Siges; el override viejo (de una geocodificación anterior) la tapaba.
+    sucursales = [
+        build_sucursal_geocoding(1, latitud=-34.6146, longitud=-58.4196, domicilio="Calle 1")
+    ]
+    ya_resuelta = SucursalCoordenadas(1, -34.6145828, -58.4195644, "Calle 1", datetime.now(UTC))
+    coords = FakeSucursalCoordenadasRepository([ya_resuelta])
+    use_case, coords, _ = _use_case(sucursales, coordenadas=coords)
+
+    resultado = await use_case.execute()
+
+    assert resultado.reconciliadas == 1
+    assert 1 not in coords.resueltas
+
+
+async def test_siges_sigue_lejos_del_override_no_se_reconcilia() -> None:
+    sucursales = [
+        build_sucursal_geocoding(1, latitud=-31.5, longitud=-68.5, domicilio="Calle 1")
+    ]
+    ya_resuelta = SucursalCoordenadas(1, -34.6145828, -58.4195644, "Calle 1", datetime.now(UTC))
+    coords = FakeSucursalCoordenadasRepository([ya_resuelta])
+    use_case, coords, _ = _use_case(sucursales, coordenadas=coords)
+
+    resultado = await use_case.execute()
+
+    assert resultado.reconciliadas == 0
+    assert 1 in coords.resueltas
+
+
+async def test_sucursal_sin_override_no_se_evalua_para_reconciliar() -> None:
+    sucursales = [build_sucursal_geocoding(1, latitud=-34.6, longitud=-58.4)]
+    use_case, _, _ = _use_case(sucursales)
+
+    resultado = await use_case.execute()
+
+    assert resultado.reconciliadas == 0
+
+
+async def test_grupo_en_conflicto_no_se_reconcilia_aunque_un_miembro_este_cerca() -> None:
+    # Bug real (2026-08-23), caso Constituyentes: dos sucursales con el mismo
+    # domicilio y pines que no coinciden entre sí. Ambas se resuelven al
+    # mismo override; una de ellas tenía su propio pin de Siges a metros del
+    # valor correcto (nunca estuvo tan mal, solo entró al grupo por
+    # comparación con la otra) — reconciliar solo esa rompería la
+    # consistencia del grupo, que sigue en conflicto.
+    sucursales = [
+        build_sucursal_geocoding(
+            1, domicilio="Av. Constituyentes 6020", latitud=-34.5726, longitud=-58.5077
+        ),
+        build_sucursal_geocoding(
+            2, domicilio="Av. Constituyentes 6020", latitud=-34.5623, longitud=-58.5158
+        ),
+    ]
+    coords = FakeSucursalCoordenadasRepository(
+        [
+            SucursalCoordenadas(1, -34.5724459, -58.5077299, "Constituyentes", datetime.now(UTC)),
+            SucursalCoordenadas(2, -34.5724459, -58.5077299, "Constituyentes", datetime.now(UTC)),
+        ]
+    )
+    use_case, coords, _ = _use_case(sucursales, coordenadas=coords)
+
+    resultado = await use_case.execute()
+
+    assert resultado.reconciliadas == 0
+    assert {1, 2} <= set(coords.resueltas)

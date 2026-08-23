@@ -96,4 +96,5 @@ export interface GeocodificarResultado {
   ambiguas: number;
   sin_resultados: number;
   sin_direccion: number;
+  reconciliadas: number;
 }

@@ -40,3 +40,4 @@ class GeocodificarResultado:
     ambiguas: int
     sin_resultados: int
     sin_direccion: int
+    reconciliadas: int

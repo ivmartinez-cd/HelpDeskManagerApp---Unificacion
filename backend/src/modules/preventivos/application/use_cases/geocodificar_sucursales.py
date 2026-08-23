@@ -7,7 +7,25 @@ gateway/cache compartidos
 elección automática y el armado de dirección son puros
 (domain/services/geocoding.py). Ambiguas/sin resultado no se persisten: se
 reintentan gratis (vía cache) en la próxima corrida, nunca se pisa una
-resolución ya guardada por reintento."""
+resolución ya guardada por reintento.
+
+Reconciliación (2026-08-23): Siges es de solo lectura acá, así que si alguien
+corrige una coordenada directamente en Siges, un override viejo (de una
+corrección nuestra anterior) la tapa para siempre — ver
+domain/services/coordenadas.py:coordenada_reconciliada. Cada corrida también
+revisa las sucursales YA overrideadas: si la coordenada actual de Siges cayó
+cerca de la que habíamos guardado, asumimos que Siges se puso al día y
+soltamos el override.
+
+Excluye a propósito las sucursales que siguen en `sospechosos` (pin
+compartido/domicilio en conflicto): un miembro de un grupo con pines en
+conflicto puede tener su propio pin cerca del override sin que eso signifique
+que Siges se corrigió — solo significa que ESE miembro nunca estuvo tan mal,
+pero el grupo (por comparación con otro miembro) sigue sin ser confiable.
+Bug real encontrado el 2026-08-23: sin este chequeo, el caso Constituyentes
+(3 sucursales del mismo domicilio, una con el pin a 1.35km del resto) soltaba
+el override de las otras dos apenas su pin individual quedaba a metros del
+valor correcto, aunque el grupo seguía en conflicto."""
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -23,7 +41,10 @@ from src.modules.preventivos.domain.repositories.preventivos_query_gateway impor
 from src.modules.preventivos.domain.repositories.sucursal_coordenadas_repository import (
     SucursalCoordenadasRepository,
 )
-from src.modules.preventivos.domain.services.coordenadas import coordenada_valida
+from src.modules.preventivos.domain.services.coordenadas import (
+    coordenada_reconciliada,
+    coordenada_valida,
+)
 from src.modules.preventivos.domain.services.geocoding import armar_direccion, elegir_automatico
 from src.modules.preventivos.domain.services.pines_sospechosos import (
     detectar_domicilios_en_conflicto,
@@ -49,22 +70,26 @@ class GeocodificarSucursalesUseCase:
 
     async def execute(self) -> GeocodificarResultado:
         contadores = {"resueltas": 0, "ambiguas": 0, "sin_resultados": 0, "sin_direccion": 0}
-        for sucursal in await self._pendientes():
+        sucursales = await self._deps.query_gateway.list_sucursales_para_geocoding()
+        sospechosos = detectar_pines_compartidos(sucursales) | detectar_domicilios_en_conflicto(
+            sucursales
+        )
+        for sucursal in await self._pendientes(sucursales, sospechosos):
             if self._llamadas >= self._tope:
                 break
             contadores[await self._procesar(sucursal)] += 1
+        reconciliadas = await self._reconciliar(sucursales, sospechosos)
         return GeocodificarResultado(
             resueltas=contadores["resueltas"],
             ambiguas=contadores["ambiguas"],
             sin_resultados=contadores["sin_resultados"],
             sin_direccion=contadores["sin_direccion"],
+            reconciliadas=reconciliadas,
         )
 
-    async def _pendientes(self) -> list[SucursalParaGeocoding]:
-        sucursales = await self._deps.query_gateway.list_sucursales_para_geocoding()
-        sospechosos = detectar_pines_compartidos(sucursales) | detectar_domicilios_en_conflicto(
-            sucursales
-        )
+    async def _pendientes(
+        self, sucursales: list[SucursalParaGeocoding], sospechosos: set[int]
+    ) -> list[SucursalParaGeocoding]:
         invalidas = [
             s
             for s in sucursales
@@ -74,6 +99,24 @@ class GeocodificarSucursalesUseCase:
             [s.id_sucursal for s in invalidas]
         )
         return [s for s in invalidas if s.id_sucursal not in resueltas]
+
+    async def _reconciliar(
+        self, sucursales: list[SucursalParaGeocoding], sospechosos: set[int]
+    ) -> int:
+        overrides = await self._deps.sucursal_coordenadas.list_by_siges_sucursal_ids(
+            [s.id_sucursal for s in sucursales]
+        )
+        reconciliadas = 0
+        for sucursal in sucursales:
+            override = overrides.get(sucursal.id_sucursal)
+            if override is None or sucursal.id_sucursal in sospechosos:
+                continue
+            if coordenada_reconciliada(
+                override.latitud, override.longitud, sucursal.latitud, sucursal.longitud
+            ):
+                await self._deps.sucursal_coordenadas.delete(sucursal.id_sucursal)
+                reconciliadas += 1
+        return reconciliadas
 
     async def _procesar(self, sucursal: SucursalParaGeocoding) -> str:
         direccion = armar_direccion(sucursal.domicilio, sucursal.ciudad, sucursal.provincia)
