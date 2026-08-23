@@ -1,5 +1,8 @@
-"""Geocodifica sucursales del universo de preventivos sin coordenada válida
-en Siges (Fase 2 del mapa de clientes). Reusa el gateway/cache compartidos
+"""Geocodifica sucursales del universo de preventivos sin coordenada
+confiable en Siges: bbox inválido (Fase 2), coordenada compartida con otra
+sucursal de domicilio distinto, o mismo domicilio con pines que no coinciden
+entre sí (Fase 3 — ver domain/services/pines_sospechosos.py). Reusa el
+gateway/cache compartidos
 (shared/infrastructure/geocoding — misma key paga que liquidaciones); la
 elección automática y el armado de dirección son puros
 (domain/services/geocoding.py). Ambiguas/sin resultado no se persisten: se
@@ -22,6 +25,10 @@ from src.modules.preventivos.domain.repositories.sucursal_coordenadas_repository
 )
 from src.modules.preventivos.domain.services.coordenadas import coordenada_valida
 from src.modules.preventivos.domain.services.geocoding import armar_direccion, elegir_automatico
+from src.modules.preventivos.domain.services.pines_sospechosos import (
+    detectar_domicilios_en_conflicto,
+    detectar_pines_compartidos,
+)
 from src.shared.domain.repositories.geocode_cache_repository import GeocodeCacheRepository
 from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato, GeocodingGateway
 
@@ -55,7 +62,14 @@ class GeocodificarSucursalesUseCase:
 
     async def _pendientes(self) -> list[SucursalParaGeocoding]:
         sucursales = await self._deps.query_gateway.list_sucursales_para_geocoding()
-        invalidas = [s for s in sucursales if not coordenada_valida(s.latitud, s.longitud)]
+        sospechosos = detectar_pines_compartidos(sucursales) | detectar_domicilios_en_conflicto(
+            sucursales
+        )
+        invalidas = [
+            s
+            for s in sucursales
+            if not coordenada_valida(s.latitud, s.longitud) or s.id_sucursal in sospechosos
+        ]
         resueltas = await self._deps.sucursal_coordenadas.list_by_siges_sucursal_ids(
             [s.id_sucursal for s in invalidas]
         )

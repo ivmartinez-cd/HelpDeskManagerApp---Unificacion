@@ -117,6 +117,66 @@ async def test_varios_candidatos_cuenta_ambiguas() -> None:
     assert coords.resueltas == {}
 
 
+async def test_pin_compartido_entre_domicilios_distintos_se_geocodifica_igual() -> None:
+    # Ambas coordenadas son "válidas" por bbox, pero comparten el mismo punto
+    # exacto con un domicilio distinto — señal de pin genérico, no real.
+    sucursales = [
+        build_sucursal_geocoding(1, domicilio="Calle A 100", latitud=-34.6, longitud=-58.4),
+        build_sucursal_geocoding(2, domicilio="Calle B 200", latitud=-34.6, longitud=-58.4),
+    ]
+    direccion_a = "Calle A 100, Ciudad, Provincia, Argentina"
+    direccion_b = "Calle B 200, Ciudad, Provincia, Argentina"
+    use_case, coords, geocoding = _use_case(
+        sucursales,
+        por_direccion={direccion_a: [_CANDIDATO_PRECISO], direccion_b: [_CANDIDATO_PRECISO]},
+    )
+
+    resultado = await use_case.execute()
+
+    assert resultado.resueltas == 2
+    assert sorted(geocoding.llamadas) == sorted([direccion_a, direccion_b])
+    assert set(coords.resueltas) == {1, 2}
+
+
+async def test_mismo_domicilio_con_pines_en_conflicto_se_geocodifica_igual() -> None:
+    # Ambas coordenadas son "válidas" por bbox, pero el mismo domicilio real
+    # tiene dos pines que no coinciden entre sí (caso Constituyentes).
+    sucursales = [
+        build_sucursal_geocoding(
+            1, domicilio="Av. Constituyentes 6020", latitud=-34.5726, longitud=-58.5060
+        ),
+        build_sucursal_geocoding(
+            2, domicilio="Av. Constituyentes 6020", latitud=-34.5623, longitud=-58.5158
+        ),
+    ]
+    direccion = "Av. Constituyentes 6020, Ciudad, Provincia, Argentina"
+    use_case, coords, geocoding = _use_case(
+        sucursales, por_direccion={direccion: [_CANDIDATO_PRECISO]}
+    )
+
+    resultado = await use_case.execute()
+
+    assert resultado.resueltas == 2
+    assert geocoding.llamadas == [direccion]  # misma dirección: un solo llamado, cacheado
+    assert set(coords.resueltas) == {1, 2}
+
+
+async def test_mismo_domicilio_repetido_no_se_toma_como_pin_compartido() -> None:
+    # Dos sucursales con la MISMA dirección real y el mismo pin: legítimo,
+    # no debe disparar geocodificación.
+    sucursales = [
+        build_sucursal_geocoding(1, domicilio="Calle A 100", latitud=-34.6, longitud=-58.4),
+        build_sucursal_geocoding(2, domicilio="Calle A 100", latitud=-34.6, longitud=-58.4),
+    ]
+    use_case, coords, geocoding = _use_case(sucursales)
+
+    resultado = await use_case.execute()
+
+    assert resultado.resueltas == 0
+    assert geocoding.llamadas == []
+    assert coords.resueltas == {}
+
+
 async def test_tope_de_llamadas_corta_la_corrida() -> None:
     sucursales = [
         build_sucursal_geocoding(1, latitud=0.0, longitud=0.0, domicilio="Calle 1"),

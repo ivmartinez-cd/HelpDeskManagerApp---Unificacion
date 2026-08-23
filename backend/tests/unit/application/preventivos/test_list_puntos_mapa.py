@@ -144,3 +144,32 @@ async def test_coordenada_geocodificada_completa_la_sin_ubicar() -> None:
 
     assert result.puntos[0].ubicado is True
     assert (result.puntos[0].latitud, result.puntos[0].longitud) == (-31.5, -68.5)
+
+
+async def test_override_pisa_una_coordenada_de_siges_ya_valida() -> None:
+    # El pin de Siges pasa la validación de bbox pero es un pin compartido
+    # (ver domain/services/pines_sospechosos.py): una vez geocodificada, la
+    # resolución manda igual, no solo cuando faltaba coordenada.
+    equipos = [
+        build_equipo(
+            1,
+            id_sucursal=10,
+            fecha_ultimo_preventivo=date.today(),
+            latitud=-34.6,
+            longitud=-58.4,
+        )
+    ]
+    resuelta = SucursalCoordenadas(
+        siges_sucursal_id=10,
+        latitud=-31.5,
+        longitud=-68.5,
+        formatted_address="Domicilio corregido",
+        fecha_resolucion=datetime.now(UTC),
+    )
+    coordenadas = FakeSucursalCoordenadasRepository([resuelta])
+    use_case = _use_case(FakePreventivosQueryGateway(equipos), coordenadas=coordenadas)
+
+    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+
+    assert result.puntos[0].ubicado is True
+    assert (result.puntos[0].latitud, result.puntos[0].longitud) == (-31.5, -68.5)

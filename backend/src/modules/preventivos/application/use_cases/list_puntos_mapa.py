@@ -1,8 +1,10 @@
 """Puntos del mapa de clientes: reusa ListEquiposPorZonaUseCase (mismos
 filtros, misma limpieza automática de habilitaciones cumplidas) y colapsa el
 resultado de máquina a sucursal — el mapa es de sucursales, no de equipos.
-Las sucursales sin coordenada válida en Siges se completan con lo que haya
-resuelto la Fase 2 (geocodificar_sucursales.py), si algo."""
+Una coordenada resuelta por geocodificar_sucursales.py siempre pisa la de
+Siges, incluso si esta última pasa la validación de bbox: puede ser un pin
+compartido con otra sucursal (ver domain/services/pines_sospechosos.py), válido
+mecánicamente pero no confiable."""
 
 from dataclasses import dataclass, replace
 
@@ -49,10 +51,10 @@ class ListPuntosMapaUseCase:
     async def _overrides(
         self, puntos: list[PuntoMapaPreventivo]
     ) -> dict[int, SucursalCoordenadas]:
-        sin_ubicar = [p.id_sucursal for p in puntos if not p.ubicado]
-        if not sin_ubicar:
+        ids = [p.id_sucursal for p in puntos]
+        if not ids:
             return {}
-        return await self._deps.sucursal_coordenadas.list_by_siges_sucursal_ids(sin_ubicar)
+        return await self._deps.sucursal_coordenadas.list_by_siges_sucursal_ids(ids)
 
 
 def _con_override(
