@@ -60,3 +60,18 @@ flujos mutantes críticos en dry-run) si ocurre cualquiera de estas dos cosas:
   no en código ejecutable.
 - La cláusula de reversión es parte del contrato de esta ADR: no cumplirla ante su
   disparador convierte la desviación de nuevo en violación.
+
+## Addendum 2026-08-23: decisión cerrada sobre e2e real y jobs de fondo
+
+1. **No se construye una suite e2e real (navegador → API → DB) ahora.** La red elegida es:
+   `make check` (unit + integración de repos contra Postgres real + tests de routers por HTTP
+   con la app real) en cada push; smoke Playwright de UI con backend mock en el pre-push
+   cuando hay cambios de frontend; suite Playwright completa a mano al cerrar cambios de API
+   consumida por el front; y la verificación manual en el navegador contra los contenedores
+   reales que ya forma parte del cierre de cada bloque (capturas con usuario e2e temporal,
+   como se hizo en el rediseño de Inicio). La cláusula de reversión de arriba sigue siendo el
+   único disparador para cambiar esto.
+2. **`*/presentation/background_jobs.py` queda sin cobertura a propósito.** La regla de
+   CLAUDE.md prohíbe ejecutar jobs de fondo en dev (mandan mails y escriben contra SOAP/
+   Insight/wsAyC reales); la lógica de negocio de cada job vive en use cases que sí tienen
+   tests, y el archivo de jobs es solo scheduling. No es un pendiente de cobertura.

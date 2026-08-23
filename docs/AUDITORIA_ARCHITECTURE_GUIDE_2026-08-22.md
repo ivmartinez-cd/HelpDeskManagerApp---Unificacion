@@ -500,3 +500,19 @@ lanza `ValueError` sin mapear (sería 500) — candidato a 404 en el próximo to
   `playwright test --grep @smoke` y lo apaga. Cierra el único gate que faltaba: un cambio de
   contrato de API que rompa la UI ya no pasa en silencio. La suite completa sigue siendo
   a mano al cerrar cambios de API que consume el front (CLAUDE.md actualizado).
+
+---
+
+## Addendum 8 (2026-08-23): decisiones cerradas sobre lo que quedaba "abierto"
+
+Pedido del usuario: que nada quede como pendiente difuso. Cada punto tiene ahora una decisión
+escrita en su lugar:
+
+| Tema | Decisión | Dónde |
+|---|---|---|
+| "Defaults de Inicio por rol" | **No hace falta**: qué ve cada perfil ya lo decide la administración de usuarios (módulos + funciones por usuario, ADR-032); Personalizar es solo la capa personal encima | ADR-033, Consecuencias |
+| Deuda §4 restante (340 funciones 21–47 líneas) | **Cerrada como deuda aceptada**: sin barrido en bloque; gate impide casos nuevos; refactor oportunista al tocar el archivo | ADR-017, "Decisión final" |
+| 23 excepciones del gate §6/§8/§11 | **Aceptadas con justificación por tipo** junto al inventario; regla: agregar una entrada es una decisión escrita, no un atajo | `scripts/guards-baseline.json` → `notes` |
+| Suite e2e real | **No se construye ahora**: red = integración + routers por HTTP + smoke UI en pre-push + suite completa manual + verificación en navegador al cerrar cada bloque; única vía de cambio: cláusula de reversión de ADR-022 | ADR-022, addendum 2026-08-23 |
+| `GET /api/sla/resumen?periodo=` inválido | **Queda `PERIODO_INVALIDO`** (código de dominio); el frontend muestra el `message` del envelope igual que cualquier 400 | Addendum 7 + test |
+| Cobertura: `sla/pendientes_router` 89 % y `background_jobs.py` 0 % | Ramas de superadmin cubiertas con 2 tests (89 → 96 %); los jobs de fondo **quedan sin cobertura por regla** (no se ejecutan en dev; su lógica vive en use cases testeados) | tests + ADR-022 addendum |

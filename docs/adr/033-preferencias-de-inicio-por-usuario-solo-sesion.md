@@ -34,8 +34,12 @@ accesos directos (`/api/me/route-visits`, ADR-028), que ya resolvió la misma pr
 - Positivas: la personalización es por cuenta y multi-dispositivo; el vertical slice es chico
   (entidad, repo, 2 use cases, router, migración) y sigue un patrón ya aceptado; cero
   permisos nuevos que administrar.
-- Negativas: una tabla más en `auth`; si algún día se quisiera "personalización por rol"
-  (defaults por TL/operador), habría que sumar una capa de defaults — no está en este alcance.
+- Negativas: una tabla más en `auth`.
+- Aclaración (2026-08-23): **no hace falta una capa de "defaults por rol"**. Qué ve cada perfil
+  ya lo decide la administración de usuarios — módulos concedidos y funciones por usuario
+  (ADR-032: pantallas y cards concedibles desde la grilla de permisos). "Personalizar" es solo
+  la capa personal encima de eso: el usuario puede ocultar lo que tiene concedido, nunca ver
+  lo que no tiene. Decisión cerrada, no queda pendiente.
 
 ## Addendum 2026-08-23: la nota personal sigue el mismo patrón
 

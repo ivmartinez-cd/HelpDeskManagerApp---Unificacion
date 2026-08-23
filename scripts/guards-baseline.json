@@ -23,5 +23,11 @@
   "sql-fstring backend/src/shared/infrastructure/database/migrations/versions/c3e5a7b9d1f2_feature_catalog.py:139",
   "sql-fstring backend/src/shared/infrastructure/database/migrations/versions/c3e5a7b9d1f2_feature_catalog.py:143",
   "sql-fstring backend/src/shared/infrastructure/database/migrations/versions/e8b2a5c91f47_vacaciones_schema.py:231"
- ]
+ ],
+ "notes": {
+  "no-authz": "Endpoints pre-auth (login/logout/forgot/reset: no hay sesión todavía) y health (sonda de monitoreo; /echo es la sonda del envelope de validación que usa test_error_handling.py). Aceptados; revisar solo si se agrega un endpoint nuevo sin sesión.",
+  "list-no-page": "Proxy passthrough de SDS/Insight en analisis_log_hp (ADR-021): el shape no es nuestro y no se transforma ni persiste. Si alguno empieza a transformar/persistir o a mostrarse como tabla paginada, migra a Page[T] con schema (condiciones de ADR-021).",
+  "sql-fstring": "Constantes de módulo en server_default, int() previo en el cache de insumos, identificadores validados con _ident() en db3_merge (SQLite del .db3 por FTP) y migraciones con valores fijos. Sin input de usuario; aceptados.",
+  "regla": "Agregar una entrada nueva a este inventario es una decisión que se escribe (ADR o nota en la auditoría), no un atajo para que pase el gate."
+ }
 }

@@ -107,3 +107,11 @@ inventario queda en **340 funciones de 21–47 líneas, 0 clases, 0 archivos bac
 pasó a medir HEAD en `make check` (`--committed`) y lo staged en el pre-commit (`--staged`):
 con varias sesiones sobre el mismo checkout, medir el árbol de trabajo frenaba el push de una
 sesión por el WIP de otra.
+
+**Decisión final (2026-08-23)**: el inventario restante (340 funciones de 21–47 líneas, sin
+clases ni archivos) **queda cerrado como deuda aceptada**: no se hace barrido en bloque (el
+riesgo de regresión en código verificado contra sistemas reales supera la ganancia de
+legibilidad, y ninguna de esas funciones tiene complejidad real: son firmas largas, literales
+de DTOs y secuencias lineales). La regla vigente es solo dos: el gate (`make check` /
+pre-commit) impide que aparezcan casos nuevos, y el archivo que se toque por otro motivo baja
+del límite. No se vuelve a auditar como pendiente.

@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-from tests.integration.router_testing import client
-from tests.integration.sla.support import PAGE_KEYS, PEND, PST_AJENO, PST_PROPIO
+from tests.integration.router_testing import client, install_session, uninstall_session
+from tests.integration.sla.support import MODULE, PAGE_KEYS, PEND, PST_AJENO, PST_PROPIO
 from tests.unit.application.sla.fakes_pendientes import FakePendientesQueryGateway
 
 # --- Autenticación / autorización ------------------------------------------
@@ -86,6 +86,38 @@ async def test_listado_paginado_mas_viejos_primero_y_filtro_por_pst() -> None:
     assert body["items"][0]["id_incidente"] == 11  # 9 días en estado, antes que el de 3
     # Un PST fuera de la cartera propia no se puede espiar por query param.
     assert ajeno.json()["total"] == 0
+
+
+@pytest.mark.usefixtures("pendientes_gateway")
+async def test_superadmin_sin_operador_ve_todos_los_pst(monkeypatch: pytest.MonkeyPatch) -> None:
+    """`_resolver_filtro`: superadmin sin `operadorId` → sin filtro (toda la cartera)."""
+    install_session(monkeypatch, (MODULE, "view"), superadmin=True)
+    try:
+        async with client() as c:
+            listado = await c.get(PEND)
+            resumen = await c.get(f"{PEND}/resumen")
+    finally:
+        uninstall_session()
+
+    assert listado.json()["total"] == 3  # 10, 11 (propio) + 12 (ajeno); 13 no es PST
+    assert resumen.json()["total"] == 3
+
+
+@pytest.mark.usefixtures("pendientes_gateway")
+async def test_superadmin_con_prestador_filtra_solo_ese_pst(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Sin filtro de cartera, `prestadorId` se aplica directo (rama `filtro None + prestador`)."""
+    install_session(monkeypatch, (MODULE, "view"), superadmin=True)
+    try:
+        async with client() as c:
+            response = await c.get(PEND, params={"prestadorId": PST_AJENO})
+    finally:
+        uninstall_session()
+
+    body = response.json()
+    assert body["total"] == 1
+    assert body["items"][0]["id_incidente"] == 12
 
 
 @pytest.mark.usefixtures("_sesion_view", "pendientes_gateway")
