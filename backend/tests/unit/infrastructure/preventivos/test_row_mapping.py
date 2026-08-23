@@ -4,6 +4,7 @@ from typing import Any
 
 from src.modules.preventivos.infrastructure.siges.row_mapping import (
     map_equipo_row,
+    map_sucursal_geocoding_row,
     map_zona_row,
 )
 
@@ -96,3 +97,43 @@ def test_mapea_fila_de_zona() -> None:
 
 def test_zona_nula_queda_vacia() -> None:
     assert map_zona_row(SimpleNamespace(zona=None, maquinas_activas=0)).zona == ""
+
+
+def test_mapea_fila_de_sucursal_para_geocoding() -> None:
+    fila = SimpleNamespace(
+        id_sucursal=42,
+        cliente="Cliente SA ",
+        sucursal="Casa Central ",
+        domicilio="San Isidro 2200 Piso: Dpto: ",
+        ciudad="MENDOZA ",
+        provincia="Mendoza ",
+        latitud="0",
+        longitud="0",
+    )
+    sucursal = map_sucursal_geocoding_row(fila)
+
+    assert sucursal.id_sucursal == 42
+    assert sucursal.cliente == "Cliente SA"
+    assert sucursal.domicilio == "San Isidro 2200 Piso: Dpto:"
+    assert sucursal.ciudad == "MENDOZA"
+    assert sucursal.provincia == "Mendoza"
+    assert sucursal.latitud == 0.0
+    assert sucursal.longitud == 0.0
+
+
+def test_mapea_fila_de_sucursal_para_geocoding_con_nulos() -> None:
+    fila = SimpleNamespace(
+        id_sucursal=1,
+        cliente=None,
+        sucursal=None,
+        domicilio=None,
+        ciudad=None,
+        provincia=None,
+        latitud=None,
+        longitud=None,
+    )
+    sucursal = map_sucursal_geocoding_row(fila)
+
+    assert sucursal.cliente == ""
+    assert sucursal.domicilio == ""
+    assert sucursal.latitud is None

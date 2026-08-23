@@ -21,6 +21,10 @@ from src.modules.preventivos.application.dtos.punto_mapa_preventivo import (
 from src.modules.preventivos.application.use_cases.deshabilitar_equipo import (
     DeshabilitarEquipoUseCase,
 )
+from src.modules.preventivos.application.use_cases.geocodificar_sucursales import (
+    GeocodificarSucursalesDependencies,
+    GeocodificarSucursalesUseCase,
+)
 from src.modules.preventivos.application.use_cases.habilitar_equipo import (
     HabilitarEquipoUseCase,
 )
@@ -43,6 +47,9 @@ from src.modules.preventivos.domain.well_known_permissions import UPDATE, VIEW
 from src.modules.preventivos.infrastructure.repositories.sqlalchemy_habilitacion_repository import (  # noqa: E501
     SqlAlchemyHabilitacionRepository,
 )
+from src.modules.preventivos.infrastructure.repositories.sqlalchemy_sucursal_coordenadas_repository import (  # noqa: E501
+    SqlAlchemySucursalCoordenadasRepository,
+)
 from src.modules.preventivos.presentation.dependencies import (
     get_preventivos_gateway,
     get_zonas_excluidas,
@@ -50,13 +57,19 @@ from src.modules.preventivos.presentation.dependencies import (
 from src.modules.preventivos.presentation.schemas.preventivos_schemas import (
     EquipoPreventivoSchema,
     EquiposPreventivosPage,
+    GeocodificarResultadoSchema,
     HabilitacionSchema,
     HabilitarEquipoBody,
     PuntoMapaSchema,
     PuntosMapaPage,
     ZonaSchema,
 )
+from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_db
+from src.shared.infrastructure.geocoding.factories import require_geocoding_gateway
+from src.shared.infrastructure.geocoding.sqlalchemy_geocode_cache_repository import (  # noqa: E501
+    SqlAlchemyGeocodeCacheRepository,
+)
 from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/preventivos", tags=["preventivos"])
@@ -72,6 +85,15 @@ def _build_equipos_use_case(db: AsyncSession) -> ListEquiposPorZonaUseCase:
             gateway=get_preventivos_gateway(),
             habilitaciones=SqlAlchemyHabilitacionRepository(db),
             zonas_excluidas=get_zonas_excluidas(),
+        )
+    )
+
+
+def _build_puntos_mapa_use_case(db: AsyncSession) -> ListPuntosMapaUseCase:
+    return ListPuntosMapaUseCase(
+        ListPuntosMapaDependencies(
+            equipos_use_case=_build_equipos_use_case(db),
+            sucursal_coordenadas=SqlAlchemySucursalCoordenadasRepository(db),
         )
     )
 
@@ -147,15 +169,31 @@ async def list_puntos_mapa(
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PuntosMapaPage:
-    use_case = ListPuntosMapaUseCase(
-        ListPuntosMapaDependencies(equipos_use_case=_build_equipos_use_case(db))
-    )
+    use_case = _build_puntos_mapa_use_case(db)
     result = await use_case.execute(
         ListEquiposPorZonaRequest(
             zona=zona, estado=estado, habilitado=habilitado, search=q, force_refresh=refresh
         )
     )
     return _puntos_mapa_response(result, page=page, size=size)
+
+
+@router.post("/geocodificar", response_model=GeocodificarResultadoSchema)
+async def geocodificar_sucursales(
+    _: Identity = _require_update,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> GeocodificarResultadoSchema:
+    use_case = GeocodificarSucursalesUseCase(
+        GeocodificarSucursalesDependencies(
+            query_gateway=get_preventivos_gateway(),
+            sucursal_coordenadas=SqlAlchemySucursalCoordenadasRepository(db),
+            geocode_cache=SqlAlchemyGeocodeCacheRepository(db),
+            geocoding=require_geocoding_gateway(),
+        ),
+        get_settings().google_maps_max_calls_per_run,
+    )
+    resultado = await use_case.execute()
+    return GeocodificarResultadoSchema.from_domain(resultado)
 
 
 @router.post(

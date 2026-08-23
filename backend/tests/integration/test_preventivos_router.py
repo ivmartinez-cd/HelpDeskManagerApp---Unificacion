@@ -1,8 +1,8 @@
-"""Router de preventivos por HTTP, sin DB ni Siges: el gateway y el repo de
-habilitaciones van en memoria (tests/unit/application/preventivos/fakes.py)
-vía monkeypatch de los nombres que el router importa. Cubre 401/403 (view vs
-update), el catálogo de zonas paginado, la tabla y el mapa (Page + sellos
-extra), los 400 de validación (zona faltante / excluida) y el ciclo
+"""Router de preventivos por HTTP, sin DB ni Siges: el gateway y los repos de
+habilitaciones/coordenadas van en memoria (tests/unit/application/preventivos/
+fakes.py) vía monkeypatch de los nombres que el router importa. Cubre 401/403
+(view vs update), el catálogo de zonas paginado, la tabla y el mapa (Page +
+sellos extra), los 400 de validación (zona faltante / excluida) y el ciclo
 habilitar → 201 / repetido → 409 / deshabilitar → 204 / inexistente → 404."""
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ from tests.integration.router_testing import client, install_session, uninstall_
 from tests.unit.application.preventivos.fakes import (
     FakeHabilitacionRepository,
     FakePreventivosQueryGateway,
+    FakeSucursalCoordenadasRepository,
     build_equipo,
     build_habilitacion,
 )
@@ -53,6 +54,15 @@ def habilitaciones(monkeypatch: pytest.MonkeyPatch) -> FakeHabilitacionRepositor
     repo = FakeHabilitacionRepository([build_habilitacion(2)])
     monkeypatch.setattr(
         preventivos_router, "SqlAlchemyHabilitacionRepository", lambda _db: repo
+    )
+    return repo
+
+
+@pytest.fixture
+def coordenadas(monkeypatch: pytest.MonkeyPatch) -> FakeSucursalCoordenadasRepository:
+    repo = FakeSucursalCoordenadasRepository()
+    monkeypatch.setattr(
+        preventivos_router, "SqlAlchemySucursalCoordenadasRepository", lambda _db: repo
     )
     return repo
 
@@ -185,7 +195,7 @@ async def test_equipos_zona_excluida_es_400_sin_consultar_siges(
 # --- GET /mapa ----------------------------------------------------------------
 
 
-@pytest.mark.usefixtures("_sesion_view", "gateway", "habilitaciones")
+@pytest.mark.usefixtures("_sesion_view", "gateway", "habilitaciones", "coordenadas")
 async def test_mapa_colapsa_por_sucursal_y_cuenta_sin_ubicar() -> None:
     async with client() as c:
         sur = await c.get(f"{_PREFIX}/mapa", params={"zona": "SUR"})

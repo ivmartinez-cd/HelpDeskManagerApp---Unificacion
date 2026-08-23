@@ -9,10 +9,18 @@ import asyncio
 from datetime import UTC, datetime
 
 from src.modules.preventivos.domain.entities.equipo_preventivo import ParqueZonaSnapshot
+from src.modules.preventivos.domain.entities.sucursal_coordenadas import (
+    SucursalParaGeocoding,
+)
 from src.modules.preventivos.domain.entities.zona_parque import ZonaParque
-from src.modules.preventivos.infrastructure.siges.query import PARQUE_ZONA_SQL, ZONAS_SQL
+from src.modules.preventivos.infrastructure.siges.query import (
+    PARQUE_ZONA_SQL,
+    SUCURSALES_GEOCODING_SQL,
+    ZONAS_SQL,
+)
 from src.modules.preventivos.infrastructure.siges.row_mapping import (
     map_equipo_row,
+    map_sucursal_geocoding_row,
     map_zona_row,
 )
 from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
@@ -66,6 +74,17 @@ class PyodbcPreventivosGateway:
             self._zonas = [map_zona_row(row) for row in rows]
             self._zonas_consultadas_en = datetime.now(UTC)
             return self._zonas
+
+    async def list_sucursales_para_geocoding(self) -> list[SucursalParaGeocoding]:
+        # Sin cache: la geocodificación se dispara a mano, de vez en cuando —
+        # no es una interacción de UI que se repita en cada click.
+        rows = await self._runner.fetch_all(
+            SUCURSALES_GEOCODING_SQL,
+            (self._meses_actividad, self._meses_actividad),
+            gateway="preventivos_sucursales_geocoding",
+            log_message="Falló la consulta de sucursales para geocoding contra Siges/MERCURIO",
+        )
+        return [map_sucursal_geocoding_row(row) for row in rows]
 
     def _es_vigente(self, consultado_en: datetime | None) -> bool:
         if consultado_en is None:

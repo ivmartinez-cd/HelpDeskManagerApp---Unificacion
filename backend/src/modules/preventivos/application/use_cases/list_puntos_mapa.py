@@ -1,8 +1,10 @@
 """Puntos del mapa de clientes: reusa ListEquiposPorZonaUseCase (mismos
 filtros, misma limpieza automática de habilitaciones cumplidas) y colapsa el
-resultado de máquina a sucursal — el mapa es de sucursales, no de equipos."""
+resultado de máquina a sucursal — el mapa es de sucursales, no de equipos.
+Las sucursales sin coordenada válida en Siges se completan con lo que haya
+resuelto la Fase 2 (geocodificar_sucursales.py), si algo."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from src.modules.preventivos.application.dtos.equipo_preventivo_anotado import (
     EquipoPreventivoAnotado,
@@ -17,6 +19,10 @@ from src.modules.preventivos.application.dtos.punto_mapa_preventivo import (
 from src.modules.preventivos.application.use_cases.list_equipos_por_zona import (
     ListEquiposPorZonaUseCase,
 )
+from src.modules.preventivos.domain.entities.sucursal_coordenadas import SucursalCoordenadas
+from src.modules.preventivos.domain.repositories.sucursal_coordenadas_repository import (
+    SucursalCoordenadasRepository,
+)
 from src.modules.preventivos.domain.services.coordenadas import coordenada_valida
 from src.modules.preventivos.domain.services.vencimiento import ORDEN_ESTADO_PRIORIDAD
 
@@ -24,6 +30,7 @@ from src.modules.preventivos.domain.services.vencimiento import ORDEN_ESTADO_PRI
 @dataclass(frozen=True, slots=True)
 class ListPuntosMapaDependencies:
     equipos_use_case: ListEquiposPorZonaUseCase
+    sucursal_coordenadas: SucursalCoordenadasRepository
 
 
 class ListPuntosMapaUseCase:
@@ -32,10 +39,28 @@ class ListPuntosMapaUseCase:
 
     async def execute(self, request: ListEquiposPorZonaRequest) -> ListPuntosMapaResult:
         resultado = await self._deps.equipos_use_case.execute(request)
+        puntos = _agrupar_por_sucursal(resultado.equipos)
+        overrides = await self._overrides(puntos)
         return ListPuntosMapaResult(
-            puntos=_agrupar_por_sucursal(resultado.equipos),
+            puntos=[_con_override(p, overrides.get(p.id_sucursal)) for p in puntos],
             consultado_en=resultado.consultado_en,
         )
+
+    async def _overrides(
+        self, puntos: list[PuntoMapaPreventivo]
+    ) -> dict[int, SucursalCoordenadas]:
+        sin_ubicar = [p.id_sucursal for p in puntos if not p.ubicado]
+        if not sin_ubicar:
+            return {}
+        return await self._deps.sucursal_coordenadas.list_by_siges_sucursal_ids(sin_ubicar)
+
+
+def _con_override(
+    punto: PuntoMapaPreventivo, override: SucursalCoordenadas | None
+) -> PuntoMapaPreventivo:
+    if override is None:
+        return punto
+    return replace(punto, latitud=override.latitud, longitud=override.longitud, ubicado=True)
 
 
 def _agrupar_por_sucursal(

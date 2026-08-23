@@ -9,6 +9,9 @@ from src.modules.preventivos.application.dtos.equipo_preventivo_anotado import (
 from src.modules.preventivos.application.dtos.punto_mapa_preventivo import (
     PuntoMapaPreventivo,
 )
+from src.modules.preventivos.domain.entities.sucursal_coordenadas import (
+    GeocodificarResultado,
+)
 from src.modules.preventivos.domain.entities.zona_parque import ZonaParque
 from src.modules.preventivos.domain.value_objects.vencimiento_preventivo import (
     EstadoPreventivo,
@@ -122,3 +125,19 @@ class ZonaSchema(BaseModel):
 
 class HabilitarEquipoBody(BaseModel):
     nota: str | None = Field(default=None, max_length=300)
+
+
+class GeocodificarResultadoSchema(BaseModel):
+    resueltas: int
+    ambiguas: int
+    sin_resultados: int
+    sin_direccion: int
+
+    @classmethod
+    def from_domain(cls, resultado: GeocodificarResultado) -> "GeocodificarResultadoSchema":
+        return cls(
+            resueltas=resultado.resueltas,
+            ambiguas=resultado.ambiguas,
+            sin_resultados=resultado.sin_resultados,
+            sin_direccion=resultado.sin_direccion,
+        )

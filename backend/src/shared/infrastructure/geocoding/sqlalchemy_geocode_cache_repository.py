@@ -3,6 +3,7 @@
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
@@ -25,19 +26,19 @@ class SqlAlchemyGeocodeCacheRepository:
     async def put(
         self, direccion_normalizada: str, candidatos: list[GeocodeCandidato]
     ) -> None:
-        stmt = select(GeocodeCacheModel).where(
-            GeocodeCacheModel.direccion_normalizada == direccion_normalizada
-        )
-        row = (await self._session.execute(stmt)).scalar_one_or_none()
+        # Upsert atómico (ON CONFLICT), no select-then-insert: dos corridas
+        # concurrentes geocodificando la misma dirección (dos sucursales
+        # distintas con igual domicilio, o dos triggers manuales solapados)
+        # no deben pisarse con un IntegrityError — el cache tolera la carrera.
         payload = [_to_dict(c) for c in candidatos]
-        if row is None:
-            self._session.add(
-                GeocodeCacheModel(
-                    direccion_normalizada=direccion_normalizada, candidatos=payload
-                )
-            )
-        else:
-            row.candidatos = payload
+        stmt = pg_insert(GeocodeCacheModel).values(
+            direccion_normalizada=direccion_normalizada, candidatos=payload
+        )
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[GeocodeCacheModel.direccion_normalizada],
+            set_={"candidatos": stmt.excluded.candidatos},
+        )
+        await self._session.execute(stmt)
         await self._session.flush()
 
 

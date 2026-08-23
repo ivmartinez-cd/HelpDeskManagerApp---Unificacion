@@ -141,3 +141,37 @@ WHERE S.Estado = 0
 {_SOLO_IMPRESORAS_WHERE}
 GROUP BY S.Cuadricula
 """
+
+# Universo completo (todas las zonas, sin parámetro de zona): la
+# geocodificación es mantenimiento periódico, no una pantalla por zona.
+# Trae Domicilio/Ciudad/Provincia para armar la dirección a geocodificar
+# (domain/services/geocoding.py) de las sucursales cuya Latitud/Longitud no
+# pasa domain/services/coordenadas.py — filtrado en Python, no acá: parsear
+# "-58,75" vs "-58.75" en T-SQL es más frágil que en el mapeo de filas.
+# Parámetros: (meses_actividad, meses_actividad) — mismo criterio de cliente
+# vivo que el resto de las consultas del módulo.
+SUCURSALES_GEOCODING_SQL = f"""
+SELECT DISTINCT
+    S.Id_Sucursal AS id_sucursal,
+    E.Den_Comercial AS cliente,
+    S.descripcion AS sucursal,
+    S.Domicilio AS domicilio,
+    C.DesCiudad AS ciudad,
+    C.DesProvincia AS provincia,
+    S.Latitud AS latitud,
+    S.Longitud AS longitud
+FROM dbo.Maquina M
+INNER JOIN dbo.Sucursal S ON S.Id_Sucursal = M.ID_Sucursal
+INNER JOIN dbo.Empresa E ON E.ID_Empresa = M.ID_Empresa
+INNER JOIN dbo.Articulo A ON A.Id_Articulo = M.ID_Articulo
+INNER JOIN dbo.ArtGen AG ON AG.Id_ArtGen = A.Id_ArtGen
+LEFT JOIN dbo.Ciudad C ON C.Id_Ciudad = S.Id_Ciudad
+{_ACTIVIDAD_EMPRESA_JOIN}
+WHERE S.Estado = 0
+  AND M.Estado = 0
+  AND M.ID_Estado_Maquina = 1
+  AND E.Estado = 0
+  AND E.ID_Tipo_Empresa IN (101, 102)
+{_EMPRESA_VIVA_WHERE}
+{_SOLO_IMPRESORAS_WHERE}
+"""

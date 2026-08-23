@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from src.modules.preventivos.application.dtos.list_equipos_request import (
     ListEquiposPorZonaRequest,
@@ -11,9 +11,11 @@ from src.modules.preventivos.application.use_cases.list_puntos_mapa import (
     ListPuntosMapaDependencies,
     ListPuntosMapaUseCase,
 )
+from src.modules.preventivos.domain.entities.sucursal_coordenadas import SucursalCoordenadas
 from tests.unit.application.preventivos.fakes import (
     FakeHabilitacionRepository,
     FakePreventivosQueryGateway,
+    FakeSucursalCoordenadasRepository,
     build_equipo,
     build_habilitacion,
 )
@@ -22,7 +24,9 @@ _EXCLUIDAS: tuple[str, ...] = ()
 
 
 def _use_case(
-    gateway: FakePreventivosQueryGateway, repo: FakeHabilitacionRepository | None = None
+    gateway: FakePreventivosQueryGateway,
+    repo: FakeHabilitacionRepository | None = None,
+    coordenadas: FakeSucursalCoordenadasRepository | None = None,
 ) -> ListPuntosMapaUseCase:
     equipos_use_case = ListEquiposPorZonaUseCase(
         ListEquiposPorZonaDependencies(
@@ -31,7 +35,12 @@ def _use_case(
             zonas_excluidas=_EXCLUIDAS,
         )
     )
-    return ListPuntosMapaUseCase(ListPuntosMapaDependencies(equipos_use_case=equipos_use_case))
+    return ListPuntosMapaUseCase(
+        ListPuntosMapaDependencies(
+            equipos_use_case=equipos_use_case,
+            sucursal_coordenadas=coordenadas or FakeSucursalCoordenadasRepository(),
+        )
+    )
 
 
 async def test_colapsa_varias_maquinas_de_una_sucursal_en_un_punto() -> None:
@@ -101,3 +110,29 @@ async def test_coordenada_invalida_queda_marcada_no_descartada() -> None:
     assert len(result.puntos) == 1
     assert result.puntos[0].ubicado is False
     assert result.puntos[0].latitud == 0.0
+
+
+async def test_coordenada_geocodificada_completa_la_sin_ubicar() -> None:
+    equipos = [
+        build_equipo(
+            1,
+            id_sucursal=10,
+            fecha_ultimo_preventivo=date.today(),
+            latitud=0.0,
+            longitud=0.0,
+        )
+    ]
+    resuelta = SucursalCoordenadas(
+        siges_sucursal_id=10,
+        latitud=-31.5,
+        longitud=-68.5,
+        formatted_address="Domicilio geocodificado",
+        fecha_resolucion=datetime.now(UTC),
+    )
+    coordenadas = FakeSucursalCoordenadasRepository([resuelta])
+    use_case = _use_case(FakePreventivosQueryGateway(equipos), coordenadas=coordenadas)
+
+    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+
+    assert result.puntos[0].ubicado is True
+    assert (result.puntos[0].latitud, result.puntos[0].longitud) == (-31.5, -68.5)

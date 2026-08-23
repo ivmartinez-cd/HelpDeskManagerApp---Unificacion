@@ -1,6 +1,9 @@
 from typing import Protocol
 
 from src.modules.preventivos.domain.entities.equipo_preventivo import ParqueZonaSnapshot
+from src.modules.preventivos.domain.entities.sucursal_coordenadas import (
+    SucursalParaGeocoding,
+)
 from src.modules.preventivos.domain.entities.zona_parque import ZonaParque
 
 
@@ -15,3 +18,8 @@ class PreventivosQueryGateway(Protocol):
     ) -> ParqueZonaSnapshot: ...
 
     async def list_zonas(self) -> list[ZonaParque]: ...
+
+    async def list_sucursales_para_geocoding(self) -> list[SucursalParaGeocoding]:
+        """Universo COMPLETO (todas las zonas): la geocodificación es una
+        tarea de mantenimiento, no una interacción de UI por zona."""
+        ...

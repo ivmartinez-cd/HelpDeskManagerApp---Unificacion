@@ -4,7 +4,11 @@ filtros de universo que el gateway da por sentados."""
 
 import pytest
 
-from src.modules.preventivos.infrastructure.siges.query import PARQUE_ZONA_SQL, ZONAS_SQL
+from src.modules.preventivos.infrastructure.siges.query import (
+    PARQUE_ZONA_SQL,
+    SUCURSALES_GEOCODING_SQL,
+    ZONAS_SQL,
+)
 
 
 def test_parque_zona_tiene_tres_placeholders_meses_meses_zona() -> None:
@@ -22,8 +26,22 @@ def test_zonas_tiene_dos_placeholders_de_meses() -> None:
     assert ZONAS_SQL.count("?") == 2
 
 
-@pytest.mark.parametrize("sql", [PARQUE_ZONA_SQL, ZONAS_SQL])
-def test_ambas_consultas_filtran_solo_impresoras_y_clientes_vivos(sql: str) -> None:
+def test_sucursales_geocoding_tiene_dos_placeholders_y_sin_filtro_de_zona() -> None:
+    assert SUCURSALES_GEOCODING_SQL.count("?") == 2
+    assert "Cuadricula" not in SUCURSALES_GEOCODING_SQL
+
+
+def test_sucursales_geocoding_trae_domicilio_ciudad_y_provincia() -> None:
+    assert "S.Domicilio AS domicilio" in SUCURSALES_GEOCODING_SQL
+    assert "C.DesCiudad AS ciudad" in SUCURSALES_GEOCODING_SQL
+    assert "C.DesProvincia AS provincia" in SUCURSALES_GEOCODING_SQL
+
+
+_TODAS = [PARQUE_ZONA_SQL, ZONAS_SQL, SUCURSALES_GEOCODING_SQL]
+
+
+@pytest.mark.parametrize("sql", _TODAS)
+def test_todas_las_consultas_filtran_solo_impresoras_y_clientes_vivos(sql: str) -> None:
     assert "AG.Descripcion LIKE 'PRT %'" in sql
     assert "AG.Descripcion LIKE 'MFP %'" in sql
     assert "M.ID_Estado_Maquina = 1" in sql
@@ -31,8 +49,8 @@ def test_ambas_consultas_filtran_solo_impresoras_y_clientes_vivos(sql: str) -> N
     assert "DATEADD(month, -?, GETDATE())" in sql
 
 
-@pytest.mark.parametrize("sql", [PARQUE_ZONA_SQL, ZONAS_SQL])
-def test_ambas_consultas_son_solo_lectura(sql: str) -> None:
+@pytest.mark.parametrize("sql", _TODAS)
+def test_todas_las_consultas_son_solo_lectura(sql: str) -> None:
     assert sql.lstrip().upper().startswith("SELECT")
     for verbo in ("INSERT", "UPDATE", "DELETE", "EXEC"):
         assert verbo not in sql.upper()

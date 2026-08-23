@@ -9,7 +9,12 @@ from src.modules.preventivos.domain.entities.equipo_preventivo import (
 from src.modules.preventivos.domain.entities.habilitacion_preventivo import (
     HabilitacionPreventivo,
 )
+from src.modules.preventivos.domain.entities.sucursal_coordenadas import (
+    SucursalCoordenadas,
+    SucursalParaGeocoding,
+)
 from src.modules.preventivos.domain.entities.zona_parque import ZonaParque
+from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
 
 
 def build_equipo(
@@ -40,6 +45,29 @@ def build_equipo(
     )
 
 
+def build_sucursal_geocoding(
+    id_sucursal: int,
+    *,
+    cliente: str = "Cliente",
+    sucursal: str = "Sucursal",
+    domicilio: str = "Calle Falsa 123",
+    ciudad: str = "Ciudad",
+    provincia: str = "Provincia",
+    latitud: float | None = None,
+    longitud: float | None = None,
+) -> SucursalParaGeocoding:
+    return SucursalParaGeocoding(
+        id_sucursal=id_sucursal,
+        cliente=cliente,
+        sucursal=sucursal,
+        domicilio=domicilio,
+        ciudad=ciudad,
+        provincia=provincia,
+        latitud=latitud,
+        longitud=longitud,
+    )
+
+
 def build_habilitacion(
     siges_maquina_id: int, *, habilitado_hace_dias: int = 0
 ) -> HabilitacionPreventivo:
@@ -58,10 +86,14 @@ def build_habilitacion(
 
 class FakePreventivosQueryGateway:
     def __init__(
-        self, equipos: list[EquipoPreventivo] | None = None, zonas: list[ZonaParque] | None = None
+        self,
+        equipos: list[EquipoPreventivo] | None = None,
+        zonas: list[ZonaParque] | None = None,
+        sucursales_geocoding: list[SucursalParaGeocoding] | None = None,
     ) -> None:
         self._equipos = equipos or []
         self._zonas = zonas or []
+        self._sucursales_geocoding = sucursales_geocoding or []
         self.zonas_consultadas: list[str] = []
 
     async def list_equipos_por_zona(
@@ -75,6 +107,44 @@ class FakePreventivosQueryGateway:
 
     async def list_zonas(self) -> list[ZonaParque]:
         return list(self._zonas)
+
+    async def list_sucursales_para_geocoding(self) -> list[SucursalParaGeocoding]:
+        return list(self._sucursales_geocoding)
+
+
+class FakeSucursalCoordenadasRepository:
+    def __init__(self, resueltas: list[SucursalCoordenadas] | None = None) -> None:
+        self.resueltas = {c.siges_sucursal_id: c for c in (resueltas or [])}
+
+    async def list_by_siges_sucursal_ids(
+        self, siges_sucursal_ids: Sequence[int]
+    ) -> dict[int, SucursalCoordenadas]:
+        ids = set(siges_sucursal_ids)
+        return {k: v for k, v in self.resueltas.items() if k in ids}
+
+    async def upsert(self, coordenadas: SucursalCoordenadas) -> None:
+        self.resueltas[coordenadas.siges_sucursal_id] = coordenadas
+
+
+class FakeGeocodingGateway:
+    def __init__(self, por_direccion: dict[str, list[GeocodeCandidato]] | None = None) -> None:
+        self.por_direccion = por_direccion or {}
+        self.llamadas: list[str] = []
+
+    async def geocode(self, direccion: str) -> list[GeocodeCandidato]:
+        self.llamadas.append(direccion)
+        return list(self.por_direccion.get(direccion, []))
+
+
+class FakeGeocodeCacheRepository:
+    def __init__(self) -> None:
+        self.rows: dict[str, list[GeocodeCandidato]] = {}
+
+    async def get(self, direccion_normalizada: str) -> list[GeocodeCandidato] | None:
+        return self.rows.get(direccion_normalizada)
+
+    async def put(self, direccion_normalizada: str, candidatos: list[GeocodeCandidato]) -> None:
+        self.rows[direccion_normalizada] = list(candidatos)
 
 
 class FakeHabilitacionRepository:

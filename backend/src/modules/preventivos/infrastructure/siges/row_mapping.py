@@ -5,6 +5,9 @@ sla/infrastructure/mercurio/row_mapping.py."""
 from typing import Any
 
 from src.modules.preventivos.domain.entities.equipo_preventivo import EquipoPreventivo
+from src.modules.preventivos.domain.entities.sucursal_coordenadas import (
+    SucursalParaGeocoding,
+)
 from src.modules.preventivos.domain.entities.zona_parque import ZonaParque
 
 
@@ -42,3 +45,16 @@ def map_equipo_row(row: Any) -> EquipoPreventivo:
 
 def map_zona_row(row: Any) -> ZonaParque:
     return ZonaParque(zona=(row.zona or "").strip(), maquinas_activas=int(row.maquinas_activas))
+
+
+def map_sucursal_geocoding_row(row: Any) -> SucursalParaGeocoding:
+    return SucursalParaGeocoding(
+        id_sucursal=int(row.id_sucursal),
+        cliente=(row.cliente or "").strip(),
+        sucursal=(row.sucursal or "").strip(),
+        domicilio=(row.domicilio or "").strip(),
+        ciudad=(row.ciudad or "").strip(),
+        provincia=(row.provincia or "").strip(),
+        latitud=_parse_coordenada(row.latitud),
+        longitud=_parse_coordenada(row.longitud),
+    )
