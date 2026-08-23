@@ -82,7 +82,7 @@ class GeocodificarSucursalesUseCase:
         candidatos = await self._candidatos(direccion)
         if not candidatos:
             return "sin_resultados"
-        elegido = elegir_automatico(candidatos)
+        elegido = elegir_automatico(candidatos, sucursal.ciudad)
         if elegido is None:
             return "ambiguas"
         await self._guardar(sucursal.id_sucursal, elegido)

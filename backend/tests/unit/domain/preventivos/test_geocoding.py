@@ -62,3 +62,35 @@ def test_elegir_automatico_intersection_se_autoresuelve() -> None:
 
 def test_elegir_automatico_sin_precision_ni_interseccion_es_ambiguo() -> None:
     assert elegir_automatico([_candidato(location_type="APPROXIMATE")]) is None
+
+
+def test_elegir_automatico_caba_con_candidato_en_conurbano_es_ambiguo() -> None:
+    # Caso real (auditoría 2026-08-23): "Chile 1347" con ciudad=CABA
+    # devolvió un único candidato ROOFTOP en Valentín Alsina (Conurbano).
+    candidato = _candidato(
+        formatted_address="Chile 1347, B1868 Valentín Alsina, Provincia de Buenos Aires, Argentina"
+    )
+    assert elegir_automatico([candidato], "CABA") is None
+
+
+def test_elegir_automatico_caba_con_candidato_en_caba_se_autoresuelve() -> None:
+    candidato = _candidato(
+        formatted_address="Av. Rivadavia 789, C1002AAF Cdad. Autónoma de Buenos Aires, Argentina"
+    )
+    assert elegir_automatico([candidato], "CABA") is candidato
+
+
+def test_elegir_automatico_caba_acepta_variantes_de_ciudad() -> None:
+    candidato = _candidato(
+        formatted_address="Av. Rivadavia 789, C1002AAF Cdad. Autónoma de Buenos Aires, Argentina"
+    )
+    assert elegir_automatico([candidato], "Capital Federal") is candidato
+    assert elegir_automatico([candidato], "Ciudad Autonoma de Buenos Aires") is candidato
+
+
+def test_elegir_automatico_ciudad_no_caba_no_se_valida_localidad() -> None:
+    # El chequeo es específico de CABA (patrón confirmado); otras ciudades
+    # no se validan acá para no arriesgar falsos rechazos por matching
+    # difuso de nombres (ej. "GENERAL SAN MARTIN" vs "San Martín").
+    candidato = _candidato(formatted_address="Cualquier lugar, Mendoza, Argentina")
+    assert elegir_automatico([candidato], "Mendoza") is candidato
