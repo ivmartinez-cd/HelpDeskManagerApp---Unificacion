@@ -8,6 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.preventivos.application.dtos.corregir_coordenada_request import (
+    CorregirCoordenadaRequest,
+)
 from src.modules.preventivos.application.dtos.habilitar_request import (
     DeshabilitarEquipoRequest,
     HabilitarEquipoRequest,
@@ -17,6 +20,9 @@ from src.modules.preventivos.application.dtos.list_equipos_request import (
 )
 from src.modules.preventivos.application.dtos.punto_mapa_preventivo import (
     ListPuntosMapaResult,
+)
+from src.modules.preventivos.application.use_cases.corregir_coordenada_sucursal import (
+    CorregirCoordenadaSucursalUseCase,
 )
 from src.modules.preventivos.application.use_cases.deshabilitar_equipo import (
     DeshabilitarEquipoUseCase,
@@ -55,6 +61,7 @@ from src.modules.preventivos.presentation.dependencies import (
     get_zonas_excluidas,
 )
 from src.modules.preventivos.presentation.schemas.preventivos_schemas import (
+    CorregirCoordenadaBody,
     EquipoPreventivoSchema,
     EquiposPreventivosPage,
     GeocodificarResultadoSchema,
@@ -228,6 +235,28 @@ async def deshabilitar_equipo(
         DeshabilitarEquipoRequest(
             siges_maquina_id=siges_maquina_id,
             deshabilitado_por_nombre=identity.user.full_name,
+        )
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.put(
+    "/sucursales/{siges_sucursal_id}/coordenadas", status_code=status.HTTP_204_NO_CONTENT
+)
+async def corregir_coordenada_sucursal(
+    siges_sucursal_id: int,
+    body: CorregirCoordenadaBody,
+    identity: Identity = _require_update,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> Response:
+    await CorregirCoordenadaSucursalUseCase(SqlAlchemySucursalCoordenadasRepository(db)).execute(
+        CorregirCoordenadaRequest(
+            siges_sucursal_id=siges_sucursal_id,
+            latitud=body.latitud,
+            longitud=body.longitud,
+            corregido_por_user_id=identity.user.id,
+            corregido_por_nombre=identity.user.full_name,
+            nota=body.nota,
         )
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

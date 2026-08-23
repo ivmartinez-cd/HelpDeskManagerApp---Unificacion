@@ -4,8 +4,7 @@ import { RefreshCw, SearchX, Wrench } from "lucide-react";
 import { POR_PAGINA, usePreventivosView } from "../hooks/use-preventivos-view";
 import { usePuntosMapa } from "../hooks/use-puntos-mapa";
 import { formatConsultadoEn, numberFormat } from "./preventivos-format";
-import { PreventivosMapa } from "./preventivos-mapa";
-import { PreventivosMapaLeyenda } from "./preventivos-mapa-leyenda";
+import { PreventivosMapaSeccion } from "./preventivos-mapa-seccion";
 import { PreventivosTabla } from "./preventivos-tabla";
 import { ZonaChips } from "./zona-chips";
 import {
@@ -238,53 +237,7 @@ export function PreventivosView() {
         </>
       )}
 
-      {vista === "mapa" && (
-        <>
-          {mapa.error && (
-            <div className="flex items-center justify-between gap-4 rounded-[12px] border border-destructive/20 bg-destructive/10 px-5 py-4">
-              <p className="font-body text-sm text-foreground">{mapa.error}</p>
-            </div>
-          )}
-          {!mapa.error && mapa.puntos === null && (
-            <BrandSkeleton className="h-[520px] w-full rounded-[12px]" />
-          )}
-          {!mapa.error && mapa.puntos !== null && (
-            <>
-              {mapa.puntos.length === 0 ? (
-                <BrandEmptyState
-                  icon={SearchX}
-                  title="Sin resultados"
-                  description="Ningún equipo de la zona cumple el filtro actual. Probá cambiar el estado o limpiar la búsqueda."
-                />
-              ) : (
-                <>
-                  {mapa.sinUbicar > 0 && (
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[8px] bg-muted/30 px-4 py-3">
-                      <p className="font-body text-xs text-muted-foreground">
-                        {numberFormat.format(mapa.sinUbicar)} sucursal(es) del filtro actual no
-                        tienen una coordenada válida en Siges y no se muestran en el mapa.
-                      </p>
-                      {canUpdate && (
-                        <BrandButton
-                          variant="outline"
-                          size="sm"
-                          loading={mapa.geocodificando}
-                          onClick={mapa.geocodificar}
-                          title="Geocodifica el universo completo de sucursales sin ubicar, no solo la zona actual"
-                        >
-                          Geocodificar sucursales sin ubicar
-                        </BrandButton>
-                      )}
-                    </div>
-                  )}
-                  <PreventivosMapa puntos={mapa.puntos} />
-                  <PreventivosMapaLeyenda />
-                </>
-              )}
-            </>
-          )}
-        </>
-      )}
+      {vista === "mapa" && <PreventivosMapaSeccion mapa={mapa} canUpdate={canUpdate} />}
     </div>
   );
 }

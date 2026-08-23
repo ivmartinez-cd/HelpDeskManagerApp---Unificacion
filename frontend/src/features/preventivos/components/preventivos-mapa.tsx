@@ -11,6 +11,18 @@ const PreventivosMapaCanvas = dynamic(
   { ssr: false, loading: () => <BrandSkeleton className="h-[520px] w-full rounded-[12px]" /> },
 );
 
-export function PreventivosMapa({ puntos }: { puntos: PuntoMapaPreventivo[] }) {
-  return <PreventivosMapaCanvas puntos={puntos} />;
+interface PreventivosMapaProps {
+  puntos: PuntoMapaPreventivo[];
+  canUpdate: boolean;
+  onEditarUbicacion: (idSucursal: number) => void;
+}
+
+export function PreventivosMapa({ puntos, canUpdate, onEditarUbicacion }: PreventivosMapaProps) {
+  return (
+    <PreventivosMapaCanvas
+      puntos={puntos}
+      canUpdate={canUpdate}
+      onEditarUbicacion={onEditarUbicacion}
+    />
+  );
 }

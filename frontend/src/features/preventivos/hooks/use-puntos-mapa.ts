@@ -58,6 +58,8 @@ export function usePuntosMapa({
     };
   }, [activo, zona, estado, soloHabilitados, busquedaAplicada, refreshToken]);
 
+  const refrescar = () => setRefreshToken((t) => t + 1);
+
   const geocodificar = () => {
     setGeocodificando(true);
     preventivosApi
@@ -72,7 +74,7 @@ export function usePuntosMapa({
             `${numberFormat.format(resultado.ambiguas)} ambiguas, ` +
             `${numberFormat.format(resultado.sin_resultados)} sin resultados${reconciliadasInfo}`,
         );
-        setRefreshToken((t) => t + 1);
+        refrescar();
       })
       .catch((err: unknown) => {
         console.error("Error al geocodificar sucursales:", err);
@@ -81,5 +83,5 @@ export function usePuntosMapa({
       .finally(() => setGeocodificando(false));
   };
 
-  return { puntos, sinUbicar, consultadoEn, error, geocodificando, geocodificar };
+  return { puntos, sinUbicar, consultadoEn, error, geocodificando, geocodificar, refrescar };
 }

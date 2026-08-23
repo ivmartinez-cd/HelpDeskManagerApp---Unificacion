@@ -54,6 +54,9 @@ def _to_entity(model: SucursalCoordenadasModel) -> SucursalCoordenadas:
         longitud=model.longitud,
         formatted_address=model.formatted_address,
         fecha_resolucion=model.fecha_resolucion,
+        corregido_por_user_id=model.corregido_por_user_id,
+        corregido_por_nombre=model.corregido_por_nombre,
+        nota=model.nota,
     )
 
 
@@ -64,6 +67,9 @@ def _to_model(coordenadas: SucursalCoordenadas) -> SucursalCoordenadasModel:
         longitud=coordenadas.longitud,
         formatted_address=coordenadas.formatted_address,
         fecha_resolucion=coordenadas.fecha_resolucion,
+        corregido_por_user_id=coordenadas.corregido_por_user_id,
+        corregido_por_nombre=coordenadas.corregido_por_nombre,
+        nota=coordenadas.nota,
     )
 
 
@@ -72,3 +78,6 @@ def _actualizar(row: SucursalCoordenadasModel, coordenadas: SucursalCoordenadas)
     row.longitud = coordenadas.longitud
     row.formatted_address = coordenadas.formatted_address
     row.fecha_resolucion = coordenadas.fecha_resolucion
+    row.corregido_por_user_id = coordenadas.corregido_por_user_id
+    row.corregido_por_nombre = coordenadas.corregido_por_nombre
+    row.nota = coordenadas.nota

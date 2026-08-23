@@ -129,6 +129,12 @@ class HabilitarEquipoBody(BaseModel):
     nota: str | None = Field(default=None, max_length=300)
 
 
+class CorregirCoordenadaBody(BaseModel):
+    latitud: float
+    longitud: float
+    nota: str | None = Field(default=None, max_length=300)
+
+
 class GeocodificarResultadoSchema(BaseModel):
     resueltas: int
     ambiguas: int

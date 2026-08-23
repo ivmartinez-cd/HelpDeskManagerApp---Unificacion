@@ -14,6 +14,15 @@ class ZonaInvalidaError(ValidationError):
         )
 
 
+class CoordenadaFueraDeRangoError(ValidationError):
+    default_code = "COORDENADA_FUERA_DE_RANGO"
+
+    def __init__(self, latitud: float, longitud: float) -> None:
+        super().__init__(
+            f"Coordenada inválida: ({latitud}, {longitud}) fuera del rango de Argentina"
+        )
+
+
 class HabilitacionYaActivaError(BusinessRuleViolationError):
     default_code = "HABILITACION_YA_ACTIVA"
 

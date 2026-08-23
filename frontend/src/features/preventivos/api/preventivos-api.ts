@@ -66,4 +66,11 @@ export const preventivosApi = {
 
   deshabilitar: (sigesMaquinaId: number) =>
     httpClient.delete<void>(`/api/preventivos/equipos/${sigesMaquinaId}/habilitar`),
+
+  corregirCoordenada: (idSucursal: number, latitud: number, longitud: number, nota?: string) =>
+    httpClient.put<void>(`/api/preventivos/sucursales/${idSucursal}/coordenadas`, {
+      latitud,
+      longitud,
+      nota: nota || null,
+    }),
 };
