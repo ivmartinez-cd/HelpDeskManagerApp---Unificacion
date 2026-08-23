@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { AlertTriangle, X } from "lucide-react";
 
 interface BrandModalProps {
@@ -23,7 +24,13 @@ interface BrandModalProps {
  *
  * La card usa tokens dark-aware (`bg-card`/`text-foreground`), no colores
  * fijos: el handoff pedía "card blanca" asumiendo tema claro único, pero
- * ahora responde al toggle de tema como el resto de la app. */
+ * ahora responde al toggle de tema como el resto de la app.
+ *
+ * Portal a `document.body` (2026-08-23): un trigger dentro de un mapa
+ * Leaflet (preventivos) dejaba el overlay `fixed` recortado/desplazado —
+ * mismo motivo que documenta `tooltip.tsx`, algún ancestro con overflow o
+ * compositing propio rompe el containing block de `position: fixed`.
+ * Portalear evita depender de dónde se monte el trigger. */
 export function BrandModal({ isOpen, onClose, title, children, widthPx = 480, error }: BrandModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
@@ -60,7 +67,7 @@ export function BrandModal({ isOpen, onClose, title, children, widthPx = 480, er
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       style={{ background: "rgba(20,20,20,.55)" }}
@@ -100,6 +107,7 @@ export function BrandModal({ isOpen, onClose, title, children, widthPx = 480, er
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
