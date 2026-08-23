@@ -112,14 +112,14 @@ test("asistente de KM: intro, chequeos gratis, Traer de Gestión y bandeja únic
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText("Este asistente deja tu Tabla KM al día en tres momentos:")).toBeVisible();
   await expect(dialog.getByText("Nada consulta Google sin mostrarte antes cuántas consultas cuesta.")).toBeVisible();
-  await page.screenshot({ path: "test-results/tabla-km-wizard-intro.png" });
+  await page.screenshot({ path: "test-results/tabla-km-wizard-intro.png" }).catch(() => {});
 
   await dialog.getByRole("button", { name: "Empezar" }).click();
   // Momento 1 con los conteos completos de Gestión (paginación de a 200).
   await expect(dialog.getByText("Gestión tiene 2 sucursales activas de este prestador.", { exact: false })).toBeVisible();
   await expect(dialog.getByText("importar 1 sucursal nueva con actividad")).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Traer de Gestión", exact: true })).toBeVisible();
-  await page.screenshot({ path: "test-results/tabla-km-wizard-traer.png" });
+  await page.screenshot({ path: "test-results/tabla-km-wizard-traer.png" }).catch(() => {});
 
   // Tras "Empezar" solo corrieron los chequeos gratis: nada escribió en la Tabla KM.
   expect(escrituras.filter((e) => !e.includes("/consultar-"))).toEqual([]);
@@ -138,7 +138,7 @@ test("asistente de KM: intro, chequeos gratis, Traer de Gestión y bandeja únic
   await expect(dialog.getByRole("button", { name: "Exportar CSV para Gestión" })).toBeVisible();
   // Nada de jerga técnica en la vista por defecto.
   await expect(dialog.getByText(/Tier|Georef|Nominatim|worklist/)).toHaveCount(0);
-  await page.screenshot({ path: "test-results/tabla-km-wizard-bandeja.png" });
+  await page.screenshot({ path: "test-results/tabla-km-wizard-bandeja.png" }).catch(() => {});
 
   // Filtro: solo nombres.
   await dialog.getByRole("radio", { name: "Nombres" }).click();
@@ -168,7 +168,7 @@ test("asistente de KM: Traer de Gestión agrupa refrescar + vincular + importar,
     `POST /api/liquidaciones/siges/prestador/${PID}/matching/auto-vincular-n1`,
     "POST /api/liquidaciones/tabla-km",
   ]);
-  await page.screenshot({ path: "test-results/tabla-km-wizard-traer-listo.png" });
+  await page.screenshot({ path: "test-results/tabla-km-wizard-traer-listo.png" }).catch(() => {});
 
   // La fila sin candidato aparece en la bandeja gracias al refresco.
   await dialog.getByRole("button", { name: "Revisar pendientes →" }).click();
@@ -186,5 +186,5 @@ test("asistente de KM: Traer de Gestión agrupa refrescar + vincular + importar,
   await expect(dialog.getByText("Listo: tu Tabla KM quedó al día.")).toBeVisible();
   await expect(dialog.getByText("1 fila nueva y 1 actualizada. El umbral de viático y las observaciones no se tocaron.")).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Exportar CSV para Gestión" })).toBeVisible();
-  await page.screenshot({ path: "test-results/tabla-km-wizard-cierre.png" });
+  await page.screenshot({ path: "test-results/tabla-km-wizard-cierre.png" }).catch(() => {});
 });

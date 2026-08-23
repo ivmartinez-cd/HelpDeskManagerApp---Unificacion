@@ -43,7 +43,8 @@ export type CardId =
   | "pendientes-cerrar"
   | "liquidaciones"
   | "proximos-equipo"
-  | "parque";
+  | "parque"
+  | "nota";
 
 export const CARD_GUARDS: Record<CardId, (m: ModuleAccess) => boolean> = {
   turnos: () => true,
@@ -57,6 +58,7 @@ export const CARD_GUARDS: Record<CardId, (m: ModuleAccess) => boolean> = {
   liquidaciones: (m) => m.liquidaciones,
   "proximos-equipo": (m) => m.cardEquipo,
   parque: (m) => m.cardParque,
+  nota: () => true,
 };
 
 /** Nombre de cada card tal como se muestra en "Personalizar". */
@@ -72,6 +74,7 @@ export const CARD_LABELS: Record<CardId, string> = {
   liquidaciones: "Liquidaciones",
   "proximos-equipo": "Equipo",
   parque: "Parque",
+  nota: "Mi nota",
 };
 
 export interface LayoutCell {
@@ -118,9 +121,10 @@ export const VIEWS: DashboardView[] = [
       {
         h: 1,
         cells: [
-          { id: "wati-pendientes", w: 4 },
-          { id: "insumos", w: 4 },
-          { id: "facturacion", w: 4 },
+          { id: "wati-pendientes", w: 3 },
+          { id: "insumos", w: 3 },
+          { id: "facturacion", w: 3.5 },
+          { id: "nota", w: 2.5 },
         ],
       },
     ],

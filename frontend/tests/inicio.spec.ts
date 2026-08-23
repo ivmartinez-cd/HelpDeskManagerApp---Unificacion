@@ -251,6 +251,37 @@ test.describe("Inicio — cabe en la pantalla sin scroll", () => {
     await expect(page.locator('[data-card="turnos"]')).toBeVisible();
   });
 
+  test("Mi nota: se guarda sola por cuenta y sobrevive la recarga", async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS[0]);
+    await mockTurnos(page, [SHIFT_PROPIO_INSUMOS]);
+    await mockAccesos(page, []);
+    // Servidor fake de /api/me/nota (ADR-033): PUT pisa, GET devuelve lo último.
+    let nota = { content: "", updatedAt: null as string | null, maxChars: 4000 };
+    const puts: string[] = [];
+    await page.route("**/api/me/nota", async (route) => {
+      if (route.request().method() === "PUT") {
+        const body = route.request().postDataJSON() as { content: string };
+        puts.push(body.content);
+        nota = { ...nota, content: body.content, updatedAt: "2026-08-23T03:00:00Z" };
+      }
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(nota) });
+    });
+    await page.goto("/");
+
+    const area = page.getByRole("textbox", { name: "Nota personal" });
+    await expect(area).toBeEnabled();
+    await area.fill("llamar a Majo por el remito");
+    await area.blur();
+    await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
+    // Debounce + blur: un solo PUT con el texto completo, no uno por tecla.
+    expect(puts).toEqual(["llamar a Majo por el remito"]);
+
+    await page.reload();
+    await expect(page.getByRole("textbox", { name: "Nota personal" })).toHaveValue(
+      "llamar a Majo por el remito",
+    );
+  });
+
   // La vista "Seguimiento" (SLA, Operadores, Pendientes a cerrar,
   // Liquidaciones, Equipo, Parque) cumple la misma regla.
   for (const vp of [VIEWPORTS[0], VIEWPORTS[3]]) {

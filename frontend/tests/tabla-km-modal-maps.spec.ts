@@ -26,5 +26,5 @@ test("modal editar muestra link Abrir en Maps @smoke", async ({ page }) => {
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.getByRole("link", { name: /Abrir en Maps/ })).toBeVisible();
 
-  await page.screenshot({ path: "test-results/tabla-km-modal-maps.png", fullPage: false });
+  await page.screenshot({ path: "test-results/tabla-km-modal-maps.png", fullPage: false }).catch(() => {});
 });

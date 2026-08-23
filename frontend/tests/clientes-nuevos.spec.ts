@@ -132,7 +132,7 @@ test.describe("Contadores › Clientes nuevos", () => {
     await page.getByRole("radio", { name: "Cerradas" }).click();
     await expect(page.getByText("CARTOCOR")).toBeVisible();
     await expect(page.getByText("EXPRESO BILETTA")).toBeHidden();
-    await page.screenshot({ path: "test-results/clientes-nuevos.png", fullPage: true });
+    await page.screenshot({ path: "test-results/clientes-nuevos.png", fullPage: true }).catch(() => {});
   });
 
   test("empty state sin fichas", async ({ page }) => {

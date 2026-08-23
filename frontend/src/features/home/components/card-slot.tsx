@@ -11,6 +11,7 @@ import { DashboardCardSkeleton } from "./dashboard-card-skeleton";
 import { FacturacionSinCerrarCard } from "./facturacion-sin-cerrar-card";
 import { InsumosSinCargarCard } from "./insumos-sin-cargar-card";
 import { LiquidacionesPendientesCard } from "./liquidaciones-pendientes-card";
+import { NotaPersonalCard } from "./nota-personal-card";
 import { OperadoresCard } from "./operadores-card";
 import { ParqueCard } from "./parque-card";
 import { TurnosTimelineCard } from "./turnos-timeline-card";
@@ -167,6 +168,8 @@ export function CardSlot({
           onRetry={parque.refetch}
         />
       );
+    case "nota":
+      return <NotaPersonalCard />;
     default:
       return null;
   }

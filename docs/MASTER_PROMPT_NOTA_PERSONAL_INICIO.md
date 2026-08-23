@@ -1,9 +1,11 @@
 # Master Prompt — Nota personal en la pantalla de Inicio
 
-> **Estado (2026-08-22): NO implementado.** Además describe la Home anterior
-> (`ShiftDashboardCard`, `TodayClientsCard`, grilla en `page.tsx`); la Home actual es el
-> dashboard de `features/home/` (ver `MASTER_PROMPT_REDISENO_DASHBOARD_INICIO.md`). Si se
-> retoma, la card entraría como un panel más del registro `VIEWS`.
+> **Estado (2026-08-23): IMPLEMENTADO** con la forma recomendada (nota única, autosave con
+> debounce 800 ms + blur, tope 4000 caracteres), pero en el módulo `auth` bajo `/api/me/nota`
+> (ADR-033, addendum) en vez de un módulo `notas` nuevo; la card "Mi nota" es un panel del
+> registro `VIEWS` (vista Hoy, ocultable desde Personalizar). El contexto de abajo describe la
+> Home anterior al rediseño del 2026-08-22; los archivos citados (`personal-note-card.tsx`,
+> `notas-api.ts`) se llaman `nota-personal-card.tsx` y `nota-api.ts`.
 
 Agregar a la pantalla de Inicio (`/`, `app/(app)/page.tsx`) una tarjeta de **nota personal**: cada
 usuario autenticado puede escribir texto libre que se guarda y persiste entre sesiones y dispositivos.

@@ -36,3 +36,15 @@ accesos directos (`/api/me/route-visits`, ADR-028), que ya resolvió la misma pr
   permisos nuevos que administrar.
 - Negativas: una tabla más en `auth`; si algún día se quisiera "personalización por rol"
   (defaults por TL/operador), habría que sumar una capa de defaults — no está en este alcance.
+
+## Addendum 2026-08-23: la nota personal sigue el mismo patrón
+
+La nota personal de Inicio (`docs/MASTER_PROMPT_NOTA_PERSONAL_INICIO.md`) se implementó con
+esta misma decisión en vez de un módulo `notas` nuevo: entidad `UserNote` (tope 4000
+caracteres validado en dominio y espejado en el schema y en el textarea), tabla `user_note`
+(una fila por usuario, FK a `app_user` con cascade), `GET/PUT /api/me/nota` solo por sesión,
+autosave con debounce de 800 ms + blur (nunca por tecla). La card "Mi nota" entra en la vista
+Hoy del registro y se puede ocultar desde Personalizar. Regla general que queda: **los datos
+personales del usuario logueado (preferencias, nota, telemetría de rutas) viven en `auth`
+bajo `/api/me/...`, gateados solo por identidad de sesión**, sin filas en el catálogo de
+permisos.

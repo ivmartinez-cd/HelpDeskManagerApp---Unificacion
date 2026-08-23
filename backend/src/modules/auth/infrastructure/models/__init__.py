@@ -16,6 +16,7 @@ from src.modules.auth.infrastructure.models.session_model import (
     UserSession,
 )
 from src.modules.auth.infrastructure.models.user_model import AppUser, Department
+from src.modules.auth.infrastructure.models.user_note_model import UserNoteModel
 
 __all__ = [
     "Action",
@@ -31,6 +32,7 @@ __all__ = [
     "UserFeatureGrant",
     "UserModuleScope",
     "UserDashboardPrefs",
+    "UserNoteModel",
     "UserRouteVisit",
     "UserSession",
 ]

@@ -11,6 +11,13 @@ class InvalidDashboardPrefsError(ValidationError):
     default_code = "INVALID_DASHBOARD_PREFS"
 
 
+class NoteTooLongError(ValidationError):
+    default_code = "NOTE_TOO_LONG"
+
+    def __init__(self, length: int, max_chars: int) -> None:
+        super().__init__(f"La nota supera el máximo de {max_chars} caracteres ({length})")
+
+
 class InvalidEmailError(ValidationError):
     default_code = "INVALID_EMAIL"
 

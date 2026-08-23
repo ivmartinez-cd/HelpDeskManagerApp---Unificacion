@@ -40,5 +40,5 @@ test("tabla KM layout mejorado @smoke", async ({ page }) => {
   await page.selectOption('select[aria-label="Filtrar por PST"]', "aaa");
   await page.waitForLoadState("networkidle");
 
-  await page.screenshot({ path: "test-results/tabla-km-layout.png", fullPage: false });
+  await page.screenshot({ path: "test-results/tabla-km-layout.png", fullPage: false }).catch(() => {});
 });

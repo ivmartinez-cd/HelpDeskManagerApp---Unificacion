@@ -105,7 +105,9 @@ test("botón Base aparece solo para prestadores con vínculo a Gestión @smoke",
     page.getByRole("row", { name: /SINVIN/ }).getByRole("button", { name: "Distancias" }),
   ).toHaveCount(0);
 
-  await page.screenshot({ path: "test-results/prestadores-botones.png", fullPage: false });
+  // Captura informativa, no aserción: bajo carga Chromium a veces no puede capturar
+  // ("Unable to capture screenshot") y no tiene que tirar el test ni el pre-push.
+  await page.screenshot({ path: "test-results/prestadores-botones.png", fullPage: false }).catch(() => {}).catch(() => {});
 });
 
 test("modal de sucursales abre al clickear Base", async ({ page }) => {
@@ -154,5 +156,5 @@ test("modal de sucursales abre al clickear Base", async ({ page }) => {
   // Botón "Guardar base" visible (selección no guardada aún)
   await expect(page.getByRole("button", { name: "Guardar base" })).not.toBeVisible();
 
-  await page.screenshot({ path: "test-results/modal-base-sucursal.png", fullPage: false });
+  await page.screenshot({ path: "test-results/modal-base-sucursal.png", fullPage: false }).catch(() => {}).catch(() => {});
 });
