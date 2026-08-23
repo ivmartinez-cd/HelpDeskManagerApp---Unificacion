@@ -22,6 +22,7 @@ def _row(**overrides: Any) -> SimpleNamespace:
         "zona": "SUR ",
         "frecuencia_dias": 180,
         "fecha_ultimo_preventivo": datetime(2026, 5, 3, 10, 15),
+        "domicilio": "San Isidro 2200 Piso: Dpto:",
         "latitud": "-34.603722",
         "longitud": "-58.381592",
     }
@@ -40,6 +41,7 @@ def test_mapea_una_fila_completa_recortando_char_fijos() -> None:
     assert equipo.sucursal == "Casa Central"
     assert equipo.zona == "SUR"
     assert equipo.frecuencia_dias == 180
+    assert equipo.domicilio == "San Isidro 2200"
     assert equipo.latitud == -34.603722
     assert equipo.longitud == -58.381592
 

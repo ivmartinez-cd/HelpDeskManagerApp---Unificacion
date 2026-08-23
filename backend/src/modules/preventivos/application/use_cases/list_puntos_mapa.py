@@ -85,6 +85,7 @@ def _punto(id_sucursal: int, grupo: list[EquipoPreventivoAnotado]) -> PuntoMapaP
         cliente=referencia.cliente,
         sucursal=referencia.sucursal,
         zona=referencia.zona,
+        domicilio=referencia.domicilio,
         latitud=referencia.latitud,
         longitud=referencia.longitud,
         ubicado=coordenada_valida(referencia.latitud, referencia.longitud),

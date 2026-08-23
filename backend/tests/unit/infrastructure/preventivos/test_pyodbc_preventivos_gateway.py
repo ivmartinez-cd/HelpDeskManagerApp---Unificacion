@@ -28,6 +28,7 @@ def _fila_equipo(id_maquina: int, zona: str = "SUR") -> SimpleNamespace:
         zona=zona,
         frecuencia_dias=180,
         fecha_ultimo_preventivo=None,
+        domicilio="Calle Falsa 123",
         latitud="-34.6",
         longitud="-58.4",
     )

@@ -9,6 +9,7 @@ from src.modules.preventivos.domain.entities.sucursal_coordenadas import (
     SucursalParaGeocoding,
 )
 from src.modules.preventivos.domain.entities.zona_parque import ZonaParque
+from src.modules.preventivos.domain.services.geocoding import normalizar_domicilio
 
 
 def _parse_coordenada(valor: Any) -> float | None:
@@ -38,6 +39,7 @@ def map_equipo_row(row: Any) -> EquipoPreventivo:
         zona=(row.zona or "").strip(),
         frecuencia_dias=int(row.frecuencia_dias) if row.frecuencia_dias is not None else None,
         fecha_ultimo_preventivo=fecha.date() if fecha is not None else None,
+        domicilio=normalizar_domicilio(row.domicilio or ""),
         latitud=_parse_coordenada(row.latitud),
         longitud=_parse_coordenada(row.longitud),
     )

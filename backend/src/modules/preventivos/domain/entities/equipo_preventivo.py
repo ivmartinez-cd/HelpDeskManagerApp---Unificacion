@@ -14,6 +14,9 @@ class EquipoPreventivo:
     y el dominio NO inventa un vencimiento en ese caso.
     `fecha_ultimo_preventivo` es el último incidente tipo 102 en estado
     terminal no anulado; None = nunca se registró un preventivo hecho.
+    `domicilio` es `Sucursal.Domicilio` normalizado (agregado 2026-08-23
+    para que el mapa muestre la dirección junto al pin y se pueda validar la
+    ubicación a ojo — mismo `normalizar_domicilio` que usa el geocoding).
     `latitud`/`longitud` son `Sucursal.Latitud`/`Longitud` parseadas (texto
     libre en Siges, no siempre numérico ni cargado) — None cuando no hay valor
     o no parsea; validarlas es responsabilidad de
@@ -28,6 +31,7 @@ class EquipoPreventivo:
     zona: str
     frecuencia_dias: int | None
     fecha_ultimo_preventivo: date | None
+    domicilio: str
     latitud: float | None
     longitud: float | None
 

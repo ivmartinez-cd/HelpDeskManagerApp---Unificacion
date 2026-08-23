@@ -64,6 +64,7 @@ export interface PuntoMapaPreventivo {
   cliente: string;
   sucursal: string;
   zona: string;
+  domicilio: string;
   latitud: number | null;
   longitud: number | null;
   ubicado: boolean;

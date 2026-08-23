@@ -31,9 +31,13 @@ function popupHtml(punto: PuntoMapaPreventivo): string {
     punto.cant_habilitadas > 0
       ? ` · ${numberFormat.format(punto.cant_habilitadas)} habilitado(s)`
       : "";
+  const domicilioInfo = punto.domicilio
+    ? `<p style="margin:0;font-size:12px;opacity:.7">${escapeHtml(punto.domicilio)}</p>`
+    : "";
   return `<div style="display:flex;flex-direction:column;gap:4px;font-size:13px">
     <p style="margin:0;font-weight:600">${escapeHtml(punto.cliente)}</p>
     <p style="margin:0;font-size:12px;opacity:.7">${escapeHtml(punto.sucursal)} · ${escapeHtml(punto.zona)}</p>
+    ${domicilioInfo}
     <p style="margin:0;font-size:12px;font-weight:600">${escapeHtml(meta.label)}${vencidoInfo}</p>
     <p style="margin:0;font-size:12px;opacity:.7">${numberFormat.format(punto.cant_maquinas)} equipo(s)${habilitadosInfo}</p>
   </div>`;

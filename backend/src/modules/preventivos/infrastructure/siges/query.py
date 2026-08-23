@@ -86,6 +86,7 @@ SELECT
     S.Cuadricula AS zona,
     TP.Dias AS frecuencia_dias,
     UP.fecha_ultimo_preventivo,
+    S.Domicilio AS domicilio,
     S.Latitud AS latitud,
     S.Longitud AS longitud
 FROM dbo.Maquina M

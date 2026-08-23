@@ -27,6 +27,7 @@ def build_equipo(
     serie: str | None = None,
     frecuencia_dias: int | None = 180,
     fecha_ultimo_preventivo: date | None = None,
+    domicilio: str = "Calle Falsa 123",
     latitud: float | None = -34.6,
     longitud: float | None = -58.4,
 ) -> EquipoPreventivo:
@@ -40,6 +41,7 @@ def build_equipo(
         zona=zona,
         frecuencia_dias=frecuencia_dias,
         fecha_ultimo_preventivo=fecha_ultimo_preventivo,
+        domicilio=domicilio,
         latitud=latitud,
         longitud=longitud,
     )

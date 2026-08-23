@@ -15,6 +15,7 @@ class PuntoMapaPreventivo:
     cliente: str
     sucursal: str
     zona: str
+    domicilio: str
     latitud: float | None
     longitud: float | None
     ubicado: bool

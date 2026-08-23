@@ -81,6 +81,7 @@ class PuntoMapaSchema(BaseModel):
     cliente: str
     sucursal: str
     zona: str
+    domicilio: str
     latitud: float | None
     longitud: float | None
     ubicado: bool
@@ -96,6 +97,7 @@ class PuntoMapaSchema(BaseModel):
             cliente=punto.cliente,
             sucursal=punto.sucursal,
             zona=punto.zona,
+            domicilio=punto.domicilio,
             latitud=punto.latitud,
             longitud=punto.longitud,
             ubicado=punto.ubicado,
