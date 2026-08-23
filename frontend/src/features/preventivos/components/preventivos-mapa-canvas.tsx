@@ -173,5 +173,13 @@ export function PreventivosMapaCanvas({
     };
   }, [puntos, canUpdate]);
 
-  return <div ref={containerRef} className="h-[520px] w-full rounded-[12px]" />;
+  // `isolate`: Leaflet usa z-index internos hasta 1000 (controles) y 700
+  // (popups) sobre `.leaflet-container`, que Leaflet fija en position:relative
+  // SIN z-index propio — eso no aísla stacking context, así que esos z-index
+  // se comparaban directo contra el z-[100] del modal de "Corregir ubicación"
+  // (BrandModal) y el mapa ganaba donde se superponían. `isolate` crea un
+  // stacking context nuevo acá: todo lo de adentro del mapa queda contenido,
+  // nunca puede pintar por encima de un elemento de afuera sin importar su
+  // z-index interno.
+  return <div ref={containerRef} className="isolate h-[520px] w-full rounded-[12px]" />;
 }
