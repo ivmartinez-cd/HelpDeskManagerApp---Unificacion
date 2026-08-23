@@ -1,6 +1,7 @@
 import { httpClient } from "@/services/http-client";
 import type {
   EquiposPreventivosPage,
+  GeocodificarResultado,
   HabilitacionPreventivo,
   ListEquiposParams,
   ListPuntosMapaParams,
@@ -51,6 +52,11 @@ export const preventivosApi = {
     if (params.refresh) searchParams.set("refresh", "true");
     return httpClient.get<PuntosMapaPage>(`/api/preventivos/mapa?${searchParams.toString()}`);
   },
+
+  /** Geocodifica el universo COMPLETO de sucursales sin coordenada válida en
+   * Siges (no solo la zona actual) — llama a Google, gasta cuota real. */
+  geocodificarSucursales: () =>
+    httpClient.post<GeocodificarResultado>("/api/preventivos/geocodificar"),
 
   habilitar: (sigesMaquinaId: number, nota?: string) =>
     httpClient.post<HabilitacionPreventivo>(

@@ -87,3 +87,12 @@ export interface ListPuntosMapaParams {
   q?: string;
   refresh?: boolean;
 }
+
+/** Resultado de disparar la geocodificación (universo completo, no solo la
+ * zona actual — ver domain/entities/sucursal_coordenadas.py). */
+export interface GeocodificarResultado {
+  resueltas: number;
+  ambiguas: number;
+  sin_resultados: number;
+  sin_direccion: number;
+}

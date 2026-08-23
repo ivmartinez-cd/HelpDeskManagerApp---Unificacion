@@ -259,10 +259,23 @@ export function PreventivosView() {
               ) : (
                 <>
                   {mapa.sinUbicar > 0 && (
-                    <p className="rounded-[8px] bg-muted/30 px-4 py-3 font-body text-xs text-muted-foreground">
-                      {numberFormat.format(mapa.sinUbicar)} sucursal(es) del filtro actual no
-                      tienen una coordenada válida en Siges y no se muestran en el mapa.
-                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[8px] bg-muted/30 px-4 py-3">
+                      <p className="font-body text-xs text-muted-foreground">
+                        {numberFormat.format(mapa.sinUbicar)} sucursal(es) del filtro actual no
+                        tienen una coordenada válida en Siges y no se muestran en el mapa.
+                      </p>
+                      {canUpdate && (
+                        <BrandButton
+                          variant="outline"
+                          size="sm"
+                          loading={mapa.geocodificando}
+                          onClick={mapa.geocodificar}
+                          title="Geocodifica el universo completo de sucursales sin ubicar, no solo la zona actual"
+                        >
+                          Geocodificar sucursales sin ubicar
+                        </BrandButton>
+                      )}
+                    </div>
                   )}
                   <PreventivosMapa puntos={mapa.puntos} />
                   <PreventivosMapaLeyenda />

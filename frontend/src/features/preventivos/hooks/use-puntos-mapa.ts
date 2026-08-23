@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { preventivosApi } from "../api/preventivos-api";
 import type { EstadoPreventivo, PuntoMapaPreventivo } from "../types/preventivos";
+import { numberFormat } from "../components/preventivos-format";
 
 interface UsePuntosMapaParams {
   activo: boolean;
@@ -26,6 +28,8 @@ export function usePuntosMapa({
   const [sinUbicar, setSinUbicar] = useState(0);
   const [consultadoEn, setConsultadoEn] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [geocodificando, setGeocodificando] = useState(false);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   useEffect(() => {
     if (!activo || !zona) return;
@@ -52,7 +56,26 @@ export function usePuntosMapa({
     return () => {
       cancelado = true;
     };
-  }, [activo, zona, estado, soloHabilitados, busquedaAplicada]);
+  }, [activo, zona, estado, soloHabilitados, busquedaAplicada, refreshToken]);
 
-  return { puntos, sinUbicar, consultadoEn, error };
+  const geocodificar = () => {
+    setGeocodificando(true);
+    preventivosApi
+      .geocodificarSucursales()
+      .then((resultado) => {
+        toast.success(
+          `Geocodificación: ${numberFormat.format(resultado.resueltas)} resueltas, ` +
+            `${numberFormat.format(resultado.ambiguas)} ambiguas, ` +
+            `${numberFormat.format(resultado.sin_resultados)} sin resultados`,
+        );
+        setRefreshToken((t) => t + 1);
+      })
+      .catch((err: unknown) => {
+        console.error("Error al geocodificar sucursales:", err);
+        toast.error("No se pudo geocodificar. Reintentá.");
+      })
+      .finally(() => setGeocodificando(false));
+  };
+
+  return { puntos, sinUbicar, consultadoEn, error, geocodificando, geocodificar };
 }
