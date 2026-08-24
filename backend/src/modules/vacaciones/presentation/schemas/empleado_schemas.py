@@ -24,6 +24,7 @@ class EmpleadoResponse(BaseModel):
     department_id: uuid.UUID = Field(serialization_alias="departmentId")
     cargo_id: uuid.UUID = Field(serialization_alias="cargoId")
     user_id: uuid.UUID | None = Field(serialization_alias="userId")
+    siges_empresa_id: int | None = Field(serialization_alias="sigesEmpresaId")
 
     @classmethod
     def from_entity(cls, empleado: Empleado) -> "EmpleadoResponse":
@@ -38,6 +39,7 @@ class EmpleadoResponse(BaseModel):
             department_id=empleado.department_id,
             cargo_id=empleado.cargo_id,
             user_id=empleado.user_id,
+            siges_empresa_id=empleado.siges_empresa_id,
         )
 
 

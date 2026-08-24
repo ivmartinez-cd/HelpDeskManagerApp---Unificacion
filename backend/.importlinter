@@ -239,6 +239,26 @@ forbidden_modules =
     zeep
 allow_indirect_imports = True
 
+[importlinter:contract:bono-tecnicos-domain-no-frameworks]
+name = El dominio de bono_tecnicos no importa frameworks
+type = forbidden
+source_modules =
+    src.modules.bono_tecnicos.domain
+forbidden_modules =
+    fastapi
+    sqlalchemy
+    pydantic
+    alembic
+
+[importlinter:contract:bono-tecnicos-domain-app-independent-from-auth]
+name = El domain/application de bono_tecnicos no depende de auth
+type = forbidden
+source_modules =
+    src.modules.bono_tecnicos.domain
+    src.modules.bono_tecnicos.application
+forbidden_modules =
+    src.modules.auth
+
 [importlinter:contract:wati-domain-no-frameworks]
 name = El dominio de wati no importa frameworks
 type = forbidden

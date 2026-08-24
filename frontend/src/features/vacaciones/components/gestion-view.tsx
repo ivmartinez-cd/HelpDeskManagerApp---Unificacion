@@ -17,6 +17,7 @@ import { CargosTab } from "./cargos-tab";
 import { EmpleadosTab } from "./empleados-tab";
 import { FeriadosTab } from "./feriados-tab";
 import { SectoresTab } from "./sectores-tab";
+import { SigesVinculoModal } from "./siges-vinculo-modal";
 
 type Tab = "empleados" | "sectores" | "cargos" | "feriados";
 const TAB_VALUES: readonly Tab[] = ["empleados", "sectores", "cargos", "feriados"];
@@ -62,6 +63,7 @@ export function GestionView() {
   const [usuarios, setUsuarios] = useState<UsuarioOption[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [abrirAlta, setAbrirAlta] = useState(false);
+  const [abrirSigesVinculo, setAbrirSigesVinculo] = useState(false);
 
   const load = useCallback(() => {
     const base = Promise.all([
@@ -106,10 +108,17 @@ export function GestionView() {
           </p>
         </div>
         {puedeGestionar && (
-          <BrandButton onClick={() => setAbrirAlta(true)}>
-            <Plus className="h-4 w-4" />
-            {NUEVO_LABEL[tab]}
-          </BrandButton>
+          <div className="flex items-center gap-2">
+            {tab === "empleados" && (
+              <BrandButton variant="outline" onClick={() => setAbrirSigesVinculo(true)}>
+                Vincular con Siges
+              </BrandButton>
+            )}
+            <BrandButton onClick={() => setAbrirAlta(true)}>
+              <Plus className="h-4 w-4" />
+              {NUEVO_LABEL[tab]}
+            </BrandButton>
+          </div>
         )}
       </div>
 
@@ -190,6 +199,13 @@ export function GestionView() {
             />
           )}
         </>
+      )}
+
+      {abrirSigesVinculo && (
+        <SigesVinculoModal
+          onClose={() => setAbrirSigesVinculo(false)}
+          onChanged={() => void load()}
+        />
       )}
     </div>
   );

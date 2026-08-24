@@ -16,6 +16,7 @@ from src.modules.vacaciones.domain.entities.solicitud import (
     EstadoSolicitud,
     Solicitud,
 )
+from src.modules.vacaciones.domain.errors import SigesVinculoDuplicadoError
 from src.modules.vacaciones.domain.repositories.ausencia_repository import (
     FiltrosAusencias,
 )
@@ -75,6 +76,20 @@ class FakeEmpleadoRepo:
 
     async def delete(self, empleado_id: uuid.UUID) -> None:
         self._items.pop(empleado_id, None)
+
+    async def vincular_siges(
+        self, empleado_id: uuid.UUID, *, siges_empresa_id: int | None
+    ) -> Empleado | None:
+        empleado = self._items.get(empleado_id)
+        if empleado is None:
+            return None
+        if siges_empresa_id is not None and any(
+            e.siges_empresa_id == siges_empresa_id and e.id != empleado_id
+            for e in self._items.values()
+        ):
+            raise SigesVinculoDuplicadoError(siges_empresa_id)
+        empleado.siges_empresa_id = siges_empresa_id
+        return empleado
 
 
 class FakeSolicitudRepo:

@@ -25,6 +25,7 @@ class Empleado:
     department_id: uuid.UUID
     cargo_id: uuid.UUID
     user_id: uuid.UUID | None
+    siges_empresa_id: int | None = None
 
     @property
     def nombre_completo(self) -> str:

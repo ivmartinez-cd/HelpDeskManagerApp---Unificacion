@@ -14,6 +14,7 @@ export function ServicioTecnicoNavItem({
   hasLiquidaciones,
   hasPreventivos,
   hasAnalisisLogHp,
+  hasBonoTecnicos,
   isActive,
   submenuOverride,
   onToggleSubmenu,
@@ -24,6 +25,7 @@ export function ServicioTecnicoNavItem({
   hasLiquidaciones: boolean;
   hasPreventivos: boolean;
   hasAnalisisLogHp: boolean;
+  hasBonoTecnicos: boolean;
   isActive: (route: string) => boolean;
   submenuOverride: boolean | undefined;
   onToggleSubmenu: (expanded: boolean) => void;
@@ -35,8 +37,10 @@ export function ServicioTecnicoNavItem({
     (hasPrestadores && isActive("/prestadores")) ||
     (hasLiquidaciones && isActive("/liquidaciones")) ||
     (hasPreventivos && isActive("/preventivos")) ||
-    (hasAnalisisLogHp && isActive("/analisis-log-hp"));
-  const stcHasSubmenu = hasSla || hasPrestadores || hasPreventivos || hasAnalisisLogHp;
+    (hasAnalisisLogHp && isActive("/analisis-log-hp")) ||
+    (hasBonoTecnicos && isActive("/bono-tecnicos"));
+  const stcHasSubmenu =
+    hasSla || hasPrestadores || hasPreventivos || hasAnalisisLogHp || hasBonoTecnicos;
   const stcSubmenuExpanded = submenuOverride ?? stcActive;
   const stcHref = hasPrestadores ? "/prestadores" : hasSla ? "/sla" : "/servicio-tecnico";
   return (
@@ -86,6 +90,7 @@ export function ServicioTecnicoNavItem({
           hasSla={hasSla}
           hasPreventivos={hasPreventivos}
           hasAnalisisLogHp={hasAnalisisLogHp}
+          hasBonoTecnicos={hasBonoTecnicos}
           onNavigate={onNavigate}
         />
       )}

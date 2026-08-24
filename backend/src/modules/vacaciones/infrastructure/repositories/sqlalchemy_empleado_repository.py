@@ -1,9 +1,11 @@
 import uuid
 
 from sqlalchemy import func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.vacaciones.domain.entities.empleado import Empleado, EstadoEmpleado
+from src.modules.vacaciones.domain.errors import SigesVinculoDuplicadoError
 from src.modules.vacaciones.domain.repositories.empleado_repository import FiltrosEmpleados
 from src.modules.vacaciones.infrastructure.models.cargo_model import VacacionesCargoModel
 from src.modules.vacaciones.infrastructure.models.empleado_model import VacacionesEmpleadoModel
@@ -22,6 +24,7 @@ def _to_entity(row: VacacionesEmpleadoModel) -> Empleado:
         department_id=row.department_id,
         cargo_id=row.cargo_id,
         user_id=row.user_id,
+        siges_empresa_id=row.siges_empresa_id,
     )
 
 
@@ -104,6 +107,23 @@ class SqlAlchemyEmpleadoRepository:
             await self._session.delete(row)
             await self._session.flush()
 
+    async def vincular_siges(
+        self, empleado_id: uuid.UUID, *, siges_empresa_id: int | None
+    ) -> Empleado | None:
+        row = await self._session.get(VacacionesEmpleadoModel, empleado_id)
+        if row is None:
+            return None
+        row.siges_empresa_id = siges_empresa_id
+        # flush() explícito para atrapar acá la violación del UNIQUE (mismo
+        # criterio que liquidaciones): un técnico de Siges vincula a lo sumo
+        # un empleado.
+        try:
+            await self._session.flush()
+        except IntegrityError as exc:
+            raise SigesVinculoDuplicadoError(siges_empresa_id) from exc
+        await self._session.refresh(row)
+        return _to_entity(row)
+
 
 def _to_model(empleado: Empleado) -> VacacionesEmpleadoModel:
     row = VacacionesEmpleadoModel(id=empleado.id)
@@ -122,3 +142,4 @@ def _apply(row: VacacionesEmpleadoModel, empleado: Empleado) -> None:
     row.department_id = empleado.department_id
     row.cargo_id = empleado.cargo_id
     row.user_id = empleado.user_id
+    row.siges_empresa_id = empleado.siges_empresa_id

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Award,
   CalendarClock,
   ClipboardList,
   DollarSign,
@@ -38,12 +39,14 @@ function buildSections({
   hasSla,
   hasPreventivos,
   hasAnalisisLogHp,
+  hasBonoTecnicos,
 }: {
   hasPrestadores: boolean;
   hasLiquidaciones: boolean;
   hasSla: boolean;
   hasPreventivos: boolean;
   hasAnalisisLogHp: boolean;
+  hasBonoTecnicos: boolean;
 }): NavSectionDef[] {
   const sections: NavSectionDef[] = [];
 
@@ -112,6 +115,13 @@ function buildSections({
     });
   }
 
+  if (hasBonoTecnicos) {
+    sections.push({
+      label: null,
+      links: [{ href: "/bono-tecnicos", label: "Bono Técnicos", exact: false, icon: Award }],
+    });
+  }
+
   return sections;
 }
 
@@ -149,6 +159,7 @@ export function ServicioTecnicoNavSubmenu({
   hasSla,
   hasPreventivos,
   hasAnalisisLogHp,
+  hasBonoTecnicos,
   onNavigate,
 }: {
   hasPrestadores: boolean;
@@ -156,6 +167,7 @@ export function ServicioTecnicoNavSubmenu({
   hasSla: boolean;
   hasPreventivos: boolean;
   hasAnalisisLogHp: boolean;
+  hasBonoTecnicos: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -163,7 +175,14 @@ export function ServicioTecnicoNavSubmenu({
   // Los flags `has*` dicen qué módulos tiene el usuario; el mapa central de
   // permisos por ruta (ADR-029) filtra además los ítems cuya pantalla pide
   // una acción específica.
-  const sections = buildSections({ hasPrestadores, hasLiquidaciones, hasSla, hasPreventivos, hasAnalisisLogHp })
+  const sections = buildSections({
+    hasPrestadores,
+    hasLiquidaciones,
+    hasSla,
+    hasPreventivos,
+    hasAnalisisLogHp,
+    hasBonoTecnicos,
+  })
     .map((s) => ({ ...s, links: s.links.filter((l) => canAccessPath(l.href, { can, hasFeature })) }))
     .filter((s) => s.links.length > 0);
 

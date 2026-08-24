@@ -20,6 +20,7 @@ export interface Empleado {
   departmentId: string;
   cargoId: string;
   userId: string | null;
+  sigesEmpresaId: number | null;
 }
 
 export interface EmpleadoListItem extends Empleado {
@@ -48,4 +49,21 @@ export interface UsuarioOption {
   id: string;
   email: string;
   fullName: string;
+}
+
+export interface PropuestaVinculoSiges {
+  empleadoId: string;
+  empleadoNombre: string;
+  sigesEmpresaId: number;
+  sigesDenComercial: string;
+}
+
+export interface SigesTecnicoDisponible {
+  sigesEmpresaId: number;
+  denComercial: string;
+}
+
+export interface PropuestasVinculoSigesResult {
+  propuestas: PropuestaVinculoSiges[];
+  disponibles: SigesTecnicoDisponible[];
 }

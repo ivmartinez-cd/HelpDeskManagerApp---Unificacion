@@ -23,6 +23,9 @@ from src.modules.auth.presentation.auth_router import router as auth_router
 from src.modules.auth.presentation.dashboard_prefs_router import router as dashboard_prefs_router
 from src.modules.auth.presentation.route_visits_router import router as route_visits_router
 from src.modules.auth.presentation.user_note_router import router as user_note_router
+from src.modules.bono_tecnicos.presentation.bono_tecnicos_router import (
+    router as bono_tecnicos_router,
+)
 from src.modules.contadores.presentation.anexos_pendientes_router import (
     router as anexos_pendientes_router,
 )
@@ -112,6 +115,9 @@ from src.modules.vacaciones.presentation.feriados_router import (
 from src.modules.vacaciones.presentation.reportes_router import (
     router as vacaciones_reportes_router,
 )
+from src.modules.vacaciones.presentation.siges_vinculo_router import (
+    router as vacaciones_siges_vinculo_router,
+)
 from src.modules.vacaciones.presentation.solicitudes_router import (
     router as vacaciones_solicitudes_router,
 )
@@ -155,6 +161,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     turnos_intercambios_router,
     sla_router,
     sla_pendientes_router,
+    bono_tecnicos_router,
     prestadores_router,
     preventivos_router,
     # config_router va ANTES: sus rutas son todas literales (/tarifarios, /spsts,
@@ -166,6 +173,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     liquidaciones_ayc_router,
     liquidaciones_router,
     vacaciones_empleados_router,
+    vacaciones_siges_vinculo_router,
     vacaciones_catalogos_router,
     vacaciones_feriados_router,
     vacaciones_solicitudes_router,

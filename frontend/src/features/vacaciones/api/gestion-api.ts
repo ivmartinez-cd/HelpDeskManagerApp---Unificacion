@@ -9,6 +9,7 @@ import type {
   FeriadoPayload,
   ImportFeriadosResult,
   Page,
+  PropuestasVinculoSigesResult,
   Sector,
   SectorPayload,
   UsuarioOption,
@@ -66,4 +67,11 @@ export const gestionApi = {
 
   listUsuarios: () =>
     httpClient.get<Page<UsuarioOption>>(`${BASE}/usuarios`).then((p) => p.items),
+
+  listSigesPropuestas: () =>
+    httpClient.get<PropuestasVinculoSigesResult>(`${BASE}/siges/propuestas`),
+  vincularEmpleadoSiges: (empleadoId: string, sigesEmpresaId: number | null) =>
+    httpClient.put<Empleado>(`${BASE}/empleados/${empleadoId}/siges-vinculo`, {
+      sigesEmpresaId,
+    }),
 };

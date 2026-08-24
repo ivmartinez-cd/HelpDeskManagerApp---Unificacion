@@ -169,6 +169,19 @@ class SectorConEmpleadosError(BusinessRuleViolationError):
         super().__init__("No se puede eliminar un sector con empleados asignados")
 
 
+class SigesVinculoDuplicadoError(BusinessRuleViolationError):
+    """El UNIQUE de `siges_empresa_id` garantiza que un técnico de Siges
+    vincule a lo sumo un empleado — el `IntegrityError` se traduce acá para
+    no propagar un 500 crudo (mismo criterio que en `liquidaciones`)."""
+
+    default_code: ClassVar[str] = "SIGES_VINCULO_DUPLICADO"
+
+    def __init__(self, siges_empresa_id: int | None) -> None:
+        super().__init__(
+            f"El técnico de Siges {siges_empresa_id} ya está vinculado a otro empleado"
+        )
+
+
 class CargoConEmpleadosError(BusinessRuleViolationError):
     default_code: ClassVar[str] = "CARGO_CON_EMPLEADOS"
 

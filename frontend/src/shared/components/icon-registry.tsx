@@ -1,5 +1,6 @@
 import {
   Activity,
+  Award,
   Calendar,
   CalendarClock,
   FileText,
@@ -25,6 +26,7 @@ const ICONS: Record<string, LucideIcon> = {
   wrench: Wrench,
   // "calendar-clock" (preventivos): "wrench" ya era de prestadores.
   "calendar-clock": CalendarClock,
+  award: Award, // bono-tecnicos
 };
 
 export function resolveIcon(name: string): LucideIcon {

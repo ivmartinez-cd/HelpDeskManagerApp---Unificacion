@@ -47,16 +47,18 @@ export function Sidebar({
   const slaModule = modules.find((m) => m.key === "sla");
   const preventivosModule = modules.find((m) => m.key === "preventivos");
   const analisisLogHpModule = modules.find((m) => m.key === "analisis-log-hp");
-  // prestadores, sla, liquidaciones, preventivos y analisis-log-hp se muestran
-  // anidados bajo Servicio Técnico, no como ítems de nivel superior — solo
-  // reorganización visual del sidebar.
+  const bonoTecnicosModule = modules.find((m) => m.key === "bono-tecnicos");
+  // prestadores, sla, liquidaciones, preventivos, analisis-log-hp y
+  // bono-tecnicos se muestran anidados bajo Servicio Técnico, no como ítems
+  // de nivel superior — solo reorganización visual del sidebar.
   const topLevelModules = sortedModules.filter(
     (m) =>
       m.key !== "liquidaciones" &&
       m.key !== "prestadores" &&
       m.key !== "sla" &&
       m.key !== "preventivos" &&
-      m.key !== "analisis-log-hp",
+      m.key !== "analisis-log-hp" &&
+      m.key !== "bono-tecnicos",
   );
   // El grupo "Servicio Técnico" no es un módulo del catálogo: se muestra solo si
   // el usuario tiene al menos uno de los módulos que agrupa (ADR-029; antes
@@ -66,7 +68,8 @@ export function Sidebar({
     !!liquidacionesModule ||
     !!slaModule ||
     !!preventivosModule ||
-    !!analisisLogHpModule;
+    !!analisisLogHpModule ||
+    !!bonoTecnicosModule;
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
@@ -130,6 +133,7 @@ export function Sidebar({
                 hasLiquidaciones={!!liquidacionesModule}
                 hasPreventivos={!!preventivosModule}
                 hasAnalisisLogHp={!!analisisLogHpModule}
+                hasBonoTecnicos={!!bonoTecnicosModule}
                 isActive={isActive}
                 submenuOverride={submenuOverride["servicio-tecnico"]}
                 onToggleSubmenu={toggleSubmenu("servicio-tecnico")}

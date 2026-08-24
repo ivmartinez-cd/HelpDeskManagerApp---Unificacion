@@ -78,6 +78,7 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { prefix: "/prestadores", anyOf: [p("prestadores", "view")] },
   { prefix: "/sla", anyOf: [p("sla", "view")] },
   { prefix: "/preventivos", anyOf: [p("preventivos", "view")] },
+  { prefix: "/bono-tecnicos", anyOf: [p("bono-tecnicos", "view")] },
   { prefix: "/analisis-log-hp", anyOf: [p("analisis-log-hp", "view")] },
   { prefix: "/wati", anyOf: [p("wati", "view")] },
 ];

@@ -158,7 +158,7 @@ class UpdateEmpleado:
         await self._validar_unicos(actual, command)
         if command.hire_date != actual.hire_date:
             await self._recalcular_ciclos(empleado_id, command)
-        empleado = _build_empleado(empleado_id, command)
+        empleado = _build_empleado_preservando_siges(empleado_id, command, actual)
         await self._deps.empleados.save(empleado)
         await self._deps.auditoria.registrar(
             ACCION_UPDATE,
@@ -233,3 +233,14 @@ def _build_empleado(empleado_id: uuid.UUID, command: EmpleadoCommand) -> Emplead
         cargo_id=command.cargo_id,
         user_id=command.user_id,
     )
+
+
+def _build_empleado_preservando_siges(
+    empleado_id: uuid.UUID, command: EmpleadoCommand, actual: Empleado
+) -> Empleado:
+    """El vínculo con Siges no es parte del form de ABM — solo lo toca
+    `VincularEmpleadoSiges` (siges_vinculo.py); preservarlo acá evita que
+    cualquier edición de datos personales lo pise a None."""
+    empleado = _build_empleado(empleado_id, command)
+    empleado.siges_empresa_id = actual.siges_empresa_id
+    return empleado
