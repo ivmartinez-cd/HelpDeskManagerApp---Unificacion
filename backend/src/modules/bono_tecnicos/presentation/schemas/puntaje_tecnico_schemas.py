@@ -21,4 +21,3 @@ class PuntajeTecnicoSchema(BaseModel):
 class GuardarBonoInputBody(BaseModel):
     tecnico: str = Field(min_length=1, max_length=120)
     dias: int = Field(ge=0)
-    tareas_varias: int = Field(ge=0)

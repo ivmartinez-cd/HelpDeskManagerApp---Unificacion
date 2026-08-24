@@ -6,7 +6,6 @@ interface BuildColumnsOptions {
   canUpdate: boolean;
   savingId: number | null;
   onGuardarDias: (row: PuntajeTecnico, dias: number) => void;
-  onGuardarTareasVarias: (row: PuntajeTecnico, tareasVarias: number) => void;
   onVerDetalle: (row: PuntajeTecnico) => void;
 }
 
@@ -14,7 +13,6 @@ export function buildBonoTecnicosColumns({
   canUpdate,
   savingId,
   onGuardarDias,
-  onGuardarTareasVarias,
   onVerDetalle,
 }: BuildColumnsOptions): StatsColumn<PuntajeTecnico>[] {
   return [
@@ -88,14 +86,9 @@ export function buildBonoTecnicosColumns({
       label: "TV",
       align: "right",
       className: "w-28",
-      render: (row) => (
-        <EditableNumberCell
-          value={row.tareas_varias}
-          disabled={!canUpdate}
-          saving={savingId === row.id_tecnico}
-          onCommit={(v) => onGuardarTareasVarias(row, v)}
-        />
-      ),
+      // Ya no es carga manual: es la cuenta de solicitudes de TV aprobadas
+      // del período (ver SolicitudTv) — solo lectura acá.
+      render: (row) => row.tareas_varias,
     },
     {
       key: "puntaje",

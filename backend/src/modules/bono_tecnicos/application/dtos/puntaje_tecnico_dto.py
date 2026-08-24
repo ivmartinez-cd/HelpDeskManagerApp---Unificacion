@@ -30,4 +30,3 @@ class GuardarBonoInputRequest:
     periodo: int
     tecnico: str
     dias: int
-    tareas_varias: int

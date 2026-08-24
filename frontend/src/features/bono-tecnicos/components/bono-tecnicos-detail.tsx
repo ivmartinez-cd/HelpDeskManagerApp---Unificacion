@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BonoTecnicoDetalleModal } from "./bono-tecnico-detalle-modal";
 import { buildBonoTecnicosColumns } from "./bono-tecnicos-columns";
+import { SolicitudesTvPendientes } from "./solicitudes-tv-pendientes";
 import { monthValueToPeriodo, useBonoTecnicos } from "../hooks/use-bono-tecnicos";
 import type { PuntajeTecnico } from "../types/bono-tecnicos";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
@@ -10,8 +11,17 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { StatsTable } from "@/shared/components/ui/stats-table";
 
 export function BonoTecnicosDetail() {
-  const { canUpdate, monthValue, setMonthValue, filas, loading, savingId, error, guardarInput } =
-    useBonoTecnicos();
+  const {
+    canUpdate,
+    canApprove,
+    monthValue,
+    setMonthValue,
+    filas,
+    loading,
+    savingId,
+    error,
+    guardarInput,
+  } = useBonoTecnicos();
   const [detalleRow, setDetalleRow] = useState<PuntajeTecnico | null>(null);
 
   const sinDiasCargados = filas.filter((f) => f.puntaje === null).length;
@@ -19,10 +29,7 @@ export function BonoTecnicosDetail() {
   const columns = buildBonoTecnicosColumns({
     canUpdate,
     savingId,
-    onGuardarDias: (row: PuntajeTecnico, dias: number) =>
-      guardarInput(row.id_tecnico, dias, row.tareas_varias),
-    onGuardarTareasVarias: (row: PuntajeTecnico, tareasVarias: number) =>
-      guardarInput(row.id_tecnico, row.dias, tareasVarias),
+    onGuardarDias: (row: PuntajeTecnico, dias: number) => guardarInput(row.id_tecnico, dias),
     onVerDetalle: setDetalleRow,
   });
 
@@ -64,6 +71,11 @@ export function BonoTecnicosDetail() {
 
       {!loading && !error && (
         <div className="flex flex-col gap-6">
+          <SolicitudesTvPendientes
+            periodo={monthValueToPeriodo(monthValue)}
+            enabled={canApprove}
+          />
+
           <KpiGrid>
             <KpiTile label="Técnicos con actividad" value={String(filas.length)} tone="neutral" />
             <KpiTile
@@ -76,11 +88,7 @@ export function BonoTecnicosDetail() {
 
           <StatsTable
             title="Puntaje por técnico"
-            subtitle={
-              canUpdate
-                ? "Cargá Días y Tareas Varias (TV) para calcular el puntaje."
-                : undefined
-            }
+            subtitle={canUpdate ? "Cargá Días para calcular el puntaje." : undefined}
             columns={columns}
             rows={filas}
             rowKey={(row) => String(row.id_tecnico)}

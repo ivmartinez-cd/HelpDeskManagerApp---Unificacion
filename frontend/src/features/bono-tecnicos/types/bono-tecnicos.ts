@@ -8,6 +8,8 @@ export interface PuntajeTecnico {
   pre_correctivo: number;
   entrega_insumos: number;
   dias: number;
+  /** Cuenta de solicitudes de TV en estado APROBADA del período — ya no es
+   * carga manual (ver `SolicitudTv`). */
   tareas_varias: number;
   /** `null` mientras no se cargaron Días para este técnico y período. */
   puntaje: number | null;
@@ -21,7 +23,38 @@ export interface PuntajeTecnico {
 export interface GuardarBonoInputBody {
   tecnico: string;
   dias: number;
-  tareas_varias: number;
+}
+
+export type EstadoSolicitudTv = "PENDIENTE" | "APROBADA" | "RECHAZADA";
+
+export interface SolicitudTv {
+  id: string;
+  id_tecnico: number;
+  tecnico: string;
+  periodo: number;
+  fecha: string;
+  razon_social: string;
+  sucursal: string;
+  tarea_realizada: string;
+  estado: EstadoSolicitudTv;
+  creado_en: string;
+  resuelta_en: string | null;
+  resuelta_por_email: string | null;
+  motivo_rechazo: string | null;
+}
+
+/** `id_tecnico`/`tecnico` no viajan: el backend los resuelve del vínculo
+ * Empleado↔Siges del usuario autenticado. */
+export interface CrearSolicitudTvBody {
+  fecha: string;
+  razon_social: string;
+  sucursal: string;
+  tarea_realizada: string;
+}
+
+export interface DecisionSolicitudTvBody {
+  decision: Extract<EstadoSolicitudTv, "APROBADA" | "RECHAZADA">;
+  motivo?: string;
 }
 
 /** Categoría cruda tal como la manda el backend (`Categoria` de la consulta

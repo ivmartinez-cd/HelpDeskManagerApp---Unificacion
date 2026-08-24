@@ -19,6 +19,7 @@ export function monthValueToPeriodo(value: string): string {
 export function useBonoTecnicos() {
   const { user, can } = useSession();
   const canUpdate = user.isSuperadmin || can("bono-tecnicos", "update");
+  const canApprove = user.isSuperadmin || can("bono-tecnicos", "approve");
 
   const [monthValue, setMonthValue] = useState<string>(currentMonthValue());
   const [filas, setFilas] = useState<PuntajeTecnico[]>([]);
@@ -60,21 +61,17 @@ export function useBonoTecnicos() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [monthValue]);
 
-  const guardarInput = (idTecnico: number, dias: number, tareasVarias: number) => {
+  const guardarInput = (idTecnico: number, dias: number) => {
     const fila = filas.find((f) => f.id_tecnico === idTecnico);
     if (!fila) return Promise.resolve();
     const periodo = monthValueToPeriodo(monthValue);
     setSavingId(idTecnico);
     setError(null);
     return bonoTecnicosApi
-      .guardarInput(periodo, idTecnico, {
-        tecnico: fila.tecnico,
-        dias,
-        tareas_varias: tareasVarias,
-      })
+      .guardarInput(periodo, idTecnico, { tecnico: fila.tecnico, dias })
       .then(cargar)
       .catch((err: unknown) => {
-        console.error("Error al guardar Días/TV:", err);
+        console.error("Error al guardar Días:", err);
         setError(err instanceof Error ? err.message : "No se pudo guardar el dato.");
       })
       .finally(() => setSavingId(null));
@@ -82,6 +79,7 @@ export function useBonoTecnicos() {
 
   return {
     canUpdate,
+    canApprove,
     monthValue,
     setMonthValue,
     filas,

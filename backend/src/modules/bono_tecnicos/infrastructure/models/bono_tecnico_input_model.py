@@ -16,7 +16,6 @@ class BonoTecnicoInputModel(Base):
     periodo: Mapped[int] = mapped_column(Integer, primary_key=True)
     tecnico: Mapped[str] = mapped_column(String(120), nullable=False)
     dias: Mapped[int] = mapped_column(Integer, nullable=False)
-    tareas_varias: Mapped[int] = mapped_column(Integer, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("now()")
     )

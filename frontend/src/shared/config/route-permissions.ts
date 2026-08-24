@@ -78,6 +78,10 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { prefix: "/prestadores", anyOf: [p("prestadores", "view")] },
   { prefix: "/sla", anyOf: [p("sla", "view")] },
   { prefix: "/preventivos", anyOf: [p("preventivos", "view")] },
+  // Pantalla propia del técnico (cargar/ver sus solicitudes de TV) — solo
+  // pide "create", no "view" (esa es la del supervisor con todos los
+  // técnicos). Específica antes que la general de abajo.
+  { prefix: "/bono-tecnicos/solicitudes", anyOf: [p("bono-tecnicos", "create")] },
   { prefix: "/bono-tecnicos", anyOf: [p("bono-tecnicos", "view")] },
   { prefix: "/analisis-log-hp", anyOf: [p("analisis-log-hp", "view")] },
   { prefix: "/wati", anyOf: [p("wati", "view")] },

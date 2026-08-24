@@ -15,7 +15,6 @@ def _row_to_entity(row: BonoTecnicoInputModel) -> BonoTecnicoInput:
         periodo=row.periodo,
         tecnico=row.tecnico,
         dias=row.dias,
-        tareas_varias=row.tareas_varias,
     )
 
 
@@ -36,14 +35,12 @@ class SqlAlchemyBonoTecnicoInputRepository:
             periodo=input_.periodo,
             tecnico=input_.tecnico,
             dias=input_.dias,
-            tareas_varias=input_.tareas_varias,
         )
         stmt = stmt.on_conflict_do_update(
             index_elements=[BonoTecnicoInputModel.id_tecnico, BonoTecnicoInputModel.periodo],
             set_={
                 "tecnico": stmt.excluded.tecnico,
                 "dias": stmt.excluded.dias,
-                "tareas_varias": stmt.excluded.tareas_varias,
                 "updated_at": text("now()"),
             },
         )

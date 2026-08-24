@@ -40,6 +40,7 @@ function buildSections({
   hasPreventivos,
   hasAnalisisLogHp,
   hasBonoTecnicos,
+  bonoTecnicosHref,
 }: {
   hasPrestadores: boolean;
   hasLiquidaciones: boolean;
@@ -47,6 +48,7 @@ function buildSections({
   hasPreventivos: boolean;
   hasAnalisisLogHp: boolean;
   hasBonoTecnicos: boolean;
+  bonoTecnicosHref: string;
 }): NavSectionDef[] {
   const sections: NavSectionDef[] = [];
 
@@ -118,7 +120,7 @@ function buildSections({
   if (hasBonoTecnicos) {
     sections.push({
       label: null,
-      links: [{ href: "/bono-tecnicos", label: "Bono Técnicos", exact: false, icon: Award }],
+      links: [{ href: bonoTecnicosHref, label: "Bono Técnicos", exact: false, icon: Award }],
     });
   }
 
@@ -175,6 +177,10 @@ export function ServicioTecnicoNavSubmenu({
   // Los flags `has*` dicen qué módulos tiene el usuario; el mapa central de
   // permisos por ruta (ADR-029) filtra además los ítems cuya pantalla pide
   // una acción específica.
+  // Mismo criterio que vacaciones (ver sidebar.tsx::hrefDeModulo): si no
+  // llega a la pantalla de "view" (la del supervisor con todos los
+  // técnicos), el link va a la propia (cargar/ver sus solicitudes de TV).
+  const bonoTecnicosHref = can("bono-tecnicos", "view") ? "/bono-tecnicos" : "/bono-tecnicos/solicitudes";
   const sections = buildSections({
     hasPrestadores,
     hasLiquidaciones,
@@ -182,6 +188,7 @@ export function ServicioTecnicoNavSubmenu({
     hasPreventivos,
     hasAnalisisLogHp,
     hasBonoTecnicos,
+    bonoTecnicosHref,
   })
     .map((s) => ({ ...s, links: s.links.filter((l) => canAccessPath(l.href, { can, hasFeature })) }))
     .filter((s) => s.links.length > 0);
