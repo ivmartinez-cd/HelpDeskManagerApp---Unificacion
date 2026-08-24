@@ -61,6 +61,11 @@ export const configApi = {
   togglePrestadorActivo: (id: string, activo: boolean) =>
     httpClient.patch<PrestadorLiquidacion>(`/api/liquidaciones/prestadores/${id}/activo`, { activo }),
 
+  vincularCdPrestador: (id: string, cdPrestadorId: number | null) =>
+    httpClient.patch<PrestadorLiquidacion>(`/api/liquidaciones/prestadores/${id}/vincular-cd`, {
+      cdPrestadorId,
+    }),
+
   deletePrestador: (id: string) =>
     httpClient.delete<void>(`/api/liquidaciones/prestadores/${id}`),
 

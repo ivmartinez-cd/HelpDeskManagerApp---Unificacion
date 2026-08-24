@@ -7,9 +7,11 @@ import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useSession } from "@/services/session-provider";
+import { AltaPrestadorWizard } from "@/features/alta-prestador/components/alta-prestador-wizard";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion } from "../types/liquidaciones";
 import { PrestadorBaseSucursalModal } from "./prestador-base-sucursal-modal";
+import { PrestadorCdModal } from "./prestador-cd-modal";
 import { PrestadorFormModal } from "./prestador-form-modal";
 import { PrestadoresExcelImportModal } from "./prestadores-excel-import-modal";
 import { SigesSyncModal } from "./siges-sync-modal";
@@ -69,13 +71,14 @@ export function PrestadoresConfig() {
   const puedeExportar = can("liquidaciones", "export");
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loading, setLoading] = useState(true);
-  // `undefined` = cerrado; `null` = alta; un prestador = edición.
-  const [formPrestador, setFormPrestador] = useState<PrestadorLiquidacion | null | undefined>(undefined);
+  const [formPrestador, setFormPrestador] = useState<PrestadorLiquidacion | undefined>(undefined);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
   const [excelOpen, setExcelOpen] = useState(false);
   const [sigesOpen, setSigesOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [basePrestador, setBasePrestador] = useState<PrestadorLiquidacion | null>(null);
+  const [cdPrestador, setCdPrestador] = useState<PrestadorLiquidacion | null>(null);
 
   // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   const load = useCallback(async () => {
@@ -125,7 +128,7 @@ export function PrestadoresConfig() {
             <>
               <BrandButton size="sm" variant="outline" onClick={() => setExcelOpen(true)}>Cargar Excel maestro</BrandButton>
               <BrandButton size="sm" variant="outline" onClick={() => setCsvOpen(true)}>Cargar CSV</BrandButton>
-              <BrandButton size="sm" onClick={() => setFormPrestador(null)}>Nuevo prestador</BrandButton>
+              <BrandButton size="sm" onClick={() => setWizardOpen(true)}>Nuevo prestador</BrandButton>
             </>
           )}
         </div>
@@ -145,6 +148,7 @@ export function PrestadoresConfig() {
                   <th className={thCls}>CUIT</th>
                   <th className={thCls}>Región</th>
                   <th className={thCls}>Vínculo</th>
+                  <th className={thCls}>Canal Directo</th>
                   <th className={thCls}>Estado</th>
                   <th className={`${thCls} text-right`}>Acciones</th>
                 </tr>
@@ -164,12 +168,22 @@ export function PrestadoresConfig() {
                       )}
                     </td>
                     <td className={tdCls}>
+                      {p.cdPrestadorId != null ? (
+                        <Badge variant="success">#{p.cdPrestadorId}</Badge>
+                      ) : (
+                        <Badge variant="neutral">Sin vínculo</Badge>
+                      )}
+                    </td>
+                    <td className={tdCls}>
                       <Badge variant={p.activo ? "success" : "neutral"}>{p.activo ? "Activo" : "Inactivo"}</Badge>
                     </td>
                     <td className={`${tdCls} text-right`}>
                       {puedeEditar && (
                         <>
                           <button onClick={() => setFormPrestador(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
+                          <button onClick={() => setCdPrestador(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">
+                            {p.cdPrestadorId != null ? "CD" : "Vincular CD"}
+                          </button>
                           {p.sigesEmpresaId != null && (
                             <button onClick={() => setBasePrestador(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">
                               {p.sigesBaseSucursalId != null ? "Distancias" : "Base"}
@@ -185,7 +199,7 @@ export function PrestadoresConfig() {
                   </tr>
                 ))}
                 {prestadores.length === 0 && (
-                  <tr><td colSpan={7} className="py-10 text-center font-body text-sm text-muted-foreground">No hay prestadores cargados.</td></tr>
+                  <tr><td colSpan={8} className="py-10 text-center font-body text-sm text-muted-foreground">No hay prestadores cargados.</td></tr>
                 )}
               </tbody>
             </table>
@@ -195,6 +209,9 @@ export function PrestadoresConfig() {
 
       {formPrestador !== undefined && (
         <PrestadorFormModal prestador={formPrestador} onClose={() => setFormPrestador(undefined)} onSuccess={load} />
+      )}
+      {wizardOpen && (
+        <AltaPrestadorWizard onClose={() => setWizardOpen(false)} onCreado={load} />
       )}
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={load} />
       <PrestadoresExcelImportModal isOpen={excelOpen} onClose={() => setExcelOpen(false)} onSuccess={load} />
@@ -206,6 +223,13 @@ export function PrestadoresConfig() {
           prestador={basePrestador}
           onClose={() => setBasePrestador(null)}
           onChanged={() => { setBasePrestador(null); void load(); }}
+        />
+      )}
+      {cdPrestador && (
+        <PrestadorCdModal
+          prestador={cdPrestador}
+          onClose={() => setCdPrestador(null)}
+          onSuccess={load}
         />
       )}
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar prestador">
