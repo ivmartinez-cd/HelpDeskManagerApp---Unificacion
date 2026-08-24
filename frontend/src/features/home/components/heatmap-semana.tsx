@@ -2,6 +2,7 @@
 
 import { Fragment } from "react";
 import type { CalendarEvent, Operador } from "@/features/contadores/types/calendario";
+import { operadorEfectivo } from "@/features/contadores/utils/calendario-format";
 import { FALLBACK_COLOR, heatCellStyle } from "../utils/inicio-format";
 
 const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -19,21 +20,21 @@ interface FilaHeat {
 export function agruparSemana(eventos: CalendarEvent[], operadores: Operador[]): FilaHeat[] {
   const porOperador = new Map<string, FilaHeat>();
   for (const evt of eventos) {
-    if (!evt.operador_id) continue;
+    const operador = operadorEfectivo(evt, operadores);
+    if (!operador) continue;
     // getDay sobre fecha pura interpretada local: 1=Lun .. 6=Sáb.
     const dia = new Date(`${evt.start.slice(0, 10)}T00:00:00`).getDay();
     if (dia < 1 || dia > 6) continue;
-    let fila = porOperador.get(evt.operador_id);
+    let fila = porOperador.get(operador.id);
     if (!fila) {
-      const op = operadores.find((o) => o.id === evt.operador_id);
       fila = {
-        id: evt.operador_id,
-        nombre: op?.nombre ?? "Sin nombre",
-        color: op?.color ?? FALLBACK_COLOR,
+        id: operador.id,
+        nombre: operador.nombre,
+        color: operador.color ?? FALLBACK_COLOR,
         celdas: Array(6).fill(0) as number[],
         total: 0,
       };
-      porOperador.set(evt.operador_id, fila);
+      porOperador.set(operador.id, fila);
     }
     fila.celdas[dia - 1] += 1;
     fila.total += 1;

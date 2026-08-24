@@ -1,8 +1,10 @@
 "use client";
 
-import { CalendarCheck2 } from "lucide-react";
+import { CalendarCheck2, Repeat2 } from "lucide-react";
+import { CoberturaEventoTooltip } from "@/features/contadores/components/cobertura-evento-tooltip";
 import type { CalendarEvent, Operador } from "@/features/contadores/types/calendario";
-import { cleanTitle } from "@/features/contadores/utils/calendario-format";
+import { cleanTitle, operadorEfectivo } from "@/features/contadores/utils/calendario-format";
+import { Tooltip } from "@/shared/components/ui/tooltip";
 import { FALLBACK_COLOR, accentText, tint } from "../utils/inicio-format";
 import { DashboardCard } from "./dashboard-card";
 import { CardEmpty, CardLink, CountBadge, Freshness } from "./dashboard-card-bits";
@@ -28,8 +30,6 @@ export function ClientesHoyCard({
   error: string | null;
   onRetry?: () => void;
 }) {
-  const porId = new Map(operadores.map((op) => [op.id, op]));
-
   return (
     <DashboardCard
       icon={CalendarCheck2}
@@ -51,13 +51,14 @@ export function ClientesHoyCard({
       ) : (
         <ul className="flex flex-col gap-1.5 pr-0.5">
           {eventos.map((evt) => {
-            const operador = evt.operador_id ? porId.get(evt.operador_id) : undefined;
+            const operador = operadorEfectivo(evt, operadores);
             const color = operador?.color ?? FALLBACK_COLOR;
             const nombre = evt.cliente || cleanTitle(evt.title) || "Sin nombre";
+            const cobertura = operador?.cobertura;
             return (
               <li
                 key={evt.id}
-                title={nombre}
+                title={cobertura ? undefined : nombre}
                 className="flex items-center justify-between gap-2 rounded-[8px] px-2.5 py-1.5"
                 style={{ background: tint(color), borderLeft: `3px solid ${color}` }}
               >
@@ -66,9 +67,17 @@ export function ClientesHoyCard({
                 </span>
                 {operador && (
                   <span
-                    className="shrink-0 truncate font-body text-[11.5px] font-semibold"
+                    className="flex shrink-0 items-center gap-1 truncate font-body text-[11.5px] font-semibold"
                     style={{ color: accentText(color) }}
                   >
+                    {cobertura && (
+                      <Tooltip content={<CoberturaEventoTooltip cobertura={cobertura} />} delay={200}>
+                        <Repeat2
+                          className="h-3 w-3 shrink-0"
+                          aria-label={`Cubierto por ${operador.nombre}`}
+                        />
+                      </Tooltip>
+                    )}
                     {operador.nombre}
                   </span>
                 )}

@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { getInitials } from "@/shared/components/ui/user-avatar";
 import { mutedColor } from "@/shared/utils/muted-color";
-import type { CalendarEvent, CalendarioVerPor, CoberturaEvento } from "../types/calendario";
+import type { CalendarEvent, CalendarioVerPor, CoberturaEvento, Operador } from "../types/calendario";
 
 export function formatDateLocal(d: Date): string {
   const y = d.getFullYear();
@@ -138,6 +138,35 @@ export function coberturaBadgeText(cobertura: CoberturaEvento, verPor: Calendari
     cobertura.operador_reemplazante_nombre ?? cobertura.operador_reemplazante_id,
   );
   return verPor === "efectivo" ? `CUBIERTO POR ${iniciales}` : `↩ ${iniciales} cubre`;
+}
+
+export interface OperadorEfectivo {
+  id: string;
+  nombre: string;
+  color: string | null;
+  /** Presente cuando el resultado viene de una cobertura, no del operador
+   * real del evento — quien renderiza puede usarlo para avisar el reemplazo
+   * (tooltip, badge). */
+  cobertura: CoberturaEvento | null;
+}
+
+/** Operador que corresponde mostrar por un evento: el reemplazante cuando
+ * hay una cobertura vigente (ADR-013), si no el operador real. Único punto
+ * de esta regla para las cards de Inicio, que —a diferencia del Calendario—
+ * no tienen el switch "ver por" y siempre muestran el efectivo. */
+export function operadorEfectivo(evt: CalendarEvent, operadores: Operador[]): OperadorEfectivo | null {
+  const cobertura = evt.cobertura;
+  if (cobertura) {
+    return {
+      id: cobertura.operador_reemplazante_id,
+      nombre: cobertura.operador_reemplazante_nombre ?? cobertura.operador_reemplazante_id,
+      color: cobertura.operador_reemplazante_color,
+      cobertura,
+    };
+  }
+  if (!evt.operador_id) return null;
+  const op = operadores.find((o) => o.id === evt.operador_id);
+  return { id: evt.operador_id, nombre: op?.nombre ?? evt.operador_id, color: op?.color ?? null, cobertura: null };
 }
 
 /** "2026-08-15" → "15 ago 2026". timeZone UTC porque son fechas puras: sin

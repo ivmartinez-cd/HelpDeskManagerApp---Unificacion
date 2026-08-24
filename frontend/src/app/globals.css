@@ -230,6 +230,13 @@
     background-color: var(--border);
     border-radius: 9999px;
   }
+
+  /* Cards de Inicio con contenido cortado abajo (DashboardCard +
+     useScrollShadow): fade en vez de un renglón partido a la mitad. */
+  .mask-fade-bottom {
+    mask-image: linear-gradient(to bottom, black calc(100% - 20px), transparent);
+    -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 20px), transparent);
+  }
 }
 
 @layer base {

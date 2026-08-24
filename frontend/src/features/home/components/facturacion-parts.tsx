@@ -12,6 +12,7 @@ import {
   cleanTitle,
   diasDeAtraso,
   formatDateLocal,
+  operadorEfectivo,
   textoAtraso,
 } from "@/features/contadores/utils/calendario-format";
 import { cn } from "@/shared/utils/cn";
@@ -46,12 +47,11 @@ export interface Pendiente {
 
 export function prepararPendientes(eventos: CalendarEvent[], operadores: Operador[]): Pendiente[] {
   const hoy = formatDateLocal(new Date());
-  const porId = new Map(operadores.map((op) => [op.id, op.nombre]));
   return eventos
     .map((evt) => ({
       id: evt.id,
       nombre: evt.cliente || cleanTitle(evt.title) || "Sin nombre",
-      operador: evt.operador_id ? (porId.get(evt.operador_id) ?? null) : null,
+      operador: operadorEfectivo(evt, operadores)?.nombre ?? null,
       dias: diasDeAtraso(evt.start, hoy),
     }))
     .sort((a, b) => b.dias - a.dias);

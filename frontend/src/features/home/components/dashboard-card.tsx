@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import { RotateCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/shared/utils/cn";
+import { useScrollShadow } from "../hooks/use-scroll-shadow";
 import { DashboardCardSkeleton } from "./dashboard-card-skeleton";
 
 interface DashboardCardProps {
@@ -37,6 +38,8 @@ export function DashboardCard({
   bodyClassName,
   children,
 }: DashboardCardProps) {
+  const { ref: bodyRef, bottom: cortado } = useScrollShadow<HTMLDivElement>();
+
   return (
     <section
       aria-label={title}
@@ -58,8 +61,10 @@ export function DashboardCard({
       </header>
 
       <div
+        ref={bodyRef}
         className={cn(
           "mt-2.5 flex min-h-0 flex-1 flex-col overflow-y-auto thin-scrollbar short:mt-2",
+          cortado && !loading && !error && "mask-fade-bottom",
           bodyClassName,
         )}
       >
