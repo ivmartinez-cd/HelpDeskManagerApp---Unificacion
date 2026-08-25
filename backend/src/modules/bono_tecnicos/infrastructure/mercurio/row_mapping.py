@@ -5,12 +5,36 @@ Acceso por nombre de columna (pyodbc.Row lo expone como atributo), no por
 AttributeError en vez de mapear silenciosamente un campo en otro. La consulta
 ya agrupa por (técnico, categoría) en SQL — `pivot_conteos` solo pasa de "una
 fila por técnico+categoría" a "una fila por técnico" con las 5 categorías
-como columnas, igual que el resumen `Lista!I1:J9` del Excel."""
+como columnas, igual que el resumen `Lista!I1:J9` del Excel.
 
+El filtro `LEFT(Den_Comercial,2)='CD'` de la consulta (ver `query.py`) deja
+pasar además de técnicos algunas filas de `Empresa` que no son personas
+(mesa de ayuda, prestadores, DaaS) y que en Siges también empiezan con "CD" —
+`_TECNICOS_EXCLUIDOS` las saca del resumen, a pedido explícito del usuario
+2026-08-25."""
+
+import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
 from src.modules.bono_tecnicos.domain.entities.conteo_tecnico import ConteoTecnico
+
+_TECNICOS_EXCLUIDOS = frozenset(
+    {
+        "PRESTADOR SERVICIO TECNICO",
+        "PRESTADOR DE SERVICIO TECNICO",
+        "MESA DE AYUDA",
+        "HECTOR ARGUELLO",
+        "DIEGO ESTEVEZ",
+        "DAAS",
+    }
+)
+
+
+def _normalizar(tecnico: str) -> str:
+    sin_acentos = unicodedata.normalize("NFKD", tecnico).encode("ascii", "ignore").decode()
+    sin_prefijo = sin_acentos.removeprefix("CD - ")
+    return sin_prefijo.strip().upper()
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,12 +54,18 @@ def map_row(row: Any) -> _FilaCategoria:
     )
 
 
-def pivot_conteos(filas: list[_FilaCategoria], periodo: int) -> list[ConteoTecnico]:
+def _agrupar_por_tecnico(filas: list[_FilaCategoria]) -> dict[tuple[str, int], dict[str, int]]:
     por_tecnico: dict[tuple[str, int], dict[str, int]] = {}
     for fila in filas:
+        if _normalizar(fila.tecnico) in _TECNICOS_EXCLUIDOS:
+            continue
         clave = (fila.tecnico, fila.id_tecnico)
         por_tecnico.setdefault(clave, {})[fila.categoria] = fila.cantidad
+    return por_tecnico
 
+
+def pivot_conteos(filas: list[_FilaCategoria], periodo: int) -> list[ConteoTecnico]:
+    por_tecnico = _agrupar_por_tecnico(filas)
     return [
         ConteoTecnico(
             tecnico=tecnico,

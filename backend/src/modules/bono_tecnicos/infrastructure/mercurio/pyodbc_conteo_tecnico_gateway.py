@@ -55,7 +55,7 @@ class PyodbcConteoTecnicoGateway:
 
 
 def _rango_fechas(periodo: Periodo) -> tuple[date, date]:
-    # FechaOperativo es datetime: BETWEEN hasta el último día a las 00:00
+    # Fecha_Cierre es datetime: BETWEEN hasta el último día a las 00:00
     # dejaría afuera ese día entero. El límite superior es el día siguiente
     # (inclusive a medianoche exacta), y cualquier fila de ese día extra la
     # descarta igual el filtro por período de la propia consulta (mismo

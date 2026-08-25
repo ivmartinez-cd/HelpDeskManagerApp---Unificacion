@@ -10,7 +10,16 @@ conexiones ODBC del Excel (`Lista!I1:I5`): 101=Correctivo, 102=Preventivo,
 103=Instalación-Desinstalación, 107=Pre-Correctivo, 204=Entrega de Insumos.
 Filtro `LEFT(E1.Den_Comercial,2) = 'CD'`: solo técnicos de planta (Canal
 Directo), no prestadores externos — esos tienen su propio módulo
-(liquidaciones/prestadores)."""
+(liquidaciones/prestadores).
+
+Filtro de período por `I.Fecha_Cierre`, no por `IncidenteTiempo.FechaOperativo`
+(bug real encontrado y corregido 2026-08-25): `FechaOperativo` es el campo de
+timing de SLA, no el mes en que se paga el bono. Verificado contra el pago real
+de julio/2026 a Agustín Haczek (el gerente comparte por fuera del sistema una
+fila con esos números) — con `FechaOperativo` el total de Correctivo+InstDes+
+EntregaInsumos daba 99 y el puntaje 7.07; con `Fecha_Cierre` da 100 y 7.12,
+calzando exacto. El JOIN a `IncidenteTiempo` se sacó a propósito (no aportaba
+ninguna columna al SELECT, solo el filtro de fecha equivocado)."""
 
 CONTEOS_TECNICOS_SQL = """
 SELECT
@@ -33,11 +42,10 @@ INNER JOIN dbo.ArtGen AG ON A.Id_ArtGen = AG.Id_ArtGen
 INNER JOIN dbo.Sucursal S ON S.Id_Sucursal = I.ID_Sucursal
 INNER JOIN dbo.Empresa E ON I.ID_Empresa = E.ID_Empresa
 INNER JOIN dbo.Empresa E1 ON I.ID_Tecnico = E1.ID_Empresa
-INNER JOIN dbo.IncidenteTiempo IT ON IT.ID_Incidente = I.ID_Incidente
 WHERE I.ID_Tipo_Incidente IN (101, 102, 103, 107, 204)
 AND LEFT(E1.Den_Comercial, 2) = 'CD'
-AND IT.FechaOperativo BETWEEN ? AND ?
-AND YEAR(IT.FechaOperativo)*100+MONTH(IT.FechaOperativo) = ?
+AND I.Fecha_Cierre BETWEEN ? AND ?
+AND YEAR(I.Fecha_Cierre)*100+MONTH(I.Fecha_Cierre) = ?
 GROUP BY E1.Den_Comercial, E1.ID_Empresa, I.ID_Tipo_Incidente
 ORDER BY E1.Den_Comercial
 """

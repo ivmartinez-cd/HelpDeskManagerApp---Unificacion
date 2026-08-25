@@ -72,3 +72,31 @@ def test_pivot_separa_por_tecnico_y_completa_categorias_ausentes_con_cero() -> N
     assert conteos["CD - Ana"].preventivo == 0
     assert conteos["CD - Beto"].preventivo == 5
     assert conteos["CD - Beto"].correctivo == 0
+
+
+def test_pivot_excluye_filas_que_no_son_tecnicos_reales() -> None:
+    filas = [
+        map_row(_row(Tecnico="CD - Ana", IdTecnico=1, Categoria="Correctivo", Cantidad=3)),
+        map_row(
+            _row(
+                Tecnico="CD - Prestador Servicio Técnico",
+                IdTecnico=901,
+                Categoria="Correctivo",
+                Cantidad=9,
+            )
+        ),
+        map_row(
+            _row(Tecnico="CD - Mesa de ayuda", IdTecnico=902, Categoria="Correctivo", Cantidad=9)
+        ),
+        map_row(
+            _row(Tecnico="CD - Hector Arguello", IdTecnico=903, Categoria="Correctivo", Cantidad=9)
+        ),
+        map_row(
+            _row(Tecnico="CD - Diego Estevez", IdTecnico=904, Categoria="Correctivo", Cantidad=9)
+        ),
+        map_row(_row(Tecnico="CD - Daas", IdTecnico=905, Categoria="Correctivo", Cantidad=9)),
+    ]
+
+    conteos = {c.tecnico: c for c in pivot_conteos(filas, periodo=202605)}
+
+    assert set(conteos) == {"CD - Ana"}
