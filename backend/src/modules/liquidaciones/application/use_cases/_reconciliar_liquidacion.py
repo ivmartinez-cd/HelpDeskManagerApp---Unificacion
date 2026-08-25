@@ -9,14 +9,22 @@ número de factura (`Extra`/`DetalleExtra`/`FacturaLocal`/`FacturaNro` de
 nuevas.
 
 Una liquidación en estado terminal (aprobada/cerrada) nunca reconcilia
-incidentes/alertas ni pisa su `estado` — eso queda congelado para siempre
-(decisión consciente: no reabrir liquidaciones ya cerradas). El extra/factura
-es la excepción: en la práctica AyC suele cargar la factura en el mismo
-momento en que aprueba la liquidación, así que si también se lo bloqueara acá
-ese dato nunca llegaría a sincronizarse (hallazgo 2026-08-21, liquidaciones
-3905-7/3929-7 aprobadas/cerradas sin factura local pese a tenerla en AyC) — una
-liquidación terminal sigue trayendo extra/factura vía `_solo_extra_y_factura`,
-sin tocar nada más.
+incidentes ni alertas — eso queda congelado para siempre (decisión consciente:
+no reabrir liquidaciones ya cerradas). El extra/factura es la excepción: en la
+práctica AyC suele cargar la factura en el mismo momento en que aprueba la
+liquidación, así que si también se lo bloqueara acá ese dato nunca llegaría a
+sincronizarse (hallazgo 2026-08-21, liquidaciones 3905-7/3929-7
+aprobadas/cerradas sin factura local pese a tenerla en AyC) — una liquidación
+terminal sigue trayendo extra/factura vía `_solo_estado_extra_y_factura`, sin
+tocar incidentes/alertas.
+
+El `estado` sí tiene una única transición permitida en terminal:
+aprobada→cerrada, cuando AyC ya la reporta cerrada (hallazgo 2026-08-25:
+liquidaciones que AyC cerraba después de aprobarlas quedaban mostrando
+"Aprobada" para siempre porque el guard las trataba como igualmente
+terminales). Nunca reabre desde cerrada, y no acepta ningún otro estado que
+AyC reporte para una liquidación aprobada (una regresión aparente —AyC
+reportando un estado anterior— se ignora, no se aplica).
 
 Orden fijo dentro de una liquidación: bajas → cambios → altas → recálculo de
 totales → reanálisis → recálculo de período → pisar estado → traer extra/factura.
@@ -110,7 +118,7 @@ class ReconciliarLiquidacion:
         self, liquidacion: Liquidacion, cd_liq: CdLiquidacion, remotos: list[IncidenteImportado]
     ) -> ReconciliarLiquidacionResultado:
         if liquidacion.estado in _ESTADOS_TERMINALES:
-            return await self._solo_extra_y_factura(liquidacion, cd_liq)
+            return await self._solo_estado_extra_y_factura(liquidacion, cd_liq)
         if len(remotos) != cd_liq.cant_incidentes:
             return ReconciliarLiquidacionResultado(reconciliada=False)
 
@@ -141,19 +149,31 @@ class ReconciliarLiquidacion:
             factura_actualizada=factura_actualizada,
         )
 
-    async def _solo_extra_y_factura(
+    async def _solo_estado_extra_y_factura(
         self, liquidacion: Liquidacion, cd_liq: CdLiquidacion
     ) -> ReconciliarLiquidacionResultado:
-        """Liquidación terminal: nunca toca incidentes, alertas ni `estado`
-        (`_pisar_estado` ni se llama), solo intenta traer extra/factura."""
+        """Liquidación terminal: nunca toca incidentes ni alertas. El estado
+        solo puede avanzar aprobada→cerrada; cualquier otra cosa que reporte
+        AyC (incluida una liquidación cerrada) se ignora."""
+        estado_actualizado = await self._avanzar_a_cerrada(liquidacion, cd_liq)
         extra_actualizado, factura_actualizada = await self._actualizar_extra_y_factura(
             liquidacion, cd_liq
         )
         return ReconciliarLiquidacionResultado(
             reconciliada=True,
+            estado_actualizado=estado_actualizado,
             extra_actualizado=extra_actualizado,
             factura_actualizada=factura_actualizada,
         )
+
+    async def _avanzar_a_cerrada(self, liquidacion: Liquidacion, cd_liq: CdLiquidacion) -> bool:
+        if liquidacion.estado != ESTADO_APROBADA:
+            return False
+        nuevo = estado_local_desde_ayc(estado_id=cd_liq.estado_id, nombre=cd_liq.estado)
+        if nuevo != ESTADO_CERRADA:
+            return False
+        await self._ports.liquidaciones.update_estado(liquidacion.id, ESTADO_CERRADA)
+        return True
 
     async def _aplicar(self, liquidacion_id: UUID, diff: DiffIncidentes) -> None:
         if diff.bajas:

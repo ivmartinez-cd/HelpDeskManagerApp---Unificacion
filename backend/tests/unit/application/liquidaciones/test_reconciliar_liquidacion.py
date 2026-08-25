@@ -13,7 +13,7 @@ from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion impo
     ReanalizarLiquidacion,
     ReanalizarLiquidacionPorts,
 )
-from src.modules.liquidaciones.domain.entities.liquidacion import ESTADO_APROBADA
+from src.modules.liquidaciones.domain.entities.liquidacion import ESTADO_APROBADA, ESTADO_CERRADA
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
     CdLiquidacion,
     CdLiquidacionDetalle,
@@ -342,6 +342,29 @@ async def test_estado_terminal_igual_trae_factura_y_extra_de_ayc() -> None:
     assert actualizada.concepto_extra == "Adicional"
     assert actualizada.monto_extra == 500.0
     assert actualizada.estado == ESTADO_APROBADA
+
+
+async def test_aprobada_avanza_a_cerrada_cuando_ayc_ya_la_cierra() -> None:
+    """El bug reportado 2026-08-25: liquidaciones que AyC cerraba después de
+    aprobarlas quedaban mostrando "Aprobada" para siempre porque el guard de
+    estado terminal las trataba como igualmente congeladas."""
+    world = World()
+    liq = world.con_liquidacion(estado=ESTADO_APROBADA)
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1, estado="Cerrada"), [])
+
+    assert resultado.estado_actualizado is True
+    assert world.liquidaciones.rows[liq.id].estado == ESTADO_CERRADA
+
+
+async def test_cerrada_nunca_se_reabre() -> None:
+    world = World()
+    liq = world.con_liquidacion(estado=ESTADO_CERRADA)
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1, estado="Aprobada"), [])
+
+    assert resultado.estado_actualizado is False
+    assert world.liquidaciones.rows[liq.id].estado == ESTADO_CERRADA
 
 
 async def test_guard_cantidad_declarada_no_coincide_no_reconcilia() -> None:
