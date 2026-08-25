@@ -14,7 +14,13 @@ transitorio quedaría así para siempre (hallazgo H-2 de la validación
 Las liquidaciones ya existentes y no terminales (`abierta`/`preliquidada`/
 `recibida`/`observada`) se reconcilian vía `ReconciliarLiquidacion` — ver ese
 módulo para el porqué de "actualizar in-place, nunca borrar y recrear". Las
-`aprobada`/`cerrada` quedan congeladas, ni se les pide el detalle SOAP.
+`aprobada` también se cruzan contra AyC (sin pedirles el detalle SOAP de
+incidentes, no hace falta) para poder avanzar su `estado` a `cerrada` cuando
+AyC ya la reporta así — hallazgo 2026-08-25: liquidaciones 3905-7/3906-6/3907-5
+quedaban mostrando "Aprobada" para siempre porque este loop las excluía del
+cruce antes de que `ReconciliarLiquidacion` pudiera siquiera evaluarlas. Las
+`cerrada` sí quedan totalmente afuera del loop (no se cruzan, no se les pide
+nada) — no hay ningún estado más allá al que puedan avanzar.
 """
 
 import logging
@@ -33,11 +39,16 @@ from src.modules.liquidaciones.application.use_cases._reconciliar_liquidacion im
     ReconciliarLiquidacionResultado,
 )
 from src.modules.liquidaciones.application.use_cases._sincronizar_contadores import Contadores
+from src.modules.liquidaciones.application.use_cases._sincronizar_logging import (
+    log_parciales,
+    log_reconciliada,
+)
 from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion import (
     ReanalizarLiquidacion,
 )
 from src.modules.liquidaciones.domain.entities.liquidacion import (
     ESTADO_ABIERTA,
+    ESTADO_APROBADA,
     ESTADO_OBSERVADA,
     ESTADO_PRELIQUIDADA,
     ESTADO_RECIBIDA,
@@ -72,6 +83,10 @@ logger = logging.getLogger(__name__)
 _ESTADOS_PENDIENTES = frozenset(
     {ESTADO_ABIERTA, ESTADO_PRELIQUIDADA, ESTADO_RECIBIDA, ESTADO_OBSERVADA}
 )
+# Además de las pendientes, las aprobadas entran al cruce con AyC — no para
+# anularlas (ver arriba) sino para que `ReconciliarLiquidacion` pueda avanzar
+# su estado a cerrada. `cerrada` no se agrega: no hay ningún estado más allá.
+_ESTADOS_RECONCILIABLES = _ESTADOS_PENDIENTES | frozenset({ESTADO_APROBADA})
 
 
 @dataclass(frozen=True)
@@ -103,7 +118,7 @@ class SincronizarLiquidaciones:
             parciales = await self._sincronizar_prestador(
                 prestador, existentes, permitir_eliminar_anuladas=permitir_eliminar_anuladas
             )
-            _log_parciales(prestador, parciales)
+            log_parciales(prestador, parciales)
             totales.sumar(parciales)
         return totales.a_resultado(sin_prestador=sin_prestador)
 
@@ -143,31 +158,45 @@ class SincronizarLiquidaciones:
         self, prestador: Prestador
     ) -> tuple[list[CdLiquidacion], list[Liquidacion], dict[str | None, Liquidacion]]:
         """Los dos lados del cruce: lo que AyC reporta para el prestador, y las
-        liquidaciones locales no terminales (lista, y la misma indexada por número)."""
+        liquidaciones locales reconciliables (pendientes + aprobadas). `pendientes`
+        (para detectar anuladas) sigue sin incluir aprobadas — esas no se anulan."""
         assert prestador.cd_prestador_id is not None
         liqs = await self._ports.cd_gateway.get_liquidaciones(prestador.cd_prestador_id)
-        pendientes = await self._ports.liquidaciones.list_activas_por_prestador_con_numero(
-            prestador.id, _ESTADOS_PENDIENTES
+        reconciliables = await self._ports.liquidaciones.list_activas_por_prestador_con_numero(
+            prestador.id, _ESTADOS_RECONCILIABLES
         )
-        return liqs, pendientes, {liq.numero_liquidacion: liq for liq in pendientes}
+        pendientes = [liq for liq in reconciliables if liq.estado in _ESTADOS_PENDIENTES]
+        por_numero = {liq.numero_liquidacion: liq for liq in reconciliables}
+        return liqs, pendientes, por_numero
 
     async def _reconciliar(
         self, cd_liq: CdLiquidacion, pendientes_por_numero: dict[str | None, Liquidacion]
     ) -> ReconciliarLiquidacionResultado | None:
-        """None si la liquidación está en estado terminal (no está en
-        `pendientes_por_numero`) o el detalle SOAP falló — en ambos casos no se
-        intentó reconciliar. Si se intentó, el resultado indica si además hubo
+        """None si la liquidación está cerrada (no está en `pendientes_por_numero`,
+        ver `_ESTADOS_RECONCILIABLES`) o el detalle SOAP falló — en ambos casos no
+        se intentó reconciliar. Si se intentó, el resultado indica si además hubo
         un guard interno de `ReconciliarLiquidacion` (mismatch de cantidad,
         bajas masivas) que abortó sin aplicar nada (`reconciliada=False`)."""
         liquidacion = pendientes_por_numero.get(cd_liq.numero_liquidacion)
         if liquidacion is None:
             return None
+        if liquidacion.estado == ESTADO_APROBADA:
+            return await self._reconciliar_aprobada(liquidacion, cd_liq)
         filas_cd = await self._detalle_para_reconciliar(cd_liq)
         if filas_cd is None:
             return None
         remotos = [a_importado(r) for r in filas_cd]
         resultado = await self._ports.reconciliar.execute(liquidacion, cd_liq, remotos)
-        _log_reconciliada(cd_liq, resultado)
+        log_reconciliada(cd_liq, resultado)
+        return resultado
+
+    async def _reconciliar_aprobada(
+        self, liquidacion: Liquidacion, cd_liq: CdLiquidacion
+    ) -> ReconciliarLiquidacionResultado:
+        """Aprobada: nunca hace falta el detalle de incidentes (`ReconciliarLiquidacion`
+        lo ignoraría igual), solo intenta avanzar el estado a cerrada."""
+        resultado = await self._ports.reconciliar.execute(liquidacion, cd_liq, [])
+        log_reconciliada(cd_liq, resultado)
         return resultado
 
     async def _detalle_para_reconciliar(
@@ -240,40 +269,3 @@ class SincronizarLiquidaciones:
         await self._ports.incidentes.bulk_create(liq.id, incidentes)
         await self._ports.reanalizar.execute(liq.id)
         return True
-
-
-def _log_parciales(prestador: Prestador, parciales: Contadores) -> None:
-    logger.info(
-        "sync CD %s: %d creadas, %d ya existentes, %d fallidas, %d anuladas, "
-        "%d reconciliadas, %d estados actualizados, %d períodos actualizados, "
-        "%d extras actualizados, %d facturas actualizadas",
-        prestador.nombre_corto,
-        parciales.creadas,
-        parciales.ya_existentes,
-        parciales.fallidas,
-        parciales.anuladas,
-        parciales.reconciliadas,
-        parciales.estados_actualizados,
-        parciales.periodos_actualizados,
-        parciales.extras_actualizados,
-        parciales.facturas_actualizadas,
-    )
-
-
-def _log_reconciliada(cd_liq: CdLiquidacion, resultado: ReconciliarLiquidacionResultado) -> None:
-    """Solo deja rastro cuando la reconciliación aplicó algo (diff de incidentes,
-    estado, período, extra o factura); las revisiones sin novedad no ensucian el log."""
-    campos = (
-        resultado.altas, resultado.cambios, resultado.bajas,
-        resultado.estado_actualizado, resultado.periodo_actualizado,
-        resultado.extra_actualizado, resultado.factura_actualizada,
-    )
-    if not (resultado.reconciliada and any(campos)):
-        return
-    logger.info(
-        "sync CD: %s reconciliada — %d altas, %d cambios, %d bajas, "
-        "estado actualizado=%s, período actualizado=%s, extra actualizado=%s, "
-        "factura actualizada=%s",
-        cd_liq.numero_liquidacion,
-        *campos,
-    )

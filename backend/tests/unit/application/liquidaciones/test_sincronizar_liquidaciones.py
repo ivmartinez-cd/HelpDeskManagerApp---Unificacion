@@ -321,10 +321,34 @@ async def test_liquidacion_nueva_nace_abierta_y_vinculada_al_prestador() -> None
     assert liq.numero_liquidacion == "3894-2"
 
 
-async def test_liquidacion_terminal_no_pide_detalle_ni_se_reconcilia() -> None:
-    """Una liquidación ya aprobada/cerrada queda congelada — ni se le pide el
-    detalle SOAP (verificado acá a nivel del loop de sync, no solo dentro de
-    ReconciliarLiquidacion — ver test_guard_estado_terminal_no_reconcilia)."""
+async def test_liquidacion_cerrada_no_pide_detalle_ni_se_reconcilia() -> None:
+    """Una liquidación ya cerrada queda totalmente afuera del cruce con AyC — ni
+    se le pide el detalle SOAP ni se intenta reconciliar (no hay ningún estado
+    más allá al que pueda avanzar)."""
+    world = World()
+    prestador = world.con_prestador_vinculado()
+    creada = await world.liquidaciones.create(
+        prestador_id=prestador.id, numero_liquidacion="3894-2", periodo="2026-07",
+        tipo_liquidacion="regular", nombre_archivo=None, total_incidentes=1, total_importe=100.0,
+    )
+    await world.liquidaciones.update_estado(creada.id, "cerrada")
+    world.gateway.liquidaciones_por_empresa[1310] = [make_cd_liquidacion(3894, cant_incidentes=1)]
+    world.gateway.incidentes_por_liq = {3894: [make_cd_incidente()]}
+
+    resultado = await world.use_case.execute()
+
+    assert resultado.ya_existentes == 1
+    assert resultado.reconciliadas == 0
+    assert 3894 not in world.gateway.detalles_pedidos
+    assert world.liquidaciones.rows[creada.id].total_importe == 100.0
+
+
+async def test_liquidacion_aprobada_avanza_a_cerrada_sin_pedir_detalle() -> None:
+    """El bug reportado 2026-08-25: liquidaciones 3905-7/3906-6/3907-5 quedaban
+    "Aprobada" para siempre porque el loop de sync las excluía del cruce con AyC
+    antes de que ReconciliarLiquidacion pudiera evaluarlas. Ahora sí se cruzan
+    (sin pedirles el detalle de incidentes, no hace falta) y su estado avanza
+    a cerrada cuando AyC ya la reporta así."""
     world = World()
     prestador = world.con_prestador_vinculado()
     creada = await world.liquidaciones.create(
@@ -338,9 +362,10 @@ async def test_liquidacion_terminal_no_pide_detalle_ni_se_reconcilia() -> None:
     resultado = await world.use_case.execute()
 
     assert resultado.ya_existentes == 1
-    assert resultado.reconciliadas == 0
+    assert resultado.reconciliadas == 1
+    assert resultado.estados_actualizados == 1
     assert 3894 not in world.gateway.detalles_pedidos
-    assert world.liquidaciones.rows[creada.id].total_importe == 100.0
+    assert world.liquidaciones.rows[creada.id].estado == "cerrada"
 
 
 async def test_ya_existente_pendiente_se_reconcilia_de_punta_a_punta() -> None:
