@@ -10,6 +10,7 @@ import {
   FileSearch,
   FileText,
   Gauge,
+  Headset,
   LayoutDashboard,
   Map,
   ScrollText,
@@ -94,6 +95,12 @@ function buildSections({
           label: "Pendientes a Cerrar",
           exact: false,
           icon: ClipboardList,
+        },
+        {
+          href: "/sla/mesa-de-ayuda",
+          label: "Incidentes Mesa de Ayuda",
+          exact: false,
+          icon: Headset,
         },
       ],
     });

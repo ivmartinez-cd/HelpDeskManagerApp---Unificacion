@@ -8,6 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.sla.application.use_cases.get_pendientes_resumen import GetPendientesResumen
 from src.modules.sla.application.use_cases.get_sla_compliance import GetSlaCompliance
+from src.modules.sla.application.use_cases.list_incidentes_mesa_ayuda import (
+    ListIncidentesMesaAyuda,
+)
 from src.modules.sla.application.use_cases.list_incidentes_vencidos import (
     ListIncidentesVencidos,
 )
@@ -16,6 +19,9 @@ from src.modules.sla.application.use_cases.refresh_pendientes_snapshot import (
     RefreshPendientesSnapshot,
 )
 from src.modules.sla.application.use_cases.refresh_sla_snapshot import RefreshSlaSnapshot
+from src.modules.sla.infrastructure.mercurio.pyodbc_mesa_ayuda_query_gateway import (
+    PyodbcMesaAyudaQueryGateway,
+)
 from src.modules.sla.infrastructure.mercurio.pyodbc_pendientes_query_gateway import (
     PyodbcPendientesQueryGateway,
 )
@@ -43,6 +49,11 @@ def get_sla_query_gateway() -> PyodbcSlaQueryGateway:
 @lru_cache
 def get_pendientes_query_gateway() -> PyodbcPendientesQueryGateway:
     return PyodbcPendientesQueryGateway(require_mercurio_runner())
+
+
+@lru_cache
+def get_mesa_ayuda_query_gateway() -> PyodbcMesaAyudaQueryGateway:
+    return PyodbcMesaAyudaQueryGateway(require_mercurio_runner())
 
 
 def build_refresh_sla_snapshot(session: AsyncSession) -> RefreshSlaSnapshot:
@@ -82,4 +93,11 @@ def build_list_pendientes(session: AsyncSession) -> ListPendientes:
     return ListPendientes(
         SqlAlchemyPendientesSnapshotRepository(session),
         build_refresh_pendientes_snapshot(session),
+    )
+
+
+def build_list_incidentes_mesa_ayuda() -> ListIncidentesMesaAyuda:
+    settings = get_settings()
+    return ListIncidentesMesaAyuda(
+        get_mesa_ayuda_query_gateway(), settings.mesa_ayuda_siges_empresa_id
     )

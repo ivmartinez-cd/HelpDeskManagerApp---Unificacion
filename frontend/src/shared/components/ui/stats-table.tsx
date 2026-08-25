@@ -23,6 +23,8 @@ interface StatsTableProps<T> {
   rowKey: (row: T, index: number) => string;
   emptyLabel?: string;
   className?: string;
+  /** Clases adicionales por fila (ej. resaltar en rojo casos vencidos). */
+  rowClassName?: (row: T, index: number) => string | undefined;
 }
 
 export function StatsTable<T>({
@@ -33,6 +35,7 @@ export function StatsTable<T>({
   rowKey,
   emptyLabel = "Sin datos en el período seleccionado.",
   className,
+  rowClassName,
 }: StatsTableProps<T>) {
   return (
     <section
@@ -74,7 +77,10 @@ export function StatsTable<T>({
               {rows.map((row, index) => (
                 <tr
                   key={rowKey(row, index)}
-                  className="border-t border-border align-middle last:border-b-0"
+                  className={cn(
+                    "border-t border-border align-middle last:border-b-0",
+                    rowClassName?.(row, index),
+                  )}
                 >
                   {columns.map((column) => (
                     <td

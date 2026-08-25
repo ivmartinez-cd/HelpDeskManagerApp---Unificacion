@@ -176,6 +176,9 @@ class SlaSettings(BaseSettings):
     # actualiza el backlog). Corte temporal: cuántos meses atrás buscar en Siges.
     pendientes_refresh_interval_minutes: int = 60
     pendientes_meses_corte: int = 24
+    # ID_Empresa de 'CD - Mesa de Ayuda' en dbo.Empresa — juega el rol de
+    # técnico (Incidente.ID_Tecnico) para sus incidentes. Confirmado 2026-08-25.
+    mesa_ayuda_siges_empresa_id: int = 428
     # Cadencia del job de fondo que refresca la copia local de eventos del
     # Calendario de Planificación. Full replace de ±90 días (~20 s); Gestión no
     # expone diff, así que cada ciclo rehace el rango entero. El botón

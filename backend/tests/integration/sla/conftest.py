@@ -9,10 +9,14 @@ from collections.abc import Iterator
 
 import pytest
 
+import src.modules.sla.presentation.mesa_ayuda_router as mesa_ayuda_router
 import src.modules.sla.presentation.pendientes_router as pendientes_router
 import src.modules.sla.presentation.sla_router as sla_router
 from src.modules.sla.application.use_cases.get_pendientes_resumen import GetPendientesResumen
 from src.modules.sla.application.use_cases.get_sla_compliance import GetSlaCompliance
+from src.modules.sla.application.use_cases.list_incidentes_mesa_ayuda import (
+    ListIncidentesMesaAyuda,
+)
 from src.modules.sla.application.use_cases.list_incidentes_vencidos import (
     ListIncidentesVencidos,
 )
@@ -24,6 +28,10 @@ from src.modules.sla.application.use_cases.refresh_sla_snapshot import RefreshSl
 from src.modules.sla.domain.entities.incidente_sla import RESULTADO_CORRECTO, RESULTADO_VENCIDO
 from tests.integration.router_testing import install_session, uninstall_session
 from tests.integration.sla.support import MODULE, PST_AJENO, PST_PROPIO, Lookup
+from tests.unit.application.sla.fakes_mesa_ayuda import (
+    FakeMesaAyudaQueryGateway,
+    build_mesa_ayuda,
+)
 from tests.unit.application.sla.fakes_pendientes import (
     FakePendientesQueryGateway,
     FakePendientesSnapshotRepository,
@@ -34,6 +42,8 @@ from tests.unit.domain.sla.fakes import (
     FakeSlaSnapshotRepository,
     build_incidente,
 )
+
+MESA_ID_TECNICO = 428
 
 
 @pytest.fixture
@@ -113,4 +123,17 @@ def pendientes_gateway(
     monkeypatch.setattr(
         pendientes_router, "build_list_pendientes", lambda _db: ListPendientes(repo, refresher)
     )
+    return gateway
+
+
+@pytest.fixture
+def mesa_ayuda_gateway(monkeypatch: pytest.MonkeyPatch) -> FakeMesaAyudaQueryGateway:
+    gateway = FakeMesaAyudaQueryGateway(
+        [
+            build_mesa_ayuda(100, operador_login="vipaez", dias_transcurridos=3),
+            build_mesa_ayuda(101, operador_login="ltorres", dias_transcurridos=9),
+        ]
+    )
+    use_case = ListIncidentesMesaAyuda(gateway, MESA_ID_TECNICO)
+    monkeypatch.setattr(mesa_ayuda_router, "build_list_incidentes_mesa_ayuda", lambda: use_case)
     return gateway

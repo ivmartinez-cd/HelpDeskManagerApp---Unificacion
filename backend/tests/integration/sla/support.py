@@ -10,6 +10,7 @@ from tests.unit.application.sla.fakes_pendientes import FakePrestadorLookup
 
 SLA = "/api/sla"
 PEND = "/api/sla/pendientes-a-cerrar"
+MESA = "/api/sla/mesa-de-ayuda"
 MODULE = "sla"
 PERIODO = 202608
 PAGE_KEYS = {"items", "total", "page", "size"}
