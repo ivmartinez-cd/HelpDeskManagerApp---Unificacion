@@ -27,6 +27,7 @@ class SqlAlchemyLiquidacionRepository:
         prestador_id: UUID | None = None,
         estado: str | None = None,
         periodo: str | None = None,
+        anio: int | None = None,
     ) -> list[Liquidacion]:
         stmt = select(LiquidacionModel).order_by(
             LiquidacionModel.periodo.desc(), LiquidacionModel.fecha_importacion.desc()
@@ -37,6 +38,8 @@ class SqlAlchemyLiquidacionRepository:
             stmt = stmt.where(LiquidacionModel.estado == estado)
         if periodo is not None:
             stmt = stmt.where(LiquidacionModel.periodo == periodo)
+        if anio is not None:
+            stmt = stmt.where(LiquidacionModel.periodo.startswith(f"{anio}-"))
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 

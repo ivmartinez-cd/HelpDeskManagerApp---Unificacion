@@ -25,7 +25,8 @@ class ListLiquidaciones:
         prestador_id: UUID | None = None,
         estado: str | None = None,
         periodo: str | None = None,
+        anio: int | None = None,
     ) -> list[Liquidacion]:
         return await self._ports.liquidaciones.list_filtered(
-            prestador_id=prestador_id, estado=estado, periodo=periodo
+            prestador_id=prestador_id, estado=estado, periodo=periodo, anio=anio
         )

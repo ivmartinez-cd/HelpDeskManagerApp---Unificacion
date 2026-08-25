@@ -40,6 +40,7 @@ class FakeLiquidacionRepository:
         prestador_id: UUID | None = None,
         estado: str | None = None,
         periodo: str | None = None,
+        anio: int | None = None,
     ) -> list[Liquidacion]:
         rows: list[Liquidacion] = list(self.rows.values())
         if prestador_id is not None:
@@ -48,6 +49,8 @@ class FakeLiquidacionRepository:
             rows = [r for r in rows if r.estado == estado]
         if periodo is not None:
             rows = [r for r in rows if r.periodo == periodo]
+        if anio is not None:
+            rows = [r for r in rows if r.periodo.startswith(f"{anio}-")]
         return rows
 
     async def list_numeros_liquidacion(self) -> set[str]:

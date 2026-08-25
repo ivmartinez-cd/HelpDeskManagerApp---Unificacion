@@ -33,6 +33,7 @@ export function LiquidacionesLista() {
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroPrestador, setFiltroPrestador] = useState("");
   const [filtroPeriodo, setFiltroPeriodo] = useState("");
+  const [filtroAnio, setFiltroAnio] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [importOpen, setImportOpen] = useState(false);
@@ -47,6 +48,7 @@ export function LiquidacionesLista() {
           prestadorId: filtroPrestador || undefined,
           estado: filtroEstado || undefined,
           periodo: filtroPeriodo || undefined,
+          anio: filtroAnio ? Number(filtroAnio) : undefined,
           page: p,
           size: PAGE_SIZE,
         });
@@ -56,7 +58,7 @@ export function LiquidacionesLista() {
         setLoading(false);
       }
     },
-    [filtroPrestador, filtroEstado, filtroPeriodo],
+    [filtroPrestador, filtroEstado, filtroPeriodo, filtroAnio],
   );
 
   useEffect(() => {
@@ -83,6 +85,7 @@ export function LiquidacionesLista() {
   };
 
   const prestadorMap = Object.fromEntries(prestadores.map((p) => [p.id, p]));
+  const anios = Array.from(new Set(periodos.map((p) => p.slice(0, 4)))).sort().reverse();
 
   const selectCls =
     "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
@@ -144,6 +147,20 @@ export function LiquidacionesLista() {
           {periodos.map((p) => (
             <option key={p} value={p}>
               {p}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filtroAnio}
+          onChange={handleFilter(setFiltroAnio)}
+          className={selectCls}
+          aria-label="Filtrar por año"
+        >
+          <option value="">Todos los años</option>
+          {anios.map((a) => (
+            <option key={a} value={a}>
+              {a}
             </option>
           ))}
         </select>

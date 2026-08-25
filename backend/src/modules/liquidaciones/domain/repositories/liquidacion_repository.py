@@ -14,9 +14,12 @@ class LiquidacionRepository(Protocol):
         prestador_id: UUID | None = None,
         estado: str | None = None,
         periodo: str | None = None,
+        anio: int | None = None,
     ) -> list[Liquidacion]:
         """Todas las liquidaciones que cumplan los filtros opcionales, ordenadas
-        por fecha_importacion desc.  Sin filtro = devuelve todas."""
+        por fecha_importacion desc.  Sin filtro = devuelve todas. `anio` filtra
+        por el año de `periodo` (YYYY-MM); si se pasa junto con `periodo`, este
+        último ya lo implica y ambos deben ser consistentes."""
         ...
 
     async def list_numeros_liquidacion(self) -> set[str]:

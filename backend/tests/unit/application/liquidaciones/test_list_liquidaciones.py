@@ -61,3 +61,17 @@ async def test_con_periodo_filtra_por_periodo() -> None:
     )
 
     assert [liq.id for liq in resultado] == [enero.id]
+
+
+async def test_con_anio_filtra_por_anio() -> None:
+    repo = FakeLiquidacionRepository()
+    de_2025 = make_liquidacion(periodo="2025-12")
+    de_2026 = make_liquidacion(periodo="2026-01")
+    repo.rows[de_2025.id] = de_2025
+    repo.rows[de_2026.id] = de_2026
+
+    resultado = await ListLiquidaciones(ListLiquidacionesPorts(liquidaciones=repo)).execute(
+        anio=2026
+    )
+
+    assert [liq.id for liq in resultado] == [de_2026.id]

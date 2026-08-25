@@ -182,6 +182,33 @@ async def test_list_filtered_by_periodo(
     assert len(resultado) >= 1
 
 
+async def test_list_filtered_by_anio(db_session: AsyncSession, prestador_id: uuid.UUID) -> None:
+    repo = SqlAlchemyLiquidacionRepository(db_session)
+    await repo.create(
+        prestador_id=prestador_id,
+        numero_liquidacion="2-1",
+        periodo="2025-12",
+        tipo_liquidacion="regular",
+        nombre_archivo=None,
+        total_incidentes=0,
+        total_importe=0.0,
+    )
+    await repo.create(
+        prestador_id=prestador_id,
+        numero_liquidacion="2-2",
+        periodo="2026-01",
+        tipo_liquidacion="regular",
+        nombre_archivo=None,
+        total_incidentes=0,
+        total_importe=0.0,
+    )
+
+    resultado = await repo.list_filtered(anio=2026)
+
+    assert all(liq.periodo.startswith("2026-") for liq in resultado)
+    assert any(liq.periodo == "2026-01" for liq in resultado)
+
+
 async def test_list_periodos_returns_distinct_sorted(
     db_session: AsyncSession, prestador_id: uuid.UUID
 ) -> None:
