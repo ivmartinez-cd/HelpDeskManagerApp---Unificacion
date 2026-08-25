@@ -108,6 +108,10 @@ class FakeSolicitudRepo:
             items = [s for s in items if s.status is filtros.status]
         if filtros.empleado_id is not None:
             items = [s for s in items if s.empleado_id == filtros.empleado_id]
+        if filtros.desde is not None:
+            items = [s for s in items if s.end_date >= filtros.desde]
+        if filtros.hasta is not None:
+            items = [s for s in items if s.start_date <= filtros.hasta]
         return items
 
     async def list_activas_de_empleado(
@@ -153,7 +157,7 @@ class FakeSolicitudRepo:
     ) -> list[Solicitud]:
         items = self._activas()
         if desde is not None:
-            items = [s for s in items if s.start_date >= desde]
+            items = [s for s in items if s.end_date >= desde]
         if hasta is not None:
             items = [s for s in items if s.start_date <= hasta]
         return items

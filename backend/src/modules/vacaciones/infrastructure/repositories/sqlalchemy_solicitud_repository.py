@@ -67,7 +67,7 @@ class SqlAlchemySolicitudRepository:
                 VacacionesEmpleadoModel.id == VacacionesSolicitudModel.empleado_id,
             ).where(VacacionesEmpleadoModel.department_id == filtros.department_id)
         if filtros.desde is not None:
-            stmt = stmt.where(VacacionesSolicitudModel.start_date >= filtros.desde)
+            stmt = stmt.where(VacacionesSolicitudModel.end_date >= filtros.desde)
         if filtros.hasta is not None:
             stmt = stmt.where(VacacionesSolicitudModel.start_date <= filtros.hasta)
         rows = (await self._session.execute(stmt)).scalars().all()
@@ -156,7 +156,7 @@ class SqlAlchemySolicitudRepository:
             VacacionesSolicitudModel.status.in_(_ACTIVOS)
         )
         if desde is not None:
-            stmt = stmt.where(VacacionesSolicitudModel.start_date >= desde)
+            stmt = stmt.where(VacacionesSolicitudModel.end_date >= desde)
         if hasta is not None:
             stmt = stmt.where(VacacionesSolicitudModel.start_date <= hasta)
         if department_id is not None:

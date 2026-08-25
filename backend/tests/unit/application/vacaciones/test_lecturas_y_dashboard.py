@@ -157,6 +157,36 @@ async def test_listar_solicitudes_enriquece_con_aprobaciones() -> None:
     )
 
 
+async def test_listar_solicitudes_por_fecha_incluye_las_que_ya_empezaron() -> None:
+    sector = _sector()
+    empleado = make_empleado(department_id=sector.id)
+    en_curso = make_solicitud(
+        empleado_id=empleado.id,
+        start_date=date(2026, 8, 24),
+        end_date=date(2026, 8, 28),
+        status=EstadoSolicitud.APPROVED,
+    )
+    deps = LeerSolicitudesDependencies(
+        solicitudes=FakeSolicitudRepo([en_curso]),
+        empleados=FakeEmpleadoRepo([empleado]),
+        sectores=FakeSectorRepo([sector]),
+        aprobaciones=FakeAprobacionRepo(),
+        users=FakeUserDirectory(),
+    )
+
+    dtos = await ListarSolicitudes(deps).execute(
+        ListarSolicitudesQuery(desde=date(2026, 8, 25), hasta=date(2026, 9, 15)),
+        make_actor(es_admin=True),
+    )
+    assert len(dtos) == 1
+
+    dtos_luego_de_terminar = await ListarSolicitudes(deps).execute(
+        ListarSolicitudesQuery(desde=date(2026, 8, 29), hasta=date(2026, 9, 15)),
+        make_actor(es_admin=True),
+    )
+    assert dtos_luego_de_terminar == []
+
+
 async def test_obtener_solicitud_controla_acceso_y_no_encontrada() -> None:
     sector = _sector()
     empleado = make_empleado(department_id=sector.id)

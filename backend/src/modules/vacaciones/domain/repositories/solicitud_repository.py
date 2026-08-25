@@ -8,6 +8,9 @@ from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud, So
 
 @dataclass(frozen=True, slots=True)
 class FiltrosSolicitudes:
+    """`desde`/`hasta` filtran por solape: solicitudes vigentes en algún punto
+    de [desde, hasta], no solo las que empiezan dentro del rango."""
+
     status: EstadoSolicitud | None = None
     empleado_id: uuid.UUID | None = None
     department_id: uuid.UUID | None = None
@@ -59,7 +62,7 @@ class SolicitudRepository(Protocol):
     async def list_activas_en_rango(
         self, desde: date | None, hasta: date | None, department_id: uuid.UUID | None
     ) -> list[Solicitud]:
-        """Eventos del calendario: activas con start_date dentro del rango,
+        """Eventos del calendario: activas que solapan [desde, hasta],
         opcionalmente acotadas a un sector (jefe)."""
         ...
 

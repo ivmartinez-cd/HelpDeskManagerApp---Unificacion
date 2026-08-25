@@ -6,7 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.vacaciones.domain.entities.empleado import Empleado, EstadoEmpleado
 from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud, Solicitud
-from src.modules.vacaciones.domain.repositories.solicitud_repository import RangoSolapado
+from src.modules.vacaciones.domain.repositories.solicitud_repository import (
+    FiltrosSolicitudes,
+    RangoSolapado,
+)
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_empleado_repository import (
     SqlAlchemyEmpleadoRepository,
 )
@@ -122,3 +125,39 @@ async def test_calendario_filtra_por_departamento(
 
     globales = await solicitudes.list_activas_en_rango(date(2026, 9, 1), date(2026, 9, 30), None)
     assert {s.empleado_id for s in globales} == {empleado.id, ajeno.id}
+
+
+@pytest.mark.asyncio
+async def test_list_activas_en_rango_incluye_las_que_ya_empezaron(
+    db_session: AsyncSession, empleado: Empleado
+) -> None:
+    repo = SqlAlchemySolicitudRepository(db_session)
+    await repo.add(
+        _solicitud(empleado.id, date(2026, 8, 24), date(2026, 8, 28), EstadoSolicitud.APPROVED)
+    )
+
+    vigente_hoy = await repo.list_activas_en_rango(date(2026, 8, 25), date(2026, 9, 15), None)
+    assert len(vigente_hoy) == 1
+
+    ya_terminada = await repo.list_activas_en_rango(date(2026, 8, 29), date(2026, 9, 15), None)
+    assert ya_terminada == []
+
+
+@pytest.mark.asyncio
+async def test_list_filtradas_por_fecha_incluye_las_que_ya_empezaron(
+    db_session: AsyncSession, empleado: Empleado
+) -> None:
+    repo = SqlAlchemySolicitudRepository(db_session)
+    await repo.add(
+        _solicitud(empleado.id, date(2026, 8, 24), date(2026, 8, 28), EstadoSolicitud.APPROVED)
+    )
+
+    vigente_hoy = await repo.list_filtradas(
+        FiltrosSolicitudes(desde=date(2026, 8, 25), hasta=date(2026, 9, 15))
+    )
+    assert len(vigente_hoy) == 1
+
+    ya_terminada = await repo.list_filtradas(
+        FiltrosSolicitudes(desde=date(2026, 8, 29), hasta=date(2026, 9, 15))
+    )
+    assert ya_terminada == []
