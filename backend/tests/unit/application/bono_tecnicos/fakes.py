@@ -107,14 +107,18 @@ def build_solicitud_tv(
 class FakeSolicitudTvRepository:
     def __init__(self, solicitudes: list[SolicitudTv] | None = None) -> None:
         self._por_id: dict[uuid.UUID, SolicitudTv] = {s.id: s for s in (solicitudes or [])}
+        self.add_calls: list[SolicitudTv] = []
+        self.save_calls: list[SolicitudTv] = []
 
     async def add(self, solicitud: SolicitudTv) -> None:
+        self.add_calls.append(solicitud)
         self._por_id[solicitud.id] = solicitud
 
     async def get_by_id(self, solicitud_id: uuid.UUID) -> SolicitudTv | None:
         return self._por_id.get(solicitud_id)
 
     async def save(self, solicitud: SolicitudTv) -> None:
+        self.save_calls.append(solicitud)
         self._por_id[solicitud.id] = solicitud
 
     async def list_by_periodo(

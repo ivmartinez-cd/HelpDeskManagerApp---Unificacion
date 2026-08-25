@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { bonoTecnicosApi } from "../api/bono-tecnicos-api";
-import type { PuntajeTecnico } from "../types/bono-tecnicos";
+import type { CrearSolicitudTvAdminBody, PuntajeTecnico } from "../types/bono-tecnicos";
 import { useSession } from "@/services/session-provider";
 
 function currentMonthValue(): string {
@@ -77,6 +77,21 @@ export function useBonoTecnicos() {
       .finally(() => setSavingId(null));
   };
 
+  const crearSolicitudTvAdmin = (idTecnico: number, body: CrearSolicitudTvAdminBody) => {
+    const periodo = monthValueToPeriodo(monthValue);
+    setSavingId(idTecnico);
+    setError(null);
+    return bonoTecnicosApi
+      .crearSolicitudAdmin(periodo, idTecnico, body)
+      .then(cargar)
+      .catch((err: unknown) => {
+        console.error("Error al cargar la TV:", err);
+        setError(err instanceof Error ? err.message : "No se pudo cargar la TV.");
+        throw err;
+      })
+      .finally(() => setSavingId(null));
+  };
+
   return {
     canUpdate,
     canApprove,
@@ -87,5 +102,6 @@ export function useBonoTecnicos() {
     savingId,
     error,
     guardarInput,
+    crearSolicitudTvAdmin,
   };
 }

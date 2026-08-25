@@ -1,5 +1,6 @@
 import { httpClient } from "@/services/http-client";
 import type {
+  CrearSolicitudTvAdminBody,
   CrearSolicitudTvBody,
   DecisionSolicitudTvBody,
   GuardarBonoInputBody,
@@ -33,6 +34,12 @@ export const bonoTecnicosApi = {
 
   crearSolicitud: (body: CrearSolicitudTvBody) =>
     httpClient.post<SolicitudTv>("/api/bono-tecnicos/solicitudes-tv", body),
+
+  crearSolicitudAdmin: (periodo: string, idTecnico: number, body: CrearSolicitudTvAdminBody) =>
+    httpClient.post<SolicitudTv>(
+      `/api/bono-tecnicos/${periodo}/${idTecnico}/solicitudes-tv`,
+      body,
+    ),
 
   getMisSolicitudes: (periodo: string) =>
     httpClient

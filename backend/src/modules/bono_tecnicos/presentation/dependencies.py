@@ -8,6 +8,9 @@ from functools import lru_cache
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.bono_tecnicos.application.use_cases.crear_solicitud_tv import CrearSolicitudTv
+from src.modules.bono_tecnicos.application.use_cases.crear_solicitud_tv_admin import (
+    CrearSolicitudTvAdmin,
+)
 from src.modules.bono_tecnicos.application.use_cases.crear_solicitud_tv_propia import (
     CrearSolicitudTvPropia,
 )
@@ -75,6 +78,10 @@ def build_crear_solicitud_tv_propia(session: AsyncSession) -> CrearSolicitudTvPr
     return CrearSolicitudTvPropia(
         SqlAlchemyTecnicoIdentityGateway(session), build_crear_solicitud_tv(session)
     )
+
+
+def build_crear_solicitud_tv_admin(session: AsyncSession) -> CrearSolicitudTvAdmin:
+    return CrearSolicitudTvAdmin(SqlAlchemySolicitudTvRepository(session))
 
 
 def build_listar_solicitudes_tv(session: AsyncSession) -> ListarSolicitudesTv:

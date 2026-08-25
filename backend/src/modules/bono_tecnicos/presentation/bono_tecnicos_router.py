@@ -13,6 +13,7 @@ from src.modules.bono_tecnicos.application.dtos.puntaje_tecnico_dto import (
     GuardarBonoInputRequest,
 )
 from src.modules.bono_tecnicos.application.dtos.solicitud_tv_dto import (
+    CrearSolicitudTvAdminRequest,
     CrearSolicitudTvPropiaRequest,
     DecidirSolicitudTvRequest,
     ListarSolicitudesTvPropiasRequest,
@@ -20,6 +21,7 @@ from src.modules.bono_tecnicos.application.dtos.solicitud_tv_dto import (
 )
 from src.modules.bono_tecnicos.domain.well_known_permissions import APPROVE, CREATE, UPDATE, VIEW
 from src.modules.bono_tecnicos.presentation.dependencies import (
+    build_crear_solicitud_tv_admin,
     build_crear_solicitud_tv_propia,
     build_decidir_solicitud_tv,
     build_get_incidentes_tecnico,
@@ -36,6 +38,7 @@ from src.modules.bono_tecnicos.presentation.schemas.puntaje_tecnico_schemas impo
     PuntajeTecnicoSchema,
 )
 from src.modules.bono_tecnicos.presentation.schemas.solicitud_tv_schemas import (
+    CrearSolicitudTvAdminBody,
     CrearSolicitudTvBody,
     DecisionSolicitudTvBody,
     SolicitudTvSchema,
@@ -110,6 +113,33 @@ async def guardar_input(
             dias=body.dias,
         )
     )
+
+
+@router.post(
+    "/{periodo}/{id_tecnico}/solicitudes-tv",
+    response_model=SolicitudTvSchema,
+    status_code=201,
+)
+async def crear_solicitud_tv_admin(
+    periodo: int,
+    id_tecnico: int,
+    body: CrearSolicitudTvAdminBody,
+    identity: Identity = _require_update,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> SolicitudTvSchema:
+    """Carga de TV por un supervisor a nombre de cualquier técnico — nace
+    ya APROBADA, a diferencia de `POST /solicitudes-tv` (ver dependencies)."""
+    request = CrearSolicitudTvAdminRequest(
+        id_tecnico=id_tecnico,
+        tecnico=body.tecnico,
+        fecha=body.fecha,
+        razon_social=body.razon_social,
+        sucursal=body.sucursal,
+        tarea_realizada=body.tarea_realizada,
+        resuelta_por_email=identity.user.email,
+    )
+    dto = await build_crear_solicitud_tv_admin(db).execute(request)
+    return SolicitudTvSchema.model_validate(dto)
 
 
 @router.post("/solicitudes-tv", response_model=SolicitudTvSchema, status_code=201)

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BonoTecnicoDetalleModal } from "./bono-tecnico-detalle-modal";
 import { buildBonoTecnicosColumns } from "./bono-tecnicos-columns";
+import { SolicitudTvAdminModal } from "./solicitud-tv-admin-modal";
 import { SolicitudesTvPendientes } from "./solicitudes-tv-pendientes";
 import { monthValueToPeriodo, useBonoTecnicos } from "../hooks/use-bono-tecnicos";
 import type { PuntajeTecnico } from "../types/bono-tecnicos";
@@ -21,8 +22,10 @@ export function BonoTecnicosDetail() {
     savingId,
     error,
     guardarInput,
+    crearSolicitudTvAdmin,
   } = useBonoTecnicos();
   const [detalleRow, setDetalleRow] = useState<PuntajeTecnico | null>(null);
+  const [solicitudTvRow, setSolicitudTvRow] = useState<PuntajeTecnico | null>(null);
 
   const sinDiasCargados = filas.filter((f) => f.puntaje === null).length;
 
@@ -31,6 +34,7 @@ export function BonoTecnicosDetail() {
     savingId,
     onGuardarDias: (row: PuntajeTecnico, dias: number) => guardarInput(row.id_tecnico, dias),
     onVerDetalle: setDetalleRow,
+    onCrearTv: setSolicitudTvRow,
   });
 
   return (
@@ -104,6 +108,15 @@ export function BonoTecnicosDetail() {
           periodo={monthValueToPeriodo(monthValue)}
           idTecnico={detalleRow.id_tecnico}
           onClose={() => setDetalleRow(null)}
+        />
+      )}
+
+      {solicitudTvRow && (
+        <SolicitudTvAdminModal
+          key={solicitudTvRow.id_tecnico}
+          tecnico={solicitudTvRow.tecnico}
+          onClose={() => setSolicitudTvRow(null)}
+          onSubmit={(body) => crearSolicitudTvAdmin(solicitudTvRow.id_tecnico, body)}
         />
       )}
     </div>

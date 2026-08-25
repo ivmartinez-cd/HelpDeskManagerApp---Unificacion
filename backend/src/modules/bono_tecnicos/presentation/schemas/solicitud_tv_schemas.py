@@ -15,6 +15,18 @@ class CrearSolicitudTvBody(BaseModel):
     tarea_realizada: str = Field(min_length=1, max_length=2000)
 
 
+class CrearSolicitudTvAdminBody(BaseModel):
+    """Alta por un supervisor a nombre de un técnico — `id_tecnico` viaja en
+    el path (mismo criterio que `guardar_input`), `tecnico` lo manda el
+    cliente porque ya lo tiene de `GET /resumen`."""
+
+    tecnico: str = Field(min_length=1, max_length=200)
+    fecha: date
+    razon_social: str = Field(min_length=1, max_length=200)
+    sucursal: str = Field(min_length=1, max_length=200)
+    tarea_realizada: str = Field(min_length=1, max_length=2000)
+
+
 class DecisionSolicitudTvBody(BaseModel):
     decision: Literal["APROBADA", "RECHAZADA"]
     motivo: str | None = Field(default=None, max_length=500)
