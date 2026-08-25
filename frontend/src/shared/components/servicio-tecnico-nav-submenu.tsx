@@ -98,7 +98,7 @@ function buildSections({
         },
         {
           href: "/sla/mesa-de-ayuda",
-          label: "Incidentes Mesa de Ayuda",
+          label: "Incidentes MDA",
           exact: false,
           icon: Headset,
         },
