@@ -21,3 +21,14 @@ def test_dias_cero_es_valido() -> None:
     input_ = BonoTecnicoInput(id_tecnico=1, periodo=202605, tecnico="CD - Ana", dias=0)
 
     assert input_.dias == 0
+
+
+def test_acepta_medio_dia() -> None:
+    input_ = BonoTecnicoInput(id_tecnico=1, periodo=202607, tecnico="CD - Matias MILAN", dias=20.5)
+
+    assert input_.dias == 20.5
+
+
+def test_rechaza_fracciones_menores_a_medio_dia() -> None:
+    with pytest.raises(ValorInvalidoError):
+        BonoTecnicoInput(id_tecnico=1, periodo=202605, tecnico="CD - Ana", dias=20.3)

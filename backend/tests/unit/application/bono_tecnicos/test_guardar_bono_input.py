@@ -42,3 +42,17 @@ async def test_valor_negativo_no_guarda_nada() -> None:
         await use_case.execute(
             GuardarBonoInputRequest(id_tecnico=1, periodo=202605, tecnico="CD - Ana", dias=-1)
         )
+
+
+async def test_guarda_medio_dia() -> None:
+    repo = FakeBonoTecnicoInputRepository()
+    use_case = GuardarBonoInput(repo)
+
+    await use_case.execute(
+        GuardarBonoInputRequest(
+            id_tecnico=498, periodo=202607, tecnico="CD - Matias MILAN", dias=20.5
+        )
+    )
+
+    guardados = await repo.find_by_periodo(Periodo(202607))
+    assert guardados[0].dias == 20.5

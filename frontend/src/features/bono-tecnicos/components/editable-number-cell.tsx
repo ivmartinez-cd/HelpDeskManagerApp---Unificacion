@@ -31,7 +31,8 @@ export function EditableNumberCell({ value, disabled, saving, onCommit }: Editab
       setDraft(String(value));
       return;
     }
-    const normalizado = Math.trunc(parsed);
+    // Medios días (ej. 20.5), no cualquier decimal — mismo criterio del backend.
+    const normalizado = Math.round(parsed * 2) / 2;
     setDraft(String(normalizado));
     if (normalizado !== value) onCommit(normalizado);
   };
@@ -41,7 +42,7 @@ export function EditableNumberCell({ value, disabled, saving, onCommit }: Editab
       <input
         type="number"
         min={0}
-        step={1}
+        step={0.5}
         value={draft}
         disabled={disabled || saving}
         onChange={(e) => setDraft(e.target.value)}

@@ -17,7 +17,7 @@ class ValorInvalidoError(ValidationError):
 
     default_code: ClassVar[str] = "VALOR_INVALIDO"
 
-    def __init__(self, campo: str, raw_value: int) -> None:
+    def __init__(self, campo: str, raw_value: int | float) -> None:
         super().__init__(f"{campo} inválido (no puede ser negativo): {raw_value!r}")
 
 

@@ -52,3 +52,17 @@ async def test_find_by_periodo_no_trae_otros_periodos(db_session: AsyncSession) 
     assert len(solo_mayo) == 1
     assert solo_mayo[0].periodo == 202605
     assert solo_mayo[0].dias == 17
+
+
+async def test_persiste_medio_dia(db_session: AsyncSession) -> None:
+    repo = SqlAlchemyBonoTecnicoInputRepository(db_session)
+    id_tecnico = _id_tecnico()
+
+    await repo.upsert(
+        BonoTecnicoInput(
+            id_tecnico=id_tecnico, periodo=202607, tecnico="CD - Matias MILAN", dias=20.5
+        )
+    )
+    guardados = await repo.find_by_periodo(Periodo(202607))
+
+    assert guardados[0].dias == 20.5

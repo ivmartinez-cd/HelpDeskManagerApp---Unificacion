@@ -16,7 +16,7 @@ class PuntajeTecnicoDTO:
     inst_des: int
     pre_correctivo: int
     entrega_insumos: int
-    dias: int
+    dias: float
     tareas_varias: int
     puntaje: float | None
     # None si el técnico no está vinculado a un empleado de Gestión de
@@ -29,4 +29,4 @@ class GuardarBonoInputRequest:
     id_tecnico: int
     periodo: int
     tecnico: str
-    dias: int
+    dias: float

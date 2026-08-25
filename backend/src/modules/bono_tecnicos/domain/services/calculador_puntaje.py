@@ -14,7 +14,7 @@ _PESO_PRE_CORRECTIVO = 0.5
 _DECIMALES = 2
 
 
-def calcular_puntaje(conteo: ConteoTecnico, dias: int, tareas_varias: int) -> float | None:
+def calcular_puntaje(conteo: ConteoTecnico, dias: float, tareas_varias: int) -> float | None:
     """`None` cuando Días es 0 o negativo: el Excel nunca contempla ese caso
     (siempre tenía un valor cargado a mano) y dividir daría un resultado sin
     sentido de negocio en vez de una regla real — se lo dejamos sin puntaje

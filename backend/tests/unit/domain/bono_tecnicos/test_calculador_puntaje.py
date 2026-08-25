@@ -44,3 +44,10 @@ def test_dias_negativos_no_calcula_puntaje() -> None:
     conteo = _conteo(correctivo=5)
 
     assert calcular_puntaje(conteo, dias=-1, tareas_varias=0) is None
+
+
+def test_admite_medio_dia() -> None:
+    conteo = _conteo(correctivo=41)
+
+    # 41 / 20.5 = 2.0
+    assert calcular_puntaje(conteo, dias=20.5, tareas_varias=0) == 2.0

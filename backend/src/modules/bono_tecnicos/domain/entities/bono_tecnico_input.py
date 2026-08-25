@@ -12,13 +12,18 @@ class BonoTecnicoInput:
     el período (y por lo tanto antes de que aparezca en `ConteoTecnico`).
 
     Tareas Varias (`$J$7`) dejó de vivir acá: ahora es la cuenta de
-    `SolicitudTv` en estado APROBADA del período, ver `GetPuntajesPeriodo`."""
+    `SolicitudTv` en estado APROBADA del período, ver `GetPuntajesPeriodo`.
+
+    `dias` admite medios días (ej. 20.5) — granularidad real del Excel legacy
+    (caso Matías Milán, bono julio/2026), no un entero puro."""
 
     id_tecnico: int
     periodo: int
     tecnico: str
-    dias: int
+    dias: float
 
     def __post_init__(self) -> None:
         if self.dias < 0:
+            raise ValorInvalidoError("dias", self.dias)
+        if (self.dias * 2) % 1 != 0:
             raise ValorInvalidoError("dias", self.dias)
