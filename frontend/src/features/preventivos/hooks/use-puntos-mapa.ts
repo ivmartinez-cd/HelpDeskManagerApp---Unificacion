@@ -30,6 +30,20 @@ export function usePuntosMapa({
   const [error, setError] = useState<string | null>(null);
   const [geocodificando, setGeocodificando] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
+  const [zonaAnterior, setZonaAnterior] = useState(zona);
+
+  // Al cambiar de zona se limpian los puntos ANTES de re-consultar: sin esto
+  // quedan visibles los pines de la zona anterior mientras llega la nueva
+  // (la caché puede estar fría, ~5-10s) sin ningún indicio de carga. Ajuste
+  // de estado durante el render (no en un efecto) — patrón recomendado para
+  // resetear estado derivado de un cambio de prop, sin el flash de un commit
+  // extra ni el lint de setState síncrono en efectos.
+  if (zona !== zonaAnterior) {
+    setZonaAnterior(zona);
+    setPuntos(null);
+    setConsultadoEn(null);
+    setError(null);
+  }
 
   useEffect(() => {
     if (!activo || !zona) return;

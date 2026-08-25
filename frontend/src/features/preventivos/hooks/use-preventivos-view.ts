@@ -29,7 +29,7 @@ export function usePreventivosView() {
   const [soloHabilitados, setSoloHabilitados] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [busquedaAplicada, setBusquedaAplicada] = useState("");
-  const [vista, setVista] = useState<"tabla" | "mapa">("tabla");
+  const [vista, setVista] = useState<"tabla" | "mapa">("mapa");
 
   // La búsqueda espera 350ms de inactividad antes de pegarle al backend.
   useEffect(() => {
@@ -40,20 +40,29 @@ export function usePreventivosView() {
     return () => clearTimeout(timer);
   }, [busqueda]);
 
-  // Catálogo de zonas una sola vez; la primera queda seleccionada.
+  // Catálogo de zonas una sola vez; arranca sin ninguna zona marcada — el
+  // usuario elige desde el mapa/chips, no se asume la primera de la lista.
   useEffect(() => {
     if (!tieneModulo) return;
     preventivosApi
       .listZonas()
-      .then((lista) => {
-        setZonas(lista);
-        setZona((actual) => actual ?? lista[0]?.zona ?? null);
-      })
+      .then((lista) => setZonas(lista))
       .catch((err: unknown) => {
         console.error("Error al cargar zonas de preventivos:", err);
         setError("No se pudo consultar el catálogo de zonas. Reintentá.");
       });
   }, [tieneModulo]);
+
+  const cargarZonas = useCallback(() => {
+    setError(null);
+    preventivosApi
+      .listZonas()
+      .then((lista) => setZonas(lista))
+      .catch((err: unknown) => {
+        console.error("Error al cargar zonas de preventivos:", err);
+        setError("No se pudo consultar el catálogo de zonas. Reintentá.");
+      });
+  }, []);
 
   const load = useCallback(
     (refresh = false) => {
@@ -168,6 +177,7 @@ export function usePreventivosView() {
     setBusqueda,
     setPagina,
     load,
+    cargarZonas,
     handleRefresh,
     handleToggleHabilitacion,
     handleSelectZona,

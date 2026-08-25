@@ -15,10 +15,11 @@ const ZOOM_DEFAULT = 11;
 
 type LeafletMarker = import("leaflet").Marker;
 
-// Clase usada para delegar el click del botón "Corregir ubicación" dentro
-// del popup (ver el listener de "popupopen" más abajo) — el popup es HTML
-// string, no JSX, así que no hay onClick nativo de React acá.
+// Clases usadas para delegar los clicks de los botones del popup (ver el
+// listener de "popupopen" más abajo) — el popup es HTML string, no JSX, así
+// que no hay onClick nativo de React acá.
 const EDITAR_BTN_CLASS = "preventivos-popup-editar";
+const CARGAR_BTN_CLASS = "preventivos-popup-cargar";
 
 function escapeHtml(valor: string): string {
   const div = document.createElement("div");
@@ -45,12 +46,19 @@ function popupHtml(punto: PuntoMapaPreventivo, canUpdate: boolean): string {
         Corregir ubicación
       </button>`
     : "";
+  const cargarInfo = canUpdate
+    ? `<button type="button" data-id-sucursal="${punto.id_sucursal}" class="${CARGAR_BTN_CLASS}"
+        style="margin-top:2px;align-self:flex-start;border:none;background:none;padding:0;font-size:12px;font-weight:600;color:#c2410c;cursor:pointer;text-decoration:underline">
+        Cargar preventivo
+      </button>`
+    : "";
   return `<div style="display:flex;flex-direction:column;gap:4px;font-size:13px">
     <p style="margin:0;font-weight:600">${escapeHtml(punto.cliente)}</p>
     <p style="margin:0;font-size:12px;opacity:.7">${escapeHtml(punto.sucursal)} · ${escapeHtml(punto.zona)}</p>
     ${domicilioInfo}
     <p style="margin:0;font-size:12px;font-weight:600">${escapeHtml(meta.label)}${vencidoInfo}</p>
     <p style="margin:0;font-size:12px;opacity:.7">${numberFormat.format(punto.cant_maquinas)} equipo(s)${habilitadosInfo}</p>
+    ${cargarInfo}
     ${editarInfo}
   </div>`;
 }
@@ -69,23 +77,29 @@ interface PreventivosMapaCanvasProps {
   puntos: PuntoMapaPreventivo[];
   canUpdate: boolean;
   onEditarUbicacion: (idSucursal: number) => void;
+  onCargarPreventivo: (idSucursal: number) => void;
 }
 
 export function PreventivosMapaCanvas({
   puntos,
   canUpdate,
   onEditarUbicacion,
+  onCargarPreventivo,
 }: PreventivosMapaCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const clusterGroupRef = useRef<import("leaflet").MarkerClusterGroup | null>(null);
-  // Ref de callback "siempre última": el listener de popupopen se engancha
+  // Refs de callback "siempre última": el listener de popupopen se engancha
   // una sola vez (al crear el mapa) y lee acá en vez de en el closure para
   // no depender de la identidad de la prop entre renders.
   const onEditarRef = useRef(onEditarUbicacion);
   useEffect(() => {
     onEditarRef.current = onEditarUbicacion;
   }, [onEditarUbicacion]);
+  const onCargarRef = useRef(onCargarPreventivo);
+  useEffect(() => {
+    onCargarRef.current = onCargarPreventivo;
+  }, [onCargarPreventivo]);
 
   useEffect(() => {
     return () => {
@@ -116,11 +130,16 @@ export function PreventivosMapaCanvas({
         // una sola vez, cada vez que Leaflet abre CUALQUIER popup del mapa.
         mapa.on("popupopen", (e) => {
           const popupEl = e.popup.getElement();
-          const boton = popupEl?.querySelector<HTMLButtonElement>(`.${EDITAR_BTN_CLASS}`);
-          if (!boton) return;
-          boton.addEventListener(
+          const botonEditar = popupEl?.querySelector<HTMLButtonElement>(`.${EDITAR_BTN_CLASS}`);
+          botonEditar?.addEventListener(
             "click",
-            () => onEditarRef.current(Number(boton.dataset.idSucursal)),
+            () => onEditarRef.current(Number(botonEditar.dataset.idSucursal)),
+            { once: true },
+          );
+          const botonCargar = popupEl?.querySelector<HTMLButtonElement>(`.${CARGAR_BTN_CLASS}`);
+          botonCargar?.addEventListener(
+            "click",
+            () => onCargarRef.current(Number(botonCargar.dataset.idSucursal)),
             { once: true },
           );
         });

@@ -5,22 +5,27 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { usePuntosMapa } from "../hooks/use-puntos-mapa";
 import type { PuntoMapaPreventivo } from "../types/preventivos";
+import { CargarPreventivoModal } from "./cargar-preventivo-modal";
 import { CorregirCoordenadaModal } from "./corregir-coordenada-modal";
 import { numberFormat } from "./preventivos-format";
 import { PreventivosMapa } from "./preventivos-mapa";
 import { PreventivosMapaLeyenda } from "./preventivos-mapa-leyenda";
 import { BrandButton, BrandEmptyState, BrandSkeleton } from "@/shared/components/ui/brand-form";
+import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
 
 interface PreventivosMapaSeccionProps {
+  zona: string;
   mapa: ReturnType<typeof usePuntosMapa>;
   canUpdate: boolean;
 }
 
 /** Vista "mapa" de `preventivos-view.tsx` (extraído para no pasar el límite
- * de §4 del archivo padre) — dueño de su propio estado de edición: el modal
- * de corrección de coordenada vive acá, no en la vista general. */
-export function PreventivosMapaSeccion({ mapa, canUpdate }: PreventivosMapaSeccionProps) {
+ * de §4 del archivo padre) — dueño de su propio estado de edición: los
+ * modales de corrección de coordenada y carga de preventivo viven acá, no en
+ * la vista general. */
+export function PreventivosMapaSeccion({ zona, mapa, canUpdate }: PreventivosMapaSeccionProps) {
   const [puntoEditando, setPuntoEditando] = useState<PuntoMapaPreventivo | null>(null);
+  const [puntoCargando, setPuntoCargando] = useState<PuntoMapaPreventivo | null>(null);
 
   return (
     <>
@@ -30,7 +35,18 @@ export function PreventivosMapaSeccion({ mapa, canUpdate }: PreventivosMapaSecci
         </div>
       )}
       {!mapa.error && mapa.puntos === null && (
-        <BrandSkeleton className="h-[520px] w-full rounded-[12px]" />
+        <>
+          <SigesLoadingModal
+            etapas={[
+              { hasta: 4, texto: `Consultando el parque de la zona ${zona}…` },
+              { hasta: 12, texto: "Calculando ubicaciones y estados de vencimiento…" },
+              { hasta: 20, texto: "Un momento más, ya casi está…" },
+              { texto: "La base está lenta hoy — seguimos esperando la respuesta…" },
+            ]}
+            nota="La primera carga de cada zona cruza el historial de incidentes y contadores (~5-10 segundos). Después queda en caché 5 minutos y responde al instante."
+          />
+          <BrandSkeleton className="h-[520px] w-full rounded-[12px]" />
+        </>
       )}
       {!mapa.error && mapa.puntos !== null && (
         <>
@@ -67,6 +83,9 @@ export function PreventivosMapaSeccion({ mapa, canUpdate }: PreventivosMapaSecci
                 onEditarUbicacion={(idSucursal) =>
                   setPuntoEditando(mapa.puntos?.find((p) => p.id_sucursal === idSucursal) ?? null)
                 }
+                onCargarPreventivo={(idSucursal) =>
+                  setPuntoCargando(mapa.puntos?.find((p) => p.id_sucursal === idSucursal) ?? null)
+                }
               />
               <PreventivosMapaLeyenda />
             </>
@@ -84,6 +103,10 @@ export function PreventivosMapaSeccion({ mapa, canUpdate }: PreventivosMapaSecci
             mapa.refrescar();
           }}
         />
+      )}
+
+      {puntoCargando && (
+        <CargarPreventivoModal punto={puntoCargando} onClose={() => setPuntoCargando(null)} />
       )}
     </>
   );

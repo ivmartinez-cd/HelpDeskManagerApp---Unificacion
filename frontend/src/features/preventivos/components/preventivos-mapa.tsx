@@ -15,14 +15,21 @@ interface PreventivosMapaProps {
   puntos: PuntoMapaPreventivo[];
   canUpdate: boolean;
   onEditarUbicacion: (idSucursal: number) => void;
+  onCargarPreventivo: (idSucursal: number) => void;
 }
 
-export function PreventivosMapa({ puntos, canUpdate, onEditarUbicacion }: PreventivosMapaProps) {
+export function PreventivosMapa({
+  puntos,
+  canUpdate,
+  onEditarUbicacion,
+  onCargarPreventivo,
+}: PreventivosMapaProps) {
   return (
     <PreventivosMapaCanvas
       puntos={puntos}
       canUpdate={canUpdate}
       onEditarUbicacion={onEditarUbicacion}
+      onCargarPreventivo={onCargarPreventivo}
     />
   );
 }

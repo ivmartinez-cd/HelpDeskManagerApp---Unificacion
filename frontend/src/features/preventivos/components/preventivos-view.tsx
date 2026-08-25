@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw, SearchX, Wrench } from "lucide-react";
+import { MapPinned, RefreshCw, SearchX, Wrench } from "lucide-react";
 import { POR_PAGINA, usePreventivosView } from "../hooks/use-preventivos-view";
 import { usePuntosMapa } from "../hooks/use-puntos-mapa";
 import { formatConsultadoEn, numberFormat } from "./preventivos-format";
@@ -53,6 +53,7 @@ export function PreventivosView() {
     setBusqueda,
     setPagina,
     load,
+    cargarZonas,
     handleRefresh,
     handleToggleHabilitacion,
     handleSelectZona,
@@ -153,19 +154,34 @@ export function PreventivosView() {
         </div>
       </div>
 
-      {vista === "tabla" && rows === null && !error && (
+      {zona === null && error && (
+        <div className="flex items-center justify-between gap-4 rounded-[12px] border border-destructive/20 bg-destructive/10 px-5 py-4">
+          <p className="font-body text-sm text-foreground">{error}</p>
+          <BrandButton variant="outline" size="sm" onClick={cargarZonas}>
+            Reintentar
+          </BrandButton>
+        </div>
+      )}
+
+      {zona === null && !error && (
+        <BrandEmptyState
+          icon={MapPinned}
+          title="Elegí una zona"
+          description="Elegí una zona arriba para ver su parque de equipos, en el mapa o en la tabla."
+        />
+      )}
+
+      {zona !== null && vista === "tabla" && rows === null && !error && (
         <>
-          {zona !== null && (
-            <SigesLoadingModal
-              etapas={[
-                { hasta: 4, texto: `Consultando el parque de la zona ${zona}…` },
-                { hasta: 12, texto: "Calculando últimos preventivos y vencimientos…" },
-                { hasta: 20, texto: "Un momento más, ya casi está…" },
-                { texto: "La base está lenta hoy — seguimos esperando la respuesta…" },
-              ]}
-              nota="La primera carga de cada zona cruza el historial de incidentes y contadores (~5-10 segundos). Después queda en caché 5 minutos y responde al instante."
-            />
-          )}
+          <SigesLoadingModal
+            etapas={[
+              { hasta: 4, texto: `Consultando el parque de la zona ${zona}…` },
+              { hasta: 12, texto: "Calculando últimos preventivos y vencimientos…" },
+              { hasta: 20, texto: "Un momento más, ya casi está…" },
+              { texto: "La base está lenta hoy — seguimos esperando la respuesta…" },
+            ]}
+            nota="La primera carga de cada zona cruza el historial de incidentes y contadores (~5-10 segundos). Después queda en caché 5 minutos y responde al instante."
+          />
           <div className="flex flex-col gap-2">
             {Array.from({ length: 8 }, (_, i) => (
               <BrandSkeleton key={i} className="h-12 w-full" />
@@ -174,7 +190,7 @@ export function PreventivosView() {
         </>
       )}
 
-      {vista === "tabla" && error && (
+      {zona !== null && vista === "tabla" && error && (
         <div className="flex items-center justify-between gap-4 rounded-[12px] border border-destructive/20 bg-destructive/10 px-5 py-4">
           <p className="font-body text-sm text-foreground">{error}</p>
           <BrandButton variant="outline" size="sm" onClick={() => void load()}>
@@ -183,7 +199,7 @@ export function PreventivosView() {
         </div>
       )}
 
-      {vista === "tabla" && rows !== null && !error && (
+      {zona !== null && vista === "tabla" && rows !== null && !error && (
         <>
           {rows.length === 0 ? (
             <BrandEmptyState
@@ -237,7 +253,9 @@ export function PreventivosView() {
         </>
       )}
 
-      {vista === "mapa" && <PreventivosMapaSeccion mapa={mapa} canUpdate={canUpdate} />}
+      {zona !== null && vista === "mapa" && (
+        <PreventivosMapaSeccion zona={zona} mapa={mapa} canUpdate={canUpdate} />
+      )}
     </div>
   );
 }
