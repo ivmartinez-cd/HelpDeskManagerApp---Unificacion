@@ -6,6 +6,13 @@ import { cn } from "@/shared/utils/cn";
 
 interface EditableNumberCellProps {
   value: number;
+  /** Qué mostrar en el input mientras `value` todavía no tiene nada cargado
+   * (ej. el sugerido de días hábiles). El campo se ve prellenado, pero sigue
+   * sin persistir nada hasta que el usuario haga foco y blur en la celda —
+   * en ese momento se compara igual contra `value`, no contra esto, así que
+   * un blur sin tocar nada sí dispara el guardado (confirmación mínima, no
+   * autoguardado en cuanto se calcula el sugerido). */
+  initialDraft?: number;
   disabled: boolean;
   saving: boolean;
   onCommit: (value: number) => void;
@@ -13,12 +20,20 @@ interface EditableNumberCellProps {
 
 /** Input numérico inline de una celda de tabla — commitea con onBlur, solo si
  * el valor cambió (evita un PUT de más al simplemente hacer foco y salir). */
-export function EditableNumberCell({ value, disabled, saving, onCommit }: EditableNumberCellProps) {
-  const [draft, setDraft] = useState(String(value));
+export function EditableNumberCell({
+  value,
+  initialDraft,
+  disabled,
+  saving,
+  onCommit,
+}: EditableNumberCellProps) {
+  const [draft, setDraft] = useState(String(initialDraft ?? value));
 
   // Si el resumen se recarga (guardado de otra celda, cambio de período), el
   // draft local tiene que seguir al valor del servidor — ajustado durante el
-  // render, no en un efecto (mismo patrón que use-sla-detail.ts).
+  // render, no en un efecto (mismo patrón que use-sla-detail.ts). Ojo: sigue
+  // a `value` (lo guardado), no a `initialDraft` (el sugerido) — si no,
+  // cualquier cambio de sugerido pisaría lo que el usuario está tipeando.
   const [prevValue, setPrevValue] = useState(value);
   if (value !== prevValue) {
     setPrevValue(value);

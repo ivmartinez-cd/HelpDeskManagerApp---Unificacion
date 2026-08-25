@@ -61,27 +61,36 @@ export function buildBonoTecnicosColumns({
       label: "Días",
       align: "right",
       className: "w-36",
-      render: (row) => (
-        <div className="flex flex-col items-end gap-0.5">
-          <EditableNumberCell
-            value={row.dias}
-            disabled={!canUpdate}
-            saving={savingId === row.id_tecnico}
-            onCommit={(v) => onGuardarDias(row, v)}
-          />
-          {row.dias_sugeridos !== null && row.dias_sugeridos !== row.dias && (
-            <button
-              type="button"
+      render: (row) => {
+        // Días=0 significa "todavía no cargado" (ver BonoTecnicoInput) — ahí
+        // el input arranca prellenado con el sugerido en vez de en blanco,
+        // pero sigue sin guardarse nada hasta que el usuario confirme esa
+        // celda (foco + blur). Si ya hay algo cargado (aunque sea distinto
+        // del sugerido), no se toca — solo se ofrece el atajo de siempre.
+        const sinCargar = row.dias === 0 && row.dias_sugeridos !== null;
+        return (
+          <div className="flex flex-col items-end gap-0.5">
+            <EditableNumberCell
+              value={row.dias}
+              initialDraft={sinCargar ? (row.dias_sugeridos ?? undefined) : undefined}
               disabled={!canUpdate}
-              onClick={() => onGuardarDias(row, row.dias_sugeridos as number)}
-              className="font-body text-[11px] text-muted-foreground hover:text-brand-orange disabled:cursor-not-allowed"
-              title="Sugerido a partir de las asistencias en Gestión de Personal"
-            >
-              sugerido: {row.dias_sugeridos}
-            </button>
-          )}
-        </div>
-      ),
+              saving={savingId === row.id_tecnico}
+              onCommit={(v) => onGuardarDias(row, v)}
+            />
+            {!sinCargar && row.dias_sugeridos !== null && row.dias_sugeridos !== row.dias && (
+              <button
+                type="button"
+                disabled={!canUpdate}
+                onClick={() => onGuardarDias(row, row.dias_sugeridos as number)}
+                className="font-body text-[11px] text-muted-foreground hover:text-brand-orange disabled:cursor-not-allowed"
+                title="Sugerido a partir de las asistencias en Gestión de Personal"
+              >
+                sugerido: {row.dias_sugeridos}
+              </button>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "tareas_varias",
