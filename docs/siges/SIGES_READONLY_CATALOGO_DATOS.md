@@ -312,6 +312,51 @@ Investigación para la feature "preventivos por zona de distribución". Scripts:
   pantalla "de impresoras" tiene que filtrar por prefijo (preventivos usa
   `LIKE 'PRT %' OR 'MFP %'`); el rubro no alcanza (ver nota PrintBox más arriba).
 
+### Señal de "última modificación" para staleness de preventivos por zona (confirmado 2026-08-25)
+
+Investigado a pedido del usuario: ¿se puede reemplazar la consulta completa por zona por un
+snapshot local + un chequeo liviano de "¿hay algo nuevo en Siges?", en vez de re-consultar todo
+en cada selección de zona? Script: `backend/scripts/explore_siges_preventivos_fecha_mod.py`.
+
+- **No hay una señal única para todo lo que necesita la pantalla** — depende de si la tabla es
+  `BASE TABLE` real o `VIEW` emulada (`INFORMATION_SCHEMA.TABLES.TABLE_TYPE`, confirmado en
+  vivo):
+  - `Sucursal` (de donde sale la zona `Cuadricula` y la frecuencia vía `TipoPreventivo`) y
+    `Empresa` son **VIEW**. Su `Fecha_Mod`/`Usuario_Mod` es **inservible como señal de cambio**:
+    confirmado con dato fresco, las 13.715 filas de `Sucursal` tienen **una sola fecha
+    distinta** (`2026-08-25 10:53:29.703`) y **un solo usuario** (`'emulado'`) — es el
+    timestamp del último refresh en bloque de la réplica, no de una edición real de esa fila
+    (mismo hallazgo que ya documentaba §"Señales de cliente nuevo" para `Empresa`/`Anexo`/
+    `Contrato`/`GrupoEconomico`, extendido acá a `Sucursal` con dato propio). `TipoPreventivo`
+    también es VIEW y ni siquiera tiene columna de fecha.
+  - `Maquina` (estado del equipo, sucursal asignada) e `Incidente` (preventivos, todo tipo de
+    ST) **son BASE TABLE reales**, con `Fecha_Mod` que sí varía por fila: `Maquina` tiene
+    54.487 filas con **29.395 fechas distintas** y **216 usuarios reales** (`equipamiento`,
+    `marodriguez`, `jpcorigliano`…) con timestamps recientes coherentes con actividad real —
+    sirve como watermark de "algo cambió en el parque" (alta/baja, reasignación de sucursal,
+    cambio de `ID_Estado_Maquina`). `Incidente.Fecha_Ingreso`/`Fecha_Cierre` son igual de
+    reales (ya usadas por la consulta productiva).
+  - `Contadores` también es BASE TABLE real (`FechaTomaContador` genuino), pero por volumen
+    (4,5M filas) su agregado es caro: ver más abajo.
+- **Medición de watermarks globales** (sin filtrar por zona, `MAX()`/`COUNT()` sobre toda la
+  base — candidatos a "¿hay algo nuevo?" barato):
+  - `MAX(Fecha_Mod)` de `Maquina`: **0.019 s**.
+  - `MAX(Fecha_Ingreso)`/`MAX(Fecha_Cierre)` de `Incidente` tipo 102 (298.757 filas): **0.092 s**.
+  - `MAX(FechaTomaContador)` de `Contadores` con `Estado = 0` (4,5M filas): **3.895 s** — nada
+    barato. Esta tabla es la base del `LEFT JOIN` de "cliente vivo" que ya usa
+    `PARQUE_ZONA_SQL` (`_ACTIVIDAD_EMPRESA_JOIN`, `query.py`); su costo probablemente explica
+    buena parte de los ~5-10 s de la primera carga por zona documentados en la UI, más que la
+    falta de un snapshot. Antes de invertir en arquitectura de snapshot conviene perfilar ese
+    JOIN puntual (plan de ejecución, índice candidato sobre `Contadores(Estado, ID_Maquina,
+    FechaTomaContador)`) — puede ser una ganancia más directa.
+- **Conclusión práctica**: un watermark de `Maquina.Fecha_Mod` + `Incidente` cubriría "hay un
+  preventivo nuevo" o "cambió el estado/ubicación de un equipo" de forma barata y confiable,
+  pero **no** cubre cambios de zona/frecuencia en `Sucursal` ni de estado en `Empresa` (ambas
+  VIEW sin señal utilizable) — un snapshot basado solo en esos watermarks quedaría ciego
+  justo a lo que define el catálogo de zonas. Cualquier patrón snapshot+staleness para este
+  módulo necesitaría aceptar esa ceguera (zona/frecuencia no cambian seguido en la práctica) o
+  combinarla con un refresh completo periódico, no solo el watermark.
+
 ### Señales de "cliente nuevo" / "instalación nueva" (confirmado 2026-08-21)
 
 Investigado para una alerta de calendario de onboarding de clientes nuevos (mensajes de
