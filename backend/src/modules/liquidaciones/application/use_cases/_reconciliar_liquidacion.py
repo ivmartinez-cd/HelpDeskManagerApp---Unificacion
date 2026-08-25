@@ -19,14 +19,23 @@ liquidación terminal sigue trayendo extra/factura vía `_solo_extra_y_factura`,
 sin tocar nada más.
 
 Orden fijo dentro de una liquidación: bajas → cambios → altas → recálculo de
-totales → reanálisis → pisar estado → traer extra/factura. El motor de reglas
-corre sobre el set de incidentes ya reconciliado, antes de pisar estado y traer
-el extra/factura (ninguno de los dos afecta al motor) — si reanalizara antes de
-las bajas, regeneraría alertas para incidentes que está por borrar. El estado se
-pisa con el que reportaba AyC *antes* de reconciliar los incidentes (`cd_liq`,
-no se vuelve a consultar) — evaluar el guard de estado terminal contra el estado
-local previo, no el nuevo, así una liquidación recién marcada `aprobada` en AyC
-también recibe esta última reconciliación de incidentes.
+totales → reanálisis → recálculo de período → pisar estado → traer extra/factura.
+El motor de reglas corre sobre el set de incidentes ya reconciliado, antes de
+pisar estado y traer el extra/factura (ninguno de los dos afecta al motor) — si
+reanalizara antes de las bajas, regeneraría alertas para incidentes que está por
+borrar. El estado se pisa con el que reportaba AyC *antes* de reconciliar los
+incidentes (`cd_liq`, no se vuelve a consultar) — evaluar el guard de estado
+terminal contra el estado local previo, no el nuevo, así una liquidación recién
+marcada `aprobada` en AyC también recibe esta última reconciliación de incidentes.
+
+El recálculo de período corre siempre (haya o no diff de incidentes) usando el
+set de incidentes ya reconciliado — a diferencia de totales/reanálisis, que solo
+tienen sentido si algo cambió. Sin esto, una liquidación creada con el período
+fijado por el fallback de `extraer_periodo` (sus incidentes no tenían todavía
+`fecha_cierre`) quedaba con el período viejo para siempre en cuanto los
+incidentes cerraban sin generar ningún otro diff (caso real: liquidación 3935-8,
+Tres Arroyos, agosto 2026 — incidentes y totales ya coincidían con AyC, pero el
+período seguía en 2026-03 con incidentes cerrados en abril/junio).
 
 Nunca borra y recrea un incidente que sigue existiendo remotamente (`cambios`
 hace UPDATE in-place, preserva `incidente_id`) — ver
@@ -40,6 +49,7 @@ from uuid import UUID
 from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion import (
     ReanalizarLiquidacion,
 )
+from src.modules.liquidaciones.domain.entities.incidente import Incidente
 from src.modules.liquidaciones.domain.entities.liquidacion import (
     ESTADO_APROBADA,
     ESTADO_CERRADA,
@@ -55,6 +65,7 @@ from src.modules.liquidaciones.domain.repositories.liquidacion_repository import
     LiquidacionRepository,
 )
 from src.modules.liquidaciones.domain.services.estados_ayc import estado_local_desde_ayc
+from src.modules.liquidaciones.domain.services.importacion.metadata import periodo_mas_frecuente
 from src.modules.liquidaciones.domain.services.reconciliar_incidentes import (
     DiffIncidentes,
     reconciliar_incidentes,
@@ -86,6 +97,7 @@ class ReconciliarLiquidacionResultado:
     cambios: int = 0
     bajas: int = 0
     estado_actualizado: bool = False
+    periodo_actualizado: bool = False
     extra_actualizado: bool = False
     factura_actualizada: bool = False
 
@@ -107,8 +119,13 @@ class ReconciliarLiquidacion:
         if locales and len(diff.bajas) / len(locales) > _UMBRAL_BAJAS_MASIVAS:
             return ReconciliarLiquidacionResultado(reconciliada=False)
 
+        actuales = locales
         if diff.altas or diff.cambios or diff.bajas:
             await self._aplicar(liquidacion.id, diff)
+            actuales = await self._ports.incidentes.list_by_liquidacion(liquidacion.id)
+        periodo_actualizado = await self._actualizar_periodo(
+            liquidacion.id, liquidacion.periodo, actuales
+        )
         estado_actualizado = await self._pisar_estado(liquidacion, cd_liq)
         extra_actualizado, factura_actualizada = await self._actualizar_extra_y_factura(
             liquidacion, cd_liq
@@ -119,6 +136,7 @@ class ReconciliarLiquidacion:
             cambios=len(diff.cambios),
             bajas=len(diff.bajas),
             estado_actualizado=estado_actualizado,
+            periodo_actualizado=periodo_actualizado,
             extra_actualizado=extra_actualizado,
             factura_actualizada=factura_actualizada,
         )
@@ -144,15 +162,28 @@ class ReconciliarLiquidacion:
             await self._ports.incidentes.update_cobrados(diff.cambios)
         if diff.altas:
             await self._ports.incidentes.bulk_create(liquidacion_id, diff.altas)
-        await self._actualizar_totales(liquidacion_id)
+        actuales = await self._ports.incidentes.list_by_liquidacion(liquidacion_id)
+        await self._actualizar_totales(liquidacion_id, actuales)
         await self._ports.reanalizar.execute(liquidacion_id)
 
-    async def _actualizar_totales(self, liquidacion_id: UUID) -> None:
-        actuales = await self._ports.incidentes.list_by_liquidacion(liquidacion_id)
+    async def _actualizar_totales(self, liquidacion_id: UUID, actuales: list[Incidente]) -> None:
         total_importe = round(sum(i.costo_total_cobrado for i in actuales), 2)
         await self._ports.liquidaciones.update_totales(
             liquidacion_id, len(actuales), total_importe
         )
+
+    async def _actualizar_periodo(
+        self, liquidacion_id: UUID, periodo_actual: str, actuales: list[Incidente]
+    ) -> bool:
+        """Recalcula el período con las fechas de cierre ya reconciliadas — sin
+        esto, una liquidación creada con incidentes todavía abiertos (período
+        fijado por el fallback de `extraer_periodo`) queda con el período viejo
+        para siempre aunque los incidentes cierren después en otro mes."""
+        nuevo = periodo_mas_frecuente(i.fecha_cierre for i in actuales)
+        if not nuevo or nuevo == periodo_actual:
+            return False
+        await self._ports.liquidaciones.update_periodo(liquidacion_id, nuevo)
+        return True
 
     async def _actualizar_extra_y_factura(
         self, liquidacion: Liquidacion, cd_liq: CdLiquidacion

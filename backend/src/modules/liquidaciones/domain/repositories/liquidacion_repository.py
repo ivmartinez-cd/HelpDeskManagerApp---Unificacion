@@ -88,6 +88,16 @@ class LiquidacionRepository(Protocol):
         fallara a mitad de camino."""
         ...
 
+    async def update_periodo(self, liquidacion_id: UUID, periodo: str) -> None:
+        """`periodo` se fija al crear la liquidación (moda de `fecha_cierre` de sus
+        incidentes en ese momento, o un fallback por fecha de emisión si ninguno
+        había cerrado todavía) y sin esto quedaba congelado para siempre: si los
+        incidentes cerraban después con fechas de otro mes, la reconciliación
+        actualizaba incidentes/importe pero no el período. Solo lo llama
+        `ReconciliarLiquidacion` cuando el recálculo da un valor distinto y no
+        vacío."""
+        ...
+
     async def count_pendientes_por_prestador(self) -> list[tuple[str, int]]:
         """Conteo de liquidaciones pendientes (excluye aprobada y cerrada) agrupado
         por prestador. Retorna pares (nombre_corto, count) ordenados por count desc."""

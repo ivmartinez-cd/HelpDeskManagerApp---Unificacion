@@ -113,6 +113,19 @@ async def test_update_totales_persists_incidentes_y_importe(
     assert fetched.total_importe == 999.5
 
 
+async def test_update_periodo_persists_new_value(
+    db_session: AsyncSession, prestador_id: uuid.UUID
+) -> None:
+    repo = SqlAlchemyLiquidacionRepository(db_session)
+    created = await _create_liquidacion(db_session, prestador_id)
+
+    await repo.update_periodo(created.id, "2026-06")
+
+    fetched = await repo.get_by_id(created.id)
+    assert fetched is not None
+    assert fetched.periodo == "2026-06"
+
+
 async def test_delete_removes_liquidacion(
     db_session: AsyncSession, prestador_id: uuid.UUID
 ) -> None:

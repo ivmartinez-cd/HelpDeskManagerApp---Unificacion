@@ -37,6 +37,7 @@ from src.modules.liquidaciones.domain.services.importacion.metadata import (
     extraer_periodo,
     extraer_tipo_liquidacion,
     mapear_columnas,
+    periodo_mas_frecuente,
 )
 from src.modules.liquidaciones.domain.services.importacion.normalizacion import (
     normalizar_tipo_servicio,
@@ -258,6 +259,30 @@ class TestExtraerPeriodo:
 
     def test_sin_incidentes_ni_fecha_en_nombre(self) -> None:
         assert extraer_periodo("export.xls", []) == ""
+
+
+# ---------------------------------------------------------------------------
+# periodo_mas_frecuente
+# ---------------------------------------------------------------------------
+
+
+class TestPeriodoMasFrecuente:
+    def test_empate_gana_el_periodo_mas_reciente(self) -> None:
+        """Caso real (liquidación 3935-8): un incidente cerrado en abril y otro en
+        junio, sin mayoría — antes dependía del hash-seed del proceso (`max(set(...))`),
+        ahora es determinístico."""
+        fechas = [date(2026, 4, 15), date(2026, 6, 18)]
+        assert periodo_mas_frecuente(fechas) == "2026-06"
+
+    def test_mayoria_gana_sobre_el_mas_reciente(self) -> None:
+        fechas = [date(2026, 1, 5), date(2026, 1, 10), date(2026, 6, 18)]
+        assert periodo_mas_frecuente(fechas) == "2026-01"
+
+    def test_ignora_fechas_none(self) -> None:
+        assert periodo_mas_frecuente([None, date(2026, 3, 1), None]) == "2026-03"
+
+    def test_sin_fechas_utilizables(self) -> None:
+        assert periodo_mas_frecuente([None, None]) == ""
 
 
 # ---------------------------------------------------------------------------

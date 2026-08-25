@@ -16,6 +16,7 @@ class SincronizarOut(BaseModel):
     anuladas: int
     reconciliadas: int
     estados_actualizados: int = Field(serialization_alias="estadosActualizados")
+    periodos_actualizados: int = Field(serialization_alias="periodosActualizados")
     extras_actualizados: int = Field(serialization_alias="extrasActualizados")
     facturas_actualizadas: int = Field(serialization_alias="facturasActualizadas")
 
@@ -29,6 +30,7 @@ class SincronizarOut(BaseModel):
             anuladas=dto.anuladas,
             reconciliadas=dto.reconciliadas,
             estados_actualizados=dto.estados_actualizados,
+            periodos_actualizados=dto.periodos_actualizados,
             extras_actualizados=dto.extras_actualizados,
             facturas_actualizadas=dto.facturas_actualizadas,
         )

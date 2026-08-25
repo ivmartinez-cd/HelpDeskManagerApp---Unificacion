@@ -90,7 +90,7 @@ export function LiquidacionesDashboard() {
     try {
       const res = await liquidacionesApi.sincronizar();
       const revisadas = res.reconciliadas > 0
-        ? ` (${res.reconciliadas} revisada${res.reconciliadas !== 1 ? "s" : ""} contra AyC${res.estadosActualizados > 0 ? `, ${res.estadosActualizados} con estado actualizado` : ""}${res.extrasActualizados > 0 ? `, ${res.extrasActualizados} con ítem extra actualizado` : ""}${res.facturasActualizadas > 0 ? `, ${res.facturasActualizadas} con nº de factura actualizado` : ""})`
+        ? ` (${res.reconciliadas} revisada${res.reconciliadas !== 1 ? "s" : ""} contra AyC${res.estadosActualizados > 0 ? `, ${res.estadosActualizados} con estado actualizado` : ""}${res.periodosActualizados > 0 ? `, ${res.periodosActualizados} con período actualizado` : ""}${res.extrasActualizados > 0 ? `, ${res.extrasActualizados} con ítem extra actualizado` : ""}${res.facturasActualizadas > 0 ? `, ${res.facturasActualizadas} con nº de factura actualizado` : ""})`
         : "";
       const detalle = `${res.creadas} nueva${res.creadas !== 1 ? "s" : ""}, ${res.yaExistentes} ya existentes${revisadas}${res.sinPrestador > 0 ? `, ${res.sinPrestador} sin prestador vinculado` : ""}${res.anuladas > 0 ? `, ${res.anuladas} anulada${res.anuladas !== 1 ? "s" : ""} en AyC eliminada${res.anuladas !== 1 ? "s" : ""}` : ""}`;
       if (res.fallidas > 0) {

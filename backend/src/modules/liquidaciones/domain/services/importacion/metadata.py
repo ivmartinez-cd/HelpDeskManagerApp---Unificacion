@@ -3,7 +3,9 @@ cierre de sus incidentes — puerto de `_map_columns`/`_extract_numero_liquidaci
 `_extract_tipo_liquidacion`/`_extract_periodo` del legacy `csv_parser.py`."""
 
 import re
-from collections.abc import Mapping, Sequence
+from collections import Counter
+from collections.abc import Iterable, Mapping, Sequence
+from datetime import date
 
 from src.modules.liquidaciones.domain.entities.liquidacion import (
     TIPO_CC,
@@ -72,12 +74,24 @@ def extraer_periodo(nombre_archivo: str, incidentes: Sequence[IncidenteImportado
     """1) el período más frecuente entre las fechas de cierre de los incidentes (más
     preciso); 2) si no hay ninguna, la fecha en el nombre del archivo asumiendo que
     se exportó el mes siguiente al liquidado; 3) `""` si ninguna de las dos sirve."""
-    periodos = [
-        f"{i.fecha_cierre.year}-{i.fecha_cierre.month:02d}" for i in incidentes if i.fecha_cierre
-    ]
-    if periodos:
-        return max(set(periodos), key=periodos.count)
-    return _periodo_desde_nombre_archivo(nombre_archivo)
+    periodo = periodo_mas_frecuente(i.fecha_cierre for i in incidentes)
+    return periodo or _periodo_desde_nombre_archivo(nombre_archivo)
+
+
+def periodo_mas_frecuente(fechas_cierre: Sequence[date | None] | Iterable[date | None]) -> str:
+    """El período (`YYYY-MM`) que más se repite entre las fechas de cierre dadas, o
+    `""` si ninguna fecha es utilizable. En caso de empate gana el período más
+    reciente — determinístico a propósito, a diferencia de `max(set(...), key=...)`
+    (el orden de iteración de un `set` de strings depende del hash-seed del
+    proceso). Reusado por `extraer_periodo` (import) y por la reconciliación
+    (recalcula el período de una liquidación ya creada cuando sus incidentes
+    terminan de cerrarse)."""
+    periodos = [f"{f.year}-{f.month:02d}" for f in fechas_cierre if f]
+    if not periodos:
+        return ""
+    conteos = Counter(periodos)
+    maximo = max(conteos.values())
+    return max(p for p, c in conteos.items() if c == maximo)
 
 
 def _periodo_desde_nombre_archivo(nombre_archivo: str) -> str:

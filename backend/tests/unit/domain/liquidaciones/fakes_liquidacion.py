@@ -128,6 +128,11 @@ class FakeLiquidacionRepository:
             total_importe=total_importe,
         )
 
+    async def update_periodo(self, liquidacion_id: UUID, periodo: str) -> None:
+        self.rows[liquidacion_id] = dataclasses.replace(
+            self.rows[liquidacion_id], periodo=periodo
+        )
+
     async def list_activas_por_prestador_con_numero(
         self, prestador_id: UUID, estados: frozenset[str]
     ) -> list[Liquidacion]:

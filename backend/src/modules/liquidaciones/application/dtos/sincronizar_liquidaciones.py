@@ -12,5 +12,6 @@ class SincronizarLiquidacionesResultado:
     anuladas: int = 0  # detectadas como anuladas en AyC y eliminadas localmente
     reconciliadas: int = 0  # ya existentes, revisadas contra AyC (con o sin diff)
     estados_actualizados: int = 0  # de las reconciliadas, cuántas pisaron su estado
+    periodos_actualizados: int = 0  # de las reconciliadas, cuántas recalcularon su período
     extras_actualizados: int = 0  # de las reconciliadas, cuántas trajeron un ítem extra de AyC
     facturas_actualizadas: int = 0  # de las reconciliadas, cuántas trajeron nº de factura de AyC

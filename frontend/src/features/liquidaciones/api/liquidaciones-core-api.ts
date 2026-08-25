@@ -108,6 +108,7 @@ export const liquidacionesCoreApi = {
       anuladas: number;
       reconciliadas: number;
       estadosActualizados: number;
+      periodosActualizados: number;
       extrasActualizados: number;
       facturasActualizadas: number;
     }>("/api/liquidaciones/sincronizar"),

@@ -110,7 +110,8 @@ class World:
         return liq
 
     def con_incidente(self, liquidacion_id, **overrides: object):
-        inc = make_incidente(liquidacion_id=liquidacion_id, fecha_cierre=_FECHA, **overrides)
+        kwargs: dict[str, object] = {"fecha_cierre": _FECHA, **overrides}
+        inc = make_incidente(liquidacion_id=liquidacion_id, **kwargs)
         self.incidentes.rows[inc.id] = inc
         return inc
 
@@ -132,6 +133,79 @@ async def test_cambio_actualiza_in_place_preservando_el_id() -> None:
     liq_actualizada = world.liquidaciones.rows[liq.id]
     assert liq_actualizada.total_incidentes == 1
     assert liq_actualizada.total_importe == 1500.0
+
+
+async def test_periodo_se_recalcula_cuando_cierran_incidentes_de_otro_mes() -> None:
+    """Caso real: la liquidación se creó con período '2026-03' (fallback, porque
+    ninguno de sus incidentes tenía `fecha_cierre` todavía) y luego se cerraron en
+    abril/junio — sin este recálculo el período quedaba congelado en '2026-03' aunque
+    incidentes/importe sí se reconciliaran bien."""
+    world = World()
+    liq = world.con_liquidacion(periodo="2026-03")
+    world.con_incidente(
+        liq.id, numero_incidente="1", fecha_cierre=date(2026, 4, 15), costo_servicio_cobrado=1500.0
+    )
+    remoto_1 = make_remoto("1", fecha_cierre=date(2026, 4, 15), costo_servicio_cobrado=1500.0)
+    remoto_2 = make_remoto("2", fecha_cierre=date(2026, 6, 18), costo_servicio_cobrado=1500.0)
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(2), [remoto_1, remoto_2])
+
+    assert resultado.periodo_actualizado is True
+    assert world.liquidaciones.rows[liq.id].periodo == "2026-06"
+
+
+async def test_periodo_no_se_toca_cuando_ya_coincide() -> None:
+    """`_FECHA` (los incidentes de este `World`) es enero 2026 — el período ya
+    está bien, así que reconciliar sin diff no debe tocar nada."""
+    world = World()
+    liq = world.con_liquidacion(periodo="2026-01")
+    world.con_incidente(
+        liq.id,
+        numero_incidente="1",
+        costo_servicio_cobrado=1500.0,
+        nro_serie="SN-1",
+        cant_km_cobrado=0.0,
+        costo_km_cobrado=0.0,
+        total_viaje_cobrado=0.0,
+        costo_total_cobrado=1500.0,
+    )
+    remoto = make_remoto("1", costo_servicio_cobrado=1500.0)
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert (resultado.altas, resultado.cambios, resultado.bajas) == (0, 0, 0)
+    assert resultado.periodo_actualizado is False
+    assert world.liquidaciones.rows[liq.id].periodo == "2026-01"
+
+
+async def test_periodo_se_corrige_aunque_no_haya_diff_de_incidentes() -> None:
+    """El caso real que motivó este recálculo (liquidación 3935-8, Tres Arroyos,
+    agosto 2026): los incidentes locales ya tenían la `fecha_cierre` correcta y
+    coincidían exactamente con lo que reporta AyC (sin diff, por eso `_aplicar`
+    nunca corría) — pero el período había quedado fijado por el fallback de
+    `extraer_periodo` al crear la liquidación, con sus incidentes todavía
+    abiertos, y nada volvía a tocarlo. El recálculo tiene que correr también en
+    el camino sin novedades."""
+    world = World()
+    liq = world.con_liquidacion(periodo="2026-03")
+    world.con_incidente(
+        liq.id,
+        numero_incidente="1",
+        fecha_cierre=date(2026, 4, 15),
+        costo_servicio_cobrado=1500.0,
+        nro_serie="SN-1",
+        cant_km_cobrado=0.0,
+        costo_km_cobrado=0.0,
+        total_viaje_cobrado=0.0,
+        costo_total_cobrado=1500.0,
+    )
+    remoto = make_remoto("1", fecha_cierre=date(2026, 4, 15), costo_servicio_cobrado=1500.0)
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert (resultado.altas, resultado.cambios, resultado.bajas) == (0, 0, 0)
+    assert resultado.periodo_actualizado is True
+    assert world.liquidaciones.rows[liq.id].periodo == "2026-04"
 
 
 async def test_alta_crea_incidente_nuevo() -> None:
