@@ -34,11 +34,23 @@ export function Sidebar({
     }
     return module.route;
   };
-  // Configuración es un módulo más para el backend (sort_order en la tabla
-  // Module), pero en la nav siempre tiene que quedar al final del todo.
-  const sortedModules = [...modules].sort((a, b) =>
-    a.key === "admin" ? 1 : b.key === "admin" ? -1 : 0,
-  );
+  // Orden del sidebar (pedido explícito del usuario 2026-08-25): los módulos
+  // de uso diario van primero y en orden alfabético (Contadores, Insumos,
+  // Servicio Técnico -grupo virtual-, WhatsApp); el resto (Gestión de
+  // Personal, Turnos) queda debajo, sin orden alfabético entre sí; y
+  // Configuración siempre al final de todo, sin importar sort_order del
+  // backend.
+  const DAILY_RANK: Record<string, number> = {
+    contadores: 0,
+    insumos: 1,
+    "servicio-tecnico": 2,
+    wati: 3,
+  };
+  const rankOf = (key: string) => {
+    if (key === "admin") return 1000;
+    return DAILY_RANK[key] ?? 100;
+  };
+  const sortedModules = [...modules].sort((a, b) => rankOf(a.key) - rankOf(b.key));
   // Liquidaciones no se muestra como ítem propio de nivel superior: queda
   // anidado dentro de Prestadores (ver PrestadoresNavSubmenu). Sigue siendo
   // un módulo backend independiente, esto es solo reorganización visual.
@@ -126,6 +138,26 @@ export function Sidebar({
               Inicio
             </Link>
 
+            {modules.length === 0 && (
+              <p className="px-3 py-4 font-body text-xs text-muted-foreground">
+                Todavía no tenés módulos habilitados.
+              </p>
+            )}
+
+            {topLevelModules
+              .filter((module) => rankOf(module.key) < DAILY_RANK["servicio-tecnico"])
+              .map((module) => (
+                <ModuleNavItem
+                  key={module.key}
+                  module={module}
+                  href={hrefDeModulo(module)}
+                  active={isActive(module.route)}
+                  submenuOverride={submenuOverride[module.key]}
+                  onToggleSubmenu={toggleSubmenu(module.key)}
+                  onNavigate={closeMobile}
+                />
+              ))}
+
             {servicioTecnicoVisible && (
               <ServicioTecnicoNavItem
                 hasSla={!!slaModule}
@@ -141,23 +173,19 @@ export function Sidebar({
               />
             )}
 
-            {modules.length === 0 && (
-              <p className="px-3 py-4 font-body text-xs text-muted-foreground">
-                Todavía no tenés módulos habilitados.
-              </p>
-            )}
-
-            {topLevelModules.map((module) => (
-              <ModuleNavItem
-                key={module.key}
-                module={module}
-                href={hrefDeModulo(module)}
-                active={isActive(module.route)}
-                submenuOverride={submenuOverride[module.key]}
-                onToggleSubmenu={toggleSubmenu(module.key)}
-                onNavigate={closeMobile}
-              />
-            ))}
+            {topLevelModules
+              .filter((module) => rankOf(module.key) >= DAILY_RANK["servicio-tecnico"])
+              .map((module) => (
+                <ModuleNavItem
+                  key={module.key}
+                  module={module}
+                  href={hrefDeModulo(module)}
+                  active={isActive(module.route)}
+                  submenuOverride={submenuOverride[module.key]}
+                  onToggleSubmenu={toggleSubmenu(module.key)}
+                  onNavigate={closeMobile}
+                />
+              ))}
           </nav>
 
           <div className="mt-auto border-t border-border px-3 pb-1 pt-3">
