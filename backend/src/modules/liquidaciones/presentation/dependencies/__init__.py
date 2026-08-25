@@ -37,6 +37,7 @@ from src.modules.liquidaciones.presentation.dependencies.geovalidacion import (
 )
 from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
     build_actualizar_estado_local,
+    build_actualizar_extra_liquidacion,
     build_anular_liquidacion,
     build_aprobar_liquidacion,
     build_backfill_estado,
@@ -89,6 +90,7 @@ __all__ = [
     "build_preview_calcular_distancias",
     "build_recalcular_km_fila",
     "build_actualizar_estado_local",
+    "build_actualizar_extra_liquidacion",
     "build_diagnosticar_asistente_km",
     "build_evaluar_tier0",
     "build_calcular_worklist_tier2",

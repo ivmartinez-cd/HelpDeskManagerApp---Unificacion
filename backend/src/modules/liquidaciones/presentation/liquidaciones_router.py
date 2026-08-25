@@ -26,6 +26,7 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_
 )
 from src.modules.liquidaciones.presentation.dependencies import (
     build_actualizar_estado_local,
+    build_actualizar_extra_liquidacion,
     build_get_liquidacion_detalle,
     build_importar_liquidacion,
     build_list_liquidaciones,
@@ -158,11 +159,9 @@ async def update_extra_liquidacion(
     _: Identity = _require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> LiquidacionOut:
-    updated = await SqlAlchemyLiquidacionRepository(db).update_extra(
+    updated = await build_actualizar_extra_liquidacion(db).execute(
         liquidacion_id, body.concepto_extra, body.monto_extra
     )
-    if not updated:
-        raise HTTPException(status_code=404, detail="Liquidación no encontrada")
     return LiquidacionOut.from_entity(updated)
 
 

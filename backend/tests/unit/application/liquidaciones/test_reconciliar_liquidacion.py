@@ -367,6 +367,48 @@ async def test_cerrada_nunca_se_reabre() -> None:
     assert world.liquidaciones.rows[liq.id].estado == ESTADO_CERRADA
 
 
+async def test_extra_se_suma_al_total_importe() -> None:
+    """El bug reportado 2026-08-25 (liquidación 3907-5, San Juan): el extra
+    cargado por AyC no se reflejaba en total_importe, así que listado y
+    dashboard seguían mostrando el total viejo."""
+    world = World()
+    liq = world.con_liquidacion(total_importe=1500.0, total_incidentes=1)
+    world.con_incidente(liq.id, numero_incidente="1", costo_servicio_cobrado=1500.0)
+    remoto = make_remoto("1", costo_servicio_cobrado=1500.0)
+    world.cd_gateway.detalles_por_liquidacion[1] = CdLiquidacionDetalle(
+        concepto_extra="Adicional", monto_extra=500.0, numero_factura=None
+    )
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.extra_actualizado is True
+    actualizada = world.liquidaciones.rows[liq.id]
+    assert actualizada.monto_extra == 500.0
+    assert actualizada.total_importe == 2000.0
+
+
+async def test_incidentes_y_extra_cambian_en_la_misma_pasada_no_se_pisan() -> None:
+    """El ajuste por extra tiene que partir del total ya recalculado por el
+    diff de incidentes de esta misma pasada — si partiera del total previo a
+    ese recálculo, pisaría el cambio de incidentes."""
+    world = World()
+    liq = world.con_liquidacion(
+        total_importe=1600.0, total_incidentes=1, concepto_extra="Adicional", monto_extra=100.0
+    )
+    world.con_incidente(liq.id, numero_incidente="1", costo_servicio_cobrado=1500.0)
+    remoto = make_remoto("1", costo_servicio_cobrado=2000.0, costo_total_cobrado=2000.0)
+    world.cd_gateway.detalles_por_liquidacion[1] = CdLiquidacionDetalle(
+        concepto_extra="Adicional", monto_extra=300.0, numero_factura=None
+    )
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.cambios == 1
+    assert resultado.extra_actualizado is True
+    actualizada = world.liquidaciones.rows[liq.id]
+    assert actualizada.total_importe == 2300.0
+
+
 async def test_guard_cantidad_declarada_no_coincide_no_reconcilia() -> None:
     world = World()
     liq = world.con_liquidacion()

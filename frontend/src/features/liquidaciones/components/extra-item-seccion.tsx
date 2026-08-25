@@ -21,8 +21,6 @@ export function ExtraItemSeccion({
   const [monto, setMonto] = useState(liquidacion.montoExtra?.toString() ?? "");
   const [saving, setSaving] = useState(false);
 
-  const totalAjustado = liquidacion.totalImporte + (liquidacion.montoExtra ?? 0);
-
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -99,23 +97,13 @@ export function ExtraItemSeccion({
           </button>
         </div>
       ) : liquidacion.montoExtra != null ? (
-        <div className="mt-2 flex flex-wrap items-baseline gap-6">
-          <div className="flex flex-col">
-            <span className="font-body text-sm text-foreground">
-              {liquidacion.conceptoExtra ?? "—"}
-            </span>
-            <span className="font-heading text-xl font-extrabold text-foreground">
-              {formatARS(liquidacion.montoExtra)}
-            </span>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
-              Total ajustado
-            </span>
-            <span className="font-heading text-xl font-extrabold text-foreground">
-              {formatARS(totalAjustado)}
-            </span>
-          </div>
+        <div className="mt-2 flex flex-col">
+          <span className="font-body text-sm text-foreground">
+            {liquidacion.conceptoExtra ?? "—"}
+          </span>
+          <span className="font-heading text-xl font-extrabold text-foreground">
+            {formatARS(liquidacion.montoExtra)}
+          </span>
         </div>
       ) : (
         <p className="mt-2 font-body text-sm text-muted-foreground">

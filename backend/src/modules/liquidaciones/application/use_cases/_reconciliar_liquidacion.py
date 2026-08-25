@@ -49,11 +49,23 @@ Nunca borra y recrea un incidente que sigue existiendo remotamente (`cambios`
 hace UPDATE in-place, preserva `incidente_id`) — ver
 `domain/services/reconciliar_incidentes.py` para el porqué (`alertas.incidente_id`
 es `ON DELETE CASCADE`; recrear el incidente se llevaría el triage de la TL).
+
+`total_importe` incluye el ítem extra (ver `recalcular_total_extra` — hallazgo
+2026-08-25, liquidación 3907-5). Como el recálculo por diff de incidentes
+(`_actualizar_totales`) puede correr en la misma pasada y antes que el ajuste
+por extra (`_actualizar_extra`), `execute()` arma una copia corregida de
+`liquidacion` con el total ya actualizado por incidentes antes de pasarla a
+`_actualizar_extra_y_factura` — si no, el ajuste por extra partiría de un
+`total_importe` desactualizado (previo al diff) y pisaría el recálculo de
+incidentes.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from uuid import UUID
 
+from src.modules.liquidaciones.application.use_cases._reconciliar_extra_y_factura import (
+    actualizar_extra_y_factura,
+)
 from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion import (
     ReanalizarLiquidacion,
 )
@@ -74,14 +86,14 @@ from src.modules.liquidaciones.domain.repositories.liquidacion_repository import
 )
 from src.modules.liquidaciones.domain.services.estados_ayc import estado_local_desde_ayc
 from src.modules.liquidaciones.domain.services.importacion.metadata import periodo_mas_frecuente
+from src.modules.liquidaciones.domain.services.recalcular_total_extra import (
+    total_importe_con_incidentes_y_extra,
+)
 from src.modules.liquidaciones.domain.services.reconciliar_incidentes import (
     DiffIncidentes,
     reconciliar_incidentes,
 )
-from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
-    CdLiquidacion,
-    CdLiquidacionDetalle,
-)
+from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import CdLiquidacion
 from src.modules.liquidaciones.domain.value_objects.incidente_importado import IncidenteImportado
 
 _ESTADOS_TERMINALES = frozenset({ESTADO_APROBADA, ESTADO_CERRADA})
@@ -119,6 +131,11 @@ class ReconciliarLiquidacion:
     ) -> ReconciliarLiquidacionResultado:
         if liquidacion.estado in _ESTADOS_TERMINALES:
             return await self._solo_estado_extra_y_factura(liquidacion, cd_liq)
+        return await self._reconciliar_no_terminal(liquidacion, cd_liq, remotos)
+
+    async def _reconciliar_no_terminal(
+        self, liquidacion: Liquidacion, cd_liq: CdLiquidacion, remotos: list[IncidenteImportado]
+    ) -> ReconciliarLiquidacionResultado:
         if len(remotos) != cd_liq.cant_incidentes:
             return ReconciliarLiquidacionResultado(reconciliada=False)
 
@@ -127,27 +144,44 @@ class ReconciliarLiquidacion:
         if locales and len(diff.bajas) / len(locales) > _UMBRAL_BAJAS_MASIVAS:
             return ReconciliarLiquidacionResultado(reconciliada=False)
 
-        actuales = locales
-        if diff.altas or diff.cambios or diff.bajas:
-            await self._aplicar(liquidacion.id, diff)
-            actuales = await self._ports.incidentes.list_by_liquidacion(liquidacion.id)
+        actuales, liquidacion_vigente = await self._aplicar_si_hay_diff(liquidacion, diff, locales)
+        resto = await self._actualizar_periodo_estado_extra(
+            liquidacion, liquidacion_vigente, cd_liq, actuales
+        )
+        return _resultado_no_terminal(diff, resto)
+
+    async def _actualizar_periodo_estado_extra(
+        self,
+        liquidacion: Liquidacion,
+        liquidacion_vigente: Liquidacion,
+        cd_liq: CdLiquidacion,
+        actuales: list[Incidente],
+    ) -> tuple[bool, bool, bool, bool]:
         periodo_actualizado = await self._actualizar_periodo(
             liquidacion.id, liquidacion.periodo, actuales
         )
         estado_actualizado = await self._pisar_estado(liquidacion, cd_liq)
         extra_actualizado, factura_actualizada = await self._actualizar_extra_y_factura(
-            liquidacion, cd_liq
+            liquidacion_vigente, cd_liq
         )
-        return ReconciliarLiquidacionResultado(
-            reconciliada=True,
-            altas=len(diff.altas),
-            cambios=len(diff.cambios),
-            bajas=len(diff.bajas),
-            estado_actualizado=estado_actualizado,
-            periodo_actualizado=periodo_actualizado,
-            extra_actualizado=extra_actualizado,
-            factura_actualizada=factura_actualizada,
+        return periodo_actualizado, estado_actualizado, extra_actualizado, factura_actualizada
+
+    async def _aplicar_si_hay_diff(
+        self, liquidacion: Liquidacion, diff: DiffIncidentes, locales: list[Incidente]
+    ) -> tuple[list[Incidente], Liquidacion]:
+        """Sin diff, no hay nada que aplicar — devuelve `locales`/`liquidacion`
+        tal cual. Con diff, `_aplicar` ya deja persistido el nuevo total
+        (incidentes + extra vigente); acá se arma la copia de `liquidacion`
+        que lo refleja, para que el ajuste por extra que pueda correr después
+        en la misma pasada parta de ese total, no del viejo."""
+        if not (diff.altas or diff.cambios or diff.bajas):
+            return locales, liquidacion
+        nuevo_total = await self._aplicar(liquidacion, diff)
+        actuales = await self._ports.incidentes.list_by_liquidacion(liquidacion.id)
+        liquidacion_vigente = replace(
+            liquidacion, total_importe=nuevo_total, total_incidentes=len(actuales)
         )
+        return actuales, liquidacion_vigente
 
     async def _solo_estado_extra_y_factura(
         self, liquidacion: Liquidacion, cd_liq: CdLiquidacion
@@ -175,22 +209,29 @@ class ReconciliarLiquidacion:
         await self._ports.liquidaciones.update_estado(liquidacion.id, ESTADO_CERRADA)
         return True
 
-    async def _aplicar(self, liquidacion_id: UUID, diff: DiffIncidentes) -> None:
+    async def _aplicar(self, liquidacion: Liquidacion, diff: DiffIncidentes) -> float:
         if diff.bajas:
             await self._ports.incidentes.delete_by_ids(diff.bajas)
         if diff.cambios:
             await self._ports.incidentes.update_cobrados(diff.cambios)
         if diff.altas:
-            await self._ports.incidentes.bulk_create(liquidacion_id, diff.altas)
-        actuales = await self._ports.incidentes.list_by_liquidacion(liquidacion_id)
-        await self._actualizar_totales(liquidacion_id, actuales)
-        await self._ports.reanalizar.execute(liquidacion_id)
+            await self._ports.incidentes.bulk_create(liquidacion.id, diff.altas)
+        actuales = await self._ports.incidentes.list_by_liquidacion(liquidacion.id)
+        nuevo_total = await self._actualizar_totales(liquidacion, actuales)
+        await self._ports.reanalizar.execute(liquidacion.id)
+        return nuevo_total
 
-    async def _actualizar_totales(self, liquidacion_id: UUID, actuales: list[Incidente]) -> None:
-        total_importe = round(sum(i.costo_total_cobrado for i in actuales), 2)
-        await self._ports.liquidaciones.update_totales(
-            liquidacion_id, len(actuales), total_importe
+    async def _actualizar_totales(
+        self, liquidacion: Liquidacion, actuales: list[Incidente]
+    ) -> float:
+        incidentes_costo_total = sum(i.costo_total_cobrado for i in actuales)
+        total_importe = total_importe_con_incidentes_y_extra(
+            incidentes_costo_total, liquidacion.monto_extra
         )
+        await self._ports.liquidaciones.update_totales(
+            liquidacion.id, len(actuales), total_importe
+        )
+        return total_importe
 
     async def _actualizar_periodo(
         self, liquidacion_id: UUID, periodo_actual: str, actuales: list[Incidente]
@@ -208,43 +249,9 @@ class ReconciliarLiquidacion:
     async def _actualizar_extra_y_factura(
         self, liquidacion: Liquidacion, cd_liq: CdLiquidacion
     ) -> tuple[bool, bool]:
-        """Una sola llamada a `get_detalle` cubre ambos campos. Nunca borra un
-        ítem extra cargado a mano cuando AyC no tiene ninguno (`concepto_extra`/
-        `monto_extra` en `None`): la carga manual sigue siendo el fallback
-        acordado con la TL (P4). El número de factura no tiene contraparte
-        manual — si AyC no la reporta (`numero_factura=None`), no hay nada que
-        pisar."""
-        detalle = await self._ports.cd_gateway.get_detalle(cd_liq.id)
-        if detalle is None:
-            return False, False
-        extra_actualizado = await self._actualizar_extra(liquidacion, detalle)
-        factura_actualizada = await self._actualizar_factura(liquidacion, detalle)
-        return extra_actualizado, factura_actualizada
-
-    async def _actualizar_extra(
-        self, liquidacion: Liquidacion, detalle: CdLiquidacionDetalle
-    ) -> bool:
-        if detalle.monto_extra is None:
-            return False
-        if (
-            detalle.concepto_extra == liquidacion.concepto_extra
-            and detalle.monto_extra == liquidacion.monto_extra
-        ):
-            return False
-        await self._ports.liquidaciones.update_extra(
-            liquidacion.id, detalle.concepto_extra, detalle.monto_extra
+        return await actualizar_extra_y_factura(
+            self._ports.liquidaciones, self._ports.cd_gateway, liquidacion, cd_liq
         )
-        return True
-
-    async def _actualizar_factura(
-        self, liquidacion: Liquidacion, detalle: CdLiquidacionDetalle
-    ) -> bool:
-        if detalle.numero_factura is None or detalle.numero_factura == liquidacion.numero_factura:
-            return False
-        await self._ports.liquidaciones.update_numero_factura(
-            liquidacion.id, detalle.numero_factura
-        )
-        return True
 
     async def _pisar_estado(self, liquidacion: Liquidacion, cd_liq: CdLiquidacion) -> bool:
         nuevo = estado_local_desde_ayc(estado_id=cd_liq.estado_id, nombre=cd_liq.estado)
@@ -252,3 +259,19 @@ class ReconciliarLiquidacion:
             return False
         await self._ports.liquidaciones.update_estado(liquidacion.id, nuevo)
         return True
+
+
+def _resultado_no_terminal(
+    diff: DiffIncidentes, resto: tuple[bool, bool, bool, bool]
+) -> ReconciliarLiquidacionResultado:
+    periodo_actualizado, estado_actualizado, extra_actualizado, factura_actualizada = resto
+    return ReconciliarLiquidacionResultado(
+        reconciliada=True,
+        altas=len(diff.altas),
+        cambios=len(diff.cambios),
+        bajas=len(diff.bajas),
+        estado_actualizado=estado_actualizado,
+        periodo_actualizado=periodo_actualizado,
+        extra_actualizado=extra_actualizado,
+        factura_actualizada=factura_actualizada,
+    )

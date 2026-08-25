@@ -21,6 +21,10 @@ from src.modules.liquidaciones.application.use_cases.actualizar_estado_local imp
     ActualizarEstadoLocal,
     ActualizarEstadoLocalPorts,
 )
+from src.modules.liquidaciones.application.use_cases.actualizar_extra_liquidacion import (
+    ActualizarExtraLiquidacion,
+    ActualizarExtraLiquidacionPorts,
+)
 from src.modules.liquidaciones.application.use_cases.anular_liquidacion import (
     AnularLiquidacion,
     AnularLiquidacionPorts,
@@ -117,6 +121,12 @@ def build_list_liquidaciones(session: AsyncSession) -> ListLiquidaciones:
 def build_actualizar_estado_local(session: AsyncSession) -> ActualizarEstadoLocal:
     return ActualizarEstadoLocal(
         ActualizarEstadoLocalPorts(liquidaciones=SqlAlchemyLiquidacionRepository(session))
+    )
+
+
+def build_actualizar_extra_liquidacion(session: AsyncSession) -> ActualizarExtraLiquidacion:
+    return ActualizarExtraLiquidacion(
+        ActualizarExtraLiquidacionPorts(liquidaciones=SqlAlchemyLiquidacionRepository(session))
     )
 
 
