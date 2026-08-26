@@ -14,6 +14,10 @@ class EquipoPreventivo:
     y el dominio NO inventa un vencimiento en ese caso.
     `fecha_ultimo_preventivo` es el último incidente tipo 102 en estado
     terminal no anulado; None = nunca se registró un preventivo hecho.
+    `fecha_instalacion` es el último incidente tipo 103 (Instalación-
+    Desinstalación) en estado terminal no anulado — ancla para estimar
+    `fecha_tentativa` del primer preventivo cuando nunca hubo uno real (ver
+    domain/services/vencimiento.py); None si nunca se registró.
     `domicilio` es `Sucursal.Domicilio` normalizado (agregado 2026-08-23
     para que el mapa muestre la dirección junto al pin y se pueda validar la
     ubicación a ojo — mismo `normalizar_domicilio` que usa el geocoding).
@@ -31,6 +35,7 @@ class EquipoPreventivo:
     zona: str
     frecuencia_dias: int | None
     fecha_ultimo_preventivo: date | None
+    fecha_instalacion: date | None
     domicilio: str
     latitud: float | None
     longitud: float | None

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 
 from src.modules.preventivos.domain.value_objects.vencimiento_preventivo import (
     EstadoPreventivo,
@@ -7,9 +7,23 @@ from src.modules.preventivos.domain.value_objects.vencimiento_preventivo import 
 
 
 @dataclass(frozen=True, slots=True)
+class ConteoEstado:
+    """Cuántos equipos de una sucursal están en un estado dado — permite
+    mostrar el desglose real en vez de esconderlo detrás de `peor_estado`."""
+
+    estado: EstadoPreventivo
+    cantidad: int
+
+
+@dataclass(frozen=True, slots=True)
 class PuntoMapaPreventivo:
-    """Una sucursal (no una máquina) para el mapa: colapsa todo su parque en
-    el estado más urgente, con el criterio de `ORDEN_ESTADO_PRIORIDAD`."""
+    """Una sucursal (no una máquina) para el mapa: `peor_estado` decide el
+    color del pin (criterio de `ORDEN_ESTADO_PRIORIDAD`), `distribucion` es
+    el conteo por estado para no esconder que el peor puede ser un solo
+    equipo aislado entre varios al día. `fecha_tentativa_min` es la más
+    próxima entre los equipos `sin_preventivo` del grupo que sí tienen una
+    instalación registrada (ver domain/services/vencimiento.py) — la más
+    urgente de esas fechas, mismo criterio que `dias_vencido_max`."""
 
     id_sucursal: int
     cliente: str
@@ -23,6 +37,8 @@ class PuntoMapaPreventivo:
     cant_habilitadas: int
     peor_estado: EstadoPreventivo
     dias_vencido_max: int | None
+    fecha_tentativa_min: date | None
+    distribucion: tuple[ConteoEstado, ...]
 
 
 @dataclass(frozen=True, slots=True)

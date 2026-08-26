@@ -29,6 +29,7 @@ def _parse_coordenada(valor: Any) -> float | None:
 
 def map_equipo_row(row: Any) -> EquipoPreventivo:
     fecha = row.fecha_ultimo_preventivo
+    instalacion = row.fecha_instalacion
     return EquipoPreventivo(
         id_maquina=int(row.id_maquina),
         id_sucursal=int(row.id_sucursal),
@@ -39,6 +40,7 @@ def map_equipo_row(row: Any) -> EquipoPreventivo:
         zona=(row.zona or "").strip(),
         frecuencia_dias=int(row.frecuencia_dias) if row.frecuencia_dias is not None else None,
         fecha_ultimo_preventivo=fecha.date() if fecha is not None else None,
+        fecha_instalacion=instalacion.date() if instalacion is not None else None,
         domicilio=normalizar_domicilio(row.domicilio or ""),
         latitud=_parse_coordenada(row.latitud),
         longitud=_parse_coordenada(row.longitud),

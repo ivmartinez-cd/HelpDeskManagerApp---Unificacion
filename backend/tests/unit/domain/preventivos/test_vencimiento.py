@@ -29,6 +29,32 @@ def test_sin_preventivo_previo_no_inventa_fecha() -> None:
     assert resultado.dias_vencido is None
 
 
+def test_sin_preventivo_con_instalacion_calcula_fecha_tentativa() -> None:
+    # Caso real (Cepas Argentinas, MXBC179G54): instalación 2026-04-20 +
+    # frecuencia 180 = tentativa 2026-10-17, pero el estado sigue siendo
+    # sin_preventivo — nunca se "inventa" un al_dia/vencido a partir de esto.
+    resultado = calcular_vencimiento(
+        None, 180, _HOY, fecha_instalacion=date(2026, 4, 20)
+    )
+
+    assert resultado.estado == "sin_preventivo"
+    assert resultado.proximo_vencimiento is None
+    assert resultado.fecha_tentativa == date(2026, 10, 17)
+
+
+def test_sin_preventivo_sin_instalacion_no_tiene_fecha_tentativa() -> None:
+    resultado = calcular_vencimiento(None, 180, _HOY)
+
+    assert resultado.fecha_tentativa is None
+
+
+def test_sin_frecuencia_no_calcula_tentativa_aunque_haya_instalacion() -> None:
+    resultado = calcular_vencimiento(None, None, _HOY, fecha_instalacion=date(2026, 4, 20))
+
+    assert resultado.estado == "sin_frecuencia"
+    assert resultado.fecha_tentativa is None
+
+
 def test_sin_frecuencia_gana_sobre_sin_preventivo() -> None:
     resultado = calcular_vencimiento(None, None, _HOY)
 

@@ -27,6 +27,10 @@ export interface EquipoPreventivo {
   proximo_vencimiento: string | null;
   estado: EstadoPreventivo;
   dias_vencido: number | null;
+  /** Solo cuando `estado === "sin_preventivo"` y hubo una Instalación-
+   * Desinstalación real: instalación + frecuencia, informativo — nunca
+   * cambia el estado (ver domain/services/vencimiento.py). */
+  fecha_tentativa: string | null;
   habilitacion: HabilitacionPreventivo | null;
 }
 
@@ -57,8 +61,15 @@ export interface ListEquiposParams {
   refresh?: boolean;
 }
 
-/** Una sucursal (no una máquina) para el mapa: `peor_estado` es el más
- * urgente de su parque, mismo criterio que el orden de la tabla. */
+export interface ConteoEstadoPreventivo {
+  estado: EstadoPreventivo;
+  cantidad: number;
+}
+
+/** Una sucursal (no una máquina) para el mapa: `peor_estado` decide el color
+ * del pin (mismo criterio que el orden de la tabla), `distribucion` es el
+ * conteo por estado — un solo equipo sin preventivo entre varios al día no
+ * debe leerse como "toda la sucursal pendiente". */
 export interface PuntoMapaPreventivo {
   id_sucursal: number;
   cliente: string;
@@ -72,6 +83,10 @@ export interface PuntoMapaPreventivo {
   cant_habilitadas: number;
   peor_estado: EstadoPreventivo;
   dias_vencido_max: number | null;
+  /** La más próxima entre los equipos `sin_preventivo` del grupo que tienen
+   * `fecha_tentativa` — mismo criterio que `dias_vencido_max`. */
+  fecha_tentativa_min: string | null;
+  distribucion: ConteoEstadoPreventivo[];
 }
 
 /** `Page` + sello de frescura + cuántas sucursales del filtro actual no

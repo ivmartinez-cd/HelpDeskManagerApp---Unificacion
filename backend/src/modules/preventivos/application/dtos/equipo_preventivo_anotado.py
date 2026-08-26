@@ -22,6 +22,7 @@ class EquipoPreventivoAnotado:
     estado: EstadoPreventivo
     proximo_vencimiento: date | None
     dias_vencido: int | None
+    fecha_tentativa: date | None
     habilitacion: HabilitacionInfo | None
 
 

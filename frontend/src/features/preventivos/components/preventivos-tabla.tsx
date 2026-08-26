@@ -43,6 +43,18 @@ function FrecuenciaCell({ dias }: { dias: number | null }) {
 
 function VencimientoCell({ equipo }: { equipo: EquipoPreventivo }) {
   if (!equipo.proximo_vencimiento) {
+    if (equipo.fecha_tentativa) {
+      return (
+        <div className="leading-tight">
+          <p className="tabular-nums text-muted-foreground">
+            {formatFecha(equipo.fecha_tentativa)}
+          </p>
+          <p className="text-xs text-muted-foreground" title="Instalación + frecuencia, nunca hubo un preventivo real">
+            tentativo
+          </p>
+        </div>
+      );
+    }
     return <span className="text-muted-foreground">—</span>;
   }
   return (

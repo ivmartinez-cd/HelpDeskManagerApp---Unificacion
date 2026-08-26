@@ -28,6 +28,7 @@ def _fila_equipo(id_maquina: int, zona: str = "SUR") -> SimpleNamespace:
         zona=zona,
         frecuencia_dias=180,
         fecha_ultimo_preventivo=None,
+        fecha_instalacion=None,
         domicilio="Calle Falsa 123",
         latitud="-34.6",
         longitud="-58.4",
@@ -48,12 +49,18 @@ class FakeRunner:
         return list(self.filas_por_sql.get(sql, []))
 
 
-def _gateway(runner: FakeRunner, ttl: float = 300.0, meses: int = 3) -> PyodbcPreventivosGateway:
+def _gateway(
+    runner: FakeRunner,
+    ttl: float = 300.0,
+    meses: int = 3,
+    zonas_ttl: float | None = None,
+) -> PyodbcPreventivosGateway:
     # El gateway solo usa `fetch_all` del runner; el fake cumple ese contrato.
     return PyodbcPreventivosGateway(
         runner,  # type: ignore[arg-type]
         cache_ttl_seconds=ttl,
         meses_actividad=meses,
+        zonas_cache_ttl_seconds=zonas_ttl,
     )
 
 
@@ -120,6 +127,17 @@ async def test_list_zonas_consulta_el_catalogo_y_lo_cachea() -> None:
     assert runner.llamadas == [(ZONAS_SQL, (5, 5), "preventivos_zonas")]
     assert [(z.zona, z.maquinas_activas) for z in primero] == [("SUR", 3)]
     assert segundo is primero
+
+
+async def test_list_zonas_usa_su_propio_ttl_mas_largo_que_el_de_equipos() -> None:
+    # TTL de equipos vencido (0.0) no debería afectar la caché de zonas.
+    runner = FakeRunner()
+    gateway = _gateway(runner, ttl=0.0, zonas_ttl=1800.0)
+
+    await gateway.list_zonas()
+    await gateway.list_zonas()
+
+    assert len(runner.llamadas) == 1
 
 
 async def test_list_zonas_vencido_vuelve_a_consultar() -> None:

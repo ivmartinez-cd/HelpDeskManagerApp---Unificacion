@@ -85,6 +85,55 @@ async def test_dias_vencido_max_es_el_peor_de_la_sucursal() -> None:
     assert result.puntos[0].dias_vencido_max == 220
 
 
+async def test_distribucion_desglosa_estados_sin_esconder_la_mayoria() -> None:
+    # Caso real: 6 equipos al día y 1 sin preventivo no deberían leerse como
+    # "toda la sucursal pendiente" solo porque `peor_estado` es sin_preventivo.
+    hoy = date.today()
+    equipos = [
+        build_equipo(1, id_sucursal=10, fecha_ultimo_preventivo=hoy),
+        build_equipo(2, id_sucursal=10, fecha_ultimo_preventivo=hoy),
+        build_equipo(3, id_sucursal=10, fecha_ultimo_preventivo=None, frecuencia_dias=180),
+    ]
+    use_case = _use_case(FakePreventivosQueryGateway(equipos))
+
+    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+
+    punto = result.puntos[0]
+    assert punto.peor_estado == "sin_preventivo"
+    assert [(c.estado, c.cantidad) for c in punto.distribucion] == [
+        ("sin_preventivo", 1),
+        ("al_dia", 2),
+    ]
+
+
+async def test_fecha_tentativa_min_es_la_mas_proxima_entre_sin_preventivo() -> None:
+    # Caso real Cepas Argentinas: dos equipos sin_preventivo con instalación
+    # distinta — la sucursal muestra la tentativa más próxima (más urgente).
+    equipos = [
+        build_equipo(
+            1, id_sucursal=10, fecha_ultimo_preventivo=None, fecha_instalacion=date(2026, 4, 20)
+        ),
+        build_equipo(
+            2, id_sucursal=10, fecha_ultimo_preventivo=None, fecha_instalacion=date(2026, 6, 1)
+        ),
+        build_equipo(3, id_sucursal=10, fecha_ultimo_preventivo=date.today()),
+    ]
+    use_case = _use_case(FakePreventivosQueryGateway(equipos))
+
+    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+
+    assert result.puntos[0].fecha_tentativa_min == date(2026, 4, 20) + timedelta(days=180)
+
+
+async def test_fecha_tentativa_min_es_none_sin_instalacion_registrada() -> None:
+    equipos = [build_equipo(1, id_sucursal=10, fecha_ultimo_preventivo=None)]
+    use_case = _use_case(FakePreventivosQueryGateway(equipos))
+
+    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+
+    assert result.puntos[0].fecha_tentativa_min is None
+
+
 async def test_cant_habilitadas_cuenta_solo_las_habilitaciones_activas() -> None:
     # fecha_ultimo_preventivo anterior a la habilitación: si fuera posterior,
     # la limpieza automática del use case de equipos la desactivaría sola.

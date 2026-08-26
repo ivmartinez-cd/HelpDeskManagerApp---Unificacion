@@ -7,6 +7,7 @@ compartido con otra sucursal (ver domain/services/pines_sospechosos.py), válido
 mecánicamente pero no confiable."""
 
 from dataclasses import dataclass, replace
+from datetime import date
 
 from src.modules.preventivos.application.dtos.equipo_preventivo_anotado import (
     EquipoPreventivoAnotado,
@@ -15,6 +16,7 @@ from src.modules.preventivos.application.dtos.list_equipos_request import (
     ListEquiposPorZonaRequest,
 )
 from src.modules.preventivos.application.dtos.punto_mapa_preventivo import (
+    ConteoEstado,
     ListPuntosMapaResult,
     PuntoMapaPreventivo,
 )
@@ -27,6 +29,9 @@ from src.modules.preventivos.domain.repositories.sucursal_coordenadas_repository
 )
 from src.modules.preventivos.domain.services.coordenadas import coordenada_valida
 from src.modules.preventivos.domain.services.vencimiento import ORDEN_ESTADO_PRIORIDAD
+from src.modules.preventivos.domain.value_objects.vencimiento_preventivo import (
+    EstadoPreventivo,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,9 +82,6 @@ def _agrupar_por_sucursal(
 def _punto(id_sucursal: int, grupo: list[EquipoPreventivoAnotado]) -> PuntoMapaPreventivo:
     referencia = grupo[0].equipo
     peor = min(grupo, key=lambda a: ORDEN_ESTADO_PRIORIDAD[a.estado])
-    vencidos = [
-        a.dias_vencido for a in grupo if a.estado == "vencido" and a.dias_vencido is not None
-    ]
     return PuntoMapaPreventivo(
         id_sucursal=id_sucursal,
         cliente=referencia.cliente,
@@ -92,5 +94,36 @@ def _punto(id_sucursal: int, grupo: list[EquipoPreventivoAnotado]) -> PuntoMapaP
         cant_maquinas=len(grupo),
         cant_habilitadas=sum(1 for a in grupo if a.habilitacion is not None),
         peor_estado=peor.estado,
-        dias_vencido_max=max(vencidos) if vencidos else None,
+        dias_vencido_max=_dias_vencido_max(grupo),
+        fecha_tentativa_min=_fecha_tentativa_min(grupo),
+        distribucion=_distribucion(grupo),
+    )
+
+
+def _dias_vencido_max(grupo: list[EquipoPreventivoAnotado]) -> int | None:
+    vencidos = [
+        a.dias_vencido for a in grupo if a.estado == "vencido" and a.dias_vencido is not None
+    ]
+    return max(vencidos) if vencidos else None
+
+
+def _fecha_tentativa_min(grupo: list[EquipoPreventivoAnotado]) -> date | None:
+    tentativas = [
+        a.fecha_tentativa
+        for a in grupo
+        if a.estado == "sin_preventivo" and a.fecha_tentativa is not None
+    ]
+    return min(tentativas) if tentativas else None
+
+
+def _distribucion(grupo: list[EquipoPreventivoAnotado]) -> tuple[ConteoEstado, ...]:
+    conteos: dict[EstadoPreventivo, int] = {}
+    for anotado in grupo:
+        conteos[anotado.estado] = conteos.get(anotado.estado, 0) + 1
+    # Recorre `ORDEN_ESTADO_PRIORIDAD` (no `conteos`) para que el desglose
+    # salga siempre vencidos-primero, igual que el resto del módulo.
+    return tuple(
+        ConteoEstado(estado=estado, cantidad=conteos[estado])
+        for estado in ORDEN_ESTADO_PRIORIDAD
+        if estado in conteos
     )

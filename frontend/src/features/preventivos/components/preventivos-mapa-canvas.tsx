@@ -8,7 +8,7 @@ import { numberFormat } from "./preventivos-format";
 import { crearIconoCluster, peorEstadoDe } from "./preventivos-mapa-cluster";
 import { puntosParaEncuadre } from "./preventivos-mapa-encuadre";
 import { crearIconoPunto } from "./preventivos-mapa-icono";
-import { ESTADO_META } from "./preventivos-tabla";
+import { ESTADO_META, formatFecha } from "./preventivos-tabla";
 
 const CENTRO_DEFAULT: [number, number] = [-34.6037, -58.3816]; // CABA
 const ZOOM_DEFAULT = 11;
@@ -27,12 +27,31 @@ function escapeHtml(valor: string): string {
   return div.innerHTML;
 }
 
+/** "vencido" es el único estado del módulo cuya etiqueta cambia con la
+ * cantidad ("1 vencido" / "3 vencidos"); el resto son frases invariantes
+ * ("al día", "sin preventivo", "sin frecuencia", "por vencer"). */
+function labelDistribucion(estado: EstadoPreventivo, cantidad: number): string {
+  if (estado === "vencido") return cantidad === 1 ? "vencido" : "vencidos";
+  return ESTADO_META[estado].label.toLowerCase();
+}
+
+function segmentoDistribucion(
+  item: PuntoMapaPreventivo["distribucion"][number],
+  punto: PuntoMapaPreventivo,
+): string {
+  let detalle = "";
+  if (item.estado === "vencido" && punto.dias_vencido_max !== null) {
+    detalle = ` (hace ${numberFormat.format(punto.dias_vencido_max)} días)`;
+  } else if (item.estado === "sin_preventivo" && punto.fecha_tentativa_min !== null) {
+    detalle = ` (tentativo ${formatFecha(punto.fecha_tentativa_min)})`;
+  }
+  return `${numberFormat.format(item.cantidad)} ${labelDistribucion(item.estado, item.cantidad)}${detalle}`;
+}
+
 function popupHtml(punto: PuntoMapaPreventivo, canUpdate: boolean): string {
-  const meta = ESTADO_META[punto.peor_estado];
-  const vencidoInfo =
-    punto.peor_estado === "vencido" && punto.dias_vencido_max !== null
-      ? ` · hace ${numberFormat.format(punto.dias_vencido_max)} días`
-      : "";
+  const distribucionInfo = punto.distribucion
+    .map((item) => segmentoDistribucion(item, punto))
+    .join(" · ");
   const habilitadosInfo =
     punto.cant_habilitadas > 0
       ? ` · ${numberFormat.format(punto.cant_habilitadas)} habilitado(s)`
@@ -56,7 +75,7 @@ function popupHtml(punto: PuntoMapaPreventivo, canUpdate: boolean): string {
     <p style="margin:0;font-weight:600">${escapeHtml(punto.cliente)}</p>
     <p style="margin:0;font-size:12px;opacity:.7">${escapeHtml(punto.sucursal)} · ${escapeHtml(punto.zona)}</p>
     ${domicilioInfo}
-    <p style="margin:0;font-size:12px;font-weight:600">${escapeHtml(meta.label)}${vencidoInfo}</p>
+    <p style="margin:0;font-size:12px;font-weight:600">${escapeHtml(distribucionInfo)}</p>
     <p style="margin:0;font-size:12px;opacity:.7">${numberFormat.format(punto.cant_maquinas)} equipo(s)${habilitadosInfo}</p>
     ${cargarInfo}
     ${editarInfo}

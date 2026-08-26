@@ -103,7 +103,10 @@ def _anotar(
     equipo: EquipoPreventivo, habilitacion: HabilitacionPreventivo | None, hoy: date
 ) -> EquipoPreventivoAnotado:
     vencimiento = calcular_vencimiento(
-        equipo.fecha_ultimo_preventivo, equipo.frecuencia_dias, hoy
+        equipo.fecha_ultimo_preventivo,
+        equipo.frecuencia_dias,
+        hoy,
+        fecha_instalacion=equipo.fecha_instalacion,
     )
     info = (
         HabilitacionInfo(
@@ -119,6 +122,7 @@ def _anotar(
         estado=vencimiento.estado,
         proximo_vencimiento=vencimiento.proximo_vencimiento,
         dias_vencido=vencimiento.dias_vencido,
+        fecha_tentativa=vencimiento.fecha_tentativa,
         habilitacion=info,
     )
 

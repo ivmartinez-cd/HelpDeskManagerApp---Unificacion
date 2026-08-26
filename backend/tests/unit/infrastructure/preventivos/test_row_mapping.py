@@ -22,6 +22,7 @@ def _row(**overrides: Any) -> SimpleNamespace:
         "zona": "SUR ",
         "frecuencia_dias": 180,
         "fecha_ultimo_preventivo": datetime(2026, 5, 3, 10, 15),
+        "fecha_instalacion": None,
         "domicilio": "San Isidro 2200 Piso: Dpto:",
         "latitud": "-34.603722",
         "longitud": "-58.381592",
@@ -48,6 +49,16 @@ def test_mapea_una_fila_completa_recortando_char_fijos() -> None:
 
 def test_fecha_ultimo_preventivo_pierde_la_hora() -> None:
     assert map_equipo_row(_row()).fecha_ultimo_preventivo == date(2026, 5, 3)
+
+
+def test_fecha_instalacion_pierde_la_hora() -> None:
+    equipo = map_equipo_row(_row(fecha_instalacion=datetime(2026, 4, 20, 17, 8)))
+
+    assert equipo.fecha_instalacion == date(2026, 4, 20)
+
+
+def test_fecha_instalacion_nula_queda_none() -> None:
+    assert map_equipo_row(_row(fecha_instalacion=None)).fecha_instalacion is None
 
 
 def test_campos_null_no_rompen_el_mapeo() -> None:

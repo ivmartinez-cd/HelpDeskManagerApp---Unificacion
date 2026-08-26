@@ -7,6 +7,7 @@ from src.modules.preventivos.application.dtos.equipo_preventivo_anotado import (
     HabilitacionInfo,
 )
 from src.modules.preventivos.application.dtos.punto_mapa_preventivo import (
+    ConteoEstado,
     PuntoMapaPreventivo,
 )
 from src.modules.preventivos.domain.entities.sucursal_coordenadas import (
@@ -45,6 +46,7 @@ class EquipoPreventivoSchema(BaseModel):
     proximo_vencimiento: date | None
     estado: EstadoPreventivo
     dias_vencido: int | None
+    fecha_tentativa: date | None
     habilitacion: HabilitacionSchema | None
 
     @classmethod
@@ -62,18 +64,28 @@ class EquipoPreventivoSchema(BaseModel):
             proximo_vencimiento=anotado.proximo_vencimiento,
             estado=anotado.estado,
             dias_vencido=anotado.dias_vencido,
-            habilitacion=(
-                HabilitacionSchema.from_info(anotado.habilitacion)
-                if anotado.habilitacion is not None
-                else None
-            ),
+            fecha_tentativa=anotado.fecha_tentativa,
+            habilitacion=_habilitacion_schema(anotado.habilitacion),
         )
+
+
+def _habilitacion_schema(info: HabilitacionInfo | None) -> HabilitacionSchema | None:
+    return HabilitacionSchema.from_info(info) if info is not None else None
 
 
 class EquiposPreventivosPage(Page[EquipoPreventivoSchema]):
     """Page + sello de frescura de la caché del gateway ("actualizado hace X")."""
 
     consultado_en: datetime
+
+
+class ConteoEstadoSchema(BaseModel):
+    estado: EstadoPreventivo
+    cantidad: int
+
+    @classmethod
+    def from_domain(cls, conteo: ConteoEstado) -> "ConteoEstadoSchema":
+        return cls(estado=conteo.estado, cantidad=conteo.cantidad)
 
 
 class PuntoMapaSchema(BaseModel):
@@ -89,6 +101,8 @@ class PuntoMapaSchema(BaseModel):
     cant_habilitadas: int
     peor_estado: EstadoPreventivo
     dias_vencido_max: int | None
+    fecha_tentativa_min: date | None
+    distribucion: list[ConteoEstadoSchema]
 
     @classmethod
     def from_domain(cls, punto: PuntoMapaPreventivo) -> "PuntoMapaSchema":
@@ -105,6 +119,8 @@ class PuntoMapaSchema(BaseModel):
             cant_habilitadas=punto.cant_habilitadas,
             peor_estado=punto.peor_estado,
             dias_vencido_max=punto.dias_vencido_max,
+            fecha_tentativa_min=punto.fecha_tentativa_min,
+            distribucion=[ConteoEstadoSchema.from_domain(c) for c in punto.distribucion],
         )
 
 

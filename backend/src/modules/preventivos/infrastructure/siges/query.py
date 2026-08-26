@@ -12,6 +12,15 @@ parametrizadas — ARCHITECTURE_GUIDE §8). Fuentes confirmadas con dato real el
   710 Resuelto c/pendientes). `Fecha_Cierre` usa el sentinel 1900-01-01
   incluso en incidentes cerrados, por eso la fecha efectiva cae a
   `Fecha_Ingreso` cuando el cierre es sentinel.
+- Fecha de instalación = MAX de `Incidente` tipo 103 (Instalación-
+  Desinstalación) en estado terminal no anulado, pero por `Fecha_Ingreso`
+  (no `Fecha_Cierre` como el preventivo — ver comentario en INST más abajo).
+  Ancla de `fecha_tentativa` cuando el equipo nunca tuvo un preventivo real
+  (caso confirmado 2026-08-26, Cepas Argentinas/MXBC179G54: sus dos
+  incidentes tipo 102 están en estado 900 Anulado — por eso no cuentan como
+  "último preventivo" — pero sí hay una Instalación con Fecha_Ingreso
+  2026-04-20; el listado legacy usa esa fecha + la frecuencia como
+  "preventivo sugerido" en vez de dejarlo en blanco).
 - Universo (ajustado 2026-08-14 tras reporte del usuario, rondas 5-11):
   `M.Estado = 0 AND M.ID_Estado_Maquina = 1` ('Activa en Cliente' — más
   estricto que el `NOT IN (2, 8)` del parque por PST: acá se despachan
@@ -86,6 +95,7 @@ SELECT
     S.Cuadricula AS zona,
     TP.Dias AS frecuencia_dias,
     UP.fecha_ultimo_preventivo,
+    INST.fecha_instalacion,
     S.Domicilio AS domicilio,
     S.Latitud AS latitud,
     S.Longitud AS longitud
@@ -104,6 +114,21 @@ LEFT JOIN (
       AND I.ID_Estado_Incidente IN (500, 600, 700, 710)
     GROUP BY I.ID_Maquina
 ) UP ON UP.ID_Maquina = M.ID_Maquina
+LEFT JOIN (
+    -- A diferencia de UP (preventivo): acá se usa Fecha_Ingreso siempre, no
+    -- Fecha_Cierre. Un preventivo es un servicio que importa cuándo se
+    -- completó (cierre); una instalación es un evento puntual donde importa
+    -- cuándo el equipo entró en servicio (ingreso) — cierre es un trámite
+    -- administrativo posterior, a veces al día siguiente, que corría
+    -- `fecha_tentativa` un día de más contra el valor real (caso confirmado
+    -- 2026-08-26: incidente 830662, Fecha_Ingreso 20/04 vs Fecha_Cierre
+    -- 21/04 — el listado legacy usa 20/04).
+    SELECT I.ID_Maquina, MAX(I.Fecha_Ingreso) AS fecha_instalacion
+    FROM dbo.Incidente I
+    WHERE I.ID_Tipo_Incidente = 103
+      AND I.ID_Estado_Incidente IN (500, 600, 700, 710)
+    GROUP BY I.ID_Maquina
+) INST ON INST.ID_Maquina = M.ID_Maquina
 {_ACTIVIDAD_EMPRESA_JOIN}
 WHERE S.Estado = 0
   AND M.Estado = 0
