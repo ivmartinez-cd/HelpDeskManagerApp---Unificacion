@@ -15,6 +15,16 @@ const nextConfig: NextConfig = {
     // conexión antes de que el backend responda y el usuario ve "Error de
     // Red" aunque el backend nunca haya fallado.
     proxyTimeout: 180_000,
+    // Turbopack persiste una cache de compilación a disco por default desde
+    // Next 16.1 (turbopackFileSystemCacheForDev) para acelerar reinicios de
+    // `next dev`. El webServer de Playwright (ver playwright.config.ts)
+    // arranca un `next dev` nuevo en cada corrida y nunca reaprovecha esa
+    // cache entre procesos, así que ahí solo paga el costo de escribirla en
+    // el filesystem lento de WSL sin ningún beneficio -- sospechoso de los
+    // cuelgues intermitentes de compilación vistos en e2e (net::ERR_ABORTED
+    // en rutas al azar, no siempre la misma). Se desactiva solo para ese
+    // proceso; el `next dev` interactivo normal la sigue usando.
+    turbopackFileSystemCacheForDev: process.env.PLAYWRIGHT_TEST !== "1",
   },
   async redirects() {
     // Turnos dejó de colgar de Configuración al pasar a ser módulo de permisos
