@@ -25,6 +25,7 @@ import {
   BrandSkeleton,
 } from "@/shared/components/ui/brand-form";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
+import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
 
 function KpiCard({ label, value, tone }: { label: string; value: number; tone: string }) {
   return (
@@ -180,11 +181,22 @@ export function ClientesNuevosView() {
       </div>
 
       {fichas === null && !error && (
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 5 }, (_, i) => (
-            <BrandSkeleton key={i} className="h-12 w-full" />
-          ))}
-        </div>
+        <>
+          <SigesLoadingModal
+            etapas={[
+              { hasta: 5, texto: "Consultando las fichas de Comercial…" },
+              { hasta: 12, texto: "Cruzando las instalaciones reales de Siges…" },
+              { hasta: 20, texto: "Un momento más, ya casi está…" },
+              { texto: "La base está lenta hoy — seguimos esperando la respuesta…" },
+            ]}
+            nota="La primera carga cruza las instalaciones reales de Siges. Después queda en caché 5 minutos y la página responde al instante."
+          />
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 5 }, (_, i) => (
+              <BrandSkeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        </>
       )}
 
       {error && (
