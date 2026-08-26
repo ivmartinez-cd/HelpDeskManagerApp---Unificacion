@@ -1,11 +1,7 @@
 import { httpClient } from "@/services/http-client";
 
-export interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
+export type { Page };
 
 // Tope de `size` que acepta el backend (Query le=1000 en config_routers).
 const CATALOGO_SIZE_MAX = 1000;

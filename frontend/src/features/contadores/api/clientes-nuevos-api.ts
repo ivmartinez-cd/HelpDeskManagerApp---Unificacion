@@ -7,12 +7,7 @@ import type {
 
 /** Envelope `Page[T]` del backend (ver contadores-api.ts): las fichas son
  * decenas por año, se piden en una sola página y se filtran en la UI. */
-interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
 
 const BASE = "/api/contadores/clientes-nuevos";
 

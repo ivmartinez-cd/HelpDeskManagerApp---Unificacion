@@ -5,12 +5,7 @@ import type {
   PrecargaGrilla,
 } from "../types/grilla-variantes";
 
-interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
 
 const BASE = "/api/turnos/grilla-variantes";
 

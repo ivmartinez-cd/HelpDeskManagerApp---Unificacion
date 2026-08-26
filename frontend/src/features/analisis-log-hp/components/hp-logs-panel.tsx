@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { ApiError } from "@/services/http-client";
 import { useSession } from "@/services/session-provider";
 import type { AnalysisResult, SdsExtractResult, Severity } from "../types/analisis-log-hp";
@@ -14,13 +15,24 @@ import {
 import { AiDiagnosisCard, buildPayload } from "./ai-diagnosis-card";
 import { AnalysisCollapsibles } from "./analysis-collapsibles";
 import { CpmdUploadModal } from "./cpmd-upload-modal";
-import { ErrorCharts } from "./error-charts";
 import { ErrorHeatmap } from "./error-heatmap";
 import { ErrorTimeline } from "./error-timeline";
 import { ExecutivePrintReport } from "./executive-print-report";
 import { KpiCards } from "./kpi-cards";
 import { PanelToolbar } from "./panel-toolbar";
 import { SeverityFilter } from "./severity-filter";
+
+// chart.js (via react-chartjs-2) fuera del bundle inicial del panel -- mismo
+// criterio que sla-mes-card.tsx en el dashboard de Inicio.
+const ErrorCharts = dynamic(() => import("./error-charts").then((m) => m.ErrorCharts), {
+  ssr: false,
+  loading: () => (
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div className="h-80 animate-pulse rounded-[12px] border border-border bg-card" />
+      <div className="h-80 animate-pulse rounded-[12px] border border-border bg-card" />
+    </div>
+  ),
+});
 
 interface Props {
   serial: string;

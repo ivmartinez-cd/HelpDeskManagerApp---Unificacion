@@ -5,12 +5,7 @@ import type {
   WatiSyncResultado,
 } from "../types/wati";
 
-interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
 
 export const watiApi = {
   getResumen: () => httpClient.get<WatiPendientesResumen>("/api/wati/pendientes/resumen"),

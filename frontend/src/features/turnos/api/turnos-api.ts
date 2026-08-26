@@ -12,12 +12,7 @@ import type {
   VarianteActiva,
 } from "../types/turnos";
 
-interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
 
 /** `/current` es un `Page` + `varianteActiva` (aditivo, ADR-025). */
 type CurrentShiftsWire = Page<ResolvedShift> & { varianteActiva?: VarianteActiva | null };

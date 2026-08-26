@@ -130,12 +130,7 @@ export interface ProcessErsResponse {
  * completos en una sola página grande para alimentar un combobox con
  * búsqueda en vivo, así que acá se desenvuelve `.items` para que el resto
  * del frontend siga viendo un array plano como antes. */
-interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
 
 export const contadoresApi = {
   // DB3 a CSV

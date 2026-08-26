@@ -10,12 +10,7 @@ import type {
   UpsertContactoPayload,
 } from "../types/prestadores";
 
-interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
 
 export const prestadoresApi = {
   getResumen: () => httpClient.get<PrestadoresResumen>("/api/prestadores"),

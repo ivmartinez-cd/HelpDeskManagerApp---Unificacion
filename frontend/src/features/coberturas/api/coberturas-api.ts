@@ -6,12 +6,7 @@ import type {
   CreateCoberturaPayload,
 } from "../types/coberturas";
 
-interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
 
 // ── Contadores — wire snake_case (schemas sin serialization_alias) ──────────
 

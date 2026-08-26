@@ -7,12 +7,7 @@
  * varias tablas de insumos necesitan el `total` (el de `/alerts` es
  * directamente el contador de escaladas), así que los métodos de listado
  * devuelven el `Page<T>` completo. */
-export interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+export type { Page } from "@/shared/types/pagination";
 
 /** Parámetros de paginación de cualquier listado del módulo. Todos los
  * endpoints tienen un `size` default generoso (500 en las tablas que filtran

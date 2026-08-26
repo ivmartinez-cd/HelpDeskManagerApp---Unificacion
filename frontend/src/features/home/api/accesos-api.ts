@@ -1,11 +1,6 @@
 import { httpClient } from "@/services/http-client";
 
-interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
 
 interface RouteVisitWire {
   route: string;

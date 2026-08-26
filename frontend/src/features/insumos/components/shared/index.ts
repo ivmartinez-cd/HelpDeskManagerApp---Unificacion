@@ -13,8 +13,5 @@ export { DateRangePickerPopover } from "./date-range-picker-popover";
 export { SortableHeader, type SortableColumn } from "./sortable-header";
 export { StatusBadge, toneForStatusKey, type StatusTone } from "./status-badge";
 export { TonerBar, tonerLevelColor, type TonerBarSize } from "./toner-bar";
-export {
-  TrendChart,
-  type TrendAnnotation,
-  type TrendPeriodOption,
-} from "./trend-chart";
+export { type TrendAnnotation, type TrendPeriodOption } from "./trend-chart";
+export { TrendChart } from "./trend-chart-lazy";

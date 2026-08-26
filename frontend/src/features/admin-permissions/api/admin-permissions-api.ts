@@ -38,14 +38,7 @@ export interface FeaturesResponse {
   features: string[];
 }
 
-/** Envelope `Page[T]` del backend — declarado local, como en el resto de las
- * features (no hay tipo compartido para no acoplarlas). */
-interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
 
 export const adminPermissionsApi = {
   modules: () =>

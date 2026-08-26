@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 
@@ -11,6 +12,8 @@ export default function AppError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const router = useRouter();
+
   useEffect(() => {
     console.error("Error no controlado en la app:", error);
   }, [error]);
@@ -27,7 +30,7 @@ export default function AppError({
         </p>
       </div>
       <div className="flex gap-3">
-        <Button variant="outline" onClick={() => (window.location.href = "/")}>
+        <Button variant="outline" onClick={() => router.push("/")}>
           Ir a Inicio
         </Button>
         <Button onClick={() => reset()}>Reintentar</Button>

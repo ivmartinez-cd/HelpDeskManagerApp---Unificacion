@@ -1,6 +1,1 @@
-export interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+export type { Page } from "@/shared/types/pagination";

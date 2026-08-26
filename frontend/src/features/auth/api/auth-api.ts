@@ -34,14 +34,8 @@ export interface LoginPayload {
   password: string;
 }
 
-/** Envelope `Page[T]` del backend — declarado local, como en el resto de las
- * features (no hay tipo compartido para no acoplarlas). */
-export interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
+export type { Page };
 
 export const authApi = {
   login: (payload: LoginPayload) =>

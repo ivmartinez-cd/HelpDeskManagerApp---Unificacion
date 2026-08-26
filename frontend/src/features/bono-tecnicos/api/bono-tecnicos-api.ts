@@ -9,12 +9,7 @@ import type {
   SolicitudTv,
 } from "../types/bono-tecnicos";
 
-interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
 
 export const bonoTecnicosApi = {
   getResumen: (periodo: string) =>

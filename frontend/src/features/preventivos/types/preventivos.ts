@@ -39,12 +39,8 @@ export interface ZonaParque {
   maquinas_activas: number;
 }
 
-export interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
+export type { Page };
 
 /** `Page` + sello de frescura de la caché del backend (TTL 5 min). */
 export interface EquiposPreventivosPage extends Page<EquipoPreventivo> {

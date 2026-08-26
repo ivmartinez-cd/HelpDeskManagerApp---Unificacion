@@ -1,12 +1,7 @@
 import { httpClient } from "@/services/http-client";
 import type { IncidenteSinCerrar, PendientesResumen } from "../types/pendientes";
 
-interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  size: number;
-}
+import type { Page } from "@/shared/types/pagination";
 
 export const pendientesApi = {
   getResumen: (operadorId?: string) => {
