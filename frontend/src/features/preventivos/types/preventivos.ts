@@ -82,9 +82,11 @@ export interface PuntoMapaPreventivo {
   cant_maquinas: number;
   cant_habilitadas: number;
   peor_estado: EstadoPreventivo;
-  dias_vencido_max: number | null;
+  /** La más antigua (más urgente) entre los `proximo_vencimiento` de los
+   * equipos `vencido` del grupo — fecha real, no un conteo de días. */
+  fecha_vencido_min: string | null;
   /** La más próxima entre los equipos `sin_preventivo` del grupo que tienen
-   * `fecha_tentativa` — mismo criterio que `dias_vencido_max`. */
+   * `fecha_tentativa`. */
   fecha_tentativa_min: string | null;
   distribucion: ConteoEstadoPreventivo[];
 }

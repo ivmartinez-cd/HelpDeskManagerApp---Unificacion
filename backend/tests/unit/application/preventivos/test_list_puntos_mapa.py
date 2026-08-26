@@ -68,7 +68,7 @@ async def test_colapsa_varias_maquinas_de_una_sucursal_en_un_punto() -> None:
     assert por_sucursal[20].peor_estado == "al_dia"
 
 
-async def test_dias_vencido_max_es_el_peor_de_la_sucursal() -> None:
+async def test_fecha_vencido_min_es_la_mas_atrasada_de_la_sucursal() -> None:
     hoy = datetime.now(_TZ_LOCAL).date()
     hace_400 = hoy - timedelta(days=400)
     hace_40 = hoy - timedelta(days=40)
@@ -80,9 +80,10 @@ async def test_dias_vencido_max_es_el_peor_de_la_sucursal() -> None:
 
     result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
 
-    # 400 - 180 = 220 días de atraso; anclado a `hoy` en vez de un número
-    # fijo para no depender de en qué instante exacto corre el test.
-    assert result.puntos[0].dias_vencido_max == 220
+    # El equipo 1 venció hace_400 + 180 días — la fecha real, no un conteo de
+    # días, es lo que ahora expone el punto del mapa (preferido por el
+    # usuario sobre "hace N días").
+    assert result.puntos[0].fecha_vencido_min == hace_400 + timedelta(days=180)
 
 
 async def test_distribucion_desglosa_estados_sin_esconder_la_mayoria() -> None:

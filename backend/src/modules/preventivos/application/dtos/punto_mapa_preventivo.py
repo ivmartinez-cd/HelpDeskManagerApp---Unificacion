@@ -20,10 +20,10 @@ class PuntoMapaPreventivo:
     """Una sucursal (no una máquina) para el mapa: `peor_estado` decide el
     color del pin (criterio de `ORDEN_ESTADO_PRIORIDAD`), `distribucion` es
     el conteo por estado para no esconder que el peor puede ser un solo
-    equipo aislado entre varios al día. `fecha_tentativa_min` es la más
-    próxima entre los equipos `sin_preventivo` del grupo que sí tienen una
-    instalación registrada (ver domain/services/vencimiento.py) — la más
-    urgente de esas fechas, mismo criterio que `dias_vencido_max`."""
+    equipo aislado entre varios al día. `fecha_vencido_min`/`fecha_tentativa_min`
+    son la fecha real más urgente de los equipos `vencido`/`sin_preventivo`
+    del grupo respectivamente — el popup del mapa prefiere mostrar la fecha
+    real ("preventivo sugerido") a un conteo de días."""
 
     id_sucursal: int
     cliente: str
@@ -36,7 +36,7 @@ class PuntoMapaPreventivo:
     cant_maquinas: int
     cant_habilitadas: int
     peor_estado: EstadoPreventivo
-    dias_vencido_max: int | None
+    fecha_vencido_min: date | None
     fecha_tentativa_min: date | None
     distribucion: tuple[ConteoEstado, ...]
 

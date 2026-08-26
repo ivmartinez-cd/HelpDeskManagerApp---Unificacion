@@ -12,15 +12,30 @@ parametrizadas — ARCHITECTURE_GUIDE §8). Fuentes confirmadas con dato real el
   710 Resuelto c/pendientes). `Fecha_Cierre` usa el sentinel 1900-01-01
   incluso en incidentes cerrados, por eso la fecha efectiva cae a
   `Fecha_Ingreso` cuando el cierre es sentinel.
+- **Scoping por sucursal (bug real corregido 2026-08-26)**: tanto el
+  preventivo como la instalación exigen que `Incidente.ID_Sucursal` (la
+  sucursal donde ocurrió el incidente, histórica) coincida con la
+  `Maquina.ID_Sucursal` ACTUAL. Un `ID_Maquina` persiste en Siges aunque el
+  equipo se reasigne entre clientes distintos con el tiempo; sin este
+  scoping, el historial de preventivos del cliente ANTERIOR se le atribuye
+  al actual. Caso confirmado: Fiter - Congreso/Z8PMB3BC600409X mostraba
+  "vencido hace 779 días" por un Preventivo de 2024 hecho en OPDEA — otro
+  cliente — antes de que el equipo llegara a Fiter en agosto 2024; auditado
+  contra el universo real: 2160/16205 máquinas activas (13%) tenían este
+  mismo problema.
 - Fecha de instalación = MAX de `Incidente` tipo 103 (Instalación-
   Desinstalación) en estado terminal no anulado, pero por `Fecha_Ingreso`
   (no `Fecha_Cierre` como el preventivo — ver comentario en INST más abajo).
   Ancla de `fecha_tentativa` cuando el equipo nunca tuvo un preventivo real
-  (caso confirmado 2026-08-26, Cepas Argentinas/MXBC179G54: sus dos
-  incidentes tipo 102 están en estado 900 Anulado — por eso no cuentan como
-  "último preventivo" — pero sí hay una Instalación con Fecha_Ingreso
-  2026-04-20; el listado legacy usa esa fecha + la frecuencia como
-  "preventivo sugerido" en vez de dejarlo en blanco).
+  en su sucursal actual (caso confirmado 2026-08-26, Cepas Argentinas/
+  MXBC179G54: sus dos incidentes tipo 102 están en estado 900 Anulado — por
+  eso no cuentan como "último preventivo" — pero sí hay una Instalación con
+  Fecha_Ingreso 2026-04-20; el listado legacy usa esa fecha + la frecuencia
+  como "preventivo sugerido" en vez de dejarlo en blanco). Si tampoco hay
+  una Instalación real en la sucursal actual (ej. reasignación sin ese
+  incidente registrado, caso Fiter), `fecha_tentativa` queda en None — no se
+  aproxima con otro tipo de incidente (correctivo, taller) para no inventar
+  una fecha sin fundamento real.
 - Universo (ajustado 2026-08-14 tras reporte del usuario, rondas 5-11):
   `M.Estado = 0 AND M.ID_Estado_Maquina = 1` ('Activa en Cliente' — más
   estricto que el `NOT IN (2, 8)` del parque por PST: acá se despachan
@@ -106,14 +121,22 @@ INNER JOIN dbo.Articulo A ON A.Id_Articulo = M.ID_Articulo
 INNER JOIN dbo.ArtGen AG ON AG.Id_ArtGen = A.Id_ArtGen
 LEFT JOIN dbo.TipoPreventivo TP ON TP.Tipo = S.TipoPreventivo
 LEFT JOIN (
-    SELECT I.ID_Maquina,
+    -- Agrupa también por ID_Sucursal (el de `Incidente`, histórico —no el
+    -- actual de `Maquina`— así el JOIN de abajo exige que coincida con la
+    -- sucursal de HOY): un equipo reasignado entre clientes arrastra su
+    -- ID_Maquina en Siges, y sin este filtro el preventivo hecho en el
+    -- cliente anterior se le atribuye al actual (caso confirmado 2026-08-26,
+    -- Fiter - Congreso/Z8PMB3BC600409X: su único Preventivo real es de 2024,
+    -- hecho en OPDEA — otro cliente — antes de que el equipo llegara a Fiter
+    -- en agosto 2024; afecta 2160/16205 máquinas activas, ~13% del parque).
+    SELECT I.ID_Maquina, I.ID_Sucursal,
            MAX(CASE WHEN I.Fecha_Cierre > '1900-01-01' THEN I.Fecha_Cierre
                     ELSE I.Fecha_Ingreso END) AS fecha_ultimo_preventivo
     FROM dbo.Incidente I
     WHERE I.ID_Tipo_Incidente = 102
       AND I.ID_Estado_Incidente IN (500, 600, 700, 710)
-    GROUP BY I.ID_Maquina
-) UP ON UP.ID_Maquina = M.ID_Maquina
+    GROUP BY I.ID_Maquina, I.ID_Sucursal
+) UP ON UP.ID_Maquina = M.ID_Maquina AND UP.ID_Sucursal = M.ID_Sucursal
 LEFT JOIN (
     -- A diferencia de UP (preventivo): acá se usa Fecha_Ingreso siempre, no
     -- Fecha_Cierre. Un preventivo es un servicio que importa cuándo se
@@ -123,12 +146,14 @@ LEFT JOIN (
     -- `fecha_tentativa` un día de más contra el valor real (caso confirmado
     -- 2026-08-26: incidente 830662, Fecha_Ingreso 20/04 vs Fecha_Cierre
     -- 21/04 — el listado legacy usa 20/04).
-    SELECT I.ID_Maquina, MAX(I.Fecha_Ingreso) AS fecha_instalacion
+    -- Mismo scoping por sucursal que UP, y por la misma razón: una
+    -- instalación en el cliente anterior no es "cuándo llegó" al actual.
+    SELECT I.ID_Maquina, I.ID_Sucursal, MAX(I.Fecha_Ingreso) AS fecha_instalacion
     FROM dbo.Incidente I
     WHERE I.ID_Tipo_Incidente = 103
       AND I.ID_Estado_Incidente IN (500, 600, 700, 710)
-    GROUP BY I.ID_Maquina
-) INST ON INST.ID_Maquina = M.ID_Maquina
+    GROUP BY I.ID_Maquina, I.ID_Sucursal
+) INST ON INST.ID_Maquina = M.ID_Maquina AND INST.ID_Sucursal = M.ID_Sucursal
 {_ACTIVIDAD_EMPRESA_JOIN}
 WHERE S.Estado = 0
   AND M.Estado = 0

@@ -154,7 +154,7 @@ async def test_equipos_devuelve_page_con_sello_de_frescura() -> None:
     assert set(vencido) == {
         "id_maquina", "serie", "modelo", "cliente", "sucursal", "zona", "frecuencia_dias",
         "fecha_ultimo_preventivo", "proximo_vencimiento", "estado", "dias_vencido",
-        "habilitacion",
+        "fecha_tentativa", "habilitacion",
     }
     assert vencido["id_maquina"] == 2
     assert vencido["estado"] == "vencido"
@@ -208,7 +208,8 @@ async def test_mapa_colapsa_por_sucursal_y_cuenta_sin_ubicar() -> None:
     punto = body["items"][0]
     assert set(punto) == {
         "id_sucursal", "cliente", "sucursal", "zona", "domicilio", "latitud", "longitud",
-        "ubicado", "cant_maquinas", "cant_habilitadas", "peor_estado", "dias_vencido_max",
+        "ubicado", "cant_maquinas", "cant_habilitadas", "peor_estado", "fecha_vencido_min",
+        "fecha_tentativa_min", "distribucion",
     }
     assert (punto["id_sucursal"], punto["cant_maquinas"], punto["cant_habilitadas"]) == (10, 2, 1)
     assert punto["peor_estado"] == "vencido"

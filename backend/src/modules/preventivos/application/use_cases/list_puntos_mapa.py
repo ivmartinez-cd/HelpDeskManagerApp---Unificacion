@@ -94,17 +94,22 @@ def _punto(id_sucursal: int, grupo: list[EquipoPreventivoAnotado]) -> PuntoMapaP
         cant_maquinas=len(grupo),
         cant_habilitadas=sum(1 for a in grupo if a.habilitacion is not None),
         peor_estado=peor.estado,
-        dias_vencido_max=_dias_vencido_max(grupo),
+        fecha_vencido_min=_fecha_vencido_min(grupo),
         fecha_tentativa_min=_fecha_tentativa_min(grupo),
         distribucion=_distribucion(grupo),
     )
 
 
-def _dias_vencido_max(grupo: list[EquipoPreventivoAnotado]) -> int | None:
+def _fecha_vencido_min(grupo: list[EquipoPreventivoAnotado]) -> date | None:
+    # El más atrasado (mayor dias_vencido) es el de proximo_vencimiento más
+    # antiguo — misma máquina, otra forma de mirarlo. El popup del mapa
+    # prefiere la fecha real ("preventivo sugerido") a un conteo de días.
     vencidos = [
-        a.dias_vencido for a in grupo if a.estado == "vencido" and a.dias_vencido is not None
+        a.proximo_vencimiento
+        for a in grupo
+        if a.estado == "vencido" and a.proximo_vencimiento is not None
     ]
-    return max(vencidos) if vencidos else None
+    return min(vencidos) if vencidos else None
 
 
 def _fecha_tentativa_min(grupo: list[EquipoPreventivoAnotado]) -> date | None:

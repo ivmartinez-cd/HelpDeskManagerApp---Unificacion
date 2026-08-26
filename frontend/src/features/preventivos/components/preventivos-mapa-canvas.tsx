@@ -40,8 +40,8 @@ function segmentoDistribucion(
   punto: PuntoMapaPreventivo,
 ): string {
   let detalle = "";
-  if (item.estado === "vencido" && punto.dias_vencido_max !== null) {
-    detalle = ` (hace ${numberFormat.format(punto.dias_vencido_max)} días)`;
+  if (item.estado === "vencido" && punto.fecha_vencido_min !== null) {
+    detalle = ` (${formatFecha(punto.fecha_vencido_min)})`;
   } else if (item.estado === "sin_preventivo" && punto.fecha_tentativa_min !== null) {
     detalle = ` (tentativo ${formatFecha(punto.fecha_tentativa_min)})`;
   }

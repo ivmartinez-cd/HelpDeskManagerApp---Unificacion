@@ -100,7 +100,7 @@ class PuntoMapaSchema(BaseModel):
     cant_maquinas: int
     cant_habilitadas: int
     peor_estado: EstadoPreventivo
-    dias_vencido_max: int | None
+    fecha_vencido_min: date | None
     fecha_tentativa_min: date | None
     distribucion: list[ConteoEstadoSchema]
 
@@ -118,7 +118,7 @@ class PuntoMapaSchema(BaseModel):
             cant_maquinas=punto.cant_maquinas,
             cant_habilitadas=punto.cant_habilitadas,
             peor_estado=punto.peor_estado,
-            dias_vencido_max=punto.dias_vencido_max,
+            fecha_vencido_min=punto.fecha_vencido_min,
             fecha_tentativa_min=punto.fecha_tentativa_min,
             distribucion=[ConteoEstadoSchema.from_domain(c) for c in punto.distribucion],
         )
