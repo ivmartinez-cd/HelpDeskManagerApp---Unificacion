@@ -29,6 +29,30 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: "list",
+  // Filesystem lento en WSL (mismo motivo que el timeout de 300s del webServer
+  // más abajo): Turbopack recompila cada ruta la primera vez que un test la
+  // visita en el proceso de `next dev` recién levantado, y esa primera
+  // compilación puede superar el default de 30s -- se vio de forma reproducible
+  // en vacaciones.spec.ts (7-8 rutas propias) con `page.goto` fallando por
+  // net::ERR_ABORTED aun sin otra carga en la máquina.
+  //
+  // TODO (retomar 2026-08-26 ~17hs): con este timeout en 60s y la máquina sin
+  // otra carga, la suite completa corre limpia salvo por rutas de
+  // vacaciones.spec.ts que dependen de /vacaciones/asistencias -- ese caso no
+  // es cuestión de tiempo: en el log del webServer aparece
+  // "○ Compiling /vacaciones/asistencias ..." y nunca llega a imprimir el
+  // "GET ... 200 in Xs" correspondiente (a diferencia de todas las demás
+  // rutas del mismo módulo, incluida /vacaciones/reportes que sí terminó en
+  // 13s). Es Turbopack colgado compilando esa ruta puntual, no lentitud —
+  // los componentes de asistencias-view no tienen imports pesados (sin
+  // chart.js/leaflet), así que no es peso de bundle. Subir el timeout no lo
+  // arregla de fondo. Opciones evaluadas, sin implementar todavía:
+  //   1. `retries: 1` también fuera de CI (hoy solo en CI) -- mitiga el
+  //      cuelgue puntual sin tocar nada más, bajo esfuerzo.
+  //   2. Sacar `--turbopack` del comando del webServer de test (volver a
+  //      webpack) -- compila más lento en general pero evita este tipo de
+  //      cuelgues; falta medir el impacto en el tiempo total de la suite.
+  timeout: 60_000,
   globalSetup: "./tests/global-setup",
   globalTeardown: "./tests/global-teardown",
   use: {
