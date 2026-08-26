@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 // ---------------------------------------------------------------------------
 // Fixtures de mock — deben ser coherentes entre sí (el TSV que devuelve
@@ -115,12 +115,6 @@ function mockExtractAndAnalysis(page: import("@playwright/test").Page) {
 // ---------------------------------------------------------------------------
 
 test.describe("Módulo Análisis de Log HP", () => {
-  test.beforeEach(async ({ context }) => {
-    await context.addCookies([
-      { name: "hdm_session", value: "playwright-test", domain: "localhost", path: "/" },
-    ]);
-  });
-
   // -------------------------------------------------------------------------
   // Pantalla 1 — Bienvenida
   // -------------------------------------------------------------------------

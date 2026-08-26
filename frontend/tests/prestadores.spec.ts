@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 const OPERADOR_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 const PST_BAHIA_ID = "11111111-1111-1111-1111-111111111111";
@@ -109,13 +109,7 @@ const HISTORIAL_PAGE = {
 };
 
 test.describe("Módulo de Prestadores", () => {
-  test.beforeEach(async ({ page, context }) => {
-    // El proxy (proxy.ts/middleware) redirige a /login si no hay cookie hdm_session.
-    // Solo necesita existir — la validez real la chequea el layout contra el mock backend.
-    await context.addCookies([
-      { name: "hdm_session", value: "playwright-test", domain: "localhost", path: "/" },
-    ]);
-
+  test.beforeEach(async ({ page }) => {
     // auth/me y auth/modules los maneja el mock backend global (global-setup.ts).
     // Acá solo mockeamos los datos de negocio (llamadas client-side).
 

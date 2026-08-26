@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 // Mismo user id que USER_MOCK en global-setup.ts.
 const USER_ID = "00000000-0000-0000-0000-000000000001";
@@ -74,12 +75,6 @@ async function mockAccesos(page: Page, ranking: string[]) {
 }
 
 test.describe("Inicio", () => {
-  test.beforeEach(async ({ context }) => {
-    await context.addCookies([
-      { name: "hdm_session", value: "playwright-test", domain: "localhost", path: "/" },
-    ]);
-  });
-
   test("el banner de turno muestra la casilla asignada al usuario logueado @smoke", async ({ page }) => {
     await mockTurnos(page, [SHIFT_PROPIO_INSUMOS]);
     await mockAccesos(page, []);
@@ -161,12 +156,6 @@ const VIEWPORTS = [
 ];
 
 test.describe("Inicio — cabe en la pantalla sin scroll", () => {
-  test.beforeEach(async ({ context }) => {
-    await context.addCookies([
-      { name: "hdm_session", value: "playwright-test", domain: "localhost", path: "/" },
-    ]);
-  });
-
   for (const tema of ["light", "dark"] as const) {
     for (const vp of VIEWPORTS) {
       test(`${vp.width}x${vp.height} · ${tema}`, async ({ page }) => {

@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 function isoDesdeHoy(dias: number): string {
   const d = new Date();
@@ -78,12 +79,6 @@ async function mockCalendario(page: Page) {
 }
 
 test.describe("Calendario: indicadores de cobertura (ADR-013 fase 2)", () => {
-  test.beforeEach(async ({ context }) => {
-    await context.addCookies([
-      { name: "hdm_session", value: "playwright-test", domain: "localhost", path: "/" },
-    ]);
-  });
-
   test("modo efectivo (default): badge CUBIERTO POR + leyenda, evento propio sin badge @smoke", async ({
     page,
   }) => {

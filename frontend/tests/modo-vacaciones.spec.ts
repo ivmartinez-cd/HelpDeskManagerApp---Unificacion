@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 /** Modo vacaciones de turnos (ADR-025): editor de grilla variante, listado,
  * badge de la home y CTA desde Aprobaciones. Caso real: vacaciones de
@@ -116,12 +117,6 @@ async function mockTurnos(page: Page, variantes: unknown[] = []) {
 }
 
 test.describe("Modo vacaciones (grilla variante de turnos)", () => {
-  test.beforeEach(async ({ context }) => {
-    await context.addCookies([
-      { name: "hdm_session", value: "playwright-test", domain: "localhost", path: "/" },
-    ]);
-  });
-
   test("editor: precarga el caso Majo, re-corta, avisa hueco (no bloquea) y guarda el payload completo @smoke", async ({
     page,
   }) => {

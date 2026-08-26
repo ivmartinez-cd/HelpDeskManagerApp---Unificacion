@@ -52,6 +52,14 @@ const MODULES_MOCK = [
     isEnabled: true,
   },
   {
+    key: "bono-tecnicos",
+    label: "Bono Técnicos",
+    route: "/bono-tecnicos",
+    icon: "award",
+    sortOrder: 16,
+    isEnabled: true,
+  },
+  {
     key: "prestadores",
     label: "Prestadores",
     route: "/prestadores",
@@ -81,6 +89,14 @@ const MODULES_MOCK = [
     route: "/turnos",
     icon: "clock",
     sortOrder: 35,
+    isEnabled: true,
+  },
+  {
+    key: "wati",
+    label: "WhatsApp",
+    route: "/wati",
+    icon: "message-circle",
+    sortOrder: 36,
     isEnabled: true,
   },
   {

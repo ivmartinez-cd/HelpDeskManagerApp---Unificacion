@@ -1,13 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test.describe("Módulo de Contadores - Interfaz y Herramientas", () => {
-  test.beforeEach(async ({ context }) => {
-    // El proxy (proxy.ts/middleware) redirige a /login si no hay cookie hdm_session.
-    await context.addCookies([
-      { name: "hdm_session", value: "playwright-test", domain: "localhost", path: "/" },
-    ]);
-  });
-
   test("debe mostrar el hub Centro de Contadores con las 7 herramientas al entrar sin ?tool= @smoke", async ({
     page,
   }) => {

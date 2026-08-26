@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 function isoDesdeHoy(dias: number): string {
   const d = new Date();
@@ -136,12 +137,6 @@ async function mockPst(page: Page) {
 }
 
 test.describe("Coberturas (overrides temporales de asignación)", () => {
-  test.beforeEach(async ({ context }) => {
-    await context.addCookies([
-      { name: "hdm_session", value: "playwright-test", domain: "localhost", path: "/" },
-    ]);
-  });
-
   test("contadores: listado muestra tabla con estados derivados y copy de pie @smoke", async ({ page }) => {
     await mockContadores(page);
     await page.goto("/contadores/coberturas");

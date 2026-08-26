@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 /** Intercambio de turnos (ADR-026) en Coberturas de Turnos: el listado plano
  * agrupa el par en una fila, el modal ofrece el toggle Cobertura |
@@ -96,12 +97,6 @@ async function mockTurnos(page: Page, overrides: unknown[] = [IDA, VUELTA, COMUN
 }
 
 test.describe("Coberturas de turnos: intercambio (ADR-026)", () => {
-  test.beforeEach(async ({ context }) => {
-    await context.addCookies([
-      { name: "hdm_session", value: "playwright-test", domain: "localhost", path: "/" },
-    ]);
-  });
-
   test("el par se agrupa en una sola fila A ⇄ B y la común queda aparte @smoke", async ({ page }) => {
     await mockTurnos(page);
     await page.goto("/turnos/coberturas");

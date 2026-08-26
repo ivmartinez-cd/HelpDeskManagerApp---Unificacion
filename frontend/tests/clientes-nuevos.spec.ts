@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 // ── Contadores › Clientes nuevos: wire snake_case (clientes_nuevos_schemas.py) ──
 
@@ -109,12 +110,6 @@ async function mockClientesNuevos(page: Page, fichas: unknown[] = [FICHA_BILETTA
 }
 
 test.describe("Contadores › Clientes nuevos", () => {
-  test.beforeEach(async ({ context }) => {
-    await context.addCookies([
-      { name: "hdm_session", value: "playwright-test", domain: "localhost", path: "/" },
-    ]);
-  });
-
   test("listado: KPIs, fichas abiertas por defecto, aviso listo para STC @smoke", async ({ page }) => {
     await mockClientesNuevos(page);
     await page.goto("/contadores/clientes-nuevos");

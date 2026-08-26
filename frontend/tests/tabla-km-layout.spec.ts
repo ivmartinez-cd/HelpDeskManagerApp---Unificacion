@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { test } from "./fixtures";
 
 const PRESTADORES_MOCK = [
   { id: "aaa", nombre: "Bahia Blanca - Eduardo Lledos", nombreCorto: "BAHIA", cuit: null, region: "BAHIA BLANCA", activo: true, sigesEmpresaId: 1303, cdPrestadorId: null, sigesBaseSucursalId: null, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
@@ -16,13 +16,7 @@ const TABLA_KM_MOCK = [
   { id: "9", prestadorId: "aaa", spstId: null, empresaNombre: "Banco Credicoop", sucursalNombre: "111 - Pigue", observaciones: null, domicilioCliente: null, localidadCliente: "Pigue", provinciaCliente: "Buenos Aires", kmsRecorrido: 134.074, umbralViatico: 80, aplicaViatico: true, kmsAFacturar: 135, urlMaps: null, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
 ];
 
-async function setFakeSession(page: import("@playwright/test").Page) {
-  await page.context().addCookies([{ name: "hdm_session", value: "test-session-token", domain: "localhost", path: "/", httpOnly: true, secure: false }]);
-}
-
 test("tabla KM layout mejorado @smoke", async ({ page }) => {
-  await setFakeSession(page);
-
   await page.route("**/api/liquidaciones/prestadores**", (route) =>
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: PRESTADORES_MOCK, total: 1, page: 1, size: 1000 }) })
   );

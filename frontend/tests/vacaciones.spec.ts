@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 // ── Datos mock (wire camelCase, serialization_alias en los schemas) ─────────
 
@@ -181,12 +182,6 @@ async function mockVacaciones(page: Page) {
 }
 
 test.describe("Vacaciones", () => {
-  test.beforeEach(async ({ context }) => {
-    await context.addCookies([
-      { name: "hdm_session", value: "playwright-test", domain: "localhost", path: "/" },
-    ]);
-  });
-
   test("el dashboard muestra KPIs y calendario @smoke", async ({ page }) => {
     await mockVacaciones(page);
     await page.goto("/vacaciones");

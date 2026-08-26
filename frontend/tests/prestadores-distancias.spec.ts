@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 const PRESTADORES_MOCK = [
   {
@@ -59,25 +59,11 @@ const SUCURSALES_MOCK = [
   },
 ];
 
-// Inyecta la cookie de sesión antes de navegar — el proxy.ts (Next.js 16 middleware)
-// comprueba solo su existencia; la validación real la hace el backend mock.
-async function setFakeSession(page: import("@playwright/test").Page) {
-  await page.context().addCookies([{
-    name: "hdm_session",
-    value: "test-session-token",
-    domain: "localhost",
-    path: "/",
-    httpOnly: true,
-    secure: false,
-  }]);
-}
-
 // Los labels de la fila son "Base" (con vínculo a Gestión, sin base cargada) y
 // "Distancias" (con base cargada); "Siges" dejó de mencionarse en la UI
 // (commit 72a50ecf). Los botones de mutación además exigen `liquidaciones.update`
 // (ADR-029) — el mock de sesión es superadmin, así que se renderizan.
 test("botón Base aparece solo para prestadores con vínculo a Gestión @smoke", async ({ page }) => {
-  await setFakeSession(page);
   await page.route("**/api/liquidaciones/prestadores**", (route) => {
     route.fulfill({
       status: 200,
@@ -111,7 +97,6 @@ test("botón Base aparece solo para prestadores con vínculo a Gestión @smoke",
 });
 
 test("modal de sucursales abre al clickear Base", async ({ page }) => {
-  await setFakeSession(page);
   await page.route("**/api/liquidaciones/prestadores**", (route) => {
     route.fulfill({
       status: 200,

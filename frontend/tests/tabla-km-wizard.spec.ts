@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 /** Asistente de KM (rediseño 2026-08-20): intro → chequeos → Traer de Gestión →
  * bandeja única. Todo mockeado: no toca backend real ni Google. */
@@ -95,12 +96,7 @@ async function mockear(page: Page, escrituras: string[]) {
   });
 }
 
-async function setFakeSession(page: Page) {
-  await page.context().addCookies([{ name: "hdm_session", value: "test-session-token", domain: "localhost", path: "/", httpOnly: true, secure: false }]);
-}
-
 test("asistente de KM: intro, chequeos gratis, Traer de Gestión y bandeja única @smoke", async ({ page }) => {
-  await setFakeSession(page);
   const escrituras: string[] = [];
   await mockear(page, escrituras);
 
@@ -147,7 +143,6 @@ test("asistente de KM: intro, chequeos gratis, Traer de Gestión y bandeja únic
 });
 
 test("asistente de KM: Traer de Gestión agrupa refrescar + vincular + importar, y el cierre tras aplicar km", async ({ page }) => {
-  await setFakeSession(page);
   const escrituras: string[] = [];
   await mockear(page, escrituras);
 
