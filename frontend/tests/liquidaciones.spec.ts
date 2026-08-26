@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 const PST_ID = "11111111-1111-1111-1111-111111111111";
 const LIQ_ID = "22222222-2222-2222-2222-222222222222";
@@ -148,13 +148,7 @@ const DETALLE_RESPONSE = {
 };
 
 test.describe("Módulo de Liquidaciones", () => {
-  test.beforeEach(async ({ page, context }) => {
-    // El proxy (proxy.ts/middleware) redirige a /login si no hay cookie hdm_session.
-    // Solo necesita existir — la validez real la chequea el layout contra el mock backend.
-    await context.addCookies([
-      { name: "hdm_session", value: "playwright-test", domain: "localhost", path: "/" },
-    ]);
-
+  test.beforeEach(async ({ page }) => {
     // auth/me y auth/modules los maneja el mock backend global (global-setup.ts)
     // Acá solo mockeamos los datos de negocio (llamadas client-side)
 
@@ -315,6 +309,36 @@ test.describe("Módulo de Liquidaciones", () => {
     }).toPass();
 
     await expect(page.getByRole("combobox")).toHaveValue("recibida");
+  });
+
+  test("detalle: PATCH /estado con 409 muestra el error y no cambia el select", async ({ page }) => {
+    await page.route(`**/api/liquidaciones/${LIQ_ID}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(DETALLE_LOCAL),
+      });
+    });
+
+    await page.route(`**/api/liquidaciones/${LIQ_ID}/estado`, async (route) => {
+      await route.fulfill({
+        status: 409,
+        contentType: "application/json",
+        body: JSON.stringify({
+          message: "La liquidación fue modificada por otro usuario. Recargá e intentá de nuevo.",
+          code: "CONFLICT",
+        }),
+      });
+    });
+
+    await page.goto(`/liquidaciones/${LIQ_ID}`);
+
+    await page.getByRole("combobox").selectOption("recibida");
+
+    await expect(
+      page.getByText("La liquidación fue modificada por otro usuario. Recargá e intentá de nuevo."),
+    ).toBeVisible();
+    await expect(page.getByRole("combobox")).toHaveValue("abierta");
   });
 
   test("detalle muestra la tabla de incidentes con fila expandible", async ({ page }) => {

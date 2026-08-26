@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { ApiError } from "@/services/http-client";
 import { liquidacionesApi } from "../api/liquidaciones-api";
@@ -67,6 +68,8 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
     try {
       await liquidacionesApi.reanalyze(id);
       await load();
+    } catch (err: unknown) {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo reanalizar la liquidación.");
     } finally {
       setReanalizing(false);
     }
@@ -78,6 +81,8 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
     try {
       const updated = await liquidacionesApi.updateEstado(id, nuevoEstado);
       setDetalle({ ...detalle, liquidacion: updated });
+    } catch (err: unknown) {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo actualizar el estado.");
     } finally {
       setUpdatingEstado(false);
     }
