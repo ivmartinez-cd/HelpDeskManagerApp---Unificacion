@@ -1,16 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
-import { ExternalLink } from "lucide-react";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import { toast } from "sonner";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
-import { formatARS, formatFecha } from "../lib/format";
-import { EstadoBadge } from "./estado-badge";
+import { formatARS } from "../lib/format";
+import { LiquidacionesDashboardTabla } from "./liquidaciones-dashboard-tabla";
 import { LiquidacionesImportModal } from "./liquidaciones-import-modal";
 
 function formatPeriodo(periodo: string): string {
@@ -30,6 +28,7 @@ export function LiquidacionesDashboard() {
   const [syncing, setSyncing] = useState(false);
   const [filtroPrestador, setFiltroPrestador] = useState("");
   const [filtroPeriodo, setFiltroPeriodo] = useState("");
+  const [filtroAnio, setFiltroAnio] = useState("");
   const hasAutoSelected = useRef(false);
 
   // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
@@ -63,14 +62,20 @@ export function LiquidacionesDashboard() {
     [liquidaciones],
   );
 
+  const aniosDisponibles = useMemo(
+    () => [...new Set(liquidaciones.map((l) => l.periodo.slice(0, 4)))].sort().reverse(),
+    [liquidaciones],
+  );
+
   const filtradas = useMemo(
     () =>
       liquidaciones.filter(
         (l) =>
           (!filtroPrestador || l.prestadorId === filtroPrestador) &&
-          (!filtroPeriodo || l.periodo === filtroPeriodo),
+          (!filtroPeriodo || l.periodo === filtroPeriodo) &&
+          (!filtroAnio || l.periodo.startsWith(filtroAnio)),
       ),
-    [liquidaciones, filtroPrestador, filtroPeriodo],
+    [liquidaciones, filtroPrestador, filtroPeriodo, filtroAnio],
   );
 
   const prestadorMap = Object.fromEntries(prestadores.map((p) => [p.id, p]));
@@ -115,10 +120,6 @@ export function LiquidacionesDashboard() {
       </div>
     );
   }
-
-  const thCls =
-    "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
-  const tdCls = "py-3 px-4 font-body text-sm text-foreground";
 
   const selectCls =
     "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
@@ -179,6 +180,20 @@ export function LiquidacionesDashboard() {
           ))}
         </select>
 
+        <select
+          value={filtroAnio}
+          onChange={(e) => setFiltroAnio(e.target.value)}
+          className={selectCls}
+          aria-label="Filtrar por año"
+        >
+          <option value="">Todos los años</option>
+          {aniosDisponibles.map((a) => (
+            <option key={a} value={a}>
+              {a}
+            </option>
+          ))}
+        </select>
+
         <span className="font-body text-sm text-muted-foreground">
           {filtradas.length} liquidaci{filtradas.length === 1 ? "ón" : "ones"}
         </span>
@@ -200,82 +215,7 @@ export function LiquidacionesDashboard() {
         <KpiTile label="Total facturado" value={formatARS(totalImporte)} tone="neutral" />
       </KpiGrid>
 
-      <div className="overflow-hidden rounded-[12px] border border-border bg-card">
-        <div className="flex items-center justify-between px-4 pt-5 pb-3">
-          <h2 className="font-heading text-base font-bold text-foreground">
-            Últimas liquidaciones
-          </h2>
-          <Link
-            href="/liquidaciones/lista"
-            className="font-body text-sm text-brand-orange hover:underline"
-          >
-            Ver todas
-          </Link>
-        </div>
-
-        {ultimas.length === 0 ? (
-          <p className="px-4 pb-6 font-body text-sm text-muted-foreground">
-            Todavía no hay liquidaciones importadas.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-muted/40">
-                  <th className={thCls}>Prestador</th>
-                  <th className={thCls}>Período</th>
-                  <th className={thCls}>Estado</th>
-                  <th className={`${thCls} text-right`}>Incidentes</th>
-                  <th className={`${thCls} text-right`}>Importe</th>
-                  <th className={thCls}>Fecha de carga</th>
-                  <th className={thCls}>Web Agentes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ultimas.map((liq) => {
-                  const pst = prestadorMap[liq.prestadorId];
-                  return (
-                    <tr
-                      key={liq.id}
-                      className="border-t border-border transition-colors hover:bg-muted/30"
-                    >
-                      <td className={tdCls}>
-                        {pst ? `${pst.region ?? pst.nombreCorto} — ${pst.nombre}` : liq.prestadorId.slice(0, 8)}
-                      </td>
-                      <td className={tdCls}>{liq.periodo || "—"}</td>
-                      <td className={tdCls}>
-                        <EstadoBadge estado={liq.estado} />
-                      </td>
-                      <td className={`${tdCls} text-right`}>
-                        {liq.totalIncidentes.toLocaleString("es-AR")}
-                      </td>
-                      <td className={`${tdCls} text-right`}>{formatARS(liq.totalImporte)}</td>
-                      <td className={`${tdCls} text-muted-foreground`}>
-                        {formatFecha(liq.fechaImportacion)}
-                      </td>
-                      <td className={tdCls}>
-                        {liq.numeroLiquidacion ? (
-                          <a
-                            href={`https://webagentes.canaldirecto.com.ar/liquidations/view/${liq.numeroLiquidacion}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 font-body text-sm text-brand-orange hover:underline"
-                          >
-                            {liq.numeroLiquidacion}
-                            <ExternalLink size={12} />
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <LiquidacionesDashboardTabla ultimas={ultimas} prestadorMap={prestadorMap} />
 
       <LiquidacionesImportModal
         isOpen={importOpen}
