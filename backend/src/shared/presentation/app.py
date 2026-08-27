@@ -31,19 +31,21 @@ async def _provide_operador_color_lookup(
     return SqlAlchemyOperadorColorLookup(db)
 
 
-def _jobs_insumos_y_sla(settings: Settings) -> list[asyncio.Task[None]]:
-    """Van juntos porque comparten el mailer (el poller de insumos avisa por mail)."""
+def _jobs_insumos(settings: Settings) -> list[asyncio.Task[None]]:
     from src.modules.auth.infrastructure.mailer_factory import get_mailer
     from src.modules.insumos.application.jobs.poller_alerts import PollerAlerts
     from src.modules.insumos.presentation.background_jobs import start_background_jobs
     from src.modules.insumos.presentation.mail_dispatch import LoggedMailDispatcher
-    from src.modules.sla.presentation.background_jobs import start_sla_background_jobs
 
     mailer = get_mailer()
     poller_alerts = PollerAlerts(LoggedMailDispatcher(mailer))
-    tasks = start_background_jobs(mailer, poller_alerts, settings.poll_interval_minutes)
-    tasks += start_sla_background_jobs(settings.sla_refresh_interval_minutes)
-    return tasks
+    return start_background_jobs(mailer, poller_alerts, settings.poll_interval_minutes)
+
+
+def _jobs_sla(settings: Settings) -> list[asyncio.Task[None]]:
+    from src.modules.sla.presentation.background_jobs import start_sla_background_jobs
+
+    return start_sla_background_jobs(settings.sla_refresh_interval_minutes)
 
 
 def _jobs_analisis_log_hp(settings: Settings) -> list[asyncio.Task[None]]:
@@ -80,10 +82,16 @@ def _iniciar_background_jobs(settings: Settings) -> list[asyncio.Task[None]]:
     """Imports perezosos a propósito: los módulos de jobs no se cargan (ni sus
     clientes externos) cuando `DISABLE_BACKGROUND_JOBS=true`. Mismo orden de
     arranque de siempre: insumos, sla, analisis_log_hp, contadores,
-    liquidaciones, wati."""
+    liquidaciones, wati. `DISABLE_INSUMOS_BACKGROUND_JOBS=true` apaga solo
+    insumos (el poller que manda mail real) y deja correr el resto."""
     if settings.disable_background_jobs:
         return []
-    tasks = _jobs_insumos_y_sla(settings)
+    tasks: list[asyncio.Task[None]] = []
+    if settings.disable_insumos_background_jobs:
+        logger.info("background_jobs: insumos omitido (DISABLE_INSUMOS_BACKGROUND_JOBS=true)")
+    else:
+        tasks += _jobs_insumos(settings)
+    tasks += _jobs_sla(settings)
     for arrancar in (_jobs_analisis_log_hp, _jobs_contadores, _jobs_liquidaciones, _jobs_wati):
         tasks += arrancar(settings)
     logger.info("background_jobs: %d job(s) iniciados", len(tasks))

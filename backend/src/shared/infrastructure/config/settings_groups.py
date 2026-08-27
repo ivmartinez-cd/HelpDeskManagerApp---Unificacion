@@ -21,6 +21,11 @@ class CoreSettings(BaseSettings):
     # Desactiva todos los jobs de fondo (útil en CI/test o cuando se corren
     # múltiples instancias y solo una debe ejecutar los jobs).
     disable_background_jobs: bool = False
+    # Insumos es el único módulo cuyo poller manda mail real a destinatarios
+    # de logística (ver incidente 2026-08-12) y opera sobre datos sembrados
+    # de producción — se puede mantener apagado mientras el resto de los
+    # jobs de sincronización corre normalmente.
+    disable_insumos_background_jobs: bool = False
 
 
 class AuthSettings(BaseSettings):
