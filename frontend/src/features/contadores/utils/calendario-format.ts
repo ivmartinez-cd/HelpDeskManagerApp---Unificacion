@@ -94,8 +94,11 @@ export function diasDeAtraso(startIso: string, todayIso: string): number {
   return Math.round((today - start) / 86_400_000);
 }
 
-/** "hace 1 día" / "hace N días". */
+/** "hace 1 día" / "hace N días" para atraso ya vencido; "hoy" / "en N días"
+ * cuando `dias` es cero o negativo (todavía no llegó su fecha). */
 export function textoAtraso(dias: number): string {
+  if (dias === 0) return "hoy";
+  if (dias < 0) return -dias === 1 ? "en 1 día" : `en ${-dias} días`;
   return dias === 1 ? "hace 1 día" : `hace ${dias} días`;
 }
 

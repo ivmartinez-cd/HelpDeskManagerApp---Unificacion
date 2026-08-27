@@ -40,6 +40,7 @@ export function CardSlot({
     calendario,
     contadoresResumen,
     pendientesPeriodo,
+    pendientesPeriodoActual,
     slaHistoria,
     parque,
     pendientesResumen,
@@ -98,6 +99,7 @@ export function CardSlot({
           resumen={contadoresResumen.data}
           pendientesPeriodoAnterior={pendientesPeriodo.data}
           pendientesPeriodoAnteriorLoading={pendientesPeriodo.loading}
+          pendientesPeriodoActual={pendientesPeriodoActual.data}
           loading={calendario.loading}
           error={calendario.error}
           onRetry={calendario.refetch}

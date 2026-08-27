@@ -229,6 +229,15 @@ export const contadoresApi = {
     httpClient.get<ClientesPendientesPeriodo>(
       "/api/contadores/calendario/pendientes-periodo-anterior",
     ),
+  // Card de Inicio: clientes del período EN CURSO que todavía siguen en el
+  // calendario de Gestión (vencidos o no, un evento por cliente) — a
+  // diferencia de getCalendarioPendientes, no se limita al atraso ya vencido.
+  getClientesPendientesPeriodoActual: (today: string) => {
+    const searchParams = new URLSearchParams({ today, size: "500" });
+    return httpClient.get<Page<CalendarEvent>>(
+      `/api/contadores/calendario/pendientes-periodo-actual?${searchParams.toString()}`,
+    );
+  },
   // Resolución de clientes sin cruce: búsqueda en vivo de empresas en Siges
   // y guardado del mapeo manual (requiere contadores:manage).
   searchEmpresasSiges: (q: string) =>

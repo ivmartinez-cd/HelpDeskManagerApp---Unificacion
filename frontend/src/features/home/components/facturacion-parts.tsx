@@ -129,15 +129,36 @@ function ArrastreDetalle({ cantidad, grupos }: { cantidad: number; grupos: strin
   );
 }
 
-/** Antigüedad de los pendientes en 5 buckets, como barras horizontales CSS
- * (longitud, no ángulo; sin Chart.js para 5 números). */
+const SIN_VENCER_COLOR = "#3b82f6";
+
+/** Antigüedad de los pendientes en buckets, como barras horizontales CSS
+ * (longitud, no ángulo; sin Chart.js para pocos números). Durante el
+ * arrastre `pendientes` puede traer días <= 0 (todavía no llegó la fecha,
+ * ver período en curso): esos van aparte en "Sin vencer" en vez de forzarlos
+ * en el bucket "1-2 días" — no se toca `AGING_BUCKETS` (comparte índices con
+ * el KPI de arriba, ver kpi-tiles.ts). */
 export function BucketsAntiguedad({ pendientes }: { pendientes: Pendiente[] }) {
+  const sinVencer = pendientes.filter((p) => p.dias <= 0).length;
   const conteos = AGING_BUCKETS.map(
-    (b) => pendientes.filter((p) => p.dias >= b.min && p.dias <= b.max).length,
+    (b) => pendientes.filter((p) => p.dias >= Math.max(b.min, 1) && p.dias <= b.max).length,
   );
-  const max = Math.max(1, ...conteos);
+  const max = Math.max(1, sinVencer, ...conteos);
   return (
     <div className="grid grid-cols-[58px_minmax(0,1fr)_24px] items-center gap-x-2 gap-y-0.5">
+      {sinVencer > 0 && (
+        <div className="contents">
+          <span className="font-body text-[11px] text-muted-foreground">Sin vencer</span>
+          <span className="h-2 overflow-hidden rounded-full bg-surface-2">
+            <span
+              className="block h-full rounded-full"
+              style={{ width: `${(sinVencer / max) * 100}%`, background: SIN_VENCER_COLOR }}
+            />
+          </span>
+          <span className="text-right font-heading text-[11.5px] font-bold tabular-nums text-foreground">
+            {sinVencer}
+          </span>
+        </div>
+      )}
       {AGING_BUCKETS.map((b, i) => (
         <div key={b.label} className="contents">
           <span className="font-body text-[11px] text-muted-foreground">{b.label}</span>

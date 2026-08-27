@@ -32,6 +32,7 @@ export function FacturacionSinCerrarCard({
   resumen,
   pendientesPeriodoAnterior,
   pendientesPeriodoAnteriorLoading,
+  pendientesPeriodoActual,
   loading,
   error,
   onRetry,
@@ -41,18 +42,22 @@ export function FacturacionSinCerrarCard({
   resumen: ResumenClientesOperador | null;
   pendientesPeriodoAnterior: ClientesPendientesPeriodo | null;
   pendientesPeriodoAnteriorLoading: boolean;
+  pendientesPeriodoActual: CalendarEvent[] | null;
   loading: boolean;
   error: string | null;
   onRetry?: () => void;
 }) {
   const lista = prepararPendientes(pendientes, operadores);
   const sinCerrar = lista.length;
+  const listaPeriodo = pendientesPeriodoActual && prepararPendientes(pendientesPeriodoActual, operadores);
+  const periodoActual = listaPeriodo?.length ?? null;
   const total = resumen?.total_clientes ?? null;
   const cerrados = total !== null ? Math.max(0, total - sinCerrar) : null;
   const pct = cerrados !== null && total && total > 0 ? (cerrados / total) * 100 : null;
   const { enArrastre, labelProximoCierre, diasParaCierre } = getCicloCierre(new Date());
   const urgente = !enArrastre && sinCerrar > 0 && diasParaCierre <= 5;
   const viejos = lista.filter((p) => p.dias >= 10).length;
+  const listaActiva = enArrastre ? listaPeriodo : lista;
 
   return (
     <DashboardCard
@@ -81,11 +86,20 @@ export function FacturacionSinCerrarCard({
         <div className="flex flex-col gap-2">
           {enArrastre ? (
             <>
-              <Numero
-                valor={total}
-                texto={`clientes por cerrar antes del ${labelProximoCierre}`}
-                tone="text-foreground"
-              />
+              {periodoActual === 0 ? (
+                <div className="flex items-center gap-2 pt-1">
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
+                  <span className="font-heading text-[14px] font-bold text-success">
+                    Todos cerrados
+                  </span>
+                </div>
+              ) : (
+                <Numero
+                  valor={periodoActual}
+                  texto={`${periodoActual === 1 ? "cliente por cerrar" : "clientes por cerrar"} antes del ${labelProximoCierre}`}
+                  tone="text-foreground"
+                />
+              )}
               <span className="font-body text-[11.5px] text-muted-foreground">
                 Nuevo período en curso · faltan {diasParaCierre} {diasParaCierre === 1 ? "día" : "días"}
               </span>
@@ -125,10 +139,10 @@ export function FacturacionSinCerrarCard({
             </>
           )}
         </div>
-        {sinCerrar > 0 && (
+        {listaActiva && listaActiva.length > 0 && (
           <div className="flex min-w-0 flex-col gap-2.5">
-            <BucketsAntiguedad pendientes={lista} />
-            <PendientesLista pendientes={lista} top={TOP_LISTA} />
+            <BucketsAntiguedad pendientes={listaActiva} />
+            <PendientesLista pendientes={listaActiva} top={TOP_LISTA} />
           </div>
         )}
       </div>

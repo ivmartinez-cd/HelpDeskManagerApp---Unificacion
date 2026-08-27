@@ -38,9 +38,15 @@ class GetPendingClientsUseCase:
         today: date,
         cutoff_days: int,
         exclude_operador_ids: frozenset[str] = frozenset(),
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> list[CalendarEventAnotado]:
-        start = (today - timedelta(days=cutoff_days)).isoformat()
-        end = (today - timedelta(days=1)).isoformat()
+        """`start_date`/`end_date` reemplazan la ventana derivada de
+        `cutoff_days` cuando el caller necesita un rango explícito (ver
+        `GetClientesPendientesPeriodoActualUseCase`, que también cuenta
+        eventos todavía no vencidos)."""
+        start = start_date or (today - timedelta(days=cutoff_days)).isoformat()
+        end = end_date or (today - timedelta(days=1)).isoformat()
         anotados = await self._events.execute(
             GetCalendarEventsRequest(
                 start_date=start,

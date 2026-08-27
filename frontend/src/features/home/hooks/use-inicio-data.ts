@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { accesosApi } from "@/features/home/api/accesos-api";
 import { contadoresApi } from "@/features/contadores/api/contadores-api";
 import type {
+  CalendarEvent,
   ClientesPendientesPeriodo,
   ResumenClientesOperador,
 } from "@/features/contadores/types/calendario";
@@ -108,6 +109,27 @@ export function useClientesPendientesPeriodoAnterior(
     enabled,
     () => contadoresApi.getClientesPendientesPeriodoAnterior(),
     "el arrastre del cierre anterior",
+    refreshKey,
+  );
+}
+
+/** Clientes del período de facturación EN CURSO que todavía siguen en el
+ * calendario de Gestión, un evento por cliente (vencidos o no) — alimenta el
+ * número grande y el desglose de "Facturación sin cerrar" durante el
+ * arrastre, que antes reusaba la cartera estática de 90 días (nunca bajaba)
+ * y después el backlog de atraso puro (subcontaba: no incluía los que
+ * todavía no llegaron a su fecha). */
+export function useClientesPendientesPeriodoActual(
+  enabled: boolean,
+  refreshKey = 0,
+): Remote<CalendarEvent[]> {
+  return useRemote(
+    enabled,
+    () =>
+      contadoresApi
+        .getClientesPendientesPeriodoActual(formatDateLocal(new Date()))
+        .then((page) => page.items),
+    "los pendientes del período en curso",
     refreshKey,
   );
 }
