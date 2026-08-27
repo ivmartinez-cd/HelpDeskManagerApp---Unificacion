@@ -77,6 +77,7 @@ from src.modules.prestadores.presentation.prestadores_router import (
 from src.modules.preventivos.presentation.preventivos_router import (
     router as preventivos_router,
 )
+from src.modules.sla.presentation.derivados_router import router as sla_derivados_router
 from src.modules.sla.presentation.mesa_ayuda_router import router as sla_mesa_ayuda_router
 from src.modules.sla.presentation.pendientes_router import router as sla_pendientes_router
 from src.modules.sla.presentation.sla_router import router as sla_router
@@ -163,6 +164,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     sla_router,
     sla_pendientes_router,
     sla_mesa_ayuda_router,
+    sla_derivados_router,
     bono_tecnicos_router,
     prestadores_router,
     preventivos_router,

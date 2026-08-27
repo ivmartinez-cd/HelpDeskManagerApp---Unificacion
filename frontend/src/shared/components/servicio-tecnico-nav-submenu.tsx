@@ -7,6 +7,7 @@ import {
   CalendarClock,
   ClipboardList,
   DollarSign,
+  FileQuestion,
   FileSearch,
   FileText,
   Gauge,
@@ -101,6 +102,20 @@ function buildSections({
           label: "Incidentes MDA",
           exact: false,
           icon: Headset,
+        },
+      ],
+    });
+  }
+
+  if (hasSla) {
+    sections.push({
+      label: null,
+      links: [
+        {
+          href: "/incidentes-sin-consultar",
+          label: "Incidentes sin consultar",
+          exact: false,
+          icon: FileQuestion,
         },
       ],
     });

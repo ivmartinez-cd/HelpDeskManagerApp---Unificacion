@@ -9,11 +9,15 @@ from collections.abc import Iterator
 
 import pytest
 
+import src.modules.sla.presentation.derivados_router as derivados_router
 import src.modules.sla.presentation.mesa_ayuda_router as mesa_ayuda_router
 import src.modules.sla.presentation.pendientes_router as pendientes_router
 import src.modules.sla.presentation.sla_router as sla_router
 from src.modules.sla.application.use_cases.get_pendientes_resumen import GetPendientesResumen
 from src.modules.sla.application.use_cases.get_sla_compliance import GetSlaCompliance
+from src.modules.sla.application.use_cases.list_incidentes_derivados import (
+    ListIncidentesDerivados,
+)
 from src.modules.sla.application.use_cases.list_incidentes_mesa_ayuda import (
     ListIncidentesMesaAyuda,
 )
@@ -28,6 +32,10 @@ from src.modules.sla.application.use_cases.refresh_sla_snapshot import RefreshSl
 from src.modules.sla.domain.entities.incidente_sla import RESULTADO_CORRECTO, RESULTADO_VENCIDO
 from tests.integration.router_testing import install_session, uninstall_session
 from tests.integration.sla.support import MODULE, PST_AJENO, PST_PROPIO, Lookup
+from tests.unit.application.sla.fakes_derivados import (
+    FakeDerivadosQueryGateway,
+    build_derivado,
+)
 from tests.unit.application.sla.fakes_mesa_ayuda import (
     FakeMesaAyudaQueryGateway,
     build_mesa_ayuda,
@@ -72,6 +80,7 @@ def lookup(monkeypatch: pytest.MonkeyPatch) -> Lookup:
     lk = Lookup()
     monkeypatch.setattr(sla_router, "SqlAlchemyPrestadorLookup", lambda _db: lk)
     monkeypatch.setattr(pendientes_router, "SqlAlchemyPrestadorLookup", lambda _db: lk)
+    monkeypatch.setattr(derivados_router, "SqlAlchemyPrestadorLookup", lambda _db: lk)
     return lk
 
 
@@ -136,4 +145,21 @@ def mesa_ayuda_gateway(monkeypatch: pytest.MonkeyPatch) -> FakeMesaAyudaQueryGat
     )
     use_case = ListIncidentesMesaAyuda(gateway, MESA_ID_TECNICO)
     monkeypatch.setattr(mesa_ayuda_router, "build_list_incidentes_mesa_ayuda", lambda: use_case)
+    return gateway
+
+
+@pytest.fixture
+def derivados_gateway(
+    monkeypatch: pytest.MonkeyPatch, lookup: Lookup
+) -> FakeDerivadosQueryGateway:
+    gateway = FakeDerivadosQueryGateway(
+        [
+            build_derivado(20, PST_PROPIO, "Tecnico Propio", dias_desde_ingreso=3),
+            build_derivado(21, PST_PROPIO, "Tecnico Propio", dias_desde_ingreso=9),
+            build_derivado(22, PST_AJENO, "Tecnico Ajeno", dias_desde_ingreso=1),
+            build_derivado(23, 99, "Sin PST", dias_desde_ingreso=1),  # no es PST: se descarta
+        ]
+    )
+    use_case = ListIncidentesDerivados(gateway, lookup)
+    monkeypatch.setattr(derivados_router, "build_list_incidentes_derivados", lambda _db: use_case)
     return gateway

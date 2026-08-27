@@ -77,6 +77,8 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { prefix: "/prestadores/coberturas", feature: "prestadores-coberturas" },
   { prefix: "/prestadores", anyOf: [p("prestadores", "view")] },
   { prefix: "/sla", anyOf: [p("sla", "view")] },
+  // Pantalla de primer nivel, fuera del árbol /sla, pero del mismo módulo.
+  { prefix: "/incidentes-sin-consultar", anyOf: [p("sla", "view")] },
   { prefix: "/preventivos", anyOf: [p("preventivos", "view")] },
   // Pantalla propia del técnico (cargar/ver sus solicitudes de TV) — solo
   // pide "create", no "view" (esa es la del supervisor con todos los

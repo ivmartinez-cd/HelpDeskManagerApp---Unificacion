@@ -10,6 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import src.modules.sla.presentation.dependencies as deps_module
 import src.shared.infrastructure.mercurio.factories as mercurio_factories
 from src.modules.sla.application.use_cases.get_sla_compliance import GetSlaCompliance
+from src.modules.sla.application.use_cases.list_incidentes_derivados import (
+    ListIncidentesDerivados,
+)
 from src.modules.sla.application.use_cases.list_incidentes_vencidos import (
     ListIncidentesVencidos,
 )
@@ -51,4 +54,7 @@ def test_builders_arman_el_grafo_de_use_cases(monkeypatch: pytest.MonkeyPatch) -
     assert isinstance(deps_module.build_get_sla_compliance(_SESSION), GetSlaCompliance)
     assert isinstance(
         deps_module.build_list_incidentes_vencidos(_SESSION), ListIncidentesVencidos
+    )
+    assert isinstance(
+        deps_module.build_list_incidentes_derivados(_SESSION), ListIncidentesDerivados
     )
