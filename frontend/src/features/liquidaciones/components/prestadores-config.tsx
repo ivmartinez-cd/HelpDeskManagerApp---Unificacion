@@ -7,7 +7,7 @@ import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useSession } from "@/services/session-provider";
-import { AltaPrestadorWizard } from "@/features/alta-prestador/components/alta-prestador-wizard";
+import { AltaPrestadorWizard } from "./alta-prestador/alta-prestador-wizard";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion } from "../types/liquidaciones";
 import { PrestadorBaseSucursalModal } from "./prestador-base-sucursal-modal";
