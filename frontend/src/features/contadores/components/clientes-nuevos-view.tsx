@@ -39,8 +39,8 @@ function KpiCard({ label, value, tone }: { label: string; value: number; tone: s
 }
 
 export function ClientesNuevosView() {
-  const { user, can } = useSession();
-  const puedeEditar = user.isSuperadmin || can("contadores", "manage");
+  const { user, hasFeature } = useSession();
+  const puedeEditar = user.isSuperadmin || hasFeature("contadores-clientes-nuevos");
 
   const [fichas, setFichas] = useState<ClienteNuevo[] | null>(null);
   const [operadores, setOperadores] = useState<Operador[]>([]);

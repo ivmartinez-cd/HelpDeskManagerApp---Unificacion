@@ -1,9 +1,10 @@
 """Fichas de clientes nuevos (onboarding de contadores): reemplaza el Excel
 de la TL alimentado por el mail "Nuevo Negocio" de Comercial. La ficha es
 local; Siges solo anota en lectura (instalaciones reales, contrato, rubro) y
-sugiere candidatos (primer contrato reciente sin ficha). Todo bajo
-`contadores.manage`: es una herramienta de gestión del equipo, no una vista
-por operador (misma decisión que coberturas/anexos, 2026-08-21)."""
+sugiere candidatos (primer contrato reciente sin ficha). Todo bajo la función
+`contadores-clientes-nuevos` (ADR-032 §4: dato sensible del equipo, no una
+vista por operador, mismo criterio que anexos) — concedible por usuario
+independientemente de `contadores.manage`."""
 
 import uuid
 from datetime import UTC, datetime
