@@ -125,3 +125,37 @@ class TestAliasManual:
             [_pendiente("e1", "Instituto Poveda")]
         )
         assert result == []
+
+    @pytest.mark.asyncio
+    async def test_sin_espacio_en_siges_usa_alias_axion_log(self) -> None:
+        """'Axion Log' (Gestión) vs 'AxionLog' (Siges, sin espacio) no
+        cruzan por contención porque el espacio rompe la subcadena."""
+        port = _FakePort([EstadoCierreGrupo(grupo="AxionLog", sin_cerrar=False)])
+        result = await FiltrarPendientesPorPeriodoReal(port).execute(
+            [_pendiente("e1", "Axion Log")]
+        )
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_sigla_corta_usa_alias_eana(self) -> None:
+        port = _FakePort([EstadoCierreGrupo(grupo="EANA SE", sin_cerrar=False)])
+        result = await FiltrarPendientesPorPeriodoReal(port).execute([_pendiente("e1", "EANA")])
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_nombre_mas_corto_en_gestion_usa_alias_froneri(self) -> None:
+        """'Froneri S. A.' (Gestión) vs 'Froneri Argentina S. A.' (Siges) no
+        cruzan por contención: 'Argentina' rompe la subcadena en el medio."""
+        port = _FakePort(
+            [EstadoCierreGrupo(grupo="Froneri Argentina S. A.", sin_cerrar=False)]
+        )
+        result = await FiltrarPendientesPorPeriodoReal(port).execute(
+            [_pendiente("e1", "Froneri S. A.")]
+        )
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_sigla_corta_usa_alias_gire(self) -> None:
+        port = _FakePort([EstadoCierreGrupo(grupo="GIRE S.A.", sin_cerrar=False)])
+        result = await FiltrarPendientesPorPeriodoReal(port).execute([_pendiente("e1", "GIRE")])
+        assert result == []
