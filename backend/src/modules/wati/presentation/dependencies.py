@@ -29,7 +29,11 @@ def get_wati_gateway() -> HttpxWatiGateway:
 
 
 def build_list_pendientes(session: AsyncSession) -> ListPendientes:
-    return ListPendientes(SqlAlchemyConversacionRepository(session))
+    settings = get_settings()
+    return ListPendientes(
+        SqlAlchemyConversacionRepository(session),
+        operador_filtro=settings.wati_operador_filtro or None,
+    )
 
 
 def build_get_pendientes_resumen(session: AsyncSession) -> GetPendientesResumen:

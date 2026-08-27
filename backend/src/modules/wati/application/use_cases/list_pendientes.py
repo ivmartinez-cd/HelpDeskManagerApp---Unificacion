@@ -32,12 +32,19 @@ class ListPendientes:
     Lee el estado sincronizado — nunca llama a WATI."""
 
     def __init__(
-        self, repo: ConversacionRepository, reloj: Callable[[], datetime] = _utcnow
+        self,
+        repo: ConversacionRepository,
+        reloj: Callable[[], datetime] = _utcnow,
+        operador_filtro: str | None = None,
     ) -> None:
         self._repo = repo
         self._reloj = reloj
+        self._operador_filtro = operador_filtro
 
     async def execute(self) -> list[ConversacionPendienteDto]:
         ahora = self._reloj()
         esperando = await self._repo.list_esperando(ahora)
-        return [_to_dto(c, ahora) for c in esperando if c.espera_respuesta(ahora)]
+        pendientes = [c for c in esperando if c.espera_respuesta(ahora)]
+        if self._operador_filtro is not None:
+            pendientes = [c for c in pendientes if c.operador_nombre == self._operador_filtro]
+        return [_to_dto(c, ahora) for c in pendientes]

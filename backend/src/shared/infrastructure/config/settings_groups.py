@@ -226,6 +226,12 @@ class WatiSettings(BaseSettings):
     # Rate limit publicado por WATI: 10 req / 10 s en getContacts/getMessages.
     wati_request_spacing_seconds: float = 1.1
     wati_timeout_seconds: float = 20.0
+    # Nombre exacto de operador (operatorName tal cual lo reporta WATI) al que se
+    # restringe la card de pendientes. Replica el filtro "Asignado a mí" del Team
+    # Inbox de WATI, que es de sesión de la UI y no existe como parámetro en la
+    # API pública. Vacío = sin filtro (todo el tenant, incluidos otros operadores
+    # y "sin asignar").
+    wati_operador_filtro: str = ""
 
 
 class AnalisisLogHpSettings(BaseSettings):
