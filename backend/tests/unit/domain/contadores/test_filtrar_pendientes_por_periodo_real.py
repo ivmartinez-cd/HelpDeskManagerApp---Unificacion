@@ -112,3 +112,16 @@ class TestAliasManual:
             [_pendiente("e1", "HOSP. ITALIANO DE LA PLATA")]
         )
         assert result == []
+
+    @pytest.mark.asyncio
+    async def test_nombre_sin_prefijo_comun_usa_alias_instituto_poveda(self) -> None:
+        """'Instituto Poveda' (Gestión) vs 'Institución Cultural Femenina'
+        (Siges) no comparten ni prefijo ni contención — sin alias quedaba
+        siempre "sin cruce" y el backlog lo mostraba de arrastre eterno."""
+        port = _FakePort(
+            [EstadoCierreGrupo(grupo="Institución Cultural Femenina", sin_cerrar=False)]
+        )
+        result = await FiltrarPendientesPorPeriodoReal(port).execute(
+            [_pendiente("e1", "Instituto Poveda")]
+        )
+        assert result == []

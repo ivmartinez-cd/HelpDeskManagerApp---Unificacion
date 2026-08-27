@@ -41,6 +41,7 @@ ALIAS_CLIENTE_GRUPO_NORM: dict[str, str] = {
         "ELEA": "Laboratorio Elea Phoenix SA",
         "Arag": "Arag S.R.L.",
         "HOSP. ITALIANO DE LA PLATA": "Hospital Italiano De La Plata",
+        "Instituto Poveda": "Institución Cultural Femenina",
     }.items()
 }
 
