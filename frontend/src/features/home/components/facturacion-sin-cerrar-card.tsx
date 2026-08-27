@@ -49,15 +49,17 @@ export function FacturacionSinCerrarCard({
 }) {
   const lista = prepararPendientes(pendientes, operadores);
   const sinCerrar = lista.length;
-  const listaPeriodo = pendientesPeriodoActual && prepararPendientes(pendientesPeriodoActual, operadores);
-  const periodoActual = listaPeriodo?.length ?? null;
+  // Solo alimenta el número grande del arrastre (incluye a los que todavía
+  // no llegaron a su fecha); el desglose de abajo sigue siendo nada más el
+  // atraso real (`lista`) — mezclar los dos ahí lo volvía inútil, dominado
+  // por el bucket "Sin vencer".
+  const periodoActual = pendientesPeriodoActual?.length ?? null;
   const total = resumen?.total_clientes ?? null;
   const cerrados = total !== null ? Math.max(0, total - sinCerrar) : null;
   const pct = cerrados !== null && total && total > 0 ? (cerrados / total) * 100 : null;
   const { enArrastre, labelProximoCierre, diasParaCierre } = getCicloCierre(new Date());
   const urgente = !enArrastre && sinCerrar > 0 && diasParaCierre <= 5;
   const viejos = lista.filter((p) => p.dias >= 10).length;
-  const listaActiva = enArrastre ? listaPeriodo : lista;
 
   return (
     <DashboardCard
@@ -139,10 +141,10 @@ export function FacturacionSinCerrarCard({
             </>
           )}
         </div>
-        {listaActiva && listaActiva.length > 0 && (
+        {sinCerrar > 0 && (
           <div className="flex min-w-0 flex-col gap-2.5">
-            <BucketsAntiguedad pendientes={listaActiva} />
-            <PendientesLista pendientes={listaActiva} top={TOP_LISTA} />
+            <BucketsAntiguedad pendientes={lista} />
+            <PendientesLista pendientes={lista} top={TOP_LISTA} />
           </div>
         )}
       </div>
