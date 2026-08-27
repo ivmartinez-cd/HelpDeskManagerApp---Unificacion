@@ -3,7 +3,6 @@
 from typing import Any, Protocol
 
 from src.modules.analisis_log_hp.domain.entities.error_code import ErrorCode
-from src.shared.presentation.schemas.pagination import Page
 
 
 class ErrorCodeRepository(Protocol):
@@ -21,7 +20,7 @@ class ErrorCodeRepository(Protocol):
         solution_content: str | None = None,
     ) -> ErrorCode: ...
 
-    async def list_page(self, page: int, size: int) -> Page[ErrorCode]: ...
+    async def list_page(self, page: int, size: int) -> tuple[list[ErrorCode], int]: ...
 
     async def bulk_update_solution_urls(
         self, updates: dict[str, dict[str, Any]]

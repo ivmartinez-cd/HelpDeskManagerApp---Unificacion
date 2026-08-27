@@ -15,7 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.analisis_log_hp.domain.entities.error_code import ErrorCode
 from src.modules.analisis_log_hp.infrastructure.models.error_code_model import ErrorCodeModel
-from src.shared.presentation.schemas.pagination import Page
 
 
 class SqlAlchemyErrorCodeRepository:
@@ -79,7 +78,7 @@ class SqlAlchemyErrorCodeRepository:
         await self._session.flush()
         return _to_entity(row)
 
-    async def list_page(self, page: int, size: int) -> Page[ErrorCode]:
+    async def list_page(self, page: int, size: int) -> tuple[list[ErrorCode], int]:
         total_res = await self._session.execute(
             select(func.count()).select_from(ErrorCodeModel)
         )
@@ -92,7 +91,7 @@ class SqlAlchemyErrorCodeRepository:
                 .offset((page - 1) * size)
             )
         ).scalars().all()
-        return Page(items=[_to_entity(r) for r in rows], total=total, page=page, size=size)
+        return [_to_entity(r) for r in rows], total
 
     async def bulk_update_solution_urls(self, updates: dict[str, dict[str, Any]]) -> int:
         """Actualiza URLs de ayuda y descripción para múltiples códigos a la vez.

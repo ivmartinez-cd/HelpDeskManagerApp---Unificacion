@@ -15,9 +15,13 @@ from src.modules.analisis_log_hp.domain.entities.saved_analysis import (
     SavedAnalysis,
     TelemetryEvent,
 )
-from src.shared.presentation.schemas.pagination import Page
 
 NOW = datetime(2026, 8, 16, 12, 0, tzinfo=UTC)
+
+
+def _paginate(all_items: list[Any], *, page: int, size: int) -> tuple[list[Any], int]:
+    start = (page - 1) * size
+    return all_items[start : start + size], len(all_items)
 
 
 def make_error_code(
@@ -81,8 +85,8 @@ class FakeErrorCodeRepo:
         self.codes[code] = entity
         return entity
 
-    async def list_page(self, page: int, size: int) -> Page[ErrorCode]:
-        return Page.of(list(self.codes.values()), page=page, size=size)
+    async def list_page(self, page: int, size: int) -> tuple[list[ErrorCode], int]:
+        return _paginate(list(self.codes.values()), page=page, size=size)
 
     async def bulk_update_solution_urls(self, updates: dict[str, dict[str, Any]]) -> int:
         if self.fail_bulk:
@@ -138,8 +142,8 @@ class FakeSavedAnalysisRepo:
     async def get_by_id(self, id: UUID) -> SavedAnalysis | None:
         return self.rows.get(id)
 
-    async def list_page(self, page: int, size: int) -> Page[SavedAnalysis]:
-        return Page.of(list(self.rows.values()), page=page, size=size)
+    async def list_page(self, page: int, size: int) -> tuple[list[SavedAnalysis], int]:
+        return _paginate(list(self.rows.values()), page=page, size=size)
 
     async def update(
         self,

@@ -43,11 +43,12 @@ async def test_list_page_ordena_del_mas_nuevo_al_mas_viejo(db_session: AsyncSess
     primero = await repo.create("primero", None, [], "INFO")
     segundo = await repo.create("segundo", None, [], "INFO")
 
-    pagina = await repo.list_page(page=1, size=1)
+    items, total = await repo.list_page(page=1, size=1)
 
-    assert pagina.total == 2
-    assert [s.id for s in pagina.items] == [segundo.id]
-    assert [s.id for s in (await repo.list_page(page=2, size=1)).items] == [primero.id]
+    assert total == 2
+    assert [s.id for s in items] == [segundo.id]
+    otros_items, _ = await repo.list_page(page=2, size=1)
+    assert [s.id for s in otros_items] == [primero.id]
 
 
 async def test_update_reemplaza_incidentes_y_conserva_diagnostico_si_no_viene(

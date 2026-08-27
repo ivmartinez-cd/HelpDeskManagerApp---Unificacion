@@ -52,11 +52,10 @@ async def test_list_page_ordena_por_codigo_y_pagina(db_session: AsyncSession) ->
     for code in ("C", "A", "B"):
         await repo.upsert(code, severity="INFO")
 
-    pagina = await repo.list_page(page=2, size=2)
+    items, total = await repo.list_page(page=2, size=2)
 
-    assert pagina.total == 3
-    assert [c.code for c in pagina.items] == ["C"]
-    assert (pagina.page, pagina.size) == (2, 2)
+    assert total == 3
+    assert [c.code for c in items] == ["C"]
 
 
 async def test_bulk_update_solution_urls_crea_y_actualiza_sin_pisar_con_vacio(

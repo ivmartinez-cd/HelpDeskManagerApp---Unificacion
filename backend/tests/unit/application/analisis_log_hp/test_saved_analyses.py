@@ -62,8 +62,8 @@ class TestListGetUpdateDelete:
         repo = FakeSavedAnalysisRepo()
         repo.seed()
         repo.seed()
-        page = await ListSavedAnalyses(repo).execute(1, 1)
-        assert (page.total, len(page.items), page.size) == (2, 1, 1)
+        items, total = await ListSavedAnalyses(repo).execute(1, 1)
+        assert (total, len(items)) == (2, 1)
 
     async def test_get_devuelve_el_snapshot(self) -> None:
         repo = FakeSavedAnalysisRepo()

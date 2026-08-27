@@ -37,7 +37,6 @@ from src.modules.analisis_log_hp.domain.services.degradation_service import (
 )
 from src.modules.analisis_log_hp.domain.services.log_enrichment import extract_serial_number
 from src.shared.domain.errors import NotFoundError
-from src.shared.presentation.schemas.pagination import Page
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +109,7 @@ class ListSavedAnalyses:
     def __init__(self, repo: SavedAnalysisRepository) -> None:
         self._repo = repo
 
-    async def execute(self, page: int, size: int) -> Page[SavedAnalysis]:
+    async def execute(self, page: int, size: int) -> tuple[list[SavedAnalysis], int]:
         return await self._repo.list_page(page, size)
 
 

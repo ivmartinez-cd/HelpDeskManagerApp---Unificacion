@@ -10,7 +10,6 @@ from src.modules.analisis_log_hp.domain.entities.saved_analysis import SavedAnal
 from src.modules.analisis_log_hp.infrastructure.models.saved_analysis_model import (
     SavedAnalysisModel,
 )
-from src.shared.presentation.schemas.pagination import Page
 
 
 class SqlAlchemySavedAnalysisRepository:
@@ -45,7 +44,7 @@ class SqlAlchemySavedAnalysisRepository:
         ).scalar_one_or_none()
         return _to_entity(row) if row else None
 
-    async def list_page(self, page: int, size: int) -> Page[SavedAnalysis]:
+    async def list_page(self, page: int, size: int) -> tuple[list[SavedAnalysis], int]:
         total = (
             await self._session.execute(
                 select(func.count()).select_from(SavedAnalysisModel)
@@ -59,7 +58,7 @@ class SqlAlchemySavedAnalysisRepository:
                 .offset((page - 1) * size)
             )
         ).scalars().all()
-        return Page(items=[_to_entity(r) for r in rows], total=total, page=page, size=size)
+        return [_to_entity(r) for r in rows], total
 
     async def update(
         self,

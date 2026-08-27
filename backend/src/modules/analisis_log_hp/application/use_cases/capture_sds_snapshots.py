@@ -68,11 +68,11 @@ class CaptureSdsSnapshots:
         self._portal = portal
 
     async def execute_all(self) -> list[SnapshotCaptureResult]:
-        page = await self._repo.list_page(1, 1000)
+        snapshots, _ = await self._repo.list_page(1, 1000)
         serials = list(
             dict.fromkeys(
                 s.equipment_identifier
-                for s in page.items
+                for s in snapshots
                 if s.equipment_identifier
             )
         )

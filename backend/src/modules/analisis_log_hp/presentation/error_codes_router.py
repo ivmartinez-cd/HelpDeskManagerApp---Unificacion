@@ -39,12 +39,12 @@ async def list_error_codes(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[ErrorCodeSchema]:
     repo = get_error_code_repo(db)
-    result = await repo.list_page(page, size)
+    items, total = await repo.list_page(page, size)
     return Page(
-        items=[ErrorCodeSchema(**ec.__dict__) for ec in result.items],
-        total=result.total,
-        page=result.page,
-        size=result.size,
+        items=[ErrorCodeSchema(**ec.__dict__) for ec in items],
+        total=total,
+        page=page,
+        size=size,
     )
 
 

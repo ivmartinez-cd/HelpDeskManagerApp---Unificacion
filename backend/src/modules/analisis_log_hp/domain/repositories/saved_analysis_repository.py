@@ -4,7 +4,6 @@ from typing import Any, Protocol
 from uuid import UUID
 
 from src.modules.analisis_log_hp.domain.entities.saved_analysis import SavedAnalysis
-from src.shared.presentation.schemas.pagination import Page
 
 
 class SavedAnalysisRepository(Protocol):
@@ -19,7 +18,7 @@ class SavedAnalysisRepository(Protocol):
 
     async def get_by_id(self, id: UUID) -> SavedAnalysis | None: ...
 
-    async def list_page(self, page: int, size: int) -> Page[SavedAnalysis]: ...
+    async def list_page(self, page: int, size: int) -> tuple[list[SavedAnalysis], int]: ...
 
     async def update(
         self,

@@ -68,10 +68,10 @@ async def list_saved_analyses(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[SavedAnalysisResponse]:
     uc = ListSavedAnalyses(get_saved_analysis_repo(db))
-    result = await uc.execute(page, size)
+    items, total = await uc.execute(page, size)
     return Page(
-        items=[_saved_to_response(s) for s in result.items],
-        total=result.total, page=result.page, size=result.size,
+        items=[_saved_to_response(s) for s in items],
+        total=total, page=page, size=size,
     )
 
 
