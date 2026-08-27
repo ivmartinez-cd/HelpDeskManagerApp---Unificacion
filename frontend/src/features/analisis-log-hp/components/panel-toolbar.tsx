@@ -1,13 +1,14 @@
 "use client";
 
 import { ArrowLeft, Download, FileText, Loader2, RefreshCw, Save } from "lucide-react";
-import type { DateFilter } from "../utils/date-filter";
-import { DateRangePicker } from "./date-range-picker";
+import { DateRangePickerPopover } from "@/shared/components/ui/date-range-picker-popover";
+import type { DateRange } from "@/shared/types/date-range";
+import { ANALISIS_LOG_HP_PRESETS } from "../utils/date-filter";
 
 interface Props {
   deviceId: string;
-  dateFilter: DateFilter;
-  onDateFilterChange: (f: DateFilter) => void;
+  dateFilter: DateRange | null;
+  onDateFilterChange: (f: DateRange | null) => void;
   onBack: () => void;
   onEws: () => void;
   onRefresh: () => void;
@@ -37,7 +38,12 @@ export function PanelToolbar({
       >
         <ArrowLeft className="h-4 w-4" />
       </button>
-      <DateRangePicker value={dateFilter} onChange={onDateFilterChange} />
+      <DateRangePickerPopover
+        value={dateFilter}
+        onChange={onDateFilterChange}
+        presets={ANALISIS_LOG_HP_PRESETS}
+        placeholder="Todo el período"
+      />
       {deviceId !== "manual" && (
         <>
           <button type="button" onClick={onEws} className={BTN}>

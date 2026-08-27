@@ -13,10 +13,4 @@
  * de `../utils/format.ts`, que fuerzan huso horario Argentina como el legacy.
  */
 
-/** Rango de fechas del `DateRangePicker` (Patrón 4). Ambas puntas en formato
- * `YYYY-MM-DD` — el mismo que aceptan los query params `startDate`/`endDate`
- * de `/api/insumos/estadisticas`. */
-export interface DateRange {
-  startDate: string;
-  endDate: string;
-}
+export type { DateRange } from "@/shared/types/date-range";

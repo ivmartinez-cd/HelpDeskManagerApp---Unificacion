@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import type { DateRange } from "../../types/common";
-import { EMPTY_VALUE, formatPlainDate } from "../../utils/format";
+import { formatPlainDate } from "@/shared/utils/date-arg";
+import type { DateRange } from "@/shared/types/date-range";
 import { WEEKDAYS, buildMonthCells, toKey } from "./date-range-utils";
 
 /** Piezas de presentación del selector de rango (`date-range-picker.tsx`):
@@ -16,9 +16,7 @@ export function RangeEnd({ label, value }: { label: string; value?: string }) {
       <span className="font-body text-[11px] font-semibold uppercase tracking-[.04em] text-muted-foreground">
         {label}
       </span>
-      <span className="font-heading text-sm font-bold text-foreground">
-        {value ? formatPlainDate(value) : EMPTY_VALUE}
-      </span>
+      <span className="font-heading text-sm font-bold text-foreground">{formatPlainDate(value)}</span>
     </div>
   );
 }

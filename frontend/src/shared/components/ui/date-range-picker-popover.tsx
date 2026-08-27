@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import { formatPlainDate } from "../../utils/format";
+import { formatPlainDate } from "@/shared/utils/date-arg";
 import { DateRangePicker, type DateRangePickerProps } from "./date-range-picker";
 
 interface DateRangePickerPopoverProps extends Omit<DateRangePickerProps, "onApply"> {
@@ -12,8 +12,8 @@ interface DateRangePickerPopoverProps extends Omit<DateRangePickerProps, "onAppl
 }
 
 /** Trigger compacto + popover con el Patrón 4 adentro — la forma en que lo
- * usan Dashboard, Historial y Estadísticas (barra de acciones). Cierra con
- * click afuera, Escape, o al Aplicar/Limpiar. */
+ * usan Dashboard, Historial y Estadísticas de Insumos (barra de acciones).
+ * Cierra con click afuera, Escape, o al Aplicar/Limpiar. */
 export function DateRangePickerPopover({
   value,
   onChange,

@@ -4,14 +4,11 @@ import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { ApiError } from "@/services/http-client";
 import { useSession } from "@/services/session-provider";
+import type { DateRange } from "@/shared/types/date-range";
 import type { AnalysisResult, SdsExtractResult, Severity } from "../types/analisis-log-hp";
 import { analisisLogHpApi } from "../api/analisis-log-hp-api";
 import { useExportPdf } from "../hooks/use-export-pdf";
-import {
-  type DateFilter,
-  filterEventsByDateFilter,
-  filterIncidentsByDateFilter,
-} from "../utils/date-filter";
+import { filterEventsByDateRange, filterIncidentsByDateRange } from "../utils/date-filter";
 import { AiDiagnosisCard, buildPayload } from "./ai-diagnosis-card";
 import { AnalysisCollapsibles } from "./analysis-collapsibles";
 import { CpmdUploadModal } from "./cpmd-upload-modal";
@@ -66,7 +63,7 @@ export function HpLogsPanel({
   const { can } = useSession();
   const puedeEditar = can("analisis-log-hp", "manage");
   const [activeSeverities, setActiveSeverities] = useState<Set<Severity>>(new Set());
-  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
+  const [dateFilter, setDateFilter] = useState<DateRange | null>(null);
   const [diagnosis, setDiagnosis] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
@@ -77,8 +74,8 @@ export function HpLogsPanel({
   const { exportingPdf, handleExportPdf, printReportRef } = useExportPdf(serial);
 
   const scopedAnalysis: AnalysisResult = useMemo(() => {
-    const events = filterEventsByDateFilter(analysis.events, dateFilter);
-    const incidents = filterIncidentsByDateFilter(analysis.incidents, dateFilter);
+    const events = filterEventsByDateRange(analysis.events, dateFilter);
+    const incidents = filterIncidentsByDateRange(analysis.incidents, dateFilter);
     return { ...analysis, events, incidents, events_count: events.length };
   }, [analysis, dateFilter]);
 

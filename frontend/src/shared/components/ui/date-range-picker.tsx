@@ -2,22 +2,19 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/shared/utils/cn";
-import type { DateRange } from "../../types/common";
-import { todayInArg } from "../../utils/format";
+import type { DateRange } from "@/shared/types/date-range";
+import { todayInArg } from "@/shared/utils/date-arg";
 import { MonthGrid, RangeEnd } from "./date-range-month-grid";
-import {
-  PRESET_KEYS,
-  PRESET_LABELS,
-  parseKey,
-  rangeForPreset,
-  type DateRangePresetKey,
-} from "./date-range-utils";
+import { DEFAULT_PRESETS, type DateRangePreset, parseKey } from "./date-range-utils";
 
-export { rangeForPreset, type DateRangePresetKey } from "./date-range-utils";
+export { DEFAULT_PRESETS, type DateRangePreset } from "./date-range-utils";
 
-/** Selector de rango de fechas del Patrón 4 del handoff: panel de presets a la
- * izquierda + dos meses en paralelo + footer con Desde/Hasta y los botones
- * Limpiar/Aplicar.
+/** Selector de rango de fechas del Patrón 4 del handoff de Insumos: panel de
+ * presets a la izquierda + dos meses en paralelo + footer con Desde/Hasta y
+ * los botones Limpiar/Aplicar. Reutilizado tal cual (mismos componentes, no
+ * una reimplementación) por cualquier pantalla que necesite filtrar por rango
+ * de fechas — ver `analisis-log-hp/components/date-filter.ts` para un
+ * consumidor con sus propios presets.
  *
  * CONTRATO (importante para las pantallas que lo consumen):
  *  - Es 100% **controlado**: `value` es la fuente de verdad y solo cambia
@@ -28,10 +25,12 @@ export { rangeForPreset, type DateRangePresetKey } from "./date-range-utils";
  *    end) ni una ráfaga de requests mientras el usuario tantea.
  *  - NO sincroniza querystring ni nada global. Cada pantalla decide si el
  *    rango va a la URL.
+ *  - `presets` default a los de Insumos (`DEFAULT_PRESETS`); un consumidor
+ *    con semántica propia (ej. "última semana", rolling en vez de calendario)
+ *    pasa la suya — ver `date-range-utils.ts` por la forma de `DateRangePreset`.
  *
- * Las fechas se manejan como `YYYY-MM-DD` (el mismo formato que aceptan
- * `startDate`/`endDate` de `/api/insumos/estadisticas`), y "hoy" se resuelve
- * en huso Argentina (`utils/format.todayInArg`), no en el del navegador.
+ * Las fechas se manejan como `YYYY-MM-DD` en huso Argentina
+ * (`shared/utils/date-arg.ts`), no en el del navegador.
  *
  * Helpers puros en `date-range-utils.ts`, grilla mensual en
  * `date-range-month-grid.tsx`, trigger + popover en `date-range-picker-popover.tsx`.
@@ -47,6 +46,8 @@ export interface DateRangePickerProps {
   /** Deshabilita días posteriores. Default: hoy (no se piden fechas futuras). */
   maxDate?: string | null;
   className?: string;
+  /** Default: presets de Insumos (`DEFAULT_PRESETS`). */
+  presets?: DateRangePreset[];
 }
 
 export function DateRangePicker({
@@ -56,9 +57,10 @@ export function DateRangePicker({
   minDate,
   maxDate,
   className,
+  presets = DEFAULT_PRESETS,
 }: DateRangePickerProps) {
   const [draft, setDraft] = useState<DateRange | null>(value);
-  const [preset, setPreset] = useState<DateRangePresetKey | null>(null);
+  const [preset, setPreset] = useState<string | null>(null);
   // Mientras se elige el segundo extremo el borrador queda "abierto".
   const [pendingStart, setPendingStart] = useState<string | null>(null);
   const [baseMonth, setBaseMonth] = useState(() => {
@@ -104,11 +106,11 @@ export function DateRangePicker({
     setPendingStart(null);
   };
 
-  const applyPreset = (key: DateRangePresetKey) => {
-    setPreset(key);
+  const applyPreset = (p: DateRangePreset) => {
+    setPreset(p.key);
     setPendingStart(null);
-    const range = rangeForPreset(key);
-    if (!range) return;
+    if (!p.range) return;
+    const range = p.range();
     setDraft(range);
     setBaseMonth(() => {
       const start = parseKey(range.startDate);
@@ -135,20 +137,20 @@ export function DateRangePicker({
         <span className="mb-1 font-heading text-[11px] font-bold uppercase tracking-[.05em] text-muted-foreground">
           Presets
         </span>
-        {PRESET_KEYS.map((key) => (
+        {presets.map((p) => (
           <button
-            key={key}
+            key={p.key}
             type="button"
-            onClick={() => applyPreset(key)}
-            aria-pressed={preset === key}
+            onClick={() => applyPreset(p)}
+            aria-pressed={preset === p.key}
             className={cn(
               "cursor-pointer rounded-[8px] px-3 py-2 text-left font-body text-sm transition-colors",
-              preset === key
+              preset === p.key
                 ? "border-l-[3px] border-brand-orange bg-brand-orange/10 font-bold text-brand-orange"
                 : "text-foreground hover:bg-brand-orange/[.06]",
             )}
           >
-            {PRESET_LABELS[key]}
+            {p.label}
           </button>
         ))}
       </div>

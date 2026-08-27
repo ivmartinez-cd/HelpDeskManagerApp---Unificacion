@@ -229,6 +229,32 @@ test.describe("Módulo Análisis de Log HP", () => {
     await expect(page.getByRole("button", { name: "7 días" })).toBeVisible();
   });
 
+  test("el filtro de rango de fechas (Patrón 4 compartido) filtra los KPIs", async ({ page }) => {
+    mockExtractAndAnalysis(page);
+
+    await page.goto("/analisis-log-hp");
+    await page.getByPlaceholder(/Ingrese Serie/).fill("MXBCN12345");
+    await page.getByRole("button", { name: "Analizar" }).click();
+
+    await expect(page.getByRole("heading", { name: "Panel de errores" })).toBeVisible();
+    await expect(page.getByText("13.DA.EE").first()).toBeVisible();
+
+    // Trigger del Patrón 4 compartido (mismo componente que Insumos, con los
+    // presets propios de esta pantalla -- no los de Insumos).
+    const trigger = page.getByRole("button", { name: "Todo el período" });
+    await expect(trigger).toBeVisible();
+    await trigger.click();
+    await expect(page.getByRole("button", { name: "Últimos 30 días" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Último trimestre" })).toHaveCount(0);
+
+    // Los eventos del fixture son de 2026-08-12 a 2026-08-15 -- "Hoy" los
+    // deja todos afuera, así que el KPI de error crítico queda vacío.
+    await page.getByRole("button", { name: "Hoy", exact: true }).click();
+    await page.getByRole("button", { name: "Aplicar" }).click();
+
+    await expect(page.getByText("Sin errores en el período").first()).toBeVisible();
+  });
+
   // -------------------------------------------------------------------------
   // Interacciones del panel
   // -------------------------------------------------------------------------
