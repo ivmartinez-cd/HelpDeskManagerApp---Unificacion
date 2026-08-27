@@ -11,6 +11,7 @@ los ERROR) → summary con remaining.
 
 import asyncio
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -42,6 +43,10 @@ logger = logging.getLogger(__name__)
 VERIFY_DELAY_SECONDS = 2.0
 
 
+def _utcnow() -> datetime:
+    return datetime.now(UTC)
+
+
 @dataclass(frozen=True)
 class VerifySummary:
     """Contador tipado — corrige el bug 1 del legacy: la clave inicializada era
@@ -65,9 +70,15 @@ class VerifyOfflineDevicesPorts:
 
 
 class VerifyOfflineDevices:
-    def __init__(self, ports: VerifyOfflineDevicesPorts, settings: InsumosSettings) -> None:
+    def __init__(
+        self,
+        ports: VerifyOfflineDevicesPorts,
+        settings: InsumosSettings,
+        reloj: Callable[[], datetime] = _utcnow,
+    ) -> None:
         self._ports = ports
         self._settings = settings
+        self._reloj = reloj
 
     async def execute(
         self,
@@ -84,7 +95,7 @@ class VerifyOfflineDevices:
     async def _run(self, limit: int, customer_id: int | None) -> VerifySummary:
         await self._sync_monitors()
         snapshot = await build_offline_snapshot(self._ports.snapshot, self._settings)
-        now = datetime.now(UTC)
+        now = self._reloj()
         candidates = snapshot.devices
         if customer_id is not None:
             candidates = [d for d in candidates if d.customer_id == customer_id]

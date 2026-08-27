@@ -46,6 +46,7 @@ class World:
                 sync_monitor_ports=sync_ports,
             ),
             InsumosSettings(),
+            reloj=lambda: NOW,
         )
 
 
