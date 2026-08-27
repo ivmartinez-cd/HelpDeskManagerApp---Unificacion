@@ -4,11 +4,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion } from "../types/liquidaciones";
 
 /** Edición de los datos básicos de un prestador ya existente. El alta se hace
- * por `AltaPrestadorWizard` (features/alta-prestador) — cruza Siges/Canal
+ * por `AltaPrestadorWizard` (./alta-prestador) — cruza Siges/Canal
  * Directo/módulo SLA, este modal se quedó solo con la edición simple. Se
  * monta solo mientras está abierto (el padre lo renderiza
  * condicionalmente), así el estado del formulario arranca fresco en cada
@@ -28,14 +29,11 @@ export function PrestadorFormModal({
     cuit: prestador.cuit ?? "",
     region: prestador.region ?? "",
   });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { saving, error, submit } = useModalSubmit();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    setError(null);
-    try {
+    void submit(async () => {
       await liquidacionesApi.updatePrestador(prestador.id, {
         nombre: form.nombre,
         nombreCorto: form.nombreCorto,
@@ -45,11 +43,7 @@ export function PrestadorFormModal({
       toast.success("Prestador actualizado");
       onClose();
       onSuccess();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error al guardar");
-    } finally {
-      setSaving(false);
-    }
+    }, "Error al guardar");
   };
 
   return (

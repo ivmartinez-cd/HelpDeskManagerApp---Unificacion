@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion } from "../types/liquidaciones";
 
@@ -21,28 +22,21 @@ export function PrestadorCdModal({
   onSuccess: () => void;
 }) {
   const [valor, setValor] = useState(prestador.cdPrestadorId?.toString() ?? "");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { saving, error, setError, submit } = useModalSubmit();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cdPrestadorId = valor.trim() === "" ? null : Number(valor);
     if (cdPrestadorId !== null && (!Number.isInteger(cdPrestadorId) || cdPrestadorId <= 0)) {
       setError("El id de Canal Directo tiene que ser un número entero positivo");
       return;
     }
-    setSaving(true);
-    setError(null);
-    try {
+    void submit(async () => {
       await liquidacionesApi.vincularCdPrestador(prestador.id, cdPrestadorId);
       toast.success(cdPrestadorId ? "Vínculo a Canal Directo guardado" : "Vínculo a Canal Directo quitado");
       onClose();
       onSuccess();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error al guardar");
-    } finally {
-      setSaving(false);
-    }
+    }, "Error al guardar");
   };
 
   return (

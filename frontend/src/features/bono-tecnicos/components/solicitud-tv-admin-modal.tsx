@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import type { CrearSolicitudTvAdminBody } from "../types/bono-tecnicos";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
+import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -25,23 +26,20 @@ export function SolicitudTvAdminModal({ tecnico, onClose, onSubmit }: SolicitudT
   const [razonSocial, setRazonSocial] = useState("");
   const [sucursal, setSucursal] = useState("");
   const [tareaRealizada, setTareaRealizada] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { saving: submitting, error, submit } = useModalSubmit();
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
-    setSubmitting(true);
-    onSubmit({
-      tecnico,
-      fecha,
-      razon_social: razonSocial,
-      sucursal,
-      tarea_realizada: tareaRealizada,
-    })
-      .then(() => onClose())
-      .catch(() => setError("No se pudo cargar la TV."))
-      .finally(() => setSubmitting(false));
+    void submit(async () => {
+      await onSubmit({
+        tecnico,
+        fecha,
+        razon_social: razonSocial,
+        sucursal,
+        tarea_realizada: tareaRealizada,
+      });
+      onClose();
+    }, "No se pudo cargar la TV.");
   };
 
   return (

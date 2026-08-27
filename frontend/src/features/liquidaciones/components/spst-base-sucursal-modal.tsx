@@ -6,6 +6,7 @@ import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Spst, SucursalPropia } from "../types/liquidaciones";
 
@@ -23,8 +24,7 @@ export function SpstBaseSucursalModal({
   const [sucursales, setSucursales] = useState<SucursalPropia[] | null>(null);
   const [loadingList, setLoadingList] = useState(true);
   const [selectedId, setSelectedId] = useState<number | null>(spst.sigesBaseSucursalId);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { saving, error, setError, submit } = useModalSubmit();
 
   useEffect(() => {
     liquidacionesApi
@@ -32,20 +32,15 @@ export function SpstBaseSucursalModal({
       .then(setSucursales)
       .catch((e: unknown) => setError(e instanceof Error ? e.message : "Error al cargar sucursales"))
       .finally(() => setLoadingList(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prestador.id]);
 
-  const handleGuardar = async () => {
-    setSaving(true);
-    setError(null);
-    try {
+  const handleGuardar = () => {
+    void submit(async () => {
       await liquidacionesApi.vincularBaseSucursalSpst(spst.id, selectedId);
       toast.success(selectedId ? "Base guardada" : "Base desvinculada");
       onChanged();
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Error al guardar");
-    } finally {
-      setSaving(false);
-    }
+    }, "Error al guardar");
   };
 
   const baseCambiada = selectedId !== spst.sigesBaseSucursalId;

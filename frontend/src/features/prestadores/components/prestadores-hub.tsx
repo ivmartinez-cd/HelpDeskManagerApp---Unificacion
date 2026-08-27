@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { RefreshCw, Wrench } from "lucide-react";
-import { prestadoresApi } from "../api/prestadores-api";
-import type { OperadorOption, PrestadoresResumen } from "../types/prestadores";
+import { usePrestadoresHub } from "../hooks/use-prestadores-hub";
 import { PrestadorDetailModal } from "./prestador-detail-modal";
 import { PrestadorFormModal } from "./prestador-form-modal";
 import { PrestadorGroupSection } from "./prestador-group-section";
@@ -12,54 +11,27 @@ import { BrandButton, BrandEmptyState, BrandInput, BrandSkeleton } from "@/share
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import { Spinner } from "@/shared/components/ui/spinner";
 
-function matchesSearch(query: string, denComercial: string, razonSocial: string | null): boolean {
-  const q = query.trim().toLowerCase();
-  if (!q) return true;
-  return denComercial.toLowerCase().includes(q) || (razonSocial ?? "").toLowerCase().includes(q);
-}
-
 export function PrestadoresHub() {
   const { user, can } = useSession();
   const canEdit = user.isSuperadmin || can("prestadores", "update");
   const canCreate = user.isSuperadmin || can("prestadores", "create");
   const canDelete = user.isSuperadmin || can("prestadores", "delete");
 
-  const [resumen, setResumen] = useState<PrestadoresResumen | null>(null);
-  const [operadores, setOperadores] = useState<OperadorOption[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [syncing, setSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const {
+    resumen,
+    operadores,
+    loading,
+    error,
+    syncing,
+    syncMessage,
+    search,
+    setSearch,
+    gruposFiltrados,
+    handleSync,
+    reload,
+  } = usePrestadoresHub();
   const [creating, setCreating] = useState(false);
   const [viewingId, setViewingId] = useState<string | null>(null);
-
-  const reload = () => {
-    return Promise.all([prestadoresApi.getResumen(), prestadoresApi.listOperadores()])
-      .then(([r, ops]) => {
-        setResumen(r);
-        setOperadores(ops);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        console.error("Error al cargar prestadores:", err);
-        setError(err instanceof Error ? err.message : "No se pudieron cargar los prestadores.");
-      });
-  };
-
-  useEffect(() => {
-    reload().then(() => setLoading(false));
-  }, []);
-
-  const gruposFiltrados = useMemo(() => {
-    if (!resumen) return [];
-    return resumen.grupos
-      .map((g) => ({
-        ...g,
-        prestadores: g.prestadores.filter((p) => matchesSearch(search, p.denComercial, p.razonSocial)),
-      }))
-      .filter((g) => g.prestadores.length > 0);
-  }, [resumen, search]);
 
   const prestadorViendo = useMemo(() => {
     if (!viewingId || !resumen) return null;
@@ -69,24 +41,6 @@ export function PrestadoresHub() {
     }
     return null;
   }, [viewingId, resumen]);
-
-  const handleSync = () => {
-    setSyncing(true);
-    setSyncMessage(null);
-    prestadoresApi
-      .syncDesdeSiges()
-      .then((result) => {
-        setSyncMessage(
-          `${result.actualizados.length} actualizados, ${result.sinCambios} sin cambios.`,
-        );
-        return reload();
-      })
-      .catch((err: unknown) => {
-        console.error("Error al sincronizar desde Siges:", err);
-        setSyncMessage(err instanceof Error ? err.message : "No se pudo sincronizar.");
-      })
-      .finally(() => setSyncing(false));
-  };
 
   return (
     <div className="flex flex-col gap-6 px-9 py-8">

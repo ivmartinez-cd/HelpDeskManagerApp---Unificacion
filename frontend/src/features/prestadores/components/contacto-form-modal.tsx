@@ -5,6 +5,7 @@ import { prestadoresApi } from "../api/prestadores-api";
 import type { Contacto } from "../types/prestadores";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
+import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
 
 interface ContactoFormModalProps {
   prestadorId: string;
@@ -25,30 +26,28 @@ export function ContactoFormModal({
   const [nombre, setNombre] = useState(contacto?.nombre ?? "");
   const [telefono, setTelefono] = useState(contacto?.telefono ?? "");
   const [email, setEmail] = useState(contacto?.email ?? "");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { saving, error, submit } = useModalSubmit();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    setError(null);
-    const payload = {
-      nombre,
-      telefono: telefono || null,
-      email: email || null,
-      isPrincipal: contacto?.isPrincipal ?? false,
-      sortOrder: contacto?.sortOrder ?? 0,
-    };
-    const request = contacto
-      ? prestadoresApi.updateContacto(prestadorId, contacto.id, payload)
-      : prestadoresApi.createContacto(prestadorId, payload);
-    request
-      .then(onSaved)
-      .catch((err: unknown) => {
+    void submit(async () => {
+      const payload = {
+        nombre,
+        telefono: telefono || null,
+        email: email || null,
+        isPrincipal: contacto?.isPrincipal ?? false,
+        sortOrder: contacto?.sortOrder ?? 0,
+      };
+      try {
+        await (contacto
+          ? prestadoresApi.updateContacto(prestadorId, contacto.id, payload)
+          : prestadoresApi.createContacto(prestadorId, payload));
+      } catch (err: unknown) {
         console.error("Error al guardar el contacto:", err);
-        setError(err instanceof Error ? err.message : "No se pudo guardar el contacto.");
-      })
-      .finally(() => setSaving(false));
+        throw err;
+      }
+      onSaved();
+    }, "No se pudo guardar el contacto.");
   };
 
   return (

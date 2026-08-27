@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { BrandButton, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Spst } from "../types/liquidaciones";
 
@@ -29,15 +30,12 @@ export function SpstFormModal({
     provincia: spst?.provincia ?? "",
     zona: spst?.zona ?? "",
   });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { saving, error, submit } = useModalSubmit();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.prestadorId) return;
-    setSaving(true);
-    setError(null);
-    try {
+    void submit(async () => {
       const payload = {
         prestadorId: form.prestadorId,
         nombre: form.nombre,
@@ -55,11 +53,7 @@ export function SpstFormModal({
       }
       onClose();
       onSuccess();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error al guardar");
-    } finally {
-      setSaving(false);
-    }
+    }, "Error al guardar");
   };
 
   return (

@@ -5,6 +5,7 @@ import { prestadoresApi } from "../api/prestadores-api";
 import type { OperadorOption, Prestador } from "../types/prestadores";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { BrandButton, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
+import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
 
 const SIN_ASIGNAR = "__sin_asignar__";
 
@@ -29,21 +30,23 @@ export function AssignOperadorModal({
 }: AssignOperadorModalProps) {
   const [operadorId, setOperadorId] = useState(prestador.operadorId ?? SIN_ASIGNAR);
   const [desde, setDesde] = useState(today());
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { saving, error, submit } = useModalSubmit();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    setError(null);
-    prestadoresApi
-      .assignOperador(prestador.id, operadorId === SIN_ASIGNAR ? null : operadorId, desde)
-      .then(onAssigned)
-      .catch((err: unknown) => {
+    void submit(async () => {
+      try {
+        await prestadoresApi.assignOperador(
+          prestador.id,
+          operadorId === SIN_ASIGNAR ? null : operadorId,
+          desde,
+        );
+      } catch (err: unknown) {
         console.error("Error al reasignar el PST:", err);
-        setError(err instanceof Error ? err.message : "No se pudo reasignar el PST.");
-      })
-      .finally(() => setSaving(false));
+        throw err;
+      }
+      onAssigned();
+    }, "No se pudo reasignar el PST.");
   };
 
   return (

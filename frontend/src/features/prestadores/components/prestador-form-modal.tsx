@@ -5,6 +5,7 @@ import { prestadoresApi } from "../api/prestadores-api";
 import type { OperadorOption, Prestador } from "../types/prestadores";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { BrandButton, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
+import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
 
 const SIN_ASIGNAR = "__sin_asignar__";
 
@@ -33,33 +34,32 @@ export function PrestadorFormModal({
   const [razonSocial, setRazonSocial] = useState(prestador?.razonSocial ?? "");
   const [cuit, setCuit] = useState(prestador?.cuit ?? "");
   const [operadorId, setOperadorId] = useState(prestador?.operadorId ?? SIN_ASIGNAR);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { saving, error, submit } = useModalSubmit();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    setError(null);
-    const request = isEdit
-      ? prestadoresApi.updatePrestador(prestador.id, {
-          denComercial,
-          razonSocial: razonSocial || null,
-          cuit: cuit || null,
-        })
-      : prestadoresApi.createPrestador({
-          sigesEmpresaId: Number(sigesEmpresaId),
-          denComercial,
-          razonSocial: razonSocial || null,
-          cuit: cuit || null,
-          operadorId: operadorId === SIN_ASIGNAR ? null : operadorId,
-        });
-    request
-      .then(onSaved)
-      .catch((err: unknown) => {
+    void submit(async () => {
+      const request = isEdit
+        ? prestadoresApi.updatePrestador(prestador.id, {
+            denComercial,
+            razonSocial: razonSocial || null,
+            cuit: cuit || null,
+          })
+        : prestadoresApi.createPrestador({
+            sigesEmpresaId: Number(sigesEmpresaId),
+            denComercial,
+            razonSocial: razonSocial || null,
+            cuit: cuit || null,
+            operadorId: operadorId === SIN_ASIGNAR ? null : operadorId,
+          });
+      try {
+        await request;
+      } catch (err: unknown) {
         console.error("Error al guardar el PST:", err);
-        setError(err instanceof Error ? err.message : "No se pudo guardar el PST.");
-      })
-      .finally(() => setSaving(false));
+        throw err;
+      }
+      onSaved();
+    }, "No se pudo guardar el PST.");
   };
 
   return (

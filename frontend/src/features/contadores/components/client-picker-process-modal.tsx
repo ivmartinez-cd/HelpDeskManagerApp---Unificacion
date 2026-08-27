@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Download, Plus } from "lucide-react";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
 import { contadoresApi } from "../api/contadores-api";
 import { CONFIG, type ClientOption, type PickerClientType } from "./client-picker-config";
 import { ClientSelect } from "./client-select";
@@ -30,10 +31,9 @@ export function ClientPickerProcessModal({ isOpen, type, onClose }: Props) {
   const [loadingClients, setLoadingClients] = useState(true);
   const [selectedId, setSelectedId] = useState("");
   const [fechaMaxima, setFechaMaxima] = useState(new Date().toISOString().split("T")[0]);
-  const [submitting, setSubmitting] = useState(false);
+  const { saving: submitting, error, setError, submit } = useModalSubmit();
   const [generatedCsv, setGeneratedCsv] = useState<string | null>(null);
   const [generatedDb3, setGeneratedDb3] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
 
@@ -68,7 +68,7 @@ export function ClientPickerProcessModal({ isOpen, type, onClose }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const client = clients.find((c) => c.id === selectedId);
     if (!client) {
@@ -76,21 +76,14 @@ export function ClientPickerProcessModal({ isOpen, type, onClose }: Props) {
       return;
     }
 
-    setSubmitting(true);
     setGeneratedCsv(null);
     setGeneratedDb3(null);
-    setError(null);
-
-    try {
+    void submit(async () => {
       const res = await config.process(client.id, client.name, fechaMaxima);
       setGeneratedCsv(res.csv_filename);
       setGeneratedDb3(res.db3_filename ?? null);
       toast.success(`${config.title} procesado exitosamente`);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error al procesar");
-    } finally {
-      setSubmitting(false);
-    }
+    }, "Error al procesar");
   };
 
   return (

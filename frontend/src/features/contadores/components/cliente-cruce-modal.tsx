@@ -7,6 +7,7 @@ import type { EmpresaSiges } from "../types/calendario";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
 
 const DEBOUNCE_MS = 350;
 
@@ -29,8 +30,7 @@ export function ClienteCruceModal({ clientes, onClose, onSaved }: ClienteCruceMo
   const [resultados, setResultados] = useState<EmpresaSiges[]>([]);
   const [buscando, setBuscando] = useState(false);
   const [seleccion, setSeleccion] = useState<Map<number, EmpresaSiges>>(new Map());
-  const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { saving: guardando, error, setError, submit } = useModalSubmit();
   const [huboCambios, setHuboCambios] = useState(false);
 
   useEffect(() => {
@@ -51,6 +51,7 @@ export function ClienteCruceModal({ clientes, onClose, onSaved }: ClienteCruceMo
         .finally(() => setBuscando(false));
     }, DEBOUNCE_MS);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   const elegirCliente = (cliente: string) => {
@@ -71,23 +72,20 @@ export function ClienteCruceModal({ clientes, onClose, onSaved }: ClienteCruceMo
 
   const guardar = () => {
     if (!activo || seleccion.size === 0) return;
-    setGuardando(true);
-    setError(null);
-    contadoresApi
-      .setClienteSigesMap(activo, [...seleccion.keys()])
-      .then(() => {
-        setHuboCambios(true);
-        const restantes = pendientes.filter((c) => c !== activo);
-        setPendientes(restantes);
-        setSeleccion(new Map());
-        if (restantes.length > 0) elegirCliente(restantes[0]);
-        else setActivo(null);
-      })
-      .catch((err: unknown) => {
+    void submit(async () => {
+      try {
+        await contadoresApi.setClienteSigesMap(activo, [...seleccion.keys()]);
+      } catch (err: unknown) {
         console.error("Error guardando el mapeo:", err);
-        setError(err instanceof Error ? err.message : "No se pudo guardar el mapeo.");
-      })
-      .finally(() => setGuardando(false));
+        throw err;
+      }
+      setHuboCambios(true);
+      const restantes = pendientes.filter((c) => c !== activo);
+      setPendientes(restantes);
+      setSeleccion(new Map());
+      if (restantes.length > 0) elegirCliente(restantes[0]);
+      else setActivo(null);
+    }, "No se pudo guardar el mapeo.");
   };
 
   const cerrar = () => {
