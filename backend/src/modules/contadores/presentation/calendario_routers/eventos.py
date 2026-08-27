@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
-from src.modules.contadores.application.dtos.calendar_event_anotado import CalendarEventAnotado
 from src.modules.contadores.application.dtos.get_calendar_events_request import (
     GetCalendarEventsRequest,
 )
@@ -142,15 +141,6 @@ def _build_pendientes_periodo_actual(
     )
 
 
-async def _filtrar_contra_siges(
-    anotados: list[CalendarEventAnotado],
-) -> list[CalendarEventAnotado]:
-    gateway = get_estado_cierre_grupos_gateway_or_none()
-    if gateway is None:
-        return anotados
-    return await FiltrarPendientesPorPeriodoReal(gateway).execute(anotados)
-
-
 @router.get(
     "/calendario/pendientes-periodo-actual", response_model=Page[CalendarEventSchema]
 )
@@ -162,14 +152,15 @@ async def get_clientes_pendientes_periodo_actual(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[CalendarEventSchema]:
     """Clientes del período EN CURSO que todavía siguen en el calendario de
-    Gestión, vencidos o no — un evento por cliente, cruzado contra Siges
-    igual que /pendientes (ver `_filtrar_contra_siges`)."""
+    Gestión, vencidos o no — un evento por cliente. A diferencia de
+    /pendientes, NO cruza contra Siges: ese cruce mide arrastre de períodos
+    anteriores, no si el período en curso está cerrado (ver el docstring de
+    `GetClientesPendientesPeriodoActualUseCase`)."""
     anotados = await _build_pendientes_periodo_actual(db).execute(
         is_superadmin=identity.user.is_superadmin,
         full_name=identity.user.full_name,
         today=date.fromisoformat(today),
         exclude_operador_ids=POOL_BACKLOG_OPERADOR_IDS,
     )
-    anotados = await _filtrar_contra_siges(anotados)
     schema_events = [CalendarEventSchema.from_anotado(a) for a in anotados]
     return Page.of(schema_events, page=page, size=size)

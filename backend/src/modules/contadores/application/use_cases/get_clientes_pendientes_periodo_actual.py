@@ -14,7 +14,12 @@ class GetClientesPendientesPeriodoActualUseCase:
     vencido), acá entran también los que todavía no llegaron a su fecha:
     mientras Gestión no saque el evento del calendario, ese cliente sigue sin
     cerrar para este período. Un cliente por fila (el primero por fecha si
-    tiene más de un evento en la ventana)."""
+    tiene más de un evento en la ventana). A propósito NO cruza contra Siges
+    (`FiltrarPendientesPorPeriodoReal` mide arrastre de períodos ANTERIORES
+    al actual — `PeriodoFacturacion < período_actual` en
+    `estado_cierre_grupos_query.py` — no si el período en curso está
+    cerrado; aplicarlo acá excluiría clientes sin deuda vieja aunque su
+    evento de este período siga en el calendario)."""
 
     def __init__(self, pending: GetPendingClientsUseCase) -> None:
         self._pending = pending
