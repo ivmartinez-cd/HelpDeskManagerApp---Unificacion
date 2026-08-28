@@ -15,6 +15,7 @@ class ProcessedRequestModel(Base):
     __tablename__ = "processed_requests"
     __table_args__ = (
         Index("idx_processed_serial_sku", "device_serial", "sku", "created_at"),
+        Index("idx_processed_consumable_serial", "consumable_serial"),
     )
 
     hp_request_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
@@ -28,6 +29,8 @@ class ProcessedRequestModel(Base):
     initial_percent_left: Mapped[int | None] = mapped_column(Integer)
     initial_days_left: Mapped[int | None] = mapped_column(Integer)
     initial_pages_left: Mapped[int | None] = mapped_column(Integer)
+    consumable_serial: Mapped[str | None] = mapped_column(String)
+    consumable_colour: Mapped[str | None] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()"), nullable=False
     )

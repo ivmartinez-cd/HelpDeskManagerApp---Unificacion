@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { insumosApi } from "../api/insumos-api";
-import { isLoaded } from "../components/dashboard/request-status";
+import { isLoaded, isSelectable } from "../components/dashboard/request-status";
 import type { CustomerSummary, DashboardResponse, RequestRow } from "../types";
 
 /** Datos del Dashboard de Insumos: métricas globales + solicitudes por cliente
@@ -182,6 +182,10 @@ export function useDashboardData(): DashboardData {
     [expandCustomer],
   );
 
+  // Filas a mostrar en la tabla: todo lo que no sea un pedido propio ya
+  // confirmado. Un pedido activo sin confirmar entrega (hasActiveSupply)
+  // sigue en esta lista con su badge de aviso — ver isLoaded en
+  // request-status.ts, feature "pedido activo sin confirmar entrega".
   const pendingRequests = useCallback(
     (customerId: number) => (requestsByCustomer[customerId] ?? []).filter((row) => !isLoaded(row)),
     [requestsByCustomer],
@@ -208,7 +212,7 @@ export function useDashboardData(): DashboardData {
 
   const isAllSelected = useCallback(
     (customerId: number) => {
-      const pending = (requestsByCustomer[customerId] ?? []).filter((row) => !isLoaded(row));
+      const pending = (requestsByCustomer[customerId] ?? []).filter((row) => isSelectable(row));
       if (pending.length === 0) return false;
       const current = selected[customerId];
       if (!current) return false;
@@ -219,7 +223,7 @@ export function useDashboardData(): DashboardData {
 
   const toggleSelectAll = useCallback(
     (customerId: number) => {
-      const pending = (requestsByCustomer[customerId] ?? []).filter((row) => !isLoaded(row));
+      const pending = (requestsByCustomer[customerId] ?? []).filter((row) => isSelectable(row));
       if (pending.length === 0) return;
       const allSelected = isAllSelected(customerId);
       setSelected((state) => {

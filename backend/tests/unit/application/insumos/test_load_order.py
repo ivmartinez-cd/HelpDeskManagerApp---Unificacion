@@ -38,6 +38,8 @@ from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.pending_validation import PendingValidation
 from src.modules.insumos.domain.value_objects.zone_contacts import ZoneContacts
 from tests.unit.domain.insumos.fakes import (
+    FakeClientOrderNotifier,
+    FakeCustomerRepository,
     FakeInsightGateway,
     FakeOrderAuditRepository,
     FakeOrderClaimRepository,
@@ -64,6 +66,8 @@ class World:
         self.zone_contacts = FakeZoneContactRepository()
         self.supply_cache = FakeSupplyCacheRepository()
         self.claims = FakeOrderClaimRepository()
+        self.customers = FakeCustomerRepository()
+        self.client_notifier = FakeClientOrderNotifier()
 
         self.insight.consumable_requests = [
             {
@@ -111,6 +115,8 @@ class World:
             order_creation=order_creation,
             incident_creation=incident_creation,
             match_resolver=SupplyMatchResolver(self.wsayc, self.supply_cache),
+            customers=self.customers,
+            client_notifier=self.client_notifier,
         )
         self.use_case = LoadOrder(ports, LoadOrderConfig(order_settings=cfg))
 

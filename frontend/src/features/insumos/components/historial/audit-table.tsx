@@ -16,24 +16,29 @@ import { eventLabel, eventTone, sdsDeviceUrl, type RowAction } from "./audit-eve
  * ordenadas (client-side, ver `audit-panel.tsx`). La acción disponible por
  * fila (`row.action`) también la calcula el backend contra toda la tabla. */
 
-const COLUMNS: readonly { key: AuditSortKey | null; label: string }[] = [
-  { key: "event", label: "Evento" },
-  { key: "hp_request_time", label: "F. Solicitud" },
-  { key: "created_at", label: "F. Carga" },
-  { key: "customer_name", label: "Cliente" },
-  { key: "device_serial", label: "Serie" },
-  { key: "sku", label: "SKU" },
-  { key: "description", label: "Insumo" },
-  { key: "initial_percent_left", label: "% al cargar" },
-  { key: "initial_days_left", label: "Días rest." },
-  { key: "initial_pages_left", label: "Págs. rest." },
-  { key: "internal_order_id", label: "Pedido CD" },
-  { key: null, label: "Detalle" },
-  { key: null, label: "Acción" },
+/** Anchos fijos (colgroup, table-fixed) para que el navegador no estire las
+ * columnas según el contenido más ancho y aparezca scroll horizontal. `event`
+ * lleva el mayor ancho: "Ignorado permanente" es el label más largo, y sin
+ * espacio se pintaba encima de la columna siguiente en vez de truncar. Suman
+ * 100%. */
+const COLUMNS: readonly { key: AuditSortKey | null; label: string; width: string }[] = [
+  { key: "event", label: "Evento", width: "11%" },
+  { key: "hp_request_time", label: "F. Solicitud", width: "7%" },
+  { key: "created_at", label: "F. Carga", width: "7%" },
+  { key: "customer_name", label: "Cliente", width: "10%" },
+  { key: "device_serial", label: "Serie", width: "8%" },
+  { key: "sku", label: "SKU", width: "7%" },
+  { key: "description", label: "Insumo", width: "14%" },
+  { key: "initial_percent_left", label: "% al cargar", width: "4%" },
+  { key: "initial_days_left", label: "Días rest.", width: "4%" },
+  { key: "initial_pages_left", label: "Págs. rest.", width: "4%" },
+  { key: "internal_order_id", label: "Pedido CD", width: "7%" },
+  { key: null, label: "Detalle", width: "8%" },
+  { key: null, label: "Acción", width: "9%" },
 ];
 
 const thClass =
-  "whitespace-nowrap px-3 py-2.5 text-left font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground";
+  "px-3 py-2.5 text-left font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground";
 const tdClass = "px-3 py-2.5 font-body text-[13px] text-foreground align-middle";
 const numericClass = `${tdClass} text-right tabular-nums`;
 const mutedClass = "font-body text-[12px] text-muted-foreground";
@@ -65,7 +70,12 @@ export function AuditTable({
 }: AuditTableProps) {
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
-      <table className="w-full border-collapse">
+      <table className="w-full table-fixed border-collapse">
+        <colgroup>
+          {COLUMNS.map((column) => (
+            <col key={column.label} style={{ width: column.width }} />
+          ))}
+        </colgroup>
         <thead>
           <tr className="border-b border-border bg-muted/40">
             {COLUMNS.map((column) =>
@@ -106,16 +116,16 @@ export function AuditTable({
                 <td className={tdClass}>
                   <StatusBadge tone={eventTone(row)}>{eventLabel(row)}</StatusBadge>
                 </td>
-                <td className={`${tdClass} whitespace-nowrap ${mutedClass}`}>
+                <td className={`${tdClass} ${mutedClass}`}>
                   {formatArgDateTime(row.hp_request_time)}
                 </td>
-                <td className={`${tdClass} whitespace-nowrap ${mutedClass}`}>
+                <td className={`${tdClass} ${mutedClass}`}>
                   {formatArgDateTime(row.created_at)}
                 </td>
-                <td className={`${tdClass} max-w-[190px] truncate`} title={row.customer_name ?? ""}>
+                <td className={`${tdClass} break-words`} title={row.customer_name ?? ""}>
                   {row.customer_name ?? EMPTY_VALUE}
                 </td>
-                <td className={`${tdClass} font-mono text-[12px]`}>
+                <td className={`${tdClass} truncate font-mono text-[12px]`} title={row.device_serial ?? ""}>
                   {row.device_serial && deviceUrl ? (
                     <a
                       href={deviceUrl}
@@ -130,10 +140,10 @@ export function AuditTable({
                     (row.device_serial ?? EMPTY_VALUE)
                   )}
                 </td>
-                <td className={`${tdClass} whitespace-nowrap font-mono text-[12px]`}>
+                <td className={`${tdClass} truncate font-mono text-[12px]`} title={row.sku ?? ""}>
                   {row.sku ?? EMPTY_VALUE}
                 </td>
-                <td className={`${tdClass} max-w-[180px] truncate`} title={row.description ?? ""}>
+                <td className={`${tdClass} truncate`} title={row.description ?? ""}>
                   {row.description ?? EMPTY_VALUE}
                 </td>
                 <td className={numericClass}>
@@ -141,7 +151,10 @@ export function AuditTable({
                 </td>
                 <td className={numericClass}>{row.initial_days_left ?? EMPTY_VALUE}</td>
                 <td className={numericClass}>{row.initial_pages_left ?? EMPTY_VALUE}</td>
-                <td className={`${tdClass} whitespace-nowrap font-mono text-[12px]`}>
+                <td
+                  className={`${tdClass} truncate font-mono text-[12px]`}
+                  title={row.internal_order_id ?? ""}
+                >
                   {row.internal_order_id && row.supply_url ? (
                     <a
                       href={row.supply_url}

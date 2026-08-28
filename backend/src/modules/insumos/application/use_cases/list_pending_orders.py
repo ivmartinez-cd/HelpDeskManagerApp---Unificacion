@@ -37,6 +37,7 @@ from src.modules.insumos.domain.value_objects.cd_state import ENTREGADO, is_in_t
 from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply, SupplyStatusEvent
 from src.modules.insumos.domain.value_objects.insumos_settings import settings_from_raw
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
+from src.shared.infrastructure.cache.ttl_cache import TTLCache
 
 # include_delivered suma los Entregado de los últimos 7 días — sirve para ver el ciclo
 # completo antes de que se pierdan de vista (mismo corte que el legacy).
@@ -55,17 +56,31 @@ class ListPendingOrdersPorts:
 
 class ListPendingOrders:
     def __init__(
-        self, ports: ListPendingOrdersPorts, order_settings: CanalDirectoOrderSettings
+        self,
+        ports: ListPendingOrdersPorts,
+        order_settings: CanalDirectoOrderSettings,
+        cache: TTLCache[tuple[int | None, bool], list[PendingOrderRow]] | None = None,
     ) -> None:
         self._ports = ports
         self._order_settings = order_settings
+        self._cache = cache
 
     async def execute(
         self, customer_id: int | None, include_delivered: bool
     ) -> list[PendingOrderRow]:
-        """Filas más viejas primero: es justo lo que hay que ir mirando día a día
-        antes que lo recién cargado."""
-        settings = settings_from_raw(await self._ports.settings.get_all())
+        if self._cache is None:
+            return await self._compute(customer_id, include_delivered)
+        return await self._cache.get_or_compute(
+            (customer_id, include_delivered),
+            lambda: self._compute(customer_id, include_delivered),
+        )
+
+    async def _compute(
+        self, customer_id: int | None, include_delivered: bool
+    ) -> list[PendingOrderRow]:
+        """Pega en vivo contra SOAP + Insight (caro) — el caller la envuelve en un
+        TTLCache corto (ver ListPendingOrders.__init__) para no recalcular en
+        tab-switches/reloads casi simultáneos."""
         orders = await self._ports.processed.get_all_created(customer_id)
         order_by_num = _orders_by_supply_id(orders)
         if not order_by_num:
@@ -77,6 +92,17 @@ class ListPendingOrders:
         pending = _in_transit_orders(order_by_num, status_by_id, history_by_id, include_delivered)
         if not pending:
             return []
+        return await self._build_rows(pending, status_by_id, history_by_id)
+
+    async def _build_rows(
+        self,
+        pending: list[tuple[int, ProcessedRequest]],
+        status_by_id: dict[int, str],
+        history_by_id: dict[int, list[SupplyStatusEvent]],
+    ) -> list[PendingOrderRow]:
+        """Filas más viejas primero: es justo lo que hay que ir mirando día a día
+        antes que lo recién cargado."""
+        settings = settings_from_raw(await self._ports.settings.get_all())
         rows, backfill = await PendingOrderRowBuilder(
             self._ports.insight, self._ports.customers, self._order_settings
         ).build(pending, status_by_id, history_by_id, settings)

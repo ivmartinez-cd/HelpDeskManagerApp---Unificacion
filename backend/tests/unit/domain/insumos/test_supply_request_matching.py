@@ -118,3 +118,76 @@ async def test_resolver_con_datos_presentes_no_toca_la_red() -> None:
 
     assert await resolver.resolve(candidate, query, for_ui_display=False) is True
     assert gateway.description_calls == []
+
+
+# --- consumable_serial (caso real 0BLRBJLJ400006W, ago-2026) ---------------------------
+
+
+def test_pedido_propio_con_mismo_sku_pero_otra_serie_de_consumible_no_matchea() -> None:
+    """3 drums de color con un único SKU compartido en el catálogo de CD: el SKU
+    coincide pero son piezas físicas distintas — la serie desempata."""
+    own = ProcessedRequest(
+        hp_request_id=1,
+        internal_order_id="441448-7",
+        sku="CF230A",
+        consumable_serial="CRUM-0000-5050",
+    )
+    query = SupplyMatchQuery(
+        sku="CF230A", own_orders=(own,), consumable_serial="CRUM-0000-6917"
+    )
+    assert supply_matches_request(_candidate(), query, for_ui_display=True) is False
+    # Anti-duplicado (poller/carga) también respeta la distinción de serie.
+    assert supply_matches_request(_candidate(), query, for_ui_display=False) is False
+
+
+def test_pedido_propio_con_misma_serie_de_consumible_matchea() -> None:
+    own = ProcessedRequest(
+        hp_request_id=1,
+        internal_order_id="441448-7",
+        sku="CF230A",
+        consumable_serial="CRUM-0000-6917",
+    )
+    query = SupplyMatchQuery(
+        sku="CF230A", own_orders=(own,), consumable_serial="CRUM-0000-6917"
+    )
+    assert supply_matches_request(_candidate(), query, for_ui_display=True) is True
+
+
+def test_sin_consumable_serial_de_un_lado_no_bloquea_por_serie() -> None:
+    """None en cualquiera de los dos lados: no hay dato para desempatar, sigue el
+    camino normal (SKU)."""
+    own = _own("441448-7", sku="CF230A")
+    query = SupplyMatchQuery(sku="CF230A", own_orders=(own,), consumable_serial="CRUM-0000-6917")
+    assert supply_matches_request(_candidate(), query, for_ui_display=True) is True
+
+
+# --- fallback por tipo sin color (waste/staples) ----------------------------------------
+
+
+def test_waste_container_sin_sku_ni_color_matchea_por_tipo() -> None:
+    """Caso real: pedido "Toner Collection Unit" sin SKU en CD no vinculaba con la
+    solicitud "Unidad de recogida de tóner" (Glenmark/MXBCR7N0WC, ago-2026)."""
+    candidate = _candidate(sku="", description="Toner Collection Unit")
+    query = SupplyMatchQuery(sku="", description="Unidad de recogida de tóner")
+    assert supply_matches_request(candidate, query, for_ui_display=True) is True
+
+
+def test_staples_sin_sku_ni_color_matchea_por_tipo() -> None:
+    candidate = _candidate(sku="", description="Staple Cartridge")
+    query = SupplyMatchQuery(sku="", description="Cartucho de grapas")
+    assert supply_matches_request(candidate, query, for_ui_display=True) is True
+
+
+def test_toner_sin_sku_ni_color_no_matchea_por_tipo() -> None:
+    """toner/drum/developer quedan afuera del fallback por tipo: sí pueden convivir en
+    varios colores por equipo, a diferencia de waste/staples."""
+    candidate = _candidate(sku="", description="Toner Cartridge")
+    query = SupplyMatchQuery(sku="", description="Cartucho de tóner")
+    assert supply_matches_request(candidate, query, for_ui_display=True) is False
+    assert supply_matches_request(candidate, query, for_ui_display=False) is True
+
+
+def test_waste_vs_staples_no_matchea() -> None:
+    candidate = _candidate(sku="", description="Waste Container")
+    query = SupplyMatchQuery(sku="", description="Cartucho de grapas")
+    assert supply_matches_request(candidate, query, for_ui_display=True) is False

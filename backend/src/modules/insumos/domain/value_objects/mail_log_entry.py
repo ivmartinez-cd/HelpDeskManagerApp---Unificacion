@@ -8,6 +8,8 @@ KIND_BACKUP = "backup"
 KIND_POLLER_ALERT = "poller_alert"
 KIND_POLLER_RECOVERY = "poller_recovery"
 KIND_PENDING_ORDER_ALERT = "pending_order_alert"
+KIND_DISPATCH_UNCONFIRMED_ALERT = "dispatch_unconfirmed_alert"
+KIND_CLIENT_ORDER_NOTICE = "client_order_notice"
 
 
 @dataclass(frozen=True)

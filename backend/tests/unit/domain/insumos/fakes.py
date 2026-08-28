@@ -13,6 +13,7 @@ from src.modules.insumos.domain.entities.audit_record import (
     StoredAuditRecord,
 )
 from src.modules.insumos.domain.entities.customer_config import CustomerConfig
+from src.modules.insumos.domain.entities.dismissed_supply import DismissedSupply
 from src.modules.insumos.domain.entities.known_device import (
     MONITORED_STATUSES,
     DeviceInventoryEntry,
@@ -49,6 +50,7 @@ from src.modules.insumos.domain.value_objects.cd_supply import (
     CdSupply,
     SupplyStatusEvent,
 )
+from src.modules.insumos.domain.value_objects.client_order_notice import ClientOrderNotice
 from src.modules.insumos.domain.value_objects.mail_log_entry import (
     MailLogEntry,
     MailLogRecord,
@@ -62,7 +64,11 @@ from src.modules.insumos.domain.value_objects.pending_validation import (
     PendingValidationWork,
     ValidationStart,
 )
-from src.modules.insumos.domain.value_objects.zone_contacts import ZoneContactRow, ZoneContacts
+from src.modules.insumos.domain.value_objects.zone_contacts import (
+    Customer,
+    ZoneContactRow,
+    ZoneContacts,
+)
 
 HAPPY_MACHINE = CdMachine(
     familia_id="255", familia_name="HP E50145/52645", empresa_id="8", sucursal_id="13840"
@@ -954,3 +960,88 @@ class FakeRequestAlertRepository:
         for hp_request_id in acknowledged:
             self.states[hp_request_id] = STATE_ACKNOWLEDGED
         return len(acknowledged)
+
+
+class FakeCustomerRepository:
+    """CustomerRepository (pantalla Clientes) — distinto de FakeCustomerConfigRepository
+    (list_enabled/get_names/sync_discovered), usado por LoadOrder para chequear
+    is_client_mail_enabled antes de avisar al cliente."""
+
+    def __init__(self) -> None:
+        self.customers: dict[int, Customer] = {}
+
+    async def list_all(self) -> list[Customer]:
+        return list(self.customers.values())
+
+    async def set_enabled(self, customer_id: int, enabled: bool) -> None:
+        c = self.customers[customer_id]
+        self.customers[customer_id] = replace(c, enabled=enabled)
+
+    async def bulk_toggle(self, enabled: bool) -> None:
+        self.customers = {cid: replace(c, enabled=enabled) for cid, c in self.customers.items()}
+
+    async def set_client_mail_enabled(self, customer_id: int, enabled: bool) -> None:
+        c = self.customers.get(customer_id)
+        if c is None:
+            return
+        self.customers[customer_id] = replace(c, client_mail_enabled=enabled)
+
+    async def is_client_mail_enabled(self, customer_id: int) -> bool:
+        c = self.customers.get(customer_id)
+        return bool(c and c.client_mail_enabled)
+
+    async def sync(self, customers: list[dict[str, object]]) -> None:
+        for entry in customers:
+            cid = int(entry["customerId"])  # type: ignore[arg-type]
+            if cid not in self.customers:
+                self.customers[cid] = Customer(
+                    customer_id=cid, name=str(entry["name"]), enabled=False
+                )
+
+
+class FakeDismissedSupplyRepository:
+    def __init__(self) -> None:
+        self.entries: dict[int, DismissedSupply] = {}
+
+    async def mark_dismissed(
+        self, supply_id: int, device_serial: str, hp_request_id: int | None = None
+    ) -> None:
+        if supply_id in self.entries:
+            return
+        self.entries[supply_id] = DismissedSupply(
+            supply_id=supply_id, device_serial=device_serial, hp_request_id=hp_request_id
+        )
+
+    async def get_dismissed_ids(self, supply_ids: list[int]) -> set[int]:
+        return {sid for sid in supply_ids if sid in self.entries}
+
+    async def get_all_dismissed_ids(self) -> set[int]:
+        return set(self.entries)
+
+    async def get_pending_unignore(self) -> list[DismissedSupply]:
+        return [e for e in self.entries.values() if e.hp_request_id is not None]
+
+    async def clear(self, supply_id: int) -> None:
+        self.entries.pop(supply_id, None)
+
+
+class FakeDispatchUnconfirmedNotificationRepository:
+    def __init__(self) -> None:
+        self.notified: set[int] = set()
+
+    async def get_notified_ids(self, hp_request_ids: list[int]) -> set[int]:
+        return {rid for rid in hp_request_ids if rid in self.notified}
+
+    async def mark_notified(self, hp_request_ids: list[int]) -> None:
+        self.notified.update(hp_request_ids)
+
+
+class FakeClientOrderNotifier:
+    def __init__(self) -> None:
+        self.notices: list[ClientOrderNotice] = []
+        self.raise_error = False
+
+    async def notify(self, notice: ClientOrderNotice) -> None:
+        if self.raise_error:
+            raise RuntimeError("smtp caído")
+        self.notices.append(notice)

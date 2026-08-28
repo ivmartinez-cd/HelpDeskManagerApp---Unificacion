@@ -30,6 +30,9 @@ from src.modules.insumos.application.use_cases._dashboard_release import Release
 from src.modules.insumos.domain.repositories.customer_config_repository import (
     CustomerConfigRepository,
 )
+from src.modules.insumos.domain.repositories.dismissed_supply_repository import (
+    DismissedSupplyRepository,
+)
 from src.modules.insumos.domain.repositories.insight_gateway import InsightGateway
 from src.modules.insumos.domain.repositories.insumos_settings_repository import (
     InsumosSettingsRepository,
@@ -60,6 +63,7 @@ class GetDashboardPorts:
     customers: CustomerConfigRepository
     settings: InsumosSettingsRepository
     audit: OrderAuditRepository
+    dismissed: DismissedSupplyRepository
 
 
 class GetDashboard:
@@ -110,7 +114,8 @@ class GetDashboard:
         )
         supplies = await self._ports.supply_cache.get_noncancelled_by_serials(pending_serials)
         own_orders = await self._ports.processed.get_created_by_serials(pending_serials)
-        return summarize_customers(datas, settings, supplies, own_orders)
+        dismissed = frozenset(await self._ports.dismissed.get_all_dismissed_ids())
+        return summarize_customers(datas, settings, supplies, own_orders, dismissed)
 
 
 def _without_released(data: CustomerRequests, released: set[int]) -> CustomerRequests:

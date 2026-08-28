@@ -69,3 +69,25 @@ class ProcessedRequestRepository(Protocol):
     ) -> None:
         """Completa initial_* en filas ya existentes (ver ProcessedInitialSnapshot)."""
         ...
+
+    async def get_missing_consumable_serial(
+        self, within_days: int | None = None
+    ) -> list[ProcessedRequest]:
+        """Pedidos CREATED sin consumable_serial — candidatos para completar vía Insight
+        (ver application/use_cases/backfill_consumable_serial.py). `within_days=None` trae
+        todo el historial (script manual); un número acota a los últimos N días (chequeo
+        periódico del poller)."""
+        ...
+
+    async def backfill_consumable_serial(self, updates: Sequence[tuple[int, str]]) -> None:
+        """Completa consumable_serial en filas ya existentes. Cada entry:
+        (hp_request_id, consumable_serial)."""
+        ...
+
+    async def find_consumable_serial_reuse_batch(
+        self, consumable_serials: set[str]
+    ) -> dict[str, list[ProcessedRequest]]:
+        """Pedidos previos (cualquier serie) que ya usaron cada consumable_serial — señal
+        de cartucho reinstalado o movido de equipo, puramente informativa (nunca decide un
+        match). Keyed por consumable_serial.upper(), listas ordenadas por created_at DESC."""
+        ...

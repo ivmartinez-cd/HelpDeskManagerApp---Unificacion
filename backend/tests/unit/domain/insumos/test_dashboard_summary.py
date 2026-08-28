@@ -68,7 +68,12 @@ def test_procesada_cuenta_como_cargada() -> None:
     assert totals["pending"] == 0
 
 
-def test_supply_activo_del_mismo_consumible_cuenta_como_cargada() -> None:
+def test_supply_activo_sin_pedido_propio_no_cuenta_como_cargada() -> None:
+    """"Cargada" (loaded) es SOLO un pedido propio verificado (processed_ids) — un
+    supply activo detectado por matching puede ser de una solicitud vieja ya cerrada
+    que nunca llegó a Entregado en Canal Directo (caso real 442759-7, ago-2026): eso
+    no resuelve la solicitud ACTUAL, sigue contando como pending/severidad. Ver
+    ListRequests / _request_association.py para el badge que avisa este caso."""
     supplies = {
         "SERIE1": [
             CachedSupply(
@@ -80,7 +85,29 @@ def test_supply_activo_del_mismo_consumible_cuenta_como_cargada() -> None:
         ]
     }
     per_customer, _ = summarize_customers([_data((_snapshot(1),))], _SETTINGS, supplies, {})
-    assert per_customer[0].loaded == 1
+    assert per_customer[0].loaded == 0
+    assert per_customer[0].pending == 1
+
+
+def test_supply_activo_descartado_a_mano_no_cuenta_ni_como_pendiente() -> None:
+    """Un pedido despachado sin confirmar que el operador ya descartó (dismiss_request
+    con supply_id) se excluye enteramente del cómputo hasta que se resuelva."""
+    supplies = {
+        "SERIE1": [
+            CachedSupply(
+                supply_id=441500,
+                serial="SERIE1",
+                estado="Pendiente",
+                description="Cartucho negro HP 30A",
+            )
+        ]
+    }
+    per_customer, totals = summarize_customers(
+        [_data((_snapshot(1),))], _SETTINGS, supplies, {}, dismissed_supply_ids=frozenset({441500})
+    )
+    assert per_customer[0].loaded == 0
+    assert per_customer[0].pending == 0
+    assert totals["pending"] == 0
 
 
 def test_supply_sin_datos_no_oculta_la_solicitud_en_la_ui() -> None:

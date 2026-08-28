@@ -99,4 +99,5 @@ def _snapshot_from(request: JsonDict, serial_by_device: dict[int, str]) -> Reque
         is_maintenance_kit=is_maintenance_kit(
             str(consumable.get("description") or ""), str(reorder_part.get("type") or "")
         ),
+        consumable_serial=consumable.get("serialNumber"),
     )

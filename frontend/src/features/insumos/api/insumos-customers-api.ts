@@ -27,6 +27,12 @@ export const insumosCustomersApi = {
   toggleCustomer: (customerId: number, enabled: boolean) =>
     httpClient.patch<{ ok: boolean }>(`${BASE}/customers/${customerId}`, { enabled }),
 
+  /** Activa o desactiva el aviso por mail al cliente al cargar su pedido. */
+  setClientMailEnabled: (customerId: number, clientMailEnabled: boolean) =>
+    httpClient.patch<{ ok: boolean }>(`${BASE}/customers/${customerId}`, {
+      client_mail_enabled: clientMailEnabled,
+    }),
+
   /** Habilita o deshabilita TODOS los clientes de una vez. */
   bulkToggleCustomers: (enabled: boolean) =>
     httpClient.post<{ ok: boolean }>(`${BASE}/customers/bulk-toggle`, { enabled }),

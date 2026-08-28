@@ -15,7 +15,15 @@ class SqlAlchemyCustomerRepository:
     async def list_all(self) -> list[Customer]:
         stmt = select(CustomerConfigModel).order_by(CustomerConfigModel.name)
         rows = (await self._session.execute(stmt)).scalars().all()
-        return [Customer(customer_id=r.customer_id, name=r.name, enabled=r.enabled) for r in rows]
+        return [
+            Customer(
+                customer_id=r.customer_id,
+                name=r.name,
+                enabled=r.enabled,
+                client_mail_enabled=r.client_mail_enabled,
+            )
+            for r in rows
+        ]
 
     async def set_enabled(self, customer_id: int, enabled: bool) -> None:
         stmt = (
@@ -27,6 +35,21 @@ class SqlAlchemyCustomerRepository:
 
     async def bulk_toggle(self, enabled: bool) -> None:
         await self._session.execute(update(CustomerConfigModel).values(enabled=enabled))
+
+    async def set_client_mail_enabled(self, customer_id: int, enabled: bool) -> None:
+        stmt = (
+            update(CustomerConfigModel)
+            .where(CustomerConfigModel.customer_id == customer_id)
+            .values(client_mail_enabled=enabled)
+        )
+        await self._session.execute(stmt)
+
+    async def is_client_mail_enabled(self, customer_id: int) -> bool:
+        stmt = select(CustomerConfigModel.client_mail_enabled).where(
+            CustomerConfigModel.customer_id == customer_id
+        )
+        value = (await self._session.execute(stmt)).scalar_one_or_none()
+        return bool(value)
 
     async def sync(self, customers: list[dict[str, object]]) -> None:
         if not customers:

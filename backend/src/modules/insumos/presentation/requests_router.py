@@ -6,12 +6,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.insumos.application.dtos.load_order import LoadOrderCommand
-from src.modules.insumos.application.dtos.request_actions import DismissCommand, ReconcileCommand
+from src.modules.insumos.application.dtos.request_actions import (
+    DismissCommand,
+    IgnoreCommand,
+    ReconcileCommand,
+)
 from src.modules.insumos.domain.well_known_permissions import CREATE, VIEW
 from src.modules.insumos.presentation.dependencies import (
     build_cancel_order,
     build_dismiss_request,
     build_get_dashboard,
+    build_ignore_request,
     build_list_pending_orders,
     build_list_requests,
     build_load_order,
@@ -21,6 +26,8 @@ from src.modules.insumos.presentation.schemas.action_schemas import (
     CancelResponse,
     DismissRequestBody,
     DismissResponse,
+    IgnoreRequestBody,
+    IgnoreResponse,
     ReconcileRequestBody,
     ReconcileResponse,
 )
@@ -123,16 +130,41 @@ async def dismiss_request(
     _: Identity = _require_create,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> DismissResponse:
-    """Descarta la solicitud directamente en HP SDS (status_update=DELETE)."""
+    """Descarta la solicitud en HP SDS — IGNORE (temporal, con auto-UNIGNORE) si tenía
+    un pedido activo sin confirmar entrega, DELETE si no."""
     command = DismissCommand(
         hp_request_id=request_id,
         customer_id=body.customer_id,
         customer_name=body.customer_name,
         device_serial=body.serial,
         sku=body.sku,
+        supply_id=body.supply_id,
+        supply_status=body.supply_status,
     )
     result = await build_dismiss_request(db).execute(command)
     return DismissResponse.from_result(result)
+
+
+@router.post("/requests/{request_id}/ignore", response_model=IgnoreResponse)
+async def ignore_request(
+    request_id: int,
+    body: IgnoreRequestBody,
+    _: Identity = _require_create,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> IgnoreResponse:
+    """Ignora la solicitud PERMANENTEMENTE en HP SDS (status_update=IGNORE, sin
+    UNIGNORE automático) — a diferencia de /dismiss, no requiere pedido asociado."""
+    command = IgnoreCommand(
+        hp_request_id=request_id,
+        customer_id=body.customer_id,
+        customer_name=body.customer_name,
+        device_serial=body.serial,
+        sku=body.sku,
+        supply_id=body.supply_id,
+        supply_status=body.supply_status,
+    )
+    result = await build_ignore_request(db).execute(command)
+    return IgnoreResponse.from_result(result)
 
 
 @router.post("/requests/{request_id}/reconcile", response_model=ReconcileResponse)

@@ -22,6 +22,14 @@ class ProcessedRequest:
     initial_percent_left: int | None = None
     initial_days_left: int | None = None
     initial_pages_left: int | None = None
+    # Serie del chip físico del consumible (consumable.serialNumber de Insight) al crear
+    # el pedido — distingue, si el equipo vuelve a pedir el mismo SKU, la MISMA unidad
+    # física (cubierta por este pedido) de OTRA con serie distinta (pedido nuevo real).
+    # Ver supply_request_matching.py. None en pedidos creados antes de este chequeo.
+    consumable_serial: str | None = None
+    # Color del canal (consumable.colour de Insight), puramente informativo (Historial/UI)
+    # — nunca decide un match, ver supply_request_matching.py.
+    consumable_colour: str | None = None
     created_at: datetime | None = None
 
 

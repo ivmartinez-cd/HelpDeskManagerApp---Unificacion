@@ -135,3 +135,80 @@ async def test_backfill_initial_snapshot_completa_filas_existentes(
     assert row is not None
     assert row.initial_percent_left == 9
     assert row.initial_days_left == 3
+
+
+async def test_consumable_serial_se_persiste_y_se_lee(db_session: AsyncSession) -> None:
+    repo = SqlAlchemyProcessedRequestRepository(db_session)
+    await repo.mark_processed(
+        _request(consumable_serial="CRUM-0000-6917", consumable_colour="CYAN")
+    )
+
+    row = await repo.get(974325)
+
+    assert row is not None
+    assert row.consumable_serial == "CRUM-0000-6917"
+    assert row.consumable_colour == "CYAN"
+
+
+async def test_get_missing_consumable_serial_solo_trae_created_sin_serie(
+    db_session: AsyncSession,
+) -> None:
+    repo = SqlAlchemyProcessedRequestRepository(db_session)
+    await repo.mark_processed(_request(974325, consumable_serial=None))
+    await repo.mark_processed(_request(974326, consumable_serial="CRUM-1"))
+    await repo.mark_processed(_request(974327, status=STATUS_CANCELLED, consumable_serial=None))
+
+    missing = await repo.get_missing_consumable_serial()
+
+    assert [r.hp_request_id for r in missing] == [974325]
+
+
+async def test_get_missing_consumable_serial_respeta_within_days(
+    db_session: AsyncSession,
+) -> None:
+    repo = SqlAlchemyProcessedRequestRepository(db_session)
+    await repo.mark_processed(_request(974325, consumable_serial=None))
+    old_created_at = datetime.now(UTC) - timedelta(days=30)
+    await db_session.execute(
+        update(ProcessedRequestModel)
+        .where(ProcessedRequestModel.hp_request_id == 974325)
+        .values(created_at=old_created_at)
+    )
+    await db_session.flush()
+
+    missing = await repo.get_missing_consumable_serial(within_days=7)
+
+    assert missing == []
+
+
+async def test_backfill_consumable_serial_completa_filas_existentes(
+    db_session: AsyncSession,
+) -> None:
+    repo = SqlAlchemyProcessedRequestRepository(db_session)
+    await repo.mark_processed(_request(consumable_serial=None))
+
+    await repo.backfill_consumable_serial([(974325, "CRUM-0000-6917")])
+
+    row = await repo.get(974325)
+    assert row is not None
+    assert row.consumable_serial == "CRUM-0000-6917"
+
+
+async def test_find_consumable_serial_reuse_batch_agrupa_por_serie(
+    db_session: AsyncSession,
+) -> None:
+    repo = SqlAlchemyProcessedRequestRepository(db_session)
+    await repo.mark_processed(
+        _request(974325, device_serial="SERIE1", consumable_serial="CRUM-1")
+    )
+    await repo.mark_processed(
+        _request(974326, device_serial="SERIE2", consumable_serial="CRUM-1")
+    )
+    await repo.mark_processed(
+        _request(974327, device_serial="SERIE1", consumable_serial="CRUM-2")
+    )
+
+    result = await repo.find_consumable_serial_reuse_batch({"crum-1"})
+
+    assert {r.hp_request_id for r in result["CRUM-1"]} == {974325, 974326}
+    assert "CRUM-2" not in result

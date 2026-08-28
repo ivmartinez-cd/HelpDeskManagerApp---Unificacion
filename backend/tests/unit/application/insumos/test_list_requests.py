@@ -28,6 +28,7 @@ from src.modules.insumos.domain.value_objects.pending_validation import PendingV
 from src.modules.insumos.domain.value_objects.zone_contacts import ZoneContacts
 from tests.unit.domain.insumos.fakes import (
     FakeCustomerConfigRepository,
+    FakeDismissedSupplyRepository,
     FakeInsightGateway,
     FakeInsumosSettingsRepository,
     FakeOrderAuditRepository,
@@ -74,6 +75,7 @@ class World:
         self.audit = FakeOrderAuditRepository()
         self.validations = FakeRequestValidationRepository()
         self.zone_contacts = FakeZoneContactRepository()
+        self.dismissed = FakeDismissedSupplyRepository()
 
         self.customers.customers = [CustomerConfig(customer_id=8, name="Cliente Test")]
         self.insight.requests_by_customer = {8: []}
@@ -95,6 +97,7 @@ class World:
             customers=self.customers,
             settings=self.settings_repo,
             audit=self.audit,
+            dismissed=self.dismissed,
         )
         self.window = ValidationWindow(
             ValidationWindowPorts(

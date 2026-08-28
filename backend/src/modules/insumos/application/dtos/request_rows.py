@@ -43,6 +43,18 @@ class RequestRow:
     supply_id: str | None = None
     supply_url: str | None = None
     supply_status: str | None = None
+    # Fecha (formato Canal Directo) del supply de supply_id — solo presente cuando viene
+    # de un pedido activo detectado por matching (no del propio order_id), para avisar
+    # "hace cuánto" quedó sin pasar a Entregado.
+    supply_fecha: str | None = None
+    # Serie del chip físico del consumible (consumable.serialNumber de Insight) — insumo
+    # del matching por consumable_serial, ver supply_request_matching.py.
+    consumable_serial: str | None = None
+    # Color del canal (consumable.colour de Insight), puramente informativo.
+    colour: str | None = None
+    # Presente cuando este consumable_serial ya generó OTRO pedido antes (mismo equipo o
+    # uno distinto) — puramente informativo, nunca bloquea la carga.
+    reused_consumable_note: str | None = None
     # Aviso de entrega alternativa (zona con observación "CARGAR PARA SUCURSAL: ...").
     # No hay forma de fijar la sucursal de entrega por SOAP (ver zone_delivery_notice.py),
     # así que esto solo alimenta un aviso — el operador cambia la sucursal a mano en

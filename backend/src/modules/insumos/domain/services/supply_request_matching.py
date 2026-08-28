@@ -80,6 +80,29 @@ class SupplyMatchQuery:
     sku: str
     description: str = ""
     own_orders: tuple[ProcessedRequest, ...] = ()
+    # Serie del chip físico del consumible de ESTA solicitud (consumable.serialNumber de
+    # Insight). Si el pedido propio que matchea por SKU se creó para una serie de
+    # consumible DISTINTA, no es el mismo caso aunque el SKU coincida — ver
+    # _match_against_own_order.
+    consumable_serial: str | None = None
+
+
+# Tipos que en la práctica nunca conviven en más de una variante por equipo — a
+# diferencia de toner/drum/developer, que sí pueden tener un color distinto por unidad.
+_TYPE_WITHOUT_COLOR_KEYWORDS = {
+    "waste": ("waste", "residuo", "container", "recogida", "collection unit", "toner collection"),
+    "staples": ("staple", "grapa"),
+}
+
+
+def _classify_type_without_color(text: str) -> str | None:
+    """'waste' | 'staples' | None según palabras clave en la descripción, en español o
+    inglés."""
+    lowered = (text or "").lower()
+    for consumable_type, keywords in _TYPE_WITHOUT_COLOR_KEYWORDS.items():
+        if any(kw in lowered for kw in keywords):
+            return consumable_type
+    return None
 
 
 def supply_matches_request(
@@ -94,8 +117,11 @@ def supply_matches_request(
     """
     req_sku = query.sku.strip().upper()
     req_desc = query.description.strip()
+    req_serial = (query.consumable_serial or "").strip().upper()
 
-    own_verdict = _match_against_own_order(candidate, req_sku, req_desc, query.own_orders)
+    own_verdict = _match_against_own_order(
+        candidate, req_sku, req_desc, req_serial, query.own_orders
+    )
     if own_verdict is not None:
         return own_verdict
     sku_verdict = _match_by_supply_sku(candidate, req_sku, req_desc)
@@ -108,6 +134,17 @@ def supply_matches_request(
     sup_sku = candidate.sku.strip().upper()
     if for_ui_display and sup_sku and req_sku and sup_sku != req_sku:
         return False
+
+    # Sin SKU ni color utilizable, pero ambos lados describen el mismo tipo "sin
+    # variantes de color" (waste container, staples): un equipo no tiene dos unidades de
+    # recogida ni dos cartuchos de grapas compitiendo por la misma alerta, así que alcanza
+    # con el tipo — caso real: pedido "Toner Collection Unit" sin SKU no vinculaba con la
+    # solicitud "Unidad de recogida de tóner" (Glenmark/MXBCR7N0WC, ago-2026).
+    sup_type = _classify_type_without_color(candidate.description)
+    req_type = _classify_type_without_color(req_desc)
+    if sup_type and req_type and sup_type == req_type:
+        return True
+
     return not for_ui_display
 
 
@@ -115,12 +152,27 @@ def _match_against_own_order(
     candidate: CachedSupply,
     req_sku: str,
     req_desc: str,
+    req_serial: str,
     own_orders: tuple[ProcessedRequest, ...],
 ) -> bool | None:
     """Si el supply es un pedido creado por esta app, su SKU registrado es la verdad."""
     own = next((o for o in own_orders if _own_order_supply_id(o) == candidate.supply_id), None)
     if own is None:
         return None
+    if _own_consumable_serial_differs(own, req_serial):
+        # Consumible físico DISTINTO con el mismo SKU compartido en el catálogo de Canal
+        # Directo (caso real 0BLRBJLJ400006W, ago-2026: 3 drums de color con un único SKU
+        # de repuesto) — el pedido propio no cubre esta solicitud aunque el SKU coincida.
+        return False
+    return _match_own_by_sku_or_color(own, req_sku, req_desc)
+
+
+def _own_consumable_serial_differs(own: ProcessedRequest, req_serial: str) -> bool:
+    own_serial = (own.consumable_serial or "").strip().upper()
+    return bool(own_serial and req_serial and own_serial != req_serial)
+
+
+def _match_own_by_sku_or_color(own: ProcessedRequest, req_sku: str, req_desc: str) -> bool | None:
     own_sku = own.sku.strip().upper()
     if own_sku:
         return own_sku == req_sku or own_sku in req_sku or req_sku in own_sku

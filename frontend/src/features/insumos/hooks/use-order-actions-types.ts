@@ -39,6 +39,10 @@ export type DashboardModal =
       customerId: number;
       customerName: string;
       count: number;
+      /** true = "Ignorar" (POST /ignore, permanente, no se revierte solo) en vez de
+       * "Descartar" (POST /dismiss). Solo aplica a descarte individual — el lote
+       * siempre es /dismiss. */
+      permanent: boolean;
     };
 
 export type LoadOutcome = "success" | "conflict" | "error";
@@ -64,7 +68,12 @@ export interface OrderActions {
   closeModal: () => void;
   loadSingle: (row: RequestRow, customerId: number, customerName: string) => Promise<void>;
   loadSelected: (customerId: number, customerName: string) => Promise<void>;
-  openDismiss: (row: RequestRow, customerId: number, customerName: string) => void;
+  openDismiss: (
+    row: RequestRow,
+    customerId: number,
+    customerName: string,
+    permanent?: boolean,
+  ) => void;
   openBatchDismiss: (customerId: number, customerName: string) => void;
   openValidationOverride: (row: RequestRow, customerId: number, customerName: string) => void;
   confirmModal: (selectedInsumoId?: string) => Promise<void>;

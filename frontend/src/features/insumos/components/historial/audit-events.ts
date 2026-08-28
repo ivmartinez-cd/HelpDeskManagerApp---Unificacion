@@ -28,6 +28,9 @@ export const EVENT_CANCELLED = "CANCELLED";
 export const EVENT_DISMISSED = "DISMISSED";
 export const EVENT_AUTO_DISMISSED = "AUTO_DISMISSED";
 export const EVENT_DEVICE_DELETED = "DEVICE_DELETED";
+/** Ignorado PERMANENTE (POST /ignore) — a diferencia de DISMISSED (temporal, con
+ * auto-UNIGNORE cuando el pedido asociado resuelve), no se revierte solo. */
+export const EVENT_IGNORED = "IGNORED";
 
 const EVENT_LABELS: Record<string, string> = {
   [EVENT_CREATED]: "Creado",
@@ -37,6 +40,7 @@ const EVENT_LABELS: Record<string, string> = {
   [EVENT_DISMISSED]: "Descartado",
   [EVENT_AUTO_DISMISSED]: "Falsa alarma",
   [EVENT_DEVICE_DELETED]: "Equipo eliminado",
+  [EVENT_IGNORED]: "Ignorado permanente",
 };
 
 /** Etiqueta visible del evento. Una corrida en seco se muestra como
@@ -78,6 +82,7 @@ export const EVENT_FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: EVENT_FILTER_RELEASED_CANCELLED, label: "Anulado / liberado" },
   { value: EVENT_DISMISSED, label: "Descartado" },
   { value: EVENT_AUTO_DISMISSED, label: "Falsa alarma (validación)" },
+  { value: EVENT_IGNORED, label: "Ignorado permanente" },
   { value: EVENT_DEVICE_DELETED, label: "Equipo eliminado" },
 ];
 

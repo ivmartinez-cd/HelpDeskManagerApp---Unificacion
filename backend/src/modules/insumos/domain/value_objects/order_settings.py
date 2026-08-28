@@ -26,6 +26,10 @@ class CanalDirectoOrderSettings:
     motivo_id: str = "1"
     # Base del portal web (CD_BASE_URL) — solo para armar URLs de vista de pedidos.
     portal_base_url: str = "https://webagentes.canaldirecto.com.ar"
+    # Base del portal de CLIENTES (distinto de portal_base_url, que es WebAgentes/interno)
+    # — solo para armar el link al pedido en el mail de aviso al cliente (ver
+    # domain/value_objects/client_order_notice.py).
+    clientes_url: str = "https://webclientes.canaldirecto.com.ar"
 
     def supply_web_url(self, supply_id: int) -> str:
         return f"{self.portal_base_url}/supplies/view/{supply_id_full(supply_id)}"

@@ -1,7 +1,7 @@
 import { type RefObject, useCallback } from "react";
 import { toast } from "sonner";
 import { insumosApi } from "../api/insumos-api";
-import { isLoaded } from "../components/dashboard/request-status";
+import { isSelectable } from "../components/dashboard/request-status";
 import type { RequestRow } from "../types";
 import type { DashboardData } from "./use-dashboard-data";
 import { type DashboardModal, errorMessage } from "./use-order-actions-types";
@@ -17,15 +17,25 @@ export function useDismissActions(
   setModal: (modal: DashboardModal | null) => void,
 ) {
   const dismissSingle = useCallback(
-    async (row: RequestRow, customerId: number, customerName: string): Promise<boolean> => {
+    async (
+      row: RequestRow,
+      customerId: number,
+      customerName: string,
+      permanent: boolean,
+    ): Promise<boolean> => {
       setRowError(row.requestId, null);
+      const payload = {
+        customerId,
+        customerName,
+        serial: row.serial,
+        sku: row.sku,
+        supplyId: row.supplyId,
+        supplyStatus: row.supplyStatus,
+      };
       try {
-        const response = await insumosApi.dismissRequest(row.requestId, {
-          customerId,
-          customerName,
-          serial: row.serial,
-          sku: row.sku,
-        });
+        const response = permanent
+          ? await insumosApi.ignoreRequest(row.requestId, payload)
+          : await insumosApi.dismissRequest(row.requestId, payload);
         if (!response.ok) {
           setRowError(row.requestId, response.error ?? "Error al descartar");
           return false;
@@ -42,15 +52,20 @@ export function useDismissActions(
   const confirmDismiss = useCallback(async () => {
     const current = modal;
     if (current?.kind !== "dismiss") return;
-    const { row, customerId, customerName } = current;
+    const { row, customerId, customerName, permanent } = current;
 
     if (row) {
-      const ok = await dismissSingle(row, customerId, customerName);
+      const ok = await dismissSingle(row, customerId, customerName, permanent);
       if (!ok) {
-        toast.error(`No se pudo descartar la solicitud ${row.requestId}`);
+        const label = permanent ? "ignorar" : "descartar";
+        toast.error(`No se pudo ${label} la solicitud ${row.requestId}`);
         return;
       }
-      toast.success("Solicitud descartada en HP SDS");
+      toast.success(
+        permanent
+          ? "Solicitud ignorada permanentemente en HP SDS"
+          : "Solicitud descartada en HP SDS",
+      );
       setModal(null);
       await dataRef.current.refreshCustomer(customerId);
       return;
@@ -59,13 +74,13 @@ export function useDismissActions(
     const data_ = dataRef.current;
     const selectedIds = data_.selected[customerId];
     const rows = (data_.requestsByCustomer[customerId] ?? []).filter(
-      (candidate) => selectedIds?.has(candidate.requestId) && !isLoaded(candidate),
+      (candidate) => selectedIds?.has(candidate.requestId) && isSelectable(candidate),
     );
 
     let dismissed = 0;
     let errors = 0;
     for (const candidate of rows) {
-      const ok = await dismissSingle(candidate, customerId, customerName);
+      const ok = await dismissSingle(candidate, customerId, customerName, false);
       if (ok) {
         dismissed += 1;
         dataRef.current.deselect(customerId, candidate.requestId);
@@ -81,8 +96,8 @@ export function useDismissActions(
   }, [modal, dismissSingle, dataRef, setModal]);
 
   const openDismiss = useCallback(
-    (row: RequestRow, customerId: number, customerName: string) => {
-      setModal({ kind: "dismiss", row, customerId, customerName, count: 1 });
+    (row: RequestRow, customerId: number, customerName: string, permanent = false) => {
+      setModal({ kind: "dismiss", row, customerId, customerName, count: 1, permanent });
     },
     [setModal],
   );
@@ -91,7 +106,14 @@ export function useDismissActions(
     (customerId: number, customerName: string) => {
       const selectedIds = dataRef.current.selected[customerId];
       if (!selectedIds || selectedIds.size === 0) return;
-      setModal({ kind: "dismiss", row: null, customerId, customerName, count: selectedIds.size });
+      setModal({
+        kind: "dismiss",
+        row: null,
+        customerId,
+        customerName,
+        count: selectedIds.size,
+        permanent: false,
+      });
     },
     [dataRef, setModal],
   );

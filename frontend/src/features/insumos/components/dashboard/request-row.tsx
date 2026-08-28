@@ -6,7 +6,8 @@ import { StatusBadge, TonerBar, toneForStatusKey } from "../shared";
 import { formatCountdown } from "../../hooks/use-countdown-clock";
 import type { RequestRow as RequestRowType } from "../../types";
 import { EMPTY_VALUE, formatArgDate } from "../../utils/format";
-import { hasActiveSupply } from "./request-status";
+import { ColourBadge, ReusedConsumableBadge, UnconfirmedSupplyBadge } from "./request-row-badges";
+import { hasActiveSupply, isSelectable } from "./request-status";
 
 /** Una solicitud dentro del panel expandido de un cliente (más la fila extra
  * del diagnóstico de validación, que se despliega debajo).
@@ -30,6 +31,7 @@ interface RequestRowProps {
   onToggleSelect: () => void;
   onLoad: () => void;
   onDismiss: () => void;
+  onIgnore: () => void;
   onValidationOverride: () => void;
   onOpenDetail: () => void;
 }
@@ -45,11 +47,12 @@ export function RequestRow({
   onToggleSelect,
   onLoad,
   onDismiss,
+  onIgnore,
   onValidationOverride,
   onOpenDetail,
 }: RequestRowProps) {
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
-  const selectable = !row.orderId && !hasActiveSupply(row) && !row.validationPending;
+  const selectable = isSelectable(row);
   const showDiagnosis = row.validationPending && diagnosisOpen && row.validationDiagnosisDetail;
 
   return (
@@ -106,6 +109,7 @@ export function RequestRow({
         </td>
         <td className={`${CELL} max-w-[160px] truncate`} title={row.description}>
           {row.description}
+          {row.colour && <ColourBadge colour={row.colour} />}
         </td>
         <td className={`${CELL} font-mono text-[10px] text-muted-foreground`}>{row.sku}</td>
         <td className={CELL}>
@@ -155,6 +159,7 @@ export function RequestRow({
                 ⚠ cambio de insumo
               </span>
             )}
+            {row.reusedConsumableNote && <ReusedConsumableBadge note={row.reusedConsumableNote} />}
           </div>
         </td>
         <td className={CELL}>
@@ -163,10 +168,9 @@ export function RequestRow({
               <Check className="h-3 w-3" aria-hidden="true" />
               {row.orderId}
             </span>
-          ) : hasActiveSupply(row) ? (
-            <span className="text-[10px] italic text-muted-foreground">Activo en CD</span>
           ) : row.validationPending ? (
             <div className="flex flex-col items-start gap-1">
+              {hasActiveSupply(row) && <UnconfirmedSupplyBadge row={row} validating />}
               <span
                 title={
                   row.validationDiagnosisDetail ??
@@ -211,12 +215,23 @@ export function RequestRow({
                   >
                     Descartar
                   </button>
+                  <span className="text-[11px] text-muted-foreground">·</span>
+                  <button
+                    type="button"
+                    onClick={onIgnore}
+                    disabled={batchRunning}
+                    title="HP SDS va a dejar de reemitir esta alerta de forma permanente"
+                    className="cursor-pointer text-[11px] font-semibold text-muted-foreground underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Ignorar
+                  </button>
                 </div>
               )}
               {error && <p className="max-w-[130px] text-[10px] leading-tight text-[#dc2626]">{error}</p>}
             </div>
           ) : (
             <div className="flex flex-col items-start gap-1">
+              {hasActiveSupply(row) && <UnconfirmedSupplyBadge row={row} validating={false} />}
               {canMutate ? (
                 <div className="flex items-center gap-1.5">
                   <button
@@ -235,6 +250,15 @@ export function RequestRow({
                     className="cursor-pointer rounded-[6px] border border-[rgba(239,68,68,.35)] px-2 py-1 text-[10px] font-bold text-[#dc2626] transition-colors hover:bg-[rgba(239,68,68,.08)] disabled:cursor-not-allowed disabled:opacity-50 dark:text-[#f87171]"
                   >
                     Descartar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onIgnore}
+                    disabled={loading || batchRunning}
+                    title="HP SDS va a dejar de reemitir esta alerta de forma permanente"
+                    className="cursor-pointer rounded-[6px] bg-[#58595B] px-2 py-1 text-[10px] font-bold text-white transition-colors hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Ignorar
                   </button>
                 </div>
               ) : (

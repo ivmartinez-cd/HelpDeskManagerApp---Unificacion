@@ -45,6 +45,9 @@ from src.modules.insumos.infrastructure.repositories.sqlalchemy_pending_order_no
     SqlAlchemyPendingOrderNotificationRepository,
 )
 from src.modules.insumos.presentation.dependencies.alerts import build_sync_pending_alerts
+from src.modules.insumos.presentation.dependencies.backfill import (
+    build_backfill_consumable_serial,
+)
 from src.modules.insumos.presentation.dependencies.new_devices import build_sync_new_devices
 from src.modules.insumos.presentation.dependencies.offline_devices import (
     build_verify_offline_devices,
@@ -52,6 +55,10 @@ from src.modules.insumos.presentation.dependencies.offline_devices import (
 from src.modules.insumos.presentation.dependencies.requests import (
     build_auto_load_requests,
     build_list_pending_orders,
+)
+from src.modules.insumos.presentation.dispatch_reconciliation_jobs import (
+    background_dismiss_reconciliation_task,
+    background_dispatch_unconfirmed_task,
 )
 from src.shared.infrastructure.database.session import get_sessionmaker
 
@@ -79,6 +86,7 @@ async def background_poller_task(
     while True:
         await _run_sync_cycle(poller_alerts)
         await _run_autoload_cycle()
+        await _run_consumable_serial_backfill_cycle()
         await asyncio.sleep(interval_minutes * 60)
 
 
@@ -115,6 +123,27 @@ async def _run_autoload_cycle() -> None:
         )
     except Exception as exc:
         logger.error("poller: ciclo de auto_load fallido", exc_info=exc)
+
+
+_CONSUMABLE_SERIAL_BACKFILL_WINDOW_DAYS = 7
+
+
+async def _run_consumable_serial_backfill_cycle() -> None:
+    """Red de seguridad: pedidos recientes que se quedaron sin consumable_serial por un
+    hipo de red puntual al crearse (create_processed_request ya guarda el pedido igual
+    si eso falla). Acotado a los últimos 7 días — el backfill de todo el historial es
+    manual (backend/scripts/backfill_consumable_serial.py)."""
+    try:
+        factory = get_sessionmaker()
+        async with factory() as session:
+            fixed = await build_backfill_consumable_serial(session).execute(
+                within_days=_CONSUMABLE_SERIAL_BACKFILL_WINDOW_DAYS
+            )
+            await session.commit()
+        if fixed:
+            logger.info("poller: consumable_serial_backfill completó %d pedido(s)", fixed)
+    except Exception as exc:
+        logger.error("poller: ciclo de consumable_serial_backfill fallido", exc_info=exc)
 
 
 async def background_offline_check_task() -> None:
@@ -229,4 +258,6 @@ def start_background_jobs(mailer: Mailer, poller_alerts: PollerAlerts, interval_
         asyncio.create_task(background_offline_check_task()),
         asyncio.create_task(background_alert_task()),
         asyncio.create_task(background_pending_alert_task(mailer)),
+        asyncio.create_task(background_dispatch_unconfirmed_task(mailer)),
+        asyncio.create_task(background_dismiss_reconciliation_task()),
     ]

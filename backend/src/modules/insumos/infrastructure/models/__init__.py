@@ -6,6 +6,12 @@ from src.modules.insumos.infrastructure.models.customer_zone_contact_model impor
     CustomerZoneContactModel,
 )
 from src.modules.insumos.infrastructure.models.dca_monitor_model import DcaMonitorModel
+from src.modules.insumos.infrastructure.models.dismissed_supply_model import (
+    DismissedSupplyModel,
+)
+from src.modules.insumos.infrastructure.models.dispatch_unconfirmed_notification_model import (
+    DispatchUnconfirmedNotificationModel,
+)
 from src.modules.insumos.infrastructure.models.known_device_model import KnownDeviceModel
 from src.modules.insumos.infrastructure.models.mail_log_model import MailLogModel
 from src.modules.insumos.infrastructure.models.order_audit_model import OrderAuditModel
@@ -35,6 +41,8 @@ __all__ = [
     "CustomerConfigModel",
     "CustomerZoneContactModel",
     "DcaMonitorModel",
+    "DismissedSupplyModel",
+    "DispatchUnconfirmedNotificationModel",
     "KnownDeviceModel",
     "MailLogModel",
     "OrderAuditModel",

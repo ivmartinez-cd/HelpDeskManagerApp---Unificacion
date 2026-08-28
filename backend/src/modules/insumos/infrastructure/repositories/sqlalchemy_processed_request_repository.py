@@ -39,6 +39,8 @@ class SqlAlchemyProcessedRequestRepository:
             "initial_percent_left": request.initial_percent_left,
             "initial_days_left": request.initial_days_left,
             "initial_pages_left": request.initial_pages_left,
+            "consumable_serial": request.consumable_serial,
+            "consumable_colour": request.consumable_colour,
         }
         stmt = pg_insert(ProcessedRequestModel).values(**values)
         # Reprocesar pisa el registro entero y renueva created_at (mismo criterio que
@@ -181,6 +183,74 @@ class SqlAlchemyProcessedRequestRepository:
         if updates:
             await self._session.flush()
 
+    async def get_missing_consumable_serial(
+        self, within_days: int | None = None
+    ) -> list[ProcessedRequest]:
+        return await _get_missing_consumable_serial(self._session, within_days)
+
+    async def backfill_consumable_serial(self, updates: Sequence[tuple[int, str]]) -> None:
+        await _backfill_consumable_serial(self._session, updates)
+
+    async def find_consumable_serial_reuse_batch(
+        self, consumable_serials: set[str]
+    ) -> dict[str, list[ProcessedRequest]]:
+        return await _find_consumable_serial_reuse_batch(self._session, consumable_serials)
+
+
+# --- consumable_serial: extraídas como funciones libres para no pasar el tamaño
+# máximo de clase (§4) — mismo criterio que _argentina_day.py. ------------------
+
+
+async def _get_missing_consumable_serial(
+    session: AsyncSession, within_days: int | None
+) -> list[ProcessedRequest]:
+    stmt = select(ProcessedRequestModel).where(
+        ProcessedRequestModel.status == STATUS_CREATED,
+        ProcessedRequestModel.consumable_serial.is_(None),
+    )
+    if within_days is not None:
+        floor = func.now() - func.make_interval(0, 0, 0, within_days)
+        stmt = stmt.where(ProcessedRequestModel.created_at >= floor)
+    stmt = stmt.order_by(ProcessedRequestModel.customer_id, ProcessedRequestModel.created_at)
+    rows = (await session.execute(stmt)).scalars().all()
+    return [_to_entity(row) for row in rows]
+
+
+async def _backfill_consumable_serial(
+    session: AsyncSession, updates: Sequence[tuple[int, str]]
+) -> None:
+    for hp_request_id, consumable_serial in updates:
+        stmt = (
+            update(ProcessedRequestModel)
+            .where(ProcessedRequestModel.hp_request_id == hp_request_id)
+            .values(consumable_serial=consumable_serial)
+        )
+        await session.execute(stmt)
+    if updates:
+        await session.flush()
+
+
+async def _find_consumable_serial_reuse_batch(
+    session: AsyncSession, consumable_serials: set[str]
+) -> dict[str, list[ProcessedRequest]]:
+    if not consumable_serials:
+        return {}
+    stmt = (
+        select(ProcessedRequestModel)
+        .where(
+            func.upper(ProcessedRequestModel.consumable_serial).in_(
+                [s.upper() for s in consumable_serials]
+            )
+        )
+        .order_by(ProcessedRequestModel.created_at.desc())
+    )
+    rows = (await session.execute(stmt)).scalars().all()
+    result: dict[str, list[ProcessedRequest]] = {}
+    for row in rows:
+        key = (row.consumable_serial or "").upper()
+        result.setdefault(key, []).append(_to_entity(row))
+    return result
+
 
 def _to_entity(row: ProcessedRequestModel) -> ProcessedRequest:
     return ProcessedRequest(
@@ -195,5 +265,7 @@ def _to_entity(row: ProcessedRequestModel) -> ProcessedRequest:
         initial_percent_left=row.initial_percent_left,
         initial_days_left=row.initial_days_left,
         initial_pages_left=row.initial_pages_left,
+        consumable_serial=row.consumable_serial,
+        consumable_colour=row.consumable_colour,
         created_at=row.created_at,
     )

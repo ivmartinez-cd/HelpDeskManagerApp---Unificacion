@@ -31,6 +31,9 @@ from src.modules.insumos.application.use_cases._load_order_builders import (
     resolve_from_insight,
     update_insight_on_success,
 )
+from src.modules.insumos.application.use_cases._load_order_client_notice import (
+    notify_client_order,
+)
 from src.modules.insumos.application.use_cases._load_order_context import (
     LoadOrderConfig,
     LoadOrderPorts,
@@ -178,8 +181,10 @@ class LoadOrder:
             )
         )
         await self._mark_insight_actioned(command, order_id)
+        if not order_id.startswith(_DRYRUN_PREFIX):
+            await notify_client_order(self._ports, command, resolved, order, order_id)
         return success(
-            order_id, self._supply_url_for(order_id), resolved.warn, zone_override
+            order_id, _supply_url_for(self._config, order_id), resolved.warn, zone_override
         )
 
     async def _create(self, command: LoadOrderCommand, order: OrderRequest) -> str:
@@ -248,7 +253,8 @@ class LoadOrder:
         except Exception as exc:
             logger.error("No se pudo registrar el evento de auditoría FAILED", exc_info=exc)
 
-    def _supply_url_for(self, order_id: str) -> str | None:
-        if order_id.startswith(_DRYRUN_PREFIX):
-            return None
-        return f"{self._config.order_settings.portal_base_url}/supplies/view/{order_id}"
+
+def _supply_url_for(config: LoadOrderConfig, order_id: str) -> str | None:
+    if order_id.startswith(_DRYRUN_PREFIX):
+        return None
+    return f"{config.order_settings.portal_base_url}/supplies/view/{order_id}"

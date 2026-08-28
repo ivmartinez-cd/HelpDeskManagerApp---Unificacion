@@ -18,10 +18,21 @@ export function hasActiveSupply(row: RequestRow): boolean {
   return Boolean(row.supplyId && !TERMINAL_SUPPLY_STATES.has(row.supplyStatus ?? ""));
 }
 
-/** La solicitud ya tiene pedido propio o un pedido activo en CD: no se carga
- * de nuevo ni entra en la selección de acciones masivas. */
+/** "Cargada" es SOLO un pedido propio verificado (orderId) — un pedido activo
+ * detectado por matching (hasActiveSupply) puede ser de una solicitud vieja ya
+ * cerrada que nunca llegó a Entregado en Canal Directo (caso real 442759-7,
+ * ago-2026): eso no resuelve la solicitud ACTUAL, sigue mostrándose con el
+ * badge de aviso y accionable (Cargar/Descartar/Ignorar). */
 export function isLoaded(row: RequestRow): boolean {
-  return Boolean(row.orderId || hasActiveSupply(row));
+  return Boolean(row.orderId);
+}
+
+/** Filas elegibles para checkbox/selección masiva (batch load/dismiss): ni
+ * cargada, ni con un pedido activo sin confirmar entrega (ese caso solo se
+ * carga/descarta/ignora fila por fila, con el badge de aviso a la vista), ni
+ * en ventana de validación. */
+export function isSelectable(row: RequestRow): boolean {
+  return !isLoaded(row) && !hasActiveSupply(row) && !row.validationPending;
 }
 
 /** Color de avatar del cliente (Patrón 1 del handoff: cuadrado 32×32 con

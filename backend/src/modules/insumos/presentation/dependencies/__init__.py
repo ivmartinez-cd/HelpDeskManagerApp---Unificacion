@@ -13,6 +13,9 @@ from src.modules.insumos.presentation.dependencies.audit import (
     build_get_audit_summary,
     build_list_audit,
 )
+from src.modules.insumos.presentation.dependencies.backfill import (
+    build_backfill_consumable_serial,
+)
 from src.modules.insumos.presentation.dependencies.config import (
     build_get_insumos_config,
     build_save_insumos_config,
@@ -28,6 +31,7 @@ from src.modules.insumos.presentation.dependencies.customers import (
     build_import_contacts_from_supply,
     build_list_customers,
     build_preview_zone_contacts_import,
+    build_set_client_mail_enabled,
     build_set_zone_contact,
     build_sync_customers,
     build_toggle_customer,
@@ -59,6 +63,7 @@ from src.modules.insumos.presentation.dependencies.requests import (
     build_get_consumable_request_history,
     build_get_dashboard,
     build_get_device_supplies,
+    build_ignore_request,
     build_list_pending_orders,
     build_list_requests,
     build_load_order,
@@ -72,6 +77,7 @@ from src.modules.insumos.presentation.dependencies.statistics import (
 __all__ = [
     "build_acknowledge_alerts",
     "build_apply_zone_contacts_import",
+    "build_backfill_consumable_serial",
     "build_bulk_seed_contacts",
     "build_bulk_toggle_customers",
     "build_cancel_order",
@@ -95,6 +101,7 @@ __all__ = [
     "build_get_sds_contacts",
     "build_get_statistics_overview",
     "build_get_zone_contacts",
+    "build_ignore_request",
     "build_import_contacts_from_supply",
     "build_list_alerts",
     "build_list_audit",
@@ -109,6 +116,7 @@ __all__ = [
     "build_preview_zone_contacts_import",
     "build_reconcile_order",
     "build_save_insumos_config",
+    "build_set_client_mail_enabled",
     "build_set_zone_contact",
     "build_sync_customers",
     "build_sync_monitor_status",

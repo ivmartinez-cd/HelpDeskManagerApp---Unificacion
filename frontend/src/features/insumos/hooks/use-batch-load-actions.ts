@@ -1,6 +1,6 @@
 import { type RefObject, useCallback, useState } from "react";
 import { toast } from "sonner";
-import { isLoaded } from "../components/dashboard/request-status";
+import { isSelectable } from "../components/dashboard/request-status";
 import type { RequestRow } from "../types";
 import { partitionBySucursalNotice } from "../utils/sucursal-filter";
 import type { DashboardData } from "./use-dashboard-data";
@@ -81,7 +81,7 @@ export function useBatchLoadActions(
       const selectedIds = current.selected[customerId];
       if (!selectedIds || selectedIds.size === 0) return;
       const rows = (current.requestsByCustomer[customerId] ?? []).filter(
-        (row) => selectedIds.has(row.requestId) && !isLoaded(row),
+        (row) => selectedIds.has(row.requestId) && isSelectable(row),
       );
       if (rows.length === 0) return;
 

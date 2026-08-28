@@ -14,6 +14,10 @@ EVENT_DISMISSED = "DISMISSED"
 # diferencia de DISMISSED (descarte manual del operador).
 EVENT_AUTO_DISMISSED = "AUTO_DISMISSED"
 EVENT_DEVICE_DELETED = "DEVICE_DELETED"
+# Ignorado permanente (POST /ignore) — a diferencia de DISMISSED (IGNORE temporal con
+# auto-UNIGNORE cuando el pedido asociado resuelve, o DELETE sin pedido asociado), este
+# no se revierte solo. Ver application/use_cases/ignore_request.py.
+EVENT_IGNORED = "IGNORED"
 
 ORDER_TYPE_SUPPLY = "supply"
 ORDER_TYPE_INCIDENT = "incident"
@@ -26,6 +30,7 @@ KNOWN_EVENTS: tuple[str, ...] = (
     EVENT_DISMISSED,
     EVENT_AUTO_DISMISSED,
     EVENT_DEVICE_DELETED,
+    EVENT_IGNORED,
 )
 
 

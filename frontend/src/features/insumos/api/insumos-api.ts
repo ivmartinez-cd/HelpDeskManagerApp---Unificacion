@@ -19,6 +19,8 @@ import type {
   DismissResponse,
   EstadisticasFilters,
   EstadisticasResponse,
+  IgnoreRequestPayload,
+  IgnoreResponse,
   InsumosConfig,
   InsumosConfigPayload,
   LoadRequestPayload,
@@ -113,9 +115,15 @@ export const insumosApi = {
   cancelRequest: (requestId: number) =>
     httpClient.post<CancelResponse>(`${BASE}/requests/${requestId}/cancel`),
 
-  /** Descarta la solicitud directamente en HP SDS (status_update=DELETE). */
+  /** Descarta la solicitud en HP SDS — IGNORE (temporal, con auto-UNIGNORE) si
+   * tenía un pedido activo sin confirmar entrega, DELETE si no. */
   dismissRequest: (requestId: number, payload: DismissRequestPayload = {}) =>
     httpClient.post<DismissResponse>(`${BASE}/requests/${requestId}/dismiss`, payload),
+
+  /** Ignora la solicitud PERMANENTEMENTE en HP SDS (status_update=IGNORE, sin
+   * UNIGNORE automático) — a diferencia de dismiss, no requiere pedido asociado. */
+  ignoreRequest: (requestId: number, payload: IgnoreRequestPayload = {}) =>
+    httpClient.post<IgnoreResponse>(`${BASE}/requests/${requestId}/ignore`, payload),
 
   /** Vincula un pedido que ya existe en CD pero que la app no registró como
    * propio (verificación post-creación fallida). Nunca crea uno nuevo. */

@@ -52,6 +52,16 @@ export interface RequestRow {
   supplyId?: string | null;
   supplyUrl?: string | null;
   supplyStatus?: string | null;
+  /** Fecha (formato Canal Directo) del supply de supplyId — solo presente cuando
+   * supplyId viene de un pedido activo detectado por matching (no del propio
+   * orderId), para avisar "hace cuánto" quedó sin pasar a Entregado. */
+  supplyFecha?: string | null;
+  /** Color del canal (consumable.colour de Insight: CYAN/MAGENTA/YELLOW/BLACK/
+   * QUADCOLOUR), puramente informativo. */
+  colour?: string | null;
+  /** Presente cuando el consumable_serial de esta solicitud ya generó OTRO pedido
+   * antes (mismo equipo o uno distinto) — informativo, nunca bloquea la carga. */
+  reusedConsumableNote?: string | null;
   /** Aviso de entrega alternativa (zona con observación "CARGAR PARA SUCURSAL: ...").
    * No hay forma de fijar la sucursal de entrega por SOAP, así que esto solo alimenta
    * un aviso — ver detect_sucursal_override en el backend. sucursalEntrega es null si
@@ -136,19 +146,29 @@ export interface CancelResponse {
   error?: string | null;
 }
 
-/** `DismissRequestBody` (action_schemas): solo metadatos para el Historial —
- * la baja en HP SDS usa el id del path. */
+/** `DismissRequestBody` (action_schemas): customer/serial/sku son metadatos para el
+ * Historial — la baja en HP SDS usa el id del path. supplyId/supplyStatus vienen de
+ * la fila cuando tiene el badge de "pedido activo sin confirmar entrega" — determinan
+ * si el descarte usa IGNORE (temporal) en vez de DELETE. */
 export interface DismissRequestPayload {
   customerId?: number | null;
   customerName?: string;
   serial?: string;
   sku?: string;
+  supplyId?: string | null;
+  supplyStatus?: string | null;
 }
 
 export interface DismissResponse {
   ok: boolean;
   error?: string | null;
 }
+
+/** `IgnoreRequestBody`: mismo shape que DismissRequestPayload — supplyId acá es
+ * opcional de verdad, una solicitud sin pedido asociado también puede ignorarse. */
+export type IgnoreRequestPayload = DismissRequestPayload;
+
+export type IgnoreResponse = DismissResponse;
 
 export interface ReconcileRequestPayload {
   customerId: number;

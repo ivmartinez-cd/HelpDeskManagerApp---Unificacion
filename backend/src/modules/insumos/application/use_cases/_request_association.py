@@ -25,7 +25,10 @@ from src.modules.insumos.domain.services.supply_request_matching import (
     supply_matches_request,
 )
 from src.modules.insumos.domain.value_objects import cd_state
-from src.modules.insumos.domain.value_objects.cd_datetime import parse_cd_datetime
+from src.modules.insumos.domain.value_objects.cd_datetime import (
+    format_cd_datetime,
+    parse_cd_datetime,
+)
 from src.modules.insumos.domain.value_objects.cd_supply import (
     ActiveSupplyView,
     CachedSupply,
@@ -173,6 +176,7 @@ class RequestAssociation:
         row.supply_id = supply_id_full(hit.supply_id)
         row.supply_url = self._ctx.order_settings.supply_web_url(hit.supply_id)
         row.supply_status = hit.estado
+        row.supply_fecha = format_cd_datetime(hit.fecha) or None
         return True
 
     def _associate_from_portal(self, state: _State, row: RequestRow) -> bool:
@@ -186,6 +190,7 @@ class RequestAssociation:
                 row.supply_id = view.nro
                 row.supply_url = view.url
                 row.supply_status = view.estado
+                row.supply_fecha = view.fecha or None
                 return True
         return False
 
@@ -204,6 +209,7 @@ class RequestAssociation:
         row.supply_id = nro
         row.supply_url = self._ctx.order_settings.supply_web_url(match.supply_id)
         row.supply_status = match.estado
+        row.supply_fecha = format_cd_datetime(match.fecha) or None
         row.order_id = nro
 
     def _show_own_order_status(self, state: _State, row: RequestRow) -> None:
@@ -226,7 +232,12 @@ class RequestAssociation:
 
     def _query_for(self, state: _State, row: RequestRow) -> SupplyMatchQuery:
         own = state.own_orders.get(row.serial.upper(), []) if row.serial else []
-        return SupplyMatchQuery(sku=row.sku, description=row.description, own_orders=tuple(own))
+        return SupplyMatchQuery(
+            sku=row.sku,
+            description=row.description,
+            own_orders=tuple(own),
+            consumable_serial=row.consumable_serial,
+        )
 
 
 def _orders_to_check(state: _State, rows: list[RequestRow]) -> dict[int, tuple[bool, str]]:

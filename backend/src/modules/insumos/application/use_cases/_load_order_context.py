@@ -3,6 +3,8 @@ parámetros se agrupan en un objeto)."""
 
 from dataclasses import dataclass
 
+from src.modules.insumos.domain.repositories.client_order_notifier import ClientOrderNotifier
+from src.modules.insumos.domain.repositories.customer_repository import CustomerRepository
 from src.modules.insumos.domain.repositories.insight_gateway import InsightGateway
 from src.modules.insumos.domain.repositories.order_audit_repository import OrderAuditRepository
 from src.modules.insumos.domain.repositories.processed_request_repository import (
@@ -32,6 +34,10 @@ class LoadOrderPorts:
     order_creation: CanalDirectoOrderCreation
     incident_creation: CanalDirectoIncidentCreation
     match_resolver: SupplyMatchResolver
+    customers: CustomerRepository
+    # None si CLIENT_MAIL_SMTP_HOST no está configurado (feature deshabilitada, ver
+    # infrastructure/client_order_mailer.py).
+    client_notifier: ClientOrderNotifier | None = None
 
 
 @dataclass(frozen=True)

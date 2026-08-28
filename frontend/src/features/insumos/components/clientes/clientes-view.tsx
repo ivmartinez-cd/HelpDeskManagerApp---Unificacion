@@ -20,9 +20,11 @@ export function ClientesView() {
     loading,
     loadError,
     busyId,
+    notifyBusyId,
     syncing,
     bulkLoading,
     toggle,
+    toggleClientMail,
     bulkToggle,
     sync,
     markHasContacts,
@@ -125,7 +127,9 @@ export function ClientesView() {
             rows={filteredRows}
             canUpdate={canUpdate}
             busyId={busyId}
+            notifyBusyId={notifyBusyId}
             onToggle={(row, enabled) => void toggle(row, enabled)}
+            onToggleClientMail={(row, enabled) => void toggleClientMail(row, enabled)}
             onOpenContacts={setSelectedCustomer}
           />
           <p className="mt-3 font-body text-xs text-muted-foreground">

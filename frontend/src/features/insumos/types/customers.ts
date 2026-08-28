@@ -11,6 +11,9 @@ export interface CustomerRow {
   name: string;
   enabled: boolean;
   has_contacts: boolean;
+  /** Opt-in de aviso por mail al cliente cuando se carga su pedido — apagado por
+   * default en toda la cartera. */
+  client_mail_enabled: boolean;
 }
 
 /** `ZoneContactOut`: contacto completo de una zona de un cliente.

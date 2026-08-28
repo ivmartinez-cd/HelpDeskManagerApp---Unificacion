@@ -97,3 +97,9 @@ class ResolvedRequest:
     requested: str | None  # ISO-Z crudo de Insight (hp_request_time)
     is_maintenance_kit: bool
     warn: str | None
+    # Serie del chip físico del consumible (consumable.serialNumber de Insight) — se
+    # persiste junto al pedido para el matching por consumable_serial (ver
+    # supply_request_matching.py). None si Insight no lo informó.
+    consumable_serial: str | None = None
+    # Color del canal (consumable.colour de Insight) — puramente informativo.
+    consumable_colour: str | None = None

@@ -14,6 +14,7 @@ from src.modules.insumos.application.use_cases.list_customers import (
     BulkToggleCustomers,
     CustomerListPorts,
     ListCustomers,
+    SetClientMailEnabled,
     SyncCustomers,
     ToggleCustomer,
 )
@@ -50,6 +51,10 @@ def build_toggle_customer(session: AsyncSession) -> ToggleCustomer:
 
 def build_bulk_toggle_customers(session: AsyncSession) -> BulkToggleCustomers:
     return BulkToggleCustomers(SqlAlchemyCustomerRepository(session))
+
+
+def build_set_client_mail_enabled(session: AsyncSession) -> SetClientMailEnabled:
+    return SetClientMailEnabled(SqlAlchemyCustomerRepository(session))
 
 
 def build_sync_customers(session: AsyncSession) -> SyncCustomers:

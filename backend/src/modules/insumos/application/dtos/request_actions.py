@@ -17,17 +17,43 @@ class CancelResult:
 @dataclass(frozen=True)
 class DismissCommand:
     """customer/serial/sku solo alimentan el evento del Historial (metadatos) — la
-    baja en HP SDS usa únicamente el hp_request_id del path."""
+    baja en HP SDS usa únicamente el hp_request_id del path.
+
+    supply_id/supply_status vienen de la fila cuando tiene el badge de "pedido activo
+    sin confirmar entrega" — determinan si el descarte usa IGNORE (temporal, con
+    auto-UNIGNORE) en vez de DELETE, ver dismiss_request.py."""
 
     hp_request_id: int
     customer_id: int | None = None
     customer_name: str = ""
     device_serial: str = ""
     sku: str = ""
+    supply_id: str | None = None
+    supply_status: str | None = None
 
 
 @dataclass(frozen=True)
 class DismissResult:
+    ok: bool
+    error: str | None = None
+
+
+@dataclass(frozen=True)
+class IgnoreCommand:
+    """Mismos campos que DismissCommand — supply_id acá es opcional de verdad: una
+    solicitud sin pedido asociado también puede ignorarse permanentemente."""
+
+    hp_request_id: int
+    customer_id: int | None = None
+    customer_name: str = ""
+    device_serial: str = ""
+    sku: str = ""
+    supply_id: str | None = None
+    supply_status: str | None = None
+
+
+@dataclass(frozen=True)
+class IgnoreResult:
     ok: bool
     error: str | None = None
 

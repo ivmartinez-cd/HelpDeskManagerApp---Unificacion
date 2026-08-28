@@ -123,6 +123,19 @@ class InsumosSettings(BaseSettings):
     sds_portal_password: SecretStr = SecretStr("")
     sds_delete_dry_run: bool = True
 
+    # Aviso por mail al cliente cuando la app carga un pedido de insumos (ver
+    # domain/value_objects/client_order_notice.py) — SMTP dedicado, separado del
+    # SMTP_* interno (backup/alertas a destinatarios internos): este manda a clientes
+    # externos y necesita su propio remitente/relay. Vacío = feature deshabilitada,
+    # mismo criterio que smtp_host vacío para los mails internos.
+    client_mail_smtp_host: str = ""
+    client_mail_smtp_port: int = 587
+    client_mail_smtp_username: str = ""
+    client_mail_smtp_password: SecretStr = SecretStr("")
+    # False para relays de prueba sin STARTTLS (ej. Mailpit).
+    client_mail_smtp_use_tls: bool = True
+    client_mail_sender_email: str = "insumos@canaldirecto.com.ar"
+
 
 class CanalDirectoSettings(BaseSettings):
     """Canal Directo: pedidos SOAP wsAyC (provider compartido, ADR-018) y contactos."""
@@ -142,6 +155,9 @@ class CanalDirectoSettings(BaseSettings):
     cd_destinatario_telefono: str = ""
     cd_destinatario_email: str = ""
     cd_destinatario_sector: str = ""
+    # Base del portal de CLIENTES (distinto de cd_base_url, que es WebAgentes/interno)
+    # — solo para armar el link al pedido en el mail de aviso al cliente.
+    cd_clientes_url: str = "https://webclientes.canaldirecto.com.ar"
 
     # SOAP wsAyC — mismo endpoint/WSDL para insumos y liquidaciones. Defaults = los
     # valores que estaban hardcodeados en los gateways; no hace falta tocar ningún .env.

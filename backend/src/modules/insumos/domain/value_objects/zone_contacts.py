@@ -68,6 +68,10 @@ class Customer:
     name: str
     enabled: bool
     has_contacts: bool = False
+    # Opt-in de aviso por mail al cliente al cargar su pedido (ver
+    # domain/value_objects/client_order_notice.py) — apagado por default en toda la
+    # cartera.
+    client_mail_enabled: bool = False
 
 
 @dataclass(frozen=True)

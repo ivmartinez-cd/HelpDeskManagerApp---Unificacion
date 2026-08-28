@@ -155,6 +155,7 @@ export function CustomerRequestsPanel({
                 onToggleSelect={() => data.toggleSelect(customerId, row.requestId)}
                 onLoad={() => void actions.loadSingle(row, customerId, customer.name)}
                 onDismiss={() => actions.openDismiss(row, customerId, customer.name)}
+                onIgnore={() => actions.openDismiss(row, customerId, customer.name, true)}
                 onValidationOverride={() =>
                   actions.openValidationOverride(row, customerId, customer.name)
                 }

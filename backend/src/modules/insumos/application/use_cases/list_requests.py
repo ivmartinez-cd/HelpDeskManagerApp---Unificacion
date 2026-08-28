@@ -11,6 +11,10 @@ import logging
 from dataclasses import dataclass
 
 from src.modules.insumos.application.dtos.request_rows import RequestRow
+from src.modules.insumos.application.use_cases._dismissed_and_reuse import (
+    attach_reused_consumable_notes,
+    filter_dismissed,
+)
 from src.modules.insumos.application.use_cases._request_association import (
     AssociationContext,
     RequestAssociation,
@@ -91,6 +95,8 @@ class ListRequests:
             )
         )
         await association.associate(rows)
+        rows = await filter_dismissed(self._ports.dashboard.dismissed, rows)
+        await attach_reused_consumable_notes(self._ports.dashboard.processed, rows)
         await attach_zone_delivery_notices(rows, self._ports.zone_contacts)
         rows.sort(key=lambda r: r.days_left)
         return rows
@@ -220,6 +226,8 @@ class ListRequests:
             is_maintenance_kit=is_maintenance_kit(
                 str(consumable.get("description") or ""), str(reorder_part.get("type") or "")
             ),
+            consumable_serial=consumable.get("serialNumber"),
+            colour=consumable.get("colour"),
         )
 
     async def _attach_validations(self, rows: list[RequestRow]) -> None:

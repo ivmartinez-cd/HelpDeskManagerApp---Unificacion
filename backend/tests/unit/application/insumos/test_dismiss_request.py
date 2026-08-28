@@ -1,4 +1,8 @@
-"""Tests de DismissRequest — descarte manual de una solicitud en HP SDS."""
+"""Tests de DismissRequest — descarte manual de una solicitud en HP SDS.
+
+DELETE cuando la solicitud no tiene un pedido activo asociado; IGNORE (temporal, con
+auto-UNIGNORE vía dismiss_reconciliation.py) cuando sí lo tiene — ver dismiss_request.py.
+"""
 
 from src.modules.insumos.application.dtos.request_actions import DismissCommand
 from src.modules.insumos.application.use_cases.dismiss_request import (
@@ -11,6 +15,7 @@ from src.modules.insumos.domain.entities.processed_request import (
     ProcessedRequest,
 )
 from tests.unit.domain.insumos.fakes import (
+    FakeDismissedSupplyRepository,
     FakeInsightGateway,
     FakeOrderAuditRepository,
     FakeProcessedRequestRepository,
@@ -24,17 +29,29 @@ COMMAND = DismissCommand(
     sku="CF230A",
 )
 
+COMMAND_CON_PEDIDO_ACTIVO = DismissCommand(
+    hp_request_id=974325,
+    customer_id=8,
+    customer_name="Cliente Test",
+    device_serial="SERIE1",
+    sku="CF230A",
+    supply_id="442759-7",
+    supply_status="Despachado",
+)
+
 
 class World:
     def __init__(self) -> None:
         self.insight = FakeInsightGateway()
         self.processed = FakeProcessedRequestRepository()
         self.audit = FakeOrderAuditRepository()
+        self.dismissed = FakeDismissedSupplyRepository()
         self.use_case = DismissRequest(
             DismissRequestPorts(
                 insight=self.insight,  # type: ignore[arg-type]
                 processed=self.processed,
                 audit=self.audit,
+                dismissed=self.dismissed,
             )
         )
 
@@ -79,3 +96,35 @@ async def test_si_insight_falla_no_se_registra_nada() -> None:
     assert result.error is not None and "No se pudo descartar" in result.error
     assert "Insight caído" not in result.error
     assert world.audit.records == []
+
+
+async def test_con_pedido_activo_usa_ignore_y_registra_el_descarte() -> None:
+    world = World()
+
+    result = await world.use_case.execute(COMMAND_CON_PEDIDO_ACTIVO)
+
+    assert result.ok is True
+    call = world.insight.updates[0]
+    assert call["statusUpdate"] == "IGNORE"
+    assert "442759-7" in call["comment"]
+    assert "Despachado" in call["comment"]
+    entry = world.dismissed.entries[442759]
+    assert entry.device_serial == "SERIE1"
+    assert entry.hp_request_id == 974325  # se guarda para poder mandar UNIGNORE después
+
+
+async def test_supply_id_dryrun_no_cuenta_como_pedido_activo() -> None:
+    world = World()
+    command = DismissCommand(
+        hp_request_id=974325,
+        customer_id=8,
+        device_serial="SERIE1",
+        sku="CF230A",
+        supply_id="DRYRUN-SDS-974325",
+    )
+
+    result = await world.use_case.execute(command)
+
+    assert result.ok is True
+    assert world.insight.updates[0]["statusUpdate"] == "DELETE"
+    assert world.dismissed.entries == {}

@@ -20,6 +20,7 @@ from src.modules.insumos.presentation.dependencies.customers import (
     build_import_contacts_from_supply,
     build_list_customers,
     build_preview_zone_contacts_import,
+    build_set_client_mail_enabled,
     build_set_zone_contact,
     build_sync_customers,
     build_toggle_customer,
@@ -76,7 +77,10 @@ async def patch_customer(
     _: Identity = _require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> OkResponse:
-    await build_toggle_customer(db).execute(customer_id, body.enabled)
+    if body.enabled is not None:
+        await build_toggle_customer(db).execute(customer_id, body.enabled)
+    if body.client_mail_enabled is not None:
+        await build_set_client_mail_enabled(db).execute(customer_id, body.client_mail_enabled)
     return OkResponse()
 
 

@@ -14,6 +14,7 @@ from src.modules.insumos.domain.repositories.insight_gateway import JsonDict
 from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply, CdSupply
 from tests.unit.domain.insumos.fakes import (
     FakeCustomerConfigRepository,
+    FakeDismissedSupplyRepository,
     FakeInsightGateway,
     FakeInsumosSettingsRepository,
     FakeOrderAuditRepository,
@@ -53,6 +54,7 @@ class World:
         self.customers = FakeCustomerConfigRepository()
         self.settings = FakeInsumosSettingsRepository()
         self.audit = FakeOrderAuditRepository()
+        self.dismissed = FakeDismissedSupplyRepository()
 
         self.customers.customers = [CustomerConfig(customer_id=8, name="Cliente Test")]
         self.insight.requests_by_customer = {8: []}
@@ -68,6 +70,7 @@ class World:
                 customers=self.customers,
                 settings=self.settings,
                 audit=self.audit,
+                dismissed=self.dismissed,
             )
         )
 

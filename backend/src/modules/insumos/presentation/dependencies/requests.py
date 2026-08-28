@@ -33,6 +33,10 @@ from src.modules.insumos.application.use_cases.get_device_supplies import (
     GetDeviceSupplies,
     GetDeviceSuppliesPorts,
 )
+from src.modules.insumos.application.use_cases.ignore_request import (
+    IgnoreRequest,
+    IgnoreRequestPorts,
+)
 from src.modules.insumos.application.use_cases.list_pending_orders import (
     ListPendingOrders,
     ListPendingOrdersPorts,
@@ -61,6 +65,12 @@ from src.modules.insumos.domain.services.validation_diagnosis import ValidationD
 from src.modules.insumos.infrastructure.repositories.sqlalchemy_customer_config_repository import (  # noqa: E501
     SqlAlchemyCustomerConfigRepository,
 )
+from src.modules.insumos.infrastructure.repositories.sqlalchemy_customer_repository import (
+    SqlAlchemyCustomerRepository,
+)
+from src.modules.insumos.infrastructure.repositories.sqlalchemy_dismissed_supply_repository import (  # noqa: E501
+    SqlAlchemyDismissedSupplyRepository,
+)
 from src.modules.insumos.infrastructure.repositories.sqlalchemy_insumos_settings_repository import (  # noqa: E501
     SqlAlchemyInsumosSettingsRepository,
 )
@@ -83,7 +93,9 @@ from src.modules.insumos.infrastructure.repositories.sqlalchemy_zone_contact_rep
     SqlAlchemyZoneContactRepository,
 )
 from src.modules.insumos.presentation.wiring import (
+    get_client_order_notifier,
     get_insight_gateway,
+    get_pending_orders_cache,
     get_wsayc_gateway,
     order_settings,
 )
@@ -100,6 +112,7 @@ def build_get_dashboard(session: AsyncSession) -> GetDashboard:
         customers=SqlAlchemyCustomerConfigRepository(session),
         settings=SqlAlchemyInsumosSettingsRepository(session),
         audit=SqlAlchemyOrderAuditRepository(session),
+        dismissed=SqlAlchemyDismissedSupplyRepository(session),
     )
     return GetDashboard(ports)
 
@@ -117,6 +130,7 @@ def build_list_requests(session: AsyncSession) -> ListRequests:
         customers=SqlAlchemyCustomerConfigRepository(session),
         settings=SqlAlchemyInsumosSettingsRepository(session),
         audit=SqlAlchemyOrderAuditRepository(session),
+        dismissed=SqlAlchemyDismissedSupplyRepository(session),
     )
     insight = get_insight_gateway()
     validations = SqlAlchemyRequestValidationRepository(session)
@@ -156,6 +170,8 @@ def build_load_order(session: AsyncSession) -> LoadOrder:
         order_creation=CanalDirectoOrderCreation(wsayc, supply_cache, cd_settings),
         incident_creation=CanalDirectoIncidentCreation(wsayc, cd_settings),
         match_resolver=SupplyMatchResolver(wsayc, supply_cache),
+        customers=SqlAlchemyCustomerRepository(session),
+        client_notifier=get_client_order_notifier(),
     )
     config = LoadOrderConfig(
         order_settings=cd_settings,
@@ -193,6 +209,18 @@ def build_dismiss_request(session: AsyncSession) -> DismissRequest:
             insight=get_insight_gateway(),
             processed=SqlAlchemyProcessedRequestRepository(session),
             audit=SqlAlchemyOrderAuditRepository(session),
+            dismissed=SqlAlchemyDismissedSupplyRepository(session),
+        )
+    )
+
+
+def build_ignore_request(session: AsyncSession) -> IgnoreRequest:
+    return IgnoreRequest(
+        IgnoreRequestPorts(
+            insight=get_insight_gateway(),
+            processed=SqlAlchemyProcessedRequestRepository(session),
+            audit=SqlAlchemyOrderAuditRepository(session),
+            dismissed=SqlAlchemyDismissedSupplyRepository(session),
         )
     )
 
@@ -206,7 +234,9 @@ def build_list_pending_orders(session: AsyncSession) -> ListPendingOrders:
         customers=SqlAlchemyCustomerConfigRepository(session),
         settings=SqlAlchemyInsumosSettingsRepository(session),
     )
-    return ListPendingOrders(ports, order_settings(get_settings()))
+    return ListPendingOrders(
+        ports, order_settings(get_settings()), cache=get_pending_orders_cache()
+    )
 
 
 def build_get_device_supplies(session: AsyncSession) -> GetDeviceSupplies:

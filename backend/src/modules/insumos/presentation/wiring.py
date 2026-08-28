@@ -11,8 +11,11 @@ por caso de uso sin pasarse del máximo de líneas.
 from functools import lru_cache
 from zoneinfo import ZoneInfo
 
+from src.modules.insumos.application.dtos.pending_orders import PendingOrderRow
+from src.modules.insumos.domain.repositories.client_order_notifier import ClientOrderNotifier
 from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
+from src.modules.insumos.infrastructure.client_order_mailer import ClientOrderMailer
 from src.modules.insumos.infrastructure.insight.httpx_insight_gateway import HttpxInsightGateway
 from src.modules.insumos.infrastructure.locks.postgres_advisory_lock import (
     OFFLINE_DELETE_LOCK_KEY,
@@ -23,6 +26,8 @@ from src.modules.insumos.infrastructure.portal.httpx_sds_portal_gateway import (
     HttpxSdsPortalGateway,
 )
 from src.modules.insumos.infrastructure.soap.zeep_wsayc_gateway import ZeepWsAycGateway
+from src.modules.insumos.presentation.client_order_dispatch import ClientOrderDispatcher
+from src.shared.infrastructure.cache.ttl_cache import TTLCache
 from src.shared.infrastructure.config.settings import Settings, get_settings
 from src.shared.infrastructure.database.engine import get_engine
 
@@ -67,6 +72,27 @@ def get_offline_verify_lock() -> PostgresAdvisoryLock:
 @lru_cache
 def get_offline_delete_lock() -> PostgresAdvisoryLock:
     return PostgresAdvisoryLock(get_engine(), OFFLINE_DELETE_LOCK_KEY)
+
+
+@lru_cache
+def get_pending_orders_cache() -> TTLCache[tuple[int | None, bool], list[PendingOrderRow]]:
+    """compute_pending_orders (ver list_pending_orders.py) pega en vivo contra SOAP +
+    Insight — TTL corto (no el intervalo del poller: acá importa el seguimiento día a
+    día) solo para absorber pedidos casi simultáneos: GET al entrar a la pestaña, el
+    polling del frontend y el job de aviso de pedidos por vencer compitiendo por el
+    mismo cómputo. Singleton de proceso: @lru_cache sobre una función sin argumentos
+    devuelve siempre la misma instancia, compartida por todos los callers."""
+    return TTLCache(ttl_seconds=60)
+
+
+@lru_cache
+def get_client_order_notifier() -> ClientOrderNotifier | None:
+    """None si CLIENT_MAIL_SMTP_HOST no está configurado — el feature queda
+    deshabilitada sin tocar el resto del flujo de carga (ver LoadOrderPorts)."""
+    settings = get_settings()
+    if not settings.client_mail_smtp_host:
+        return None
+    return ClientOrderDispatcher(ClientOrderMailer(settings))
 
 
 def order_settings(settings: Settings) -> CanalDirectoOrderSettings:

@@ -26,6 +26,7 @@ class ListCustomers:
                 name=c.name,
                 enabled=c.enabled,
                 has_contacts=c.customer_id in with_contacts,
+                client_mail_enabled=c.client_mail_enabled,
             )
             for c in customers
         ]
@@ -45,6 +46,14 @@ class BulkToggleCustomers:
 
     async def execute(self, enabled: bool) -> None:
         await self._repo.bulk_toggle(enabled)
+
+
+class SetClientMailEnabled:
+    def __init__(self, repo: CustomerRepository) -> None:
+        self._repo = repo
+
+    async def execute(self, customer_id: int, enabled: bool) -> None:
+        await self._repo.set_client_mail_enabled(customer_id, enabled)
 
 
 class SyncCustomers:

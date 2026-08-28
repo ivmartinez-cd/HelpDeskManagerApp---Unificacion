@@ -90,7 +90,7 @@ function ValidationOverrideModal({ modal, busy, onClose, onConfirm }: ModalProps
 
 function DismissConfirmationModal({ modal, busy, onClose, onConfirm }: ModalProps) {
   if (modal.kind !== "dismiss") return null;
-  const { row, count, customerName } = modal;
+  const { row, count, customerName, permanent } = modal;
   const isBatch = row === null;
 
   return (
@@ -98,13 +98,17 @@ function DismissConfirmationModal({ modal, busy, onClose, onConfirm }: ModalProp
       isOpen
       onClose={onClose}
       onConfirm={() => onConfirm()}
-      title="Descartar solicitudes de SDS"
+      title={permanent ? "Ignorar solicitud permanentemente" : "Descartar solicitudes de SDS"}
       // El descarte individual mantiene la fricción del legacy (un click). El
-      // descarte en lote pide tipear: borra N solicitudes en HP SDS de una y
-      // no hay forma de revertirlo desde esta app.
-      variant={isBatch ? "destructive" : "warning"}
-      confirmText="DESCARTAR"
-      confirmLabel={busy ? "Descartando…" : "Confirmar descarte"}
+      // descarte en lote y el ignorado permanente piden tipear: son
+      // irreversibles desde esta app.
+      variant={isBatch || permanent ? "destructive" : "warning"}
+      confirmText={permanent ? "IGNORAR" : "DESCARTAR"}
+      confirmLabel={
+        busy ? (permanent ? "Ignorando…" : "Descartando…")
+        : permanent ? "Confirmar ignorar"
+        : "Confirmar descarte"
+      }
       loading={busy}
       widthPx={440}
       extra={
@@ -136,9 +140,20 @@ function DismissConfirmationModal({ modal, busy, onClose, onConfirm }: ModalProp
         </div>
       }
     >
-      ¿Confirmás descartar {isBatch ? `estas ${count} solicitudes` : "esta solicitud"}? No se
-      generará ningún pedido y se cancelarán las alertas en HP SDS (pasarán a estado{" "}
-      <strong>DELETED</strong>).
+      {permanent ? (
+        <>
+          ¿Estás seguro de que querés ignorar esta solicitud de forma <strong>permanente</strong>?
+          HP SDS va a dejar de reemitirla y no se va a revertir sola — usalo cuando sabés que esta
+          alerta no debería volver a aparecer (pedido ya resuelto, o un consumible que sabés que no
+          hay que cargar).
+        </>
+      ) : (
+        <>
+          ¿Confirmás descartar {isBatch ? `estas ${count} solicitudes` : "esta solicitud"}? No se
+          generará ningún pedido y se cancelarán las alertas en HP SDS (pasarán a estado{" "}
+          <strong>DELETED</strong>).
+        </>
+      )}
     </ConfirmationModal>
   );
 }

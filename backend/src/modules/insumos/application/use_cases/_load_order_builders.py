@@ -94,6 +94,8 @@ async def resolve_device_from_match(
             str(consumable.get("description") or ""), str(reorder_part.get("type") or "")
         ),
         warn=_consumable_warn(consumable),
+        consumable_serial=consumable.get("serialNumber"),
+        consumable_colour=consumable.get("colour"),
     )
 
 
@@ -205,6 +207,8 @@ def build_processed_request(
         initial_percent_left=rounded(resolved.percent_left),
         initial_days_left=resolved.days_left,
         initial_pages_left=resolved.pages_left,
+        consumable_serial=resolved.consumable_serial,
+        consumable_colour=resolved.consumable_colour,
     )
 
 

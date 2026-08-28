@@ -18,6 +18,7 @@ export function useCustomers() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [notifyBusyId, setNotifyBusyId] = useState<number | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
 
@@ -67,6 +68,24 @@ export function useCustomers() {
     }
   }, []);
 
+  const toggleClientMail = useCallback(async (row: CustomerRow, enabled: boolean) => {
+    setNotifyBusyId(row.customer_id);
+    try {
+      await insumosApi.setClientMailEnabled(row.customer_id, enabled);
+      if (!mounted.current) return;
+      setRows((prev) =>
+        prev.map((r) =>
+          r.customer_id === row.customer_id ? { ...r, client_mail_enabled: enabled } : r,
+        ),
+      );
+      toast.success(`Aviso por mail ${enabled ? "activado" : "desactivado"}.`);
+    } catch (err: unknown) {
+      toast.error(errorMessage(err, "No se pudo actualizar el aviso por mail."));
+    } finally {
+      if (mounted.current) setNotifyBusyId(null);
+    }
+  }, []);
+
   const bulkToggle = useCallback(async (enabled: boolean) => {
     setBulkLoading(true);
     try {
@@ -108,9 +127,11 @@ export function useCustomers() {
     loading,
     loadError,
     busyId,
+    notifyBusyId,
     syncing,
     bulkLoading,
     toggle,
+    toggleClientMail,
     bulkToggle,
     sync,
     markHasContacts,

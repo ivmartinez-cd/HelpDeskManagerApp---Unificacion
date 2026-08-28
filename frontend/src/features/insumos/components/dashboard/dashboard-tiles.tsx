@@ -6,8 +6,12 @@ import type { DashboardResponse } from "../../types";
  * loaded}` + `loadedToday`, con los umbrales de días en la etiqueta.
  *
  * Colores: semáforo rojo/amarillo/verde para severidad y naranja Institucional
- * para lo accionable. "Con pedido" iba en celeste `#00a4e4` en el legacy —
- * color PROHIBIDO por el handoff, reemplazado por el gris MPS `#58595B`.
+ * para lo accionable. "Cargado" iba en celeste `#00a4e4` en el legacy — color
+ * PROHIBIDO por el handoff, reemplazado por el gris MPS `#58595B`.
+ *
+ * "Cargado" (antes "Con pedido") cuenta SOLO pedidos propios verificados — un
+ * pedido activo detectado por matching que nunca confirmó entrega no cuenta acá
+ * (sigue en "Pendientes"/severidad, con badge de aviso en la fila).
  */
 
 interface Tile {
@@ -27,7 +31,7 @@ function tilesFor(dashboard: DashboardResponse): Tile[] {
     { label: `Urgentes ≤${thresholds.urgent}d`, value: totals.urgent ?? 0, color: "#F7941D" },
     { label: `Atención ≤${thresholds.warning}d`, value: totals.warning ?? 0, color: "#eab308" },
     { label: "OK", value: totals.good ?? 0, color: "#22c55e" },
-    { label: "Con pedido", value: totals.loaded ?? 0, color: "#3b82f6" },
+    { label: "Cargado", value: totals.loaded ?? 0, color: "#3b82f6" },
     { label: "Cargados hoy", value: loadedToday, color: "#F7941D" },
   ];
 }

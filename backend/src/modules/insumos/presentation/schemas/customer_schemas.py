@@ -19,6 +19,7 @@ class CustomerOut(BaseModel):
     name: str
     enabled: bool
     has_contacts: bool
+    client_mail_enabled: bool
 
     @classmethod
     def from_domain(cls, c: Customer) -> "CustomerOut":
@@ -27,11 +28,17 @@ class CustomerOut(BaseModel):
             name=c.name,
             enabled=c.enabled,
             has_contacts=c.has_contacts,
+            client_mail_enabled=c.client_mail_enabled,
         )
 
 
 class CustomerPatchBody(BaseModel):
-    enabled: bool = False
+    """None = no tocar ese campo. `enabled` (monitoreo) y `client_mail_enabled` (aviso
+    por mail al cliente) son toggles independientes — un PATCH que solo manda uno de
+    los dos no debe pisar el otro."""
+
+    enabled: bool | None = None
+    client_mail_enabled: bool | None = None
 
 
 class BulkToggleBody(BaseModel):
