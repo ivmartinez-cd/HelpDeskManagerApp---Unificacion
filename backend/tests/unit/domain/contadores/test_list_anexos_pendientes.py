@@ -66,6 +66,7 @@ _UNIVERSO = [
     _anexo("SUMCDSI0077/C2", "202607", grupo="Roemmers - Maprimed", importe="6472.41"),
     _anexo("COD36CDSI00674/A1", "202606", grupo="Galicia Seguros"),
     _anexo("COD30CDSI00510/A1/C1", "202412", grupo="Chubb", vendedor="Barbara Romero"),
+    _anexo("COD36CDSI00901/A1", "202608", grupo="Farmacity", importe="150.00"),
 ]
 
 
@@ -85,6 +86,10 @@ def test_estado_mes_anterior_en_proceso_y_mas_viejo_demorado() -> None:
     assert estado_de_periodo("202607", hoy=_HOY) == "en_proceso"
     assert estado_de_periodo("202606", hoy=_HOY) == "demorado"
     assert estado_de_periodo("202412", hoy=_HOY) == "demorado"
+
+
+def test_estado_mes_en_curso() -> None:
+    assert estado_de_periodo("202608", hoy=_HOY) == "mes_en_curso"
 
 
 @pytest.mark.asyncio
@@ -113,6 +118,10 @@ async def test_filtra_por_estado_y_busqueda() -> None:
     assert [a.anexo.anexo for a in por_grupo.anexos] == ["SUMCDSI0077/C2"]
     por_vendedor = await use_case.execute(ListAnexosPendientesRequest(search="barbara"))
     assert [a.anexo.anexo for a in por_vendedor.anexos] == ["COD30CDSI00510/A1/C1"]
+    mes_en_curso = await use_case.execute(
+        ListAnexosPendientesRequest(estado="mes_en_curso"), hoy=_HOY
+    )
+    assert [a.anexo.anexo for a in mes_en_curso.anexos] == ["COD36CDSI00901/A1"]
 
 
 @pytest.mark.asyncio
@@ -133,5 +142,6 @@ async def test_resumen_cuenta_estados_y_suma_importes() -> None:
     assert resumen.en_proceso == 2
     assert resumen.demorados == 2
     assert resumen.importe_usd_total == Decimal("6472.41")
+    assert resumen.mes_en_curso == 1
     assert resumen.periodo_referencia == "202607"
     assert resumen.consultado_en == _CONSULTADO_EN

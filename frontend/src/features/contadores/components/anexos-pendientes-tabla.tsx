@@ -6,10 +6,11 @@ import { BrandBadge } from "@/shared/components/ui/brand-form";
 
 export const ESTADO_META: Record<
   EstadoAnexoPendiente,
-  { label: string; variant: "warning" | "danger" }
+  { label: string; variant: "warning" | "danger" | "accent" }
 > = {
   en_proceso: { label: "En proceso", variant: "warning" },
   demorado: { label: "Demorado", variant: "danger" },
+  mes_en_curso: { label: "Mes en curso", variant: "accent" },
 };
 
 const usdFormat = new Intl.NumberFormat("es-AR", {

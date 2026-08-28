@@ -2,9 +2,12 @@
 
 Recrea el reporte legacy `sitesphp/.../SiGes/AnexosNoFacturados/RUN.php`
 acotado a lo que pidió la TL (2026-08-14): solo anexos de tipo Impresión
-(la "opción Impresión" del formulario legacy) y solo estados EN PROCESO /
-DEMORADO — el mes en curso y todo lo FACTURADO / LIBERADO / A LIBERAR
-quedan afuera. Semántica validada con dato real contra el legacy
+(la "opción Impresión" del formulario legacy) — todo lo FACTURADO / LIBERADO
+/ A LIBERAR queda afuera. El mes en curso se incluye (desde 2026-08-28) para
+que la UI pueda filtrarlo aparte como MES_EN_CURSO (ver
+`periodos_facturacion.estado_de_periodo`); el parámetro de corte de período
+pasó de excluyente a inclusive (`<=`). Semántica validada con dato real
+contra el legacy
 (`backend/scripts/explore_siges_anexos_no_facturados.py` y rondas 3-5):
 
 - `Factura_Anexo` tiene una fila por (anexo, período de facturación); el
@@ -55,7 +58,7 @@ WHERE u.rn = 1
   AND u.ListoParaFacturar = 0
   AND A.ID_EstadoAnexo = 1
   AND A.discriminador = 'I'
-  AND u.PeriodoFacturacion < ?
+  AND u.PeriodoFacturacion <= ?
   AND u.Fecha_Proceso >= ?
 ORDER BY u.PeriodoFacturacion, G.descripcion, A.NombreAnexo
 """

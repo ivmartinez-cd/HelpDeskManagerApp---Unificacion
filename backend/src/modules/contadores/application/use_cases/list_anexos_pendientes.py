@@ -1,5 +1,5 @@
 """Listado del reporte de cierre de contadores (anexos de Impresión con
-período abierto): anota el estado EN PROCESO/DEMORADO y el operador asignado
+período abierto): anota el estado EN PROCESO/DEMORADO/MES_EN_CURSO y el operador asignado
 al cliente (vía calendario + cruce con Siges), filtra/busca en memoria sobre
 el snapshot cacheado del puerto. El orden ya viene fijo del SQL (período más
 viejo primero, después grupo y anexo) — es un reporte para imprimir, no una

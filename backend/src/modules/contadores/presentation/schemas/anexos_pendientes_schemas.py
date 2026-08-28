@@ -51,5 +51,6 @@ class AnexosPendientesResumenSchema(BaseModel):
     en_proceso: int
     demorados: int
     importe_usd_total: Decimal
+    mes_en_curso: int
     periodo_referencia: str
     consultado_en: datetime

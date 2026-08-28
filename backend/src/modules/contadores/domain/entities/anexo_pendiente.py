@@ -1,7 +1,8 @@
 """Anexo de Impresión con un período de facturación abierto (sin liberar ni
 facturar) — el universo del reporte de cierre de contadores, que recrea el
-legacy `SiGes/AnexosNoFacturados` acotado a EN PROCESO / DEMORADO (ver
-`anexos_pendientes_query.py` para la semántica validada contra Siges)."""
+legacy `SiGes/AnexosNoFacturados` acotado a EN PROCESO / DEMORADO /
+MES_EN_CURSO (ver `anexos_pendientes_query.py` para la semántica validada
+contra Siges)."""
 
 from dataclasses import dataclass
 from datetime import date, datetime

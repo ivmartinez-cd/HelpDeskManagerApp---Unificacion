@@ -2,7 +2,7 @@
  * `anexos_pendientes_schemas.py`, snake_case sin alias) — verificado contra
  * el endpoint vivo antes de cablear la tabla. */
 
-export type EstadoAnexoPendiente = "en_proceso" | "demorado";
+export type EstadoAnexoPendiente = "en_proceso" | "demorado" | "mes_en_curso";
 
 export interface AnexoPendiente {
   id_anexo: number;
@@ -24,10 +24,13 @@ export interface AnexoPendiente {
 }
 
 export interface AnexosPendientesResumen {
+  /** `total`/`en_proceso`/`demorados` excluyen el mes en curso: son los KPIs
+   * del cierre, no cambian de significado por el filtro `mes_en_curso`. */
   total: number;
   en_proceso: number;
   demorados: number;
   importe_usd_total: string;
+  mes_en_curso: number;
   /** Período considerado EN PROCESO (el mes anterior al en curso). */
   periodo_referencia: string;
   consultado_en: string;

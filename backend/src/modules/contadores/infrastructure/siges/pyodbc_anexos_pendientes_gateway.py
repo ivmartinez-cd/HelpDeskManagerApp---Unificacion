@@ -2,10 +2,11 @@
 
 Mismo esqueleto que `PyodbcEquiposSinRealGateway`: la plomería vive en el
 `MercurioQueryRunner` compartido (ADR-018) y acá quedan los parámetros
-dinámicos (el período del mes en curso y la ventana de recencia de 12 meses
-ruedan solos con el calendario — el "más dinámico" pedido sobre el legacy,
-que los tomaba de un formulario) y la caché TTL: la UI reordena/filtra
-sobre el mismo universo sin otra pasada por MERCURIO."""
+dinámicos (el corte de período — ahora inclusivo del mes en curso, ver
+`anexos_pendientes_query.py` — y la ventana de recencia de 12 meses ruedan
+solos con el calendario — el "más dinámico" pedido sobre el legacy, que los
+tomaba de un formulario) y la caché TTL: la UI reordena/filtra sobre el
+mismo universo sin otra pasada por MERCURIO."""
 
 import asyncio
 from datetime import UTC, datetime

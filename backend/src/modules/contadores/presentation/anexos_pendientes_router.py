@@ -1,9 +1,10 @@
 """Reporte de cierre de contadores: anexos de Impresión con el período de
-facturación abierto (EN PROCESO / DEMORADO). Recrea el legacy
-`SiGes/AnexosNoFacturados` con la regla de la TL — mes en curso afuera,
-FACTURADO/LIBERADO/A LIBERAR afuera — y referencia que rueda sola (ver
-`anexos_pendientes_query.py`). Consulta en vivo a SiGesReadOnly con caché
-TTL en el gateway."""
+facturación abierto (EN PROCESO / DEMORADO / MES_EN_CURSO). Recrea el legacy
+`SiGes/AnexosNoFacturados` con la regla de la TL — FACTURADO/LIBERADO/A
+LIBERAR afuera — y referencia que rueda sola (ver `anexos_pendientes_query.py`).
+El mes en curso se filtra aparte con `estado=mes_en_curso` (2026-08-28) y no
+cuenta en los KPIs de pendientes/demorados del resumen. Consulta en vivo a
+SiGesReadOnly con caché TTL en el gateway."""
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -90,6 +91,7 @@ async def get_anexos_pendientes_resumen(
         en_proceso=resumen.en_proceso,
         demorados=resumen.demorados,
         importe_usd_total=resumen.importe_usd_total,
+        mes_en_curso=resumen.mes_en_curso,
         periodo_referencia=resumen.periodo_referencia,
         consultado_en=resumen.consultado_en,
     )

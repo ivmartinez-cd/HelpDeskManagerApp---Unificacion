@@ -23,6 +23,7 @@ const FILTROS_ESTADO = [
   { value: "todos", label: "Todos" },
   { value: "en_proceso", label: "En proceso" },
   { value: "demorado", label: "Demorados" },
+  { value: "mes_en_curso", label: "Mes en curso" },
 ];
 
 const usdFormat = new Intl.NumberFormat("es-AR", {
@@ -147,6 +148,11 @@ export function AnexosPendientesView() {
             label="USD pendiente"
             value={usdFormat.format(Number(resumen.importe_usd_total))}
             tone="text-brand-orange"
+          />
+          <KpiCard
+            label="Mes en curso"
+            value={String(resumen.mes_en_curso)}
+            tone="text-foreground"
           />
         </div>
       )}

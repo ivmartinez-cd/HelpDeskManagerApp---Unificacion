@@ -7,9 +7,10 @@ from src.modules.contadores.domain.services.periodos_facturacion import EstadoAn
 
 @dataclass(frozen=True)
 class AnexoPendienteConEstado:
-    """Anexo pendiente anotado con su estado EN PROCESO/DEMORADO y el operador
-    del calendario asignado al cliente. `operador=None` cuando el cliente no
-    cruza con el calendario o el cruce no pudo armarse (Siges caído)."""
+    """Anexo pendiente anotado con su estado EN PROCESO/DEMORADO/MES_EN_CURSO
+    y el operador del calendario asignado al cliente. `operador=None` cuando
+    el cliente no cruza con el calendario o el cruce no pudo armarse (Siges
+    caído)."""
 
     anexo: AnexoPendiente
     estado: EstadoAnexoPendiente

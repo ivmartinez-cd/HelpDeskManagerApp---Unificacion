@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Literal
 
-FiltroEstado = Literal["todos", "en_proceso", "demorado"]
+FiltroEstado = Literal["todos", "en_proceso", "demorado", "mes_en_curso"]
 
 
 @dataclass(frozen=True)

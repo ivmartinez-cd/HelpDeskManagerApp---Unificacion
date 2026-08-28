@@ -16,10 +16,14 @@ from src.modules.contadores.domain.services.periodos_facturacion import (
 
 @dataclass(frozen=True)
 class AnexosPendientesResumen:
+    # `total`/`en_proceso`/`demorados`/`importe_usd_total` excluyen el mes en
+    # curso a propósito — son los KPIs del cierre (regla TL 2026-08-14), no
+    # cambian de significado por el filtro MES_EN_CURSO agregado 2026-08-28.
     total: int
     en_proceso: int
     demorados: int
     importe_usd_total: Decimal
+    mes_en_curso: int
     # Período considerado EN PROCESO (el mes anterior al en curso) — la UI lo
     # muestra como referencia del reporte.
     periodo_referencia: str
@@ -33,14 +37,14 @@ class GetAnexosPendientesResumenUseCase:
     async def execute(self, *, hoy: date | None = None) -> AnexosPendientesResumen:
         snapshot = await self._port.list_anexos()
         hoy = hoy or datetime.now(UTC).date()
-        estados = [estado_de_periodo(a.periodo, hoy=hoy) for a in snapshot.anexos]
+        anotados = [(a, estado_de_periodo(a.periodo, hoy=hoy)) for a in snapshot.anexos]
+        pendientes = [(a, e) for a, e in anotados if e != "mes_en_curso"]
         return AnexosPendientesResumen(
-            total=len(snapshot.anexos),
-            en_proceso=sum(1 for e in estados if e == "en_proceso"),
-            demorados=sum(1 for e in estados if e == "demorado"),
-            importe_usd_total=sum(
-                (a.importe_usd for a in snapshot.anexos), start=Decimal(0)
-            ),
+            total=len(pendientes),
+            en_proceso=sum(1 for _, e in pendientes if e == "en_proceso"),
+            demorados=sum(1 for _, e in pendientes if e == "demorado"),
+            importe_usd_total=sum((a.importe_usd for a, _ in pendientes), start=Decimal(0)),
+            mes_en_curso=sum(1 for _, e in anotados if e == "mes_en_curso"),
             periodo_referencia=periodo_anterior(periodo_de(hoy)),
             consultado_en=snapshot.consultado_en,
         )
