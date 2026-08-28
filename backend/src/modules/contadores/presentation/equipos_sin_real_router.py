@@ -82,6 +82,9 @@ async def list_equipos_sin_real(
     sort_dir: Literal["asc", "desc"] = Query(default="desc"),
     min_meses: int = Query(default=3, ge=1),
     search: str | None = Query(default=None, max_length=120),
+    solo_activos: bool = Query(
+        default=False, description="Solo estado_maquina = 'Activa en Cliente'"
+    ),
     refresh: bool = Query(default=False, description="Fuerza re-consultar Siges (~10s)"),
     identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
@@ -97,6 +100,7 @@ async def list_equipos_sin_real(
             sort_dir=sort_dir,
             force_refresh=refresh,
             solo_operador_nombre=_solo_operador(identity),
+            solo_activos=solo_activos,
         )
     )
     schemas = [EquipoSinRealSchema.from_anotado(a) for a in result.equipos]
@@ -105,19 +109,19 @@ async def list_equipos_sin_real(
 
 @router.get("/equipos-sin-real/resumen", response_model=EquiposSinRealResumenSchema)
 async def get_equipos_sin_real_resumen(
+    min_meses: int = Query(default=1, ge=1, description="Filtro del desglose por operador"),
+    solo_activos: bool = Query(
+        default=False, description="Filtro del desglose por operador"
+    ),
     identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> EquiposSinRealResumenSchema:
     use_case = GetEquiposSinRealResumenUseCase(
         get_equipos_sin_real_gateway(), operador_mapa=_operador_mapa(db)
     )
-    resumen = await use_case.execute(solo_operador_nombre=_solo_operador(identity))
-    return EquiposSinRealResumenSchema(
-        total=resumen.total,
-        criticos=resumen.criticos,
-        altos=resumen.altos,
-        medios=resumen.medios,
-        bajos=resumen.bajos,
-        nunca_real=resumen.nunca_real,
-        consultado_en=resumen.consultado_en,
+    resumen = await use_case.execute(
+        solo_operador_nombre=_solo_operador(identity),
+        min_meses=min_meses,
+        solo_activos=solo_activos,
     )
+    return EquiposSinRealResumenSchema.from_dto(resumen)

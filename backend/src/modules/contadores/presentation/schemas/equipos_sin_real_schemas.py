@@ -5,6 +5,9 @@ from pydantic import BaseModel
 from src.modules.contadores.application.dtos.equipo_sin_real_anotado import (
     EquipoSinRealAnotado,
 )
+from src.modules.contadores.application.use_cases.get_equipos_sin_real_resumen import (
+    EquiposSinRealResumen,
+)
 from src.modules.contadores.domain.services.severidad_sin_real import (
     SeveridadSinReal,
     severidad_por_meses,
@@ -62,6 +65,13 @@ class EquipoSinRealSchema(BaseModel):
         )
 
 
+class OperadorSinRealSchema(BaseModel):
+    nombre: str
+    color: str | None
+    equipos: int
+    parque_total: int | None
+
+
 class EquiposSinRealResumenSchema(BaseModel):
     total: int
     criticos: int
@@ -69,4 +79,25 @@ class EquiposSinRealResumenSchema(BaseModel):
     medios: int
     bajos: int
     nunca_real: int
+    no_localizados: int
+    operadores: list[OperadorSinRealSchema]
     consultado_en: datetime
+
+    @classmethod
+    def from_dto(cls, resumen: EquiposSinRealResumen) -> "EquiposSinRealResumenSchema":
+        return cls(
+            total=resumen.total,
+            criticos=resumen.criticos,
+            altos=resumen.altos,
+            medios=resumen.medios,
+            bajos=resumen.bajos,
+            nunca_real=resumen.nunca_real,
+            no_localizados=resumen.no_localizados,
+            operadores=[
+                OperadorSinRealSchema(
+                    nombre=o.nombre, color=o.color, equipos=o.equipos, parque_total=o.parque_total
+                )
+                for o in resumen.operadores
+            ],
+            consultado_en=resumen.consultado_en,
+        )

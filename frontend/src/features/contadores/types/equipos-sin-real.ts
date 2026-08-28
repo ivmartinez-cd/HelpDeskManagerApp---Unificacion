@@ -33,6 +33,16 @@ export interface EquipoSinReal {
   operador_color: string | null;
 }
 
+export interface OperadorSinReal {
+  nombre: string;
+  color: string | null;
+  equipos: number;
+  /** Parque total elegible de ese operador (mismos estados que el
+   * numerador, sin filtro de fecha) — null para "Sin operador asignado",
+   * que no tiene cartera propia sobre la que calcular una tasa. */
+  parque_total: number | null;
+}
+
 export interface EquiposSinRealResumen {
   total: number;
   criticos: number;
@@ -40,6 +50,8 @@ export interface EquiposSinRealResumen {
   medios: number;
   bajos: number;
   nunca_real: number;
+  no_localizados: number;
+  operadores: OperadorSinReal[];
   consultado_en: string;
 }
 
@@ -53,4 +65,7 @@ export interface EquiposSinRealListParams {
   minMeses: number;
   search?: string;
   refresh?: boolean;
+  /** Solo estado_maquina = "Activa en Cliente" — saca Backup/Backup
+   * Fijo/Baja Solicitada/No Localizado del listado. */
+  soloActivos?: boolean;
 }

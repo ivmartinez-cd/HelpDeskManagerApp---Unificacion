@@ -85,3 +85,20 @@ LEFT JOIN im I ON I.ID_Maquina = U.ID_Maquina
 WHERE AG.Descripcion NOT LIKE 'PrintBox%'
 ORDER BY meses_sin_real DESC, cliente, serie
 """
+
+# Denominador consistente para la tasa "sin real / parque propio" por
+# operador: mismos estados operativos y mismo criterio PrintBox que
+# `EQUIPOS_SIN_REAL_SQL` (arriba), pero sin el filtro de fecha — el parque
+# elegible completo de cada empresa, no solo el que hoy está sin real. Sin
+# esto, mezclar esta tasa con el "impresoras activas" de `parque_cliente`
+# (que excluye Backup Fijo e incluye PrintBox) podía superar el 100%.
+PARQUE_ELEGIBLE_SQL = """
+SELECT M.ID_Empresa AS id_empresa, COUNT(*) AS cantidad
+FROM dbo.Maquina M
+INNER JOIN dbo.Articulo A ON A.Id_Articulo = M.ID_Articulo
+INNER JOIN dbo.ArtGen AG ON AG.Id_ArtGen = A.Id_ArtGen
+WHERE M.Estado = 0
+  AND M.ID_Estado_Maquina IN (1, 3, 8, 200, 254)
+  AND AG.Descripcion NOT LIKE 'PrintBox%'
+GROUP BY M.ID_Empresa
+"""

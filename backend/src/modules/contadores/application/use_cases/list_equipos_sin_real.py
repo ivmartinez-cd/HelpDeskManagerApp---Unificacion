@@ -20,6 +20,7 @@ from src.modules.contadores.application.use_cases.operador_por_empresa import (
     MapaOperadorPorEmpresa,
 )
 from src.modules.contadores.domain.ports.equipos_sin_real_port import EquiposSinRealPort
+from src.modules.contadores.domain.services.estado_maquina_sin_real import ACTIVA_EN_CLIENTE
 
 _SORT_KEYS: dict[SortBy, Callable[[EquipoSinRealAnotado], int | str | tuple[int, str]]] = {
     "meses": lambda a: a.equipo.meses_sin_real,
@@ -59,6 +60,8 @@ class ListEquiposSinRealUseCase:
         ]
         if request.solo_operador_nombre:
             anotados = filtrar_por_operador(anotados, request.solo_operador_nombre)
+        if request.solo_activos:
+            anotados = _solo_activos(anotados)
         if request.search:
             anotados = _filtrar(anotados, request.search)
         anotados = _ordenar(anotados, request.sort_by, request.sort_dir == "desc")
@@ -80,6 +83,12 @@ def filtrar_por_operador(
     return [
         a for a in anotados if a.operador is not None and a.operador.nombre.casefold() == nombre
     ]
+
+
+def _solo_activos(anotados: list[EquipoSinRealAnotado]) -> list[EquipoSinRealAnotado]:
+    """Saca Backup/Backup Fijo/Baja Solicitada/No Localizado: solo lo que de
+    verdad necesita una visita para tomar el contador."""
+    return [a for a in anotados if a.equipo.estado_maquina == ACTIVA_EN_CLIENTE]
 
 
 def _filtrar(anotados: list[EquipoSinRealAnotado], search: str) -> list[EquipoSinRealAnotado]:

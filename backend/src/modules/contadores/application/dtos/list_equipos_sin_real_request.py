@@ -17,3 +17,8 @@ class ListEquiposSinRealRequest:
     # clientes asignados a ese operador — es lo que ve un operador sin
     # `contadores.manage` (decisión del usuario 2026-08-21). `None` = todos.
     solo_operador_nombre: str | None = None
+    # El universo incluye Backup/Backup Fijo/Baja Solicitada/No Localizado
+    # junto con lo realmente activo (ver docstring de `equipos_sin_real_query`).
+    # `True` acota a `estado_maquina == "Activa en Cliente"` — lo que de
+    # verdad necesita una visita, sin backups ni equipos perdidos mezclados.
+    solo_activos: bool = False
