@@ -44,7 +44,7 @@ interface RouteRule {
 const p = (module: string, action: string): RequiredPermission => ({ module, action });
 
 export const ROUTE_RULES: readonly RouteRule[] = [
-  // Configuración (usuarios + permisos). Turnos ya no vive acá (ADR-029).
+  // Módulo admin, ítem "Usuarios" (cuentas + permisos). Turnos ya no vive acá (ADR-029).
   { prefix: "/admin", anyOf: [p("admin", "manage")] },
 
   // Turnos: la grilla y sus coberturas se consultan con view; mutar es manage

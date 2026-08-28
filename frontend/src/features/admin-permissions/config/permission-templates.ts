@@ -110,8 +110,8 @@ export const PERMISSION_TEMPLATES: readonly PermissionTemplate[] = [
     // (flag `is_superadmin`, que la UI muestra como "Administrador" y no
     // necesita grants): esto es un TL que además puede gestionar usuarios.
     key: "tl-configuracion",
-    label: "Team leader + Configuración",
-    description: "Team leader + Configuración (usuarios y permisos). No es superadmin.",
+    label: "Team leader + Usuarios",
+    description: "Team leader + módulo Usuarios (cuentas y permisos). No es superadmin.",
     grants: [...TEAM_LEADER, ["admin", "manage"]],
     features: FUNCIONES_TL,
   },
