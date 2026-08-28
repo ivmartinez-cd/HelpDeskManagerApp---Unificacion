@@ -6,15 +6,10 @@ import {
   Award,
   CalendarClock,
   ClipboardList,
-  DollarSign,
   FileQuestion,
   FileSearch,
-  FileText,
   Gauge,
   Headset,
-  LayoutDashboard,
-  Map,
-  ScrollText,
   UserRoundCheck,
   Users,
   type LucideIcon,
@@ -31,13 +26,18 @@ interface NavLinkDef {
 }
 
 interface NavSectionDef {
-  label: string | null;
+  label: string;
   links: NavLinkDef[];
 }
 
+/** Submenú del grupo virtual "Servicio Técnico" (reorganizado 2026-08-28):
+ *  cuatro secciones por tipo de trabajo, todas con título — Incidentes
+ *  (tablero SLA + las tres colas de seguimiento), Prestadores, Técnicos y
+ *  Herramientas. Liquidaciones ya no va acá: es un ítem de nivel superior
+ *  propio (ver `LiquidacionesNavSubmenu`). Cada sección se arma solo con los
+ *  links de los módulos que el usuario tiene; las vacías no se muestran. */
 function buildSections({
   hasPrestadores,
-  hasLiquidaciones,
   hasSla,
   hasPreventivos,
   hasAnalisisLogHp,
@@ -45,108 +45,47 @@ function buildSections({
   bonoTecnicosHref,
 }: {
   hasPrestadores: boolean;
-  hasLiquidaciones: boolean;
   hasSla: boolean;
   hasPreventivos: boolean;
   hasAnalisisLogHp: boolean;
   hasBonoTecnicos: boolean;
   bonoTecnicosHref: string;
 }): NavSectionDef[] {
-  const sections: NavSectionDef[] = [];
+  const incidentes: NavLinkDef[] = hasSla
+    ? [
+        { href: "/sla", label: "Tablero SLA", exact: true, icon: Gauge },
+        { href: "/sla/pendientes-a-cerrar", label: "Pendientes a cerrar", exact: false, icon: ClipboardList },
+        { href: "/incidentes-sin-consultar", label: "Sin consultar", exact: false, icon: FileQuestion },
+        { href: "/sla/mesa-de-ayuda", label: "Mesa de Ayuda", exact: false, icon: Headset },
+      ]
+    : [];
 
-  if (hasPrestadores) {
-    sections.push({
-      label: "Prestadores",
-      links: [
-        { href: "/prestadores", label: "Prestadores Asignados", exact: true, icon: Users },
+  const prestadores: NavLinkDef[] = hasPrestadores
+    ? [
+        { href: "/prestadores", label: "Asignados", exact: true, icon: Users },
         { href: "/prestadores/coberturas", label: "Coberturas", exact: false, icon: UserRoundCheck },
-      ],
-    });
-  }
+      ]
+    : [];
 
-  if (hasLiquidaciones) {
-    sections.push(
-      {
-        label: "Liquidación",
-        links: [
-          { href: "/liquidaciones", label: "Resumen", exact: true, icon: LayoutDashboard },
-          { href: "/liquidaciones/lista", label: "Liquidaciones", exact: false, icon: FileText },
-        ],
-      },
-      {
-        label: "Configuración",
-        links: [
-          { href: "/liquidaciones/configuracion/prestadores", label: "Conf. Prestadores", exact: false, icon: Users },
-          { href: "/liquidaciones/configuracion/spsts", label: "SPSTs", exact: false, icon: ScrollText },
-          { href: "/liquidaciones/configuracion/tarifarios", label: "Tarifarios", exact: false, icon: DollarSign },
-          { href: "/liquidaciones/configuracion/tabla-km", label: "Tabla KM", exact: false, icon: Map },
-          { href: "/liquidaciones/configuracion/reglas", label: "Reglas de alerta", exact: false, icon: ScrollText },
-        ],
-      },
-    );
-  }
+  const tecnicos: NavLinkDef[] = [
+    ...(hasPreventivos
+      ? [{ href: "/preventivos", label: "Preventivos por zona", exact: false, icon: CalendarClock }]
+      : []),
+    ...(hasBonoTecnicos
+      ? [{ href: bonoTecnicosHref, label: "Bono Técnicos", exact: false, icon: Award }]
+      : []),
+  ];
 
-  if (hasSla) {
-    sections.push({
-      label: "SLA",
-      links: [
-        { href: "/sla", label: "Resumen SLA", exact: true, icon: Gauge },
-        {
-          href: "/sla/pendientes-a-cerrar",
-          label: "Pendientes a Cerrar",
-          exact: false,
-          icon: ClipboardList,
-        },
-        {
-          href: "/sla/mesa-de-ayuda",
-          label: "Incidentes MDA",
-          exact: false,
-          icon: Headset,
-        },
-      ],
-    });
-  }
+  const herramientas: NavLinkDef[] = hasAnalisisLogHp
+    ? [{ href: "/analisis-log-hp", label: "Análisis Logs HP", exact: false, icon: FileSearch }]
+    : [];
 
-  if (hasSla) {
-    sections.push({
-      label: null,
-      links: [
-        {
-          href: "/incidentes-sin-consultar",
-          label: "Incidentes sin consultar",
-          exact: false,
-          icon: FileQuestion,
-        },
-      ],
-    });
-  }
-
-  if (hasPreventivos) {
-    sections.push({
-      label: null,
-      links: [
-        { href: "/preventivos", label: "Preventivos por zona", exact: false, icon: CalendarClock },
-      ],
-    });
-  }
-
-  if (hasAnalisisLogHp) {
-    sections.push({
-      label: null,
-      links: [
-        { href: "/analisis-log-hp", label: "Análisis Logs HP", exact: false, icon: FileSearch },
-      ],
-    });
-  }
-
-  if (hasBonoTecnicos) {
-    sections.push({
-      label: null,
-      links: [{ href: bonoTecnicosHref, label: "Bono Técnicos", exact: false, icon: Award }],
-    });
-  }
-
-  return sections;
+  return [
+    { label: "Incidentes", links: incidentes },
+    { label: "Prestadores", links: prestadores },
+    { label: "Técnicos", links: tecnicos },
+    { label: "Herramientas", links: herramientas },
+  ];
 }
 
 function NavLinkRow({
@@ -179,7 +118,6 @@ function NavLinkRow({
 
 export function ServicioTecnicoNavSubmenu({
   hasPrestadores,
-  hasLiquidaciones,
   hasSla,
   hasPreventivos,
   hasAnalisisLogHp,
@@ -187,7 +125,6 @@ export function ServicioTecnicoNavSubmenu({
   onNavigate,
 }: {
   hasPrestadores: boolean;
-  hasLiquidaciones: boolean;
   hasSla: boolean;
   hasPreventivos: boolean;
   hasAnalisisLogHp: boolean;
@@ -205,7 +142,6 @@ export function ServicioTecnicoNavSubmenu({
   const bonoTecnicosHref = can("bono-tecnicos", "view") ? "/bono-tecnicos" : "/bono-tecnicos/solicitudes";
   const sections = buildSections({
     hasPrestadores,
-    hasLiquidaciones,
     hasSla,
     hasPreventivos,
     hasAnalisisLogHp,
@@ -218,12 +154,10 @@ export function ServicioTecnicoNavSubmenu({
   return (
     <div className="flex flex-col gap-3 py-1.5 pb-2 pl-4 pr-1">
       {sections.map((section) => (
-        <div key={section.label ?? section.links[0]?.href} className="flex flex-col gap-px">
-          {section.label && (
-            <p className="px-2 pb-1 font-body text-[10px] font-bold uppercase tracking-[.08em] text-muted-foreground/70">
-              {section.label}
-            </p>
-          )}
+        <div key={section.label} className="flex flex-col gap-px">
+          <p className="px-2 pb-1 font-body text-[10px] font-bold uppercase tracking-[.08em] text-muted-foreground/70">
+            {section.label}
+          </p>
           {section.links.map((link) => {
             const active = link.exact
               ? pathname === link.href

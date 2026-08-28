@@ -8,6 +8,7 @@ import {
   Clock,
   FileSearch,
   Package,
+  ReceiptText,
   Settings,
   UserRound,
   type LucideIcon,
@@ -16,12 +17,14 @@ import {
 import type { ModuleSummary } from "@/features/auth/api/auth-api";
 import { ContadoresNavSubmenu } from "@/shared/components/contadores-nav-submenu";
 import { InsumosNavSubmenu } from "@/shared/components/insumos-nav-submenu";
+import { LiquidacionesNavSubmenu } from "@/shared/components/liquidaciones-nav-submenu";
 import { VacacionesNavSubmenu } from "@/shared/components/vacaciones-nav-submenu";
 import { cn } from "@/shared/utils/cn";
 
 const MODULE_ICONS: Record<string, LucideIcon> = {
   contadores: BarChart2,
   insumos: Package,
+  liquidaciones: ReceiptText,
   vacaciones: UserRound,
   turnos: Clock,
   "analisis-log-hp": FileSearch,
@@ -47,7 +50,8 @@ export function ModuleNavItem({
   const isContadores = module.key === "contadores";
   const isInsumos = module.key === "insumos";
   const isVacaciones = module.key === "vacaciones";
-  const hasSubmenu = isContadores || isInsumos || isVacaciones;
+  const isLiquidaciones = module.key === "liquidaciones";
+  const hasSubmenu = isContadores || isInsumos || isVacaciones || isLiquidaciones;
   const submenuExpanded = submenuOverride ?? active;
   const ModuleIcon = MODULE_ICONS[module.key] ?? Circle;
   return (
@@ -93,6 +97,7 @@ export function ModuleNavItem({
       {isContadores && submenuExpanded && <ContadoresNavSubmenu onNavigate={onNavigate} />}
       {isInsumos && submenuExpanded && <InsumosNavSubmenu onNavigate={onNavigate} />}
       {isVacaciones && submenuExpanded && <VacacionesNavSubmenu onNavigate={onNavigate} />}
+      {isLiquidaciones && submenuExpanded && <LiquidacionesNavSubmenu onNavigate={onNavigate} />}
     </div>
   );
 }

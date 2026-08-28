@@ -51,21 +51,18 @@ export function Sidebar({
     return DAILY_RANK[key] ?? 100;
   };
   const sortedModules = [...modules].sort((a, b) => rankOf(a.key) - rankOf(b.key));
-  // Liquidaciones no se muestra como ítem propio de nivel superior: queda
-  // anidado dentro de Prestadores (ver PrestadoresNavSubmenu). Sigue siendo
-  // un módulo backend independiente, esto es solo reorganización visual.
-  const liquidacionesModule = modules.find((m) => m.key === "liquidaciones");
   const prestadoresModule = modules.find((m) => m.key === "prestadores");
   const slaModule = modules.find((m) => m.key === "sla");
   const preventivosModule = modules.find((m) => m.key === "preventivos");
   const analisisLogHpModule = modules.find((m) => m.key === "analisis-log-hp");
   const bonoTecnicosModule = modules.find((m) => m.key === "bono-tecnicos");
-  // prestadores, sla, liquidaciones, preventivos, analisis-log-hp y
-  // bono-tecnicos se muestran anidados bajo Servicio Técnico, no como ítems
-  // de nivel superior — solo reorganización visual del sidebar.
+  // prestadores, sla, preventivos, analisis-log-hp y bono-tecnicos se
+  // muestran anidados bajo Servicio Técnico, no como ítems de nivel superior —
+  // solo reorganización visual del sidebar. Liquidaciones es ítem propio (con
+  // submenú, ver ModuleNavItem) desde 2026-08-28: es facturación mensual, no
+  // operación diaria, y ocupaba casi la mitad del submenú de Servicio Técnico.
   const topLevelModules = sortedModules.filter(
     (m) =>
-      m.key !== "liquidaciones" &&
       m.key !== "prestadores" &&
       m.key !== "sla" &&
       m.key !== "preventivos" &&
@@ -77,7 +74,6 @@ export function Sidebar({
   // aparecía siempre, apuntando a una ruta inexistente para quien no tenía nada).
   const servicioTecnicoVisible =
     !!prestadoresModule ||
-    !!liquidacionesModule ||
     !!slaModule ||
     !!preventivosModule ||
     !!analisisLogHpModule ||
@@ -162,7 +158,6 @@ export function Sidebar({
               <ServicioTecnicoNavItem
                 hasSla={!!slaModule}
                 hasPrestadores={!!prestadoresModule}
-                hasLiquidaciones={!!liquidacionesModule}
                 hasPreventivos={!!preventivosModule}
                 hasAnalisisLogHp={!!analisisLogHpModule}
                 hasBonoTecnicos={!!bonoTecnicosModule}

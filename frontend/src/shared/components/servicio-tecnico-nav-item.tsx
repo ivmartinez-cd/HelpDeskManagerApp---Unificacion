@@ -6,12 +6,11 @@ import { ServicioTecnicoNavSubmenu } from "@/shared/components/servicio-tecnico-
 import { cn } from "@/shared/utils/cn";
 
 /** Servicio Técnico: grupo hardcodeado (no es módulo), expandible con
- *  los módulos que agrupa — mismo patrón que Prestadores +
- *  Liquidaciones pero en sentido inverso (el padre es el hardcodeado). */
+ *  los módulos que agrupa (sla, prestadores, preventivos, analisis-log-hp,
+ *  bono-tecnicos). Liquidaciones va aparte, como ítem de nivel superior. */
 export function ServicioTecnicoNavItem({
   hasSla,
   hasPrestadores,
-  hasLiquidaciones,
   hasPreventivos,
   hasAnalisisLogHp,
   hasBonoTecnicos,
@@ -22,7 +21,6 @@ export function ServicioTecnicoNavItem({
 }: {
   hasSla: boolean;
   hasPrestadores: boolean;
-  hasLiquidaciones: boolean;
   hasPreventivos: boolean;
   hasAnalisisLogHp: boolean;
   hasBonoTecnicos: boolean;
@@ -35,7 +33,6 @@ export function ServicioTecnicoNavItem({
     isActive("/servicio-tecnico") ||
     (hasSla && isActive("/sla")) ||
     (hasPrestadores && isActive("/prestadores")) ||
-    (hasLiquidaciones && isActive("/liquidaciones")) ||
     (hasPreventivos && isActive("/preventivos")) ||
     (hasAnalisisLogHp && isActive("/analisis-log-hp")) ||
     (hasBonoTecnicos && isActive("/bono-tecnicos"));
@@ -86,7 +83,6 @@ export function ServicioTecnicoNavItem({
       {stcHasSubmenu && stcSubmenuExpanded && (
         <ServicioTecnicoNavSubmenu
           hasPrestadores={hasPrestadores}
-          hasLiquidaciones={hasLiquidaciones}
           hasSla={hasSla}
           hasPreventivos={hasPreventivos}
           hasAnalisisLogHp={hasAnalisisLogHp}
