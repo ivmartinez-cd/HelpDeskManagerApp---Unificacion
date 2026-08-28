@@ -29,6 +29,10 @@ export function Sidebar({
   // de Gestión de Personal sin acceso al dashboard → Solicitudes.
   const hrefDeModulo = (module: { key: string; route: string }): string => {
     if (module.key === "contadores") return "/contadores/calendario";
+    // Configuración solo tiene Usuarios (Turnos es módulo propio, ADR-029): se
+    // entra directo, sin hub intermedio de una sola tarjeta. `/admin` redirige
+    // acá también (next.config.ts) para links viejos.
+    if (module.key === "admin") return "/admin/usuarios";
     if (module.key === "vacaciones" && !canAccessPath(module.route, { can, hasFeature })) {
       return "/vacaciones/solicitudes";
     }
