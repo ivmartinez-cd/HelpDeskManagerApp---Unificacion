@@ -1,5 +1,4 @@
 import type { DashboardData } from "../hooks/use-dashboard-data";
-import { getCicloCierre } from "../components/facturacion-parts";
 import type { CardId } from "./dashboard-registry";
 
 export interface QuietInfo {
@@ -33,9 +32,12 @@ export function quietCards(d: DashboardData): Map<CardId, QuietInfo> {
   const cal = d.calendario;
   const arrastre = d.pendientesPeriodo;
   if (!cal.loading && !cal.error && cal.data && cal.data.pendientes.length === 0) {
-    const { enArrastre } = getCicloCierre(new Date());
+    // El arrastre del cierre anterior (ArrastreBlock) ahora se muestra
+    // siempre, no solo después del día 20 — la card solo se calla si
+    // realmente no hay nada, sin importar el día del mes calendario (mismo
+    // bug 2026-09-01 que el número grande, ver facturacion-sin-cerrar-card).
     const arrastreResuelto =
-      !enArrastre || (!arrastre.loading && !arrastre.error && arrastre.data?.cantidad === 0);
+      !arrastre.loading && !arrastre.error && arrastre.data?.cantidad === 0;
     if (arrastreResuelto) {
       add({
         id: "facturacion",

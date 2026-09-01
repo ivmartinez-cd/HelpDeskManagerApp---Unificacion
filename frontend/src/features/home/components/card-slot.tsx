@@ -96,7 +96,6 @@ export function CardSlot({
         <FacturacionSinCerrarCard
           pendientes={calendario.data?.pendientes ?? []}
           operadores={calendario.data?.operadores ?? []}
-          resumen={contadoresResumen.data}
           pendientesPeriodoAnterior={pendientesPeriodo.data}
           pendientesPeriodoAnteriorLoading={pendientesPeriodo.loading}
           pendientesPeriodoActual={pendientesPeriodoActual.data}
