@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # pre-push — la puerta antes de GitHub:
 #  1) muestra qué commits se van a subir (para revisar el git log, no pushear a ciegas);
-#  2) corre `make check` completo (lint-imports + ruff + mypy + pytest, ≈20 s) y bloquea si falla.
+#  2) corre `make check-fast` (lint-imports + ruff + mypy + pytest unit + gates
+#     sizes/guards, ≈20 s) y bloquea si falla.
 #
-# El lint/tsc/smoke Playwright de frontend se sacó de acá (2026-09-01): con
-# varias sesiones de Claude Code compartiendo la misma máquina, el smoke
-# (arranca un `next dev` de test) podía tardar varios minutos bajo
-# contención de CPU y freezaba el resto de las terminales — un push no
-# debería poder colgar la máquina. Ahora corre en GitHub Actions
-# (.github/workflows/ci.yml) de forma async, sin bloquear. La suite
-# completa de Playwright y `make test-integration` siguen siendo a mano
-# (`PW_PORT=3011 npx playwright test` en frontend/, `make test-integration`)
-# al cerrar cambios de API que consume el front o que tocan el modelo de datos.
+# Lo que NO corre acá (2026-09-01, esta máquina comparte disco/CPU entre
+# varias terminales — WSL sobre HDD externo): el lint/tsc/smoke Playwright de
+# frontend (arranca un `next dev` de test, podía tardar varios minutos bajo
+# contención de CPU) y `test-integration` (pega contra Postgres real vía
+# Docker; su I/O sostenido frenaba las demás terminales — incidente real: un
+# push dejó el HDD saturado ~40 min). Un push no debería poder colgar la
+# máquina. Todo eso corre en GitHub Actions (.github/workflows/ci.yml) de
+# forma async, con su propio disco/CPU, sin bloquear nada local. La suite
+# completa de Playwright sigue siendo a mano (`PW_PORT=3011 npx playwright
+# test` en frontend/) al cerrar cambios de API que consume el front.
 # Saltear: git push --no-verify (solo si sabés por qué y lo decís).
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
@@ -40,10 +42,10 @@ done
 echo
 
 log=$(mktemp)
-if make -s check >"$log" 2>&1; then
-  ok "make check (lint-imports, ruff, mypy, pytest)"
+if make -s check-fast >"$log" 2>&1; then
+  ok "make check-fast (lint-imports, ruff, mypy, pytest unit, sizes, guards)"
 else
-  red "make check falló — no se pushea:"; tail -30 "$log"; rm -f "$log"; exit 1
+  red "make check-fast falló — no se pushea:"; tail -30 "$log"; rm -f "$log"; exit 1
 fi
 rm -f "$log"
 exit 0

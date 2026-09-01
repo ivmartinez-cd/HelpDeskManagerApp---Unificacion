@@ -3,17 +3,21 @@ name: CI
 # Corre en la nube lo que no depende de la red interna (Mercurio/SigesReadOnly/
 # Gestión, solo alcanzable desde la red corporativa — ver
 # project_deploy_render_vercel_neon_blocked_red_interna en la memoria). Antes
-# esto mismo bloqueaba `git push` en .githooks/pre-push; con varias sesiones
-# de Claude Code compartiendo la misma máquina/disco, el smoke de Playwright
-# (arranca un `next dev` de test) podía tardar minutos bajo contención de CPU
-# y freezaba el resto de las terminales. `make check` (backend) y el
-# lint/typecheck de frontend no necesitan esa red ni Docker: se movieron acá.
+# esto mismo corría en `.githooks/pre-push` local; con varias sesiones de
+# Claude Code compartiendo la misma máquina (WSL sobre HDD externo), el smoke
+# de Playwright (arranca un `next dev` de test) y `test-integration` (I/O
+# sostenido contra Postgres real) podían tardar varios minutos bajo
+# contención y freezaban el resto de las terminales (incidente real
+# 2026-09-01). `check-fast` (backend, sin test-integration) y el
+# lint/typecheck de frontend no necesitan Docker ni esa red: quedan en el
+# pre-push local, rápidos. `test-integration` sí necesita Postgres, pero el
+# schema sale de `Base.metadata.create_all` (no Alembic, ver
+# tests/integration/infrastructure/conftest.py) — corre acá con un service
+# container propio del runner, sin tocar el disco local.
 #
-# Lo que NO corre acá (sigue siendo manual, ver AGENTS.md/CLAUDE.md):
-#   - tests/integration del backend (necesitan helpdesk-db-test vía Docker
-#     Compose, no un service container suelto).
+# Lo que NO corre acá (sigue siendo manual, ver CLAUDE.md):
 #   - la suite completa de Playwright y el smoke @grep — necesitan el stack
-#     completo (backend + Postgres seedeado) corriendo.
+#     completo (backend + Postgres seedeado con datos reales) corriendo.
 on:
   push:
     branches: [main]
@@ -29,6 +33,23 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    # Mismas credenciales que docker-compose.test.yml (db-test), así el
+    # conftest de tests/integration (que ya sabe leer DB_TEST_HOST/PORT) no
+    # necesita ningún caso especial para CI.
+    services:
+      db-test:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: helpdesk_test
+          POSTGRES_PASSWORD: helpdesk_test
+          POSTGRES_DB: helpdesk_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U helpdesk_test"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 10
     # Settings (settings_groups.py) es fail-fast: exige estos tres campos sin
     # default aunque nada en tests/unit haga una conexión real — son dummies,
     # no secretos (el .env real con credenciales de verdad no se commitea).
@@ -36,6 +57,8 @@ jobs:
       FRONTEND_URL: http://localhost:3000
       CORS_ORIGIN: http://localhost:3000
       DATABASE_URL: postgresql+asyncpg://ci:ci@localhost:5432/ci
+      DB_TEST_HOST: localhost
+      DB_TEST_PORT: "5432"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
@@ -47,6 +70,7 @@ jobs:
       - run: uv run ruff check src tests
       - run: uv run mypy src
       - run: uv run pytest tests/unit -q
+      - run: uv run pytest tests/integration -q
 
   frontend:
     runs-on: ubuntu-latest

@@ -11,7 +11,7 @@ PGDB     ?= helpdesk
 TEST_DB  := helpdesk-db-test
 NET      := helpdesk-manager_default
 
-.PHONY: help status check lint-imports ruff mypy test test-integration sizes sizes-wip guards guards-wip lint-frontend typecheck-frontend hooks \
+.PHONY: help status check check-fast lint-imports ruff mypy test test-integration sizes sizes-wip guards guards-wip lint-frontend typecheck-frontend hooks \
         db-backup db-restore restart-backend restart-frontend recreate-backend \
         logs-backend logs-frontend mailpit up ps
 
@@ -24,6 +24,15 @@ status:  ## Estado del entorno (contenedores, modo test, jobs, git)
 # --- Verificación obligatoria antes de dar por terminado un módulo (CLAUDE.md) ---
 check: lint-imports ruff mypy test test-integration sizes guards  ## lint-imports + ruff + mypy + pytest unit + integración + gates §4 y §6/§8/§11
 	@echo "✔ check completo"
+
+# Mismo check, sin test-integration: esa parte pega contra Postgres real (vía
+# Docker) y en esta máquina compartida (WSL sobre HDD externo) su I/O sostenido
+# frena las demás terminales. La corre GitHub Actions en cada push (con un
+# service container propio, no toca este disco) — este target es lo que usa
+# el pre-push local para no bloquear la máquina (ver CLAUDE.md, incidente
+# 2026-09-01).
+check-fast: lint-imports ruff mypy test sizes guards  ## check sin test-integration (usado por pre-push)
+	@echo "✔ check-fast completo (test-integration corre en CI, no acá)"
 
 lint-imports:  ## Contratos de capas/módulos (la regla más importante)
 	$(EXEC) uv run lint-imports

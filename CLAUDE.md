@@ -89,8 +89,10 @@ en una auditoría aparte. Concretamente:
   ```
   Si algo de esto falla, no está terminado. `lint-imports` en particular es la única forma
   confiable de verificar la dirección de dependencias entre capas — no alcanza con revisar a
-  ojo. Atajo equivalente desde la raíz del repo (WSL): `make check` (corre los cuatro dentro
-  del contenedor); el `pre-push` de git lo corre solo antes de cada push.
+  ojo. Atajo equivalente desde la raíz del repo (WSL): `make check` (corre los cuatro más
+  `test-integration`/`sizes`/`guards` dentro del contenedor); el `pre-push` de git corre la
+  variante `make check-fast` (sin `test-integration`, que pega contra Postgres real — ver
+  "Guardas automáticas de git" más abajo) antes de cada push.
 - Las desviaciones conscientes del texto literal de la guía se documentan como ADR en
   `backend/docs/adr/` (ver `007-vocabulario-de-permisos-en-shared-excepcion-de-presentation.md`
   como ejemplo) — una excepción sin ADR es una violación, no una decisión.
@@ -193,18 +195,21 @@ bloquea algo que de verdad hace falta, explicárselo al usuario y que decida él
   consciente y coordinado: `ALLOW_FOREIGN=1 git commit …`. Si hay cambios en `backend/`, corre
   `lint-imports` + `ruff` (archivos staged) + `mypy` dentro del contenedor.
 - **`.githooks/pre-push`** (≈20 s): lista los commits que se van a subir (leerlos, no pushear a
-  ciegas) y corre `make check` completo (lint-imports + ruff + mypy + pytest unit + integración
-  + gates `sizes`/`guards` sobre HEAD). Si algo falla, no se pushea.
+  ciegas) y corre `make check-fast` (lint-imports + ruff + mypy + pytest unit + gates
+  `sizes`/`guards` sobre HEAD — **sin** `test-integration`). Si algo falla, no se pushea.
 - **CI en GitHub Actions** (`.github/workflows/ci.yml`, desde 2026-09-01): corre en paralelo, sin
-  bloquear la terminal, lint-imports + ruff + mypy + pytest unit del backend y eslint + `tsc
-  --noEmit` del frontend en cada push a `main` y en cada PR. Antes esto (el lint/tsc + el
-  **smoke de Playwright**, que arranca un `next dev` de test en el puerto 3011) corría dentro
-  del `pre-push` local — con varias sesiones de Claude Code compartiendo la misma máquina, ese
-  paso podía tardar varios minutos bajo contención de CPU y freezaba el resto de las terminales
-  (incidente real 2026-09-01). Un push no debería poder colgar la máquina, así que se sacó de
-  ahí. La suite completa de Playwright y `make test-integration` (necesitan el stack corriendo
-  o `helpdesk-db-test`) siguen siendo a mano y son parte del cierre de cualquier cambio de API
-  que consuma el frontend o toque el modelo de datos — CI no las reemplaza todavía.
+  tocar esta máquina, lo que el pre-push local ya no corre: `test-integration` del backend (con
+  un service container de Postgres propio del runner — el schema sale de
+  `Base.metadata.create_all`, no de Alembic, así que no hace falta nada especial) y eslint +
+  `tsc --noEmit` del frontend, en cada push a `main` y en cada PR. Esto (más el **smoke de
+  Playwright**, que arranca un `next dev` de test en el puerto 3011) antes corría en el
+  `pre-push` local — con varias sesiones de Claude Code compartiendo la misma máquina (WSL sobre
+  HDD externo), la contención de CPU/disco podía hacer tardar ese bloque varios minutos y
+  freezaba el resto de las terminales (incidente real 2026-09-01, un push dejó el HDD saturado
+  ~40 min). Un push no debería poder colgar la máquina, así que se sacó de ahí. La suite
+  completa de Playwright sigue siendo a mano (`PW_PORT=3011 npx playwright test` en `frontend/`)
+  y es parte del cierre de cualquier cambio de API que consuma el frontend — necesita el stack
+  completo con datos reales, CI no la reemplaza.
 - Los hooks de git se activan por clon con `make hooks` (`git config core.hooksPath
   .githooks`). `--no-verify` existe, pero usarlo es una decisión del usuario, no de Claude.
 
