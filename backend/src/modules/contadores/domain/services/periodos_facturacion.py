@@ -8,16 +8,30 @@ puesta en el mes anterior (en el legacy el label depende del período de
 referencia elegido a mano; acá la referencia rueda sola con el calendario).
 El mes en curso, antes afuera del todo, se anota como MES_EN_CURSO desde
 2026-08-28 — filtro aparte para quien necesite ver el arrastre que todavía
-no cerró, sin mezclarlo con los KPIs de pendientes/demorados del cierre."""
+no cerró, sin mezclarlo con los KPIs de pendientes/demorados del cierre.
+
+Bug real 2026-09-01: `periodo_de` devolvía el mes calendario de `dia` en vez
+de respetar el corte de DIA_CIERRE (el período arranca el 20, no el 1 — ver
+`ciclo_cierre.ventana_periodo_actual`, la misma regla). Del 1 al 20 de cada
+mes eso hacía que `periodo_de(hoy)` apuntara al mes que recién iba a
+arrancar, y por lo tanto `periodo_anterior(periodo_de(hoy))` terminaba
+apuntando al período TODAVÍA ABIERTO en vez del que ya cerró — la card de
+Inicio mostraba como "arrastre del período anterior" clientes del período en
+curso que legítimamente no habían vencido."""
 
 from datetime import date
 from typing import Literal
+
+from src.modules.contadores.domain.services.ciclo_cierre import DIA_CIERRE
 
 EstadoAnexoPendiente = Literal["en_proceso", "demorado", "mes_en_curso"]
 
 
 def periodo_de(dia: date) -> str:
-    return f"{dia.year:04d}{dia.month:02d}"
+    """Período de facturación vigente en `dia`, nombrado por el mes en que
+    arranca (misma rotación de DIA_CIERRE que `ciclo_cierre.ventana_periodo_actual`)."""
+    mes_inicio = dia if dia.day > DIA_CIERRE else restar_meses(dia, 1)
+    return f"{mes_inicio.year:04d}{mes_inicio.month:02d}"
 
 
 def periodo_anterior(periodo: str) -> str:

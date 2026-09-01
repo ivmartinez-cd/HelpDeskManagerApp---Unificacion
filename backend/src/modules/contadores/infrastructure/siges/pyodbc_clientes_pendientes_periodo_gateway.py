@@ -10,6 +10,7 @@ from typing import Any
 from src.modules.contadores.domain.entities.clientes_pendientes_periodo import (
     ClientesPendientesPeriodo,
 )
+from src.modules.contadores.domain.services.ciclo_cierre import hoy_argentina
 from src.modules.contadores.domain.services.periodos_facturacion import (
     periodo_anterior,
     periodo_de,
@@ -34,8 +35,7 @@ class PyodbcClientesPendientesPeriodoGateway:
             if not force_refresh and self._snapshot_vigente():
                 assert self._snapshot is not None
                 return self._snapshot
-            hoy = datetime.now(UTC).date()
-            periodo = periodo_anterior(periodo_de(hoy))
+            periodo = periodo_anterior(periodo_de(hoy_argentina()))
             rows = await self._runner.fetch_all(
                 CLIENTES_PENDIENTES_PERIODO_SQL,
                 (periodo,),

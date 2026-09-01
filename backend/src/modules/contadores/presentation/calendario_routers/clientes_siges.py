@@ -1,8 +1,6 @@
 """Cruce clientes de Gestión ↔ empresas de Siges para la card de Inicio:
 resumen por operador, búsqueda de empresas y mapeo manual."""
 
-from datetime import UTC, datetime
-
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,6 +20,7 @@ from src.modules.contadores.application.use_cases.resolver_cliente_siges import 
     SetClienteSigesMap,
     SetClienteSigesMapCommand,
 )
+from src.modules.contadores.domain.services.ciclo_cierre import hoy_argentina
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_calendario_repository import (
     SqlAlchemyCalendarEventRepository,
 )
@@ -67,7 +66,7 @@ async def get_resumen_clientes_operador(
         parque=get_parque_cliente_gateway_or_none(),
     )
     dto = await GetResumenClientesOperador(deps).execute(
-        hoy=datetime.now(UTC).date(),
+        hoy=hoy_argentina(),
         dias_ventana=DEFAULT_SYNC_WINDOW_DAYS,
         is_superadmin=identity.user.is_superadmin,
         full_name=identity.user.full_name,
@@ -98,7 +97,7 @@ async def get_clientes_pendientes_periodo_anterior(
         resultado,
         is_superadmin=identity.user.is_superadmin,
         full_name=identity.user.full_name,
-        hoy=datetime.now(UTC).date(),
+        hoy=hoy_argentina(),
         dias_ventana=DEFAULT_SYNC_WINDOW_DAYS,
     )
     return ClientesPendientesPeriodoResponse(

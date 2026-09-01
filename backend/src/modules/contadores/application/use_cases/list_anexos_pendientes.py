@@ -6,7 +6,7 @@ viejo primero, después grupo y anexo) — es un reporte para imprimir, no una
 tabla explorable."""
 
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 
 from src.modules.contadores.application.dtos.anexo_pendiente_con_estado import (
     AnexoPendienteConEstado,
@@ -19,6 +19,7 @@ from src.modules.contadores.application.use_cases.operador_por_empresa import (
     MapaOperadorPorEmpresa,
 )
 from src.modules.contadores.domain.ports.anexos_pendientes_port import AnexosPendientesPort
+from src.modules.contadores.domain.services.ciclo_cierre import hoy_argentina
 from src.modules.contadores.domain.services.cliente_matcher import (
     IndiceNombres,
     buscar_por_nombre,
@@ -45,7 +46,7 @@ class ListAnexosPendientesUseCase:
         self, request: ListAnexosPendientesRequest, *, hoy: date | None = None
     ) -> ListAnexosPendientesResult:
         snapshot = await self._port.list_anexos(force_refresh=request.force_refresh)
-        hoy = hoy or datetime.now(UTC).date()
+        hoy = hoy or hoy_argentina()
         mapa_nombre, mapa_grupo = await self._build_mapas(hoy)
         # Los índices flex se arman UNA vez, no por anexo (el matching corre
         # N_anexos × 2 veces por request).

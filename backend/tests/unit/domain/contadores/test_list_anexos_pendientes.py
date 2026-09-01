@@ -23,8 +23,10 @@ from src.modules.contadores.domain.services.periodos_facturacion import (
     restar_meses,
 )
 
-_CONSULTADO_EN = datetime(2026, 8, 14, 12, 0, tzinfo=UTC)
-_HOY = date(2026, 8, 14)
+_CONSULTADO_EN = datetime(2026, 8, 25, 12, 0, tzinfo=UTC)
+# Después del día 20 a propósito: periodo_de(_HOY)="202608" (ver
+# test_periodo_de_respeta_el_corte_del_dia_20 para la otra mitad del ciclo).
+_HOY = date(2026, 8, 25)
 
 
 def _anexo(
@@ -74,6 +76,15 @@ def test_periodo_de_y_anterior() -> None:
     assert periodo_de(_HOY) == "202608"
     assert periodo_anterior("202608") == "202607"
     assert periodo_anterior("202601") == "202512"
+
+
+def test_periodo_de_respeta_el_corte_del_dia_20() -> None:
+    # Bug real 2026-09-01: del 1 al 20 el período en curso arrancó el mes
+    # anterior, no coincide con el mes calendario de `dia`.
+    assert periodo_de(date(2026, 8, 1)) == "202607"
+    assert periodo_de(date(2026, 8, 20)) == "202607"
+    assert periodo_de(date(2026, 8, 21)) == "202608"
+    assert periodo_de(date(2026, 9, 1)) == "202608"
 
 
 def test_restar_meses_cruza_el_anio() -> None:

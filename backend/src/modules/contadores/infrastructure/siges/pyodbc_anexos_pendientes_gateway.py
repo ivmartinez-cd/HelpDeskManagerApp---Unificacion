@@ -17,6 +17,7 @@ from src.modules.contadores.domain.entities.anexo_pendiente import (
     AnexoPendiente,
     AnexosPendientesSnapshot,
 )
+from src.modules.contadores.domain.services.ciclo_cierre import hoy_argentina
 from src.modules.contadores.domain.services.periodos_facturacion import (
     periodo_de,
     restar_meses,
@@ -41,7 +42,7 @@ class PyodbcAnexosPendientesGateway:
             if not force_refresh and self._snapshot_vigente():
                 assert self._snapshot is not None
                 return self._snapshot
-            hoy = datetime.now(UTC).date()
+            hoy = hoy_argentina()
             rows = await self._runner.fetch_all(
                 ANEXOS_PENDIENTES_SQL,
                 (periodo_de(hoy), restar_meses(hoy, _VENTANA_RECENCIA_MESES)),

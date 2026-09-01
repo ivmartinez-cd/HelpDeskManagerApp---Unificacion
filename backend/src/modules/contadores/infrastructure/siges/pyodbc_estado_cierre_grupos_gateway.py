@@ -11,6 +11,7 @@ from src.modules.contadores.domain.entities.estado_cierre_grupo import (
     EstadoCierreGrupo,
     EstadoCierreGruposSnapshot,
 )
+from src.modules.contadores.domain.services.ciclo_cierre import hoy_argentina
 from src.modules.contadores.domain.services.periodos_facturacion import periodo_de
 from src.modules.contadores.infrastructure.siges.estado_cierre_grupos_query import (
     ESTADO_CIERRE_GRUPOS_SQL,
@@ -32,10 +33,9 @@ class PyodbcEstadoCierreGruposGateway:
             if not force_refresh and self._snapshot_vigente():
                 assert self._snapshot is not None
                 return self._snapshot
-            hoy = datetime.now(UTC).date()
             rows = await self._runner.fetch_all(
                 ESTADO_CIERRE_GRUPOS_SQL,
-                (periodo_de(hoy),),
+                (periodo_de(hoy_argentina()),),
                 gateway="estado_cierre_grupos",
                 log_message=(
                     "Fallo la consulta de estado de cierre por grupo contra Siges/MERCURIO"

@@ -3,10 +3,11 @@ período abierto y cuánta plata (USD calculados por los procesos) está
 esperando el cierre. Deriva del mismo snapshot cacheado que el listado."""
 
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from src.modules.contadores.domain.ports.anexos_pendientes_port import AnexosPendientesPort
+from src.modules.contadores.domain.services.ciclo_cierre import hoy_argentina
 from src.modules.contadores.domain.services.periodos_facturacion import (
     estado_de_periodo,
     periodo_anterior,
@@ -36,7 +37,7 @@ class GetAnexosPendientesResumenUseCase:
 
     async def execute(self, *, hoy: date | None = None) -> AnexosPendientesResumen:
         snapshot = await self._port.list_anexos()
-        hoy = hoy or datetime.now(UTC).date()
+        hoy = hoy or hoy_argentina()
         anotados = [(a, estado_de_periodo(a.periodo, hoy=hoy)) for a in snapshot.anexos]
         pendientes = [(a, e) for a, e in anotados if e != "mes_en_curso"]
         return AnexosPendientesResumen(

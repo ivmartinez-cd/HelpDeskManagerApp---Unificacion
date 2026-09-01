@@ -6,11 +6,26 @@ en los dos lenguajes; si el día de corte cambia, actualizar ambos.
 El período se nombra por el mes en que ARRANCA (convención Siges, ver
 `periodos_facturacion.periodo_de`): el período "202607" va del 20/7 al 20/8,
 el "202608" del 20/8 al 20/9 — el día DIA_CIERRE es a la vez cierre del
-período que termina y arranque del que empieza."""
+período que termina y arranque del que empieza.
 
-from datetime import date
+`hoy_argentina()` es el "hoy" de negocio para todo este cálculo: el día
+calendario argentino, no el UTC del servidor/contenedor (mismo criterio que
+`turnos.get_current_shifts._ARGENTINA_TZ` y
+`insumos.infrastructure.repositories._argentina_day`) — con `datetime.now(UTC).date()`,
+entre las 21hs y la medianoche en Buenos Aires el reloj UTC ya está en el día
+siguiente y el cálculo del período (que depende del corte de DIA_CIERRE)
+queda adelantado un día."""
+
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 DIA_CIERRE = 20
+
+_ARGENTINA_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
+
+
+def hoy_argentina() -> date:
+    return datetime.now(_ARGENTINA_TZ).date()
 
 
 def ventana_periodo_actual(hoy: date) -> tuple[date, date]:
