@@ -105,11 +105,21 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tarifario_
 from src.modules.liquidaciones.infrastructure.soap.zeep_cd_liquidaciones_gateway import (
     ZeepCdLiquidacionesGateway,
 )
+from src.shared.infrastructure.database.engine import get_engine
+from src.shared.infrastructure.locks.postgres_advisory_lock import (
+    LIQUIDACIONES_SINCRONIZAR_LOCK_KEY,
+    PostgresAdvisoryLock,
+)
 
 
 @lru_cache
 def _cd_gateway() -> ZeepCdLiquidacionesGateway:
     return ZeepCdLiquidacionesGateway()
+
+
+@lru_cache
+def _sync_lock() -> PostgresAdvisoryLock:
+    return PostgresAdvisoryLock(get_engine(), LIQUIDACIONES_SINCRONIZAR_LOCK_KEY)
 
 
 def build_list_liquidaciones(session: AsyncSession) -> ListLiquidaciones:
@@ -211,6 +221,7 @@ def build_sincronizar_liquidaciones(session: AsyncSession) -> SincronizarLiquida
             incidentes=SqlAlchemyIncidenteRepository(session),
             reanalizar=build_reanalizar_liquidacion(session),
             reconciliar=build_reconciliar_liquidacion(session),
+            sync_lock=_sync_lock(),
         )
     )
 

@@ -19,7 +19,6 @@ from src.modules.insumos.application.use_cases._offline_snapshot import (
 )
 from src.modules.insumos.domain.entities.audit_record import EVENT_DEVICE_DELETED, AuditRecord
 from src.modules.insumos.domain.errors import DeleteInProgressError
-from src.modules.insumos.domain.repositories.exclusive_lock import ExclusiveLock
 from src.modules.insumos.domain.repositories.known_device_repository import (
     KnownDeviceRepository,
 )
@@ -28,6 +27,7 @@ from src.modules.insumos.domain.repositories.sds_portal_gateway import SdsPortal
 from src.modules.insumos.domain.value_objects.insumos_settings import InsumosSettings
 from src.modules.insumos.domain.value_objects.offline_clock import calendar_days_offline
 from src.modules.insumos.domain.value_objects.offline_device import OfflineDevice
+from src.shared.domain.repositories.exclusive_lock import ExclusiveLock
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,5 @@
-"""Puerto de exclusión mutua entre workers para operaciones offline de larga duración."""
+"""Puerto de exclusión mutua entre workers para operaciones de larga duración o con
+efectos externos que no deben solaparse (ver `shared/infrastructure/locks/`)."""
 
 from contextlib import AbstractAsyncContextManager
 from typing import Protocol

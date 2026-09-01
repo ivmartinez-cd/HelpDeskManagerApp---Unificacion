@@ -56,6 +56,7 @@ from src.modules.liquidaciones.domain.entities.liquidacion import (
     Liquidacion,
 )
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
+from src.modules.liquidaciones.domain.errors import SincronizacionEnProgresoError
 from src.modules.liquidaciones.domain.repositories.cd_liquidaciones_gateway import (
     CdLiquidacionesGateway,
 )
@@ -75,6 +76,7 @@ from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
     CdLiquidacion,
 )
 from src.shared.domain.errors import ExternalServiceError
+from src.shared.domain.repositories.exclusive_lock import ExclusiveLock
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +99,7 @@ class SincronizarLiquidacionesPorts:
     incidentes: IncidenteRepository
     reanalizar: ReanalizarLiquidacion
     reconciliar: ReconciliarLiquidacion
+    sync_lock: ExclusiveLock
 
 
 class SincronizarLiquidaciones:
@@ -110,7 +113,22 @@ class SincronizarLiquidaciones:
         con None sincroniza todos los vinculados. `permitir_eliminar_anuladas=False`
         salta `_detectar_y_eliminar_anuladas` entero — la usa el job de fondo
         (`presentation/background_jobs.py`), que nunca borra sin que alguien esté
-        mirando; el botón/endpoint manual la deja en `True`."""
+        mirando; el botón/endpoint manual la deja en `True`.
+
+        Serializado con un advisory lock (`sync_lock`): sin él, dos corridas
+        concurrentes (dos pestañas contra el botón, o el botón contra el job de
+        fondo) leen el mismo `existentes` antes de que la otra comitee sus
+        creates y duplican la liquidación — incidente real 2026-09-01. Si otra
+        corrida ya tiene el lock, `SincronizacionEnProgresoError` (409): el
+        caller no debe reintentar, la corrida en curso termina sola."""
+        async with self._ports.sync_lock.hold() as acquired:
+            if not acquired:
+                raise SincronizacionEnProgresoError()
+            return await self._run(prestador_id, permitir_eliminar_anuladas)
+
+    async def _run(
+        self, prestador_id: UUID | None, permitir_eliminar_anuladas: bool
+    ) -> SincronizarLiquidacionesResultado:
         prestadores_cd, sin_prestador = await self._prestadores_a_sincronizar(prestador_id)
         existentes = await self._ports.liquidaciones.list_numeros_liquidacion()
         totales = Contadores()

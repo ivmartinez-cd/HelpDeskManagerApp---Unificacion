@@ -24,7 +24,6 @@ from src.modules.insumos.application.use_cases.sync_monitor_status import (
     SyncMonitorStatusPorts,
 )
 from src.modules.insumos.domain.errors import OfflineCheckInProgressError
-from src.modules.insumos.domain.repositories.exclusive_lock import ExclusiveLock
 from src.modules.insumos.domain.repositories.known_device_repository import (
     KnownDeviceRepository,
 )
@@ -37,6 +36,7 @@ from src.modules.insumos.domain.value_objects.offline_device import (
     DeviceLocationUpdate,
     OfflineDevice,
 )
+from src.shared.domain.repositories.exclusive_lock import ExclusiveLock
 
 logger = logging.getLogger(__name__)
 

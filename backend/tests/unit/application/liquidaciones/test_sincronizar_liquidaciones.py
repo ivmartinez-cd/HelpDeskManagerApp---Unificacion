@@ -4,7 +4,11 @@ filtro por prestador (H-5) y exclusión de inactivos (H-6, vía el fake que espe
 el contrato de `list_con_cd_id`)."""
 
 import dataclasses
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import date
+
+import pytest
 
 from src.modules.liquidaciones.application.use_cases._cd_mapping import a_importado
 from src.modules.liquidaciones.application.use_cases._reconciliar_liquidacion import (
@@ -19,6 +23,7 @@ from src.modules.liquidaciones.application.use_cases.sincronizar_liquidaciones i
     SincronizarLiquidaciones,
     SincronizarLiquidacionesPorts,
 )
+from src.modules.liquidaciones.domain.errors import SincronizacionEnProgresoError
 from src.modules.liquidaciones.domain.services.numeracion_ayc import numero_liquidacion
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
     CdIncidenteRow,
@@ -96,12 +101,24 @@ class FakeCdGateway:
         return None
 
 
+class FakeExclusiveLock:
+    def __init__(self, acquired: bool = True) -> None:
+        self.acquired = acquired
+        self.holds = 0
+
+    @asynccontextmanager
+    async def hold(self) -> AsyncIterator[bool]:
+        self.holds += 1
+        yield self.acquired
+
+
 class World:
-    def __init__(self) -> None:
+    def __init__(self, *, lock_acquired: bool = True) -> None:
         self.gateway = FakeCdGateway()
         self.prestadores = FakePrestadorRepository()
         self.liquidaciones = FakeLiquidacionRepository()
         self.incidentes = FakeIncidenteRepository()
+        self.sync_lock = FakeExclusiveLock(lock_acquired)
         reanalizar = ReanalizarLiquidacion(
             ReanalizarLiquidacionPorts(
                 liquidaciones=self.liquidaciones,
@@ -130,6 +147,7 @@ class World:
                 incidentes=self.incidentes,
                 reanalizar=reanalizar,
                 reconciliar=reconciliar,
+                sync_lock=self.sync_lock,
             )
         )
 
@@ -389,3 +407,19 @@ async def test_ya_existente_pendiente_se_reconcilia_de_punta_a_punta() -> None:
 
     assert resultado.reconciliadas == 1
     assert world.liquidaciones.rows[creada.id].total_importe == 1000.0
+
+
+async def test_lock_no_adquirido_no_crea_y_lanza_conflicto() -> None:
+    """Incidente real 2026-09-01: dos pestañas dispararon `/sincronizar` casi a la
+    vez y crearon liquidaciones duplicadas. Con el lock ya tomado por otra corrida,
+    `execute()` no debe tocar nada — la corrida en curso es la que sincroniza."""
+    world = World(lock_acquired=False)
+    world.con_prestador_vinculado()
+    world.gateway.liquidaciones_por_empresa[1310] = [make_cd_liquidacion(3894)]
+    world.gateway.incidentes_por_liq = {3894: [make_cd_incidente()]}
+
+    with pytest.raises(SincronizacionEnProgresoError):
+        await world.use_case.execute()
+
+    assert world.sync_lock.holds == 1
+    assert await world.liquidaciones.list_numeros_liquidacion() == set()

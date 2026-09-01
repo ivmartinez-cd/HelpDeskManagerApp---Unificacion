@@ -194,3 +194,17 @@ class ArchivoMaestroInvalidoError(ValidationError):
 
     def __init__(self, detalle: str) -> None:
         super().__init__(f"No se pudo leer el archivo maestro de prestador: {detalle}")
+
+
+class SincronizacionEnProgresoError(BusinessRuleViolationError):
+    """Ya hay una sincronización con Canal Directo en curso (advisory lock tomado) —
+    el caller no debe reintentar; la sincronización en progreso terminará sola.
+    Incidente real 2026-09-01: dos pestañas disparando `/sincronizar` a la vez
+    crearon liquidaciones duplicadas (mismo `numero_liquidacion`, sin constraint
+    que lo impidiera) porque cada request leía el set de existentes antes de que
+    el otro comiteara sus creates."""
+
+    default_code: ClassVar[str] = "SINCRONIZACION_EN_PROGRESO"
+
+    def __init__(self) -> None:
+        super().__init__("Ya hay una sincronización con Canal Directo en curso")

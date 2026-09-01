@@ -17,11 +17,6 @@ from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
 from src.modules.insumos.infrastructure.client_order_mailer import ClientOrderMailer
 from src.modules.insumos.infrastructure.insight.httpx_insight_gateway import HttpxInsightGateway
-from src.modules.insumos.infrastructure.locks.postgres_advisory_lock import (
-    OFFLINE_DELETE_LOCK_KEY,
-    OFFLINE_VERIFY_LOCK_KEY,
-    PostgresAdvisoryLock,
-)
 from src.modules.insumos.infrastructure.portal.httpx_sds_portal_gateway import (
     HttpxSdsPortalGateway,
 )
@@ -30,6 +25,11 @@ from src.modules.insumos.presentation.client_order_dispatch import ClientOrderDi
 from src.shared.infrastructure.cache.ttl_cache import TTLCache
 from src.shared.infrastructure.config.settings import Settings, get_settings
 from src.shared.infrastructure.database.engine import get_engine
+from src.shared.infrastructure.locks.postgres_advisory_lock import (
+    OFFLINE_DELETE_LOCK_KEY,
+    OFFLINE_VERIFY_LOCK_KEY,
+    PostgresAdvisoryLock,
+)
 
 
 @lru_cache

@@ -2,7 +2,8 @@
 
 Por qué conexión dedicada con AUTOCOMMIT y no la AsyncSession del request:
 ver ADR-008. Las claves deben ser únicas en toda la base — mantener el registro
-en este módulo (no dispersarlas en wiring o en los casos de uso).
+en este módulo (no dispersarlas en wiring o en los casos de uso), sea cual sea
+el módulo de negocio que las usa.
 """
 
 from collections.abc import AsyncGenerator
@@ -15,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 # usa su propia clave para no bloquearse entre sí.
 OFFLINE_VERIFY_LOCK_KEY: int = 1_001_001
 OFFLINE_DELETE_LOCK_KEY: int = 1_001_002
+LIQUIDACIONES_SINCRONIZAR_LOCK_KEY: int = 1_002_001
 
 
 class PostgresAdvisoryLock:
