@@ -29,6 +29,13 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    # Settings (settings_groups.py) es fail-fast: exige estos tres campos sin
+    # default aunque nada en tests/unit haga una conexión real — son dummies,
+    # no secretos (el .env real con credenciales de verdad no se commitea).
+    env:
+      FRONTEND_URL: http://localhost:3000
+      CORS_ORIGIN: http://localhost:3000
+      DATABASE_URL: postgresql+asyncpg://ci:ci@localhost:5432/ci
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
