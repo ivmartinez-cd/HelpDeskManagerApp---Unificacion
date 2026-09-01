@@ -1,6 +1,6 @@
 import { nivelEspera, textoEspera } from "@/features/wati/utils/espera";
 import type { DashboardData } from "../hooks/use-dashboard-data";
-import { AGING_BUCKETS, fmtInt, fmtPct } from "../utils/inicio-format";
+import { fmtInt, fmtPct } from "../utils/inicio-format";
 import type { ModuleAccess } from "./dashboard-registry";
 
 export type KpiTone = "neutral" | "ok" | "warn" | "bad";
@@ -61,7 +61,7 @@ function kpiInsumos(d: DashboardData): KpiTile {
 function kpiPendientesCerrar(d: DashboardData): KpiTile {
   const total = d.pendientesResumen.data?.total ?? 0;
   return tile(
-    { id: "pendientes-cerrar", label: "Pend. a cerrar", href: "/sla/pendientes-a-cerrar" },
+    { id: "pendientes-cerrar", label: "Incidentes", href: "/sla/pendientes-a-cerrar" },
     d.pendientesResumen,
     {
       value: fmtInt(total),
@@ -71,21 +71,31 @@ function kpiPendientesCerrar(d: DashboardData): KpiTile {
   );
 }
 
-function kpiFacturacion(d: DashboardData): KpiTile {
-  const pendientes = d.calendario.data?.pendientes ?? [];
-  const hoy = new Date();
-  const viejos = pendientes.filter((p) => {
-    const dias = Math.round((hoy.getTime() - Date.parse(p.start)) / 86_400_000);
-    return dias > AGING_BUCKETS[3].max;
-  }).length;
+/** Anexos sin proceso generado: el operador se olvidó de iniciar la
+ * facturación de un anexo (sin Nro_Proceso del último período ya cerrado
+ * con seguridad, ver ListarAnexosSinProcesar en el backend). El número
+ * grande son CLIENTES (así lo mira el operador: "a quién le falta"); el
+ * contexto, los anexos concretos que hay que ir a generar. Sin dato de
+ * Siges el tile queda en error ("—", "no se pudo cargar"), no en 0: un cero
+ * inventado hace perder confianza en el KPI. */
+function kpiAnexosSinProcesar(d: DashboardData): KpiTile {
+  const r = d.anexosSinProcesar.data;
+  const clientes = r?.clientes ?? 0;
+  const anexos = r?.anexos ?? 0;
   return tile(
-    { id: "facturacion", label: "Facturación", href: "/contadores/calendario" },
-    d.calendario,
     {
-      value: fmtInt(pendientes.length),
+      id: "anexos-sin-procesar",
+      label: "Sin procesar",
+      href: "/contadores/anexos-sin-procesar",
+    },
+    d.anexosSinProcesar,
+    {
+      value: fmtInt(clientes),
       context:
-        pendientes.length === 0 ? "todo cerrado" : `${fmtInt(viejos)} con más de 10 días`,
-      tone: viejos > 0 ? "bad" : pendientes.length > 0 ? "warn" : "ok",
+        clientes === 0
+          ? "todos procesados"
+          : `${fmtInt(anexos)} ${anexos === 1 ? "anexo" : "anexos"} sin procesar`,
+      tone: clientes === 0 ? "ok" : "bad",
     },
   );
 }
@@ -132,7 +142,7 @@ export function buildKpiTiles(d: DashboardData, access: ModuleAccess): KpiTile[]
   const tiles: (KpiTile | null)[] = [
     access.wati ? kpiWhatsapp(d) : null,
     access.insumos ? kpiInsumos(d) : null,
-    access.contadores ? kpiFacturacion(d) : null,
+    access.contadores ? kpiAnexosSinProcesar(d) : null,
     access.sla ? kpiPendientesCerrar(d) : null,
     access.sla ? kpiSla(d) : null,
     access.liquidaciones ? kpiLiquidaciones(d) : null,

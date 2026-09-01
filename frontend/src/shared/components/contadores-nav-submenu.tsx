@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   CalendarDays,
+  FileWarning,
   Gauge,
   ReceiptText,
   UserRoundCheck,
@@ -55,6 +56,12 @@ export function ContadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }
       label: "Anexos sin facturar",
       icon: ReceiptText,
       active: pathname === "/contadores/anexos-pendientes",
+    },
+    {
+      href: "/contadores/anexos-sin-procesar",
+      label: "Anexos sin procesar",
+      icon: FileWarning,
+      active: pathname === "/contadores/anexos-sin-procesar",
     },
     {
       href: "/contadores/clientes-nuevos",

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { accesosApi } from "@/features/home/api/accesos-api";
 import { contadoresApi } from "@/features/contadores/api/contadores-api";
 import type {
+  AnexosSinProcesarResumen,
   CalendarEvent,
   ClientesPendientesPeriodo,
   ResumenClientesOperador,
@@ -171,6 +172,23 @@ export function usePendientesResumen(enabled: boolean, refreshKey = 0): Remote<P
 
 export function useInsumosDashboard(enabled: boolean, refreshKey = 0): Remote<DashboardResponse> {
   return useRemote(enabled, () => insumosApi.getDashboard(), "el dashboard de Insumos", refreshKey);
+}
+
+/** KPI de Inicio "Anexos sin procesar" (ver contadoresApi.getAnexosSinProcesarResumen):
+ * clientes con evento vencido en el calendario cuyos anexos todavía no
+ * tienen Nro_Proceso del último período ya cerrado con seguridad. Si Siges
+ * no responde el endpoint devuelve 502 y este hook queda en `error` — el
+ * tile debe mostrar "—", nunca un 0 inventado. */
+export function useAnexosSinProcesar(
+  enabled: boolean,
+  refreshKey = 0,
+): Remote<AnexosSinProcesarResumen> {
+  return useRemote(
+    enabled,
+    () => contadoresApi.getAnexosSinProcesarResumen(formatDateLocal(new Date())),
+    "los anexos sin procesar",
+    refreshKey,
+  );
 }
 
 export interface LiquidacionesPendientes {

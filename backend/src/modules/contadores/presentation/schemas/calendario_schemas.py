@@ -180,3 +180,32 @@ class SetClienteSigesMapRequest(BaseModel):
     cliente_gestion: str
     siges_empresa_ids: list[int]
     """Vacía = desmapear el cliente (vuelve a 'sin cruce')."""
+
+
+class AnexoSinProcesarSchema(BaseModel):
+    """Fila del detalle de "Anexos sin procesar" (KPI de Inicio)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id_anexo: int
+    anexo: str
+    grupo: str
+    cliente: str
+    operador_id: str | None
+    fecha_evento: str
+    dias_vencido: int
+    periodo_esperado: str
+    ultimo_periodo_procesado: str | None
+
+
+class AnexosSinProcesarResumenSchema(BaseModel):
+    """KPI de Inicio: `clientes` es el número grande (grupos económicos con
+    al menos un anexo sin procesar) y `anexos` el contexto. Si Siges no
+    responde el endpoint devuelve 502 — el tile debe mostrar "sin dato",
+    nunca un cero inventado."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    clientes: int
+    anexos: int
+    consultado_en: datetime

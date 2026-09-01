@@ -5,6 +5,7 @@ import { useWatiPendientes } from "@/features/wati/providers/wati-pendientes-pro
 import type { ModuleAccess } from "../config/dashboard-registry";
 import { useCalendarioHome } from "./use-calendario-home";
 import {
+  useAnexosSinProcesar,
   useClientesPendientesPeriodoActual,
   useClientesPendientesPeriodoAnterior,
   useContadoresResumen,
@@ -42,6 +43,7 @@ export function useDashboardData(access: ModuleAccess) {
 
   const turnos = useTurnosHoy(refreshKey);
   const calendario = useCalendarioHome(access.contadores, refreshKey);
+  const anexosSinProcesar = useAnexosSinProcesar(access.contadores, refreshKey);
   const contadoresResumen = useContadoresResumen(access.contadores, refreshKey);
   const pendientesPeriodo = useClientesPendientesPeriodoAnterior(access.contadores, refreshKey);
   const pendientesPeriodoActual = useClientesPendientesPeriodoActual(access.contadores, refreshKey);
@@ -57,6 +59,7 @@ export function useDashboardData(access: ModuleAccess) {
     refreshedAt,
     turnos,
     calendario,
+    anexosSinProcesar,
     contadoresResumen,
     pendientesPeriodo,
     pendientesPeriodoActual,

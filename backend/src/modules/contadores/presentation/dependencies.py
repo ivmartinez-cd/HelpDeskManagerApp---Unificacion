@@ -21,6 +21,9 @@ from src.modules.contadores.infrastructure.siges.pyodbc_equipos_sin_real_gateway
 from src.modules.contadores.infrastructure.siges.pyodbc_estado_cierre_grupos_gateway import (
     PyodbcEstadoCierreGruposGateway,
 )
+from src.modules.contadores.infrastructure.siges.pyodbc_estado_proceso_anexos_gateway import (
+    PyodbcEstadoProcesoAnexosGateway,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_operador_gateway import (
     PyodbcOperadorGateway,
 )
@@ -57,6 +60,10 @@ _CLIENTES_PENDIENTES_PERIODO_CACHE_TTL_SECONDS = 300.0
 # y candidatos por primer contrato), TTL corto para que "Actualizar" sea
 # barato y la pantalla no repita la consulta en cada filtro.
 _CLIENTES_NUEVOS_CACHE_TTL_SECONDS = 300.0
+
+# Mismo criterio: consulta liviana (~3000 filas de 4 columnas sobre Anexo),
+# TTL corto para no repetirla en cada carga de la card de Inicio.
+_ESTADO_PROCESO_ANEXOS_CACHE_TTL_SECONDS = 300.0
 
 
 @lru_cache
@@ -100,6 +107,17 @@ def get_estado_cierre_grupos_gateway_or_none() -> PyodbcEstadoCierreGruposGatewa
             exc_info=exc,
         )
         return None
+
+
+@lru_cache
+def get_estado_proceso_anexos_gateway() -> PyodbcEstadoProcesoAnexosGateway:
+    """Sin variante `_or_none`, a propósito: el KPI "Anexos sin procesar"
+    señala un olvido concreto de una persona, y sin dato de Siges eso debe
+    verse como error en el tile de Inicio ("—", no se pudo cargar), nunca
+    como un cero inventado."""
+    return PyodbcEstadoProcesoAnexosGateway(
+        require_mercurio_runner(), _ESTADO_PROCESO_ANEXOS_CACHE_TTL_SECONDS
+    )
 
 
 @lru_cache

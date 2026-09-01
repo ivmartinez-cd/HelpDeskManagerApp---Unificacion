@@ -7,6 +7,7 @@ de liquidaciones)."""
 from fastapi import APIRouter
 
 from src.modules.contadores.presentation.calendario_routers import (
+    anexos_sin_procesar,
     clientes_siges,
     eventos,
     overrides,
@@ -18,3 +19,4 @@ router.include_router(eventos.router)
 router.include_router(sync.router)
 router.include_router(clientes_siges.router)
 router.include_router(overrides.router)
+router.include_router(anexos_sin_procesar.router)

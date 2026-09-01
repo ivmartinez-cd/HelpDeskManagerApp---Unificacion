@@ -109,3 +109,26 @@ export interface EmpresaSiges {
   den_comercial: string;
   impresoras: number;
 }
+
+/** Fila del detalle de "Anexos sin procesar" (KPI de Inicio): un anexo de
+ * Impresión activo sin `Nro_Proceso` del último período ya cerrado con
+ * seguridad, de un cliente con evento vencido en el calendario. */
+export interface AnexoSinProcesar {
+  id_anexo: number;
+  anexo: string;
+  grupo: string;
+  cliente: string;
+  operador_id: string | null;
+  fecha_evento: string;
+  dias_vencido: number;
+  periodo_esperado: string;
+  ultimo_periodo_procesado: string | null;
+}
+
+/** KPI de Inicio. Si Siges no responde el endpoint devuelve 502 y el hook
+ * queda en `error`: el tile debe mostrar "—", nunca un 0 inventado. */
+export interface AnexosSinProcesarResumen {
+  clientes: number;
+  anexos: number;
+  consultado_en: string;
+}

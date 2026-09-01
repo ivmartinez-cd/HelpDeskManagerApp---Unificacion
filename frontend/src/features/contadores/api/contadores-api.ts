@@ -1,5 +1,7 @@
 import { httpClient } from "@/services/http-client";
 import type {
+  AnexoSinProcesar,
+  AnexosSinProcesarResumen,
   CalendarEvent,
   CalendarFilterParams,
   ClientesPendientesPeriodo,
@@ -264,6 +266,23 @@ export const contadoresApi = {
   },
   getAnexosPendientesResumen: () =>
     httpClient.get<AnexosPendientesResumen>("/api/contadores/anexos-pendientes/resumen"),
+
+  // KPI de Inicio "Anexos sin procesar" — clientes con evento vencido en el
+  // calendario cuyos anexos todavía no tienen Nro_Proceso del último período
+  // ya cerrado con seguridad (ver ListarAnexosSinProcesar). Sin dato de
+  // Siges el backend devuelve 502: nunca se inventa un cero.
+  getAnexosSinProcesarResumen: (today: string) =>
+    httpClient.get<AnexosSinProcesarResumen>(
+      `/api/contadores/calendario/anexos-sin-procesar/resumen?today=${today}`,
+    ),
+  listAnexosSinProcesar: (today: string) => {
+    const searchParams = new URLSearchParams({ today, size: "500" });
+    return httpClient
+      .get<Page<AnexoSinProcesar>>(
+        `/api/contadores/calendario/anexos-sin-procesar?${searchParams.toString()}`,
+      )
+      .then((page) => page.items);
+  },
 };
 
 
