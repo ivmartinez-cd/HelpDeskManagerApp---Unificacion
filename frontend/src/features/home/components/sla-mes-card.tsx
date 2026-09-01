@@ -108,10 +108,18 @@ export function SlaMesCard({
   const canUpdate = user.isSuperadmin || can("sla", "update");
   const [syncing, setSyncing] = useState(false);
 
-  const actual = historia?.resumenes[historia.resumenes.length - 1] ?? null;
-  const anterior = historia?.resumenes[historia.resumenes.length - 2] ?? null;
+  // El mes en curso recién arranca sin incidentes cerrados casi todos los
+  // días 1: en vez de vaciar la card entera, el número grande muestra el
+  // último mes con datos reales (retrocede más de uno si hiciera falta) con
+  // una nota aclarando que es un mes pasado.
+  const resumenes = historia?.resumenes ?? [];
+  const idxPrincipal = [...resumenes].findLastIndex((r) => r !== null && r.total > 0);
+  const actual = idxPrincipal >= 0 ? resumenes[idxPrincipal] : null;
+  const esMesEnCurso = idxPrincipal === resumenes.length - 1;
+  const anterior = idxPrincipal > 0 ? resumenes[idxPrincipal - 1] : null;
   const variacion =
     actual && anterior && anterior.total > 0 ? actual.pct_correctos - anterior.pct_correctos : null;
+  const periodoPrincipal = idxPrincipal >= 0 ? historia?.periodos[idxPrincipal] : undefined;
 
   const handleSincronizar = async () => {
     const periodo = historia?.periodos[historia.periodos.length - 1];
@@ -154,6 +162,11 @@ export function SlaMesCard({
         <CardEmpty>Sin incidentes en el período actual.</CardEmpty>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-2.5">
+          {!esMesEnCurso && periodoPrincipal && (
+            <span className="font-body text-[11px] text-muted-foreground">
+              Mes en curso: sin incidentes todavía · mostrando {periodoLabel(periodoPrincipal)}
+            </span>
+          )}
           <div className="flex items-baseline gap-2">
             <span className="font-heading text-[28px] font-extrabold leading-none tabular-nums text-foreground">
               {fmtPct(actual.pct_correctos)}%
