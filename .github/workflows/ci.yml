@@ -1,0 +1,58 @@
+name: CI
+
+# Corre en la nube lo que no depende de la red interna (Mercurio/SigesReadOnly/
+# Gestión, solo alcanzable desde la red corporativa — ver
+# project_deploy_render_vercel_neon_blocked_red_interna en la memoria). Antes
+# esto mismo bloqueaba `git push` en .githooks/pre-push; con varias sesiones
+# de Claude Code compartiendo la misma máquina/disco, el smoke de Playwright
+# (arranca un `next dev` de test) podía tardar minutos bajo contención de CPU
+# y freezaba el resto de las terminales. `make check` (backend) y el
+# lint/typecheck de frontend no necesitan esa red ni Docker: se movieron acá.
+#
+# Lo que NO corre acá (sigue siendo manual, ver AGENTS.md/CLAUDE.md):
+#   - tests/integration del backend (necesitan helpdesk-db-test vía Docker
+#     Compose, no un service container suelto).
+#   - la suite completa de Playwright y el smoke @grep — necesitan el stack
+#     completo (backend + Postgres seedeado) corriendo.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.5.x"
+      - run: uv python install 3.12
+      - run: uv sync --frozen
+      - run: uv run lint-imports
+      - run: uv run ruff check src tests
+      - run: uv run mypy src
+      - run: uv run pytest tests/unit -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit

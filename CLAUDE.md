@@ -192,15 +192,19 @@ bloquea algo que de verdad hace falta, explicárselo al usuario y que decida él
   recientemente por **otra** sesión de Claude (según el registro de sesiones); override
   consciente y coordinado: `ALLOW_FOREIGN=1 git commit …`. Si hay cambios en `backend/`, corre
   `lint-imports` + `ruff` (archivos staged) + `mypy` dentro del contenedor.
-- **`.githooks/pre-push`** (≈1,5 min; +2–3 min con cambios de frontend): lista los commits que
-  se van a subir (leerlos, no pushear a ciegas), corre `make check` completo (lint-imports +
-  ruff + mypy + pytest unit + integración + gates `sizes`/`guards` sobre HEAD) y, si hay cambios
-  en `frontend/`, eslint + `tsc --noEmit` del frontend más el **smoke de Playwright**
-  (`--grep @smoke`, un test por spec, con un `next dev` de test en el puerto 3011 que el hook
-  levanta y apaga solo). Si algo falla, no se pushea. Si un paso del frontend falla con salida
-  vacía, otra sesión estaba reiniciando el contenedor — reintentar. La suite Playwright
-  completa sigue siendo a mano (`PW_PORT=3011 npx playwright test` en `frontend/`) y es parte
-  del cierre de cualquier cambio de API que consuma el frontend.
+- **`.githooks/pre-push`** (≈20 s): lista los commits que se van a subir (leerlos, no pushear a
+  ciegas) y corre `make check` completo (lint-imports + ruff + mypy + pytest unit + integración
+  + gates `sizes`/`guards` sobre HEAD). Si algo falla, no se pushea.
+- **CI en GitHub Actions** (`.github/workflows/ci.yml`, desde 2026-09-01): corre en paralelo, sin
+  bloquear la terminal, lint-imports + ruff + mypy + pytest unit del backend y eslint + `tsc
+  --noEmit` del frontend en cada push a `main` y en cada PR. Antes esto (el lint/tsc + el
+  **smoke de Playwright**, que arranca un `next dev` de test en el puerto 3011) corría dentro
+  del `pre-push` local — con varias sesiones de Claude Code compartiendo la misma máquina, ese
+  paso podía tardar varios minutos bajo contención de CPU y freezaba el resto de las terminales
+  (incidente real 2026-09-01). Un push no debería poder colgar la máquina, así que se sacó de
+  ahí. La suite completa de Playwright y `make test-integration` (necesitan el stack corriendo
+  o `helpdesk-db-test`) siguen siendo a mano y son parte del cierre de cualquier cambio de API
+  que consuma el frontend o toque el modelo de datos — CI no las reemplaza todavía.
 - Los hooks de git se activan por clon con `make hooks` (`git config core.hooksPath
   .githooks`). `--no-verify` existe, pero usarlo es una decisión del usuario, no de Claude.
 
@@ -223,7 +227,7 @@ Directo) es el **respaldo**: lo que no está pusheado existe solo en el disco de
 - **Una sola sesión pushea.** Si `git status`/el registro de sesiones muestran que otra
   sesión está commiteando en ese momento, esperar a que termine o coordinar por
   `SendMessage`; pushear en paralelo desde varias sesiones solo duplica el `pre-push`.
-- No pushear después de cada commit chico (el `pre-push` tarda ~45 s; el ruido no aporta), ni
+- No pushear después de cada commit chico (el `pre-push` tarda ~20 s; el ruido no aporta), ni
   hacer `force push` jamás (bloqueado por `claude-git-guard`).
 
 `make help` lista el resto de atajos (`status`, `restart-*`,

@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
 # pre-push — la puerta antes de GitHub:
 #  1) muestra qué commits se van a subir (para revisar el git log, no pushear a ciegas);
-#  2) corre `make check` completo (lint-imports + ruff + mypy + pytest, ≈20 s) y bloquea si falla;
-#  3) corre el lint + tsc del frontend si hay cambios en frontend/ entre los commits a subir;
-#  4) con cambios en frontend/, corre además el smoke de Playwright (`--grep @smoke`, un test
-#     por spec, ≈2-3 min): levanta un `next dev` de test en el puerto 3011 con el backend mock
-#     (o reusa uno ya levantado) y lo apaga al terminar. La suite completa sigue siendo a mano
-#     (`PW_PORT=3011 npx playwright test` en frontend/) al cerrar cambios de API que consume el front.
+#  2) corre `make check` completo (lint-imports + ruff + mypy + pytest, ≈20 s) y bloquea si falla.
+#
+# El lint/tsc/smoke Playwright de frontend se sacó de acá (2026-09-01): con
+# varias sesiones de Claude Code compartiendo la misma máquina, el smoke
+# (arranca un `next dev` de test) podía tardar varios minutos bajo
+# contención de CPU y freezaba el resto de las terminales — un push no
+# debería poder colgar la máquina. Ahora corre en GitHub Actions
+# (.github/workflows/ci.yml) de forma async, sin bloquear. La suite
+# completa de Playwright y `make test-integration` siguen siendo a mano
+# (`PW_PORT=3011 npx playwright test` en frontend/, `make test-integration`)
+# al cerrar cambios de API que consume el front o que tocan el modelo de datos.
 # Saltear: git push --no-verify (solo si sabés por qué y lo decís).
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
 remote="${1:-origin}"
-FRONTEND=helpdesk-manager-frontend
 
 red() { printf '\033[31m✘ %s\033[0m\n' "$*"; }
 yel() { printf '\033[33m! %s\033[0m\n' "$*"; }
@@ -30,10 +34,8 @@ done
 ((${#ranges[@]} == 0)) && exit 0
 
 echo "pre-push → $remote. Commits a subir:"
-touches_frontend=0
 for r in "${ranges[@]}"; do
   git log --oneline --no-decorate "$r" 2>/dev/null | sed 's/^/    /'
-  if git diff --name-only "$r" 2>/dev/null | grep -q '^frontend/'; then touches_frontend=1; fi
 done
 echo
 
@@ -42,50 +44,6 @@ if make -s check >"$log" 2>&1; then
   ok "make check (lint-imports, ruff, mypy, pytest)"
 else
   red "make check falló — no se pushea:"; tail -30 "$log"; rm -f "$log"; exit 1
-fi
-rm -f "$log"
-
-if ((touches_frontend)); then
-  if docker exec "$FRONTEND" true 2>/dev/null; then
-    fe_fail() {  # $1 = nombre del paso
-      red "frontend $1 falló — no se pushea:"
-      if [[ -s "$log" ]]; then tail -30 "$log"; else
-        yel "(salida vacía: probablemente otra sesión estaba reiniciando $FRONTEND — reintentá el push en un minuto)"
-      fi
-      rm -f "$log"; exit 1
-    }
-    if docker exec "$FRONTEND" npm run -s lint >"$log" 2>&1; then ok "frontend lint"; else fe_fail "lint"; fi
-    # tsc: next build también chequea tipos, pero recién al reiniciar el contenedor — acá falla antes
-    if docker exec "$FRONTEND" npx tsc --noEmit >"$log" 2>&1; then ok "frontend tsc --noEmit"; else fe_fail "tsc"; fi
-  else
-    yel "contenedor $FRONTEND no responde — salteo el lint del frontend"
-  fi
-
-  # --- 4) smoke Playwright (host WSL; la imagen del contenedor es Alpine y no corre Chromium) ---
-  node_bin=$(ls -d "$HOME"/.nvm/versions/node/*/bin 2>/dev/null | tail -1)
-  if [[ -n "$node_bin" && -x frontend/node_modules/.bin/playwright ]]; then
-    export PATH="$node_bin:$PATH"
-    unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
-    port=3011; started=0; devlog=$(mktemp)
-    if ! curl -s --noproxy '*' -o /dev/null -m 5 "http://localhost:$port/login"; then
-      ( cd frontend && BACKEND_URL=http://127.0.0.1:18099 WATI_URL=https://wati.example.test/inbox           npx next dev --turbopack -p "$port" >"$devlog" 2>&1 & )
-      started=1
-      for _ in $(seq 1 60); do grep -q "Ready in" "$devlog" 2>/dev/null && break; sleep 3; done
-      # Primer compile de /login: el filesystem es lento, puede tardar más de un minuto.
-      curl -s --noproxy '*' -o /dev/null -m 300 "http://localhost:$port/login" || true
-    fi
-    if (cd frontend && PW_PORT=$port ./node_modules/.bin/playwright test --grep @smoke --reporter=line >"$log" 2>&1); then
-      ok "frontend smoke Playwright ($(grep -oE '[0-9]+ passed' "$log" | tail -1))"
-    else
-      red "frontend smoke Playwright falló — no se pushea:"; grep -E "✘|passed|failed|Error" "$log" | tail -20
-      if ((started)); then pkill -f "next dev --turbopack -p $port" 2>/dev/null || true; fi
-      rm -f "$log" "$devlog"; exit 1
-    fi
-    if ((started)); then pkill -f "next dev --turbopack -p $port" 2>/dev/null || true; fi
-    rm -f "$devlog"
-  else
-    yel "sin node (nvm) o sin playwright instalado en frontend/node_modules — salteo el smoke Playwright"
-  fi
 fi
 rm -f "$log"
 exit 0
