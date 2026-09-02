@@ -2,22 +2,30 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/shared/utils/cn";
-import type { Alerta, Incidente } from "../types/liquidaciones";
+import type { Alerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
 import { formatFecha } from "../lib/format";
 import { IncidentesTabla } from "./incidentes-tabla";
 
 export function IncidentesSeccion({
+  liquidacionId,
+  prestadorId,
+  prestadores,
   titulo,
   accentClass,
   incidentes,
   alertasByInc,
   soloConAlertas,
+  onAlertaChanged,
 }: {
+  liquidacionId: string;
+  prestadorId: string;
+  prestadores: PrestadorLiquidacion[];
   titulo: string;
   accentClass?: string;
   incidentes: Incidente[];
   alertasByInc: Record<string, Alerta[]>;
   soloConAlertas?: boolean;
+  onAlertaChanged: () => void;
 }) {
   const [filtroFecha, setFiltroFecha] = useState("");
 
@@ -65,9 +73,13 @@ export function IncidentesSeccion({
         )}
       </div>
       <IncidentesTabla
+        liquidacionId={liquidacionId}
+        prestadorId={prestadorId}
+        prestadores={prestadores}
         incidentes={filtrados}
         allIncidentes={incidentes}
         alertasByInc={alertasByInc}
+        onAlertaChanged={onAlertaChanged}
       />
     </div>
   );

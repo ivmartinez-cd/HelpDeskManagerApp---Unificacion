@@ -13,7 +13,6 @@ import type {
   LiquidacionDetalle,
   PrestadorLiquidacion,
 } from "../types/liquidaciones";
-import { AlertasSeccion } from "./alertas-seccion";
 import { ExtraItemSeccion } from "./extra-item-seccion";
 import { IncidentesSeccion } from "./incidentes-seccion";
 import { LiquidacionAlertasBanner } from "./liquidacion-alertas-banner";
@@ -171,32 +170,31 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
       />
 
       <IncidentesSeccion
+        liquidacionId={id}
+        prestadorId={liquidacion.prestadorId}
+        prestadores={prestadores}
         titulo="Correctivos"
         accentClass="text-brand-orange"
         incidentes={correctivos}
         alertasByInc={alertasByInc}
         soloConAlertas={soloConAlertas}
+        onAlertaChanged={() => void load()}
       />
       {preventivos.length > 0 && (
         <IncidentesSeccion
+          liquidacionId={id}
+          prestadorId={liquidacion.prestadorId}
+          prestadores={prestadores}
           titulo="Preventivos"
           accentClass="text-emerald-500"
           incidentes={preventivos}
           alertasByInc={alertasByInc}
           soloConAlertas={soloConAlertas}
+          onAlertaChanged={() => void load()}
         />
       )}
 
       <ModeloFacturacionSeccion incidentes={incidentes} totalImporte={liquidacion.totalImporte} />
-
-      <AlertasSeccion
-        liquidacionId={id}
-        prestadorId={liquidacion.prestadorId}
-        prestadores={prestadores}
-        alertas={alertas}
-        incidentes={incidentes}
-        onChanged={() => void load()}
-      />
 
       <ObservacionesSeccion
         liquidacionId={id}

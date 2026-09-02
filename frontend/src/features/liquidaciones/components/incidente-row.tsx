@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronRight, ExternalLink, Route } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { incidentUrl } from "@/shared/utils/incident-link";
-import type { Alerta, Incidente } from "../types/liquidaciones";
+import type { Alerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
 import { formatARS, formatFechaDia } from "../lib/format";
 import { AlertaSubRow } from "./alerta-sub-row";
 import { EstadoValidacionBadge, TipoBadge } from "./incidente-badges";
@@ -14,17 +14,25 @@ const CODIGO_ALT010 = "ALT010";
  * `incidentes-tabla.tsx` porque ese archivo ya superaba el tamaño máximo de
  * archivo (§4). */
 export function IncidenteRow({
+  liquidacionId,
+  prestadorId,
+  prestadores,
   incidente,
   alertasInc,
   expanded,
   isRutaCompartida,
   onToggle,
+  onAlertaChanged,
 }: {
+  liquidacionId: string;
+  prestadorId: string;
+  prestadores: PrestadorLiquidacion[];
   incidente: Incidente;
   alertasInc: Alerta[];
   expanded: boolean;
   isRutaCompartida: boolean;
   onToggle: () => void;
+  onAlertaChanged: () => void;
 }) {
   const tdCls = "py-3 px-4 font-body text-sm text-foreground";
   const serieDuplicada = alertasInc.find((a) => a.tipoAlerta === CODIGO_ALT010);
@@ -144,7 +152,17 @@ export function IncidenteRow({
           <EstadoValidacionBadge estado={incidente.estadoValidacion} />
         </td>
       </tr>
-      {expanded && alertasInc.map((a) => <AlertaSubRow key={a.id} alerta={a} />)}
+      {expanded &&
+        alertasInc.map((a) => (
+          <AlertaSubRow
+            key={a.id}
+            liquidacionId={liquidacionId}
+            prestadorId={prestadorId}
+            prestadores={prestadores}
+            alerta={a}
+            onChanged={onAlertaChanged}
+          />
+        ))}
     </>
   );
 }

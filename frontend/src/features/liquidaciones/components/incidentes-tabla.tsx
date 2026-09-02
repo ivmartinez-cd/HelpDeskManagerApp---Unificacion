@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
-import type { Alerta, Incidente } from "../types/liquidaciones";
+import type { Alerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
 import { formatARS } from "../lib/format";
 import { computeRutasCompartidas } from "../lib/rutas-compartidas";
 import { IncidenteRow } from "./incidente-row";
@@ -26,13 +26,21 @@ const INC_SORT_KEYS: readonly IncSortKey[] = [
 ];
 
 export function IncidentesTabla({
+  liquidacionId,
+  prestadorId,
+  prestadores,
   incidentes,
   allIncidentes,
   alertasByInc,
+  onAlertaChanged,
 }: {
+  liquidacionId: string;
+  prestadorId: string;
+  prestadores: PrestadorLiquidacion[];
   incidentes: Incidente[];
   allIncidentes: Incidente[];
   alertasByInc: Record<string, Alerta[]>;
+  onAlertaChanged: () => void;
 }) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const { sort, toggleSort } = useTableSort<IncSortKey>({
@@ -114,11 +122,15 @@ export function IncidentesTabla({
             {sorted.map((inc) => (
               <IncidenteRow
                 key={inc.id}
+                liquidacionId={liquidacionId}
+                prestadorId={prestadorId}
+                prestadores={prestadores}
                 incidente={inc}
                 alertasInc={alertasByInc[inc.id] ?? []}
                 expanded={expandedIds.has(inc.id)}
                 isRutaCompartida={rutasCompartidas.has(inc.id)}
                 onToggle={() => toggleExpanded(inc.id)}
+                onAlertaChanged={onAlertaChanged}
               />
             ))}
           </tbody>
