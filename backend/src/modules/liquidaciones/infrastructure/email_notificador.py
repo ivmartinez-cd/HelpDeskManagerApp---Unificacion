@@ -21,6 +21,20 @@ class EmailNotificador:
 
     async def notificar_aprobacion(self, liquidacion: Liquidacion) -> None:
         codigo = liquidacion.numero_liquidacion
+        subject, body, html_body = self._construir_mensaje(liquidacion)
+        try:
+            await self._mailer.send(
+                to=_DESTINATARIO_APROBACION, subject=subject, body=body, html_body=html_body
+            )
+        except Exception as exc:
+            _logger.error(
+                "email_notificador: falló el aviso de aprobación de liquidación",
+                extra={"liquidacion_id": str(liquidacion.id), "numero": codigo},
+                exc_info=exc,
+            )
+
+    def _construir_mensaje(self, liquidacion: Liquidacion) -> tuple[str, str, str]:
+        codigo = liquidacion.numero_liquidacion
         url = f"{self._frontend_url}/liquidaciones/{liquidacion.id}"
         subject = f"Aviso CanalDirecto - Se APROBO la Liquidacion nro: {codigo}"
         html_body = (
@@ -35,13 +49,4 @@ class EmailNotificador:
             f"Para ver los detalles de la misma ingresá a: {url}\n\n"
             "CANAL DIRECTO"
         )
-        try:
-            await self._mailer.send(
-                to=_DESTINATARIO_APROBACION, subject=subject, body=body, html_body=html_body
-            )
-        except Exception as exc:
-            _logger.error(
-                "email_notificador: falló el aviso de aprobación de liquidación",
-                extra={"liquidacion_id": str(liquidacion.id), "numero": codigo},
-                exc_info=exc,
-            )
+        return subject, body, html_body
