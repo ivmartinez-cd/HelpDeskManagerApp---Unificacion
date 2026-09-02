@@ -4,9 +4,14 @@ parametrizadas — ARCHITECTURE_GUIDE §8). Fuentes confirmadas con dato real el
 
 - Zona = `Sucursal.Cuadricula` (texto libre; el catálogo es el DISTINCT de
   sucursales activas, no un enum).
-- Frecuencia = `Sucursal.TipoPreventivo` → `TipoPreventivo.Dias` (0 = sin
-  preventivo pactado; se expone tal cual y el dominio lo trata como
-  "sin_frecuencia").
+- Frecuencia = `Sucursal.TipoPreventivo` → `TipoPreventivo.Dias`. **Sin
+  frecuencia queda afuera del universo (regla del usuario, 2026-09-02)**: una
+  sucursal con `Dias = 0` o sin fila en `TipoPreventivo` no tiene preventivo
+  pactado, así que sus máquinas no aparecen ni en la tabla, ni en el conteo
+  del chip de zona, ni en el mapa (las tres consultas comparten
+  `_CON_FRECUENCIA_WHERE`). El estado `sin_frecuencia` del dominio sigue
+  existiendo como red de seguridad, pero con este filtro no debería llegar
+  ninguna fila que lo produzca.
 - Último preventivo = MAX de `Incidente` tipo 102 (Preventivo) en estado
   terminal no anulado (500 Finalizado / 600 Cerrado / 700 Resuelto /
   710 Resuelto c/pendientes). `Fecha_Cierre` usa el sentinel 1900-01-01
@@ -99,6 +104,17 @@ _SOLO_IMPRESORAS_WHERE = """
   AND (AG.Descripcion LIKE 'PRT %' OR AG.Descripcion LIKE 'MFP %')
 """
 
+# Solo sucursales con frecuencia pactada (regla del usuario, 2026-09-02): sin
+# `TipoPreventivo.Dias` > 0 no hay vencimiento que calcular ni visita que
+# despachar, y el usuario no quiere ver esos clientes en la pantalla. Requiere
+# el LEFT JOIN a TipoPreventivo como `TP` en cada consulta que lo use.
+_TIPO_PREVENTIVO_JOIN = """
+LEFT JOIN dbo.TipoPreventivo TP ON TP.Tipo = S.TipoPreventivo
+"""
+_CON_FRECUENCIA_WHERE = """
+  AND ISNULL(TP.Dias, 0) > 0
+"""
+
 PARQUE_ZONA_SQL = f"""
 SELECT
     M.ID_Maquina AS id_maquina,
@@ -119,7 +135,7 @@ INNER JOIN dbo.Sucursal S ON S.Id_Sucursal = M.ID_Sucursal
 INNER JOIN dbo.Empresa E ON E.ID_Empresa = M.ID_Empresa
 INNER JOIN dbo.Articulo A ON A.Id_Articulo = M.ID_Articulo
 INNER JOIN dbo.ArtGen AG ON AG.Id_ArtGen = A.Id_ArtGen
-LEFT JOIN dbo.TipoPreventivo TP ON TP.Tipo = S.TipoPreventivo
+{_TIPO_PREVENTIVO_JOIN}
 LEFT JOIN (
     -- Agrupa también por ID_Sucursal (el de `Incidente`, histórico —no el
     -- actual de `Maquina`— así el JOIN de abajo exige que coincida con la
@@ -162,6 +178,7 @@ WHERE S.Estado = 0
   AND E.ID_Tipo_Empresa IN (101, 102)
 {_EMPRESA_VIVA_WHERE}
 {_SOLO_IMPRESORAS_WHERE}
+{_CON_FRECUENCIA_WHERE}
   AND S.Cuadricula = ?
 """
 
@@ -185,11 +202,13 @@ INNER JOIN dbo.Empresa E
    AND E.ID_Tipo_Empresa IN (101, 102)
 INNER JOIN dbo.Articulo A ON A.Id_Articulo = M.ID_Articulo
 INNER JOIN dbo.ArtGen AG ON AG.Id_ArtGen = A.Id_ArtGen
+{_TIPO_PREVENTIVO_JOIN}
 {_ACTIVIDAD_EMPRESA_JOIN}
 WHERE S.Estado = 0
   AND LTRIM(RTRIM(S.Cuadricula)) <> ''
 {_EMPRESA_VIVA_WHERE}
 {_SOLO_IMPRESORAS_WHERE}
+{_CON_FRECUENCIA_WHERE}
 GROUP BY S.Cuadricula
 """
 
@@ -217,6 +236,7 @@ INNER JOIN dbo.Empresa E ON E.ID_Empresa = M.ID_Empresa
 INNER JOIN dbo.Articulo A ON A.Id_Articulo = M.ID_Articulo
 INNER JOIN dbo.ArtGen AG ON AG.Id_ArtGen = A.Id_ArtGen
 LEFT JOIN dbo.Ciudad C ON C.Id_Ciudad = S.Id_Ciudad
+{_TIPO_PREVENTIVO_JOIN}
 {_ACTIVIDAD_EMPRESA_JOIN}
 WHERE S.Estado = 0
   AND M.Estado = 0
@@ -225,4 +245,5 @@ WHERE S.Estado = 0
   AND E.ID_Tipo_Empresa IN (101, 102)
 {_EMPRESA_VIVA_WHERE}
 {_SOLO_IMPRESORAS_WHERE}
+{_CON_FRECUENCIA_WHERE}
 """

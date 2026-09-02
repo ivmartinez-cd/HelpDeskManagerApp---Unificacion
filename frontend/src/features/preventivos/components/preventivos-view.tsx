@@ -23,7 +23,6 @@ const FILTROS_ESTADO = [
   { value: "por_vencer", label: "Por vencer" },
   { value: "al_dia", label: "Al día" },
   { value: "sin_preventivo", label: "Sin preventivo" },
-  { value: "sin_frecuencia", label: "Sin frecuencia" },
 ];
 
 const FILTROS_VISTA = [
@@ -245,8 +244,9 @@ export function PreventivosView() {
 
           <p className="rounded-[8px] bg-muted/30 px-4 py-3 font-body text-xs text-muted-foreground">
             Vencimiento = último preventivo cerrado en Gestión + la frecuencia de la sucursal
-            (TipoPreventivo). &quot;Sin preventivo&quot; / &quot;sin frecuencia&quot;
-            se muestran explícitos, sin inventar fechas. La habilitación se limpia sola cuando
+            (TipoPreventivo). &quot;Sin preventivo&quot; se muestra explícito, sin inventar
+            fechas; las sucursales sin frecuencia cargada no se listan. La habilitación se
+            limpia sola cuando
             aparece un preventivo posterior. Datos cacheados 5 minutos; &quot;Actualizar&quot;
             fuerza una consulta nueva.
           </p>

@@ -14,6 +14,9 @@ ADR-019; fuentes de datos confirmadas en `docs/siges/SIGES_READONLY_CATALOGO_DAT
 - **Frecuencia**: `Sucursal.TipoPreventivo` → `TipoPreventivo.Dias` (30/60/90/120/180/360;
   0 = sin preventivo pactado). Es un dato POR SUCURSAL: todas las máquinas de la sucursal
   comparten frecuencia. No confundir con la tabla `Frecuencia` (es de otra cosa, legacy).
+  **Desde 2026-09-02 las sucursales sin frecuencia (`Dias = 0` o sin fila) quedan fuera del
+  universo** por decisión del usuario: no aparecen en la tabla, ni en el conteo del chip de
+  zona, ni en el mapa (`ISNULL(TP.Dias, 0) > 0` en las tres consultas de `query.py`).
 - **Último preventivo**: máximo `Incidente` de tipo 102 (Preventivo) en estado terminal no
   anulado (Finalizado 500 / Cerrado 600 / Resuelto 700 / Resuelto c/pendientes 710). La fecha
   es `Fecha_Cierre`, salvo que tenga el sentinel `1900-01-01` (pasa incluso en Cerrados), en
@@ -40,8 +43,9 @@ próximo vencimiento = fecha último preventivo + frecuencia (días)
 vencido      si próximo < hoy           (dias_vencido = hoy - próximo)
 por_vencer   si próximo <= hoy + 30 días
 al_dia       si no
-sin_frecuencia   si la sucursal no tiene frecuencia (Dias 0 o sin fila) — sin fecha
 sin_preventivo   si nunca se registró un preventivo hecho — sin fecha
+sin_frecuencia   red de seguridad del dominio (Dias 0 o sin fila); desde 2026-09-02 la
+                 consulta SQL ya no trae esas filas, así que no debería verse en la UI
 ```
 
 Regla dura: los estados `sin_*` son explícitos, nunca se inventa una fecha. "Hoy" se calcula
@@ -61,6 +65,6 @@ historial se conserva.
 - `GET /api/preventivos/equipos?zona=SUR&estado=vencido&habilitado=true&q=...&page&size&refresh`
   — `Page` + `consultado_en` (caché TTL 5 min por zona; `refresh=true` fuerza consulta).
   Orden default: vencidos primero (más atrasado arriba), después sin preventivo, por vencer,
-  al día, sin frecuencia.
+  al día.
 - `POST /api/preventivos/equipos/{siges_maquina_id}/habilitar` (permiso `update`; body
   `{nota?}`) / `DELETE` ídem para deshabilitar.

@@ -96,6 +96,10 @@ datos de Gestión que conviene ver y corregir allá, no maquillar acá.
 - Regla de negocio dura: un equipo sin frecuencia (`Dias = 0`/sin fila) o sin preventivo
   previo se muestra con estado explícito (`sin_frecuencia` / `sin_preventivo`), nunca con una
   fecha inventada. El cálculo es dominio puro (`domain/services/vencimiento.py`) con tests.
+  **Ajuste 2026-09-02 (pedido del usuario)**: los equipos sin frecuencia directamente no se
+  listan — el filtro `ISNULL(TP.Dias, 0) > 0` vive en las tres consultas de Siges para que
+  tabla, chip de zona y mapa coincidan; `sin_frecuencia` queda como red de seguridad del
+  dominio, no como estado visible.
 - La card de Inicio queda como extensión posible (Inicio ya tiene 4+ cards) — no en esta
   pasada.
 - Si el parque crece un orden de magnitud y la consulta pasa de ~0.5 s a >5 s, la decisión 2

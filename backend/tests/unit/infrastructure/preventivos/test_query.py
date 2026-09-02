@@ -50,6 +50,14 @@ def test_todas_las_consultas_filtran_solo_impresoras_y_clientes_vivos(sql: str) 
 
 
 @pytest.mark.parametrize("sql", _TODAS)
+def test_todas_las_consultas_excluyen_sucursales_sin_frecuencia(sql: str) -> None:
+    # Regla del usuario (2026-09-02): sin `TipoPreventivo.Dias` > 0 el cliente
+    # no aparece en tabla, chip de zona ni mapa — mismo filtro en las tres.
+    assert "LEFT JOIN dbo.TipoPreventivo TP ON TP.Tipo = S.TipoPreventivo" in sql
+    assert "ISNULL(TP.Dias, 0) > 0" in sql
+
+
+@pytest.mark.parametrize("sql", _TODAS)
 def test_todas_las_consultas_son_solo_lectura(sql: str) -> None:
     assert sql.lstrip().upper().startswith("SELECT")
     for verbo in ("INSERT", "UPDATE", "DELETE", "EXEC"):
