@@ -3,7 +3,7 @@
 # contenedores (docker corre en WSL, ya no hay copia paralela en Windows).
 #
 # Uso (se corre DENTRO de WSL, parado en el repo):
-#   bash scripts/wsl/reiniciar.sh backend       # restart backend (exige DISABLE_BACKGROUND_JOBS=true)
+#   bash scripts/wsl/reiniciar.sh backend       # restart backend (exige DISABLE_INSUMOS_BACKGROUND_JOBS=true)
 #   bash scripts/wsl/reiniciar.sh frontend      # normalmente NO hace falta (ver abajo)
 #
 # Por qué existe: el BACKEND no recarga solo (uvicorn sin --reload, decisión deliberada: el
@@ -39,17 +39,21 @@ esperar_200() {  # $1 = url ; espera hasta ESPERA_MAX segundos
 }
 
 if [ "$SVC" = "backend" ]; then
-  flag="$(grep -E '^DISABLE_BACKGROUND_JOBS=' "$LIN/.env" | tail -1 | cut -d= -f2 | tr -d '\r[:space:]')"
+  # Los jobs de fondo corren ENCENDIDOS en dev (decisión 2026-09-02) salvo insumos, que se
+  # pisaría con SDSInsumos productivo (sdsinsumos.cdsa.com.ar) y manda mail real.
+  flag="$(grep -E '^DISABLE_INSUMOS_BACKGROUND_JOBS=' "$LIN/.env" | tail -1 | cut -d= -f2 | tr -d '\r[:space:]')"
   if [ "$flag" != "true" ]; then
-    echo "ABORTADO: DISABLE_BACKGROUND_JOBS no está en true en $LIN/.env (regla dura de CLAUDE.md)." >&2
+    echo "ABORTADO: DISABLE_INSUMOS_BACKGROUND_JOBS no está en true en $LIN/.env (regla dura de CLAUDE.md)." >&2
     exit 2
   fi
   echo "== docker restart helpdesk-manager-backend (alembic upgrade head + uvicorn)"
   docker restart helpdesk-manager-backend >/dev/null
   esperar_200 "http://127.0.0.1:8012/docs"
-  echo "== DISABLE_BACKGROUND_JOBS en el contenedor: $(docker exec helpdesk-manager-backend printenv DISABLE_BACKGROUND_JOBS || echo '(no definida)')"
-  if docker logs --since 10m helpdesk-manager-backend 2>&1 | grep -q 'background_jobs: .* iniciados'; then
-    echo "ATENCIÓN: el log muestra background jobs iniciados — revisar .env y recrear el contenedor." >&2
+  echo "== DISABLE_INSUMOS_BACKGROUND_JOBS en el contenedor: $(docker exec helpdesk-manager-backend printenv DISABLE_INSUMOS_BACKGROUND_JOBS || echo '(no definida)')"
+  log="$(docker logs --since 10m helpdesk-manager-backend 2>&1)"
+  if printf '%s' "$log" | grep -q 'background_jobs: .* iniciados' \
+     && ! printf '%s' "$log" | grep -q 'background_jobs: insumos omitido'; then
+    echo "ATENCIÓN: el log muestra jobs iniciados SIN la línea 'insumos omitido' — el poller de insumos está corriendo. Revisar .env y recrear el contenedor." >&2
   fi
 else
   # ¿El contenedor está en modo dev (next dev)? Entonces Fast Refresh ya recompila solo y

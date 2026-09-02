@@ -1,47 +1,57 @@
 # CLAUDE.md
 
-## Modo test obligatorio: SDSInsumos sigue productivo, la migración nunca puede tocarlo
+## Jobs de fondo: encendidos, salvo insumos (SDSInsumos sigue productivo)
 
 Regla dura, no opcional, para toda sesión de trabajo en este repo — no solo la actual.
 
-- SDSInsumos (el legacy) sigue productivo mientras se migra a este monorepo. La DB de dev
-  (`helpdesk-db`) está sembrada con datos reales de producción (ver memoria
+- **Desde el 2026-09-02 (decisión de Iván) los jobs de fondo corren ENCENDIDOS en dev**:
+  `DISABLE_BACKGROUND_JOBS=false` en `.env`. Los compañeros usan esta app como entorno de
+  pruebas y esperan que SLA, contadores, liquidaciones, WATI y análisis de logs se actualicen
+  solos (antes, con el flag en `true`, SLA solo se refrescaba al apretar "Actualizar").
+- **Insumos queda apagado SIEMPRE**: `DISABLE_INSUMOS_BACKGROUND_JOBS=true`. SDSInsumos
+  (`sdsinsumos.cdsa.com.ar`, el legacy) sigue productivo mientras se migra a este monorepo, y
+  su poller acá se pisaría con el de producción. Además la DB de dev (`helpdesk-db`) está
+  sembrada con datos reales de producción (ver memoria
   `project_insumos_dev_seeded_from_prod_backup`), incluidos destinatarios de mail reales de
   logística (`app_settings.logistics_mail_to`). **Nada de esto es un mock**: cualquier job o
   llamada que se dispare de verdad tiene efectos reales sobre gente real y sobre Canal Directo
-  en producción.
+  en producción. No encender insumos (borrar la línea o ponerla en `false`) sin que el usuario
+  lo pida explícitamente.
 - **Mails en dev van a Mailpit, no a Gmail (desde 2026-08-21).** `.env` apunta
   `SMTP_HOST=mailpit` / `SMTP_PORT=1025` / `SMTP_STARTTLS=false` al servicio `mailpit` del
   compose; todo mail que dispare el backend queda en http://localhost:8025 y nunca sale de la
   máquina. Las credenciales reales de Gmail quedaron comentadas con prefijo `[prod]` en `.env` —
   **no descomentarlas en dev**. Esto es una red de seguridad extra, no reemplaza la regla de
-  abajo: SOAP/Insight/wsAyC siguen siendo reales, y un job de fondo que escriba contra ellos
+  arriba: SOAP/Insight/wsAyC siguen siendo reales, y un job de fondo que escriba contra ellos
   sigue teniendo efectos reales aunque el mail quede atrapado.
 - **Incidente real (2026-08-12)**: editar en vivo código de jobs de fondo
   (`poller_alerts.py`/`background_jobs.py`) con el contenedor `helpdesk-manager-backend`
   corriendo con sus jobs activos disparó un mail real de "poller caído" a destinatarios reales
   de Canal Directo, sin que nadie lo pidiera.
-- **Antes de tocar o dejar correr cualquier código de jobs de fondo**
+- **Qué implica tener los jobs activos al editar backend**: uvicorn corre sin `--reload`, así
+  que editar un archivo no afecta al proceso hasta el próximo `reiniciar.sh backend`. Pero en
+  cada reinicio los jobs arrancan y **corren un ciclo inmediato** (SLA, pendientes, contadores,
+  liquidaciones-reconciliar, WATI, snapshots HP) con el código que esté en disco en ese
+  momento. Antes de reiniciar el backend con código de jobs a medio hacer
   (`backend/src/modules/*/presentation/background_jobs.py`,
-  `backend/src/modules/*/application/jobs/`, o cualquier cosa que mande mail o escriba contra
-  SOAP/Insight/wsAyC fuera de un `dryRun` explícito), el contenedor del backend tiene que estar
-  en modo test:
+  `backend/src/modules/*/application/jobs/`, o cualquier cosa que un job ejecute contra
+  SOAP/Insight/wsAyC/Gestión/Mercurio), apagarlos temporalmente y avisarlo:
   ```
-  # .env
+  # .env  (temporal, volver a false al terminar)
   DISABLE_BACKGROUND_JOBS=true
   ```
-  y hay que confirmar que el contenedor lo tenga **aplicado de verdad** — `docker restart` NO
-  relee `.env` (reinicia el proceso con el entorno viejo). Hace falta recrear el contenedor:
+  y recrear el contenedor — `docker restart` NO relee `.env` (reinicia el proceso con el
+  entorno viejo):
   ```
   docker compose up -d --force-recreate backend
-  docker exec helpdesk-manager-backend printenv DISABLE_BACKGROUND_JOBS   # tiene que imprimir "true"
+  docker exec helpdesk-manager-backend printenv DISABLE_BACKGROUND_JOBS DISABLE_INSUMOS_BACKGROUND_JOBS
   ```
-  y verificar en el log de arranque que **no** aparezca `background_jobs: N job(s) iniciados`
-  después de `Application startup complete`.
-- Esta regla aplica a cualquier módulo con jobs de fondo (insumos, y también
-  `sla/presentation/background_jobs.py`), no solo al que se esté tocando en el momento. No
-  reactivar los jobs de fondo (borrar la línea de `.env` o ponerla en `false`) sin que el usuario
-  lo pida explícitamente — no es una decisión a tomar de forma proactiva.
+  Al terminar, volver a `DISABLE_BACKGROUND_JOBS=false` y recrear de nuevo: dejar los jobs
+  apagados "por las dudas" rompe la actualización automática que los compañeros esperan.
+- Verificación del arranque sano: en el log, después de `Application startup complete`, tiene
+  que aparecer `background_jobs: insumos omitido (DISABLE_INSUMOS_BACKGROUND_JOBS=true)` y
+  `background_jobs: 6 job(s) iniciados`. `reiniciar.sh backend` y `make recreate-backend`
+  abortan/avisan si `DISABLE_INSUMOS_BACKGROUND_JOBS` no está en `true`.
 
 ## Idioma y estilo de comunicación
 
@@ -132,10 +142,11 @@ bash scripts/wsl/reiniciar.sh backend          # tras editar backend/
 
 - **Backend** (`helpdesk-manager-backend`): uvicorn corre sin `--reload`. Tras editar
   `backend/`, `reiniciar.sh backend` hace `docker restart`, que re-corre el entrypoint:
-  `alembic upgrade head` + uvicorn; el script aborta si `DISABLE_BACKGROUND_JOBS` no está en
-  `true` y avisa si el log muestra jobs iniciados. Recordar que `docker restart` NO relee
-  `.env` — para cambios de variables de entorno hace falta, parado en
-  `/home/ivan/proyectos/helpdesk-manager`, `docker compose up -d --force-recreate backend`.
+  `alembic upgrade head` + uvicorn; el script aborta si `DISABLE_INSUMOS_BACKGROUND_JOBS` no
+  está en `true` y avisa si el log muestra jobs iniciados sin la línea `insumos omitido`.
+  Recordar que `docker restart` NO relee `.env` — para cambios de variables de entorno hace
+  falta, parado en `/home/ivan/proyectos/helpdesk-manager`,
+  `docker compose up -d --force-recreate backend`.
 - **Frontend** (`helpdesk-manager-frontend`): corre `next dev` (Fast Refresh). Tras editar
   `frontend/` **no hay que hacer nada**: la ruta se recompila sola en ~2 s (medido con el disco
   ocioso) y el navegador la toma al recargar. `reiniciar.sh frontend` detecta el modo dev, avisa

@@ -99,7 +99,7 @@ hooks:  ## Activa los hooks de git del repo (.githooks: pre-commit y pre-push) e
 	@echo "✔ core.hooksPath=.githooks (pre-commit: archivos ajenos + ruff staged; pre-push: solo lista commits, todo lo demás corre en CI)"
 
 # --- Contenedores ---
-restart-backend:  ## docker restart del backend (exige DISABLE_BACKGROUND_JOBS=true)
+restart-backend:  ## docker restart del backend (exige DISABLE_INSUMOS_BACKGROUND_JOBS=true)
 	bash scripts/wsl/reiniciar.sh backend
 
 restart-frontend:  ## docker restart del frontend (next build && start, varios minutos)
@@ -107,9 +107,9 @@ restart-frontend:  ## docker restart del frontend (next build && start, varios m
 
 recreate-backend:  ## Recrear backend releyendo .env (docker restart NO relee .env)
 	docker compose up -d --force-recreate backend
-	@$(EXEC) printenv DISABLE_BACKGROUND_JOBS | grep -qx true \
-	  || { echo "✘ DISABLE_BACKGROUND_JOBS no es 'true' en el contenedor — ver CLAUDE.md"; exit 1; }
-	@echo "✔ backend recreado en modo test"
+	@$(EXEC) printenv DISABLE_INSUMOS_BACKGROUND_JOBS | grep -qx true \
+	  || { echo "✘ DISABLE_INSUMOS_BACKGROUND_JOBS no es 'true' en el contenedor — ver CLAUDE.md"; exit 1; }
+	@echo "✔ backend recreado (jobs activos, insumos apagado)"
 
 up:  ## Levantar todo el stack (db, backend, mailpit, frontend)
 	docker compose up -d
