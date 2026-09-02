@@ -10,6 +10,7 @@ import {
   BrandInput,
   BrandSkeleton,
 } from "@/shared/components/ui/brand-form";
+import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { gestionApi } from "../api/gestion-api";
@@ -24,6 +25,8 @@ import {
   solicitudSortValue,
   type SolicitudSortKey,
 } from "./solicitudes-tabla";
+
+const PAGE_SIZE = 25;
 
 const SECCIONES = [
   { value: "vacaciones", label: "Vacaciones" },
@@ -49,6 +52,7 @@ export function SolicitudesView() {
   const [error, setError] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<"todas" | EstadoSolicitud>("todas");
   const [busqueda, setBusqueda] = useState("");
+  const [page, setPage] = useState(1);
 
   const { sort, toggleSort } = useTableSort<SolicitudSortKey>({
     initial: { key: "inicio", direction: "desc" },
@@ -94,6 +98,14 @@ export function SolicitudesView() {
       compareSortValues(solicitudSortValue(a, sort.key), solicitudSortValue(b, sort.key), sort.direction),
     );
   }, [solicitudes, filtro, busqueda, sort]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filtro, busqueda, sort]);
+
+  const totalPaginas = Math.max(1, Math.ceil(visibles.length / PAGE_SIZE));
+  const paginaActual = Math.min(page, totalPaginas);
+  const visiblesPagina = visibles.slice((paginaActual - 1) * PAGE_SIZE, paginaActual * PAGE_SIZE);
 
   const handleEliminar = () => {
     if (!eliminando) return;
@@ -188,13 +200,22 @@ export function SolicitudesView() {
               description="Creá una solicitud para pedir tus vacaciones."
             />
           ) : (
-            <SolicitudesTabla
-              visibles={visibles}
-              sort={sort}
-              onToggleSort={toggleSort}
-              onEditar={setEditando}
-              onEliminar={setEliminando}
-            />
+            <>
+              <SolicitudesTabla
+                visibles={visiblesPagina}
+                sort={sort}
+                onToggleSort={toggleSort}
+                onEditar={setEditando}
+                onEliminar={setEliminando}
+              />
+              <PaginationBar
+                page={paginaActual}
+                total={visibles.length}
+                size={PAGE_SIZE}
+                onPageChange={setPage}
+                noun="solicitudes"
+              />
+            </>
           )}
         </>
       )}

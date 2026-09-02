@@ -12,23 +12,37 @@ import type {
 } from "../types/vacaciones";
 
 const BASE = "/api/vacaciones";
+/** Tope del backend por página (`le=500` en `solicitudes_router.py`). */
+const LIST_PAGE_SIZE = 500;
+/** Cubre hasta 5000 solicitudes (admin ve las de toda la empresa, sin filtro
+ * de fecha) sin arriesgar un loop sin fin. */
+const LIST_MAX_PAGES = 10;
 
 export const solicitudesApi = {
-  list: (params?: {
+  /** Un admin ve acá las solicitudes de TODA la empresa sin límite de fecha:
+   * el default del backend (200) se queda corto, así que se recorren todas
+   * las páginas para no truncar en silencio. */
+  list: async (params?: {
     status?: EstadoSolicitud;
     empleadoId?: string;
     desde?: string;
     hasta?: string;
-  }) => {
+  }): Promise<Solicitud[]> => {
     const q = new URLSearchParams();
     if (params?.status) q.set("status", params.status);
     if (params?.empleadoId) q.set("employeeId", params.empleadoId);
     if (params?.desde) q.set("from", params.desde);
     if (params?.hasta) q.set("to", params.hasta);
-    const query = q.size > 0 ? `?${q.toString()}` : "";
-    return httpClient
-      .get<Page<Solicitud>>(`${BASE}/solicitudes${query}`)
-      .then((p) => p.items);
+    q.set("size", String(LIST_PAGE_SIZE));
+
+    const items: Solicitud[] = [];
+    for (let page = 1; page <= LIST_MAX_PAGES; page++) {
+      q.set("page", String(page));
+      const result = await httpClient.get<Page<Solicitud>>(`${BASE}/solicitudes?${q.toString()}`);
+      items.push(...result.items);
+      if (items.length >= result.total) break;
+    }
+    return items;
   },
   create: (payload: SolicitudPayload) =>
     httpClient.post<Solicitud>(`${BASE}/solicitudes`, payload),

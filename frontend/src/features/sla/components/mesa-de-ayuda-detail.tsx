@@ -7,11 +7,13 @@ import { mesaDeAyudaColumns } from "./mesa-de-ayuda-columns";
 import type { IncidenteMesaAyuda } from "../types/mesa-ayuda";
 import { useSession } from "@/services/session-provider";
 import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
+import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { StatsTable } from "@/shared/components/ui/stats-table";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { cn } from "@/shared/utils/cn";
 
 const TODOS = "__todos__";
+const PAGE_SIZE = 100;
 
 /** El login de Siges es el prefijo del email corporativo (ej.
  * mjvela@canaldirecto.com.ar -> mjvela) — no hay un vínculo formal entre
@@ -38,6 +40,7 @@ export function MesaDeAyudaDetail() {
   const [operador, setOperador] = useState<string>(TODOS);
   const [operadorInicializado, setOperadorInicializado] = useState(false);
   const [todos, setTodos] = useState<IncidenteMesaAyuda[]>([]);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,9 +90,20 @@ export function MesaDeAyudaDetail() {
   };
 
   const operadorOptions = useOperadorOptions(todos);
-  const incidentes = useMemo(
+  const filtrados = useMemo(
     () => (operador === TODOS ? todos : todos.filter((i) => i.operador_login === operador)),
     [todos, operador],
+  );
+  const [prevOperador, setPrevOperador] = useState(operador);
+  if (operador !== prevOperador) {
+    setPrevOperador(operador);
+    setPage(1);
+  }
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE));
+  const paginaActual = Math.min(page, totalPaginas);
+  const incidentes = filtrados.slice(
+    (paginaActual - 1) * PAGE_SIZE,
+    paginaActual * PAGE_SIZE,
   );
 
   return (
@@ -140,21 +154,32 @@ export function MesaDeAyudaDetail() {
       )}
 
       {!loading && !error && (
-        <StatsTable
-          title="Incidentes de Mesa de Ayuda sin cerrar"
-          subtitle={
-            incidentes.length > 0
-              ? `${incidentes.length} incidente${incidentes.length !== 1 ? "s" : ""} — ordenados por días transcurridos (mayor primero)`
-              : undefined
-          }
-          columns={mesaDeAyudaColumns}
-          rows={incidentes}
-          rowKey={(row) => String(row.id_incidente)}
-          rowClassName={(row) =>
-            cn(row.demorado && "bg-[#dc2626]/[0.07] dark:bg-[#f87171]/[0.08]")
-          }
-          emptyLabel="Sin incidentes de Mesa de Ayuda pendientes de cierre."
-        />
+        <>
+          <StatsTable
+            title="Incidentes de Mesa de Ayuda sin cerrar"
+            subtitle={
+              filtrados.length > 0
+                ? `${filtrados.length} incidente${filtrados.length !== 1 ? "s" : ""} — ordenados por días transcurridos (mayor primero)`
+                : undefined
+            }
+            columns={mesaDeAyudaColumns}
+            rows={incidentes}
+            rowKey={(row) => String(row.id_incidente)}
+            rowClassName={(row) =>
+              cn(row.demorado && "bg-[#dc2626]/[0.07] dark:bg-[#f87171]/[0.08]")
+            }
+            emptyLabel="Sin incidentes de Mesa de Ayuda pendientes de cierre."
+          />
+          {filtrados.length > 0 && (
+            <PaginationBar
+              page={paginaActual}
+              total={filtrados.length}
+              size={PAGE_SIZE}
+              onPageChange={setPage}
+              noun="incidentes"
+            />
+          )}
+        </>
       )}
     </div>
   );

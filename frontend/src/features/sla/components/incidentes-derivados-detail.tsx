@@ -1,9 +1,15 @@
 "use client";
 
 import { FileQuestion } from "lucide-react";
-import { MIS_PST, TODOS, useIncidentesDerivados } from "../hooks/use-incidentes-derivados";
+import {
+  DERIVADOS_PAGE_SIZE,
+  MIS_PST,
+  TODOS,
+  useIncidentesDerivados,
+} from "../hooks/use-incidentes-derivados";
 import { incidentesDerivadosColumns } from "./incidentes-derivados-columns";
 import { BrandSelect } from "@/shared/components/ui/brand-form";
+import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { StatsTable } from "@/shared/components/ui/stats-table";
 import { Spinner } from "@/shared/components/ui/spinner";
 
@@ -16,6 +22,9 @@ export function IncidentesDerivadosDetail() {
     setScope,
     operadores,
     incidentes,
+    total,
+    page,
+    setPage,
     loading,
     error,
     isSuperadmin,
@@ -80,18 +89,29 @@ export function IncidentesDerivadosDetail() {
       )}
 
       {!loading && !error && (
-        <StatsTable
-          title="Incidentes sin consultar"
-          subtitle={
-            incidentes.length > 0
-              ? `${incidentes.length} incidente${incidentes.length !== 1 ? "s" : ""} — ordenados por días sin consultar (mayor primero)`
-              : undefined
-          }
-          columns={incidentesDerivadosColumns}
-          rows={incidentes}
-          rowKey={(row) => String(row.id_incidente)}
-          emptyLabel="Sin incidentes derivados sin consultar para el período y filtro seleccionados."
-        />
+        <>
+          <StatsTable
+            title="Incidentes sin consultar"
+            subtitle={
+              total > 0
+                ? `${total} incidente${total !== 1 ? "s" : ""} — ordenados por días sin consultar (mayor primero)`
+                : undefined
+            }
+            columns={incidentesDerivadosColumns}
+            rows={incidentes}
+            rowKey={(row) => String(row.id_incidente)}
+            emptyLabel="Sin incidentes derivados sin consultar para el período y filtro seleccionados."
+          />
+          {total > 0 && (
+            <PaginationBar
+              page={page}
+              total={total}
+              size={DERIVADOS_PAGE_SIZE}
+              onPageChange={setPage}
+              noun="incidentes"
+            />
+          )}
+        </>
       )}
     </div>
   );

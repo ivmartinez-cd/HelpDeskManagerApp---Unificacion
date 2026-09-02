@@ -1,10 +1,17 @@
 "use client";
 
 import { RefreshCw } from "lucide-react";
-import { MIS_PST, TODOS, formatUpdatedAt, useSlaDetail } from "../hooks/use-sla-detail";
+import {
+  INCIDENTES_PAGE_SIZE,
+  MIS_PST,
+  TODOS,
+  formatUpdatedAt,
+  useSlaDetail,
+} from "../hooks/use-sla-detail";
 import { incidenteColumns } from "./sla-incidentes-columns";
 import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
+import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
 import { StatsTable } from "@/shared/components/ui/stats-table";
 import { Spinner } from "@/shared/components/ui/spinner";
@@ -20,6 +27,9 @@ export function SlaDetail() {
     operadores,
     resumen,
     incidentes,
+    totalIncidentes,
+    page,
+    setPage,
     loading,
     refreshing,
     error,
@@ -158,6 +168,15 @@ export function SlaDetail() {
             rowKey={(row) => String(row.id_incidente)}
             emptyLabel="Sin incidentes vencidos en el período seleccionado."
           />
+          {totalIncidentes > 0 && (
+            <PaginationBar
+              page={page}
+              total={totalIncidentes}
+              size={INCIDENTES_PAGE_SIZE}
+              onPageChange={setPage}
+              noun="incidentes vencidos"
+            />
+          )}
         </div>
       )}
     </div>

@@ -8,12 +8,14 @@ import { prestadoresApi } from "@/features/prestadores/api/prestadores-api";
 import type { OperadorOption } from "@/features/prestadores/types/prestadores";
 import { useSession } from "@/services/session-provider";
 import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
+import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { StatsTable, type StatsColumn } from "@/shared/components/ui/stats-table";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { incidentUrl } from "@/shared/utils/incident-link";
 
 const MIS_PST = "__mis_pst__";
 const TODOS = "__todos__";
+const PAGE_SIZE = 100;
 
 function formatFecha(iso: string | null): string {
   if (!iso) return "—";
@@ -87,6 +89,8 @@ export function PendientesACerrarDetail() {
   const [scope, setScope] = useState<string>(MIS_PST);
   const [operadores, setOperadores] = useState<OperadorOption[]>([]);
   const [incidentes, setIncidentes] = useState<IncidenteSinCerrar[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -98,6 +102,7 @@ export function PendientesACerrarDetail() {
     setLoading(true);
     setError(null);
     setIncidentes([]);
+    setPage(1);
   }
 
   useEffect(() => {
@@ -109,10 +114,11 @@ export function PendientesACerrarDetail() {
     let active = true;
     const operadorId = scope === TODOS ? undefined : scope === MIS_PST ? undefined : scope;
     pendientesApi
-      .listPendientes({ operadorId })
-      .then((items) => {
+      .listPendientes({ operadorId, page, size: PAGE_SIZE })
+      .then((res) => {
         if (!active) return;
-        setIncidentes(items);
+        setIncidentes(res.items);
+        setTotal(res.total);
       })
       .catch((err: unknown) => {
         if (!active) return;
@@ -127,7 +133,7 @@ export function PendientesACerrarDetail() {
     return () => {
       active = false;
     };
-  }, [scope]);
+  }, [scope, page]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -135,9 +141,10 @@ export function PendientesACerrarDetail() {
     const operadorId = scope === TODOS ? undefined : scope === MIS_PST ? undefined : scope;
     pendientesApi
       .refresh()
-      .then(() => pendientesApi.listPendientes({ operadorId }))
-      .then((items) => {
-        setIncidentes(items);
+      .then(() => pendientesApi.listPendientes({ operadorId, page, size: PAGE_SIZE }))
+      .then((res) => {
+        setIncidentes(res.items);
+        setTotal(res.total);
         setUpdatedAt(new Date().toISOString());
       })
       .catch((err: unknown) => {
@@ -210,18 +217,29 @@ export function PendientesACerrarDetail() {
       )}
 
       {!loading && !error && (
-        <StatsTable
-          title="Incidentes pendientes a cerrar"
-          subtitle={
-            incidentes.length > 0
-              ? `${incidentes.length} incidente${incidentes.length !== 1 ? "s" : ""} — ordenados por días sin cerrar (mayor primero)`
-              : undefined
-          }
-          columns={columns}
-          rows={incidentes}
-          rowKey={(row) => String(row.id_incidente)}
-          emptyLabel="Sin incidentes pendientes a cerrar para el filtro seleccionado."
-        />
+        <>
+          <StatsTable
+            title="Incidentes pendientes a cerrar"
+            subtitle={
+              total > 0
+                ? `${total} incidente${total !== 1 ? "s" : ""} — ordenados por días sin cerrar (mayor primero)`
+                : undefined
+            }
+            columns={columns}
+            rows={incidentes}
+            rowKey={(row) => String(row.id_incidente)}
+            emptyLabel="Sin incidentes pendientes a cerrar para el filtro seleccionado."
+          />
+          {total > 0 && (
+            <PaginationBar
+              page={page}
+              total={total}
+              size={PAGE_SIZE}
+              onPageChange={setPage}
+              noun="incidentes"
+            />
+          )}
+        </>
       )}
     </div>
   );

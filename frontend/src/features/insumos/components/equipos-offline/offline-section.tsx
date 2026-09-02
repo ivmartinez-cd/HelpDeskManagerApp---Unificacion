@@ -3,11 +3,18 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
+import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import type { SortState } from "../../hooks/use-table-sort";
 import type { OfflineDeviceRow } from "../../types";
 import type { OfflineGroup, OfflineSortKey } from "./offline-utils";
 import { OFFLINE_GROUP_META } from "./offline-utils";
 import { OfflineDevicesTable } from "./offline-devices-table";
+
+/** Filas por página dentro de cada sección colapsable: evita el scroll
+ * interminable en grupos grandes (ej. "Bodega" con cientos de equipos) sin
+ * pedirle una página nueva al backend — ya se trajo todo el listado en
+ * `useOfflineDevices` (ver comentario ahí sobre filtrado client-side). */
+const PAGE_SIZE = 25;
 
 interface OfflineSectionProps {
   group: OfflineGroup;
@@ -40,8 +47,12 @@ export function OfflineSection({
 }: OfflineSectionProps) {
   const meta = OFFLINE_GROUP_META[group];
   const [open, setOpen] = useState(meta.defaultExpanded && rows.length > 0);
+  const [page, setPage] = useState(1);
 
   const ChevronIcon = open ? ChevronDown : ChevronRight;
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = rows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const isOutageSection = group === "caida_colector";
   const isBodegaSection = group === "bodega";
@@ -77,7 +88,7 @@ export function OfflineSection({
       {open && rows.length > 0 && (
         <div className="border-t border-border">
           <OfflineDevicesTable
-            rows={rows}
+            rows={pageRows}
             sort={sort}
             onToggleSort={onToggleSort}
             canUpdate={canUpdate}
@@ -87,6 +98,16 @@ export function OfflineSection({
             onToggleSelect={onToggleSelect}
             onToggleDismissed={onToggleDismissed}
           />
+          {rows.length > PAGE_SIZE && (
+            <PaginationBar
+              page={currentPage}
+              total={rows.length}
+              size={PAGE_SIZE}
+              onPageChange={setPage}
+              noun="equipos"
+              className="border-t border-border px-4 py-2"
+            />
+          )}
         </div>
       )}
 

@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, ShieldAlert } from "lucide-react";
 import { ApiError } from "@/services/http-client";
 import { BrandEmptyState, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
+import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { asistenciasApi } from "../api/asistencias-api";
@@ -11,6 +12,8 @@ import { formatFecha, iniciales } from "../lib/fechas";
 import { TIPO_AUSENCIA, horarioTexto } from "../lib/tipos-ausencia";
 import type { Ausencia, TipoAusencia } from "../types/vacaciones";
 import { SolicitudEstadoBadge } from "./solicitud-estado-badge";
+
+const PAGE_SIZE = 25;
 
 type AusenciaSortKey = "empleado" | "fecha" | "tipo" | "duracion";
 const AUSENCIA_SORT_KEYS: readonly AusenciaSortKey[] = ["empleado", "fecha", "tipo", "duracion"];
@@ -48,6 +51,7 @@ export function AsistenciasListado({
     descFirstKeys: ["fecha"],
   });
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const anios = useMemo(() => {
     const desde = 2017;
@@ -70,6 +74,14 @@ export function AsistenciasListado({
       compareSortValues(ausenciaSortValue(a, sort.key), ausenciaSortValue(b, sort.key), sort.direction),
     );
   }, [ausencias, busqueda, tipo, anio, sort]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [busqueda, tipo, anio, sort]);
+
+  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / PAGE_SIZE));
+  const paginaActual = Math.min(page, totalPaginas);
+  const visibles = filtradas.slice((paginaActual - 1) * PAGE_SIZE, paginaActual * PAGE_SIZE);
 
   const eliminar = (a: Ausencia) => {
     if (!window.confirm(`¿Eliminar la baja de ${a.empleadoNombre}?`)) return;
@@ -147,7 +159,7 @@ export function AsistenciasListado({
               </tr>
             </thead>
             <tbody>
-              {filtradas.map((a) => (
+              {visibles.map((a) => (
                 <tr key={a.id} className="border-b border-border/60 last:border-0">
                   <td className="px-4 py-3">
                     <span className="flex items-center gap-2.5">
@@ -212,6 +224,16 @@ export function AsistenciasListado({
             </tbody>
           </table>
         </div>
+      )}
+
+      {filtradas.length > 0 && (
+        <PaginationBar
+          page={paginaActual}
+          total={filtradas.length}
+          size={PAGE_SIZE}
+          onPageChange={setPage}
+          noun="bajas"
+        />
       )}
     </div>
   );

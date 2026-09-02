@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PrinterCheck, RefreshCw } from "lucide-react";
 import { BrandButton, BrandEmptyState, BrandSkeleton } from "@/shared/components/ui/brand-form";
+import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { useSession } from "@/services/session-provider";
 import { ConfirmationModal, StatusBadge } from "../shared";
 import { formatArgTime } from "../../utils/format";
@@ -30,6 +31,9 @@ import {
  * backlog histórico tapa lo accionable. */
 
 const CURRENT_YEAR = String(new Date().getFullYear());
+/** Filas por página al mostrar el listado ya filtrado/ordenado client-side
+ * (ver comentario en `useNewDevices` sobre por qué se trae todo de una). */
+const PAGE_SIZE = 25;
 
 export function NewDevicesView() {
   const { can, user } = useSession();
@@ -89,6 +93,10 @@ export function NewDevicesView() {
   }, [rows, query, year, showDismissed, sort]);
 
   const hasFilters = query.trim() !== "" || year !== ALL_YEARS || !showDismissed;
+
+  const [page, setPage] = useState(1);
+  useEffect(() => setPage(1), [query, year, showDismissed, sort]);
+  const pageRows = visibleRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="p-6 lg:p-10">
@@ -157,13 +165,23 @@ export function NewDevicesView() {
       ) : (
         <>
           <NewDevicesTable
-            rows={visibleRows}
+            rows={pageRows}
             sort={sort}
             onToggleSort={toggleSort}
             canUpdate={canUpdate}
             busyDeviceId={busyDeviceId}
             onToggleDismissed={(device, dismissed) => void setDismissed(device, dismissed)}
           />
+          {visibleRows.length > PAGE_SIZE && (
+            <PaginationBar
+              page={page}
+              total={visibleRows.length}
+              size={PAGE_SIZE}
+              onPageChange={setPage}
+              noun="equipos"
+              className="mt-2"
+            />
+          )}
           <p className="mt-3 font-body text-xs text-muted-foreground">
             Mostrando {visibleRows.length} de {rows.length} equipo(s). La lista se actualiza sola
             cada 5 minutos.

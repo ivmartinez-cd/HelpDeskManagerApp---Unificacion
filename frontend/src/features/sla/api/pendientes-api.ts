@@ -9,13 +9,19 @@ export const pendientesApi = {
     return httpClient.get<PendientesResumen>(`/api/sla/pendientes-a-cerrar/resumen${qs}`);
   },
 
-  listPendientes: (params?: { operadorId?: string; prestadorId?: number }) => {
-    const p = new URLSearchParams({ size: "500" });
+  listPendientes: (params?: {
+    operadorId?: string;
+    prestadorId?: number;
+    page?: number;
+    size?: number;
+  }) => {
+    const p = new URLSearchParams({
+      page: String(params?.page ?? 1),
+      size: String(params?.size ?? 100),
+    });
     if (params?.operadorId) p.set("operadorId", params.operadorId);
     if (params?.prestadorId != null) p.set("prestadorId", String(params.prestadorId));
-    return httpClient
-      .get<Page<IncidenteSinCerrar>>(`/api/sla/pendientes-a-cerrar?${p.toString()}`)
-      .then((page) => page.items);
+    return httpClient.get<Page<IncidenteSinCerrar>>(`/api/sla/pendientes-a-cerrar?${p.toString()}`);
   },
 
   refresh: () =>

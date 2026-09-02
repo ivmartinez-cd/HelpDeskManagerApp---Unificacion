@@ -25,6 +25,8 @@ function scopeToOperadorId(scope: string): string | undefined {
   return scope === MIS_PST || scope === TODOS ? undefined : scope;
 }
 
+export const DERIVADOS_PAGE_SIZE = 100;
+
 export function useIncidentesDerivados() {
   const { user, can } = useSession();
   const canVerOperadores = user.isSuperadmin || can("prestadores", "view");
@@ -33,6 +35,8 @@ export function useIncidentesDerivados() {
   const [scope, setScope] = useState<string>(MIS_PST);
   const [operadores, setOperadores] = useState<OperadorOption[]>([]);
   const [incidentes, setIncidentes] = useState<IncidenteDerivado[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +47,7 @@ export function useIncidentesDerivados() {
     setLoading(true);
     setError(null);
     setIncidentes([]);
+    setPage(1);
   }
 
   useEffect(() => {
@@ -54,10 +59,15 @@ export function useIncidentesDerivados() {
     let active = true;
     const periodo = monthValueToPeriodo(monthValue);
     derivadosApi
-      .listIncidentes(periodo, { operadorId: scopeToOperadorId(scope) })
-      .then((items) => {
+      .listIncidentes(periodo, {
+        operadorId: scopeToOperadorId(scope),
+        page,
+        size: DERIVADOS_PAGE_SIZE,
+      })
+      .then((res) => {
         if (!active) return;
-        setIncidentes(items);
+        setIncidentes(res.items);
+        setTotal(res.total);
       })
       .catch((err: unknown) => {
         if (!active) return;
@@ -72,7 +82,7 @@ export function useIncidentesDerivados() {
     return () => {
       active = false;
     };
-  }, [monthValue, scope]);
+  }, [monthValue, scope, page]);
 
   return {
     canVerOperadores,
@@ -82,6 +92,9 @@ export function useIncidentesDerivados() {
     setScope,
     operadores,
     incidentes,
+    total,
+    page,
+    setPage,
     loading,
     error,
     isSuperadmin: user.isSuperadmin,

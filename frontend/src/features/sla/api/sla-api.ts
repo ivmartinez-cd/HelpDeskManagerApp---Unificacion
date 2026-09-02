@@ -23,12 +23,10 @@ export const slaApi = {
   getResumen: (periodo: string) =>
     httpClient.get<SlaResumen>(`/api/sla/resumen?periodo=${periodo}`),
 
-  listIncidentesVencidos: (periodo: string, filtro?: FiltroOperador) =>
-    httpClient
-      .get<Page<IncidenteVencido>>(
-        `/api/sla/incidentes-vencidos?periodo=${periodo}&size=500${filtroQuery(filtro)}`,
-      )
-      .then((p) => p.items),
+  listIncidentesVencidos: (periodo: string, filtro?: FiltroOperador, page = 1, size = 100) =>
+    httpClient.get<Page<IncidenteVencido>>(
+      `/api/sla/incidentes-vencidos?periodo=${periodo}&page=${page}&size=${size}${filtroQuery(filtro)}`,
+    ),
 
   refreshResumen: (periodo: string) =>
     httpClient.post<SlaResumen>(`/api/sla/actualizar?periodo=${periodo}`),

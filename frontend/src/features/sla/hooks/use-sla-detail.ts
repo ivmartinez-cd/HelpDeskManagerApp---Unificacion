@@ -35,6 +35,8 @@ function monthValueToPeriodo(value: string): string {
   return value.replace("-", "");
 }
 
+export const INCIDENTES_PAGE_SIZE = 100;
+
 export function useSlaDetail() {
   const { user, can } = useSession();
   const canUpdate = user.isSuperadmin || can("sla", "update");
@@ -45,6 +47,8 @@ export function useSlaDetail() {
   const [operadores, setOperadores] = useState<OperadorOption[]>([]);
   const [resumen, setResumen] = useState<SlaResumen | null>(null);
   const [incidentes, setIncidentes] = useState<IncidenteVencido[]>([]);
+  const [totalIncidentes, setTotalIncidentes] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +64,7 @@ export function useSlaDetail() {
     setError(null);
     setResumen(null);
     setIncidentes([]);
+    setPage(1);
   }
 
   useEffect(() => {
@@ -71,11 +76,15 @@ export function useSlaDetail() {
     let active = true;
     const periodo = monthValueToPeriodo(monthValue);
     const filtro = scopeToFiltro(scope);
-    Promise.all([slaApi.getResumen(periodo), slaApi.listIncidentesVencidos(periodo, filtro)])
+    Promise.all([
+      slaApi.getResumen(periodo),
+      slaApi.listIncidentesVencidos(periodo, filtro, page, INCIDENTES_PAGE_SIZE),
+    ])
       .then(([res, inc]) => {
         if (!active) return;
         setResumen(res);
-        setIncidentes(inc);
+        setIncidentes(inc.items);
+        setTotalIncidentes(inc.total);
       })
       .catch((err: unknown) => {
         if (!active) return;
@@ -88,7 +97,7 @@ export function useSlaDetail() {
     return () => {
       active = false;
     };
-  }, [monthValue, scope]);
+  }, [monthValue, scope, page]);
 
   const handleRefresh = () => {
     const periodo = monthValueToPeriodo(monthValue);
@@ -98,11 +107,15 @@ export function useSlaDetail() {
     slaApi
       .refreshResumen(periodo)
       .then(() =>
-        Promise.all([slaApi.getResumen(periodo), slaApi.listIncidentesVencidos(periodo, filtro)]),
+        Promise.all([
+          slaApi.getResumen(periodo),
+          slaApi.listIncidentesVencidos(periodo, filtro, page, INCIDENTES_PAGE_SIZE),
+        ]),
       )
       .then(([res, inc]) => {
         setResumen(res);
-        setIncidentes(inc);
+        setIncidentes(inc.items);
+        setTotalIncidentes(inc.total);
       })
       .catch((err: unknown) => {
         console.error("Error al actualizar el SLA:", err);
@@ -121,6 +134,9 @@ export function useSlaDetail() {
     operadores,
     resumen,
     incidentes,
+    totalIncidentes,
+    page,
+    setPage,
     loading,
     refreshing,
     error,

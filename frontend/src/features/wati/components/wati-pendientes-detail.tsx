@@ -4,6 +4,7 @@ import { AlertTriangle, MessageCircle, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { useSession } from "@/services/session-provider";
 import { BrandButton, BrandStatTile } from "@/shared/components/ui/brand-form";
+import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { StatsTable, type StatsColumn } from "@/shared/components/ui/stats-table";
 import { watiApi } from "../api/wati-api";
@@ -25,6 +26,8 @@ function formatHora(iso: string | null): string {
     { hour: "2-digit", minute: "2-digit" },
   )}`;
 }
+
+const PAGE_SIZE = 25;
 
 const columns: StatsColumn<ConversacionPendiente>[] = [
   {
@@ -86,6 +89,7 @@ export function WatiPendientesDetail() {
   const { resumen, pendientes, loading, error, refetch } = useWatiPendientes();
   const [sincronizando, setSincronizando] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   async function sincronizar() {
     setSincronizando(true);
@@ -101,6 +105,8 @@ export function WatiPendientesDetail() {
   }
 
   const vencida = resumen ? sincronizacionVencida(resumen.sincronizado_at) : false;
+  const totalPaginas = Math.max(1, Math.ceil(pendientes.length / PAGE_SIZE));
+  const paginaActual = Math.min(page, totalPaginas);
 
   return (
     <div className="flex flex-col gap-5 px-7 py-4">
@@ -165,14 +171,25 @@ export function WatiPendientesDetail() {
       ) : error ? (
         <p className="font-body text-sm text-destructive">{error}</p>
       ) : (
-        <StatsTable
-          title="Chats esperando respuesta"
-          subtitle="Del más antiguo al más nuevo. Se actualiza solo cada minuto."
-          columns={columns}
-          rows={pendientes}
-          rowKey={(row) => row.wa_id}
-          emptyLabel="Sin chats esperando respuesta."
-        />
+        <>
+          <StatsTable
+            title="Chats esperando respuesta"
+            subtitle="Del más antiguo al más nuevo. Se actualiza solo cada minuto."
+            columns={columns}
+            rows={pendientes.slice((paginaActual - 1) * PAGE_SIZE, paginaActual * PAGE_SIZE)}
+            rowKey={(row) => row.wa_id}
+            emptyLabel="Sin chats esperando respuesta."
+          />
+          {pendientes.length > 0 && (
+            <PaginationBar
+              page={paginaActual}
+              total={pendientes.length}
+              size={PAGE_SIZE}
+              onPageChange={setPage}
+              noun="chats"
+            />
+          )}
+        </>
       )}
     </div>
   );
