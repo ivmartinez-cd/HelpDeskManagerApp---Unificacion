@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight, ExternalLink, Route } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { incidentUrl } from "@/shared/utils/incident-link";
 import type { Alerta, Incidente } from "../types/liquidaciones";
-import { formatARS, formatFecha } from "../lib/format";
+import { formatARS, formatFechaDia } from "../lib/format";
 import { AlertaSubRow } from "./alerta-sub-row";
 import { EstadoValidacionBadge, TipoBadge } from "./incidente-badges";
 
@@ -138,7 +138,7 @@ export function IncidenteRow({
           {diff !== null ? formatARS(diff) : "—"}
         </td>
         <td className={`${tdCls} text-muted-foreground`}>
-          {incidente.fechaCierre ? formatFecha(incidente.fechaCierre) : "—"}
+          {incidente.fechaCierre ? formatFechaDia(incidente.fechaCierre) : "—"}
         </td>
         <td className={tdCls}>
           <EstadoValidacionBadge estado={incidente.estadoValidacion} />
