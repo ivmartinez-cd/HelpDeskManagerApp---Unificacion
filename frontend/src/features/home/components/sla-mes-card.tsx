@@ -10,12 +10,12 @@ import {
   Tooltip,
 } from "chart.js";
 import { Gauge, RotateCw } from "lucide-react";
-import { useTheme } from "next-themes";
 import { useEffect, useMemo, useState } from "react";
 import { Line } from "react-chartjs-2";
 import { toast } from "sonner";
 import { slaApi } from "@/features/sla/api/sla-api";
 import { useSession } from "@/services/session-provider";
+import { useTheme } from "@/shared/components/theme-provider";
 import { cn } from "@/shared/utils/cn";
 import type { SlaHistoria } from "../hooks/use-inicio-data";
 import { chartTheme } from "../utils/chart-theme";

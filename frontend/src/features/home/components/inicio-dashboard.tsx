@@ -65,13 +65,13 @@ export function InicioDashboard() {
           <h1 className="font-heading text-[22px] font-extrabold leading-none text-foreground short:text-[20px]">
             Inicio
           </h1>
-          {/* Texto dependiente del reloj/locale del cliente: el SSR puede
-              diferir (ICU del contenedor, segundos) — se acepta el del cliente. */}
-          <p className="font-body text-[12.5px] text-muted-foreground" suppressHydrationWarning>
-            {fechaLarga(now)}
-            <span className="mx-1.5 opacity-50">·</span>
-            actualizado {textoHace(data.refreshedAt.toISOString(), now.getTime())}
-          </p>
+          {now && (
+            <p className="font-body text-[12.5px] text-muted-foreground">
+              {fechaLarga(now)}
+              <span className="mx-1.5 opacity-50">·</span>
+              actualizado {textoHace(data.refreshedAt.toISOString(), now.getTime())}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center justify-end gap-1.5">
           <AccesosDirectos />

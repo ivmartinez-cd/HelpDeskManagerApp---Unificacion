@@ -30,7 +30,7 @@ export function MiTurnoBanner({
   const { user } = useSession();
   const now = useNow(30_000);
 
-  if (loading) return null;
+  if (loading || !now) return null;
   const propios = shifts.filter((s) => s.operadores.some((o) => o.userId === user.id));
   if (propios.length === 0) return null;
 

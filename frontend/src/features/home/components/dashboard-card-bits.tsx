@@ -58,6 +58,7 @@ export function Freshness({
   className?: string;
 }) {
   const now = useNow(30_000);
+  if (!now) return null;
   const mins = minutosDesde(at, now.getTime());
   const stale = staleAfterMin !== undefined && (mins === null || mins > staleAfterMin);
   return (

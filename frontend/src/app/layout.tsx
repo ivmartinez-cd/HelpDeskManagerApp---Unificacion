@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Outfit, Montserrat, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 
-import { ThemeProvider } from "@/shared/components/theme-provider";
+import { ThemeProvider, ThemeScript } from "@/shared/components/theme-provider";
 import { Toaster } from "sonner";
 
 const outfit = Outfit({
@@ -53,11 +53,14 @@ export default function RootLayout({
       className={`${outfit.variable} ${montserrat.variable} ${sourceSans.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <ThemeScript />
+      </head>
       <body
         className="min-h-full bg-background text-foreground transition-colors duration-300"
         suppressHydrationWarning
       >
-        <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
+        <ThemeProvider>
           <a
             href="#main-content"
             className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-6 focus:py-3 focus:bg-accent focus:text-accent-foreground focus:rounded-xl focus:font-bold focus:shadow-2xl focus:outline-none transition-all"

@@ -31,9 +31,9 @@ export function TurnosTimelineCard({
     [shifts],
   );
   const { start, end } = ejeHorario(timelineShifts);
-  const nowH = now.getHours() + now.getMinutes() / 60;
-  const inHours = nowH >= start && nowH <= end;
-  const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const nowH = now ? now.getHours() + now.getMinutes() / 60 : null;
+  const inHours = nowH !== null && nowH >= start && nowH <= end;
+  const hhmm = now ? `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}` : null;
 
   return (
     <DashboardCard
@@ -55,20 +55,22 @@ export function TurnosTimelineCard({
               Grilla de vacaciones hasta el {formatDiaMes(varianteActiva.hasta)}
             </span>
           )}
-          <span
-            className={
-              inHours
-                ? "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-success/[0.13] px-2.5 py-1 font-heading text-[10.5px] font-bold text-success"
-                : "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 font-heading text-[10.5px] font-bold text-muted-foreground"
-            }
-          >
+          {hhmm && (
             <span
               className={
-                inHours ? "h-1.5 w-1.5 rounded-full bg-success" : "h-1.5 w-1.5 rounded-full bg-muted-foreground"
+                inHours
+                  ? "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-success/[0.13] px-2.5 py-1 font-heading text-[10.5px] font-bold text-success"
+                  : "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 font-heading text-[10.5px] font-bold text-muted-foreground"
               }
-            />
-            {inHours ? `Ahora ${hhmm}` : `Fuera de horario · ${hhmm}`}
-          </span>
+            >
+              <span
+                className={
+                  inHours ? "h-1.5 w-1.5 rounded-full bg-success" : "h-1.5 w-1.5 rounded-full bg-muted-foreground"
+                }
+              />
+              {inHours ? `Ahora ${hhmm}` : `Fuera de horario · ${hhmm}`}
+            </span>
+          )}
         </div>
       }
     >
