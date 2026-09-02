@@ -255,8 +255,13 @@ test.describe("Módulo de Liquidaciones", () => {
     await expect(page.getByText("42")).toBeVisible();
     // KPI de alertas cuenta pendientes/en_revision en vivo sobre `alertas`
     // (fix 8272396), no el liquidacion.totalAlertas=3 fijado al importar —
-    // el fixture ALERTA trae una sola alerta en estado "pendiente".
-    await expect(page.getByText("1", { exact: true })).toBeVisible();
+    // el fixture ALERTA trae una sola alerta en estado "pendiente". El valor
+    // "1" solo, sin scopear al tile, matchea otros "1" de la página (celdas
+    // de tabla, contador de issues de Next dev overlay).
+    const alertasTileValor = page
+      .getByText("Alertas", { exact: true })
+      .locator("xpath=following-sibling::span");
+    await expect(alertasTileValor).toHaveText("1");
     await expect(page.getByRole("button", { name: "↻ Reanalizar" })).toBeVisible();
     await expect(page.getByRole("link", { name: "← Lista de liquidaciones" })).toBeVisible();
   });
