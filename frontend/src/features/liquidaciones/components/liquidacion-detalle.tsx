@@ -123,6 +123,14 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
     return acc;
   }, {});
   const incConAlertas = Object.keys(alertasByInc).length;
+  // `liquidacion.totalAlertas` es el contador que fija el motor de reglas al
+  // importar/reanalizar (cuántas alertas generó esa corrida) — no baja cuando
+  // la TL resuelve/descarta una alerta individual (ver ActualizarEstadoAlerta,
+  // que no lo toca). El KPI del header muestra alertas pendientes de revisión,
+  // así que se calcula acá sobre `alertas` (siempre fresco tras cada `load()`).
+  const alertasPendientes = alertas.filter(
+    (a) => a.estado === "pendiente" || a.estado === "en_revision",
+  ).length;
   const correctivos = incidentes.filter((i) => i.tipo.toLowerCase() !== "preventivo");
   const preventivos = incidentes.filter((i) => i.tipo.toLowerCase() === "preventivo");
 
@@ -138,6 +146,7 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
       {/* Header */}
       <LiquidacionDetalleHeader
         liquidacion={liquidacion}
+        alertasPendientes={alertasPendientes}
         pst={pst}
         reanalizing={reanalizing}
         onReanalizar={() => void handleReanalizar()}

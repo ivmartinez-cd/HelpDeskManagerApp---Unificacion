@@ -14,6 +14,7 @@ import { KpiTile } from "./kpi-tile";
 
 export function LiquidacionDetalleHeader({
   liquidacion,
+  alertasPendientes,
   pst,
   reanalizing,
   onReanalizar,
@@ -23,6 +24,10 @@ export function LiquidacionDetalleHeader({
   onAnulado,
 }: {
   liquidacion: Liquidacion;
+  /** Alertas en estado pendiente/en_revision — a diferencia de
+   * `liquidacion.totalAlertas` (fijo por el motor de reglas al importar/reanalizar),
+   * baja en vivo cuando la TL resuelve o descarta una alerta. */
+  alertasPendientes: number;
   pst: PrestadorLiquidacion | undefined;
   reanalizing: boolean;
   onReanalizar: () => void;
@@ -96,8 +101,8 @@ export function LiquidacionDetalleHeader({
           <KpiTile
             icon={<AlertTriangle size={16} />}
             label="Alertas"
-            value={liquidacion.totalAlertas.toLocaleString("es-AR")}
-            warn={liquidacion.totalAlertas > 0}
+            value={alertasPendientes.toLocaleString("es-AR")}
+            warn={alertasPendientes > 0}
           />
           <KpiTile
             icon={<DollarSign size={16} />}
