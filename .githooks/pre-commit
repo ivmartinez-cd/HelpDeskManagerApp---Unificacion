@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
-# pre-commit — dos controles rápidos (≈2 s):
+# pre-commit — un solo control local, barato (≈5 s en este disco):
 #  1) No commitear trabajo AJENO: si hay varias sesiones de Claude sobre este checkout, el
 #     registro .claude/sessions/edits.tsv sabe quién editó cada archivo por última vez. Si un
 #     archivo staged fue editado más recientemente por OTRA sesión, se rechaza el commit.
 #     Override consciente: ALLOW_FOREIGN=1 git commit …   (o sacar el archivo del stage).
-#  1b) §4 tamaños (scripts/check_sizes.py --staged) y §6/§8/§11 (scripts/check_guards.py --staged): solo
-#      casos fuera del inventario congelado (scripts/*-baseline.json).
-#  2) Backend: lint-imports + ruff (archivos staged) + mypy, dentro del contenedor. El pytest
-#     completo corre en pre-push (make check).
-# Saltear todo: git commit --no-verify (solo si sabés por qué).
+#  2) Backend: ruff sobre los .py staged, dentro del contenedor (sintaxis, imports sin usar,
+#     etc.). Es lo único que corre acá.
+#
+# Lo que YA NO corre acá (2026-09-02; medido con la máquina ociosa sobre el HDD USB:
+# lint-imports 42 s, mypy 108 s, sizes+guards 29 s — con 3-4 sesiones de Claude en paralelo
+# cada commit dejaba el disco saturado varios minutos): lint-imports, mypy y los gates
+# §4/§6/§8/§11. Todo eso lo corre GitHub Actions (.github/workflows/ci.yml) en cada push, con
+# su propio disco/CPU. Quien pushea sigue la corrida con `make ci` (gh run watch) y arregla si
+# queda rojo.
+# Saltear: git commit --no-verify (solo si sabés por qué).
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
 
@@ -48,24 +53,14 @@ if [[ -f "$REG" ]]; then
   fi
 fi
 
-# --- 1b) §4 tamaños sobre lo staged (ARCHITECTURE_GUIDE §4, inventario congelado ADR-017/020) --
-if grep -qE '^(backend|frontend)/src/' <<<"$staged"; then
-  python3 scripts/check_sizes.py --staged || { red "§4 tamaños (archivos staged): dividir antes de commitear"; exit 1; }
-  python3 scripts/check_guards.py --staged || { red "§6/§8/§11 (archivos staged): ver mensaje de arriba"; exit 1; }
-fi
-
-# --- 2) backend: lint-imports + ruff + mypy -----------------------------------
-if grep -q '^backend/' <<<"$staged"; then
+# --- 2) backend: ruff sobre los .py staged (lint-imports / mypy / gates corren en CI) --------
+pyfiles=$(grep -E '^backend/.*\.py$' <<<"$staged" | sed 's#^backend/##' | tr '\n' ' ')
+if [[ -n "${pyfiles// /}" ]]; then
   if docker exec "$BACKEND" true 2>/dev/null; then
-    out=$(docker exec "$BACKEND" uv run lint-imports 2>&1) || { red "lint-imports"; echo "$out" | tail -20; exit 1; }
-    pyfiles=$(grep -E '^backend/.*\.py$' <<<"$staged" | sed 's#^backend/##' | tr '\n' ' ')
-    if [[ -n "${pyfiles// /}" ]]; then
-      # shellcheck disable=SC2086
-      docker exec "$BACKEND" uv run ruff check $pyfiles || { red "ruff (archivos staged)"; exit 1; }
-    fi
-    out=$(docker exec "$BACKEND" uv run mypy src 2>&1) || { red "mypy src"; echo "$out" | tail -20; exit 1; }
+    # shellcheck disable=SC2086
+    docker exec "$BACKEND" uv run ruff check $pyfiles || { red "ruff (archivos staged)"; exit 1; }
   else
-    yel "pre-commit: el contenedor $BACKEND no responde — salteo lint-imports/ruff/mypy. Correr 'make check' antes de pushear."
+    yel "pre-commit: el contenedor $BACKEND no responde — salteo ruff. CI lo corre en el push."
   fi
 fi
 exit 0

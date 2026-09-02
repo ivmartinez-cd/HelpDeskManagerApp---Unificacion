@@ -80,30 +80,43 @@ en una auditoría aparte. Concretamente:
 - **Tamaños máximos (§4)**: archivo ≤300 líneas, clase ≤200, función ≤20. Si un archivo se pasa,
   separar en módulos por responsabilidad en el momento, no siguiendo agregando al mismo archivo.
 - **Verificación antes de dar por terminado un módulo** (no solo al final de todo el proyecto):
-  correr, dentro del contenedor del backend —
+  la verificación completa la corre **GitHub Actions en cada push** (`.github/workflows/ci.yml`:
+  `lint-imports`, `ruff`, `mypy`, pytest unit + integración, gates §4/§6/§8/§11, eslint, `tsc`
+  y la suite de Playwright). Localmente solo se corre lo barato y acotado al módulo tocado —
   ```
-  uv run lint-imports   # contratos de capas/módulos — la regla más importante, no es opinable
-  uv run ruff check src tests
-  uv run mypy src
-  uv run pytest tests/unit -q
+  uv run ruff check <archivos tocados>     # segundos, dentro del contenedor del backend
+  make test-module M=<modulo>              # OPCIONAL: pytest unit solo de tests/unit/*/<modulo>
   ```
-  Si algo de esto falla, no está terminado. `lint-imports` en particular es la única forma
-  confiable de verificar la dirección de dependencias entre capas — no alcanza con revisar a
-  ojo. Atajo equivalente desde la raíz del repo (WSL): `make check` (corre los cuatro más
-  `test-integration`/`sizes`/`guards` dentro del contenedor); el `pre-push` de git corre la
-  variante `make check-fast` (sin `test-integration`, que pega contra Postgres real — ver
-  "Guardas automáticas de git" más abajo) antes de cada push.
+  — y al pushear se sigue la corrida de CI con `make ci` (`gh run watch`); si queda rojo, se
+  arregla y se vuelve a pushear. Si CI falla, no está terminado. **No correr local** `make check`,
+  `make check-fast`, `uv run lint-imports`, `uv run mypy src`, `uv run pytest tests/unit`
+  completo ni Playwright salvo pedido explícito del usuario: medido el 2026-09-02 con la
+  máquina ociosa sobre el HDD USB, lint-imports 42 s, mypy 108 s, pytest unit 101 s,
+  sizes+guards 29 s — con 3-4 sesiones de Claude en paralelo cada corrida saturaba el disco y
+  freezaba las demás terminales. `lint-imports` sigue siendo la regla más importante y no es
+  opinable: la hace cumplir CI, no el ojo. `make test-module` también es caro en este disco
+  (contadores, 286 tests: pytest dice 32 s pero la corrida tarda ≈2 min de reloj por el
+  arranque de `uv` y los imports desde el HDD): usarlo cuando el cambio lo amerite, no por
+  rutina; ruff sí, siempre.
 - Las desviaciones conscientes del texto literal de la guía se documentan como ADR en
   `backend/docs/adr/` (ver `007-vocabulario-de-permisos-en-shared-excepcion-de-presentation.md`
   como ejemplo) — una excepción sin ADR es una violación, no una decisión.
 
-## Sin hot reload en los contenedores: los cambios de código requieren restart explícito
+## Frontend recarga solo; el backend requiere restart explícito
 
-Desde 2026-08-13 (commit `e0576cd`) ni el backend ni el frontend recargan código solos —
-decisión deliberada, no una limitación: el `--reload` de uvicorn podía relanzar los background
-jobs con cada guardado (así se disparó el mail real del incidente 2026-08-12). El código sigue
-bind-monteado (`./backend:/app`, `./frontend:/app`), pero editar un archivo **no tiene ningún
-efecto** hasta reiniciar el contenedor.
+**Frontend: NO reiniciar.** Desde el 2026-09-02 el contenedor corre `next dev` (Fast Refresh),
+así que editar un archivo de `frontend/` se refleja solo en ~2 s. La app es un entorno de
+pruebas que los compañeros del usuario usan mientras él corrige cosas en vivo: modo dev es el
+estado correcto, no un parche. Antes corría `next build && next start` en cada arranque, y
+`reiniciar.sh frontend` re-corría ese build completo tras cada edición: medido el 2026-09-02,
+~3 min por vuelta con la presión de I/O del WSL en `full avg10=89%` (el 89% del tiempo TODAS las
+tareas del sistema bloqueadas esperando el HDD USB, con CPU y RAM casi libres). Eso era lo que
+freezaba las demás terminales en cada implementación.
+
+**Backend: sí reiniciar.** Uvicorn corre sin `--reload` — decisión deliberada, no una
+limitación: el `--reload` relanzaba los background jobs con cada guardado y así se disparó el
+mail real del incidente 2026-08-12. El código sigue bind-monteado (`./backend:/app`), pero
+editar un archivo de `backend/` **no tiene ningún efecto** hasta reiniciar el contenedor.
 
 **Docker corre en WSL (Ubuntu-24.04), no en Windows.** Desde 2026-08-21 el repo se edita
 **directo en la copia de Linux** (`/home/ivan/proyectos/helpdesk-manager`, la misma que montan
@@ -113,8 +126,8 @@ a recordar tras editar es `scripts/wsl/reiniciar.sh`, corrido desde una terminal
 el repo:
 
 ```
-bash scripts/wsl/reiniciar.sh frontend
-bash scripts/wsl/reiniciar.sh backend
+bash scripts/wsl/reiniciar.sh backend          # tras editar backend/
+# tras editar frontend/: NADA, Fast Refresh lo recompila solo
 ```
 
 - **Backend** (`helpdesk-manager-backend`): uvicorn corre sin `--reload`. Tras editar
@@ -123,10 +136,15 @@ bash scripts/wsl/reiniciar.sh backend
   `true` y avisa si el log muestra jobs iniciados. Recordar que `docker restart` NO relee
   `.env` — para cambios de variables de entorno hace falta, parado en
   `/home/ivan/proyectos/helpdesk-manager`, `docker compose up -d --force-recreate backend`.
-- **Frontend** (`helpdesk-manager-frontend`): el contenedor corre `next build && next start`
-  (build de producción al arrancar). Tras editar `frontend/`, `reiniciar.sh frontend` re-corre
-  el build completo — tarda bastante más que un dev server; el script espera a que `/login`
-  vuelva a responder 200 antes de devolver.
+- **Frontend** (`helpdesk-manager-frontend`): corre `next dev` (Fast Refresh). Tras editar
+  `frontend/` **no hay que hacer nada**: la ruta se recompila sola en ~2 s (medido con el disco
+  ocioso) y el navegador la toma al recargar. `reiniciar.sh frontend` detecta el modo dev, avisa
+  y no reinicia; `reiniciar.sh frontend --force` fuerza el restart para los casos que sí lo
+  piden (cambió una variable de entorno, se rompió el dev server). Reiniciarlo cuesta un
+  arranque en frío de varios minutos en este disco, así que no hacerlo por costumbre.
+  El comando lo fija `command:` en `docker-compose.yml`; para servir un build de producción,
+  `FRONTEND_CMD=npm run build && npm run start` en `.env` + `docker compose up -d
+  --force-recreate frontend`.
 - Cualquier comando `docker …` / `docker compose …` se corre directo en la terminal WSL, parado
   en el repo — ya no hace falta pasar por `wsl.exe` desde Windows.
 - Playwright local (`frontend/`): corre en el **host WSL**, no en el contenedor (la imagen es
@@ -190,31 +208,30 @@ bloquea algo que de verdad hace falta, explicárselo al usuario y que decida él
   `-am` y `git push --force`. Motivo: con varias sesiones sobre el mismo checkout, esos
   comandos suben trabajo ajeno o reescriben historia compartida. Siempre `git add <archivos
   propios>` explícito y `git commit` sin `-a`.
-- **`.githooks/pre-commit`** (≈2 s): rechaza el commit si algún archivo staged fue editado más
+- **`.githooks/pre-commit`** (≈5 s): rechaza el commit si algún archivo staged fue editado más
   recientemente por **otra** sesión de Claude (según el registro de sesiones); override
-  consciente y coordinado: `ALLOW_FOREIGN=1 git commit …`. Si hay cambios en `backend/`, corre
-  `lint-imports` + `ruff` (archivos staged) + `mypy` dentro del contenedor.
-- **`.githooks/pre-push`** (≈20 s): lista los commits que se van a subir (leerlos, no pushear a
-  ciegas) y corre `make check-fast` (lint-imports + ruff + mypy + pytest unit + gates
-  `sizes`/`guards` sobre HEAD — **sin** `test-integration`). Si algo falla, no se pushea.
-- **CI en GitHub Actions** (`.github/workflows/ci.yml`, desde 2026-09-01): corre en paralelo, sin
-  tocar esta máquina, lo que el pre-push local ya no corre: `test-integration` del backend (con
-  un service container de Postgres propio del runner — el schema sale de
-  `Base.metadata.create_all`, no de Alembic, así que no hace falta nada especial) y eslint +
-  `tsc --noEmit` del frontend, en cada push a `main` y en cada PR. Esto (más el **smoke de
-  Playwright**, que arranca un `next dev` de test en el puerto 3011) antes corría en el
-  `pre-push` local — con varias sesiones de Claude Code compartiendo la misma máquina (WSL sobre
-  HDD externo), la contención de CPU/disco podía hacer tardar ese bloque varios minutos y
-  freezaba el resto de las terminales (incidente real 2026-09-01, un push dejó el HDD saturado
-  ~40 min). Un push no debería poder colgar la máquina, así que se sacó de ahí. La suite
-  completa de Playwright sigue siendo a mano (`PW_PORT=3011 npx playwright test` en `frontend/`)
-  y es parte del cierre de cualquier cambio de API que consuma el frontend — necesita el stack
-  completo con datos reales, CI no la reemplaza.
+  consciente y coordinado: `ALLOW_FOREIGN=1 git commit …`. Si hay `.py` staged en `backend/`,
+  corre `ruff` sobre esos archivos dentro del contenedor. Nada más.
+- **`.githooks/pre-push`** (instantáneo): lista los commits que se van a subir (leerlos, no
+  pushear a ciegas). **No corre ninguna verificación local** desde el 2026-09-02.
+- **CI en GitHub Actions** (`.github/workflows/ci.yml`): corre en cada push a `main` y en cada
+  PR, sin tocar esta máquina, **toda** la verificación: backend `lint-imports` + `ruff` + `mypy`
+  + pytest unit + `test-integration` (service container de Postgres propio del runner; el schema
+  sale de `Base.metadata.create_all`, no de Alembic) + gates §4/§6/§8/§11
+  (`scripts/check_sizes.py` y `check_guards.py --committed`); frontend eslint + `tsc --noEmit`;
+  y la **suite completa de Playwright** (job `e2e`). La suite es hermética — `tests/global-setup.ts`
+  levanta un backend mock en 18099 y cada spec mockea sus datos con `page.route()`; no toca el
+  backend real ni datos reales — así que CI la reemplaza por completo; localmente solo se corre a
+  pedido del usuario (`PW_PORT=3011 npx playwright test` en `frontend/`). Historia: hasta el
+  2026-09-01 el pre-push corría todo esto local y un push dejó el HDD saturado ~40 min; el
+  2026-09-02 se midió que incluso `check-fast` tardaba ≈5 min con la máquina ociosa y se sacó
+  todo de los hooks. Contrapartida aceptada: `main` en GitHub puede quedar rojo unos minutos;
+  quien pushea sigue la corrida con `make ci` y arregla.
 - Los hooks de git se activan por clon con `make hooks` (`git config core.hooksPath
   .githooks`). `--no-verify` existe, pero usarlo es una decisión del usuario, no de Claude.
 
-`make check` es la forma canónica de correr la verificación del módulo que exige
-`ARCHITECTURE_GUIDE.md`.
+`make check` sigue siendo la verificación canónica que exige `ARCHITECTURE_GUIDE.md`; la corre
+CI en cada push. Localmente, solo si el usuario lo pide explícitamente.
 
 ### Cuándo pushear (decisión del usuario, 2026-08-21)
 
@@ -226,14 +243,15 @@ Directo) es el **respaldo**: lo que no está pusheado existe solo en el disco de
 - **Hacerlo proactivamente cuando se detecte la condición**, sin esperar a que el usuario lo
   pida de nuevo: el hook de arranque avisa si hay **≥5 commits sin pushear o el más viejo
   tiene más de 24 h**; `hd-status` muestra lo mismo. En ese caso, al terminar la tarea en
-  curso (no en el medio), correr `git push origin main` y decirlo en el resumen final — el
-  `pre-push` garantiza que no suba nada que rompa `make check`. Si el push falla por el hook,
-  reportarlo y no usar `--no-verify`.
+  curso (no en el medio), correr `git push origin main` y decirlo en el resumen final — y
+  después seguir la corrida de CI con `make ci`; si falla, arreglarlo antes de cerrar la tarea.
+  Nunca `--no-verify`.
 - **Una sola sesión pushea.** Si `git status`/el registro de sesiones muestran que otra
   sesión está commiteando en ese momento, esperar a que termine o coordinar por
   `SendMessage`; pushear en paralelo desde varias sesiones solo duplica el `pre-push`.
-- No pushear después de cada commit chico (el `pre-push` tarda ~20 s; el ruido no aporta), ni
-  hacer `force push` jamás (bloqueado por `claude-git-guard`).
+- El `pre-push` ya no cuesta nada, pero igual pushear por bloque de trabajo y no por cada
+  commit chico: cada push dispara una corrida de CI y cancela la anterior en curso. Nunca
+  `force push` (bloqueado por `claude-git-guard`).
 
 `make help` lista el resto de atajos (`status`, `restart-*`,
 `recreate-backend`, `logs-*`, `mailpit`, `typecheck-frontend`). Antes de una migración o un

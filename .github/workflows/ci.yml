@@ -1,23 +1,26 @@
 name: CI
 
-# Corre en la nube lo que no depende de la red interna (Mercurio/SigesReadOnly/
-# Gestión, solo alcanzable desde la red corporativa — ver
-# project_deploy_render_vercel_neon_blocked_red_interna en la memoria). Antes
-# esto mismo corría en `.githooks/pre-push` local; con varias sesiones de
-# Claude Code compartiendo la misma máquina (WSL sobre HDD externo), el smoke
-# de Playwright (arranca un `next dev` de test) y `test-integration` (I/O
-# sostenido contra Postgres real) podían tardar varios minutos bajo
-# contención y freezaban el resto de las terminales (incidente real
-# 2026-09-01). `check-fast` (backend, sin test-integration) y el
-# lint/typecheck de frontend no necesitan Docker ni esa red: quedan en el
-# pre-push local, rápidos. `test-integration` sí necesita Postgres, pero el
-# schema sale de `Base.metadata.create_all` (no Alembic, ver
-# tests/integration/infrastructure/conftest.py) — corre acá con un service
-# container propio del runner, sin tocar el disco local.
+# Toda la verificación del repo corre acá, en cada push a main y en cada PR, sin
+# tocar la máquina de desarrollo. Desde el 2026-09-02 ningún hook de git corre
+# checks pesados en local: medido con la máquina ociosa sobre el HDD USB,
+# lint-imports 42 s + mypy 108 s + pytest unit 101 s + sizes/guards 29 s ≈ 5 min
+# por push, y con 3-4 sesiones de Claude Code en paralelo eso saturaba el disco
+# y freezaba las demás terminales (incidentes 2026-09-01 y 2026-09-02). El
+# pre-commit local solo corre ruff sobre lo staged; el pre-push solo lista los
+# commits. Quien pushea sigue esta corrida con `make ci` (gh run watch).
 #
-# Lo que NO corre acá (sigue siendo manual, ver CLAUDE.md):
-#   - la suite completa de Playwright y el smoke @grep — necesitan el stack
-#     completo (backend + Postgres seedeado con datos reales) corriendo.
+# Jobs:
+#   backend  - lint-imports, ruff, mypy, pytest unit, pytest integration (service
+#              container de Postgres propio del runner; el schema sale de
+#              Base.metadata.create_all, no de Alembic, ver
+#              tests/integration/infrastructure/conftest.py) y los gates
+#              §4/§6/§8/§11 (scripts/check_sizes.py y check_guards.py --committed).
+#   frontend - eslint + tsc --noEmit.
+#   e2e      - suite completa de Playwright. Es hermética: tests/global-setup.ts
+#              levanta un backend mock en 127.0.0.1:18099 y cada spec mockea sus
+#              datos con page.route(); no necesita el backend real ni la red
+#              corporativa (Mercurio/Siges/Gestión, ver
+#              project_deploy_render_vercel_neon_blocked_red_interna en la memoria).
 on:
   push:
     branches: [main]
@@ -71,6 +74,11 @@ jobs:
       - run: uv run mypy src
       - run: uv run pytest tests/unit -q
       - run: uv run pytest tests/integration -q
+      - name: Gates §4 tamaños y §6/§8/§11 guards (sobre HEAD)
+        working-directory: ${{ github.workspace }}
+        run: |
+          python3 scripts/check_sizes.py --committed
+          python3 scripts/check_guards.py --committed
 
   frontend:
     runs-on: ubuntu-latest
@@ -87,3 +95,28 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npx tsc --noEmit
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # playwright.config.ts levanta `next dev --turbopack` (webServer) y el mock
+      # backend (globalSetup); en CI reuseExistingServer=false y retries=2.
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-test-results
+          path: frontend/test-results/
+          retention-days: 7

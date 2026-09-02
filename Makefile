@@ -11,7 +11,7 @@ PGDB     ?= helpdesk
 TEST_DB  := helpdesk-db-test
 NET      := helpdesk-manager_default
 
-.PHONY: help status check check-fast lint-imports ruff mypy test test-integration sizes sizes-wip guards guards-wip lint-frontend typecheck-frontend hooks \
+.PHONY: help status check check-fast test-module ci lint-imports ruff mypy test test-integration sizes sizes-wip guards guards-wip lint-frontend typecheck-frontend hooks \
         db-backup db-restore restart-backend restart-frontend recreate-backend \
         logs-backend logs-frontend mailpit up ps
 
@@ -21,18 +21,23 @@ help:  ## Lista los targets
 status:  ## Estado del entorno (contenedores, modo test, jobs, git)
 	@hd-status
 
-# --- Verificación obligatoria antes de dar por terminado un módulo (CLAUDE.md) ---
-check: lint-imports ruff mypy test test-integration sizes guards  ## lint-imports + ruff + mypy + pytest unit + integración + gates §4 y §6/§8/§11
+# --- Verificación completa: la corre GitHub Actions en cada push (.github/workflows/ci.yml).
+# Local SOLO si el usuario lo pide. Medido el 2026-09-02 con la máquina ociosa sobre el HDD USB:
+# lint-imports 42 s, ruff 5 s, mypy 108 s, pytest unit 101 s, sizes+guards 29 s (≈5 min).
+# Con varias sesiones de Claude en paralelo eso satura el disco y freeza las demás terminales;
+# por eso ningún hook de git lo corre (ver CLAUDE.md "Guardas automáticas de git").
+check: lint-imports ruff mypy test test-integration sizes guards  ## Verificación completa (la corre CI; local solo a pedido): lint-imports + ruff + mypy + pytest unit + integración + gates
 	@echo "✔ check completo"
 
-# Mismo check, sin test-integration: esa parte pega contra Postgres real (vía
-# Docker) y en esta máquina compartida (WSL sobre HDD externo) su I/O sostenido
-# frena las demás terminales. La corre GitHub Actions en cada push (con un
-# service container propio, no toca este disco) — este target es lo que usa
-# el pre-push local para no bloquear la máquina (ver CLAUDE.md, incidente
-# 2026-09-01).
-check-fast: lint-imports ruff mypy test sizes guards  ## check sin test-integration (usado por pre-push)
-	@echo "✔ check-fast completo (test-integration corre en CI, no acá)"
+check-fast: lint-imports ruff mypy test sizes guards  ## check sin test-integration (local solo a pedido; ya no lo usa ningún hook)
+	@echo "✔ check-fast completo"
+
+test-module:  ## pytest unit SOLO del módulo M, opcional (≈2 min de reloj en este disco por arranque de uv/imports; make test-module M=contadores)
+	@test -n "$(M)" || { echo "Uso: make test-module M=<modulo>   (ej. contadores, turnos, vacaciones)"; exit 2; }
+	$(EXEC) sh -c 'uv run pytest tests/unit/*/$(M) -q'
+
+ci:  ## Sigue la corrida de CI del último push a main (gh run watch); falla si CI falló
+	@sleep 5; id=$$(gh run list --branch main --limit 1 --json databaseId --jq '.[0].databaseId'); echo "CI run $$id: https://github.com/ivmartinez-cd/HelpDeskManagerApp---Unificacion/actions/runs/$$id"; gh run watch "$$id" --exit-status
 
 lint-imports:  ## Contratos de capas/módulos (la regla más importante)
 	$(EXEC) uv run lint-imports
@@ -91,7 +96,7 @@ db-restore:  ## Restaura FILE=backups/<x>.dump|.sql sobre la DB de dev — DESTR
 
 hooks:  ## Activa los hooks de git del repo (.githooks: pre-commit y pre-push) en este clon
 	git config core.hooksPath .githooks
-	@echo "✔ core.hooksPath=.githooks (pre-commit: archivos ajenos + lint/ruff/mypy; pre-push: make check + lint frontend)"
+	@echo "✔ core.hooksPath=.githooks (pre-commit: archivos ajenos + ruff staged; pre-push: solo lista commits, todo lo demás corre en CI)"
 
 # --- Contenedores ---
 restart-backend:  ## docker restart del backend (exige DISABLE_BACKGROUND_JOBS=true)

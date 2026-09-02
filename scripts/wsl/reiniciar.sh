@@ -3,16 +3,24 @@
 # contenedores (docker corre en WSL, ya no hay copia paralela en Windows).
 #
 # Uso (se corre DENTRO de WSL, parado en el repo):
-#   bash scripts/wsl/reiniciar.sh frontend      # restart frontend (next build && next start, ~2-4 min)
 #   bash scripts/wsl/reiniciar.sh backend       # restart backend (exige DISABLE_BACKGROUND_JOBS=true)
+#   bash scripts/wsl/reiniciar.sh frontend      # normalmente NO hace falta (ver abajo)
 #
-# Por qué existe: ni backend ni frontend recargan solos (ver CLAUDE.md "Sin hot reload").
+# Por qué existe: el BACKEND no recarga solo (uvicorn sin --reload, decisión deliberada: el
+# --reload relanzaba los background jobs con cada guardado y así se mandó un mail real,
+# incidente 2026-08-12).
+#
+# El FRONTEND sí recarga solo desde el 2026-09-02: el contenedor corre `next dev` (Fast
+# Refresh), así que editar un archivo de frontend/ se refleja en ~2 s sin reiniciar nada.
+# `reiniciar.sh frontend` avisa y no hace nada; para forzar el restart igual (p. ej. tras
+# cambiar variables de entorno) usar: reiniciar.sh frontend --force
 # Reemplaza a scripts/wsl/sincronizar-y-reiniciar.sh, que hacía rsync desde Windows: ese paso
 # ya no hace falta porque el repo se edita directo acá.
 set -euo pipefail
 
 LIN="${HDM_LINUX:-/home/ivan/proyectos/helpdesk-manager}"
 SVC="${1:-}"
+FORCE="${2:-}"
 ESPERA_MAX="${HDM_ESPERA_MAX:-600}"
 
 [ -d "$LIN/frontend" ] || { echo "No encuentro el repo: $LIN" >&2; exit 1; }
@@ -44,7 +52,19 @@ if [ "$SVC" = "backend" ]; then
     echo "ATENCIÓN: el log muestra background jobs iniciados — revisar .env y recrear el contenedor." >&2
   fi
 else
-  echo "== docker restart helpdesk-manager-frontend (next build && next start, ~2-4 min)"
+  # ¿El contenedor está en modo dev (next dev)? Entonces Fast Refresh ya recompila solo y
+  # reiniciar solo cuesta un arranque en frío caro (medido 2026-09-02: ~4 min contra ~2 s
+  # que tarda una edición con el dev server ya levantado).
+  cmd_actual="$(docker inspect helpdesk-manager-frontend --format '{{join .Config.Cmd " "}}' 2>/dev/null || true)"
+  if printf '%s' "$cmd_actual" | grep -q 'run dev' && [ "$FORCE" != "--force" ]; then
+    echo "== el frontend corre en modo dev (next dev): NO hace falta reiniciar."
+    echo "   Editá el archivo y recargá el navegador; Fast Refresh lo recompila en ~2 s."
+    echo "   Si de verdad necesitás recrear el contenedor (p. ej. cambió una variable de"
+    echo "   entorno): bash scripts/wsl/reiniciar.sh frontend --force"
+    curl --noproxy '*' -s -o /dev/null -m 10 -w '   estado actual de /login: %{http_code}\n' http://127.0.0.1:3000/login || true
+    exit 0
+  fi
+  echo "== docker restart helpdesk-manager-frontend (arranque en frío del dev server, varios minutos en este disco)"
   docker restart helpdesk-manager-frontend >/dev/null
   esperar_200 "http://127.0.0.1:3000/login"
 fi

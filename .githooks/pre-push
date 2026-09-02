@@ -1,27 +1,19 @@
 #!/usr/bin/env bash
-# pre-push — la puerta antes de GitHub:
-#  1) muestra qué commits se van a subir (para revisar el git log, no pushear a ciegas);
-#  2) corre `make check-fast` (lint-imports + ruff + mypy + pytest unit + gates
-#     sizes/guards, ≈20 s) y bloquea si falla.
+# pre-push — solo muestra qué commits se van a subir (para revisar el git log, no pushear a
+# ciegas). NO corre ninguna verificación local.
 #
-# Lo que NO corre acá (2026-09-01, esta máquina comparte disco/CPU entre
-# varias terminales — WSL sobre HDD externo): el lint/tsc/smoke Playwright de
-# frontend (arranca un `next dev` de test, podía tardar varios minutos bajo
-# contención de CPU) y `test-integration` (pega contra Postgres real vía
-# Docker; su I/O sostenido frenaba las demás terminales — incidente real: un
-# push dejó el HDD saturado ~40 min). Un push no debería poder colgar la
-# máquina. Todo eso corre en GitHub Actions (.github/workflows/ci.yml) de
-# forma async, con su propio disco/CPU, sin bloquear nada local. La suite
-# completa de Playwright sigue siendo a mano (`PW_PORT=3011 npx playwright
-# test` en frontend/) al cerrar cambios de API que consume el front.
-# Saltear: git push --no-verify (solo si sabés por qué y lo decís).
+# Historia: hasta el 2026-09-02 corría `make check-fast` (lint-imports + ruff + mypy + pytest
+# unit + gates sizes/guards). Medido ese día con la máquina ociosa, sobre el HDD USB:
+# 42 + 5 + 108 + 101 + 29 s ≈ 5 min por push; con varias sesiones de Claude en paralelo dejaba
+# el disco saturado y freezaba las demás terminales (incidentes 2026-09-01 y 2026-09-02). Un
+# push no debería poder colgar la máquina: TODO corre en GitHub Actions
+# (.github/workflows/ci.yml): lint-imports, ruff, mypy, pytest unit + integración, gates
+# §4/§6/§8/§11, eslint, tsc y la suite completa de Playwright. Quien pushea sigue la corrida
+# con `make ci` (gh run watch) y arregla si queda rojo — `main` en GitHub puede quedar rojo
+# unos minutos, esa es la contrapartida aceptada.
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
 remote="${1:-origin}"
-
-red() { printf '\033[31m✘ %s\033[0m\n' "$*"; }
-yel() { printf '\033[33m! %s\033[0m\n' "$*"; }
-ok()  { printf '\033[32m✔ %s\033[0m\n' "$*"; }
 
 z40='0000000000000000000000000000000000000000'
 ranges=()
@@ -39,13 +31,6 @@ echo "pre-push → $remote. Commits a subir:"
 for r in "${ranges[@]}"; do
   git log --oneline --no-decorate "$r" 2>/dev/null | sed 's/^/    /'
 done
+echo "Verificación completa en GitHub Actions — seguirla con: make ci"
 echo
-
-log=$(mktemp)
-if make -s check-fast >"$log" 2>&1; then
-  ok "make check-fast (lint-imports, ruff, mypy, pytest unit, sizes, guards)"
-else
-  red "make check-fast falló — no se pushea:"; tail -30 "$log"; rm -f "$log"; exit 1
-fi
-rm -f "$log"
 exit 0

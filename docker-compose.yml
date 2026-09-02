@@ -60,6 +60,22 @@ services:
     container_name: helpdesk-manager-frontend
     restart: unless-stopped
     env_file: .env
+    # Modo dev (Fast Refresh) por default: editar un archivo de frontend/ se
+    # refleja solo, en segundos, sin rebuild ni `docker restart`.
+    #
+    # Antes el contenedor corría `next build && next start` (el CMD de su
+    # Dockerfile) en CADA arranque y en cada `reiniciar.sh frontend`. Medido el
+    # 2026-09-02: ~3 min por vuelta, con la presión de I/O del WSL en
+    # `full avg10=89%` — o sea, el 89% del tiempo TODAS las tareas del sistema
+    # bloqueadas esperando el HDD USB. Eso es lo que freezaba las demás
+    # terminales en cada implementación (la CPU y la RAM estaban casi libres:
+    # presión 0.2%).
+    #
+    # Para volver al build de producción (más rápido de servir, pero paga los
+    # ~3 min en cada arranque), poner en .env:
+    #   FRONTEND_CMD=npm run build && npm run start
+    # y recrear: docker compose up -d --force-recreate frontend
+    command: ["sh", "-c", "${FRONTEND_CMD:-npm run dev -- -H 0.0.0.0 -p 3000}"]
     environment:
       # El rewrite de next.config.ts y el fetch server-side de app/(app)/layout.tsx
       # corren dentro de este contenedor: "127.0.0.1" no resuelve al backend acá.
