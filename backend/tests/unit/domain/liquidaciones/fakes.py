@@ -8,6 +8,7 @@ import uuid
 from datetime import date, datetime
 from uuid import UUID
 
+from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.regla_alerta import ReglaAlerta
 from src.modules.liquidaciones.domain.entities.spst import Spst
@@ -231,6 +232,17 @@ class FakeCdLiquidacionesGateway:
         if self.void_raises is not None:
             raise self.void_raises
         self.anulados.append(liquidacion_ayc_id)
+
+
+class FakeNotificador:
+    """Registra las liquidaciones notificadas en vez de mandar mail — para
+    verificar en los tests que se invoca (y con qué) sin depender de SMTP."""
+
+    def __init__(self) -> None:
+        self.aprobaciones: list[Liquidacion] = []
+
+    async def notificar_aprobacion(self, liquidacion: Liquidacion) -> None:
+        self.aprobaciones.append(liquidacion)
 
 
 class FakeLiquidacionFileParser:

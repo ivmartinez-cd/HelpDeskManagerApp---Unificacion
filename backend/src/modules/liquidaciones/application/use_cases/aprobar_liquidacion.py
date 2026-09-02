@@ -20,6 +20,7 @@ from src.modules.liquidaciones.domain.repositories.cd_liquidaciones_gateway impo
 from src.modules.liquidaciones.domain.repositories.liquidacion_repository import (
     LiquidacionRepository,
 )
+from src.modules.liquidaciones.domain.repositories.notificador import Notificador
 from src.shared.domain.errors import NotFoundError
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ logger = logging.getLogger(__name__)
 class AprobarLiquidacionPorts:
     liquidaciones: LiquidacionRepository
     cd_gateway: CdLiquidacionesGateway
+    notificador: Notificador
 
 
 class AprobarLiquidacion:
@@ -65,4 +67,5 @@ class AprobarLiquidacion:
                 "actualizar. Recargá la liquidación — si el estado no cambió, "
                 "contactar soporte."
             )
+        await self._ports.notificador.notificar_aprobacion(updated)
         return updated

@@ -18,7 +18,7 @@ from src.modules.liquidaciones.domain.exceptions import (
 )
 from src.shared.domain.errors import NotFoundError
 from tests.unit.domain.liquidaciones.factories import make_liquidacion
-from tests.unit.domain.liquidaciones.fakes import FakeCdLiquidacionesGateway
+from tests.unit.domain.liquidaciones.fakes import FakeCdLiquidacionesGateway, FakeNotificador
 from tests.unit.domain.liquidaciones.fakes_liquidacion import FakeLiquidacionRepository
 
 
@@ -26,10 +26,12 @@ class World:
     def __init__(self) -> None:
         self.liquidaciones = FakeLiquidacionRepository()
         self.gateway = FakeCdLiquidacionesGateway()
+        self.notificador = FakeNotificador()
         self.use_case = AprobarLiquidacion(
             AprobarLiquidacionPorts(
                 liquidaciones=self.liquidaciones,
                 cd_gateway=self.gateway,
+                notificador=self.notificador,
             )
         )
 
@@ -83,3 +85,18 @@ async def test_fallo_soap_no_escribe_local() -> None:
         await world.use_case.execute(liq.id, "Operador")
 
     assert world.liquidaciones.rows[liq.id].estado == "abierta"
+    assert world.notificador.aprobaciones == []
+
+
+async def test_aprobacion_exitosa_dispara_notificacion() -> None:
+    world = World()
+    liq = make_liquidacion(numero_liquidacion="3938-5", estado="abierta")
+    world.liquidaciones.rows[liq.id] = liq
+
+    resultado = await world.use_case.execute(liq.id, "Operador")
+
+    assert len(world.notificador.aprobaciones) == 1
+    notificada = world.notificador.aprobaciones[0]
+    assert notificada.id == liq.id
+    assert notificada.numero_liquidacion == "3938-5"
+    assert notificada.estado == resultado.estado == "aprobada"

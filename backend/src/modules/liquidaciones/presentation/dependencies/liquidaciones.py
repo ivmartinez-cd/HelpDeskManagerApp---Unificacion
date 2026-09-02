@@ -105,6 +105,9 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tarifario_
 from src.modules.liquidaciones.infrastructure.soap.zeep_cd_liquidaciones_gateway import (
     ZeepCdLiquidacionesGateway,
 )
+from src.modules.liquidaciones.presentation.dependencies.notificaciones import (
+    build_notificador,
+)
 from src.shared.infrastructure.database.engine import get_engine
 from src.shared.infrastructure.locks.postgres_advisory_lock import (
     LIQUIDACIONES_SINCRONIZAR_LOCK_KEY,
@@ -231,6 +234,7 @@ def build_aprobar_liquidacion(session: AsyncSession) -> AprobarLiquidacion:
         AprobarLiquidacionPorts(
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
             cd_gateway=_cd_gateway(),
+            notificador=build_notificador(),
         )
     )
 
