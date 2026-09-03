@@ -55,13 +55,13 @@ export function AusenciaModal({ ausencia, empleados, esAdmin, onClose, onSaved }
     }
     setBusy(true);
     setError(null);
-    // Paridad legacy: el medio día solo aplica al tipo Descuento día.
+    // Medio día: Descuento día (paridad legacy) y Home office (2026-09-03, a pedido).
     const base = {
       startDate,
       endDate,
       tipo,
       reason: reason || null,
-      halfDay: tipo === "DESCUENTO_DIA" ? halfDay : false,
+      halfDay: tipo === "DESCUENTO_DIA" || tipo === "HOME_OFFICE" ? halfDay : false,
       horaDesde: tipo === "CAMBIO_HORARIO" ? horaDesde : null,
       horaHasta: tipo === "CAMBIO_HORARIO" ? horaHasta : null,
     };
@@ -171,19 +171,25 @@ export function AusenciaModal({ ausencia, empleados, esAdmin, onClose, onSaved }
 
         <label
           className={`flex items-center gap-2.5 font-body text-sm ${
-            tipo === "DESCUENTO_DIA" ? "text-foreground" : "text-muted-foreground"
+            tipo === "DESCUENTO_DIA" || tipo === "HOME_OFFICE"
+              ? "text-foreground"
+              : "text-muted-foreground"
           }`}
         >
           <input
             type="checkbox"
-            checked={tipo === "DESCUENTO_DIA" && halfDay}
-            disabled={tipo !== "DESCUENTO_DIA"}
+            checked={(tipo === "DESCUENTO_DIA" || tipo === "HOME_OFFICE") && halfDay}
+            disabled={tipo !== "DESCUENTO_DIA" && tipo !== "HOME_OFFICE"}
             onChange={(e) => setHalfDay(e.target.checked)}
             className="h-4 w-4 accent-brand-orange"
           />
           Medio día
           <span className="text-xs text-muted-foreground">
-            (solo para Descuento día — computa 0.5)
+            {tipo === "DESCUENTO_DIA"
+              ? "(computa 0.5 en el reporte de descuentos)"
+              : tipo === "HOME_OFFICE"
+                ? "(solo informativo, no afecta descuentos ni liquidación)"
+                : "(solo para Descuento día u Home office)"}
           </span>
         </label>
 

@@ -57,8 +57,12 @@ del ABM pasó de "Gestión Humana" a **"Personal"**. Solo cambió el `label`: la
 
 - **Ausencias (Absence legacy)**: nacen `APPROVED`; `days_count` usa el MISMO conteo corrido
   con extensión LCT que las solicitudes (`dias_corridos` — el legacy usaba calendarDaysBetween
-  para ambas); `half_day` computa 0.5 solo en reportes/KPIs y la UI solo lo habilita para
-  DESCUENTO_DIA (paridad del submit legacy). Valida solape contra bajas del mismo tipo y contra
+  para ambas); `half_day` computa 0.5 en el reporte de descuentos solo para DESCUENTO_DIA
+  (paridad del submit legacy). Desde 2026-09-03 la UI también habilita el checkbox para
+  HOME_OFFICE, pero ahí es puramente informativo (gradiente del calendario y texto "Medio día"
+  del listado): HOME_OFFICE no entra en `dias_descontados_en_mes` ni en el gateway de días
+  sugeridos de bono_tecnicos, así que `half_day=True` en ese tipo no descuenta ni afecta
+  liquidación. Valida solape contra bajas del mismo tipo y contra
   solicitudes activas (409). Editar/eliminar: dueño o admin (el jefe crea pero NO toca ajenas);
   no-admin solo PENDING y nunca cambia `status`.
 - **Reporte de descuentos**: jefe clavado a su sector; admin elige sector (default el llamado
