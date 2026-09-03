@@ -578,6 +578,37 @@ test.describe("Módulo de Liquidaciones", () => {
     await expect(page.getByRole("cell", { name: "SUCURSAL CENTRO" })).toBeVisible();
   });
 
+  test("detalle: 'Recibir' marca la liquidación como Recibida en Canal Directo", async ({
+    page,
+  }) => {
+    await page.route(`**/api/liquidaciones/${LIQ_ID}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(DETALLE_RESPONSE),
+      });
+    });
+    let recibido = false;
+    await page.route(`**/api/liquidaciones/${LIQ_ID}/recibir`, async (route) => {
+      recibido = route.request().method() === "POST";
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ...LIQUIDACION, estado: "recibida" }),
+      });
+    });
+
+    await page.goto(`/liquidaciones/${LIQ_ID}`);
+    await page.getByRole("button", { name: "Recibir", exact: true }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Recibir en Canal Directo" });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Recibir", exact: true }).click();
+
+    await expect(page.getByText("Liquidación marcada como Recibida en Canal Directo")).toBeVisible();
+    expect(recibido).toBe(true);
+  });
+
   test("detalle: tildar incidentes y resolver sus alertas en lote con un solo motivo", async ({
     page,
   }) => {

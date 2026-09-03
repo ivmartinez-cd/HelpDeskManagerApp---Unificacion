@@ -56,10 +56,6 @@ from src.modules.liquidaciones.application.use_cases.list_liquidaciones import (
     ListLiquidaciones,
     ListLiquidacionesPorts,
 )
-from src.modules.liquidaciones.application.use_cases.observar_liquidacion import (
-    ObservarLiquidacion,
-    ObservarLiquidacionPorts,
-)
 from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion import (
     ReanalizarLiquidacion,
     ReanalizarLiquidacionPorts,
@@ -119,7 +115,7 @@ from src.shared.infrastructure.locks.postgres_advisory_lock import (
 
 
 @lru_cache
-def _cd_gateway() -> ZeepCdLiquidacionesGateway:
+def cd_gateway() -> ZeepCdLiquidacionesGateway:
     return ZeepCdLiquidacionesGateway()
 
 
@@ -209,7 +205,7 @@ def build_reconciliar_liquidacion(session: AsyncSession) -> ReconciliarLiquidaci
             incidentes=SqlAlchemyIncidenteRepository(session),
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
             reanalizar=build_reanalizar_liquidacion(session),
-            cd_gateway=_cd_gateway(),
+            cd_gateway=cd_gateway(),
         )
     )
 
@@ -221,7 +217,7 @@ def build_reconciliar_liquidacion_individual(
         ReconciliarLiquidacionIndividualPorts(
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
             prestadores=SqlAlchemyPrestadorRepository(session),
-            cd_gateway=_cd_gateway(),
+            cd_gateway=cd_gateway(),
             reconciliar=build_reconciliar_liquidacion(session),
         )
     )
@@ -230,7 +226,7 @@ def build_reconciliar_liquidacion_individual(
 def build_sincronizar_liquidaciones(session: AsyncSession) -> SincronizarLiquidaciones:
     return SincronizarLiquidaciones(
         SincronizarLiquidacionesPorts(
-            cd_gateway=_cd_gateway(),
+            cd_gateway=cd_gateway(),
             prestadores=SqlAlchemyPrestadorRepository(session),
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
             incidentes=SqlAlchemyIncidenteRepository(session),
@@ -245,17 +241,8 @@ def build_aprobar_liquidacion(session: AsyncSession) -> AprobarLiquidacion:
     return AprobarLiquidacion(
         AprobarLiquidacionPorts(
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
-            cd_gateway=_cd_gateway(),
+            cd_gateway=cd_gateway(),
             notificador=build_notificador(),
-        )
-    )
-
-
-def build_observar_liquidacion(session: AsyncSession) -> ObservarLiquidacion:
-    return ObservarLiquidacion(
-        ObservarLiquidacionPorts(
-            liquidaciones=SqlAlchemyLiquidacionRepository(session),
-            cd_gateway=_cd_gateway(),
         )
     )
 
@@ -264,7 +251,7 @@ def build_anular_liquidacion(session: AsyncSession) -> AnularLiquidacion:
     return AnularLiquidacion(
         AnularLiquidacionPorts(
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
-            cd_gateway=_cd_gateway(),
+            cd_gateway=cd_gateway(),
         )
     )
 
@@ -272,7 +259,7 @@ def build_anular_liquidacion(session: AsyncSession) -> AnularLiquidacion:
 def build_backfill_estado(session: AsyncSession) -> BackfillEstadoLiquidaciones:
     return BackfillEstadoLiquidaciones(
         BackfillEstadoLiquidacionesPorts(
-            cd_gateway=_cd_gateway(),
+            cd_gateway=cd_gateway(),
             prestadores=SqlAlchemyPrestadorRepository(session),
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
         )

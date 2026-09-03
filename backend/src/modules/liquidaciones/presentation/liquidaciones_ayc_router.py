@@ -22,6 +22,7 @@ from src.modules.liquidaciones.presentation.dependencies import (
     build_aprobar_liquidacion,
     build_backfill_estado,
     build_observar_liquidacion,
+    build_recibir_liquidacion,
     build_reconciliar_liquidacion_individual,
     build_sincronizar_liquidaciones,
 )
@@ -75,6 +76,19 @@ async def aprobar_liquidacion(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> LiquidacionOut:
     updated = await build_aprobar_liquidacion(db).execute(
+        liquidacion_id, usuario=identity.user.full_name
+    )
+    return LiquidacionOut.from_entity(updated)
+
+
+@router.post("/{liquidacion_id}/recibir", response_model=LiquidacionOut)
+async def recibir_liquidacion(
+    liquidacion_id: UUID,
+    identity: Identity = _require_approve,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> LiquidacionOut:
+    """Marca la liquidación como Recibida en AyC (paso previo a aprobar/observar)."""
+    updated = await build_recibir_liquidacion(db).execute(
         liquidacion_id, usuario=identity.user.full_name
     )
     return LiquidacionOut.from_entity(updated)

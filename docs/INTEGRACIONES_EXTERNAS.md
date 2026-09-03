@@ -64,7 +64,7 @@ operación SOAP viaja como POST y reintentar `persistNewSupply` duplica pedidos 
 | Módulo | Adapter | Instanciación | Operaciones (lectura / escritura) | Manejo de errores |
 |---|---|---|---|---|
 | insumos | `soap/zeep_wsayc_gateway.py` (`ZeepWsAycGateway`) | singleton de proceso (`wiring.py::get_wsayc_gateway`, `lru_cache`) sobre el provider compartido | L: `getMachineBySerial`, `getMachineIncidents`, `getArticleParts`, `getSupplyById`, `getIncidentById`, `getSupplyDetails`, `getTopSupplies` · E: `persistNewSupply`, `persistNewIncident`, `voidSupply`, `voidIncident` | por método, a propósito distinto: los persist y `getMachineBySerial` propagan crudo (el caller distingue); el resto degrada a vacío/None con warning; los void degradan a `False` con error |
-| liquidaciones | `soap/zeep_cd_liquidaciones_gateway.py` (`ZeepCdLiquidacionesGateway`) | singleton de proceso (`dependencies/liquidaciones.py::_cd_gateway`, `lru_cache`) sobre el provider compartido | L: `getTopLiquidations`, `getLiquidationDetails` · E: `setLiquidationStatus`, `voidLiquidation` | gets degradan a `[]` con warning; escrituras propagan crudo (+ `_raise_if_soap_error`) |
+| liquidaciones | `soap/zeep_cd_liquidaciones_gateway.py` (`ZeepCdLiquidacionesGateway`) | singleton de proceso (`dependencies/liquidaciones.py::cd_gateway`, `lru_cache`) sobre el provider compartido | L: `getTopLiquidations`, `getLiquidationDetails` · E: `setLiquidationStatus`, `voidLiquidation` | gets degradan a `[]` con warning; escrituras propagan crudo (+ `_raise_if_soap_error`) |
 
 Consumidores: endpoints de insumos (customers, requests, offline_devices) + poller de
 fondo de insumos (`background_jobs.py`: sync inventario, auto-carga, verificación de

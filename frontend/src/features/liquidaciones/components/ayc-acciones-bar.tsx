@@ -1,14 +1,14 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { Liquidacion } from "../types/liquidaciones";
 
-type Accion = "aprobar" | "observar" | "anular";
+type Accion = "recibir" | "aprobar" | "observar" | "anular";
 
 const CONFIG: Record<
   Accion,
@@ -22,6 +22,16 @@ const CONFIG: Record<
     icon?: ReactNode;
   }
 > = {
+  recibir: {
+    label: "Recibir",
+    titulo: "Recibir en Canal Directo",
+    mensaje: (n) =>
+      `¿Marcar la liquidación ${n} como Recibida en Canal Directo? Es el paso previo a aprobarla u observarla.`,
+    btnLabel: "Recibir",
+    btnCls: "bg-brand-orange text-white hover:opacity-90",
+    triggerCls: "border border-border text-foreground hover:bg-muted/50",
+    icon: <Inbox size={13} />,
+  },
   aprobar: {
     label: "Aprobar",
     titulo: "Aprobar en Canal Directo",
@@ -65,10 +75,10 @@ export function AyCAccionesBar({ liquidacion, onActualizado, onAnulado }: Props)
   const [accion, setAccion] = useState<Accion | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Espejo de liquidaciones_ayc_router.py: aprobar/observar = approve, anular =
-  // delete; "eliminar solo localmente" es DELETE /{id} = update.
+  // Espejo de liquidaciones_ayc_router.py: recibir/aprobar/observar = approve,
+  // anular = delete; "eliminar solo localmente" es DELETE /{id} = update.
   const { can } = useSession();
-  const acciones = (["aprobar", "observar", "anular"] as Accion[]).filter((a) =>
+  const acciones = (["recibir", "aprobar", "observar", "anular"] as Accion[]).filter((a) =>
     a === "anular" ? can("liquidaciones", "delete") : can("liquidaciones", "approve"),
   );
   const puedeBorrarLocal = can("liquidaciones", "update");
@@ -87,7 +97,12 @@ export function AyCAccionesBar({ liquidacion, onActualizado, onAnulado }: Props)
     setLoading(true);
     setError(null);
     try {
-      if (accion === "aprobar") {
+      if (accion === "recibir") {
+        const updated = await liquidacionesApi.recibir(liquidacion.id);
+        onActualizado(updated);
+        toast.success("Liquidación marcada como Recibida en Canal Directo");
+        setAccion(null);
+      } else if (accion === "aprobar") {
         const updated = await liquidacionesApi.aprobar(liquidacion.id);
         onActualizado(updated);
         toast.success("Liquidación aprobada en Canal Directo");

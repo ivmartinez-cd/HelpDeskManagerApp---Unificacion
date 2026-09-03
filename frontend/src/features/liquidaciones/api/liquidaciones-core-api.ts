@@ -100,6 +100,9 @@ export const liquidacionesCoreApi = {
   observar: (id: string) =>
     httpClient.post<Liquidacion>(`/api/liquidaciones/${id}/observar`),
 
+  recibir: (id: string) =>
+    httpClient.post<Liquidacion>(`/api/liquidaciones/${id}/recibir`),
+
   anular: (id: string) =>
     httpClient.post<void>(`/api/liquidaciones/${id}/anular`),
 

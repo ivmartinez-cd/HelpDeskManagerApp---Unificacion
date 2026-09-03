@@ -15,6 +15,10 @@ from src.modules.liquidaciones.presentation.dependencies.config import (
     build_update_tarifario,
     build_vincular_tabla_km_spst,
 )
+from src.modules.liquidaciones.presentation.dependencies.estados_ayc import (
+    build_observar_liquidacion,
+    build_recibir_liquidacion,
+)
 from src.modules.liquidaciones.presentation.dependencies.geolocalizacion import (
     build_aplicar_calcular_distancias,
     build_auditar_pines,
@@ -45,7 +49,6 @@ from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
     build_importar_liquidacion,
     build_importar_prestador_maestro,
     build_list_liquidaciones,
-    build_observar_liquidacion,
     build_reanalizar_liquidacion,
     build_reconciliar_liquidacion_individual,
     build_sincronizar_liquidaciones,
@@ -116,6 +119,7 @@ __all__ = [
     "build_importar_prestador_maestro",
     "build_list_liquidaciones",
     "build_observar_liquidacion",
+    "build_recibir_liquidacion",
     "build_mapear_zona_siges",
     "build_proponer_vinculos_siges",
     "build_reanalizar_liquidacion",
