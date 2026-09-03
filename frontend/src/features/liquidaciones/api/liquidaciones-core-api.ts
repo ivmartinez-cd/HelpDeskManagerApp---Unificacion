@@ -25,7 +25,9 @@ export const liquidacionesCoreApi = {
       .get<Page<PrestadorLiquidacion>>(
         `/api/liquidaciones/prestadores?soloActivos=${soloActivos}`,
       )
-      .then((p) => p.items),
+      // Los combos muestran nombreCorto, que no correlaciona alfabéticamente
+      // con el `nombre` por el que ordena el backend (ej. "Rosario" -> SUPERNOVA).
+      .then((p) => [...p.items].sort((a, b) => a.nombreCorto.localeCompare(b.nombreCorto, "es"))),
 
   list: (params?: {
     prestadorId?: string;

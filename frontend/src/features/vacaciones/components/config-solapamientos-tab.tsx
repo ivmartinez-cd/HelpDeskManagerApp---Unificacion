@@ -6,6 +6,7 @@ import { ApiError } from "@/services/http-client";
 import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
 import { configApi } from "../api/config-api";
 import { gestionApi } from "../api/gestion-api";
+import { ordenarPorNombre } from "../lib/empleados";
 import { iniciales } from "../lib/fechas";
 import type { Cargo, EmpleadoListItem, Exclusion } from "../types/vacaciones";
 
@@ -43,6 +44,8 @@ function ExclusionesCard({
   const [empleadoB, setEmpleadoB] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const empleadosOrdenados = ordenarPorNombre(empleados);
 
   const colorDe = (id: string) =>
     empleados.find((e) => e.id === id)?.color ?? "#475569";
@@ -85,7 +88,7 @@ function ExclusionesCard({
       <div className="mb-3 grid grid-cols-2 gap-2">
         <BrandSelect label="Empleado A" value={empleadoA} onChange={(e) => setEmpleadoA(e.target.value)}>
           <option value="">Elegir…</option>
-          {empleados.map((e) => (
+          {empleadosOrdenados.map((e) => (
             <option key={e.id} value={e.id}>
               {e.firstName} {e.lastName}
             </option>
@@ -93,7 +96,7 @@ function ExclusionesCard({
         </BrandSelect>
         <BrandSelect label="Empleado B" value={empleadoB} onChange={(e) => setEmpleadoB(e.target.value)}>
           <option value="">Elegir…</option>
-          {empleados
+          {empleadosOrdenados
             .filter((e) => e.id !== empleadoA)
             .map((e) => (
               <option key={e.id} value={e.id}>

@@ -5,6 +5,7 @@ import { ApiError } from "@/services/http-client";
 import { BrandButton, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { solicitudesApi } from "../api/solicitudes-api";
+import { ordenarPorNombre } from "../lib/empleados";
 import { hoyIso } from "../lib/fechas";
 import type { EmpleadoListItem, Solicitud } from "../types/vacaciones";
 
@@ -71,7 +72,7 @@ export function SolicitudModal({ solicitud, empleados, onClose, onSaved }: Props
             onChange={(e) => setEmpleadoId(e.target.value)}
           >
             <option value="">Seleccioná un empleado…</option>
-            {empleados.map((e) => (
+            {ordenarPorNombre(empleados).map((e) => (
               <option key={e.id} value={e.id}>
                 {e.firstName} {e.lastName} · {e.sectorNombre}
               </option>

@@ -5,6 +5,7 @@ import { ApiError } from "@/services/http-client";
 import { BrandButton, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { asistenciasApi } from "../api/asistencias-api";
+import { nombreCompleto, ordenarPorNombre } from "../lib/empleados";
 import { hoyIso } from "../lib/fechas";
 import { TIPO_AUSENCIA, TIPOS_SELECCIONABLES } from "../lib/tipos-ausencia";
 import type { Ausencia, EmpleadoListItem, EstadoSolicitud, TipoAusencia } from "../types/vacaciones";
@@ -35,11 +36,10 @@ export function AusenciaModal({ ausencia, empleados, esAdmin, onClose, onSaved }
   const [error, setError] = useState<string | null>(null);
 
   const filtrados = useMemo(() => {
+    const ordenados = ordenarPorNombre(empleados);
     const q = busqueda.trim().toLowerCase();
-    if (!q) return empleados;
-    return empleados.filter((e) =>
-      `${e.firstName} ${e.lastName}`.toLowerCase().includes(q),
-    );
+    if (!q) return ordenados;
+    return ordenados.filter((e) => nombreCompleto(e).toLowerCase().includes(q));
   }, [empleados, busqueda]);
 
   const toggle = (id: string) => {
