@@ -577,4 +577,48 @@ test.describe("Módulo de Liquidaciones", () => {
     await expect(page.getByRole("cell", { name: "EMPRESA TEST" })).toBeVisible();
     await expect(page.getByRole("cell", { name: "SUCURSAL CENTRO" })).toBeVisible();
   });
+
+  test("detalle: tildar incidentes y resolver sus alertas en lote con un solo motivo", async ({
+    page,
+  }) => {
+    await page.route(`**/api/liquidaciones/${LIQ_ID}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(DETALLE_RESPONSE),
+      });
+    });
+    let bodyLote: unknown = null;
+    await page.route(`**/api/liquidaciones/${LIQ_ID}/alertas/estado`, async (route) => {
+      bodyLote = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ actualizadas: 1 }),
+      });
+    });
+
+    await page.goto(`/liquidaciones/${LIQ_ID}`);
+
+    // Sin selección no hay barra
+    await expect(page.getByRole("toolbar", { name: "Alertas seleccionadas" })).toBeHidden();
+
+    await page.getByRole("checkbox", { name: "Seleccionar incidente INC-2026-0001" }).check();
+    const barra = page.getByRole("toolbar", { name: "Alertas seleccionadas" });
+    await expect(barra).toBeVisible();
+    await expect(barra.getByText("1 incidente · 1 alerta seleccionada")).toBeVisible();
+
+    await barra.getByRole("button", { name: "Resolver", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "Resolver 1 alerta" });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("textbox").fill("costo doble acordado para toda la zona");
+    await dialog.getByRole("button", { name: "Resolver 1 alerta" }).click();
+
+    await expect(page.getByText("1 alerta resuelta")).toBeVisible();
+    expect(bodyLote).toEqual({
+      alertaIds: [ALERTA.id],
+      estado: "resuelta",
+      justificacion: "costo doble acordado para toda la zona",
+    });
+  });
 });

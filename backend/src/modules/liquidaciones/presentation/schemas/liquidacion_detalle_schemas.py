@@ -111,6 +111,27 @@ class AlertaEstadoIn(BaseModel):
         return self
 
 
+class AlertasEstadoLoteIn(BaseModel):
+    """PATCH .../alertas/estado — mismo cambio de estado y motivo para varias
+    alertas de la liquidación (ver `ActualizarEstadoAlertasLote`)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    alerta_ids: list[uuid.UUID] = Field(alias="alertaIds", min_length=1, max_length=500)
+    estado: ESTADOS_ALERTA
+    justificacion: str | None = None
+
+    @model_validator(mode="after")
+    def _justificacion_al_descartar(self) -> "AlertasEstadoLoteIn":
+        if self.estado == "descartada" and not (self.justificacion or "").strip():
+            raise ValueError("Descartar alertas requiere una justificación.")
+        return self
+
+
+class AlertasEstadoLoteOut(BaseModel):
+    actualizadas: int
+
+
 # Espeja los ESTADO_* de domain/entities/observacion.py — mismo ciclo que el legacy
 # (PUT /liquidaciones/{id}/observaciones/{obs_id}/estado).
 ESTADOS_OBSERVACION = Literal[

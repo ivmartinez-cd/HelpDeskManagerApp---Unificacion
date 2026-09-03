@@ -17,6 +17,9 @@ from src.modules.liquidaciones.application.use_cases.actualizar_estado_alerta im
     ActualizarEstadoAlerta,
     ActualizarEstadoAlertaPorts,
 )
+from src.modules.liquidaciones.application.use_cases.actualizar_estado_alertas_lote import (
+    ActualizarEstadoAlertasLote,
+)
 from src.modules.liquidaciones.application.use_cases.actualizar_estado_local import (
     ActualizarEstadoLocal,
     ActualizarEstadoLocalPorts,
@@ -145,6 +148,15 @@ def build_actualizar_extra_liquidacion(session: AsyncSession) -> ActualizarExtra
 
 def build_actualizar_estado_alerta(session: AsyncSession) -> ActualizarEstadoAlerta:
     return ActualizarEstadoAlerta(
+        ActualizarEstadoAlertaPorts(
+            alertas=SqlAlchemyAlertaRepository(session),
+            incidentes=SqlAlchemyIncidenteRepository(session),
+        )
+    )
+
+
+def build_actualizar_estado_alertas_lote(session: AsyncSession) -> ActualizarEstadoAlertasLote:
+    return ActualizarEstadoAlertasLote(
         ActualizarEstadoAlertaPorts(
             alertas=SqlAlchemyAlertaRepository(session),
             incidentes=SqlAlchemyIncidenteRepository(session),

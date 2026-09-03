@@ -84,6 +84,16 @@ export const liquidacionesCoreApi = {
       body,
     ),
 
+  /** Mismo estado y motivo para varias alertas (tilde múltiple en el detalle). */
+  updateEstadoAlertasLote: (
+    liquidacionId: string,
+    body: { alertaIds: string[]; estado: EstadoAlerta; justificacion?: string },
+  ) =>
+    httpClient.patch<{ actualizadas: number }>(
+      `/api/liquidaciones/${liquidacionId}/alertas/estado`,
+      body,
+    ),
+
   aprobar: (id: string) =>
     httpClient.post<Liquidacion>(`/api/liquidaciones/${id}/aprobar`),
 

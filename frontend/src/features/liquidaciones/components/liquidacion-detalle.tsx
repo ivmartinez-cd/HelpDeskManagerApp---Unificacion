@@ -7,12 +7,14 @@ import { toast } from "sonner";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { ApiError } from "@/services/http-client";
 import { liquidacionesApi } from "../api/liquidaciones-api";
+import { SeleccionAlertasProvider } from "../hooks/seleccion-alertas-context";
 import type {
   Alerta,
   EstadoLiquidacion,
   LiquidacionDetalle,
   PrestadorLiquidacion,
 } from "../types/liquidaciones";
+import { AlertasLoteBar } from "./alertas-lote-bar";
 import { ExtraItemSeccion } from "./extra-item-seccion";
 import { IncidentesSeccion } from "./incidentes-seccion";
 import { LiquidacionAlertasBanner } from "./liquidacion-alertas-banner";
@@ -138,6 +140,7 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
   const incidentesById = Object.fromEntries(incidentes.map((i) => [i.id, i]));
 
   return (
+    <SeleccionAlertasProvider alertasByInc={alertasByInc}>
     <div className="flex flex-col gap-5 p-6">
       <Link
         href="/liquidaciones/lista"
@@ -207,6 +210,10 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
         observaciones={observaciones}
         onChanged={() => void load()}
       />
+
+      {/* Gestión de alertas en lote: aparece al tildar incidentes */}
+      <AlertasLoteBar liquidacionId={id} onChanged={() => void load()} />
     </div>
+    </SeleccionAlertasProvider>
   );
 }

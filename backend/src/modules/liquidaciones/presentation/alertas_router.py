@@ -16,16 +16,38 @@ from src.modules.auth.presentation.dependencies.permissions import require_permi
 from src.modules.liquidaciones.domain.well_known_permissions import UPDATE
 from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
     build_actualizar_estado_alerta,
+    build_actualizar_estado_alertas_lote,
 )
 from src.modules.liquidaciones.presentation.schemas.liquidacion_detalle_schemas import (
     AlertaEstadoIn,
     AlertaOut,
+    AlertasEstadoLoteIn,
+    AlertasEstadoLoteOut,
 )
 from src.shared.infrastructure.database.session import get_db
 
 router = APIRouter(prefix="/api/liquidaciones", tags=["liquidaciones"])
 
 _require_update = Depends(require_permission(UPDATE))
+
+
+@router.patch("/{liquidacion_id}/alertas/estado", response_model=AlertasEstadoLoteOut)
+async def update_estado_alertas_lote(
+    liquidacion_id: UUID,
+    body: AlertasEstadoLoteIn,
+    _: Identity = _require_update,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> AlertasEstadoLoteOut:
+    """Mismo estado y motivo para varias alertas (tilde múltiple en el detalle).
+    Una alerta ajena a la liquidación rechaza el lote entero (404, ver
+    `AlertasNoEncontradasError`) sin cambiar ninguna."""
+    actualizadas = await build_actualizar_estado_alertas_lote(db).execute(
+        liquidacion_id,
+        body.alerta_ids,
+        estado=body.estado,
+        justificacion=body.justificacion,
+    )
+    return AlertasEstadoLoteOut(actualizadas=len(actualizadas))
 
 
 @router.patch("/{liquidacion_id}/alertas/{alerta_id}/estado", response_model=AlertaOut)

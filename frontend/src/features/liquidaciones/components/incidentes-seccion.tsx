@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/shared/utils/cn";
+import { useSeleccionAlertas } from "../hooks/seleccion-alertas-context";
 import type { Alerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
 import { formatFecha } from "../lib/format";
 import { IncidentesTabla } from "./incidentes-tabla";
@@ -46,6 +47,16 @@ export function IncidentesSeccion({
     return filtroFecha ? base.filter((i) => i.fechaCierre === filtroFecha) : base;
   }, [incidentes, alertasByInc, soloConAlertas, filtroFecha]);
 
+  // "Tildar todos": los incidentes visibles (respeta el filtro de fecha) con
+  // alertas abiertas, para gestionarlas en lote desde la barra flotante.
+  const seleccion = useSeleccionAlertas();
+  const seleccionables = useMemo(
+    () => (seleccion ? filtrados.filter((i) => seleccion.esSeleccionable(i.id)) : []),
+    [filtrados, seleccion],
+  );
+  const todosTildados =
+    seleccionables.length > 0 && seleccionables.every((i) => seleccion?.seleccionados.has(i.id));
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -56,6 +67,19 @@ export function IncidentesSeccion({
             {incidentes.length.toLocaleString("es-AR")}
           </span>
         </h2>
+        {seleccion && seleccionables.length > 0 && (
+          <label className="flex items-center gap-2 font-body text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={todosTildados}
+              onChange={(e) =>
+                seleccion.seleccionarTodos(seleccionables.map((i) => i.id), e.target.checked)
+              }
+              className="h-3.5 w-3.5 accent-brand-orange"
+            />
+            Tildar los {seleccionables.length} con alertas abiertas
+          </label>
+        )}
         {fechas.length > 1 && (
           <label className="flex items-center gap-2 font-body text-xs text-muted-foreground">
             Filtrar por fecha de cierre:

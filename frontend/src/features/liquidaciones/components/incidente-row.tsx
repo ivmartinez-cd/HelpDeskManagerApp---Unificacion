@@ -3,6 +3,7 @@
 import { ChevronDown, ChevronRight, ExternalLink, Route } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { incidentUrl } from "@/shared/utils/incident-link";
+import { useSeleccionAlertas } from "../hooks/seleccion-alertas-context";
 import type { Alerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
 import { formatARS, formatFechaDia } from "../lib/format";
 import { AlertaSubRow } from "./alerta-sub-row";
@@ -37,6 +38,10 @@ export function IncidenteRow({
   onAlertaChanged: () => void;
 }) {
   const tdCls = "py-3 px-4 font-body text-sm text-foreground";
+  // Tilde de selección múltiple (gestión de alertas en lote): solo incidentes
+  // con alertas abiertas; el resto deja el hueco para alinear la columna.
+  const seleccion = useSeleccionAlertas();
+  const seleccionable = seleccion?.esSeleccionable(incidente.id) ?? false;
   const serieDuplicada = alertasInc.find((a) => a.tipoAlerta === CODIGO_ALT010);
   const diff =
     incidente.costoServicioEsperado !== null
@@ -55,6 +60,19 @@ export function IncidenteRow({
       >
         <td className={tdCls}>
           <div className="flex items-center gap-1.5">
+            {seleccion &&
+              (seleccionable ? (
+                <input
+                  type="checkbox"
+                  aria-label={`Seleccionar incidente ${incidente.numeroIncidente}`}
+                  checked={seleccion.seleccionados.has(incidente.id)}
+                  onChange={() => seleccion.toggle(incidente.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-3.5 w-3.5 flex-shrink-0 accent-brand-orange"
+                />
+              ) : (
+                <span className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
+              ))}
             {hasAlertas &&
               (expanded ? (
                 <ChevronDown size={12} className="flex-shrink-0 text-muted-foreground" />

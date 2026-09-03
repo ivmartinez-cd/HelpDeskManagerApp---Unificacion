@@ -221,3 +221,17 @@ class SincronizacionEnProgresoError(BusinessRuleViolationError):
 
     def __init__(self) -> None:
         super().__init__("Ya hay una sincronización con Canal Directo en curso")
+
+
+class AlertasNoEncontradasError(NotFoundError):
+    """Alguna de las alertas que la TL gestiona en lote no pertenece a la
+    liquidación (o ya no existe tras un re-análisis). Se rechaza el lote entero
+    antes de tocar nada: la TL espera que el mismo motivo aplique a todas."""
+
+    default_code: ClassVar[str] = "ALERTAS_NO_ENCONTRADAS"
+
+    def __init__(self, alerta_ids: list[UUID]) -> None:
+        super().__init__(
+            f"{len(alerta_ids)} alerta(s) no pertenecen a esta liquidación: "
+            + ", ".join(str(a) for a in alerta_ids[:5])
+        )
