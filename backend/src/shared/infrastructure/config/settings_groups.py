@@ -54,6 +54,13 @@ class MailSettings(BaseSettings):
     smtp_starttls: bool = True
     smtp_from: str = "HelpDesk Manager <no-reply@cdsa.com.ar>"
 
+    cd_smtp_host: str = ""  # SMTP institucional de Canal Directo; ver .env.example CD_SMTP_*
+    cd_smtp_port: int = 25
+    cd_smtp_user: str = ""
+    cd_smtp_pass: SecretStr = SecretStr("")
+    cd_smtp_starttls: bool = False
+    cd_smtp_from: str = "Canal Directo <noreply@canaldirecto.com.ar>"
+
     # Emails del módulo vacaciones (nueva solicitud → jefes+admins, decisión →
     # empleado). Default False a propósito: en dev el .env tiene SMTP real y la
     # DB puede tener destinatarios reales — activarlo es una decisión explícita
