@@ -15,7 +15,7 @@ from src.modules.auth.domain.errors import UserNotFoundError
 from src.modules.auth.domain.repositories.operador_color_lookup import OperadorColorLookup
 from src.modules.auth.domain.well_known_permissions import MANAGE_ADMIN
 from src.modules.auth.infrastructure.argon2_password_hasher import Argon2PasswordHasher
-from src.modules.auth.infrastructure.mailer_factory import get_mailer
+from src.modules.auth.infrastructure.mailer_factory import get_mailer_canal_directo
 from src.modules.auth.infrastructure.repositories.sqlalchemy_reset_token_repository import (
     SqlAlchemyResetTokenRepository,
 )
@@ -120,7 +120,9 @@ async def _send_password_link(
         users=SqlAlchemyUserRepository(db),
         reset_tokens=SqlAlchemyResetTokenRepository(db),
         tokens=SecureTokenGenerator(),
-        mailer=get_mailer(),
+        # Remitente institucional (noreply@canaldirecto.com.ar), no el SMTP_FROM
+        # personal del mailer general.
+        mailer=get_mailer_canal_directo(),
         frontend_url=settings.frontend_url,
     )
     await RequestPasswordReset(deps).execute(user_email, purpose=purpose)

@@ -29,7 +29,7 @@ from src.modules.auth.application.use_cases.revoke_session import (
     RevokeSessionDependencies,
 )
 from src.modules.auth.infrastructure.argon2_password_hasher import Argon2PasswordHasher
-from src.modules.auth.infrastructure.mailer_factory import get_mailer
+from src.modules.auth.infrastructure.mailer_factory import get_mailer_canal_directo
 from src.modules.auth.infrastructure.repositories.sqlalchemy_feature_repositories import (
     SqlAlchemyFeatureGrantRepository,
 )
@@ -157,7 +157,9 @@ async def forgot_password(
         users=SqlAlchemyUserRepository(db),
         reset_tokens=SqlAlchemyResetTokenRepository(db),
         tokens=SecureTokenGenerator(),
-        mailer=get_mailer(),
+        # Remitente institucional (noreply@canaldirecto.com.ar), no el SMTP_FROM
+        # personal del mailer general.
+        mailer=get_mailer_canal_directo(),
         frontend_url=settings.frontend_url,
     )
     await RequestPasswordReset(deps).execute(payload.email)
