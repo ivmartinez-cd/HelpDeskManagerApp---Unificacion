@@ -52,6 +52,16 @@ def test_nombre_corto_no_intenta_contencion() -> None:
     assert match_clientes(["BIND"], empresas, alias={}) == {"BIND": []}
 
 
+def test_contencion_no_matchea_substring_dentro_de_una_palabra() -> None:
+    # Caso real 2026-09-03: 'ADIUM' (grupo Siges, laboratorio) es substring
+    # de 'ARCADIUM' pero no está contenido como palabra completa en
+    # 'Arcadium Lithium' (minera de litio, cliente distinto) — no debe cruzar.
+    empresas = [EmpresaSiges(id=439, den_comercial="ADIUM")]
+    assert match_clientes(["Arcadium Lithium"], empresas, alias={}) == {
+        "Arcadium Lithium": []
+    }
+
+
 def test_alias_manual_gana_sobre_el_cruce_automatico() -> None:
     empresas = [EmpresaSiges(id=8, den_comercial="Gob San Juan SRL")]
     resultado = match_clientes(
@@ -101,6 +111,12 @@ class TestBuscarPorNombre:
     def test_nombre_corto_no_matchea_por_contencion(self) -> None:
         indice = self._indice({"ASP Logistica Central": "Op A"})
         assert buscar_por_nombre("ASP", indice) is None
+
+    def test_no_matchea_substring_dentro_de_una_palabra(self) -> None:
+        # Caso real: grupo Siges 'ADIUM' (laboratorio) contra cliente de
+        # calendario 'Arcadium Lithium' (minera de litio, sin relación).
+        indice = self._indice({"Arcadium Lithium": "Op A"})
+        assert buscar_por_nombre("ADIUM", indice) is None
 
     def test_sin_nombre_o_sin_indice(self) -> None:
         assert buscar_por_nombre(None, self._indice({"Chubb": "Op"})) is None

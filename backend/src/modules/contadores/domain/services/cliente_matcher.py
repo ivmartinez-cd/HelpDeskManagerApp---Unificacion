@@ -83,13 +83,21 @@ def _match_uno(
     return _match_por_contencion(norm, por_norm)
 
 
+def _contenido_por_palabra(a: str, b: str) -> bool:
+    """Contención a nivel de palabra completa: 'ADIUM' no debe matchear
+    dentro de 'ARCADIUM LITHIUM' solo porque es substring de 'ARCADIUM'
+    (caso real: grupo Siges 'ADIUM', laboratorio sin relación, confundido
+    con el cliente de calendario 'Arcadium Lithium', minera de litio)."""
+    return f" {a} " in f" {b} "
+
+
 def _match_por_contencion(norm: str, por_norm: dict[str, list[EmpresaSiges]]) -> list[int]:
     if len(norm) < _MIN_LARGO_CONTENCION:
         return []
     candidatos = [
         empresa
         for otro_norm, empresas in por_norm.items()
-        if norm in otro_norm or otro_norm in norm
+        if _contenido_por_palabra(norm, otro_norm) or _contenido_por_palabra(otro_norm, norm)
         for empresa in empresas
     ]
     return [candidatos[0].id] if len(candidatos) == 1 else []
@@ -126,5 +134,9 @@ def buscar_por_nombre[T](nombre: str | None, indice: IndiceNombres[T]) -> T | No
         return indice.flex[flex]
     if len(flex) < _MIN_LARGO_CONTENCION:
         return None
-    candidatos = [v for k, v in indice.flex.items() if flex in k or k in flex]
+    candidatos = [
+        v
+        for k, v in indice.flex.items()
+        if _contenido_por_palabra(flex, k) or _contenido_por_palabra(k, flex)
+    ]
     return candidatos[0] if len(candidatos) == 1 else None
