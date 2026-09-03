@@ -14,7 +14,13 @@ también los anexos sin ningún historial para poder descartarlos a propósito
 
 Sin parámetros: todo el juicio de "¿le tocaba estar procesado?" vive en el
 dominio (comparando contra `hoy`), no en la query — así la caché del gateway
-sirve a cualquier `today` que llegue del cliente."""
+sirve a cualquier `today` que llegue del cliente.
+
+`maquinas_activas` cuenta `Maquina.ID_Anexo` con `Estado=0` (vigente, mismo
+criterio que `EQUIPOS_SIN_REAL_SQL`): caso real 2026-09-03, el anexo de OCA
+tenía 12 máquinas ligadas pero las 12 "De Baja" — 0 activas. Sin parque
+vigente no hay nada que facturar, así que el dominio descarta esos anexos
+en vez de acusar al operador de un olvido que no existe."""
 
 ESTADO_PROCESO_ANEXOS_SQL = """
 SELECT A.ID_Anexo AS id_anexo,
@@ -23,7 +29,11 @@ SELECT A.ID_Anexo AS id_anexo,
        (SELECT MAX(FA.PeriodoFacturacion)
         FROM dbo.Factura_Anexo FA
         WHERE FA.ID_Anexo = A.ID_Anexo AND FA.Nro_Proceso IS NOT NULL)
-           AS ultimo_periodo_procesado
+           AS ultimo_periodo_procesado,
+       (SELECT COUNT(*)
+        FROM dbo.Maquina M
+        WHERE M.ID_Anexo = A.ID_Anexo AND M.Estado = 0)
+           AS maquinas_activas
 FROM dbo.Anexo A
 INNER JOIN dbo.GrupoEconomico G ON G.id = A.ID_GrupoE
 WHERE A.ID_EstadoAnexo = 1

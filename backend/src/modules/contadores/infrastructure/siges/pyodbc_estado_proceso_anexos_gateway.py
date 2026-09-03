@@ -63,4 +63,5 @@ def _to_estado(row: Any) -> EstadoProcesoAnexo:
         anexo=(row.anexo or "").strip(),
         grupo=row.grupo.strip(),
         ultimo_periodo_procesado=ultimo.strip() if ultimo else None,
+        maquinas_activas=row.maquinas_activas,
     )

@@ -24,7 +24,13 @@ al día 20 el proceso de su período ya está disponible el mismo día — no ha
 falso positivo por corrimiento del lote. Si un cliente tiene varios eventos
 vencidos, se exige el período MÁS NUEVO (el olvido más reciente también
 cuenta) y se muestra la fecha del más antiguo (la señal más fuerte de
-arrastre)."""
+arrastre).
+
+Caso real 2026-09-03: OCA (`COD36CDSI00619/A`) tenía 12 máquinas ligadas,
+las 12 "De Baja" — 0 activas en Siges. Sin parque vigente no hay nada que
+facturar, así que un `maquinas_activas == 0` se descarta igual que "sin
+historial": no es un olvido del operador, es un anexo que debió cerrarse
+junto con su parque."""
 
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
@@ -125,6 +131,8 @@ def _anexos_sin_procesar(
     resultado = []
     for anexo in anexos:
         if anexo.ultimo_periodo_procesado is None:
+            continue
+        if anexo.maquinas_activas == 0:
             continue
         obligacion = buscar_por_nombre(anexo.grupo, indice)
         if obligacion is None:

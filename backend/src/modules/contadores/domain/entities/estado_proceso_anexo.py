@@ -19,6 +19,12 @@ class EstadoProcesoAnexo:
     # anexo nunca tuvo ningún proceso (alta reciente o factura por otro
     # circuito) — sin historial no hay prueba de olvido, se descarta aparte.
     ultimo_periodo_procesado: str | None
+    # Cantidad de máquinas con Maquina.Estado=0 (vigentes, mismo criterio que
+    # `equipos_sin_real_query.py`) ligadas al anexo. Caso real 2026-09-03:
+    # COD36CDSI00619/A (OCA) tiene 12 máquinas, las 12 "De Baja" — 0 activas.
+    # Sin parque vigente no hay nada que facturar: no es un olvido del
+    # operador, es un anexo que debió cerrarse junto con su parque.
+    maquinas_activas: int
 
 
 @dataclass(frozen=True)

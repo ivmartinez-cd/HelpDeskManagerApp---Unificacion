@@ -42,9 +42,15 @@ def _pendiente(id_: str, cliente: str | None, *, start: str = "2026-08-12") -> C
     )
 
 
-def _anexo(grupo: str, ultimo: str | None, *, id_anexo: int = 1) -> EstadoProcesoAnexo:
+def _anexo(
+    grupo: str, ultimo: str | None, *, id_anexo: int = 1, maquinas_activas: int = 1
+) -> EstadoProcesoAnexo:
     return EstadoProcesoAnexo(
-        id_anexo=id_anexo, anexo="COD1/A", grupo=grupo, ultimo_periodo_procesado=ultimo
+        id_anexo=id_anexo,
+        anexo="COD1/A",
+        grupo=grupo,
+        ultimo_periodo_procesado=ultimo,
+        maquinas_activas=maquinas_activas,
     )
 
 
@@ -144,6 +150,18 @@ async def test_anexo_sin_historial_de_proceso_no_se_cuenta() -> None:
     """Sin historial no hay prueba de olvido: puede ser un alta reciente o
     un anexo que factura por otro circuito."""
     port = _FakePort([_anexo("Sika", None)])
+    resultado = await ListarAnexosSinProcesar(port).execute(
+        [_pendiente("e1", "Sika")], hoy=_HOY
+    )
+    assert resultado.anexos == []
+
+
+@pytest.mark.asyncio
+async def test_anexo_sin_maquinas_activas_no_se_cuenta() -> None:
+    """Caso real 2026-09-03: OCA (COD36CDSI00619/A) tiene 12 máquinas
+    ligadas, las 12 'De Baja' — sin parque vigente no hay nada que
+    facturar, no es un olvido del operador."""
+    port = _FakePort([_anexo("Sika", "202606", maquinas_activas=0)])
     resultado = await ListarAnexosSinProcesar(port).execute(
         [_pendiente("e1", "Sika")], hoy=_HOY
     )
