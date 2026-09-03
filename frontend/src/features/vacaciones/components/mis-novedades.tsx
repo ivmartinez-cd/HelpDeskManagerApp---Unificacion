@@ -12,10 +12,10 @@ import { TIPOS_SOLICITABLES, type Ausencia } from "../types/vacaciones";
 import { NovedadModal } from "./novedad-modal";
 import { SolicitudEstadoBadge } from "./solicitud-estado-badge";
 
-/** Sección "Home office y cambios de horario" de Mis Solicitudes: las
- * novedades propias (el backend ya acota a lo propio para quien no gestiona),
- * con su estado, y el alta. Una PENDING se puede cancelar; las decididas
- * quedan como historial. */
+/** Pestaña "Home office y horario" de Asistencias (hasta 2026-09-03 vivía en
+ * Mis Solicitudes): las novedades propias (el backend ya acota a lo propio
+ * para quien no gestiona), con su estado, y el alta. Una PENDING se puede
+ * cancelar; las decididas quedan como historial. */
 export function MisNovedades() {
   const { user, can } = useSession();
   const puedeCrear = user.isSuperadmin || can("vacaciones", "create") || can("vacaciones", "manage");
@@ -65,7 +65,7 @@ export function MisNovedades() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="font-body text-sm text-muted-foreground">
           Home office y cambios de horario puntuales. Los aprueba tu TL; al aprobarse impactan en
-          el Registro de asistencias y en Turnos.
+          el calendario de asistencias y en Turnos.
         </p>
         {puedeCrear && (
           <BrandButton onClick={() => setCreando(true)}>

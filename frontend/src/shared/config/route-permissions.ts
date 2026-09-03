@@ -16,6 +16,8 @@
  *  - `feature`: la pantalla es una "función" concedible por usuario desde la
  *    grilla de permisos (ADR-032). Es lo que permite "a este operador sí
  *    Coberturas, a aquel no" sin tocar código.
+ *  Si una regla trae los dos, alcanza con cualquiera (la pantalla tiene una
+ *  parte concedible por función y otra que se abre con una acción).
  *
  * Orden: se toma la primera entrada cuyo `prefix` matchea (`===` o `/…`; con
  * `exact: true` solo `===`), así que lo específico va antes que lo general
@@ -32,7 +34,7 @@ export interface RequiredPermission {
 
 interface RouteRule {
   prefix: string;
-  /** Acciones: alcanza con una. Vacío si la ruta se rige por `feature`. */
+  /** Acciones: alcanza con una. Vacío si la ruta se rige solo por `feature`. */
   anyOf?: RequiredPermission[];
   /** Función concedible por usuario (clave de `module_feature`). */
   feature?: string;
@@ -55,7 +57,14 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   // funciones concedibles por usuario (ADR-032).
   { prefix: "/vacaciones/solicitudes", anyOf: [p("vacaciones", "manage"), p("vacaciones", "create")] },
   { prefix: "/vacaciones/aprobaciones", anyOf: [p("vacaciones", "manage"), p("vacaciones", "approve")] },
-  { prefix: "/vacaciones/asistencias", feature: "vacaciones-asistencias" },
+  // Asistencias: el registro (calendario/listado/reportes) es la función; la
+  // pestaña "Home office y horario" (solicitudes propias) se abre con create,
+  // así un operador entra a pedir home office sin ver el registro del equipo.
+  {
+    prefix: "/vacaciones/asistencias",
+    feature: "vacaciones-asistencias",
+    anyOf: [p("vacaciones", "manage"), p("vacaciones", "create")],
+  },
   { prefix: "/vacaciones/gestion", feature: "vacaciones-gestion-humana" },
   { prefix: "/vacaciones/reportes", feature: "vacaciones-reportes" },
   { prefix: "/vacaciones/auditoria", feature: "vacaciones-auditoria" },
@@ -111,7 +120,7 @@ export interface AccessChecks {
 export function canAccessPath(pathname: string, checks: AccessChecks): boolean {
   const rule = ruleForPath(pathname);
   if (!rule) return true;
-  if (rule.feature) return checks.hasFeature(rule.feature);
+  if (rule.feature && checks.hasFeature(rule.feature)) return true;
   return (rule.anyOf ?? []).some((perm) => checks.can(perm.module, perm.action));
 }
 

@@ -16,7 +16,6 @@ import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { gestionApi } from "../api/gestion-api";
 import { solicitudesApi } from "../api/solicitudes-api";
 import type { EmpleadoListItem, EstadoSolicitud, Solicitud } from "../types/vacaciones";
-import { MisNovedades } from "./mis-novedades";
 import { SolicitudEliminarModal } from "./solicitud-eliminar-modal";
 import { SolicitudModal } from "./solicitud-modal";
 import {
@@ -27,11 +26,6 @@ import {
 } from "./solicitudes-tabla";
 
 const PAGE_SIZE = 25;
-
-const SECCIONES = [
-  { value: "vacaciones", label: "Vacaciones" },
-  { value: "novedades", label: "Home office y horario" },
-];
 
 const FILTROS: { value: "todas" | EstadoSolicitud; label: string }[] = [
   { value: "todas", label: "Todas" },
@@ -45,8 +39,8 @@ export function SolicitudesView() {
   const esAdmin = user.isSuperadmin || can("vacaciones", "manage");
   const puedeCrear = esAdmin || can("vacaciones", "create");
 
-  // "Vacaciones" (esta vista) | "Home office y horario" (MisNovedades, 2026-08-21).
-  const [seccion, setSeccion] = useState<"vacaciones" | "novedades">("vacaciones");
+  // Solo vacaciones: home office y cambios de horario viven en Asistencias
+  // (pestaña "Home office y horario", `MisNovedades`) desde 2026-09-03.
   const [solicitudes, setSolicitudes] = useState<Solicitud[] | null>(null);
   const [empleados, setEmpleados] = useState<EmpleadoListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -133,10 +127,10 @@ export function SolicitudesView() {
             Mis Solicitudes
           </h1>
           <p className="font-body text-sm text-muted-foreground">
-            Creá y gestioná tus solicitudes de vacaciones, home office y cambios de horario
+            Creá y gestioná tus solicitudes de vacaciones
           </p>
         </div>
-        {puedeCrear && seccion === "vacaciones" && (
+        {puedeCrear && (
           <BrandButton onClick={() => setCreando(true)}>
             <Plus className="h-4 w-4" />
             Nueva solicitud
@@ -144,16 +138,6 @@ export function SolicitudesView() {
         )}
       </div>
 
-      <SegmentedControl
-        label="Sección"
-        options={SECCIONES}
-        value={seccion}
-        onChange={(v) => setSeccion(v as typeof seccion)}
-      />
-
-      {seccion === "novedades" && <MisNovedades />}
-
-      {seccion === "vacaciones" && (
       <div className="flex flex-wrap items-end gap-3">
         <div className="min-w-[240px]">
           <BrandInput
@@ -172,9 +156,8 @@ export function SolicitudesView() {
           onChange={(v) => setFiltro(v as typeof filtro)}
         />
       </div>
-      )}
 
-      {seccion === "vacaciones" && solicitudes === null && !error && (
+      {solicitudes === null && !error && (
         <div className="flex flex-col gap-2">
           {Array.from({ length: 4 }, (_, i) => (
             <BrandSkeleton key={i} className="h-14 w-full" />
@@ -182,7 +165,7 @@ export function SolicitudesView() {
         </div>
       )}
 
-      {seccion === "vacaciones" && error && (
+      {error && (
         <div className="flex items-center justify-between gap-4 rounded-[12px] border border-destructive/20 bg-destructive/10 px-5 py-4">
           <p className="font-body text-sm text-foreground">{error}</p>
           <BrandButton variant="outline" size="sm" onClick={() => void load()}>
@@ -191,7 +174,7 @@ export function SolicitudesView() {
         </div>
       )}
 
-      {seccion === "vacaciones" && solicitudes !== null && !error && (
+      {solicitudes !== null && !error && (
         <>
           {visibles.length === 0 ? (
             <BrandEmptyState
