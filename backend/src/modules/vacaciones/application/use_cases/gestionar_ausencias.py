@@ -98,7 +98,7 @@ class CrearAusencias:
         empleados = await self._deps.empleados.get_by_ids(destinos)
         if len(empleados) != len(set(destinos)):
             raise NotFoundError("Uno o más empleados no fueron encontrados")
-        dias = dias_de_baja(command.start_date, command.end_date)
+        dias = dias_de_baja(command.tipo, command.start_date, command.end_date)
         if dias <= 0:
             raise ValidationError("El rango de fechas no es válido")
         validar_horario(command.tipo, command.hora_desde, command.hora_hasta)
@@ -146,7 +146,7 @@ class EditarAusencia:
         verificar_puede_modificar_ausencia(actor, ausencia, accion="editar")
         if command.status is not None:
             verificar_puede_cambiar_estado(actor)
-        dias = dias_de_baja(command.start_date, command.end_date)
+        dias = dias_de_baja(command.tipo, command.start_date, command.end_date)
         if dias <= 0:
             raise ValidationError("El rango de fechas no es válido")
         validar_horario(command.tipo, command.hora_desde, command.hora_hasta)

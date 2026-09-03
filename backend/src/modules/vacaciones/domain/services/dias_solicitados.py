@@ -13,15 +13,16 @@ _VIERNES = 4
 _SABADO = 5
 
 
-def dias_corridos(start: date, end: date) -> int:
+def dias_corridos(start: date, end: date, *, aplicar_extension_lct: bool = True) -> int:
     if end < start:
         return 0
     last = end
-    dow = end.weekday()
-    if dow == _VIERNES:
-        last = end + timedelta(days=2)
-    elif dow == _SABADO:
-        last = end + timedelta(days=1)
+    if aplicar_extension_lct:
+        dow = end.weekday()
+        if dow == _VIERNES:
+            last = end + timedelta(days=2)
+        elif dow == _SABADO:
+            last = end + timedelta(days=1)
     return (last - start).days + 1
 
 

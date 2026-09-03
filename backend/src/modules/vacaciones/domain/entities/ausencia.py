@@ -29,8 +29,10 @@ class Ausencia:
     """Baja/ausencia (Absence del legacy). Las que carga un admin/jefe nacen
     APPROVED; las que pide un empleado para sí nacen PENDING y las decide quien
     tiene `approve` (mismo circuito que las vacaciones). `days_count` usa el
-    mismo conteo corrido con extensión LCT que las solicitudes, y `half_day`
-    hace que compute 0.5 en los reportes sin alterar `days_count`.
+    mismo conteo corrido con extensión LCT que las solicitudes, salvo
+    HOME_OFFICE/CAMBIO_HORARIO (`dias_de_baja`, decisión 2026-09-03: son días
+    puntuales con aprobación de TL, no vacación formal). `half_day` hace que
+    compute 0.5 en los reportes sin alterar `days_count`.
     `hora_desde`/`hora_hasta` solo aplican a CAMBIO_HORARIO.
     """
 

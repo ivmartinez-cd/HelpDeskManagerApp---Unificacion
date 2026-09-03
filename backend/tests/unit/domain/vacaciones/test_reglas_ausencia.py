@@ -40,17 +40,28 @@ def make_ausencia(**overrides: object) -> Ausencia:
 class TestDiasDeBaja:
     def test_dias_corridos_inclusive(self) -> None:
         # lunes a miércoles = 3 días corridos
-        assert dias_de_baja(date(2026, 8, 3), date(2026, 8, 5)) == 3
+        tipo = TipoAusencia.BAJA_ENFERMEDAD
+        assert dias_de_baja(tipo, date(2026, 8, 3), date(2026, 8, 5)) == 3
 
     def test_fin_viernes_extiende_finde(self) -> None:
         # mismo calendarDaysBetween del legacy: viernes suma sáb+dom
-        assert dias_de_baja(date(2026, 8, 7), date(2026, 8, 7)) == 3
+        tipo = TipoAusencia.BAJA_ENFERMEDAD
+        assert dias_de_baja(tipo, date(2026, 8, 7), date(2026, 8, 7)) == 3
 
     def test_fin_sabado_extiende_domingo(self) -> None:
-        assert dias_de_baja(date(2026, 8, 8), date(2026, 8, 8)) == 2
+        tipo = TipoAusencia.BAJA_ENFERMEDAD
+        assert dias_de_baja(tipo, date(2026, 8, 8), date(2026, 8, 8)) == 2
 
     def test_rango_invertido_da_cero(self) -> None:
-        assert dias_de_baja(date(2026, 8, 5), date(2026, 8, 3)) == 0
+        tipo = TipoAusencia.BAJA_ENFERMEDAD
+        assert dias_de_baja(tipo, date(2026, 8, 5), date(2026, 8, 3)) == 0
+
+    def test_home_office_viernes_no_extiende_finde(self) -> None:
+        # caso real 2026-09-03: Home Office de un solo día viernes daba 3
+        assert dias_de_baja(TipoAusencia.HOME_OFFICE, date(2026, 9, 11), date(2026, 9, 11)) == 1
+
+    def test_cambio_horario_sabado_no_extiende_domingo(self) -> None:
+        assert dias_de_baja(TipoAusencia.CAMBIO_HORARIO, date(2026, 8, 8), date(2026, 8, 8)) == 1
 
 
 class TestResolverEmpleadosDestino:

@@ -6,7 +6,7 @@ toca bajas PENDING y nunca cambia el estado.
 """
 
 import uuid
-from datetime import time
+from datetime import date, time
 
 from src.modules.vacaciones.domain.entities.ausencia import Ausencia, TipoAusencia
 from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud
@@ -18,9 +18,19 @@ from src.modules.vacaciones.domain.services.dias_solicitados import dias_corrido
 from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 from src.shared.domain.errors import ValidationError
 
-dias_de_baja = dias_corridos
-"""Conteo de días de una baja: el legacy usa el mismo calendarDaysBetween
-(corridos inclusive + extensión LCT si el fin cae viernes/sábado)."""
+_SIN_EXTENSION_LCT = frozenset({TipoAusencia.HOME_OFFICE, TipoAusencia.CAMBIO_HORARIO})
+"""Tipos operativos con aprobación de TL (TIPOS_SOLICITABLES): un día puntual
+no debe inflarse a fin de semana completo por caer viernes/sábado, a
+diferencia de una baja real (decisión 2026-09-03 — antes `dias_de_baja` era
+alias directo de `dias_corridos` y aplicaba esa extensión a todos los tipos
+por igual, paridad literal con el legacy)."""
+
+
+def dias_de_baja(tipo: TipoAusencia, start: date, end: date) -> int:
+    """Conteo de días de una baja: el legacy usa el mismo calendarDaysBetween
+    (corridos inclusive + extensión LCT si el fin cae viernes/sábado) para
+    todos los tipos; acá se excluye esa extensión para `_SIN_EXTENSION_LCT`."""
+    return dias_corridos(start, end, aplicar_extension_lct=tipo not in _SIN_EXTENSION_LCT)
 
 
 def resolver_empleados_destino(
