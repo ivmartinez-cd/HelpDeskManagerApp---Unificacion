@@ -77,7 +77,7 @@ export const liquidacionesCoreApi = {
   updateEstadoAlerta: (
     liquidacionId: string,
     alertaId: string,
-    body: { estado: EstadoAlerta; justificacion?: string },
+    body: { estado: EstadoAlerta; justificacion?: string; incidenteRelacionadoId?: string | null },
   ) =>
     httpClient.patch<Alerta>(
       `/api/liquidaciones/${liquidacionId}/alertas/${alertaId}/estado`,

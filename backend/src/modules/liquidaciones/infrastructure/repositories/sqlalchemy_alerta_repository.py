@@ -41,12 +41,14 @@ class SqlAlchemyAlertaRepository:
         *,
         estado: str,
         justificacion: str | None,
+        incidente_relacionado_id: UUID | None = None,
     ) -> Alerta | None:
         row = await self._session.get(AlertaModel, alerta_id)
         if row is None or row.liquidacion_id != liquidacion_id:
             return None
         row.estado = estado
         row.justificacion = justificacion
+        row.incidente_relacionado_id = incidente_relacionado_id
         await self._session.flush()
         await self._session.refresh(row)
         return _to_entity(row)
@@ -64,6 +66,7 @@ def _a_model(liquidacion_id: UUID, conciliada: AlertaConciliada) -> AlertaModel:
         riesgo=alerta.riesgo,
         estado=conciliada.estado,
         justificacion=conciliada.justificacion,
+        incidente_relacionado_id=conciliada.incidente_relacionado_id,
     )
 
 
@@ -79,4 +82,5 @@ def _to_entity(row: AlertaModel) -> Alerta:
         estado=row.estado,
         fecha_generacion=row.fecha_generacion,
         justificacion=row.justificacion,
+        incidente_relacionado_id=row.incidente_relacionado_id,
     )

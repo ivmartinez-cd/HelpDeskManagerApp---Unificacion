@@ -27,6 +27,9 @@ class AlertaModel(Base):
     riesgo: Mapped[float] = mapped_column(Float, nullable=False)
     estado: Mapped[str] = mapped_column(String, nullable=False, server_default=text("'pendiente'"))
     justificacion: Mapped[str | None] = mapped_column(String)
+    incidente_relacionado_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("incidentes.id", ondelete="SET NULL")
+    )
     fecha_generacion: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()"), nullable=False
     )

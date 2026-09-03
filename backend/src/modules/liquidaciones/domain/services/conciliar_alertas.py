@@ -11,6 +11,7 @@ El motor regenera el set completo de alertas en cada corrida
   el dato que la causaba se corrigió, así que la decisión quedó obsoleta.
 """
 
+import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -25,6 +26,7 @@ class AlertaConciliada:
     generada: AlertaGenerada
     estado: str
     justificacion: str | None
+    incidente_relacionado_id: uuid.UUID | None = None
 
 
 def conciliar_alertas(
@@ -42,5 +44,6 @@ def conciliar_alertas(
             generada=nueva,
             estado=previa.estado if previa else ESTADO_PENDIENTE,
             justificacion=previa.justificacion if previa else None,
+            incidente_relacionado_id=previa.incidente_relacionado_id if previa else None,
         ))
     return conciliadas

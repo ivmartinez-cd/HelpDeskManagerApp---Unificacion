@@ -71,6 +71,9 @@ class AlertaOut(BaseModel):
     riesgo: float
     estado: str
     justificacion: str | None = None
+    incidente_relacionado_id: uuid.UUID | None = Field(
+        None, serialization_alias="incidenteRelacionadoId"
+    )
     fecha_generacion: datetime = Field(serialization_alias="fechaGeneracion")
 
     @classmethod
@@ -84,6 +87,7 @@ class AlertaOut(BaseModel):
             riesgo=e.riesgo,
             estado=e.estado,
             justificacion=e.justificacion,
+            incidente_relacionado_id=e.incidente_relacionado_id,
             fecha_generacion=e.fecha_generacion,
         )
 
@@ -94,8 +98,11 @@ ESTADOS_ALERTA = Literal["pendiente", "en_revision", "resuelta", "descartada"]
 
 
 class AlertaEstadoIn(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     estado: ESTADOS_ALERTA
     justificacion: str | None = None
+    incidente_relacionado_id: uuid.UUID | None = Field(None, alias="incidenteRelacionadoId")
 
     @model_validator(mode="after")
     def _justificacion_al_descartar(self) -> "AlertaEstadoIn":

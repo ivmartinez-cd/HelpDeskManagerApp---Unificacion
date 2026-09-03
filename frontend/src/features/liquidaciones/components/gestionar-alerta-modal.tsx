@@ -7,7 +7,7 @@ import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import { CODIGO_ALT009, ESTADO_ALERTA_STYLES, TRANSICIONES_ALERTA } from "../lib/alerta-estados";
-import type { Alerta, EstadoAlerta, PrestadorLiquidacion } from "../types/liquidaciones";
+import type { Alerta, EstadoAlerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
 import { riesgoClass } from "./incidente-badges";
 import { EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
 
@@ -30,6 +30,7 @@ export function GestionarAlertaModal({
   liquidacionId,
   prestadorId,
   prestadores,
+  incidentesById,
   alerta,
   onClose,
   onChanged,
@@ -37,6 +38,7 @@ export function GestionarAlertaModal({
   liquidacionId: string;
   prestadorId: string;
   prestadores: PrestadorLiquidacion[];
+  incidentesById: Record<string, Incidente>;
   alerta: Alerta;
   onClose: () => void;
   onChanged: () => void;
@@ -44,8 +46,14 @@ export function GestionarAlertaModal({
   const [enviando, setEnviando] = useState(false);
   const [transicion, setTransicion] = useState<{ estado: EstadoAlerta; label: string; pideJustificacion?: boolean } | null>(null);
   const [justificacion, setJustificacion] = useState("");
+  const [incidenteRelacionadoId, setIncidenteRelacionadoId] = useState(
+    alerta.incidenteRelacionadoId ?? "",
+  );
   const [cargandoSucursal, setCargandoSucursal] = useState(false);
   const estilo = ESTADO_ALERTA_STYLES[alerta.estado] ?? ESTADO_ALERTA_STYLES.pendiente;
+  const candidatosRuta = Object.values(incidentesById)
+    .filter((i) => i.id !== alerta.incidenteId)
+    .sort((a, b) => a.numeroIncidente.localeCompare(b.numeroIncidente));
 
   const cambiar = async (estado: EstadoAlerta, justificacionTexto?: string) => {
     setEnviando(true);
@@ -53,6 +61,7 @@ export function GestionarAlertaModal({
       await liquidacionesApi.updateEstadoAlerta(liquidacionId, alerta.id, {
         estado,
         ...(justificacionTexto ? { justificacion: justificacionTexto } : {}),
+        incidenteRelacionadoId: incidenteRelacionadoId || null,
       });
       onChanged();
       onClose();
@@ -110,6 +119,24 @@ export function GestionarAlertaModal({
               autoFocus
               className="w-full rounded-[8px] border border-border bg-background p-3 font-body text-sm text-foreground outline-none focus:border-brand-orange"
             />
+            {candidatosRuta.length > 0 && (
+              <label className="flex flex-col gap-1 font-body text-xs text-muted-foreground">
+                Ruta compartida con (opcional):
+                <select
+                  value={incidenteRelacionadoId}
+                  onChange={(e) => setIncidenteRelacionadoId(e.target.value)}
+                  className="rounded-[8px] border border-border bg-background px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange"
+                >
+                  <option value="">Ninguno</option>
+                  {candidatosRuta.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      #{i.numeroIncidente} —{" "}
+                      {[i.empresaNombre, i.sucursalNombre].filter(Boolean).join(" / ") || "—"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <div className="flex justify-end gap-2">
               <BrandButton variant="outline" onClick={() => setTransicion(null)}>
                 Volver

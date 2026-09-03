@@ -78,6 +78,7 @@ export interface Alerta {
   riesgo: number;
   estado: EstadoAlerta;
   justificacion: string | null;
+  incidenteRelacionadoId: string | null;
   fechaGeneracion: string;
 }
 

@@ -132,6 +132,10 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
   ).length;
   const correctivos = incidentes.filter((i) => i.tipo.toLowerCase() !== "preventivo");
   const preventivos = incidentes.filter((i) => i.tipo.toLowerCase() === "preventivo");
+  // Todos los incidentes de la liquidación (no solo los de la sección que se
+  // está renderizando) — permite vincular/mostrar una ruta compartida con un
+  // incidente de la otra sección (correctivos ⇄ preventivos).
+  const incidentesById = Object.fromEntries(incidentes.map((i) => [i.id, i]));
 
   return (
     <div className="flex flex-col gap-5 p-6">
@@ -176,6 +180,7 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
         titulo="Correctivos"
         accentClass="text-brand-orange"
         incidentes={correctivos}
+        incidentesById={incidentesById}
         alertasByInc={alertasByInc}
         soloConAlertas={soloConAlertas}
         onAlertaChanged={() => void load()}
@@ -188,6 +193,7 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
           titulo="Preventivos"
           accentClass="text-emerald-500"
           incidentes={preventivos}
+          incidentesById={incidentesById}
           alertasByInc={alertasByInc}
           soloConAlertas={soloConAlertas}
           onAlertaChanged={() => void load()}

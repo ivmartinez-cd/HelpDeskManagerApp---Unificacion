@@ -32,3 +32,7 @@ class Alerta:
     # Motivo de la decisión de la TL — obligatorio al descartar; el re-análisis
     # lo preserva junto con el estado (ver `conciliar_alertas`).
     justificacion: str | None = None
+    # Otro incidente de la misma liquidación donde en realidad se cobraron los
+    # km de esta ruta compartida — vínculo estructurado que la TL carga al
+    # gestionar la alerta, preservado por el re-análisis igual que justificacion.
+    incidente_relacionado_id: uuid.UUID | None = None

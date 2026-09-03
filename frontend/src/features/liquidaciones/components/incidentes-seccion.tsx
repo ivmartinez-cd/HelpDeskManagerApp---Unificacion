@@ -13,6 +13,7 @@ export function IncidentesSeccion({
   titulo,
   accentClass,
   incidentes,
+  incidentesById,
   alertasByInc,
   soloConAlertas,
   onAlertaChanged,
@@ -23,6 +24,7 @@ export function IncidentesSeccion({
   titulo: string;
   accentClass?: string;
   incidentes: Incidente[];
+  incidentesById: Record<string, Incidente>;
   alertasByInc: Record<string, Alerta[]>;
   soloConAlertas?: boolean;
   onAlertaChanged: () => void;
@@ -78,6 +80,7 @@ export function IncidentesSeccion({
         prestadores={prestadores}
         incidentes={filtrados}
         allIncidentes={incidentes}
+        incidentesById={incidentesById}
         alertasByInc={alertasByInc}
         onAlertaChanged={onAlertaChanged}
       />

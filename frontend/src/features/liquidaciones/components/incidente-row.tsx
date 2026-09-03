@@ -18,6 +18,7 @@ export function IncidenteRow({
   prestadorId,
   prestadores,
   incidente,
+  incidentesById,
   alertasInc,
   expanded,
   isRutaCompartida,
@@ -28,6 +29,7 @@ export function IncidenteRow({
   prestadorId: string;
   prestadores: PrestadorLiquidacion[];
   incidente: Incidente;
+  incidentesById: Record<string, Incidente>;
   alertasInc: Alerta[];
   expanded: boolean;
   isRutaCompartida: boolean;
@@ -44,6 +46,7 @@ export function IncidenteRow({
   return (
     <>
       <tr
+        id={`incidente-row-${incidente.id}`}
         className={cn(
           "border-t border-border transition-colors hover:bg-muted/30",
           hasAlertas ? "cursor-pointer" : "cursor-default",
@@ -159,6 +162,7 @@ export function IncidenteRow({
             liquidacionId={liquidacionId}
             prestadorId={prestadorId}
             prestadores={prestadores}
+            incidentesById={incidentesById}
             alerta={a}
             onChanged={onAlertaChanged}
           />

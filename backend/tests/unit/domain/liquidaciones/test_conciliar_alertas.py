@@ -27,6 +27,7 @@ def _existente(
     *,
     estado: str = "pendiente",
     justificacion: str | None = None,
+    incidente_relacionado_id: uuid.UUID | None = None,
 ) -> Alerta:
     return Alerta(
         id=uuid.uuid4(),
@@ -39,6 +40,7 @@ def _existente(
         estado=estado,
         fecha_generacion=_AHORA,
         justificacion=justificacion,
+        incidente_relacionado_id=incidente_relacionado_id,
     )
 
 
@@ -83,3 +85,21 @@ def test_distinto_tipo_no_matchea() -> None:
 def test_lo_que_el_motor_ya_no_genera_desaparece() -> None:
     existente = _existente(uuid.uuid4(), estado="descartada", justificacion="x")
     assert conciliar_alertas([existente], []) == []
+
+
+def test_preserva_incidente_relacionado() -> None:
+    inc, relacionado = uuid.uuid4(), uuid.uuid4()
+    existente = _existente(
+        inc, estado="descartada", justificacion="x", incidente_relacionado_id=relacionado
+    )
+    [conciliada] = conciliar_alertas([existente], [_generada(inc)])
+    assert conciliada.incidente_relacionado_id == relacionado
+
+
+def test_pendiente_se_regenera_sin_incidente_relacionado() -> None:
+    inc, relacionado = uuid.uuid4(), uuid.uuid4()
+    existente = _existente(
+        inc, estado="pendiente", incidente_relacionado_id=relacionado
+    )
+    [conciliada] = conciliar_alertas([existente], [_generada(inc)])
+    assert conciliada.incidente_relacionado_id is None

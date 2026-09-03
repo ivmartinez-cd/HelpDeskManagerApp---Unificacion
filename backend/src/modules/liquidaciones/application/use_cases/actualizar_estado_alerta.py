@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.liquidaciones.domain.entities.alerta import Alerta
+from src.modules.liquidaciones.domain.errors import IncidenteRelacionadoInvalidoError
 from src.modules.liquidaciones.domain.repositories.alerta_repository import AlertaRepository
 from src.modules.liquidaciones.domain.repositories.incidente_repository import (
     IncidenteRepository,
@@ -25,10 +26,24 @@ class ActualizarEstadoAlerta:
         self._ports = ports
 
     async def execute(
-        self, liquidacion_id: UUID, alerta_id: UUID, *, estado: str, justificacion: str | None
+        self,
+        liquidacion_id: UUID,
+        alerta_id: UUID,
+        *,
+        estado: str,
+        justificacion: str | None,
+        incidente_relacionado_id: UUID | None = None,
     ) -> Alerta | None:
+        if incidente_relacionado_id is not None:
+            incidentes_liq = await self._ports.incidentes.list_by_liquidacion(liquidacion_id)
+            if not any(i.id == incidente_relacionado_id for i in incidentes_liq):
+                raise IncidenteRelacionadoInvalidoError(incidente_relacionado_id)
         actualizada = await self._ports.alertas.update_estado(
-            liquidacion_id, alerta_id, estado=estado, justificacion=justificacion
+            liquidacion_id,
+            alerta_id,
+            estado=estado,
+            justificacion=justificacion,
+            incidente_relacionado_id=incidente_relacionado_id,
         )
         if actualizada is None:
             return None

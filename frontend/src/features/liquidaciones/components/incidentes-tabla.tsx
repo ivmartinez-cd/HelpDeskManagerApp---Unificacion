@@ -31,6 +31,7 @@ export function IncidentesTabla({
   prestadores,
   incidentes,
   allIncidentes,
+  incidentesById,
   alertasByInc,
   onAlertaChanged,
 }: {
@@ -39,6 +40,7 @@ export function IncidentesTabla({
   prestadores: PrestadorLiquidacion[];
   incidentes: Incidente[];
   allIncidentes: Incidente[];
+  incidentesById: Record<string, Incidente>;
   alertasByInc: Record<string, Alerta[]>;
   onAlertaChanged: () => void;
 }) {
@@ -126,6 +128,7 @@ export function IncidentesTabla({
                 prestadorId={prestadorId}
                 prestadores={prestadores}
                 incidente={inc}
+                incidentesById={incidentesById}
                 alertasInc={alertasByInc[inc.id] ?? []}
                 expanded={expandedIds.has(inc.id)}
                 isRutaCompartida={rutasCompartidas.has(inc.id)}

@@ -269,6 +269,7 @@ class FakeAlertaRepository:
                 riesgo=c.generada.riesgo,
                 estado=c.estado,
                 justificacion=c.justificacion,
+                incidente_relacionado_id=c.incidente_relacionado_id,
                 fecha_generacion=datetime(2026, 1, 1),
             )
             for c in alertas
@@ -277,13 +278,22 @@ class FakeAlertaRepository:
         return creadas
 
     async def update_estado(
-        self, liquidacion_id: UUID, alerta_id: UUID, *, estado: str, justificacion: str | None
+        self,
+        liquidacion_id: UUID,
+        alerta_id: UUID,
+        *,
+        estado: str,
+        justificacion: str | None,
+        incidente_relacionado_id: UUID | None = None,
     ) -> Alerta | None:
         filas = self.por_liquidacion.get(liquidacion_id, [])
         for i, alerta in enumerate(filas):
             if alerta.id == alerta_id:
                 actualizada = dataclasses.replace(
-                    alerta, estado=estado, justificacion=justificacion
+                    alerta,
+                    estado=estado,
+                    justificacion=justificacion,
+                    incidente_relacionado_id=incidente_relacionado_id,
                 )
                 filas[i] = actualizada
                 return actualizada

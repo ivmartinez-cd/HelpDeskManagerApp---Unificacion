@@ -27,8 +27,9 @@ class AlertaRepository(Protocol):
         *,
         estado: str,
         justificacion: str | None,
+        incidente_relacionado_id: UUID | None = None,
     ) -> Alerta | None:
-        """Cambia estado y justificación (la justificación siempre se pisa con lo
-        que venga — None limpia al reabrir). None si la alerta no existe o no
-        pertenece a la liquidación."""
+        """Cambia estado, justificación e incidente relacionado (los tres siempre
+        se pisan con lo que venga — None limpia al reabrir). None si la alerta no
+        existe o no pertenece a la liquidación."""
         ...

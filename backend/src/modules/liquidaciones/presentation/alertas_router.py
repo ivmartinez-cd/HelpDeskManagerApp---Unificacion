@@ -41,6 +41,7 @@ async def update_estado_alerta(
         alerta_id,
         estado=body.estado,
         justificacion=body.justificacion,
+        incidente_relacionado_id=body.incidente_relacionado_id,
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Alerta no encontrada")

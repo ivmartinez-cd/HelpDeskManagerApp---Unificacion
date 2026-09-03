@@ -196,6 +196,19 @@ class ArchivoMaestroInvalidoError(ValidationError):
         super().__init__(f"No se pudo leer el archivo maestro de prestador: {detalle}")
 
 
+class IncidenteRelacionadoInvalidoError(ValidationError):
+    """El incidente que la TL elige como "vínculo de ruta compartida" al
+    gestionar una alerta tiene que pertenecer a la misma liquidación — evita
+    vincular contra un incidente de otro prestador o período por error de UI."""
+
+    default_code: ClassVar[str] = "INCIDENTE_RELACIONADO_INVALIDO"
+
+    def __init__(self, incidente_id: UUID) -> None:
+        super().__init__(
+            f"El incidente {incidente_id} no pertenece a esta liquidación."
+        )
+
+
 class SincronizacionEnProgresoError(BusinessRuleViolationError):
     """Ya hay una sincronización con Canal Directo en curso (advisory lock tomado) —
     el caller no debe reintentar; la sincronización en progreso terminará sola.
