@@ -6,8 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.auth.presentation.dependencies.features import require_feature
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.insumos.domain.value_objects.zone_contacts import ZoneOverwriteRequest
+from src.modules.insumos.domain.well_known_features import ADMINISTRACION
 from src.modules.insumos.domain.well_known_permissions import UPDATE, VIEW
 from src.modules.insumos.presentation.dependencies.customers import (
     build_apply_zone_contacts_import,
@@ -50,7 +52,14 @@ from src.shared.presentation.schemas.pagination import Page
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/insumos", tags=["insumos"])
+# Todo este router respalda la pantalla Clientes del apartado "Administración",
+# concedible por usuario (ADR-032): además de la acción de cada endpoint se
+# exige la función a nivel router.
+router = APIRouter(
+    prefix="/api/insumos",
+    tags=["insumos"],
+    dependencies=[Depends(require_feature(ADMINISTRACION))],
+)
 
 _require_view = Depends(require_permission(VIEW))
 _require_update = Depends(require_permission(UPDATE))

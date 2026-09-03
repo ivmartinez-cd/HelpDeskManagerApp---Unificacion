@@ -81,6 +81,12 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { prefix: "/contadores/clientes-nuevos", feature: "contadores-clientes-nuevos" },
   // Resto: la página entera se abre con view; las acciones se gatean adentro.
   { prefix: "/contadores", anyOf: [p("contadores", "view")] },
+  // Insumos: el apartado "Administración" del submenú (Clientes, Configuración,
+  // Estadísticas) es una función concedible por usuario (ADR-032); el backend
+  // exige la misma función en esos routers. El resto se abre con view.
+  { prefix: "/insumos/clientes", feature: "insumos-administracion" },
+  { prefix: "/insumos/configuracion", feature: "insumos-administracion" },
+  { prefix: "/insumos/estadisticas", feature: "insumos-administracion" },
   { prefix: "/insumos", anyOf: [p("insumos", "view")] },
   { prefix: "/liquidaciones", anyOf: [p("liquidaciones", "view")] },
   { prefix: "/prestadores/coberturas", feature: "prestadores-coberturas" },

@@ -48,6 +48,16 @@ excepciones por usuario, que es justo lo pedido.
    plantillas Team leader / Team leader + Configuración incluyen todas las funciones; Operador y
    Solo lectura, ninguna.
 
+## Ampliaciones del catálogo
+
+- **2026-09-03 — Insumos → "Administración"** (`insumos-administracion`, migración
+  `d4f6a8b2c0e1`): el apartado Administración del submenú (Clientes, Configuración,
+  Estadísticas) se abría con `insumos.view`, así que cualquier operador podía tocar clientes y
+  parámetros. Pasa a ser una función; el backend la exige a nivel router en
+  `customers_router`, `config_router` y `statistics_router`. Backfill **deliberadamente
+  restrictivo** (excepción al punto 3): se concede a quien tiene `insumos.delete` (nivel Team
+  leader en las plantillas); los operadores la pierden, que es lo pedido.
+
 ## Regla para módulos nuevos (complementa ARCHITECTURE_GUIDE §8)
 
 Si una pantalla/card debe poder concederse por usuario independientemente de las acciones del

@@ -28,6 +28,7 @@ const FUNCIONES_TL: readonly string[] = [
   "contadores-clientes-nuevos",
   "contadores-sin-real-todos",
   "contadores-card-operadores",
+  "insumos-administracion",
   "prestadores-coberturas",
   "prestadores-card-parque",
   "vacaciones-dashboard",
@@ -94,7 +95,7 @@ export const PERMISSION_TEMPLATES: readonly PermissionTemplate[] = [
     key: "operador",
     label: "Operador",
     description:
-      "Mesa de ayuda: contadores (herramientas), insumos (solicitudes), SLA, preventivos y sus propias vacaciones. Sin Liquidación.",
+      "Mesa de ayuda: contadores (herramientas), insumos (solicitudes, sin Administración), SLA, preventivos y sus propias vacaciones. Sin Liquidación.",
     grants: OPERADOR,
   },
   {

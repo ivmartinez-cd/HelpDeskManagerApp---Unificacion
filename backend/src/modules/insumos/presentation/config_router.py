@@ -7,7 +7,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.auth.presentation.dependencies.features import require_feature
 from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.insumos.domain.well_known_features import ADMINISTRACION
 from src.modules.insumos.domain.well_known_permissions import UPDATE, VIEW
 from src.modules.insumos.presentation.dependencies import (
     build_get_insumos_config,
@@ -20,7 +22,13 @@ from src.modules.insumos.presentation.schemas.config_schemas import (
 )
 from src.shared.infrastructure.database.session import get_db
 
-router = APIRouter(prefix="/api/insumos", tags=["insumos"])
+# Pantalla Configuración del apartado "Administración", concedible por usuario
+# (ADR-032): la función se exige a nivel router, la acción por endpoint.
+router = APIRouter(
+    prefix="/api/insumos",
+    tags=["insumos"],
+    dependencies=[Depends(require_feature(ADMINISTRACION))],
+)
 
 _require_view = Depends(require_permission(VIEW))
 _require_update = Depends(require_permission(UPDATE))
