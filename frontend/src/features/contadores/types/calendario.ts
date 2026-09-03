@@ -111,8 +111,8 @@ export interface EmpresaSiges {
 }
 
 /** Fila del detalle de "Anexos sin procesar" (KPI de Inicio): un anexo de
- * Impresión activo sin `Nro_Proceso` del último período ya cerrado con
- * seguridad, de un cliente con evento vencido en el calendario. */
+ * Impresión activo sin `Nro_Proceso` del período al que pertenece la visita
+ * vencida del cliente en el calendario (ciclo que rota el día 20). */
 export interface AnexoSinProcesar {
   id_anexo: number;
   anexo: string;

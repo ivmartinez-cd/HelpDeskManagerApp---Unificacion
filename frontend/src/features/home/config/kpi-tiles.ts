@@ -72,8 +72,8 @@ function kpiPendientesCerrar(d: DashboardData): KpiTile {
 }
 
 /** Anexos sin proceso generado: el operador se olvidó de iniciar la
- * facturación de un anexo (sin Nro_Proceso del último período ya cerrado
- * con seguridad, ver ListarAnexosSinProcesar en el backend). El número
+ * facturación de un anexo (sin Nro_Proceso del período al que pertenece la
+ * visita vencida, ver ListarAnexosSinProcesar en el backend). El número
  * grande son CLIENTES (así lo mira el operador: "a quién le falta"); el
  * contexto, los anexos concretos que hay que ir a generar. Sin dato de
  * Siges el tile queda en error ("—", "no se pudo cargar"), no en 0: un cero

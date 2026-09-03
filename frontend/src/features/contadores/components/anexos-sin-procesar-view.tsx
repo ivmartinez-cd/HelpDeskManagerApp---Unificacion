@@ -134,9 +134,10 @@ export function AnexosSinProcesarView() {
 
           <p className="rounded-[8px] bg-muted/30 px-4 py-3 font-body text-xs text-muted-foreground">
             Un anexo cuenta acá cuando su cliente tiene un evento vencido en el calendario de
-            Gestión y Siges confirma que el anexo no llegó a tener número de proceso del último
-            período ya cerrado (un mes de gracia). Clientes sin cruce contra Siges o anexos sin
-            ningún historial de proceso no se muestran: sin certeza, no se acusa a nadie.
+            Gestión y Siges confirma que el anexo no tiene número de proceso del período al que
+            pertenece esa visita (el ciclo rota el día 20). Clientes sin cruce contra Siges o
+            anexos sin ningún historial de proceso no se muestran: sin certeza, no se acusa a
+            nadie.
           </p>
         </>
       )}

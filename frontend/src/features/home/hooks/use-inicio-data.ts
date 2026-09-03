@@ -176,7 +176,7 @@ export function useInsumosDashboard(enabled: boolean, refreshKey = 0): Remote<Da
 
 /** KPI de Inicio "Anexos sin procesar" (ver contadoresApi.getAnexosSinProcesarResumen):
  * clientes con evento vencido en el calendario cuyos anexos todavía no
- * tienen Nro_Proceso del último período ya cerrado con seguridad. Si Siges
+ * tienen Nro_Proceso del período al que pertenece la visita vencida. Si Siges
  * no responde el endpoint devuelve 502 y este hook queda en `error` — el
  * tile debe mostrar "—", nunca un 0 inventado. */
 export function useAnexosSinProcesar(

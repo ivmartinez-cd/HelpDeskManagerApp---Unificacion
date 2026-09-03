@@ -9,15 +9,24 @@ olvido concreto de una persona y un falso positivo le hace perder confianza
 al número. Si Siges no responde, PROPAGA `ExternalServiceError`: el tile de
 Inicio debe mostrar "sin dato", nunca un cero inventado.
 
-`periodo_esperado` es un umbral único por consulta —
-`periodo_anterior(periodo_de(hoy))`, un mes de gracia— y NO se deriva de la
-fecha de cada evento vencido: el lote de facturación de Siges no corre un
-día fijo (verificado 2026-08-31: a veces corre 1-2 días después de fin de
-mes), así que atarlo a la fecha exacta de la visita generaría falsos
-positivos en las de fin de mes. Mismo mes de gracia que ya usa
-`estado_de_periodo` (en_proceso vs. demorado)."""
+`periodo_esperado` se deriva de la FECHA DE CADA EVENTO vencido
+(`periodo_de(fecha_evento)`, ciclo que rota el día DIA_CIERRE), no de un
+umbral único por consulta. La ventana de backlog (30 días) siempre cruza un
+día 20, así que un umbral global falla de un lado o del otro: con
+`periodo_de(hoy)` cada día 21 acusaría a clientes cuya visita del período
+nuevo todavía no ocurrió; con `periodo_anterior(periodo_de(hoy))` (lo que
+había hasta el 2026-09-03) el KPI daba 0 todo el mes — el 3/9 el período
+que se estaba procesando era 202608 y el umbral pedía 202607, que ya tenía
+todo el mundo. Verificado contra Factura_Anexo el 2026-09-03: los procesos
+de un período YYYYMM se generan desde el ~11 de ese mes hasta los primeros
+días del siguiente (202608: 11/8 → 3/9), así que para una visita posterior
+al día 20 el proceso de su período ya está disponible el mismo día — no hay
+falso positivo por corrimiento del lote. Si un cliente tiene varios eventos
+vencidos, se exige el período MÁS NUEVO (el olvido más reciente también
+cuenta) y se muestra la fecha del más antiguo (la señal más fuerte de
+arrastre)."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
 
 from src.modules.contadores.application.dtos.anexo_sin_procesar import (
@@ -35,22 +44,19 @@ from src.modules.contadores.domain.services.cliente_matcher import (
     buscar_por_nombre,
     normalizar_nombre,
 )
-from src.modules.contadores.domain.services.periodos_facturacion import (
-    periodo_anterior,
-    periodo_de,
-)
+from src.modules.contadores.domain.services.periodos_facturacion import periodo_de
 
 
 @dataclass(frozen=True)
 class _Obligacion:
-    """Lo que el calendario dice de un cliente con arrastre: quién es el
-    operador y desde cuándo (para mostrarlo), no el período exacto que le
-    corresponde — ese es el mismo umbral para todos."""
+    """Lo que el calendario dice de un cliente con arrastre: qué período le
+    tocaba procesar, quién es el operador y desde cuándo viene el arrastre."""
 
     cliente: str
     operador_id: str | None
     fecha_evento: str
     dias_vencido: int
+    periodo_esperado: str
 
 
 class ListarAnexosSinProcesar:
@@ -64,8 +70,7 @@ class ListarAnexosSinProcesar:
         if not indice.exacto:
             return ResultadoAnexosSinProcesar(anexos=[], consultado_en=datetime.now(UTC))
         snapshot = await self._port.list_estado()  # sin try/except: propaga
-        periodo_esperado = periodo_anterior(periodo_de(hoy))
-        anexos = _anexos_sin_procesar(snapshot.anexos, indice, periodo_esperado)
+        anexos = _anexos_sin_procesar(snapshot.anexos, indice)
         anexos.sort(key=lambda a: a.dias_vencido, reverse=True)
         return ResultadoAnexosSinProcesar(anexos=anexos, consultado_en=snapshot.consultado_en)
 
@@ -79,9 +84,7 @@ def _indice_obligaciones(
         if obligacion is None:
             continue
         clave = normalizar_nombre(obligacion.cliente)
-        actual = directo.get(clave)
-        if actual is None or obligacion.dias_vencido > actual.dias_vencido:
-            directo[clave] = obligacion
+        directo[clave] = _fusionar(directo.get(clave), obligacion)
     via_alias = {
         ALIAS_CLIENTE_GRUPO_NORM[clave]: obligacion
         for clave, obligacion in directo.items()
@@ -94,37 +97,45 @@ def _obligacion_de(anotado: CalendarEventAnotado, *, hoy: date) -> _Obligacion |
     cliente = anotado.event.cliente
     if not cliente:
         return None
-    fecha_evento = anotado.event.start[:10]
-    dias_vencido = (hoy - date.fromisoformat(fecha_evento)).days
+    fecha_evento = date.fromisoformat(anotado.event.start[:10])
     return _Obligacion(
         cliente=cliente,
         operador_id=anotado.event.operador_id,
-        fecha_evento=fecha_evento,
-        dias_vencido=dias_vencido,
+        fecha_evento=fecha_evento.isoformat(),
+        dias_vencido=(hoy - fecha_evento).days,
+        periodo_esperado=periodo_de(fecha_evento),
+    )
+
+
+def _fusionar(actual: _Obligacion | None, nueva: _Obligacion) -> _Obligacion:
+    """Varios eventos vencidos del mismo cliente: se muestra el más antiguo y
+    se exige el período más nuevo entre todos (ver docstring del módulo)."""
+    if actual is None:
+        return nueva
+    mas_antigua = nueva if nueva.dias_vencido > actual.dias_vencido else actual
+    return replace(
+        mas_antigua,
+        periodo_esperado=max(actual.periodo_esperado, nueva.periodo_esperado),
     )
 
 
 def _anexos_sin_procesar(
-    anexos: list[EstadoProcesoAnexo],
-    indice: IndiceNombres[_Obligacion],
-    periodo_esperado: str,
+    anexos: list[EstadoProcesoAnexo], indice: IndiceNombres[_Obligacion]
 ) -> list[AnexoSinProcesar]:
     resultado = []
     for anexo in anexos:
         if anexo.ultimo_periodo_procesado is None:
             continue
-        if anexo.ultimo_periodo_procesado >= periodo_esperado:
-            continue
         obligacion = buscar_por_nombre(anexo.grupo, indice)
         if obligacion is None:
             continue
-        resultado.append(_to_dto(anexo, obligacion, periodo_esperado))
+        if anexo.ultimo_periodo_procesado >= obligacion.periodo_esperado:
+            continue
+        resultado.append(_to_dto(anexo, obligacion))
     return resultado
 
 
-def _to_dto(
-    anexo: EstadoProcesoAnexo, obligacion: _Obligacion, periodo_esperado: str
-) -> AnexoSinProcesar:
+def _to_dto(anexo: EstadoProcesoAnexo, obligacion: _Obligacion) -> AnexoSinProcesar:
     return AnexoSinProcesar(
         id_anexo=anexo.id_anexo,
         anexo=anexo.anexo,
@@ -133,6 +144,6 @@ def _to_dto(
         operador_id=obligacion.operador_id,
         fecha_evento=obligacion.fecha_evento,
         dias_vencido=obligacion.dias_vencido,
-        periodo_esperado=periodo_esperado,
+        periodo_esperado=obligacion.periodo_esperado,
         ultimo_periodo_procesado=anexo.ultimo_periodo_procesado,
     )

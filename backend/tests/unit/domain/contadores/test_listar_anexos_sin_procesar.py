@@ -14,7 +14,9 @@ from src.modules.contadores.domain.entities.estado_proceso_anexo import (
 from src.shared.domain.errors import ExternalServiceError
 
 _CONSULTADO_EN = datetime(2026, 8, 31, 12, 0, tzinfo=UTC)
-# periodo_de(hoy)="202608", periodo_anterior="202607": un mes de gracia.
+# El período esperado sale de la fecha de cada evento (ciclo del día 20), no
+# de `hoy`: el evento default del 12/8 pide "202607"; uno posterior al 20/8
+# pide "202608".
 _HOY = date(2026, 8, 31)
 
 
@@ -78,6 +80,41 @@ async def test_anexo_que_ya_rodo_a_un_periodo_posterior_no_se_cuenta() -> None:
         [_pendiente("e1", "Sika")], hoy=_HOY
     )
     assert resultado.anexos == []
+
+
+@pytest.mark.asyncio
+async def test_evento_posterior_al_dia_20_exige_el_periodo_que_arranco_ese_dia() -> None:
+    """Caso real del 2026-09-03: visita del 28/8 vencida y el anexo con
+    último proceso 202607 — el período que se estaba procesando era 202608."""
+    port = _FakePort([_anexo("Oca", "202607")])
+    resultado = await ListarAnexosSinProcesar(port).execute(
+        [_pendiente("e1", "Oca", start="2026-08-28")], hoy=date(2026, 9, 3)
+    )
+    assert [(a.periodo_esperado, a.dias_vencido) for a in resultado.anexos] == [("202608", 6)]
+
+
+@pytest.mark.asyncio
+async def test_evento_anterior_al_dia_20_no_exige_el_periodo_nuevo() -> None:
+    """La ventana de backlog cruza el día 20: una visita del 12/8 pertenece al
+    ciclo 202607 y no acusa por 202608 aunque hoy ya sea septiembre."""
+    port = _FakePort([_anexo("Sika", "202607")])
+    resultado = await ListarAnexosSinProcesar(port).execute(
+        [_pendiente("e1", "Sika", start="2026-08-12")], hoy=date(2026, 9, 3)
+    )
+    assert resultado.anexos == []
+
+
+@pytest.mark.asyncio
+async def test_varios_eventos_exigen_el_periodo_mas_nuevo_y_muestran_el_mas_antiguo() -> None:
+    port = _FakePort([_anexo("Sika", "202607")])
+    pendientes = [
+        _pendiente("e1", "Sika", start="2026-08-12"),
+        _pendiente("e2", "Sika", start="2026-08-28"),
+    ]
+    resultado = await ListarAnexosSinProcesar(port).execute(pendientes, hoy=date(2026, 9, 3))
+    assert [(a.periodo_esperado, a.fecha_evento) for a in resultado.anexos] == [
+        ("202608", "2026-08-12")
+    ]
 
 
 @pytest.mark.asyncio
