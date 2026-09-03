@@ -21,3 +21,15 @@ def get_mailer_canal_directo() -> Mailer:
     if settings.cd_smtp_host:
         return SmtpMailer(SmtpConfig.canal_directo(settings))
     return get_mailer()
+
+
+def get_mailer_liquidaciones() -> Mailer:
+    """Aviso de aprobación de liquidaciones — SMTP propio (`LIQUIDACIONES_SMTP_*`),
+    aislado de `CD_SMTP_*` para poder habilitarlo sin arrastrar el reset/
+    activación de clave de auth, que comparte ese relay. Sin
+    LIQUIDACIONES_SMTP_HOST cae al mailer de Canal Directo (comportamiento
+    previo, hoy Mailpit en dev)."""
+    settings = get_settings()
+    if settings.liquidaciones_smtp_host:
+        return SmtpMailer(SmtpConfig.liquidaciones(settings))
+    return get_mailer_canal_directo()

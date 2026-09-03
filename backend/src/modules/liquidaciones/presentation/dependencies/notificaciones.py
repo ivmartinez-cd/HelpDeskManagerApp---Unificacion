@@ -1,13 +1,15 @@
 """Wiring del Notificador de liquidaciones — separado de `liquidaciones.py`
 por tamaño (§4). Sin flag on/off: siempre construye la impl con mail real.
-El aviso sale "en nombre de Canal Directo" (noreply@canaldirecto.com.ar por el
-relay institucional, `CD_SMTP_*`, como el aviso al cliente de SDSInsumos) y no
-desde la cuenta del usuario que opera la app; sin CD_SMTP_HOST cae al SMTP_*
-general, que en dev es Mailpit y no sale nada de la máquina."""
+El aviso sale "en nombre de Canal Directo" (noreply@canaldirecto.com.ar) por
+`LIQUIDACIONES_SMTP_*` — relay dedicado (2026-09-03), no `CD_SMTP_*`: ese lo
+comparte el reset/activación de clave de auth, y este dev lo prueban varios
+compañeros, así que aislarlo evita que habilitar mail real acá arrastre auth.
+Sin LIQUIDACIONES_SMTP_HOST cae a CD_SMTP_*/SMTP_* (Mailpit en dev, nada sale
+de la máquina)."""
 
 from functools import lru_cache
 
-from src.modules.auth.infrastructure.mailer_factory import get_mailer_canal_directo
+from src.modules.auth.infrastructure.mailer_factory import get_mailer_liquidaciones
 from src.modules.liquidaciones.domain.repositories.notificador import Notificador
 from src.modules.liquidaciones.infrastructure.email_notificador import EmailNotificador
 from src.shared.infrastructure.config.settings import get_settings
@@ -17,5 +19,5 @@ from src.shared.infrastructure.config.settings import get_settings
 def build_notificador() -> Notificador:
     settings = get_settings()
     return EmailNotificador(
-        mailer=get_mailer_canal_directo(), frontend_url=settings.frontend_url
+        mailer=get_mailer_liquidaciones(), frontend_url=settings.frontend_url
     )

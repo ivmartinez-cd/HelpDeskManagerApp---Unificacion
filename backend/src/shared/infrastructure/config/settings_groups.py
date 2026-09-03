@@ -67,6 +67,19 @@ class MailSettings(BaseSettings):
     # por entorno, no un default (mismo criterio que el modo test de CLAUDE.md).
     vacaciones_mail_enabled: bool = False
 
+    # SMTP dedicado del aviso de aprobación de liquidaciones (jpcorigliano@
+    # canaldirecto.com.ar) — separado de CD_SMTP_* a propósito (decisión
+    # 2026-09-03): CD_SMTP_* también lo usa el reset/activación de clave de
+    # auth, y este dev lo prueban varios compañeros; querer mail real solo acá
+    # sin arrastrar auth necesita su propio host. Vacío = cae a
+    # get_mailer_canal_directo() (CD_SMTP_*, hoy Mailpit en dev).
+    liquidaciones_smtp_host: str = ""
+    liquidaciones_smtp_port: int = 25
+    liquidaciones_smtp_user: str = ""
+    liquidaciones_smtp_pass: SecretStr = SecretStr("")
+    liquidaciones_smtp_starttls: bool = False
+    liquidaciones_smtp_from: str = "Canal Directo <noreply@canaldirecto.com.ar>"
+
 
 class ContadoresSettings(BaseSettings):
     """Módulo contadores: SDS Insight API, Epson ERS y Gestión web."""

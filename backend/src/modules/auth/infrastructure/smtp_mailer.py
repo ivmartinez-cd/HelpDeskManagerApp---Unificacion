@@ -10,9 +10,11 @@ from src.shared.infrastructure.config.settings import Settings
 
 @dataclass(frozen=True)
 class SmtpConfig:
-    """Un servidor SMTP + remitente. Dos orígenes en `Settings`: el general
-    (`SMTP_*`, avisos internos de la app) y el institucional de Canal Directo
-    (`CD_SMTP_*`, relay sin auth con remitente noreply@canaldirecto.com.ar)."""
+    """Un servidor SMTP + remitente. Tres orígenes en `Settings`: el general
+    (`SMTP_*`, avisos internos de la app), el institucional de Canal Directo
+    (`CD_SMTP_*`, relay sin auth con remitente noreply@canaldirecto.com.ar) y
+    el dedicado del aviso de aprobación de liquidaciones
+    (`LIQUIDACIONES_SMTP_*`, mismo relay pero aislado de CD_SMTP_*/auth)."""
 
     host: str
     port: int
@@ -41,6 +43,17 @@ class SmtpConfig:
             password=settings.cd_smtp_pass,
             starttls=settings.cd_smtp_starttls,
             sender=settings.cd_smtp_from,
+        )
+
+    @classmethod
+    def liquidaciones(cls, settings: Settings) -> "SmtpConfig":
+        return cls(
+            host=settings.liquidaciones_smtp_host,
+            port=settings.liquidaciones_smtp_port,
+            user=settings.liquidaciones_smtp_user,
+            password=settings.liquidaciones_smtp_pass,
+            starttls=settings.liquidaciones_smtp_starttls,
+            sender=settings.liquidaciones_smtp_from,
         )
 
 
