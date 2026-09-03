@@ -24,6 +24,9 @@ from src.modules.contadores.infrastructure.siges.pyodbc_estado_cierre_grupos_gat
 from src.modules.contadores.infrastructure.siges.pyodbc_estado_proceso_anexos_gateway import (
     PyodbcEstadoProcesoAnexosGateway,
 )
+from src.modules.contadores.infrastructure.siges.pyodbc_falta_contador_proceso_gateway import (
+    PyodbcFaltaContadorProcesoGateway,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_operador_gateway import (
     PyodbcOperadorGateway,
 )
@@ -162,6 +165,13 @@ def get_parque_cliente_gateway_or_none() -> PyodbcParqueClienteGateway | None:
             exc_info=exc,
         )
         return None
+
+
+@lru_cache
+def get_falta_contador_proceso_gateway() -> PyodbcFaltaContadorProcesoGateway:
+    """Sin TTL a propósito (ver docstring del gateway): cada llamada trae un
+    `Nro_Proceso` distinto, no hay universo repetible que cachear."""
+    return PyodbcFaltaContadorProcesoGateway(require_mercurio_runner())
 
 
 @lru_cache

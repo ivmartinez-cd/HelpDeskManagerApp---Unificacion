@@ -228,6 +228,34 @@ reporte (43/43 filas tipo Impresión, mismas fechas e importes). Scripts:
   `GrupoEconomico.descripcion`, `Anexo.moneda_id`/`moneda_facturacion_id`→`Moneda.Descripcion`
   (`Pesos`/`Dólar Billete`/`Dólar Divisa`).
 
+### `dbo.Factura_Contador` — detalle de contadores por `Nro_Proceso` (confirmado 2026-09-01, paridad exacta)
+
+Fuente del reporte SSRS legacy "Impresión/Detalle de contadores por nro de proceso"
+(`reportes.cdsa.com.ar:8090`, pide auth NTLM que esta cuenta no tiene — el RDL no es
+accesible; la lógica se reconstruyó contra dato real). Consumido por Estimación en 0
+(`contadores/infrastructure/siges/falta_contador_proceso_query.py`). Script:
+`backend/scripts/explore_siges_detalle_contadores_proceso.py`. Paridad verificada 1:1 contra
+una captura real del reporte para `Nro_Proceso=99070` (serie, cliente y contador anterior
+exactos) y contra el CSV generado por la app (9/9 filas, mismo orden).
+
+- Una fila por (`Nro_Proceso`, `ID_Maquina`, `ID_ClaseContador`): `ImpreContadorAnterior` /
+  `ImpreContadorActual` son el valor de la última toma "anterior"/"actual" conocida
+  (`Contadores.Contador`, vía `ID_ContadorAnterior`/`ID_ContadorActual`), no un recálculo.
+  `ID_ClaseContador` 10=Mono, 20=Color (misma convención que `Contadores`/`Maquina`).
+- **"Falta Contador"** (el `Tipo` que dispara Estimación en 0) = `ID_ContadorActual =
+  ID_ContadorAnterior`: no se registró ninguna toma nueva en `Contadores` para esa
+  máquina/clase este período, y el FK "actual" simplemente reapunta a la última conocida.
+  Distinto de `ImpresionesReales = 0` a secas — hay casos con toma real nueva y delta 0 que el
+  reporte marca "Automatico", no "Falta Contador" (verificado: `ID_Maquina=37866` en el
+  proceso 99070).
+- `ID_TipoToma=14` en `Contadores` ("Estimado", catálogo `Tipo_Toma`) es el resultado de una
+  corrida previa de Estimación en 0 (coincide con `_TIPO_SALIDA = "14"` en
+  `estimation_zero_builder.py`) — el CSV de salida de esta herramienta se reimporta a Siges
+  por un proceso fuera de este repo, no identificado.
+- **Un `Nro_Proceso` cae en una sola `Empresa` (`ID_Empresa`) y un solo `Anexo`** (verificado
+  en los 15 procesos más recientes al momento de la investigación) — el cliente sale sin
+  ambigüedad de cualquier fila del proceso, tenga o no falta de contador.
+
 ### Preventivos por zona: `Sucursal.Cuadricula` + `Sucursal.TipoPreventivo` + `Tipo_Incidente` (confirmado 2026-08-14)
 
 Investigación para la feature "preventivos por zona de distribución". Scripts:

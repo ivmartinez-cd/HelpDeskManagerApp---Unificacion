@@ -133,7 +133,13 @@ export const contadoresApi = {
   runDb3Export: (formData: FormData) =>
     httpClient.postForm<Db3ExportResponse>("/api/contadores/db3", formData),
 
-  // Estimación en 0
+  // Estimación en 0 — camino principal: trae las filas directo de Siges por
+  // Nro de Proceso (`RunEstimationZeroFromProcesoBody` en tools_schemas.py,
+  // sin alias de camelCase — nombres tal cual los espera el backend).
+  runEstimationZeroFromProceso: (payload: { nro_proceso: number; fecha: string }) =>
+    httpClient.post<EstimationZeroResponse>("/api/contadores/en0/proceso", payload),
+
+  // Estimación en 0 — fallback manual (CSV exportado a mano del reporte SSRS).
   runEstimationZero: (formData: FormData) =>
     httpClient.postForm<EstimationZeroResponse>("/api/contadores/en0", formData),
 

@@ -1,3 +1,5 @@
+from datetime import date
+
 from pydantic import BaseModel
 
 
@@ -11,6 +13,11 @@ class RunEstimationZeroResponse(BaseModel):
     @classmethod
     def from_path(cls, path: str) -> "RunEstimationZeroResponse":
         return cls(file=_basename(path))
+
+
+class RunEstimationZeroFromProcesoBody(BaseModel):
+    nro_proceso: int
+    fecha: date
 
 
 class RunFixedSumResponse(BaseModel):

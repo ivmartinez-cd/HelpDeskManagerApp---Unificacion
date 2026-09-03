@@ -138,3 +138,10 @@ class InvalidEstadoClienteNuevoError(ValidationError):
 
     def __init__(self, estado: str) -> None:
         super().__init__(f"Estado de ficha inválido: {estado!r}")
+
+
+class ProcesoNoEncontradoError(NotFoundError):
+    default_code = "PROCESO_NO_ENCONTRADO"
+
+    def __init__(self, nro_proceso: int) -> None:
+        super().__init__(f"No se encontró el proceso {nro_proceso} en Siges")

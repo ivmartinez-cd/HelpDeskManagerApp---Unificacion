@@ -7,6 +7,9 @@ from fastapi.responses import FileResponse
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.contadores.application.dtos.run_db3_export_request import RunDb3ExportRequest
+from src.modules.contadores.application.dtos.run_estimation_zero_from_proceso_request import (
+    RunEstimationZeroFromProcesoRequest,
+)
 from src.modules.contadores.application.dtos.run_estimation_zero_request import (
     RunEstimationZeroRequest,
 )
@@ -14,6 +17,9 @@ from src.modules.contadores.application.dtos.run_fixed_sum_request import RunFix
 from src.modules.contadores.application.use_cases.run_db3_export import RunDb3ExportUseCase
 from src.modules.contadores.application.use_cases.run_estimation_zero import (
     RunEstimationZeroUseCase,
+)
+from src.modules.contadores.application.use_cases.run_estimation_zero_desde_proceso import (
+    RunEstimationZeroDesdeProcesoUseCase,
 )
 from src.modules.contadores.application.use_cases.run_fixed_sum import RunFixedSumUseCase
 from src.modules.contadores.domain.well_known_permissions import EXPORT
@@ -31,8 +37,12 @@ from src.modules.contadores.infrastructure.excel.openpyxl_fixed_sum_reader impor
 from src.modules.contadores.infrastructure.sqlite.sqlite3_db3_file_reader import (
     Sqlite3Db3FileReader,
 )
+from src.modules.contadores.presentation.dependencies import (
+    get_falta_contador_proceso_gateway,
+)
 from src.modules.contadores.presentation.schemas.db3_schemas import RunDb3ExportResponse
 from src.modules.contadores.presentation.schemas.tools_schemas import (
+    RunEstimationZeroFromProcesoBody,
     RunEstimationZeroResponse,
     RunFixedSumResponse,
 )
@@ -76,14 +86,16 @@ def _db3_base_name(files: list[UploadFile]) -> str:
 async def run_estimation_zero(
     file: UploadFile,
     fecha: date = Form(...),
-    cliente: str = Form(...),
     _: Identity = _require_export,
 ) -> RunEstimationZeroResponse:
+    """Fallback manual: CSV exportado a mano del reporte SSRS. Camino
+    principal es `/en0/proceso` (consulta en vivo a Siges); este endpoint
+    queda para cuando SigesReadOnly no responde o el proceso no está ahí."""
     upload_path = await save_upload(file)
     try:
         request = RunEstimationZeroRequest(
             file_path=str(upload_path),
-            cliente=cliente,
+            cliente=_cliente_from_upload(file),
             fecha_nueva=fecha.strftime("%d/%m/%Y"),
             output_dir=output_dir(),
         )
@@ -91,6 +103,34 @@ async def run_estimation_zero(
         csv_path = use_case.execute(request)
     finally:
         upload_path.unlink(missing_ok=True)
+    return RunEstimationZeroResponse.from_path(csv_path)
+
+
+def _cliente_from_upload(file: UploadFile) -> str:
+    """Sin campo "cliente" en el form (ver `/en0/proceso`, que lo deriva de
+    Siges): acá no hay de dónde sacarlo salvo el nombre del archivo que
+    subió el operador, mismo criterio que `_db3_base_name`."""
+    name = file.filename or "SinCliente"
+    return Path(name).stem
+
+
+@router.post("/en0/proceso")
+async def run_estimation_zero_from_proceso(
+    body: RunEstimationZeroFromProcesoBody,
+    _: Identity = _require_export,
+) -> RunEstimationZeroResponse:
+    """Camino principal: trae las filas "falta contador" del `Nro_Proceso`
+    directo de Siges (ver `PyodbcFaltaContadorProcesoGateway`) — sin CSV
+    manual ni campo cliente, se deriva de la empresa del proceso."""
+    request = RunEstimationZeroFromProcesoRequest(
+        nro_proceso=body.nro_proceso,
+        fecha_nueva=body.fecha.strftime("%d/%m/%Y"),
+        output_dir=output_dir(),
+    )
+    use_case = RunEstimationZeroDesdeProcesoUseCase(
+        get_falta_contador_proceso_gateway(), CsvEstimationZeroWriter()
+    )
+    csv_path = await use_case.execute(request)
     return RunEstimationZeroResponse.from_path(csv_path)
 
 
