@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { useSeleccionAlertas } from "../hooks/seleccion-alertas-context";
 import type { Alerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
-import { formatFecha } from "../lib/format";
+import { formatFechaDia } from "../lib/format";
 import { IncidentesTabla } from "./incidentes-tabla";
 
 export function IncidentesSeccion({
@@ -91,7 +91,7 @@ export function IncidentesSeccion({
               <option value="">Todas</option>
               {fechas.map((f) => (
                 <option key={f} value={f}>
-                  {formatFecha(f)}
+                  {formatFechaDia(f)}
                 </option>
               ))}
             </select>
