@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { BonoTecnicoDetalleModal } from "./bono-tecnico-detalle-modal";
 import { buildBonoTecnicosColumns } from "./bono-tecnicos-columns";
 import { SolicitudTvAdminModal } from "./solicitud-tv-admin-modal";
@@ -20,8 +21,10 @@ export function BonoTecnicosDetail() {
     filas,
     loading,
     savingId,
+    savingSugeridos,
     error,
     guardarInput,
+    cargarSugeridos,
     crearSolicitudTvAdmin,
   } = useBonoTecnicos();
   const [detalleRow, setDetalleRow] = useState<PuntajeTecnico | null>(null);
@@ -89,6 +92,20 @@ export function BonoTecnicosDetail() {
               hint="Puntaje pendiente de calcular"
             />
           </KpiGrid>
+
+          {canUpdate && sinDiasCargados > 0 && (
+            <div>
+              <button
+                type="button"
+                disabled={savingSugeridos}
+                onClick={() => void cargarSugeridos()}
+                className="inline-flex items-center gap-2 rounded-[8px] border border-brand-orange bg-brand-orange/10 px-4 py-2 font-body text-sm font-bold text-brand-orange hover:bg-brand-orange/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {savingSugeridos && <Loader2 className="h-4 w-4 animate-spin" />}
+                Cargar sugeridos ({sinDiasCargados})
+              </button>
+            </div>
+          )}
 
           <StatsTable
             title="Puntaje por técnico"
