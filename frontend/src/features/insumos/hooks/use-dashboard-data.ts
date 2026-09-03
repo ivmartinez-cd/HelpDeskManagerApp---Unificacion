@@ -61,9 +61,18 @@ export function useDashboardData(): DashboardData {
   const [requestsError, setRequestsError] = useState<Record<number, string | null>>({});
   const [selected, setSelected] = useState<Record<number, ReadonlySet<number>>>({});
 
-  // Snapshot de pendientes por cliente entre polls: solo se re-piden las
-  // solicitudes de los clientes expandidos cuyo contador cambió.
+  // Snapshot de pendientes por cliente entre polls: para clientes colapsados,
+  // invalidar el cache viejo cuando el contador cambió (sin pedirlo por HTTP).
   const prevPending = useRef<Record<number, number>>({});
+  // Divergencias contador/filas para las que ya se pidió un refetch, como
+  // "pendientes:filas". Si el refetch no la resuelve (los dos endpoints
+  // clasifican distinto una fila, no es una foto vieja), evita reintentar en
+  // cada poll para siempre.
+  const resyncAttempts = useRef<Record<number, string>>({});
+  // Un fetch en vuelo por cliente: poll de 60s, tick por visibilitychange,
+  // refresh post-carga y expandCustomer pueden pisarse — sin cancelar el
+  // anterior, la respuesta que salió primero puede resolver última.
+  const inFlight = useRef<Map<number, AbortController>>(new Map());
   const expandedRef = useRef(expanded);
   const requestsRef = useRef(requestsByCustomer);
 
@@ -75,18 +84,28 @@ export function useDashboardData(): DashboardData {
   }, [requestsByCustomer]);
 
   const fetchCustomerRequests = useCallback(async (customerId: number) => {
+    inFlight.current.get(customerId)?.abort();
+    const controller = new AbortController();
+    inFlight.current.set(customerId, controller);
+
     setRequestsLoading((state) => ({ ...state, [customerId]: true }));
     setRequestsError((state) => ({ ...state, [customerId]: null }));
     try {
-      const page = await insumosApi.listRequests({ customerId });
+      const page = await insumosApi.listRequests({ customerId }, { signal: controller.signal });
       setRequestsByCustomer((state) => ({ ...state, [customerId]: page.items }));
       setSelected((state) =>
         state[customerId] ? state : { ...state, [customerId]: new Set<number>() },
       );
     } catch (err) {
+      // Abortado porque arrancó un fetch más nuevo para este cliente: no es un
+      // error a mostrar, y el estado (loading/errors) ya le pertenece a ese otro.
+      if (err instanceof DOMException && err.name === "AbortError") return;
       setRequestsError((state) => ({ ...state, [customerId]: errorMessage(err) }));
     } finally {
-      setRequestsLoading((state) => ({ ...state, [customerId]: false }));
+      if (inFlight.current.get(customerId) === controller) {
+        inFlight.current.delete(customerId);
+        setRequestsLoading((state) => ({ ...state, [customerId]: false }));
+      }
     }
   }, []);
 
@@ -99,17 +118,45 @@ export function useDashboardData(): DashboardData {
         setError(null);
         setLastUpdatedAt(new Date().toISOString());
 
+        // Resincronizar el panel expandido con el contador de la fila. El
+        // criterio es la cantidad de filas que la tabla REALMENTE muestra
+        // (post-isLoaded), no un snapshot aparte: si un refetch anterior no
+        // corrió, falló o llegó fuera de orden, el próximo poll lo repara solo.
         const before = prevPending.current;
-        const stale = data.perCustomer.filter(
-          (customer) =>
-            expandedRef.current.has(customer.customerId) &&
-            requestsRef.current[customer.customerId] !== undefined &&
-            (before[customer.customerId] ?? 0) !== customer.pending,
-        );
+        const stale: number[] = [];
+        for (const customer of data.perCustomer) {
+          const cid = customer.customerId;
+          const cached = requestsRef.current[cid];
+          if (cached === undefined) continue; // nunca se expandió: expandCustomer las trae
+
+          if (!expandedRef.current.has(cid)) {
+            // Colapsado: invalidar el cache en vez de pedir por HTTP algo que
+            // nadie mira. Sin esto, toggleExpand vuelve a servir filas viejas
+            // (solo fetchea si no hay cache).
+            if ((before[cid] ?? 0) !== customer.pending) {
+              setRequestsByCustomer((state) => {
+                const next = { ...state };
+                delete next[cid];
+                return next;
+              });
+            }
+            continue;
+          }
+
+          const shown = cached.filter((row) => !isLoaded(row)).length;
+          if (shown === customer.pending) {
+            delete resyncAttempts.current[cid];
+            continue;
+          }
+          const divergence = `${customer.pending}:${shown}`;
+          if (resyncAttempts.current[cid] === divergence) continue;
+          resyncAttempts.current[cid] = divergence;
+          stale.push(cid);
+        }
         prevPending.current = Object.fromEntries(
           data.perCustomer.map((customer) => [customer.customerId, customer.pending]),
         );
-        await Promise.all(stale.map((customer) => fetchCustomerRequests(customer.customerId)));
+        await Promise.all(stale.map((customerId) => fetchCustomerRequests(customerId)));
       } catch (err) {
         setError(errorMessage(err));
       } finally {

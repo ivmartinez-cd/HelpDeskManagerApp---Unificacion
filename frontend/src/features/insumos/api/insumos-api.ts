@@ -104,8 +104,8 @@ export const insumosApi = {
 
   // --------------------------------------------------------------- Solicitudes
   /** Solicitudes OUTSTANDING de un cliente (`customerId`) o de todos. */
-  listRequests: (params: { customerId?: number } & PageParams = {}) =>
-    httpClient.get<Page<RequestRow>>(`${BASE}/requests${toQuery({ ...params })}`),
+  listRequests: (params: { customerId?: number } & PageParams = {}, init?: RequestInit) =>
+    httpClient.get<Page<RequestRow>>(`${BASE}/requests${toQuery({ ...params })}`, init),
 
   /** Crea el pedido en Canal Directo para la solicitud dada. */
   loadRequest: (requestId: number, payload: LoadRequestPayload) =>

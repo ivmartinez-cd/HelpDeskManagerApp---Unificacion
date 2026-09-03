@@ -195,8 +195,11 @@ class RequestAssociation:
         return False
 
     def _associate_by_date(self, state: _State, row: RequestRow) -> None:
-        """Supply creado en o después de la fecha de la solicitud: se adopta también
-        como orderId (la fila pasa a "cargada"), igual que el legacy."""
+        """Supply creado en o después de la fecha de la solicitud: se muestra con el
+        badge de "pedido sin confirmar entrega", igual que cache/portal — NO se adopta
+        como orderId. Solo un pedido propio verificado (own_orders) cuenta como cargado
+        para el dashboard (get_dashboard.py); setear order_id acá sacaba la fila de la
+        tabla vía isLoaded mientras el contador de "pending" la seguía contando."""
         if not row.serial or row.requested_day is None:
             return
         supplies = state.supplies_by_serial.get(row.serial.upper(), [])
@@ -205,12 +208,10 @@ class RequestAssociation:
             match, self._query_for(state, row), for_ui_display=True
         ):
             return
-        nro = supply_id_full(match.supply_id)
-        row.supply_id = nro
+        row.supply_id = supply_id_full(match.supply_id)
         row.supply_url = self._ctx.order_settings.supply_web_url(match.supply_id)
         row.supply_status = match.estado
         row.supply_fecha = format_cd_datetime(match.fecha) or None
-        row.order_id = nro
 
     def _show_own_order_status(self, state: _State, row: RequestRow) -> None:
         order_id = row.order_id

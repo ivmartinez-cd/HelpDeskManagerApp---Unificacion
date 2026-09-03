@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { CheckCircle2, ChevronRight } from "lucide-react";
+import { CheckCircle2, ChevronRight, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import type { DateRange, PendingOrderRow } from "../../types";
 import { toArgDateKey } from "../../utils/format";
@@ -95,6 +95,15 @@ export function PendingOrdersTable({
     });
   };
 
+  // Mira solo los clientes visibles con el filtro de búsqueda/rango activo:
+  // si ya están todos abiertos el botón cierra, si no abre todos (los que la
+  // búsqueda dejó afuera no cuentan ni para decidir ni para expandirse).
+  const allExpanded = groups.length > 0 && groups.every((group) => expanded.has(group.customerId));
+
+  const toggleExpandAll = () => {
+    setExpanded(allExpanded ? new Set() : new Set(groups.map((group) => group.customerId)));
+  };
+
   if (groups.length === 0) {
     return (
       <div className="mx-auto my-8 flex max-w-lg flex-col items-center gap-3 rounded-[12px] border border-border bg-card p-8 text-center">
@@ -116,55 +125,71 @@ export function PendingOrdersTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-[12px] border border-border bg-card">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="border-b border-border bg-muted/40">
-            <th scope="col" className={`${headThClass} text-left`}>
-              Cliente
-            </th>
-            <th scope="col" className={`${headThClass} text-right`}>
-              Pendientes de entrega
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {groups.map((group) => {
-            const isOpen = expanded.has(group.customerId);
-            return (
-              <Fragment key={group.customerId}>
-                <tr
-                  onClick={() => toggle(group.customerId)}
-                  className="cursor-pointer select-none border-b border-border hover:bg-muted/30"
-                >
-                  <td className="px-4 py-2.5 font-body text-sm font-semibold text-foreground">
-                    <span className="flex items-center gap-2">
-                      <ChevronRight
-                        className={cn(
-                          "h-4 w-4 flex-none text-muted-foreground transition-transform",
-                          isOpen && "rotate-90",
-                        )}
-                        aria-hidden="true"
-                      />
-                      {group.customerName}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-right font-body text-sm tabular-nums text-foreground">
-                    {group.orders.length}
-                  </td>
-                </tr>
-                {isOpen && (
-                  <tr className="border-b border-border bg-muted/20">
-                    <td colSpan={2} className="px-4 py-4">
-                      <PendingOrdersDetail orders={group.orders} />
+    <div className="flex flex-col gap-3">
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={toggleExpandAll}
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-[8px] border border-border bg-card px-3 py-1.5 font-body text-xs font-semibold text-foreground transition-colors hover:bg-muted"
+        >
+          {allExpanded ? (
+            <ChevronsDownUp className="h-3.5 w-3.5" aria-hidden="true" />
+          ) : (
+            <ChevronsUpDown className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+          {allExpanded ? "Contraer todos" : "Expandir todos"}
+        </button>
+      </div>
+      <div className="overflow-hidden rounded-[12px] border border-border bg-card">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-border bg-muted/40">
+              <th scope="col" className={`${headThClass} text-left`}>
+                Cliente
+              </th>
+              <th scope="col" className={`${headThClass} text-right`}>
+                Pendientes de entrega
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {groups.map((group) => {
+              const isOpen = expanded.has(group.customerId);
+              return (
+                <Fragment key={group.customerId}>
+                  <tr
+                    onClick={() => toggle(group.customerId)}
+                    className="cursor-pointer select-none border-b border-border hover:bg-muted/30"
+                  >
+                    <td className="px-4 py-2.5 font-body text-sm font-semibold text-foreground">
+                      <span className="flex items-center gap-2">
+                        <ChevronRight
+                          className={cn(
+                            "h-4 w-4 flex-none text-muted-foreground transition-transform",
+                            isOpen && "rotate-90",
+                          )}
+                          aria-hidden="true"
+                        />
+                        {group.customerName}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-right font-body text-sm tabular-nums text-foreground">
+                      {group.orders.length}
                     </td>
                   </tr>
-                )}
-              </Fragment>
-            );
-          })}
-        </tbody>
-      </table>
+                  {isOpen && (
+                    <tr className="border-b border-border bg-muted/20">
+                      <td colSpan={2} className="px-4 py-4">
+                        <PendingOrdersDetail orders={group.orders} />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
