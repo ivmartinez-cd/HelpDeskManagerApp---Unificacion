@@ -90,6 +90,7 @@ class LiquidacionOut(BaseModel):
     concepto_extra: str | None = Field(None, serialization_alias="conceptoExtra")
     monto_extra: float | None = Field(None, serialization_alias="montoExtra")
     numero_factura: str | None = Field(None, serialization_alias="numeroFactura")
+    factura_pdf_url: str | None = Field(None, serialization_alias="facturaPdfUrl")
 
     @classmethod
     def from_entity(cls, e: Liquidacion) -> "LiquidacionOut":
@@ -108,4 +109,5 @@ class LiquidacionOut(BaseModel):
             concepto_extra=e.concepto_extra,
             monto_extra=e.monto_extra,
             numero_factura=e.numero_factura,
+            factura_pdf_url=e.factura_pdf_url,
         )

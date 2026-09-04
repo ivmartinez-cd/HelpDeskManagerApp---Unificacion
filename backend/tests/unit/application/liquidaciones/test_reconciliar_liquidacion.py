@@ -578,3 +578,27 @@ async def test_numero_factura_sin_cambios_no_reporta_actualizacion() -> None:
     resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
 
     assert resultado.factura_actualizada is False
+
+
+async def test_factura_pdf_url_no_se_recalcula_si_ya_estaba_seteada() -> None:
+    """Bug real (liquidación 3951-6, 2026-09-04): `Fecha` de AyC en
+    `getLiquidationById` no es estable — cambia entre reconciliaciones (p. ej.
+    al aprobar la liquidación) sin ser la fecha real en que se cargó la
+    factura. Recalcular `factura_pdf_url` con esa fecha en cada reconciliación
+    pisaba una URL ya calculada con una fecha distinta y equivocada."""
+    world = World()
+    url_original = "https://webagentes.canaldirecto.com.ar/files/webagentes/liquidations/x.pdf"
+    liq = world.con_liquidacion(numero_factura="2-1575", factura_pdf_url=url_original)
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
+    world.cd_gateway.detalles_por_liquidacion[1] = CdLiquidacionDetalle(
+        concepto_extra=None,
+        monto_extra=None,
+        numero_factura="2-1575",
+        fecha=date(2026, 9, 4),
+        rs_prestador="Otro Prestador SRL",
+    )
+
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.factura_actualizada is False
+    assert world.liquidaciones.rows[liq.id].factura_pdf_url == url_original

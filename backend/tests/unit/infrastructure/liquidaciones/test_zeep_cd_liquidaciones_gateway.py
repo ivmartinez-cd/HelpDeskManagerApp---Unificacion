@@ -5,6 +5,7 @@ y algunos `DetalleExtra` vienen con acentos double-encoded (verificado contra la
 liquidación real 3929-7, 2026-08-20)."""
 
 import json
+from datetime import date
 
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import CdLiquidacionDetalle
 from src.modules.liquidaciones.infrastructure.soap.zeep_cd_liquidaciones_gateway import (
@@ -15,7 +16,12 @@ from src.modules.liquidaciones.infrastructure.soap.zeep_cd_liquidaciones_gateway
 
 
 def _raw(
-    extra: str = "0", detalle: str = " ", factura_local: str = "", factura_nro: str = ""
+    extra: str = "0",
+    detalle: str = " ",
+    factura_local: str = "",
+    factura_nro: str = "",
+    fecha: str = "",
+    rs_prestador: str = "",
 ) -> str:
     return json.dumps(
         {
@@ -25,6 +31,8 @@ def _raw(
                 "DetalleExtra": detalle,
                 "FacturaLocal": factura_local,
                 "FacturaNro": factura_nro,
+                "Fecha": fecha,
+                "RsPrestador": rs_prestador,
             }
         }
     )
@@ -87,3 +95,20 @@ def test_fix_mojibake_no_rompe_texto_ya_valido() -> None:
 def test_armar_numero_factura_con_alguno_vacio_es_none() -> None:
     assert _armar_numero_factura("2", "") is None
     assert _armar_numero_factura("", "144") is None
+
+
+def test_fecha_y_rs_prestador_se_parsean_para_armar_el_link_de_factura() -> None:
+    """Datos reales de la liquidación 3943-7 (2026-09-04) — ver
+    `domain/services/factura_pdf_url.py`."""
+    resultado = _parse_detalle(
+        _raw(
+            factura_local="6",
+            factura_nro="417",
+            fecha="02/09/2026",
+            rs_prestador="LOPEZ MARIO JAVIER",
+        )
+    )
+
+    assert resultado is not None
+    assert resultado.fecha == date(2026, 9, 2)
+    assert resultado.rs_prestador == "LOPEZ MARIO JAVIER"

@@ -37,3 +37,4 @@ class LiquidacionModel(Base):
     concepto_extra: Mapped[str | None] = mapped_column(Text)
     monto_extra: Mapped[float | None] = mapped_column(Float)
     numero_factura: Mapped[str | None] = mapped_column(Text)
+    factura_pdf_url: Mapped[str | None] = mapped_column(Text)

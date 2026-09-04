@@ -21,6 +21,7 @@ export interface Liquidacion {
   conceptoExtra: string | null;
   montoExtra: number | null;
   numeroFactura: string | null;
+  facturaPdfUrl: string | null;
 }
 
 export interface LiquidacionPage {

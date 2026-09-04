@@ -220,8 +220,14 @@ def _parse_detalle(raw: str) -> CdLiquidacionDetalle | None:
     monto = _safe_float(liq.get("Extra", "0")) or None
     concepto = _fix_mojibake(str(liq.get("DetalleExtra", "")).strip()) or None if monto else None
     numero_factura = _armar_numero_factura(liq.get("FacturaLocal", ""), liq.get("FacturaNro", ""))
+    fecha = _parse_fecha_liquidacion(str(liq.get("Fecha", "")))
+    rs_prestador = _fix_mojibake(str(liq.get("RsPrestador", "")).strip()) or None
     return CdLiquidacionDetalle(
-        concepto_extra=concepto, monto_extra=monto, numero_factura=numero_factura
+        concepto_extra=concepto,
+        monto_extra=monto,
+        numero_factura=numero_factura,
+        fecha=fecha,
+        rs_prestador=rs_prestador,
     )
 
 

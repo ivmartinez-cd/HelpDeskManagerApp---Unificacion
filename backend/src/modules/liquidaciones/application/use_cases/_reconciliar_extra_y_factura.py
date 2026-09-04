@@ -10,6 +10,7 @@ from src.modules.liquidaciones.domain.repositories.cd_liquidaciones_gateway impo
 from src.modules.liquidaciones.domain.repositories.liquidacion_repository import (
     LiquidacionRepository,
 )
+from src.modules.liquidaciones.domain.services.factura_pdf_url import armar_factura_pdf_url
 from src.modules.liquidaciones.domain.services.recalcular_total_extra import (
     total_importe_tras_cambiar_extra,
 )
@@ -58,7 +59,39 @@ async def _actualizar_extra(
 async def _actualizar_factura(
     liquidaciones: LiquidacionRepository, liquidacion: Liquidacion, detalle: CdLiquidacionDetalle
 ) -> bool:
-    if detalle.numero_factura is None or detalle.numero_factura == liquidacion.numero_factura:
+    """El link al PDF (`factura_pdf_url`) se calcula una sola vez — la primera
+    vez que aparece `numero_factura`, o cuando ese número cambia — y no se
+    recalcula en reconciliaciones posteriores mientras el número siga igual.
+    Así una liquidación que ya tenía el número guardado antes de que este
+    campo existiera lo completa solo en el próximo ciclo del job (backfill),
+    pero una vez calculada la URL queda fija. Verificado contra AyC real
+    (liquidación 3951-6, 2026-09-04): `Fecha` en `getLiquidationById` no es
+    estable en el tiempo (no es la fecha fija de subida del archivo, cambia
+    entre corridas) — recalcular con ese campo en cada reconciliación pisaba
+    una URL válida con una fecha equivocada."""
+    if detalle.numero_factura is None:
         return False
-    await liquidaciones.update_numero_factura(liquidacion.id, detalle.numero_factura)
+    numero_sin_cambios = detalle.numero_factura == liquidacion.numero_factura
+    if numero_sin_cambios and liquidacion.factura_pdf_url is not None:
+        return False
+    pdf_url = _calcular_pdf_url(liquidacion, detalle)
+    if numero_sin_cambios and pdf_url == liquidacion.factura_pdf_url:
+        return False
+    await liquidaciones.update_numero_factura(liquidacion.id, detalle.numero_factura, pdf_url)
     return True
+
+
+def _calcular_pdf_url(liquidacion: Liquidacion, detalle: CdLiquidacionDetalle) -> str | None:
+    if (
+        detalle.fecha is None
+        or not detalle.rs_prestador
+        or not detalle.numero_factura
+        or not liquidacion.numero_liquidacion
+    ):
+        return None
+    return armar_factura_pdf_url(
+        fecha=detalle.fecha,
+        rs_prestador=detalle.rs_prestador,
+        numero_factura=detalle.numero_factura,
+        numero_liquidacion=liquidacion.numero_liquidacion,
+    )

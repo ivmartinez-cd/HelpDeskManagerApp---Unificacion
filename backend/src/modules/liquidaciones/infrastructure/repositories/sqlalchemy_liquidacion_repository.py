@@ -136,7 +136,7 @@ class SqlAlchemyLiquidacionRepository:
         return _to_entity(row)
 
     async def update_numero_factura(
-        self, liquidacion_id: UUID, numero_factura: str
+        self, liquidacion_id: UUID, numero_factura: str, factura_pdf_url: str | None
     ) -> Liquidacion | None:
         row = await self._session.get(LiquidacionModel, liquidacion_id)
         if row is None:
@@ -144,7 +144,7 @@ class SqlAlchemyLiquidacionRepository:
         stmt = (
             update(LiquidacionModel)
             .where(LiquidacionModel.id == liquidacion_id)
-            .values(numero_factura=numero_factura)
+            .values(numero_factura=numero_factura, factura_pdf_url=factura_pdf_url)
         )
         await self._session.execute(stmt)
         await self._session.refresh(row)
@@ -219,4 +219,5 @@ def _to_entity(row: LiquidacionModel) -> Liquidacion:
         concepto_extra=row.concepto_extra,
         monto_extra=row.monto_extra,
         numero_factura=row.numero_factura,
+        factura_pdf_url=row.factura_pdf_url,
     )

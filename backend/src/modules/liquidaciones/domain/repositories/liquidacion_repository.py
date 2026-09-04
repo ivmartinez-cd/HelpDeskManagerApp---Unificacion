@@ -67,11 +67,14 @@ class LiquidacionRepository(Protocol):
     ) -> Liquidacion | None: ...
 
     async def update_numero_factura(
-        self, liquidacion_id: UUID, numero_factura: str
+        self, liquidacion_id: UUID, numero_factura: str, factura_pdf_url: str | None
     ) -> Liquidacion | None:
         """Solo lo escribe la reconciliación contra AyC (`FacturaLocal`-`FacturaNro`
         de `getLiquidationById`) — a diferencia de `update_extra`, no hay carga
-        manual: sin PATCH de usuario para este campo."""
+        manual: sin PATCH de usuario para este campo. `factura_pdf_url` viaja junto
+        porque se deriva del mismo `getLiquidationById` (ver
+        `domain/services/factura_pdf_url.py`); `None` si AyC no trae `Fecha`/
+        `RsPrestador` para reconstruirlo."""
         ...
 
     async def update_total_alertas(self, liquidacion_id: UUID, total_alertas: int) -> None:

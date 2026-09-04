@@ -108,12 +108,14 @@ class FakeLiquidacionRepository:
         return updated
 
     async def update_numero_factura(
-        self, liquidacion_id: UUID, numero_factura: str
+        self, liquidacion_id: UUID, numero_factura: str, factura_pdf_url: str | None
     ) -> Liquidacion | None:
         row = self.rows.get(liquidacion_id)
         if row is None:
             return None
-        updated = dataclasses.replace(row, numero_factura=numero_factura)
+        updated = dataclasses.replace(
+            row, numero_factura=numero_factura, factura_pdf_url=factura_pdf_url
+        )
         self.rows[liquidacion_id] = updated
         return updated
 

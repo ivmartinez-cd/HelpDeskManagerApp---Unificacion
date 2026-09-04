@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Calendar, DollarSign, ExternalLink } from "lucide-react";
+import { AlertTriangle, Calendar, DollarSign, ExternalLink, Receipt } from "lucide-react";
 import type {
   EstadoLiquidacion,
   Liquidacion,
@@ -85,7 +85,20 @@ export function LiquidacionDetalleHeader({
         {liquidacion.numeroFactura && (
           <>
             <span>·</span>
-            <span>Factura {liquidacion.numeroFactura}</span>
+            {liquidacion.facturaPdfUrl ? (
+              <a
+                href={liquidacion.facturaPdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`Factura ${liquidacion.numeroFactura}`}
+                aria-label={`Ver factura ${liquidacion.numeroFactura}`}
+                className="inline-flex items-center text-brand-orange hover:underline"
+              >
+                <Receipt size={14} />
+              </a>
+            ) : (
+              <span>Factura {liquidacion.numeroFactura}</span>
+            )}
           </>
         )}
       </div>

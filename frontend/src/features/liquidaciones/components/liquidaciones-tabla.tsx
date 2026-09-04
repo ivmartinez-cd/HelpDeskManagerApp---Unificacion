@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Receipt } from "lucide-react";
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
@@ -67,6 +67,7 @@ export function LiquidacionesTabla({
               <SortableHeader column={{ key: "importe", label: "Importe" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <SortableHeader column={{ key: "fecha", label: "Fecha" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <th className={thCls}>Web Agentes</th>
+              <th className={thCls}>Factura</th>
               <th className={thCls}></th>
             </tr>
           </thead>
@@ -118,6 +119,26 @@ export function LiquidacionesTabla({
                       </a>
                     ) : (
                       <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className={tdCls}>
+                    {liq.facturaPdfUrl ? (
+                      <a
+                        href={liq.facturaPdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`Factura ${liq.numeroFactura}`}
+                        aria-label={`Ver factura ${liq.numeroFactura}`}
+                        className="inline-flex items-center text-brand-orange hover:underline"
+                      >
+                        <Receipt size={16} />
+                      </a>
+                    ) : (
+                      <Receipt
+                        size={16}
+                        className="text-muted-foreground opacity-30 blur-[0.5px]"
+                        aria-hidden="true"
+                      />
                     )}
                   </td>
                   <td className={tdCls}>

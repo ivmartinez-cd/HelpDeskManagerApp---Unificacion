@@ -25,11 +25,19 @@ class CdLiquidacionDetalle:
     número de factura del prestador. Cada campo es independiente — puede haber
     factura sin extra, o extra sin factura todavía (liquidación aún no
     facturada: `FacturaNro=""`). `monto_extra=None`/`concepto_extra=None` es
-    "sin extra cargado" (AyC reporta `Extra="0"`), no cero."""
+    "sin extra cargado" (AyC reporta `Extra="0"`), no cero.
+
+    `fecha`/`rs_prestador` (`Fecha`/`RsPrestador` del mismo JSON) solo se usan
+    para reconstruir `factura_pdf_url` (ver
+    `domain/services/factura_pdf_url.py`) — el link real al PDF que el
+    prestador carga en AyC, que no viaja como URL directa en ningún campo del
+    SOAP."""
 
     concepto_extra: str | None
     monto_extra: float | None
     numero_factura: str | None
+    fecha: date | None = None
+    rs_prestador: str | None = None
 
 
 @dataclass(frozen=True)
