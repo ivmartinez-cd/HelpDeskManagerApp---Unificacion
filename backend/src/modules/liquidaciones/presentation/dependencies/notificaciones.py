@@ -19,5 +19,5 @@ from src.shared.infrastructure.config.settings import get_settings
 def build_notificador() -> Notificador:
     settings = get_settings()
     return EmailNotificador(
-        mailer=get_mailer_liquidaciones(), frontend_url=settings.frontend_url
+        mailer=get_mailer_liquidaciones(), cd_base_url=settings.cd_base_url
     )

@@ -1,8 +1,12 @@
 """Impl del puerto Notificador — mail de aviso de aprobación a jpcorigliano@
 canaldirecto.com.ar, mismo asunto/cuerpo literal que usa el legacy Web Agentes
-(CakePHP) para este evento. Un fallo de envío nunca corta la aprobación —ya
-confirmada en wsAyC y local cuando esto se invoca—: se loguea acá y se sigue,
-mismo criterio que `vacaciones/infrastructure/email_notificador.py`."""
+(CakePHP) para este evento. El link también apunta a Web Agentes
+(`{cd_base_url}/liquidations/view/{numero_liquidacion}`), el mismo patrón ya
+usado en `liquidaciones-tabla.tsx`/`liquidacion-detalle-header.tsx` del
+frontend — no al frontend nuevo, que los agentes destinatarios de este aviso
+no usan. Un fallo de envío nunca corta la aprobación —ya confirmada en wsAyC
+y local cuando esto se invoca—: se loguea acá y se sigue, mismo criterio que
+`vacaciones/infrastructure/email_notificador.py`."""
 
 import logging
 
@@ -15,9 +19,9 @@ _DESTINATARIO_APROBACION = "jpcorigliano@canaldirecto.com.ar"
 
 
 class EmailNotificador:
-    def __init__(self, mailer: Mailer, frontend_url: str) -> None:
+    def __init__(self, mailer: Mailer, cd_base_url: str) -> None:
         self._mailer = mailer
-        self._frontend_url = frontend_url.rstrip("/")
+        self._cd_base_url = cd_base_url.rstrip("/")
 
     async def notificar_aprobacion(self, liquidacion: Liquidacion) -> None:
         codigo = liquidacion.numero_liquidacion
@@ -35,7 +39,7 @@ class EmailNotificador:
 
     def _construir_mensaje(self, liquidacion: Liquidacion) -> tuple[str, str, str]:
         codigo = liquidacion.numero_liquidacion
-        url = f"{self._frontend_url}/liquidaciones/{liquidacion.id}"
+        url = f"{self._cd_base_url}/liquidations/view/{codigo}"
         subject = f"Aviso CanalDirecto - Se APROBO la Liquidacion nro: {codigo}"
         html_body = (
             f"Les informamos que se ha aprobado la Liquidacion nro: {codigo}<br />\n"
