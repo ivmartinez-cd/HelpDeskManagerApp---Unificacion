@@ -146,9 +146,12 @@ Consultas sobre `helpdesk-db` + `GET /siges/zonas` + dry-run del sync de tarifar
   - TUCUMAN: no era un dato mal cargado. Sus dos zonas de Siges ("TMTA122 - TUCUMAN" y
     "TMTA122 - SGO DEL ESTERO") estaban mapeadas a la misma genérica con distinto costo de
     km (433,9 vs 454,9, y así en cada trimestre); el 2026-08-13 se había dejado Sgo del
-    Estero sin mapear a propósito y alguien la mapeó a Genérica el 08-14. Se creó el SPST
-    "SPST Tucumán - Santiago del Estero", se mapeó esa zona a él y el sync creó sus 150
-    vigencias propias. La genérica conserva los valores de Tucumán. 0 conflictos.
+    Estero sin mapear a propósito y alguien la mapeó a Genérica el 08-14. Primero se le
+    dio un SPST propio; al confirmar el usuario que **NAPA ya no atiende Santiago del
+    Estero**, se desarmó (tarifas, mapeo y SPST borrados) y la zona vuelve a quedar **sin
+    mapear a propósito**, como el 08-13. El sync diario la va a listar como "1 zona sin
+    mapear" (Siges todavía la publica); si molesta, agregar una marca "zona ignorada".
+    La genérica conserva los valores de Tucumán. 0 conflictos.
   - SAN JUAN instalación 92.252: **se mantiene** — es la "regla del doble" confirmada por el
     usuario el 2026-08-13 (`LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`, decisiones ADR-014).
     Sigue apareciendo como 1 conflicto en cada sync a modo de recordatorio.
