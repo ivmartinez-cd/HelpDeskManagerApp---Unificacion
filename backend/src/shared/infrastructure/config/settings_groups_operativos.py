@@ -133,3 +133,13 @@ class LiquidacionesSettings(BaseSettings):
     # con el usuario mirando). El universo típico es chico (~5 pendientes hoy),
     # 2h alcanza sin generar carga SOAP relevante.
     liquidaciones_reconciliar_interval_minutes: int = 120
+
+    # Cadencia del job que sincroniza tarifarios desde SigesReadOnly (ADR-014,
+    # dataset 2) para todos los prestadores vinculados — mismo caso de uso que
+    # el botón "Sincronizar desde Siges" en modo aplicar: crea solo vigencias
+    # faltantes, nunca pisa un conflicto (los loguea). Hasta 2026-09 el sync
+    # trimestral era 100 % manual: SM TUCUMAN/VENADO/CHACO tenían la vigencia
+    # de julio con fin 2026-09-30 y desde octubre todo incidente daba ALT008
+    # hasta que alguien apretara el botón. Siges publica por trimestre; una
+    # pasada diaria alcanza y es solo lectura contra Siges.
+    liquidaciones_sync_tarifarios_interval_minutes: int = 1440

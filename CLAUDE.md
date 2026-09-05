@@ -50,7 +50,7 @@ Regla dura, no opcional, para toda sesión de trabajo en este repo — no solo l
   apagados "por las dudas" rompe la actualización automática que los compañeros esperan.
 - Verificación del arranque sano: en el log, después de `Application startup complete`, tiene
   que aparecer `background_jobs: insumos omitido (DISABLE_INSUMOS_BACKGROUND_JOBS=true)` y
-  `background_jobs: 6 job(s) iniciados`. `reiniciar.sh backend` y `make recreate-backend`
+  `background_jobs: 7 job(s) iniciados`. `reiniciar.sh backend` y `make recreate-backend`
   abortan/avisan si `DISABLE_INSUMOS_BACKGROUND_JOBS` no está en `true`.
 
 ## Idioma y estilo de comunicación

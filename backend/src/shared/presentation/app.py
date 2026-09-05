@@ -69,7 +69,10 @@ def _jobs_liquidaciones(settings: Settings) -> list[asyncio.Task[None]]:
         start_liquidaciones_background_jobs,
     )
 
-    return start_liquidaciones_background_jobs(settings.liquidaciones_reconciliar_interval_minutes)
+    return start_liquidaciones_background_jobs(
+        settings.liquidaciones_reconciliar_interval_minutes,
+        settings.liquidaciones_sync_tarifarios_interval_minutes,
+    )
 
 
 def _jobs_wati(settings: Settings) -> list[asyncio.Task[None]]:

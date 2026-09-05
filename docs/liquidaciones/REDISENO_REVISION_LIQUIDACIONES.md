@@ -125,3 +125,28 @@ siguiente del mismo día) — 2 y 5 en su versión mínima, dentro de patrones q
 Orden: 3 y 4 son backend puro y chicos; 2 y 5 necesitan una decisión de UI (mockup)
 pero son un componente nuevo en una pantalla existente, no un rediseño; 1 es una
 validación más una propuesta.
+
+## 5. Chequeo del resto de los prestadores (2026-09-05, solo lectura)
+
+Consultas sobre `helpdesk-db` + `GET /siges/zonas` + dry-run del sync de tarifarios:
+
+- **Ningún otro prestador tiene el problema de INFOMAC**: los 34 vinculados tienen tarifa
+  genérica y las 41 zonas de Siges están mapeadas (0 sin mapear).
+- **Vigencias que cierran el 2026-09-30** (tarifa `2026-07-01` con `vigencia_hasta`
+  cargada, en vez de abierta): SM TUCUMAN (6/6 tipos), VENADO (4/6), CHACO (3/6). Desde
+  el 1 de octubre todo incidente de esos PST da ALT008 hasta que alguien corra
+  "Sincronizar desde Siges" — y Siges todavía no publicó ninguna vigencia posterior a
+  julio para ningún PST (dry-run: 0 a crear en todos). ~~El sync trimestral es manual: no
+  hay job que lo corra.~~ **Cerrado el mismo día**: job `liquidaciones_sync_tarifarios`
+  (diario, `LIQUIDACIONES_SYNC_TARIFARIOS_INTERVAL_MINUTES=1440`) que aplica el sync para
+  todos los vinculados, solo crea vigencias faltantes, loguea conflictos como WARNING y
+  reanaliza las abiertas si creó algo. Primer ciclo real: creadas=0, conflictos=26.
+- **Conflictos local ≠ Siges que el sync nunca pisa** (decide la TL cuál es el correcto):
+  TUCUMAN `costo_km` 433,9 local vs 454,9 Siges en 24 vigencias desde 2025-10; SAN JUAN
+  instalación 92.252 vs 46.126 desde 2026-01; VENADO instalación 66.794 vs 66.749 desde
+  2026-07.
+- SPSTs con filas de Tabla KM pero sin tarifa propia (PENTACOM 8, SUPERNOVA 2) caen a la
+  genérica y Siges solo tiene una zona para esos PST: no es un problema.
+- Las liquidaciones con ALT001 en el 100 % de los incidentes son del prestador, no de
+  config: SAN JUAN 3944-6/3946-4 cobró $1 por incidente; 3945-5 mezcla precio viejo
+  (50.231), doble (108.800) y zona; SALTA 3960-4/3954-3 cobró otro precio.

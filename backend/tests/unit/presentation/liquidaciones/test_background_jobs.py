@@ -1,7 +1,8 @@
-"""Glue del job de fondo de liquidaciones: el loop nunca muere por un ciclo
-fallido, respeta el intervalo, el ciclo compone `SincronizarLiquidaciones` con
-`permitir_eliminar_anuladas=False` y commitea. Todo mockeado — acá no se toca
-wsAyC, la DB ni nada real."""
+"""Glue de los jobs de fondo de liquidaciones: el loop nunca muere por un ciclo
+fallido, respeta el intervalo, el ciclo de reconciliación compone
+`SincronizarLiquidaciones` con `permitir_eliminar_anuladas=False` y commitea, y
+el de tarifarios aplica el sync de Siges y reanaliza solo si creó algo. Todo
+mockeado — acá no se toca wsAyC, Siges, la DB ni nada real."""
 
 from types import SimpleNamespace
 from typing import Any
@@ -91,9 +92,7 @@ class TestCicloReconciliar:
                 )
 
         monkeypatch.setattr(bj, "get_sessionmaker", lambda: lambda: session)
-        monkeypatch.setattr(
-            bj, "build_sincronizar_liquidaciones", lambda s: _FakeSincronizar()
-        )
+        monkeypatch.setattr(bj, "build_sincronizar_liquidaciones", lambda s: _FakeSincronizar())
 
         await bj._ciclo_reconciliar()
 
@@ -101,19 +100,90 @@ class TestCicloReconciliar:
         assert session.commits == 1
 
 
+def _resultado_sync(creados: int, conflictos: list[object] | None = None) -> SimpleNamespace:
+    return SimpleNamespace(
+        creados=creados,
+        sin_cambios=10,
+        conflictos=conflictos or [],
+        zonas_sin_mapear=[],
+        prestadores_sin_vinculo=[],
+        prestadores_sin_generica=[],
+    )
+
+
+class TestCicloSyncTarifarios:
+    @pytest.mark.asyncio
+    async def test_aplica_sync_y_reanaliza_solo_si_creo_algo(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        session = _FakeSession()
+        llamadas: list[str] = []
+
+        class _FakeSync:
+            async def execute(self, **kwargs: object) -> SimpleNamespace:
+                llamadas.append(f"sync dry_run={kwargs['dry_run']}")
+                return _resultado_sync(creados=6)
+
+        class _FakeReanalizar:
+            async def execute(self, prestador_id: object) -> SimpleNamespace:
+                llamadas.append(f"reanalizar {prestador_id}")
+                return SimpleNamespace(reanalizadas=2, total_alertas=9)
+
+        monkeypatch.setattr(bj, "get_sessionmaker", lambda: lambda: session)
+        monkeypatch.setattr(bj, "build_sync_tarifarios_desde_siges", lambda s: _FakeSync())
+        monkeypatch.setattr(
+            bj, "build_reanalizar_liquidaciones_abiertas", lambda s: _FakeReanalizar()
+        )
+
+        await bj._ciclo_sync_tarifarios()
+
+        assert llamadas == ["sync dry_run=False", "reanalizar None"]
+        assert session.commits == 1
+
+    @pytest.mark.asyncio
+    async def test_sin_creadas_no_reanaliza_y_loguea_conflictos(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        session = _FakeSession()
+
+        class _FakeSync:
+            async def execute(self, **kwargs: object) -> SimpleNamespace:
+                return _resultado_sync(creados=0, conflictos=[SimpleNamespace(prestador="TUCUMAN")])
+
+        def _no_debe_llamarse(s: object) -> None:
+            raise AssertionError("no hay nada nuevo: no corresponde reanalizar")
+
+        monkeypatch.setattr(bj, "get_sessionmaker", lambda: lambda: session)
+        monkeypatch.setattr(bj, "build_sync_tarifarios_desde_siges", lambda s: _FakeSync())
+        monkeypatch.setattr(bj, "build_reanalizar_liquidaciones_abiertas", _no_debe_llamarse)
+
+        await bj._ciclo_sync_tarifarios()
+
+        assert session.commits == 1
+        assert any("conflicto(s) local≠Siges" in r.message for r in caplog.records)
+
+
 class TestStart:
     @pytest.mark.asyncio
-    async def test_crea_un_task_con_su_intervalo(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def test_crea_un_task_por_job_con_su_intervalo(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         arrancados: list[tuple[str, int]] = []
 
         async def reconciliar(interval_minutes: int) -> None:
             arrancados.append(("reconciliar", interval_minutes))
 
-        monkeypatch.setattr(bj, "background_liquidaciones_reconciliar_task", reconciliar)
+        async def sync_tarifarios(interval_minutes: int) -> None:
+            arrancados.append(("sync_tarifarios", interval_minutes))
 
-        tasks = bj.start_liquidaciones_background_jobs(interval_minutes=120)
+        monkeypatch.setattr(bj, "background_liquidaciones_reconciliar_task", reconciliar)
+        monkeypatch.setattr(bj, "background_liquidaciones_sync_tarifarios_task", sync_tarifarios)
+
+        tasks = bj.start_liquidaciones_background_jobs(
+            interval_minutes=120, sync_tarifarios_interval_minutes=1440
+        )
         for t in tasks:
             await t
 
-        assert len(tasks) == 1
-        assert arrancados == [("reconciliar", 120)]
+        assert len(tasks) == 2
+        assert arrancados == [("reconciliar", 120), ("sync_tarifarios", 1440)]
