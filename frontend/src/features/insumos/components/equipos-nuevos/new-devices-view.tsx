@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { PrinterCheck, RefreshCw } from "lucide-react";
 import { BrandButton, BrandEmptyState, BrandSkeleton } from "@/shared/components/ui/brand-form";
 import { PaginationBar } from "@/shared/components/ui/pagination-bar";
@@ -95,8 +95,14 @@ export function NewDevicesView() {
   const hasFilters = query.trim() !== "" || year !== ALL_YEARS || !showDismissed;
 
   const [page, setPage] = useState(1);
-  useEffect(() => setPage(1), [query, year, showDismissed, sort]);
   const pageRows = visibleRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Volver a la página 1 en cada cambio de filtro/orden — en el punto donde
+  // cambian, no en un efecto (react-hooks/set-state-in-effect).
+  const handleQueryChange = (value: string) => { setQuery(value); setPage(1); };
+  const handleYearChange = (value: string) => { setYear(value); setPage(1); };
+  const handleShowDismissedChange = (value: boolean) => { setShowDismissed(value); setPage(1); };
+  const handleToggleSort = (key: NewDeviceSortKey) => { toggleSort(key); setPage(1); };
 
   return (
     <div className="p-6 lg:p-10">
@@ -127,12 +133,12 @@ export function NewDevicesView() {
 
       <NewDevicesToolbar
         query={query}
-        onQueryChange={setQuery}
+        onQueryChange={handleQueryChange}
         year={year}
         years={yearOptions}
-        onYearChange={setYear}
+        onYearChange={handleYearChange}
         showDismissed={showDismissed}
-        onShowDismissedChange={setShowDismissed}
+        onShowDismissedChange={handleShowDismissedChange}
         dismissedCount={dismissedCount}
       />
 
@@ -167,7 +173,7 @@ export function NewDevicesView() {
           <NewDevicesTable
             rows={pageRows}
             sort={sort}
-            onToggleSort={toggleSort}
+            onToggleSort={handleToggleSort}
             canUpdate={canUpdate}
             busyDeviceId={busyDeviceId}
             onToggleDismissed={(device, dismissed) => void setDismissed(device, dismissed)}

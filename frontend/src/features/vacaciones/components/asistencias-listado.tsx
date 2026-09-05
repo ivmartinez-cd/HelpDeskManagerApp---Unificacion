@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Search, ShieldAlert } from "lucide-react";
 import { ApiError } from "@/services/http-client";
 import { BrandEmptyState, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
@@ -75,9 +75,12 @@ export function AsistenciasListado({
     );
   }, [ausencias, busqueda, tipo, anio, sort]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [busqueda, tipo, anio, sort]);
+  // Volver a la página 1 en cada cambio de filtro/orden — en el punto donde
+  // cambian, no en un efecto (react-hooks/set-state-in-effect).
+  const handleBusquedaChange = (value: string) => { setBusqueda(value); setPage(1); };
+  const handleTipoChange = (value: TipoAusencia | "") => { setTipo(value); setPage(1); };
+  const handleAnioChange = (value: string) => { setAnio(value); setPage(1); };
+  const handleToggleSort = (key: AusenciaSortKey) => { toggleSort(key); setPage(1); };
 
   const totalPaginas = Math.max(1, Math.ceil(filtradas.length / PAGE_SIZE));
   const paginaActual = Math.min(page, totalPaginas);
@@ -103,7 +106,7 @@ export function AsistenciasListado({
             label="Buscar"
             placeholder="Buscar baja…"
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            onChange={(e) => handleBusquedaChange(e.target.value)}
             className="pl-9"
           />
         </div>
@@ -111,7 +114,7 @@ export function AsistenciasListado({
           <BrandSelect
             label="Tipo"
             value={tipo}
-            onChange={(e) => setTipo(e.target.value as TipoAusencia | "")}
+            onChange={(e) => handleTipoChange(e.target.value as TipoAusencia | "")}
           >
             <option value="">Todos los tipos</option>
             {(Object.keys(TIPO_AUSENCIA) as TipoAusencia[]).map((t) => (
@@ -122,7 +125,7 @@ export function AsistenciasListado({
           </BrandSelect>
         </div>
         <div className="w-36">
-          <BrandSelect label="Año" value={anio} onChange={(e) => setAnio(e.target.value)}>
+          <BrandSelect label="Año" value={anio} onChange={(e) => handleAnioChange(e.target.value)}>
             <option value="">Todos los años</option>
             {anios.map((y) => (
               <option key={y} value={String(y)}>
@@ -150,10 +153,10 @@ export function AsistenciasListado({
           <table className="w-full min-w-[720px] font-body text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30 text-left font-heading text-[11px] uppercase tracking-[.06em] text-muted-foreground">
-                <SortableHeader column={{ key: "empleado", label: "Empleado" }} sort={sort} onToggleSort={toggleSort} />
-                <SortableHeader column={{ key: "fecha", label: "Fecha" }} sort={sort} onToggleSort={toggleSort} />
-                <SortableHeader column={{ key: "tipo", label: "Tipo" }} sort={sort} onToggleSort={toggleSort} />
-                <SortableHeader column={{ key: "duracion", label: "Duración" }} sort={sort} onToggleSort={toggleSort} />
+                <SortableHeader column={{ key: "empleado", label: "Empleado" }} sort={sort} onToggleSort={handleToggleSort} />
+                <SortableHeader column={{ key: "fecha", label: "Fecha" }} sort={sort} onToggleSort={handleToggleSort} />
+                <SortableHeader column={{ key: "tipo", label: "Tipo" }} sort={sort} onToggleSort={handleToggleSort} />
+                <SortableHeader column={{ key: "duracion", label: "Duración" }} sort={sort} onToggleSort={handleToggleSort} />
                 <th className="px-4 py-3">Observaciones</th>
                 {puedeGestionar && <th className="px-4 py-3" />}
               </tr>

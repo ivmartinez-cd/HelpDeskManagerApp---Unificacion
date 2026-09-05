@@ -203,9 +203,10 @@ async def test_pedido_externo_activo_del_mismo_consumible_se_asocia_sin_order_id
     assert row.supply_status == "Pendiente"
 
 
-async def test_supply_posterior_a_la_solicitud_se_adopta_como_order_id() -> None:
-    """Date-match del legacy: un supply (incluso ya Entregado) creado en o después de la
-    fecha de la solicitud la cubre y se adopta como orderId."""
+async def test_supply_posterior_a_la_solicitud_se_muestra_sin_adoptar_order_id() -> None:
+    """Date-match: un supply (incluso ya Entregado) creado en o después de la fecha de
+    la solicitud la cubre y se muestra, pero ya NO se adopta como orderId (dda3d6b) —
+    el contador "pending" del dashboard solo cuenta pedidos propios verificados."""
     world = World()
     world.insight.requests_by_customer = {8: [_insight_request(1)]}
     await world.supply_cache.upsert(
@@ -222,7 +223,7 @@ async def test_supply_posterior_a_la_solicitud_se_adopta_como_order_id() -> None
 
     row = rows[0]
     assert row.supply_id == "441600-5"
-    assert row.order_id == "441600-5"
+    assert row.order_id is None
     assert row.supply_status == "Entregado"
 
 

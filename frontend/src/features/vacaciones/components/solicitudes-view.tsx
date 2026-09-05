@@ -93,9 +93,11 @@ export function SolicitudesView() {
     );
   }, [solicitudes, filtro, busqueda, sort]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [filtro, busqueda, sort]);
+  // Volver a la página 1 en cada cambio de filtro/orden — en el punto donde
+  // cambian, no en un efecto (react-hooks/set-state-in-effect).
+  const handleFiltroChange = (value: "todas" | EstadoSolicitud) => { setFiltro(value); setPage(1); };
+  const handleBusquedaChange = (value: string) => { setBusqueda(value); setPage(1); };
+  const handleToggleSort = (key: SolicitudSortKey) => { toggleSort(key); setPage(1); };
 
   const totalPaginas = Math.max(1, Math.ceil(visibles.length / PAGE_SIZE));
   const paginaActual = Math.min(page, totalPaginas);
@@ -145,7 +147,7 @@ export function SolicitudesView() {
             type="search"
             placeholder="Por empleado, motivo o sector…"
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            onChange={(e) => handleBusquedaChange(e.target.value)}
           />
         </div>
         <SegmentedControl
@@ -153,7 +155,7 @@ export function SolicitudesView() {
           size="sm"
           options={FILTROS}
           value={filtro}
-          onChange={(v) => setFiltro(v as typeof filtro)}
+          onChange={(v) => handleFiltroChange(v as typeof filtro)}
         />
       </div>
 
@@ -187,7 +189,7 @@ export function SolicitudesView() {
               <SolicitudesTabla
                 visibles={visiblesPagina}
                 sort={sort}
-                onToggleSort={toggleSort}
+                onToggleSort={handleToggleSort}
                 onEditar={setEditando}
                 onEliminar={setEliminando}
               />
