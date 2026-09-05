@@ -248,6 +248,22 @@ class FakeConfigTablaKmRepository(FakeTablaKmRepository):
         idx = self._index_of(tabla_km_id)
         return None if idx is None else self.rows[idx]
 
+    async def update_kms_a_facturar(
+        self, tabla_km_id: UUID, kms_a_facturar: float
+    ) -> TablaKm | None:
+        idx = self._index_of(tabla_km_id)
+        if idx is None:
+            return None
+        self.rows[idx] = dataclasses.replace(self.rows[idx], kms_a_facturar=kms_a_facturar)
+        return self.rows[idx]
+
+    async def update_archivada(self, tabla_km_id: UUID, archivada: bool) -> TablaKm | None:
+        idx = self._index_of(tabla_km_id)
+        if idx is None:
+            return None
+        self.rows[idx] = dataclasses.replace(self.rows[idx], archivada=archivada)
+        return self.rows[idx]
+
     async def update_vinculo_spst(
         self, tabla_km_id: UUID, *, spst_id: UUID | None
     ) -> TablaKm | None:

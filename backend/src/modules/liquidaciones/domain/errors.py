@@ -50,6 +50,10 @@ class AcuerdoPrecioInvalidoError(ValidationError):
     default_code: ClassVar[str] = "ACUERDO_PRECIO_INVALIDO"
 
 
+class KmReferenciaInvalidoError(ValidationError):
+    default_code: ClassVar[str] = "KM_REFERENCIA_INVALIDO"
+
+
 class ParSinTablaKmError(NotFoundError):
     """El par empresa+sucursal no tiene fila en la Tabla KM del prestador — antes de
     asignarle zona hay que darlo de alta (es el caso ALT009)."""

@@ -91,3 +91,17 @@ class DeleteTablaKm:
         if anterior is None or not await self._ports.tabla_km.delete(tabla_km_id):
             raise TablaKmNoEncontradaError(tabla_km_id)
         return anterior
+
+
+class SetArchivadaTablaKm:
+    """Archivar = ocultar de la pantalla una fila sin actividad reciente; no se
+    borra y el motor la sigue usando si la sucursal reaparece."""
+
+    def __init__(self, ports: ConfigTablaKmPorts) -> None:
+        self._ports = ports
+
+    async def execute(self, tabla_km_id: UUID, *, archivada: bool) -> TablaKm:
+        actualizada = await self._ports.tabla_km.update_archivada(tabla_km_id, archivada)
+        if actualizada is None:
+            raise TablaKmNoEncontradaError(tabla_km_id)
+        return actualizada

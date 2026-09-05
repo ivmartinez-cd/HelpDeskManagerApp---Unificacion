@@ -33,12 +33,14 @@ from src.modules.liquidaciones.application.use_cases.siges_tarifarios import (
     MapearZonaSiges,
     SigesTarifariosPorts,
 )
+from src.modules.liquidaciones.domain.repositories.google_maps_gateway import GoogleMapsGateway
 from src.modules.liquidaciones.infrastructure.google_maps.httpx_google_maps_gateway import (
     HttpxGoogleMapsGateway,
 )
 from src.modules.liquidaciones.infrastructure.models.cuadricula_base_map_model import (
     SqlAlchemyCuadriculaBaseMapRepository,
 )
+from src.modules.liquidaciones.infrastructure.osrm.httpx_osrm_gateway import HttpxOsrmGateway
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_incidente_repository import (  # noqa: E501
     SqlAlchemyIncidenteRepository,
 )
@@ -76,6 +78,22 @@ def siges_google_maps_gateway() -> HttpxGoogleMapsGateway:
     """Singleton de proceso — también lo consumen los builders de
     `dependencies/geolocalizacion.py`."""
     return HttpxGoogleMapsGateway(get_settings().google_maps_api_key)
+
+
+def distancias_gateway() -> GoogleMapsGateway:
+    """El proveedor de distancias según `DISTANCIAS_PROVEEDOR`: el puerto sigue
+    llamándose `GoogleMapsGateway` por historia, el contrato es el mismo."""
+    settings = get_settings()
+    if settings.distancias_proveedor == "osrm":
+        return HttpxOsrmGateway(settings.osrm_base_url)
+    return siges_google_maps_gateway()
+
+
+def tope_llamadas_distancias() -> int:
+    settings = get_settings()
+    if settings.distancias_proveedor == "osrm":
+        return settings.osrm_max_calls_per_run
+    return settings.google_maps_max_calls_per_run
 
 
 def _siges_ports(session: AsyncSession) -> SigesConfigPorts:

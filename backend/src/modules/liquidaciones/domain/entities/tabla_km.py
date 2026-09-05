@@ -46,3 +46,6 @@ class TablaKm:
     geocode_fecha: datetime | None = None
     siges_sucursal_id: int | None = None
     id_costo_servicios: int | None = None
+    # Sin actividad en liquidaciones recientes: se oculta de la pantalla (no se
+    # borra — el motor la sigue resolviendo si la sucursal reaparece).
+    archivada: bool = False

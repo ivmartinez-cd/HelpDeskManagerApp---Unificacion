@@ -60,10 +60,10 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tabla_km_r
     SqlAlchemyTablaKmRepository,
 )
 from src.modules.liquidaciones.presentation.dependencies.siges import (
+    distancias_gateway,
     siges_catalogo_gateway,
-    siges_google_maps_gateway,
+    tope_llamadas_distancias,
 )
-from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.geocoding.factories import require_geocoding_gateway
 from src.shared.infrastructure.geocoding.sqlalchemy_geocode_cache_repository import (  # noqa: E501
     SqlAlchemyGeocodeCacheRepository,
@@ -71,7 +71,7 @@ from src.shared.infrastructure.geocoding.sqlalchemy_geocode_cache_repository imp
 
 
 def _tope() -> int:
-    return get_settings().google_maps_max_calls_per_run
+    return tope_llamadas_distancias()
 
 
 def _distancias_ports(session: AsyncSession) -> CalcularDistanciasPorts:
@@ -79,7 +79,7 @@ def _distancias_ports(session: AsyncSession) -> CalcularDistanciasPorts:
         prestadores=SqlAlchemyPrestadorRepository(session),
         tabla_km=SqlAlchemyTablaKmRepository(session),
         siges=siges_catalogo_gateway(),
-        google_maps=siges_google_maps_gateway(),
+        google_maps=distancias_gateway(),
         sucursal_coords=SqlAlchemySucursalCoordenadasRepository(session),
         previews=SqlAlchemyCalculoKmPreviewRepository(session),
         incidentes=SqlAlchemyIncidenteRepository(session),

@@ -206,3 +206,31 @@ reanaliza las abiertas del prestador. Atajo desde el modal Gestionar de una ALT0
 "Cargar acuerdo de precio para {cliente}" con cliente/tipo/precio cobrado precargados.
 Probado en vivo con ida y vuelta sobre 3960-4 (acuerdo Refinor correctivo 78.119: 20 → 13
 ALT001; borrado: 20 de nuevo). Los acuerdos reales los carga la TL.
+
+## 8. Tabla KM — cuatro mejoras (2026-09-05)
+
+Datos al arrancar: 2.748 filas, 1.229 usadas por alguna liquidación de 2026, 1.660 sin km
+esperado (solo 75 usadas en 2026), 2.576 sin coordenadas. En las liquidaciones abiertas, 45
+ALT002 pendientes: 19 "fila sin km" (esperado 0), 21 "cobró 0 km" (mismo viaje), 5 reales.
+
+1. **La tabla se completa desde las liquidaciones.** ALT002 sobre una fila sin km ya no dice
+   "km incorrectos": marca `sin_referencia` y el modal Gestionar ofrece "Tomar N km como
+   referencia" (`PUT /tabla-km/km-referencia`, `FijarKmReferencia`, reanálisis automático).
+   Cuenta en el banner de configuración incompleta. Probado con ida y vuelta.
+2. **Ruta compartida en un clic.** ALT002 con 0 km cobrados y sin corredor que matchee lleva
+   `candidatos` (incidentes del mismo día que sí cobraron km, hasta 5); el modal ofrece
+   "Mismo viaje que #N" + "Confirmar ruta compartida" (resuelve con "Km asociado a otro
+   incidente" y el vínculo). Tras reanalizar las abiertas: 19 sin referencia, 10 posible ruta
+   compartida, 16 diferencias reales. La vista agrupada por día sigue pendiente de mockup.
+3. **Distancias con OpenStreetMap.** Proveedor `osrm` (`HttpxOsrmGateway`, servicio `table`
+   con `annotations=distance`, mismo puerto que Google) elegido por `DISTANCIAS_PROVEEDOR`
+   en `.env` (activado en dev; tope propio `OSRM_MAX_CALLS_PER_RUN=4000`, así SAN JUAN con
+   1.738 rutas ya no queda bloqueado). Preview real de BAHIA: 58 filas en 8 s, 4 sin ruta (un
+   pin de Gestión en California). **Nada aplicado**: aplicar pisa `kms_a_facturar` de las
+   filas existentes (706 tienen km medido ≠ facturado) — correr el asistente por prestador y
+   revisar el preview antes de aplicar. El servidor público de OSRM es un demo sin SLA;
+   `OSRM_BASE_URL` permite uno propio. Pendiente: los textos del asistente siguen diciendo
+   "consumo Google".
+4. **Archivado.** Columna `tabla_kms.archivada` (migración `c3e8f1a9d2b4`) con backfill de
+   las 1.519 filas sin actividad en 2026; la pantalla las oculta por default ("Mostrar N
+   archivadas"), botón Archivar/Restaurar por fila, el motor no las distingue.

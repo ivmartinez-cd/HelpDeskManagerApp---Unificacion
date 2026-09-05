@@ -130,4 +130,13 @@ class TablaKmRepository(Protocol):
         ni viático. Limpia geocode_formatted_address para forzar re-geocoding."""
         ...
 
+    async def update_kms_a_facturar(
+        self, tabla_km_id: UUID, kms_a_facturar: float
+    ) -> TablaKm | None:
+        """Km de referencia tomados de lo que el prestador cobró (`FijarKmReferencia`),
+        con la TL confirmando desde la alerta — el resto de la fila se preserva."""
+        ...
+
+    async def update_archivada(self, tabla_km_id: UUID, archivada: bool) -> TablaKm | None: ...
+
     async def delete(self, tabla_km_id: UUID) -> bool: ...

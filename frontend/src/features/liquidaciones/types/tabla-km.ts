@@ -23,6 +23,8 @@ export interface TablaKm {
   geocodeFormattedAddress: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Sin actividad en liquidaciones recientes: oculta de la pantalla, el motor la sigue usando. */
+  archivada: boolean;
 }
 
 export interface PropuestaVinculoSpst {

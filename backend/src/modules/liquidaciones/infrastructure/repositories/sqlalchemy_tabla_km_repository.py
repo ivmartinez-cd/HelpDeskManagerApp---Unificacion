@@ -74,14 +74,21 @@ class SqlAlchemyTablaKmRepository:
     ) -> TablaKm | None:
         # Edición completa desde el ABM; no toca `updated_at` (comportamiento heredado).
         cambios = CambiosTablaKm(
-            prestador_id=prestador_id, spst_id=spst_id,
-            empresa_nombre=empresa_nombre, sucursal_nombre=sucursal_nombre,
+            prestador_id=prestador_id,
+            spst_id=spst_id,
+            empresa_nombre=empresa_nombre,
+            sucursal_nombre=sucursal_nombre,
             observaciones=observaciones,
-            domicilio_cliente=domicilio_cliente, localidad_cliente=localidad_cliente,
+            domicilio_cliente=domicilio_cliente,
+            localidad_cliente=localidad_cliente,
             provincia_cliente=provincia_cliente,
-            kms_recorrido=kms_recorrido, umbral_viatico=umbral_viatico,
-            aplica_viatico=aplica_viatico, kms_a_facturar=kms_a_facturar, url_maps=url_maps,
-            latitud_destino=latitud_destino, longitud_destino=longitud_destino,
+            kms_recorrido=kms_recorrido,
+            umbral_viatico=umbral_viatico,
+            aplica_viatico=aplica_viatico,
+            kms_a_facturar=kms_a_facturar,
+            url_maps=url_maps,
+            latitud_destino=latitud_destino,
+            longitud_destino=longitud_destino,
         )
         return await self._actualizar(tabla_km_id, cambios)
 
@@ -122,10 +129,16 @@ class SqlAlchemyTablaKmRepository:
         id_costo_servicios: int | None = None,
     ) -> TablaKm | None:
         cambios = CambiosTablaKm(
-            kms_ida=kms_ida, kms_vuelta=kms_vuelta, kms_recorrido=kms_recorrido,
-            aplica_viatico=aplica_viatico, kms_a_facturar=kms_a_facturar, url_maps=url_maps,
-            latitud_destino=latitud_destino, longitud_destino=longitud_destino,
-            coords_origen=coords_origen, updated_at=datetime.now(UTC),
+            kms_ida=kms_ida,
+            kms_vuelta=kms_vuelta,
+            kms_recorrido=kms_recorrido,
+            aplica_viatico=aplica_viatico,
+            kms_a_facturar=kms_a_facturar,
+            url_maps=url_maps,
+            latitud_destino=latitud_destino,
+            longitud_destino=longitud_destino,
+            coords_origen=coords_origen,
+            updated_at=datetime.now(UTC),
         )
         cambios.update(vinculo_siges_si_presente(siges_sucursal_id, id_costo_servicios))
         return await self._actualizar(tabla_km_id, cambios)
@@ -172,6 +185,14 @@ class SqlAlchemyTablaKmRepository:
         cambios.update(vinculo_siges_si_presente(siges_sucursal_id, id_costo_servicios))
         return await self._actualizar(tabla_km_id, cambios)
 
+    async def update_kms_a_facturar(
+        self, tabla_km_id: UUID, kms_a_facturar: float
+    ) -> TablaKm | None:
+        return await _set_campos(self._session, tabla_km_id, kms_a_facturar=kms_a_facturar)
+
+    async def update_archivada(self, tabla_km_id: UUID, archivada: bool) -> TablaKm | None:
+        return await _set_campos(self._session, tabla_km_id, archivada=archivada)
+
     async def delete(self, tabla_km_id: UUID) -> bool:
         row = await self._session.get(TablaKmModel, tabla_km_id)
         if not row:
@@ -208,6 +229,16 @@ def _filtro_busqueda(q: str) -> ColumnElement[bool]:
     )
 
 
+async def _set_campos(session: AsyncSession, tabla_km_id: UUID, **campos: object) -> TablaKm | None:
+    row = await session.get(TablaKmModel, tabla_km_id)
+    if row is None:
+        return None
+    for campo, valor in campos.items():
+        setattr(row, campo, valor)
+    await session.flush()
+    return _to_entity(row)
+
+
 def _to_entity(row: TablaKmModel) -> TablaKm:
     return TablaKm(
         id=row.id,
@@ -235,4 +266,5 @@ def _to_entity(row: TablaKmModel) -> TablaKm:
         geocode_fecha=row.geocode_fecha,
         siges_sucursal_id=row.siges_sucursal_id,
         id_costo_servicios=row.id_costo_servicios,
+        archivada=row.archivada,
     )

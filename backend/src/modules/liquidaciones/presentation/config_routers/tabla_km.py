@@ -31,14 +31,20 @@ from src.modules.liquidaciones.presentation.dependencies import (
     build_asignar_zona_sucursal,
     build_create_tabla_km,
     build_delete_tabla_km,
+    build_fijar_km_referencia,
+    build_set_archivada_tabla_km,
     build_update_tabla_km,
     build_vincular_tabla_km_spst,
 )
 from src.modules.liquidaciones.presentation.schemas.config_schemas import (
-    AsignarZonaSucursalIn,
     ResultadoVinculoTablaKmSpstOut,
     TablaKmIn,
     TablaKmOut,
+)
+from src.modules.liquidaciones.presentation.schemas.tabla_km_schemas import (
+    ArchivadaIn,
+    AsignarZonaSucursalIn,
+    KmReferenciaIn,
 )
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
@@ -146,6 +152,35 @@ async def asignar_zona_sucursal(
         spst_id=body.spst_id,
     )
     await reanalizar_abiertas(db, body.prestador_id)
+    return TablaKmOut.from_entity(fila)
+
+
+@router.put("/tabla-km/km-referencia", response_model=TablaKmOut)
+async def fijar_km_referencia(
+    body: KmReferenciaIn,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> TablaKmOut:
+    """Toma los km cobrados por el prestador como referencia de la sucursal
+    (desde la alerta ALT002 "sin km de referencia"). Reanaliza las abiertas."""
+    fila = await build_fijar_km_referencia(db).execute(
+        body.prestador_id,
+        empresa_nombre=body.empresa_nombre,
+        sucursal_nombre=body.sucursal_nombre,
+        kms=body.kms,
+    )
+    await reanalizar_abiertas(db, body.prestador_id)
+    return TablaKmOut.from_entity(fila)
+
+
+@router.patch("/tabla-km/{tabla_km_id}/archivada", response_model=TablaKmOut)
+async def set_archivada_tabla_km(
+    tabla_km_id: UUID,
+    body: ArchivadaIn,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> TablaKmOut:
+    fila = await build_set_archivada_tabla_km(db).execute(tabla_km_id, archivada=body.archivada)
     return TablaKmOut.from_entity(fila)
 
 

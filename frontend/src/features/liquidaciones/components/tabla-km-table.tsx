@@ -91,6 +91,8 @@ export function TablaKmTable({
   spstsConTarifa: Set<string | null>;
   onEdit: (t: TablaKm) => void;
   onDelete: (id: string) => void;
+  /** Archivar = ocultar una fila sin actividad reciente; el motor la sigue usando. */
+  onArchivar?: (t: TablaKm) => void;
 }) {
   // Para agrupar visualmente por empresa cuando el sort es por empresa
   const groupByEmpresa = sort.key === "empresa";
@@ -130,7 +132,7 @@ export function TablaKmTable({
               return (
                 <tr
                   key={t.id}
-                  className={`transition-colors hover:bg-muted/30 ${firstOfGroup ? "border-t border-border" : "border-t border-transparent"}`}
+                  className={`transition-colors hover:bg-muted/30 ${firstOfGroup ? "border-t border-border" : "border-t border-transparent"} ${t.archivada ? "opacity-60" : ""}`}
                 >
                   <td className={`${tdCls} ${!firstOfGroup ? "text-transparent select-none" : ""}`}>
                     <span className={`block truncate ${firstOfGroup && lastOfGroup === false ? "font-semibold" : ""}`} title={t.empresaNombre}>
@@ -165,6 +167,11 @@ export function TablaKmTable({
                     {puedeEditar && (
                       <>
                         <button onClick={() => onEdit(t)} className="mr-3 font-body text-sm text-brand-orange hover:underline">Editar</button>
+                        {onArchivar && (
+                          <button onClick={() => onArchivar(t)} className="mr-3 font-body text-sm text-muted-foreground hover:underline" title={t.archivada ? "Volver a mostrar esta fila" : "Ocultar esta fila sin borrarla (el motor la sigue usando)"}>
+                            {t.archivada ? "Restaurar" : "Archivar"}
+                          </button>
+                        )}
                         <button onClick={() => onDelete(t.id)} className="font-body text-sm text-destructive hover:underline">Eliminar</button>
                       </>
                     )}

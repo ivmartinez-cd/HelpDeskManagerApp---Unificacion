@@ -12,13 +12,22 @@ const PENDIENTES = new Set(["pendiente", "en_revision"]);
 export function diagnosticoConfig(alertas: Alerta[], incidentes: Incidente[]) {
   const porId = Object.fromEntries(incidentes.map((i) => [i.id, i]));
   const sucursalesSinZona = new Set<string>();
+  const sucursalesSinKm = new Set<string>();
   let incidentesSinZona = 0;
+  let incidentesSinKm = 0;
   let conZonaSinTarifa = 0;
   let paresFueraTablaKm = 0;
   for (const a of alertas) {
     if (!PENDIENTES.has(a.estado)) continue;
     if (a.tipoAlerta === "ALT009") {
       paresFueraTablaKm += 1;
+    } else if (a.tipoAlerta === "ALT002") {
+      const ctx = a.datosContexto as { sin_referencia?: boolean } | null;
+      if (ctx?.sin_referencia) {
+        incidentesSinKm += 1;
+        const inc = porId[a.incidenteId];
+        if (inc) sucursalesSinKm.add(`${inc.empresaNombre ?? ""}|${inc.sucursalNombre ?? ""}`);
+      }
     } else if (a.tipoAlerta === "ALT008") {
       const ctx = a.datosContexto as { spst_id?: string | null } | null;
       if (ctx?.spst_id) {
@@ -33,9 +42,11 @@ export function diagnosticoConfig(alertas: Alerta[], incidentes: Incidente[]) {
   return {
     incidentesSinZona,
     sucursalesSinZona: sucursalesSinZona.size,
+    incidentesSinKm,
+    sucursalesSinKm: sucursalesSinKm.size,
     conZonaSinTarifa,
     paresFueraTablaKm,
-    total: incidentesSinZona + conZonaSinTarifa + paresFueraTablaKm,
+    total: incidentesSinZona + incidentesSinKm + conZonaSinTarifa + paresFueraTablaKm,
   };
 }
 
@@ -54,6 +65,11 @@ export function LiquidacionConfigBanner({
       `${d.sucursalesSinZona} sucursal(es) sin zona en Tabla KM (${d.incidentesSinZona} incidente(s)) — asignala desde "Gestionar" en la alerta ALT008`,
     );
   }
+  if (d.incidentesSinKm > 0) {
+    partes.push(
+      `${d.sucursalesSinKm} sucursal(es) sin km de referencia en Tabla KM (${d.incidentesSinKm} incidente(s)) — tomá los km cobrados desde "Gestionar" en la alerta ALT002`,
+    );
+  }
   if (d.conZonaSinTarifa > 0) {
     partes.push(`${d.conZonaSinTarifa} incidente(s) con zona pero sin tarifa cargada para su tipo y fecha`);
   }
@@ -65,8 +81,8 @@ export function LiquidacionConfigBanner({
       <Settings2 size={16} className="mt-0.5 flex-shrink-0 text-muted-foreground" />
       <div className="font-body text-sm text-foreground">
         <p className="font-semibold">
-          {d.total} incidente(s) sin precio resoluble por configuración incompleta (no es un
-          error del prestador).
+          {d.total} incidente(s) sin precio o km resoluble por configuración incompleta (no es
+          un error del prestador).
         </p>
         <ul className="mt-1 list-disc pl-5 text-muted-foreground">
           {partes.map((p) => (

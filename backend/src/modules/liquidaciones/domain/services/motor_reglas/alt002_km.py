@@ -28,16 +28,61 @@ def evaluar_alt002(
     if tabla_km is None:
         return []
     cobrado = incidente.cant_km_cobrado or 0
-    esperado_raw = tabla_km.kms_a_facturar
+    esperado_raw = tabla_km.kms_a_facturar or 0.0
     esperado = math.ceil(esperado_raw)
-    if (
-        abs(cobrado - esperado) <= tolerancia_km
-        or abs(cobrado - esperado_raw) <= tolerancia_km
-    ):
+    if _dentro_de_tolerancia(cobrado, esperado, esperado_raw, tolerancia_km):
         return []
-    if cobrado == 0 and esperado > 0 and _es_ruta_compartida(tabla_km, vecinos_mismo_dia):
+    if esperado_raw <= 0:
+        return [_hallazgo_sin_referencia(incidente, cobrado)]
+    if cobrado == 0 and _es_ruta_compartida(tabla_km, vecinos_mismo_dia):
         return []
-    return [_hallazgo(incidente, cobrado, esperado, esperado_raw)]
+    candidatos = _candidatos_ruta(vecinos_mismo_dia) if cobrado == 0 else []
+    return [_hallazgo(incidente, cobrado, esperado, esperado_raw, candidatos)]
+
+
+def _dentro_de_tolerancia(cobrado: float, esperado: int, esperado_raw: float, tol: float) -> bool:
+    return abs(cobrado - esperado) <= tol or abs(cobrado - esperado_raw) <= tol
+
+
+def _candidatos_ruta(
+    vecinos: Sequence[tuple[Incidente, TablaKm | None]],
+) -> list[dict[str, object]]:
+    """Incidentes del mismo día que sí cobraron km — el "mismo viaje" probable
+    cuando este cobró 0 y el corredor no matcheó (la TL lo resolvía a mano como
+    "Km asociado a otro incidente")."""
+    candidatos: list[dict[str, object]] = []
+    for otro, _ in vecinos:
+        if (otro.cant_km_cobrado or 0) <= 0:
+            continue
+        candidatos.append(
+            {
+                "incidente_id": str(otro.id),
+                "numero_incidente": otro.numero_incidente,
+                "empresa": otro.empresa_nombre,
+                "sucursal": otro.sucursal_nombre,
+                "km": otro.cant_km_cobrado,
+            }
+        )
+    return candidatos[:5]
+
+
+def _hallazgo_sin_referencia(incidente: Incidente, cobrado: float) -> Hallazgo:
+    """La fila existe pero nunca se le cargó km: no es "km incorrectos", es
+    configuración incompleta — la UI ofrece tomar lo cobrado como referencia."""
+    descripcion = (
+        f"{incidente.empresa_nombre} — {incidente.sucursal_nombre} no tiene km de "
+        f"referencia en Tabla KM; el prestador cobró {cobrado} km"
+    )
+    contexto = {
+        "cobrado": cobrado,
+        "esperado": 0,
+        "esperado_raw": 0.0,
+        "diferencia": round(cobrado, 2),
+        "empresa": incidente.empresa_nombre,
+        "sucursal": incidente.sucursal_nombre,
+        "sin_referencia": True,
+    }
+    return Hallazgo(descripcion, contexto)
 
 
 def _es_ruta_compartida(
@@ -52,14 +97,30 @@ def _es_ruta_compartida(
 
 
 def _hallazgo(
-    incidente: Incidente, cobrado: float, esperado: int, esperado_raw: float
+    incidente: Incidente,
+    cobrado: float,
+    esperado: int,
+    esperado_raw: float,
+    candidatos: list[dict[str, object]],
 ) -> Hallazgo:
     descripcion = (
         f"KMs cobrados {cobrado} km difieren de la Tabla KM "
         f"({esperado_raw} km → {esperado} km redondeado) "
         f"para {incidente.empresa_nombre} — {incidente.sucursal_nombre}"
     )
-    contexto = {
+    if candidatos:
+        descripcion += f"; el mismo día cobró km en #{candidatos[0]['numero_incidente']}"
+    return Hallazgo(descripcion, _contexto(incidente, cobrado, esperado, esperado_raw, candidatos))
+
+
+def _contexto(
+    incidente: Incidente,
+    cobrado: float,
+    esperado: int,
+    esperado_raw: float,
+    candidatos: list[dict[str, object]],
+) -> dict[str, object]:
+    contexto: dict[str, object] = {
         "cobrado": cobrado,
         "esperado": esperado,
         "esperado_raw": esperado_raw,
@@ -67,4 +128,7 @@ def _hallazgo(
         "empresa": incidente.empresa_nombre,
         "sucursal": incidente.sucursal_nombre,
     }
-    return Hallazgo(descripcion, contexto)
+    if candidatos:
+        contexto["posible_ruta_compartida"] = True
+        contexto["candidatos"] = candidatos
+    return contexto

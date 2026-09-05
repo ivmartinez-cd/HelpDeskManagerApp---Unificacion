@@ -32,6 +32,9 @@ export function TablaKmConfig({
   const puedeEditar = can("liquidaciones", "update");
   const puedeExportar = can("liquidaciones", "export");
   const [entradas, setEntradas] = useState<TablaKm[]>([]);
+  // Las filas sin actividad en liquidaciones recientes vienen archivadas
+  // (migración c3e8f1a9d2b4 + botón por fila): ocultas por default.
+  const [mostrarArchivadas, setMostrarArchivadas] = useState(false);
   // Prestador al que corresponden las `entradas` ya cargadas — si no coincide con
   // `filtroPst` es que hay un fetch en vuelo para la nueva selección (deriva el
   // spinner sin setState sincrónico en el effect, prohibido por
@@ -147,14 +150,26 @@ export function TablaKmConfig({
   const pstSeleccionado = prestadores.find((p) => p.id === filtroPst) ?? null;
   const loadingEntradas = filtroPst !== "" && filtroPst !== entradasPstId;
   const q = busqueda.toLowerCase();
+  const archivadas = entradas.filter((e) => e.archivada).length;
   const filtered = useMemo(() => {
+    const visibles = mostrarArchivadas ? entradas : entradas.filter((e) => !e.archivada);
     const base = q
-      ? entradas.filter((e) => e.empresaNombre.toLowerCase().includes(q) || e.sucursalNombre.toLowerCase().includes(q))
-      : entradas;
+      ? visibles.filter((e) => e.empresaNombre.toLowerCase().includes(q) || e.sucursalNombre.toLowerCase().includes(q))
+      : visibles;
     return [...base].sort((a, b) =>
       compareSortValues(kmSortValue(a, sort.key), kmSortValue(b, sort.key), sort.direction),
     );
-  }, [entradas, q, sort]);
+  }, [entradas, q, sort, mostrarArchivadas]);
+
+  const handleArchivar = async (t: TablaKm) => {
+    try {
+      await liquidacionesApi.setTablaKmArchivada(t.id, !t.archivada);
+      toast.success(t.archivada ? "Fila restaurada" : "Fila archivada");
+      void loadEntradas();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "No se pudo cambiar");
+    }
+  };
 
   const selectCls = "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
 
@@ -218,6 +233,12 @@ export function TablaKmConfig({
           {prestadores.map((p) => <option key={p.id} value={p.id}>{p.nombreCorto}</option>)}
         </select>
         <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por cliente o sucursal..." className={`${selectCls} min-w-[220px]`} aria-label="Buscar" disabled={!filtroPst} />
+        {archivadas > 0 && (
+          <label className="flex items-center gap-2 font-body text-sm text-muted-foreground">
+            <input type="checkbox" checked={mostrarArchivadas} onChange={(e) => setMostrarArchivadas(e.target.checked)} />
+            Mostrar {archivadas} archivada(s) sin actividad en 2026
+          </label>
+        )}
       </div>
 
       {!filtroPst ? (
@@ -236,6 +257,7 @@ export function TablaKmConfig({
           spstsConTarifa={spstsConTarifa}
           onEdit={(t) => { setEditing(t); setModalOpen(true); }}
           onDelete={setDeletingId}
+          onArchivar={puedeEditar ? (t) => void handleArchivar(t) : undefined}
         />
       )}
 

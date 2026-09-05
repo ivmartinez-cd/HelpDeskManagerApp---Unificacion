@@ -11,10 +11,12 @@ import { CODIGO_ALT009, ESTADO_ALERTA_STYLES, TRANSICIONES_ALERTA } from "../lib
 import { formatARS } from "../lib/format";
 import type { Alerta, EstadoAlerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
 import { riesgoClass } from "./incidente-badges";
+import { AlertaKmAcciones } from "./alerta-km-acciones";
 import { AsignarZonaSucursal } from "./asignar-zona-sucursal";
 import { EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
 
 const CODIGO_ALT001 = "ALT001";
+const CODIGO_ALT002 = "ALT002";
 const CODIGO_ALT008 = "ALT008";
 
 function plantillaDesdeAlerta(alerta: Alerta): PlantillaEntrada {
@@ -165,6 +167,19 @@ export function GestionarAlertaModal({
             </Link>
           </p>
         )}
+        {alerta.tipoAlerta === CODIGO_ALT002 &&
+          incidente &&
+          !transicion &&
+          (alerta.estado === "pendiente" || alerta.estado === "en_revision") && (
+            <AlertaKmAcciones
+              liquidacionId={liquidacionId}
+              prestadorId={prestadorId}
+              alerta={alerta}
+              incidente={incidente}
+              onChanged={onChanged}
+              onClose={onClose}
+            />
+          )}
         {sinZona && incidente && !transicion && (
           <AsignarZonaSucursal
             prestadorId={prestadorId}

@@ -25,6 +25,7 @@ from src.modules.liquidaciones.application.use_cases.config_tabla_km import (
     ConfigTablaKmPorts,
     CreateTablaKm,
     DeleteTablaKm,
+    SetArchivadaTablaKm,
     UpdateTablaKm,
 )
 from src.modules.liquidaciones.application.use_cases.config_tarifarios import (
@@ -32,6 +33,10 @@ from src.modules.liquidaciones.application.use_cases.config_tarifarios import (
     CreateTarifario,
     DeleteTarifario,
     UpdateTarifario,
+)
+from src.modules.liquidaciones.application.use_cases.fijar_km_referencia import (
+    FijarKmReferencia,
+    FijarKmReferenciaPorts,
 )
 from src.modules.liquidaciones.application.use_cases.vincular_tabla_km_spst import (
     VincularTablaKmSpst,
@@ -139,3 +144,11 @@ def build_asignar_zona_sucursal(session: AsyncSession) -> AsignarZonaSucursal:
             spsts=SqlAlchemySpstRepository(session),
         )
     )
+
+
+def build_fijar_km_referencia(session: AsyncSession) -> FijarKmReferencia:
+    return FijarKmReferencia(FijarKmReferenciaPorts(tabla_km=SqlAlchemyTablaKmRepository(session)))
+
+
+def build_set_archivada_tabla_km(session: AsyncSession) -> SetArchivadaTablaKm:
+    return SetArchivadaTablaKm(_tabla_km_ports(session))

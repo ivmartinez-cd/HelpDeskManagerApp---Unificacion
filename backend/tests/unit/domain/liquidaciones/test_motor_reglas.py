@@ -83,6 +83,54 @@ class TestAlt002KmsIncorrectos:
         assert len(alertas) == 1
         assert alertas[0].datos_contexto["diferencia"] == 40.0
 
+    def test_fila_sin_km_marca_sin_referencia_en_vez_de_km_incorrectos(self) -> None:
+        tabla = make_tabla_km(kms_a_facturar=0.0)
+        incidente = make_incidente(
+            empresa_nombre=tabla.empresa_nombre,
+            sucursal_nombre=tabla.sucursal_nombre,
+            cant_km_cobrado=26.0,
+        )
+        resultado = ejecutar_motor_reglas(
+            [incidente], [incidente], reglas_activas_default(), [tabla], []
+        )
+        alertas = [a for a in resultado.alertas if a.tipo_alerta == "ALT002"]
+        assert len(alertas) == 1
+        assert alertas[0].datos_contexto["sin_referencia"] is True
+        assert "no tiene km de referencia" in (alertas[0].descripcion or "")
+
+    def test_cobro_cero_sin_corredor_lista_candidatos_de_ruta(self) -> None:
+        tabla = make_tabla_km(kms_a_facturar=120.0, localidad_cliente="Santa Rosa")
+        otra = make_tabla_km(
+            prestador_id=tabla.prestador_id,
+            empresa_nombre="OCA",
+            sucursal_nombre="Central",
+            kms_a_facturar=300.0,
+            localidad_cliente="Cipolletti",
+        )
+        sin_km = make_incidente(
+            empresa_nombre=tabla.empresa_nombre,
+            sucursal_nombre=tabla.sucursal_nombre,
+            cant_km_cobrado=0.0,
+        )
+        con_km = make_incidente(
+            numero_incidente="777",
+            empresa_nombre="OCA",
+            sucursal_nombre="Central",
+            cant_km_cobrado=300.0,
+            fecha_cierre=sin_km.fecha_cierre,
+        )
+        resultado = ejecutar_motor_reglas(
+            [sin_km, con_km], [sin_km, con_km], reglas_activas_default(), [tabla, otra], []
+        )
+        alerta = next(
+            a
+            for a in resultado.alertas
+            if a.tipo_alerta == "ALT002" and a.incidente_id == sin_km.id
+        )
+        assert alerta.datos_contexto["posible_ruta_compartida"] is True
+        assert alerta.datos_contexto["candidatos"][0]["numero_incidente"] == "777"
+        assert "#777" in (alerta.descripcion or "")
+
     def test_kms_decimal_cobrado_ceil_no_dispara(self) -> None:
         """kms_a_facturar=20.5: el PST cobra 21 (ceil correcto). Con tolerancia
         estricta (0) no debe disparar porque ceil(20.5)=21=cobrado."""
@@ -94,7 +142,9 @@ class TestAlt002KmsIncorrectos:
         )
         reglas = dict(reglas_activas_default())
         reglas["ALT002"] = make_regla(
-            codigo="ALT002", riesgo_base=100.0, activa=True,
+            codigo="ALT002",
+            riesgo_base=100.0,
+            activa=True,
             configuracion={"tolerancia_km": 0.0},
         )
         resultado = ejecutar_motor_reglas([incidente], [incidente], reglas, [tabla], [])
@@ -126,7 +176,9 @@ class TestAlt002KmsIncorrectos:
         )
         reglas = dict(reglas_activas_default())
         reglas["ALT002"] = make_regla(
-            codigo="ALT002", riesgo_base=100.0, activa=True,
+            codigo="ALT002",
+            riesgo_base=100.0,
+            activa=True,
             configuracion={"tolerancia_km": 0.0},
         )
         resultado = ejecutar_motor_reglas([incidente], [incidente], reglas, [tabla], [])
@@ -162,11 +214,8 @@ class TestAlt002KmsIncorrectos:
             cant_km_cobrado=90.0,
         )
         resultado = ejecutar_motor_reglas(
-            [inc_a, inc_b],
-            [inc_a, inc_b],
-            reglas_activas_default(),
-            [tabla_a, tabla_b],
-            [])
+            [inc_a, inc_b], [inc_a, inc_b], reglas_activas_default(), [tabla_a, tabla_b], []
+        )
         alertas = [a for a in resultado.alertas if a.tipo_alerta == "ALT002"]
         # inc_a (0 vs 50) se suprime por ruta compartida; inc_b (90 vs 50) dispara la suya.
         assert len(alertas) == 1
@@ -237,11 +286,8 @@ class TestAlt004ServicioDuplicado:
         inc_actual = make_incidente(numero_incidente="500")
         inc_previo = make_incidente(numero_incidente="500", liquidacion_id=liq_previa)
         resultado = ejecutar_motor_reglas(
-            [inc_actual],
-            [inc_actual, inc_previo],
-            reglas_activas_default(),
-            [],
-            [])
+            [inc_actual], [inc_actual, inc_previo], reglas_activas_default(), [], []
+        )
         alertas = [a for a in resultado.alertas if a.tipo_alerta == "ALT004"]
         assert len(alertas) == 1
         assert alertas[0].datos_contexto["liquidaciones_previas"] == [str(liq_previa)]
@@ -259,9 +305,7 @@ class TestAlt010SerieDuplicada:
         fecha = date(2026, 1, 10)
         inc1 = make_incidente(nro_serie="SN-1", tipo="correctivo", fecha_cierre=fecha)
         inc2 = make_incidente(nro_serie="SN-1", tipo="correctivo", fecha_cierre=fecha)
-        resultado = ejecutar_motor_reglas(
-            [inc1], [inc1, inc2], reglas_activas_default(), [], []
-        )
+        resultado = ejecutar_motor_reglas([inc1], [inc1, inc2], reglas_activas_default(), [], [])
         assert [a for a in resultado.alertas if a.tipo_alerta == "ALT010"] == []
 
     def test_no_dispara_misma_serie_distinto_periodo(self) -> None:
@@ -425,11 +469,10 @@ class TestAlt005RutaCompartida:
         )
         reglas = reglas_activas_default()
         reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
-        resultado = ejecutar_motor_reglas(
-            [inc1, inc2], [inc1, inc2], reglas, [tabla1, tabla2], []
-        )
+        resultado = ejecutar_motor_reglas([inc1, inc2], [inc1, inc2], reglas, [tabla1, tabla2], [])
         alertas1 = [
-            a for a in resultado.alertas
+            a
+            for a in resultado.alertas
             if a.tipo_alerta == "ALT005" and not a.es_grupo and a.incidente_id == inc1.id
         ]
         assert len(alertas1) == 1
@@ -442,7 +485,8 @@ class TestAlt005RutaCompartida:
         # simétrico: inc2 también dispara la suya citando a inc1 — cada incidente se
         # evalúa por su cuenta, igual que el legacy.
         alertas2 = [
-            a for a in resultado.alertas
+            a
+            for a in resultado.alertas
             if a.tipo_alerta == "ALT005" and not a.es_grupo and a.incidente_id == inc2.id
         ]
         assert len(alertas2) == 1
@@ -484,11 +528,10 @@ class TestAlt005RutaCompartida:
         )
         reglas = reglas_activas_default()
         reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
-        resultado = ejecutar_motor_reglas(
-            [inc1, inc2], [inc1, inc2], reglas, [tabla1, tabla2], []
-        )
+        resultado = ejecutar_motor_reglas([inc1, inc2], [inc1, inc2], reglas, [tabla1, tabla2], [])
         alertas1 = [
-            a for a in resultado.alertas
+            a
+            for a in resultado.alertas
             if a.tipo_alerta == "ALT005" and not a.es_grupo and a.incidente_id == inc1.id
         ]
         assert len(alertas1) == 1
@@ -536,9 +579,7 @@ class TestAlt005RutaCompartida:
         )
         reglas = reglas_activas_default()
         reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
-        resultado = ejecutar_motor_reglas(
-            [inc1, inc2], [inc1, inc2], reglas, [tabla1, tabla2], []
-        )
+        resultado = ejecutar_motor_reglas([inc1, inc2], [inc1, inc2], reglas, [tabla1, tabla2], [])
         alertas = [a for a in resultado.alertas if a.tipo_alerta == "ALT005"]
         assert len(alertas) == 1  # inc2 no dispara nada (guarda G2: km cobrado == 0)
         assert alertas[0].incidente_id == inc1.id
@@ -588,9 +629,7 @@ class TestAlt005RutaCompartida:
         )
         reglas = reglas_activas_default()
         reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
-        resultado = ejecutar_motor_reglas(
-            [inc1, inc2], [inc1, inc2], reglas, [tabla1, tabla2], []
-        )
+        resultado = ejecutar_motor_reglas([inc1, inc2], [inc1, inc2], reglas, [tabla1, tabla2], [])
         alertas1 = [
             a for a in resultado.alertas if a.tipo_alerta == "ALT005" and a.incidente_id == inc1.id
         ]
@@ -654,7 +693,8 @@ class TestAlt005RutaCompartida:
             [inc_actual, inc_localidad, inc_corredor],
             reglas,
             [tabla_actual, tabla_localidad, tabla_corredor],
-            [])
+            [],
+        )
         alertas = [
             a
             for a in resultado.alertas
@@ -697,11 +737,8 @@ class TestAlt005RutaCompartida:
         reglas = reglas_activas_default()
         reglas["ALT005"] = make_regla(codigo="ALT005", activa=True)
         resultado = ejecutar_motor_reglas(
-            [incidente_sin_km, incidentes[1]],
-            [incidente_sin_km, incidentes[1]],
-            reglas,
-            tablas,
-            [])
+            [incidente_sin_km, incidentes[1]], [incidente_sin_km, incidentes[1]], reglas, tablas, []
+        )
         alertas = [
             a
             for a in resultado.alertas
@@ -832,9 +869,7 @@ class TestMotorOrquestador:
         inc_ok = make_incidente(numero_incidente="1", costo_servicio_cobrado=1500.0)
         inc_alerta = make_incidente(numero_incidente="2", costo_servicio_cobrado=9999.0)
         todos = [inc_ok, inc_alerta]
-        resultado = ejecutar_motor_reglas(
-            todos, todos, reglas_activas_default(), [], [tarifario]
-        )
+        resultado = ejecutar_motor_reglas(todos, todos, reglas_activas_default(), [], [tarifario])
         estados = {e.incidente_id: e.estado_validacion for e in resultado.incidentes_evaluados}
         assert estados[inc_ok.id] == "ok"
         assert estados[inc_alerta.id] == "con_alertas"

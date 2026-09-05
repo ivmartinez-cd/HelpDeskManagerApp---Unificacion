@@ -113,6 +113,16 @@ class LiquidacionesSettings(BaseSettings):
     google_maps_api_key: str = ""
     google_maps_max_calls_per_run: int = 200
 
+    # Proveedor del cálculo de distancias PST↔sucursal del Asistente de KM:
+    # "google" (Distance Matrix, paga, con el tope de arriba) u "osrm"
+    # (OpenStreetMap, gratis; decisión del usuario 2026-09-05 — SAN JUAN
+    # necesitaba 1.738 rutas y Google estaba trabado por tope y autorización).
+    # El servidor público de OSRM es un demo sin SLA: `osrm_base_url` permite
+    # apuntar a uno propio; el tope acota la duración de una corrida, no dinero.
+    distancias_proveedor: str = "google"
+    osrm_base_url: str = "https://router.project-osrm.org"
+    osrm_max_calls_per_run: int = 4000
+
     # Georef (API del Estado argentino, gratuita/sin auth) — Tier 1 de
     # geovalidación. Sin costo, pero sin abuso de un servicio público: tope
     # por corrida acota la duración del request HTTP (no por dinero, por

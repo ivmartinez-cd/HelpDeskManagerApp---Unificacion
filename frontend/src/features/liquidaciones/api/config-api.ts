@@ -218,6 +218,18 @@ export const configApi = {
     spstId: string | null;
   }) => httpClient.put<TablaKm>("/api/liquidaciones/tabla-km/zona-sucursal", body),
 
+  // Km cobrados por el prestador → km de referencia de la sucursal (desde la
+  // alerta ALT002 "sin km de referencia"). El backend reanaliza las abiertas.
+  fijarKmReferencia: (body: {
+    prestadorId: string;
+    empresaNombre: string;
+    sucursalNombre: string;
+    kms: number;
+  }) => httpClient.put<TablaKm>("/api/liquidaciones/tabla-km/km-referencia", body),
+
+  setTablaKmArchivada: (id: string, archivada: boolean) =>
+    httpClient.patch<TablaKm>(`/api/liquidaciones/tabla-km/${id}/archivada`, { archivada }),
+
   vincularSpstTablaKm: (prestadorId: string, dryRun: boolean, incluirProvincia = false) =>
     httpClient.post<ResultadoVinculoTablaKmSpst>(
       `/api/liquidaciones/tabla-km/vincular-spst?${new URLSearchParams({

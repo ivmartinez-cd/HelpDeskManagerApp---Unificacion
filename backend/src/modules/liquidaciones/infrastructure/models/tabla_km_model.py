@@ -47,6 +47,7 @@ class TablaKmModel(Base):
     geocode_fecha: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     siges_sucursal_id: Mapped[int | None] = mapped_column(Integer)
     id_costo_servicios: Mapped[int | None] = mapped_column(Integer)
+    archivada: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()"), nullable=False
     )
