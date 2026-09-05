@@ -491,6 +491,9 @@ test.describe("Módulo de Liquidaciones", () => {
 
     await page.goto(`/liquidaciones/${LIQ_ID}`);
 
+    // Las alertas de un incidente están colapsadas por default — hay que
+    // expandir la fila (click) para que aparezca AlertaSubRow.
+    await page.locator(`#incidente-row-${INC_ID}`).click();
     await expect(page.getByText("Ruta compartida entre incidentes")).toBeVisible();
     await page.getByRole("button", { name: "Gestionar" }).click();
 
