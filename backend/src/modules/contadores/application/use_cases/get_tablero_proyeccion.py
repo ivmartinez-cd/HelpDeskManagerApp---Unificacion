@@ -7,12 +7,15 @@ reales: reemplazar la fuente de equipos es el único cambio necesario el día
 que se conecte a SiGes."""
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from typing import Any
 
 from src.modules.contadores.application.dtos.contexto_proceso_dto import ContextoProcesoDto
-from src.modules.contadores.application.dtos.decision_operador_dto import DecisionOperadorDto
+from src.modules.contadores.application.dtos.decision_operador_dto import (
+    DecisionManualDto,
+    DecisionOperadorDto,
+)
 from src.modules.contadores.application.dtos.equipo_proceso_dto import (
     ClaseProceso,
     EquipoProceso,
@@ -94,23 +97,48 @@ class _ValoresCalculados:
     tipo_toma: int | None
     fuente: str
     semaforo: str
+    metodo_detalle: str
+    requiere_confirmacion: bool
 
 
 def _calcular_valores(calculo: _CalculoClase) -> _ValoresCalculados:
-    clase, resultado = calculo.clase, calculo.resultado
-    valores = _ValoresCalculados(
+    clase, resultado, decision = calculo.clase, calculo.resultado, calculo.decision
+    base = _ValoresCalculados(
         resultado.estim_propuesto, resultado.impresiones, resultado.tipo_toma,
-        resultado.fuente, resultado.semaforo,
+        resultado.fuente, resultado.semaforo, resultado.metodo_detalle,
+        resultado.requiere_confirmacion,
     )
     if clase.ya_real:
+        # Un dato real nunca se pisa (REGLAS_DE_NEGOCIO §1) — ni por una
+        # decisión manual vieja ni por un "marcar pendiente" viejo.
         impresiones = (clase.valor_real_cargado or 0) - clase.ultimo_contador_facturado.valor
-        valores = _ValoresCalculados(
-            clase.valor_real_cargado, impresiones,
-            clase.ultimo_contador_facturado.tipo_toma, valores.fuente, valores.semaforo,
+        return _ValoresCalculados(
+            clase.valor_real_cargado, impresiones, clase.ultimo_contador_facturado.tipo_toma,
+            base.fuente, base.semaforo, base.metodo_detalle, False,
         )
-    if calculo.decision and calculo.decision.pendiente:
-        valores = _ValoresCalculados(None, None, None, "Pendiente", "ROJO")
-    return valores
+    if decision and decision.pendiente:
+        return _ValoresCalculados(None, None, None, "Pendiente", "ROJO", "Pendiente", True)
+    if decision and decision.manual:
+        return _valores_de_manual(decision.manual, clase, base)
+    if decision and decision.nota:
+        return replace(base, requiere_confirmacion=True)
+    return base
+
+
+def _valores_de_manual(
+    manual: DecisionManualDto, clase: ClaseProceso, base: _ValoresCalculados
+) -> _ValoresCalculados:
+    impresiones = (
+        (manual.contador_propuesto - clase.ultimo_contador_facturado.valor)
+        if manual.contador_propuesto is not None
+        else None
+    )
+    # Ya fue confirmado por el operador al aceptar — no vuelve a pedir
+    # confirmación aunque el cálculo automático la hubiera requerido.
+    return _ValoresCalculados(
+        manual.contador_propuesto, impresiones, manual.tipo_toma,
+        manual.fuente, base.semaforo, manual.metodo_detalle, False,
+    )
 
 
 def _armar_fila(calculo: _CalculoClase, fecha_objetivo: date) -> FilaProyeccionDto:
@@ -174,11 +202,11 @@ def _campos_calculo(calculo: _CalculoClase, valores: _ValoresCalculados) -> dict
         tipo_toma=valores.tipo_toma,
         impresiones=valores.impresiones,
         fuente=valores.fuente,
-        metodo_detalle=resultado.metodo_detalle,
+        metodo_detalle=valores.metodo_detalle,
         coloreo=resultado.coloreo,
         borde_salto_imposible=resultado.borde_salto_imposible,
         semaforo=valores.semaforo,
-        requiere_confirmacion=resultado.requiere_confirmacion or bool(calculo.decision),
+        requiere_confirmacion=valores.requiere_confirmacion,
         nota_operador=calculo.decision.nota if calculo.decision else None,
     )
 

@@ -6,10 +6,12 @@ de ese archivo)."""
 from datetime import date
 
 from fastapi import APIRouter, Body, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.contadores.application.dtos.decision_operador_dto import DecisionManualDto
 from src.modules.contadores.application.dtos.forzar_metodo_request import ForzarMetodoRequest
 from src.modules.contadores.application.dtos.recalcular_candidato_request import (
     RecalcularCandidatoRequest,
@@ -68,6 +70,16 @@ router = APIRouter()
 
 _require_view = Depends(require_permission(VIEW))
 _require_manage = Depends(require_permission(MANAGE))
+
+
+class AceptarManualBody(BaseModel):
+    """El último cálculo que el operador vio (P/L manual o método forzado) y
+    decidió confirmar — si viene vacío, "aceptar" confirma el automático."""
+
+    contador_propuesto: float | None = None
+    tipo_toma: int | None = None
+    fuente: str | None = None
+    metodo_detalle: str | None = None
 
 
 @router.get("/candidatos/{id_maquina}/{clase}", response_model=CandidatosEquipoSchema)
@@ -160,11 +172,34 @@ async def agregar_nota(
 async def aceptar_propuesta(
     id_maquina: int,
     clase: str,
+    body: AceptarManualBody | None = None,
     identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
-    await _decisiones_store_de(id_maquina, clase, db).aceptar(id_maquina, clase)
-    await registrar_accion(db, identity, id_maquina, clase, "aceptar_sugerencia")
+    manual = _decision_manual_de(body)
+    await _decisiones_store_de(id_maquina, clase, db).aceptar(id_maquina, clase, manual)
+    campos = (
+        {
+            "contador_propuesto": manual.contador_propuesto,
+            "tipo_toma_grabado": manual.tipo_toma,
+            "fuente": manual.fuente,
+            "metodo_detalle": manual.metodo_detalle,
+        }
+        if manual
+        else {}
+    )
+    await registrar_accion(db, identity, id_maquina, clase, "aceptar_sugerencia", **campos)
+
+
+def _decision_manual_de(body: AceptarManualBody | None) -> DecisionManualDto | None:
+    if body is None or body.fuente is None:
+        return None
+    return DecisionManualDto(
+        contador_propuesto=body.contador_propuesto,
+        tipo_toma=body.tipo_toma,
+        fuente=body.fuente,
+        metodo_detalle=body.metodo_detalle or "",
+    )
 
 
 def _decisiones_store_de(id_maquina: int, clase: str, db: AsyncSession) -> DecisionesOperadorPort:

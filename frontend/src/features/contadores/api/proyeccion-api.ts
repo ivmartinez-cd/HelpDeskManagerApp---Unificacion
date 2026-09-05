@@ -1,6 +1,7 @@
 import { httpClient } from "@/services/http-client";
 import type { Page } from "@/shared/types/pagination";
 import type {
+  AceptarManualBody,
   AnexoOption,
   CandidatosEquipo,
   CrearRecesoBody,
@@ -61,13 +62,21 @@ export const proyeccionApi = {
   agregarNota: (idMaquina: number, clase: string, nota: string) =>
     httpClient.post<void>(`${BASE}/candidatos/${idMaquina}/${clase}/nota`, { nota }),
 
-  aceptarPropuesta: (idMaquina: number, clase: string) =>
-    httpClient.post<void>(`${BASE}/candidatos/${idMaquina}/${clase}/aceptar`),
+  aceptarPropuesta: (idMaquina: number, clase: string, manual?: AceptarManualBody) =>
+    httpClient.post<void>(`${BASE}/candidatos/${idMaquina}/${clase}/aceptar`, manual ?? {}),
 
-  listRecesos: () =>
-    httpClient.get<Page<Receso>>(`${BASE}/recesos`).then((page) => page.items),
+  // Sin `idGrupoEconomico` (o con el de ejemplo): recesos de ejemplo, en
+  // memoria. Con un grupo económico real, los de ese grupo en Postgres
+  // (ver `_recesos_store_de` en el backend).
+  listRecesos: (idGrupoEconomico?: number) => {
+    const qs = idGrupoEconomico ? `?id_grupo_economico=${idGrupoEconomico}` : "";
+    return httpClient.get<Page<Receso>>(`${BASE}/recesos${qs}`).then((page) => page.items);
+  },
 
   crearReceso: (body: CrearRecesoBody) => httpClient.post<Receso>(`${BASE}/recesos`, body),
 
-  eliminarReceso: (id: number) => httpClient.delete<void>(`${BASE}/recesos/${id}`),
+  eliminarReceso: (id: number, idGrupoEconomico?: number) => {
+    const qs = idGrupoEconomico ? `?id_grupo_economico=${idGrupoEconomico}` : "";
+    return httpClient.delete<void>(`${BASE}/recesos/${id}${qs}`);
+  },
 };

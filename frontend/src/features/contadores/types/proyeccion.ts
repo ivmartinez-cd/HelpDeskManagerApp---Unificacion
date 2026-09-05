@@ -140,6 +140,16 @@ export interface RecalcularCandidatoResponse {
   requiere_confirmacion: boolean;
 }
 
+// El último cálculo manual (P/L o método forzado) que el operador vio y
+// decide confirmar al aceptar — si se omite, "aceptar" confirma el
+// automático (comportamiento de siempre).
+export interface AceptarManualBody {
+  contador_propuesto: number | null;
+  tipo_toma: number | null;
+  fuente: string;
+  metodo_detalle: string;
+}
+
 export interface Receso {
   id: number;
   id_grupo_economico: number;

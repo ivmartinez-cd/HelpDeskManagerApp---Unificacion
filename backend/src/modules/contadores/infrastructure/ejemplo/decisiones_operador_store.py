@@ -1,12 +1,16 @@
 """Store en memoria de decisiones del operador del modo ejemplo (marcar
-pendiente / agregar nota) — mismo criterio temporal que `recesos_store.py`.
-Implementa `DecisionesOperadorPort` con métodos `async def` sin I/O real,
-para tratar ejemplo y real de forma uniforme — ver
-`SqlAlchemyDecisionesOperadorRepository` para el modo real (Postgres)."""
+pendiente / agregar nota / aceptar, con o sin valor manual) — mismo criterio
+temporal que `recesos_store.py`. Implementa `DecisionesOperadorPort` con
+métodos `async def` sin I/O real, para tratar ejemplo y real de forma
+uniforme — ver `SqlAlchemyDecisionesOperadorRepository` para el modo real
+(Postgres)."""
 
 from functools import lru_cache
 
-from src.modules.contadores.application.dtos.decision_operador_dto import DecisionOperadorDto
+from src.modules.contadores.application.dtos.decision_operador_dto import (
+    DecisionManualDto,
+    DecisionOperadorDto,
+)
 
 
 class DecisionesOperadorStore:
@@ -22,17 +26,25 @@ class DecisionesOperadorStore:
     async def marcar_pendiente(self, id_maquina: int, clase: str) -> None:
         actual = await self.obtener(id_maquina, clase) or DecisionOperadorDto()
         self._decisiones[(id_maquina, clase)] = DecisionOperadorDto(
-            pendiente=True, nota=actual.nota
+            pendiente=True, nota=actual.nota, manual=actual.manual
         )
 
     async def agregar_nota(self, id_maquina: int, clase: str, nota: str) -> None:
         actual = await self.obtener(id_maquina, clase) or DecisionOperadorDto()
         self._decisiones[(id_maquina, clase)] = DecisionOperadorDto(
-            pendiente=actual.pendiente, nota=nota
+            pendiente=actual.pendiente, nota=nota, manual=actual.manual
         )
 
-    async def aceptar(self, id_maquina: int, clase: str) -> None:
-        self._decisiones.pop((id_maquina, clase), None)
+    async def aceptar(
+        self, id_maquina: int, clase: str, manual: DecisionManualDto | None = None
+    ) -> None:
+        if manual is None:
+            self._decisiones.pop((id_maquina, clase), None)
+            return
+        actual = await self.obtener(id_maquina, clase)
+        self._decisiones[(id_maquina, clase)] = DecisionOperadorDto(
+            pendiente=False, nota=actual.nota if actual else None, manual=manual
+        )
 
 
 @lru_cache

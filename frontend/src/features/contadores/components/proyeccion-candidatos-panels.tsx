@@ -19,9 +19,7 @@ export interface Seleccion {
 export interface Calculo {
   estim: number | null;
   impresiones: number | null;
-}
-
-export interface Forzado extends Calculo {
+  tipoToma: number | null;
   fuente: string;
   metodoDetalle: string;
 }
@@ -99,7 +97,7 @@ export function ProyeccionLecturasTabla({
 interface ProyeccionCalculoPanelProps {
   seleccion: Seleccion;
   calculoVisible: Calculo | null;
-  forzado: Forzado | null;
+  forzado: Calculo | null;
   puedeGestionar: boolean;
   forzando: MetodoForzado | null;
   onForzar: (metodo: MetodoForzado) => void;

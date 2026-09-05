@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
+import { SearchableSelect } from "@/shared/components/ui/searchable-select";
 import { useSession } from "@/services/session-provider";
 import { proyeccionApi } from "../api/proyeccion-api";
-import type { Receso } from "../types/proyeccion";
-
-const ID_GRUPO_ECONOMICO_EJEMPLO = 1;
+import type { AnexoOption, GrupoEconomicoOption, Receso } from "../types/proyeccion";
 
 function formatFecha(iso: string): string {
   const [y, m, d] = iso.split("-");
@@ -17,23 +16,41 @@ function formatFecha(iso: string): string {
 export function ProyeccionRecesosView() {
   const { can } = useSession();
   const puedeGestionar = can("contadores", "manage");
+  const [grupos, setGrupos] = useState<GrupoEconomicoOption[]>([]);
+  const [anexos, setAnexos] = useState<AnexoOption[]>([]);
+  const [idGrupo, setIdGrupo] = useState<string | null>(null);
+  const [idAnexo, setIdAnexo] = useState<string | null>(null);
   const [recesos, setRecesos] = useState<Receso[] | null>(null);
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [guardando, setGuardando] = useState(false);
 
-  const cargar = () => void proyeccionApi.listRecesos().then(setRecesos);
+  useEffect(() => {
+    void proyeccionApi.listGruposEconomicos().then(setGrupos);
+  }, []);
 
-  useEffect(cargar, []);
+  useEffect(() => {
+    if (!idGrupo) return;
+    void proyeccionApi.listAnexos(Number(idGrupo)).then(setAnexos);
+  }, [idGrupo]);
+
+  // Derivado en vez de resetear estado a mano en el efecto de arriba
+  // (react-hooks/set-state-in-effect): sin grupo no hay anexos que mostrar.
+  const anexosVisibles = idGrupo ? anexos : [];
+
+  const cargar = () =>
+    void proyeccionApi.listRecesos(idGrupo ? Number(idGrupo) : undefined).then(setRecesos);
+
+  useEffect(cargar, [idGrupo]);
 
   const agregar = async () => {
     if (!desde || !hasta || !descripcion.trim()) return;
     setGuardando(true);
     try {
       await proyeccionApi.crearReceso({
-        id_grupo_economico: ID_GRUPO_ECONOMICO_EJEMPLO,
-        id_anexo: null,
+        id_grupo_economico: idGrupo ? Number(idGrupo) : 1,
+        id_anexo: idAnexo ? Number(idAnexo) : null,
         fecha_desde: desde,
         fecha_hasta: hasta,
         descripcion: descripcion.trim(),
@@ -48,7 +65,7 @@ export function ProyeccionRecesosView() {
   };
 
   const eliminar = async (id: number) => {
-    await proyeccionApi.eliminarReceso(id);
+    await proyeccionApi.eliminarReceso(id, idGrupo ? Number(idGrupo) : undefined);
     cargar();
   };
 
@@ -71,6 +88,37 @@ export function ProyeccionRecesosView() {
           estimación: no diluyen la tasa diaria ni se facturan como impresiones.
         </p>
       </div>
+
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="w-[260px]">
+          <SearchableSelect
+            label="Grupo económico"
+            placeholder="Elegí un grupo… (vacío = ejemplo)"
+            options={grupos.map((g) => ({ id: String(g.id), label: g.descripcion }))}
+            value={idGrupo}
+            onChange={(id) => {
+              setIdGrupo(id);
+              setIdAnexo(null);
+            }}
+          />
+        </div>
+        <div className="w-[260px]">
+          <SearchableSelect
+            label="Anexo (opcional — vacío = todo el grupo)"
+            placeholder={idGrupo ? "Todo el grupo…" : "Elegí primero un grupo"}
+            disabled={!idGrupo}
+            options={anexosVisibles.map((a) => ({ id: String(a.id_anexo), label: a.nombre_anexo }))}
+            value={idAnexo}
+            onChange={setIdAnexo}
+          />
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        {idGrupo
+          ? "Administrando recesos de un grupo económico real — persisten en la base."
+          : "Sin grupo elegido: administrando los recesos de ejemplo (se pierden al reiniciar el backend)."}
+      </p>
 
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         {puedeGestionar && (

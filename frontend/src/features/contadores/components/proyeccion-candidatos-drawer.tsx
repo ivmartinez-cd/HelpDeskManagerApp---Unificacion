@@ -17,7 +17,6 @@ import {
   ProyeccionCalculoPanel,
   ProyeccionLecturasTabla,
   type Calculo,
-  type Forzado,
   type Seleccion,
 } from "./proyeccion-candidatos-panels";
 
@@ -50,7 +49,7 @@ export function ProyeccionCandidatosDrawer({
   const [error, setError] = useState<string | null>(null);
   const [seleccion, setSeleccion] = useState<Seleccion>({ partida: null, llegada: null });
   const [calculo, setCalculo] = useState<Calculo | null>(null);
-  const [forzado, setForzado] = useState<Forzado | null>(null);
+  const [forzado, setForzado] = useState<Calculo | null>(null);
   const [forzando, setForzando] = useState<MetodoForzado | null>(null);
   const [nota, setNota] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -85,7 +84,15 @@ export function ProyeccionCandidatosDrawer({
         ...solicitudReal(solicitud),
       })
       .then((r) => {
-        if (!cancelado) setCalculo({ estim: r.estim_propuesto, impresiones: r.impresiones });
+        if (!cancelado) {
+          setCalculo({
+            estim: r.estim_propuesto,
+            impresiones: r.impresiones,
+            tipoToma: r.tipo_toma,
+            fuente: r.fuente,
+            metodoDetalle: r.metodo_detalle,
+          });
+        }
       })
       .catch(() => {
         if (!cancelado) setCalculo(null);
@@ -115,6 +122,7 @@ export function ProyeccionCandidatosDrawer({
       setForzado({
         estim: r.estim_propuesto,
         impresiones: r.impresiones,
+        tipoToma: r.tipo_toma,
         fuente: r.fuente,
         metodoDetalle: r.metodo_detalle,
       });
@@ -124,6 +132,11 @@ export function ProyeccionCandidatosDrawer({
       setForzando(null);
     }
   };
+
+  // Lo que el operador ve en pantalla al momento de aceptar: P/L manual si
+  // hay una pareja elegida, sino el método forzado si hay uno vigente, sino
+  // ninguno (confirma el automático).
+  const manualParaAceptar = calculoVisible ?? forzado;
 
   const accion = async (fn: () => Promise<void>) => {
     setGuardando(true);
@@ -206,7 +219,22 @@ export function ProyeccionCandidatosDrawer({
             <BrandButton
               className="flex-1"
               loading={guardando}
-              onClick={() => accion(() => proyeccionApi.aceptarPropuesta(fila.id_maquina, fila.clase))}
+              onClick={() =>
+                accion(() =>
+                  proyeccionApi.aceptarPropuesta(
+                    fila.id_maquina,
+                    fila.clase,
+                    manualParaAceptar
+                      ? {
+                          contador_propuesto: manualParaAceptar.estim,
+                          tipo_toma: manualParaAceptar.tipoToma,
+                          fuente: manualParaAceptar.fuente,
+                          metodo_detalle: manualParaAceptar.metodoDetalle,
+                        }
+                      : undefined,
+                  ),
+                )
+              }
             >
               ✓ Aceptar
             </BrandButton>
