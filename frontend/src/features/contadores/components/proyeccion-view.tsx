@@ -8,6 +8,7 @@ import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
 import { SearchableSelect } from "@/shared/components/ui/searchable-select";
 import { useTableSort } from "@/shared/hooks/use-table-sort";
 import { proyeccionApi } from "../api/proyeccion-api";
+import { useLoteAceptarProyeccion } from "../hooks/use-lote-aceptar-proyeccion";
 import type {
   FilaProyeccion,
   GrupoEconomicoOption,
@@ -132,6 +133,15 @@ export function ProyeccionView() {
     return ordenar(filtradas, sort.key, sort.direction);
   }, [tablero, filtro, busqueda, sort]);
 
+  const {
+    seleccionadas,
+    aceptando: aceptandoLote,
+    toggleSeleccion,
+    toggleSeleccionTodas,
+    limpiarSeleccion,
+    aceptarSeleccionadas,
+  } = useLoteAceptarProyeccion(tablero, filasVisibles, cargar);
+
   const contador = (f: FiltroChip) =>
     tablero ? tablero.filas.filter((fila) => aplicaFiltro(fila, f)).length : 0;
 
@@ -226,6 +236,24 @@ export function ProyeccionView() {
         </div>
       </div>
 
+      {seleccionadas.size > 0 && (
+        <div className="flex items-center gap-3 rounded-[8px] border border-brand-orange/40 bg-brand-orange/10 px-4 py-2.5">
+          <span className="text-sm font-semibold text-foreground">
+            {seleccionadas.size} seleccionada{seleccionadas.size === 1 ? "" : "s"}
+          </span>
+          <BrandButton loading={aceptandoLote} onClick={aceptarSeleccionadas}>
+            Aceptar seleccionadas
+          </BrandButton>
+          <button
+            type="button"
+            onClick={limpiarSeleccion}
+            className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+          >
+            Cancelar selección
+          </button>
+        </div>
+      )}
+
       {!tablero ? (
         <p className="text-sm text-muted-foreground">
           {cargando
@@ -238,6 +266,9 @@ export function ProyeccionView() {
           sort={sort}
           onToggleSort={toggleSort}
           onVerCandidatos={setSeleccion}
+          seleccionadas={seleccionadas}
+          onToggleSeleccion={toggleSeleccion}
+          onToggleSeleccionTodas={toggleSeleccionTodas}
         />
       )}
 

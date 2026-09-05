@@ -85,21 +85,53 @@ function agruparPorEquipo(filas: FilaProyeccion[]): FilaAgrupada[] {
   return Array.from(porId.values()).map((claves) => ({ claves }));
 }
 
+export function esSeleccionable(fila: FilaProyeccion): boolean {
+  return !fila.es_real && fila.estim_propuesto !== null;
+}
+
+export function claveFila(fila: FilaProyeccion): string {
+  return `${fila.id_maquina}-${fila.clase}`;
+}
+
 interface ProyeccionTablaProps {
   filas: FilaProyeccion[];
   sort: SortState<ProyeccionSortKey>;
   onToggleSort: (key: ProyeccionSortKey) => void;
   onVerCandidatos: (fila: FilaProyeccion) => void;
+  seleccionadas: Set<string>;
+  onToggleSeleccion: (fila: FilaProyeccion) => void;
+  onToggleSeleccionTodas: () => void;
 }
 
-export function ProyeccionTabla({ filas, sort, onToggleSort, onVerCandidatos }: ProyeccionTablaProps) {
+export function ProyeccionTabla({
+  filas,
+  sort,
+  onToggleSort,
+  onVerCandidatos,
+  seleccionadas,
+  onToggleSeleccion,
+  onToggleSeleccionTodas,
+}: ProyeccionTablaProps) {
   const grupos = agruparPorEquipo(filas);
+  const seleccionablesVisibles = filas.filter(esSeleccionable);
+  const todasSeleccionadas =
+    seleccionablesVisibles.length > 0 && seleccionablesVisibles.every((f) => seleccionadas.has(claveFila(f)));
 
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
       <table className="w-full min-w-[1180px] text-left text-sm">
         <thead>
           <tr className="border-b border-border font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+            <th className="px-4 py-2.5">
+              <input
+                type="checkbox"
+                aria-label="Seleccionar todas las filas con propuesta"
+                checked={todasSeleccionadas}
+                disabled={seleccionablesVisibles.length === 0}
+                onChange={onToggleSeleccionTodas}
+                className="h-4 w-4 accent-brand-orange"
+              />
+            </th>
             <SortableHeader column={{ key: "ubicacion", label: "Ubicación" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
             <SortableHeader column={{ key: "nro_serie", label: "Nro. serie" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
             <SortableHeader column={{ key: "modelo", label: "Modelo" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
@@ -117,7 +149,18 @@ export function ProyeccionTabla({ filas, sort, onToggleSort, onVerCandidatos }: 
         <tbody className="divide-y divide-border">
           {grupos.map(({ claves }) =>
             claves.map((fila, i) => (
-              <tr key={`${fila.id_maquina}-${fila.clase}`} className="hover:bg-muted/30">
+              <tr key={claveFila(fila)} className="hover:bg-muted/30">
+                <td className="px-4 py-3">
+                  <input
+                    type="checkbox"
+                    aria-label={`Seleccionar ${fila.nro_serie} clase ${fila.clase}`}
+                    checked={seleccionadas.has(claveFila(fila))}
+                    disabled={!esSeleccionable(fila)}
+                    onChange={() => onToggleSeleccion(fila)}
+                    title={esSeleccionable(fila) ? undefined : "Nada para aceptar: ya es real o requiere revisión individual"}
+                    className="h-4 w-4 accent-brand-orange disabled:opacity-30"
+                  />
+                </td>
                 {i === 0 && (
                   <>
                     <td className="px-4 py-3" rowSpan={claves.length}>
