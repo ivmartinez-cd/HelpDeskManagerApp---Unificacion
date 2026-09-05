@@ -10,6 +10,7 @@ import {
   cardsDeVista,
   layoutVisible,
   moduleAccessFrom,
+  viewTotalHeight,
   type ViewKey,
 } from "../config/dashboard-registry";
 import { buildKpiTiles } from "../config/kpi-tiles";
@@ -101,7 +102,11 @@ export function InicioDashboard() {
         </div>
       )}
 
-      <DashboardGrid rows={rows} render={(id) => <CardSlot id={id} data={data} access={access} />} />
+      <DashboardGrid
+        rows={rows}
+        totalH={viewTotalHeight(vista)}
+        render={(id) => <CardSlot id={id} data={data} access={access} />}
+      />
 
       <QuietStrip items={sinNovedades} />
 

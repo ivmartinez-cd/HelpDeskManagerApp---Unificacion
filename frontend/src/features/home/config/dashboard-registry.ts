@@ -175,3 +175,13 @@ export function cardsDeVista(view: ViewKey, access: ModuleAccess): CardId[] {
   const vista = VIEWS.find((v) => v.key === view) ?? VIEWS[0];
   return vista.rows.flatMap((r) => r.cells.map((c) => c.id)).filter((id) => CARD_GUARDS[id](access));
 }
+
+/** Alto total diseñado de una vista (todas las filas, tenga o no cards
+ * visibles el usuario). `DashboardGrid` lo usa para que una fila entera
+ * ausente (p. ej. usuario sin Liquidaciones/Equipo/Parque) deje ese espacio
+ * en blanco en vez de estirar las filas que sí quedan a costa de inflarlas
+ * con hueco interno. */
+export function viewTotalHeight(view: ViewKey): number {
+  const vista = VIEWS.find((v) => v.key === view) ?? VIEWS[0];
+  return vista.rows.reduce((sum, r) => sum + r.h, 0);
+}
