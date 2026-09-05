@@ -23,8 +23,8 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tabla_km_r
     SqlAlchemyTablaKmRepository,
 )
 from src.modules.liquidaciones.presentation.dependencies.siges import (
+    distancias_gateway,
     siges_catalogo_gateway,
-    siges_google_maps_gateway,
 )
 from src.shared.infrastructure.geocoding.factories import require_geocoding_gateway
 from src.shared.infrastructure.geocoding.sqlalchemy_geocode_cache_repository import (  # noqa: E501
@@ -39,7 +39,7 @@ def _lugares_ports(session: AsyncSession) -> TablaKmLugaresPorts:
         siges=siges_catalogo_gateway(),
         geocode_cache=SqlAlchemyGeocodeCacheRepository(session),
         geocoding=require_geocoding_gateway(),
-        google_maps=siges_google_maps_gateway(),
+        google_maps=distancias_gateway(),
     )
 
 

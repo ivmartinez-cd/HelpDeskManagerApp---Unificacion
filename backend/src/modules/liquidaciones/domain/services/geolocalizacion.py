@@ -55,6 +55,23 @@ def armar_direccion(
     return ", ".join(partes)
 
 
+def armar_busqueda_por_nombre(
+    empresa: str | None, sucursal: str | None, localidad: str | None, provincia: str | None
+) -> str | None:
+    """Segundo intento cuando el domicilio no geocodifica: buscar el punto de
+    interés por nombre ("OCA Santa Rosa", "Aeropuerto de Bahía Blanca") en la
+    localidad. `None` sin nombre o sin localidad — sin localidad la búsqueda por
+    marca devuelve cualquier sucursal del país."""
+    nombre = " ".join(p.strip() for p in (empresa or "", sucursal or "") if p and p.strip())
+    if not nombre or not (localidad and localidad.strip()):
+        return None
+    partes = [nombre, localidad.strip()]
+    if provincia and provincia.strip():
+        partes.append(provincia.strip())
+    partes.append("Argentina")
+    return ", ".join(partes)
+
+
 def elegir_automatico(candidatos: list[GeocodeCandidato]) -> GeocodeCandidato | None:
     """Único candidato y preciso, o nada: un ROOFTOP/RANGE_INTERPOLATED sin
     partial_match, o una intersección exacta (GEOMETRIC_CENTER tipo

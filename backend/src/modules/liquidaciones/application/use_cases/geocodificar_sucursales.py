@@ -27,6 +27,7 @@ from src.modules.liquidaciones.domain.repositories.sucursal_coordenadas_reposito
 )
 from src.modules.liquidaciones.domain.services.geolocalizacion import (
     PROCEDENCIA_GEOCODE,
+    armar_busqueda_por_nombre,
     armar_direccion,
     elegir_automatico,
 )
@@ -68,9 +69,7 @@ class GeocodificarSucursales:
         self._tope = tope_llamadas
 
     async def execute(self, prestador_id: UUID) -> GeocodificarResultado:
-        prestador = await validar_prestador_vinculado_siges(
-            self._ports.prestadores, prestador_id
-        )
+        prestador = await validar_prestador_vinculado_siges(self._ports.prestadores, prestador_id)
         sucursales = await self._ports.siges.list_sucursales_de_prestador(
             prestador.siges_empresa_id  # type: ignore[arg-type]
         )
@@ -111,7 +110,30 @@ class GeocodificarSucursales:
         candidatos = await self._obtener_candidatos(direccion, contador)
         if candidatos is None:
             return
-        await self._clasificar(sucursal.siges_sucursal_id, candidatos, contador)
+        if candidatos:
+            await self._clasificar(sucursal.siges_sucursal_id, candidatos, contador)
+            return
+        await self._intentar_por_nombre(sucursal, contador)
+
+    async def _intentar_por_nombre(
+        self, sucursal: SigesSucursalCliente, contador: "_Contador"
+    ) -> None:
+        """El domicilio no geocodificó: buscar el lugar por nombre del cliente
+        (punto de interés). Lo que aparezca NUNCA se auto-resuelve — una marca
+        puede tener varias sucursales en la misma ciudad — va a revisión."""
+        busqueda = armar_busqueda_por_nombre(
+            sucursal.empresa_nombre,
+            sucursal.sucursal_nombre,
+            sucursal.localidad,
+            sucursal.provincia,
+        )
+        candidatos = await self._obtener_candidatos(busqueda, contador) if busqueda else []
+        if candidatos is None:
+            return
+        if candidatos:
+            contador.ambiguas += 1
+        else:
+            contador.sin_resultados += 1
 
     async def _obtener_candidatos(
         self, direccion: str, contador: "_Contador"

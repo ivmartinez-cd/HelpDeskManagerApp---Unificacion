@@ -31,6 +31,7 @@ _ROOFTOP = GeocodeCandidato(
     location_type="ROOFTOP",
     tipos=("street_address",),
 )
+_BUSQUEDA_NOMBRE = "Dia % Tienda 1, CABA, Capital Federal, Argentina"
 _RUTA = GeocodeCandidato(
     formatted_address="RN33, Argentina",
     latitud=-36.0252331,
@@ -140,7 +141,31 @@ class TestGeocodificarSucursales:
         await use_case.execute(prestador_id)
         resultado = await use_case.execute(prestador_id)
         assert resultado.sin_resultados == 1
-        assert len(geocoding.llamadas) == 1
+        # Domicilio + segundo intento por nombre, ambos cacheados: la segunda
+        # corrida no vuelve a consultar.
+        assert geocoding.llamadas == [_DIRECCION, _BUSQUEDA_NOMBRE]
+
+    @pytest.mark.asyncio
+    async def test_domicilio_sin_resultado_busca_por_nombre_y_va_a_revision(self) -> None:
+        poi = GeocodeCandidato(
+            formatted_address="Dia %, Av. Callao, CABA, Argentina",
+            latitud=-34.59,
+            longitud=-58.39,
+            location_type="ROOFTOP",
+            tipos=("shop", "supermarket"),
+        )
+        geocoding = FakeGeocodingGateway({_BUSQUEDA_NOMBRE: [poi]})
+        use_case, ports, prestador_id = _armar([_sucursal()], geocoding)
+
+        resultado = await use_case.execute(prestador_id)
+
+        # Un único candidato por nombre NUNCA se auto-resuelve (puede ser otra
+        # sucursal de la misma marca): queda ambiguo para revisión humana.
+        assert resultado.ambiguas == 1
+        assert resultado.resueltas_auto == 0
+        fila = await ports.sucursal_coords.get_by_siges_sucursal_id(1)
+        assert fila is not None and not fila.resuelta
+        assert await ports.geocode_cache.get(_BUSQUEDA_NOMBRE) == [poi]
 
     @pytest.mark.asyncio
     async def test_tope_corta_la_corrida(self) -> None:

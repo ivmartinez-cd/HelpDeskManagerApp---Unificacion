@@ -123,6 +123,13 @@ class LiquidacionesSettings(BaseSettings):
     osrm_base_url: str = "https://router.project-osrm.org"
     osrm_max_calls_per_run: int = 4000
 
+    # Proveedor de geocodificación de domicilios (sucursales sin pin, auditoría
+    # de pines): "google" (Geocoding API, paga) u "osm" (Nominatim, gratis,
+    # 1 req/s). Mismo criterio que las distancias; el tope acota la duración
+    # de una corrida (a 1 req/s, 500 ≈ 8 minutos).
+    geocoding_proveedor: str = "google"
+    osm_geocoding_max_calls_per_run: int = 500
+
     # Georef (API del Estado argentino, gratuita/sin auth) — Tier 1 de
     # geovalidación. Sin costo, pero sin abuso de un servicio público: tope
     # por corrida acota la duración del request HTTP (no por dinero, por

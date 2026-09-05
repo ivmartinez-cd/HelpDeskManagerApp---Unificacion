@@ -64,14 +64,25 @@ from src.modules.liquidaciones.presentation.dependencies.siges import (
     siges_catalogo_gateway,
     tope_llamadas_distancias,
 )
-from src.shared.infrastructure.geocoding.factories import require_geocoding_gateway
+from src.shared.infrastructure.geocoding.factories import (
+    require_geocoding_gateway,
+    tope_llamadas_geocoding,
+)
 from src.shared.infrastructure.geocoding.sqlalchemy_geocode_cache_repository import (  # noqa: E501
     SqlAlchemyGeocodeCacheRepository,
 )
 
 
 def _tope() -> int:
+    """Tope del cálculo de distancias (proveedor de distancias)."""
     return tope_llamadas_distancias()
+
+
+def _tope_geocoding() -> int:
+    """Tope de geocodificación (proveedor de geocoding) — distinto del de
+    distancias: con distancias en OSRM y geocoding en Google, el tope de Google
+    tiene que seguir mandando sobre lo que se gasta."""
+    return tope_llamadas_geocoding()
 
 
 def _distancias_ports(session: AsyncSession) -> CalcularDistanciasPorts:
@@ -105,7 +116,7 @@ def build_geocodificar_sucursales(session: AsyncSession) -> GeocodificarSucursal
             geocoding=require_geocoding_gateway(),
             incidentes=SqlAlchemyIncidenteRepository(session),
         ),
-        _tope(),
+        _tope_geocoding(),
     )
 
 
@@ -139,7 +150,7 @@ def build_listar_pines_sospechosos(session: AsyncSession) -> ListarPinesSospecho
 
 
 def build_auditar_pines(session: AsyncSession) -> AuditarPines:
-    return AuditarPines(_pines_ports(session), _tope())
+    return AuditarPines(_pines_ports(session), _tope_geocoding())
 
 
 def build_corregir_pin(session: AsyncSession) -> CorregirPin:
