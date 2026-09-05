@@ -54,6 +54,10 @@ class KmReferenciaInvalidoError(ValidationError):
     default_code: ClassVar[str] = "KM_REFERENCIA_INVALIDO"
 
 
+class PinManualInvalidoError(ValidationError):
+    default_code: ClassVar[str] = "PIN_MANUAL_INVALIDO"
+
+
 class ParSinTablaKmError(NotFoundError):
     """El par empresa+sucursal no tiene fila en la Tabla KM del prestador — antes de
     asignarle zona hay que darlo de alta (es el caso ALT009)."""

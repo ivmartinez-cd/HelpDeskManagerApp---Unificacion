@@ -23,6 +23,10 @@ from src.modules.liquidaciones.application.use_cases.estado_asistente_km import 
     DiagnosticarAsistenteKm,
     EstadoAsistenteKmPorts,
 )
+from src.modules.liquidaciones.application.use_cases.fijar_pin_manual import (
+    FijarPinManual,
+    FijarPinManualPorts,
+)
 from src.modules.liquidaciones.application.use_cases.geocodificar_sucursales import (
     GeocodificarPorts,
     GeocodificarSucursales,
@@ -170,4 +174,14 @@ def build_diagnosticar_asistente_km(session: AsyncSession) -> DiagnosticarAsiste
             incidentes=SqlAlchemyIncidenteRepository(session),
         ),
         _tope(),
+    )
+
+
+def build_fijar_pin_manual(session: AsyncSession) -> FijarPinManual:
+    return FijarPinManual(
+        FijarPinManualPorts(
+            prestadores=SqlAlchemyPrestadorRepository(session),
+            siges=siges_catalogo_gateway(),
+            sucursal_coords=SqlAlchemySucursalCoordenadasRepository(session),
+        )
     )

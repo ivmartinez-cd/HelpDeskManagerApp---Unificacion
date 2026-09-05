@@ -26,6 +26,7 @@ from src.modules.liquidaciones.presentation.dependencies import (
     build_auditar_pines,
     build_corregir_pin,
     build_diagnosticar_asistente_km,
+    build_fijar_pin_manual,
     build_geocodificar_sucursales,
     build_listar_coordenadas_pendientes,
     build_listar_pines_sospechosos,
@@ -44,6 +45,7 @@ from src.modules.liquidaciones.presentation.schemas.distancias_schemas import (
 from src.modules.liquidaciones.presentation.schemas.geolocalizacion_schemas import (
     AuditarPinesOut,
     GeocodificarResultadoOut,
+    PinManualIn,
     PinSospechosoOut,
     RefrescarDireccionesOut,
     ResolverCoordenadasIn,
@@ -144,9 +146,7 @@ async def listar_coordenadas(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[SucursalCoordenadasOut]:
     filas = await build_listar_coordenadas_pendientes(db).execute(prestador_id)
-    return Page.of(
-        [SucursalCoordenadasOut.from_dto(f) for f in filas], page=page, size=size
-    )
+    return Page.of([SucursalCoordenadasOut.from_dto(f) for f in filas], page=page, size=size)
 
 
 @router.put(
@@ -166,9 +166,7 @@ async def resolver_coordenadas(
         latitud=body.latitud,
         longitud=body.longitud,
     )
-    return SucursalCoordenadasOut.from_dto(
-        SucursalConCandidatos(resuelta, ESTADO_RESUELTA, ())
-    )
+    return SucursalCoordenadasOut.from_dto(SucursalConCandidatos(resuelta, ESTADO_RESUELTA, ()))
 
 
 @router.get(
@@ -199,6 +197,29 @@ async def corregir_pin(
     await build_corregir_pin(db).execute(prestador_id, siges_sucursal_id)
 
 
+@router.put(
+    "/siges/prestador/{prestador_id}/sucursal/{siges_sucursal_id}/pin-manual",
+    response_model=SucursalCoordenadasOut,
+)
+async def fijar_pin_manual(
+    prestador_id: UUID,
+    siges_sucursal_id: int,
+    body: PinManualIn,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> SucursalCoordenadasOut:
+    """Coordenadas verificadas con evidencia para una sucursal, tenga o no pin
+    en Gestión (override con procedencia `manual`; la fuente queda guardada)."""
+    resuelta = await build_fijar_pin_manual(db).execute(
+        prestador_id,
+        siges_sucursal_id,
+        latitud=body.latitud,
+        longitud=body.longitud,
+        fuente=body.fuente,
+    )
+    return SucursalCoordenadasOut.from_dto(SucursalConCandidatos(resuelta, ESTADO_RESUELTA, ()))
+
+
 @router.post(
     "/siges/prestador/{prestador_id}/auditar-pines",
     response_model=AuditarPinesOut,
@@ -210,9 +231,7 @@ async def auditar_pines(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AuditarPinesOut:
     solo_ids = (
-        frozenset(body.siges_sucursal_ids)
-        if body is not None and body.siges_sucursal_ids
-        else None
+        frozenset(body.siges_sucursal_ids) if body is not None and body.siges_sucursal_ids else None
     )
     resultado = await build_auditar_pines(db).execute(prestador_id, solo_ids)
     return AuditarPinesOut.from_dto(resultado)

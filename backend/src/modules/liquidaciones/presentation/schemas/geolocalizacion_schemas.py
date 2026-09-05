@@ -107,6 +107,15 @@ class ResolverCoordenadasIn(BaseModel):
     longitud: float | None = None
 
 
+class PinManualIn(BaseModel):
+    """Coordenadas verificadas a mano/por agente con evidencia (`fuente`: URL o
+    descripción de dónde salió el dato)."""
+
+    latitud: float
+    longitud: float
+    fuente: str = Field(min_length=1, max_length=500)
+
+
 class PinSospechosoOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     siges_sucursal_id: int = Field(serialization_alias="sigesSucursalId")
