@@ -29,6 +29,9 @@ from src.modules.liquidaciones.presentation.config_routers._deps import (
     require_update,
     require_view,
 )
+from src.modules.liquidaciones.presentation.config_routers._reanalisis import (
+    reanalizar_abiertas,
+)
 from src.modules.liquidaciones.presentation.dependencies import (
     build_create_tarifario,
     build_delete_tarifario,
@@ -72,6 +75,7 @@ async def create_tarifario(
         vigencia_desde=body.vigencia_desde,
         vigencia_hasta=body.vigencia_hasta,
     )
+    await reanalizar_abiertas(db, tarifario.prestador_id)
     return TarifarioOut.from_entity(tarifario)
 
 
@@ -92,6 +96,7 @@ async def update_tarifario(
         vigencia_desde=body.vigencia_desde,
         vigencia_hasta=body.vigencia_hasta,
     )
+    await reanalizar_abiertas(db, updated.prestador_id)
     return TarifarioOut.from_entity(updated)
 
 
@@ -101,7 +106,8 @@ async def delete_tarifario(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
-    await build_delete_tarifario(db).execute(tarifario_id)
+    borrado = await build_delete_tarifario(db).execute(tarifario_id)
+    await reanalizar_abiertas(db, borrado.prestador_id)
 
 
 @router.get("/tarifarios/export")
@@ -129,7 +135,7 @@ async def import_tarifarios_csv(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, int]:
-    return await csv_helpers.import_tarifarios(
+    resultado = await csv_helpers.import_tarifarios(
         file,
         build_create_tarifario(db),
         build_update_tarifario(db),
@@ -137,3 +143,7 @@ async def import_tarifarios_csv(
         SqlAlchemyTarifarioRepository(db),
         SqlAlchemySpstRepository(db),
     )
+    # El CSV no dice qué prestadores tocó: se reanalizan todas las abiertas.
+    if resultado.get("creados", 0) or resultado.get("actualizados", 0):
+        await reanalizar_abiertas(db, None)
+    return resultado

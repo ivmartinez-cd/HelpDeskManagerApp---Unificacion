@@ -25,11 +25,13 @@ from src.modules.liquidaciones.application.use_cases.siges_sucursales import (
     SigesSucursalesPorts,
     SigesSucursalesPropiasSimplePorts,
 )
+from src.modules.liquidaciones.application.use_cases.siges_sync_tarifarios import (
+    SyncTarifariosDesdeSiges,
+)
 from src.modules.liquidaciones.application.use_cases.siges_tarifarios import (
     EstadoZonasSiges,
     MapearZonaSiges,
     SigesTarifariosPorts,
-    SyncTarifariosDesdeSiges,
 )
 from src.modules.liquidaciones.infrastructure.google_maps.httpx_google_maps_gateway import (
     HttpxGoogleMapsGateway,

@@ -7,7 +7,7 @@ SPST ya resuelto (`spst_nombre`, "Genérica" si no tiene) — son de solo
 lectura para la UI, no hace falta que el cliente cruce contra la lista de
 SPST para mostrar algo legible."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from uuid import UUID
 
@@ -50,6 +50,10 @@ class SyncTarifariosResultado:
     sin_cambios: int
     zonas_sin_mapear: list[ZonaSinMapear]
     prestadores_sin_vinculo: list[str]
+    # Prestadores vinculados que quedan sin ninguna tarifa genérica (sin SPST),
+    # contando lo que este sync crea: sus sucursales sin SPST en Tabla KM no van
+    # a tener precio (ALT008 en cada incidente). Default por compatibilidad.
+    prestadores_sin_generica: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

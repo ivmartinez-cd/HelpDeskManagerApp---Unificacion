@@ -109,9 +109,12 @@ class DeleteTarifario:
     def __init__(self, ports: ConfigTarifariosPorts) -> None:
         self._ports = ports
 
-    async def execute(self, tarifario_id: UUID) -> None:
+    async def execute(self, tarifario_id: UUID) -> Tarifario:
+        """Devuelve el tarifario borrado — el caller necesita su `prestador_id`
+        para reanalizar las liquidaciones abiertas afectadas."""
         repo = self._ports.tarifarios
         anterior = await repo.get_by_id(tarifario_id)
         if anterior is None or not await repo.delete(tarifario_id):
             raise TarifarioNoEncontradoError(tarifario_id)
         await _recadenar_grupo_de(repo, anterior)
+        return anterior

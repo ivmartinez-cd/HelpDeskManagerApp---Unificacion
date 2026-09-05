@@ -36,9 +36,7 @@ class TestVincularTablaKmSpst:
     async def test_aplicar_vincula_solo_las_que_matchean(self) -> None:
         prestador_id = make_spst().prestador_id
         spst = make_spst(prestador_id=prestador_id, zona_cobertura="Valle Fértil")
-        con_match = make_tabla_km(
-            prestador_id=prestador_id, localidad_cliente="Valle Fertil"
-        )
+        con_match = make_tabla_km(prestador_id=prestador_id, localidad_cliente="Valle Fertil")
         sin_match = make_tabla_km(prestador_id=prestador_id, localidad_cliente="San Rafael")
         tabla_km = FakeConfigTablaKmRepository([con_match, sin_match])
         spsts = FakeConfigSpstRepository([spst])
@@ -64,3 +62,40 @@ class TestVincularTablaKmSpst:
 
         assert resultado.total_sin_vincular == 0
         assert resultado.vinculadas == 0
+
+    async def test_propuesta_por_provincia_no_se_aplica_sin_incluir_provincia(self) -> None:
+        prestador_id = make_spst().prestador_id
+        spst = make_spst(
+            prestador_id=prestador_id, zona_cobertura="Gral. Roca", provincia="Río Negro"
+        )
+        fila = make_tabla_km(
+            prestador_id=prestador_id, localidad_cliente="Cipolletti", provincia_cliente="Río Negro"
+        )
+        tabla_km = FakeConfigTablaKmRepository([fila])
+        spsts = FakeConfigSpstRepository([spst])
+
+        resultado = await _use_case(tabla_km, spsts).execute(prestador_id, dry_run=False)
+
+        assert resultado.por_provincia == 1
+        assert resultado.con_propuesta == 0
+        assert resultado.vinculadas == 0
+        assert tabla_km.rows[0].spst_id is None
+
+    async def test_incluir_provincia_aplica_la_propuesta(self) -> None:
+        prestador_id = make_spst().prestador_id
+        spst = make_spst(
+            prestador_id=prestador_id, zona_cobertura="Gral. Roca", provincia="Río Negro"
+        )
+        fila = make_tabla_km(
+            prestador_id=prestador_id, localidad_cliente="Cipolletti", provincia_cliente="Río Negro"
+        )
+        tabla_km = FakeConfigTablaKmRepository([fila])
+        spsts = FakeConfigSpstRepository([spst])
+
+        resultado = await _use_case(tabla_km, spsts).execute(
+            prestador_id, dry_run=False, incluir_provincia=True
+        )
+
+        assert resultado.con_propuesta == 1
+        assert resultado.vinculadas == 1
+        assert tabla_km.rows[0].spst_id == spst.id

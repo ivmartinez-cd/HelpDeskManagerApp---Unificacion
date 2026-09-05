@@ -51,6 +51,7 @@ from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
     build_importar_prestador_maestro,
     build_list_liquidaciones,
     build_reanalizar_liquidacion,
+    build_reanalizar_liquidaciones_abiertas,
     build_reconciliar_liquidacion_individual,
     build_sincronizar_liquidaciones,
 )
@@ -125,6 +126,7 @@ __all__ = [
     "build_mapear_zona_siges",
     "build_proponer_vinculos_siges",
     "build_reanalizar_liquidacion",
+    "build_reanalizar_liquidaciones_abiertas",
     "build_reconciliar_liquidacion_individual",
     "build_sincronizar_liquidaciones",
     "build_sync_config_desde_siges",

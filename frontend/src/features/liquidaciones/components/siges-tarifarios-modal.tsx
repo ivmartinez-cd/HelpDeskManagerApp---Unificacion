@@ -108,6 +108,13 @@ function ResultadoSyncTarifarios({ resultado }: { resultado: SyncTarifariosResul
           ))}
         </>
       )}
+      {resultado.prestadoresSinGenerica.length > 0 && (
+        <p className="font-body text-xs text-destructive mt-2">
+          {resultado.prestadoresSinGenerica.join(", ")} no tiene ninguna tarifa Genérica:
+          las sucursales sin SPST en Tabla KM van a quedar sin precio (ALT008 en cada
+          incidente). Mapeá la zona de la sede del prestador a &quot;Genérica&quot;.
+        </p>
+      )}
       {resultado.prestadoresSinVinculo.length > 0 && (
         <p className="font-body text-xs text-destructive mt-2">
           {resultado.prestadoresSinVinculo[0]} no está vinculado a Siges — vinculalo en

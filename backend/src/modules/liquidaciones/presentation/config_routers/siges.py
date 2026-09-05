@@ -15,6 +15,9 @@ from src.modules.liquidaciones.presentation.config_routers._deps import (
     require_update,
     require_view,
 )
+from src.modules.liquidaciones.presentation.config_routers._reanalisis import (
+    reanalizar_abiertas,
+)
 from src.modules.liquidaciones.presentation.dependencies import (
     build_buscar_sucursales_siges,
     build_eliminar_mapeo_cuadricula,
@@ -110,6 +113,8 @@ async def sync_tarifarios_desde_siges(
     resultado = await build_sync_tarifarios_desde_siges(db).execute(
         dry_run=dry_run, prestador_id=prestador_id
     )
+    if not dry_run and resultado.creados:
+        await reanalizar_abiertas(db, prestador_id)
     return SyncTarifariosOut.from_dto(resultado)
 
 
@@ -125,9 +130,7 @@ async def sucursales_propias_prestador(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[SucursalPropiaOut]:
     sucursales = await build_listar_sucursales_propias(db).execute(prestador_id)
-    return Page.of(
-        [SucursalPropiaOut.from_entity(s) for s in sucursales], page=page, size=size
-    )
+    return Page.of([SucursalPropiaOut.from_entity(s) for s in sucursales], page=page, size=size)
 
 
 @router.get("/siges/sucursales", response_model=Page[SucursalSigesOut])
@@ -140,9 +143,7 @@ async def buscar_sucursales_siges(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[SucursalSigesOut]:
     sucursales = await build_buscar_sucursales_siges(db).execute(prestador_id, q=q)
-    return Page.of(
-        [SucursalSigesOut.from_dto(s) for s in sucursales], page=page, size=size
-    )
+    return Page.of([SucursalSigesOut.from_dto(s) for s in sucursales], page=page, size=size)
 
 
 @router.put("/prestadores/{prestador_id}/siges-vinculo", response_model=PrestadorOut)
@@ -185,7 +186,8 @@ async def mapear_cuadricula(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> CuadriculaMapOut:
     resultado = await build_mapear_cuadricula(db).execute(
-        prestador_id, cuadricula=cuadricula,
+        prestador_id,
+        cuadricula=cuadricula,
         siges_base_sucursal_id=body.siges_base_sucursal_id,
     )
     return CuadriculaMapOut.from_entity(resultado)

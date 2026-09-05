@@ -31,6 +31,9 @@ export interface SyncTarifariosResult {
   sinCambios: number;
   zonasSinMapear: ZonaSinMapear[];
   prestadoresSinVinculo: string[];
+  /** Prestadores que quedan sin ninguna tarifa genérica (sin SPST): sus
+   * sucursales sin SPST en Tabla KM no van a tener precio (ALT008). */
+  prestadoresSinGenerica: string[];
 }
 
 export interface Tarifario {

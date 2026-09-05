@@ -24,6 +24,9 @@ from src.modules.liquidaciones.presentation.config_routers._deps import (
     require_update,
     require_view,
 )
+from src.modules.liquidaciones.presentation.config_routers._reanalisis import (
+    reanalizar_abiertas,
+)
 from src.modules.liquidaciones.presentation.dependencies import (
     build_create_tabla_km,
     build_delete_tabla_km,
@@ -79,6 +82,7 @@ async def create_tabla_km(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> TablaKmOut:
     row = await build_create_tabla_km(db).execute(_datos(body))
+    await reanalizar_abiertas(db, row.prestador_id)
     return TablaKmOut.from_entity(row)
 
 
@@ -90,6 +94,7 @@ async def update_tabla_km(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> TablaKmOut:
     updated = await build_update_tabla_km(db).execute(tabla_km_id, _datos(body))
+    await reanalizar_abiertas(db, updated.prestador_id)
     return TablaKmOut.from_entity(updated)
 
 
@@ -99,20 +104,27 @@ async def delete_tabla_km(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
-    await build_delete_tabla_km(db).execute(tabla_km_id)
+    borrada = await build_delete_tabla_km(db).execute(tabla_km_id)
+    await reanalizar_abiertas(db, borrada.prestador_id)
 
 
 @router.post("/tabla-km/vincular-spst", response_model=ResultadoVinculoTablaKmSpstOut)
 async def vincular_spst(
     prestador_id: UUID = Query(alias="prestadorId"),
     dry_run: bool = Query(default=True, alias="dryRun"),
+    incluir_provincia: bool = Query(default=False, alias="incluirProvincia"),
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ResultadoVinculoTablaKmSpstOut:
     """Vincula filas de Tabla KM sin `spst_id` al SPST del mismo prestador cuya
-    zona/localidad matchea la localidad del cliente — ver
-    `domain/services/vincular_tabla_km_spst.py`. Dry-run por default."""
-    resultado = await build_vincular_tabla_km_spst(db).execute(prestador_id, dry_run=dry_run)
+    zona/localidad matchea la localidad del cliente (y, con `incluirProvincia`,
+    también por provincia única) — ver `domain/services/vincular_tabla_km_spst.py`.
+    Dry-run por default."""
+    resultado = await build_vincular_tabla_km_spst(db).execute(
+        prestador_id, dry_run=dry_run, incluir_provincia=incluir_provincia
+    )
+    if resultado.vinculadas:
+        await reanalizar_abiertas(db, prestador_id)
     return ResultadoVinculoTablaKmSpstOut.from_dto(resultado)
 
 
@@ -152,4 +164,5 @@ async def import_tabla_km_csv(
     )
     for prestador_id in prestadores_tocados:
         await build_vincular_tabla_km_spst(db).execute(prestador_id, dry_run=False)
+        await reanalizar_abiertas(db, prestador_id)
     return resultado

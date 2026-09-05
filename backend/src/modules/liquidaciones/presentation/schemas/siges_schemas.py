@@ -96,9 +96,7 @@ class SyncSigesOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     dry_run: bool = Field(serialization_alias="dryRun")
     cambios: list[SyncCambioOut]
-    nombres_distintos: list[SyncDiferenciaNombreOut] = Field(
-        serialization_alias="nombresDistintos"
-    )
+    nombres_distintos: list[SyncDiferenciaNombreOut] = Field(serialization_alias="nombresDistintos")
     sin_cambios: int = Field(serialization_alias="sinCambios")
     sin_vinculo: list[str] = Field(serialization_alias="sinVinculo")
     vinculo_roto: list[str] = Field(serialization_alias="vinculoRoto")
@@ -253,6 +251,7 @@ class SyncTarifariosOut(BaseModel):
     sin_cambios: int = Field(serialization_alias="sinCambios")
     zonas_sin_mapear: list[ZonaSinMapearOut] = Field(serialization_alias="zonasSinMapear")
     prestadores_sin_vinculo: list[str] = Field(serialization_alias="prestadoresSinVinculo")
+    prestadores_sin_generica: list[str] = Field(serialization_alias="prestadoresSinGenerica")
 
     @classmethod
     def from_dto(cls, dto: SyncTarifariosResultado) -> SyncTarifariosOut:
@@ -290,4 +289,5 @@ class SyncTarifariosOut(BaseModel):
                 for z in dto.zonas_sin_mapear
             ],
             prestadores_sin_vinculo=dto.prestadores_sin_vinculo,
+            prestadores_sin_generica=dto.prestadores_sin_generica,
         )

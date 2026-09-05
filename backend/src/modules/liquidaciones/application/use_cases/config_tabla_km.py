@@ -84,6 +84,10 @@ class DeleteTablaKm:
     def __init__(self, ports: ConfigTablaKmPorts) -> None:
         self._ports = ports
 
-    async def execute(self, tabla_km_id: UUID) -> None:
-        if not await self._ports.tabla_km.delete(tabla_km_id):
+    async def execute(self, tabla_km_id: UUID) -> TablaKm:
+        """Devuelve la fila borrada — el caller necesita su `prestador_id` para
+        reanalizar las liquidaciones abiertas afectadas."""
+        anterior = await self._ports.tabla_km.get_by_id(tabla_km_id)
+        if anterior is None or not await self._ports.tabla_km.delete(tabla_km_id):
             raise TablaKmNoEncontradaError(tabla_km_id)
+        return anterior

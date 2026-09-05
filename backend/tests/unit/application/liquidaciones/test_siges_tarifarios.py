@@ -5,11 +5,13 @@ from datetime import date
 
 import pytest
 
+from src.modules.liquidaciones.application.use_cases.siges_sync_tarifarios import (
+    SyncTarifariosDesdeSiges,
+)
 from src.modules.liquidaciones.application.use_cases.siges_tarifarios import (
     EstadoZonasSiges,
     MapearZonaSiges,
     SigesTarifariosPorts,
-    SyncTarifariosDesdeSiges,
 )
 from src.modules.liquidaciones.domain.errors import (
     PrestadorNoEncontradoError,
@@ -75,9 +77,9 @@ class TestSyncTarifarios:
         ).execute(dry_run=True)
 
         assert resultado.creados == 1
-        assert [
-            (g.tipo_servicio, g.spst_nombre, g.cantidad) for g in resultado.grupos_creados
-        ] == [("correctivo", "Genérica", 1)]
+        assert [(g.tipo_servicio, g.spst_nombre, g.cantidad) for g in resultado.grupos_creados] == [
+            ("correctivo", "Genérica", 1)
+        ]
         assert repo_t.rows == []  # no escribió
 
     async def test_sync_real_crea_y_recadena_vigencias(self) -> None:
@@ -99,6 +101,36 @@ class TestSyncTarifarios:
         # El recadenado de CreateTarifario cerró la vigencia anterior.
         assert por_desde[date(2026, 4, 1)].vigencia_hasta == date(2026, 6, 30)
         assert por_desde[date(2026, 7, 1)].vigencia_hasta is None
+
+    async def test_prestador_con_generica_no_figura_en_sin_generica(self) -> None:
+        prestador = make_prestador(nombre_corto="PENTACOM", siges_empresa_id=137)
+        repo_p = FakeConfigPrestadorRepository({prestador.id: prestador})
+
+        resultado = await SyncTarifariosDesdeSiges(_ports(repo_p, costos=[_costo()])).execute(
+            dry_run=True
+        )
+
+        assert resultado.prestadores_sin_generica == []
+
+    async def test_prestador_con_todas_las_zonas_en_spst_figura_sin_generica(self) -> None:
+        # Caso INFOMAC 2026-09-04: la zona de la sede mapeada a un SPST en vez de a
+        # Genérica — ninguna sucursal sin SPST en Tabla KM tendría precio.
+        prestador = make_prestador(nombre_corto="INFOMAC", siges_empresa_id=740)
+        spst = make_spst(prestador_id=prestador.id, nombre="SPST Infomac - Villa Mercedes")
+        repo_p = FakeConfigPrestadorRepository({prestador.id: prestador})
+        ports = _ports(
+            repo_p,
+            costos=[_costo(empresa=740, descripcion="Villa Mercedes / Bs.As.")],
+            spsts=FakeConfigSpstRepository([spst]),
+        )
+        await MapearZonaSiges(ports).execute(
+            prestador.id, descripcion_siges="Villa Mercedes / Bs.As.", spst_id=spst.id
+        )
+
+        resultado = await SyncTarifariosDesdeSiges(ports).execute(dry_run=True)
+
+        assert resultado.creados == 1
+        assert resultado.prestadores_sin_generica == ["INFOMAC"]
 
     async def test_conflicto_se_reporta_y_no_pisa(self) -> None:
         prestador = make_prestador(nombre_corto="PENTACOM", siges_empresa_id=137)
@@ -213,9 +245,7 @@ class TestEstadoZonas:
         spsts = FakeConfigSpstRepository([spst])
         costos = [_costo(empresa=850, descripcion="GSJ - Escuelas Valle Fertil")]
 
-        resultado = await EstadoZonasSiges(
-            _ports(repo_p, spsts=spsts, costos=costos)
-        ).execute()
+        resultado = await EstadoZonasSiges(_ports(repo_p, spsts=spsts, costos=costos)).execute()
 
         zona = resultado.zonas[0]
         assert zona.propuesta_spst_id == spst.id
@@ -224,9 +254,7 @@ class TestEstadoZonas:
         prestador = make_prestador(nombre_corto="MENDOZA", siges_empresa_id=657)
         repo_p = FakeConfigPrestadorRepository({prestador.id: prestador})
         zona_maps = FakeTarifarioZonaMapRepository()
-        await zona_maps.upsert(
-            prestador_id=prestador.id, descripcion_siges="TMTB122", spst_id=None
-        )
+        await zona_maps.upsert(prestador_id=prestador.id, descripcion_siges="TMTB122", spst_id=None)
         costos = [_costo(empresa=657, descripcion="TMTB122")]
 
         resultado = await EstadoZonasSiges(
@@ -265,9 +293,9 @@ class TestMapearZona:
         spsts = FakeConfigSpstRepository([spst])
         zona_maps = FakeTarifarioZonaMapRepository()
 
-        mapa = await MapearZonaSiges(
-            _ports(repo_p, zona_maps=zona_maps, spsts=spsts)
-        ).execute(prestador.id, descripcion_siges="  Ushuaia - Infomac ", spst_id=spst.id)
+        mapa = await MapearZonaSiges(_ports(repo_p, zona_maps=zona_maps, spsts=spsts)).execute(
+            prestador.id, descripcion_siges="  Ushuaia - Infomac ", spst_id=spst.id
+        )
 
         assert (mapa.descripcion_siges, mapa.spst_id) == ("Ushuaia - Infomac", spst.id)
 

@@ -64,6 +64,10 @@ from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion impo
     ReanalizarLiquidacion,
     ReanalizarLiquidacionPorts,
 )
+from src.modules.liquidaciones.application.use_cases.reanalizar_liquidaciones_abiertas import (  # noqa: E501
+    ReanalizarLiquidacionesAbiertas,
+    ReanalizarLiquidacionesAbiertasPorts,
+)
 from src.modules.liquidaciones.application.use_cases.reconciliar_liquidacion_individual import (
     ReconciliarLiquidacionIndividual,
     ReconciliarLiquidacionIndividualPorts,
@@ -187,6 +191,17 @@ def build_reanalizar_liquidacion(session: AsyncSession) -> ReanalizarLiquidacion
             reglas=SqlAlchemyReglaAlertaRepository(session),
             tablas_km=SqlAlchemyTablaKmRepository(session),
             tarifarios=SqlAlchemyTarifarioRepository(session),
+        )
+    )
+
+
+def build_reanalizar_liquidaciones_abiertas(
+    session: AsyncSession,
+) -> ReanalizarLiquidacionesAbiertas:
+    return ReanalizarLiquidacionesAbiertas(
+        ReanalizarLiquidacionesAbiertasPorts(
+            liquidaciones=SqlAlchemyLiquidacionRepository(session),
+            reanalizar=build_reanalizar_liquidacion(session),
         )
     )
 

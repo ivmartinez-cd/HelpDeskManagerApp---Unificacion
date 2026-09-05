@@ -252,6 +252,7 @@ class PropuestaVinculoSpstOut(BaseModel):
     localidad_cliente: str | None = Field(serialization_alias="localidadCliente")
     spst_id: uuid.UUID | None = Field(serialization_alias="spstId")
     spst_nombre: str | None = Field(serialization_alias="spstNombre")
+    criterio: str | None
 
     @classmethod
     def from_entity(cls, e: PropuestaVinculoSpst) -> PropuestaVinculoSpstOut:
@@ -262,6 +263,7 @@ class PropuestaVinculoSpstOut(BaseModel):
             localidad_cliente=e.localidad_cliente,
             spst_id=e.spst_id,
             spst_nombre=e.spst_nombre,
+            criterio=e.criterio,
         )
 
 
@@ -273,6 +275,7 @@ class ResultadoVinculoTablaKmSpstOut(BaseModel):
     sin_propuesta: int = Field(serialization_alias="sinPropuesta")
     vinculadas: int
     ejemplos: list[PropuestaVinculoSpstOut]
+    por_provincia: int = Field(serialization_alias="porProvincia")
 
     @classmethod
     def from_dto(cls, dto: ResultadoVinculoTablaKmSpst) -> ResultadoVinculoTablaKmSpstOut:
@@ -283,4 +286,5 @@ class ResultadoVinculoTablaKmSpstOut(BaseModel):
             sin_propuesta=dto.sin_propuesta,
             vinculadas=dto.vinculadas,
             ejemplos=[PropuestaVinculoSpstOut.from_entity(e) for e in dto.ejemplos],
+            por_provincia=dto.por_provincia,
         )

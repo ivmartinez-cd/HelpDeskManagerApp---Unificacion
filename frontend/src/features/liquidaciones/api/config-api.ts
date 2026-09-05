@@ -190,8 +190,12 @@ export const configApi = {
     return httpClient.postForm<ResultadoImportCsv>("/api/liquidaciones/tabla-km/import", fd);
   },
 
-  vincularSpstTablaKm: (prestadorId: string, dryRun: boolean) =>
+  vincularSpstTablaKm: (prestadorId: string, dryRun: boolean, incluirProvincia = false) =>
     httpClient.post<ResultadoVinculoTablaKmSpst>(
-      `/api/liquidaciones/tabla-km/vincular-spst?prestadorId=${prestadorId}&dryRun=${dryRun}`,
+      `/api/liquidaciones/tabla-km/vincular-spst?${new URLSearchParams({
+        prestadorId,
+        dryRun: String(dryRun),
+        incluirProvincia: String(incluirProvincia),
+      })}`,
     ),
 };

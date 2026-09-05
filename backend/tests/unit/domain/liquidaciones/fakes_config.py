@@ -244,6 +244,10 @@ class FakeConfigTablaKmRepository(FakeTablaKmRepository):
     def _index_of(self, tabla_km_id: UUID) -> int | None:
         return next((i for i, t in enumerate(self.rows) if t.id == tabla_km_id), None)
 
+    async def get_by_id(self, tabla_km_id: UUID) -> TablaKm | None:
+        idx = self._index_of(tabla_km_id)
+        return None if idx is None else self.rows[idx]
+
     async def update_vinculo_spst(
         self, tabla_km_id: UUID, *, spst_id: UUID | None
     ) -> TablaKm | None:

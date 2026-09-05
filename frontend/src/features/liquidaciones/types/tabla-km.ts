@@ -32,6 +32,8 @@ export interface PropuestaVinculoSpst {
   localidadCliente: string | null;
   spstId: string | null;
   spstNombre: string | null;
+  /** "localidad" | "provincia" | null — cómo se llegó al SPST propuesto. */
+  criterio: string | null;
 }
 
 export interface ResultadoVinculoTablaKmSpst {
@@ -41,4 +43,7 @@ export interface ResultadoVinculoTablaKmSpst {
   sinPropuesta: number;
   vinculadas: number;
   ejemplos: PropuestaVinculoSpst[];
+  /** Propuestas que salieron solo por provincia: se aplican únicamente con
+   * `incluirProvincia=true`. */
+  porProvincia: number;
 }

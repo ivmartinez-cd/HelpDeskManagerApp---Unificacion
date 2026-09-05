@@ -7,21 +7,12 @@ con costo distinto es conflicto que se reporta sin escribir; las descripciones
 de Siges sin mapear a un SPST quedan fuera y se reportan. Dry-run first-class.
 """
 
-from collections import Counter
 from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.liquidaciones.application.dtos.siges_tarifarios import (
-    ConflictoTarifario,
-    GrupoTarifasCreadas,
-    SyncTarifariosResultado,
     ZonaEstado,
-    ZonaSinMapear,
     ZonasSigesResultado,
-)
-from src.modules.liquidaciones.application.use_cases.config_tarifarios import (
-    ConfigTarifariosPorts,
-    CreateTarifario,
 )
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.tarifario_zona_map import TarifarioZonaMap
@@ -44,12 +35,11 @@ from src.modules.liquidaciones.domain.repositories.tarifario_zona_map_repository
     TarifarioZonaMapRepository,
 )
 from src.modules.liquidaciones.domain.services.sync_tarifarios import (
-    PlanSyncTarifarios,
     planificar_sync_tarifarios,
     proponer_mapeo_spst,
 )
 
-_GENERICA = "Genérica"
+GENERICA = "Genérica"
 
 
 @dataclass(frozen=True)
@@ -69,7 +59,7 @@ _Contexto = tuple[
 ]
 
 
-async def _contexto(
+async def cargar_contexto(
     ports: SigesTarifariosPorts, prestador_id: UUID | None = None
 ) -> _Contexto:
     """Prestadores vinculados/sin vínculo + costos de Siges por empresa + mapeo
@@ -124,9 +114,7 @@ class EstadoZonasSiges:
         self._ports = ports
 
     async def execute(self, prestador_id: UUID | None = None) -> ZonasSigesResultado:
-        vinculados, _, costos_por_empresa, mapeos = await _contexto(
-            self._ports, prestador_id
-        )
+        vinculados, _, costos_por_empresa, mapeos = await cargar_contexto(self._ports, prestador_id)
         zonas: list[ZonaEstado] = []
         for prestador in vinculados:
             costos = costos_por_empresa.get(prestador.siges_empresa_id or 0, [])
@@ -180,93 +168,3 @@ class MapearZonaSiges:
         spst = await self._ports.spsts.get_by_id(spst_id)
         if spst is None or spst.prestador_id != prestador_id:
             raise SpstNoEncontradoError(spst_id)
-
-
-class SyncTarifariosDesdeSiges:
-    def __init__(self, ports: SigesTarifariosPorts) -> None:
-        self._ports = ports
-        self._crear = CreateTarifario(ConfigTarifariosPorts(tarifarios=ports.tarifarios))
-
-    async def execute(
-        self, *, dry_run: bool, prestador_id: UUID | None = None
-    ) -> SyncTarifariosResultado:
-        vinculados, sin_vinculo, costos_por_empresa, mapeos = await _contexto(
-            self._ports, prestador_id
-        )
-        grupos: list[GrupoTarifasCreadas] = []
-        conflictos: list[ConflictoTarifario] = []
-        zonas_sin_mapear: list[ZonaSinMapear] = []
-        creados = 0
-        sin_cambios = 0
-
-        for prestador in vinculados:
-            plan = planificar_sync_tarifarios(
-                await self._ports.tarifarios.list_by_prestador(prestador.id),
-                costos_por_empresa.get(prestador.siges_empresa_id or 0, []),
-                mapeos.get(prestador.id, {}),
-            )
-            if not dry_run:
-                await self._crear_faltantes(prestador.id, plan)
-            creados += len(plan.a_crear)
-            sin_cambios += plan.sin_cambios
-            spsts = await self._ports.spsts.list_by_prestador(prestador.id)
-            nombres = {s.id: s.nombre for s in spsts}
-            self._agregar(
-                prestador.nombre_corto, plan, nombres, grupos, conflictos, zonas_sin_mapear
-            )
-
-        return SyncTarifariosResultado(
-            dry_run=dry_run,
-            creados=creados,
-            grupos_creados=grupos,
-            conflictos=conflictos,
-            sin_cambios=sin_cambios,
-            zonas_sin_mapear=zonas_sin_mapear,
-            prestadores_sin_vinculo=sin_vinculo,
-        )
-
-    async def _crear_faltantes(self, prestador_id: UUID, plan: PlanSyncTarifarios) -> None:
-        for candidata in plan.a_crear:
-            await self._crear.execute(
-                prestador_id=prestador_id,
-                tipo_servicio=candidata.tipo_servicio,
-                spst_id=candidata.spst_id,
-                costo_servicio=candidata.costo_servicio,
-                costo_km=candidata.costo_km,
-                vigencia_desde=candidata.vigencia_desde,
-                vigencia_hasta=None,
-            )
-
-    def _agregar(
-        self,
-        prestador: str,
-        plan: PlanSyncTarifarios,
-        nombres_spst: dict[UUID, str],
-        grupos: list[GrupoTarifasCreadas],
-        conflictos: list[ConflictoTarifario],
-        zonas_sin_mapear: list[ZonaSinMapear],
-    ) -> None:
-        def nombre_de(spst_id: UUID | None) -> str:
-            return nombres_spst.get(spst_id, "?") if spst_id else _GENERICA
-
-        por_grupo = Counter((c.tipo_servicio, c.spst_id) for c in plan.a_crear)
-        grupos.extend(
-            GrupoTarifasCreadas(prestador, tipo, nombre_de(spst_id), cantidad)
-            for (tipo, spst_id), cantidad in sorted(por_grupo.items(), key=str)
-        )
-        conflictos.extend(
-            ConflictoTarifario(
-                prestador=prestador,
-                tipo_servicio=c.tipo_servicio,
-                spst_nombre=nombre_de(c.spst_id),
-                vigencia_desde=c.vigencia_desde,
-                campo=c.campo,
-                valor_local=c.valor_local,
-                valor_siges=c.valor_siges,
-            )
-            for c in plan.conflictos
-        )
-        zonas_sin_mapear.extend(
-            ZonaSinMapear(prestador, descripcion, filas)
-            for descripcion, filas in sorted(plan.sin_mapear.items())
-        )

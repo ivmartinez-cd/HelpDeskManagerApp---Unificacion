@@ -20,16 +20,20 @@ export function VincularSpstModal({
   const [resultado, setResultado] = useState<ResultadoVinculoTablaKmSpst | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aplicando, setAplicando] = useState(false);
+  // Las propuestas por provincia son un proxy más débil que la localidad (la
+  // provincia no siempre coincide con la zona tarifaria): se aplican solo si
+  // la TL lo tilda para este prestador.
+  const [incluirProvincia, setIncluirProvincia] = useState(false);
 
   const load = useCallback(
     () =>
       liquidacionesApi
-        .vincularSpstTablaKm(prestadorId, true)
+        .vincularSpstTablaKm(prestadorId, true, incluirProvincia)
         .then((r) => { setResultado(r); setError(null); })
         .catch((err: unknown) => {
           setError(err instanceof Error ? err.message : "Error al calcular vínculos");
         }),
-    [prestadorId],
+    [prestadorId, incluirProvincia],
   );
 
   useEffect(() => { void load(); }, [load]);
@@ -37,7 +41,7 @@ export function VincularSpstModal({
   const handleAplicar = async () => {
     setAplicando(true);
     try {
-      const res = await liquidacionesApi.vincularSpstTablaKm(prestadorId, false);
+      const res = await liquidacionesApi.vincularSpstTablaKm(prestadorId, false, incluirProvincia);
       setResultado(res);
       toast.success(`${res.vinculadas} fila(s) vinculada(s)`);
       onVinculado();
@@ -49,7 +53,7 @@ export function VincularSpstModal({
   };
 
   return (
-    <BrandModal isOpen onClose={onClose} title="Vincular SPST por localidad" error={error}>
+    <BrandModal isOpen onClose={onClose} title="Vincular SPST por localidad o provincia" error={error}>
       {resultado === null ? (
         <div className="flex h-32 items-center justify-center">{!error && <Spinner />}</div>
       ) : (
@@ -59,6 +63,22 @@ export function VincularSpstModal({
             este prestador. Solo propone cuando hay un único candidato — el resto queda para
             vínculo manual.
           </p>
+          {resultado.porProvincia > 0 && (
+            <label className="flex items-start gap-2 font-body text-sm text-foreground">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={incluirProvincia}
+                onChange={(e) => setIncluirProvincia(e.target.checked)}
+                disabled={aplicando || !resultado.dryRun}
+              />
+              <span>
+                Incluir también las {resultado.porProvincia} propuesta(s) por provincia
+                (único SPST de esa provincia). Es un proxy más débil: la provincia no siempre
+                coincide con la zona tarifaria — revisá los ejemplos antes de aplicar.
+              </span>
+            </label>
+          )}
           <div className="flex gap-3">
             <div className="flex-1 rounded-[10px] border border-border bg-muted/30 p-3 text-center">
               <p className="font-body text-lg font-bold text-foreground">{resultado.totalSinVincular}</p>
@@ -83,6 +103,7 @@ export function VincularSpstModal({
                 <p key={e.tablaKmId} className="border-t border-border py-1.5 font-body text-xs text-muted-foreground first:border-t-0">
                   <span className="text-foreground">{e.sucursalNombre}</span> · {e.localidadCliente ?? "sin localidad"} →{" "}
                   {e.spstNombre ? <span className="font-semibold text-success">{e.spstNombre}</span> : <span className="text-muted-foreground">sin match</span>}
+                  {e.criterio === "provincia" && <span className="ml-1 text-muted-foreground">(por provincia)</span>}
                 </p>
               ))}
             </div>
@@ -90,8 +111,8 @@ export function VincularSpstModal({
 
           {!resultado.dryRun && (
             <p className="font-body text-sm font-semibold text-success">
-              {resultado.vinculadas} fila(s) vinculada(s). Si esta liquidación ya estaba
-              analizada, usá &quot;Reanalizar&quot; para que tome los precios de zona nuevos.
+              {resultado.vinculadas} fila(s) vinculada(s). Las liquidaciones abiertas de este
+              prestador se reanalizaron solas con los precios de zona nuevos.
             </p>
           )}
 
