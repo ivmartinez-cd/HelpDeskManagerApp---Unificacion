@@ -111,11 +111,7 @@ def _calcular_valores(calculo: _CalculoClase) -> _ValoresCalculados:
     if clase.ya_real:
         # Un dato real nunca se pisa (REGLAS_DE_NEGOCIO §1) — ni por una
         # decisión manual vieja ni por un "marcar pendiente" viejo.
-        impresiones = (clase.valor_real_cargado or 0) - clase.ultimo_contador_facturado.valor
-        return _ValoresCalculados(
-            clase.valor_real_cargado, impresiones, clase.ultimo_contador_facturado.tipo_toma,
-            base.fuente, base.semaforo, base.metodo_detalle, False,
-        )
+        return _valores_de_real(clase, base)
     if decision and decision.pendiente:
         return _ValoresCalculados(None, None, None, "Pendiente", "ROJO", "Pendiente", True)
     if decision and decision.manual:
@@ -123,6 +119,14 @@ def _calcular_valores(calculo: _CalculoClase) -> _ValoresCalculados:
     if decision and decision.nota:
         return replace(base, requiere_confirmacion=True)
     return base
+
+
+def _valores_de_real(clase: ClaseProceso, base: _ValoresCalculados) -> _ValoresCalculados:
+    impresiones = (clase.valor_real_cargado or 0) - clase.ultimo_contador_facturado.valor
+    return _ValoresCalculados(
+        clase.valor_real_cargado, impresiones, clase.ultimo_contador_facturado.tipo_toma,
+        base.fuente, base.semaforo, base.metodo_detalle, False,
+    )
 
 
 def _valores_de_manual(

@@ -72,15 +72,7 @@ class SqlAlchemyDecisionesOperadorRepository:
         nota: str | None,
         manual: DecisionManualDto | None,
     ) -> None:
-        valores: dict[str, Any] = {
-            "pendiente": pendiente,
-            "nota": nota,
-            "manual_contador_propuesto": manual.contador_propuesto if manual else None,
-            "manual_tipo_toma": manual.tipo_toma if manual else None,
-            "manual_fuente": manual.fuente if manual else None,
-            "manual_metodo_detalle": manual.metodo_detalle if manual else None,
-            "actualizado_en": datetime.now(UTC),
-        }
+        valores = _valores_de(pendiente, nota, manual)
         stmt = pg_insert(DecisionOperadorModel).values(
             id_maquina=id_maquina, clase=clase, **valores
         )
@@ -90,6 +82,20 @@ class SqlAlchemyDecisionesOperadorRepository:
                 set_=valores,
             )
         )
+
+
+def _valores_de(
+    pendiente: bool, nota: str | None, manual: DecisionManualDto | None
+) -> dict[str, Any]:
+    return {
+        "pendiente": pendiente,
+        "nota": nota,
+        "manual_contador_propuesto": manual.contador_propuesto if manual else None,
+        "manual_tipo_toma": manual.tipo_toma if manual else None,
+        "manual_fuente": manual.fuente if manual else None,
+        "manual_metodo_detalle": manual.metodo_detalle if manual else None,
+        "actualizado_en": datetime.now(UTC),
+    }
 
 
 def _to_dto(row: DecisionOperadorModel) -> DecisionOperadorDto:
