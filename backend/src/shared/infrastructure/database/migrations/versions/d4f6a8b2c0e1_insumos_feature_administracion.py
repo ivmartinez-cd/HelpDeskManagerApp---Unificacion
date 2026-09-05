@@ -26,9 +26,24 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 FEATURE_KEY = "insumos-administracion"
-_USERS_SQL = (
-    "SELECT user_id FROM permission_grant WHERE module_key = 'insumos' AND action_key = 'delete'"
-)
+
+_GRANT_SQL = """
+    INSERT INTO user_feature_grant (user_id, feature_key)
+    SELECT DISTINCT user_id, :feature_key
+    FROM (
+        SELECT user_id FROM permission_grant
+        WHERE module_key = 'insumos' AND action_key = 'delete'
+    ) u
+    ON CONFLICT DO NOTHING
+"""
+
+_AUDIT_SQL = """
+    INSERT INTO permission_audit (actor_user_id, target_user_id, module_key, action_key, operation)
+    SELECT NULL::uuid, user_id, 'feature', :feature_key, 'grant'
+    FROM user_feature_grant WHERE feature_key = :feature_key
+"""
+
+_DELETE_SQL = "DELETE FROM module_feature WHERE key = :feature_key"
 
 
 def upgrade() -> None:
@@ -52,17 +67,10 @@ def upgrade() -> None:
             }
         ],
     )
-    op.execute(
-        f"INSERT INTO user_feature_grant (user_id, feature_key) "
-        f"SELECT DISTINCT user_id, '{FEATURE_KEY}' FROM ({_USERS_SQL}) u ON CONFLICT DO NOTHING"
-    )
-    op.execute(
-        "INSERT INTO permission_audit (actor_user_id, target_user_id, module_key, "
-        f"action_key, operation) SELECT NULL::uuid, user_id, 'feature', '{FEATURE_KEY}', 'grant' "
-        f"FROM user_feature_grant WHERE feature_key = '{FEATURE_KEY}'"
-    )
+    op.execute(sa.text(_GRANT_SQL).bindparams(feature_key=FEATURE_KEY))
+    op.execute(sa.text(_AUDIT_SQL).bindparams(feature_key=FEATURE_KEY))
 
 
 def downgrade() -> None:
     # user_feature_grant cae en cascada por la FK a module_feature.
-    op.execute(f"DELETE FROM module_feature WHERE key = '{FEATURE_KEY}'")
+    op.execute(sa.text(_DELETE_SQL).bindparams(feature_key=FEATURE_KEY))
