@@ -66,7 +66,7 @@ async def create_spst(
         domicilio=body.domicilio or None,
         localidad=body.localidad or None,
         provincia=body.provincia or None,
-        zona=body.zona or None,
+        zona_cobertura=body.zona_cobertura or None,
     )
     return SpstOut.from_entity(spst)
 
@@ -84,7 +84,7 @@ async def update_spst(
         domicilio=body.domicilio or None,
         localidad=body.localidad or None,
         provincia=body.provincia or None,
-        zona=body.zona or None,
+        zona_cobertura=body.zona_cobertura or None,
     )
     return SpstOut.from_entity(updated)
 

@@ -7,12 +7,14 @@ import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useSession } from "@/services/session-provider";
+import { prestadoresApi } from "@/features/prestadores/api/prestadores-api";
 import { AltaPrestadorWizard } from "./alta-prestador/alta-prestador-wizard";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion } from "../types/liquidaciones";
 import { PrestadorBaseSucursalModal } from "./prestador-base-sucursal-modal";
 import { PrestadorCdModal } from "./prestador-cd-modal";
 import { PrestadorFormModal } from "./prestador-form-modal";
+import { PrestadorSlaModal } from "./prestador-sla-modal";
 import { PrestadoresExcelImportModal } from "./prestadores-excel-import-modal";
 import { SigesSyncModal } from "./siges-sync-modal";
 
@@ -79,6 +81,15 @@ export function PrestadoresConfig() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [basePrestador, setBasePrestador] = useState<PrestadorLiquidacion | null>(null);
   const [cdPrestador, setCdPrestador] = useState<PrestadorLiquidacion | null>(null);
+  const [slaPrestador, setSlaPrestador] = useState<PrestadorLiquidacion | null>(null);
+  // Ids de Siges ya dados de alta en el módulo SLA (otro módulo, catálogo
+  // aparte) — sin esto no hay forma de saber si falta completar ese paso del
+  // asistente, que a diferencia de Siges/Base/CD no tiene botón de vuelta.
+  // `null` = todavía no se pudo consultar (o el usuario no tiene permiso sobre
+  // `prestadores` — permiso distinto al de este módulo): en ese caso no se
+  // ofrece el botón, para no arriesgar una alta SLA duplicada por un dato que
+  // no se pudo verificar.
+  const [sigesConAltaSla, setSigesConAltaSla] = useState<Set<number> | null>(null);
 
   // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   const load = useCallback(async () => {
@@ -89,7 +100,26 @@ export function PrestadoresConfig() {
     }
   }, []);
 
+  // Promise-chain en vez de async/await: react-hooks/set-state-in-effect solo
+  // acepta setState en callbacks .then/.catch (ver nota en siges-sync-modal.tsx).
+  const loadAltasSla = useCallback(
+    () =>
+      prestadoresApi
+        .getResumen()
+        .then((resumen) => {
+          const ids = resumen.grupos.flatMap((g) => g.prestadores.map((p) => p.sigesEmpresaId));
+          setSigesConAltaSla(new Set(ids));
+        })
+        .catch((err: unknown) => {
+          // Sin permiso sobre `prestadores`, u otro error — se oculta el botón
+          // "Completar alta SLA" en vez de arriesgar una alta duplicada.
+          console.error("No se pudo consultar el módulo SLA:", err);
+        }),
+    [],
+  );
+
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void loadAltasSla(); }, [loadAltasSla]);
 
   const handleToggle = async (p: PrestadorLiquidacion) => {
     try {
@@ -146,7 +176,7 @@ export function PrestadoresConfig() {
                   <th className={thCls}>Clave</th>
                   <th className={thCls}>Nombre</th>
                   <th className={thCls}>CUIT</th>
-                  <th className={thCls}>Región</th>
+                  <th className={thCls} title="Solo informativa — no la usa ningún cálculo (distinto de la 'Zona de cobertura' del SPST, que tampoco define precios desde el refactor a SPST)">Región</th>
                   <th className={thCls}>Vínculo</th>
                   <th className={thCls}>Canal Directo</th>
                   <th className={thCls}>Estado</th>
@@ -187,6 +217,17 @@ export function PrestadoresConfig() {
                           {p.sigesEmpresaId != null && (
                             <button onClick={() => setBasePrestador(p)} className="font-body text-sm text-brand-orange hover:underline mr-3">
                               {p.sigesBaseSucursalId != null ? "Distancias" : "Base"}
+                            </button>
+                          )}
+                          {p.sigesEmpresaId != null
+                            && sigesConAltaSla !== null
+                            && !sigesConAltaSla.has(p.sigesEmpresaId) && (
+                            <button
+                              onClick={() => setSlaPrestador(p)}
+                              className="font-body text-sm text-warning hover:underline mr-3"
+                              title="El asistente de alta se salteó (o nunca tuvo) el paso del módulo SLA — completalo acá"
+                            >
+                              Completar alta SLA
                             </button>
                           )}
                           <button onClick={() => handleToggle(p)} className={`font-body text-sm hover:underline mr-3 ${p.activo ? "text-destructive" : "text-success"}`}>
@@ -230,6 +271,13 @@ export function PrestadoresConfig() {
           prestador={cdPrestador}
           onClose={() => setCdPrestador(null)}
           onSuccess={load}
+        />
+      )}
+      {slaPrestador && (
+        <PrestadorSlaModal
+          prestador={slaPrestador}
+          onClose={() => setSlaPrestador(null)}
+          onCreado={() => { setSlaPrestador(null); void loadAltasSla(); }}
         />
       )}
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar prestador">

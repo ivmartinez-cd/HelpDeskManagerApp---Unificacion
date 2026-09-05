@@ -48,30 +48,43 @@ def export_spsts(rows: list[Spst], prestador_map: dict[str, str]) -> StreamingRe
         clave = prestador_map.get(str(s.prestador_id), "")
         w.writerow([
             clave, s.nombre, s.domicilio or "", s.localidad or "",
-            s.provincia or "", s.zona or "", "SI" if s.activo else "NO",
+            s.provincia or "", s.zona_cobertura or "", "SI" if s.activo else "NO",
         ])
     buf.seek(0)
     return _csv_response(buf, "spsts.csv")
 
 
-def export_tarifarios(rows: list[Tarifario], prestador_map: dict[str, str]) -> StreamingResponse:
+def export_tarifarios(
+    rows: list[Tarifario], prestador_map: dict[str, str], spst_map: dict[str, str]
+) -> StreamingResponse:
+    """`spst_map`: id de SPST (str) → nombre — la columna `SPST` exporta el
+    nombre, no el id, para que el CSV siga siendo editable a mano (mismo
+    criterio que `PST_CLAVE`); vacía = tarifa genérica (`spst_id=None`)."""
     buf = io.StringIO()
     buf.write(_BOM)
     w = csv.writer(buf)
     w.writerow([
-        "PST_CLAVE", "TIPO_SERVICIO", "ZONA", "COSTO_SERVICIO",
+        "PST_CLAVE", "TIPO_SERVICIO", "SPST", "COSTO_SERVICIO",
         "COSTO_KM", "VIGENCIA_DESDE", "VIGENCIA_HASTA",
     ])
     for t in rows:
-        clave = prestador_map.get(str(t.prestador_id), "")
-        w.writerow([
-            clave, t.tipo_servicio, t.zona or "",
-            t.costo_servicio, t.costo_km,
-            t.vigencia_desde.isoformat(),
-            t.vigencia_hasta.isoformat() if t.vigencia_hasta else "",
-        ])
+        w.writerow(_fila_tarifario(t, prestador_map, spst_map))
     buf.seek(0)
     return _csv_response(buf, "tarifarios.csv")
+
+
+def _fila_tarifario(
+    t: Tarifario, prestador_map: dict[str, str], spst_map: dict[str, str]
+) -> list[str | float]:
+    return [
+        prestador_map.get(str(t.prestador_id), ""),
+        t.tipo_servicio,
+        spst_map.get(str(t.spst_id), "") if t.spst_id else "",
+        t.costo_servicio,
+        t.costo_km,
+        t.vigencia_desde.isoformat(),
+        t.vigencia_hasta.isoformat() if t.vigencia_hasta else "",
+    ]
 
 
 def export_tabla_km(rows: list[TablaKm], prestador_map: dict[str, str]) -> StreamingResponse:

@@ -126,7 +126,10 @@ export function LiquidacionDetalleHeader({
         <div className="flex flex-col items-end gap-2">
           {!liquidacion.numeroLiquidacion && (
             <div className="flex items-center gap-2">
-              <span className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
+              <span
+                className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground"
+                title="Liquidación manual, sin remito de Canal Directo — el estado se cambia acá a mano en vez de sincronizarse con AyC"
+              >
                 Cambiar estado
               </span>
               <EstadoSelector

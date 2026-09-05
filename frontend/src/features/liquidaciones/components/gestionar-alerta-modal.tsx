@@ -7,6 +7,7 @@ import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import { CODIGO_ALT009, ESTADO_ALERTA_STYLES, TRANSICIONES_ALERTA } from "../lib/alerta-estados";
+import { formatARS } from "../lib/format";
 import type { Alerta, EstadoAlerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
 import { riesgoClass } from "./incidente-badges";
 import { EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
@@ -51,9 +52,14 @@ export function GestionarAlertaModal({
   );
   const [cargandoSucursal, setCargandoSucursal] = useState(false);
   const estilo = ESTADO_ALERTA_STYLES[alerta.estado] ?? ESTADO_ALERTA_STYLES.pendiente;
-  const candidatosRuta = Object.values(incidentesById)
-    .filter((i) => i.id !== alerta.incidenteId)
-    .sort((a, b) => a.numeroIncidente.localeCompare(b.numeroIncidente));
+  // El selector de "ruta compartida" es un vínculo MANUAL para una alerta 1:1
+  // (ver Alerta.incidenteRelacionadoId) — una alerta ya agrupada por el motor
+  // (esGrupo) no lo necesita, el grupo ya está resuelto.
+  const candidatosRuta = alerta.esGrupo
+    ? []
+    : Object.values(incidentesById)
+        .filter((i) => i.id !== alerta.incidenteId)
+        .sort((a, b) => a.numeroIncidente.localeCompare(b.numeroIncidente));
 
   const cambiar = async (estado: EstadoAlerta, justificacionTexto?: string) => {
     setEnviando(true);
@@ -93,11 +99,23 @@ export function GestionarAlertaModal({
         <div className="flex items-center gap-3">
           <Badge variant={estilo.variant}>{estilo.label}</Badge>
           <span className={`font-body text-sm font-semibold tabular-nums ${riesgoClass(alerta.riesgo)}`}>
-            {Math.round(alerta.riesgo * 100)}% riesgo
+            {Math.round(alerta.riesgo)}% riesgo
           </span>
+          {alerta.esGrupo && (
+            <span className="rounded-full bg-muted px-1.5 py-0.5 font-body text-[10px] font-bold uppercase text-muted-foreground">
+              Grupo ({alerta.grupoIncidenteIds.length} incidentes)
+            </span>
+          )}
         </div>
         {alerta.descripcion && (
           <p className="font-body text-sm text-foreground">{alerta.descripcion}</p>
+        )}
+        {alerta.esGrupo && alerta.diferencia !== null && (
+          <p className="font-body text-xs text-muted-foreground">
+            Cobrado {formatARS(alerta.montoCobrado ?? 0)} · Esperado{" "}
+            {formatARS(alerta.montoEsperado ?? 0)} · Diferencia{" "}
+            {formatARS(alerta.diferencia)}
+          </p>
         )}
         {alerta.justificacion && (
           <p className="font-body text-xs italic text-muted-foreground">

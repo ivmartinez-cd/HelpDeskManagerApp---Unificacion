@@ -8,9 +8,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repository import (
+    SqlAlchemySpstRepository,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tarifario_repository import (  # noqa: E501
     SqlAlchemyTarifarioRepository,
 )
+
+
+async def _create_spst(db_session: AsyncSession, prestador_id: uuid.UUID, nombre: str):
+    return await SqlAlchemySpstRepository(db_session).create(
+        prestador_id=prestador_id,
+        nombre=nombre,
+        domicilio=None,
+        localidad=None,
+        provincia=None,
+        zona_cobertura=None,
+    )
 
 
 async def _create_tarifario(
@@ -18,14 +32,14 @@ async def _create_tarifario(
     prestador_id: uuid.UUID,
     *,
     tipo_servicio: str = "correctivo",
-    zona: str | None = "AMBA",
+    spst_id: uuid.UUID | None = None,
     vigencia_desde: date = date(2026, 1, 1),
     vigencia_hasta: date | None = None,
 ):
     return await SqlAlchemyTarifarioRepository(db_session).create(
         prestador_id=prestador_id,
         tipo_servicio=tipo_servicio,
-        zona=zona,
+        spst_id=spst_id,
         costo_servicio=1000.0,
         costo_km=50.0,
         vigencia_desde=vigencia_desde,
@@ -57,33 +71,36 @@ async def test_list_by_prestador_only_returns_own_tarifarios(
     assert [t.id for t in resultado] == [propio.id]
 
 
-async def test_list_grupo_matches_tipo_servicio_y_zona_exacta(
+async def test_list_grupo_matches_tipo_servicio_y_spst_exacto(
     db_session: AsyncSession, prestador_id: uuid.UUID
 ) -> None:
     repo = SqlAlchemyTarifarioRepository(db_session)
-    del_grupo = await _create_tarifario(db_session, prestador_id, zona="AMBA")
-    await _create_tarifario(db_session, prestador_id, zona="Interior")
-    await _create_tarifario(db_session, prestador_id, zona=None)
+    amba = await _create_spst(db_session, prestador_id, "AMBA")
+    interior = await _create_spst(db_session, prestador_id, "Interior")
+    del_grupo = await _create_tarifario(db_session, prestador_id, spst_id=amba.id)
+    await _create_tarifario(db_session, prestador_id, spst_id=interior.id)
+    await _create_tarifario(db_session, prestador_id, spst_id=None)
 
     resultado = await repo.list_grupo(
-        prestador_id=prestador_id, tipo_servicio="correctivo", zona="AMBA"
+        prestador_id=prestador_id, tipo_servicio="correctivo", spst_id=amba.id
     )
 
     assert [t.id for t in resultado] == [del_grupo.id]
 
 
-async def test_list_grupo_con_zona_none_matches_solo_zona_none(
+async def test_list_grupo_con_spst_none_matches_solo_generica(
     db_session: AsyncSession, prestador_id: uuid.UUID
 ) -> None:
     repo = SqlAlchemyTarifarioRepository(db_session)
-    await _create_tarifario(db_session, prestador_id, zona="AMBA")
-    sin_zona = await _create_tarifario(db_session, prestador_id, zona=None)
+    amba = await _create_spst(db_session, prestador_id, "AMBA")
+    await _create_tarifario(db_session, prestador_id, spst_id=amba.id)
+    sin_spst = await _create_tarifario(db_session, prestador_id, spst_id=None)
 
     resultado = await repo.list_grupo(
-        prestador_id=prestador_id, tipo_servicio="correctivo", zona=None
+        prestador_id=prestador_id, tipo_servicio="correctivo", spst_id=None
     )
 
-    assert [t.id for t in resultado] == [sin_zona.id]
+    assert [t.id for t in resultado] == [sin_spst.id]
 
 
 async def test_set_vigencia_hasta_updates_only_that_field(

@@ -48,11 +48,10 @@ export interface ZonaSigesEstado {
   prestadorId: string;
   prestador: string;
   descripcionSiges: string;
-  /** true con zonaLocal null = mapeada a la zona genérica (sin zona). */
+  /** true con spstId null = mapeada a la tarifa genérica (sin SPST). */
   mapeada: boolean;
-  zonaLocal: string | null;
-  propuesta: string | null;
-  zonasLocales: string[];
+  spstId: string | null;
+  propuestaSpstId: string | null;
 }
 
 export interface ZonasSiges {

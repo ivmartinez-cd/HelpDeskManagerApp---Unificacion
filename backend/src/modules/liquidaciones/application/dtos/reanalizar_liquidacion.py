@@ -1,5 +1,4 @@
-"""DTO de salida de ReanalizarLiquidacion — mismas 3 claves que devolvía
-`ejecutar_motor` del legacy."""
+"""DTO de salida de ReanalizarLiquidacion."""
 
 from dataclasses import dataclass
 
@@ -8,4 +7,3 @@ from dataclasses import dataclass
 class ReanalizarLiquidacionResultado:
     total_incidentes: int
     total_alertas: int
-    total_observaciones: int

@@ -20,7 +20,6 @@ from tests.unit.domain.liquidaciones.fakes_liquidacion import (
     FakeAlertaRepository,
     FakeIncidenteRepository,
     FakeLiquidacionRepository,
-    FakeObservacionRepository,
 )
 
 
@@ -36,7 +35,6 @@ def _armar(liquidaciones=None, incidentes=None, tabla_km=None) -> GetLiquidacion
             liquidaciones=liq_repo,
             incidentes=inc_repo,
             alertas=FakeAlertaRepository(),
-            observaciones=FakeObservacionRepository(),
             tablas_km=FakeTablaKmRepository(tabla_km or []),
         )
     )
@@ -77,3 +75,23 @@ class TestGetLiquidacionDetalle:
         assert detalle.incidentes[0].localidad_cliente is None
         assert detalle.incidentes[0].spst_id is None
         assert detalle.incidentes[0].url_maps is None
+
+    async def test_no_matchea_por_sucursal_si_la_empresa_es_distinta(self) -> None:
+        """Antes indexaba solo por sucursal: dos empresas con sucursal homónima
+        (ej. "Neuquen") hacían que una "tomara prestado" el SPST de la otra."""
+        liq = make_liquidacion()
+        fila = make_tabla_km(
+            prestador_id=liq.prestador_id,
+            empresa_nombre="Calico",
+            sucursal_nombre="Neuquen",
+            localidad_cliente="Centenario",
+            spst_id=uuid.uuid4(),
+        )
+        inc = make_incidente(
+            liquidacion_id=liq.id, empresa_nombre="OCA", sucursal_nombre="Neuquen"
+        )
+
+        detalle = await _armar([liq], [inc], [fila]).execute(liq.id)
+
+        assert detalle.incidentes[0].localidad_cliente is None
+        assert detalle.incidentes[0].spst_id is None

@@ -40,6 +40,15 @@ CODIGOS_CON_EVALUADOR = frozenset(
     }
 )
 
+# Clave de `configuracion` que controla el segundo switch de ALT005: además de
+# la Alerta por-incidente (gateada por `activa`, igual que cualquier otra
+# regla), ALT005 puede generar una Alerta agrupada por corredor (`es_grupo=True`,
+# ex entidad `Observacion` separada) — esto antes no se podía apagar por
+# separado (auditoría de liquidaciones, hallazgo "Un switch controla dos
+# comportamientos en ALT005"). Ausente = `True` (preserva el comportamiento de
+# antes de este campo para toda regla existente).
+CONFIG_GENERA_OBSERVACIONES = "genera_observaciones"
+
 
 @dataclass(frozen=True)
 class ReglaAlerta:
@@ -52,3 +61,7 @@ class ReglaAlerta:
     configuracion: dict[str, Any]
     created_at: datetime
     updated_at: datetime
+
+
+def genera_observaciones(regla: ReglaAlerta) -> bool:
+    return bool(regla.configuracion.get(CONFIG_GENERA_OBSERVACIONES, True))

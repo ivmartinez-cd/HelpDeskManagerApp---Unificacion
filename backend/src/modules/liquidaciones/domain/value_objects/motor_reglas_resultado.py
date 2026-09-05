@@ -8,7 +8,7 @@ entidades de dominio son inmutables; la aplicación decide cómo persistirlo.
 """
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 
@@ -25,20 +25,13 @@ class AlertaGenerada:
     descripcion: str
     riesgo: float
     datos_contexto: dict[str, Any]
-
-
-@dataclass(frozen=True)
-class ObservacionGenerada:
-    tipo_observacion: str
-    severidad: str
-    titulo: str
-    descripcion: str
-    monto_cobrado: float
-    monto_esperado: float
-    incidentes_relacionados: list[uuid.UUID]
-    incidente_principal_id: uuid.UUID
-    regla_codigo: str
-    datos_contexto: dict[str, Any]
+    # Ex `ObservacionGenerada` (ver `domain/entities/alerta.py`) — hoy solo lo
+    # arma `alt005_ruta.py::evaluar_grupo_alt005`.
+    es_grupo: bool = False
+    grupo_incidente_ids: tuple[uuid.UUID, ...] = field(default_factory=tuple)
+    monto_cobrado: float | None = None
+    monto_esperado: float | None = None
+    diferencia: float | None = None
 
 
 @dataclass(frozen=True)
@@ -54,4 +47,3 @@ class IncidenteEvaluado:
 class ResultadoMotorReglas:
     incidentes_evaluados: list[IncidenteEvaluado]
     alertas: list[AlertaGenerada]
-    observaciones: list[ObservacionGenerada]

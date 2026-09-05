@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BrandButton, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { PrestadorLiquidacion, Tarifario } from "../types/liquidaciones";
+import type { PrestadorLiquidacion, Spst, Tarifario } from "../types/liquidaciones";
 
 const TIPOS = [
   "correctivo", "preventivo", "instalacion_desinstalacion",
@@ -13,10 +13,10 @@ const TIPOS = [
 ];
 
 // Prefill del botón "Actualizar" de un grupo: nueva vigencia desde hoy con el
-// tipo/zona/costos de la tarifa vigente (el recadenado cierra la anterior).
+// tipo/SPST/costos de la tarifa vigente (el recadenado cierra la anterior).
 export interface PlantillaTarifa {
   tipoServicio: string;
-  zona: string;
+  spstId: string;
   costoServicio: string;
   costoKm: string;
 }
@@ -27,7 +27,7 @@ function tarifaAForm(t: Tarifario | null, defaultPrestadorId: string, plantilla:
     return {
       prestadorId: defaultPrestadorId,
       tipoServicio: plantilla?.tipoServicio ?? "",
-      zona: plantilla?.zona ?? "",
+      spstId: plantilla?.spstId ?? "",
       costoServicio: plantilla?.costoServicio ?? "",
       costoKm: plantilla?.costoKm ?? "",
       vigenciaDesde: plantilla ? hoy : "",
@@ -37,7 +37,7 @@ function tarifaAForm(t: Tarifario | null, defaultPrestadorId: string, plantilla:
   return {
     prestadorId: t.prestadorId,
     tipoServicio: t.tipoServicio,
-    zona: t.zona ?? "",
+    spstId: t.spstId ?? "",
     costoServicio: String(t.costoServicio),
     costoKm: String(t.costoKm),
     vigenciaDesde: t.vigenciaDesde,
@@ -57,6 +57,18 @@ export function TarifaModal({
   const [form, setForm] = useState(() => tarifaAForm(editing, defaultPrestadorId, plantilla));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [spsts, setSpsts] = useState<Spst[]>([]);
+
+  // SPST del prestador seleccionado — sin esto una tarifa solo puede quedar
+  // genérica (spstId vacío) al no haber forma de elegir una específica.
+  useEffect(() => {
+    let cancelado = false;
+    const cargar = form.prestadorId
+      ? liquidacionesApi.listSpsts({ prestadorId: form.prestadorId, soloActivos: true })
+      : Promise.resolve([]);
+    void cargar.then((data) => { if (!cancelado) setSpsts(data); });
+    return () => { cancelado = true; };
+  }, [form.prestadorId]);
 
   const handleClose = () => { setForm(tarifaAForm(editing, defaultPrestadorId, plantilla)); setError(null); onClose(); };
 
@@ -68,7 +80,7 @@ export function TarifaModal({
       const body = {
         prestadorId: form.prestadorId,
         tipoServicio: form.tipoServicio,
-        zona: form.zona || undefined,
+        spstId: form.spstId || undefined,
         costoServicio: parseFloat(form.costoServicio),
         costoKm: parseFloat(form.costoKm),
         vigenciaDesde: form.vigenciaDesde,
@@ -94,7 +106,7 @@ export function TarifaModal({
     <BrandModal isOpen={isOpen} onClose={handleClose} title={editing ? "Editar tarifa" : "Nueva tarifa"} error={error} widthPx={520}>
       <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
-          <BrandSelect label="Prestador *" required value={form.prestadorId} onChange={(e) => setForm((f) => ({ ...f, prestadorId: e.target.value }))}>
+          <BrandSelect label="Prestador *" required value={form.prestadorId} onChange={(e) => setForm((f) => ({ ...f, prestadorId: e.target.value, spstId: "" }))}>
             <option value="">Seleccioná...</option>
             {prestadores.map((p) => <option key={p.id} value={p.id}>{p.nombreCorto} — {p.nombre}</option>)}
           </BrandSelect>
@@ -103,7 +115,19 @@ export function TarifaModal({
           <option value="">Seleccioná...</option>
           {TIPOS.map((t) => <option key={t} value={t}>{t}</option>)}
         </BrandSelect>
-        <BrandInput label="Zona (vacío = todas)" value={form.zona} placeholder="Villa Mercedes..." onChange={(e) => setForm((f) => ({ ...f, zona: e.target.value }))} />
+        <BrandSelect
+          label="SPST (vacío = todos)"
+          hint="Tarifa genérica del prestador si no elegís uno específico."
+          value={form.spstId}
+          onChange={(e) => setForm((f) => ({ ...f, spstId: e.target.value }))}
+        >
+          <option value="">Genérica</option>
+          {spsts.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.nombre}{s.zonaCobertura ? ` — ${s.zonaCobertura}` : ""}
+            </option>
+          ))}
+        </BrandSelect>
         <BrandInput label="Costo servicio (ARS) *" type="number" step="0.01" required value={form.costoServicio} onChange={(e) => setForm((f) => ({ ...f, costoServicio: e.target.value }))} />
         <BrandInput label="Costo km (ARS) *" type="number" step="0.01" required value={form.costoKm} onChange={(e) => setForm((f) => ({ ...f, costoKm: e.target.value }))} />
         <BrandInput label="Vigencia desde *" type="date" required value={form.vigenciaDesde} onChange={(e) => setForm((f) => ({ ...f, vigenciaDesde: e.target.value }))} />

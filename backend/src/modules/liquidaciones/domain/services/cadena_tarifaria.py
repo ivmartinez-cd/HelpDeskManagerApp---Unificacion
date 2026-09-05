@@ -1,7 +1,7 @@
 """Cadena temporal de vigencias de tarifarios — port de `_rebuild_temporal_chain` del
 legacy (`backend/app/api/routers/tarifarios.py`).
 
-Dentro de un grupo (prestador, tipo_servicio, zona) cada tarifa debe cerrarse el día
+Dentro de un grupo (prestador, tipo_servicio, spst_id) cada tarifa debe cerrarse el día
 anterior a la `vigencia_desde` de la siguiente; la última conserva la `vigencia_hasta`
 que tenga (None = abierta). Sin esto se generan vigencias solapadas, que es justo lo
 que ALT001/ALT008 usan para resolver el precio esperado."""
@@ -22,8 +22,8 @@ class AjusteVigencia:
 def recalcular_cadena(tarifas: list[Tarifario]) -> list[AjusteVigencia]:
     """Devuelve solo los ajustes necesarios (filas cuya `vigencia_hasta` cambia).
 
-    Precondición: `tarifas` es un único grupo prestador+tipo_servicio+zona; acá no
-    se re-agrupa."""
+    Precondición: `tarifas` es un único grupo prestador+tipo_servicio+spst_id; acá
+    no se re-agrupa."""
     ordenadas = sorted(tarifas, key=lambda t: t.vigencia_desde)
     ajustes = []
     for actual, siguiente in zip(ordenadas, ordenadas[1:], strict=False):

@@ -27,6 +27,7 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     SigesSucursalCliente,
     SigesSucursalPropia,
 )
+from src.modules.liquidaciones.domain.repositories.spst_repository import SpstRepository
 from src.modules.liquidaciones.domain.repositories.sucursal_coordenadas_repository import (
     SucursalCoordenadasRepository,
 )
@@ -52,6 +53,9 @@ class CalcularDistanciasPorts:
     sucursal_coords: SucursalCoordenadasRepository
     previews: CalculoKmPreviewRepository
     incidentes: IncidenteRepository
+    # Solo lo usa AplicarCalcularDistancias, para vincular SPST a las filas que
+    # crea — ver ese archivo.
+    spsts: SpstRepository
 
 
 def es_empresa_activa(empresa_nombre: str, activos_norm: set[str]) -> bool:

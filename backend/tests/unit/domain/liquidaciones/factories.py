@@ -40,7 +40,7 @@ def make_spst(**overrides: Any) -> Spst:
         "domicilio": None,
         "localidad": None,
         "provincia": None,
-        "zona": None,
+        "zona_cobertura": None,
         "activo": True,
         "created_at": NOW,
     }
@@ -53,7 +53,7 @@ def make_tarifario(**overrides: Any) -> Tarifario:
         "id": uuid.uuid4(),
         "prestador_id": uuid.uuid4(),
         "tipo_servicio": "correctivo",
-        "zona": None,
+        "spst_id": None,
         "costo_servicio": 1500.0,
         "costo_km": 100.0,
         "vigencia_desde": date(2025, 1, 1),

@@ -10,10 +10,19 @@ import type {
 } from "../types/liquidaciones";
 import { fetchCatalogoCompleto, type Page } from "./_shared";
 
+/** Import de Tarifarios/Tabla KM hace upsert (por su clave natural) en vez de
+ * crear siempre — reimportar el mismo CSV ya no duplica filas. */
+interface ResultadoImportCsv {
+  creados: number;
+  actualizados: number;
+  sinCambios: number;
+  descartadas: number;
+}
+
 interface TarifarioBody {
   prestadorId: string;
   tipoServicio: string;
-  zona?: string;
+  spstId?: string;
   costoServicio: number;
   costoKm: number;
   vigenciaDesde: string;
@@ -49,6 +58,12 @@ export const configApi = {
     httpClient.patch<ReglaAlerta>(
       `/api/liquidaciones/reglas-alerta/${codigo}/activa`,
       { activa },
+    ),
+
+  updateReglaGeneraObservaciones: (codigo: string, generaObservaciones: boolean) =>
+    httpClient.patch<ReglaAlerta>(
+      `/api/liquidaciones/reglas-alerta/${codigo}/genera-observaciones`,
+      { generaObservaciones },
     ),
 
   // ── Prestadores ────────────────────────────────────────────────────────────
@@ -97,10 +112,10 @@ export const configApi = {
       .then((p) => p.items);
   },
 
-  createSpst: (body: { prestadorId: string; nombre: string; domicilio?: string; localidad?: string; provincia?: string; zona?: string }) =>
+  createSpst: (body: { prestadorId: string; nombre: string; domicilio?: string; localidad?: string; provincia?: string; zonaCobertura?: string }) =>
     httpClient.post<Spst>("/api/liquidaciones/spsts", body),
 
-  updateSpst: (id: string, body: { prestadorId: string; nombre: string; domicilio?: string; localidad?: string; provincia?: string; zona?: string }) =>
+  updateSpst: (id: string, body: { prestadorId: string; nombre: string; domicilio?: string; localidad?: string; provincia?: string; zonaCobertura?: string }) =>
     httpClient.patch<Spst>(`/api/liquidaciones/spsts/${id}`, body),
 
   toggleSpstActivo: (id: string, activo: boolean) =>
@@ -134,13 +149,16 @@ export const configApi = {
   deleteTarifario: (id: string) =>
     httpClient.delete<void>(`/api/liquidaciones/tarifarios/${id}`),
 
-  exportTarifariosCsv: () =>
-    httpClient.downloadFile("/api/liquidaciones/tarifarios/export", "tarifarios.csv"),
+  exportTarifariosCsv: (prestadorId?: string) =>
+    httpClient.downloadFile(
+      `/api/liquidaciones/tarifarios/export${prestadorId ? `?prestadorId=${prestadorId}` : ""}`,
+      "tarifarios.csv",
+    ),
 
   importTarifariosCsv: (file: File) => {
     const fd = new FormData();
     fd.append("file", file);
-    return httpClient.postForm<{ creados: number }>("/api/liquidaciones/tarifarios/import", fd);
+    return httpClient.postForm<ResultadoImportCsv>("/api/liquidaciones/tarifarios/import", fd);
   },
 
   // ── Tabla KM ───────────────────────────────────────────────────────────────
@@ -160,13 +178,16 @@ export const configApi = {
   deleteTablaKm: (id: string) =>
     httpClient.delete<void>(`/api/liquidaciones/tabla-km/${id}`),
 
-  exportTablaKmCsv: () =>
-    httpClient.downloadFile("/api/liquidaciones/tabla-km/export", "tabla_km.csv"),
+  exportTablaKmCsv: (prestadorId?: string) =>
+    httpClient.downloadFile(
+      `/api/liquidaciones/tabla-km/export${prestadorId ? `?prestadorId=${prestadorId}` : ""}`,
+      "tabla_km.csv",
+    ),
 
   importTablaKmCsv: (file: File) => {
     const fd = new FormData();
     fd.append("file", file);
-    return httpClient.postForm<{ creados: number }>("/api/liquidaciones/tabla-km/import", fd);
+    return httpClient.postForm<ResultadoImportCsv>("/api/liquidaciones/tabla-km/import", fd);
   },
 
   vincularSpstTablaKm: (prestadorId: string, dryRun: boolean) =>

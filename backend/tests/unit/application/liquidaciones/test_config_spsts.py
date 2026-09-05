@@ -28,7 +28,7 @@ async def test_create_persiste() -> None:
         domicilio=None,
         localidad="Salta",
         provincia="Salta",
-        zona="NOA",
+        zona_cobertura="NOA",
     )
 
     assert creado.prestador_id == prestador_id
@@ -45,7 +45,7 @@ async def test_update_persiste() -> None:
         domicilio="Calle 1",
         localidad=None,
         provincia=None,
-        zona=None,
+        zona_cobertura=None,
     )
 
     assert updated.nombre == "Nuevo"
@@ -57,7 +57,12 @@ async def test_update_inexistente_lanza_not_found() -> None:
 
     with pytest.raises(SpstNoEncontradoError):
         await UpdateSpst(_ports(repo)).execute(
-            uuid.uuid4(), nombre="X", domicilio=None, localidad=None, provincia=None, zona=None
+            uuid.uuid4(),
+            nombre="X",
+            domicilio=None,
+            localidad=None,
+            provincia=None,
+            zona_cobertura=None,
         )
 
 

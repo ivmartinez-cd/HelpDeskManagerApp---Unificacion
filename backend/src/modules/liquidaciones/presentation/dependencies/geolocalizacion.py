@@ -50,6 +50,9 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_incidente_
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repository import (
+    SqlAlchemySpstRepository,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_sucursal_coordenadas_repository import (  # noqa: E501
     SqlAlchemySucursalCoordenadasRepository,
 )
@@ -80,6 +83,7 @@ def _distancias_ports(session: AsyncSession) -> CalcularDistanciasPorts:
         sucursal_coords=SqlAlchemySucursalCoordenadasRepository(session),
         previews=SqlAlchemyCalculoKmPreviewRepository(session),
         incidentes=SqlAlchemyIncidenteRepository(session),
+        spsts=SqlAlchemySpstRepository(session),
     )
 
 

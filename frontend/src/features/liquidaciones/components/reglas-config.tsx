@@ -13,8 +13,8 @@ const thCls =
   "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
 const tdCls = "py-3 px-4 font-body text-sm text-foreground";
 
-function ToggleActiva({ regla, onToggle, disabled }: {
-  regla: ReglaAlerta;
+function ToggleSwitch({ checked, onToggle, disabled }: {
+  checked: boolean;
   onToggle: () => void;
   disabled: boolean;
 }) {
@@ -22,18 +22,18 @@ function ToggleActiva({ regla, onToggle, disabled }: {
     <button
       type="button"
       role="switch"
-      aria-checked={regla.activa}
+      aria-checked={checked}
       disabled={disabled}
       onClick={onToggle}
       className={cn(
         "relative h-5 w-9 rounded-full transition-colors disabled:opacity-50",
-        regla.activa ? "bg-brand-orange" : "bg-border",
+        checked ? "bg-brand-orange" : "bg-border",
       )}
     >
       <span
         className={cn(
           "absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all",
-          regla.activa ? "left-[18px]" : "left-0.5",
+          checked ? "left-[18px]" : "left-0.5",
         )}
       />
     </button>
@@ -70,6 +70,26 @@ export function ReglasConfig() {
     }
   };
 
+  const handleToggleObservaciones = async (regla: ReglaAlerta) => {
+    setTogglingCodigo(regla.codigo);
+    try {
+      await liquidacionesApi.updateReglaGeneraObservaciones(
+        regla.codigo,
+        !regla.generaObservaciones,
+      );
+      toast.success(
+        regla.generaObservaciones
+          ? `${regla.codigo}: dejó de generar Observaciones agrupadas (la Alerta por-incidente sigue igual)`
+          : `${regla.codigo}: vuelve a generar Observaciones agrupadas`,
+      );
+      void load();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al cambiar la regla");
+    } finally {
+      setTogglingCodigo(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-48 items-center justify-center">
@@ -86,6 +106,9 @@ export function ReglasConfig() {
           Qué controles corre el motor sobre cada liquidación. Desactivar una regla hace
           que deje de generar alertas <span className="font-semibold text-foreground">a
           partir del próximo re-análisis</span> — las alertas ya generadas no se tocan.
+          ALT005 además genera Observaciones agrupadas por corredor, con su propio
+          switch independiente (columna &quot;Observaciones&quot;) — solo tiene efecto
+          mientras la regla esté activa.
         </p>
       </div>
       <div className="overflow-hidden rounded-[12px] border border-border bg-card">
@@ -98,6 +121,12 @@ export function ReglasConfig() {
                 <th className={thCls}>Descripción</th>
                 <th className={`${thCls} text-right`}>Riesgo base</th>
                 <th className={thCls}>Activa</th>
+                <th
+                  className={thCls}
+                  title="Segundo switch, solo para ALT005: además de la Alerta por-incidente, agrupa por corredor en otra alerta aparte"
+                >
+                  Observaciones
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -122,11 +151,22 @@ export function ReglasConfig() {
                   <td className={`${tdCls} text-muted-foreground`}>{r.descripcion ?? "—"}</td>
                   <td className={`${tdCls} text-right tabular-nums`}>{r.riesgoBase}</td>
                   <td className={tdCls}>
-                    <ToggleActiva
-                      regla={r}
+                    <ToggleSwitch
+                      checked={r.activa}
                       disabled={togglingCodigo === r.codigo}
                       onToggle={() => void handleToggle(r)}
                     />
+                  </td>
+                  <td className={tdCls}>
+                    {r.codigo === "ALT005" ? (
+                      <ToggleSwitch
+                        checked={r.generaObservaciones}
+                        disabled={togglingCodigo === r.codigo || !r.activa}
+                        onToggle={() => void handleToggleObservaciones(r)}
+                      />
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </td>
                 </tr>
               ))}

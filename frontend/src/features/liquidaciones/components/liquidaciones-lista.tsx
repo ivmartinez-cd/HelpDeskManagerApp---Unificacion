@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type ChangeEvent } from "react";
+import { toast } from "sonner";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useSession } from "@/services/session-provider";
@@ -79,6 +80,11 @@ export function LiquidacionesLista() {
       await liquidacionesApi.delete(deletingId);
       setDeletingId(null);
       void loadLiquidaciones(page);
+    } catch (err: unknown) {
+      // El backend rechaza con 409 si la liquidación tiene vínculo con Canal
+      // Directo — borrarla local sin más la desincroniza de AyC. El camino
+      // correcto es Anular desde el detalle.
+      toast.error(err instanceof Error ? err.message : "Error al eliminar");
     } finally {
       setDeleteInProgress(false);
     }
@@ -235,7 +241,7 @@ export function LiquidacionesLista() {
         widthPx={420}
       >
         <p className="font-body text-sm text-muted-foreground">
-          Esta acción eliminará la liquidación y todos sus incidentes, alertas y observaciones.
+          Esta acción eliminará la liquidación y todos sus incidentes y alertas.
           No se puede deshacer.
         </p>
         {deletingId && (() => {

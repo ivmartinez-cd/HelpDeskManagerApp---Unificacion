@@ -2,7 +2,7 @@
 
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import type { SortState } from "@/shared/hooks/use-table-sort";
-import type { TablaKm } from "../types/liquidaciones";
+import type { Spst, TablaKm } from "../types/liquidaciones";
 
 export type KmSortKey = "empresa" | "sucursal" | "kmsRec" | "kmsFact";
 export const KM_SORT_KEYS: readonly KmSortKey[] = ["empresa", "sucursal", "kmsRec", "kmsFact"];
@@ -18,6 +18,52 @@ export function kmSortValue(t: TablaKm, key: KmSortKey) {
 
 const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
 const tdCls = "py-2 px-4 font-body text-sm text-foreground";
+const warnBadgeCls = "inline-flex items-center rounded-full bg-warning/10 px-2 py-0.5 font-body text-[10px] font-bold uppercase tracking-wide text-warning hover:bg-warning/20";
+
+/** Hace visible en un solo lugar la cadena que hoy está repartida en 2
+ * pantallas (Tabla KM → SPST → Tarifario): sin esto, saber por qué un
+ * incidente no tiene precio obliga a saltar entre pantallas adivinando. */
+function CeldaSpst({
+  fila,
+  spstsPorId,
+  spstsConTarifa,
+  onEdit,
+}: {
+  fila: TablaKm;
+  spstsPorId: Map<string, Spst>;
+  spstsConTarifa: Set<string | null>;
+  onEdit: (t: TablaKm) => void;
+}) {
+  if (!fila.spstId) {
+    return (
+      <button type="button" onClick={() => onEdit(fila)} className={warnBadgeCls} title="Sin esto no se puede resolver ninguna tarifa — clic para vincular">
+        Sin SPST
+      </button>
+    );
+  }
+  const spst = spstsPorId.get(fila.spstId);
+  if (!spst) {
+    return <span className="font-body text-xs text-muted-foreground">SPST no encontrado</span>;
+  }
+  const sinTarifa = !spstsConTarifa.has(fila.spstId);
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="truncate font-body text-sm text-foreground" title={spst.nombre}>{spst.nombre}</span>
+      <span className="flex items-center gap-1.5">
+        {spst.zonaCobertura && (
+          <span className="truncate font-body text-xs text-muted-foreground" title={spst.zonaCobertura}>
+            {spst.zonaCobertura}
+          </span>
+        )}
+        {sinTarifa && (
+          <button type="button" onClick={() => onEdit(fila)} className={warnBadgeCls} title="Este SPST no tiene ninguna tarifa cargada — el incidente va a quedar sin precio">
+            Sin tarifario
+          </button>
+        )}
+      </span>
+    </div>
+  );
+}
 
 /** Tabla de entradas de Tabla KM (con agrupación visual por empresa cuando el
  * sort es por empresa), extraída de `tabla-km-config.tsx` porque ese archivo
@@ -27,6 +73,8 @@ export function TablaKmTable({
   sort,
   toggleSort,
   puedeEditar,
+  spstsPorId,
+  spstsConTarifa,
   onEdit,
   onDelete,
 }: {
@@ -34,6 +82,13 @@ export function TablaKmTable({
   sort: SortState<KmSortKey>;
   toggleSort: (key: KmSortKey) => void;
   puedeEditar: boolean;
+  /** SPST del prestador seleccionado, por id — para mostrar el SPST resuelto
+   * de cada fila sin obligar a saltar a la pantalla de SPSTs. */
+  spstsPorId: Map<string, Spst>;
+  /** Ids de SPST (o `null` = genérica) con al menos un tarifario cargado para
+   * este prestador — permite avisar "sin tarifario" en el momento, no semanas
+   * después cuando aparece como alerta en una liquidación. */
+  spstsConTarifa: Set<string | null>;
   onEdit: (t: TablaKm) => void;
   onDelete: (id: string) => void;
 }) {
@@ -49,17 +104,19 @@ export function TablaKmTable({
       <div className="overflow-x-auto">
         <table className="w-full table-fixed">
           <colgroup>
-            <col className="w-[22%]" />
-            <col className="w-[38%]" />
-            <col className="w-[10%]" />
-            <col className="w-[10%]" />
-            <col className="w-[8%]" />
-            <col className="w-[12%]" />
+            <col className="w-[17%]" />
+            <col className="w-[26%]" />
+            <col className="w-[21%]" />
+            <col className="w-[9%]" />
+            <col className="w-[9%]" />
+            <col className="w-[7%]" />
+            <col className="w-[11%]" />
           </colgroup>
           <thead>
             <tr className="bg-muted/40">
               <SortableHeader column={{ key: "empresa", label: "Empresa" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <SortableHeader column={{ key: "sucursal", label: "Sucursal" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+              <th className={thCls} title="Determina qué tarifa se le cobra al incidente: SPST → tarifario">SPST → Tarifa</th>
               <SortableHeader column={{ key: "kmsRec", label: "KMs rec." }} sort={sort} onToggleSort={toggleSort} thClassName={`${thCls} text-right`} />
               <SortableHeader column={{ key: "kmsFact", label: "KMs fact." }} sort={sort} onToggleSort={toggleSort} thClassName={`${thCls} text-right`} />
               <th className={`${thCls} text-center`}>Viático</th>
@@ -89,6 +146,9 @@ export function TablaKmTable({
                         </a>
                       )}
                     </div>
+                  </td>
+                  <td className={tdCls}>
+                    <CeldaSpst fila={t} spstsPorId={spstsPorId} spstsConTarifa={spstsConTarifa} onEdit={onEdit} />
                   </td>
                   <td className={`${tdCls} text-right tabular-nums text-muted-foreground`}>
                     {t.kmsRecorrido > 0 ? Math.round(t.kmsRecorrido) : "—"}

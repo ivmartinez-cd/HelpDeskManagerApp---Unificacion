@@ -14,8 +14,10 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tabla_km_repository import (  # noqa: E501
     SqlAlchemyTablaKmRepository,
 )
-from src.modules.liquidaciones.presentation import _liq_csv as csv_helpers
 from src.modules.liquidaciones.presentation import _liq_csv_export as csv_export
+from src.modules.liquidaciones.presentation import (
+    _liq_csv_upsert_tabla_km as csv_helpers,
+)
 from src.modules.liquidaciones.presentation.config_routers._deps import (
     CATALOGO_SIZE,
     require_export,
@@ -116,12 +118,18 @@ async def vincular_spst(
 
 @router.get("/tabla-km/export")
 async def export_tabla_km_csv(
+    prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
     _: Identity = require_export,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> StreamingResponse:
+    """Sin `prestadorId` exporta el catálogo completo. Con él (el caso normal desde
+    la pantalla, que siempre tiene un prestador filtrado), exporta solo el suyo —
+    antes ignoraba el filtro y siempre traía todo, rompiendo el ciclo "exporto lo
+    que veo, corrijo, reimporto"."""
+    repo = SqlAlchemyTablaKmRepository(db)
+    rows = await (repo.list_by_prestador(prestador_id) if prestador_id else repo.list_all())
     prestadores = await SqlAlchemyPrestadorRepository(db).list_all()
     pmap = {str(p.id): p.nombre_corto for p in prestadores}
-    rows = await SqlAlchemyTablaKmRepository(db).list_all()
     return csv_export.export_tabla_km(rows, pmap)
 
 
@@ -131,6 +139,17 @@ async def import_tabla_km_csv(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, int]:
-    return await csv_helpers.import_tabla_km(
-        file, SqlAlchemyTablaKmRepository(db), SqlAlchemyPrestadorRepository(db)
+    """El CSV no trae columna de SPST — sin esto, cada fila importada quedaría
+    sin zona/tarifa hasta que alguien corriera "Vincular SPST" a mano. Se corre
+    acá mismo, por cada prestador que recibió filas nuevas, mismo criterio
+    "solo cuando hay un único candidato" que el botón manual."""
+    resultado, prestadores_tocados = await csv_helpers.import_tabla_km(
+        file,
+        build_create_tabla_km(db),
+        build_update_tabla_km(db),
+        SqlAlchemyPrestadorRepository(db),
+        SqlAlchemyTablaKmRepository(db),
     )
+    for prestador_id in prestadores_tocados:
+        await build_vincular_tabla_km_spst(db).execute(prestador_id, dry_run=False)
+    return resultado

@@ -190,8 +190,8 @@ async def test_importar_recadena_vigencias_dentro_del_grupo() -> None:
 
 
 async def test_importar_recadena_contra_tarifario_preexistente() -> None:
-    """El tarifario ya persistido del mismo grupo (tipo, zona=None) se cierra contra
-    el recién importado."""
+    """El tarifario ya persistido del mismo grupo (tipo, spst_id=None) se cierra
+    contra el recién importado."""
     world = World()
     prestador = await world.prestadores.create(
         nombre="PENTACOM", nombre_corto="PENTACOM", cuit=None, region=None

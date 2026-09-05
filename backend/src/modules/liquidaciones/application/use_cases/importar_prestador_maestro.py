@@ -9,7 +9,7 @@ nunca se actualizan (igual que el legacy), Tabla KM existente (por empresa+sucur
 se omite en vez de pisarse.
 
 Tras crear tarifarios se recadenan las vigencias de cada grupo (tipo_servicio,
-zona=None) que recibió filas nuevas — divergencia consciente vs. el legacy, que al
+spst_id=None) que recibió filas nuevas — divergencia consciente vs. el legacy, que al
 importar dejaba vigencias solapadas (ver `domain/services/cadena_tarifaria.py`)."""
 
 from dataclasses import dataclass
@@ -110,7 +110,7 @@ class ImportarPrestadorMaestro:
                 domicilio=None,
                 localidad=None,
                 provincia=None,
-                zona=None,
+                zona_cobertura=None,
             )
             por_nombre[clave] = nuevo
             creados += 1
@@ -136,10 +136,10 @@ class ImportarPrestadorMaestro:
         return creados, omitidos
 
     async def _recadenar_tipos_creados(self, prestador_id: UUID, tipos: set[str]) -> None:
-        # El maestro crea todo con zona=None → el grupo afectado es (prestador, tipo, None).
+        # El maestro crea todo con spst_id=None → el grupo afectado es (prestador, tipo, None).
         for tipo in sorted(tipos):
             await recadenar_grupo(
-                self._ports.tarifarios, prestador_id=prestador_id, tipo_servicio=tipo, zona=None
+                self._ports.tarifarios, prestador_id=prestador_id, tipo_servicio=tipo, spst_id=None
             )
 
     @staticmethod
@@ -150,7 +150,7 @@ class ImportarPrestadorMaestro:
         await self._ports.tarifarios.create(
             prestador_id=prestador_id,
             tipo_servicio=t.tipo_servicio,
-            zona=None,
+            spst_id=None,
             costo_servicio=t.costo_servicio,
             costo_km=t.costo_km,
             vigencia_desde=t.vigencia_desde,

@@ -64,7 +64,6 @@ class ImportarLiquidacion:
             liquidacion_id=liquidacion.id,
             total_incidentes=analisis.total_incidentes,
             total_alertas=analisis.total_alertas,
-            total_observaciones=analisis.total_observaciones,
         )
 
     async def _crear_liquidacion(

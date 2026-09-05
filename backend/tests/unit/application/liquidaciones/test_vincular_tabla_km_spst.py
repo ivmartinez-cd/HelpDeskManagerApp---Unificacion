@@ -20,7 +20,7 @@ def _use_case(
 class TestVincularTablaKmSpst:
     async def test_dry_run_no_escribe(self) -> None:
         prestador_id = make_spst().prestador_id
-        spst = make_spst(prestador_id=prestador_id, zona="Valle Fértil")
+        spst = make_spst(prestador_id=prestador_id, zona_cobertura="Valle Fértil")
         fila = make_tabla_km(
             prestador_id=prestador_id, localidad_cliente="SAN AGUSTIN DEL VALLE FERTIL"
         )
@@ -35,7 +35,7 @@ class TestVincularTablaKmSpst:
 
     async def test_aplicar_vincula_solo_las_que_matchean(self) -> None:
         prestador_id = make_spst().prestador_id
-        spst = make_spst(prestador_id=prestador_id, zona="Valle Fértil")
+        spst = make_spst(prestador_id=prestador_id, zona_cobertura="Valle Fértil")
         con_match = make_tabla_km(
             prestador_id=prestador_id, localidad_cliente="Valle Fertil"
         )
@@ -53,7 +53,7 @@ class TestVincularTablaKmSpst:
 
     async def test_fila_ya_vinculada_no_se_cuenta(self) -> None:
         prestador_id = make_spst().prestador_id
-        spst = make_spst(prestador_id=prestador_id, zona="Valle Fértil")
+        spst = make_spst(prestador_id=prestador_id, zona_cobertura="Valle Fértil")
         ya_vinculada = make_tabla_km(
             prestador_id=prestador_id, localidad_cliente="Valle Fertil", spst_id=spst.id
         )

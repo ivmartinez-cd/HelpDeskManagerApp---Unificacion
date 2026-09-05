@@ -16,6 +16,7 @@ from src.modules.liquidaciones.presentation.config_routers._deps import (
 from src.modules.liquidaciones.presentation.schemas.reglas_alerta_schemas import (
     ReglaActivaIn,
     ReglaAlertaOut,
+    ReglaGeneraObservacionesIn,
 )
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
@@ -42,6 +43,21 @@ async def set_regla_activa(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ReglaAlertaOut:
     regla = await SqlAlchemyReglaAlertaRepository(db).set_activa(codigo, body.activa)
+    if regla is None:
+        raise HTTPException(status_code=404, detail="Regla no encontrada")
+    return ReglaAlertaOut.from_entity(regla)
+
+
+@router.patch("/reglas-alerta/{codigo}/genera-observaciones", response_model=ReglaAlertaOut)
+async def set_regla_genera_observaciones(
+    codigo: str,
+    body: ReglaGeneraObservacionesIn,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> ReglaAlertaOut:
+    regla = await SqlAlchemyReglaAlertaRepository(db).set_genera_observaciones(
+        codigo, body.genera_observaciones
+    )
     if regla is None:
         raise HTTPException(status_code=404, detail="Regla no encontrada")
     return ReglaAlertaOut.from_entity(regla)

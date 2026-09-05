@@ -168,9 +168,8 @@ class ZonaEstadoOut(BaseModel):
     prestador: str
     descripcion_siges: str = Field(serialization_alias="descripcionSiges")
     mapeada: bool
-    zona_local: str | None = Field(serialization_alias="zonaLocal")
-    propuesta: str | None
-    zonas_locales: list[str] = Field(serialization_alias="zonasLocales")
+    spst_id: uuid.UUID | None = Field(serialization_alias="spstId")
+    propuesta_spst_id: uuid.UUID | None = Field(serialization_alias="propuestaSpstId")
 
 
 class ZonasSigesOut(BaseModel):
@@ -185,9 +184,8 @@ class ZonasSigesOut(BaseModel):
                     prestador=z.prestador,
                     descripcion_siges=z.descripcion_siges,
                     mapeada=z.mapeada,
-                    zona_local=z.zona_local,
-                    propuesta=z.propuesta,
-                    zonas_locales=z.zonas_locales,
+                    spst_id=z.spst_id,
+                    propuesta_spst_id=z.propuesta_spst_id,
                 )
                 for z in dto.zonas
             ]
@@ -195,12 +193,12 @@ class ZonasSigesOut(BaseModel):
 
 
 class MapearZonaIn(BaseModel):
-    """`zonaLocal` null = mapear a la zona genérica (tarifario sin zona)."""
+    """`spstId` null = mapear a la tarifa genérica (tarifario sin SPST)."""
 
     model_config = ConfigDict(populate_by_name=True)
     prestador_id: uuid.UUID = Field(alias="prestadorId")
     descripcion_siges: str = Field(alias="descripcionSiges", min_length=1)
-    zona_local: str | None = Field(default=None, alias="zonaLocal", min_length=1)
+    spst_id: uuid.UUID | None = Field(default=None, alias="spstId")
 
 
 class ZonaMapOut(BaseModel):
@@ -208,7 +206,7 @@ class ZonaMapOut(BaseModel):
     id: uuid.UUID
     prestador_id: uuid.UUID = Field(serialization_alias="prestadorId")
     descripcion_siges: str = Field(serialization_alias="descripcionSiges")
-    zona_local: str | None = Field(serialization_alias="zonaLocal")
+    spst_id: uuid.UUID | None = Field(serialization_alias="spstId")
 
     @classmethod
     def from_entity(cls, e: TarifarioZonaMap) -> ZonaMapOut:
@@ -216,7 +214,7 @@ class ZonaMapOut(BaseModel):
             id=e.id,
             prestador_id=e.prestador_id,
             descripcion_siges=e.descripcion_siges,
-            zona_local=e.zona_local,
+            spst_id=e.spst_id,
         )
 
 
@@ -224,7 +222,7 @@ class GrupoTarifasCreadasOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     prestador: str
     tipo_servicio: str = Field(serialization_alias="tipoServicio")
-    zona: str | None
+    spst_nombre: str | None = Field(serialization_alias="spstNombre")
     cantidad: int
 
 
@@ -232,7 +230,7 @@ class ConflictoTarifarioOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     prestador: str
     tipo_servicio: str = Field(serialization_alias="tipoServicio")
-    zona: str | None
+    spst_nombre: str | None = Field(serialization_alias="spstNombre")
     vigencia_desde: str = Field(serialization_alias="vigenciaDesde")
     campo: str
     valor_local: float = Field(serialization_alias="valorLocal")
@@ -265,7 +263,7 @@ class SyncTarifariosOut(BaseModel):
                 GrupoTarifasCreadasOut(
                     prestador=g.prestador,
                     tipo_servicio=g.tipo_servicio,
-                    zona=g.zona,
+                    spst_nombre=g.spst_nombre,
                     cantidad=g.cantidad,
                 )
                 for g in dto.grupos_creados
@@ -274,7 +272,7 @@ class SyncTarifariosOut(BaseModel):
                 ConflictoTarifarioOut(
                     prestador=c.prestador,
                     tipo_servicio=c.tipo_servicio,
-                    zona=c.zona,
+                    spst_nombre=c.spst_nombre,
                     vigencia_desde=c.vigencia_desde.isoformat(),
                     campo=c.campo,
                     valor_local=c.valor_local,

@@ -98,13 +98,13 @@ const PAGE_RESPONSE = {
   size: 50,
 };
 
-// Dos vigencias del mismo grupo (correctivo, sin zona): la más nueva vigente
+// Dos vigencias del mismo grupo (correctivo, sin SPST): la más nueva vigente
 // hoy, la vieja cerrada — alcanza para el timeline con variación +10%.
 const TARIFA_VIGENTE = {
   id: "66666666-6666-6666-6666-666666666666",
   prestadorId: PST_ID,
   tipoServicio: "correctivo",
-  zona: null,
+  spstId: null,
   costoServicio: 11000,
   costoKm: 550,
   vigenciaDesde: "2026-01-01",
@@ -513,6 +513,13 @@ test.describe("Módulo de Liquidaciones", () => {
         }),
       });
     });
+    await page.route("**/api/liquidaciones/spsts**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ items: [], total: 0, page: 1, size: 500 }),
+      });
+    });
 
     await page.goto("/liquidaciones/configuracion/tarifarios");
     await page.getByLabel("Filtrar por prestador").selectOption(PST_ID);
@@ -541,6 +548,13 @@ test.describe("Módulo de Liquidaciones", () => {
           page: 1,
           size: 1000,
         }),
+      });
+    });
+    await page.route("**/api/liquidaciones/spsts**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ items: [], total: 0, page: 1, size: 500 }),
       });
     });
 

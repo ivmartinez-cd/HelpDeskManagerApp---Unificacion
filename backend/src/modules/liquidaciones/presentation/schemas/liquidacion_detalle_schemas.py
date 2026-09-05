@@ -13,7 +13,6 @@ from src.modules.liquidaciones.application.dtos.liquidacion_detalle import (
     LiquidacionDetalle,
 )
 from src.modules.liquidaciones.domain.entities.alerta import Alerta
-from src.modules.liquidaciones.domain.entities.observacion import Observacion
 from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import LiquidacionOut
 
 
@@ -75,6 +74,13 @@ class AlertaOut(BaseModel):
         None, serialization_alias="incidenteRelacionadoId"
     )
     fecha_generacion: datetime = Field(serialization_alias="fechaGeneracion")
+    # Ex `Observacion` (ver `domain/entities/alerta.py`) — hoy solo lo genera
+    # ALT005 agrupando por corredor.
+    es_grupo: bool = Field(serialization_alias="esGrupo")
+    grupo_incidente_ids: list[uuid.UUID] = Field(serialization_alias="grupoIncidenteIds")
+    monto_cobrado: float | None = Field(serialization_alias="montoCobrado")
+    monto_esperado: float | None = Field(serialization_alias="montoEsperado")
+    diferencia: float | None
 
     @classmethod
     def from_entity(cls, e: Alerta) -> "AlertaOut":
@@ -89,6 +95,11 @@ class AlertaOut(BaseModel):
             justificacion=e.justificacion,
             incidente_relacionado_id=e.incidente_relacionado_id,
             fecha_generacion=e.fecha_generacion,
+            es_grupo=e.es_grupo,
+            grupo_incidente_ids=list(e.grupo_incidente_ids),
+            monto_cobrado=e.monto_cobrado,
+            monto_esperado=e.monto_esperado,
+            diferencia=e.diferencia,
         )
 
 
@@ -132,52 +143,10 @@ class AlertasEstadoLoteOut(BaseModel):
     actualizadas: int
 
 
-# Espeja los ESTADO_* de domain/entities/observacion.py — mismo ciclo que el legacy
-# (PUT /liquidaciones/{id}/observaciones/{obs_id}/estado).
-ESTADOS_OBSERVACION = Literal[
-    "pendiente", "en_revision", "resuelta", "rechazada", "excepcion_aprobada"
-]
-
-
-class ObservacionEstadoIn(BaseModel):
-    estado: ESTADOS_OBSERVACION
-
-
-class ObservacionOut(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    id: uuid.UUID
-    tipo_observacion: str = Field(serialization_alias="tipoObservacion")
-    severidad: str
-    titulo: str
-    descripcion: str | None
-    monto_cobrado: float = Field(serialization_alias="montoCobrado")
-    monto_esperado: float = Field(serialization_alias="montoEsperado")
-    diferencia: float
-    estado: str
-    fecha_generacion: datetime = Field(serialization_alias="fechaGeneracion")
-
-    @classmethod
-    def from_entity(cls, e: Observacion) -> "ObservacionOut":
-        return cls(
-            id=e.id,
-            tipo_observacion=e.tipo_observacion,
-            severidad=e.severidad,
-            titulo=e.titulo,
-            descripcion=e.descripcion,
-            monto_cobrado=e.monto_cobrado,
-            monto_esperado=e.monto_esperado,
-            diferencia=e.diferencia,
-            estado=e.estado,
-            fecha_generacion=e.fecha_generacion,
-        )
-
-
 class LiquidacionDetalleOut(BaseModel):
     liquidacion: LiquidacionOut
     incidentes: list[IncidenteOut]
     alertas: list[AlertaOut]
-    observaciones: list[ObservacionOut]
 
     @classmethod
     def from_dto(cls, dto: LiquidacionDetalle) -> "LiquidacionDetalleOut":
@@ -185,5 +154,4 @@ class LiquidacionDetalleOut(BaseModel):
             liquidacion=LiquidacionOut.from_entity(dto.liquidacion),
             incidentes=[IncidenteOut.from_dto(i) for i in dto.incidentes],
             alertas=[AlertaOut.from_entity(a) for a in dto.alertas],
-            observaciones=[ObservacionOut.from_entity(o) for o in dto.observaciones],
         )

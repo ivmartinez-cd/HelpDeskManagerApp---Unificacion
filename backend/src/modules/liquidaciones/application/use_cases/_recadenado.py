@@ -1,4 +1,4 @@
-"""Recadenado del grupo (prestador, tipo_servicio, zona) — glue compartido entre
+"""Recadenado del grupo (prestador, tipo_servicio, spst_id) — glue compartido entre
 todos los caminos de escritura de tarifarios (alta/edición/baja manual de
 `config_tarifarios.py` y los importadores). La regla en sí vive en
 `domain/services/cadena_tarifaria.py`."""
@@ -16,10 +16,10 @@ async def recadenar_grupo(
     *,
     prestador_id: UUID,
     tipo_servicio: str,
-    zona: str | None,
+    spst_id: UUID | None,
 ) -> None:
     grupo = await repo.list_grupo(
-        prestador_id=prestador_id, tipo_servicio=tipo_servicio, zona=zona
+        prestador_id=prestador_id, tipo_servicio=tipo_servicio, spst_id=spst_id
     )
     for ajuste in recalcular_cadena(grupo):
         await repo.set_vigencia_hasta(ajuste.tarifario_id, ajuste.vigencia_hasta)

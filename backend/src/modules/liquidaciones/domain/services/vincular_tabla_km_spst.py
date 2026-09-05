@@ -1,9 +1,9 @@
-"""Propuesta de vínculo Tabla KM ↔ SPST por coincidencia de localidad/zona.
+"""Propuesta de vínculo Tabla KM ↔ SPST por coincidencia de localidad/cobertura.
 
 Resuelve el caso en que la Tabla KM de un prestador se importó antes de que
-existiera el SPST correspondiente: sin `TablaKm.spst_id`, `resolver_zona`
-(`motor_reglas/_resolucion.py`) nunca puede devolver una zona distinta de la
-genérica, aunque el tarifario de esa zona ya esté cargado y mapeado."""
+existiera el SPST correspondiente: sin `TablaKm.spst_id`, `resolver_tarifario`
+(`motor_reglas/_resolucion.py`) nunca puede matchear un tarifario específico
+de ese SPST, aunque ya esté cargado."""
 
 import unicodedata
 from dataclasses import dataclass
@@ -31,12 +31,15 @@ class PropuestaVinculoSpst:
 def proponer_vinculos_spst(
     filas: list[TablaKm], spsts: list[Spst]
 ) -> list[PropuestaVinculoSpst]:
-    """Solo filas sin `spst_id`. Propone el único SPST del prestador cuya zona
-    (o localidad, si no tiene zona) — normalizada sin acentos — sea substring de
-    la localidad del cliente o viceversa. Ambiguo (más de un candidato) o sin
-    texto para comparar = sin propuesta, queda para vínculo manual."""
+    """Solo filas sin `spst_id`. Propone el único SPST del prestador cuya
+    `zona_cobertura` (o localidad, si no tiene cobertura cargada) — normalizada
+    sin acentos — sea substring de la localidad del cliente o viceversa.
+    Ambiguo (más de un candidato) o sin texto para comparar = sin propuesta,
+    queda para vínculo manual."""
     candidatos = [
-        (s, _normalizar(s.zona or s.localidad or "")) for s in spsts if s.zona or s.localidad
+        (s, _normalizar(s.zona_cobertura or s.localidad or ""))
+        for s in spsts
+        if s.zona_cobertura or s.localidad
     ]
     return [_proponer_una(fila, candidatos) for fila in filas if fila.spst_id is None]
 

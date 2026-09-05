@@ -1,8 +1,8 @@
-"""Fakes en memoria del agregado Liquidación (liquidación/incidentes/alertas/
-observaciones) — separado de `fakes.py` (§4) porque son los cuatro fakes que
-crecen juntos en los tests de sync y reconciliación contra AyC. Simplificaciones
-conscientes: `list_by_prestador` de Incidente no filtra por prestador de verdad,
-y `delete_by_ids` no simula `ON DELETE CASCADE` (esa cascada se valida contra
+"""Fakes en memoria del agregado Liquidación (liquidación/incidentes/alertas) —
+separado de `fakes.py` (§4) porque son los tres fakes que crecen juntos en los
+tests de sync y reconciliación contra AyC. Simplificaciones conscientes:
+`list_by_prestador` de Incidente no filtra por prestador de verdad, y
+`delete_by_ids` no simula `ON DELETE CASCADE` (esa cascada se valida contra
 Postgres en `tests/integration`)."""
 
 import dataclasses
@@ -14,7 +14,6 @@ from uuid import UUID
 from src.modules.liquidaciones.domain.entities.alerta import Alerta
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
 from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
-from src.modules.liquidaciones.domain.entities.observacion import Observacion
 from src.modules.liquidaciones.domain.services.conciliar_alertas import AlertaConciliada
 from src.modules.liquidaciones.domain.value_objects.incidente_actualizado import (
     IncidenteActualizado,
@@ -24,7 +23,6 @@ from src.modules.liquidaciones.domain.value_objects.incidente_importado import (
 )
 from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado import (
     IncidenteEvaluado,
-    ObservacionGenerada,
 )
 
 
@@ -273,6 +271,11 @@ class FakeAlertaRepository:
                 justificacion=c.justificacion,
                 incidente_relacionado_id=c.incidente_relacionado_id,
                 fecha_generacion=datetime(2026, 1, 1),
+                es_grupo=c.generada.es_grupo,
+                grupo_incidente_ids=c.generada.grupo_incidente_ids,
+                monto_cobrado=c.generada.monto_cobrado,
+                monto_esperado=c.generada.monto_esperado,
+                diferencia=c.generada.diferencia,
             )
             for c in alertas
         ]
@@ -300,35 +303,3 @@ class FakeAlertaRepository:
                 filas[i] = actualizada
                 return actualizada
         return None
-
-
-class FakeObservacionRepository:
-    def __init__(self) -> None:
-        self.por_liquidacion: dict[UUID, list[Observacion]] = {}
-
-    async def list_by_liquidacion(self, liquidacion_id: UUID) -> list[Observacion]:
-        return self.por_liquidacion.get(liquidacion_id, [])
-
-    async def replace_for_liquidacion(
-        self, liquidacion_id: UUID, observaciones: Sequence[ObservacionGenerada]
-    ) -> list[Observacion]:
-        creadas = [
-            Observacion(
-                id=uuid.uuid4(),
-                liquidacion_id=liquidacion_id,
-                tipo_observacion=o.tipo_observacion,
-                severidad=o.severidad,
-                titulo=o.titulo,
-                descripcion=o.descripcion,
-                datos_contexto=o.datos_contexto,
-                monto_cobrado=o.monto_cobrado,
-                monto_esperado=o.monto_esperado,
-                diferencia=round(o.monto_cobrado - o.monto_esperado, 2),
-                estado="pendiente",
-                regla_codigo=o.regla_codigo,
-                fecha_generacion=datetime(2026, 1, 1),
-            )
-            for o in observaciones
-        ]
-        self.por_liquidacion[liquidacion_id] = creadas
-        return creadas

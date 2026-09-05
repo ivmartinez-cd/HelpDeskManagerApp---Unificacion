@@ -6,10 +6,14 @@ importa DB/frameworks).
 
 ALT005 corre por LOS DOS caminos, igual que en el legacy: `evaluar_alt005` (módulo
 `alt005_ruta_individual`) por-incidente, vía `_EVALUADORES_POR_INCIDENTE`, genera
-`AlertaGenerada`; `evaluar_grupo_alt005` (módulo `alt005_ruta`) agrupa por corredor y
-genera `ObservacionGenerada` vía `_evaluar_observaciones`. Ninguno de los dos suprime
-al otro — así funcionaba en producción real (activa=True, no el default `False` de
-`seed.py` que se asumía originalmente).
+`AlertaGenerada` (`es_grupo=False`) gateada por `regla.activa` (igual que cualquier
+otra regla); `evaluar_grupo_alt005` (módulo `alt005_ruta`) agrupa por corredor y
+genera `AlertaGenerada` (`es_grupo=True`) vía `_evaluar_alertas_grupo`, con su propio
+switch anidado (`regla_alerta.genera_observaciones`, en `configuracion` — nombre
+heredado de cuando esto era una entidad `Observacion` separada, ver
+`domain/entities/alerta.py` — desde la auditoría de liquidaciones, hallazgo "un
+switch controla dos comportamientos en ALT005"): sigue requiriendo `activa=True`,
+pero puede desactivarse por separado sin apagar la Alerta por-incidente.
 """
 
 import uuid
@@ -31,8 +35,8 @@ from src.modules.liquidaciones.domain.entities.regla_alerta import (
     CODIGO_ALT009_PAR_EMPRESA_SUCURSAL,
     CODIGO_ALT010_SERIE_DUPLICADA,
     ReglaAlerta,
+    genera_observaciones,
 )
-from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.entities.tarifario import (
     TIPO_CORRECTIVO,
@@ -53,7 +57,6 @@ from src.modules.liquidaciones.domain.services.motor_reglas._resolucion import (
     indexar_tablas_km,
     resolver_tabla_km,
     resolver_tarifario,
-    resolver_zona,
 )
 from src.modules.liquidaciones.domain.services.motor_reglas.alt005_ruta import (
     evaluar_grupo_alt005,
@@ -62,7 +65,6 @@ from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado impor
     AlertaGenerada,
     Hallazgo,
     IncidenteEvaluado,
-    ObservacionGenerada,
     ResultadoMotorReglas,
 )
 
@@ -82,7 +84,6 @@ _EVALUADORES_POR_INCIDENTE = (
 class _ContextoMotor:
     reglas_activas: Mapping[str, ReglaAlerta]
     indice_tablas: Mapping[tuple[str, str], TablaKm]
-    spsts_por_id: Mapping[uuid.UUID, Spst]
     tarifarios: Sequence[Tarifario]
     incidentes_liquidacion: Sequence[Incidente]
     incidentes_prestador: Sequence[Incidente]
@@ -93,20 +94,21 @@ def ejecutar_motor_reglas(
     incidentes_prestador: Sequence[Incidente],
     reglas_activas: Mapping[str, ReglaAlerta],
     tablas_km: Sequence[TablaKm],
-    spsts: Sequence[Spst],
     tarifarios: Sequence[Tarifario],
 ) -> ResultadoMotorReglas:
+    """Ya no recibe `spsts`: el tarifario se resuelve directo por
+    `TablaKm.spst_id` (ver `_resolucion.py`) — el SPST en sí no le hace falta
+    a ninguna regla desde que la zona dejó de ser el intermediario."""
     contexto = _ContextoMotor(
         reglas_activas=reglas_activas,
         indice_tablas=indexar_tablas_km(tablas_km),
-        spsts_por_id={s.id: s for s in spsts},
         tarifarios=tarifarios,
         incidentes_liquidacion=incidentes,
         incidentes_prestador=incidentes_prestador,
     )
     incidentes_evaluados, alertas = _evaluar_incidentes(incidentes, contexto)
-    observaciones = _evaluar_observaciones(incidentes, contexto)
-    return ResultadoMotorReglas(incidentes_evaluados, alertas, observaciones)
+    alertas = alertas + _evaluar_alertas_grupo(incidentes, contexto)
+    return ResultadoMotorReglas(incidentes_evaluados, alertas)
 
 
 def _evaluar_incidentes(
@@ -126,14 +128,14 @@ def _evaluar_incidente(
     incidente: Incidente, contexto: _ContextoMotor
 ) -> tuple[TablaKm | None, Tarifario | None, list[tuple[str, Hallazgo]]]:
     tabla_km = resolver_tabla_km(incidente, contexto.indice_tablas)
-    zona = resolver_zona(tabla_km, contexto.spsts_por_id)
-    tarifario = resolver_tarifario(incidente, zona, contexto.tarifarios)
+    spst_id = tabla_km.spst_id if tabla_km else None
+    tarifario = resolver_tarifario(incidente, spst_id, contexto.tarifarios)
     hallazgos = []
     for codigo in _EVALUADORES_POR_INCIDENTE:
         regla = contexto.reglas_activas.get(codigo)
         if regla is None:
             continue
-        args = (incidente, tabla_km, tarifario, contexto, regla)
+        args = (incidente, tabla_km, tarifario, spst_id, contexto, regla)
         hallazgos += [(codigo, h) for h in _evaluar_regla(codigo, *args)]
     return tabla_km, tarifario, hallazgos
 
@@ -143,6 +145,7 @@ def _evaluar_regla(
     incidente: Incidente,
     tabla_km: TablaKm | None,
     tarifario: Tarifario | None,
+    spst_id: uuid.UUID | None,
     contexto: _ContextoMotor,
     regla: ReglaAlerta,
 ) -> list[Hallazgo]:
@@ -159,7 +162,7 @@ def _evaluar_regla(
     if codigo == CODIGO_ALT005_RUTA_COMPARTIDA:
         return _evaluar_alt005(incidente, tabla_km, contexto)
     if codigo == CODIGO_ALT008_TARIFARIO_INEXISTENTE:
-        return alt008_tarifario.evaluar_alt008(incidente, tarifario)
+        return alt008_tarifario.evaluar_alt008(incidente, tarifario, spst_id)
     if codigo == CODIGO_ALT009_PAR_EMPRESA_SUCURSAL:
         return alt009_spst.evaluar_alt009(incidente, tabla_km)
     coincidencias = _coincidencias_alt010(incidente, contexto.incidentes_prestador)
@@ -264,10 +267,11 @@ def _a_incidente_evaluado(
     )
 
 
-def _evaluar_observaciones(
+def _evaluar_alertas_grupo(
     incidentes: Sequence[Incidente], contexto: _ContextoMotor
-) -> list[ObservacionGenerada]:
-    if CODIGO_ALT005_RUTA_COMPARTIDA not in contexto.reglas_activas:
+) -> list[AlertaGenerada]:
+    regla = contexto.reglas_activas.get(CODIGO_ALT005_RUTA_COMPARTIDA)
+    if regla is None or not genera_observaciones(regla):
         return []
     tablas_por_incidente = {}
     for inc in incidentes:

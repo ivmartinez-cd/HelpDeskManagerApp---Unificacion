@@ -18,7 +18,9 @@ class TarifarioModel(Base):
         UUID(as_uuid=True), ForeignKey("prestadores.id", ondelete="CASCADE"), nullable=False
     )
     tipo_servicio: Mapped[str] = mapped_column(String, nullable=False)
-    zona: Mapped[str | None] = mapped_column(String)
+    spst_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("spsts.id", ondelete="SET NULL")
+    )
     costo_servicio: Mapped[float] = mapped_column(Float, nullable=False)
     costo_km: Mapped[float] = mapped_column(Float, nullable=False)
     vigencia_desde: Mapped[date] = mapped_column(Date, nullable=False)

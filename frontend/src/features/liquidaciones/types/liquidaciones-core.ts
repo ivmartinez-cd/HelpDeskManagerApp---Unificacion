@@ -35,7 +35,6 @@ export interface ImportarLiquidacionResult {
   liquidacionId: string;
   totalIncidentes: number;
   totalAlertas: number;
-  totalObservaciones: number;
 }
 
 export interface ImportExcelMaestroResult {
@@ -81,6 +80,13 @@ export interface Alerta {
   justificacion: string | null;
   incidenteRelacionadoId: string | null;
   fechaGeneracion: string;
+  /** Ex entidad `Observacion` separada — hoy solo lo genera ALT005 agrupando
+   * por corredor. `incidenteId` es el incidente "principal" del grupo. */
+  esGrupo: boolean;
+  grupoIncidenteIds: string[];
+  montoCobrado: number | null;
+  montoEsperado: number | null;
+  diferencia: number | null;
 }
 
 /** Regla del motor (catálogo ALT001-009). `tieneEvaluador=false` = existe en
@@ -93,32 +99,16 @@ export interface ReglaAlerta {
   activa: boolean;
   riesgoBase: number;
   tieneEvaluador: boolean;
+  /** Segundo switch, hoy solo relevante para ALT005: además de la Alerta
+   * por-incidente (gateada por `activa`, igual que cualquier regla), ALT005
+   * puede generar una Alerta agrupada por corredor (`esGrupo=true`, ex
+   * entidad `Observacion` separada) — requiere `activa` además de este flag. */
+  generaObservaciones: boolean;
   updatedAt: string;
-}
-
-export type EstadoObservacion =
-  | "pendiente"
-  | "en_revision"
-  | "resuelta"
-  | "rechazada"
-  | "excepcion_aprobada";
-
-export interface Observacion {
-  id: string;
-  tipoObservacion: string;
-  severidad: string;
-  titulo: string;
-  descripcion: string | null;
-  montoCobrado: number;
-  montoEsperado: number;
-  diferencia: number;
-  estado: EstadoObservacion;
-  fechaGeneracion: string;
 }
 
 export interface LiquidacionDetalle {
   liquidacion: Liquidacion;
   incidentes: Incidente[];
   alertas: Alerta[];
-  observaciones: Observacion[];
 }

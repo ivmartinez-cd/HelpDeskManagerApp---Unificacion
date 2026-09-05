@@ -103,3 +103,39 @@ def test_pendiente_se_regenera_sin_incidente_relacionado() -> None:
     )
     [conciliada] = conciliar_alertas([existente], [_generada(inc)])
     assert conciliada.incidente_relacionado_id is None
+
+
+def test_regla_desactivada_preserva_alerta_ya_trabajada() -> None:
+    """Desactivar una regla no debe borrar el triage ya hecho sobre alertas que
+    siguen siendo válidas — solo evita que se generen alertas nuevas de ese tipo."""
+    inc = uuid.uuid4()
+    existente = _existente(inc, tipo="ALT005", estado="descartada", justificacion="ok")
+
+    conciliadas = conciliar_alertas([existente], [], codigos_reglas_activas={"ALT001"})
+
+    [conciliada] = conciliadas
+    assert conciliada.generada.tipo_alerta == "ALT005"
+    assert conciliada.estado == "descartada"
+    assert conciliada.justificacion == "ok"
+
+
+def test_regla_sigue_activa_y_dato_corregido_desaparece_igual() -> None:
+    """El comportamiento de siempre no cambia cuando la regla sigue activa: si el
+    motor ya no genera la alerta es porque el dato que la causaba se corrigió."""
+    inc = uuid.uuid4()
+    existente = _existente(inc, tipo="ALT001", estado="descartada", justificacion="x")
+
+    conciliadas = conciliar_alertas([existente], [], codigos_reglas_activas={"ALT001"})
+
+    assert conciliadas == []
+
+
+def test_regla_desactivada_no_preserva_alertas_pendientes() -> None:
+    """Solo se preserva lo que la TL trabajó — una pendiente de una regla
+    desactivada simplemente deja de generarse, no hay nada que conservar."""
+    inc = uuid.uuid4()
+    existente = _existente(inc, tipo="ALT005", estado="pendiente")
+
+    conciliadas = conciliar_alertas([existente], [], codigos_reglas_activas={"ALT001"})
+
+    assert conciliadas == []

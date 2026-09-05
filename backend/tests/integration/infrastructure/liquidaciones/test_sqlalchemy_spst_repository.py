@@ -22,7 +22,7 @@ async def _create_spst(db_session: AsyncSession, prestador_id: uuid.UUID, nombre
         domicilio="Calle 1",
         localidad="CABA",
         provincia="Buenos Aires",
-        zona="AMBA",
+        zona_cobertura="AMBA",
     )
 
 
@@ -73,12 +73,12 @@ async def test_update_changes_fields(db_session: AsyncSession, prestador_id: uui
         domicilio="Calle 2",
         localidad="Cordoba",
         provincia="Cordoba",
-        zona="Interior",
+        zona_cobertura="Interior",
     )
 
     assert updated is not None
     assert updated.nombre == "Renombrado"
-    assert updated.zona == "Interior"
+    assert updated.zona_cobertura == "Interior"
 
 
 async def test_delete_sets_null_on_related_tabla_km_instead_of_blocking(

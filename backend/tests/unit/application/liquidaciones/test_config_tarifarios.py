@@ -1,5 +1,5 @@
 """Tests de Create/Update/DeleteTarifario — el foco es el recadenado temporal de
-vigencias del grupo (prestador, tipo_servicio, zona) en cada escritura."""
+vigencias del grupo (prestador, tipo_servicio, spst_id) en cada escritura."""
 
 import uuid
 from datetime import date
@@ -31,7 +31,7 @@ async def test_create_recadena_el_grupo() -> None:
     creado = await CreateTarifario(_ports(repo)).execute(
         prestador_id=prestador_id,
         tipo_servicio="correctivo",
-        zona=None,
+        spst_id=None,
         costo_servicio=2000.0,
         costo_km=120.0,
         vigencia_desde=date(2025, 6, 1),
@@ -54,7 +54,7 @@ async def test_create_en_otro_grupo_no_toca_el_previo() -> None:
     await CreateTarifario(_ports(repo)).execute(
         prestador_id=prestador_id,
         tipo_servicio="preventivo",
-        zona=None,
+        spst_id=None,
         costo_servicio=2000.0,
         costo_km=120.0,
         vigencia_desde=date(2025, 6, 1),
@@ -86,7 +86,7 @@ async def test_update_que_cambia_de_grupo_recadena_origen_y_destino() -> None:
         origen_b.id,
         prestador_id=prestador_id,
         tipo_servicio="preventivo",
-        zona=None,
+        spst_id=None,
         costo_servicio=origen_b.costo_servicio,
         costo_km=origen_b.costo_km,
         vigencia_desde=date(2025, 6, 1),
@@ -114,7 +114,7 @@ async def test_update_inexistente_lanza_not_found() -> None:
             uuid.uuid4(),
             prestador_id=uuid.uuid4(),
             tipo_servicio="correctivo",
-            zona=None,
+            spst_id=None,
             costo_servicio=1.0,
             costo_km=1.0,
             vigencia_desde=date(2025, 1, 1),

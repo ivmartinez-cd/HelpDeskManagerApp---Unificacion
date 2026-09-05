@@ -89,7 +89,7 @@ class SpstIn(BaseModel):
     domicilio: str | None = None
     localidad: str | None = None
     provincia: str | None = None
-    zona: str | None = None
+    zona_cobertura: str | None = Field(default=None, alias="zonaCobertura")
 
 
 class SpstOut(BaseModel):
@@ -100,7 +100,7 @@ class SpstOut(BaseModel):
     domicilio: str | None
     localidad: str | None
     provincia: str | None
-    zona: str | None
+    zona_cobertura: str | None = Field(serialization_alias="zonaCobertura")
     activo: bool
     siges_empresa_id: int | None = Field(default=None, serialization_alias="sigesEmpresaId")
     siges_base_sucursal_id: int | None = Field(  # noqa: E501
@@ -117,7 +117,7 @@ class SpstOut(BaseModel):
             domicilio=e.domicilio,
             localidad=e.localidad,
             provincia=e.provincia,
-            zona=e.zona,
+            zona_cobertura=e.zona_cobertura,
             activo=e.activo,
             siges_empresa_id=e.siges_empresa_id,
             siges_base_sucursal_id=e.siges_base_sucursal_id,
@@ -132,7 +132,7 @@ class TarifarioIn(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     prestador_id: uuid.UUID = Field(alias="prestadorId")
     tipo_servicio: str = Field(alias="tipoServicio")
-    zona: str | None = None
+    spst_id: uuid.UUID | None = Field(default=None, alias="spstId")
     costo_servicio: float = Field(alias="costoServicio")
     costo_km: float = Field(alias="costoKm")
     vigencia_desde: date = Field(alias="vigenciaDesde")
@@ -144,7 +144,7 @@ class TarifarioOut(BaseModel):
     id: uuid.UUID
     prestador_id: uuid.UUID = Field(serialization_alias="prestadorId")
     tipo_servicio: str = Field(serialization_alias="tipoServicio")
-    zona: str | None
+    spst_id: uuid.UUID | None = Field(serialization_alias="spstId")
     costo_servicio: float = Field(serialization_alias="costoServicio")
     costo_km: float = Field(serialization_alias="costoKm")
     vigencia_desde: date = Field(serialization_alias="vigenciaDesde")
@@ -157,7 +157,7 @@ class TarifarioOut(BaseModel):
             id=e.id,
             prestador_id=e.prestador_id,
             tipo_servicio=e.tipo_servicio,
-            zona=e.zona,
+            spst_id=e.spst_id,
             costo_servicio=e.costo_servicio,
             costo_km=e.costo_km,
             vigencia_desde=e.vigencia_desde,

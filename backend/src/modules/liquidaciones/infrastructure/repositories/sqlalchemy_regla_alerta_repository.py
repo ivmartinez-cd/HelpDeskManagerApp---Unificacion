@@ -3,7 +3,10 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.liquidaciones.domain.entities.regla_alerta import ReglaAlerta
+from src.modules.liquidaciones.domain.entities.regla_alerta import (
+    CONFIG_GENERA_OBSERVACIONES,
+    ReglaAlerta,
+)
 from src.modules.liquidaciones.infrastructure.models.regla_alerta_model import ReglaAlertaModel
 
 
@@ -27,6 +30,18 @@ class SqlAlchemyReglaAlertaRepository:
         if row is None:
             return None
         row.activa = activa
+        await self._session.flush()
+        await self._session.refresh(row)
+        return _to_entity(row)
+
+    async def set_genera_observaciones(self, codigo: str, valor: bool) -> ReglaAlerta | None:
+        stmt = select(ReglaAlertaModel).where(ReglaAlertaModel.codigo == codigo)
+        row = (await self._session.execute(stmt)).scalar_one_or_none()
+        if row is None:
+            return None
+        # Reasigna un dict nuevo (no mutar in-place): JSONB sin `MutableDict`
+        # no detecta cambios sobre el objeto existente.
+        row.configuracion = {**row.configuracion, CONFIG_GENERA_OBSERVACIONES: valor}
         await self._session.flush()
         await self._session.refresh(row)
         return _to_entity(row)

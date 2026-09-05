@@ -1,7 +1,7 @@
 """Casos de uso de escritura de Tarifarios — port de POST/PATCH/DELETE /tarifarios.
 
 Toda alta/edición/baja recalcula la cadena temporal de vigencias del grupo
-(prestador, tipo_servicio, zona) afectado — ver `domain/services/cadena_tarifaria.py`
+(prestador, tipo_servicio, spst_id) afectado — ver `domain/services/cadena_tarifaria.py`
 (port de `_rebuild_temporal_chain` legacy). Si la edición mueve el tarifario de
 grupo, se recadenean el grupo de origen y el de destino. Tras recadenar se relee la
 fila (la cadena puede haberle pisado `vigencia_hasta`)."""
@@ -25,7 +25,7 @@ class ConfigTarifariosPorts:
 
 async def _recadenar_grupo_de(repo: TarifarioRepository, t: Tarifario) -> None:
     await recadenar_grupo(
-        repo, prestador_id=t.prestador_id, tipo_servicio=t.tipo_servicio, zona=t.zona
+        repo, prestador_id=t.prestador_id, tipo_servicio=t.tipo_servicio, spst_id=t.spst_id
     )
 
 
@@ -38,7 +38,7 @@ class CreateTarifario:
         *,
         prestador_id: UUID,
         tipo_servicio: str,
-        zona: str | None,
+        spst_id: UUID | None,
         costo_servicio: float,
         costo_km: float,
         vigencia_desde: date,
@@ -48,7 +48,7 @@ class CreateTarifario:
         creado = await repo.create(
             prestador_id=prestador_id,
             tipo_servicio=tipo_servicio,
-            zona=zona,
+            spst_id=spst_id,
             costo_servicio=costo_servicio,
             costo_km=costo_km,
             vigencia_desde=vigencia_desde,
@@ -69,7 +69,7 @@ class UpdateTarifario:
         *,
         prestador_id: UUID,
         tipo_servicio: str,
-        zona: str | None,
+        spst_id: UUID | None,
         costo_servicio: float,
         costo_km: float,
         vigencia_desde: date,
@@ -83,7 +83,7 @@ class UpdateTarifario:
             tarifario_id,
             prestador_id=prestador_id,
             tipo_servicio=tipo_servicio,
-            zona=zona,
+            spst_id=spst_id,
             costo_servicio=costo_servicio,
             costo_km=costo_km,
             vigencia_desde=vigencia_desde,
@@ -97,10 +97,10 @@ class UpdateTarifario:
 
     async def _recadenar_afectados(self, anterior: Tarifario, updated: Tarifario) -> None:
         await _recadenar_grupo_de(self._ports.tarifarios, anterior)
-        if (updated.prestador_id, updated.tipo_servicio, updated.zona) != (
+        if (updated.prestador_id, updated.tipo_servicio, updated.spst_id) != (
             anterior.prestador_id,
             anterior.tipo_servicio,
-            anterior.zona,
+            anterior.spst_id,
         ):
             await _recadenar_grupo_de(self._ports.tarifarios, updated)
 

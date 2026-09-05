@@ -15,7 +15,6 @@ class ImportarLiquidacionOut(BaseModel):
     liquidacion_id: uuid.UUID = Field(serialization_alias="liquidacionId")
     total_incidentes: int = Field(serialization_alias="totalIncidentes")
     total_alertas: int = Field(serialization_alias="totalAlertas")
-    total_observaciones: int = Field(serialization_alias="totalObservaciones")
 
     @classmethod
     def from_dto(cls, dto: ImportarLiquidacionResultado) -> "ImportarLiquidacionOut":
@@ -23,5 +22,4 @@ class ImportarLiquidacionOut(BaseModel):
             liquidacion_id=dto.liquidacion_id,
             total_incidentes=dto.total_incidentes,
             total_alertas=dto.total_alertas,
-            total_observaciones=dto.total_observaciones,
         )

@@ -9,4 +9,3 @@ class ImportarLiquidacionResultado:
     liquidacion_id: UUID
     total_incidentes: int
     total_alertas: int
-    total_observaciones: int

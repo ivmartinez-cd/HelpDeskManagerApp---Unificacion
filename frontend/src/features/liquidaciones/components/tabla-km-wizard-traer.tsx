@@ -11,9 +11,14 @@ import type { EstadoAsistenteKm, ResultadoAutoVinculoN1, SucursalSiges } from ".
 import { Aviso, Resultado, VerDetalle } from "./tabla-km-wizard-ui";
 
 type Refresco = Awaited<ReturnType<typeof liquidacionesApi.refrescarDatosSucursales>>;
-type Etapa = "domicilios" | "nombres" | "importar" | null;
+type Etapa = "domicilios" | "nombres" | "importar" | "vinculando" | null;
 
-interface ResultadoTraer { refresco: Refresco; n1: ResultadoAutoVinculoN1; importadas: number }
+interface ResultadoTraer {
+  refresco: Refresco;
+  n1: ResultadoAutoVinculoN1;
+  importadas: number;
+  vinculadas: number;
+}
 
 /** Bloqueantes que se resuelven afuera del asistente (Configuración / Gestión). */
 export function Bloqueantes({ estado, nombrePrestador }: { estado: EstadoAsistenteKm; nombrePrestador: string }) {
@@ -99,7 +104,8 @@ function ResumenTraido({ r }: { r: ResultadoTraer }) {
       <Resultado>
         Listo: actualizamos {plural(refresco.actualizadas, "domicilio", "domicilios")}
         {refresco.vinculadas > 0 && `, completamos ${plural(refresco.vinculadas, "vínculo", "vínculos")}`}
-        , importamos {plural(r.importadas, "sucursal", "sucursales")} y vinculamos {n1.vinculadas} por nombre automáticamente.
+        , importamos {plural(r.importadas, "sucursal", "sucursales")} y vinculamos {n1.vinculadas} por nombre automáticamente
+        {r.vinculadas > 0 && `, y ${plural(r.vinculadas, "sucursal nueva quedó", "sucursales nuevas quedaron")} con SPST asignado`}.
       </Resultado>
       {refresco.noEncontradas > 0 && (
         <p className="font-body text-sm text-muted-foreground">
@@ -131,7 +137,10 @@ function ResumenTraido({ r }: { r: ResultadoTraer }) {
 }
 
 const LABEL_ETAPA: Record<Exclude<Etapa, null>, string> = {
-  domicilios: "Actualizando domicilios…", nombres: "Vinculando nombres…", importar: "Importando…",
+  domicilios: "Actualizando domicilios…",
+  nombres: "Vinculando nombres…",
+  importar: "Importando…",
+  vinculando: "Vinculando SPST…",
 };
 
 async function importarSucursales(prestadorId: string, nuevas: SucursalSiges[], onProgreso: (i: number) => void) {
@@ -183,8 +192,19 @@ export function MomentoTraer({ prestadorId, nombrePrestador, datos, onCambio, re
       setEtapa("importar");
       setProgreso(0);
       await importarSucursales(prestadorId, aImportar, setProgreso);
-      setResultado({ refresco, n1, importadas: aImportar.length });
-      toast.success("Datos traídos de Gestión");
+      // Las filas recién importadas nacen sin SPST (Gestión no lo sabe) — sin
+      // esto quedarían sin zona/tarifa hasta que alguien lo notara a mano.
+      setEtapa("vinculando");
+      const vinculo =
+        aImportar.length > 0
+          ? await liquidacionesApi.vincularSpstTablaKm(prestadorId, false)
+          : null;
+      setResultado({ refresco, n1, importadas: aImportar.length, vinculadas: vinculo?.vinculadas ?? 0 });
+      toast.success(
+        vinculo && vinculo.vinculadas > 0
+          ? `Datos traídos de Gestión (${vinculo.vinculadas} vinculadas a SPST automáticamente)`
+          : "Datos traídos de Gestión",
+      );
       await onCambio();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "No se pudo traer de Gestión. Probá de nuevo.");

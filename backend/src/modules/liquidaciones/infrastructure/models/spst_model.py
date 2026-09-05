@@ -26,7 +26,7 @@ class SpstModel(Base):
     domicilio: Mapped[str | None] = mapped_column(String)
     localidad: Mapped[str | None] = mapped_column(String)
     provincia: Mapped[str | None] = mapped_column(String)
-    zona: Mapped[str | None] = mapped_column(String)
+    zona_cobertura: Mapped[str | None] = mapped_column(String)
     activo: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     siges_empresa_id: Mapped[int | None] = mapped_column(Integer, unique=True)
     siges_base_sucursal_id: Mapped[int | None] = mapped_column(Integer)

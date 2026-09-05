@@ -9,7 +9,7 @@ para que FastAPI no intente parsear esos segmentos como UUID y devuelva 422."""
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
@@ -18,15 +18,13 @@ from src.modules.liquidaciones.domain.well_known_permissions import CREATE, UPDA
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_liquidacion_repository import (  # noqa: E501
     SqlAlchemyLiquidacionRepository,
 )
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_observacion_repository import (  # noqa: E501
-    SqlAlchemyObservacionRepository,
-)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (
     SqlAlchemyPrestadorRepository,
 )
 from src.modules.liquidaciones.presentation.dependencies import (
     build_actualizar_estado_local,
     build_actualizar_extra_liquidacion,
+    build_eliminar_liquidacion_local,
     build_get_liquidacion_detalle,
     build_importar_liquidacion,
     build_list_liquidaciones,
@@ -37,8 +35,6 @@ from src.modules.liquidaciones.presentation.schemas.importar_liquidacion_schemas
 )
 from src.modules.liquidaciones.presentation.schemas.liquidacion_detalle_schemas import (
     LiquidacionDetalleOut,
-    ObservacionEstadoIn,
-    ObservacionOut,
 )
 from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import (
     EstadoIn,
@@ -165,36 +161,21 @@ async def update_extra_liquidacion(
     return LiquidacionOut.from_entity(updated)
 
 
-@router.patch(
-    "/{liquidacion_id}/observaciones/{observacion_id}/estado",
-    response_model=ObservacionOut,
-)
-async def update_estado_observacion(
-    liquidacion_id: UUID,
-    observacion_id: UUID,
-    body: ObservacionEstadoIn,
-    _: Identity = _require_update,
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> ObservacionOut:
-    updated = await SqlAlchemyObservacionRepository(db).update_estado(
-        liquidacion_id, observacion_id, body.estado
-    )
-    if not updated:
-        raise HTTPException(status_code=404, detail="Observación no encontrada")
-    return ObservacionOut.from_entity(updated)
-
-
 @router.delete("/{liquidacion_id}", status_code=204)
 async def delete_liquidacion(
     liquidacion_id: UUID,
+    forzar: bool = Query(default=False),
     _: Identity = _require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
-    # Baja local únicamente — para liquidaciones sin numero_liquidacion (CSV sin AyC ID).
-    # Para liquidaciones con vínculo AyC, usar POST /{id}/anular.
-    deleted = await SqlAlchemyLiquidacionRepository(db).delete(liquidacion_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Liquidación no encontrada")
+    """Baja local. Para liquidaciones sin `numeroLiquidacion` (CSV sin AyC ID) borra
+    directo. Para liquidaciones vinculadas a AyC, rechaza con 409 salvo `forzar=true`
+    — ese es el único camino que debería usarlo (el link "Eliminar solo localmente"
+    de la barra de acciones AyC, tras un `/anular` que ya falló del lado de AyC).
+    Sin este guard, un "Eliminar" casual sobre una liquidación vinculada la borra
+    local sin avisar a AyC, y la próxima sincronización la recrea como "nueva",
+    perdiendo todo el triage de alertas/observaciones ya hecho."""
+    await build_eliminar_liquidacion_local(db).execute(liquidacion_id, forzar=forzar)
 
 
 @router.get("/{liquidacion_id}", response_model=LiquidacionDetalleOut)

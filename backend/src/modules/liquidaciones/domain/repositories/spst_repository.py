@@ -23,7 +23,7 @@ class SpstRepository(Protocol):
         domicilio: str | None,
         localidad: str | None,
         provincia: str | None,
-        zona: str | None,
+        zona_cobertura: str | None,
     ) -> Spst:
         """Genera el `id` (UUID) internamente."""
         ...
@@ -36,7 +36,7 @@ class SpstRepository(Protocol):
         domicilio: str | None,
         localidad: str | None,
         provincia: str | None,
-        zona: str | None,
+        zona_cobertura: str | None,
     ) -> Spst | None: ...
 
     async def toggle_activo(self, spst_id: UUID, *, activo: bool) -> Spst | None: ...

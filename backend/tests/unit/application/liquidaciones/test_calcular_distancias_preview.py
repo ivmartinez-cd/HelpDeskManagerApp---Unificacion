@@ -23,8 +23,8 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     SigesSucursalCliente,
     SigesSucursalPropia,
 )
-from tests.unit.domain.liquidaciones.factories import make_prestador, make_tabla_km
-from tests.unit.domain.liquidaciones.fakes import FakePrestadorRepository
+from tests.unit.domain.liquidaciones.factories import make_prestador, make_spst, make_tabla_km
+from tests.unit.domain.liquidaciones.fakes import FakePrestadorRepository, FakeSpstRepository
 from tests.unit.domain.liquidaciones.fakes_geolocalizacion import (
     FakeCalculoKmPreviewRepository,
     FakeGoogleMapsIdaVuelta,
@@ -62,8 +62,14 @@ def _armar(
     tabla_km: FakeTablaKmGeoRepository | None = None,
     tramos: dict | None = None,
     tope: int = 200,
+    spsts: FakeSpstRepository | None = None,
+    prestador_id: UUID | None = None,
 ) -> tuple[PreviewCalcularDistancias, AplicarCalcularDistancias, CalcularDistanciasPorts, UUID]:
-    prestador = make_prestador(siges_empresa_id=77, siges_base_sucursal_id=9)
+    prestador = make_prestador(
+        **({"id": prestador_id} if prestador_id else {}),
+        siges_empresa_id=77,
+        siges_base_sucursal_id=9,
+    )
     base_propia = SigesSucursalPropia(
         siges_sucursal_id=9, descripcion="Base", latitud="-38,7189846", longitud="-62,264305"
     )
@@ -77,6 +83,7 @@ def _armar(
         # Todas las empresas del escenario cuentan como activas — el filtro de
         # ex-clientes se prueba aparte.
         incidentes=FakeIncidentesActividad({c.empresa_nombre for c in clientes}),
+        spsts=spsts or FakeSpstRepository(),
     )
     return (
         PreviewCalcularDistancias(ports, tope),
@@ -206,3 +213,33 @@ class TestApply:
         _, aplicar_uc, _, _ = _armar([_sucursal_cliente()])
         with pytest.raises(PreviewNoEncontradoError):
             await aplicar_uc.execute(uuid4())
+
+    @pytest.mark.asyncio
+    async def test_apply_vincula_spst_de_las_filas_nuevas(self) -> None:
+        """Las filas que crea el cálculo de distancias nacen sin SPST (Google no
+        lo sabe) — sin este auto-vínculo quedarían sin zona/tarifa en silencio."""
+        prestador_id = uuid4()
+        spst = make_spst(prestador_id=prestador_id, zona_cobertura="Guamini")
+        spsts = FakeSpstRepository([spst])
+        preview_uc, aplicar_uc, ports, _ = _armar(
+            [_sucursal_cliente()], spsts=spsts, prestador_id=prestador_id
+        )
+        preview = await preview_uc.execute(prestador_id)
+        await aplicar_uc.execute(preview.id)
+        [fila] = await ports.tabla_km.list_by_prestador(prestador_id)
+        assert fila.spst_id == spst.id
+
+    @pytest.mark.asyncio
+    async def test_apply_no_vincula_spst_ambiguo(self) -> None:
+        prestador_id = uuid4()
+        spsts = FakeSpstRepository([
+            make_spst(prestador_id=prestador_id, zona_cobertura="Guamini Norte"),
+            make_spst(prestador_id=prestador_id, zona_cobertura="Guamini Sur"),
+        ])
+        preview_uc, aplicar_uc, ports, _ = _armar(
+            [_sucursal_cliente()], spsts=spsts, prestador_id=prestador_id
+        )
+        preview = await preview_uc.execute(prestador_id)
+        await aplicar_uc.execute(preview.id)
+        [fila] = await ports.tabla_km.list_by_prestador(prestador_id)
+        assert fila.spst_id is None

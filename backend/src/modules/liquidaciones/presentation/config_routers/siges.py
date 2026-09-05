@@ -78,10 +78,11 @@ async def sync_config_desde_siges(
 
 @router.get("/siges/zonas", response_model=ZonasSigesOut)
 async def estado_zonas_siges(
+    prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
     _: Identity = require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ZonasSigesOut:
-    resultado = await build_estado_zonas_siges(db).execute()
+    resultado = await build_estado_zonas_siges(db).execute(prestador_id)
     return ZonasSigesOut.from_dto(resultado)
 
 
@@ -94,7 +95,7 @@ async def mapear_zona_siges(
     mapa = await build_mapear_zona_siges(db).execute(
         body.prestador_id,
         descripcion_siges=body.descripcion_siges,
-        zona_local=body.zona_local,
+        spst_id=body.spst_id,
     )
     return ZonaMapOut.from_entity(mapa)
 
@@ -102,10 +103,13 @@ async def mapear_zona_siges(
 @router.post("/siges/sync-tarifarios", response_model=SyncTarifariosOut)
 async def sync_tarifarios_desde_siges(
     dry_run: bool = Query(default=True, alias="dryRun"),
+    prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SyncTarifariosOut:
-    resultado = await build_sync_tarifarios_desde_siges(db).execute(dry_run=dry_run)
+    resultado = await build_sync_tarifarios_desde_siges(db).execute(
+        dry_run=dry_run, prestador_id=prestador_id
+    )
     return SyncTarifariosOut.from_dto(resultado)
 
 

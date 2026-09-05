@@ -40,6 +40,10 @@ from src.modules.liquidaciones.application.use_cases.backfill_estado_liquidacion
     BackfillEstadoLiquidaciones,
     BackfillEstadoLiquidacionesPorts,
 )
+from src.modules.liquidaciones.application.use_cases.eliminar_liquidacion_local import (
+    EliminarLiquidacionLocal,
+    EliminarLiquidacionLocalPorts,
+)
 from src.modules.liquidaciones.application.use_cases.get_liquidacion_detalle import (
     GetLiquidacionDetalle,
     GetLiquidacionDetallePorts,
@@ -82,9 +86,6 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_incidente_
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_liquidacion_repository import (  # noqa: E501
     SqlAlchemyLiquidacionRepository,
-)
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_observacion_repository import (  # noqa: E501
-    SqlAlchemyObservacionRepository,
 )
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
@@ -136,6 +137,12 @@ def build_actualizar_estado_local(session: AsyncSession) -> ActualizarEstadoLoca
     )
 
 
+def build_eliminar_liquidacion_local(session: AsyncSession) -> EliminarLiquidacionLocal:
+    return EliminarLiquidacionLocal(
+        EliminarLiquidacionLocalPorts(liquidaciones=SqlAlchemyLiquidacionRepository(session))
+    )
+
+
 def build_actualizar_extra_liquidacion(session: AsyncSession) -> ActualizarExtraLiquidacion:
     return ActualizarExtraLiquidacion(
         ActualizarExtraLiquidacionPorts(liquidaciones=SqlAlchemyLiquidacionRepository(session))
@@ -166,7 +173,6 @@ def build_get_liquidacion_detalle(session: AsyncSession) -> GetLiquidacionDetall
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
             incidentes=SqlAlchemyIncidenteRepository(session),
             alertas=SqlAlchemyAlertaRepository(session),
-            observaciones=SqlAlchemyObservacionRepository(session),
             tablas_km=SqlAlchemyTablaKmRepository(session),
         )
     )
@@ -178,10 +184,8 @@ def build_reanalizar_liquidacion(session: AsyncSession) -> ReanalizarLiquidacion
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
             incidentes=SqlAlchemyIncidenteRepository(session),
             alertas=SqlAlchemyAlertaRepository(session),
-            observaciones=SqlAlchemyObservacionRepository(session),
             reglas=SqlAlchemyReglaAlertaRepository(session),
             tablas_km=SqlAlchemyTablaKmRepository(session),
-            spsts=SqlAlchemySpstRepository(session),
             tarifarios=SqlAlchemyTarifarioRepository(session),
         )
     )

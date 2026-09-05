@@ -27,17 +27,22 @@ export const sigesApi = {
   vincularSpstSiges: (id: string, sigesEmpresaId: number | null) =>
     httpClient.put<Spst>(`/api/liquidaciones/spsts/${id}/siges-vinculo`, { sigesEmpresaId }),
 
-  getSigesZonas: () => httpClient.get<ZonasSiges>("/api/liquidaciones/siges/zonas"),
+  // `prestadorId` acota el reporte de zonas/sync a un solo prestador — sin él
+  // trae el agregado de todos los prestadores vinculados a Siges (ADR-014).
+  getSigesZonas: (prestadorId: string) =>
+    httpClient.get<ZonasSiges>(
+      `/api/liquidaciones/siges/zonas?${new URLSearchParams({ prestadorId })}`,
+    ),
 
   mapearZonaSiges: (body: {
     prestadorId: string;
     descripcionSiges: string;
-    zonaLocal: string | null;
+    spstId: string | null;
   }) => httpClient.put<{ id: string }>("/api/liquidaciones/siges/zonas", body),
 
-  syncTarifariosSiges: (dryRun: boolean) =>
+  syncTarifariosSiges: (dryRun: boolean, prestadorId: string) =>
     httpClient.post<SyncTarifariosResult>(
-      `/api/liquidaciones/siges/sync-tarifarios?dryRun=${dryRun}`,
+      `/api/liquidaciones/siges/sync-tarifarios?${new URLSearchParams({ dryRun: String(dryRun), prestadorId })}`,
     ),
 
   buscarSucursalesSiges: (prestadorId: string, q: string) => {

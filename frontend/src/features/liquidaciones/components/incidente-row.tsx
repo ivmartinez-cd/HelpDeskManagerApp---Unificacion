@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronRight, ExternalLink, Route } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
 import { incidentUrl } from "@/shared/utils/incident-link";
 import { useSeleccionAlertas } from "../hooks/seleccion-alertas-context";
@@ -148,6 +149,19 @@ export function IncidenteRow({
             <span className="font-semibold text-success">
               {Math.round(incidente.cantKmEsperado).toLocaleString("es-AR")}
             </span>
+          ) : incidente.empresaNombre && incidente.sucursalNombre ? (
+            <Link
+              href={`/liquidaciones/configuracion/tabla-km?${new URLSearchParams({
+                prestadorId,
+                empresa: incidente.empresaNombre,
+                sucursal: incidente.sucursalNombre,
+              })}`}
+              onClick={(e) => e.stopPropagation()}
+              title="Falta esta empresa/sucursal en Tabla KM — cargarla acá"
+              className="text-xs font-semibold text-warning underline decoration-dotted hover:opacity-80"
+            >
+              Sin tabla
+            </Link>
           ) : (
             <span className="text-xs font-semibold text-warning">Sin tabla</span>
           )}

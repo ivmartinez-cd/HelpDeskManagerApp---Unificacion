@@ -56,3 +56,30 @@ async def test_list_all_returns_ordered_by_codigo(db_session: AsyncSession) -> N
     todas = await SqlAlchemyReglaAlertaRepository(db_session).list_all()
 
     assert [r.codigo for r in todas] == ["ALT001", "ALT005"]
+
+
+async def test_set_activa_updates_and_returns_none_when_missing(
+    db_session: AsyncSession,
+) -> None:
+    await _create_regla(db_session, codigo="ALT001", activa=True)
+    repo = SqlAlchemyReglaAlertaRepository(db_session)
+
+    actualizada = await repo.set_activa("ALT001", False)
+    assert actualizada is not None
+    assert actualizada.activa is False
+    assert await repo.set_activa("NOEXISTE", True) is None
+
+
+async def test_set_genera_observaciones_merges_sin_pisar_otras_claves(
+    db_session: AsyncSession,
+) -> None:
+    model = await _create_regla(db_session, codigo="ALT005", activa=True)
+    model.configuracion = {"otra_clave": 123}
+    await db_session.flush()
+    repo = SqlAlchemyReglaAlertaRepository(db_session)
+
+    actualizada = await repo.set_genera_observaciones("ALT005", False)
+
+    assert actualizada is not None
+    assert actualizada.configuracion == {"otra_clave": 123, "genera_observaciones": False}
+    assert await repo.set_genera_observaciones("NOEXISTE", True) is None

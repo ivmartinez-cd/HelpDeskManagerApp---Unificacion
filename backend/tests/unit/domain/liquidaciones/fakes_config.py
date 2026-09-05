@@ -59,17 +59,17 @@ class FakeTarifarioZonaMapRepository:
         return list(self.rows)
 
     async def upsert(
-        self, *, prestador_id: UUID, descripcion_siges: str, zona_local: str | None
+        self, *, prestador_id: UUID, descripcion_siges: str, spst_id: UUID | None
     ) -> TarifarioZonaMap:
         for i, fila in enumerate(self.rows):
             if (fila.prestador_id, fila.descripcion_siges) == (prestador_id, descripcion_siges):
-                self.rows[i] = dataclasses.replace(fila, zona_local=zona_local)
+                self.rows[i] = dataclasses.replace(fila, spst_id=spst_id)
                 return self.rows[i]
         nueva = TarifarioZonaMap(
             id=uuid4(),
             prestador_id=prestador_id,
             descripcion_siges=descripcion_siges,
-            zona_local=zona_local,
+            spst_id=spst_id,
             created_at=datetime(2026, 1, 1),
         )
         self.rows.append(nueva)
@@ -140,7 +140,7 @@ class FakeConfigSpstRepository(FakeSpstRepository):
         domicilio: str | None,
         localidad: str | None,
         provincia: str | None,
-        zona: str | None,
+        zona_cobertura: str | None,
     ) -> Spst | None:
         idx = self._index_of(spst_id)
         if idx is None:
@@ -151,7 +151,7 @@ class FakeConfigSpstRepository(FakeSpstRepository):
             domicilio=domicilio,
             localidad=localidad,
             provincia=provincia,
-            zona=zona,
+            zona_cobertura=zona_cobertura,
         )
         return self.rows[idx]
 
@@ -190,12 +190,13 @@ class FakeConfigTarifarioRepository(FakeTarifarioRepository):
         return self.rows[idx] if idx is not None else None
 
     async def list_grupo(
-        self, *, prestador_id: UUID, tipo_servicio: str, zona: str | None
+        self, *, prestador_id: UUID, tipo_servicio: str, spst_id: UUID | None
     ) -> list[Tarifario]:
         return [
             t
             for t in self.rows
-            if (t.prestador_id, t.tipo_servicio, t.zona) == (prestador_id, tipo_servicio, zona)
+            if (t.prestador_id, t.tipo_servicio, t.spst_id)
+            == (prestador_id, tipo_servicio, spst_id)
         ]
 
     async def set_vigencia_hasta(self, tarifario_id: UUID, vigencia_hasta: date | None) -> None:
@@ -210,7 +211,7 @@ class FakeConfigTarifarioRepository(FakeTarifarioRepository):
         *,
         prestador_id: UUID,
         tipo_servicio: str,
-        zona: str | None,
+        spst_id: UUID | None,
         costo_servicio: float,
         costo_km: float,
         vigencia_desde: date,
@@ -223,7 +224,7 @@ class FakeConfigTarifarioRepository(FakeTarifarioRepository):
             self.rows[idx],
             prestador_id=prestador_id,
             tipo_servicio=tipo_servicio,
-            zona=zona,
+            spst_id=spst_id,
             costo_servicio=costo_servicio,
             costo_km=costo_km,
             vigencia_desde=vigencia_desde,

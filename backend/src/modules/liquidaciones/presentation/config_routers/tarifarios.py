@@ -13,11 +13,16 @@ from src.modules.auth.application.dtos.results import Identity
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repository import (
+    SqlAlchemySpstRepository,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tarifario_repository import (  # noqa: E501
     SqlAlchemyTarifarioRepository,
 )
-from src.modules.liquidaciones.presentation import _liq_csv as csv_helpers
 from src.modules.liquidaciones.presentation import _liq_csv_export as csv_export
+from src.modules.liquidaciones.presentation import (
+    _liq_csv_upsert_tarifarios as csv_helpers,
+)
 from src.modules.liquidaciones.presentation.config_routers._deps import (
     CATALOGO_SIZE,
     require_export,
@@ -61,7 +66,7 @@ async def create_tarifario(
     tarifario = await build_create_tarifario(db).execute(
         prestador_id=body.prestador_id,
         tipo_servicio=body.tipo_servicio,
-        zona=body.zona or None,
+        spst_id=body.spst_id,
         costo_servicio=body.costo_servicio,
         costo_km=body.costo_km,
         vigencia_desde=body.vigencia_desde,
@@ -81,7 +86,7 @@ async def update_tarifario(
         tarifario_id,
         prestador_id=body.prestador_id,
         tipo_servicio=body.tipo_servicio,
-        zona=body.zona or None,
+        spst_id=body.spst_id,
         costo_servicio=body.costo_servicio,
         costo_km=body.costo_km,
         vigencia_desde=body.vigencia_desde,
@@ -101,13 +106,21 @@ async def delete_tarifario(
 
 @router.get("/tarifarios/export")
 async def export_tarifarios_csv(
+    prestador_id: UUID | None = Query(default=None, alias="prestadorId"),
     _: Identity = require_export,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> StreamingResponse:
+    """Sin `prestadorId` exporta el catálogo completo. Con él (el caso normal desde
+    la pantalla, que siempre tiene un prestador filtrado), exporta solo el suyo —
+    antes ignoraba el filtro y siempre traía todo, rompiendo el ciclo "exporto lo
+    que veo, corrijo, reimporto"."""
+    repo = SqlAlchemyTarifarioRepository(db)
+    rows = await (repo.list_by_prestador(prestador_id) if prestador_id else repo.list_all())
     prestadores = await SqlAlchemyPrestadorRepository(db).list_all()
     pmap = {str(p.id): p.nombre_corto for p in prestadores}
-    rows = await SqlAlchemyTarifarioRepository(db).list_all()
-    return csv_export.export_tarifarios(rows, pmap)
+    spsts = await SqlAlchemySpstRepository(db).list_all()
+    smap = {str(s.id): s.nombre for s in spsts}
+    return csv_export.export_tarifarios(rows, pmap, smap)
 
 
 @router.post("/tarifarios/import")
@@ -117,5 +130,10 @@ async def import_tarifarios_csv(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, int]:
     return await csv_helpers.import_tarifarios(
-        file, build_create_tarifario(db), SqlAlchemyPrestadorRepository(db)
+        file,
+        build_create_tarifario(db),
+        build_update_tarifario(db),
+        SqlAlchemyPrestadorRepository(db),
+        SqlAlchemyTarifarioRepository(db),
+        SqlAlchemySpstRepository(db),
     )

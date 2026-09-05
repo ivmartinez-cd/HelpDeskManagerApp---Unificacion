@@ -16,6 +16,9 @@ from src.modules.liquidaciones.domain.entities.calculo_km_preview import (
     PreviewFila,
 )
 from src.modules.liquidaciones.domain.errors import PreviewNoEncontradoError
+from src.modules.liquidaciones.domain.services.vincular_tabla_km_spst import (
+    proponer_vinculos_spst,
+)
 
 
 @dataclass(frozen=True)
@@ -41,7 +44,21 @@ class AplicarCalcularDistancias:
             creadas += c
             actualizadas += a
         await self._ports.previews.delete(preview_id)
+        if creadas:
+            # Las filas nuevas nacen sin SPST (el cálculo de distancias no lo
+            # sabe) — sin esto quedarían sin zona/tarifa hasta que alguien lo
+            # notara a mano. Mismo criterio "único candidato" del botón manual.
+            await self._vincular_spst_nuevas(preview.prestador_id)
         return AplicarDistanciasResultado(creadas=creadas, actualizadas=actualizadas)
+
+    async def _vincular_spst_nuevas(self, prestador_id: UUID) -> None:
+        filas = await self._ports.tabla_km.list_by_prestador(prestador_id)
+        spsts = await self._ports.spsts.list_by_prestador(prestador_id)
+        for propuesta in proponer_vinculos_spst(filas, spsts):
+            if propuesta.spst_id is not None:
+                await self._ports.tabla_km.update_vinculo_spst(
+                    propuesta.tabla_km_id, spst_id=propuesta.spst_id
+                )
 
     async def _aplicar_fila(
         self, prestador_id: UUID, fila: PreviewFila

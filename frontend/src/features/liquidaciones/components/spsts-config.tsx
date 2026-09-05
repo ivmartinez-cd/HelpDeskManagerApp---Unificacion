@@ -146,7 +146,8 @@ export function SpstsConfig() {
                   <th className={thCls}>PST</th>
                   <th className={thCls}>Nombre</th>
                   <th className={thCls}>Localidad</th>
-                  <th className={thCls}>Zona</th>
+                  <th className={thCls}>Zona de cobertura</th>
+                  <th className={thCls} title="A diferencia del vínculo Siges del Prestador, este no sincroniza datos — solo saca al SPST de la lista de 'disponibles' para vincular a otro">Vínculo Siges</th>
                   <th className={thCls}>Estado</th>
                   <th className={`${thCls} text-right`}>Acciones</th>
                 </tr>
@@ -159,16 +160,25 @@ export function SpstsConfig() {
                       <td className={tdCls}><span className="font-heading text-sm font-bold uppercase text-foreground">{pst?.nombreCorto ?? "—"}</span></td>
                       <td className={tdCls}><span className="text-brand-orange">{s.nombre}</span></td>
                       <td className={`${tdCls} text-muted-foreground`}>{s.localidad || "—"}</td>
-                      <td className={`${tdCls} text-muted-foreground`}>{s.zona || "—"}</td>
+                      <td className={`${tdCls} text-muted-foreground`}>{s.zonaCobertura || "—"}</td>
+                      <td className={tdCls}>
+                        {s.sigesEmpresaId != null ? (
+                          <Badge variant="success">#{s.sigesEmpresaId}</Badge>
+                        ) : (
+                          <Badge variant="neutral">Sin vínculo</Badge>
+                        )}
+                      </td>
                       <td className={tdCls}>
                         <Badge variant={s.activo ? "success" : "neutral"}>{s.activo ? "Activo" : "Inactivo"}</Badge>
                       </td>
                       <td className={`${tdCls} text-right`}>
                         {puedeEditar && (
                           <>
-                            <button onClick={() => setBaseSucursalSpst(s)} className={`font-body text-sm hover:underline mr-3 ${s.sigesBaseSucursalId ? "text-success" : "text-muted-foreground"}`}>
-                              Base despacho
-                            </button>
+                            {pst?.sigesEmpresaId != null && (
+                              <button onClick={() => setBaseSucursalSpst(s)} className={`font-body text-sm hover:underline mr-3 ${s.sigesBaseSucursalId ? "text-success" : "text-muted-foreground"}`}>
+                                Base despacho
+                              </button>
+                            )}
                             <button onClick={() => setFormSpst(s)} className="font-body text-sm text-brand-orange hover:underline mr-3">Editar</button>
                             <button onClick={() => handleToggle(s)} className={`font-body text-sm hover:underline mr-3 ${s.activo ? "text-destructive" : "text-success"}`}>
                               {s.activo ? "Desactivar" : "Activar"}
@@ -181,7 +191,7 @@ export function SpstsConfig() {
                   );
                 })}
                 {visible.length === 0 && (
-                  <tr><td colSpan={6} className="py-10 text-center font-body text-sm text-muted-foreground">No hay SPSTs con los filtros seleccionados.</td></tr>
+                  <tr><td colSpan={7} className="py-10 text-center font-body text-sm text-muted-foreground">No hay SPSTs con los filtros seleccionados.</td></tr>
                 )}
               </tbody>
             </table>

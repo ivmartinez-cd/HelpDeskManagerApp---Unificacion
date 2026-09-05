@@ -16,9 +16,9 @@ class TarifarioRepository(Protocol):
         ...
 
     async def list_grupo(
-        self, *, prestador_id: UUID, tipo_servicio: str, zona: str | None
+        self, *, prestador_id: UUID, tipo_servicio: str, spst_id: UUID | None
     ) -> list[Tarifario]:
-        """El grupo (prestador, tipo_servicio, zona) completo — insumo de
+        """El grupo (prestador, tipo_servicio, spst_id) completo — insumo de
         `recalcular_cadena` (ver `domain/services/cadena_tarifaria.py`)."""
         ...
 
@@ -31,7 +31,7 @@ class TarifarioRepository(Protocol):
         *,
         prestador_id: UUID,
         tipo_servicio: str,
-        zona: str | None,
+        spst_id: UUID | None,
         costo_servicio: float,
         costo_km: float,
         vigencia_desde: date,
@@ -46,7 +46,7 @@ class TarifarioRepository(Protocol):
         *,
         prestador_id: UUID,
         tipo_servicio: str,
-        zona: str | None,
+        spst_id: UUID | None,
         costo_servicio: float,
         costo_km: float,
         vigencia_desde: date,

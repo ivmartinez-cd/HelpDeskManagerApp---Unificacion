@@ -29,8 +29,12 @@ export function TipoBadge({ tipo }: { tipo: string }) {
   );
 }
 
+/** `riesgo` viene del backend en escala 0-100 (riesgo_base de la regla, ej.
+ * ALT001=100, ALT005=40) — NO 0-1. Los umbrales tienen que estar en la misma
+ * escala o todas las alertas caen en el mismo balde (bug real, no ajuste de
+ * gusto: así estaba antes de este fix). */
 export function riesgoClass(riesgo: number) {
-  if (riesgo > 0.7) return "text-destructive";
-  if (riesgo > 0.3) return "text-warning";
+  if (riesgo > 70) return "text-destructive";
+  if (riesgo > 30) return "text-warning";
   return "text-success";
 }

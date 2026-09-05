@@ -14,7 +14,7 @@ import {
 import { useState } from "react";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { formatARS, formatFechaDia } from "../lib/format";
-import type { Tarifario } from "../types/liquidaciones";
+import type { Spst, Tarifario } from "../types/liquidaciones";
 
 // Port de components/tarifarios/{ServiceTarifaRow,TarifarioHistoryTimeline}.tsx
 // del legacy Liquidacion-Prestadores, reestilado a los tokens del monorepo
@@ -22,7 +22,7 @@ import type { Tarifario } from "../types/liquidaciones";
 
 export interface GrupoTarifa {
   tipoServicio: string;
-  zona: string | null;
+  spstId: string | null;
   historial: Tarifario[];
   vigente: Tarifario | null;
 }
@@ -31,10 +31,10 @@ export function agruparTarifarios(tarifarios: Tarifario[]): GrupoTarifa[] {
   const hoy = new Date().toISOString().split("T")[0];
   const grupos = new Map<string, GrupoTarifa>();
   for (const t of tarifarios) {
-    const key = `${t.tipoServicio}::${t.zona ?? ""}`;
+    const key = `${t.tipoServicio}::${t.spstId ?? ""}`;
     let grupo = grupos.get(key);
     if (!grupo) {
-      grupo = { tipoServicio: t.tipoServicio, zona: t.zona, historial: [], vigente: null };
+      grupo = { tipoServicio: t.tipoServicio, spstId: t.spstId, historial: [], vigente: null };
       grupos.set(key, grupo);
     }
     grupo.historial.push(t);
@@ -48,8 +48,13 @@ export function agruparTarifarios(tarifarios: Tarifario[]): GrupoTarifa[] {
   }
   return [...grupos.values()].sort(
     (a, b) =>
-      a.tipoServicio.localeCompare(b.tipoServicio) || (a.zona ?? "").localeCompare(b.zona ?? ""),
+      a.tipoServicio.localeCompare(b.tipoServicio) || (a.spstId ?? "").localeCompare(b.spstId ?? ""),
   );
+}
+
+function nombreSpst(spstId: string | null, spstsPorId: Map<string, Spst>): string {
+  if (!spstId) return "Toda la cobertura";
+  return spstsPorId.get(spstId)?.nombre ?? "SPST eliminado";
 }
 
 function VariacionBadge({ actual, anterior }: { actual: number; anterior: number }) {
@@ -131,6 +136,7 @@ function TarifarioHistoryTimeline({
                     <button
                       onClick={() => onEdit(tarifa)}
                       aria-label="Editar tarifa"
+                      title="Corrige esta vigencia puntual sin crear una nueva ni tocar el historial"
                       className="rounded-[6px] p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-brand-orange"
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -154,9 +160,11 @@ function TarifarioHistoryTimeline({
 }
 
 export function GrupoTarifaRow({
-  grupo, canEdit = true, onActualizar, onEdit, onDelete,
+  grupo, spstsPorId, canEdit = true, onActualizar, onEdit, onDelete,
 }: {
   grupo: GrupoTarifa;
+  /** SPST del prestador, por id — para mostrar su nombre en vez del id crudo. */
+  spstsPorId: Map<string, Spst>;
   /** `liquidaciones.update` (ADR-029): sin esto el historial es solo lectura. */
   canEdit?: boolean;
   onActualizar: (grupo: GrupoTarifa) => void;
@@ -178,9 +186,9 @@ export function GrupoTarifaRow({
               {grupo.tipoServicio.replace(/_/g, " ")}
             </h4>
             <p className="mt-0.5 flex items-center gap-1 font-body text-xs text-muted-foreground">
-              <span>Zona:</span>
+              <span>SPST:</span>
               <span className="rounded-[6px] bg-muted px-1.5 py-0.5 font-semibold text-foreground">
-                {grupo.zona || "Toda la cobertura"}
+                {nombreSpst(grupo.spstId, spstsPorId)}
               </span>
             </p>
           </div>
@@ -214,8 +222,13 @@ export function GrupoTarifaRow({
             </div>
             <div className="ml-1 flex items-center gap-1.5">
               {canEdit && (
-                <BrandButton size="sm" variant="outline" onClick={() => onActualizar(grupo)}>
-                  Actualizar
+                <BrandButton
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onActualizar(grupo)}
+                  title="Crea una tarifa nueva vigente desde hoy y cierra la anterior. Para corregir un valor de una vigencia pasada, usá el lápiz en el Historial de abajo."
+                >
+                  Nueva vigencia desde hoy
                 </BrandButton>
               )}
               <BrandButton size="sm" variant="outline" onClick={() => setHistorialAbierto((v) => !v)}>

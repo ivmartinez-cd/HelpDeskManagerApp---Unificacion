@@ -30,7 +30,6 @@ from tests.unit.domain.liquidaciones.fakes import (
     FakeLiquidacionFileParser,
     FakePrestadorRepository,
     FakeReglaAlertaRepository,
-    FakeSpstRepository,
     FakeTablaKmRepository,
     FakeTarifarioRepository,
 )
@@ -38,7 +37,6 @@ from tests.unit.domain.liquidaciones.fakes_liquidacion import (
     FakeAlertaRepository,
     FakeIncidenteRepository,
     FakeLiquidacionRepository,
-    FakeObservacionRepository,
 )
 
 ARCHIVO_NOMBRE = "liquidacion_TEST_2026-01.xls"
@@ -89,10 +87,8 @@ class World:
         self.liquidaciones = FakeLiquidacionRepository()
         self.incidentes = FakeIncidenteRepository()
         self.alertas = FakeAlertaRepository()
-        self.observaciones = FakeObservacionRepository()
         self.reglas = FakeReglaAlertaRepository(reglas_activas_default())
         self.tablas_km = FakeTablaKmRepository()
-        self.spsts = FakeSpstRepository()
         self.tarifarios = FakeTarifarioRepository()
         self.parser = FakeLiquidacionFileParser(
             resultado_parseo or make_resultado_parseo()
@@ -103,10 +99,8 @@ class World:
                 liquidaciones=self.liquidaciones,
                 incidentes=self.incidentes,
                 alertas=self.alertas,
-                observaciones=self.observaciones,
                 reglas=self.reglas,
                 tablas_km=self.tablas_km,
-                spsts=self.spsts,
                 tarifarios=self.tarifarios,
             )
         )
@@ -204,7 +198,6 @@ async def test_happy_path_dispara_reanalizar_y_retorna_sus_totales() -> None:
 
     assert resultado.total_incidentes == 1
     assert resultado.total_alertas == 1  # ALT001: precio cobrado > tarifario
-    assert resultado.total_observaciones == 0
     assert resultado.liquidacion_id in world.liquidaciones.rows
 
 

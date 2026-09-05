@@ -14,7 +14,7 @@ from src.modules.liquidaciones.infrastructure.models.tarifario_model import Tari
 # o saltear filas entre páginas cuando un prestador supera el `size` pedido.
 _ORDEN_ESTABLE = (
     TarifarioModel.tipo_servicio,
-    TarifarioModel.zona,
+    TarifarioModel.spst_id,
     TarifarioModel.vigencia_desde.desc(),
     TarifarioModel.id,
 )
@@ -43,12 +43,14 @@ class SqlAlchemyTarifarioRepository:
         return [_to_entity(row) for row in rows]
 
     async def list_grupo(
-        self, *, prestador_id: UUID, tipo_servicio: str, zona: str | None
+        self, *, prestador_id: UUID, tipo_servicio: str, spst_id: UUID | None
     ) -> list[Tarifario]:
+        col = TarifarioModel.spst_id
+        filtro_spst = col.is_(None) if spst_id is None else col == spst_id
         stmt = select(TarifarioModel).where(
             TarifarioModel.prestador_id == prestador_id,
             TarifarioModel.tipo_servicio == tipo_servicio,
-            TarifarioModel.zona.is_(None) if zona is None else TarifarioModel.zona == zona,
+            filtro_spst,
         )
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
@@ -66,7 +68,7 @@ class SqlAlchemyTarifarioRepository:
         *,
         prestador_id: UUID,
         tipo_servicio: str,
-        zona: str | None,
+        spst_id: UUID | None,
         costo_servicio: float,
         costo_km: float,
         vigencia_desde: date,
@@ -77,7 +79,7 @@ class SqlAlchemyTarifarioRepository:
             return None
         row.prestador_id = prestador_id
         row.tipo_servicio = tipo_servicio
-        row.zona = zona
+        row.spst_id = spst_id
         row.costo_servicio = costo_servicio
         row.costo_km = costo_km
         row.vigencia_desde = vigencia_desde
@@ -99,7 +101,7 @@ class SqlAlchemyTarifarioRepository:
         *,
         prestador_id: UUID,
         tipo_servicio: str,
-        zona: str | None,
+        spst_id: UUID | None,
         costo_servicio: float,
         costo_km: float,
         vigencia_desde: date,
@@ -109,7 +111,7 @@ class SqlAlchemyTarifarioRepository:
             id=uuid.uuid4(),
             prestador_id=prestador_id,
             tipo_servicio=tipo_servicio,
-            zona=zona,
+            spst_id=spst_id,
             costo_servicio=costo_servicio,
             costo_km=costo_km,
             vigencia_desde=vigencia_desde,
@@ -126,7 +128,7 @@ def _to_entity(row: TarifarioModel) -> Tarifario:
         id=row.id,
         prestador_id=row.prestador_id,
         tipo_servicio=row.tipo_servicio,
-        zona=row.zona,
+        spst_id=row.spst_id,
         costo_servicio=row.costo_servicio,
         costo_km=row.costo_km,
         vigencia_desde=row.vigencia_desde,

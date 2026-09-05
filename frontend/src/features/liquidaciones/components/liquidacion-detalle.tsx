@@ -20,7 +20,6 @@ import { IncidentesSeccion } from "./incidentes-seccion";
 import { LiquidacionAlertasBanner } from "./liquidacion-alertas-banner";
 import { LiquidacionDetalleHeader } from "./liquidacion-detalle-header";
 import { ModeloFacturacionSeccion } from "./modelo-facturacion-seccion";
-import { ObservacionesSeccion } from "./observaciones-seccion";
 
 export function LiquidacionDetalleView({ id }: { id: string }) {
   const router = useRouter();
@@ -116,7 +115,7 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
     );
   }
 
-  const { liquidacion, incidentes, alertas, observaciones } = detalle;
+  const { liquidacion, incidentes, alertas } = detalle;
   const pstMap = Object.fromEntries(prestadores.map((p) => [p.id, p]));
   const pst = pstMap[liquidacion.prestadorId];
   const alertasByInc = alertas.reduce<Record<string, Alerta[]>>((acc, a) => {
@@ -204,12 +203,6 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
       )}
 
       <ModeloFacturacionSeccion incidentes={incidentes} totalImporte={liquidacion.totalImporte} />
-
-      <ObservacionesSeccion
-        liquidacionId={id}
-        observaciones={observaciones}
-        onChanged={() => void load()}
-      />
 
       {/* Gestión de alertas en lote: aparece al tildar incidentes */}
       <AlertasLoteBar liquidacionId={id} onChanged={() => void load()} />

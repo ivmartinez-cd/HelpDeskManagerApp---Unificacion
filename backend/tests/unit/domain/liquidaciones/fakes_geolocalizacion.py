@@ -393,6 +393,16 @@ class FakeTablaKmGeoRepository:
         self.rows[tabla_km_id] = actualizada
         return actualizada
 
+    async def update_vinculo_spst(
+        self, tabla_km_id: UUID, *, spst_id: UUID | None
+    ) -> TablaKm | None:
+        row = self.rows.get(tabla_km_id)
+        if row is None:
+            return None
+        actualizada = dataclasses.replace(row, spst_id=spst_id)
+        self.rows[tabla_km_id] = actualizada
+        return actualizada
+
     async def update_vinculo_siges(
         self,
         tabla_km_id: UUID,

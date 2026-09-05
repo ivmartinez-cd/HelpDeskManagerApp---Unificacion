@@ -28,7 +28,7 @@ export function SpstFormModal({
     domicilio: spst?.domicilio ?? "",
     localidad: spst?.localidad ?? "",
     provincia: spst?.provincia ?? "",
-    zona: spst?.zona ?? "",
+    zonaCobertura: spst?.zonaCobertura ?? "",
   });
   const { saving, error, submit } = useModalSubmit();
 
@@ -42,7 +42,7 @@ export function SpstFormModal({
         domicilio: form.domicilio || undefined,
         localidad: form.localidad || undefined,
         provincia: form.provincia || undefined,
-        zona: form.zona || undefined,
+        zonaCobertura: form.zonaCobertura || undefined,
       };
       if (spst) {
         await liquidacionesApi.updateSpst(spst.id, payload);
@@ -67,7 +67,13 @@ export function SpstFormModal({
         <BrandInput label="Domicilio base" value={form.domicilio} onChange={(e) => setForm((f) => ({ ...f, domicilio: e.target.value }))} />
         <BrandInput label="Localidad" value={form.localidad} onChange={(e) => setForm((f) => ({ ...f, localidad: e.target.value }))} />
         <BrandInput label="Provincia" value={form.provincia} onChange={(e) => setForm((f) => ({ ...f, provincia: e.target.value }))} />
-        <BrandInput label="Zona" value={form.zona} placeholder="Córdoba Capital..." onChange={(e) => setForm((f) => ({ ...f, zona: e.target.value }))} />
+        <BrandInput
+          label="Zona de cobertura"
+          hint="Solo texto de referencia — no afecta qué tarifa se cobra. La tarifa se asigna directo al SPST."
+          value={form.zonaCobertura}
+          placeholder="Córdoba Capital..."
+          onChange={(e) => setForm((f) => ({ ...f, zonaCobertura: e.target.value }))}
+        />
         <div className="flex justify-end gap-3 pt-1">
           <BrandButton type="button" variant="outline" onClick={onClose}>Cancelar</BrandButton>
           <BrandButton type="submit" loading={saving}>{spst ? "Guardar cambios" : "Crear SPST"}</BrandButton>

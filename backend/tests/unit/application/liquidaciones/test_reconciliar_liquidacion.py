@@ -28,7 +28,6 @@ from tests.unit.domain.liquidaciones.factories import (
 from tests.unit.domain.liquidaciones.fakes import (
     FakeCdLiquidacionesGateway,
     FakeReglaAlertaRepository,
-    FakeSpstRepository,
     FakeTablaKmRepository,
     FakeTarifarioRepository,
 )
@@ -36,7 +35,6 @@ from tests.unit.domain.liquidaciones.fakes_liquidacion import (
     FakeAlertaRepository,
     FakeIncidenteRepository,
     FakeLiquidacionRepository,
-    FakeObservacionRepository,
 )
 
 _FECHA = date(2026, 1, 15)
@@ -88,10 +86,8 @@ class World:
                 liquidaciones=self.liquidaciones,
                 incidentes=self.incidentes,
                 alertas=self.alertas,
-                observaciones=FakeObservacionRepository(),
                 reglas=FakeReglaAlertaRepository(reglas_activas_default()),
                 tablas_km=FakeTablaKmRepository(),
-                spsts=FakeSpstRepository(),
                 tarifarios=self.tarifarios,
             )
         )

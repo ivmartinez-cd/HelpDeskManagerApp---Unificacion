@@ -3,14 +3,14 @@
 export interface GrupoTarifasCreadas {
   prestador: string;
   tipoServicio: string;
-  zona: string | null;
+  spstNombre: string | null;
   cantidad: number;
 }
 
 export interface ConflictoTarifario {
   prestador: string;
   tipoServicio: string;
-  zona: string | null;
+  spstNombre: string | null;
   vigenciaDesde: string;
   campo: string;
   valorLocal: number;
@@ -37,7 +37,7 @@ export interface Tarifario {
   id: string;
   prestadorId: string;
   tipoServicio: string;
-  zona: string | null;
+  spstId: string | null;
   costoServicio: number;
   costoKm: number;
   vigenciaDesde: string;

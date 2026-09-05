@@ -27,7 +27,7 @@ export interface Spst {
   domicilio: string | null;
   localidad: string | null;
   provincia: string | null;
-  zona: string | null;
+  zonaCobertura: string | null;
   activo: boolean;
   sigesEmpresaId: number | null;
   sigesBaseSucursalId: number | null;

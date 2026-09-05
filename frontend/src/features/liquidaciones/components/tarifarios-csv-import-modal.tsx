@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { BrandButton, BrandFileInput } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
+import { resumenImportCsv } from "../lib/format";
 
 /** Modal de importación de tarifas por CSV, extraído de
  * `tarifarios-config.tsx` porque ese archivo ya superaba el tamaño máximo de
@@ -21,7 +22,8 @@ export function CsvImportModal({ isOpen, onClose, onSuccess }: { isOpen: boolean
     setError(null);
     try {
       const res = await liquidacionesApi.importTarifariosCsv(file);
-      toast.success(`${res.creados} tarifas importadas`);
+      const resumen = resumenImportCsv(res, "tarifa", "tarifas");
+      if (res.descartadas > 0) toast.warning(resumen); else toast.success(resumen);
       handleClose();
       onSuccess();
     } catch (err: unknown) {

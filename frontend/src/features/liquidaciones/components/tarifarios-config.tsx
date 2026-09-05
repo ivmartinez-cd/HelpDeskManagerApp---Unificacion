@@ -1,20 +1,27 @@
 "use client";
 
 import { Briefcase } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BrandButton, BrandEmptyState } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { PrestadorLiquidacion, Tarifario } from "../types/liquidaciones";
+import type { PrestadorLiquidacion, Spst, Tarifario } from "../types/liquidaciones";
 import { agruparTarifarios, GrupoTarifaRow, type GrupoTarifa } from "./tarifario-history-timeline";
 import { SigesTarifariosModal } from "./siges-tarifarios-modal";
 import { type PlantillaTarifa, TarifaModal } from "./tarifa-modal";
 import { CsvImportModal } from "./tarifarios-csv-import-modal";
 
-export function TarifariosConfig() {
+export function TarifariosConfig({
+  deepLinkFaltante = null,
+}: {
+  /** Llega desde una alerta ALT008 ("Sin tarifario") en el detalle de
+   * liquidación — precarga prestador + alta de la tarifa con tipo/SPST ya
+   * completos. */
+  deepLinkFaltante?: { prestadorId: string; tipoServicio: string; spstId: string } | null;
+} = {}) {
   // Mutaciones = liquidaciones.update; descarga CSV = liquidaciones.export (ADR-029).
   const { can } = useSession();
   const puedeEditar = can("liquidaciones", "update");
@@ -27,19 +34,43 @@ export function TarifariosConfig() {
   const [tarifariosPstId, setTarifariosPstId] = useState<string | null>(null);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loadingPrestadores, setLoadingPrestadores] = useState(true);
-  const [filtroPst, setFiltroPst] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
+  const [filtroPst, setFiltroPst] = useState(() => deepLinkFaltante?.prestadorId ?? "");
+  // Lazy initializer (no effect) para no disparar setState sincrónico al
+  // montar — mismo criterio que el deep-link de Tabla KM.
+  const [modalOpen, setModalOpen] = useState(() => deepLinkFaltante !== null);
   const [editing, setEditing] = useState<Tarifario | null>(null);
-  const [plantilla, setPlantilla] = useState<PlantillaTarifa | null>(null);
+  const [plantilla, setPlantilla] = useState<PlantillaTarifa | null>(() =>
+    deepLinkFaltante
+      ? {
+          tipoServicio: deepLinkFaltante.tipoServicio,
+          spstId: deepLinkFaltante.spstId,
+          costoServicio: "",
+          costoKm: "",
+        }
+      : null,
+  );
   const [csvOpen, setCsvOpen] = useState(false);
   const [sigesOpen, setSigesOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [spsts, setSpsts] = useState<Spst[]>([]);
 
   useEffect(() => {
     void liquidacionesApi.listPrestadores(false)
       .then(setPrestadores)
       .finally(() => setLoadingPrestadores(false));
   }, []);
+
+  // SPST del prestador seleccionado — solo para resolver el nombre a mostrar
+  // en cada grupo (`GrupoTarifaRow`), la tarifa en sí guarda el spstId crudo.
+  useEffect(() => {
+    let cancelado = false;
+    const cargar = filtroPst
+      ? liquidacionesApi.listSpsts({ prestadorId: filtroPst })
+      : Promise.resolve([]);
+    void cargar.then((data) => { if (!cancelado) setSpsts(data); });
+    return () => { cancelado = true; };
+  }, [filtroPst]);
+  const spstsPorId = useMemo(() => new Map(spsts.map((s) => [s.id, s])), [spsts]);
 
   // Trae solo las tarifas del prestador seleccionado — traer el catálogo completo
   // (4832 filas) truncaba a las 500 que trae el backend por default, ver
@@ -69,7 +100,7 @@ export function TarifariosConfig() {
   };
 
   const handleDownload = async () => {
-    try { await liquidacionesApi.exportTarifariosCsv(); }
+    try { await liquidacionesApi.exportTarifariosCsv(filtroPst || undefined); }
     catch { toast.error("Error al descargar"); }
   };
 
@@ -82,7 +113,7 @@ export function TarifariosConfig() {
   const handleActualizar = (grupo: GrupoTarifa) =>
     abrirModal(null, {
       tipoServicio: grupo.tipoServicio,
-      zona: grupo.zona ?? "",
+      spstId: grupo.spstId ?? "",
       costoServicio: String(grupo.vigente?.costoServicio ?? ""),
       costoKm: String(grupo.vigente?.costoKm ?? ""),
     });
@@ -103,7 +134,17 @@ export function TarifariosConfig() {
           </p>
         </div>
         <div className="flex gap-2">
-          {puedeEditar && <BrandButton size="sm" variant="outline" onClick={() => setSigesOpen(true)}>Sincronizar</BrandButton>}
+          {puedeEditar && (
+            <BrandButton
+              size="sm"
+              variant="outline"
+              disabled={!filtroPst}
+              title={!filtroPst ? "Seleccioná un prestador primero" : undefined}
+              onClick={() => setSigesOpen(true)}
+            >
+              Sincronizar
+            </BrandButton>
+          )}
           {puedeExportar && <BrandButton size="sm" variant="outline" onClick={handleDownload}>Descargar CSV</BrandButton>}
           {puedeEditar && (
             <>
@@ -132,8 +173,9 @@ export function TarifariosConfig() {
           <div className="divide-y divide-border">
             {grupos.map((grupo) => (
               <GrupoTarifaRow
-                key={`${grupo.tipoServicio}::${grupo.zona ?? ""}`}
+                key={`${grupo.tipoServicio}::${grupo.spstId ?? ""}`}
                 grupo={grupo}
+                spstsPorId={spstsPorId}
                 canEdit={puedeEditar}
                 onActualizar={handleActualizar}
                 onEdit={(t) => abrirModal(t)}
@@ -146,8 +188,13 @@ export function TarifariosConfig() {
 
       <TarifaModal key={editing?.id ?? (plantilla ? `plantilla:${Object.values(plantilla).join("::")}` : "nueva")} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); setPlantilla(null); }} prestadores={prestadores} editing={editing} plantilla={plantilla} defaultPrestadorId={filtroPst} onSuccess={loadTarifarios} />
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={loadTarifarios} />
-      {sigesOpen && (
-        <SigesTarifariosModal onClose={() => setSigesOpen(false)} onChanged={loadTarifarios} />
+      {sigesOpen && filtroPst && (
+        <SigesTarifariosModal
+          prestadorId={filtroPst}
+          prestadorNombre={pstSeleccionado?.nombreCorto ?? ""}
+          onClose={() => setSigesOpen(false)}
+          onChanged={loadTarifarios}
+        />
       )}
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar tarifa">
         <p className="font-body text-sm text-muted-foreground mb-5">Esta acción no se puede deshacer. ¿Confirmás la eliminación?</p>

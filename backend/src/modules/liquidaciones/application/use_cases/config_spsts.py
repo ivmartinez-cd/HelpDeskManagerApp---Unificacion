@@ -26,7 +26,7 @@ class CreateSpst:
         domicilio: str | None,
         localidad: str | None,
         provincia: str | None,
-        zona: str | None,
+        zona_cobertura: str | None,
     ) -> Spst:
         return await self._ports.spsts.create(
             prestador_id=prestador_id,
@@ -34,7 +34,7 @@ class CreateSpst:
             domicilio=domicilio,
             localidad=localidad,
             provincia=provincia,
-            zona=zona,
+            zona_cobertura=zona_cobertura,
         )
 
 
@@ -50,7 +50,7 @@ class UpdateSpst:
         domicilio: str | None,
         localidad: str | None,
         provincia: str | None,
-        zona: str | None,
+        zona_cobertura: str | None,
     ) -> Spst:
         updated = await self._ports.spsts.update(
             spst_id,
@@ -58,7 +58,7 @@ class UpdateSpst:
             domicilio=domicilio,
             localidad=localidad,
             provincia=provincia,
-            zona=zona,
+            zona_cobertura=zona_cobertura,
         )
         if updated is None:
             raise SpstNoEncontradoError(spst_id)

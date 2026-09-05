@@ -48,7 +48,7 @@ class SqlAlchemySpstRepository:
         domicilio: str | None,
         localidad: str | None,
         provincia: str | None,
-        zona: str | None,
+        zona_cobertura: str | None,
     ) -> Spst:
         model = SpstModel(
             id=uuid.uuid4(),
@@ -57,7 +57,7 @@ class SqlAlchemySpstRepository:
             domicilio=domicilio,
             localidad=localidad,
             provincia=provincia,
-            zona=zona,
+            zona_cobertura=zona_cobertura,
         )
         self._session.add(model)
         await self._session.flush()
@@ -72,7 +72,7 @@ class SqlAlchemySpstRepository:
         domicilio: str | None,
         localidad: str | None,
         provincia: str | None,
-        zona: str | None,
+        zona_cobertura: str | None,
     ) -> Spst | None:
         row = await self._session.get(SpstModel, spst_id)
         if not row:
@@ -81,7 +81,7 @@ class SqlAlchemySpstRepository:
         row.domicilio = domicilio
         row.localidad = localidad
         row.provincia = provincia
-        row.zona = zona
+        row.zona_cobertura = zona_cobertura
         await self._session.flush()
         await self._session.refresh(row)
         return _to_entity(row)
@@ -140,7 +140,7 @@ def _to_entity(row: SpstModel) -> Spst:
         domicilio=row.domicilio,
         localidad=row.localidad,
         provincia=row.provincia,
-        zona=row.zona,
+        zona_cobertura=row.zona_cobertura,
         activo=row.activo,
         created_at=row.created_at,
         siges_empresa_id=row.siges_empresa_id,

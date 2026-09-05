@@ -9,14 +9,24 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { PrestadorLiquidacion, SucursalSiges, TablaKm } from "../types/liquidaciones";
+import type { PrestadorLiquidacion, Spst, SucursalSiges, Tarifario, TablaKm } from "../types/liquidaciones";
 import { CsvImportModal, EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
 import { KM_SORT_KEYS, kmSortValue, type KmSortKey, TablaKmTable } from "./tabla-km-table";
 import { SigesTablaKmModal } from "./siges-tabla-km-modal";
 import { TablaKmWizard } from "./tabla-km-wizard";
 import { VincularSpstModal } from "./vincular-spst-modal";
 
-export function TablaKmConfig() {
+export function TablaKmConfig({
+  deepLinkFaltante = null,
+  deepLinkBuscar = null,
+}: {
+  /** Llega desde un incidente "Sin tabla" en el detalle de liquidación —
+   * precarga prestador + alta de la entrada con empresa/sucursal ya completos. */
+  deepLinkFaltante?: { prestadorId: string; empresa: string; sucursal: string } | null;
+  /** Llega desde una alerta sin SPST resuelto (ALT008/ALT009) — la fila ya
+   * existe, solo hace falta encontrarla y vincularle el SPST a mano. */
+  deepLinkBuscar?: { prestadorId: string; query: string } | null;
+} = {}) {
   // Mutaciones = liquidaciones.update; descarga CSV = liquidaciones.export (ADR-029).
   const { can } = useSession();
   const puedeEditar = can("liquidaciones", "update");
@@ -29,11 +39,26 @@ export function TablaKmConfig() {
   const [entradasPstId, setEntradasPstId] = useState<string | null>(null);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [loadingPrestadores, setLoadingPrestadores] = useState(true);
-  const [filtroPst, setFiltroPst] = useState("");
-  const [busqueda, setBusqueda] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
+  const [filtroPst, setFiltroPst] = useState(
+    () => deepLinkFaltante?.prestadorId ?? deepLinkBuscar?.prestadorId ?? "",
+  );
+  const [busqueda, setBusqueda] = useState(() => deepLinkBuscar?.query ?? "");
+  // El deep-link desde un incidente "Sin tabla" precarga prestador + alta de la
+  // entrada faltante — lazy initializer (no effect) para no disparar setState
+  // sincrónico al montar (prohibido por react-hooks/set-state-in-effect).
+  const [modalOpen, setModalOpen] = useState(() => deepLinkFaltante !== null);
   const [editing, setEditing] = useState<TablaKm | null>(null);
-  const [plantilla, setPlantilla] = useState<PlantillaEntrada | null>(null);
+  const [plantilla, setPlantilla] = useState<PlantillaEntrada | null>(() =>
+    deepLinkFaltante
+      ? {
+          empresaNombre: deepLinkFaltante.empresa,
+          sucursalNombre: deepLinkFaltante.sucursal,
+          domicilioCliente: "",
+          localidadCliente: "",
+          provinciaCliente: "",
+        }
+      : null,
+  );
   const [csvOpen, setCsvOpen] = useState(false);
   const [sigesOpen, setSigesOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -66,6 +91,29 @@ export function TablaKmConfig() {
 
   useEffect(() => { void loadEntradas(); }, [loadEntradas]);
 
+  // SPST y SPST-con-tarifario del prestador — insumo de la columna "SPST →
+  // Tarifa" (hace visible en la propia tabla la cadena que resuelve el
+  // precio, en vez de obligar a saltar a SPSTs/Tarifarios para adivinarla).
+  const [spsts, setSpsts] = useState<Spst[]>([]);
+  const [spstsConTarifa, setSpstsConTarifa] = useState<Set<string | null>>(new Set());
+  useEffect(() => {
+    let cancelado = false;
+    const cargar = filtroPst
+      ? Promise.all([
+          liquidacionesApi.listSpsts({ prestadorId: filtroPst }),
+          liquidacionesApi.listTarifarios(filtroPst),
+        ])
+      : Promise.resolve([[], []] as [Spst[], Tarifario[]]);
+    void cargar.then(([spstsData, tarifariosData]) => {
+      if (cancelado) return;
+      setSpsts(spstsData);
+      setSpstsConTarifa(new Set(tarifariosData.map((t) => t.spstId)));
+    });
+    return () => { cancelado = true; };
+  }, [filtroPst]);
+  // `Map` a secas choca con el ícono `Map` de lucide-react importado arriba.
+  const spstsPorId = useMemo(() => new globalThis.Map(spsts.map((s) => [s.id, s])), [spsts]);
+
   const handleDelete = async () => {
     if (!deletingId) return;
     try {
@@ -79,7 +127,7 @@ export function TablaKmConfig() {
   };
 
   const handleDownload = async () => {
-    try { await liquidacionesApi.exportTablaKmCsv(); }
+    try { await liquidacionesApi.exportTablaKmCsv(filtroPst || undefined); }
     catch { toast.error("Error al descargar"); }
   };
 
@@ -145,7 +193,7 @@ export function TablaKmConfig() {
                 variant="outline"
                 disabled={!filtroPst}
                 onClick={() => setVincularSpstOpen(true)}
-                title="Vincular filas sin SPST por coincidencia de localidad — necesario para que el motor resuelva precios por zona"
+                title="Vincular filas sin SPST por coincidencia de localidad — necesario para que el motor resuelva precios. No toca el vínculo con Gestión (eso lo maneja el Asistente de KM)"
               >
                 Vincular SPST
               </BrandButton>
@@ -154,7 +202,7 @@ export function TablaKmConfig() {
                 variant="outline"
                 disabled={!pstSeleccionado || pstSeleccionado.sigesEmpresaId == null}
                 onClick={() => setWizardOpen(true)}
-                title="Traer sucursales de Gestión, revisar pendientes y calcular km"
+                title="Trae/actualiza sucursales desde Gestión (identidad, domicilio) y calcula km — no vincula el SPST de la tarifa, para eso usá 'Vincular SPST'"
               >
                 Asistente de KM →
               </BrandButton>
@@ -184,6 +232,8 @@ export function TablaKmConfig() {
           sort={sort}
           toggleSort={toggleSort}
           puedeEditar={puedeEditar}
+          spstsPorId={spstsPorId}
+          spstsConTarifa={spstsConTarifa}
           onEdit={(t) => { setEditing(t); setModalOpen(true); }}
           onDelete={setDeletingId}
         />

@@ -24,7 +24,7 @@ class SqlAlchemyTarifarioZonaMapRepository:
         return [_to_entity(row) for row in rows]
 
     async def upsert(
-        self, *, prestador_id: UUID, descripcion_siges: str, zona_local: str | None
+        self, *, prestador_id: UUID, descripcion_siges: str, spst_id: UUID | None
     ) -> TarifarioZonaMap:
         stmt = select(TarifarioZonaMapModel).where(
             TarifarioZonaMapModel.prestador_id == prestador_id,
@@ -36,11 +36,11 @@ class SqlAlchemyTarifarioZonaMapRepository:
                 id=uuid.uuid4(),
                 prestador_id=prestador_id,
                 descripcion_siges=descripcion_siges,
-                zona_local=zona_local,
+                spst_id=spst_id,
             )
             self._session.add(row)
         else:
-            row.zona_local = zona_local
+            row.spst_id = spst_id
         await self._session.flush()
         await self._session.refresh(row)
         return _to_entity(row)
@@ -51,6 +51,6 @@ def _to_entity(row: TarifarioZonaMapModel) -> TarifarioZonaMap:
         id=row.id,
         prestador_id=row.prestador_id,
         descripcion_siges=row.descripcion_siges,
-        zona_local=row.zona_local,
+        spst_id=row.spst_id,
         created_at=row.created_at,
     )

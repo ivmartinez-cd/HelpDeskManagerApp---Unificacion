@@ -1,7 +1,10 @@
 """Caso de uso GetLiquidacionDetalle — port de GET /liquidaciones/{id} (más el
 detalle de incidentes/alertas/observaciones que el legacy resolvía con relaciones
 ORM cargadas perezosamente; acá se piden explícitas). Cada incidente se enriquece
-con localidad/SPST/link de Maps de la fila de tabla KM que matchea por sucursal."""
+con localidad/SPST/link de Maps de la fila de tabla KM que matchea por (empresa,
+sucursal) — el mismo índice que usa el motor de reglas (`_resolucion.py`), para
+que la UI nunca muestre un vínculo que el cálculo real no usó (antes indexaba
+solo por sucursal y podía "prestar" el SPST de otra empresa con igual sucursal)."""
 
 from dataclasses import dataclass
 from uuid import UUID
@@ -20,11 +23,12 @@ from src.modules.liquidaciones.domain.repositories.incidente_repository import (
 from src.modules.liquidaciones.domain.repositories.liquidacion_repository import (
     LiquidacionRepository,
 )
-from src.modules.liquidaciones.domain.repositories.observacion_repository import (
-    ObservacionRepository,
-)
 from src.modules.liquidaciones.domain.repositories.tabla_km_repository import (
     TablaKmRepository,
+)
+from src.modules.liquidaciones.domain.services.motor_reglas._resolucion import (
+    indexar_tablas_km,
+    resolver_tabla_km,
 )
 
 
@@ -33,7 +37,6 @@ class GetLiquidacionDetallePorts:
     liquidaciones: LiquidacionRepository
     incidentes: IncidenteRepository
     alertas: AlertaRepository
-    observaciones: ObservacionRepository
     tablas_km: TablaKmRepository
 
 
@@ -47,21 +50,18 @@ class GetLiquidacionDetalle:
             raise LiquidacionNoEncontradaError(liquidacion_id)
         incidentes = await self._ports.incidentes.list_by_liquidacion(liquidacion_id)
         tabla_km = await self._ports.tablas_km.list_by_prestador(liquidacion.prestador_id)
-        por_sucursal = _indexar_por_sucursal(tabla_km)
+        indice = indexar_tablas_km(tabla_km)
         return LiquidacionDetalle(
             liquidacion=liquidacion,
-            incidentes=[_enriquecer(i, por_sucursal) for i in incidentes],
+            incidentes=[_enriquecer(i, indice) for i in incidentes],
             alertas=await self._ports.alertas.list_by_liquidacion(liquidacion_id),
-            observaciones=await self._ports.observaciones.list_by_liquidacion(liquidacion_id),
         )
 
 
-def _indexar_por_sucursal(filas: list[TablaKm]) -> dict[str, TablaKm]:
-    return {f.sucursal_nombre.strip().lower(): f for f in filas if f.sucursal_nombre}
-
-
-def _enriquecer(incidente: Incidente, por_sucursal: dict[str, TablaKm]) -> IncidenteDetalle:
-    fila = por_sucursal.get((incidente.sucursal_nombre or "").strip().lower())
+def _enriquecer(
+    incidente: Incidente, indice: dict[tuple[str, str], TablaKm]
+) -> IncidenteDetalle:
+    fila = resolver_tabla_km(incidente, indice)
     return IncidenteDetalle(
         incidente=incidente,
         localidad_cliente=fila.localidad_cliente if fila else None,

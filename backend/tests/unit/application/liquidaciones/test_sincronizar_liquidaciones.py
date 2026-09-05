@@ -37,7 +37,6 @@ from tests.unit.domain.liquidaciones.factories import (
 from tests.unit.domain.liquidaciones.fakes import (
     FakePrestadorRepository,
     FakeReglaAlertaRepository,
-    FakeSpstRepository,
     FakeTablaKmRepository,
     FakeTarifarioRepository,
 )
@@ -45,7 +44,6 @@ from tests.unit.domain.liquidaciones.fakes_liquidacion import (
     FakeAlertaRepository,
     FakeIncidenteRepository,
     FakeLiquidacionRepository,
-    FakeObservacionRepository,
 )
 
 
@@ -124,10 +122,8 @@ class World:
                 liquidaciones=self.liquidaciones,
                 incidentes=self.incidentes,
                 alertas=FakeAlertaRepository(),
-                observaciones=FakeObservacionRepository(),
                 reglas=FakeReglaAlertaRepository(reglas_activas_default()),
                 tablas_km=FakeTablaKmRepository(),
-                spsts=FakeSpstRepository(),
                 tarifarios=FakeTarifarioRepository(),
             )
         )

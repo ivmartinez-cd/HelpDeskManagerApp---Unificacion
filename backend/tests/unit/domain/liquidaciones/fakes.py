@@ -1,7 +1,7 @@
 """Fakes en memoria de los puertos de liquidaciones — para tests de casos de uso.
 
-Los fakes del agregado Liquidación (Liquidacion/Incidente/Alerta/Observacion)
-viven en `fakes_liquidacion.py` — separados de acá por tamaño (§4)."""
+Los fakes del agregado Liquidación (Liquidacion/Incidente/Alerta) viven en
+`fakes_liquidacion.py` — separados de acá por tamaño (§4)."""
 
 import dataclasses
 import uuid
@@ -10,7 +10,10 @@ from uuid import UUID
 
 from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
-from src.modules.liquidaciones.domain.entities.regla_alerta import ReglaAlerta
+from src.modules.liquidaciones.domain.entities.regla_alerta import (
+    CONFIG_GENERA_OBSERVACIONES,
+    ReglaAlerta,
+)
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
@@ -79,6 +82,16 @@ class FakeReglaAlertaRepository:
         self.activas[codigo] = actualizada
         return actualizada
 
+    async def set_genera_observaciones(self, codigo: str, valor: bool) -> ReglaAlerta | None:
+        regla = self.activas.get(codigo)
+        if regla is None:
+            return None
+        actualizada = dataclasses.replace(
+            regla, configuracion={**regla.configuracion, CONFIG_GENERA_OBSERVACIONES: valor}
+        )
+        self.activas[codigo] = actualizada
+        return actualizada
+
 
 class FakeSpstRepository:
     def __init__(self, rows: list[Spst] | None = None) -> None:
@@ -98,7 +111,7 @@ class FakeSpstRepository:
         domicilio: str | None,
         localidad: str | None,
         provincia: str | None,
-        zona: str | None,
+        zona_cobertura: str | None,
     ) -> Spst:
         row = Spst(
             id=uuid.uuid4(),
@@ -107,7 +120,7 @@ class FakeSpstRepository:
             domicilio=domicilio,
             localidad=localidad,
             provincia=provincia,
-            zona=zona,
+            zona_cobertura=zona_cobertura,
             activo=True,
             created_at=datetime(2026, 1, 1),
         )
@@ -173,7 +186,7 @@ class FakeTarifarioRepository:
         *,
         prestador_id: UUID,
         tipo_servicio: str,
-        zona: str | None,
+        spst_id: UUID | None,
         costo_servicio: float,
         costo_km: float,
         vigencia_desde: date,
@@ -183,7 +196,7 @@ class FakeTarifarioRepository:
             id=uuid.uuid4(),
             prestador_id=prestador_id,
             tipo_servicio=tipo_servicio,
-            zona=zona,
+            spst_id=spst_id,
             costo_servicio=costo_servicio,
             costo_km=costo_km,
             vigencia_desde=vigencia_desde,

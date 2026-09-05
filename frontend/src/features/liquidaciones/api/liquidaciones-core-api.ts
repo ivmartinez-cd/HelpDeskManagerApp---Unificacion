@@ -3,12 +3,10 @@ import type {
   Alerta,
   EstadoAlerta,
   EstadoLiquidacion,
-  EstadoObservacion,
   ImportarLiquidacionResult,
   Liquidacion,
   LiquidacionDetalle,
   LiquidacionPage,
-  Observacion,
   PrestadorLiquidacion,
 } from "../types/liquidaciones";
 import { fetchCatalogoCompleto, type Page } from "./_shared";
@@ -62,19 +60,17 @@ export const liquidacionesCoreApi = {
     return httpClient.postForm<ImportarLiquidacionResult>("/api/liquidaciones/importar", fd);
   },
 
-  delete: (id: string) => httpClient.delete<void>(`/api/liquidaciones/${id}`),
+  // `forzar` es la única forma de borrar localmente una liquidación vinculada
+  // a Canal Directo (el backend rechaza con 409 si no) — solo debería pasarlo
+  // el link "Eliminar solo localmente" tras un `/anular` que ya falló.
+  delete: (id: string, forzar = false) =>
+    httpClient.delete<void>(`/api/liquidaciones/${id}${forzar ? "?forzar=true" : ""}`),
 
   updateEstado: (id: string, estado: EstadoLiquidacion) =>
     httpClient.patch<Liquidacion>(`/api/liquidaciones/${id}/estado`, { estado }),
 
   updateExtra: (id: string, body: { conceptoExtra: string | null; montoExtra: number | null }) =>
     httpClient.patch<Liquidacion>(`/api/liquidaciones/${id}/extra`, body),
-
-  updateEstadoObservacion: (liquidacionId: string, observacionId: string, estado: EstadoObservacion) =>
-    httpClient.patch<Observacion>(
-      `/api/liquidaciones/${liquidacionId}/observaciones/${observacionId}/estado`,
-      { estado },
-    ),
 
   updateEstadoAlerta: (
     liquidacionId: string,
@@ -112,7 +108,7 @@ export const liquidacionesCoreApi = {
     httpClient.post<void>(`/api/liquidaciones/${id}/reconciliar`),
 
   reanalyze: (id: string) =>
-    httpClient.post<{ totalIncidentes: number; totalAlertas: number; totalObservaciones: number }>(
+    httpClient.post<{ totalIncidentes: number; totalAlertas: number }>(
       `/api/liquidaciones/${id}/reanalyze`,
     ),
 

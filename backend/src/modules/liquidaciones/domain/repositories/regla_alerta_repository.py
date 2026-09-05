@@ -18,3 +18,10 @@ class ReglaAlertaRepository(Protocol):
         consulta `list_activas` en cada corrida); las alertas ya generadas no
         se tocan. None si el código no existe."""
         ...
+
+    async def set_genera_observaciones(self, codigo: str, valor: bool) -> ReglaAlerta | None:
+        """Segundo switch de ALT005 — ver `regla_alerta.genera_observaciones`.
+        Merge sobre `configuracion` (no reemplaza la clave completa), para no
+        pisar otros parámetros que se agreguen a futuro. None si el código no
+        existe."""
+        ...

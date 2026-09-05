@@ -1,8 +1,9 @@
 """Sub-Prestador de Servicio Técnico (SPST) — spsts.
 
 Sucursal/filial de un `Prestador` (ej. las distintas bases de INFOMAC en Villa Mercedes
-y Gral. Roca/Neuquén) — resuelve la zona/domicilio real usada por `TablaKM` y por el
-motor de reglas para elegir tarifario.
+y Gral. Roca/Neuquén) — resuelve el domicilio real usado por `TablaKM`, y es la fila que
+`Tarifario.spst_id` referencia directamente para el precio (ya no hay un campo "zona"
+intermedio compartido entre las dos entidades).
 """
 
 import uuid
@@ -18,7 +19,12 @@ class Spst:
     domicilio: str | None
     localidad: str | None
     provincia: str | None
-    zona: str | None
+    # Texto libre, SOLO para que "Vincular SPST" sugiera coincidencias por
+    # localidad al alta de una fila de Tabla KM — no tiene ningún efecto sobre
+    # qué tarifa se le cobra a un incidente (eso lo decide `Tarifario.spst_id`
+    # directo). Se llamó "zona" hasta 2026-09; se renombró para que no se
+    # confunda con eso.
+    zona_cobertura: str | None
     activo: bool
     created_at: datetime
     # Vínculo a `dbo.Empresa` de Siges (ADR-014) — None = sin vincular.

@@ -25,6 +25,7 @@ from src.modules.liquidaciones.domain.entities.incidente import (
     ESTADO_VALIDACION_OK,
     Incidente,
 )
+from src.modules.liquidaciones.domain.entities.regla_alerta import ReglaAlerta
 from src.modules.liquidaciones.domain.errors import LiquidacionNoEncontradaError
 from src.modules.liquidaciones.domain.repositories.alerta_repository import AlertaRepository
 from src.modules.liquidaciones.domain.repositories.incidente_repository import (
@@ -33,13 +34,9 @@ from src.modules.liquidaciones.domain.repositories.incidente_repository import (
 from src.modules.liquidaciones.domain.repositories.liquidacion_repository import (
     LiquidacionRepository,
 )
-from src.modules.liquidaciones.domain.repositories.observacion_repository import (
-    ObservacionRepository,
-)
 from src.modules.liquidaciones.domain.repositories.regla_alerta_repository import (
     ReglaAlertaRepository,
 )
-from src.modules.liquidaciones.domain.repositories.spst_repository import SpstRepository
 from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
 from src.modules.liquidaciones.domain.repositories.tarifario_repository import (
     TarifarioRepository,
@@ -61,10 +58,8 @@ class ReanalizarLiquidacionPorts:
     liquidaciones: LiquidacionRepository
     incidentes: IncidenteRepository
     alertas: AlertaRepository
-    observaciones: ObservacionRepository
     reglas: ReglaAlertaRepository
     tablas_km: TablaKmRepository
-    spsts: SpstRepository
     tarifarios: TarifarioRepository
 
 
@@ -78,41 +73,44 @@ class ReanalizarLiquidacion:
             raise LiquidacionNoEncontradaError(liquidacion_id)
 
         incidentes = await self._ports.incidentes.list_by_liquidacion(liquidacion_id)
-        resultado = await self._ejecutar_motor(liquidacion.prestador_id, incidentes)
-        await self._persistir(liquidacion_id, resultado)
+        reglas_activas = await self._ports.reglas.list_activas()
+        resultado = await self._ejecutar_motor(
+            liquidacion.prestador_id, incidentes, reglas_activas
+        )
+        await self._persistir(liquidacion_id, resultado, set(reglas_activas))
 
         return ReanalizarLiquidacionResultado(
             total_incidentes=len(incidentes),
             total_alertas=len(resultado.alertas),
-            total_observaciones=len(resultado.observaciones),
         )
 
     async def _ejecutar_motor(
-        self, prestador_id: UUID, incidentes: list[Incidente]
+        self,
+        prestador_id: UUID,
+        incidentes: list[Incidente],
+        reglas_activas: dict[str, ReglaAlerta],
     ) -> ResultadoMotorReglas:
         incidentes_prestador = await self._ports.incidentes.list_by_prestador(prestador_id)
-        reglas_activas = await self._ports.reglas.list_activas()
         tablas_km = await self._ports.tablas_km.list_by_prestador(prestador_id)
-        spsts = await self._ports.spsts.list_by_prestador(prestador_id)
         tarifarios = await self._ports.tarifarios.list_by_prestador(prestador_id)
         return ejecutar_motor_reglas(
-            incidentes, incidentes_prestador, reglas_activas, tablas_km, spsts, tarifarios
+            incidentes, incidentes_prestador, reglas_activas, tablas_km, tarifarios
         )
 
-    async def _persistir(self, liquidacion_id: UUID, resultado: ResultadoMotorReglas) -> None:
-        # El triage previo de la TL (estado ≠ pendiente + justificación) sobrevive
-        # al reemplazo — ver conciliar_alertas. El estado_validacion del incidente se
-        # deriva de las alertas YA conciliadas, no del hallazgo crudo del motor.
+    async def _persistir(
+        self,
+        liquidacion_id: UUID,
+        resultado: ResultadoMotorReglas,
+        codigos_reglas_activas: set[str],
+    ) -> None:
+        # El triage previo de la TL sobrevive al reemplazo — ver conciliar_alertas.
         existentes = await self._ports.alertas.list_by_liquidacion(liquidacion_id)
-        conciliadas = conciliar_alertas(existentes, resultado.alertas)
+        conciliadas = conciliar_alertas(existentes, resultado.alertas, codigos_reglas_activas)
         incidentes_evaluados = _conciliar_estado_incidentes(
             resultado.incidentes_evaluados, conciliadas
         )
         await self._ports.incidentes.apply_evaluacion(incidentes_evaluados)
         await self._ports.alertas.replace_for_liquidacion(liquidacion_id, conciliadas)
-        await self._ports.observaciones.replace_for_liquidacion(
-            liquidacion_id, resultado.observaciones
-        )
         await self._ports.liquidaciones.update_total_alertas(liquidacion_id, len(resultado.alertas))
 
 

@@ -7,6 +7,7 @@ import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type {
+  Spst,
   SyncTarifariosResult,
   ZonaSigesEstado,
   ZonasSiges,
@@ -15,30 +16,26 @@ import type {
 const seccionCls = "font-heading text-xs font-bold uppercase tracking-[.06em] text-muted-foreground";
 const filaCls = "flex items-end justify-between gap-3 border-t border-border py-2 first:border-t-0";
 
-// Sentinels del select: zona genérica (tarifario sin zona — el caso mayoritario,
-// códigos TMT*) y "adoptar el nombre de Siges como zona local nueva".
-const ZONA_GENERICA = "__generica__";
-const USAR_NOMBRE_SIGES = "__siges__";
+// Sentinel del select: tarifa genérica (tarifario sin SPST — el caso
+// mayoritario, códigos TMT*).
+const GENERICA = "__generica__";
 
 // Selección inicial del select: si ya está mapeada, reflejar el mapeo actual
 // (no la propuesta) para que remapear parta de dónde está hoy, no de cero.
 function seleccionInicialDe(zona: ZonaSigesEstado): string {
-  if (!zona.mapeada) return zona.propuesta ?? ZONA_GENERICA;
-  if (zona.zonaLocal === null) return ZONA_GENERICA;
-  if (zona.zonaLocal === zona.descripcionSiges) return USAR_NOMBRE_SIGES;
-  return zona.zonaLocal;
+  if (!zona.mapeada) return zona.propuestaSpstId ?? GENERICA;
+  return zona.spstId ?? GENERICA;
 }
 
-function ZonaMapRow({ zona, onMapeada }: { zona: ZonaSigesEstado; onMapeada: () => void }) {
+function ZonaMapRow({
+  zona, spsts, onMapeada,
+}: {
+  zona: ZonaSigesEstado;
+  spsts: Spst[];
+  onMapeada: () => void;
+}) {
   const [seleccion, setSeleccion] = useState(() => seleccionInicialDe(zona));
   const [saving, setSaving] = useState(false);
-
-  // El mapeo vigente puede ser una zona que ya no aparece en `zonasLocales`
-  // (ninguna tarifa la usa todavía) — agregarla para no perderla del select.
-  const opciones =
-    zona.zonaLocal && zona.zonaLocal !== zona.descripcionSiges && !zona.zonasLocales.includes(zona.zonaLocal)
-      ? [...zona.zonasLocales, zona.zonaLocal].sort()
-      : zona.zonasLocales;
 
   const handleMapear = async () => {
     setSaving(true);
@@ -46,12 +43,7 @@ function ZonaMapRow({ zona, onMapeada }: { zona: ZonaSigesEstado; onMapeada: () 
       await liquidacionesApi.mapearZonaSiges({
         prestadorId: zona.prestadorId,
         descripcionSiges: zona.descripcionSiges,
-        zonaLocal:
-          seleccion === ZONA_GENERICA
-            ? null
-            : seleccion === USAR_NOMBRE_SIGES
-              ? zona.descripcionSiges
-              : seleccion,
+        spstId: seleccion === GENERICA ? null : seleccion,
       });
       toast.success("Zona mapeada");
       onMapeada();
@@ -65,20 +57,17 @@ function ZonaMapRow({ zona, onMapeada }: { zona: ZonaSigesEstado; onMapeada: () 
   return (
     <div className={filaCls}>
       <div className="min-w-0 flex-1">
-        <p className="truncate font-body text-sm text-foreground">
-          <span className="font-bold">{zona.prestador}</span> · {zona.descripcionSiges}
-        </p>
+        <p className="truncate font-body text-sm text-foreground">{zona.descripcionSiges}</p>
         <BrandSelect
-          label="Zona local"
+          label="SPST"
           value={seleccion}
           onChange={(e) => setSeleccion(e.target.value)}
         >
-          <option value={ZONA_GENERICA}>Zona genérica (tarifario sin zona)</option>
-          <option value={USAR_NOMBRE_SIGES}>Usar el nombre tal cual</option>
-          {opciones.map((z) => (
-            <option key={z} value={z}>
-              {z}
-              {zona.propuesta === z ? " (propuesta)" : ""}
+          <option value={GENERICA}>Genérica (tarifario sin SPST)</option>
+          {spsts.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.nombre}
+              {zona.propuestaSpstId === s.id ? " (propuesta)" : ""}
             </option>
           ))}
         </BrandSelect>
@@ -100,11 +89,10 @@ function ResultadoSyncTarifarios({ resultado }: { resultado: SyncTarifariosResul
       </p>
       {resultado.gruposCreados.map((g) => (
         <p
-          key={`${g.prestador}-${g.tipoServicio}-${g.zona ?? ""}`}
+          key={`${g.tipoServicio}-${g.spstNombre ?? ""}`}
           className="font-body text-sm text-foreground"
         >
-          <span className="font-bold">{g.prestador}</span> · {g.tipoServicio}
-          {g.zona ? ` · ${g.zona}` : ""} → {g.cantidad} vigencia(s)
+          {g.tipoServicio} · {g.spstNombre ?? "Genérica"} → {g.cantidad} vigencia(s)
         </p>
       ))}
       {resultado.conflictos.length > 0 && (
@@ -114,30 +102,38 @@ function ResultadoSyncTarifarios({ resultado }: { resultado: SyncTarifariosResul
           </p>
           {resultado.conflictos.map((c, i) => (
             <p key={i} className="font-body text-xs text-muted-foreground">
-              {c.prestador} · {c.tipoServicio}
-              {c.zona ? ` · ${c.zona}` : ""} · desde {c.vigenciaDesde}: {c.campo} local{" "}
-              {c.valorLocal} vs {c.valorSiges}
+              {c.tipoServicio} · {c.spstNombre ?? "Genérica"} · desde {c.vigenciaDesde}:{" "}
+              {c.campo} local {c.valorLocal} vs {c.valorSiges}
             </p>
           ))}
         </>
       )}
+      {resultado.prestadoresSinVinculo.length > 0 && (
+        <p className="font-body text-xs text-destructive mt-2">
+          {resultado.prestadoresSinVinculo[0]} no está vinculado a Siges — vinculalo en
+          Configuración &gt; Prestadores antes de sincronizar.
+        </p>
+      )}
       <p className="font-body text-xs text-muted-foreground mt-2">
         Sin cambios: {resultado.sinCambios}
-        {resultado.prestadoresSinVinculo.length > 0 &&
-          ` · Sin vínculo: ${resultado.prestadoresSinVinculo.join(", ")}`}
       </p>
     </div>
   );
 }
 
 export function SigesTarifariosModal({
+  prestadorId,
+  prestadorNombre,
   onClose,
   onChanged,
 }: {
+  prestadorId: string;
+  prestadorNombre: string;
   onClose: () => void;
   onChanged: () => void;
 }) {
   const [zonas, setZonas] = useState<ZonasSiges | null>(null);
+  const [spsts, setSpsts] = useState<Spst[]>([]);
   const [resultado, setResultado] = useState<SyncTarifariosResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
@@ -145,16 +141,21 @@ export function SigesTarifariosModal({
   // Promise-chain: ver nota en siges-sync-modal.tsx (regla set-state-in-effect).
   const load = useCallback(
     () =>
-      Promise.all([liquidacionesApi.getSigesZonas(), liquidacionesApi.syncTarifariosSiges(true)])
-        .then(([z, dry]) => {
+      Promise.all([
+        liquidacionesApi.getSigesZonas(prestadorId),
+        liquidacionesApi.syncTarifariosSiges(true, prestadorId),
+        liquidacionesApi.listSpsts({ prestadorId }),
+      ])
+        .then(([z, dry, s]) => {
           setZonas(z);
           setResultado(dry);
+          setSpsts(s);
           setError(null);
         })
         .catch((err: unknown) => {
           setError(err instanceof Error ? err.message : "Error al consultar");
         }),
-    [],
+    [prestadorId],
   );
 
   useEffect(() => { void load(); }, [load]);
@@ -162,7 +163,7 @@ export function SigesTarifariosModal({
   const handleAplicar = async () => {
     setSyncing(true);
     try {
-      const res = await liquidacionesApi.syncTarifariosSiges(false);
+      const res = await liquidacionesApi.syncTarifariosSiges(false, prestadorId);
       setResultado(res);
       toast.success(`Sync aplicado: ${res.creados} vigencia(s) nueva(s)`);
       onChanged();
@@ -177,7 +178,7 @@ export function SigesTarifariosModal({
   const mapeadas = zonas?.zonas.filter((z) => z.mapeada) ?? [];
 
   return (
-    <BrandModal isOpen onClose={onClose} title="Sincronizar tarifarios" error={error}>
+    <BrandModal isOpen onClose={onClose} title={`Sincronizar tarifarios · ${prestadorNombre}`} error={error}>
       {zonas === null || resultado === null ? (
         <div className="flex h-32 items-center justify-center">{!error && <Spinner />}</div>
       ) : (
@@ -186,12 +187,14 @@ export function SigesTarifariosModal({
             <div>
               <p className={`${seccionCls} mb-1`}>
                 Zonas sin mapear ({sinMapear.length}) — sus tarifas no se sincronizan
-                hasta confirmar el mapeo
+                hasta confirmar el mapeo. &quot;Mapear&quot; guarda al toque, aunque después
+                cierres sin tocar &quot;Aplicar sync&quot;
               </p>
               {sinMapear.map((z) => (
                 <ZonaMapRow
                   key={`${z.prestadorId}-${z.descripcionSiges}`}
                   zona={z}
+                  spsts={spsts}
                   onMapeada={load}
                 />
               ))}
@@ -207,6 +210,7 @@ export function SigesTarifariosModal({
                 <ZonaMapRow
                   key={`${z.prestadorId}-${z.descripcionSiges}`}
                   zona={z}
+                  spsts={spsts}
                   onMapeada={load}
                 />
               ))}
