@@ -88,9 +88,8 @@ async def run_estimation_zero(
     fecha: date = Form(...),
     _: Identity = _require_export,
 ) -> RunEstimationZeroResponse:
-    """Fallback manual: CSV exportado a mano del reporte SSRS. Camino
-    principal es `/en0/proceso` (consulta en vivo a Siges); este endpoint
-    queda para cuando SigesReadOnly no responde o el proceso no está ahí."""
+    """Fallback manual (CSV a mano del SSRS) para cuando SigesReadOnly no
+    responde — el camino principal es `/en0/proceso` (consulta en vivo a Siges)."""
     upload_path = await save_upload(file)
     try:
         request = RunEstimationZeroRequest(
