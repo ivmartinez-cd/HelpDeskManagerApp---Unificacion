@@ -1,6 +1,10 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.contadores.domain.ports.estim_log_port import EntradaEstimLog
+from src.modules.contadores.domain.ports.estim_log_port import (
+    EntradaEstimLog,
+    ResumenAuditoriaMaquina,
+)
 from src.modules.contadores.infrastructure.models.estim_log_model import EstimLogModel
 
 
@@ -31,3 +35,25 @@ class SqlAlchemyEstimLogRepository:
             )
         )
         await self._session.flush()
+
+    async def resumen_por_maquina(
+        self, nro_proceso: int
+    ) -> dict[int, ResumenAuditoriaMaquina]:
+        """Última entrada (por `creado_en`) de cada máquina define el
+        `#IdLog`; la última con observación manual no vacía define
+        `observacion_manual` — pueden ser filas distintas."""
+        stmt = (
+            select(EstimLogModel)
+            .where(EstimLogModel.nro_proceso == nro_proceso)
+            .order_by(EstimLogModel.creado_en)
+        )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        resumen: dict[int, ResumenAuditoriaMaquina] = {}
+        for row in rows:
+            actual = resumen.get(row.id_maquina)
+            observacion = row.observacion.strip() if row.observacion else None
+            resumen[row.id_maquina] = ResumenAuditoriaMaquina(
+                id_log_corto=str(row.id)[:8],
+                observacion_manual=observacion or (actual.observacion_manual if actual else None),
+            )
+        return resumen

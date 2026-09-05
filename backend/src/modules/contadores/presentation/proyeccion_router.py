@@ -8,7 +8,7 @@ archivo) para no pasar el máximo de 300 líneas."""
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
@@ -16,6 +16,7 @@ from src.modules.auth.presentation.dependencies.permissions import require_permi
 from src.modules.contadores.application.dtos.solicitud_tablero_siges_dto import (
     SolicitudTableroSigesDto,
 )
+from src.modules.contadores.application.use_cases.generar_export_csv import GenerarExportCsvUseCase
 from src.modules.contadores.application.use_cases.gestionar_recesos_proyeccion import (
     CrearRecesoRequest,
     GestionarRecesosProyeccionUseCase,
@@ -46,6 +47,9 @@ from src.modules.contadores.infrastructure.ejemplo.decisiones_operador_store imp
 from src.modules.contadores.infrastructure.ejemplo.recesos_store import get_recesos_ejemplo_store
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_decisiones_operador_repository import (  # noqa: E501
     SqlAlchemyDecisionesOperadorRepository,
+)
+from src.modules.contadores.infrastructure.repositories.sqlalchemy_estim_log_repository import (
+    SqlAlchemyEstimLogRepository,
 )
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_recesos_repository import (
     SqlAlchemyRecesosRepository,
@@ -144,6 +148,34 @@ async def _get_tablero_real(
     )
     resultado = await use_case.execute(solicitud)
     return TableroProyeccionSchema.from_result(resultado)
+
+
+@router.get("/export")
+async def exportar_csv(
+    nro_proceso: int,
+    id_grupo_economico: int,
+    id_anexo: int,
+    fecha_objetivo: date,
+    _: Identity = _require_manage,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> Response:
+    """Export a SiGes (REGLAS_DE_NEGOCIO §12) — solo para un proceso real,
+    no hay export de ejemplo. Windows-1252 sin BOM (mismo importador que el
+    sistema original), separador ';', una fila por equipo."""
+    solicitud = SolicitudTableroSigesDto(nro_proceso, id_grupo_economico, id_anexo, fecha_objetivo)
+    use_case = GenerarExportCsvUseCase(
+        get_grilla_estimacion_gateway(),
+        SqlAlchemyDecisionesOperadorRepository(db),
+        SqlAlchemyRecesosRepository(db),
+        SqlAlchemyEstimLogRepository(db),
+    )
+    contenido = await use_case.execute(solicitud)
+    nombre = f"Estimacion_{nro_proceso}_{fecha_objetivo.isoformat()}.csv"
+    return Response(
+        content=contenido.encode("cp1252", errors="replace"),
+        media_type="text/csv; charset=windows-1252",
+        headers={"Content-Disposition": f'attachment; filename="{nombre}"'},
+    )
 
 
 @router.get("/recesos", response_model=Page[RecesoSchema])

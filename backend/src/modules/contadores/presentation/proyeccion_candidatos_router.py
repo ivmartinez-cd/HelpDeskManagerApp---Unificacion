@@ -4,6 +4,7 @@ se incluye en ese router (mismo prefix, ver `router.include_router` al final
 de ese archivo)."""
 
 from datetime import date
+from typing import cast
 
 from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel
@@ -36,6 +37,9 @@ from src.modules.contadores.application.use_cases.recalcular_candidato_siges imp
     RecalcularCandidatoSigesUseCase,
 )
 from src.modules.contadores.domain.ports.decisiones_operador_port import DecisionesOperadorPort
+from src.modules.contadores.domain.value_objects.estimacion.fuente_estimacion import (
+    FuenteEstimacion,
+)
 from src.modules.contadores.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.contadores.infrastructure.ejemplo.decisiones_operador_store import (
     get_decisiones_operador_store,
@@ -197,7 +201,7 @@ def _decision_manual_de(body: AceptarManualBody | None) -> DecisionManualDto | N
     return DecisionManualDto(
         contador_propuesto=body.contador_propuesto,
         tipo_toma=body.tipo_toma,
-        fuente=body.fuente,
+        fuente=cast(FuenteEstimacion, body.fuente),
         metodo_detalle=body.metodo_detalle or "",
     )
 

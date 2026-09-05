@@ -1,5 +1,9 @@
 from dataclasses import dataclass
 
+from src.modules.contadores.domain.value_objects.estimacion.fuente_estimacion import (
+    FuenteEstimacion,
+)
+
 
 @dataclass(frozen=True, slots=True)
 class DecisionManualDto:
@@ -10,7 +14,7 @@ class DecisionManualDto:
 
     contador_propuesto: float | None
     tipo_toma: int | None
-    fuente: str
+    fuente: FuenteEstimacion
     metodo_detalle: str
 
 

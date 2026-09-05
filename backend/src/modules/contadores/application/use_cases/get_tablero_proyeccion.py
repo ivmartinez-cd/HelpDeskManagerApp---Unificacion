@@ -7,15 +7,12 @@ reales: reemplazar la fuente de equipos es el único cambio necesario el día
 que se conecte a SiGes."""
 
 from collections.abc import Callable
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
 from src.modules.contadores.application.dtos.contexto_proceso_dto import ContextoProcesoDto
-from src.modules.contadores.application.dtos.decision_operador_dto import (
-    DecisionManualDto,
-    DecisionOperadorDto,
-)
+from src.modules.contadores.application.dtos.decision_operador_dto import DecisionOperadorDto
 from src.modules.contadores.application.dtos.equipo_proceso_dto import (
     ClaseProceso,
     EquipoProceso,
@@ -24,6 +21,9 @@ from src.modules.contadores.application.dtos.fila_proyeccion_dto import FilaProy
 from src.modules.contadores.application.dtos.resumen_proyeccion_dto import ResumenProyeccionDto
 from src.modules.contadores.application.use_cases._construir_estimacion_input import (
     construir_estimacion_input,
+)
+from src.modules.contadores.application.use_cases._resolver_resultado_final import (
+    resolver_resultado_final,
 )
 from src.modules.contadores.domain.ports.decisiones_operador_port import DecisionesOperadorPort
 from src.modules.contadores.domain.services.estimacion.antiguedad import meses_entre
@@ -70,8 +70,9 @@ class GetTableroProyeccionUseCase:
         self, equipo: EquipoProceso, clase: ClaseProceso, contexto: "_ContextoArmado"
     ) -> FilaProyeccionDto:
         entrada = construir_estimacion_input(equipo, clase, contexto.ctx)
-        resultado = estimar(entrada)
+        automatico = estimar(entrada)
         decision = contexto.decisiones.get((equipo.id_maquina, clase.clase))
+        resultado = resolver_resultado_final(clase, automatico, decision)
         calculo = _CalculoClase(equipo, clase, resultado, decision)
         return _armar_fila(calculo, contexto.ctx.fecha_objetivo)
 
@@ -90,65 +91,9 @@ class _CalculoClase:
     decision: DecisionOperadorDto | None
 
 
-@dataclass(frozen=True, slots=True)
-class _ValoresCalculados:
-    estim_propuesto: float | None
-    impresiones: float | None
-    tipo_toma: int | None
-    fuente: str
-    semaforo: str
-    metodo_detalle: str
-    requiere_confirmacion: bool
-
-
-def _calcular_valores(calculo: _CalculoClase) -> _ValoresCalculados:
-    clase, resultado, decision = calculo.clase, calculo.resultado, calculo.decision
-    base = _ValoresCalculados(
-        resultado.estim_propuesto, resultado.impresiones, resultado.tipo_toma,
-        resultado.fuente, resultado.semaforo, resultado.metodo_detalle,
-        resultado.requiere_confirmacion,
-    )
-    if clase.ya_real:
-        # Un dato real nunca se pisa (REGLAS_DE_NEGOCIO §1) — ni por una
-        # decisión manual vieja ni por un "marcar pendiente" viejo.
-        return _valores_de_real(clase, base)
-    if decision and decision.pendiente:
-        return _ValoresCalculados(None, None, None, "Pendiente", "ROJO", "Pendiente", True)
-    if decision and decision.manual:
-        return _valores_de_manual(decision.manual, clase, base)
-    if decision and decision.nota:
-        return replace(base, requiere_confirmacion=True)
-    return base
-
-
-def _valores_de_real(clase: ClaseProceso, base: _ValoresCalculados) -> _ValoresCalculados:
-    impresiones = (clase.valor_real_cargado or 0) - clase.ultimo_contador_facturado.valor
-    return _ValoresCalculados(
-        clase.valor_real_cargado, impresiones, clase.ultimo_contador_facturado.tipo_toma,
-        base.fuente, base.semaforo, base.metodo_detalle, False,
-    )
-
-
-def _valores_de_manual(
-    manual: DecisionManualDto, clase: ClaseProceso, base: _ValoresCalculados
-) -> _ValoresCalculados:
-    impresiones = (
-        (manual.contador_propuesto - clase.ultimo_contador_facturado.valor)
-        if manual.contador_propuesto is not None
-        else None
-    )
-    # Ya fue confirmado por el operador al aceptar — no vuelve a pedir
-    # confirmación aunque el cálculo automático la hubiera requerido.
-    return _ValoresCalculados(
-        manual.contador_propuesto, impresiones, manual.tipo_toma,
-        manual.fuente, base.semaforo, manual.metodo_detalle, False,
-    )
-
-
 def _armar_fila(calculo: _CalculoClase, fecha_objetivo: date) -> FilaProyeccionDto:
-    valores = _calcular_valores(calculo)
     return FilaProyeccionDto(
-        **_campos_identidad(calculo, fecha_objetivo, valores), **_campos_calculo(calculo, valores)
+        **_campos_identidad(calculo, fecha_objetivo), **_campos_calculo(calculo)
     )
 
 
@@ -163,10 +108,8 @@ def _historico_con_actual(
     return (*historico[:-1], impresiones if impresiones is not None else 0.0)
 
 
-def _campos_identidad(
-    calculo: _CalculoClase, fecha_objetivo: date, valores: _ValoresCalculados
-) -> dict[str, Any]:
-    campos_clase = _campos_clase(calculo.clase, fecha_objetivo, valores)
+def _campos_identidad(calculo: _CalculoClase, fecha_objetivo: date) -> dict[str, Any]:
+    campos_clase = _campos_clase(calculo, fecha_objetivo)
     return {**_campos_equipo(calculo.equipo), **campos_clase}
 
 
@@ -182,14 +125,13 @@ def _campos_equipo(equipo: EquipoProceso) -> dict[str, Any]:
     )
 
 
-def _campos_clase(
-    clase: ClaseProceso, fecha_objetivo: date, valores: _ValoresCalculados
-) -> dict[str, Any]:
+def _campos_clase(calculo: _CalculoClase, fecha_objetivo: date) -> dict[str, Any]:
+    clase = calculo.clase
     return dict(
         tecnologia=clase.tecnologia,
         clase=clase.clase,
         meses_sin_real=_meses_sin_real(clase, fecha_objetivo),
-        historico_12=_historico_con_actual(clase.historico_12, valores.impresiones),
+        historico_12=_historico_con_actual(clase.historico_12, calculo.resultado.impresiones),
         prom_6_facturados=clase.prom_6_facturados,
         ultimo_facturado_valor=clase.ultimo_contador_facturado.valor,
         ultimo_facturado_fecha=clase.ultimo_contador_facturado.fecha,
@@ -199,18 +141,18 @@ def _campos_clase(
     )
 
 
-def _campos_calculo(calculo: _CalculoClase, valores: _ValoresCalculados) -> dict[str, Any]:
+def _campos_calculo(calculo: _CalculoClase) -> dict[str, Any]:
     resultado = calculo.resultado
     return dict(
-        estim_propuesto=valores.estim_propuesto,
-        tipo_toma=valores.tipo_toma,
-        impresiones=valores.impresiones,
-        fuente=valores.fuente,
-        metodo_detalle=valores.metodo_detalle,
+        estim_propuesto=resultado.estim_propuesto,
+        tipo_toma=resultado.tipo_toma,
+        impresiones=resultado.impresiones,
+        fuente=resultado.fuente,
+        metodo_detalle=resultado.metodo_detalle,
         coloreo=resultado.coloreo,
         borde_salto_imposible=resultado.borde_salto_imposible,
-        semaforo=valores.semaforo,
-        requiere_confirmacion=valores.requiere_confirmacion,
+        semaforo=resultado.semaforo,
+        requiere_confirmacion=resultado.requiere_confirmacion,
         nota_operador=calculo.decision.nota if calculo.decision else None,
     )
 

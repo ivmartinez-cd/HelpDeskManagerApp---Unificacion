@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -8,6 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.contadores.application.dtos.decision_operador_dto import (
     DecisionManualDto,
     DecisionOperadorDto,
+)
+from src.modules.contadores.domain.value_objects.estimacion.fuente_estimacion import (
+    FuenteEstimacion,
 )
 from src.modules.contadores.infrastructure.models.decision_operador_model import (
     DecisionOperadorModel,
@@ -108,7 +111,7 @@ def _to_dto(row: DecisionOperadorModel) -> DecisionOperadorDto:
                 else None
             ),
             tipo_toma=row.manual_tipo_toma,
-            fuente=row.manual_fuente,
+            fuente=cast(FuenteEstimacion, row.manual_fuente),
             metodo_detalle=row.manual_metodo_detalle or "",
         )
     return DecisionOperadorDto(pendiente=row.pendiente, nota=row.nota, manual=manual)

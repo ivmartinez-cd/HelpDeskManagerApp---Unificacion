@@ -26,5 +26,20 @@ class EntradaEstimLog:
     detalle: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass(frozen=True, slots=True)
+class ResumenAuditoriaMaquina:
+    """Lo que el export necesita del historial de un equipo (REGLAS_DE_NEGOCIO
+    §12): la observación manual más reciente y un identificador corto de la
+    última entrada del log, para que un reclamo de facturación lleve a la
+    decisión completa. Solo existe para equipos que el operador tocó."""
+
+    id_log_corto: str
+    observacion_manual: str | None
+
+
 class EstimLogPort(Protocol):
     async def registrar(self, entrada: EntradaEstimLog) -> None: ...
+
+    async def resumen_por_maquina(
+        self, nro_proceso: int
+    ) -> dict[int, ResumenAuditoriaMaquina]: ...
