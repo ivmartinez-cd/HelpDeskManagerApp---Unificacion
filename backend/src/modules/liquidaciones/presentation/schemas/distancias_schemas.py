@@ -107,13 +107,16 @@ class CalculoKmPreviewOut(BaseModel):
 class AplicarDistanciasIn(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     preview_id: uuid.UUID = Field(alias="previewId")
+    # Completar solo filas sin km (no pisa lo negociado por la TL).
+    solo_sin_km: bool = Field(default=False, alias="soloSinKm")
 
 
 class AplicarDistanciasOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     creadas: int
     actualizadas: int
+    omitidas: int = 0
 
     @classmethod
     def from_resultado(cls, r: AplicarDistanciasResultado) -> AplicarDistanciasOut:
-        return cls(creadas=r.creadas, actualizadas=r.actualizadas)
+        return cls(creadas=r.creadas, actualizadas=r.actualizadas, omitidas=r.omitidas)

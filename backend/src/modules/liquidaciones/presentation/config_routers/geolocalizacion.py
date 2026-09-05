@@ -104,7 +104,9 @@ async def aplicar_calcular_distancias(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AplicarDistanciasOut:
-    resultado = await build_aplicar_calcular_distancias(db).execute(body.preview_id)
+    resultado = await build_aplicar_calcular_distancias(db).execute(
+        body.preview_id, solo_sin_km=body.solo_sin_km
+    )
     return AplicarDistanciasOut.from_resultado(resultado)
 
 

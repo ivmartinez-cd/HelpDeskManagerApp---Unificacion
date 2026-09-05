@@ -209,6 +209,46 @@ class TestApply:
         assert actualizada.kms_recorrido == pytest.approx(398.815)
 
     @pytest.mark.asyncio
+    async def test_apply_solo_sin_km_no_pisa_las_filas_con_km(self) -> None:
+        preview_uc, aplicar_uc, ports, prestador_id = _armar([_sucursal_cliente()])
+        existente = make_tabla_km(
+            prestador_id=prestador_id,
+            empresa_nombre="Adecoagro",
+            sucursal_nombre="Las Horquetas",
+            kms_recorrido=150.0,
+            kms_a_facturar=150.0,
+        )
+        ports.tabla_km.rows[existente.id] = existente  # type: ignore[attr-defined]
+        preview = await preview_uc.execute(prestador_id)
+
+        resultado = await aplicar_uc.execute(preview.id, solo_sin_km=True)
+
+        assert resultado.actualizadas == 0
+        assert resultado.omitidas == 1
+        sin_tocar = await ports.tabla_km.get_by_id(existente.id)
+        assert sin_tocar is not None and sin_tocar.kms_a_facturar == 150.0
+
+    @pytest.mark.asyncio
+    async def test_apply_solo_sin_km_completa_las_filas_en_cero(self) -> None:
+        preview_uc, aplicar_uc, ports, prestador_id = _armar([_sucursal_cliente()])
+        existente = make_tabla_km(
+            prestador_id=prestador_id,
+            empresa_nombre="Adecoagro",
+            sucursal_nombre="Las Horquetas",
+            kms_recorrido=0.0,
+            kms_a_facturar=0.0,
+        )
+        ports.tabla_km.rows[existente.id] = existente  # type: ignore[attr-defined]
+        preview = await preview_uc.execute(prestador_id)
+
+        resultado = await aplicar_uc.execute(preview.id, solo_sin_km=True)
+
+        assert resultado.actualizadas == 1
+        assert resultado.omitidas == 0
+        completada = await ports.tabla_km.get_by_id(existente.id)
+        assert completada is not None and completada.kms_recorrido == pytest.approx(398.815)
+
+    @pytest.mark.asyncio
     async def test_apply_de_preview_inexistente_falla(self) -> None:
         _, aplicar_uc, _, _ = _armar([_sucursal_cliente()])
         with pytest.raises(PreviewNoEncontradoError):
@@ -232,10 +272,12 @@ class TestApply:
     @pytest.mark.asyncio
     async def test_apply_no_vincula_spst_ambiguo(self) -> None:
         prestador_id = uuid4()
-        spsts = FakeSpstRepository([
-            make_spst(prestador_id=prestador_id, zona_cobertura="Guamini Norte"),
-            make_spst(prestador_id=prestador_id, zona_cobertura="Guamini Sur"),
-        ])
+        spsts = FakeSpstRepository(
+            [
+                make_spst(prestador_id=prestador_id, zona_cobertura="Guamini Norte"),
+                make_spst(prestador_id=prestador_id, zona_cobertura="Guamini Sur"),
+            ]
+        )
         preview_uc, aplicar_uc, ports, _ = _armar(
             [_sucursal_cliente()], spsts=spsts, prestador_id=prestador_id
         )
