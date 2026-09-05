@@ -14,11 +14,10 @@ const CARD_COLOR: Record<ToolKey, { badge: string; fg: string }> = {
 
 
 /** Hub "Centro de Contadores" — landing del módulo cuando se entra por el
- * nav de arriba, sin `?tool=`. Cada card navega a la herramienta real
- * (`/contadores?tool=<key>`, ver contadores/page.tsx); 6 de las 7 herramientas
- * son funcionales (Proyección quedó con la card visible pero sin lógica
- * detrás, ver `tool.disabled` en tool-catalog.ts), así que no se reimplementa
- * el modal simplificado del handoff — ver README del design handoff. */
+ * nav de arriba, sin `?tool=`. Cada card navega a la herramienta real: el
+ * modal genérico (`/contadores?tool=<key>`, ver contadores/page.tsx) salvo
+ * que declare `route` propia (Proyección: tablero completo, no entra en un
+ * modal). Todas las herramientas del catálogo son funcionales. */
 export function ContadoresHub() {
   return (
     <div className="flex flex-col gap-6 px-9 py-8">
@@ -62,7 +61,7 @@ export function ContadoresHub() {
           return (
             <Link
               key={tool.key}
-              href={`/contadores?tool=${tool.key}`}
+              href={tool.route ?? `/contadores?tool=${tool.key}`}
               className="flex flex-col gap-2.5 rounded-[12px] border border-border bg-card p-5 no-underline transition-colors hover:border-muted-foreground/30"
             >
               <span

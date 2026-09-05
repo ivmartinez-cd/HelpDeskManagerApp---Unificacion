@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AlertTriangle, X } from "lucide-react";
 
@@ -35,6 +35,18 @@ export function BrandModal({ isOpen, onClose, title, children, widthPx = 480, er
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const titleId = useId();
+  // El portal necesita `document.body`, que no existe en el render de
+  // servidor: si `isOpen` ya viene en `true` desde el primer render (ej.
+  // ToolLauncherModal con `?tool=` en la URL), el SSR crashea con
+  // "document is not defined" y Next cae a client-side rendering (bug
+  // visto 2026-09-05). `useSyncExternalStore` (no un efecto con setState,
+  // que dispara react-hooks/set-state-in-effect) le dice a React el valor
+  // exacto a usar en cada entorno: false en el snapshot de servidor.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -65,7 +77,7 @@ export function BrandModal({ isOpen, onClose, title, children, widthPx = 480, er
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   return createPortal(
     <div

@@ -21,9 +21,11 @@ export interface ToolDef {
   icon: LucideIcon;
   description: string;
   /** La card queda visible en el hub pero sin lógica detrás (sin backend,
-   * sin modal funcional) — usado para Proyección, cuya lógica se dio de
-   * baja a propósito sin sacar la card del catálogo. */
+   * sin modal funcional). */
   disabled?: boolean;
+  /** Página propia en vez del modal genérico de `/contadores?tool=` — para
+   * herramientas demasiado grandes para un modal (tablero completo). */
+  route?: string;
 }
 
 /** Catálogo único de las herramientas de Contadores — fuente de verdad
@@ -35,7 +37,7 @@ export const TOOLS: ToolDef[] = [
     navLabel: "Proyección Contadores",
     icon: ChartColumn,
     description: "Proyecta lecturas de contadores y genera archivos para SiGes.",
-    disabled: true,
+    route: "/contadores/proyeccion",
   },
 
   {

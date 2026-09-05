@@ -9,6 +9,9 @@ from functools import lru_cache
 from src.modules.contadores.infrastructure.siges.pyodbc_anexos_pendientes_gateway import (
     PyodbcAnexosPendientesGateway,
 )
+from src.modules.contadores.infrastructure.siges.pyodbc_candidatos_equipo_gateway import (
+    PyodbcCandidatosEquipoGateway,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_clientes_nuevos_gateway import (
     PyodbcClientesNuevosGateway,
 )
@@ -27,11 +30,17 @@ from src.modules.contadores.infrastructure.siges.pyodbc_estado_proceso_anexos_ga
 from src.modules.contadores.infrastructure.siges.pyodbc_falta_contador_proceso_gateway import (
     PyodbcFaltaContadorProcesoGateway,
 )
+from src.modules.contadores.infrastructure.siges.pyodbc_grilla_estimacion_gateway import (
+    PyodbcGrillaEstimacionGateway,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_operador_gateway import (
     PyodbcOperadorGateway,
 )
 from src.modules.contadores.infrastructure.siges.pyodbc_parque_cliente_gateway import (
     PyodbcParqueClienteGateway,
+)
+from src.modules.contadores.infrastructure.siges.pyodbc_proceso_estimacion_gateway import (
+    PyodbcProcesoEstimacionGateway,
 )
 from src.shared.domain.errors import ExternalServiceError
 from src.shared.infrastructure.mercurio.factories import require_mercurio_runner
@@ -193,3 +202,24 @@ def get_clientes_nuevos_gateway_or_none() -> PyodbcClientesNuevosGateway | None:
             exc_info=exc,
         )
         return None
+
+
+@lru_cache
+def get_proceso_estimacion_gateway() -> PyodbcProcesoEstimacionGateway:
+    """Sin variante `_or_none`: a diferencia de las cards que degradan, los
+    combos de selección del Estimador no tienen nada que mostrar sin Siges —
+    debe fallar visible (502) si MERCURIO no está configurado."""
+    return PyodbcProcesoEstimacionGateway(require_mercurio_runner())
+
+
+@lru_cache
+def get_grilla_estimacion_gateway() -> PyodbcGrillaEstimacionGateway:
+    """Sin variante `_or_none`: sin Siges no hay grilla que mostrar."""
+    return PyodbcGrillaEstimacionGateway(require_mercurio_runner())
+
+
+@lru_cache
+def get_candidatos_equipo_gateway() -> PyodbcCandidatosEquipoGateway:
+    """Sin variante `_or_none`: sin Siges no hay candidatos reales que
+    mostrar (el fallback a datos de ejemplo lo resuelve el router, no acá)."""
+    return PyodbcCandidatosEquipoGateway(require_mercurio_runner())

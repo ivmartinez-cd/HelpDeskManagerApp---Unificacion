@@ -3,6 +3,7 @@ from src.modules.contadores.infrastructure.models.cliente_nuevo_model import Cli
 from src.modules.contadores.infrastructure.models.cliente_siges_map_model import (
     ClienteSigesMapModel,
 )
+from src.modules.contadores.infrastructure.models.estim_log_model import EstimLogModel
 from src.modules.contadores.infrastructure.models.ftp_client_model import FtpClientModel
 from src.modules.contadores.infrastructure.models.meter_client_config_model import (
     MeterClientConfigModel,
@@ -13,6 +14,7 @@ __all__ = [
     "CalendarEventModel",
     "ClienteNuevoModel",
     "ClienteSigesMapModel",
+    "EstimLogModel",
     "FtpClientModel",
     "MeterClientConfigModel",
     "OperadorModel",

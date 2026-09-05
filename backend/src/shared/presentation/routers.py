@@ -40,6 +40,7 @@ from src.modules.contadores.presentation.equipos_sin_real_router import (
 )
 from src.modules.contadores.presentation.ers_router import router as ers_router
 from src.modules.contadores.presentation.ftp_clients_router import router as ftp_clients_router
+from src.modules.contadores.presentation.proyeccion_router import router as proyeccion_router
 from src.modules.contadores.presentation.sds_router import router as sds_router
 from src.modules.contadores.presentation.tools_router import router as contadores_tools_router
 from src.modules.insumos.presentation.alerts_router import router as insumos_alerts_router
@@ -137,6 +138,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     dashboard_prefs_router,
     user_note_router,
     contadores_tools_router,
+    proyeccion_router,
     ftp_clients_router,
     clientes_nuevos_router,
     sds_router,

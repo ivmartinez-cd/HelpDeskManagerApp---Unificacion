@@ -197,7 +197,7 @@ export function BrandSkeleton({ className }: { className?: string }) {
 }
 
 interface BrandBadgeProps {
-  variant?: "neutral" | "accent" | "success" | "warning" | "danger";
+  variant?: "neutral" | "accent" | "success" | "warning" | "danger" | "info";
   children: ReactNode;
 }
 
@@ -207,6 +207,9 @@ const brandBadgeVariants: Record<NonNullable<BrandBadgeProps["variant"]>, string
   success: "bg-success/10 text-success",
   warning: "bg-warning/10 text-warning",
   danger: "bg-destructive/10 text-destructive",
+  // Coloreo bidireccional de Impresiones (REGLAS_DE_NEGOCIO §7.2): azul
+  // cuando el estimado supera 1.4× el promedio del propio equipo.
+  info: "bg-info/10 text-info",
 };
 
 export function BrandBadge({ variant = "neutral", children }: BrandBadgeProps) {

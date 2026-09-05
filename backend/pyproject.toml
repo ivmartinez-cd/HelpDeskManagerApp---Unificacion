@@ -79,6 +79,10 @@ extend-immutable-calls = [
 # El system prompt del gateway de IA es contenido de texto, no código:
 # las líneas largas son deliberadas para mantener el prompt legible como prosa.
 "src/modules/analisis_log_hp/infrastructure/anthropic/anthropic_ai_gateway.py" = ["E501"]
+# SQL real de Siges copiado tal cual del proyecto original (comentarios de
+# negocio alineados en columnas) — reformatearlo perdería la alineación y
+# se apartaría del texto ya validado en producción sin necesidad.
+"src/modules/contadores/infrastructure/siges/grilla_estimacion_query.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
