@@ -19,10 +19,6 @@ from uuid import UUID
 from src.modules.liquidaciones.infrastructure.models.alerta_model import AlertaModel
 from src.modules.liquidaciones.infrastructure.models.incidente_model import IncidenteModel
 from src.modules.liquidaciones.infrastructure.models.liquidacion_model import LiquidacionModel
-from src.modules.liquidaciones.infrastructure.models.observacion_model import (
-    ObservacionIncidenteModel,
-    ObservacionModel,
-)
 from src.modules.liquidaciones.infrastructure.models.prestador_model import (
     LiquidacionPrestadorModel,
 )
@@ -163,23 +159,8 @@ ORDEN_TOPOLOGICO: tuple[TablaSpec, ...] = (
         fks={"alerta_id": "alertas"},
         timestamps=("fecha",),
     ),
-    TablaSpec(
-        origen="observaciones",
-        modelo=ObservacionModel,
-        columnas=(
-            "liquidacion_id", "tipo_observacion", "severidad", "titulo", "descripcion",
-            "datos_contexto", "monto_cobrado", "monto_esperado", "diferencia", "estado",
-            "regla_codigo", "fecha_generacion",
-        ),
-        fks={"liquidacion_id": "liquidaciones"},
-        jsons=("datos_contexto",),
-        json_defaults={"datos_contexto": {}},
-        timestamps=("fecha_generacion",),
-    ),
-    TablaSpec(
-        origen="observacion_incidentes",
-        modelo=ObservacionIncidenteModel,
-        columnas=("observacion_id", "incidente_id", "rol"),
-        fks={"observacion_id": "observaciones", "incidente_id": "incidentes"},
-    ),
+    # `observaciones`/`observacion_incidentes` (legacy SQLite) ya no tienen tabla
+    # destino: se unificaron en `alertas`/`alerta_incidentes` (ver migración
+    # b7e4d9a2c531). Esta migración de datos legacy ya corrió una sola vez en
+    # 2026-08-21, antes de esa unificación — no vuelve a correr.
 )
