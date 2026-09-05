@@ -165,6 +165,16 @@ class TestListarPinesSospechosos:
         assert pines[0].location_type == "ROOFTOP"
 
     @pytest.mark.asyncio
+    async def test_pin_ya_corregido_desaparece_del_listado(self) -> None:
+        ports, prestador_id = _armar([_sucursal()])
+        await ports.geocode_cache.put(_DIRECCION, [_LEJOS])
+        assert len(await ListarPinesSospechosos(ports).execute(prestador_id)) == 1
+
+        await CorregirPin(ports).execute(prestador_id, 1)
+
+        assert await ListarPinesSospechosos(ports).execute(prestador_id) == []
+
+    @pytest.mark.asyncio
     async def test_discrepancia_bajo_umbral_no_es_sospechoso(self) -> None:
         ports, prestador_id = _armar([_sucursal()])
         await ports.geocode_cache.put(_DIRECCION, [_CERCA])

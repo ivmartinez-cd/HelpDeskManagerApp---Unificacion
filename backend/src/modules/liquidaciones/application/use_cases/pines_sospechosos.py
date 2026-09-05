@@ -80,7 +80,17 @@ class ListarPinesSospechosos:
         self, prestador_id: UUID, solo_ids: frozenset[int] | None = None
     ) -> list[PinSospechoso]:
         sospechosos: list[PinSospechoso] = []
+        # Un pin ya corregido (override en sucursal_coordenadas) deja de ser
+        # sospechoso: sin esto el listado seguía mostrando los 82 corregidos por
+        # el pelotón del 2026-09-05 con su discrepancia original.
+        corregidas = {
+            r.siges_sucursal_id
+            for r in await self._ports.sucursal_coords.list_by_prestador(prestador_id)
+            if r.resuelta
+        }
         for sucursal, coords, direccion in await _con_pin(self._ports, prestador_id, solo_ids):
+            if sucursal.siges_sucursal_id in corregidas:
+                continue
             candidatos = await self._ports.geocode_cache.get(direccion)
             if not candidatos:
                 continue
@@ -128,9 +138,7 @@ class AuditarPines:
     async def _contar_sin_direccion(
         self, prestador_id: UUID, solo_ids: frozenset[int] | None
     ) -> int:
-        prestador = await validar_prestador_vinculado_siges(
-            self._ports.prestadores, prestador_id
-        )
+        prestador = await validar_prestador_vinculado_siges(self._ports.prestadores, prestador_id)
         sucursales = await self._ports.siges.list_sucursales_de_prestador(
             prestador.siges_empresa_id  # type: ignore[arg-type]
         )
@@ -167,9 +175,7 @@ def _evaluar(
     direccion: str,
     candidato: GeocodeCandidato,
 ) -> PinSospechoso | None:
-    discrepancia = haversine_km(
-        coords[0], coords[1], candidato.latitud, candidato.longitud
-    )
+    discrepancia = haversine_km(coords[0], coords[1], candidato.latitud, candidato.longitud)
     if not es_pin_sospechoso(discrepancia):
         return None
     return PinSospechoso(
@@ -195,15 +201,11 @@ class CorregirPin:
         self._ports = ports
 
     async def execute(self, prestador_id: UUID, siges_sucursal_id: int) -> None:
-        prestador = await validar_prestador_vinculado_siges(
-            self._ports.prestadores, prestador_id
-        )
+        prestador = await validar_prestador_vinculado_siges(self._ports.prestadores, prestador_id)
         sucursales = await self._ports.siges.list_sucursales_de_prestador(
             prestador.siges_empresa_id  # type: ignore[arg-type]
         )
-        sucursal = next(
-            (s for s in sucursales if s.siges_sucursal_id == siges_sucursal_id), None
-        )
+        sucursal = next((s for s in sucursales if s.siges_sucursal_id == siges_sucursal_id), None)
         if sucursal is None:
             raise ValidationError(f"Sucursal {siges_sucursal_id} no encontrada")
         direccion = armar_direccion(sucursal.domicilio, sucursal.localidad, sucursal.provincia)

@@ -261,3 +261,41 @@ pines existentes: la auditoría los lista y la TL confirma cada corrección desd
 asistente (Momento 2, "pines a verificar" / "ubicaciones por resolver"). Las 92 resoluciones
 automáticas sí quedaron guardadas (`sucursal_coordenadas`, procedencia `geocode`) y las
 usa el cálculo de km. Pendiente: los textos del asistente siguen hablando de Google.
+
+## 10. Pelotón de agentes sobre los pendientes de geolocalización (2026-09-05)
+
+Seis agentes en paralelo, un grupo de prestadores cada uno, con reglas mecánicas escritas
+en un archivo compartido y sin acceso a servicios externos (solo los cuatro endpoints del
+backend: listar pines sospechosos, corregir pin, listar coordenadas pendientes, elegir
+candidato). Backup previo `backups/helpdesk-db_2026-09-05_2129_pre-peloton-geoloc.dump`.
+
+Reglas: corregir un pin solo si está a ≥ 50 km de su dirección, el geocode es preciso
+(ROOFTOP) y la localidad coincide; elegir candidato solo si hay exactamente uno preciso en
+la localidad; nunca coordenadas manuales. Ajuste descubierto por el grupo 2 y propagado a
+todos antes de escribir: cuando la localidad se llama igual que la provincia (Córdoba,
+Mendoza, Salta, San Juan, Santa Fe…) la coincidencia literal daba por buena cualquier ciudad
+de la provincia; se exigió que la localidad aparezca dos veces (ciudad + provincia). Sin ese
+ajuste se habrían movido mal ~45 pines correctos de capitales.
+
+| Resultado | Total |
+|---|---|
+| Casos evaluados | 1.135 |
+| Pines corregidos (override en `sucursal_coordenadas`) | 82 |
+| Coordenadas elegidas | 11 |
+| Dejados con motivo | 1.006 |
+| Errores de escritura | 0 |
+
+Dejados, por qué: 388 con discrepancia < 50 km (rural, puede estar bien); 218 con geocode
+impreciso entre 50 y 1.000 km; **141 "PIN ROTO en Gestión"** (pin en California
+36.78/-119.42, en Madrid, en Chubut para sucursales de Rawson-San Juan, o en el centroide de
+Argentina: valores por defecto de Gestión) — lista para corregir en Gestión en
+`geoloc-2026-09-05-pines-rotos-para-gestion.tsv`; 131 coordenadas ambiguas o sin candidatos
+(`geoloc-2026-09-05-coordenadas-para-la-tl.tsv`); 72 frenados por el ajuste de provincia.
+Las correcciones aplicadas están en `geoloc-2026-09-05-correcciones-aplicadas.tsv`; dos
+escrituras de SAN JUAN hechas antes del ajuste (14169 Centro Cívico, 322) quedan marcadas
+REVISAR aunque mejoran lo que había. Candidatos a corregir a mano que la regla no permitió:
+INFOMAC 11046/8341/14297 (Neuquén capital, el geocoder omite la provincia), MENDOZA 10646
+(Mendoza Plaza Shopping), SAN LUIS 7019 (Credicoop, pin en Rosario).
+
+Fix derivado: `ListarPinesSospechosos` ya no lista los pines con override (antes los 82
+corregidos seguían apareciendo con su discrepancia original).
