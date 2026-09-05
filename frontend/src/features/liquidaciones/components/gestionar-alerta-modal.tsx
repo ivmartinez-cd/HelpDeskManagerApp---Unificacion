@@ -10,7 +10,10 @@ import { CODIGO_ALT009, ESTADO_ALERTA_STYLES, TRANSICIONES_ALERTA } from "../lib
 import { formatARS } from "../lib/format";
 import type { Alerta, EstadoAlerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
 import { riesgoClass } from "./incidente-badges";
+import { AsignarZonaSucursal } from "./asignar-zona-sucursal";
 import { EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
+
+const CODIGO_ALT008 = "ALT008";
 
 function plantillaDesdeAlerta(alerta: Alerta): PlantillaEntrada {
   const ctx = alerta.datosContexto as { empresa?: string; sucursal?: string } | null;
@@ -60,6 +63,22 @@ export function GestionarAlertaModal({
     : Object.values(incidentesById)
         .filter((i) => i.id !== alerta.incidenteId)
         .sort((a, b) => a.numeroIncidente.localeCompare(b.numeroIncidente));
+  // ALT008 con `spst_id` null en el contexto = la fila de Tabla KM de la
+  // sucursal no tiene zona (ver `linkFaltante` en alerta-sub-row.tsx): se
+  // resuelve acá, sin ir a Tabla KM.
+  const incidente = incidentesById[alerta.incidenteId];
+  const ctxAlt008 = alerta.datosContexto as { spst_id?: string | null } | null;
+  const sinZona =
+    alerta.tipoAlerta === CODIGO_ALT008 &&
+    !ctxAlt008?.spst_id &&
+    !!incidente?.empresaNombre &&
+    !!incidente?.sucursalNombre &&
+    (alerta.estado === "pendiente" || alerta.estado === "en_revision");
+  const incidentesMismaSucursal = incidente
+    ? Object.values(incidentesById).filter(
+        (i) => i.empresaNombre === incidente.empresaNombre && i.sucursalNombre === incidente.sucursalNombre,
+      ).length
+    : 0;
 
   const cambiar = async (estado: EstadoAlerta, justificacionTexto?: string) => {
     setEnviando(true);
@@ -121,6 +140,18 @@ export function GestionarAlertaModal({
           <p className="font-body text-xs italic text-muted-foreground">
             Motivo: {alerta.justificacion}
           </p>
+        )}
+        {sinZona && incidente && !transicion && (
+          <AsignarZonaSucursal
+            prestadorId={prestadorId}
+            empresaNombre={incidente.empresaNombre!}
+            sucursalNombre={incidente.sucursalNombre!}
+            incidentesAfectados={incidentesMismaSucursal}
+            onAsignada={() => {
+              onChanged();
+              onClose();
+            }}
+          />
         )}
 
         {transicion ? (

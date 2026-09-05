@@ -3,6 +3,10 @@ repositorio SQLAlchemy scoped a la sesión del request y lo inyectan en el Ports
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.liquidaciones.application.use_cases.asignar_zona_sucursal import (
+    AsignarZonaSucursal,
+    AsignarZonaSucursalPorts,
+)
 from src.modules.liquidaciones.application.use_cases.config_prestadores import (
     ConfigPrestadoresPorts,
     CreatePrestador,
@@ -122,6 +126,15 @@ def build_delete_tabla_km(session: AsyncSession) -> DeleteTablaKm:
 def build_vincular_tabla_km_spst(session: AsyncSession) -> VincularTablaKmSpst:
     return VincularTablaKmSpst(
         VincularTablaKmSpstPorts(
+            tabla_km=SqlAlchemyTablaKmRepository(session),
+            spsts=SqlAlchemySpstRepository(session),
+        )
+    )
+
+
+def build_asignar_zona_sucursal(session: AsyncSession) -> AsignarZonaSucursal:
+    return AsignarZonaSucursal(
+        AsignarZonaSucursalPorts(
             tabla_km=SqlAlchemyTablaKmRepository(session),
             spsts=SqlAlchemySpstRepository(session),
         )

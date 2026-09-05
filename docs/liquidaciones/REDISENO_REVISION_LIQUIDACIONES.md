@@ -75,8 +75,19 @@ Pasos que se hicieron:
 
 ## 4. Cambios de producto para que no vuelva a pasar (chicos, en el lugar del problema)
 
-Estado 2026-09-05: **1 (aviso), 3 y 4 implementados** (commit del mismo día, ver abajo);
-2 y 5 pendientes de mockup.
+Estado 2026-09-05: **1 (aviso), 2, 3, 4 y 5 implementados** (commits `b52423b` y el
+siguiente del mismo día) — 2 y 5 en su versión mínima, dentro de patrones que ya existían:
+
+- 2: en el modal "Gestionar" de una ALT008 sin zona aparece el bloque "Zona de la
+  sucursal" (Genérica / SPSTs del prestador) + "Asignar zona y reanalizar"
+  (`PUT /tabla-km/zona-sucursal`, `AsignarZonaSucursal`). Como todos los incidentes de la
+  sucursal comparten la fila de Tabla KM, se resuelven juntos; el modal dice cuántos.
+  Probado en vivo: Cartocor / Oficina Cipolletti → Gral. Roca, reanálisis automático,
+  la ALT001 de Cipolletti desapareció (26 → 25 alertas en 3952-5). La vista agrupada por
+  localidad ("Santa Rosa: 3 sucursales, 9 incidentes") sigue pendiente de mockup.
+- 5: banner "N incidentes sin precio resoluble por configuración incompleta" arriba del
+  ítem extra, derivado en el cliente de las alertas pendientes (ALT008 sin/con SPST,
+  ALT009), con la acción de cada caso. Sin endpoint nuevo.
 
 - 3 quedó como propuesta **opt-in**: el dry-run de INFOMAC mostró que la provincia no
   siempre es la zona tarifaria (Plottier/Neuquén → propondría Norte Neuquén, pero factura

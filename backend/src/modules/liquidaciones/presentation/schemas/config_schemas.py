@@ -169,6 +169,16 @@ class TarifarioOut(BaseModel):
 # ─── Tabla KM ────────────────────────────────────────────────────────────────
 
 
+class AsignarZonaSucursalIn(BaseModel):
+    """`spstId` null = zona Genérica (tarifario sin SPST)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+    prestador_id: uuid.UUID = Field(alias="prestadorId")
+    empresa_nombre: str = Field(alias="empresaNombre", min_length=1)
+    sucursal_nombre: str = Field(alias="sucursalNombre", min_length=1)
+    spst_id: uuid.UUID | None = Field(default=None, alias="spstId")
+
+
 class TablaKmIn(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     prestador_id: uuid.UUID = Field(alias="prestadorId")

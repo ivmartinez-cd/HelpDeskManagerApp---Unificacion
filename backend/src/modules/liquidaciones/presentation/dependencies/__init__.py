@@ -1,4 +1,5 @@
 from src.modules.liquidaciones.presentation.dependencies.config import (
+    build_asignar_zona_sucursal,
     build_create_prestador,
     build_create_spst,
     build_create_tabla_km,
@@ -77,6 +78,7 @@ from src.modules.liquidaciones.presentation.dependencies.tabla_km_geo import (
 )
 
 __all__ = [
+    "build_asignar_zona_sucursal",
     "build_anular_liquidacion",
     "build_aplicar_calcular_distancias",
     "build_aprobar_liquidacion",

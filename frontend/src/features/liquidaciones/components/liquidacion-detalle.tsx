@@ -18,6 +18,7 @@ import { AlertasLoteBar } from "./alertas-lote-bar";
 import { ExtraItemSeccion } from "./extra-item-seccion";
 import { IncidentesSeccion } from "./incidentes-seccion";
 import { LiquidacionAlertasBanner } from "./liquidacion-alertas-banner";
+import { LiquidacionConfigBanner } from "./liquidacion-config-banner";
 import { LiquidacionDetalleHeader } from "./liquidacion-detalle-header";
 import { ModeloFacturacionSeccion } from "./modelo-facturacion-seccion";
 
@@ -169,6 +170,8 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
           onSoloConAlertas={setSoloConAlertas}
         />
       )}
+
+      <LiquidacionConfigBanner alertas={alertas} incidentes={incidentes} />
 
       <ExtraItemSeccion
         liquidacion={liquidacion}

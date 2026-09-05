@@ -190,6 +190,16 @@ export const configApi = {
     return httpClient.postForm<ResultadoImportCsv>("/api/liquidaciones/tabla-km/import", fd);
   },
 
+  // Zona (SPST, o Genérica con spstId null) de la fila de Tabla KM de un par
+  // empresa+sucursal, desde la alerta ALT008 del detalle. El backend reanaliza
+  // las liquidaciones abiertas del prestador.
+  asignarZonaSucursal: (body: {
+    prestadorId: string;
+    empresaNombre: string;
+    sucursalNombre: string;
+    spstId: string | null;
+  }) => httpClient.put<TablaKm>("/api/liquidaciones/tabla-km/zona-sucursal", body),
+
   vincularSpstTablaKm: (prestadorId: string, dryRun: boolean, incluirProvincia = false) =>
     httpClient.post<ResultadoVinculoTablaKmSpst>(
       `/api/liquidaciones/tabla-km/vincular-spst?${new URLSearchParams({

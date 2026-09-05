@@ -28,12 +28,14 @@ from src.modules.liquidaciones.presentation.config_routers._reanalisis import (
     reanalizar_abiertas,
 )
 from src.modules.liquidaciones.presentation.dependencies import (
+    build_asignar_zona_sucursal,
     build_create_tabla_km,
     build_delete_tabla_km,
     build_update_tabla_km,
     build_vincular_tabla_km_spst,
 )
 from src.modules.liquidaciones.presentation.schemas.config_schemas import (
+    AsignarZonaSucursalIn,
     ResultadoVinculoTablaKmSpstOut,
     TablaKmIn,
     TablaKmOut,
@@ -126,6 +128,25 @@ async def vincular_spst(
     if resultado.vinculadas:
         await reanalizar_abiertas(db, prestador_id)
     return ResultadoVinculoTablaKmSpstOut.from_dto(resultado)
+
+
+@router.put("/tabla-km/zona-sucursal", response_model=TablaKmOut)
+async def asignar_zona_sucursal(
+    body: AsignarZonaSucursalIn,
+    _: Identity = require_update,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> TablaKmOut:
+    """Fija la zona (SPST o Genérica) de la fila de Tabla KM de un par
+    empresa+sucursal, desde la alerta ALT008 del detalle — todos los incidentes
+    de esa sucursal comparten la fila. Reanaliza las liquidaciones abiertas."""
+    fila = await build_asignar_zona_sucursal(db).execute(
+        body.prestador_id,
+        empresa_nombre=body.empresa_nombre,
+        sucursal_nombre=body.sucursal_nombre,
+        spst_id=body.spst_id,
+    )
+    await reanalizar_abiertas(db, body.prestador_id)
+    return TablaKmOut.from_entity(fila)
 
 
 @router.get("/tabla-km/export")

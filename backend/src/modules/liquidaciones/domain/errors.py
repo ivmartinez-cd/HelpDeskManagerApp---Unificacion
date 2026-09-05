@@ -39,6 +39,19 @@ class TablaKmNoEncontradaError(NotFoundError):
         super().__init__(f"Entrada de Tabla KM no encontrada: {tabla_km_id}")
 
 
+class ParSinTablaKmError(NotFoundError):
+    """El par empresa+sucursal no tiene fila en la Tabla KM del prestador — antes de
+    asignarle zona hay que darlo de alta (es el caso ALT009)."""
+
+    default_code: ClassVar[str] = "TABLA_KM_PAR_NO_ENCONTRADO"
+
+    def __init__(self, empresa: str, sucursal: str) -> None:
+        super().__init__(
+            f"'{empresa}' — '{sucursal}' no está en la Tabla KM del prestador; "
+            "cargá la sucursal antes de asignarle zona"
+        )
+
+
 class PrestadorConLiquidacionesError(BusinessRuleViolationError):
     """`liquidaciones.prestador_id` no tiene `ondelete` a propósito (ver
     `infrastructure/models/liquidacion_model.py`) — es historial de facturación
@@ -204,9 +217,7 @@ class IncidenteRelacionadoInvalidoError(ValidationError):
     default_code: ClassVar[str] = "INCIDENTE_RELACIONADO_INVALIDO"
 
     def __init__(self, incidente_id: UUID) -> None:
-        super().__init__(
-            f"El incidente {incidente_id} no pertenece a esta liquidación."
-        )
+        super().__init__(f"El incidente {incidente_id} no pertenece a esta liquidación.")
 
 
 class SincronizacionEnProgresoError(BusinessRuleViolationError):
