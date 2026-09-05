@@ -90,6 +90,14 @@ async function mockear(page: Page, escrituras: string[]) {
     if (p.endsWith("/refrescar-datos-sucursales")) return route.fulfill(json(REFRESCO));
     if (p.endsWith("/matching/auto-vincular-n1")) return route.fulfill(json({ vinculadas: 2, sinCambios: 3, detalle: [] }));
     if (req.method() === "POST" && p.endsWith("/api/liquidaciones/tabla-km")) return route.fulfill(json({ ...TABLA_KM_MOCK[0], id: "nuevo" }));
+    // Auto-vínculo a SPST de las filas recién importadas (paso agregado con
+    // el refactor tarifario.spst_id) — 0 vinculadas para no alterar el texto
+    // de resumen que ya cubre el resto de los pasos.
+    if (p.endsWith("/tabla-km/vincular-spst")) {
+      return route.fulfill(
+        json({ dryRun: false, totalSinVincular: 1, conPropuesta: 0, sinPropuesta: 1, vinculadas: 0, ejemplos: [] }),
+      );
+    }
     if (p.endsWith("/calcular-distancias/preview")) return route.fulfill(json(PREVIEW));
     if (p.endsWith("/calcular-distancias/aplicar")) return route.fulfill(json({ creadas: 1, actualizadas: 1 }));
     return route.continue();
@@ -162,6 +170,7 @@ test("asistente de KM: Traer de Gestión agrupa refrescar + vincular + importar,
     `POST /api/liquidaciones/siges/prestador/${PID}/refrescar-datos-sucursales`,
     `POST /api/liquidaciones/siges/prestador/${PID}/matching/auto-vincular-n1`,
     "POST /api/liquidaciones/tabla-km",
+    "POST /api/liquidaciones/tabla-km/vincular-spst",
   ]);
   await page.screenshot({ path: "test-results/tabla-km-wizard-traer-listo.png" }).catch(() => {});
 
