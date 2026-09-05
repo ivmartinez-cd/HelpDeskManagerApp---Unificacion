@@ -50,10 +50,15 @@ class SqlAlchemyEstimLogRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         resumen: dict[int, ResumenAuditoriaMaquina] = {}
         for row in rows:
-            actual = resumen.get(row.id_maquina)
-            observacion = row.observacion.strip() if row.observacion else None
-            resumen[row.id_maquina] = ResumenAuditoriaMaquina(
-                id_log_corto=str(row.id)[:8],
-                observacion_manual=observacion or (actual.observacion_manual if actual else None),
-            )
+            resumen[row.id_maquina] = _acumular(row, resumen.get(row.id_maquina))
         return resumen
+
+
+def _acumular(
+    row: EstimLogModel, actual: ResumenAuditoriaMaquina | None
+) -> ResumenAuditoriaMaquina:
+    observacion = row.observacion.strip() if row.observacion else None
+    return ResumenAuditoriaMaquina(
+        id_log_corto=str(row.id)[:8],
+        observacion_manual=observacion or (actual.observacion_manual if actual else None),
+    )

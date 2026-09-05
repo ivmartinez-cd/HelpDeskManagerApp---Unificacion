@@ -170,6 +170,10 @@ async def exportar_csv(
         SqlAlchemyEstimLogRepository(db),
     )
     contenido = await use_case.execute(solicitud)
+    return _response_csv(contenido, nro_proceso, fecha_objetivo)
+
+
+def _response_csv(contenido: str, nro_proceso: int, fecha_objetivo: date) -> Response:
     nombre = f"Estimacion_{nro_proceso}_{fecha_objetivo.isoformat()}.csv"
     return Response(
         content=contenido.encode("cp1252", errors="replace"),
