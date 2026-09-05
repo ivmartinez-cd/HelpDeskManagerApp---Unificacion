@@ -67,19 +67,6 @@ const INCIDENTE_SIN_TABLA = {
   urlMaps: null,
 };
 
-const OBSERVACION = {
-  id: "55555555-5555-5555-5555-555555555555",
-  tipoObservacion: "RUTA_COMPARTIDA",
-  severidad: "ADVERTENCIA",
-  titulo: "Ruta compartida entre incidentes",
-  descripcion: "Dos incidentes comparten viaje",
-  montoCobrado: 20000,
-  montoEsperado: 10000,
-  diferencia: 10000,
-  estado: "pendiente",
-  fechaGeneracion: "2026-08-12T10:02:00Z",
-};
-
 const ALERTA = {
   id: "44444444-4444-4444-4444-444444444444",
   incidenteId: INC_ID,
@@ -89,6 +76,33 @@ const ALERTA = {
   riesgo: 0.8,
   estado: "pendiente",
   fechaGeneracion: "2026-08-12T10:01:00Z",
+  justificacion: null,
+  incidenteRelacionadoId: null,
+  esGrupo: false,
+  grupoIncidenteIds: [],
+  montoCobrado: null,
+  montoEsperado: null,
+  diferencia: null,
+};
+
+// Ex `Observacion` — ahora es una `Alerta` con esGrupo=true (unificación
+// 2026-09-04). ALT005 agrupa dos incidentes que comparten viaje/ruta.
+const ALERTA_GRUPO = {
+  id: "55555555-5555-5555-5555-555555555555",
+  incidenteId: INC_ID,
+  tipoAlerta: "ALT005",
+  descripcion: "Ruta compartida entre incidentes",
+  datosContexto: null,
+  riesgo: 60,
+  estado: "pendiente",
+  fechaGeneracion: "2026-08-12T10:02:00Z",
+  justificacion: null,
+  incidenteRelacionadoId: null,
+  esGrupo: true,
+  grupoIncidenteIds: [INC_ID, INCIDENTE_SIN_TABLA.id],
+  montoCobrado: 20000,
+  montoEsperado: 10000,
+  diferencia: 10000,
 };
 
 const PAGE_RESPONSE = {
@@ -144,7 +158,6 @@ const DETALLE_RESPONSE = {
   liquidacion: LIQUIDACION,
   incidentes: [INCIDENTE],
   alertas: [ALERTA],
-  observaciones: [],
 };
 
 test.describe("Módulo de Liquidaciones", () => {
@@ -452,26 +465,26 @@ test.describe("Módulo de Liquidaciones", () => {
     await expect(warnings).toHaveCount(2);
   });
 
-  test("detalle: observación pendiente muestra acciones y PATCH cambia el estado", async ({
+  test("detalle: alerta agrupada (ex observación) se gestiona y el PATCH cambia el estado", async ({
     page,
   }) => {
     await page.route(`**/api/liquidaciones/${LIQ_ID}`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ ...DETALLE_RESPONSE, alertas: [], observaciones: [OBSERVACION] }),
+        body: JSON.stringify({ ...DETALLE_RESPONSE, alertas: [ALERTA_GRUPO] }),
       });
     });
 
     let patchBody: unknown = null;
     await page.route(
-      `**/api/liquidaciones/${LIQ_ID}/observaciones/${OBSERVACION.id}/estado`,
+      `**/api/liquidaciones/${LIQ_ID}/alertas/${ALERTA_GRUPO.id}/estado`,
       async (route) => {
         patchBody = route.request().postDataJSON();
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({ ...OBSERVACION, estado: "en_revision" }),
+          body: JSON.stringify({ ...ALERTA_GRUPO, estado: "en_revision" }),
         });
       },
     );
@@ -479,13 +492,15 @@ test.describe("Módulo de Liquidaciones", () => {
     await page.goto(`/liquidaciones/${LIQ_ID}`);
 
     await expect(page.getByText("Ruta compartida entre incidentes")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Aprobar excepción" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Resolver" })).toBeVisible();
+    await page.getByRole("button", { name: "Gestionar" }).click();
 
-    await page.getByRole("button", { name: "Revisar" }).click();
+    const dialog = page.getByRole("dialog", { name: "Gestionar ALT005" });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Revisar", exact: true }).click();
+    await dialog.getByRole("button", { name: "Revisar", exact: true }).click();
 
     await expect(async () => {
-      expect(patchBody).toEqual({ estado: "en_revision" });
+      expect(patchBody).toEqual({ estado: "en_revision", incidenteRelacionadoId: null });
     }).toPass();
   });
 
@@ -537,7 +552,7 @@ test.describe("Módulo de Liquidaciones", () => {
     await expect(page.getByText("Inicial")).toBeVisible();
   });
 
-  test("tarifarios: Actualizar abre el modal prefijado con el grupo", async ({ page }) => {
+  test("tarifarios: Nueva vigencia desde hoy abre el modal prefijado con el grupo", async ({ page }) => {
     await page.route("**/api/liquidaciones/tarifarios**", async (route) => {
       await route.fulfill({
         status: 200,
@@ -560,7 +575,7 @@ test.describe("Módulo de Liquidaciones", () => {
 
     await page.goto("/liquidaciones/configuracion/tarifarios");
     await page.getByLabel("Filtrar por prestador").selectOption(PST_ID);
-    await page.getByRole("button", { name: "Actualizar" }).click();
+    await page.getByRole("button", { name: "Nueva vigencia desde hoy" }).click();
 
     const dialog = page.getByRole("dialog", { name: "Nueva tarifa" });
     await expect(dialog).toBeVisible();
@@ -595,11 +610,16 @@ test.describe("Módulo de Liquidaciones", () => {
   test("detalle: 'Recibir' marca la liquidación como Recibida en Canal Directo", async ({
     page,
   }) => {
+    // El botón "Recibir" solo aparece si el estado lo permite (gating real de
+    // Web Agentes, ver ayc-acciones-bar.tsx) — acá una preliquidada.
     await page.route(`**/api/liquidaciones/${LIQ_ID}`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(DETALLE_RESPONSE),
+        body: JSON.stringify({
+          ...DETALLE_RESPONSE,
+          liquidacion: { ...LIQUIDACION, estado: "preliquidada" },
+        }),
       });
     });
     let recibido = false;
