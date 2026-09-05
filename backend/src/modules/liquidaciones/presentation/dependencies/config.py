@@ -77,7 +77,12 @@ def build_delete_prestador(session: AsyncSession) -> DeletePrestador:
 
 
 def _spsts_ports(session: AsyncSession) -> ConfigSpstsPorts:
-    return ConfigSpstsPorts(spsts=SqlAlchemySpstRepository(session))
+    # `prestadores` permite que el alta valide el prestador antes de escribir
+    # (404 de dominio) en vez de depender de la FK traducida en el repo.
+    return ConfigSpstsPorts(
+        spsts=SqlAlchemySpstRepository(session),
+        prestadores=SqlAlchemyPrestadorRepository(session),
+    )
 
 
 def build_create_spst(session: AsyncSession) -> CreateSpst:
