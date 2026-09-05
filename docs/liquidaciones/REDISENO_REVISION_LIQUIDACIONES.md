@@ -141,10 +141,19 @@ Consultas sobre `helpdesk-db` + `GET /siges/zonas` + dry-run del sync de tarifar
   (diario, `LIQUIDACIONES_SYNC_TARIFARIOS_INTERVAL_MINUTES=1440`) que aplica el sync para
   todos los vinculados, solo crea vigencias faltantes, loguea conflictos como WARNING y
   reanaliza las abiertas si creó algo. Primer ciclo real: creadas=0, conflictos=26.
-- **Conflictos local ≠ Siges que el sync nunca pisa** (decide la TL cuál es el correcto):
-  TUCUMAN `costo_km` 433,9 local vs 454,9 Siges en 24 vigencias desde 2025-10; SAN JUAN
-  instalación 92.252 vs 46.126 desde 2026-01; VENADO instalación 66.794 vs 66.749 desde
-  2026-07.
+- **Conflictos local ≠ Siges que el sync nunca pisa** — resueltos el mismo día (backup
+  `backups/helpdesk-db_2026-09-05_1909_tarifas-conflictos-siges.dump`):
+  - TUCUMAN: no era un dato mal cargado. Sus dos zonas de Siges ("TMTA122 - TUCUMAN" y
+    "TMTA122 - SGO DEL ESTERO") estaban mapeadas a la misma genérica con distinto costo de
+    km (433,9 vs 454,9, y así en cada trimestre); el 2026-08-13 se había dejado Sgo del
+    Estero sin mapear a propósito y alguien la mapeó a Genérica el 08-14. Se creó el SPST
+    "SPST Tucumán - Santiago del Estero", se mapeó esa zona a él y el sync creó sus 150
+    vigencias propias. La genérica conserva los valores de Tucumán. 0 conflictos.
+  - SAN JUAN instalación 92.252: **se mantiene** — es la "regla del doble" confirmada por el
+    usuario el 2026-08-13 (`LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md`, decisiones ADR-014).
+    Sigue apareciendo como 1 conflicto en cada sync a modo de recordatorio.
+  - VENADO instalación 2026-07: corregido a 66.749 (valor de Siges; la diferencia de $45
+    era una carga manual). 0 conflictos.
 - SPSTs con filas de Tabla KM pero sin tarifa propia (PENTACOM 8, SUPERNOVA 2) caen a la
   genérica y Siges solo tiene una zona para esos PST: no es un problema.
 - Las liquidaciones con ALT001 en el 100 % de los incidentes son del prestador, no de
