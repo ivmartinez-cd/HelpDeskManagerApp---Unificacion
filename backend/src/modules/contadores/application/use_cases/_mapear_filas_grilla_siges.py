@@ -3,7 +3,9 @@ en `EquipoProceso` (una por equipo, con sus clases) — la forma que ya espera
 el resto del pipeline (`construir_estimacion_input`, `estimar()`)."""
 
 from dataclasses import dataclass
+from datetime import date
 from itertools import groupby
+from typing import TypedDict
 
 from src.modules.contadores.application.dtos.equipo_proceso_dto import (
     ClaseProceso,
@@ -75,8 +77,23 @@ def _clase_de(f: FilaGrillaSigesDto) -> ClaseProceso:
     )
 
 
-def _lecturas_de(f: FilaGrillaSigesDto) -> dict[str, object]:
-    return dict(
+class _LecturasKwargs(TypedDict):
+    ultimo_real: LecturaRef | None
+    fecha_ultimo_real_no_t4: date | None
+    real_anterior: LecturaRef | None
+    t4_mas_reciente: LecturaRef | None
+    t4_revisado: bool
+
+
+class _ParquesKwargs(TypedDict):
+    parque_cliente_modelo: PromedioParque | None
+    parque_grupo_modelo: PromedioParque | None
+    parque_cliente_tecnologia: PromedioParque | None
+    parque_global_modelo: PromedioParque | None
+
+
+def _lecturas_de(f: FilaGrillaSigesDto) -> _LecturasKwargs:
+    return _LecturasKwargs(
         ultimo_real=_lectura(f.ultimo_real_valor, f.ultimo_real_fecha, f.ultimo_real_tipo_toma),
         fecha_ultimo_real_no_t4=f.ultimo_real_no_t4_fecha,
         real_anterior=_lectura(
@@ -87,8 +104,8 @@ def _lecturas_de(f: FilaGrillaSigesDto) -> dict[str, object]:
     )
 
 
-def _parques_de(f: FilaGrillaSigesDto) -> dict[str, PromedioParque | None]:
-    return dict(
+def _parques_de(f: FilaGrillaSigesDto) -> _ParquesKwargs:
+    return _ParquesKwargs(
         parque_cliente_modelo=_promedio(_StatsNivel(
             f.prom_parque_cliente_modelo, f.pcm_cant, f.pcm_cnt_descartados,
             f.pcm_mediana_cruda, f.pcm_media_cruda,
@@ -111,6 +128,7 @@ def _parques_de(f: FilaGrillaSigesDto) -> dict[str, PromedioParque | None]:
 
 def _ultimo_facturado_de(f: FilaGrillaSigesDto) -> LecturaRef:
     if f.contador_anterior_valor is not None:
+        assert f.contador_anterior_fecha is not None and f.contador_anterior_tipo_toma is not None
         return LecturaRef(
             f.contador_anterior_valor, f.contador_anterior_fecha, f.contador_anterior_tipo_toma
         )
@@ -120,10 +138,16 @@ def _ultimo_facturado_de(f: FilaGrillaSigesDto) -> LecturaRef:
     return LecturaRef(0.0, f.periodo_desde, 1)
 
 
-def _lectura(valor: float | None, fecha: object, tipo_toma: int | None) -> LecturaRef | None:
+def _lectura(
+    valor: float | None, fecha: date | None, tipo_toma: int | None
+) -> LecturaRef | None:
     if valor is None:
         return None
-    return LecturaRef(valor, fecha, tipo_toma)  # type: ignore[arg-type]
+    # Invariante de la grilla real: una lectura con valor siempre trae su
+    # fecha y tipo de toma (las tres columnas salen de la misma fila de
+    # Contadores) — nunca solo una de las tres viene None.
+    assert fecha is not None and tipo_toma is not None
+    return LecturaRef(valor, fecha, tipo_toma)
 
 
 @dataclass(frozen=True, slots=True)

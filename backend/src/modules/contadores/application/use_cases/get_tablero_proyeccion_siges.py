@@ -4,6 +4,7 @@ equipos por la consulta real (MODELO_DE_DATOS.md §3.4)."""
 
 from src.modules.contadores.application.dtos.contexto_proceso_dto import ContextoProcesoDto
 from src.modules.contadores.application.dtos.fila_grilla_siges_dto import FilaGrillaSigesDto
+from src.modules.contadores.application.dtos.receso_dto import RecesoDto
 from src.modules.contadores.application.dtos.resumen_proyeccion_dto import ResumenProyeccionDto
 from src.modules.contadores.application.dtos.solicitud_tablero_siges_dto import (
     SolicitudTableroSigesDto,
@@ -60,5 +61,5 @@ class GetTableroProyeccionSigesUseCase:
         )
 
 
-def _a_receso_cliente(r) -> RecesoCliente:
+def _a_receso_cliente(r: RecesoDto) -> RecesoCliente:
     return RecesoCliente(r.fecha_desde, r.fecha_hasta, r.id_grupo_economico, r.id_anexo)

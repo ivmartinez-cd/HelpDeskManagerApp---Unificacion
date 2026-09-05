@@ -27,6 +27,20 @@ NOMBRE_GRUPO_ECONOMICO_EJEMPLO = "Cliente Demo S.A."
 NOMBRE_PROCESO_EJEMPLO = "2026-04 · Anexo Principal · Proc. 1001"
 NRO_PROCESO_EJEMPLO = 1001
 
+__all__ = [
+    "ClaseEjemplo",
+    "EquipoEjemplo",
+    "equipos_ejemplo",
+    "FECHA_OBJETIVO_EJEMPLO",
+    "PERIODO_DESDE_EJEMPLO",
+    "PERIODO_HASTA_EJEMPLO",
+    "ID_GRUPO_ECONOMICO_EJEMPLO",
+    "ID_ANEXO_EJEMPLO",
+    "NOMBRE_GRUPO_ECONOMICO_EJEMPLO",
+    "NOMBRE_PROCESO_EJEMPLO",
+    "NRO_PROCESO_EJEMPLO",
+]
+
 
 def historico_ejemplo(normal: float, actual: float) -> tuple[float, ...]:
     """11 meses estables (histórico real) + el mes actual (estimado)."""

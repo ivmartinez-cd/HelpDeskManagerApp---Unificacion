@@ -164,7 +164,7 @@ def _f(valor: Any) -> float | None:
     return float(valor) if valor is not None else None
 
 
-def _d(valor: Any) -> date | None:
+def _d(valor: date | datetime | None) -> date | None:
     """pyodbc/FreeTDS devuelve una columna SQL `date` como `datetime.datetime`
     (hora 00:00:00), no como `date` — el motor hace aritmética asumiendo
     `date` puro (bug real visto 2026-09-05: `date - datetime` no se puede)."""

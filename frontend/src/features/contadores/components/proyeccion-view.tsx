@@ -101,15 +101,18 @@ export function ProyeccionView() {
     : null;
   const procesoElegido = procesosVisibles.find((p) => String(p.nro_proceso) === idProcesoValido);
 
-  const solicitudActual: SolicitudTableroReal | undefined =
-    idGrupo && procesoElegido && fechaObjetivo
-      ? {
-          nroProceso: procesoElegido.nro_proceso,
-          idGrupoEconomico: Number(idGrupo),
-          idAnexo: procesoElegido.id_anexo,
-          fechaObjetivo,
-        }
-      : undefined;
+  const solicitudActual: SolicitudTableroReal | undefined = useMemo(
+    () =>
+      idGrupo && procesoElegido && fechaObjetivo
+        ? {
+            nroProceso: procesoElegido.nro_proceso,
+            idGrupoEconomico: Number(idGrupo),
+            idAnexo: procesoElegido.id_anexo,
+            fechaObjetivo,
+          }
+        : undefined,
+    [idGrupo, procesoElegido, fechaObjetivo],
+  );
 
   const cargar = useCallback(() => {
     setCargando(true);
