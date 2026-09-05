@@ -24,7 +24,6 @@ from uuid import UUID
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
     CalcularDistanciasPorts,
     Destino,
-    build_costo_bases,
     calcular_kms_a_facturar,
     coords_base_default,
     desde_periodo_hace_meses,
@@ -44,10 +43,12 @@ from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import Sucur
 from src.modules.liquidaciones.domain.entities.tabla_km import UMBRAL_VIATICO_DEFAULT, TablaKm
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesSucursalCliente,
+    SigesSucursalPropia,
 )
 from src.modules.liquidaciones.domain.services.geolocalizacion import (
     PROCEDENCIA_MANUAL,
     PROCEDENCIA_SIGES,
+    haversine_km,
 )
 from src.modules.liquidaciones.domain.services.vinculacion_siges import normalizar_nombre
 
@@ -60,20 +61,19 @@ class PreviewCalcularDistancias:
         self._tope = tope_llamadas
 
     async def execute(self, prestador_id: UUID) -> CalculoKmPreview:
-        prestador = await validar_prestador_para_distancias(
-            self._ports.prestadores, prestador_id
-        )
+        prestador = await validar_prestador_para_distancias(self._ports.prestadores, prestador_id)
         propias = await self._ports.siges.list_sucursales_de_empresa(
             prestador.siges_empresa_id  # type: ignore[arg-type]
         )
         base_default = coords_base_default(prestador, propias)
-        costo_bases = build_costo_bases(propias)
+        # Las sedes de los SPST vinculados a Siges entran al mapa de bases por
+        # zona tarifaria (`id_costo_servicios`): sin esto, INFOMAC medía Ushuaia
+        # desde Villa Mercedes (3.000 km de ida, 2026-09-05).
+        bases = _bases_con_coords(base_default, propias + await self._sedes_de_spsts(prestador_id))
         destinos, sin_ubicar, sin_actividad = await self._armar_destinos(prestador)
         verificar_tope(2 * len(destinos), self._tope)
         existentes = await self._cargar_existentes(prestador_id)
-        filas, sin_ruta = await self._calcular_filas(
-            base_default, costo_bases, destinos, existentes
-        )
+        filas, sin_ruta = await self._calcular_filas(bases, destinos, existentes)
         return await self._ports.previews.create(
             prestador_id=prestador_id,
             filas=tuple(filas),
@@ -82,6 +82,13 @@ class PreviewCalcularDistancias:
             elementos_google=2 * len(destinos),
             sin_actividad=sin_actividad,
         )
+
+    async def _sedes_de_spsts(self, prestador_id: UUID) -> list[SigesSucursalPropia]:
+        sedes: list[SigesSucursalPropia] = []
+        for spst in await self._ports.spsts.list_by_prestador(prestador_id):
+            if spst.siges_empresa_id is not None:
+                sedes += await self._ports.siges.list_sucursales_de_empresa(spst.siges_empresa_id)
+        return sedes
 
     async def _armar_destinos(self, prestador: Prestador) -> tuple[list[Destino], int, int]:
         sucursales = await self._ports.siges.list_sucursales_de_prestador(
@@ -118,18 +125,17 @@ class PreviewCalcularDistancias:
 
     async def _calcular_filas(
         self,
-        base_default: tuple[float, float],
-        costo_bases: dict[int, tuple[float, float]],
+        bases: list[tuple[float, float]],
         destinos: list[Destino],
         existentes: dict[tuple[str, str], TablaKm],
     ) -> tuple[list[PreviewFila], int]:
-        # Agrupar destinos por base efectiva para minimizar batches distintos.
+        # Cada destino se mide desde la base más cercana (sede del PST o de sus
+        # SPST): varias sedes comparten zona tarifaria en Siges, así que
+        # `id_costo_servicios` no alcanza para elegir la sede (INFOMAC, 2026-09-05:
+        # Santa Rosa, Pehuajó y Trenque Lauquen comparten la zona 43).
         grupos: dict[tuple[float, float], list[Destino]] = defaultdict(list)
         for d in destinos:
-            id_cs = d.sucursal.id_costo_servicios
-            base = (costo_bases.get(id_cs) if id_cs is not None else None) or base_default
-            grupos[base].append(d)
-
+            grupos[_base_mas_cercana(d.coords, bases)].append(d)
         filas: list[PreviewFila] = []
         sin_ruta = 0
         for base, grupo in grupos.items():
@@ -259,3 +265,20 @@ def _km_fila(ida: float, vuelta: float, existente: TablaKm | None) -> _CamposKm:
         kms_recorrido_actual=existente.kms_recorrido if existente else None,
         kms_a_facturar_actual=existente.kms_a_facturar if existente else None,
     )
+
+
+def _base_mas_cercana(
+    destino: tuple[float, float], bases: list[tuple[float, float]]
+) -> tuple[float, float]:
+    return min(bases, key=lambda b: haversine_km(destino[0], destino[1], b[0], b[1]))
+
+
+def _bases_con_coords(
+    base_default: tuple[float, float], sedes: list[SigesSucursalPropia]
+) -> list[tuple[float, float]]:
+    bases = [base_default]
+    for sede in sedes:
+        coords = parse_latlon_siges(sede.latitud, sede.longitud)
+        if coords is not None and coords not in bases:
+            bases.append(coords)
+    return bases

@@ -98,6 +98,20 @@ class TestAlt002KmsIncorrectos:
         assert alertas[0].datos_contexto["sin_referencia"] is True
         assert "no tiene km de referencia" in (alertas[0].descripcion or "")
 
+    def test_cobro_cero_sin_ningun_viaje_ese_dia_no_alerta(self) -> None:
+        # El prestador no cobró km y nadie cobró km ese día: no hay sobrecobro
+        # ni ruta que vincular — antes daba "cobró 0 vs 1.560 km".
+        tabla = make_tabla_km(kms_a_facturar=1560.0)
+        incidente = make_incidente(
+            empresa_nombre=tabla.empresa_nombre,
+            sucursal_nombre=tabla.sucursal_nombre,
+            cant_km_cobrado=0.0,
+        )
+        resultado = ejecutar_motor_reglas(
+            [incidente], [incidente], reglas_activas_default(), [tabla], []
+        )
+        assert [a for a in resultado.alertas if a.tipo_alerta == "ALT002"] == []
+
     def test_cobro_cero_sin_corredor_lista_candidatos_de_ruta(self) -> None:
         tabla = make_tabla_km(kms_a_facturar=120.0, localidad_cliente="Santa Rosa")
         otra = make_tabla_km(

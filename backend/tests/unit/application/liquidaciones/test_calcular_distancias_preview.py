@@ -112,6 +112,31 @@ class TestPreview:
         assert await ports.tabla_km.list_by_prestador(prestador_id) == []
 
     @pytest.mark.asyncio
+    async def test_destino_se_mide_desde_la_sede_mas_cercana(self) -> None:
+        """La sede del SPST (a 1 km del cliente) gana sobre la base del PST
+        (a 200 km): varias sedes comparten zona tarifaria, así que se elige por
+        distancia, no por `id_costo_servicios`."""
+        cliente = _sucursal_cliente()
+        preview_uc, _, ports, prestador_id = _armar([cliente])
+        lat, lon = _DESTINO
+        sede_spst = SigesSucursalPropia(
+            siges_sucursal_id=77,
+            descripcion="Sede SPST",
+            latitud=str(lat + 0.01).replace(".", ","),
+            longitud=str(lon).replace(".", ","),
+            id_costo_servicios=None,
+        )
+        ports.siges.propias.append(sede_spst)  # type: ignore[attr-defined]
+        ports.spsts.rows.append(  # type: ignore[attr-defined]
+            make_spst(prestador_id=prestador_id, siges_empresa_id=5, siges_base_sucursal_id=77)
+        )
+
+        preview = await preview_uc.execute(prestador_id)
+
+        assert len(preview.filas) == 1
+        assert preview.filas[0].latitud_base == pytest.approx(lat + 0.01)
+
+    @pytest.mark.asyncio
     async def test_fila_existente_preserva_umbral_y_muestra_diff(self) -> None:
         preview_uc, _, ports, prestador_id = _armar([_sucursal_cliente()])
         existente = make_tabla_km(

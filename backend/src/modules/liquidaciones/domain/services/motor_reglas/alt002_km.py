@@ -34,10 +34,31 @@ def evaluar_alt002(
         return []
     if esperado_raw <= 0:
         return [_hallazgo_sin_referencia(incidente, cobrado)]
-    if cobrado == 0 and _es_ruta_compartida(tabla_km, vecinos_mismo_dia):
+    if cobrado == 0:
+        return _evaluar_sin_km_cobrado(
+            incidente, tabla_km, vecinos_mismo_dia, esperado, esperado_raw
+        )
+    return [_hallazgo(incidente, cobrado, esperado, esperado_raw, [])]
+
+
+def _evaluar_sin_km_cobrado(
+    incidente: Incidente,
+    tabla_km: TablaKm,
+    vecinos: Sequence[tuple[Incidente, TablaKm | None]],
+    esperado: int,
+    esperado_raw: float,
+) -> list[Hallazgo]:
+    """El prestador no cobró km: nunca es un sobrecobro. Solo vale avisar si ese
+    mismo día cobró km en otro incidente (posible ruta compartida, para dejar el
+    vínculo); si no hay ningún viaje ese día, no hay nada que revisar — hasta
+    2026-09-05 esto disparaba "cobró 0 vs 1.560 km" para cada sucursal lejana
+    a la que el prestador simplemente no viajó."""
+    if _es_ruta_compartida(tabla_km, vecinos):
         return []
-    candidatos = _candidatos_ruta(vecinos_mismo_dia) if cobrado == 0 else []
-    return [_hallazgo(incidente, cobrado, esperado, esperado_raw, candidatos)]
+    candidatos = _candidatos_ruta(vecinos)
+    if not candidatos:
+        return []
+    return [_hallazgo(incidente, 0.0, esperado, esperado_raw, candidatos)]
 
 
 def _dentro_de_tolerancia(cobrado: float, esperado: int, esperado_raw: float, tol: float) -> bool:

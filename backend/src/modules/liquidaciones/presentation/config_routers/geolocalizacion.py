@@ -21,6 +21,9 @@ from src.modules.liquidaciones.presentation.config_routers._deps import (
     require_update,
     require_view,
 )
+from src.modules.liquidaciones.presentation.config_routers._reanalisis import (
+    reanalizar_abiertas,
+)
 from src.modules.liquidaciones.presentation.dependencies import (
     build_aplicar_calcular_distancias,
     build_auditar_pines,
@@ -107,6 +110,9 @@ async def aplicar_calcular_distancias(
     resultado = await build_aplicar_calcular_distancias(db).execute(
         body.preview_id, solo_sin_km=body.solo_sin_km
     )
+    # Km nuevos en Tabla KM cambian lo que ALT002 espera: reanalizar las abiertas
+    # igual que tras cualquier otro cambio de configuración.
+    await reanalizar_abiertas(db, prestador_id)
     return AplicarDistanciasOut.from_resultado(resultado)
 
 
