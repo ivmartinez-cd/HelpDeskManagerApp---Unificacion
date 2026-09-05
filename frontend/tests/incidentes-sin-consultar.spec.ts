@@ -59,7 +59,7 @@ test.describe("Servicio Técnico › Incidentes sin consultar", () => {
     await expect(page.getByText("EDERSA S.A.")).toBeVisible();
     await expect(page.getByText("COOP SAN JUAN")).toBeVisible();
     await expect(page.getByText("Victor Paez").first()).toBeVisible();
-    await expect(page.getByText("2 incidentes", { exact: false })).toBeVisible();
+    await expect(page.getByText("2 incidentes", { exact: false }).first()).toBeVisible();
   });
 
   test("empty state sin incidentes", async ({ page }) => {

@@ -377,8 +377,9 @@ test.describe("Módulo de Liquidaciones", () => {
     await expect(page.getByText("EMPRESA TEST / SUCURSAL CENTRO")).toBeVisible();
     await expect(page.getByText("● CON ALERTAS")).toBeVisible();
 
-    // Expandir la fila para ver la alerta inline
-    await page.getByRole("link", { name: "INC-2026-0001" }).first().click();
+    // Expandir la fila para ver la alerta inline — el link al incidente hace
+    // stopPropagation (abre Gestión en otra pestaña), hay que clickear la fila.
+    await page.locator(`#incidente-row-${INC_ID}`).click();
     await expect(page.getByText("ALT001")).toBeVisible();
     await expect(page.getByText("Monto cobrado supera el esperado")).toBeVisible();
   });

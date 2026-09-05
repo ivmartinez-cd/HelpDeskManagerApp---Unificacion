@@ -271,7 +271,7 @@ test.describe("Vacaciones", () => {
     );
 
     await page.goto("/vacaciones/aprobaciones");
-    await expect(page.getByText("Pendientes de aprobación")).toBeVisible();
+    await expect(page.getByText("Vacaciones pendientes de aprobación", { exact: false })).toBeVisible();
 
     await page.getByText("Laura Pérez").first().click();
     await expect(page.getByPlaceholder("Comentario (opcional)…")).toBeVisible();
