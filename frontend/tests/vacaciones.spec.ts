@@ -238,7 +238,7 @@ test.describe("Vacaciones", () => {
   test("aprobaciones expande la card y decide con comentario", async ({ page }) => {
     await mockVacaciones(page);
     let decidida = false;
-    await page.route("**/api/vacaciones/solicitudes", (route) =>
+    await page.route("**/api/vacaciones/solicitudes**", (route) =>
       route.fulfill({
         status: 200,
         contentType: "application/json",
