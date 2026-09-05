@@ -26,7 +26,9 @@ async def test_create_y_get_by_id_round_trip(db_session: AsyncSession) -> None:
 
     assert leido is not None
     assert (leido.name, leido.equipment_identifier, leido.global_severity) == (
-        "snap", "HP (SER1)", "ERROR"
+        "snap",
+        "HP (SER1)",
+        "ERROR",
     )
     assert leido.incidents == _INC
     assert leido.ai_diagnosis == "diag"
@@ -57,12 +59,13 @@ async def test_update_reemplaza_incidentes_y_conserva_diagnostico_si_no_viene(
     repo = SqlAlchemySavedAnalysisRepository(db_session)
     creado = await repo.create("snap", None, _INC, "ERROR", ai_diagnosis="diag")
 
-    sin_diag = await repo.update(creado.id, [], "INFO")
-    con_diag = await repo.update(creado.id, [], "INFO", ai_diagnosis="nuevo")
+    sin_diag = await repo.update(creado.id, "snap renombrado", [], "INFO")
+    con_diag = await repo.update(creado.id, "snap renombrado", [], "INFO", ai_diagnosis="nuevo")
 
     assert sin_diag is not None and (sin_diag.incidents, sin_diag.ai_diagnosis) == ([], "diag")
+    assert sin_diag.name == "snap renombrado"
     assert con_diag is not None and con_diag.ai_diagnosis == "nuevo"
-    assert await repo.update(uuid.uuid4(), [], "INFO") is None
+    assert await repo.update(uuid.uuid4(), "x", [], "INFO") is None
 
 
 async def test_delete_devuelve_true_solo_si_existia(db_session: AsyncSession) -> None:
@@ -76,8 +79,14 @@ async def test_delete_devuelve_true_solo_si_existia(db_session: AsyncSession) ->
 
 def _evento(serial: str, analysis_id: uuid.UUID | None, code: str, t: datetime) -> TelemetryEvent:
     return TelemetryEvent(
-        device_serial=serial, saved_analysis_id=analysis_id, code=code,
-        classification="desc", severity="ERROR", occurrences=2, counter=500, event_time=t,
+        device_serial=serial,
+        saved_analysis_id=analysis_id,
+        code=code,
+        classification="desc",
+        severity="ERROR",
+        occurrences=2,
+        counter=500,
+        event_time=t,
     )
 
 
@@ -86,18 +95,23 @@ async def test_telemetria_add_y_get_por_serial_ordenada_por_fecha(
 ) -> None:
     repo = SqlAlchemyTelemetryRepository(db_session)
     aid = uuid.uuid4()
-    await repo.add_events([
-        _evento("SER1", aid, "B", datetime(2026, 8, 2, tzinfo=UTC)),
-        _evento("SER1", None, "A", _T0),
-        _evento("OTRO", aid, "C", _T0),
-    ])
+    await repo.add_events(
+        [
+            _evento("SER1", aid, "B", datetime(2026, 8, 2, tzinfo=UTC)),
+            _evento("SER1", None, "A", _T0),
+            _evento("OTRO", aid, "C", _T0),
+        ]
+    )
 
     eventos = await repo.get_events_by_serial("SER1")
 
     assert [e.code for e in eventos] == ["A", "B"]
     ev = eventos[1]
     assert (ev.saved_analysis_id, ev.classification, ev.occurrences, ev.counter) == (
-        aid, "desc", 2, 500
+        aid,
+        "desc",
+        2,
+        500,
     )
     assert ev.event_time == datetime(2026, 8, 2, tzinfo=UTC)
 
@@ -113,11 +127,13 @@ async def test_telemetria_delete_by_analysis_id_borra_solo_ese_analisis(
 ) -> None:
     repo = SqlAlchemyTelemetryRepository(db_session)
     aid, otro = uuid.uuid4(), uuid.uuid4()
-    await repo.add_events([
-        _evento("SER1", aid, "A", _T0),
-        _evento("SER1", aid, "B", _T0),
-        _evento("SER1", otro, "C", _T0),
-    ])
+    await repo.add_events(
+        [
+            _evento("SER1", aid, "A", _T0),
+            _evento("SER1", aid, "B", _T0),
+            _evento("SER1", otro, "C", _T0),
+        ]
+    )
 
     borrados = await repo.delete_by_analysis_id(aid)
 

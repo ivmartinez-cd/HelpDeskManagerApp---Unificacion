@@ -64,15 +64,25 @@ async def test_current_es_solo_sesion_y_devuelve_page_mas_variante(
     assert body["total"] == 1
     shift = body["items"][0]
     assert set(shift) == {
-        "slotId", "casillaId", "casillaNombre", "casillaColor", "horaInicio", "horaFin",
-        "diaSemana", "operadores", "isCurrent", "isNext",
+        "slotId",
+        "casillaId",
+        "casillaNombre",
+        "casillaColor",
+        "horaInicio",
+        "horaFin",
+        "diaSemana",
+        "operadores",
+        "isCurrent",
+        "isNext",
     }
     assert shift["slotId"] == str(repos_titular.slot.id)
     assert shift["casillaNombre"] == "INSUMOS"
     assert shift["isCurrent"] is True
     assert shift["operadores"] == [
         {
-            "userId": str(repos_titular.luna), "userName": "Luna Torres", "color": "#123456",
+            "userId": str(repos_titular.luna),
+            "userName": "Luna Torres",
+            "color": "#123456",
             "nota": None,
         }
     ]
@@ -105,8 +115,11 @@ async def test_listar_casillas_paginado(repos_titular: ReposTitular) -> None:
     assert set(body) == PAGE_KEYS
     assert body["items"] == [
         {
-            "id": str(repos_titular.casilla.id), "nombre": "INSUMOS", "color": "#F7941D",
-            "sortOrder": 0, "isActive": True,
+            "id": str(repos_titular.casilla.id),
+            "nombre": "INSUMOS",
+            "color": "#F7941D",
+            "sortOrder": 0,
+            "isActive": True,
         }
     ]
 
@@ -123,7 +136,11 @@ async def test_crear_editar_y_borrar_casilla(repos_titular: ReposTitular) -> Non
 
     assert creada.status_code == 201
     assert creada.json() == {
-        "id": casilla_id, "nombre": "ST", "color": "#58595B", "sortOrder": 1, "isActive": True
+        "id": casilla_id,
+        "nombre": "ST",
+        "color": "#58595B",
+        "sortOrder": 1,
+        "isActive": True,
     }
     assert editada.status_code == 200
     # Solo `nombre` es editable: color/orden se preservan aunque el body no los traiga.
@@ -131,6 +148,7 @@ async def test_crear_editar_y_borrar_casilla(repos_titular: ReposTitular) -> Non
 
     assert borrada.status_code == 204
     assert uuid.UUID(casilla_id) not in repos_titular.casillas.rows
+
 
 @pytest.mark.usefixtures("_sesion_manage", "repos_titular")
 async def test_editar_casilla_inexistente_es_404() -> None:
@@ -170,7 +188,13 @@ async def test_listar_slots_filtra_por_casilla_y_resuelve_nombres(
     assert body["total"] == 1
     slot = body["items"][0]
     assert set(slot) == {
-        "id", "casillaId", "horaInicio", "horaFin", "diaSemana", "sortOrder", "asignaciones"
+        "id",
+        "casillaId",
+        "horaInicio",
+        "horaFin",
+        "diaSemana",
+        "sortOrder",
+        "asignaciones",
     }
     assert slot["asignaciones"][0]["userName"] == "Luna Torres"
     assert otra.json()["total"] == 0
@@ -179,10 +203,14 @@ async def test_listar_slots_filtra_por_casilla_y_resuelve_nombres(
 @pytest.mark.usefixtures("_sesion_manage")
 async def test_crear_editar_borrar_slot_y_reasignar(repos_titular: ReposTitular) -> None:
     body = {
-        "casillaId": str(repos_titular.casilla.id), "horaInicio": "08:00", "horaFin": "11:00",
-        "diaSemana": 2, "sortOrder": 3,
+        "casillaId": str(repos_titular.casilla.id),
+        "horaInicio": "08:00",
+        "horaFin": "11:00",
+        "diaSemana": 2,
+        "sortOrder": 3,
     }
-    nuevo = uuid.uuid4()
+    # Un usuario que existe en el provider: los ids desconocidos ahora dan 404.
+    nuevo = repos_titular.luna
     async with client() as c:
         creado = await c.post(f"{PREFIX}/slots", json=body)
         slot_id = creado.json()["id"]
@@ -195,8 +223,13 @@ async def test_crear_editar_borrar_slot_y_reasignar(repos_titular: ReposTitular)
 
     assert creado.status_code == 201
     assert creado.json() == {
-        "id": slot_id, "casillaId": str(repos_titular.casilla.id), "horaInicio": "08:00:00",
-        "horaFin": "11:00:00", "diaSemana": 2, "sortOrder": 3, "asignaciones": [],
+        "id": slot_id,
+        "casillaId": str(repos_titular.casilla.id),
+        "horaInicio": "08:00:00",
+        "horaFin": "11:00:00",
+        "diaSemana": 2,
+        "sortOrder": 3,
+        "asignaciones": [],
     }
     assert editado.status_code == 200
     assert (editado.json()["horaFin"], editado.json()["sortOrder"]) == ("12:00:00", 3)
