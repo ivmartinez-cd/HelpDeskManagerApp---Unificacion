@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { cn } from "@/shared/utils/cn";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { useSession } from "@/services/session-provider";
 import { proyeccionApi } from "../api/proyeccion-api";
@@ -14,6 +13,13 @@ import type {
   SolicitudTableroReal,
 } from "../types/proyeccion";
 import { ProyeccionBoxplot } from "./proyeccion-boxplot";
+import {
+  ProyeccionCalculoPanel,
+  ProyeccionLecturasTabla,
+  type Calculo,
+  type Forzado,
+  type Seleccion,
+} from "./proyeccion-candidatos-panels";
 
 interface ProyeccionCandidatosDrawerProps {
   fila: FilaProyeccion;
@@ -22,17 +28,15 @@ interface ProyeccionCandidatosDrawerProps {
   onCambio: () => void;
 }
 
-interface Seleccion {
-  partida: CandidatoLectura | null;
-  llegada: CandidatoLectura | null;
+function solicitudReal(solicitud: SolicitudTableroReal | undefined) {
+  if (!solicitud) return {};
+  return {
+    nro_proceso: solicitud.nroProceso,
+    id_grupo_economico: solicitud.idGrupoEconomico,
+    id_anexo: solicitud.idAnexo,
+    fecha_objetivo: solicitud.fechaObjetivo,
+  };
 }
-
-function formatFecha(iso: string): string {
-  const [y, m, d] = iso.split("-");
-  return `${d}/${m}/${y}`;
-}
-
-const numberFormat = new Intl.NumberFormat("es-AR");
 
 export function ProyeccionCandidatosDrawer({
   fila,
@@ -45,13 +49,8 @@ export function ProyeccionCandidatosDrawer({
   const [datos, setDatos] = useState<CandidatosEquipo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [seleccion, setSeleccion] = useState<Seleccion>({ partida: null, llegada: null });
-  const [calculo, setCalculo] = useState<{ estim: number | null; impresiones: number | null } | null>(null);
-  const [forzado, setForzado] = useState<{
-    estim: number | null;
-    impresiones: number | null;
-    fuente: string;
-    metodoDetalle: string;
-  } | null>(null);
+  const [calculo, setCalculo] = useState<Calculo | null>(null);
+  const [forzado, setForzado] = useState<Forzado | null>(null);
   const [forzando, setForzando] = useState<MetodoForzado | null>(null);
   const [nota, setNota] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -83,14 +82,7 @@ export function ProyeccionCandidatosDrawer({
         llegada_fecha: seleccion.llegada.fecha,
         llegada_valor: seleccion.llegada.valor,
         llegada_tipo_toma: seleccion.llegada.tipo_toma,
-        ...(solicitud
-          ? {
-              nro_proceso: solicitud.nroProceso,
-              id_grupo_economico: solicitud.idGrupoEconomico,
-              id_anexo: solicitud.idAnexo,
-              fecha_objetivo: solicitud.fechaObjetivo,
-            }
-          : {}),
+        ...solicitudReal(solicitud),
       })
       .then((r) => {
         if (!cancelado) setCalculo({ estim: r.estim_propuesto, impresiones: r.impresiones });
@@ -105,6 +97,11 @@ export function ProyeccionCandidatosDrawer({
 
   const calculoVisible = seleccion.partida && seleccion.llegada ? calculo : null;
 
+  const elegir = (rol: "partida" | "llegada", lectura: CandidatoLectura) => {
+    setForzado(null);
+    setSeleccion((s) => ({ ...s, [rol]: lectura }));
+  };
+
   const forzar = async (metodo: MetodoForzado) => {
     setSeleccion({ partida: null, llegada: null });
     setForzando(metodo);
@@ -113,14 +110,7 @@ export function ProyeccionCandidatosDrawer({
         id_maquina: fila.id_maquina,
         clase: fila.clase,
         metodo,
-        ...(solicitud
-          ? {
-              nro_proceso: solicitud.nroProceso,
-              id_grupo_economico: solicitud.idGrupoEconomico,
-              id_anexo: solicitud.idAnexo,
-              fecha_objetivo: solicitud.fechaObjetivo,
-            }
-          : {}),
+        ...solicitudReal(solicitud),
       });
       setForzado({
         estim: r.estim_propuesto,
@@ -167,125 +157,23 @@ export function ProyeccionCandidatosDrawer({
           <p className="mb-2 text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
             Últimas lecturas
           </p>
-          {error ? (
-            <p className="text-sm text-warning">{error}</p>
-          ) : !datos ? (
-            <p className="text-sm text-muted-foreground">Cargando…</p>
-          ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-left text-[10px] uppercase text-muted-foreground">
-                  <th className="py-1.5">Fecha</th>
-                  <th className="py-1.5">Tipo</th>
-                  <th className="py-1.5 text-right">Valor</th>
-                  <th className="py-1.5">Valid.</th>
-                  <th className="py-1.5">P</th>
-                  <th className="py-1.5">L</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {datos.lecturas.map((lectura) => (
-                  <tr key={`${lectura.fecha}-${lectura.tipo_toma}-${lectura.valor}`}>
-                    <td className="py-2">{formatFecha(lectura.fecha)}</td>
-                    <td className="py-2">T{lectura.tipo_toma}</td>
-                    <td className="py-2 text-right tabular-nums">{numberFormat.format(lectura.valor)}</td>
-                    <td className={cn("py-2", lectura.valido ? "text-success" : "text-warning")}>
-                      {lectura.valido ? "✓ ok" : lectura.motivo_invalidez}
-                    </td>
-                    <td className="py-2">
-                      <button
-                        disabled={!puedeGestionar}
-                        onClick={() => {
-                          setForzado(null);
-                          setSeleccion((s) => ({ ...s, partida: lectura }));
-                        }}
-                        className={cn(
-                          "h-6 w-6 rounded-[6px] border border-border bg-muted text-[10px] font-extrabold disabled:opacity-40",
-                          seleccion.partida === lectura && "border-success bg-success text-background",
-                        )}
-                      >
-                        P
-                      </button>
-                    </td>
-                    <td className="py-2">
-                      <button
-                        disabled={!puedeGestionar}
-                        onClick={() => {
-                          setForzado(null);
-                          setSeleccion((s) => ({ ...s, llegada: lectura }));
-                        }}
-                        className={cn(
-                          "h-6 w-6 rounded-[6px] border border-border bg-muted text-[10px] font-extrabold disabled:opacity-40",
-                          seleccion.llegada === lectura && "border-info bg-info text-background",
-                        )}
-                      >
-                        L
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          <ProyeccionLecturasTabla
+            datos={datos}
+            error={error}
+            seleccion={seleccion}
+            puedeGestionar={puedeGestionar}
+            onElegir={elegir}
+          />
 
           {!error && (
-            <>
-              <p className="mb-2 mt-6 text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
-                Cálculo
-              </p>
-              <dl className="grid grid-cols-2 gap-y-2 text-[12.5px]">
-                <dt className="text-muted-foreground">P → L</dt>
-                <dd className="text-right tabular-nums">
-                  {seleccion.partida ? formatFecha(seleccion.partida.fecha) : "—"} →{" "}
-                  {seleccion.llegada ? formatFecha(seleccion.llegada.fecha) : "—"}
-                </dd>
-                <dt className="text-muted-foreground">Estim. propuesto</dt>
-                <dd className="text-right font-heading text-base font-extrabold text-brand-orange tabular-nums">
-                  {calculoVisible?.estim !== null && calculoVisible?.estim !== undefined
-                    ? numberFormat.format(calculoVisible.estim)
-                    : forzado?.estim !== null && forzado?.estim !== undefined
-                      ? numberFormat.format(forzado.estim)
-                      : "—"}
-                </dd>
-                <dt className="text-muted-foreground">Impresiones del período</dt>
-                <dd className="text-right font-heading text-base font-extrabold text-brand-orange tabular-nums">
-                  {calculoVisible?.impresiones !== null && calculoVisible?.impresiones !== undefined
-                    ? numberFormat.format(calculoVisible.impresiones)
-                    : forzado?.impresiones !== null && forzado?.impresiones !== undefined
-                      ? numberFormat.format(forzado.impresiones)
-                      : "—"}
-                </dd>
-                {!calculoVisible && forzado && (
-                  <>
-                    <dt className="text-muted-foreground">Método forzado</dt>
-                    <dd className="text-right text-xs text-muted-foreground">{forzado.metodoDetalle}</dd>
-                  </>
-                )}
-              </dl>
-
-              {puedeGestionar && (
-                <div className="mt-3 flex gap-2">
-                  <BrandButton
-                    variant="outline"
-                    className="flex-1 text-xs"
-                    loading={forzando === "entre_reales"}
-                    disabled={forzando !== null}
-                    onClick={() => forzar("entre_reales")}
-                  >
-                    Forzar entre reales
-                  </BrandButton>
-                  <BrandButton
-                    variant="outline"
-                    className="flex-1 text-xs"
-                    loading={forzando === "cascada_parque"}
-                    disabled={forzando !== null}
-                    onClick={() => forzar("cascada_parque")}
-                  >
-                    Forzar cascada de parque
-                  </BrandButton>
-                </div>
-              )}
-            </>
+            <ProyeccionCalculoPanel
+              seleccion={seleccion}
+              calculoVisible={calculoVisible}
+              forzado={forzado}
+              puedeGestionar={puedeGestionar}
+              forzando={forzando}
+              onForzar={forzar}
+            />
           )}
 
           {datos?.boxplot && (

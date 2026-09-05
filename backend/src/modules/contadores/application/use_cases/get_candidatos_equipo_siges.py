@@ -1,6 +1,10 @@
 from src.modules.contadores.application.dtos.candidato_lectura_dto import CandidatoLecturaDto
 from src.modules.contadores.application.dtos.candidatos_equipo_dto import CandidatosEquipoDto
-from src.modules.contadores.domain.ports.candidatos_equipo_port import CandidatosEquipoPort
+from src.modules.contadores.domain.ports.candidatos_equipo_port import (
+    CandidatosEquipoPort,
+    LecturaCandidataSiges,
+    MetadataEquipoSiges,
+)
 from src.modules.contadores.domain.value_objects.estimacion.estado_maquina import Tecnologia
 
 
@@ -20,29 +24,34 @@ class GetCandidatosEquipoSigesUseCase:
         if metadata is None:
             return None
         lecturas = await self._port.fetch_lecturas(id_maquina, id_clase_contador)
-        return CandidatosEquipoDto(
-            id_maquina=id_maquina,
-            nro_serie=metadata.nro_serie,
-            empresa=metadata.empresa,
-            sucursal=metadata.sucursal,
-            sector=metadata.sector or "",
-            modelo=metadata.modelo,
-            tecnologia=_tecnologia_de(metadata.id_tecnologia),
-            velocidad_ppm=metadata.velocidad,
-            lecturas=[
-                CandidatoLecturaDto(
-                    fecha=lectura.fecha,
-                    tipo_toma=lectura.tipo_toma,
-                    valor=lectura.valor,
-                    valido=lectura.para_facturar,
-                    motivo_invalidez=None
-                    if lectura.para_facturar
-                    else "PF=0 (Servicio Técnico sin revisar)",
-                )
-                for lectura in lecturas
-            ],
-            boxplot=None,
-        )
+        return _dto_de(id_maquina, metadata, lecturas)
+
+
+def _dto_de(
+    id_maquina: int, metadata: MetadataEquipoSiges, lecturas: list[LecturaCandidataSiges]
+) -> CandidatosEquipoDto:
+    return CandidatosEquipoDto(
+        id_maquina=id_maquina,
+        nro_serie=metadata.nro_serie,
+        empresa=metadata.empresa,
+        sucursal=metadata.sucursal,
+        sector=metadata.sector or "",
+        modelo=metadata.modelo,
+        tecnologia=_tecnologia_de(metadata.id_tecnologia),
+        velocidad_ppm=metadata.velocidad,
+        lecturas=[_lectura_dto(lectura) for lectura in lecturas],
+        boxplot=None,
+    )
+
+
+def _lectura_dto(lectura: LecturaCandidataSiges) -> CandidatoLecturaDto:
+    return CandidatoLecturaDto(
+        fecha=lectura.fecha,
+        tipo_toma=lectura.tipo_toma,
+        valor=lectura.valor,
+        valido=lectura.para_facturar,
+        motivo_invalidez=None if lectura.para_facturar else "PF=0 (Servicio Técnico sin revisar)",
+    )
 
 
 def _tecnologia_de(id_tecnologia: int) -> Tecnologia:

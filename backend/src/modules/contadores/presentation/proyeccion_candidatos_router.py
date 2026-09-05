@@ -37,7 +37,11 @@ from src.modules.contadores.infrastructure.ejemplo.decisiones_operador_store imp
     get_decisiones_operador_store,
 )
 from src.modules.contadores.infrastructure.ejemplo.recesos_store import get_recesos_ejemplo_store
-from src.modules.contadores.presentation._proyeccion_auditoria import registrar_accion
+from src.modules.contadores.presentation._proyeccion_auditoria import (
+    registrar_accion,
+    registrar_metodo_forzado,
+    registrar_pl_manual,
+)
 from src.modules.contadores.presentation._proyeccion_contexto_ejemplo import contexto_ejemplo
 from src.modules.contadores.presentation._proyeccion_solicitud_real import (
     es_solicitud_real,
@@ -94,16 +98,7 @@ async def recalcular_candidato(
         raise HTTPException(
             status_code=422, detail="Pareja Partida/Llegada inválida (separación < 15 días o L < P)"
         )
-    await registrar_accion(
-        db, identity, request.id_maquina, request.clase, "pl_manual",
-        fecha_objetivo=request.fecha_objetivo, nro_proceso=request.nro_proceso,
-        contador_propuesto=resultado.estim_propuesto, tipo_toma_grabado=resultado.tipo_toma,
-        fuente=resultado.fuente, metodo_detalle=resultado.metodo_detalle,
-        detalle={
-            "partida_valor": request.partida_valor, "partida_fecha": str(request.partida_fecha),
-            "llegada_valor": request.llegada_valor, "llegada_fecha": str(request.llegada_fecha),
-        },
-    )
+    await registrar_pl_manual(db, identity, request, resultado)
     return RecalcularCandidatoResponseSchema.from_resultado(resultado)
 
 
@@ -127,12 +122,7 @@ async def forzar_metodo_candidato(
             status_code=422,
             detail="No se pudo forzar ese método: no hay datos suficientes (par válido o parque)",
         )
-    await registrar_accion(
-        db, identity, request.id_maquina, request.clase, f"forzar_{request.metodo}",
-        fecha_objetivo=request.fecha_objetivo, nro_proceso=request.nro_proceso,
-        contador_propuesto=resultado.estim_propuesto, tipo_toma_grabado=resultado.tipo_toma,
-        fuente=resultado.fuente, metodo_detalle=resultado.metodo_detalle,
-    )
+    await registrar_metodo_forzado(db, identity, request, resultado)
     return RecalcularCandidatoResponseSchema.from_resultado(resultado)
 
 

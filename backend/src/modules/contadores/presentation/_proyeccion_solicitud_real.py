@@ -7,7 +7,7 @@ además de que `clase` sea numérica — ver docstring de `get_candidatos` en
 from datetime import date
 from typing import Protocol
 
-from src.modules.contadores.application.use_cases.recalcular_candidato_siges import (
+from src.modules.contadores.application.dtos.solicitud_recalculo_siges_dto import (
     SolicitudRecalculoSigesDto,
 )
 
