@@ -2,10 +2,19 @@
 copiado tal cual de `Queries/GetGrillaEstimacion.sql` del proyecto original
 (el código gana si contradice los documentos, ver brief de migración): NO se
 reescribió la lógica a mano, se ejecuta el mismo script ya validado en
-producción. Único cambio: se antepone `DECLARE @NroProceso/@FechaObjetivo`
-porque pyodbc no soporta parámetros con nombre en un batch de texto arbitrario
-como sí lo hace ADO.NET — se declaran acá y se asignan desde los placeholders
-posicionales `?` (2 parámetros: nro_proceso, fecha_objetivo).
+producción. Único cambio estructural: se antepone `DECLARE
+@NroProceso/@FechaObjetivo` porque pyodbc no soporta parámetros con nombre en
+un batch de texto arbitrario como sí lo hace ADO.NET — se declaran acá y se
+asignan desde los placeholders posicionales `?` (2 parámetros: nro_proceso,
+fecha_objetivo).
+
+Única desviación de negocio deliberada (no estructural): REGLAS_DE_NEGOCIO
+§14 dejaba sin resolver el desempate cuando un T8/T13 y un T4 caen en la
+misma fecha como candidatos de Partida/Llegada — el `TOP 1 ... ORDER BY
+FechaTomaContador DESC` original no tenía segundo criterio, así que el
+empate era no determinístico. Decisión del usuario 2026-09-05: T8/T13 gana
+sobre T4 (ver comentarios "DESEMPATE" en #UltimoReal/#RealAnterior más
+abajo). El resto de la query sigue siendo copia literal del .sql original.
 
 Pipeline con tablas temporales (11 pasos) porque los índices recomendados en
 MIGRACION_SISTEMAS.md §3 no existen en producción — ver ese documento antes
@@ -509,7 +518,16 @@ OUTER APPLY (
            -- Solo se exige antigüedad ≤ @MaxMesesAntiguedad (empresa+sucursal ya aplican).
            OR (C.ID_TipoToma IN (4,8,13)
                AND C.FechaTomaContador >= DATEADD(MONTH, -@MaxMesesAntiguedad, @PeriodoHasta)))
-    ORDER BY C.FechaTomaContador DESC
+    -- DESEMPATE (REGLAS_DE_NEGOCIO §14, decisión 2026-09-05 — única desviación
+    -- deliberada del .sql original, que dejaba esto sin resolver: TOP 1 sin
+    -- segundo criterio de orden era no determinístico si dos candidatos caían
+    -- en la misma fecha). Real > T8/T13 (ancla, sin revisión) > T4 (respaldo).
+    ORDER BY C.FechaTomaContador DESC,
+             CASE
+                 WHEN C.ID_TipoToma IN (1,2,3,6,7,9,10,12,15,17,20,21,22,23) THEN 0
+                 WHEN C.ID_TipoToma IN (8,13) THEN 1
+                 ELSE 2
+             END
 ) UR
 -- Último real FACTURADO **excluyendo T4** (tipos reales sin el 4). Es la referencia
 -- de la regla "un T4 solo sirve si su fecha es posterior al último real facturado".
@@ -566,7 +584,14 @@ OUTER APPLY (
            OR (C.ID_TipoToma IN (4,8,13)
                AND C.FechaTomaContador >= DATEADD(MONTH, -@MaxMesesAntiguedad, @PeriodoHasta)))
       AND  C.FechaTomaContador <= DATEADD(DAY, -@MinPreferred, UR.Fecha)
-    ORDER BY C.FechaTomaContador DESC
+    -- DESEMPATE (REGLAS_DE_NEGOCIO §14, decisión 2026-09-05): ver comentario
+    -- en #UltimoReal más arriba. Real > T8/T13 > T4.
+    ORDER BY C.FechaTomaContador DESC,
+             CASE
+                 WHEN C.ID_TipoToma IN (1,2,3,6,7,9,10,12,15,17,20,21,22,23) THEN 0
+                 WHEN C.ID_TipoToma IN (8,13) THEN 1
+                 ELSE 2
+             END
 ) RA_Pref
 OUTER APPLY (
     SELECT TOP 1 C.Contador, C.FechaTomaContador, C.ID_TipoToma
@@ -586,7 +611,14 @@ OUTER APPLY (
            OR (C.ID_TipoToma IN (4,8,13)
                AND C.FechaTomaContador >= DATEADD(MONTH, -@MaxMesesAntiguedad, @PeriodoHasta)))
       AND  C.FechaTomaContador <= DATEADD(DAY, -@MinAbsoluto, UR.Fecha)
-    ORDER BY C.FechaTomaContador DESC
+    -- DESEMPATE (REGLAS_DE_NEGOCIO §14, decisión 2026-09-05): ver comentario
+    -- en #UltimoReal más arriba. Real > T8/T13 > T4.
+    ORDER BY C.FechaTomaContador DESC,
+             CASE
+                 WHEN C.ID_TipoToma IN (1,2,3,6,7,9,10,12,15,17,20,21,22,23) THEN 0
+                 WHEN C.ID_TipoToma IN (8,13) THEN 1
+                 ELSE 2
+             END
 ) RA_Fall
 WHERE UR.Fecha IS NOT NULL;
 
