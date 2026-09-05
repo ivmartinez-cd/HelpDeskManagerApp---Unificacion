@@ -1,13 +1,13 @@
 import uuid
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from zoneinfo import ZoneInfo
 
 from src.modules.turnos.application.dtos.grilla_variante_dtos import (
     CurrentShiftsDTO,
     VarianteActivaDTO,
 )
 from src.modules.turnos.application.dtos.turno_dtos import OperatorShiftView, ResolvedShiftDTO
+from src.modules.turnos.application.fecha_local import ahora_local
 from src.modules.turnos.domain.entities.grilla_variante import GrillaVariante
 from src.modules.turnos.domain.repositories.asignacion_override_repository import (
     AsignacionOverrideRepository,
@@ -24,8 +24,6 @@ from src.modules.turnos.domain.repositories.grilla_variante_repository import (
 from src.modules.turnos.domain.repositories.slot_repository import SlotRepository
 from src.modules.turnos.domain.repositories.user_provider import UserProvider
 from src.modules.turnos.domain.services.turno_resolver import ResolvedSlotShift, TurnoResolver
-
-_ARGENTINA_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,7 +50,7 @@ class GetCurrentShifts:
         self._resolver = TurnoResolver()
 
     async def execute(self, *, now_datetime: datetime | None = None) -> CurrentShiftsDTO:
-        now = now_datetime or datetime.now(_ARGENTINA_TZ)
+        now = now_datetime or ahora_local()
         target_date = now.date()
 
         casillas = await self._deps.casillas.list_all(include_inactive=False)

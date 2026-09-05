@@ -15,6 +15,7 @@ from src.modules.auth.application.use_cases.reset_password import (
 )
 from src.modules.auth.domain.entities.password_reset_token import PasswordResetToken
 from src.modules.auth.domain.errors import (
+    AccountDisabledError,
     InvalidCredentialsError,
     TokenAlreadyUsedError,
     TokenExpiredError,
@@ -168,6 +169,24 @@ async def test_reset_password_token_vencido() -> None:
         await ResetPassword(_reset_deps(users, tokens_repo, FakeSessionRepository())).execute(
             raw_token="tok", new_password="Nueva1!a"
         )
+
+
+async def test_reset_password_de_usuario_inactivo_es_cuenta_deshabilitada() -> None:
+    users = FakeUserRepository()
+    user = make_user(is_active=False)
+    users.rows[user.id] = user
+    tokens_repo = FakeResetTokenRepository()
+    record = _reset_token(user.id)
+    tokens_repo.rows[record.token_hash] = record
+    sessions = FakeSessionRepository()
+
+    with pytest.raises(AccountDisabledError):
+        await ResetPassword(_reset_deps(users, tokens_repo, sessions)).execute(
+            raw_token="tok", new_password="Nueva1!a"
+        )
+
+    assert users.saved == []
+    assert tokens_repo.marked_used == []
 
 
 async def test_reset_password_usuario_inexistente_es_token_invalido() -> None:

@@ -17,6 +17,11 @@ from src.modules.turnos.domain.errors import (
     VarianteOperadorSolapadoError,
     VarianteSinFranjasError,
 )
+from src.modules.turnos.domain.services.franja_reglas import (
+    detalle_franja_invalida,
+    detalle_solape_por_casilla,
+    rango,
+)
 
 TipoAdvertencia = Literal["HUECO", "SIN_OPERADOR", "OPERADOR_AUSENTE"]
 
@@ -60,27 +65,13 @@ def validar_franjas(slots: list[VarianteSlot]) -> None:
     if not slots:
         raise VarianteSinFranjasError()
     for s in slots:
-        if s.hora_inicio >= s.hora_fin:
-            raise VarianteFranjaInvalidaError(
-                f"{_hhmm(s.hora_inicio)}-{_hhmm(s.hora_fin)} (inicio debe ser menor que fin)"
-            )
-        if not 0 <= s.dia_semana <= 6:
-            raise VarianteFranjaInvalidaError(f"día de semana {s.dia_semana} fuera de 0..6")
-    _validar_sin_solape_por_casilla(slots)
+        detalle = detalle_franja_invalida(s)
+        if detalle is not None:
+            raise VarianteFranjaInvalidaError(detalle)
+    solape = detalle_solape_por_casilla(slots)
+    if solape is not None:
+        raise VarianteFranjasSolapadasError(solape)
     _validar_operador_sin_solape(slots)
-
-
-def _validar_sin_solape_por_casilla(slots: list[VarianteSlot]) -> None:
-    por_grupo: dict[tuple[uuid.UUID, int], list[VarianteSlot]] = {}
-    for s in slots:
-        por_grupo.setdefault((s.casilla_id, s.dia_semana), []).append(s)
-    for grupo in por_grupo.values():
-        ordenadas = sorted(grupo, key=lambda s: s.hora_inicio)
-        for anterior, actual in zip(ordenadas, ordenadas[1:], strict=False):
-            if actual.hora_inicio < anterior.hora_fin:
-                raise VarianteFranjasSolapadasError(
-                    f"{_rango(anterior)} y {_rango(actual)} (día {actual.dia_semana})"
-                )
 
 
 def _validar_operador_sin_solape(slots: list[VarianteSlot]) -> None:
@@ -93,7 +84,7 @@ def _validar_operador_sin_solape(slots: list[VarianteSlot]) -> None:
         for anterior, actual in zip(ordenadas, ordenadas[1:], strict=False):
             if actual.hora_inicio < anterior.hora_fin:
                 raise VarianteOperadorSolapadoError(
-                    f"operador {user_id} en {_rango(anterior)} y {_rango(actual)} (día {dia})"
+                    f"operador {user_id} en {rango(anterior)} y {rango(actual)} (día {dia})"
                 )
 
 
@@ -176,11 +167,3 @@ def _restar(base: list[Intervalo], quitar: list[Intervalo]) -> list[Intervalo]:
         if cursor < fin:
             resultado.append((cursor, fin))
     return resultado
-
-
-def _hhmm(t: time) -> str:
-    return t.strftime("%H:%M")
-
-
-def _rango(s: VarianteSlot) -> str:
-    return f"{_hhmm(s.hora_inicio)}-{_hhmm(s.hora_fin)}"

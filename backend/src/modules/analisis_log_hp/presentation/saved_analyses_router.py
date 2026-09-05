@@ -37,9 +37,7 @@ from src.modules.auth.presentation.dependencies.permissions import require_permi
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
-router = APIRouter(
-    prefix="/api/analisis-log-hp/saved-analyses", tags=["analisis-log-hp"]
-)
+router = APIRouter(prefix="/api/analisis-log-hp/saved-analyses", tags=["analisis-log-hp"])
 
 _require_view = Depends(require_permission(VIEW))
 _require_manage = Depends(require_permission(MANAGE))
@@ -47,16 +45,23 @@ _require_manage = Depends(require_permission(MANAGE))
 
 def _saved_to_response(s: Any) -> SavedAnalysisResponse:
     return SavedAnalysisResponse(
-        id=s.id, name=s.name, equipment_identifier=s.equipment_identifier,
-        global_severity=s.global_severity, created_at=s.created_at,
+        id=s.id,
+        name=s.name,
+        equipment_identifier=s.equipment_identifier,
+        global_severity=s.global_severity,
+        created_at=s.created_at,
     )
 
 
 def _saved_to_detail(s: Any) -> SavedAnalysisDetailResponse:
     return SavedAnalysisDetailResponse(
-        id=s.id, name=s.name, equipment_identifier=s.equipment_identifier,
-        global_severity=s.global_severity, created_at=s.created_at,
-        incidents=s.incidents, ai_diagnosis=s.ai_diagnosis,
+        id=s.id,
+        name=s.name,
+        equipment_identifier=s.equipment_identifier,
+        global_severity=s.global_severity,
+        created_at=s.created_at,
+        incidents=s.incidents,
+        ai_diagnosis=s.ai_diagnosis,
     )
 
 
@@ -71,7 +76,9 @@ async def list_saved_analyses(
     items, total = await uc.execute(page, size)
     return Page(
         items=[_saved_to_response(s) for s in items],
-        total=total, page=page, size=size,
+        total=total,
+        page=page,
+        size=size,
     )
 
 
@@ -83,20 +90,30 @@ async def create_saved_analysis(
 ) -> SavedAnalysisDetailResponse:
 
     from src.modules.analisis_log_hp.domain.entities.incident import Incident
+
     incidents = [
         Incident(
-            id=i.id, code=i.code, classification=i.classification,
-            severity=i.severity, severity_weight=i.severity_weight,
-            occurrences=i.occurrences, start_time=i.start_time,
-            end_time=i.end_time, counter_range=(i.counter_range[0], i.counter_range[1]),
-            sds_link=i.sds_link, code_description=i.code_description,
+            id=i.id,
+            code=i.code,
+            classification=i.classification,
+            severity=i.severity,
+            severity_weight=i.severity_weight,
+            occurrences=i.occurrences,
+            start_time=i.start_time,
+            end_time=i.end_time,
+            counter_range=(i.counter_range[0], i.counter_range[1]),
+            sds_link=i.sds_link,
+            code_description=i.code_description,
         )
         for i in body.incidents
     ]
     uc = CreateSavedAnalysis(get_saved_analysis_repo(db), get_telemetry_repo(db))
     saved = await uc.execute(
-        body.name, body.equipment_identifier, incidents,
-        body.global_severity, body.ai_diagnosis,
+        body.name,
+        body.equipment_identifier,
+        incidents,
+        body.global_severity,
+        body.ai_diagnosis,
     )
     return _saved_to_detail(saved)
 
@@ -119,20 +136,31 @@ async def update_saved_analysis(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SavedAnalysisDetailResponse:
     from src.modules.analisis_log_hp.domain.entities.incident import Incident
+
     incidents = [
         Incident(
-            id=i.id, code=i.code, classification=i.classification,
-            severity=i.severity, severity_weight=i.severity_weight,
-            occurrences=i.occurrences, start_time=i.start_time,
-            end_time=i.end_time, counter_range=(i.counter_range[0], i.counter_range[1]),
-            sds_link=i.sds_link, code_description=i.code_description,
+            id=i.id,
+            code=i.code,
+            classification=i.classification,
+            severity=i.severity,
+            severity_weight=i.severity_weight,
+            occurrences=i.occurrences,
+            start_time=i.start_time,
+            end_time=i.end_time,
+            counter_range=(i.counter_range[0], i.counter_range[1]),
+            sds_link=i.sds_link,
+            code_description=i.code_description,
         )
         for i in body.incidents
     ]
     uc = UpdateSavedAnalysis(get_saved_analysis_repo(db), get_telemetry_repo(db))
     saved = await uc.execute(
-        id, body.equipment_identifier, incidents,
-        body.global_severity, body.ai_diagnosis,
+        id,
+        body.name,
+        body.equipment_identifier,
+        incidents,
+        body.global_severity,
+        body.ai_diagnosis,
     )
     return _saved_to_detail(saved)
 
@@ -205,4 +233,8 @@ async def get_device_health(
         recommendation=result.health.recommendation,
         triggered_rule=result.health.triggered_rule,
         events_count=result.events_count,
+        critical_events_count=result.health.critical_events_count,
+        critical_occurrences=result.health.critical_occurrences,
+        days_since_last_critical=result.health.days_since_last_critical,
+        pages_since_last_critical=result.health.pages_since_last_critical,
     )

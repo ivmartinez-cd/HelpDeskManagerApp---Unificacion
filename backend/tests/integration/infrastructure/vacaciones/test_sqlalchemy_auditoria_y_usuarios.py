@@ -31,13 +31,16 @@ from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_user_director
 )
 
 
-async def _user(db_session: AsyncSession, nombre: str, *, activo: bool = True) -> AppUser:
+async def _user(
+    db_session: AsyncSession, nombre: str, *, activo: bool = True, superadmin: bool = False
+) -> AppUser:
     user = AppUser(
         id=uuid.uuid4(),
         email=f"{nombre.lower().replace(' ', '-')}-{uuid.uuid4().hex[:8]}@canal.com",
         password_hash="x",
         full_name=nombre,
         is_active=activo,
+        is_superadmin=superadmin,
     )
     db_session.add(user)
     await db_session.flush()
@@ -73,9 +76,7 @@ async def test_registrador_escribe_y_list_pagina_filtra_por_entidad_accion_y_fec
     assert todos[1].metadata == {}  # metadata vacía se guarda como NULL y vuelve como {}
     assert todos[0].user_id == actor.id
 
-    pagina, total = await repo.list_pagina(
-        FiltrosAuditoria(entidad=entidad), offset=1, limit=1
-    )
+    pagina, total = await repo.list_pagina(FiltrosAuditoria(entidad=entidad), offset=1, limit=1)
     assert total == 3
     assert [r.accion for r in pagina] == ["UPDATE"]
 
@@ -105,9 +106,7 @@ async def test_list_pagina_search_matchea_accion_entidad_o_email(
     await SqlAlchemyRegistradorAuditoria(db_session, actor.id).registrar(
         "APPROVE", entidad, "s-1", {}
     )
-    await SqlAlchemyRegistradorAuditoria(db_session, None).registrar(
-        "IMPORT", entidad, None, {}
-    )
+    await SqlAlchemyRegistradorAuditoria(db_session, None).registrar("IMPORT", entidad, None, {})
     repo = SqlAlchemyAuditoriaRepository(db_session)
 
     por_email, _ = await repo.list_pagina(
@@ -181,6 +180,8 @@ async def test_destinatarios_une_jefes_del_sector_y_admins_sin_duplicar_ni_inact
     ambos = await _user(db_session, "Jefe y Admin")
     jefe_inactivo = await _user(db_session, "Jefe Inactivo", activo=False)
     jefe_otro_sector = await _user(db_session, "Jefe Otro")
+    superadmin = await _user(db_session, "Super Admin", superadmin=True)
+    superadmin_inactivo = await _user(db_session, "Super Inactivo", activo=False, superadmin=True)
     db_session.add_all(
         [
             UserModuleScope(
@@ -203,5 +204,6 @@ async def test_destinatarios_une_jefes_del_sector_y_admins_sin_duplicar_ni_inact
 
     emails = await SqlAlchemyDestinatariosNuevaSolicitud(db_session).emails(sector_id)
 
-    assert len(emails) == 3  # deduplicado: "ambos" aparece una sola vez
-    assert set(emails) == {jefe.email, ambos.email, admin.email}
+    assert len(emails) == 4  # deduplicado: "ambos" aparece una sola vez
+    assert set(emails) == {jefe.email, ambos.email, admin.email, superadmin.email}
+    assert superadmin_inactivo.email not in emails

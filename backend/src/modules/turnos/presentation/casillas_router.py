@@ -8,7 +8,10 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
-from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.auth.presentation.dependencies.permissions import (
+    require_any_permission,
+    require_permission,
+)
 from src.modules.turnos.application.dtos.turno_dtos import (
     CreateCasillaCommand,
     UpdateCasillaCommand,
@@ -29,6 +32,12 @@ from src.modules.turnos.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.turnos.infrastructure.repositories.sqlalchemy_casilla_repository import (
     SqlAlchemyCasillaRepository,
 )
+from src.modules.turnos.infrastructure.repositories.sqlalchemy_grilla_variante_repository import (  # noqa: E501
+    SqlAlchemyGrillaVarianteRepository,
+)
+from src.modules.turnos.infrastructure.repositories.sqlalchemy_slot_repository import (
+    SqlAlchemySlotRepository,
+)
 from src.modules.turnos.presentation.schemas.turno_schemas import (
     CasillaRequest,
     CasillaResponse,
@@ -42,7 +51,9 @@ router = APIRouter(prefix="/api/turnos", tags=["turnos"])
 # con default generoso porque alimenta la grilla del home/el panel de admin
 # completo, no una tabla paginada.
 _DEFAULT_SIZE = 200
-_require_view = Depends(require_permission(VIEW))
+# Leer alcanza con `view` o `manage`: `manage` no implica `view` (ADR-029) y
+# un usuario con solo `manage` no podía abrir la pantalla.
+_require_view = Depends(require_any_permission(VIEW, MANAGE))
 _require_manage = Depends(require_permission(MANAGE))
 
 
@@ -99,5 +110,9 @@ async def delete_casilla(
     _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
-    deps = DeleteCasillaDependencies(casillas=SqlAlchemyCasillaRepository(db))
+    deps = DeleteCasillaDependencies(
+        casillas=SqlAlchemyCasillaRepository(db),
+        slots=SqlAlchemySlotRepository(db),
+        variantes=SqlAlchemyGrillaVarianteRepository(db),
+    )
     await DeleteCasilla(deps).execute(casilla_id)

@@ -95,6 +95,11 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npx tsc --noEmit
+      # La imagen de producción compila al arrancar (`npm run build && npm run start`):
+      # sin este paso un error de build recién aparecía en el arranque del contenedor.
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
 
   e2e:
     runs-on: ubuntu-latest

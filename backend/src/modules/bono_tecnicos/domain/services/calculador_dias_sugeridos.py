@@ -43,11 +43,14 @@ def _dias_habiles(periodo: Periodo) -> list[date]:
     return dias
 
 
-def calcular_dias_sugeridos(periodo: Periodo, ausencias: list[AusenciaTecnico]) -> int:
+def calcular_dias_sugeridos(periodo: Periodo, ausencias: list[AusenciaTecnico]) -> float:
+    """Múltiplo de 0.5 (misma granularidad que el input manual), nunca
+    negativo — sin `round()`, que es bancario y hacía desaparecer los medios
+    días."""
     habiles = _dias_habiles(periodo)
     descontados = 0.0
     for dia in habiles:
         match = next((a for a in ausencias if a.cubre(dia)), None)
         if match is not None:
             descontados += 0.5 if match.half_day else 1.0
-    return max(0, round(len(habiles) - descontados))
+    return max(0.0, len(habiles) - descontados)

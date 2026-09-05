@@ -12,6 +12,7 @@ from src.modules.turnos.application.dtos.grilla_variante_dtos import (
     VarianteSlotInput,
 )
 from src.modules.turnos.application.dtos.turno_dtos import OperatorShiftView
+from src.modules.turnos.application.use_cases.usuarios_support import validar_usuarios_existen
 from src.modules.turnos.domain.entities.grilla_variante import GrillaVariante, VarianteSlot
 from src.modules.turnos.domain.errors import OverlappingVarianteError, VarianteCasillaInvalidaError
 from src.modules.turnos.domain.repositories.ausencias_lookup import (
@@ -71,6 +72,7 @@ async def validar_variante(
     casillas_validas = {c.id for c in await deps.casillas.list_all(include_inactive=True)}
     if any(s.casilla_id not in casillas_validas for s in variante.slots):
         raise VarianteCasillaInvalidaError()
+    await validar_usuarios_existen(deps.users, [u for s in variante.slots for u in s.user_ids])
     existentes = [v for v in await deps.variantes.list_activas() if v.id != excluir_id]
     if hay_solapamiento_vigencia(variante.desde, variante.hasta, existentes):
         raise OverlappingVarianteError()

@@ -1,7 +1,8 @@
 import uuid
 from datetime import date
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator
 
 from src.modules.prestadores.application.dtos.prestador_dtos import (
     AsignacionHistorialDTO,
@@ -109,11 +110,16 @@ class PrestadoresResumenResponse(BaseModel):
         )
 
 
+# El nombre con el que aparece el PST en todo el módulo: no puede quedar vacío
+# ni ser solo espacios.
+_DenComercial = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+
+
 class CreatePrestadorRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     siges_empresa_id: int = Field(validation_alias="sigesEmpresaId")
-    den_comercial: str = Field(validation_alias="denComercial")
+    den_comercial: _DenComercial = Field(validation_alias="denComercial")
     razon_social: str | None = Field(default=None, validation_alias="razonSocial")
     cuit: str | None = None
     operador_id: uuid.UUID | None = Field(default=None, validation_alias="operadorId")
@@ -122,7 +128,7 @@ class CreatePrestadorRequest(BaseModel):
 class UpdatePrestadorRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    den_comercial: str = Field(validation_alias="denComercial")
+    den_comercial: _DenComercial = Field(validation_alias="denComercial")
     razon_social: str | None = Field(default=None, validation_alias="razonSocial")
     cuit: str | None = None
 
@@ -145,9 +151,17 @@ class UpsertContactoRequest(BaseModel):
 
     nombre: str
     telefono: str | None = None
-    email: str | None = None
+    email: EmailStr | None = None
     is_principal: bool = Field(default=False, validation_alias="isPrincipal")
     sort_order: int = Field(default=0, validation_alias="sortOrder")
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _vacio_es_none(cls, value: object) -> object:
+        # El formulario manda "" cuando el campo queda en blanco.
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
 
 class AsignacionHistorialResponse(BaseModel):
@@ -222,9 +236,7 @@ class CreateAsignacionOverrideRequest(BaseModel):
     operador_reemplazante_id: uuid.UUID = Field(validation_alias="operadorReemplazanteId")
     desde: date
     hasta: date
-    prestador_ids: list[uuid.UUID] | None = Field(
-        default=None, validation_alias="prestadorIds"
-    )
+    prestador_ids: list[uuid.UUID] | None = Field(default=None, validation_alias="prestadorIds")
     motivo: str | None = None
 
 

@@ -156,8 +156,7 @@ class TestEvaluateDeviceHealthBordes:
 
     def test_contador_cero_no_cuenta_para_ventana_de_paginas(self) -> None:
         viejos = [
-            _Ev("13.20", event_time=_NOW - timedelta(days=60 + i), counter=0)
-            for i in range(4)
+            _Ev("13.20", event_time=_NOW - timedelta(days=60 + i), counter=0) for i in range(4)
         ]
         reciente = _Ev("INFO", severity="INFO", counter=10_000, event_time=_NOW)
         salud = evaluate_device_health([*viejos, reciente], now=_NOW)
@@ -179,3 +178,21 @@ class TestEvaluateDeviceHealthBordes:
     def test_severidad_critical_cuenta_como_critica(self) -> None:
         ev = _Ev("13.20", severity="critical", event_time=_NOW - timedelta(days=1))
         assert evaluate_device_health([ev], now=_NOW).status == "YELLOW"
+
+    def test_expone_los_contadores_que_uso_la_regla(self) -> None:
+        # Caso QA 2026-09-05: 2 ERROR viejos → GREEN por R3; la UI necesita ver
+        # los días/páginas que justificaron el veredicto.
+        viejos = [
+            _Ev("13.20", occurrences=2, counter=1000, event_time=_NOW - timedelta(days=33)),
+            _Ev("49.4C", counter=1000, event_time=_NOW - timedelta(days=40)),
+        ]
+        salud = evaluate_device_health(viejos, now=_NOW)
+        assert salud.triggered_rule == "stable"
+        assert (salud.critical_events_count, salud.critical_occurrences) == (2, 3)
+        assert (salud.days_since_last_critical, salud.pages_since_last_critical) == (33, 0)
+
+    def test_sin_criticos_los_contadores_quedan_en_cero(self) -> None:
+        salud = evaluate_device_health([_Ev("INFO", severity="INFO")], now=_NOW)
+        assert (salud.critical_events_count, salud.critical_occurrences) == (0, 0)
+        assert salud.days_since_last_critical is None
+        assert salud.pages_since_last_critical is None

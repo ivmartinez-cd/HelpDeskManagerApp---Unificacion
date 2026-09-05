@@ -83,6 +83,24 @@ class PrestadorConLiquidacionesError(BusinessRuleViolationError):
         )
 
 
+class PrestadorDuplicadoError(BusinessRuleViolationError):
+    """`nombre_corto` es UNIQUE en `prestadores`: es la clave con la que matchean
+    los CSV de liquidación. El caso de uso lo chequea antes de escribir y el
+    repositorio traduce el `IntegrityError` por si dos altas corren a la vez."""
+
+    default_code: ClassVar[str] = "PRESTADOR_DUPLICADO"
+
+    def __init__(self, nombre_corto: str) -> None:
+        super().__init__(
+            f"Ya existe un prestador con el nombre corto '{nombre_corto}'. "
+            "Elegí otro o editá el existente."
+        )
+
+
+class TarifarioInvalidoError(ValidationError):
+    default_code: ClassVar[str] = "TARIFARIO_INVALIDO"
+
+
 class CdVinculoDuplicadoError(BusinessRuleViolationError):
     """El UNIQUE de `cd_prestador_id` garantiza que un prestador de CD vincule
     a lo sumo una fila local — IntegrityError traducido acá (mismo criterio que

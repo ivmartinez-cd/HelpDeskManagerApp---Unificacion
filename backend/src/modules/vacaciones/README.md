@@ -42,8 +42,8 @@ del ABM pasó de "Gestión Humana" a **"Personal"**. Solo cambió el `label`: la
 - **Emails (D8 activado)**: `EmailNotificador` (infrastructure) sobre el mailer de auth,
   que ganó un `html_body` opcional (multipart texto+HTML; ConsoleMailer lo ignora).
   Destinatarios de nueva solicitud = jefes del sector del empleado (`user_module_scope`)
-  + admins (grant `manage`), solo cuentas activas, deduplicados — el equivalente exacto
-  de MANAGERs del sector + ADMINs del legacy. Decisión → email del empleado. Templates
+  + admins (grant `manage` o superadmin, igual que `get_actor_vacaciones`), solo cuentas
+  activas, deduplicados — el equivalente de MANAGERs del sector + ADMINs del legacy. Decisión → email del empleado. Templates
   portados de `utils/email.ts` (mismos subjects, fechas dd/mm/aa, link a
   `/vacaciones/aprobaciones`); un fallo de envío se loguea y **nunca** corta el use case
   (paridad del `sendMail` legacy). `NuevaSolicitudNotif` ganó `department_id` para poder
@@ -121,6 +121,11 @@ del ABM pasó de "Gestión Humana" a **"Personal"**. Solo cambió el `label`: la
 - El empleado ve el **calendario completo**; solo el jefe lo ve acotado a su sector.
 - `min_advance_notice_days` / `max_overlap_percent` / `max_overlap_count` existen en la config
   por paridad de datos pero **ninguna validación los usa** (el legacy tampoco).
+- **Desvío consciente (2026-09-05)**: un no-admin no puede crear una solicitud con
+  `start_date` anterior a hoy (400 `FECHA_PASADA`, después del chequeo de año y antes de la
+  agenda); el admin sigue cargando histórico. El legacy solo rechazaba el año pasado.
+- **Desvío consciente (2026-09-05)**: un empleado sin `manage` ni sector que manda
+  `empleadoIds` con ids ajenos recibe 403 (el legacy reescribía en silencio al propio).
 
 ## Migración de datos reales (pendiente — corre en la PC del trabajo)
 

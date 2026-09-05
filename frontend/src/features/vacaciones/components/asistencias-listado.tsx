@@ -15,6 +15,24 @@ import { SolicitudEstadoBadge } from "./solicitud-estado-badge";
 
 const PAGE_SIZE = 25;
 
+/** `daysCount` incluye la extensión LCT del backend (fin viernes +2, sábado +1)
+ * salvo para HOME_OFFICE/CAMBIO_HORARIO; se avisa para que 2 días jue–vie
+ * mostrados como 4 no desconcierten. */
+function incluyeFinDeSemana(a: Ausencia): boolean {
+  if (a.tipo === "HOME_OFFICE" || a.tipo === "CAMBIO_HORARIO") return false;
+  const [y, m, d] = a.endDate.split("-").map(Number);
+  const diaSemana = new Date(y, m - 1, d).getDay(); // 0=dom ... 6=sáb
+  return diaSemana === 5 || diaSemana === 6;
+}
+
+function duracionTexto(a: Ausencia): string {
+  const dias = `${a.daysCount} día${a.daysCount === 1 ? "" : "s"}`;
+  const horario = horarioTexto(a);
+  if (horario) return `${horario} · ${dias}`;
+  if (a.halfDay) return "Medio día";
+  return incluyeFinDeSemana(a) ? `${dias} (incluye fin de semana)` : dias;
+}
+
 type AusenciaSortKey = "empleado" | "fecha" | "tipo" | "duracion";
 const AUSENCIA_SORT_KEYS: readonly AusenciaSortKey[] = ["empleado", "fecha", "tipo", "duracion"];
 
@@ -193,11 +211,7 @@ export function AsistenciasListado({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {horarioTexto(a)
-                      ? `${horarioTexto(a)} · ${a.daysCount} día${a.daysCount === 1 ? "" : "s"}`
-                      : a.halfDay
-                        ? "Medio día"
-                        : `${a.daysCount} día${a.daysCount === 1 ? "" : "s"}`}
+                    {duracionTexto(a)}
                   </td>
                   <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground" title={a.reason ?? ""}>
                     {a.reason ?? "—"}

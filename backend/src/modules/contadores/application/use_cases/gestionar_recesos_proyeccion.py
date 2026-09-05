@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from src.modules.contadores.application.dtos.receso_dto import RecesoDto
+from src.modules.contadores.domain.errors import RecesoRangoInvalidoError
 from src.modules.contadores.domain.ports.recesos_port import RecesosPort
 
 
@@ -22,6 +23,9 @@ class GestionarRecesosProyeccionUseCase:
         return await self._store.listar(id_grupo_economico)
 
     async def crear(self, request: CrearRecesoRequest) -> RecesoDto:
+        # Un receso invertido se persistía y participaba del tablero (F7).
+        if request.fecha_desde > request.fecha_hasta:
+            raise RecesoRangoInvalidoError()
         return await self._store.crear(
             RecesoDto(
                 id=0,

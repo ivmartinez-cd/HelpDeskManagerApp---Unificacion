@@ -1,6 +1,6 @@
 from typing import ClassVar
 
-from src.shared.domain.errors import DomainError, NotFoundError
+from src.shared.domain.errors import DomainError, NotFoundError, ValidationError
 
 
 class LogParseError(DomainError):
@@ -19,3 +19,10 @@ class SavedAnalysisNotFoundError(NotFoundError):
 
     def __init__(self) -> None:
         super().__init__("Análisis guardado no encontrado")
+
+
+class SavedAnalysisNameInvalidError(ValidationError):
+    default_code: ClassVar[str] = "SAVED_ANALYSIS_NAME_INVALID"
+
+    def __init__(self) -> None:
+        super().__init__("El nombre del análisis guardado no puede estar vacío")

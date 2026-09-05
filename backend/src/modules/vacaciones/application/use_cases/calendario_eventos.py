@@ -1,6 +1,10 @@
 """Eventos del calendario: vacaciones activas + feriados, con el "restante"
 corrido del legacy (saldo que va quedando a medida que se consumen las
-solicitudes del año, en orden de inicio)."""
+solicitudes del año, en orden de inicio).
+
+"Activas" = PENDING + APPROVED a propósito (paridad legacy): la grilla del
+frontend (`vacaciones-month-grid.tsx`) atenúa las PENDING por `status`, así
+que no se filtran acá."""
 
 import uuid
 from dataclasses import dataclass
@@ -57,12 +61,8 @@ class CalendarioEventos:
         eventos.extend(await self._eventos_feriados())
         return eventos
 
-    async def _eventos_vacaciones(
-        self, visibles: list[Solicitud]
-    ) -> list[EventoCalendarioDTO]:
-        empleados = await self._deps.empleados.get_by_ids(
-            list({s.empleado_id for s in visibles})
-        )
+    async def _eventos_vacaciones(self, visibles: list[Solicitud]) -> list[EventoCalendarioDTO]:
+        empleados = await self._deps.empleados.get_by_ids(list({s.empleado_id for s in visibles}))
         sectores = {s.id: s for s in await self._deps.sectores.list_all()}
         restantes = await self._restantes(visibles, empleados)
         eventos = []

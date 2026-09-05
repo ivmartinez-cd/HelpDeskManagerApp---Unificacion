@@ -44,7 +44,7 @@ class SqlAlchemyDiasSugeridosGateway:
 
     async def get_dias_sugeridos_por_tecnico(
         self, periodo: Periodo, ids_tecnico: list[int]
-    ) -> dict[int, int]:
+    ) -> dict[int, float]:
         if not ids_tecnico:
             return {}
         empleado_por_siges_id = await self._empleados_vinculados(ids_tecnico)
@@ -54,9 +54,7 @@ class SqlAlchemyDiasSugeridosGateway:
             list(empleado_por_siges_id.values()), periodo
         )
         return {
-            siges_id: calcular_dias_sugeridos(
-                periodo, ausencias_por_empleado.get(empleado.id, [])
-            )
+            siges_id: calcular_dias_sugeridos(periodo, ausencias_por_empleado.get(empleado.id, []))
             for siges_id, empleado in empleado_por_siges_id.items()
         }
 

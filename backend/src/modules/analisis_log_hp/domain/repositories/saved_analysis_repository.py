@@ -23,6 +23,7 @@ class SavedAnalysisRepository(Protocol):
     async def update(
         self,
         id: UUID,
+        name: str,
         incidents: list[dict[str, Any]],
         global_severity: str,
         ai_diagnosis: str | None = None,

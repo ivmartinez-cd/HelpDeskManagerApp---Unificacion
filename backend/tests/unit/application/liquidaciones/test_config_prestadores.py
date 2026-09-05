@@ -9,7 +9,10 @@ from src.modules.liquidaciones.application.use_cases.config_prestadores import (
     TogglePrestadorActivo,
     UpdatePrestador,
 )
-from src.modules.liquidaciones.domain.errors import PrestadorNoEncontradoError
+from src.modules.liquidaciones.domain.errors import (
+    PrestadorDuplicadoError,
+    PrestadorNoEncontradoError,
+)
 from tests.unit.domain.liquidaciones.factories import make_prestador
 from tests.unit.domain.liquidaciones.fakes_config import FakeConfigPrestadorRepository
 
@@ -29,6 +32,19 @@ async def test_create_normaliza_nombre_corto() -> None:
     assert repo.rows[creado.id].nombre_corto == "PENTACOM"
 
 
+async def test_create_con_nombre_corto_duplicado_lanza_conflicto() -> None:
+    existente = make_prestador(nombre_corto="PENTACOM")
+    repo = FakeConfigPrestadorRepository({existente.id: existente})
+
+    # El chequeo compara ya normalizado: " pentacom " choca con "PENTACOM".
+    with pytest.raises(PrestadorDuplicadoError):
+        await CreatePrestador(_ports(repo)).execute(
+            nombre="Otro", nombre_corto=" pentacom ", cuit=None, region=None
+        )
+
+    assert len(repo.rows) == 1
+
+
 async def test_update_normaliza_y_persiste() -> None:
     existente = make_prestador(nombre_corto="VIEJO")
     repo = FakeConfigPrestadorRepository({existente.id: existente})
@@ -39,6 +55,30 @@ async def test_update_normaliza_y_persiste() -> None:
 
     assert updated.nombre_corto == "NUEVO"
     assert repo.rows[existente.id].nombre == "Nuevo Nombre"
+
+
+async def test_update_conservando_su_propio_nombre_corto_no_es_duplicado() -> None:
+    existente = make_prestador(nombre_corto="PENTACOM")
+    repo = FakeConfigPrestadorRepository({existente.id: existente})
+
+    updated = await UpdatePrestador(_ports(repo)).execute(
+        existente.id, nombre="Pentacom SA", nombre_corto="pentacom", cuit=None, region=None
+    )
+
+    assert updated.nombre_corto == "PENTACOM"
+
+
+async def test_update_al_nombre_corto_de_otro_lanza_conflicto() -> None:
+    uno = make_prestador(nombre_corto="UNO")
+    otro = make_prestador(nombre_corto="OTRO")
+    repo = FakeConfigPrestadorRepository({uno.id: uno, otro.id: otro})
+
+    with pytest.raises(PrestadorDuplicadoError):
+        await UpdatePrestador(_ports(repo)).execute(
+            uno.id, nombre=uno.nombre, nombre_corto="otro", cuit=None, region=None
+        )
+
+    assert repo.rows[uno.id].nombre_corto == "UNO"
 
 
 async def test_update_inexistente_lanza_not_found() -> None:

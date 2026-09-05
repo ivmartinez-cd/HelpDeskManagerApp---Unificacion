@@ -18,6 +18,7 @@ from src.modules.analisis_log_hp.application.use_cases.saved_analyses import (
     incident_to_summary,
 )
 from src.modules.analisis_log_hp.domain.entities.saved_analysis import TelemetryEvent
+from src.modules.analisis_log_hp.domain.errors import SavedAnalysisNameInvalidError
 from src.shared.domain.errors import NotFoundError
 from tests.unit.application.analisis_log_hp.fakes import (
     NOW,
@@ -56,6 +57,12 @@ class TestCreateSavedAnalysis:
         await CreateSavedAnalysis(repo, tele).execute("x", None, [make_incident()], "ERROR")
         assert tele.events == []
 
+    async def test_nombre_solo_espacios_lanza_validacion(self) -> None:
+        repo, tele = FakeSavedAnalysisRepo(), FakeTelemetryRepo()
+        with pytest.raises(SavedAnalysisNameInvalidError):
+            await CreateSavedAnalysis(repo, tele).execute("   ", None, [], "INFO")
+        assert repo.rows == {}
+
 
 class TestListGetUpdateDelete:
     async def test_list_delega_la_paginacion(self) -> None:
@@ -82,23 +89,47 @@ class TestListGetUpdateDelete:
         tele = FakeTelemetryRepo([vieja, ajena])
 
         nuevo = await UpdateSavedAnalysis(repo, tele).execute(
-            snap.id, "HP (SER1)", [make_incident("NEW")], "WARNING"
+            snap.id, snap.name, "HP (SER1)", [make_incident("NEW")], "WARNING"
         )
 
         assert nuevo.global_severity == "WARNING"
         assert [e.code for e in tele.events] == ["OTRO", "NEW"]
 
+    async def test_update_renombra_el_analisis(self) -> None:
+        repo = FakeSavedAnalysisRepo()
+        snap = repo.seed()
+
+        nuevo = await UpdateSavedAnalysis(repo, FakeTelemetryRepo()).execute(
+            snap.id, "  snap editado ", None, [], "INFO"
+        )
+
+        assert nuevo.name == "snap editado"
+        assert repo.rows[snap.id].name == "snap editado"
+
+    async def test_update_con_nombre_vacio_lanza_validacion_sin_tocar_nada(self) -> None:
+        repo = FakeSavedAnalysisRepo()
+        snap = repo.seed()
+        tele = FakeTelemetryRepo([TelemetryEvent("S", snap.id, "OLD", None, "ERROR", 1, 1, NOW)])
+
+        with pytest.raises(SavedAnalysisNameInvalidError):
+            await UpdateSavedAnalysis(repo, tele).execute(snap.id, "", None, [], "INFO")
+
+        assert repo.rows[snap.id].name == "snap"
+        assert len(tele.events) == 1
+
     async def test_update_sin_equipo_solo_borra_telemetria(self) -> None:
         repo = FakeSavedAnalysisRepo()
         snap = repo.seed()
         tele = FakeTelemetryRepo([TelemetryEvent("S", snap.id, "OLD", None, "ERROR", 1, 1, NOW)])
-        await UpdateSavedAnalysis(repo, tele).execute(snap.id, None, [make_incident()], "ERROR")
+        await UpdateSavedAnalysis(repo, tele).execute(
+            snap.id, snap.name, None, [make_incident()], "ERROR"
+        )
         assert tele.events == []
 
     async def test_update_inexistente_lanza_not_found(self) -> None:
         with pytest.raises(NotFoundError):
             await UpdateSavedAnalysis(FakeSavedAnalysisRepo(), FakeTelemetryRepo()).execute(
-                uuid.uuid4(), None, [], "INFO"
+                uuid.uuid4(), "x", None, [], "INFO"
             )
 
     async def test_delete_borra_snapshot_y_telemetria(self) -> None:

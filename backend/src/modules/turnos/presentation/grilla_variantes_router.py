@@ -10,7 +10,10 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
-from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.auth.presentation.dependencies.permissions import (
+    require_any_permission,
+    require_permission,
+)
 from src.modules.turnos.application.dtos.grilla_variante_dtos import (
     CreateGrillaVarianteCommand,
     UpdateGrillaVarianteCommand,
@@ -66,7 +69,9 @@ router = APIRouter(prefix="/api/turnos/grilla-variantes", tags=["turnos"])
 # Catálogo chico (un puñado de grillas por año) -- paginado por contrato
 # (CLAUDE.md §11) con default generoso, igual que el resto de /api/turnos.
 _DEFAULT_SIZE = 200
-_require_view = Depends(require_permission(VIEW))
+# Leer alcanza con `view` o `manage`: `manage` no implica `view` (ADR-029) y
+# un usuario con solo `manage` no podía abrir la pantalla.
+_require_view = Depends(require_any_permission(VIEW, MANAGE))
 _require_manage = Depends(require_permission(MANAGE))
 
 
@@ -89,9 +94,7 @@ async def list_grilla_variantes(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[GrillaVarianteResponse]:
     items = await ListGrillaVariantes(_deps(db)).execute(solo_vigentes=vigentes)
-    return Page.of(
-        [GrillaVarianteResponse.from_dto(i) for i in items], page=page, size=size
-    )
+    return Page.of([GrillaVarianteResponse.from_dto(i) for i in items], page=page, size=size)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)

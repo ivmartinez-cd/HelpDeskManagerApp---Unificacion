@@ -12,13 +12,70 @@ from src.modules.liquidaciones.application.use_cases.config_tarifarios import (
     DeleteTarifario,
     UpdateTarifario,
 )
-from src.modules.liquidaciones.domain.errors import TarifarioNoEncontradoError
+from src.modules.liquidaciones.domain.errors import (
+    TarifarioInvalidoError,
+    TarifarioNoEncontradoError,
+)
 from tests.unit.domain.liquidaciones.factories import make_tarifario
 from tests.unit.domain.liquidaciones.fakes_config import FakeConfigTarifarioRepository
 
 
 def _ports(repo: FakeConfigTarifarioRepository) -> ConfigTarifariosPorts:
     return ConfigTarifariosPorts(tarifarios=repo)
+
+
+async def test_create_con_vigencia_invertida_lanza_validacion() -> None:
+    repo = FakeConfigTarifarioRepository()
+
+    with pytest.raises(TarifarioInvalidoError):
+        await CreateTarifario(_ports(repo)).execute(
+            prestador_id=uuid.uuid4(),
+            tipo_servicio="correctivo",
+            spst_id=None,
+            costo_servicio=1.0,
+            costo_km=1.0,
+            vigencia_desde=date(2026, 6, 1),
+            vigencia_hasta=date(2026, 1, 1),
+        )
+
+    assert repo.rows == []
+
+
+async def test_create_con_vigencia_de_un_dia_es_valida() -> None:
+    repo = FakeConfigTarifarioRepository()
+
+    creado = await CreateTarifario(_ports(repo)).execute(
+        prestador_id=uuid.uuid4(),
+        tipo_servicio="correctivo",
+        spst_id=None,
+        costo_servicio=1.0,
+        costo_km=1.0,
+        vigencia_desde=date(2026, 6, 1),
+        vigencia_hasta=date(2026, 6, 1),
+    )
+
+    assert creado.vigencia_hasta == date(2026, 6, 1)
+
+
+async def test_update_con_vigencia_invertida_lanza_validacion_sin_tocar_la_fila() -> None:
+    existente = make_tarifario(vigencia_desde=date(2025, 1, 1), vigencia_hasta=None)
+    repo = FakeConfigTarifarioRepository([existente])
+
+    with pytest.raises(TarifarioInvalidoError):
+        await UpdateTarifario(_ports(repo)).execute(
+            existente.id,
+            prestador_id=existente.prestador_id,
+            tipo_servicio=existente.tipo_servicio,
+            spst_id=existente.spst_id,
+            costo_servicio=existente.costo_servicio,
+            costo_km=existente.costo_km,
+            vigencia_desde=date(2026, 6, 1),
+            vigencia_hasta=date(2026, 1, 1),
+        )
+
+    intacto = await repo.get_by_id(existente.id)
+    assert intacto is not None
+    assert intacto.vigencia_desde == date(2025, 1, 1)
 
 
 async def test_create_recadena_el_grupo() -> None:

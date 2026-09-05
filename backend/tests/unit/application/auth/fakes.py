@@ -10,6 +10,7 @@ from src.modules.auth.domain.entities.route_visit_count import RouteVisitCount
 from src.modules.auth.domain.entities.session import Session
 from src.modules.auth.domain.entities.user import User
 from src.modules.auth.domain.value_objects.email import Email
+from src.modules.auth.domain.value_objects.feature_catalog_entry import FeatureCatalogEntry
 from src.modules.auth.domain.value_objects.feature_set import FeatureSet
 from src.modules.auth.domain.value_objects.password_hash import PasswordHash
 from src.modules.auth.domain.value_objects.permission_set import PermissionSet
@@ -178,23 +179,34 @@ class FakeFeatureGrantRepository:
 
 @dataclass(slots=True)
 class FakeLoginAttemptRepository:
+    """`recent_failures` es la base histórica; además cuenta los fallos que
+    se graban durante el test para el email exacto consultado."""
+
     recent_failures: int = 0
     records: list[tuple[str, str | None, bool]] = field(default_factory=list)
+    queried_emails: list[str] = field(default_factory=list)
 
     async def record(self, *, email: str, ip: str | None, succeeded: bool) -> None:
         self.records.append((email, ip, succeeded))
 
     async def count_recent_failures(self, *, email: str, since: datetime) -> int:
-        return self.recent_failures
+        self.queried_emails.append(email)
+        recorded = sum(1 for e, _, ok in self.records if e == email and not ok)
+        return self.recent_failures + recorded
 
 
 class FakeResetTokenRepository:
     def __init__(self) -> None:
         self.rows: dict[bytes, PasswordResetToken] = {}
         self.marked_used: list[bytes] = []
+        self.created: list[tuple[uuid.UUID, datetime]] = []
 
     async def add(self, token: PasswordResetToken) -> None:
         self.rows[token.token_hash] = token
+        self.created.append((token.user_id, datetime.now(UTC)))
+
+    async def count_created_since(self, user_id: uuid.UUID, *, since: datetime) -> int:
+        return sum(1 for uid, at in self.created if uid == user_id and at >= since)
 
     async def get_by_token_hash(self, token_hash: bytes) -> PasswordResetToken | None:
         return self.rows.get(token_hash)
@@ -206,18 +218,29 @@ class FakeResetTokenRepository:
             record.used_at = at
 
 
+DUMMY_HASH = PasswordHash(value="hash:__dummy__")
+
+
 class FakePasswordHasher:
     """Hash reversible de juguete: suficiente para verificar el contrato
-    hash/verify sin pagar argon2 en cada test."""
+    hash/verify sin pagar argon2 en cada test. `verified` registra contra
+    qué hash se verificó cada candidato."""
+
+    def __init__(self) -> None:
+        self.verified: list[PasswordHash] = []
 
     def hash(self, raw: RawPassword) -> PasswordHash:
         return PasswordHash(value=f"hash:{raw.value}")
 
     def verify(self, candidate: str, stored: PasswordHash) -> bool:
+        self.verified.append(stored)
         return stored.value == f"hash:{candidate}"
 
     def needs_rehash(self, stored: PasswordHash) -> bool:
         return False
+
+    def dummy_hash(self) -> PasswordHash:
+        return DUMMY_HASH
 
 
 class FakeSessionTokenGenerator:
@@ -242,9 +265,7 @@ class FakeMailer:
     def __init__(self) -> None:
         self.sent: list[SentMail] = []
 
-    async def send(
-        self, *, to: str, subject: str, body: str, html_body: str | None = None
-    ) -> None:
+    async def send(self, *, to: str, subject: str, body: str, html_body: str | None = None) -> None:
         self.sent.append(SentMail(to=to, subject=subject, body=body))
 
 
@@ -257,6 +278,23 @@ class FakeModuleCatalogRepository:
 
     async def is_enabled(self, module: ModuleKey) -> bool:
         return module.value in self.enabled
+
+
+class FakeFeatureCatalogRepository:
+    def __init__(self, keys: set[str]) -> None:
+        self.entries = [
+            FeatureCatalogEntry(
+                key=FeatureKey(key),
+                module=ModuleKey(key.split("-")[0]),
+                label=key,
+                description="",
+                sort_order=1,
+            )
+            for key in sorted(keys)
+        ]
+
+    async def list_all(self) -> list[FeatureCatalogEntry]:
+        return self.entries
 
 
 @dataclass(slots=True)
@@ -275,9 +313,7 @@ class FakeRouteVisitRepository:
 
     async def purge_before(self, *, user_id: uuid.UUID, cutoff: date) -> None:
         self.purged.append((user_id, cutoff))
-        self.rows = {
-            k: v for k, v in self.rows.items() if not (k[0] == user_id and k[1] < cutoff)
-        }
+        self.rows = {k: v for k, v in self.rows.items() if not (k[0] == user_id and k[1] < cutoff)}
 
     async def top_routes(
         self, *, user_id: uuid.UUID, since: date, limit: int

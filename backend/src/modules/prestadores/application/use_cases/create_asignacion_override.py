@@ -6,6 +6,10 @@ from src.modules.prestadores.application.dtos.prestador_dtos import (
     AsignacionOverrideDTO,
     CreateAsignacionOverrideCommand,
 )
+from src.modules.prestadores.application.use_cases._referencias import (
+    exigir_operadores,
+    exigir_prestadores,
+)
 from src.modules.prestadores.application.use_cases.asignacion_override_dto_builder import (
     build_asignacion_override_dto,
 )
@@ -18,6 +22,7 @@ from src.modules.prestadores.domain.errors import (
 from src.modules.prestadores.domain.repositories.asignacion_override_repository import (
     AsignacionOverrideRepository,
 )
+from src.modules.prestadores.domain.repositories.prestador_repository import PrestadorRepository
 from src.modules.prestadores.domain.repositories.user_provider import UserProvider
 from src.shared.domain.services.asignacion_override_resolver import hay_solapamiento
 
@@ -26,6 +31,7 @@ from src.shared.domain.services.asignacion_override_resolver import hay_solapami
 class CreateAsignacionOverrideDependencies:
     overrides: AsignacionOverrideRepository
     users: UserProvider
+    prestadores: PrestadorRepository
 
 
 class CreateAsignacionOverride:
@@ -40,6 +46,10 @@ class CreateAsignacionOverride:
             raise InvalidOverrideRangeError()
         if command.operador_ausente_id == command.operador_reemplazante_id:
             raise OverrideMismoOperadorError()
+        users = await exigir_operadores(
+            self._deps.users, [command.operador_ausente_id, command.operador_reemplazante_id]
+        )
+        await exigir_prestadores(self._deps.prestadores, command.prestador_ids or [])
 
         alcance: Literal["TOTAL"] | frozenset[uuid.UUID] = (
             "TOTAL" if command.prestador_ids is None else frozenset(command.prestador_ids)
@@ -62,7 +72,4 @@ class CreateAsignacionOverride:
             created_by_user_id=command.created_by_user_id,
         )
         await self._deps.overrides.create(override)
-
-        involucrados = {command.operador_ausente_id, command.operador_reemplazante_id}
-        users = await self._deps.users.get_users_by_ids(list(involucrados))
         return build_asignacion_override_dto(override, users)

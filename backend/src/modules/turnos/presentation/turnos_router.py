@@ -3,12 +3,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.identity import get_current_identity
-from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.auth.presentation.dependencies.permissions import require_any_permission
 from src.modules.turnos.application.use_cases.get_current_shifts import (
     GetCurrentShifts,
     GetCurrentShiftsDependencies,
 )
-from src.modules.turnos.domain.well_known_permissions import VIEW
+from src.modules.turnos.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.turnos.infrastructure.repositories.sqlalchemy_asignacion_override_repository import (  # noqa: E501
     SqlAlchemyAsignacionOverrideRepository,
 )
@@ -47,9 +47,9 @@ router = APIRouter(prefix="/api/turnos", tags=["turnos"])
 # generoso porque alimentan la grilla del home/el panel de admin completo, no
 # una tabla paginada.
 _DEFAULT_SIZE = 200
-# turnos.view para consultar (ADR-029). `/current` queda solo-sesión: es la
-# card de Inicio de cada operador.
-_require_view = Depends(require_permission(VIEW))
+# `turnos.view` o `turnos.manage` para consultar (ADR-029; `manage` no implica
+# `view`). `/current` queda solo-sesión: es la card de Inicio de cada operador.
+_require_view = Depends(require_any_permission(VIEW, MANAGE))
 
 
 @router.get("/current")
@@ -94,6 +94,4 @@ async def list_assignable_users(
 ) -> Page[UserOptionResponse]:
     provider = SqlAlchemyUserProvider(db)
     users = await provider.list_all_active_users()
-    return Page.of(
-        [UserOptionResponse.from_info(u) for u in users], page=page, size=size
-    )
+    return Page.of([UserOptionResponse.from_info(u) for u in users], page=page, size=size)

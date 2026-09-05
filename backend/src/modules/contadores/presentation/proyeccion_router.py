@@ -198,7 +198,7 @@ async def list_recesos(
     return Page.of(items, page=1, size=_TAMANIO_PAGINA_CATALOGO_CHICO)
 
 
-@router.post("/recesos", response_model=RecesoSchema)
+@router.post("/recesos", response_model=RecesoSchema, status_code=201)
 async def crear_receso(
     request: CrearRecesoRequest,
     _: Identity = _require_manage,

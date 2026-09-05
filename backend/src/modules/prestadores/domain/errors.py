@@ -1,3 +1,4 @@
+import uuid
 from typing import ClassVar
 
 from src.shared.domain.errors import BusinessRuleViolationError, NotFoundError, ValidationError
@@ -8,6 +9,22 @@ class PrestadorNotFoundError(NotFoundError):
 
     def __init__(self) -> None:
         super().__init__("Prestador no encontrado")
+
+
+class PrestadorDuplicadoError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "PRESTADOR_DUPLICADO"
+
+    def __init__(self, siges_empresa_id: int) -> None:
+        super().__init__(
+            f"Ya existe un prestador vinculado a la empresa {siges_empresa_id} de Siges"
+        )
+
+
+class OperadorNoEncontradoError(NotFoundError):
+    default_code: ClassVar[str] = "OPERADOR_NOT_FOUND"
+
+    def __init__(self, operador_id: uuid.UUID) -> None:
+        super().__init__(f"El operador {operador_id} no existe")
 
 
 class ContactoNotFoundError(NotFoundError):

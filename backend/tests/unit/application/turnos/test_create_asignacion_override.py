@@ -12,6 +12,7 @@ from src.modules.turnos.domain.errors import (
     InvalidOverrideRangeError,
     OverlappingOverrideError,
     OverrideMismoOperadorError,
+    UsuarioNotFoundError,
 )
 from src.modules.turnos.domain.repositories.user_provider import UserInfo
 from tests.unit.domain.turnos.fakes import FakeAsignacionOverrideRepository, FakeUserProvider
@@ -112,3 +113,15 @@ async def test_permite_coberturas_puntuales_de_franjas_distintas_con_fechas_sola
 
     assert dto.estado == "ACTIVA"
     assert len(repo.rows) == 2
+
+
+async def test_operador_inexistente_es_not_found_no_500() -> None:
+    """La FK a `app_user` fallaba en el flush como IntegrityError -> 500."""
+    repo = FakeAsignacionOverrideRepository()
+    fantasma = uuid.uuid4()
+
+    with pytest.raises(UsuarioNotFoundError, match=str(fantasma)):
+        await CreateAsignacionOverride(_deps(repo)).execute(
+            _command(operador_reemplazante_id=fantasma)
+        )
+    assert repo.rows == {}

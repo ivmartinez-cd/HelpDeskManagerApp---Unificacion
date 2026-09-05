@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 
 from src.modules.auth.domain.entities.password_reset_token import PasswordResetToken
 from src.modules.auth.domain.errors import (
+    AccountDisabledError,
     TokenAlreadyUsedError,
     TokenExpiredError,
     TokenInvalidError,
@@ -36,6 +37,8 @@ class ResetPassword:
         user = await self._deps.users.get_by_id(valid.user_id)
         if user is None:
             raise TokenInvalidError()
+        if not user.is_active:
+            raise AccountDisabledError()
         user.password_hash = self._deps.hasher.hash(RawPassword(new_password))
         await self._deps.users.save(user)
         await self._deps.reset_tokens.mark_used(token_hash, at=now)

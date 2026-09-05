@@ -51,6 +51,16 @@ class AnioPasadoError(DomainError):
         super().__init__("No se pueden registrar vacaciones en años pasados")
 
 
+class FechaPasadaError(DomainError):
+    """Sin equivalente en el legacy: un no-admin no puede pedir vacaciones que
+    ya empezaron (el admin sí, para cargar histórico)."""
+
+    default_code: ClassVar[str] = "FECHA_PASADA"
+
+    def __init__(self) -> None:
+        super().__init__("La fecha de inicio no puede ser anterior a hoy")
+
+
 class AnioMuyLejanoError(DomainError):
     default_code: ClassVar[str] = "ANIO_MUY_LEJANO"
 
@@ -157,9 +167,7 @@ class SolapamientoConVacacionesError(BusinessRuleViolationError):
     default_code: ClassVar[str] = "SOLAPAMIENTO_VACACIONES"
 
     def __init__(self) -> None:
-        super().__init__(
-            "Ya existe una solicitud de vacaciones que se solapa con esas fechas"
-        )
+        super().__init__("Ya existe una solicitud de vacaciones que se solapa con esas fechas")
 
 
 class SectorConEmpleadosError(BusinessRuleViolationError):

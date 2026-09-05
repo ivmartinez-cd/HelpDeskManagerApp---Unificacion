@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, timedelta
 
 from src.modules.prestadores.application.use_cases.list_prestadores_agrupados import (
     ListPrestadoresAgrupados,
@@ -10,6 +10,7 @@ from src.modules.prestadores.domain.entities.prestador import Prestador
 from src.modules.prestadores.domain.repositories.user_provider import UserInfo
 from src.shared.domain.errors import ExternalServiceError
 from tests.unit.domain.prestadores.fakes import (
+    FakeAsignacionHistorialRepository,
     FakeAsignacionOverrideRepository,
     FakeContactoRepository,
     FakePrestadorRepository,
@@ -43,14 +44,39 @@ def _deps(
     users: FakeUserProvider,
     overrides: FakeAsignacionOverrideRepository | None = None,
     siges: FakeSigesPrestadorGateway | None = None,
+    asignaciones: FakeAsignacionHistorialRepository | None = None,
 ) -> ListPrestadoresAgrupadosDependencies:
     return ListPrestadoresAgrupadosDependencies(
         prestadores=prestadores,
         contactos=FakeContactoRepository(),
         users=users,
         overrides=overrides or FakeAsignacionOverrideRepository(),
+        asignaciones=asignaciones or FakeAsignacionHistorialRepository(),
         siges=siges,
     )
+
+
+async def test_asignacion_programada_a_futuro_aparece_recien_a_esa_fecha() -> None:
+    prestadores = FakePrestadorRepository()
+    users = FakeUserProvider()
+    asignaciones = FakeAsignacionHistorialRepository()
+    hoy_id, futuro_id = uuid.uuid4(), uuid.uuid4()
+    users.users[hoy_id] = UserInfo(id=hoy_id, full_name="Operador Hoy")
+    users.users[futuro_id] = UserInfo(id=futuro_id, full_name="Operador Futuro")
+    pst = _prestador(siges_id=1, nombre="PST Rosario", operador_id=hoy_id)
+    prestadores.rows[pst.id] = pst
+    desde_futuro = date.today() + timedelta(days=10)
+    await asignaciones.reasignar(pst.id, hoy_id, date(2025, 1, 1))
+    await asignaciones.reasignar(pst.id, futuro_id, desde_futuro)
+    use_case = ListPrestadoresAgrupados(_deps(prestadores, users, asignaciones=asignaciones))
+
+    de_hoy = await use_case.execute()
+    a_futuro = await use_case.execute(fecha=desde_futuro)
+
+    assert [g.operador_id for g in de_hoy.grupos] == [hoy_id]
+    assert de_hoy.grupos[0].prestadores[0].operador_id == hoy_id
+    assert [g.operador_id for g in a_futuro.grupos] == [futuro_id]
+    assert a_futuro.grupos[0].prestadores[0].operador_nombre == "Operador Futuro"
 
 
 async def test_agrupa_por_operador_y_deja_sin_asignar_al_final() -> None:
@@ -180,9 +206,7 @@ async def test_parque_de_equipos_sale_del_conteo_en_vivo_de_siges() -> None:
 
     resumen = await ListPrestadoresAgrupados(_deps(prestadores, users, siges=siges)).execute()
 
-    equipos_por_nombre = {
-        p.den_comercial: p.equipos for g in resumen.grupos for p in g.prestadores
-    }
+    equipos_por_nombre = {p.den_comercial: p.equipos for g in resumen.grupos for p in g.prestadores}
     assert equipos_por_nombre == {"PST Villa Mercedes": 841, "PST C": 0}
     assert siges.equipos_calls == [[3, 740]]
 

@@ -8,10 +8,16 @@ from src.modules.prestadores.application.dtos.prestador_dtos import (
     PrestadorDTO,
     PrestadoresResumenDTO,
 )
+from src.modules.prestadores.application.use_cases.operador_real_resolver import (
+    con_operador_real_a,
+)
 from src.modules.prestadores.application.use_cases.prestador_dto_builder import (
     build_prestador_dto,
 )
 from src.modules.prestadores.domain.entities.prestador import Prestador
+from src.modules.prestadores.domain.repositories.asignacion_historial_repository import (
+    AsignacionHistorialRepository,
+)
 from src.modules.prestadores.domain.repositories.asignacion_override_repository import (
     AsignacionOverrideRepository,
 )
@@ -33,6 +39,7 @@ class ListPrestadoresAgrupadosDependencies:
     contactos: ContactoRepository
     users: UserProvider
     overrides: AsignacionOverrideRepository
+    asignaciones: AsignacionHistorialRepository
     siges: SigesPrestadorGateway | None = None
     """Para el parque de equipos en vivo — `None` (o caído) degrada al último
     valor persistido por el sync, el listado nunca se rompe por MERCURIO."""
@@ -43,7 +50,8 @@ class ListPrestadoresAgrupados:
     la fecha de consulta (default hoy) — un PST cubierto por un override
     vigente aparece agrupado bajo el reemplazante, no bajo el titular
     permanente (ver ADR-013). Cada `PrestadorDTO` sigue mostrando su
-    asignación real (`Prestador.operador_id`), solo el agrupado cambia."""
+    asignación real a esa fecha (según el historial, lo que hace visibles
+    las asignaciones programadas), solo el agrupado cambia."""
 
     def __init__(self, deps: ListPrestadoresAgrupadosDependencies) -> None:
         self._deps = deps
@@ -51,11 +59,16 @@ class ListPrestadoresAgrupados:
     async def execute(
         self, *, include_inactive: bool = True, fecha: date | None = None
     ) -> PrestadoresResumenDTO:
-        prestadores = await self._deps.prestadores.list_all(include_inactive=include_inactive)
+        fecha = fecha or date.today()
+        prestadores = await con_operador_real_a(
+            self._deps.asignaciones,
+            await self._deps.prestadores.list_all(include_inactive=include_inactive),
+            fecha,
+        )
         contactos_por_prestador = await self._deps.contactos.list_by_prestadores(
             [p.id for p in prestadores]
         )
-        efectivo_por_prestador = await self._resolver_efectivos(prestadores, fecha or date.today())
+        efectivo_por_prestador = await self._resolver_efectivos(prestadores, fecha)
         equipos_en_vivo = await self._equipos_en_vivo(prestadores)
 
         operador_ids = {p.operador_id for p in prestadores if p.operador_id is not None}

@@ -9,13 +9,57 @@ from src.modules.liquidaciones.application.use_cases.config_spsts import (
     ToggleSpstActivo,
     UpdateSpst,
 )
-from src.modules.liquidaciones.domain.errors import SpstNoEncontradoError
-from tests.unit.domain.liquidaciones.factories import make_spst
-from tests.unit.domain.liquidaciones.fakes_config import FakeConfigSpstRepository
+from src.modules.liquidaciones.domain.errors import (
+    PrestadorNoEncontradoError,
+    SpstNoEncontradoError,
+)
+from tests.unit.domain.liquidaciones.factories import make_prestador, make_spst
+from tests.unit.domain.liquidaciones.fakes_config import (
+    FakeConfigPrestadorRepository,
+    FakeConfigSpstRepository,
+)
 
 
-def _ports(repo: FakeConfigSpstRepository) -> ConfigSpstsPorts:
-    return ConfigSpstsPorts(spsts=repo)
+def _ports(
+    repo: FakeConfigSpstRepository,
+    prestadores: FakeConfigPrestadorRepository | None = None,
+) -> ConfigSpstsPorts:
+    return ConfigSpstsPorts(spsts=repo, prestadores=prestadores)
+
+
+async def test_create_con_prestador_inexistente_lanza_not_found() -> None:
+    repo = FakeConfigSpstRepository()
+    prestadores = FakeConfigPrestadorRepository()
+
+    with pytest.raises(PrestadorNoEncontradoError):
+        await CreateSpst(_ports(repo, prestadores)).execute(
+            prestador_id=uuid.uuid4(),
+            nombre="Huérfano",
+            domicilio=None,
+            localidad=None,
+            provincia=None,
+            zona_cobertura=None,
+        )
+
+    assert repo.rows == []
+
+
+async def test_create_con_prestador_existente_persiste() -> None:
+    prestador = make_prestador()
+    repo = FakeConfigSpstRepository()
+    prestadores = FakeConfigPrestadorRepository({prestador.id: prestador})
+
+    creado = await CreateSpst(_ports(repo, prestadores)).execute(
+        prestador_id=prestador.id,
+        nombre="SPST Sur",
+        domicilio=None,
+        localidad=None,
+        provincia=None,
+        zona_cobertura=None,
+    )
+
+    assert creado.prestador_id == prestador.id
+    assert len(repo.rows) == 1
 
 
 async def test_create_persiste() -> None:

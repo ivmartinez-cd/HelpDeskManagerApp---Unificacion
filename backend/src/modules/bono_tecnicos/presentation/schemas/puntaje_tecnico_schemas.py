@@ -15,7 +15,7 @@ class PuntajeTecnicoSchema(BaseModel):
     dias: float
     tareas_varias: int
     puntaje: float | None
-    dias_sugeridos: int | None
+    dias_sugeridos: float | None
 
 
 class GuardarBonoInputBody(BaseModel):

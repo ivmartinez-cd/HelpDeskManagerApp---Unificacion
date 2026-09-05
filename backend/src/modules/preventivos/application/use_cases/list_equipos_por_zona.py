@@ -20,7 +20,7 @@ from src.modules.preventivos.domain.entities.equipo_preventivo import EquipoPrev
 from src.modules.preventivos.domain.entities.habilitacion_preventivo import (
     HabilitacionPreventivo,
 )
-from src.modules.preventivos.domain.errors import ZonaInvalidaError
+from src.modules.preventivos.domain.errors import ZonaInvalidaError, ZonaNoEncontradaError
 from src.modules.preventivos.domain.repositories.habilitacion_repository import (
     HabilitacionRepository,
 )
@@ -55,6 +55,7 @@ class ListEquiposPorZonaUseCase:
         zona = request.zona.strip()
         if zona_excluida(zona, self._deps.zonas_excluidas):
             raise ZonaInvalidaError(zona)
+        await self._exigir_zona_conocida(zona)
         snapshot = await self._deps.gateway.list_equipos_por_zona(
             zona, force_refresh=request.force_refresh
         )
@@ -67,6 +68,13 @@ class ListEquiposPorZonaUseCase:
         filtrados = [a for a in anotados if _pasa_filtros(a, request)]
         filtrados.sort(key=_orden_default)
         return ListEquiposResult(equipos=filtrados, consultado_en=snapshot.consultado_en)
+
+    async def _exigir_zona_conocida(self, zona: str) -> None:
+        """El catálogo de zonas está cacheado en el gateway (30 min); una zona
+        con typo no paga la consulta completa del parque contra Siges."""
+        conocidas = {z.zona.strip().upper() for z in await self._deps.gateway.list_zonas()}
+        if zona.upper() not in conocidas:
+            raise ZonaNoEncontradaError(zona)
 
     async def _habilitaciones_vigentes(
         self, equipos: tuple[EquipoPreventivo, ...]
@@ -127,9 +135,7 @@ def _anotar(
     )
 
 
-def _pasa_filtros(
-    anotado: EquipoPreventivoAnotado, request: ListEquiposPorZonaRequest
-) -> bool:
+def _pasa_filtros(anotado: EquipoPreventivoAnotado, request: ListEquiposPorZonaRequest) -> bool:
     if request.estado is not None and anotado.estado != request.estado:
         return False
     if request.habilitado is not None and (

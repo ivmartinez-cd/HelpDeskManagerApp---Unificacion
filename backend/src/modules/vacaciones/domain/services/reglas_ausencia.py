@@ -1,6 +1,7 @@
 """Reglas de acceso y conteo de las bajas (paridad absence.controller legacy):
 el jefe/admin registra para cualquier lista de empleados (el legacy no
-chequeaba sector en el alta masiva), el empleado solo para sí; editar/eliminar
+chequeaba sector en el alta masiva), el empleado solo para sí (pedir para
+otro es 403, no se reescribe en silencio como hacía el legacy); editar/eliminar
 es del dueño o del admin (el jefe NO edita bajas ajenas), y un no-admin solo
 toca bajas PENDING y nunca cambia el estado.
 """
@@ -36,10 +37,13 @@ def dias_de_baja(tipo: TipoAusencia, start: date, end: date) -> int:
 def resolver_empleados_destino(
     actor: ActorVacaciones, empleado_ids: list[uuid.UUID]
 ) -> list[uuid.UUID]:
+    propio = [actor.empleado_id] if actor.empleado_id else []
     if actor.es_admin or actor.es_jefe_de_sector:
-        destinos = empleado_ids or ([actor.empleado_id] if actor.empleado_id else [])
+        destinos = empleado_ids or propio
     else:
-        destinos = [actor.empleado_id] if actor.empleado_id else []
+        if any(e not in propio for e in empleado_ids):
+            raise OperacionNoPermitidaError("Solo podés registrar novedades para vos")
+        destinos = propio
     if not destinos:
         raise ValidationError("No se ha indicado ningún empleado")
     return destinos

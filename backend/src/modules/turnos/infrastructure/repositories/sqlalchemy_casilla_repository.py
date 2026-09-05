@@ -15,6 +15,11 @@ class SqlAlchemyCasillaRepository:
         model = await self._session.get(TurnoCasillaModel, casilla_id)
         return _to_casilla_entity(model) if model else None
 
+    async def get_by_nombre(self, nombre: str) -> Casilla | None:
+        stmt = select(TurnoCasillaModel).where(TurnoCasillaModel.nombre == nombre)
+        model = (await self._session.execute(stmt)).scalar_one_or_none()
+        return _to_casilla_entity(model) if model else None
+
     async def list_all(self, *, include_inactive: bool = False) -> list[Casilla]:
         stmt = select(TurnoCasillaModel)
         if not include_inactive:

@@ -15,6 +15,9 @@ class Session:
     expires_at: datetime
     last_seen_at: datetime
     revoked_at: datetime | None = None
+    # Desde dónde se abrió (auditoría / "cerrar otras sesiones").
+    ip: str | None = None
+    user_agent: str | None = None
 
     def is_active(self, *, at: datetime) -> bool:
         return self.revoked_at is None and at < self.expires_at

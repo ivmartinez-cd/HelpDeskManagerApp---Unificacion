@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime
 
 from src.modules.contadores.application.dtos.cliente_nuevo_dtos import (
     ClienteNuevoRequest,
@@ -31,6 +32,7 @@ class UpdateClienteNuevoUseCase:
         if otra is not None and otra.id != ficha.id:
             raise DuplicateClienteNuevoError(request.cliente.strip())
         aplicar_request(ficha, request)
+        ficha.updated_at = datetime.now(UTC)
         await self._repo.save(ficha)
         return to_cliente_nuevo_result(ficha, None)
 

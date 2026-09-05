@@ -23,9 +23,34 @@ def test_resta_un_dia_completo_de_ausencia() -> None:
 
 
 def test_resta_medio_dia_por_half_day() -> None:
-    ausencia = _ausencia(date(2026, 5, 4), date(2026, 5, 4), half_day=True)
+    # Septiembre 2026: 22 días hábiles; un medio día tiene que verse (21.5),
+    # no desaparecer por redondeo bancario.
+    ausencia = _ausencia(date(2026, 9, 16), date(2026, 9, 16), half_day=True)
 
-    assert calcular_dias_sugeridos(Periodo(202605), [ausencia]) == 20  # round(21 - 0.5) = 20
+    assert calcular_dias_sugeridos(Periodo(202609), [ausencia]) == 21.5
+
+
+def test_septiembre_2026_sin_ausencias_son_22_dias_habiles() -> None:
+    assert calcular_dias_sugeridos(Periodo(202609), []) == 22
+
+
+def test_tres_dias_y_medio_descontados_dan_18_y_medio() -> None:
+    ausencias = [
+        _ausencia(date(2026, 9, 10), date(2026, 9, 11)),
+        _ausencia(date(2026, 9, 16), date(2026, 9, 16), half_day=True),
+        _ausencia(date(2026, 9, 29), date(2026, 9, 29)),
+    ]
+
+    assert calcular_dias_sugeridos(Periodo(202609), ausencias) == 18.5
+
+
+def test_resultado_es_multiplo_de_medio_dia() -> None:
+    ausencias = [_ausencia(date(2026, 9, 1), date(2026, 9, 3), half_day=True)]
+
+    resultado = calcular_dias_sugeridos(Periodo(202609), ausencias)
+
+    assert resultado == 20.5
+    assert (resultado * 2) == int(resultado * 2)
 
 
 def test_ausencia_fuera_del_periodo_no_descuenta() -> None:

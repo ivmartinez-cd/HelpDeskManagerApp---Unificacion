@@ -3,7 +3,6 @@ from src.modules.auth.application.use_cases.request_password_reset import (
     RequestPasswordResetDependencies,
 )
 from tests.unit.application.auth.fakes import (
-    FakeMailer,
     FakeResetTokenRepository,
     FakeSessionTokenGenerator,
     FakeUserRepository,
@@ -12,56 +11,78 @@ from tests.unit.application.auth.fakes import (
 
 
 def _deps(
-    users: FakeUserRepository, tokens_repo: FakeResetTokenRepository, mailer: FakeMailer
+    users: FakeUserRepository, tokens_repo: FakeResetTokenRepository
 ) -> RequestPasswordResetDependencies:
     return RequestPasswordResetDependencies(
         users=users,
         reset_tokens=tokens_repo,
         tokens=FakeSessionTokenGenerator(),
-        mailer=mailer,
         frontend_url="http://front",
     )
 
 
-async def test_email_desconocido_no_manda_nada_ni_persiste_token() -> None:
+async def test_email_desconocido_no_arma_mail_ni_persiste_token() -> None:
     tokens_repo = FakeResetTokenRepository()
-    mailer = FakeMailer()
 
-    await RequestPasswordReset(_deps(FakeUserRepository(), tokens_repo, mailer)).execute(
+    mail = await RequestPasswordReset(_deps(FakeUserRepository(), tokens_repo)).execute(
         "nadie@canaldirecto.com.ar"
     )
 
-    assert mailer.sent == []
+    assert mail is None
     assert tokens_repo.rows == {}
 
 
-async def test_reset_persiste_token_hasheado_y_manda_el_link() -> None:
+async def test_reset_persiste_token_hasheado_y_devuelve_el_mail_con_el_link() -> None:
     users = FakeUserRepository()
     user = make_user()
     users.rows[user.id] = user
     tokens_repo = FakeResetTokenRepository()
-    mailer = FakeMailer()
 
-    await RequestPasswordReset(_deps(users, tokens_repo, mailer)).execute(user.email.value)
+    mail = await RequestPasswordReset(_deps(users, tokens_repo)).execute(user.email.value)
 
     assert list(tokens_repo.rows) == [b"h:tok"]
     assert tokens_repo.rows[b"h:tok"].user_id == user.id
-    assert len(mailer.sent) == 1
-    assert mailer.sent[0].to == user.email.value
-    assert "http://front/reset-password?token=tok" in mailer.sent[0].body
-    assert "&new=1" not in mailer.sent[0].body
-    assert "Restablecer" in mailer.sent[0].subject
+    assert mail is not None
+    assert mail.to == user.email.value
+    assert "http://front/reset-password?token=tok" in mail.body
+    assert "&new=1" not in mail.body
+    assert "Restablecer" in mail.subject
 
 
 async def test_activation_usa_asunto_propio_y_marca_el_link_como_nuevo() -> None:
     users = FakeUserRepository()
     user = make_user()
     users.rows[user.id] = user
-    mailer = FakeMailer()
 
-    await RequestPasswordReset(_deps(users, FakeResetTokenRepository(), mailer)).execute(
+    mail = await RequestPasswordReset(_deps(users, FakeResetTokenRepository())).execute(
         user.email.value, purpose="activation"
     )
 
-    assert "Activá" in mailer.sent[0].subject
-    assert "token=tok&new=1" in mailer.sent[0].body
+    assert mail is not None
+    assert "Activá" in mail.subject
+    assert "token=tok&new=1" in mail.body
+
+
+async def test_usuario_inactivo_no_recibe_token_ni_mail() -> None:
+    users = FakeUserRepository()
+    user = make_user(is_active=False)
+    users.rows[user.id] = user
+    tokens_repo = FakeResetTokenRepository()
+
+    mail = await RequestPasswordReset(_deps(users, tokens_repo)).execute(user.email.value)
+
+    assert mail is None
+    assert tokens_repo.rows == {}
+
+
+async def test_mas_de_tres_pedidos_en_la_ventana_no_emiten_otro_token() -> None:
+    users = FakeUserRepository()
+    user = make_user()
+    users.rows[user.id] = user
+    tokens_repo = FakeResetTokenRepository()
+    use_case = RequestPasswordReset(_deps(users, tokens_repo))
+
+    emitidos = [await use_case.execute(user.email.value) for _ in range(4)]
+
+    assert [m is not None for m in emitidos] == [True, True, True, False]
+    assert len(tokens_repo.created) == 3

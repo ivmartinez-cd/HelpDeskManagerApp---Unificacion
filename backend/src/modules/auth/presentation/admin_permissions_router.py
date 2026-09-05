@@ -42,6 +42,9 @@ from src.modules.auth.infrastructure.repositories.sqlalchemy_permission_audit_re
 from src.modules.auth.infrastructure.repositories.sqlalchemy_permission_repository import (
     SqlAlchemyPermissionRepository,
 )
+from src.modules.auth.infrastructure.repositories.sqlalchemy_user_repository import (
+    SqlAlchemyUserRepository,
+)
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.auth.presentation.schemas.catalog_schemas import (
     ActionCatalogResponse,
@@ -101,7 +104,9 @@ async def get_user_permissions(
     _: Identity = _require_manage_admin,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PermissionsResponse:
-    deps = GetUserPermissionsDependencies(permissions=SqlAlchemyPermissionRepository(db))
+    deps = GetUserPermissionsDependencies(
+        users=SqlAlchemyUserRepository(db), permissions=SqlAlchemyPermissionRepository(db)
+    )
     permissions = await GetUserPermissions(deps).execute(user_id)
     return PermissionsResponse.from_domain(permissions)
 
@@ -114,13 +119,16 @@ async def replace_user_permissions(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PermissionsResponse:
     deps = ReplaceUserPermissionsDependencies(
+        users=SqlAlchemyUserRepository(db),
         permissions=SqlAlchemyPermissionRepository(db),
+        catalog=SqlAlchemyModuleCatalogRepository(db),
         audit=SqlAlchemyPermissionAuditRepository(db),
     )
     await ReplaceUserPermissions(deps).execute(
         target_user_id=user_id,
         desired=payload.to_domain(),
         actor_user_id=identity.user.id,
+        actor_is_superadmin=identity.user.is_superadmin,
     )
     permissions = await SqlAlchemyPermissionRepository(db).get_for_user(user_id)
     return PermissionsResponse.from_domain(permissions)
@@ -149,7 +157,9 @@ async def get_user_features(
     _: Identity = _require_manage_admin,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> FeaturesResponse:
-    deps = GetUserFeaturesDependencies(features=SqlAlchemyFeatureGrantRepository(db))
+    deps = GetUserFeaturesDependencies(
+        users=SqlAlchemyUserRepository(db), features=SqlAlchemyFeatureGrantRepository(db)
+    )
     return FeaturesResponse.from_domain(await GetUserFeatures(deps).execute(user_id))
 
 
@@ -161,7 +171,9 @@ async def replace_user_features(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> FeaturesResponse:
     deps = ReplaceUserFeaturesDependencies(
+        users=SqlAlchemyUserRepository(db),
         features=SqlAlchemyFeatureGrantRepository(db),
+        catalog=SqlAlchemyFeatureCatalogRepository(db),
         audit=SqlAlchemyPermissionAuditRepository(db),
     )
     await ReplaceUserFeatures(deps).execute(

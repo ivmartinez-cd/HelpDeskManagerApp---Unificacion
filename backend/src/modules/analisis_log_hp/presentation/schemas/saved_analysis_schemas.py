@@ -41,3 +41,9 @@ class DeviceHealthResponse(BaseModel):
     recommendation: str
     triggered_rule: str | None
     events_count: int
+    # Contadores con los que el motor tomó la decisión (R1/R3), para que la UI
+    # pueda mostrar por qué un equipo con errores viejos figura GREEN.
+    critical_events_count: int = 0
+    critical_occurrences: int = 0
+    days_since_last_critical: int | None = None
+    pages_since_last_critical: int | None = None

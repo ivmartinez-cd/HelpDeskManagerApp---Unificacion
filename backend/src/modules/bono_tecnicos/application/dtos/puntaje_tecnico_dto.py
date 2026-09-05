@@ -21,7 +21,7 @@ class PuntajeTecnicoDTO:
     puntaje: float | None
     # None si el técnico no está vinculado a un empleado de Gestión de
     # Personal (`Empleado.siges_empresa_id`) — no hay de dónde sugerir.
-    dias_sugeridos: int | None
+    dias_sugeridos: float | None
 
 
 @dataclass(frozen=True, slots=True)

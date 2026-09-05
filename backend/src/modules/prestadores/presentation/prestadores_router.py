@@ -111,6 +111,7 @@ async def list_prestadores(
         contactos=SqlAlchemyContactoRepository(db),
         users=SqlAlchemyUserProvider(db),
         overrides=SqlAlchemyAsignacionOverrideRepository(db),
+        asignaciones=SqlAlchemyAsignacionHistorialRepository(db),
         siges=get_prestador_siges_gateway_or_none(),
     )
     resumen = await ListPrestadoresAgrupados(deps).execute(fecha=fecha)
@@ -125,9 +126,7 @@ async def list_operadores(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[OperadorOptionResponse]:
     users = await SqlAlchemyUserProvider(db).list_all_active_users()
-    return Page.of(
-        [OperadorOptionResponse.from_info(u) for u in users], page=page, size=size
-    )
+    return Page.of([OperadorOptionResponse.from_info(u) for u in users], page=page, size=size)
 
 
 @router.post("/sync", response_model=SyncResultResponse)
@@ -155,6 +154,7 @@ async def get_prestador(
         prestadores=SqlAlchemyPrestadorRepository(db),
         contactos=SqlAlchemyContactoRepository(db),
         users=SqlAlchemyUserProvider(db),
+        asignaciones=SqlAlchemyAsignacionHistorialRepository(db),
     )
     dto = await GetPrestador(deps).execute(prestador_id)
     return PrestadorResponse.from_dto(dto)
@@ -253,9 +253,7 @@ async def list_historial(
         users=SqlAlchemyUserProvider(db),
     )
     items = await ListAsignacionHistorial(deps).execute(prestador_id)
-    return Page.of(
-        [AsignacionHistorialResponse.from_dto(i) for i in items], page=page, size=size
-    )
+    return Page.of([AsignacionHistorialResponse.from_dto(i) for i in items], page=page, size=size)
 
 
 router.include_router(contactos_router)

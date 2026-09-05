@@ -12,6 +12,7 @@ from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.errors import (
     CdVinculoDuplicadoError,
     PrestadorConLiquidacionesError,
+    PrestadorDuplicadoError,
     SigesVinculoDuplicadoError,
 )
 from src.modules.liquidaciones.infrastructure.models.prestador_model import (
@@ -52,7 +53,12 @@ class SqlAlchemyPrestadorRepository:
             region=region,
         )
         self._session.add(model)
-        await self._session.flush()
+        # El único UNIQUE que puede fallar en el alta es `nombre_corto` (los ids
+        # de Siges/CD se cargan después, por `vincular_*`).
+        try:
+            await self._session.flush()
+        except IntegrityError as exc:
+            raise PrestadorDuplicadoError(nombre_corto) from exc
         await self._session.refresh(model)
         return _to_entity(model)
 
@@ -68,14 +74,17 @@ class SqlAlchemyPrestadorRepository:
         row = await self._session.get(LiquidacionPrestadorModel, prestador_id)
         if not row:
             return None
-        row.nombre = nombre
-        row.nombre_corto = nombre_corto
-        row.cuit = cuit
-        row.region = region
+        row.nombre, row.nombre_corto, row.cuit, row.region = nombre, nombre_corto, cuit, region
         row.updated_at = datetime.now(UTC)
-        await self._session.flush()
+        await self._flush_o_duplicado(nombre_corto)
         await self._session.refresh(row)
         return _to_entity(row)
+
+    async def _flush_o_duplicado(self, nombre_corto: str) -> None:
+        try:
+            await self._session.flush()
+        except IntegrityError as exc:
+            raise PrestadorDuplicadoError(nombre_corto) from exc
 
     async def toggle_activo(self, prestador_id: UUID, *, activo: bool) -> Prestador | None:
         row = await self._session.get(LiquidacionPrestadorModel, prestador_id)

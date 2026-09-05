@@ -9,6 +9,7 @@ from src.modules.turnos.application.dtos.turno_dtos import (
 from src.modules.turnos.application.use_cases.asignacion_override_dto_builder import (
     build_asignacion_override_dto,
 )
+from src.modules.turnos.application.use_cases.usuarios_support import validar_usuarios_existen
 from src.modules.turnos.domain.errors import (
     InvalidOverrideRangeError,
     OverlappingOverrideError,
@@ -37,10 +38,7 @@ class CreateAsignacionOverride:
         self._deps = deps
 
     async def execute(self, command: CreateAsignacionOverrideCommand) -> AsignacionOverrideDTO:
-        if command.desde > command.hasta:
-            raise InvalidOverrideRangeError()
-        if command.operador_ausente_id == command.operador_reemplazante_id:
-            raise OverrideMismoOperadorError()
+        await self._validar_campos(command)
 
         alcance: Literal["TOTAL"] | frozenset[uuid.UUID] = (
             "TOTAL" if command.slot_ids is None else frozenset(command.slot_ids)
@@ -67,3 +65,12 @@ class CreateAsignacionOverride:
         involucrados = {command.operador_ausente_id, command.operador_reemplazante_id}
         users = await self._deps.users.get_users_by_ids(list(involucrados))
         return build_asignacion_override_dto(override, users)
+
+    async def _validar_campos(self, command: CreateAsignacionOverrideCommand) -> None:
+        if command.desde > command.hasta:
+            raise InvalidOverrideRangeError()
+        if command.operador_ausente_id == command.operador_reemplazante_id:
+            raise OverrideMismoOperadorError()
+        await validar_usuarios_existen(
+            self._deps.users, [command.operador_ausente_id, command.operador_reemplazante_id]
+        )

@@ -152,12 +152,12 @@ class FakeTecnicoIdentityGateway:
 
 
 class FakeDiasSugeridosGateway:
-    def __init__(self, dias_sugeridos: dict[int, int] | None = None) -> None:
+    def __init__(self, dias_sugeridos: dict[int, float] | None = None) -> None:
         self._dias_sugeridos = dias_sugeridos or {}
         self.consultas: list[tuple[Periodo, list[int]]] = []
 
     async def get_dias_sugeridos_por_tecnico(
         self, periodo: Periodo, ids_tecnico: list[int]
-    ) -> dict[int, int]:
+    ) -> dict[int, float]:
         self.consultas.append((periodo, ids_tecnico))
         return {i: v for i, v in self._dias_sugeridos.items() if i in ids_tecnico}

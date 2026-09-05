@@ -1,7 +1,7 @@
 """Fakes en memoria de los puertos de prestadores para tests unitarios."""
 
 import uuid
-from datetime import date, timedelta
+from datetime import date
 
 from src.modules.prestadores.domain.entities.asignacion_historial import AsignacionHistorial
 from src.modules.prestadores.domain.entities.asignacion_override import AsignacionOverride
@@ -11,6 +11,10 @@ from src.modules.prestadores.domain.repositories.siges_prestador_gateway import 
     SigesPrestadorInfo,
 )
 from src.modules.prestadores.domain.repositories.user_provider import UserInfo
+from src.modules.prestadores.domain.services.historial_asignacion import (
+    operador_vigente,
+    planificar_reasignacion,
+)
 
 
 class FakePrestadorRepository:
@@ -78,17 +82,22 @@ class FakeAsignacionHistorialRepository:
     async def list_by_prestador(self, prestador_id: uuid.UUID) -> list[AsignacionHistorial]:
         return [t for t in self.rows.values() if t.prestador_id == prestador_id]
 
+    async def list_vigentes_a(self, fecha: date) -> dict[uuid.UUID, uuid.UUID | None]:
+        vigentes: dict[uuid.UUID, uuid.UUID | None] = {}
+        for prestador_id in {t.prestador_id for t in self.rows.values()}:
+            tramo = operador_vigente(await self.list_by_prestador(prestador_id), fecha)
+            if tramo is not None:
+                vigentes[prestador_id] = tramo.operador_id
+        return vigentes
+
     async def reasignar(
         self, prestador_id: uuid.UUID, operador_id: uuid.UUID | None, desde: date
     ) -> None:
-        close_at = desde - timedelta(days=1)
-        for tramo in list(self.rows.values()):
-            if tramo.prestador_id != prestador_id or tramo.hasta is not None:
-                continue
-            if tramo.desde > close_at:
-                del self.rows[tramo.id]
-            else:
-                tramo.hasta = close_at
+        plan = planificar_reasignacion(await self.list_by_prestador(prestador_id), desde)
+        for tramo in plan.borrar:
+            del self.rows[tramo.id]
+        for tramo in plan.cerrar:
+            tramo.hasta = plan.cierre
         nuevo = AsignacionHistorial(
             id=uuid.uuid4(),
             prestador_id=prestador_id,
@@ -168,6 +177,4 @@ class FakeSigesPrestadorGateway:
         if self.fail_equipos is not None:
             raise self.fail_equipos
         self.equipos_calls.append(siges_empresa_ids)
-        return {
-            i: self.equipos_por_id[i] for i in siges_empresa_ids if i in self.equipos_por_id
-        }
+        return {i: self.equipos_por_id[i] for i in siges_empresa_ids if i in self.equipos_por_id}

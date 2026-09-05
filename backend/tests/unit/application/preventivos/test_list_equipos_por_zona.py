@@ -10,7 +10,7 @@ from src.modules.preventivos.application.use_cases.list_equipos_por_zona import 
     ListEquiposPorZonaDependencies,
     ListEquiposPorZonaUseCase,
 )
-from src.modules.preventivos.domain.errors import ZonaInvalidaError
+from src.modules.preventivos.domain.errors import ZonaInvalidaError, ZonaNoEncontradaError
 from tests.unit.application.preventivos.fakes import (
     FakeHabilitacionRepository,
     FakePreventivosQueryGateway,
@@ -40,6 +40,23 @@ async def test_zona_excluida_lanza_error_sin_consultar_siges() -> None:
         await _use_case(gateway).execute(ListEquiposPorZonaRequest(zona="INTERIOR"))
 
     assert gateway.zonas_consultadas == []
+
+
+async def test_zona_fuera_del_catalogo_es_not_found_sin_consultar_el_parque() -> None:
+    gateway = FakePreventivosQueryGateway([build_equipo(1, zona="SUR")])
+
+    with pytest.raises(ZonaNoEncontradaError):
+        await _use_case(gateway).execute(ListEquiposPorZonaRequest(zona="SURR"))
+
+    assert gateway.zonas_consultadas == []
+
+
+async def test_zona_del_catalogo_se_acepta_sin_distinguir_mayusculas() -> None:
+    gateway = FakePreventivosQueryGateway([build_equipo(1, zona="SUR")])
+
+    await _use_case(gateway).execute(ListEquiposPorZonaRequest(zona=" sur "))
+
+    assert gateway.zonas_consultadas == ["sur"]
 
 
 async def test_ordena_vencidos_primero_y_mas_atrasado_arriba() -> None:

@@ -67,7 +67,7 @@ class GetPuntajesPeriodo:
 def _build_dto(
     conteo: ConteoTecnico,
     dias: float,
-    dias_sugeridos: int | None,
+    dias_sugeridos: float | None,
     tareas_varias: int,
 ) -> PuntajeTecnicoDTO:
     return PuntajeTecnicoDTO(

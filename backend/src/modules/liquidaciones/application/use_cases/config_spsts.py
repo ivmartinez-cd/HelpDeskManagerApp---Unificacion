@@ -5,13 +5,23 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.liquidaciones.domain.entities.spst import Spst
-from src.modules.liquidaciones.domain.errors import SpstNoEncontradoError
+from src.modules.liquidaciones.domain.errors import (
+    PrestadorNoEncontradoError,
+    SpstNoEncontradoError,
+)
+from src.modules.liquidaciones.domain.repositories.prestador_repository import (
+    PrestadorRepository,
+)
 from src.modules.liquidaciones.domain.repositories.spst_repository import SpstRepository
 
 
 @dataclass(frozen=True)
 class ConfigSpstsPorts:
     spsts: SpstRepository
+    # Opcional solo por compatibilidad con el wiring actual de
+    # `presentation/dependencies/config.py`; sin él, la FK del repositorio sigue
+    # traduciéndose a `PrestadorNoEncontradoError`.
+    prestadores: PrestadorRepository | None = None
 
 
 class CreateSpst:
@@ -28,6 +38,7 @@ class CreateSpst:
         provincia: str | None,
         zona_cobertura: str | None,
     ) -> Spst:
+        await self._asegurar_prestador(prestador_id)
         return await self._ports.spsts.create(
             prestador_id=prestador_id,
             nombre=nombre,
@@ -36,6 +47,11 @@ class CreateSpst:
             provincia=provincia,
             zona_cobertura=zona_cobertura,
         )
+
+    async def _asegurar_prestador(self, prestador_id: UUID) -> None:
+        repo = self._ports.prestadores
+        if repo is not None and await repo.get_by_id(prestador_id) is None:
+            raise PrestadorNoEncontradoError(prestador_id)
 
 
 class UpdateSpst:

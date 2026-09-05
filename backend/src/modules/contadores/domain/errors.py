@@ -145,3 +145,10 @@ class ProcesoNoEncontradoError(NotFoundError):
 
     def __init__(self, nro_proceso: int) -> None:
         super().__init__(f"No se encontró el proceso {nro_proceso} en Siges")
+
+
+class RecesoRangoInvalidoError(ValidationError):
+    default_code = "RECESO_RANGO_INVALIDO"
+
+    def __init__(self) -> None:
+        super().__init__("El receso debe terminar el mismo día que empieza o después")

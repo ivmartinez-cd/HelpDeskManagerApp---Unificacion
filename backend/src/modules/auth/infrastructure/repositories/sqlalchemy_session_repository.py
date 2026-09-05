@@ -50,6 +50,8 @@ def _to_entity(model: UserSession) -> Session:
         expires_at=model.expires_at,
         last_seen_at=model.last_seen_at,
         revoked_at=model.revoked_at,
+        ip=model.ip,
+        user_agent=model.user_agent,
     )
 
 
@@ -59,4 +61,6 @@ def _to_new_model(session: Session) -> UserSession:
         user_id=session.user_id,
         token_hash=session.token_hash,
         expires_at=session.expires_at,
+        ip=session.ip,
+        user_agent=session.user_agent,
     )

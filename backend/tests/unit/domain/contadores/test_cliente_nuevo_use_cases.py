@@ -210,6 +210,17 @@ async def test_editar_aplica_campos_y_valida() -> None:
         await UpdateClienteNuevoUseCase(repo).execute(uuid.uuid4(), _request())
 
 
+async def test_editar_avanza_updated_at_y_conserva_created_at() -> None:
+    repo = InMemoryClienteNuevoRepository()
+    creada = await CreateClienteNuevoUseCase(repo).execute(_request(), created_by_user_id=_USER)
+
+    editada = await UpdateClienteNuevoUseCase(repo).execute(creada.id, _request(dia_corte=25))
+
+    assert editada.created_at == creada.created_at
+    assert editada.updated_at > creada.updated_at
+    assert repo.fichas[creada.id].updated_at == editada.updated_at
+
+
 @pytest.mark.asyncio
 async def test_editar_rechaza_renombrar_a_otro_cliente_con_ficha_abierta() -> None:
     repo = InMemoryClienteNuevoRepository()

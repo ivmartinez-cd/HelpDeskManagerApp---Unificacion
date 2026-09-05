@@ -1,7 +1,8 @@
 import uuid
 from datetime import date, time
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from src.modules.turnos.application.dtos.turno_dtos import (
     AsignacionDTO,
@@ -60,7 +61,7 @@ class ResolvedShiftResponse(BaseModel):
 class CasillaRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    nombre: str
+    nombre: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
     color: str | None = None
     sort_order: int = Field(
         default=0, validation_alias="sortOrder", serialization_alias="sortOrder"
@@ -118,7 +119,9 @@ class SlotRequest(BaseModel):
     casilla_id: uuid.UUID = Field(validation_alias="casillaId", serialization_alias="casillaId")
     hora_inicio: time = Field(validation_alias="horaInicio", serialization_alias="horaInicio")
     hora_fin: time = Field(validation_alias="horaFin", serialization_alias="horaFin")
-    dia_semana: int = Field(validation_alias="diaSemana", serialization_alias="diaSemana")
+    dia_semana: int = Field(
+        validation_alias="diaSemana", serialization_alias="diaSemana", ge=0, le=6
+    )
     sort_order: int = Field(
         default=0, validation_alias="sortOrder", serialization_alias="sortOrder"
     )

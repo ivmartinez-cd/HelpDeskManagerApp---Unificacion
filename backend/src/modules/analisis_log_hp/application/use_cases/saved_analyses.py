@@ -21,6 +21,7 @@ from src.modules.analisis_log_hp.domain.entities.saved_analysis import (
     SavedAnalysis,
     TelemetryEvent,
 )
+from src.modules.analisis_log_hp.domain.errors import SavedAnalysisNameInvalidError
 from src.modules.analisis_log_hp.domain.repositories.saved_analysis_repository import (
     SavedAnalysisRepository,
 )
@@ -43,6 +44,13 @@ logger = logging.getLogger(__name__)
 
 def _make_aware(dt: datetime) -> datetime:
     return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt
+
+
+def _nombre_valido(name: str) -> str:
+    limpio = name.strip()
+    if not limpio:
+        raise SavedAnalysisNameInvalidError()
+    return limpio
 
 
 def incident_to_summary(inc: Incident) -> dict[str, Any]:
@@ -94,14 +102,12 @@ class CreateSavedAnalysis:
     ) -> SavedAnalysis:
         summaries = [incident_to_summary(i) for i in incidents]
         saved = await self._repo.create(
-            name, equipment_identifier, summaries, global_severity, ai_diagnosis
+            _nombre_valido(name), equipment_identifier, summaries, global_severity, ai_diagnosis
         )
         if equipment_identifier:
             clean = extract_serial_number(equipment_identifier)
             if clean:
-                await self._telemetry.add_events(
-                    _build_telemetry(clean, saved.id, incidents)
-                )
+                await self._telemetry.add_events(_build_telemetry(clean, saved.id, incidents))
         return saved
 
 
@@ -132,22 +138,23 @@ class UpdateSavedAnalysis:
     async def execute(
         self,
         id: UUID,
+        name: str,
         equipment_identifier: str | None,
         incidents: list[Incident],
         global_severity: str,
         ai_diagnosis: str | None = None,
     ) -> SavedAnalysis:
         summaries = [incident_to_summary(i) for i in incidents]
-        snap = await self._repo.update(id, summaries, global_severity, ai_diagnosis)
+        snap = await self._repo.update(
+            id, _nombre_valido(name), summaries, global_severity, ai_diagnosis
+        )
         if not snap:
             raise NotFoundError("Análisis guardado no encontrado")
         await self._telemetry.delete_by_analysis_id(id)
         if equipment_identifier:
             clean = extract_serial_number(equipment_identifier)
             if clean:
-                await self._telemetry.add_events(
-                    _build_telemetry(clean, snap.id, incidents)
-                )
+                await self._telemetry.add_events(_build_telemetry(clean, snap.id, incidents))
         return snap
 
 
@@ -198,6 +205,7 @@ class CompareAnalysisWithLog:
         diff["diferencia_dias"] = diferencia_dias
 
         from src.modules.analisis_log_hp.domain.services.compare_service import calculate_trend
+
         diff["tendencia"] = calculate_trend(snap.incidents, current_by_code, diff)
 
         return CompareResult(
@@ -263,8 +271,10 @@ class GetAnalysisHealth:
         if not snap.equipment_identifier:
             return HealthResult(
                 health=DeviceHealth(
-                    "GREEN", "Sin equipo asociado",
-                    "El análisis no tiene identificador de equipo.", "Sin acciones requeridas."
+                    "GREEN",
+                    "Sin equipo asociado",
+                    "El análisis no tiene identificador de equipo.",
+                    "Sin acciones requeridas.",
                 ),
                 events_count=0,
             )
@@ -272,8 +282,10 @@ class GetAnalysisHealth:
         if not clean:
             return HealthResult(
                 health=DeviceHealth(
-                    "GREEN", "Sin serial",
-                    "No se pudo extraer el serial.", "Sin acciones requeridas.",
+                    "GREEN",
+                    "Sin serial",
+                    "No se pudo extraer el serial.",
+                    "Sin acciones requeridas.",
                 ),
                 events_count=0,
             )

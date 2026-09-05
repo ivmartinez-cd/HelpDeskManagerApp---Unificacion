@@ -75,10 +75,16 @@ class TestResolverEmpleadosDestino:
         actor = make_actor(sector_gestionado_id=uuid.uuid4())
         assert resolver_empleados_destino(actor, ids) == ids
 
-    def test_empleado_ignora_lista_y_usa_el_propio(self) -> None:
+    def test_empleado_con_id_ajeno_es_403(self) -> None:
+        actor = make_actor(empleado_id=uuid.uuid4())
+        with pytest.raises(OperacionNoPermitidaError):
+            resolver_empleados_destino(actor, [uuid.uuid4()])
+
+    def test_empleado_con_su_propio_id_o_sin_lista_usa_el_propio(self) -> None:
         propio = uuid.uuid4()
         actor = make_actor(empleado_id=propio)
-        assert resolver_empleados_destino(actor, [uuid.uuid4()]) == [propio]
+        assert resolver_empleados_destino(actor, [propio]) == [propio]
+        assert resolver_empleados_destino(actor, []) == [propio]
 
     def test_admin_sin_lista_cae_al_propio(self) -> None:
         propio = uuid.uuid4()
@@ -98,9 +104,7 @@ class TestVerificarPuedeModificar:
     def test_dueno_solo_pendientes(self) -> None:
         empleado_id = uuid.uuid4()
         actor = make_actor(empleado_id=empleado_id)
-        pendiente = make_ausencia(
-            empleado_id=empleado_id, status=EstadoSolicitud.PENDING
-        )
+        pendiente = make_ausencia(empleado_id=empleado_id, status=EstadoSolicitud.PENDING)
         verificar_puede_modificar_ausencia(actor, pendiente, accion="editar")
         aprobada = make_ausencia(empleado_id=empleado_id)
         with pytest.raises(SoloAusenciasPendientesError):

@@ -105,11 +105,15 @@ async def test_rechaza_mismo_operador_en_ambos_lados() -> None:
 async def test_rechaza_si_un_lado_pisa_una_cobertura_activa_de_ese_ausente() -> None:
     repo = FakeAsignacionOverrideRepository()
     # Luna ya está cubierta por otro ese día (cobertura común, alcance total).
-    deps_comun = CreateAsignacionOverrideDependencies(overrides=repo, users=FakeUserProvider())
+    otro = uuid.uuid4()
+    users = FakeUserProvider()
+    users.users[_LUNA] = UserInfo(id=_LUNA, full_name="Luna")
+    users.users[otro] = UserInfo(id=otro, full_name="Otro Operador")
+    deps_comun = CreateAsignacionOverrideDependencies(overrides=repo, users=users)
     await CreateAsignacionOverride(deps_comun).execute(
         CreateAsignacionOverrideCommand(
             operador_ausente_id=_LUNA,
-            operador_reemplazante_id=uuid.uuid4(),
+            operador_reemplazante_id=otro,
             desde=date(2026, 8, 20),
             hasta=date(2026, 8, 20),
             slot_ids=None,

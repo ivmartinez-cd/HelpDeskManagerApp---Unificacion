@@ -5,11 +5,14 @@ resto del módulo (ADR-029)."""
 
 import uuid
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
-from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.auth.presentation.dependencies.permissions import (
+    require_any_permission,
+    require_permission,
+)
 from src.modules.turnos.application.dtos.turno_dtos import (
     CreateAsignacionOverrideCommand,
     UpdateAsignacionOverrideCommand,
@@ -46,13 +49,19 @@ from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/turnos", tags=["turnos"])
 
+# Historial (no hay DELETE): paginado real, default generoso porque la UI
+# muestra el listado completo, no una tabla paginada.
 _DEFAULT_SIZE = 200
-_require_view = Depends(require_permission(VIEW))
+# Leer alcanza con `view` o `manage`: `manage` no implica `view` (ADR-029) y
+# un usuario con solo `manage` no podía abrir la pantalla.
+_require_view = Depends(require_any_permission(VIEW, MANAGE))
 _require_manage = Depends(require_permission(MANAGE))
 
 
 @router.get("/overrides")
 async def list_overrides(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
     _identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[AsignacionOverrideResponse]:
@@ -61,9 +70,7 @@ async def list_overrides(
         users=SqlAlchemyUserProvider(db),
     )
     items = await ListAsignacionOverrides(deps).execute()
-    return Page.of(
-        [AsignacionOverrideResponse.from_dto(i) for i in items], page=1, size=_DEFAULT_SIZE
-    )
+    return Page.of([AsignacionOverrideResponse.from_dto(i) for i in items], page=page, size=size)
 
 
 @router.post("/overrides", status_code=status.HTTP_201_CREATED)

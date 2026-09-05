@@ -1,6 +1,7 @@
 from datetime import date
 
 from src.modules.turnos.application.dtos.grilla_variante_dtos import GrillaVarianteDTO
+from src.modules.turnos.application.fecha_local import hoy_local
 from src.modules.turnos.application.use_cases.grilla_variante_support import (
     GrillaVarianteDependencies,
     grilla_variante_dto,
@@ -28,7 +29,7 @@ class ListGrillaVariantes:
     ) -> list[GrillaVarianteDTO]:
         variantes = await self._deps.variantes.list_all()
         if solo_vigentes:
-            referencia = hoy or date.today()
+            referencia = hoy or hoy_local()
             variantes = [v for v in variantes if _vigente_o_futura(v, referencia)]
         titulares = await self._deps.slots.list_all()
         ordenadas = sorted(variantes, key=lambda v: v.desde, reverse=True)

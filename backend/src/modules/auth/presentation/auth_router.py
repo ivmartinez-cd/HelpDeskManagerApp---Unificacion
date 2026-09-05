@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request, Response, status
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,8 +28,8 @@ from src.modules.auth.application.use_cases.revoke_session import (
     RevokeSession,
     RevokeSessionDependencies,
 )
+from src.modules.auth.domain.value_objects.raw_password import MAX_PASSWORD_LENGTH
 from src.modules.auth.infrastructure.argon2_password_hasher import Argon2PasswordHasher
-from src.modules.auth.infrastructure.mailer_factory import get_mailer_canal_directo
 from src.modules.auth.infrastructure.repositories.sqlalchemy_feature_repositories import (
     SqlAlchemyFeatureGrantRepository,
 )
@@ -54,6 +54,7 @@ from src.modules.auth.infrastructure.repositories.sqlalchemy_user_repository imp
 from src.modules.auth.infrastructure.secure_token_generator import SecureTokenGenerator
 from src.modules.auth.presentation.cookies import clear_session_cookies, set_session_cookies
 from src.modules.auth.presentation.dependencies.identity import get_current_identity
+from src.modules.auth.presentation.password_mail import encolar_mail
 from src.modules.auth.presentation.schemas.catalog_schemas import ModuleCatalogResponse
 from src.modules.auth.presentation.schemas.identity_schemas import IdentityResponse
 from src.shared.infrastructure.config.settings import get_settings
@@ -65,7 +66,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(max_length=MAX_PASSWORD_LENGTH)
 
 
 @router.post("/login")
@@ -150,19 +151,18 @@ _FORGOT_PASSWORD_MESSAGE = (
 
 @router.post("/password/forgot", status_code=status.HTTP_202_ACCEPTED)
 async def forgot_password(
-    payload: ForgotPasswordRequest, db: AsyncSession = Depends(get_db, scope="function")
+    payload: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, str]:
-    settings = get_settings()
     deps = RequestPasswordResetDependencies(
         users=SqlAlchemyUserRepository(db),
         reset_tokens=SqlAlchemyResetTokenRepository(db),
         tokens=SecureTokenGenerator(),
-        # Remitente institucional (noreply@canaldirecto.com.ar), no el SMTP_FROM
-        # personal del mailer general.
-        mailer=get_mailer_canal_directo(),
-        frontend_url=settings.frontend_url,
+        frontend_url=get_settings().frontend_url,
     )
-    await RequestPasswordReset(deps).execute(payload.email)
+    mail = await RequestPasswordReset(deps).execute(payload.email)
+    encolar_mail(background_tasks, mail)
     return {"message": _FORGOT_PASSWORD_MESSAGE}
 
 
@@ -170,7 +170,7 @@ class ResetPasswordRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     token: str
-    new_password: str = Field(alias="newPassword")
+    new_password: str = Field(alias="newPassword", max_length=MAX_PASSWORD_LENGTH)
 
 
 @router.post("/password/reset", status_code=status.HTTP_204_NO_CONTENT)
@@ -190,8 +190,8 @@ async def reset_password(
 class ChangePasswordRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    current_password: str = Field(alias="currentPassword")
-    new_password: str = Field(alias="newPassword")
+    current_password: str = Field(alias="currentPassword", max_length=MAX_PASSWORD_LENGTH)
+    new_password: str = Field(alias="newPassword", max_length=MAX_PASSWORD_LENGTH)
 
 
 @router.post("/password/change", status_code=status.HTTP_204_NO_CONTENT)

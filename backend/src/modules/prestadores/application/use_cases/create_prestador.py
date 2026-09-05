@@ -6,10 +6,12 @@ from src.modules.prestadores.application.dtos.prestador_dtos import (
     CreatePrestadorCommand,
     PrestadorDTO,
 )
+from src.modules.prestadores.application.use_cases._referencias import exigir_operadores
 from src.modules.prestadores.application.use_cases.prestador_dto_builder import (
     build_prestador_dto,
 )
 from src.modules.prestadores.domain.entities.prestador import Prestador
+from src.modules.prestadores.domain.errors import PrestadorDuplicadoError
 from src.modules.prestadores.domain.repositories.asignacion_historial_repository import (
     AsignacionHistorialRepository,
 )
@@ -32,6 +34,10 @@ class CreatePrestador:
         self._deps = deps
 
     async def execute(self, command: CreatePrestadorCommand) -> PrestadorDTO:
+        if await self._deps.prestadores.get_by_siges_empresa_id(command.siges_empresa_id):
+            raise PrestadorDuplicadoError(command.siges_empresa_id)
+        users = await exigir_operadores(self._deps.users, [command.operador_id])
+
         prestador = Prestador(
             id=uuid.uuid4(),
             siges_empresa_id=command.siges_empresa_id,
@@ -47,9 +53,4 @@ class CreatePrestador:
             await self._deps.asignaciones.reasignar(
                 prestador.id, command.operador_id, datetime.now(UTC).date()
             )
-        users = (
-            await self._deps.users.get_users_by_ids([command.operador_id])
-            if command.operador_id
-            else {}
-        )
         return build_prestador_dto(prestador, [], users)

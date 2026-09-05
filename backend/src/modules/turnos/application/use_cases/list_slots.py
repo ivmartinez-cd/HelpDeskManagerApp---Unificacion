@@ -1,14 +1,12 @@
 import uuid
 from dataclasses import dataclass
-from datetime import date, datetime
-from zoneinfo import ZoneInfo
+from datetime import date
 
 from src.modules.turnos.application.dtos.turno_dtos import AsignacionDTO, SlotDTO
+from src.modules.turnos.application.fecha_local import hoy_local
 from src.modules.turnos.domain.repositories.asignacion_repository import AsignacionRepository
 from src.modules.turnos.domain.repositories.slot_repository import SlotRepository
 from src.modules.turnos.domain.repositories.user_provider import UserProvider
-
-_ARGENTINA_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,16 +30,14 @@ class ListSlots:
         else:
             slots = await self._deps.slots.list_all()
 
-        effective_date = target_date or datetime.now(_ARGENTINA_TZ).date()
+        effective_date = target_date or hoy_local()
         asignaciones_by_slot = await self._deps.asignaciones.list_by_slots(
             [slot.id for slot in slots], effective_date
         )
         # Nombres resueltos por id, no filtrados por activo: un operador desactivado
         # con una asignación vieja/vigente tiene que seguir mostrando su nombre acá
         # (mismo criterio que GetCurrentShifts), no "Desconocido".
-        all_user_ids = {
-            a.user_id for asig_list in asignaciones_by_slot.values() for a in asig_list
-        }
+        all_user_ids = {a.user_id for asig_list in asignaciones_by_slot.values() for a in asig_list}
         user_info_map = await self._deps.users.get_users_by_ids(list(all_user_ids))
 
         return [

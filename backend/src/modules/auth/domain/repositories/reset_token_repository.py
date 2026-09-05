@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from typing import Protocol
 
@@ -13,3 +14,8 @@ class ResetTokenRepository(Protocol):
     async def add(self, token: PasswordResetToken) -> None: ...
     async def get_by_token_hash(self, token_hash: bytes) -> PasswordResetToken | None: ...
     async def mark_used(self, token_hash: bytes, *, at: datetime) -> None: ...
+
+    async def count_created_since(self, user_id: uuid.UUID, *, since: datetime) -> int:
+        """Tokens emitidos al usuario desde `since` (usados o no): base del
+        límite de frecuencia de /password/forgot."""
+        ...

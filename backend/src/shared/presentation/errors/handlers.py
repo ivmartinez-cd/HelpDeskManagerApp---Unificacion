@@ -3,9 +3,11 @@ import logging
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from src.shared.domain.errors import AppError
+from src.shared.presentation.errors.integrity import handle_integrity_error
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +16,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AppError, _handle_app_error)  # type: ignore[arg-type]
     app.add_exception_handler(RequestValidationError, _handle_validation_error)  # type: ignore[arg-type]
     app.add_exception_handler(StarletteHTTPException, _handle_http_exception)  # type: ignore[arg-type]
+    app.add_exception_handler(IntegrityError, handle_integrity_error)  # type: ignore[arg-type]
     app.add_exception_handler(Exception, _handle_unexpected_error)
 
 
@@ -34,9 +37,7 @@ async def _handle_app_error(request: Request, exc: AppError) -> JSONResponse:
     return JSONResponse(status_code=exc.http_status, content=content, headers=exc.headers)
 
 
-async def _handle_validation_error(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
+async def _handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
     details = [
         {"field": ".".join(str(p) for p in e["loc"]), "message": e["msg"]} for e in exc.errors()
     ]

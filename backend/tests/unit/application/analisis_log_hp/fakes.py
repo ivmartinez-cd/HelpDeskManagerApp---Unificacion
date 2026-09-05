@@ -148,6 +148,7 @@ class FakeSavedAnalysisRepo:
     async def update(
         self,
         id: UUID,
+        name: str,
         incidents: list[dict[str, Any]],
         global_severity: str,
         ai_diagnosis: str | None = None,
@@ -157,7 +158,7 @@ class FakeSavedAnalysisRepo:
             return None
         new = SavedAnalysis(
             id=old.id,
-            name=old.name,
+            name=name,
             equipment_identifier=old.equipment_identifier,
             incidents=incidents,
             global_severity=global_severity,
@@ -202,7 +203,10 @@ class FakeCpmdRepo:
 
     async def create(self, *, keywords: list[str], label: str, filename: str) -> CpmdManual:
         manual = CpmdManual(
-            id=len(self.rows) + 1, keywords=keywords, label=label, filename=filename,
+            id=len(self.rows) + 1,
+            keywords=keywords,
+            label=label,
+            filename=filename,
             uploaded_at=NOW,
         )
         self.rows[manual.id] = manual

@@ -46,34 +46,34 @@ class SqlAlchemySavedAnalysisRepository:
 
     async def list_page(self, page: int, size: int) -> tuple[list[SavedAnalysis], int]:
         total = (
-            await self._session.execute(
-                select(func.count()).select_from(SavedAnalysisModel)
-            )
+            await self._session.execute(select(func.count()).select_from(SavedAnalysisModel))
         ).scalar_one()
         rows = (
-            await self._session.execute(
-                select(SavedAnalysisModel)
-                .order_by(SavedAnalysisModel.created_at.desc())
-                .limit(size)
-                .offset((page - 1) * size)
+            (
+                await self._session.execute(
+                    select(SavedAnalysisModel)
+                    .order_by(SavedAnalysisModel.created_at.desc())
+                    .limit(size)
+                    .offset((page - 1) * size)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return [_to_entity(r) for r in rows], total
 
     async def update(
         self,
         id: uuid.UUID,
+        name: str,
         incidents: list[dict[str, Any]],
         global_severity: str,
         ai_diagnosis: str | None = None,
     ) -> SavedAnalysis | None:
-        row = (
-            await self._session.execute(
-                select(SavedAnalysisModel).where(SavedAnalysisModel.id == id)
-            )
-        ).scalar_one_or_none()
+        row = await self._session.get(SavedAnalysisModel, id)
         if not row:
             return None
+        row.name = name
         row.incidents = incidents
         row.global_severity = global_severity
         if ai_diagnosis is not None:

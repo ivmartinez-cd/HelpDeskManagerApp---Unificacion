@@ -1,5 +1,4 @@
 import uuid
-from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -69,7 +68,8 @@ class SqlAlchemyClienteNuevoRepository:
             raise LookupError(f"ClienteNuevo {ficha.id} no existe")
         for campo in _CAMPOS_EDITABLES:
             setattr(model, campo, getattr(ficha, campo))
-        model.updated_at = datetime.now(UTC)
+        # La marca la pone el caso de uso, así la respuesta y la fila coinciden.
+        model.updated_at = ficha.updated_at
         await self._session.flush()
 
     async def delete(self, ficha_id: uuid.UUID) -> None:

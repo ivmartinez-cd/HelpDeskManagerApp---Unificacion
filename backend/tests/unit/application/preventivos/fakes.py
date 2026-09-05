@@ -88,6 +88,13 @@ def build_habilitacion(
     )
 
 
+def _zonas_de(equipos: list[EquipoPreventivo]) -> list[ZonaParque]:
+    conteo: dict[str, int] = {}
+    for equipo in equipos:
+        conteo[equipo.zona] = conteo.get(equipo.zona, 0) + 1
+    return [ZonaParque(zona=z, maquinas_activas=n) for z, n in conteo.items()]
+
+
 class FakePreventivosQueryGateway:
     def __init__(
         self,
@@ -96,7 +103,9 @@ class FakePreventivosQueryGateway:
         sucursales_geocoding: list[SucursalParaGeocoding] | None = None,
     ) -> None:
         self._equipos = equipos or []
-        self._zonas = zonas or []
+        # Sin catálogo explícito, las zonas son las de los equipos cargados
+        # (igual que en Siges: el catálogo es el DISTINCT del parque).
+        self._zonas = zonas if zonas is not None else _zonas_de(self._equipos)
         self._sucursales_geocoding = sucursales_geocoding or []
         self.zonas_consultadas: list[str] = []
 

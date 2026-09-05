@@ -11,15 +11,22 @@ from src.modules.prestadores.application.use_cases.update_asignacion_override im
     UpdateAsignacionOverrideDependencies,
 )
 from src.modules.prestadores.domain.entities.asignacion_override import AsignacionOverride
+from src.modules.prestadores.domain.entities.prestador import Prestador
 from src.modules.prestadores.domain.errors import (
     AsignacionOverrideNotFoundError,
     InvalidOverrideRangeError,
+    OperadorNoEncontradoError,
     OverlappingOverrideError,
     OverrideMismoOperadorError,
     OverrideNoEditableError,
+    PrestadorNotFoundError,
 )
 from src.modules.prestadores.domain.repositories.user_provider import UserInfo
-from tests.unit.domain.prestadores.fakes import FakeAsignacionOverrideRepository, FakeUserProvider
+from tests.unit.domain.prestadores.fakes import (
+    FakeAsignacionOverrideRepository,
+    FakePrestadorRepository,
+    FakeUserProvider,
+)
 
 _AUSENTE = uuid.uuid4()
 _REEMPLAZANTE = uuid.uuid4()
@@ -57,13 +64,33 @@ def _command(override_id: uuid.UUID, **overrides: object) -> UpdateAsignacionOve
     return UpdateAsignacionOverrideCommand(**base)  # type: ignore[arg-type]
 
 
-def _deps(overrides: FakeAsignacionOverrideRepository) -> UpdateAsignacionOverrideDependencies:
+def _deps(
+    overrides: FakeAsignacionOverrideRepository,
+    prestadores: FakePrestadorRepository | None = None,
+) -> UpdateAsignacionOverrideDependencies:
     users = FakeUserProvider()
     users.users[_AUSENTE] = UserInfo(id=_AUSENTE, full_name="Ausente Real")
     users.users[_OTRO_REEMPLAZANTE] = UserInfo(
         id=_OTRO_REEMPLAZANTE, full_name="Reemplazante Nuevo"
     )
-    return UpdateAsignacionOverrideDependencies(overrides=overrides, users=users)
+    return UpdateAsignacionOverrideDependencies(
+        overrides=overrides, users=users, prestadores=prestadores or FakePrestadorRepository()
+    )
+
+
+def _prestador_existente(prestadores: FakePrestadorRepository) -> uuid.UUID:
+    pst = Prestador(
+        id=uuid.uuid4(),
+        siges_empresa_id=1,
+        den_comercial="PST Rosario",
+        razon_social=None,
+        cuit=None,
+        equipos=None,
+        operador_id=_AUSENTE,
+        is_active=True,
+    )
+    prestadores.rows[pst.id] = pst
+    return pst.id
 
 
 async def test_edita_campos_conservando_id_y_creador() -> None:
@@ -85,14 +112,31 @@ async def test_edita_alcance_de_total_a_parcial() -> None:
     repo = FakeAsignacionOverrideRepository()
     override = _existente()
     repo.rows[override.id] = override
-    pst = uuid.uuid4()
+    prestadores = FakePrestadorRepository()
+    pst = _prestador_existente(prestadores)
 
-    dto = await UpdateAsignacionOverride(_deps(repo)).execute(
+    dto = await UpdateAsignacionOverride(_deps(repo, prestadores)).execute(
         _command(override.id, prestador_ids=[pst])
     )
 
     assert dto.alcance_total is False
     assert dto.prestador_ids == [pst]
+
+
+async def test_rechaza_reemplazante_o_prestador_inexistentes() -> None:
+    repo = FakeAsignacionOverrideRepository()
+    override = _existente()
+    repo.rows[override.id] = override
+
+    with pytest.raises(OperadorNoEncontradoError):
+        await UpdateAsignacionOverride(_deps(repo)).execute(
+            _command(override.id, operador_reemplazante_id=uuid.uuid4())
+        )
+    with pytest.raises(PrestadorNotFoundError):
+        await UpdateAsignacionOverride(_deps(repo)).execute(
+            _command(override.id, prestador_ids=[uuid.uuid4()])
+        )
+    assert repo.rows[override.id].motivo == "vacaciones"
 
 
 async def test_editar_inexistente_lanza_not_found() -> None:

@@ -15,6 +15,7 @@ def test_accepts_a_password_meeting_all_rules() -> None:
         ("lowercase1!", "mayúscula"),
         ("NoDigitsHere!", "número"),
         ("NoSpecial123", "carácter especial"),
+        ("Aa1!" + "x" * 125, "superar 128"),
     ],
 )
 def test_rejects_a_password_missing_one_rule(raw: str, reason: str) -> None:

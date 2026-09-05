@@ -10,13 +10,20 @@ from src.modules.prestadores.application.use_cases.create_asignacion_override im
     CreateAsignacionOverride,
     CreateAsignacionOverrideDependencies,
 )
+from src.modules.prestadores.domain.entities.prestador import Prestador
 from src.modules.prestadores.domain.errors import (
     InvalidOverrideRangeError,
+    OperadorNoEncontradoError,
     OverlappingOverrideError,
     OverrideMismoOperadorError,
+    PrestadorNotFoundError,
 )
 from src.modules.prestadores.domain.repositories.user_provider import UserInfo
-from tests.unit.domain.prestadores.fakes import FakeAsignacionOverrideRepository, FakeUserProvider
+from tests.unit.domain.prestadores.fakes import (
+    FakeAsignacionOverrideRepository,
+    FakePrestadorRepository,
+    FakeUserProvider,
+)
 
 _AUSENTE = uuid.uuid4()
 _REEMPLAZANTE = uuid.uuid4()
@@ -36,11 +43,31 @@ def _command(**overrides: object) -> CreateAsignacionOverrideCommand:
     return CreateAsignacionOverrideCommand(**base)  # type: ignore[arg-type]
 
 
+_PRESTADORES = FakePrestadorRepository()
+
+
+def _pst_existente() -> uuid.UUID:
+    pst = Prestador(
+        id=uuid.uuid4(),
+        siges_empresa_id=len(_PRESTADORES.rows) + 1,
+        den_comercial="PST",
+        razon_social=None,
+        cuit=None,
+        equipos=None,
+        operador_id=_AUSENTE,
+        is_active=True,
+    )
+    _PRESTADORES.rows[pst.id] = pst
+    return pst.id
+
+
 def _deps(overrides: FakeAsignacionOverrideRepository) -> CreateAsignacionOverrideDependencies:
     users = FakeUserProvider()
     users.users[_AUSENTE] = UserInfo(id=_AUSENTE, full_name="Ausente Real")
     users.users[_REEMPLAZANTE] = UserInfo(id=_REEMPLAZANTE, full_name="Reemplazante Real")
-    return CreateAsignacionOverrideDependencies(overrides=overrides, users=users)
+    return CreateAsignacionOverrideDependencies(
+        overrides=overrides, users=users, prestadores=_PRESTADORES
+    )
 
 
 async def test_crea_override_alcance_total() -> None:
@@ -57,14 +84,36 @@ async def test_crea_override_alcance_total() -> None:
 
 async def test_crea_override_alcance_por_prestador() -> None:
     repo = FakeAsignacionOverrideRepository()
-    pst = uuid.uuid4()
+    pst = _pst_existente()
 
-    dto = await CreateAsignacionOverride(_deps(repo)).execute(
-        _command(prestador_ids=[pst])
-    )
+    dto = await CreateAsignacionOverride(_deps(repo)).execute(_command(prestador_ids=[pst]))
 
     assert dto.alcance_total is False
     assert dto.prestador_ids == [pst]
+
+
+async def test_rechaza_operadores_inexistentes_sin_persistir() -> None:
+    repo = FakeAsignacionOverrideRepository()
+
+    with pytest.raises(OperadorNoEncontradoError):
+        await CreateAsignacionOverride(_deps(repo)).execute(
+            _command(operador_ausente_id=uuid.uuid4())
+        )
+    with pytest.raises(OperadorNoEncontradoError):
+        await CreateAsignacionOverride(_deps(repo)).execute(
+            _command(operador_reemplazante_id=uuid.uuid4())
+        )
+    assert repo.rows == {}
+
+
+async def test_rechaza_prestador_inexistente_en_el_alcance() -> None:
+    repo = FakeAsignacionOverrideRepository()
+
+    with pytest.raises(PrestadorNotFoundError):
+        await CreateAsignacionOverride(_deps(repo)).execute(
+            _command(prestador_ids=[_pst_existente(), uuid.uuid4()])
+        )
+    assert repo.rows == {}
 
 
 async def test_rechaza_rango_invalido() -> None:
@@ -109,14 +158,10 @@ async def test_permite_overrides_del_mismo_ausente_sin_solapar_fechas() -> None:
 
 async def test_permite_overrides_puntuales_de_pst_distintos_con_fechas_solapadas() -> None:
     repo = FakeAsignacionOverrideRepository()
-    pst_a, pst_b = uuid.uuid4(), uuid.uuid4()
-    await CreateAsignacionOverride(_deps(repo)).execute(
-        _command(prestador_ids=[pst_a])
-    )
+    pst_a, pst_b = _pst_existente(), _pst_existente()
+    await CreateAsignacionOverride(_deps(repo)).execute(_command(prestador_ids=[pst_a]))
 
-    dto = await CreateAsignacionOverride(_deps(repo)).execute(
-        _command(prestador_ids=[pst_b])
-    )
+    dto = await CreateAsignacionOverride(_deps(repo)).execute(_command(prestador_ids=[pst_b]))
 
     assert dto.estado == "ACTIVA"
     assert len(repo.rows) == 2

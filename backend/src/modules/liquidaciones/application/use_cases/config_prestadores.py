@@ -9,7 +9,10 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
-from src.modules.liquidaciones.domain.errors import PrestadorNoEncontradoError
+from src.modules.liquidaciones.domain.errors import (
+    PrestadorDuplicadoError,
+    PrestadorNoEncontradoError,
+)
 from src.modules.liquidaciones.domain.repositories.prestador_repository import (
     PrestadorRepository,
 )
@@ -20,6 +23,16 @@ class ConfigPrestadoresPorts:
     prestadores: PrestadorRepository
 
 
+async def _asegurar_nombre_corto_libre(
+    repo: PrestadorRepository, nombre_corto: str, *, salvo_id: UUID | None = None
+) -> None:
+    """Chequeo explícito antes del UNIQUE de la DB: un mensaje de dominio claro
+    en vez de depender del `IntegrityError` (que queda como red de seguridad)."""
+    existente = await repo.get_by_nombre_corto(nombre_corto)
+    if existente is not None and existente.id != salvo_id:
+        raise PrestadorDuplicadoError(nombre_corto)
+
+
 class CreatePrestador:
     def __init__(self, ports: ConfigPrestadoresPorts) -> None:
         self._ports = ports
@@ -27,9 +40,11 @@ class CreatePrestador:
     async def execute(
         self, *, nombre: str, nombre_corto: str, cuit: str | None, region: str | None
     ) -> Prestador:
+        normalizado = nombre_corto.strip().upper()
+        await _asegurar_nombre_corto_libre(self._ports.prestadores, normalizado)
         return await self._ports.prestadores.create(
             nombre=nombre,
-            nombre_corto=nombre_corto.strip().upper(),
+            nombre_corto=normalizado,
             cuit=cuit,
             region=region,
         )
@@ -48,12 +63,12 @@ class UpdatePrestador:
         cuit: str | None,
         region: str | None,
     ) -> Prestador:
+        normalizado = nombre_corto.strip().upper()
+        await _asegurar_nombre_corto_libre(
+            self._ports.prestadores, normalizado, salvo_id=prestador_id
+        )
         updated = await self._ports.prestadores.update(
-            prestador_id,
-            nombre=nombre,
-            nombre_corto=nombre_corto.strip().upper(),
-            cuit=cuit,
-            region=region,
+            prestador_id, nombre=nombre, nombre_corto=normalizado, cuit=cuit, region=region
         )
         if updated is None:
             raise PrestadorNoEncontradoError(prestador_id)

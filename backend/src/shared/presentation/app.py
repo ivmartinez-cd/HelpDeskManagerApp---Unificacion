@@ -17,6 +17,7 @@ from src.shared.infrastructure.database.session import get_db
 from src.shared.infrastructure.logging_config import configure_logging
 from src.shared.presentation.errors.handlers import register_exception_handlers
 from src.shared.presentation.middlewares.request_id import RequestIdMiddleware
+from src.shared.presentation.middlewares.security_headers import SecurityHeadersMiddleware
 from src.shared.presentation.routers import ROUTERS
 
 logger = logging.getLogger(__name__)
@@ -114,25 +115,31 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
             logger.info("background_jobs: %d job(s) cancelados", len(tasks))
 
 
+_ORIGENES_DEV = (
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3010",
+    "http://127.0.0.1:3010",
+)
+
+
+def _es_development(settings: Settings) -> bool:
+    return settings.environment == "development"
+
+
 def _origenes_cors(settings: Settings) -> list[str]:
-    return list(
-        filter(
-            None,
-            {
-                settings.cors_origin,
-                settings.frontend_url,
-                "http://localhost:3000",
-                "http://127.0.0.1:3000",
-                "http://localhost:3010",
-                "http://127.0.0.1:3010",
-            },
-        )
-    )
+    """Los orígenes de `next dev`/Playwright solo se admiten en development;
+    fuera de ahí mandan `CORS_ORIGIN` y `FRONTEND_URL` (ronda E2E 2026-09-05)."""
+    origenes = {settings.cors_origin, settings.frontend_url}
+    if _es_development(settings):
+        origenes.update(_ORIGENES_DEV)
+    return sorted(filter(None, origenes))
 
 
 def _registrar_middlewares(app: FastAPI, settings: Settings) -> None:
     """CORS primero y RequestId después: el último agregado queda más afuera
-    en la pila de Starlette (RequestId envuelve a CORS)."""
+    en la pila de Starlette (RequestId envuelve a CORS). SecurityHeaders va
+    entre medio: agrega headers a toda respuesta, incluidas las de error."""
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_origenes_cors(settings),
@@ -140,7 +147,17 @@ def _registrar_middlewares(app: FastAPI, settings: Settings) -> None:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    # HSTS solo tiene sentido si la sesión ya viaja por TLS (cookie Secure).
+    app.add_middleware(SecurityHeadersMiddleware, hsts=settings.session_cookie_secure)
     app.add_middleware(RequestIdMiddleware)
+
+
+def _docs_kwargs(settings: Settings) -> dict[str, str | None]:
+    """Swagger/ReDoc/OpenAPI solo en development: en producción listan 300+
+    endpoints (incluidos los de integraciones con costo) sin sesión."""
+    if _es_development(settings):
+        return {"docs_url": "/docs", "redoc_url": "/redoc", "openapi_url": "/openapi.json"}
+    return {"docs_url": None, "redoc_url": None, "openapi_url": None}
 
 
 def _registrar_routers(app: FastAPI) -> None:
@@ -152,7 +169,12 @@ def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging(level="DEBUG" if settings.environment == "development" else "INFO")
 
-    app = FastAPI(title="HelpDesk Manager API", version="0.1.0", lifespan=_lifespan)
+    app = FastAPI(
+        title="HelpDesk Manager API",
+        version="0.1.0",
+        lifespan=_lifespan,
+        **_docs_kwargs(settings),
+    )
     app.dependency_overrides[get_operador_color_lookup] = _provide_operador_color_lookup
     _registrar_middlewares(app, settings)
     register_exception_handlers(app)

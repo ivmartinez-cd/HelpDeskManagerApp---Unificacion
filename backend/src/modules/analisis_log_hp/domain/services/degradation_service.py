@@ -14,7 +14,7 @@ Sutilezas (§5.6 caracterización):
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from typing import Protocol
 
@@ -41,6 +41,12 @@ class DeviceHealth:
     reason: str
     recommendation: str
     triggered_rule: str | None = None
+    # Contadores que usaron las reglas, para que la UI muestre el "por qué"
+    # (p. ej. GREEN con errores críticos de hace más de STABLE_DAYS días).
+    critical_events_count: int = 0
+    critical_occurrences: int = 0
+    days_since_last_critical: int | None = None
+    pages_since_last_critical: int | None = None
 
 
 def _aware(dt: datetime) -> datetime:
@@ -70,22 +76,49 @@ def evaluate_device_health(
     events = _dedup(events)
     if not events:
         return DeviceHealth(
-            "GREEN", "Sin historial",
-            "No hay eventos registrados.", "Sin acciones requeridas.",
+            "GREEN",
+            "Sin historial",
+            "No hay eventos registrados.",
+            "Sin acciones requeridas.",
         )
 
     crit = [e for e in events if _is_critical(e)]
     latest_counter = max(e.counter for e in events)
+    salud = _aplicar_reglas(crit, latest_counter, maintenance or [], now_aware)
+    return replace(salud, **_contadores(crit, latest_counter, now_aware))
+
+
+def _aplicar_reglas(
+    crit: list[_TelemetryEvent],
+    latest_counter: int,
+    maintenance: list[_TelemetryEvent],
+    now_aware: datetime,
+) -> DeviceHealth:
     return (
-        _rule_post_repair(crit, maintenance or [])
+        _rule_post_repair(crit, maintenance)
         or _rule_recurrence(crit, latest_counter, now_aware)
         or _rule_stable(crit, latest_counter, now_aware)
         or DeviceHealth(
-            "YELLOW", "En observación",
+            "YELLOW",
+            "En observación",
             "Errores críticos recientes sin alcanzar el umbral de alerta.",
             "Monitorear la evolución del equipo.",
         )
     )
+
+
+def _contadores(
+    crit: list[_TelemetryEvent], latest_counter: int, now_aware: datetime
+) -> dict[str, int | None]:
+    if not crit:
+        return {"critical_events_count": 0, "critical_occurrences": 0}
+    last_crit = max(crit, key=lambda e: _aware(e.event_time))
+    return {
+        "critical_events_count": len(crit),
+        "critical_occurrences": sum(max(1, e.occurrences) for e in crit),
+        "days_since_last_critical": (now_aware - _aware(last_crit.event_time)).days,
+        "pages_since_last_critical": latest_counter - last_crit.counter,
+    }
 
 
 def _rule_post_repair(
@@ -99,7 +132,8 @@ def _rule_post_repair(
     if not post:
         return None
     return DeviceHealth(
-        "RED", "Falla post-reparación",
+        "RED",
+        "Falla post-reparación",
         f"El error crítico {post[-1].code} reapareció tras el último mantenimiento.",
         "Enviar técnico: la reparación no resolvió la falla.",
         triggered_rule="post_repair",
@@ -115,15 +149,20 @@ def _rule_recurrence(
 
     for code, group in by_code.items():
         recent = [
-            e for e in group
+            e
+            for e in group
             if (now_aware - _aware(e.event_time)).days <= RECURRENCE_DAYS
-            or (e.counter > 0 and latest_counter > 0
-                and (latest_counter - e.counter) <= RECURRENCE_PAGES)
+            or (
+                e.counter > 0
+                and latest_counter > 0
+                and (latest_counter - e.counter) <= RECURRENCE_PAGES
+            )
         ]
         total = sum(max(1, e.occurrences) for e in recent)
         if total > RECURRENCE_THRESHOLD:
             return DeviceHealth(
-                "RED", "En degradación",
+                "RED",
+                "En degradación",
                 f"El error crítico {code} se repitió {total} veces "
                 f"(dentro de {RECURRENCE_PAGES:,} páginas o {RECURRENCE_DAYS} días).",
                 "Se recomienda Técnico.",
@@ -136,18 +175,16 @@ def _rule_stable(
     crit: list[_TelemetryEvent], latest_counter: int, now_aware: datetime
 ) -> DeviceHealth | None:
     if not crit:
-        return DeviceHealth(
-            "GREEN", "Estable", "Sin errores críticos.",
-            "Sin acciones requeridas.", triggered_rule="stable",
-        )
+        return _green_estable("Sin errores críticos.")
     last_crit = max(crit, key=lambda e: _aware(e.event_time))
     days_clean = (now_aware - _aware(last_crit.event_time)).days
     pages_clean = latest_counter - last_crit.counter
     if days_clean < STABLE_DAYS and pages_clean < STABLE_PAGES:
         return None
+    return _green_estable(f"Sin errores críticos por {pages_clean:,} páginas / {days_clean} días.")
+
+
+def _green_estable(detalle: str) -> DeviceHealth:
     return DeviceHealth(
-        "GREEN", "Estable",
-        f"Sin errores críticos por {pages_clean:,} páginas / {days_clean} días.",
-        "Sin acciones requeridas.",
-        triggered_rule="stable",
+        "GREEN", "Estable", detalle, "Sin acciones requeridas.", triggered_rule="stable"
     )

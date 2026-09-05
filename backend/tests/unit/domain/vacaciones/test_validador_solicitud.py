@@ -15,6 +15,7 @@ from src.modules.vacaciones.domain.errors import (
     CicloNoHabilitadoError,
     EmpleadoInactivoError,
     ExclusionMutuaError,
+    FechaPasadaError,
     LimiteAdelantoError,
     LimiteCargoError,
     RangoSinDiasError,
@@ -93,6 +94,24 @@ class TestValidarCreacion:
     def test_anio_pasado_permitido_para_admin(self) -> None:
         validar_creacion(_datos(target_year=2025), _agenda(), _ctx(es_admin=True))
 
+    def test_fecha_de_inicio_pasada_bloqueada_sin_admin(self) -> None:
+        with pytest.raises(FechaPasadaError):
+            validar_creacion(
+                _datos(start_date=date(2026, 3, 2), end_date=date(2026, 3, 4)),
+                _agenda(),
+                _ctx(),
+            )
+
+    def test_fecha_de_inicio_hoy_permitida_sin_admin(self) -> None:
+        validar_creacion(_datos(start_date=HOY, end_date=date(2026, 8, 14)), _agenda(), _ctx())
+
+    def test_fecha_de_inicio_pasada_permitida_para_admin(self) -> None:
+        validar_creacion(
+            _datos(start_date=date(2026, 3, 2), end_date=date(2026, 3, 4)),
+            _agenda(),
+            _ctx(es_admin=True),
+        )
+
     def test_mas_de_un_anio_adelante_bloqueado_incluso_admin(self) -> None:
         with pytest.raises(AnioMuyLejanoError):
             validar_creacion(_datos(target_year=2028), _agenda(), _ctx(es_admin=True))
@@ -167,8 +186,13 @@ class TestValidarCreacion:
             config=make_config(max_advance_days=10),
             saldo=make_saldo(used=5, pending=3, available=6),
         )
+        # Fechas futuras respecto de `hoy`: la regla de fecha pasada no debe
+        # tapar la del límite de adelanto.
+        datos = _datos(
+            start_date=date(2027, 1, 4), end_date=date(2027, 1, 6), target_year=2027, dias=3
+        )
         with pytest.raises(LimiteAdelantoError):
-            validar_creacion(_datos(target_year=2027, dias=3), _agenda(), ctx)
+            validar_creacion(datos, _agenda(), ctx)
 
     def test_feliz_sin_errores(self) -> None:
         validar_creacion(_datos(), _agenda(), _ctx())

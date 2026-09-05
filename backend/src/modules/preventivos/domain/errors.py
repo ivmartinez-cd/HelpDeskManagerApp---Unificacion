@@ -14,6 +14,13 @@ class ZonaInvalidaError(ValidationError):
         )
 
 
+class ZonaNoEncontradaError(NotFoundError):
+    default_code = "ZONA_NO_ENCONTRADA"
+
+    def __init__(self, zona: str) -> None:
+        super().__init__(f"La zona {zona!r} no está en el catálogo de zonas de preventivos")
+
+
 class CoordenadaFueraDeRangoError(ValidationError):
     default_code = "COORDENADA_FUERA_DE_RANGO"
 

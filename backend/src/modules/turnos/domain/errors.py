@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from typing import ClassVar
 
 from src.shared.domain.errors import BusinessRuleViolationError, NotFoundError, ValidationError
@@ -8,6 +9,66 @@ class CasillaNotFoundError(NotFoundError):
 
     def __init__(self, casilla_id: object) -> None:
         super().__init__(f"Casilla {casilla_id} no existe")
+
+
+class CasillaNombreVacioError(ValidationError):
+    default_code: ClassVar[str] = "CASILLA_NOMBRE_VACIO"
+
+    def __init__(self) -> None:
+        super().__init__("El nombre de la casilla no puede estar vacío")
+
+
+class CasillaNombreDuplicadoError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "CASILLA_NOMBRE_DUPLICADO"
+
+    def __init__(self, nombre: str) -> None:
+        super().__init__(f"Ya existe una casilla con el nombre {nombre!r}")
+
+
+class CasillaEnUsoError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "CASILLA_EN_USO"
+
+    def __init__(self, detalle: str) -> None:
+        super().__init__(f"La casilla no se puede borrar: {detalle}")
+
+
+class SlotNotFoundError(NotFoundError):
+    default_code: ClassVar[str] = "SLOT_NOT_FOUND"
+
+    def __init__(self, slot_id: object) -> None:
+        super().__init__(f"Franja {slot_id} no existe")
+
+
+class FranjaInvalidaError(ValidationError):
+    default_code: ClassVar[str] = "FRANJA_INVALIDA"
+
+    def __init__(self, detalle: str) -> None:
+        super().__init__(f"Franja inválida: {detalle}")
+
+
+class FranjasSolapadasError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "FRANJAS_SOLAPADAS"
+
+    def __init__(self, detalle: str) -> None:
+        super().__init__(f"La franja se superpone con otra de la misma casilla y día: {detalle}")
+
+
+class SlotEnUsoError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "SLOT_EN_USO"
+
+    def __init__(self, detalle: str) -> None:
+        super().__init__(f"La franja no se puede borrar: {detalle}")
+
+
+class UsuarioNotFoundError(NotFoundError):
+    """Usuario referenciado por una asignación/cobertura/grilla que no existe
+    en `app_user`. Antes llegaba como `IntegrityError` (500)."""
+
+    default_code: ClassVar[str] = "USUARIO_NOT_FOUND"
+
+    def __init__(self, user_ids: Iterable[object]) -> None:
+        ids = ", ".join(sorted(str(u) for u in user_ids))
+        super().__init__(f"Usuario(s) inexistente(s): {ids}")
 
 
 class AsignacionOverrideNotFoundError(NotFoundError):

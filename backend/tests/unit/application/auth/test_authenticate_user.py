@@ -11,6 +11,7 @@ from src.modules.auth.domain.errors import (
     TooManyAttemptsError,
 )
 from tests.unit.application.auth.fakes import (
+    DUMMY_HASH,
     FakeLoginAttemptRepository,
     FakePasswordHasher,
     FakePermissionRepository,
@@ -26,13 +27,14 @@ def _deps(
     *,
     sessions: FakeSessionRepository | None = None,
     attempts: FakeLoginAttemptRepository | None = None,
+    hasher: FakePasswordHasher | None = None,
 ) -> AuthenticateUserDependencies:
     return AuthenticateUserDependencies(
         users=users,
         sessions=sessions or FakeSessionRepository(),
         permissions=FakePermissionRepository(),
         login_attempts=attempts or FakeLoginAttemptRepository(),
-        hasher=FakePasswordHasher(),
+        hasher=hasher or FakePasswordHasher(),
         tokens=FakeSessionTokenGenerator(),
     )
 
@@ -61,6 +63,19 @@ async def test_login_valido_abre_sesion_y_registra_intento_exitoso() -> None:
     assert attempts.records == [("ana@canaldirecto.com.ar", "10.0.0.1", True)]
 
 
+async def test_la_sesion_guarda_ip_y_user_agent_del_login() -> None:
+    users = FakeUserRepository()
+    user = make_user()
+    users.rows[user.id] = user
+    sessions = FakeSessionRepository()
+
+    await AuthenticateUser(_deps(users, sessions=sessions)).execute(_command())
+
+    session = next(iter(sessions.rows.values()))
+    assert session.ip == "10.0.0.1"
+    assert session.user_agent == "tests"
+
+
 async def test_password_incorrecto_registra_fallo_y_rechaza() -> None:
     users = FakeUserRepository()
     user = make_user()
@@ -78,6 +93,16 @@ async def test_password_incorrecto_registra_fallo_y_rechaza() -> None:
 async def test_email_desconocido_rechaza_sin_revelar_si_existe() -> None:
     with pytest.raises(InvalidCredentialsError):
         await AuthenticateUser(_deps(FakeUserRepository())).execute(_command())
+
+
+async def test_email_desconocido_verifica_igual_contra_el_hash_dummy() -> None:
+    hasher = FakePasswordHasher()
+
+    with pytest.raises(InvalidCredentialsError):
+        await AuthenticateUser(_deps(FakeUserRepository(), hasher=hasher)).execute(_command())
+
+    # Mismo costo de argon2 exista o no el usuario (anti-enumeración por timing).
+    assert hasher.verified == [DUMMY_HASH]
 
 
 async def test_cuenta_desactivada_rechaza_aunque_el_password_sea_correcto() -> None:
@@ -100,3 +125,20 @@ async def test_rate_limit_bloquea_antes_de_verificar_credenciales() -> None:
 
     # Bloqueado por rate limit: ni siquiera se registra un intento nuevo.
     assert attempts.records == []
+
+
+async def test_rate_limit_cuenta_igual_aunque_cambien_las_mayusculas_del_email() -> None:
+    users = FakeUserRepository()
+    user = make_user()
+    users.rows[user.id] = user
+    attempts = FakeLoginAttemptRepository(recent_failures=4)
+    use_case = AuthenticateUser(_deps(users, attempts=attempts))
+
+    with pytest.raises(InvalidCredentialsError):
+        await use_case.execute(_command(email="Ana@CanalDirecto.com.ar", password="Otra1!aa"))
+    with pytest.raises(TooManyAttemptsError):
+        await use_case.execute(_command(email="ANA@canaldirecto.com.ar"))
+
+    # El guard y el registro consultan el mismo email normalizado.
+    assert attempts.queried_emails == ["ana@canaldirecto.com.ar"] * 2
+    assert attempts.records == [("ana@canaldirecto.com.ar", "10.0.0.1", False)]

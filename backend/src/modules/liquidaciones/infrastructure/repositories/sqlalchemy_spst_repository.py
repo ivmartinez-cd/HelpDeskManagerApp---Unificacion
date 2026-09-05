@@ -8,7 +8,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.spst import Spst
-from src.modules.liquidaciones.domain.errors import SigesVinculoDuplicadoError
+from src.modules.liquidaciones.domain.errors import (
+    PrestadorNoEncontradoError,
+    SigesVinculoDuplicadoError,
+)
 from src.modules.liquidaciones.infrastructure.models.spst_model import SpstModel
 
 
@@ -60,7 +63,12 @@ class SqlAlchemySpstRepository:
             zona_cobertura=zona_cobertura,
         )
         self._session.add(model)
-        await self._session.flush()
+        # La única constraint que puede fallar en el alta es la FK a prestadores
+        # (el UNIQUE de siges_empresa_id se toca recién en `vincular_siges`).
+        try:
+            await self._session.flush()
+        except IntegrityError as exc:
+            raise PrestadorNoEncontradoError(prestador_id) from exc
         await self._session.refresh(model)
         return _to_entity(model)
 

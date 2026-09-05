@@ -1,6 +1,7 @@
+import uuid
 from datetime import datetime
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.domain.entities.password_reset_token import PasswordResetToken
@@ -31,6 +32,14 @@ class SqlAlchemyResetTokenRepository:
         stmt = update(ORMToken).where(ORMToken.token_hash == token_hash).values(used_at=at)
         await self._session.execute(stmt)
         await self._session.flush()
+
+    async def count_created_since(self, user_id: uuid.UUID, *, since: datetime) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(ORMToken)
+            .where(ORMToken.user_id == user_id, ORMToken.created_at >= since)
+        )
+        return (await self._session.execute(stmt)).scalar_one()
 
 
 def _to_entity(model: ORMToken) -> PasswordResetToken:

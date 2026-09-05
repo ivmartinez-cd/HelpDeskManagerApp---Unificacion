@@ -32,6 +32,7 @@ from src.modules.turnos.application.use_cases.update_grilla_variante import (
 from src.modules.turnos.domain.errors import (
     GrillaVarianteNotFoundError,
     OverlappingVarianteError,
+    UsuarioNotFoundError,
     VarianteCasillaInvalidaError,
     VarianteNoEditableError,
     VarianteOperadorSolapadoError,
@@ -251,7 +252,18 @@ async def test_precarga_devuelve_titular_sin_el_ausente_y_marca_sus_franjas() ->
         ("ST", time(13)),
     ]
     assert all(s.operadores == [] for s in de_majo)
-    assert all(
-        c.majo not in [o.user_id for o in s.operadores] for s in dto.slots
-    )
+    assert all(c.majo not in [o.user_id for o in s.operadores] for s in dto.slots)
     assert [a.user_name for a in dto.advertencias] == ["Luna Torres"]
+
+
+async def test_crear_con_operador_inexistente_es_not_found_no_500() -> None:
+    """La FK de `turno_grilla_variante_asignacion.user_id` fallaba en el flush
+    como IntegrityError -> 500; ahora se valida antes de persistir."""
+    esc = _Escenario()
+    fantasma = uuid.uuid4()
+
+    with pytest.raises(UsuarioNotFoundError, match=str(fantasma)):
+        await CreateGrillaVariante(esc.deps).execute(
+            esc.command([esc.franja(esc.caso.insumos.id, time(8), time(9), fantasma)])
+        )
+    assert esc.variantes.rows == {}

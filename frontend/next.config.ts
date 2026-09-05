@@ -26,6 +26,18 @@ const nextConfig: NextConfig = {
     // proceso; el `next dev` interactivo normal la sigue usando.
     turbopackFileSystemCacheForDev: process.env.PLAYWRIGHT_TEST !== "1",
   },
+  async headers() {
+    // Línea base de seguridad para toda página y para /api (proxyado): antes no
+    // se emitía ninguno (ronda E2E 2026-09-05). Sin CSP a propósito: el script
+    // de tema inline (ADR-035) y Next dev necesitarían nonces; queda pendiente.
+    const seguridad = [
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "X-Frame-Options", value: "DENY" },
+      { key: "Referrer-Policy", value: "same-origin" },
+      { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+    ];
+    return [{ source: "/:path*", headers: seguridad }];
+  },
   async redirects() {
     // Turnos dejó de colgar de Configuración al pasar a ser módulo de permisos
     // propio (ADR-029); links viejos (favoritos, mails) siguen llegando.

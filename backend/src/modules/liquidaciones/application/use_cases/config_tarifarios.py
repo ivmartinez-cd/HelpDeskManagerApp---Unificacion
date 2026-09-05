@@ -12,7 +12,10 @@ from uuid import UUID
 
 from src.modules.liquidaciones.application.use_cases._recadenado import recadenar_grupo
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
-from src.modules.liquidaciones.domain.errors import TarifarioNoEncontradoError
+from src.modules.liquidaciones.domain.errors import (
+    TarifarioInvalidoError,
+    TarifarioNoEncontradoError,
+)
 from src.modules.liquidaciones.domain.repositories.tarifario_repository import (
     TarifarioRepository,
 )
@@ -21,6 +24,12 @@ from src.modules.liquidaciones.domain.repositories.tarifario_repository import (
 @dataclass(frozen=True)
 class ConfigTarifariosPorts:
     tarifarios: TarifarioRepository
+
+
+def _validar_vigencia(vigencia_desde: date, vigencia_hasta: date | None) -> None:
+    # Una vigencia invertida nunca matchea y ALT001 no encuentra tarifario.
+    if vigencia_hasta is not None and vigencia_hasta < vigencia_desde:
+        raise TarifarioInvalidoError("La vigencia hasta no puede ser anterior a la vigencia desde")
 
 
 async def _recadenar_grupo_de(repo: TarifarioRepository, t: Tarifario) -> None:
@@ -44,6 +53,7 @@ class CreateTarifario:
         vigencia_desde: date,
         vigencia_hasta: date | None,
     ) -> Tarifario:
+        _validar_vigencia(vigencia_desde, vigencia_hasta)
         repo = self._ports.tarifarios
         creado = await repo.create(
             prestador_id=prestador_id,
@@ -75,6 +85,7 @@ class UpdateTarifario:
         vigencia_desde: date,
         vigencia_hasta: date | None,
     ) -> Tarifario:
+        _validar_vigencia(vigencia_desde, vigencia_hasta)
         repo = self._ports.tarifarios
         anterior = await repo.get_by_id(tarifario_id)
         if anterior is None:

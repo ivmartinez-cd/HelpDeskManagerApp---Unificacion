@@ -51,8 +51,8 @@ router = APIRouter()
 
 @router.get("/calendario", response_model=Page[CalendarEventSchema])
 async def get_calendario_events(
-    start: str = Query(..., description="Fecha de inicio (YYYY-MM-DD)"),
-    end: str = Query(..., description="Fecha de fin (YYYY-MM-DD)"),
+    start: date = Query(..., description="Fecha de inicio (YYYY-MM-DD)"),
+    end: date = Query(..., description="Fecha de fin (YYYY-MM-DD)"),
     operador_id: str | None = Query(
         default=None, description="Solo superadmin: filtra por un operador puntual"
     ),
@@ -63,9 +63,11 @@ async def get_calendario_events(
 ) -> Page[CalendarEventSchema]:
     repo = SqlAlchemyCalendarEventRepository(db)
     overrides = SqlAlchemyAsignacionOverrideRepository(db)
+    # El repositorio local trabaja con ISO strings; tipar `date` acá convierte
+    # una fecha mal formada en 422 en vez de un ValueError adentro del repo.
     request = GetCalendarEventsRequest(
-        start_date=start,
-        end_date=end,
+        start_date=start.isoformat(),
+        end_date=end.isoformat(),
         is_superadmin=identity.user.is_superadmin,
         full_name=identity.user.full_name,
         operador_id=operador_id,
@@ -104,7 +106,7 @@ async def get_mi_operador(
 
 @router.get("/calendario/pendientes", response_model=Page[CalendarEventSchema])
 async def get_calendario_pendientes(
-    today: str = Query(..., description="Hoy del operador, YYYY-MM-DD (huso local)"),
+    today: date = Query(..., description="Hoy del operador, YYYY-MM-DD (huso local)"),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=500, ge=1, le=MAX_PAGE_SIZE),
     identity: Identity = require_view,
@@ -120,7 +122,7 @@ async def get_calendario_pendientes(
     anotados = await use_case.execute(
         is_superadmin=identity.user.is_superadmin,
         full_name=identity.user.full_name,
-        today=date.fromisoformat(today),
+        today=today,
         cutoff_days=DEFAULT_BACKLOG_DAYS,
         exclude_operador_ids=POOL_BACKLOG_OPERADOR_IDS,
     )
@@ -141,11 +143,9 @@ def _build_pendientes_periodo_actual(
     )
 
 
-@router.get(
-    "/calendario/pendientes-periodo-actual", response_model=Page[CalendarEventSchema]
-)
+@router.get("/calendario/pendientes-periodo-actual", response_model=Page[CalendarEventSchema])
 async def get_clientes_pendientes_periodo_actual(
-    today: str = Query(..., description="Hoy del operador, YYYY-MM-DD (huso local)"),
+    today: date = Query(..., description="Hoy del operador, YYYY-MM-DD (huso local)"),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=500, ge=1, le=MAX_PAGE_SIZE),
     identity: Identity = require_view,
@@ -159,7 +159,7 @@ async def get_clientes_pendientes_periodo_actual(
     anotados = await _build_pendientes_periodo_actual(db).execute(
         is_superadmin=identity.user.is_superadmin,
         full_name=identity.user.full_name,
-        today=date.fromisoformat(today),
+        today=today,
         exclude_operador_ids=POOL_BACKLOG_OPERADOR_IDS,
     )
     schema_events = [CalendarEventSchema.from_anotado(a) for a in anotados]

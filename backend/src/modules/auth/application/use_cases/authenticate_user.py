@@ -45,27 +45,32 @@ class AuthenticateUser:
         self._deps = deps
 
     async def execute(self, command: LoginCommand) -> AuthenticatedSession:
-        await self._guard_rate_limit(command.email)
-        user = await self._verify_credentials(command)
-        session, token = await self._open_session(user.id)
+        # El mismo email normalizado que graba `record()`: si el guard usara el
+        # crudo, cambiar mayúsculas reiniciaría el contador de lockout.
+        email = Email(command.email)
+        await self._guard_rate_limit(email)
+        user = await self._verify_credentials(email, command)
+        session, token = await self._open_session(user.id, command)
         permissions = await self._deps.permissions.get_for_user(user.id)
         features = await self._deps.features.get_for_user(user.id)
         identity = to_identity(user, permissions, session_id=session.id, features=features)
         return AuthenticatedSession(identity=identity, session_token=token)
 
-    async def _guard_rate_limit(self, email: str) -> None:
+    async def _guard_rate_limit(self, email: Email) -> None:
         since = datetime.now(UTC) - _LOCKOUT_WINDOW
-        failures = await self._deps.login_attempts.count_recent_failures(email=email, since=since)
+        failures = await self._deps.login_attempts.count_recent_failures(
+            email=email.value, since=since
+        )
         if failures >= _MAX_FAILED_ATTEMPTS:
             retry_after = int(_LOCKOUT_WINDOW.total_seconds())
             raise TooManyAttemptsError(retry_after_seconds=retry_after)
 
-    async def _verify_credentials(self, command: LoginCommand) -> User:
-        email = Email(command.email)
+    async def _verify_credentials(self, email: Email, command: LoginCommand) -> User:
         user = await self._deps.users.get_by_email(email)
-        password_ok = user is not None and self._deps.hasher.verify(
-            command.password, user.password_hash
-        )
+        # Sin usuario se verifica igual contra un hash dummy: mismo costo de
+        # argon2 en ambas ramas (anti-enumeración por timing).
+        stored = user.password_hash if user is not None else self._deps.hasher.dummy_hash()
+        password_ok = self._deps.hasher.verify(command.password, stored) and user is not None
         # record() comitea internamente (auditoría): sobrevive al 401/403
         # que puede levantarse dos líneas más abajo.
         await self._deps.login_attempts.record(
@@ -77,7 +82,7 @@ class AuthenticateUser:
             raise AccountDisabledError()
         return user
 
-    async def _open_session(self, user_id: uuid.UUID) -> tuple[Session, str]:
+    async def _open_session(self, user_id: uuid.UUID, command: LoginCommand) -> tuple[Session, str]:
         token = self._deps.tokens.generate()
         now = datetime.now(UTC)
         session = Session(
@@ -87,6 +92,8 @@ class AuthenticateUser:
             issued_at=now,
             expires_at=now + _SESSION_TTL,
             last_seen_at=now,
+            ip=command.ip,
+            user_agent=command.user_agent,
         )
         await self._deps.sessions.add(session)
         return session, token

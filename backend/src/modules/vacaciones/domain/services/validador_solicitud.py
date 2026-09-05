@@ -2,8 +2,9 @@
 (vacation.controller.ts). El caller precarga los datos (solicitudes activas,
 exclusiones, rangos del cargo, saldo) y esta función solo decide.
 
-Crear: activo → días>0 → año → solape propio → exclusión mutua → límite por
-cargo → ciclo abierto (bypass admin) → saldo → límite de adelanto.
+Crear: activo → días>0 → año → fecha de inicio no pasada (bypass admin; regla
+propia, no del legacy) → solape propio → exclusión mutua → límite por cargo →
+ciclo abierto (bypass admin) → saldo → límite de adelanto.
 Editar (paridad legacy, NO re-valida año ni ciclo): editable solo PENDING
 (bypass admin) → activo → días>0 → solape → exclusión → límite → saldo con
 add-back de los días actuales.
@@ -24,6 +25,7 @@ from src.modules.vacaciones.domain.errors import (
     CicloNoHabilitadoError,
     EmpleadoInactivoError,
     ExclusionMutuaError,
+    FechaPasadaError,
     LimiteAdelantoError,
     LimiteCargoError,
     RangoSinDiasError,
@@ -75,27 +77,22 @@ class ContextoEdicion:
     dias_actuales: int
 
 
-def validar_creacion(
-    datos: DatosSolicitud, agenda: ContextoAgenda, ctx: ContextoCreacion
-) -> None:
+def validar_creacion(datos: DatosSolicitud, agenda: ContextoAgenda, ctx: ContextoCreacion) -> None:
     if not datos.empleado.esta_activo:
         raise EmpleadoInactivoError()
     _validar_dias(datos)
     _validar_anio(datos.target_year, ctx)
+    _validar_fecha_pasada(datos, ctx)
     _validar_agenda(datos, agenda)
     _validar_ciclo_y_saldo(datos, ctx)
     _validar_limite_adelanto(datos, ctx)
 
 
-def validar_edicion(
-    datos: DatosSolicitud, agenda: ContextoAgenda, ctx: ContextoEdicion
-) -> None:
+def validar_edicion(datos: DatosSolicitud, agenda: ContextoAgenda, ctx: ContextoEdicion) -> None:
     if not ctx.es_admin and ctx.estado_actual is not EstadoSolicitud.PENDING:
         raise SoloPendientesEditablesError("editar")
     if not datos.empleado.esta_activo:
-        raise EmpleadoInactivoError(
-            "No se pueden modificar solicitudes de empleados inactivos"
-        )
+        raise EmpleadoInactivoError("No se pueden modificar solicitudes de empleados inactivos")
     _validar_dias(datos)
     _validar_agenda(datos, agenda)
     disponible_con_actual = ctx.saldo.available + ctx.dias_actuales
@@ -136,15 +133,18 @@ def _validar_anio(target_year: int, ctx: ContextoCreacion) -> None:
             raise CicloAunNoAbiertoError(target_year, apertura.strftime("%d/%m/%Y"))
 
 
+def _validar_fecha_pasada(datos: DatosSolicitud, ctx: ContextoCreacion) -> None:
+    if datos.start_date < ctx.hoy and not ctx.es_admin:
+        raise FechaPasadaError()
+
+
 def _validar_agenda(datos: DatosSolicitud, agenda: ContextoAgenda) -> None:
     _validar_solape_propio(datos, agenda.solicitudes_propias)
     _validar_exclusiones(agenda)
     _validar_limite_cargo(datos, agenda)
 
 
-def _validar_solape_propio(
-    datos: DatosSolicitud, propias: tuple[Solicitud, ...]
-) -> None:
+def _validar_solape_propio(datos: DatosSolicitud, propias: tuple[Solicitud, ...]) -> None:
     for solicitud in propias:
         if solicitud.solapa_con(datos.start_date, datos.end_date):
             raise SolapamientoPropioError()

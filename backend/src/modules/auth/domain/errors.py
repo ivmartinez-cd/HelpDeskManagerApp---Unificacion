@@ -117,6 +117,34 @@ class CannotDemoteSelfError(BusinessRuleViolationError):
         super().__init__("No podés quitarte tu propio permiso de administración")
 
 
+class UnknownPermissionError(ValidationError):
+    """El par módulo/acción no existe en `module_action`: la FK compuesta de
+    permission_grant lo rechazaría igual, pero como 500 y sin auditoría."""
+
+    default_code = "UNKNOWN_PERMISSION"
+
+    def __init__(self, module: str, action: str) -> None:
+        super().__init__(f"El permiso {module}.{action} no existe en el catálogo")
+
+
+class UnknownFeatureError(ValidationError):
+    default_code = "UNKNOWN_FEATURE"
+
+    def __init__(self, key: str) -> None:
+        super().__init__(f"La función {key!r} no existe en el catálogo")
+
+
+class AdminManageReservedError(ApplicationError):
+    """Conceder o quitar `admin.manage` es exclusivo del superadmin: un admin
+    delegado no puede crear ni bajar a otros administradores."""
+
+    http_status = 403
+    default_code = "ADMIN_MANAGE_RESERVED"
+
+    def __init__(self) -> None:
+        super().__init__("Solo un superadmin puede conceder o quitar admin.manage")
+
+
 class InvalidRoutePathError(ValidationError):
     """Ver `RoutePath` (ADR-028) — la ruta no matchea la gramática de
     navegación esperada (esquema/query string/traversal/segmento inválido)."""
