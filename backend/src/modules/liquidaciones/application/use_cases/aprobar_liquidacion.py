@@ -21,6 +21,7 @@ from src.modules.liquidaciones.domain.repositories.liquidacion_repository import
     LiquidacionRepository,
 )
 from src.modules.liquidaciones.domain.repositories.notificador import Notificador
+from src.modules.liquidaciones.domain.services.transiciones_ayc import validar_transicion
 from src.shared.domain.errors import NotFoundError
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,7 @@ class AprobarLiquidacion:
             raise NotFoundError(f"Liquidación {liquidacion_id} no encontrada")
         if not liq.numero_liquidacion:
             raise LiquidacionSinVinculoAyCError(liquidacion_id)
+        validar_transicion("aprobar", liq.estado)
 
         ayc_id = int(liq.numero_liquidacion.split("-")[0])
 

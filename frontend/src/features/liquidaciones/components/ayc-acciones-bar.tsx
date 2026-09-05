@@ -6,9 +6,28 @@ import { toast } from "sonner";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { Liquidacion } from "../types/liquidaciones";
+import type { EstadoLiquidacion, Liquidacion } from "../types/liquidaciones";
 
 type Accion = "recibir" | "aprobar" | "observar" | "anular";
+
+// Puerto del comportamiento real de Web Agentes (`LiquidationsController` +
+// `View/Liquidations/view.ctp`, repo `Web-Agentes`): cada botón solo se
+// dibuja si el estado actual lo permite (auditoría de liquidaciones, hallazgo
+// "Botones de estado sin gating por estado actual") — mismas reglas que
+// valida el backend en `transiciones_ayc.py`, doble check acá para que el
+// botón directamente no aparezca. No reproduce la restricción fina por tipo
+// de usuario del legacy (mesa de ayuda vs. gerente): esta app no modela esa
+// distinción, ambos caen bajo el mismo permiso `liquidaciones.approve`.
+const ORIGENES_VALIDOS: Record<"recibir" | "observar" | "aprobar", EstadoLiquidacion[]> = {
+  recibir: ["preliquidada", "observada"],
+  observar: ["recibida", "aprobada"],
+  aprobar: ["recibida", "observada"],
+};
+
+function accionValidaDesdeEstado(accion: Accion, estado: EstadoLiquidacion): boolean {
+  if (accion === "anular") return estado !== "cerrada";
+  return ORIGENES_VALIDOS[accion].includes(estado);
+}
 
 const CONFIG: Record<
   Accion,
@@ -78,8 +97,10 @@ export function AyCAccionesBar({ liquidacion, onActualizado, onAnulado }: Props)
   // Espejo de liquidaciones_ayc_router.py: recibir/aprobar/observar = approve,
   // anular = delete; "eliminar solo localmente" es DELETE /{id} = update.
   const { can } = useSession();
-  const acciones = (["recibir", "aprobar", "observar", "anular"] as Accion[]).filter((a) =>
-    a === "anular" ? can("liquidaciones", "delete") : can("liquidaciones", "approve"),
+  const acciones = (["recibir", "aprobar", "observar", "anular"] as Accion[]).filter(
+    (a) =>
+      (a === "anular" ? can("liquidaciones", "delete") : can("liquidaciones", "approve")) &&
+      accionValidaDesdeEstado(a, liquidacion.estado),
   );
   const puedeBorrarLocal = can("liquidaciones", "update");
 
@@ -128,7 +149,7 @@ export function AyCAccionesBar({ liquidacion, onActualizado, onAnulado }: Props)
     setLoading(true);
     setError(null);
     try {
-      await liquidacionesApi.delete(liquidacion.id);
+      await liquidacionesApi.delete(liquidacion.id, true);
       toast.success("Registro local eliminado");
       onAnulado();
     } catch (e) {
@@ -141,6 +162,12 @@ export function AyCAccionesBar({ liquidacion, onActualizado, onAnulado }: Props)
   return (
     <>
       <div className="flex items-center gap-2">
+        <span
+          className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground"
+          title="Liquidación con remito de Canal Directo — cada acción pega a wsAyC, no es solo un cambio local"
+        >
+          Canal Directo
+        </span>
         {acciones.map((a) => (
           <button
             key={a}

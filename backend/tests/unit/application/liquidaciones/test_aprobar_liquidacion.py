@@ -15,6 +15,7 @@ from src.modules.liquidaciones.domain.entities.liquidacion import ESTADO_APROBAD
 from src.modules.liquidaciones.domain.exceptions import (
     LiquidacionAyCOperationError,
     LiquidacionSinVinculoAyCError,
+    TransicionEstadoAycInvalidaError,
 )
 from src.shared.domain.errors import NotFoundError
 from tests.unit.domain.liquidaciones.factories import make_liquidacion
@@ -52,7 +53,7 @@ async def test_sin_vinculo_ayc_lanza_error() -> None:
 
 async def test_aprobacion_actualiza_estado_local_a_aprobada() -> None:
     world = World()
-    liq = make_liquidacion(numero_liquidacion="500-0", estado="abierta")
+    liq = make_liquidacion(numero_liquidacion="500-0", estado="recibida")
     world.liquidaciones.rows[liq.id] = liq
 
     resultado = await world.use_case.execute(liq.id, "Juan Pérez")
@@ -61,9 +62,33 @@ async def test_aprobacion_actualiza_estado_local_a_aprobada() -> None:
     assert world.liquidaciones.rows[liq.id].estado == "aprobada"
 
 
+async def test_aprobar_desde_observada_tambien_vale() -> None:
+    world = World()
+    liq = make_liquidacion(numero_liquidacion="500-1", estado="observada")
+    world.liquidaciones.rows[liq.id] = liq
+
+    resultado = await world.use_case.execute(liq.id, "Juan Pérez")
+
+    assert resultado.estado == "aprobada"
+
+
+async def test_desde_estado_invalido_rechaza_sin_pegarle_a_soap() -> None:
+    """Mismo criterio que Web Agentes: el botón "Aprobar" no existe si el
+    estado no es Recibida/Observada."""
+    world = World()
+    liq = make_liquidacion(numero_liquidacion="500-2", estado="preliquidada")
+    world.liquidaciones.rows[liq.id] = liq
+
+    with pytest.raises(TransicionEstadoAycInvalidaError):
+        await world.use_case.execute(liq.id, "Operador")
+
+    assert world.gateway.estados_seteados == []
+    assert world.notificador.aprobaciones == []
+
+
 async def test_pasa_ayc_id_y_usuario_correctos_al_soap() -> None:
     world = World()
-    liq = make_liquidacion(numero_liquidacion="999-3")
+    liq = make_liquidacion(numero_liquidacion="999-3", estado="recibida")
     world.liquidaciones.rows[liq.id] = liq
 
     await world.use_case.execute(liq.id, "Ana García")
@@ -77,20 +102,20 @@ async def test_pasa_ayc_id_y_usuario_correctos_al_soap() -> None:
 
 async def test_fallo_soap_no_escribe_local() -> None:
     world = World()
-    liq = make_liquidacion(numero_liquidacion="500-0", estado="abierta")
+    liq = make_liquidacion(numero_liquidacion="500-0", estado="recibida")
     world.liquidaciones.rows[liq.id] = liq
     world.gateway.set_estado_raises = RuntimeError("Timeout SOAP")
 
     with pytest.raises(LiquidacionAyCOperationError):
         await world.use_case.execute(liq.id, "Operador")
 
-    assert world.liquidaciones.rows[liq.id].estado == "abierta"
+    assert world.liquidaciones.rows[liq.id].estado == "recibida"
     assert world.notificador.aprobaciones == []
 
 
 async def test_aprobacion_exitosa_dispara_notificacion() -> None:
     world = World()
-    liq = make_liquidacion(numero_liquidacion="3938-5", estado="abierta")
+    liq = make_liquidacion(numero_liquidacion="3938-5", estado="recibida")
     world.liquidaciones.rows[liq.id] = liq
 
     resultado = await world.use_case.execute(liq.id, "Operador")

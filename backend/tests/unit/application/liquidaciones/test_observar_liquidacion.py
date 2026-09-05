@@ -12,6 +12,7 @@ from src.modules.liquidaciones.domain.entities.liquidacion import ESTADO_OBSERVA
 from src.modules.liquidaciones.domain.exceptions import (
     LiquidacionAyCOperationError,
     LiquidacionSinVinculoAyCError,
+    TransicionEstadoAycInvalidaError,
 )
 from src.shared.domain.errors import NotFoundError
 from tests.unit.domain.liquidaciones.factories import make_liquidacion
@@ -47,7 +48,7 @@ async def test_sin_vinculo_ayc_lanza_error() -> None:
 
 async def test_observacion_actualiza_estado_local_a_observada() -> None:
     world = World()
-    liq = make_liquidacion(numero_liquidacion="500-0", estado="abierta")
+    liq = make_liquidacion(numero_liquidacion="500-0", estado="recibida")
     world.liquidaciones.rows[liq.id] = liq
 
     resultado = await world.use_case.execute(liq.id, "Juan Pérez")
@@ -56,9 +57,34 @@ async def test_observacion_actualiza_estado_local_a_observada() -> None:
     assert world.liquidaciones.rows[liq.id].estado == "observada"
 
 
+async def test_desde_aprobada_tambien_permite_observar() -> None:
+    """Web Agentes (`view.ctp`) deja volver de Aprobada a Observada — acá no se
+    distingue el rol gerente-only del legacy, cualquiera con permiso puede."""
+    world = World()
+    liq = make_liquidacion(numero_liquidacion="500-1", estado="aprobada")
+    world.liquidaciones.rows[liq.id] = liq
+
+    resultado = await world.use_case.execute(liq.id, "Juan Pérez")
+
+    assert resultado.estado == "observada"
+
+
+async def test_desde_estado_invalido_rechaza_sin_pegarle_a_soap() -> None:
+    """Mismo criterio que Web Agentes: el botón "Observar" no existe si el
+    estado no es Recibida/Aprobada — acá se replica rechazando el request."""
+    world = World()
+    liq = make_liquidacion(numero_liquidacion="500-2", estado="preliquidada")
+    world.liquidaciones.rows[liq.id] = liq
+
+    with pytest.raises(TransicionEstadoAycInvalidaError):
+        await world.use_case.execute(liq.id, "Operador")
+
+    assert world.gateway.estados_seteados == []
+
+
 async def test_pasa_ayc_id_y_usuario_correctos_al_soap() -> None:
     world = World()
-    liq = make_liquidacion(numero_liquidacion="888-5")
+    liq = make_liquidacion(numero_liquidacion="888-5", estado="recibida")
     world.liquidaciones.rows[liq.id] = liq
 
     await world.use_case.execute(liq.id, "Carlos López")
@@ -72,11 +98,11 @@ async def test_pasa_ayc_id_y_usuario_correctos_al_soap() -> None:
 
 async def test_fallo_soap_no_escribe_local() -> None:
     world = World()
-    liq = make_liquidacion(numero_liquidacion="500-0", estado="abierta")
+    liq = make_liquidacion(numero_liquidacion="500-0", estado="recibida")
     world.liquidaciones.rows[liq.id] = liq
     world.gateway.set_estado_raises = RuntimeError("SOAP caído")
 
     with pytest.raises(LiquidacionAyCOperationError):
         await world.use_case.execute(liq.id, "Operador")
 
-    assert world.liquidaciones.rows[liq.id].estado == "abierta"
+    assert world.liquidaciones.rows[liq.id].estado == "recibida"

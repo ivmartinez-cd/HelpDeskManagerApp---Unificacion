@@ -14,6 +14,7 @@ from src.modules.liquidaciones.application.use_cases.anular_liquidacion import (
 from src.modules.liquidaciones.domain.exceptions import (
     LiquidacionAyCOperationError,
     LiquidacionSinVinculoAyCError,
+    TransicionEstadoAycInvalidaError,
 )
 from src.shared.domain.errors import NotFoundError
 from tests.unit.domain.liquidaciones.factories import make_liquidacion
@@ -66,6 +67,20 @@ async def test_pasa_ayc_id_correcto_al_void() -> None:
     await world.use_case.execute(liq.id)
 
     assert world.gateway.anulados == [12345]
+
+
+async def test_cerrada_no_se_puede_anular() -> None:
+    """Mismo criterio que Web Agentes: el botón "Eliminar" (= Anular acá)
+    desaparece del todo una vez Cerrada."""
+    world = World()
+    liq = make_liquidacion(numero_liquidacion="777-5", estado="cerrada")
+    world.liquidaciones.rows[liq.id] = liq
+
+    with pytest.raises(TransicionEstadoAycInvalidaError):
+        await world.use_case.execute(liq.id)
+
+    assert world.gateway.anulados == []
+    assert liq.id in world.liquidaciones.rows
 
 
 async def test_fallo_soap_no_elimina_local() -> None:

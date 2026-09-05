@@ -9,7 +9,10 @@ from src.modules.liquidaciones.application.use_cases.recibir_liquidacion import 
     RecibirLiquidacionPorts,
 )
 from src.modules.liquidaciones.domain.entities.liquidacion import ESTADO_RECIBIDA
-from src.modules.liquidaciones.domain.exceptions import LiquidacionAyCOperationError
+from src.modules.liquidaciones.domain.exceptions import (
+    LiquidacionAyCOperationError,
+    TransicionEstadoAycInvalidaError,
+)
 from tests.unit.domain.liquidaciones.factories import make_liquidacion
 from tests.unit.domain.liquidaciones.fakes import FakeCdLiquidacionesGateway
 from tests.unit.domain.liquidaciones.fakes_liquidacion import FakeLiquidacionRepository
@@ -34,6 +37,29 @@ async def test_recibir_escribe_recibida_en_ayc_y_local() -> None:
     assert resultado.estado == ESTADO_RECIBIDA
     assert world.liquidaciones.rows[liq.id].estado == ESTADO_RECIBIDA
     assert world.gateway.estados_seteados == [(3936, ESTADO_RECIBIDA, "Juan Pérez")]
+
+
+async def test_recibir_desde_observada_tambien_vale() -> None:
+    world = World()
+    liq = make_liquidacion(numero_liquidacion="3936-8", estado="observada")
+    world.liquidaciones.rows[liq.id] = liq
+
+    resultado = await world.use_case.execute(liq.id, "Juan Pérez")
+
+    assert resultado.estado == ESTADO_RECIBIDA
+
+
+async def test_desde_estado_invalido_rechaza_sin_pegarle_a_soap() -> None:
+    """Mismo criterio que Web Agentes: el botón "Recibir" no existe si el
+    estado no es Preliquidada/Observada."""
+    world = World()
+    liq = make_liquidacion(numero_liquidacion="3936-9", estado="aprobada")
+    world.liquidaciones.rows[liq.id] = liq
+
+    with pytest.raises(TransicionEstadoAycInvalidaError):
+        await world.use_case.execute(liq.id, "Operador")
+
+    assert world.gateway.estados_seteados == []
 
 
 async def test_fallo_soap_no_escribe_local_y_nombra_la_accion() -> None:

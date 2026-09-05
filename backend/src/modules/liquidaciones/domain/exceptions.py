@@ -39,3 +39,18 @@ class LiquidacionConVinculoAycError(BusinessRuleViolationError):
             "estado se actualiza solo, contra AyC. Usá los botones Aprobar/Observar/"
             "Anular para cambiarlo a mano."
         )
+
+
+class TransicionEstadoAycInvalidaError(BusinessRuleViolationError):
+    """El botón (Recibir/Observar/Aprobar/Anular) no es válido desde el estado
+    actual — mismas reglas que Web Agentes (`LiquidationsController`/`view.ctp`):
+    ahí el botón directamente no se muestra; acá, si igual llega el request
+    (UI desincronizada, o alguien pega contra la API a mano), se rechaza en vez
+    de mandarlo a wsAyC. Ver `domain/services/transiciones_ayc.py`."""
+
+    default_code = "TRANSICION_ESTADO_AYC_INVALIDA"
+
+    def __init__(self, verbo: str, estado_actual: str) -> None:
+        super().__init__(
+            f"No se puede {verbo} una liquidación en estado '{estado_actual}'."
+        )
