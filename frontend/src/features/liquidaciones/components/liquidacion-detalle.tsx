@@ -14,6 +14,7 @@ import type {
   LiquidacionDetalle,
   PrestadorLiquidacion,
 } from "../types/liquidaciones";
+import { AbonoBanner } from "./abono-banner";
 import { AlertasLoteBar } from "./alertas-lote-bar";
 import { ExtraItemSeccion } from "./extra-item-seccion";
 import { IncidentesSeccion } from "./incidentes-seccion";
@@ -170,6 +171,8 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
           onSoloConAlertas={setSoloConAlertas}
         />
       )}
+
+      <AbonoBanner liquidacion={liquidacion} totalIncidentes={incidentes.length} />
 
       <LiquidacionConfigBanner alertas={alertas} incidentes={incidentes} />
 

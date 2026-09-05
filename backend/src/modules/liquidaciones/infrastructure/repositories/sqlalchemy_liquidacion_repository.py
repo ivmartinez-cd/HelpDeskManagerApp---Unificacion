@@ -64,11 +64,7 @@ class SqlAlchemyLiquidacionRepository:
         return {row[0] for row in result.all()}
 
     async def list_periodos(self) -> list[str]:
-        stmt = (
-            select(LiquidacionModel.periodo)
-            .distinct()
-            .order_by(LiquidacionModel.periodo.desc())
-        )
+        stmt = select(LiquidacionModel.periodo).distinct().order_by(LiquidacionModel.periodo.desc())
         result = await self._session.execute(stmt)
         return [row[0] for row in result.all()]
 
@@ -173,6 +169,14 @@ class SqlAlchemyLiquidacionRepository:
             update(LiquidacionModel)
             .where(LiquidacionModel.id == liquidacion_id)
             .values(periodo=periodo)
+        )
+        await self._session.execute(stmt)
+
+    async def update_tipo_liquidacion(self, liquidacion_id: UUID, tipo_liquidacion: str) -> None:
+        stmt = (
+            update(LiquidacionModel)
+            .where(LiquidacionModel.id == liquidacion_id)
+            .values(tipo_liquidacion=tipo_liquidacion)
         )
         await self._session.execute(stmt)
 

@@ -93,6 +93,7 @@ from src.modules.liquidaciones.domain.services.reconciliar_incidentes import (
     DiffIncidentes,
     reconciliar_incidentes,
 )
+from src.modules.liquidaciones.domain.services.tipo_abono import tipo_segun_incidentes
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import CdLiquidacion
 from src.modules.liquidaciones.domain.value_objects.incidente_importado import IncidenteImportado
 
@@ -218,8 +219,16 @@ class ReconciliarLiquidacion:
             await self._ports.incidentes.bulk_create(liquidacion.id, diff.altas)
         actuales = await self._ports.incidentes.list_by_liquidacion(liquidacion.id)
         nuevo_total = await self._actualizar_totales(liquidacion, actuales)
+        await self._actualizar_tipo(liquidacion, actuales)
         await self._ports.reanalizar.execute(liquidacion.id)
         return nuevo_total
+
+    async def _actualizar_tipo(self, liquidacion: Liquidacion, actuales: list[Incidente]) -> None:
+        """Abono ⇄ regular según los incidentes ya reconciliados — antes del
+        reanálisis, que filtra reglas por tipo (`reglas_aplicables`)."""
+        tipo = tipo_segun_incidentes(actuales)
+        if tipo != liquidacion.tipo_liquidacion:
+            await self._ports.liquidaciones.update_tipo_liquidacion(liquidacion.id, tipo)
 
     async def _actualizar_totales(
         self, liquidacion: Liquidacion, actuales: list[Incidente]
@@ -228,9 +237,7 @@ class ReconciliarLiquidacion:
         total_importe = total_importe_con_incidentes_y_extra(
             incidentes_costo_total, liquidacion.monto_extra
         )
-        await self._ports.liquidaciones.update_totales(
-            liquidacion.id, len(actuales), total_importe
-        )
+        await self._ports.liquidaciones.update_totales(liquidacion.id, len(actuales), total_importe)
         return total_importe
 
     async def _actualizar_periodo(

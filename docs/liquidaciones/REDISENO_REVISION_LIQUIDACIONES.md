@@ -150,3 +150,30 @@ Consultas sobre `helpdesk-db` + `GET /siges/zonas` + dry-run del sync de tarifar
 - Las liquidaciones con ALT001 en el 100 % de los incidentes son del prestador, no de
   config: SAN JUAN 3944-6/3946-4 cobró $1 por incidente; 3945-5 mezcla precio viejo
   (50.231), doble (108.800) y zona; SALTA 3960-4/3954-3 cobró otro precio.
+
+## 6. Liquidaciones de abono (2026-09-05)
+
+SAN JUAN factura por contrato mensual: cierra todos los incidentes a $1 en AyC y carga el
+importe real como ítem extra (tres conceptos por mes: Mantenimiento Técnico Centro Cívico
+5,1–7,66 M; Recursos adicionales Escuelas / Depósito ~1,91 M; Adicional Factura Servicios
+Cívico 1.499.999). 31 liquidaciones reales desde enero con exactamente ese patrón; el CSV
+legacy ya las etiquetaba `cc`/`preco`. El sync de AyC las creaba como `regular` y el motor
+generaba una ALT001 por incidente (105 por mes) que nadie miraba. **SALTA no es este caso**:
+cobró precios distintos de verdad, sus alertas son legítimas.
+
+Decisiones del usuario (mismo día): detección **automática** ("todos los incidentes a $1",
+opción 1A); **sin alerta por monto** (el abono varía siempre); lo único a controlar es que
+el extra esté cargado.
+
+Implementado:
+- `TIPO_ABONO = "abono"` + `domain/services/tipo_abono.py` (`es_abono`,
+  `tipo_segun_incidentes`, `reglas_aplicables`). El sync lo fija al crear y la
+  reconciliación lo recalcula con los incidentes ya reconciliados (`update_tipo_liquidacion`).
+- `ReanalizarLiquidacion` corre solo `reglas_aplicables(tipo)`: en un abono se apagan
+  ALT001/002/003/005/008/009; quedan los duplicados (ALT004/ALT010). Las alertas viejas ya
+  trabajadas por la TL se preservan (misma semántica que desactivar la regla).
+- Migración `a9c4e2f7b1d3`: backfill de las 31 existentes (todas SAN JUAN). Reanálisis en
+  vivo: 3944-6 20 → 0 alertas; 3946-4 113 → 8 (solo ALT010, duplicados reales).
+- UI: banner "Liquidación de abono" en el detalle, en naranja si falta el extra ("no aprobar
+  hasta entonces"), con los últimos 6 abonos del prestador (período, monto, concepto) para
+  comparar a ojo. La etiqueta de tipo del encabezado ya muestra "abono".

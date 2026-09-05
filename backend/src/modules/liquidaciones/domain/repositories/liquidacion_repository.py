@@ -104,6 +104,12 @@ class LiquidacionRepository(Protocol):
         vacío."""
         ...
 
+    async def update_tipo_liquidacion(self, liquidacion_id: UUID, tipo_liquidacion: str) -> None:
+        """`ReconciliarLiquidacion` lo recalcula con los incidentes ya reconciliados
+        (`tipo_segun_incidentes`): una liquidación que AyC creó "vacía" o con
+        precios y después quedó toda a $1 pasa a abono, y al revés."""
+        ...
+
     async def count_pendientes_por_prestador(self) -> list[tuple[str, int]]:
         """Conteo de liquidaciones pendientes (excluye aprobada y cerrada) agrupado
         por prestador. Retorna pares (nombre_corto, count) ordenados por count desc."""

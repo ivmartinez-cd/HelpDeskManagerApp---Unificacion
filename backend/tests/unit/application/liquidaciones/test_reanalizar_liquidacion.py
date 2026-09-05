@@ -118,8 +118,10 @@ async def test_reanalizar_preserva_el_triage_de_la_tl() -> None:
     await world.use_case.execute(liquidacion.id)
     alerta = world.alertas.por_liquidacion[liquidacion.id][0]
     await world.alertas.update_estado(
-        liquidacion.id, alerta.id,
-        estado="descartada", justificacion="Diferencia acordada con el PST",
+        liquidacion.id,
+        alerta.id,
+        estado="descartada",
+        justificacion="Diferencia acordada con el PST",
     )
 
     await world.use_case.execute(liquidacion.id)
@@ -147,8 +149,10 @@ async def test_reanalizar_deja_ok_el_incidente_cuya_unica_alerta_fue_descartada(
 
     alerta = world.alertas.por_liquidacion[liquidacion.id][0]
     await world.alertas.update_estado(
-        liquidacion.id, alerta.id,
-        estado="descartada", justificacion="Diferencia acordada con el PST",
+        liquidacion.id,
+        alerta.id,
+        estado="descartada",
+        justificacion="Diferencia acordada con el PST",
     )
 
     await world.use_case.execute(liquidacion.id)
@@ -172,3 +176,19 @@ async def test_reanalizar_regenera_pendientes_sin_arrastre() -> None:
     regenerada = world.alertas.por_liquidacion[liquidacion.id][0]
     assert regenerada.estado == "pendiente"
     assert regenerada.justificacion is None
+
+
+async def test_abono_no_genera_alertas_de_precio() -> None:
+    """Contrato mensual: todos los incidentes a $1 y el importe en el ítem extra —
+    ALT001 por incidente es ruido (105 por mes en SAN JUAN) y se apaga."""
+    world = World()
+    prestador_id = uuid.uuid4()
+    liquidacion = make_liquidacion(prestador_id=prestador_id, tipo_liquidacion="abono")
+    world.liquidaciones.rows[liquidacion.id] = liquidacion
+    world.tarifarios.rows = [make_tarifario(prestador_id=prestador_id, costo_servicio=54400.0)]
+    incidente = make_incidente(liquidacion_id=liquidacion.id, costo_servicio_cobrado=1.0)
+    world.incidentes.rows[incidente.id] = incidente
+
+    resultado = await world.use_case.execute(liquidacion.id)
+
+    assert resultado.total_alertas == 0

@@ -1,5 +1,10 @@
 """Caso de uso ReanalizarLiquidacion — port de POST /liquidaciones/{id}/reanalize.
 
+Para una liquidación de abono (`TIPO_ABONO`) las reglas de precio/km quedan fuera
+(`reglas_aplicables`): como se pasan al conciliador como "no activas", las alertas
+viejas de esas reglas que la TL ya había trabajado se preservan (misma semántica
+que desactivar la regla), y las pendientes desaparecen.
+
 Re-corre el motor de reglas sobre una liquidación ya importada. El legacy
 (`ejecutar_motor`) solo actualiza `total_alertas` al terminar — `total_incidentes` y
 `total_importe` se fijan al importar y no se tocan acá (confirmado leyendo el router
@@ -46,6 +51,7 @@ from src.modules.liquidaciones.domain.services.conciliar_alertas import (
     conciliar_alertas,
 )
 from src.modules.liquidaciones.domain.services.motor_reglas.motor import ejecutar_motor_reglas
+from src.modules.liquidaciones.domain.services.tipo_abono import reglas_aplicables
 from src.modules.liquidaciones.domain.services.triage_alertas import recalcular_estado_incidente
 from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado import (
     IncidenteEvaluado,
@@ -73,10 +79,10 @@ class ReanalizarLiquidacion:
             raise LiquidacionNoEncontradaError(liquidacion_id)
 
         incidentes = await self._ports.incidentes.list_by_liquidacion(liquidacion_id)
-        reglas_activas = await self._ports.reglas.list_activas()
-        resultado = await self._ejecutar_motor(
-            liquidacion.prestador_id, incidentes, reglas_activas
+        reglas_activas = reglas_aplicables(
+            liquidacion.tipo_liquidacion, await self._ports.reglas.list_activas()
         )
+        resultado = await self._ejecutar_motor(liquidacion.prestador_id, incidentes, reglas_activas)
         await self._persistir(liquidacion_id, resultado, set(reglas_activas))
 
         return ReanalizarLiquidacionResultado(
@@ -123,8 +129,6 @@ def _conciliar_estado_incidentes(
     resultado = []
     for evaluado in incidentes_evaluados:
         estados = estados_por_incidente.get(evaluado.incidente_id, [])
-        nuevo_estado = (
-            recalcular_estado_incidente(estados) if estados else ESTADO_VALIDACION_OK
-        )
+        nuevo_estado = recalcular_estado_incidente(estados) if estados else ESTADO_VALIDACION_OK
         resultado.append(replace(evaluado, estado_validacion=nuevo_estado))
     return resultado

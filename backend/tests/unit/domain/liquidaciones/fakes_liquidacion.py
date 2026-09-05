@@ -132,15 +132,19 @@ class FakeLiquidacionRepository:
         )
 
     async def update_periodo(self, liquidacion_id: UUID, periodo: str) -> None:
+        self.rows[liquidacion_id] = dataclasses.replace(self.rows[liquidacion_id], periodo=periodo)
+
+    async def update_tipo_liquidacion(self, liquidacion_id: UUID, tipo_liquidacion: str) -> None:
         self.rows[liquidacion_id] = dataclasses.replace(
-            self.rows[liquidacion_id], periodo=periodo
+            self.rows[liquidacion_id], tipo_liquidacion=tipo_liquidacion
         )
 
     async def list_activas_por_prestador_con_numero(
         self, prestador_id: UUID, estados: frozenset[str]
     ) -> list[Liquidacion]:
         return [
-            r for r in self.rows.values()
+            r
+            for r in self.rows.values()
             if r.prestador_id == prestador_id
             and r.numero_liquidacion is not None
             and r.estado in estados

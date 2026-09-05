@@ -13,6 +13,9 @@ from dataclasses import dataclass
 from datetime import datetime
 
 TIPO_REGULAR = "regular"
+# Contrato mensual: incidentes a $1 + ítem extra con el importe real (ver
+# `domain/services/tipo_abono.py`). Absorbe los "cc"/"preco" del CSV legacy.
+TIPO_ABONO = "abono"
 TIPO_PRECO = "preco"
 TIPO_CC = "cc"
 TIPO_DEPOSITO = "deposito"

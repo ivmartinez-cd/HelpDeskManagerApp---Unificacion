@@ -52,7 +52,6 @@ from src.modules.liquidaciones.domain.entities.liquidacion import (
     ESTADO_OBSERVADA,
     ESTADO_PRELIQUIDADA,
     ESTADO_RECIBIDA,
-    TIPO_REGULAR,
     Liquidacion,
 )
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
@@ -71,6 +70,7 @@ from src.modules.liquidaciones.domain.repositories.prestador_repository import (
 )
 from src.modules.liquidaciones.domain.services.detectar_anuladas import detectar_anuladas
 from src.modules.liquidaciones.domain.services.importacion.metadata import extraer_periodo
+from src.modules.liquidaciones.domain.services.tipo_abono import tipo_segun_incidentes
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
     CdIncidenteRow,
     CdLiquidacion,
@@ -217,17 +217,14 @@ class SincronizarLiquidaciones:
         log_reconciliada(cd_liq, resultado)
         return resultado
 
-    async def _detalle_para_reconciliar(
-        self, cd_liq: CdLiquidacion
-    ) -> list[CdIncidenteRow] | None:
+    async def _detalle_para_reconciliar(self, cd_liq: CdLiquidacion) -> list[CdIncidenteRow] | None:
         """Detalle SOAP de la liquidación, o None si falló (se reintenta en el
         próximo sync — la reconciliación no se intenta con datos parciales)."""
         try:
             return await self._ports.cd_gateway.get_incidentes(cd_liq.id)
         except ExternalServiceError:
             logger.warning(
-                "sync CD: detalle SOAP falló al reconciliar %s — se reintenta en "
-                "el próximo sync",
+                "sync CD: detalle SOAP falló al reconciliar %s — se reintenta en el próximo sync",
                 cd_liq.numero_liquidacion,
             )
             return None
@@ -279,7 +276,7 @@ class SincronizarLiquidaciones:
             prestador_id=prestador.id,
             numero_liquidacion=cd_liq.numero_liquidacion,
             periodo=periodo,
-            tipo_liquidacion=TIPO_REGULAR,
+            tipo_liquidacion=tipo_segun_incidentes(incidentes),
             nombre_archivo=None,
             total_incidentes=len(incidentes),
             total_importe=total,

@@ -218,9 +218,7 @@ async def test_alta_crea_incidente_nuevo() -> None:
 
 async def test_sin_diferencias_no_toca_nada_pero_reconcilia() -> None:
     world = World()
-    liq = world.con_liquidacion(
-        estado="recibida", total_incidentes=1, total_importe=1500.0
-    )
+    liq = world.con_liquidacion(estado="recibida", total_incidentes=1, total_importe=1500.0)
     world.con_incidente(
         liq.id,
         numero_incidente="1",
@@ -438,9 +436,7 @@ async def test_estado_se_pisa_con_el_que_reporta_ayc() -> None:
     liq = world.con_liquidacion(estado="abierta")
     remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
 
-    resultado = await world.use_case.execute(
-        liq, make_cd_liq(1, estado="Recibida"), [remoto]
-    )
+    resultado = await world.use_case.execute(liq, make_cd_liq(1, estado="Recibida"), [remoto])
 
     assert resultado.estado_actualizado is True
     assert world.liquidaciones.rows[liq.id].estado == "recibida"
@@ -481,9 +477,7 @@ async def test_estado_ayc_desconocido_no_se_pisa() -> None:
     liq = world.con_liquidacion(estado="recibida")
     remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
 
-    resultado = await world.use_case.execute(
-        liq, make_cd_liq(1, estado="Anulada"), [remoto]
-    )
+    resultado = await world.use_case.execute(liq, make_cd_liq(1, estado="Anulada"), [remoto])
 
     assert resultado.estado_actualizado is False
     assert world.liquidaciones.rows[liq.id].estado == "recibida"
@@ -494,7 +488,8 @@ async def test_extra_se_trae_desde_ayc() -> None:
     liq = world.con_liquidacion(concepto_extra=None, monto_extra=None)
     remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
     world.cd_gateway.detalles_por_liquidacion[1] = CdLiquidacionDetalle(
-        concepto_extra="Adicional Factura NRO 0002-00001573", monto_extra=1499999.0,
+        concepto_extra="Adicional Factura NRO 0002-00001573",
+        monto_extra=1499999.0,
         numero_factura=None,
     )
 
@@ -598,3 +593,19 @@ async def test_factura_pdf_url_no_se_recalcula_si_ya_estaba_seteada() -> None:
 
     assert resultado.factura_actualizada is False
     assert world.liquidaciones.rows[liq.id].factura_pdf_url == url_original
+
+
+async def test_reconciliar_pasa_a_abono_cuando_todo_queda_a_un_peso() -> None:
+    """SAN JUAN: AyC deja todos los incidentes a $1 y carga el importe real como
+    extra — la liquidación pasa a abono y el reanálisis deja de generar ALT001."""
+    world = World()
+    liq = world.con_liquidacion(tipo_liquidacion="regular")
+    world.con_incidente(liq.id, numero_incidente="1", costo_servicio_cobrado=54400.0)
+    world.tarifarios.rows = [make_tarifario(prestador_id=liq.prestador_id, costo_servicio=54400.0)]
+    remoto = make_remoto("1", costo_servicio_cobrado=1.0, costo_total_cobrado=1.0)
+
+    await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert world.liquidaciones.rows[liq.id].tipo_liquidacion == "abono"
+    alertas = world.alertas.por_liquidacion.get(liq.id, [])
+    assert all(a.tipo_alerta != "ALT001" for a in alertas)
