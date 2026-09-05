@@ -2,7 +2,7 @@
 `shared/infrastructure/mercurio/factories.py`, ADR-018): singleton de
 proceso, un solo lugar que lee la key. La settings sigue viviendo bajo
 `LiquidacionesSettings` (fue el primer módulo en usarla, ver
-`settings_groups.py`) pero es la config de Google Geocoding para toda la
+`settings_groups_operativos.py`) pero es la config de Google Geocoding para toda la
 app, no algo privado de liquidaciones — no se renombró para no tocar una
 integración ya verificada en producción (mismo criterio que
 `sla_mercurio_*`)."""

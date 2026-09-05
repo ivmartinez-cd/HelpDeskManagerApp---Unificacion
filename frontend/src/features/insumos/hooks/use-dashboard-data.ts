@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { insumosApi } from "../api/insumos-api";
-import { isLoaded, isSelectable } from "../components/dashboard/request-status";
+import { isLoaded } from "../components/dashboard/request-status";
 import type { CustomerSummary, DashboardResponse, RequestRow } from "../types";
+import { useRequestSelection } from "./use-request-selection";
 
 /** Datos del Dashboard de Insumos: métricas globales + solicitudes por cliente
  * + expansión + selección por checkbox, todo en UN hook.
@@ -59,7 +60,14 @@ export function useDashboardData(): DashboardData {
   const [requestsByCustomer, setRequestsByCustomer] = useState<Record<number, RequestRow[]>>({});
   const [requestsLoading, setRequestsLoading] = useState<Record<number, boolean>>({});
   const [requestsError, setRequestsError] = useState<Record<number, string | null>>({});
-  const [selected, setSelected] = useState<Record<number, ReadonlySet<number>>>({});
+  const {
+    selected,
+    ensureCustomerSelection,
+    toggleSelect,
+    toggleSelectAll,
+    deselect,
+    isAllSelected,
+  } = useRequestSelection(requestsByCustomer);
 
   // Snapshot de pendientes por cliente entre polls: para clientes colapsados,
   // invalidar el cache viejo cuando el contador cambió (sin pedirlo por HTTP).
@@ -83,31 +91,33 @@ export function useDashboardData(): DashboardData {
     requestsRef.current = requestsByCustomer;
   }, [requestsByCustomer]);
 
-  const fetchCustomerRequests = useCallback(async (customerId: number) => {
-    inFlight.current.get(customerId)?.abort();
-    const controller = new AbortController();
-    inFlight.current.set(customerId, controller);
+  const fetchCustomerRequests = useCallback(
+    async (customerId: number) => {
+      inFlight.current.get(customerId)?.abort();
+      const controller = new AbortController();
+      inFlight.current.set(customerId, controller);
 
-    setRequestsLoading((state) => ({ ...state, [customerId]: true }));
-    setRequestsError((state) => ({ ...state, [customerId]: null }));
-    try {
-      const page = await insumosApi.listRequests({ customerId }, { signal: controller.signal });
-      setRequestsByCustomer((state) => ({ ...state, [customerId]: page.items }));
-      setSelected((state) =>
-        state[customerId] ? state : { ...state, [customerId]: new Set<number>() },
-      );
-    } catch (err) {
-      // Abortado porque arrancó un fetch más nuevo para este cliente: no es un
-      // error a mostrar, y el estado (loading/errors) ya le pertenece a ese otro.
-      if (err instanceof DOMException && err.name === "AbortError") return;
-      setRequestsError((state) => ({ ...state, [customerId]: errorMessage(err) }));
-    } finally {
-      if (inFlight.current.get(customerId) === controller) {
-        inFlight.current.delete(customerId);
-        setRequestsLoading((state) => ({ ...state, [customerId]: false }));
+      setRequestsLoading((state) => ({ ...state, [customerId]: true }));
+      setRequestsError((state) => ({ ...state, [customerId]: null }));
+      try {
+        const page = await insumosApi.listRequests({ customerId }, { signal: controller.signal });
+        setRequestsByCustomer((state) => ({ ...state, [customerId]: page.items }));
+        ensureCustomerSelection(customerId);
+      } catch (err) {
+        // Abortado porque arrancó un fetch más nuevo para este cliente: no es
+        // un error a mostrar, y el estado (loading/errors) ya le pertenece a
+        // ese otro.
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setRequestsError((state) => ({ ...state, [customerId]: errorMessage(err) }));
+      } finally {
+        if (inFlight.current.get(customerId) === controller) {
+          inFlight.current.delete(customerId);
+          setRequestsLoading((state) => ({ ...state, [customerId]: false }));
+        }
       }
-    }
-  }, []);
+    },
+    [ensureCustomerSelection],
+  );
 
   const loadDashboard = useCallback(
     async (silent = false) => {
@@ -236,53 +246,6 @@ export function useDashboardData(): DashboardData {
   const pendingRequests = useCallback(
     (customerId: number) => (requestsByCustomer[customerId] ?? []).filter((row) => !isLoaded(row)),
     [requestsByCustomer],
-  );
-
-  const toggleSelect = useCallback((customerId: number, requestId: number) => {
-    setSelected((state) => {
-      const next = new Set(state[customerId] ?? []);
-      if (next.has(requestId)) next.delete(requestId);
-      else next.add(requestId);
-      return { ...state, [customerId]: next };
-    });
-  }, []);
-
-  const deselect = useCallback((customerId: number, requestId: number) => {
-    setSelected((state) => {
-      const current = state[customerId];
-      if (!current?.has(requestId)) return state;
-      const next = new Set(current);
-      next.delete(requestId);
-      return { ...state, [customerId]: next };
-    });
-  }, []);
-
-  const isAllSelected = useCallback(
-    (customerId: number) => {
-      const pending = (requestsByCustomer[customerId] ?? []).filter((row) => isSelectable(row));
-      if (pending.length === 0) return false;
-      const current = selected[customerId];
-      if (!current) return false;
-      return pending.every((row) => current.has(row.requestId));
-    },
-    [requestsByCustomer, selected],
-  );
-
-  const toggleSelectAll = useCallback(
-    (customerId: number) => {
-      const pending = (requestsByCustomer[customerId] ?? []).filter((row) => isSelectable(row));
-      if (pending.length === 0) return;
-      const allSelected = isAllSelected(customerId);
-      setSelected((state) => {
-        const next = new Set(state[customerId] ?? []);
-        for (const row of pending) {
-          if (allSelected) next.delete(row.requestId);
-          else next.add(row.requestId);
-        }
-        return { ...state, [customerId]: next };
-      });
-    },
-    [requestsByCustomer, isAllSelected],
   );
 
   const customersWithPending = useMemo(

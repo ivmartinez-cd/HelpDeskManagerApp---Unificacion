@@ -59,16 +59,11 @@ async def _actualizar_extra(
 async def _actualizar_factura(
     liquidaciones: LiquidacionRepository, liquidacion: Liquidacion, detalle: CdLiquidacionDetalle
 ) -> bool:
-    """El link al PDF (`factura_pdf_url`) se calcula una sola vez — la primera
-    vez que aparece `numero_factura`, o cuando ese número cambia — y no se
-    recalcula en reconciliaciones posteriores mientras el número siga igual.
-    Así una liquidación que ya tenía el número guardado antes de que este
-    campo existiera lo completa solo en el próximo ciclo del job (backfill),
-    pero una vez calculada la URL queda fija. Verificado contra AyC real
-    (liquidación 3951-6, 2026-09-04): `Fecha` en `getLiquidationById` no es
-    estable en el tiempo (no es la fecha fija de subida del archivo, cambia
-    entre corridas) — recalcular con ese campo en cada reconciliación pisaba
-    una URL válida con una fecha equivocada."""
+    """El link al PDF se calcula una sola vez, al aparecer o cambiar
+    `numero_factura`, y no se recalcula después: `Fecha` en
+    `getLiquidationById` no es estable entre llamadas (verificado contra AyC
+    real, liquidación 3951-6, 2026-09-04) — recalcular en cada reconciliación
+    pisaba una URL válida con una fecha equivocada."""
     if detalle.numero_factura is None:
         return False
     numero_sin_cambios = detalle.numero_factura == liquidacion.numero_factura

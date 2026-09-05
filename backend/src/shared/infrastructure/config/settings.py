@@ -13,14 +13,16 @@ from pathlib import Path
 from pydantic_settings import SettingsConfigDict
 
 from src.shared.infrastructure.config.settings_groups import (
-    AnalisisLogHpSettings,
     AuthSettings,
     CanalDirectoSettings,
     ContadoresSettings,
     CoreSettings,
     InsumosSettings,
-    LiquidacionesSettings,
     MailSettings,
+)
+from src.shared.infrastructure.config.settings_groups_operativos import (
+    AnalisisLogHpSettings,
+    LiquidacionesSettings,
     PreventivosSettings,
     SlaSettings,
     WatiSettings,
