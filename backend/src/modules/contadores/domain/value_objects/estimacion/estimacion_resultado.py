@@ -11,7 +11,10 @@ from src.modules.contadores.domain.value_objects.estimacion.fuente_estimacion im
 class EstimacionResultado:
     """Salida del motor para un (equipo, clase de contador). `tipo_toma`
     grabado es siempre 14/19/None — nunca 4 (REGLAS_DE_NEGOCIO §4, regla
-    dura de grabado)."""
+    dura de grabado). `bloqueo_obligatorio` (§14) es más fuerte que
+    `requiere_confirmacion` (solo aviso/semáforo): obliga a
+    `resolver_resultado_final` a no dejar salir el valor automático hasta
+    que el operador lo acepte o corrija a mano."""
 
     estim_propuesto: float | None
     impresiones: float | None
@@ -31,3 +34,4 @@ class EstimacionResultado:
     par_incluye_t4: bool = False
     t4_sin_revisar: bool = False
     tasa_diaria: float | None = None
+    bloqueo_obligatorio: bool = False

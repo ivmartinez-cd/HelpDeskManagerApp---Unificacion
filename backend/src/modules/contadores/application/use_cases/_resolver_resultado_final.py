@@ -31,6 +31,23 @@ _RESULTADO_PENDIENTE_POR_OPERADOR = EstimacionResultado(
     dias_receso_descontados=0,
 )
 
+_RESULTADO_BLOQUEADO_POR_INTERPOLACION = EstimacionResultado(
+    estim_propuesto=None,
+    impresiones=None,
+    tipo_toma=None,
+    fuente="Pendiente",
+    metodo_detalle="Interpolación hacia atrás: requiere confirmación manual antes de facturar",
+    requiere_confirmacion=True,
+    semaforo="ROJO",
+    borde_salto_imposible=False,
+    coloreo=None,
+    nota_operador=None,
+    meses_sin_real_en_alerta=False,
+    dias_par_pl=None,
+    ajustado_por_receso=False,
+    dias_receso_descontados=0,
+)
+
 
 def resolver_resultado_final(
     clase: ClaseProceso, automatico: EstimacionResultado, decision: DecisionOperadorDto | None
@@ -41,6 +58,8 @@ def resolver_resultado_final(
         return _RESULTADO_PENDIENTE_POR_OPERADOR
     if decision and decision.manual:
         return _resultado_de_manual(decision.manual, clase, automatico)
+    if automatico.bloqueo_obligatorio:
+        return _RESULTADO_BLOQUEADO_POR_INTERPOLACION
     if decision and decision.nota:
         return replace(automatico, requiere_confirmacion=True)
     return automatico

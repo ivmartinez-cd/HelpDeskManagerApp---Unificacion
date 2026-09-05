@@ -29,6 +29,7 @@ def test_entre_dos_reales_calculo_basico() -> None:
     assert resultado.tipo_toma == 14
     assert resultado.fuente == "Historia_Propia"
     assert resultado.requiere_confirmacion is False
+    assert resultado.bloqueo_obligatorio is False
 
 
 def test_entre_dos_reales_interpola_hacia_atras() -> None:
@@ -45,6 +46,8 @@ def test_entre_dos_reales_interpola_hacia_atras() -> None:
     assert resultado.estim_propuesto < 43_226
     assert 9_200 <= resultado.impresiones <= 9_600  # type: ignore[operator]
     assert resultado.fuente == "Historia_Propia"
+    assert resultado.requiere_confirmacion is True
+    assert resultado.bloqueo_obligatorio is True
 
 
 def test_separacion_menor_a_15_dias_descarta_el_par() -> None:

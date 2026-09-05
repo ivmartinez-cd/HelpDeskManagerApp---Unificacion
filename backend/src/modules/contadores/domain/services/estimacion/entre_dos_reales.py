@@ -1,4 +1,4 @@
-from dataclasses import replace
+from dataclasses import dataclass, replace
 
 from src.modules.contadores.domain.services.estimacion.armado_resultado import con_marcadores
 from src.modules.contadores.domain.services.estimacion.marcadores import (
@@ -65,15 +65,39 @@ def _par_incluye_t4(entrada: EstimacionInput) -> bool:
     )
 
 
+@dataclass(frozen=True, slots=True)
+class _Flags:
+    """Llegada posterior a la fecha objetivo (interpolación hacia atrás,
+    `dias_proyectados < 0`) fuerza `bloqueo_obligatorio` (REGLAS_DE_NEGOCIO
+    §14, decisión 2026-09-05): no alcanza con el aviso de `requiere_confirmacion`,
+    `resolver_resultado_final` no deja salir este valor sin que el operador
+    lo acepte o corrija a mano."""
+
+    otro_motivo: bool
+    interpola_hacia_atras: bool
+
+    @property
+    def requiere_confirmacion(self) -> bool:
+        return self.otro_motivo or self.interpola_hacia_atras
+
+
+def _flags_de(ctx: ContextoEstimacion, r3: ResultadoReglaDeTres) -> _Flags:
+    return _Flags(
+        otro_motivo=_par_incluye_t4(ctx.entrada) or r3.dias_receso_descontados > 0,
+        interpola_hacia_atras=r3.dias_proyectados < 0,
+    )
+
+
 def _armar(ctx: ContextoEstimacion, r3: ResultadoReglaDeTres) -> EstimacionResultado:
-    requiere_confirmacion = _par_incluye_t4(ctx.entrada) or r3.dias_receso_descontados > 0
-    senales = SenalesRama(requiere_confirmacion_otro_motivo=requiere_confirmacion)
+    flags = _flags_de(ctx, r3)
+    senales = SenalesRama(requiere_confirmacion_otro_motivo=flags.requiere_confirmacion)
     marcadores = evaluar_marcadores(ctx.entrada, r3.impresiones, senales)
     resultado = replace(
         _BASE,
         estim_propuesto=r3.estimado,
         impresiones=r3.impresiones,
-        requiere_confirmacion=requiere_confirmacion,
+        requiere_confirmacion=flags.requiere_confirmacion,
+        bloqueo_obligatorio=flags.interpola_hacia_atras,
         dias_par_pl=r3.dias_par,
         ajustado_por_receso=r3.dias_receso_descontados > 0,
         dias_receso_descontados=r3.dias_receso_descontados,
