@@ -77,6 +77,7 @@ export function TablaKmTable({
   spstsConTarifa,
   onEdit,
   onDelete,
+  onArchivar,
 }: {
   filtered: TablaKm[];
   sort: SortState<KmSortKey>;

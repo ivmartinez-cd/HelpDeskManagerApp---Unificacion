@@ -152,12 +152,10 @@ def _registrar_middlewares(app: FastAPI, settings: Settings) -> None:
     app.add_middleware(RequestIdMiddleware)
 
 
-def _docs_kwargs(settings: Settings) -> dict[str, str | None]:
+def _ruta_docs(settings: Settings, ruta: str) -> str | None:
     """Swagger/ReDoc/OpenAPI solo en development: en producción listan 300+
     endpoints (incluidos los de integraciones con costo) sin sesión."""
-    if _es_development(settings):
-        return {"docs_url": "/docs", "redoc_url": "/redoc", "openapi_url": "/openapi.json"}
-    return {"docs_url": None, "redoc_url": None, "openapi_url": None}
+    return ruta if _es_development(settings) else None
 
 
 def _registrar_routers(app: FastAPI) -> None:
@@ -173,7 +171,9 @@ def create_app() -> FastAPI:
         title="HelpDesk Manager API",
         version="0.1.0",
         lifespan=_lifespan,
-        **_docs_kwargs(settings),
+        docs_url=_ruta_docs(settings, "/docs"),
+        redoc_url=_ruta_docs(settings, "/redoc"),
+        openapi_url=_ruta_docs(settings, "/openapi.json"),
     )
     app.dependency_overrides[get_operador_color_lookup] = _provide_operador_color_lookup
     _registrar_middlewares(app, settings)

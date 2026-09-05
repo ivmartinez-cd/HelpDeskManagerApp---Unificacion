@@ -85,7 +85,14 @@ def evaluate_device_health(
     crit = [e for e in events if _is_critical(e)]
     latest_counter = max(e.counter for e in events)
     salud = _aplicar_reglas(crit, latest_counter, maintenance or [], now_aware)
-    return replace(salud, **_contadores(crit, latest_counter, now_aware))
+    c = _contadores(crit, latest_counter, now_aware)
+    return replace(
+        salud,
+        critical_events_count=c.eventos,
+        critical_occurrences=c.ocurrencias,
+        days_since_last_critical=c.dias_desde_ultimo,
+        pages_since_last_critical=c.paginas_desde_ultimo,
+    )
 
 
 def _aplicar_reglas(
@@ -107,18 +114,26 @@ def _aplicar_reglas(
     )
 
 
+@dataclass(frozen=True, slots=True)
+class _Contadores:
+    eventos: int = 0
+    ocurrencias: int = 0
+    dias_desde_ultimo: int | None = None
+    paginas_desde_ultimo: int | None = None
+
+
 def _contadores(
     crit: list[_TelemetryEvent], latest_counter: int, now_aware: datetime
-) -> dict[str, int | None]:
+) -> _Contadores:
     if not crit:
-        return {"critical_events_count": 0, "critical_occurrences": 0}
+        return _Contadores()
     last_crit = max(crit, key=lambda e: _aware(e.event_time))
-    return {
-        "critical_events_count": len(crit),
-        "critical_occurrences": sum(max(1, e.occurrences) for e in crit),
-        "days_since_last_critical": (now_aware - _aware(last_crit.event_time)).days,
-        "pages_since_last_critical": latest_counter - last_crit.counter,
-    }
+    return _Contadores(
+        eventos=len(crit),
+        ocurrencias=sum(max(1, e.occurrences) for e in crit),
+        dias_desde_ultimo=(now_aware - _aware(last_crit.event_time)).days,
+        paginas_desde_ultimo=latest_counter - last_crit.counter,
+    )
 
 
 def _rule_post_repair(
