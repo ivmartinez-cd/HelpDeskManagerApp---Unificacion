@@ -108,9 +108,7 @@ async def forzar_metodo_candidato(
     identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> RecalcularCandidatoResponseSchema:
-    """Dos de las 5 acciones manuales de REGLAS_DE_NEGOCIO §8 ("forzar
-    cascada de parque" / "forzar entre dos reales") — mismo criterio de
-    fallback ejemplo→real que `recalcular_candidato`."""
+    """Forzar cascada de parque / entre reales (REGLAS_DE_NEGOCIO §8)."""
     resultado = ForzarMetodoCandidatoUseCase().execute(request, contexto_ejemplo(None))
     if resultado is None and es_solicitud_real(request):
         use_case = ForzarMetodoCandidatoSigesUseCase(
