@@ -234,3 +234,30 @@ ALT002 pendientes: 19 "fila sin km" (esperado 0), 21 "cobró 0 km" (mismo viaje)
 4. **Archivado.** Columna `tabla_kms.archivada` (migración `c3e8f1a9d2b4`) con backfill de
    las 1.519 filas sin actividad en 2026; la pantalla las oculta por default ("Mostrar N
    archivadas"), botón Archivar/Restaurar por fila, el motor no las distingue.
+
+## 9. Direcciones de Tabla KM con OpenStreetMap (2026-09-05)
+
+Pedido del usuario: arreglar todas las direcciones sin depender de Google. Los flujos ya
+existían (geocodificar sucursales sin pin, auditar pines contra la dirección, corregir pin,
+bandeja del Asistente de KM) atados a Google; se agregó Nominatim/OpenStreetMap detrás del
+mismo puerto (`GEOCODING_PROVEEDOR=osm`, activo en dev, commit `8e770f02`), con segundo
+intento por nombre del cliente (nunca se auto-resuelve) y reuso de la caché de direcciones
+(4.817 → 6.462 tras la pasada).
+
+Pasada completa sobre los 34 prestadores vinculados (dos tandas; la primera perdió los
+últimos 24 por respuestas vacías transitorias y se repitió con códigos HTTP, todos 200):
+
+| Resultado | Total |
+|---|---|
+| Sucursales sin pin resueltas solas (candidato único y preciso) | 92 |
+| Sucursales con candidatos para que la TL elija (bandeja) | 68 |
+| Sucursales sin ningún resultado (ni dirección ni nombre) | 26 |
+| Pines de Gestión sospechosos (> 5 km de su dirección) | 516 |
+| Consultas nuevas a Nominatim (1/s, con User-Agent propio) | 1.615 |
+
+Los más cargados: PENTACOM (43 resueltas, 23 a revisar, 70 pines), SAN JUAN (100 pines
+sospechosos, tope del listado), SUPERNOVA (8/10/60), MENDOZA (7/6/44). Nada se aplicó sobre
+pines existentes: la auditoría los lista y la TL confirma cada corrección desde el
+asistente (Momento 2, "pines a verificar" / "ubicaciones por resolver"). Las 92 resoluciones
+automáticas sí quedaron guardadas (`sucursal_coordenadas`, procedencia `geocode`) y las
+usa el cálculo de km. Pendiente: los textos del asistente siguen hablando de Google.
