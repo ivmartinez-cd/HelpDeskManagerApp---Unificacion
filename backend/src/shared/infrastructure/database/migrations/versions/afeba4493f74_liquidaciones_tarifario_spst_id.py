@@ -92,7 +92,7 @@ def upgrade() -> None:
     op.alter_column("spsts", "zona", new_column_name="zona_cobertura")
 
 
-def _migrar_zona_a_spst(bind: sa.Connection, tabla: sa.Table, columna_zona: str) -> None:
+def _migrar_zona_a_spst(bind: sa.Connection, tabla: sa.TableClause, columna_zona: str) -> None:
     """zona IS NULL ya queda spst_id NULL (default) sin tocar nada. Para el
     resto, agrupa por (prestador_id, zona) una sola vez y exige un único
     candidato — más de uno aborta la migración en vez de adivinar."""

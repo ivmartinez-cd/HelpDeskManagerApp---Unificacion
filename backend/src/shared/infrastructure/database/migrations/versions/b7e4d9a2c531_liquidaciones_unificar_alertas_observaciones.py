@@ -40,6 +40,7 @@ Create Date: 2026-09-04 21:50:00.000000
 
 import uuid
 from collections.abc import Sequence
+from typing import cast
 
 import sqlalchemy as sa
 from alembic import op
@@ -176,7 +177,7 @@ def _incidente_principal(bind: sa.Connection, observacion_id: uuid.UUID) -> uuid
             f"{len(principales)} incidentes 'principal' (se esperaba exactamente 1) — "
             "caso no visto en el dry-run, revisar a mano antes de continuar."
         )
-    return principales[0].incidente_id
+    return cast(uuid.UUID, principales[0].incidente_id)
 
 
 def _migrar_vinculos(bind: sa.Connection, observacion_id: uuid.UUID, alerta_id: uuid.UUID) -> None:
