@@ -9,6 +9,7 @@ archivo) para no pasar el máximo de 300 líneas."""
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
@@ -34,6 +35,7 @@ from src.modules.contadores.application.use_cases.list_grupos_economicos_estimac
 from src.modules.contadores.application.use_cases.list_procesos_por_grupo_estimacion import (
     ListProcesosPorGrupoEstimacionUseCase,
 )
+from src.modules.contadores.domain.ports.recesos_port import RecesosPort
 from src.modules.contadores.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.contadores.infrastructure.ejemplo.datos_ejemplo_proyeccion import (
     ID_GRUPO_ECONOMICO_EJEMPLO,
@@ -42,6 +44,12 @@ from src.modules.contadores.infrastructure.ejemplo.decisiones_operador_store imp
     get_decisiones_operador_store,
 )
 from src.modules.contadores.infrastructure.ejemplo.recesos_store import get_recesos_ejemplo_store
+from src.modules.contadores.infrastructure.repositories.sqlalchemy_decisiones_operador_repository import (  # noqa: E501
+    SqlAlchemyDecisionesOperadorRepository,
+)
+from src.modules.contadores.infrastructure.repositories.sqlalchemy_recesos_repository import (
+    SqlAlchemyRecesosRepository,
+)
 from src.modules.contadores.presentation._proyeccion_contexto_ejemplo import contexto_ejemplo
 from src.modules.contadores.presentation.dependencies import (
     get_grilla_estimacion_gateway,
@@ -57,6 +65,7 @@ from src.modules.contadores.presentation.schemas.proyeccion_schemas import (
     RecesoSchema,
     TableroProyeccionSchema,
 )
+from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/contadores/proyeccion", tags=["contadores-proyeccion"])
@@ -109,48 +118,76 @@ async def get_tablero(
     id_grupo_economico: int | None = None,
     id_anexo: int | None = None,
     _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> TableroProyeccionSchema:
     """Sin `nro_proceso` (ni el resto de la selección real) sigue devolviendo
     el tablero de ejemplo — el día que el frontend siempre mande la
     selección real, este fallback se puede sacar."""
     if nro_proceso is None or id_grupo_economico is None or id_anexo is None:
         store = get_decisiones_operador_store()
-        resultado = GetTableroProyeccionUseCase(store).execute(contexto_ejemplo(fecha_objetivo))
+        ctx = await contexto_ejemplo(fecha_objetivo)
+        resultado = await GetTableroProyeccionUseCase(store).execute(ctx)
         return TableroProyeccionSchema.from_result(resultado)
     if fecha_objetivo is None:
         raise HTTPException(422, detail="fecha_objetivo es requerida para el tablero real")
     solicitud = SolicitudTableroSigesDto(nro_proceso, id_grupo_economico, id_anexo, fecha_objetivo)
-    return await _get_tablero_real(solicitud)
+    return await _get_tablero_real(solicitud, db)
 
 
-async def _get_tablero_real(solicitud: SolicitudTableroSigesDto) -> TableroProyeccionSchema:
+async def _get_tablero_real(
+    solicitud: SolicitudTableroSigesDto, db: AsyncSession
+) -> TableroProyeccionSchema:
     use_case = GetTableroProyeccionSigesUseCase(
         get_grilla_estimacion_gateway(),
-        get_decisiones_operador_store(),
-        get_recesos_ejemplo_store(),
+        SqlAlchemyDecisionesOperadorRepository(db),
+        SqlAlchemyRecesosRepository(db),
     )
     resultado = await use_case.execute(solicitud)
     return TableroProyeccionSchema.from_result(resultado)
 
 
 @router.get("/recesos", response_model=Page[RecesoSchema])
-async def list_recesos(_: Identity = _require_view) -> Page[RecesoSchema]:
-    recesos = get_recesos_ejemplo_store().listar(ID_GRUPO_ECONOMICO_EJEMPLO)
+async def list_recesos(
+    id_grupo_economico: int | None = None,
+    _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> Page[RecesoSchema]:
+    """Sin `id_grupo_economico` (o si coincide con el de ejemplo), lista los
+    recesos de ejemplo — con un grupo económico real, los de ese grupo en
+    Postgres (la pantalla de administración todavía no ofrece elegir grupo,
+    pero el contrato ya soporta un proceso real)."""
+    store = _recesos_store_de(id_grupo_economico, db)
+    recesos = await store.listar(id_grupo_economico or ID_GRUPO_ECONOMICO_EJEMPLO)
     items = [RecesoSchema.from_dto(r) for r in recesos]
     return Page.of(items, page=1, size=_TAMANIO_PAGINA_CATALOGO_CHICO)
 
 
 @router.post("/recesos", response_model=RecesoSchema)
 async def crear_receso(
-    request: CrearRecesoRequest, _: Identity = _require_manage
+    request: CrearRecesoRequest,
+    _: Identity = _require_manage,
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> RecesoSchema:
-    use_case = GestionarRecesosProyeccionUseCase(get_recesos_ejemplo_store())
-    return RecesoSchema.from_dto(use_case.crear(request))
+    store = _recesos_store_de(request.id_grupo_economico, db)
+    use_case = GestionarRecesosProyeccionUseCase(store)
+    return RecesoSchema.from_dto(await use_case.crear(request))
 
 
 @router.delete("/recesos/{id_receso}", status_code=204)
-async def eliminar_receso(id_receso: int, _: Identity = _require_manage) -> None:
-    GestionarRecesosProyeccionUseCase(get_recesos_ejemplo_store()).eliminar(id_receso)
+async def eliminar_receso(
+    id_receso: int,
+    id_grupo_economico: int | None = None,
+    _: Identity = _require_manage,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> None:
+    store = _recesos_store_de(id_grupo_economico, db)
+    await GestionarRecesosProyeccionUseCase(store).eliminar(id_receso)
+
+
+def _recesos_store_de(id_grupo_economico: int | None, db: AsyncSession) -> RecesosPort:
+    if id_grupo_economico is None or id_grupo_economico == ID_GRUPO_ECONOMICO_EJEMPLO:
+        return get_recesos_ejemplo_store()
+    return SqlAlchemyRecesosRepository(db)
 
 
 router.include_router(candidatos_router)

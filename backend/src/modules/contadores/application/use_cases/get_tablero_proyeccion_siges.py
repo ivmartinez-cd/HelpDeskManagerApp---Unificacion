@@ -16,12 +16,10 @@ from src.modules.contadores.application.use_cases.get_tablero_proyeccion import 
     GetTableroProyeccionUseCase,
     TableroProyeccionResult,
 )
+from src.modules.contadores.domain.ports.decisiones_operador_port import DecisionesOperadorPort
 from src.modules.contadores.domain.ports.grilla_estimacion_port import GrillaEstimacionPort
+from src.modules.contadores.domain.ports.recesos_port import RecesosPort
 from src.modules.contadores.domain.value_objects.estimacion.receso_cliente import RecesoCliente
-from src.modules.contadores.infrastructure.ejemplo.decisiones_operador_store import (
-    DecisionesOperadorStore,
-)
-from src.modules.contadores.infrastructure.ejemplo.recesos_store import RecesosEjemploStore
 
 _RESUMEN_VACIO = ResumenProyeccionDto(reales=0, estimados=0, pendientes=0, sospechosos=0, total=0)
 
@@ -30,8 +28,8 @@ class GetTableroProyeccionSigesUseCase:
     def __init__(
         self,
         gateway: GrillaEstimacionPort,
-        decisiones: DecisionesOperadorStore,
-        recesos_store: RecesosEjemploStore,
+        decisiones: DecisionesOperadorPort,
+        recesos_store: RecesosPort,
     ) -> None:
         self._gateway = gateway
         self._decisiones = decisiones
@@ -44,13 +42,13 @@ class GetTableroProyeccionSigesUseCase:
         if not filas_siges:
             return TableroProyeccionResult([], _RESUMEN_VACIO)
         equipos = agrupar_por_equipo(filas_siges)
-        ctx = self._contexto(filas_siges[0], solicitud)
-        return GetTableroProyeccionUseCase(self._decisiones, lambda: equipos).execute(ctx)
+        ctx = await self._contexto(filas_siges[0], solicitud)
+        return await GetTableroProyeccionUseCase(self._decisiones, lambda: equipos).execute(ctx)
 
-    def _contexto(
+    async def _contexto(
         self, primera: FilaGrillaSigesDto, solicitud: SolicitudTableroSigesDto
     ) -> ContextoProcesoDto:
-        recesos = self._recesos_store.listar(solicitud.id_grupo_economico)
+        recesos = await self._recesos_store.listar(solicitud.id_grupo_economico)
         return ContextoProcesoDto(
             fecha_objetivo=solicitud.fecha_objetivo,
             periodo_desde=primera.periodo_desde,

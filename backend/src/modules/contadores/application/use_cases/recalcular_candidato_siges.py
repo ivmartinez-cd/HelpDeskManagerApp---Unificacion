@@ -8,6 +8,7 @@ from src.modules.contadores.application.use_cases._construir_entrada_siges impor
     ConstructorEntradaSiges,
 )
 from src.modules.contadores.domain.ports.grilla_estimacion_port import GrillaEstimacionPort
+from src.modules.contadores.domain.ports.recesos_port import RecesosPort
 from src.modules.contadores.domain.services.estimacion.recalcular_manual import recalcular_con_pl
 from src.modules.contadores.domain.value_objects.estimacion.contexto_estimacion import (
     ContextoEstimacion,
@@ -16,7 +17,6 @@ from src.modules.contadores.domain.value_objects.estimacion.estimacion_resultado
     EstimacionResultado,
 )
 from src.modules.contadores.domain.value_objects.estimacion.lectura_ref import LecturaRef
-from src.modules.contadores.infrastructure.ejemplo.recesos_store import RecesosEjemploStore
 
 
 class RecalcularCandidatoSigesUseCase:
@@ -26,7 +26,7 @@ class RecalcularCandidatoSigesUseCase:
     manual que prueba el operador — `None` si el equipo/clase no aparece en
     esa grilla (proceso o equipo distintos a los ya cargados)."""
 
-    def __init__(self, gateway: GrillaEstimacionPort, recesos_store: RecesosEjemploStore) -> None:
+    def __init__(self, gateway: GrillaEstimacionPort, recesos_store: RecesosPort) -> None:
         self._constructor = ConstructorEntradaSiges(gateway, recesos_store)
 
     async def execute(

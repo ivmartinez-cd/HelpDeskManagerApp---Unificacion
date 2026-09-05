@@ -17,8 +17,8 @@ from src.modules.contadores.infrastructure.ejemplo.datos_ejemplo_proyeccion impo
 from src.modules.contadores.infrastructure.ejemplo.recesos_store import get_recesos_ejemplo_store
 
 
-def contexto_ejemplo(fecha_objetivo: date | None) -> ContextoProcesoDto:
-    recesos = get_recesos_ejemplo_store().listar(ID_GRUPO_ECONOMICO_EJEMPLO)
+async def contexto_ejemplo(fecha_objetivo: date | None) -> ContextoProcesoDto:
+    recesos = await get_recesos_ejemplo_store().listar(ID_GRUPO_ECONOMICO_EJEMPLO)
     return ContextoProcesoDto(
         fecha_objetivo=fecha_objetivo or FECHA_OBJETIVO_EJEMPLO,
         periodo_desde=PERIODO_DESDE_EJEMPLO,

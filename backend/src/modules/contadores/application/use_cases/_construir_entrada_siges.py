@@ -16,14 +16,14 @@ from src.modules.contadores.application.use_cases._mapear_filas_grilla_siges imp
     agrupar_por_equipo,
 )
 from src.modules.contadores.domain.ports.grilla_estimacion_port import GrillaEstimacionPort
+from src.modules.contadores.domain.ports.recesos_port import RecesosPort
 from src.modules.contadores.domain.services.estimacion.recesos import recesos_aplicables
 from src.modules.contadores.domain.value_objects.estimacion.estimacion_input import EstimacionInput
 from src.modules.contadores.domain.value_objects.estimacion.receso_cliente import RecesoCliente
-from src.modules.contadores.infrastructure.ejemplo.recesos_store import RecesosEjemploStore
 
 
 class ConstructorEntradaSiges:
-    def __init__(self, gateway: GrillaEstimacionPort, recesos_store: RecesosEjemploStore) -> None:
+    def __init__(self, gateway: GrillaEstimacionPort, recesos_store: RecesosPort) -> None:
         self._gateway = gateway
         self._recesos_store = recesos_store
 
@@ -37,15 +37,15 @@ class ConstructorEntradaSiges:
         if not filas_equipo:
             return None
         equipo = agrupar_por_equipo(filas_equipo)[0]
-        ctx = self._contexto(filas_equipo[0], solicitud)
+        ctx = await self._contexto(filas_equipo[0], solicitud)
         entrada = construir_estimacion_input(equipo, equipo.clases[0], ctx)
         recesos = recesos_aplicables(ctx.recesos, ctx.id_anexo, ctx.id_grupo_economico)
         return entrada, recesos
 
-    def _contexto(
+    async def _contexto(
         self, fila: FilaGrillaSigesDto, solicitud: SolicitudRecalculoSigesDto
     ) -> ContextoProcesoDto:
-        recesos = self._recesos_store.listar(solicitud.id_grupo_economico)
+        recesos = await self._recesos_store.listar(solicitud.id_grupo_economico)
         return ContextoProcesoDto(
             fecha_objetivo=solicitud.fecha_objetivo,
             periodo_desde=fila.periodo_desde,

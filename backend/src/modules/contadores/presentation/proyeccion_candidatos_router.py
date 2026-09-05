@@ -22,6 +22,7 @@ from src.modules.contadores.application.use_cases.forzar_metodo_candidato_siges 
 )
 from src.modules.contadores.application.use_cases.get_candidatos_equipo import (
     GetCandidatosEquipoUseCase,
+    buscar_equipo_y_clase,
 )
 from src.modules.contadores.application.use_cases.get_candidatos_equipo_siges import (
     GetCandidatosEquipoSigesUseCase,
@@ -32,11 +33,17 @@ from src.modules.contadores.application.use_cases.recalcular_candidato import (
 from src.modules.contadores.application.use_cases.recalcular_candidato_siges import (
     RecalcularCandidatoSigesUseCase,
 )
+from src.modules.contadores.domain.ports.decisiones_operador_port import DecisionesOperadorPort
 from src.modules.contadores.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.contadores.infrastructure.ejemplo.decisiones_operador_store import (
     get_decisiones_operador_store,
 )
-from src.modules.contadores.infrastructure.ejemplo.recesos_store import get_recesos_ejemplo_store
+from src.modules.contadores.infrastructure.repositories.sqlalchemy_decisiones_operador_repository import (  # noqa: E501
+    SqlAlchemyDecisionesOperadorRepository,
+)
+from src.modules.contadores.infrastructure.repositories.sqlalchemy_recesos_repository import (
+    SqlAlchemyRecesosRepository,
+)
 from src.modules.contadores.presentation._proyeccion_auditoria import (
     registrar_accion,
     registrar_metodo_forzado,
@@ -73,7 +80,9 @@ async def get_candidatos(
     """`clase` de un equipo de ejemplo es un código (`"A4-B/N"`); `clase` de
     un equipo real de Siges es el `ID_ClaseContador` como string (ver
     `_clase_de` en `_mapear_filas_grilla_siges.py`) — de ahí el fallback."""
-    dto = GetCandidatosEquipoUseCase().execute(id_maquina, clase, contexto_ejemplo(fecha_objetivo))
+    dto = GetCandidatosEquipoUseCase().execute(
+        id_maquina, clase, await contexto_ejemplo(fecha_objetivo)
+    )
     if dto is None and clase.isdigit():
         use_case = GetCandidatosEquipoSigesUseCase(get_candidatos_equipo_gateway())
         dto = await use_case.execute(id_maquina, int(clase))
@@ -88,10 +97,10 @@ async def recalcular_candidato(
     identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> RecalcularCandidatoResponseSchema:
-    resultado = RecalcularCandidatoUseCase().execute(request, contexto_ejemplo(None))
+    resultado = RecalcularCandidatoUseCase().execute(request, await contexto_ejemplo(None))
     if resultado is None and es_solicitud_real(request):
         use_case = RecalcularCandidatoSigesUseCase(
-            get_grilla_estimacion_gateway(), get_recesos_ejemplo_store()
+            get_grilla_estimacion_gateway(), SqlAlchemyRecesosRepository(db)
         )
         resultado = await use_case.execute(request, solicitud_de(request))
     if resultado is None:
@@ -109,10 +118,10 @@ async def forzar_metodo_candidato(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> RecalcularCandidatoResponseSchema:
     """Forzar cascada de parque / entre reales (REGLAS_DE_NEGOCIO §8)."""
-    resultado = ForzarMetodoCandidatoUseCase().execute(request, contexto_ejemplo(None))
+    resultado = ForzarMetodoCandidatoUseCase().execute(request, await contexto_ejemplo(None))
     if resultado is None and es_solicitud_real(request):
         use_case = ForzarMetodoCandidatoSigesUseCase(
-            get_grilla_estimacion_gateway(), get_recesos_ejemplo_store()
+            get_grilla_estimacion_gateway(), SqlAlchemyRecesosRepository(db)
         )
         resultado = await use_case.execute(request, solicitud_de(request))
     if resultado is None:
@@ -131,7 +140,7 @@ async def marcar_pendiente(
     identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
-    get_decisiones_operador_store().marcar_pendiente(id_maquina, clase)
+    await _decisiones_store_de(id_maquina, clase, db).marcar_pendiente(id_maquina, clase)
     await registrar_accion(db, identity, id_maquina, clase, "marcar_pendiente")
 
 
@@ -143,7 +152,7 @@ async def agregar_nota(
     identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
-    get_decisiones_operador_store().agregar_nota(id_maquina, clase, nota)
+    await _decisiones_store_de(id_maquina, clase, db).agregar_nota(id_maquina, clase, nota)
     await registrar_accion(db, identity, id_maquina, clase, "agregar_nota", observacion=nota)
 
 
@@ -154,5 +163,18 @@ async def aceptar_propuesta(
     identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
-    get_decisiones_operador_store().aceptar(id_maquina, clase)
+    await _decisiones_store_de(id_maquina, clase, db).aceptar(id_maquina, clase)
     await registrar_accion(db, identity, id_maquina, clase, "aceptar_sugerencia")
+
+
+def _decisiones_store_de(id_maquina: int, clase: str, db: AsyncSession) -> DecisionesOperadorPort:
+    """Un equipo real de Siges nunca aparece en `equipos_ejemplo()` — a
+    diferencia de `es_solicitud_real` (que solo mira si `clase` es numérica),
+    acá hace falta esa verificación extra porque el equipo de ejemplo id=1
+    también tiene clase "10" (numérica): sin este chequeo, sus decisiones se
+    escribirían en Postgres en vez del store en memoria (bug real, visto
+    2026-09-05)."""
+    equipo, _ = buscar_equipo_y_clase(id_maquina, clase)
+    if equipo is None and clase.isdigit():
+        return SqlAlchemyDecisionesOperadorRepository(db)
+    return get_decisiones_operador_store()

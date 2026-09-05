@@ -6,6 +6,7 @@ from src.modules.contadores.application.use_cases._construir_entrada_siges impor
     ConstructorEntradaSiges,
 )
 from src.modules.contadores.domain.ports.grilla_estimacion_port import GrillaEstimacionPort
+from src.modules.contadores.domain.ports.recesos_port import RecesosPort
 from src.modules.contadores.domain.services.estimacion.forzar_metodo import (
     forzar_cascada_parque,
     forzar_entre_reales,
@@ -16,14 +17,13 @@ from src.modules.contadores.domain.value_objects.estimacion.contexto_estimacion 
 from src.modules.contadores.domain.value_objects.estimacion.estimacion_resultado import (
     EstimacionResultado,
 )
-from src.modules.contadores.infrastructure.ejemplo.recesos_store import RecesosEjemploStore
 
 
 class ForzarMetodoCandidatoSigesUseCase:
     """Variante real de `ForzarMetodoCandidatoUseCase`: mismo criterio de
     reuso de la grilla cacheada que `RecalcularCandidatoSigesUseCase`."""
 
-    def __init__(self, gateway: GrillaEstimacionPort, recesos_store: RecesosEjemploStore) -> None:
+    def __init__(self, gateway: GrillaEstimacionPort, recesos_store: RecesosPort) -> None:
         self._constructor = ConstructorEntradaSiges(gateway, recesos_store)
 
     async def execute(

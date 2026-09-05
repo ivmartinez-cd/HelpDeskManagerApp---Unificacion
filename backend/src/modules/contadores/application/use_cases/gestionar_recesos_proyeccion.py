@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from src.modules.contadores.application.dtos.receso_dto import RecesoDto
-from src.modules.contadores.infrastructure.ejemplo.recesos_store import RecesosEjemploStore
+from src.modules.contadores.domain.ports.recesos_port import RecesosPort
 
 
 @dataclass(frozen=True, slots=True)
@@ -15,14 +15,14 @@ class CrearRecesoRequest:
 
 
 class GestionarRecesosProyeccionUseCase:
-    def __init__(self, store: RecesosEjemploStore) -> None:
+    def __init__(self, store: RecesosPort) -> None:
         self._store = store
 
-    def listar(self, id_grupo_economico: int) -> list[RecesoDto]:
-        return self._store.listar(id_grupo_economico)
+    async def listar(self, id_grupo_economico: int) -> list[RecesoDto]:
+        return await self._store.listar(id_grupo_economico)
 
-    def crear(self, request: CrearRecesoRequest) -> RecesoDto:
-        return self._store.crear(
+    async def crear(self, request: CrearRecesoRequest) -> RecesoDto:
+        return await self._store.crear(
             RecesoDto(
                 id=0,
                 id_grupo_economico=request.id_grupo_economico,
@@ -33,5 +33,5 @@ class GestionarRecesosProyeccionUseCase:
             )
         )
 
-    def eliminar(self, id_receso: int) -> None:
-        self._store.eliminar(id_receso)
+    async def eliminar(self, id_receso: int) -> None:
+        await self._store.eliminar(id_receso)

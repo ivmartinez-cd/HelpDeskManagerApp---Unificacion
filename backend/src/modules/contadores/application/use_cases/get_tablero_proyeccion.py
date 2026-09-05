@@ -12,6 +12,7 @@ from datetime import date
 from typing import Any
 
 from src.modules.contadores.application.dtos.contexto_proceso_dto import ContextoProcesoDto
+from src.modules.contadores.application.dtos.decision_operador_dto import DecisionOperadorDto
 from src.modules.contadores.application.dtos.equipo_proceso_dto import (
     ClaseProceso,
     EquipoProceso,
@@ -21,6 +22,7 @@ from src.modules.contadores.application.dtos.resumen_proyeccion_dto import Resum
 from src.modules.contadores.application.use_cases._construir_estimacion_input import (
     construir_estimacion_input,
 )
+from src.modules.contadores.domain.ports.decisiones_operador_port import DecisionesOperadorPort
 from src.modules.contadores.domain.services.estimacion.antiguedad import meses_entre
 from src.modules.contadores.domain.services.estimacion.motor import estimar
 from src.modules.contadores.domain.value_objects.estimacion.estimacion_resultado import (
@@ -28,10 +30,6 @@ from src.modules.contadores.domain.value_objects.estimacion.estimacion_resultado
 )
 from src.modules.contadores.infrastructure.ejemplo.datos_ejemplo_proyeccion import (
     equipos_ejemplo,
-)
-from src.modules.contadores.infrastructure.ejemplo.decisiones_operador_store import (
-    DecisionesOperadorStore,
-    DecisionOperador,
 )
 
 
@@ -48,28 +46,37 @@ class GetTableroProyeccionUseCase:
 
     def __init__(
         self,
-        decisiones: DecisionesOperadorStore,
+        decisiones: DecisionesOperadorPort,
         obtener_equipos: Callable[[], list[EquipoProceso]] = equipos_ejemplo,
     ) -> None:
         self._decisiones = decisiones
         self._obtener_equipos = obtener_equipos
 
-    def execute(self, ctx: ContextoProcesoDto) -> TableroProyeccionResult:
+    async def execute(self, ctx: ContextoProcesoDto) -> TableroProyeccionResult:
+        # Una sola consulta para todo el tablero (no una por fila) — ver
+        # docstring de DecisionesOperadorPort.listar_todas.
+        contexto = _ContextoArmado(ctx, await self._decisiones.listar_todas())
         filas = [
-            self._fila_de(equipo, clase, ctx)
+            self._fila_de(equipo, clase, contexto)
             for equipo in self._obtener_equipos()
             for clase in equipo.clases
         ]
         return TableroProyeccionResult(filas, _resumen_de(filas))
 
     def _fila_de(
-        self, equipo: EquipoProceso, clase: ClaseProceso, ctx: ContextoProcesoDto
+        self, equipo: EquipoProceso, clase: ClaseProceso, contexto: "_ContextoArmado"
     ) -> FilaProyeccionDto:
-        entrada = construir_estimacion_input(equipo, clase, ctx)
+        entrada = construir_estimacion_input(equipo, clase, contexto.ctx)
         resultado = estimar(entrada)
-        decision = self._decisiones.obtener(equipo.id_maquina, clase.clase)
+        decision = contexto.decisiones.get((equipo.id_maquina, clase.clase))
         calculo = _CalculoClase(equipo, clase, resultado, decision)
-        return _armar_fila(calculo, ctx.fecha_objetivo)
+        return _armar_fila(calculo, contexto.ctx.fecha_objetivo)
+
+
+@dataclass(frozen=True, slots=True)
+class _ContextoArmado:
+    ctx: ContextoProcesoDto
+    decisiones: dict[tuple[int, str], DecisionOperadorDto]
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,7 +84,7 @@ class _CalculoClase:
     equipo: EquipoProceso
     clase: ClaseProceso
     resultado: EstimacionResultado
-    decision: DecisionOperador | None
+    decision: DecisionOperadorDto | None
 
 
 @dataclass(frozen=True, slots=True)
