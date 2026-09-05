@@ -8,6 +8,9 @@ import uuid
 from datetime import date, datetime
 from uuid import UUID
 
+from src.modules.liquidaciones.domain.entities.acuerdo_precio_cliente import (
+    AcuerdoPrecioCliente,
+)
 from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.regla_alerta import (
@@ -17,6 +20,9 @@ from src.modules.liquidaciones.domain.entities.regla_alerta import (
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
+from src.modules.liquidaciones.domain.value_objects.acuerdo_precio_datos import (
+    AcuerdoPrecioDatos,
+)
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
     CdIncidenteRow,
     CdLiquidacion,
@@ -268,3 +274,38 @@ class FakeLiquidacionFileParser:
     def parse(self, contenido: bytes, nombre_archivo: str) -> ResultadoImportacion:
         self.calls.append((contenido, nombre_archivo))
         return self.resultado
+
+
+class FakeAcuerdoPrecioClienteRepository:
+    def __init__(self, rows: list[AcuerdoPrecioCliente] | None = None) -> None:
+        self.rows = rows or []
+
+    async def get_by_id(self, acuerdo_id: UUID) -> AcuerdoPrecioCliente | None:
+        return next((a for a in self.rows if a.id == acuerdo_id), None)
+
+    async def list_by_prestador(self, prestador_id: UUID) -> list[AcuerdoPrecioCliente]:
+        return [a for a in self.rows if a.prestador_id == prestador_id]
+
+    async def create(self, prestador_id: UUID, datos: AcuerdoPrecioDatos) -> AcuerdoPrecioCliente:
+        row = AcuerdoPrecioCliente(
+            id=uuid.uuid4(),
+            prestador_id=prestador_id,
+            created_at=datetime(2026, 1, 1),
+            **dataclasses.asdict(datos),
+        )
+        self.rows.append(row)
+        return row
+
+    async def update(
+        self, acuerdo_id: UUID, datos: AcuerdoPrecioDatos
+    ) -> AcuerdoPrecioCliente | None:
+        for i, a in enumerate(self.rows):
+            if a.id == acuerdo_id:
+                self.rows[i] = dataclasses.replace(a, **dataclasses.asdict(datos))
+                return self.rows[i]
+        return None
+
+    async def delete(self, acuerdo_id: UUID) -> bool:
+        antes = len(self.rows)
+        self.rows = [a for a in self.rows if a.id != acuerdo_id]
+        return len(self.rows) < antes

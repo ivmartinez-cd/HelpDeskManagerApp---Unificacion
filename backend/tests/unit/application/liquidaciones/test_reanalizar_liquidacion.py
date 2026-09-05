@@ -13,12 +13,14 @@ from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion impo
 )
 from src.modules.liquidaciones.domain.errors import LiquidacionNoEncontradaError
 from tests.unit.domain.liquidaciones.factories import (
+    make_acuerdo,
     make_incidente,
     make_liquidacion,
     make_tarifario,
     reglas_activas_default,
 )
 from tests.unit.domain.liquidaciones.fakes import (
+    FakeAcuerdoPrecioClienteRepository,
     FakeReglaAlertaRepository,
     FakeTablaKmRepository,
     FakeTarifarioRepository,
@@ -38,6 +40,7 @@ class World:
         self.reglas = FakeReglaAlertaRepository(reglas_activas_default())
         self.tablas_km = FakeTablaKmRepository()
         self.tarifarios = FakeTarifarioRepository()
+        self.acuerdos = FakeAcuerdoPrecioClienteRepository()
         self.use_case = ReanalizarLiquidacion(
             ReanalizarLiquidacionPorts(
                 liquidaciones=self.liquidaciones,
@@ -46,6 +49,7 @@ class World:
                 reglas=self.reglas,
                 tablas_km=self.tablas_km,
                 tarifarios=self.tarifarios,
+                acuerdos=self.acuerdos,
             )
         )
 
@@ -187,6 +191,29 @@ async def test_abono_no_genera_alertas_de_precio() -> None:
     world.liquidaciones.rows[liquidacion.id] = liquidacion
     world.tarifarios.rows = [make_tarifario(prestador_id=prestador_id, costo_servicio=54400.0)]
     incidente = make_incidente(liquidacion_id=liquidacion.id, costo_servicio_cobrado=1.0)
+    world.incidentes.rows[incidente.id] = incidente
+
+    resultado = await world.use_case.execute(liquidacion.id)
+
+    assert resultado.total_alertas == 0
+
+
+async def test_acuerdo_de_precio_por_cliente_evita_la_alerta() -> None:
+    """SALTA cobra el doble a las mineras (acuerdo con motivo): con el acuerdo
+    cargado, el precio doble ya no es ALT001."""
+    world = World()
+    prestador_id = uuid.uuid4()
+    liquidacion = make_liquidacion(prestador_id=prestador_id)
+    world.liquidaciones.rows[liquidacion.id] = liquidacion
+    world.tarifarios.rows = [make_tarifario(prestador_id=prestador_id, costo_servicio=46073.0)]
+    world.acuerdos.rows = [
+        make_acuerdo(prestador_id=prestador_id, empresa_nombre="Minera del Altiplano", factor=2.0)
+    ]
+    incidente = make_incidente(
+        liquidacion_id=liquidacion.id,
+        empresa_nombre="Minera del Altiplano",
+        costo_servicio_cobrado=92146.0,
+    )
     world.incidentes.rows[incidente.id] = incidente
 
     resultado = await world.use_case.execute(liquidacion.id)

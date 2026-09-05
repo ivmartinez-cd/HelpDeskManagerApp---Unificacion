@@ -1,5 +1,7 @@
 import { httpClient } from "@/services/http-client";
 import type {
+  AcuerdoBody,
+  AcuerdoPrecioCliente,
   ImportExcelMaestroResult,
   PrestadorLiquidacion,
   ReglaAlerta,
@@ -132,6 +134,22 @@ export const configApi = {
     fd.append("file", file);
     return httpClient.postForm<{ creados: number }>("/api/liquidaciones/spsts/import", fd);
   },
+
+  // ── Acuerdos de precio por cliente ─────────────────────────────────────────
+  listAcuerdos: (prestadorId: string) =>
+    fetchCatalogoCompleto<AcuerdoPrecioCliente>(
+      "/api/liquidaciones/acuerdos",
+      new URLSearchParams({ prestadorId }),
+    ),
+
+  createAcuerdo: (body: AcuerdoBody) =>
+    httpClient.post<AcuerdoPrecioCliente>("/api/liquidaciones/acuerdos", body),
+
+  updateAcuerdo: (id: string, body: AcuerdoBody) =>
+    httpClient.patch<AcuerdoPrecioCliente>(`/api/liquidaciones/acuerdos/${id}`, body),
+
+  deleteAcuerdo: (id: string) =>
+    httpClient.delete<void>(`/api/liquidaciones/acuerdos/${id}`),
 
   // ── Tarifarios ─────────────────────────────────────────────────────────────
   listTarifarios: (prestadorId?: string) => {

@@ -1,3 +1,9 @@
+from src.modules.liquidaciones.presentation.dependencies.acuerdos import (
+    build_create_acuerdo,
+    build_delete_acuerdo,
+    build_list_acuerdos,
+    build_update_acuerdo,
+)
 from src.modules.liquidaciones.presentation.dependencies.config import (
     build_asignar_zona_sucursal,
     build_create_prestador,
@@ -51,10 +57,12 @@ from src.modules.liquidaciones.presentation.dependencies.liquidaciones import (
     build_importar_liquidacion,
     build_importar_prestador_maestro,
     build_list_liquidaciones,
-    build_reanalizar_liquidacion,
-    build_reanalizar_liquidaciones_abiertas,
     build_reconciliar_liquidacion_individual,
     build_sincronizar_liquidaciones,
+)
+from src.modules.liquidaciones.presentation.dependencies.reanalisis import (
+    build_reanalizar_liquidacion,
+    build_reanalizar_liquidaciones_abiertas,
 )
 from src.modules.liquidaciones.presentation.dependencies.siges import (
     build_buscar_sucursales_siges,
@@ -78,6 +86,10 @@ from src.modules.liquidaciones.presentation.dependencies.tabla_km_geo import (
 )
 
 __all__ = [
+    "build_create_acuerdo",
+    "build_delete_acuerdo",
+    "build_list_acuerdos",
+    "build_update_acuerdo",
     "build_asignar_zona_sucursal",
     "build_anular_liquidacion",
     "build_aplicar_calcular_distancias",

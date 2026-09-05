@@ -32,6 +32,9 @@ from src.modules.liquidaciones.domain.entities.incidente import (
 )
 from src.modules.liquidaciones.domain.entities.regla_alerta import ReglaAlerta
 from src.modules.liquidaciones.domain.errors import LiquidacionNoEncontradaError
+from src.modules.liquidaciones.domain.repositories.acuerdo_precio_cliente_repository import (  # noqa: E501
+    AcuerdoPrecioClienteRepository,
+)
 from src.modules.liquidaciones.domain.repositories.alerta_repository import AlertaRepository
 from src.modules.liquidaciones.domain.repositories.incidente_repository import (
     IncidenteRepository,
@@ -67,6 +70,9 @@ class ReanalizarLiquidacionPorts:
     reglas: ReglaAlertaRepository
     tablas_km: TablaKmRepository
     tarifarios: TarifarioRepository
+    # Opcional para no romper a los callers/tests que no lo necesitan: sin
+    # repo, el motor corre sin acuerdos de precio por cliente.
+    acuerdos: AcuerdoPrecioClienteRepository | None = None
 
 
 class ReanalizarLiquidacion:
@@ -99,8 +105,13 @@ class ReanalizarLiquidacion:
         incidentes_prestador = await self._ports.incidentes.list_by_prestador(prestador_id)
         tablas_km = await self._ports.tablas_km.list_by_prestador(prestador_id)
         tarifarios = await self._ports.tarifarios.list_by_prestador(prestador_id)
+        acuerdos = (
+            await self._ports.acuerdos.list_by_prestador(prestador_id)
+            if self._ports.acuerdos is not None
+            else []
+        )
         return ejecutar_motor_reglas(
-            incidentes, incidentes_prestador, reglas_activas, tablas_km, tarifarios
+            incidentes, incidentes_prestador, reglas_activas, tablas_km, tarifarios, acuerdos
         )
 
     async def _persistir(

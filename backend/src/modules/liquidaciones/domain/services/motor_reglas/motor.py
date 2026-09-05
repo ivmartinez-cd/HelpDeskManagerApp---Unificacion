@@ -20,6 +20,9 @@ import uuid
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
+from src.modules.liquidaciones.domain.entities.acuerdo_precio_cliente import (
+    AcuerdoPrecioCliente,
+)
 from src.modules.liquidaciones.domain.entities.incidente import (
     ESTADO_VALIDACION_CON_ALERTAS,
     ESTADO_VALIDACION_OK,
@@ -43,6 +46,7 @@ from src.modules.liquidaciones.domain.entities.tarifario import (
     TIPO_PREVENTIVO,
     Tarifario,
 )
+from src.modules.liquidaciones.domain.services.acuerdos_precio import resolver_acuerdo
 from src.modules.liquidaciones.domain.services.motor_reglas import (
     alt001_precio,
     alt002_km,
@@ -87,6 +91,7 @@ class _ContextoMotor:
     tarifarios: Sequence[Tarifario]
     incidentes_liquidacion: Sequence[Incidente]
     incidentes_prestador: Sequence[Incidente]
+    acuerdos: Sequence[AcuerdoPrecioCliente] = ()
 
 
 def ejecutar_motor_reglas(
@@ -95,16 +100,16 @@ def ejecutar_motor_reglas(
     reglas_activas: Mapping[str, ReglaAlerta],
     tablas_km: Sequence[TablaKm],
     tarifarios: Sequence[Tarifario],
+    acuerdos: Sequence[AcuerdoPrecioCliente] = (),
 ) -> ResultadoMotorReglas:
-    """Ya no recibe `spsts`: el tarifario se resuelve directo por
-    `TablaKm.spst_id` (ver `_resolucion.py`) — el SPST en sí no le hace falta
-    a ninguna regla desde que la zona dejó de ser el intermediario."""
+    """Sin `spsts`: el tarifario se resuelve por `TablaKm.spst_id` (`_resolucion.py`)."""
     contexto = _ContextoMotor(
         reglas_activas=reglas_activas,
         indice_tablas=indexar_tablas_km(tablas_km),
         tarifarios=tarifarios,
         incidentes_liquidacion=incidentes,
         incidentes_prestador=incidentes_prestador,
+        acuerdos=acuerdos,
     )
     incidentes_evaluados, alertas = _evaluar_incidentes(incidentes, contexto)
     alertas = alertas + _evaluar_alertas_grupo(incidentes, contexto)
@@ -150,7 +155,8 @@ def _evaluar_regla(
     regla: ReglaAlerta,
 ) -> list[Hallazgo]:
     if codigo == CODIGO_ALT001_PRECIO_INCORRECTO:
-        return alt001_precio.evaluar_alt001(incidente, tarifario)
+        acuerdo = resolver_acuerdo(incidente, contexto.acuerdos)
+        return alt001_precio.evaluar_alt001(incidente, tarifario, acuerdo)
     if codigo == CODIGO_ALT002_KMS_INCORRECTOS:
         return _evaluar_alt002(incidente, tabla_km, contexto, regla)
     if codigo == CODIGO_ALT003_VIATICO_DUPLICADO:

@@ -60,14 +60,6 @@ from src.modules.liquidaciones.application.use_cases.list_liquidaciones import (
     ListLiquidaciones,
     ListLiquidacionesPorts,
 )
-from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion import (
-    ReanalizarLiquidacion,
-    ReanalizarLiquidacionPorts,
-)
-from src.modules.liquidaciones.application.use_cases.reanalizar_liquidaciones_abiertas import (  # noqa: E501
-    ReanalizarLiquidacionesAbiertas,
-    ReanalizarLiquidacionesAbiertasPorts,
-)
 from src.modules.liquidaciones.application.use_cases.reconciliar_liquidacion_individual import (
     ReconciliarLiquidacionIndividual,
     ReconciliarLiquidacionIndividualPorts,
@@ -94,9 +86,6 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_liquidacio
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_regla_alerta_repository import (  # noqa: E501
-    SqlAlchemyReglaAlertaRepository,
-)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repository import (
     SqlAlchemySpstRepository,
 )
@@ -111,6 +100,9 @@ from src.modules.liquidaciones.infrastructure.soap.zeep_cd_liquidaciones_gateway
 )
 from src.modules.liquidaciones.presentation.dependencies.notificaciones import (
     build_notificador,
+)
+from src.modules.liquidaciones.presentation.dependencies.reanalisis import (
+    build_reanalizar_liquidacion,
 )
 from src.shared.infrastructure.database.engine import get_engine
 from src.shared.infrastructure.locks.postgres_advisory_lock import (
@@ -178,30 +170,6 @@ def build_get_liquidacion_detalle(session: AsyncSession) -> GetLiquidacionDetall
             incidentes=SqlAlchemyIncidenteRepository(session),
             alertas=SqlAlchemyAlertaRepository(session),
             tablas_km=SqlAlchemyTablaKmRepository(session),
-        )
-    )
-
-
-def build_reanalizar_liquidacion(session: AsyncSession) -> ReanalizarLiquidacion:
-    return ReanalizarLiquidacion(
-        ReanalizarLiquidacionPorts(
-            liquidaciones=SqlAlchemyLiquidacionRepository(session),
-            incidentes=SqlAlchemyIncidenteRepository(session),
-            alertas=SqlAlchemyAlertaRepository(session),
-            reglas=SqlAlchemyReglaAlertaRepository(session),
-            tablas_km=SqlAlchemyTablaKmRepository(session),
-            tarifarios=SqlAlchemyTarifarioRepository(session),
-        )
-    )
-
-
-def build_reanalizar_liquidaciones_abiertas(
-    session: AsyncSession,
-) -> ReanalizarLiquidacionesAbiertas:
-    return ReanalizarLiquidacionesAbiertas(
-        ReanalizarLiquidacionesAbiertasPorts(
-            liquidaciones=SqlAlchemyLiquidacionRepository(session),
-            reanalizar=build_reanalizar_liquidacion(session),
         )
     )
 

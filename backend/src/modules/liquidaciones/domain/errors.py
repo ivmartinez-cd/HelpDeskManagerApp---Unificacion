@@ -39,6 +39,17 @@ class TablaKmNoEncontradaError(NotFoundError):
         super().__init__(f"Entrada de Tabla KM no encontrada: {tabla_km_id}")
 
 
+class AcuerdoPrecioNoEncontradoError(NotFoundError):
+    default_code: ClassVar[str] = "ACUERDO_PRECIO_NO_ENCONTRADO"
+
+    def __init__(self, acuerdo_id: UUID) -> None:
+        super().__init__(f"Acuerdo de precio no encontrado: {acuerdo_id}")
+
+
+class AcuerdoPrecioInvalidoError(ValidationError):
+    default_code: ClassVar[str] = "ACUERDO_PRECIO_INVALIDO"
+
+
 class ParSinTablaKmError(NotFoundError):
     """El par empresa+sucursal no tiene fila en la Tabla KM del prestador — antes de
     asignarle zona hay que darlo de alta (es el caso ALT009)."""

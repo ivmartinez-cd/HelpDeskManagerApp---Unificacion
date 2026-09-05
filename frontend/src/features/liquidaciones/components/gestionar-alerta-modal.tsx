@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Badge } from "@/shared/components/ui/badge";
 import { BrandButton } from "@/shared/components/ui/brand-form";
@@ -13,6 +14,7 @@ import { riesgoClass } from "./incidente-badges";
 import { AsignarZonaSucursal } from "./asignar-zona-sucursal";
 import { EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
 
+const CODIGO_ALT001 = "ALT001";
 const CODIGO_ALT008 = "ALT008";
 
 function plantillaDesdeAlerta(alerta: Alerta): PlantillaEntrada {
@@ -74,6 +76,20 @@ export function GestionarAlertaModal({
     !!incidente?.empresaNombre &&
     !!incidente?.sucursalNombre &&
     (alerta.estado === "pendiente" || alerta.estado === "en_revision");
+  // ALT001 pendiente: atajo para dejar asentado el arreglo con ese cliente una
+  // sola vez (acuerdo de precio) en vez de resolver la misma alerta cada mes.
+  const ctxAlt001 = alerta.datosContexto as { cobrado?: number } | null;
+  const linkAcuerdo =
+    alerta.tipoAlerta === CODIGO_ALT001 &&
+    !!incidente?.empresaNombre &&
+    (alerta.estado === "pendiente" || alerta.estado === "en_revision")
+      ? `/liquidaciones/configuracion/acuerdos?${new URLSearchParams({
+          prestadorId,
+          empresa: incidente.empresaNombre,
+          tipo: incidente.tipo,
+          cobrado: String(ctxAlt001?.cobrado ?? ""),
+        })}`
+      : null;
   const incidentesMismaSucursal = incidente
     ? Object.values(incidentesById).filter(
         (i) => i.empresaNombre === incidente.empresaNombre && i.sucursalNombre === incidente.sucursalNombre,
@@ -139,6 +155,14 @@ export function GestionarAlertaModal({
         {alerta.justificacion && (
           <p className="font-body text-xs italic text-muted-foreground">
             Motivo: {alerta.justificacion}
+          </p>
+        )}
+        {linkAcuerdo && !transicion && (
+          <p className="font-body text-xs text-muted-foreground">
+            ¿Es un arreglo con este cliente que se repite todos los meses?{" "}
+            <Link href={linkAcuerdo} className="font-semibold text-brand-orange hover:underline">
+              Cargar acuerdo de precio para {incidente?.empresaNombre} →
+            </Link>
           </p>
         )}
         {sinZona && incidente && !transicion && (

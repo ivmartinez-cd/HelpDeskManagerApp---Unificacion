@@ -177,3 +177,20 @@ Implementado:
 - UI: banner "Liquidación de abono" en el detalle, en naranja si falta el extra ("no aprobar
   hasta entonces"), con los últimos 6 abonos del prestador (período, monto, concepto) para
   comparar a ojo. La etiqueta de tipo del encabezado ya muestra "abono".
+
+## 7. Acuerdos de precio por cliente (2026-09-05)
+
+Corrección al §5: las ALT001 de SALTA no son errores del prestador sino arreglos por
+cliente que la TL resolvía a mano cada mes con el mismo motivo: mineras (Minera del
+Altiplano, Sal de Vida, Sales de Jujuy) al doble ("Costo doble aprobado por AO", 32 alertas
+resueltas así), Refinor a 78.119/53.180, YAGUAR al precio viejo 46.073.
+
+Implementado (commit del mismo día): tabla `acuerdos_precio_cliente` (prestador + cliente
++ tipo opcional + factor o precio fijo + motivo + vigencia), pantalla Configuración >
+Acuerdos por cliente, y ALT001 toma el precio del acuerdo como esperado
+(`resolver_acuerdo` + `evaluar_alt001(…, acuerdo)`): sin alerta si cobra lo acordado, y si
+cobra otra cosa la alerta dice "difiere del acuerdo con X (motivo)". Toda escritura
+reanaliza las abiertas del prestador. Atajo desde el modal Gestionar de una ALT001:
+"Cargar acuerdo de precio para {cliente}" con cliente/tipo/precio cobrado precargados.
+Probado en vivo con ida y vuelta sobre 3960-4 (acuerdo Refinor correctivo 78.119: 20 → 13
+ALT001; borrado: 20 de nuevo). Los acuerdos reales los carga la TL.

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   DollarSign,
   FileText,
+  Handshake,
   LayoutDashboard,
   Map,
   ScrollText,
@@ -45,6 +46,7 @@ const SECTIONS: NavSectionDef[] = [
       { href: "/liquidaciones/configuracion/prestadores", label: "Prestadores", exact: false, icon: Users },
       { href: "/liquidaciones/configuracion/spsts", label: "SPSTs", exact: false, icon: ScrollText },
       { href: "/liquidaciones/configuracion/tarifarios", label: "Tarifarios", exact: false, icon: DollarSign },
+      { href: "/liquidaciones/configuracion/acuerdos", label: "Acuerdos por cliente", exact: false, icon: Handshake },
       { href: "/liquidaciones/configuracion/tabla-km", label: "Tabla KM", exact: false, icon: Map },
       { href: "/liquidaciones/configuracion/reglas", label: "Reglas de alerta", exact: false, icon: ScrollText },
     ],

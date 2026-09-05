@@ -5,6 +5,9 @@ import uuid
 from datetime import date, datetime
 from typing import Any
 
+from src.modules.liquidaciones.domain.entities.acuerdo_precio_cliente import (
+    AcuerdoPrecioCliente,
+)
 from src.modules.liquidaciones.domain.entities.alerta import Alerta
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
 from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
@@ -189,3 +192,20 @@ def reglas_activas_default() -> dict[str, ReglaAlerta]:
         codigo: make_regla(codigo=codigo, riesgo_base=riesgo, activa=True)
         for codigo, riesgo in codigos_activos.items()
     }
+
+
+def make_acuerdo(**overrides: Any) -> AcuerdoPrecioCliente:
+    defaults: dict[str, Any] = {
+        "id": uuid.uuid4(),
+        "prestador_id": uuid.uuid4(),
+        "empresa_nombre": "Minera del Altiplano",
+        "tipo_servicio": None,
+        "factor": 2.0,
+        "precio_fijo": None,
+        "motivo": "Costo doble aprobado por AO",
+        "vigencia_desde": date(2026, 1, 1),
+        "vigencia_hasta": None,
+        "created_at": NOW,
+    }
+    defaults.update(overrides)
+    return AcuerdoPrecioCliente(**defaults)
