@@ -299,3 +299,40 @@ INFOMAC 11046/8341/14297 (Neuquén capital, el geocoder omite la provincia), MEN
 
 Fix derivado: `ListarPinesSospechosos` ya no lista los pines con override (antes los 82
 corregidos seguían apareciendo con su discrepancia original).
+
+## 11. Segunda pasada del pelotón (búsqueda en el mapa) y km para toda la Tabla KM (2026-09-05/06)
+
+**Pelotón 2**: seis agentes sobre los 277 casos que la primera pasada dejó (141 pines rotos,
+131 coordenadas ambiguas, 5 recomendados), buscando cada sucursal por su cuenta: dirección de
+Gestión en OpenStreetMap con variantes, búsqueda web del cliente, y validación por
+geocodificación inversa antes de escribir. Puente `osm.sh` de carril único (flock + 1 req/s
+para todos los agentes) y endpoint nuevo `PUT …/sucursal/{id}/pin-manual` (coordenadas +
+fuente, rechaza fuera de Argentina). Resultado: **153 sucursales ubicadas con fuente citable**
+(`geoloc-2026-09-06-pines-manuales-cargados.tsv`; SAN JUAN 74, con el Mapa Educativo
+Nacional y GEOSanJuan como corroboración de las escuelas) y **66 dejadas con el mejor
+indicio** (`geoloc-2026-09-06-dejados-para-gestion.tsv`): casi todas plantas o estaciones
+sobre rutas ("RN9 km 1471") que OSM no tiene mapeadas, o direcciones con la provincia
+equivocada en Gestión. Lección: el agente del grupo 5 se trabó 4 h leyendo notas de diario;
+se cortó y se relanzó con tope de 4 consultas por caso. Los agentes de búsqueda necesitan
+tope de consultas y de tiempo desde el arranque.
+
+**Km para toda la tabla** (`AplicarCalcularDistancias` con `soloSinKm`, commit `c393336e`):
+- 25 prestadores no tenían base de despacho: se fijó desde Gestión (única sede con
+  coordenadas; CHACO → Resistencia).
+- Pasada sobre los 34 prestadores con OpenStreetMap: 982 filas creadas (sucursales con
+  actividad que no estaban en la tabla), 1.290 completadas, 767 negociadas sin tocar.
+- Dos errores detectados y corregidos: (a) INFOMAC medía todo desde Villa Mercedes porque
+  Gestión tiene 18 SPST de Infomac con sede propia y nosotros 4 → se crearon los 15 que
+  faltaban con su sede, se vincularon 29 sucursales por localidad y el cálculo pasó a medir
+  **desde la sede más cercana** (varias sedes comparten zona tarifaria, así que
+  `id_costo_servicios` no alcanzaba); (b) 7 resoluciones automáticas de la pasada 1 cayeron
+  en otra ciudad (la trampa localidad = provincia otra vez) → revertidas. Los km medidos
+  desde base equivocada o con pin roto (328 filas) se volvieron a cero antes de recalcular.
+- Regla ALT002: "cobró 0 km" sin ningún viaje ese día ya no alerta (nunca es sobrecobro);
+  antes, al llenar la tabla, cada cliente lejano al que el prestador no viajó daba "cobró 0
+  vs 1.560 km" (195 ALT002 pendientes en abiertas → 50 tras la regla y la corrección).
+
+Estado final de la Tabla KM: 3.847 filas (2.328 activas), 2.208 con km medido, 1.104 con km
+facturable (el resto en cero por la regla de viático), 1.813 con pin; 400 sucursales con
+coordenadas resueltas localmente (247 por geocode, 153 manuales con fuente). Los pines de
+Gestión no se tocan: las correcciones viven en `sucursal_coordenadas` y tienen prioridad.

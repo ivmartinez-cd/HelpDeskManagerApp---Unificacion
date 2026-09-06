@@ -1,0 +1,154 @@
+prestador	siges_sucursal_id	empresa	sucursal	lat	lon	fuente
+BAHIA	3174	Catter Meat S.A.	Bahía Blanca (Frigorífico Villa Olga)	-38.6956593	-62.366749	https://www.openstreetmap.org/way/315334622
+BAHIA	11140	Provincia Microempresas	6846 - Coronel Pringles	-37.9863264	-61.3538891	https://www.openstreetmap.org/way/810129722
+CATAMARCA	7210	Aerolineas Argentinas	AEROPUERTO CATAMARCA	-28.5928947	-65.752148	https://www.openstreetmap.org/way/134546260
+CDU	8673	SOYCHU	Gualeguay	-33.1357808	-59.3067609	https://www.openstreetmap.org/way/1308449727 (San Jose 480, Gualeguay)
+CHACO	11641	Musimundo	PTO ESPERANZA	-26.0226123	-54.6064609	https://misionesonline.net/2014/12/18/musimundo-anuncia-una-nueva-apertura-en-la-provincia-de-misiones/ (20 de Junio 464) + https://www.openstreetmap.org/way/541453085
+CHACO	11607	Musimundo	TRES ISLETAS	-26.3381681	-60.4274823	https://www.openstreetmap.org/node/10254610011
+INFOMAC	8341	Aerolineas Argentinas	Aeropuerto Neuquen	-38.9520969	-68.140227	https://www.openstreetmap.org/node/6352160834
+INFOMAC	11174	EDERSA S.A.	ALLEN	-38.9784766	-67.8240779	https://www.openstreetmap.org/way/1005054049
+INFOMAC	11849	Generación Mediterránea	FRIAS	-28.6073372	-65.1230681	https://www.openstreetmap.org/way/616831295
+INFOMAC	10964	ISSN	Delegacion ISSN Cordones De Chapelco	-40.1320511	-71.225752	https://www.openstreetmap.org/node/12879399821
+INFOMAC	11084	ISSN	Hotel Copahue	-37.8192311	-71.0993686	https://www.openstreetmap.org/node/1933711059
+INFOMAC	14297	Lisicki Litvin	NEUQUEN - TORRE GARDEN CENTRAL TOWER	-38.9418213	-68.0596862	https://www.openstreetmap.org/way/1172617884
+INFOMAC	4580	Manpower	Bariloche	-41.1339884	-71.3060312	https://www.openstreetmap.org/way/301823442
+INFOMAC	11046	SINDICATO DE PETROLEO Y GAS	Edificio Meopp	-38.9578272	-68.0538145	https://www.openstreetmap.org/way/1174893465
+JUJUY	229	Salta Refrescos (Región Norte)	Ledesma	-23.8146831	-64.7941258	https://www.openstreetmap.org/way/669394374
+JUJUY	5336	Walmart	1031 - CH+ Jujuy	-24.2108086	-65.2887106	https://www.openstreetmap.org/way/263122025
+LA RIOJA	11073	Diarco	Chilecito	-29.1741282	-67.4935147	https://www.openstreetmap.org/way/1092755223 (Diarco Chilecito, Av. Eva Peron/RN40)
+LA RIOJA	11851	Generación Mediterránea	LA RIOJA	-29.3827496	-66.8332351	https://www.openstreetmap.org/way/243320997 (Central Termica La Rioja, junto a calle Los Duraznos)
+LA RIOJA	5503	Pago Facil	Chango Mas Catamarca	-28.4670465	-65.7549977	https://www.openstreetmap.org/way/42389649 (ChangoMas, Av. Acosta Villafane 2420, Catamarca)
+MACARONE	5534	Banco Santander Río	PDV La Ribera	-31.6508102	-60.7017195	https://www.openstreetmap.org/way/304582731 (Ribera Shopping, Dique 1 Puerto Santa Fe)
+MACARONE	1268	Transfarmaco	Santa Fé	-31.6422412	-60.6952765	https://www.openstreetmap.org/way/1150215391
+MDQ	4251	Arcos Dorados (Mc Donalds)	SMM - Av. San Martin (111)	-37.9996788	-57.5462389	https://www.mcdonalds.com.ar/restaurantes/mar-del-plata/mar-del-plata-peatonal-smm + https://www.openstreetmap.org/way/337647238
+MDQ	4361	Arcos Dorados (Mc Donalds)	PRM - Peralta Ramos (83)	-38.0259072	-57.5321674	https://www.openstreetmap.org/node/7834071135
+MDQ	7215	Provincia Microempresas	6100 - MDP 3 (Luro 2)	-37.9904711	-57.5620031	https://www.openstreetmap.org/way/430863706
+MDQ	5477	Provincia Microempresas	Santa Teresita	-36.5406922	-56.6901428	https://www.openstreetmap.org/way/1242051458
+MDQ	6228	Provincia Microempresas	Balcarce	-37.8451529	-58.2533449	https://www.openstreetmap.org/way/800891511
+MENDOZA	10646	ANNEX	G13 - GRID Mendoza - Plaza Shopping	-32.9011023	-68.7991067	https://www.openstreetmap.org/way/93904230 (Mendoza Plaza Shopping, Acceso Este 3280)
+MENDOZA	10554	Arcos Dorados (Mc Donalds)	TMZ	-32.8946844	-68.8302139	https://www.openstreetmap.org/way/164618280 (Terminal de Omnibus Mendoza, entre Acceso Este y Av. Gdor. Videla; TMZ=Terminal Mendoza)
+MENDOZA	6457	Banco Santander Río	709 - CITIBANK - Palmares	-32.9543162	-68.8569476	https://www.openstreetmap.org/way/254648506 (Banco Santander, Palmares, Av. San Martin Sur 2650)
+MENDOZA	321	Cepas Argentinas	Mendoza	-33.1789252	-68.4543835	https://www.openstreetmap.org/node/13900336949 (San Isidro 2200, Rivadavia)
+MENDOZA	6635	Cepas Argentinas	Planta Mendoza ( Rivadavia)	-33.1789252	-68.4543835	https://www.openstreetmap.org/node/13900336949 (San Isidro 2200, Rivadavia)
+MENDOZA	11269	EANA	Mendoza - Aeropuerto Internacional El Plumerillo	-32.8318687	-68.7954466	https://www.openstreetmap.org/way/240889868 (Aeropuerto Int. Gob. Gabrielli / El Plumerillo)
+MENDOZA	6238	Efectivo Si	EFECTIVO SI - Hiper Libertad  Godoy Cruz ( Mendoza )	-32.9289988	-68.8558282	https://www.openstreetmap.org/way/162861947 (Hipermercado Libertad, Joaquin V. Gonzalez 450, Godoy Cruz)
+MENDOZA	1540	Peñaflor - BVA	Maipú	-32.9725242	-68.7469505	https://www.openstreetmap.org/way/1155145043 (Bodega Trapiche/Grupo Penaflor, Nueva Mayorga s/n Coquimbito, https://www.yelp.com/biz/bodega-trapiche-maip%C3%BA)
+MENDOZA	6334	Praxair Argentina SRL	Mendoza	-33.0631865	-68.9739375	https://www.openstreetmap.org/way/215252728 (Complejo Industrial/Refineria Lujan de Cuyo; Praxair en Ruta 84 s/n segun https://www.mendoza.gov.ar/wp-content/uploads/sites/7/2022/09/220923-Listado-de-Gases-Medicinales-a-09.2022.pdf)
+PENTACOM	4378	Arcos Dorados (Mc Donalds)	CSC - Cordoba Shopping Center (164)	-31.3810363	-64.2144436	https://www.openstreetmap.org/way/208507509
+PENTACOM	4380	Arcos Dorados (Mc Donalds)	LIC - Hipermercado Libertad Córdoba (166)	-31.3631311	-64.2159898	https://www.openstreetmap.org/way/36997552
+PENTACOM	6461	Banco Santander Río	712 - CITIBANK - Córdoba	-31.4151572	-64.1820576	https://www.openstreetmap.org/way/278279683
+PENTACOM	5515	Banco Santander Río	531 - CRUZ DEL EJE	-30.7263937	-64.8037937	https://www.openstreetmap.org/node/5871100475
+PENTACOM	6129	Banco Santander Río	Instituto universitario Aeronautico Argentino	-31.4335875	-64.275807	https://www.openstreetmap.org/way/232950553
+PENTACOM	6237	Efectivo Si	EFECTIVO SI - Hiper Libertad Cordoba	-31.4330624	-64.1434231	https://www.openstreetmap.org/node/3917218269
+PENTACOM	3855	Galeno	CM Córdoba	-31.4113372	-64.1780456	https://www.openstreetmap.org/way/319478038 (UNC: Galeno atiende en Sarmiento 274)
+PENTACOM	4592	Manpower	CBA. Administracion Centro	-31.428824	-64.1857279	https://www.openstreetmap.org/way/278030885
+PENTACOM	4581	Manpower	Cerro de las Rosas	-31.3627648	-64.2372822	https://www.openstreetmap.org/way/371896679
+PENTACOM	8708	Molino Cañuelas	Agro - Rio IV	-33.1193079	-64.3610186	https://www.openstreetmap.org/way/953854094
+PENTACOM	3702	OCA	Operador Córdoba	-31.3898358	-64.1817841	https://www.openstreetmap.org/way/483692034 (OCA Cervantes 550 Alta Cordoba, tiendeo/sucursales24)
+PENTACOM	3964	OCA	GRAN CORDOBA	-31.3898358	-64.1817841	https://www.openstreetmap.org/way/483692034 (OCA Cervantes 550 Alta Cordoba, tiendeo/sucursales24)
+PENTACOM	3426	OCA	Centro de Imposición Córdoba	-31.4159107	-64.1809241	https://www.openstreetmap.org/way/278030852 (PDF sucursales OCA: Alvear 84 Local 1)
+PENTACOM	6326	Praxair Argentina SRL	Córdoba	-31.4652285	-64.1984797	https://www.openstreetmap.org/way/1246985522
+PENTACOM	955	Salta Refrescos ATANOR	Ingenio Marapa	-27.5914983	-65.6148873	https://www.openstreetmap.org/way/948872056
+PENTACOM	606	Sancor Cooperativas Limitada	Córdoba - Concesionario LUDUEÑA	-32.1699363	-64.1237172	https://www.openstreetmap.org/way/1030085462
+PENTACOM	4130	Saputo	Tio Pujio	-32.2828786	-63.3619334	https://www.openstreetmap.org/way/346720901
+PERGAMINO	11517	ROBINSON LOGISTICS	ROJAS	-34.1994325	-60.7021166	https://www.openstreetmap.org/way/732148306
+POSADAS	4770	Efectivo Si	EFECTIVO SI - Posadas	-27.366922	-55.8949692	https://www.openstreetmap.org/way/256880427
+SALTA	6210	Arcos Dorados (Mc Donalds)	LIS - Libertad Salta (179)	-24.8321075	-65.4276047	https://www.openstreetmap.org/way/197708857
+SALTA	4266	Arcos Dorados (Mc Donalds)	SNS - Shopping NOA Salta (189)	-24.7812496	-65.4023547	https://www.openstreetmap.org/way/110356316
+SALTA	6889	Banco Santander Río	Universidad Católica de Salta	-24.7392431	-65.3923888	https://www.openstreetmap.org/way/101221232
+SALTA	2963	Distribuidora Metropolitana	Salta	-24.8246976	-65.4219259	https://www.openstreetmap.org/way/673172680
+SALTA	4782	Efectivo Si	EFECTIVO SI - Salta	-24.791907	-65.4126647	https://www.openstreetmap.org/way/202495412
+SALTA	8212	Efectivo Si	EFECTIVO SI - Hiper Libertad Salta	-24.8321075	-65.4276047	https://www.openstreetmap.org/way/197708857
+SAN JUAN	5013	Arcos Dorados (Mc Donalds)	JN2 - San Juan 2 (15)	-31.5395305	-68.572679	https://www.openstreetmap.org/node/3817450671
+SAN JUAN	6132	Banco Santander Río	567 - San Juan Rivadavia	-31.5279547	-68.5709844	https://www.openstreetmap.org/node/11228344273
+SAN JUAN	790	Disco	SM 412	-31.5298082	-68.5910585	https://www.openstreetmap.org/node/9981537181
+SAN JUAN	792	Disco	SM 414	-31.5834807	-68.5408552	https://www.openstreetmap.org/way/257713529
+SAN JUAN	754	Disco	SM 193	-31.5287385	-68.5598118	https://www.openstreetmap.org/way/837507941
+SAN JUAN	12191	Gobierno de San Juan	Escuela 11 de Septiembre	-31.5632796	-68.537863	https://www.openstreetmap.org/node/13143709642
+SAN JUAN	6093	Gobierno de San Juan	Escuela Capitan Carlos Moyano	-31.5707472	-68.561552	https://www.openstreetmap.org/way/711902965
+SAN JUAN	12231	Gobierno de San Juan	JINZ N.º 44	-31.5488292	-68.5895092	https://www.openstreetmap.org/node/6659761163
+SAN JUAN	12448	Gobierno de San Juan	ENI N.º 34 Magdalena Guemes	-31.582255	-68.5604946	https://www.openstreetmap.org/way/712597506
+SAN JUAN	3293	Gobierno de San Juan	Escuela 14 de Febrero	-31.5840175	-68.532539	https://www.openstreetmap.org/way/355587376
+SAN JUAN	3618	Gobierno de San Juan	Escuela Agrotecnica Los Pioneros	-31.6492882	-68.5013693	https://www.openstreetmap.org/node/6704791375
+SAN JUAN	12182	Gobierno de San Juan	Escuela Fray Luis Beltran	-31.5766223	-68.5190569	https://www.openstreetmap.org/way/377868679
+SAN JUAN	8829	Gobierno de San Juan	ENI N.º 32	-30.2115993	-69.1365034	https://www.openstreetmap.org/node/6447069691
+SAN JUAN	4881	Gobierno de San Juan	Escuela Pascual Chena	-31.7326772	-68.2673354	https://www.openstreetmap.org/way/693842086
+SAN JUAN	8674	Gobierno de San Juan	ENI N.º 39	-31.5790444	-68.5501241	https://www.openstreetmap.org/way/712597496
+SAN JUAN	3771	Gobierno de San Juan	Escuela Cecilio Avila	-31.561916	-68.5092554	https://www.openstreetmap.org/way/711902953
+SAN JUAN	3428	Gobierno de San Juan	Municipalidad de Rawson	-31.5830858	-68.5414047	https://www.openstreetmap.org/way/257713519
+SAN JUAN	9066	Gobierno de San Juan	Escuela Niñas de Ayohuma	-31.5825702	-68.5599715	https://www.openstreetmap.org/node/6699821992
+SAN JUAN	8367	Gobierno de San Juan	Escuela Sec. Barrio Valle Grande	-31.5672718	-68.5998147	https://www.openstreetmap.org/node/6699835990
+SAN JUAN	12356	Gobierno de San Juan	Escuela Juana C. Aberastain	-31.6485939	-68.5018913	https://www.openstreetmap.org/way/712195305
+SAN JUAN	5257	Gobierno de San Juan	Escuela Pcia. De Misiones	-31.706756	-68.4848591	https://www.openstreetmap.org/way/713266763
+SAN JUAN	3558	Gobierno de San Juan	Escuela Albergue Rodeo	-30.2124357	-69.1378356	https://www.openstreetmap.org/way/687713380
+SAN JUAN	3802	Gobierno de San Juan	Escuela Bachillerato Columna Cabot	-30.4152512	-69.2223161	https://www.openstreetmap.org/way/687481263
+SAN JUAN	5049	Gobierno de San Juan	Escuela Leopoldo Corretjer	-31.5656733	-68.539273	https://www.openstreetmap.org/node/6702072497
+SAN JUAN	12342	Gobierno de San Juan	Escuela Jose Hernandez	-31.5731766	-68.5266557	https://www.openstreetmap.org/node/6702072494
+SAN JUAN	9068	Gobierno de San Juan	ENI N.º 36 Milo Lockett	-31.5737569	-68.537594	https://www.openstreetmap.org/node/6699677608
+SAN JUAN	3765	Gobierno de San Juan	Escuela Carlos Maria de Alvear	-31.5766698	-68.5576148	https://www.openstreetmap.org/way/409055724
+SAN JUAN	5262	Gobierno de San Juan	Escuela Maestro Jose J. Berrutti	-31.6193687	-68.5022716	https://www.openstreetmap.org/way/712902302
+SAN JUAN	6618	Gobierno de San Juan	CENTRO DE FORMACION PROFESIONAL N.º 1  DE RAWSON	-31.5735485	-68.5354985	https://www.openstreetmap.org/node/13762355882
+SAN JUAN	9096	Gobierno de San Juan	ENI N.º 52 Ruth Harft	-31.5634159	-68.5384015	https://sanjuan.geodestinos.ar/cat/educacion/6490-eni-52-ruth-harf
+SAN JUAN	9164	Gobierno de San Juan	JINZ N.º 9 Martin Yanzon	-31.7584038	-68.2494789	https://www.openstreetmap.org/way/693842083
+SAN JUAN	9153	Gobierno de San Juan	JINZ N.º 43 Policia de la Pcia. San Juan	-31.5501435	-68.5580228	https://www.openstreetmap.org/node/11031709242
+SAN JUAN	4956	Gobierno de San Juan	Escuela 20 de Junio	-31.9487338	-68.4745912	https://www.openstreetmap.org/way/694427499
+SAN JUAN	14102	Gobierno de San Juan	Escuela Miguel Cane de Bauchaceta	-30.5106549	-69.4600621	https://www.openstreetmap.org/way/686948992
+SAN JUAN	14103	Gobierno de San Juan	Escuela Martin Yanzon	-31.7584038	-68.2494789	https://www.openstreetmap.org/way/693842083
+SAN JUAN	9146	Gobierno de San Juan	JINZ N.º 37	-31.5258679	-68.6317618	https://www.openstreetmap.org/way/358718639
+SAN JUAN	3606	Gobierno de San Juan	Escuela Pcial. Tec. N.º 6 La Bebida	-31.5390693	-68.6296774	https://www.openstreetmap.org/way/1121124332
+SAN JUAN	3623	Gobierno de San Juan	Escuela Pcia. de Salta	-31.5284259	-68.5800762	https://www.openstreetmap.org/node/12091971098
+SAN JUAN	9119	Gobierno de San Juan	JINZ N.º 1 Juan Eugenio Seru	-31.9031879	-68.4741076	https://www.openstreetmap.org/way/699803025
+SAN JUAN	4668	Gobierno de San Juan	ENI N.º 14 Alfonsina Storni	-31.9823348	-68.4272203	https://www.openstreetmap.org/way/699817324
+SAN JUAN	4705	Gobierno de San Juan	Escuela Dr. Carlos Doncel	-32.019737	-68.4255129	https://www.openstreetmap.org/way/699562726
+SAN JUAN	12446	Gobierno de San Juan	EEE Cristo de la Quebrada	-31.9524385	-68.6512644	https://www.openstreetmap.org/node/6573892895
+SAN JUAN	4954	Gobierno de San Juan	EEE Multiple de los Berros	-31.9524385	-68.6512644	https://www.openstreetmap.org/node/6573892895
+SAN JUAN	9120	Gobierno de San Juan	JINZ Nro 10 Jose M. del Carril	-32.0599836	-68.4298818	https://www.openstreetmap.org/node/6573893071
+SAN JUAN	5264	Gobierno de San Juan	ENI N.º 25	-31.9562734	-68.6594782	https://www.openstreetmap.org/way/700035522
+SAN JUAN	3774	Gobierno de San Juan	Escuela Dr. Albert Einstein	-31.9859004	-68.5483109	https://www.openstreetmap.org/way/694427538
+SAN JUAN	3788	Gobierno de San Juan	Escuela Falucho	-31.9521885	-68.6509677	https://www.openstreetmap.org/way/694738185
+SAN JUAN	4922	Gobierno de San Juan	Escuela Josefa R. de Garcia	-31.996787	-68.764991	https://mapa.educacion.gob.ar/legajo/700008100
+SAN JUAN	14317	Gobierno de San Juan	Escuela Sec. Zonda	-31.5448533	-68.7521716	https://www.openstreetmap.org/node/6434024997
+SAN JUAN	3480	Gobierno de San Juan	JARDINES DE INFANTES NUCLEADOS ZONAL	-31.5304463	-68.5415852	https://sanjuan.geodestinos.ar/cat/educacion/2420-2420-escuela-luis-jorge-fontana
+SAN JUAN	3143	Gobierno de San Juan	Escuela Candelaria A. de Godoy	-31.5657034	-68.5393076	https://www.openstreetmap.org/node/13830044190
+SAN JUAN	3760	Gobierno de San Juan	Escuela Gabriela Mistral	-31.5733611	-68.5264242	https://www.openstreetmap.org/way/470086160
+SAN JUAN	4875	Gobierno de San Juan	JINZ N.º 52 Alas Argentinas	-31.5719626	-68.5333645	https://www.openstreetmap.org/node/13762364253
+SAN JUAN	6615	Gobierno de San Juan	Escuela Barrio Ejercito de los Andes	-31.5838171	-68.5059143	https://www.openstreetmap.org/way/709074960
+SAN JUAN	3208	Gobierno de San Juan	Escuela America	-31.6571006	-68.4649926	https://www.openstreetmap.org/way/712195310
+SAN JUAN	12288	Gobierno de San Juan	Escuela Sec. Alas Argentinas	-31.5717902	-68.5340532	https://www.openstreetmap.org/node/6699835917
+SAN JUAN	3552	Gobierno de San Juan	Escuela Sec. Martin Yanzon	-31.7585388	-68.2492336	https://www.openstreetmap.org/node/6514324715
+SAN JUAN	4646	Gobierno de San Juan	Escuela Comodoro Rivadavia	-31.7310795	-68.3452531	https://www.openstreetmap.org/way/693661401
+SAN JUAN	12268	Gobierno de San Juan	Escuela Sec. N.º 134	-31.5656815	-68.5392408	https://www.openstreetmap.org/node/6690030555
+SAN JUAN	4079	Gobierno de San Juan	Escuela S. J. Eudes	-31.5621517	-68.5621582	https://www.openstreetmap.org/way/713458736
+SAN JUAN	3192	Gobierno de San Juan	Escuela Antonio de la Torre	-31.5739261	-68.5372054	https://www.openstreetmap.org/node/13762355881
+SAN JUAN	9073	Gobierno de San Juan	ENI N.º 42 El Jardin de Francesco	-31.5880058	-68.5307504	https://sanjuan.geodestinos.ar/cat/educacion/6294-eni-42-el-jardin-de-francesco
+SAN JUAN	12261	Gobierno de San Juan	Escuela Cristobal Colon	-31.6202168	-68.4633019	https://www.openstreetmap.org/way/710779350
+SAN JUAN	4642	Gobierno de San Juan	ENI N.º 75 Elena Santa Cruz	-31.576378	-68.518597	https://mapa.educacion.gob.ar/legajo/700114000
+SAN JUAN	9161	Gobierno de San Juan	JINZ Nro 6 - 17 de Agosto	-30.3220359	-69.2044959	https://www.openstreetmap.org/node/12618485503
+SAN JUAN	3625	Gobierno de San Juan	Escuela Jose P. Cortinez	-31.5360289	-68.4380283	https://www.openstreetmap.org/way/705312560
+SAN JUAN	3770	Gobierno de San Juan	Escuela Juan XXIII	-31.5634051	-68.5372503	https://www.openstreetmap.org/node/6702072495
+SAN JUAN	1463	Molinos Río de la Plata	Santa Lucía	-31.5568206	-68.46798	https://sanjuan.geodestinos.ar/cat/fabricas-e-industrias/4554-4554-molinos-rio-de-la-plata-planta-los-robles
+SAN JUAN	1526	Molinos Río de la Plata	Los Robles	-31.5568206	-68.46798	https://sanjuan.geodestinos.ar/cat/fabricas-e-industrias/4554-4554-molinos-rio-de-la-plata-planta-los-robles
+SAN JUAN	8225	Pago Facil	C.S. San Juan	-31.5340479	-68.5215637	https://www.openstreetmap.org/node/5873610463
+SAN JUAN	5501	Pago Facil	Libertad San Juan	-31.5204106	-68.5408458	https://sanjuan.geodestinos.ar/cat/supermercados-y-mayoristas/1400-1400-super-libertad-sucursal-san-juan
+SAN JUAN	3387	Pertenecer SRL	San Juan	-31.5339461	-68.5207133	https://www.openstreetmap.org/node/8972914170
+SAN JUAN	1139	Peñaflor	San Martin - San Juan	-31.5574333	-68.3270908	https://www.openstreetmap.org/way/252173430
+SAN JUAN	5357	Walmart	1081 - CH+ Rawson SJ	-31.5754534	-68.5434575	https://sanjuan.geodestinos.ar/cat/supermercados-y-mayoristas/1387-1387-changomas-sucursal-rawson
+SAN LUIS	7019	Banco Credicoop	239 - San Luis	-33.3062338	-66.3350339	https://www.openstreetmap.org/way/1002049140
+SAN LUIS	6074	Banco Santander Río	Universidad Catolica de Cuyo - San Luis	-33.3001581	-66.3196823	https://www.openstreetmap.org/way/543918807
+SAN LUIS	6127	Banco Santander Río	Universidad Nacional De San Luis	-33.2915212	-66.3400936	https://www.openstreetmap.org/way/122553922
+SAN LUIS	8895	Dos Anclas	Bebedero	-33.5020073	-66.6505653	https://www.openstreetmap.org/way/474266553
+SM TUCUMAN	3706	Salta Refrescos (Región Sur)	Concepción	-27.34774861272473	-65.5874087442325	Pin de Gestion con signo de longitud corregido (estaba +65.58); cae sobre calle El Ceibo, Concepcion https://www.openstreetmap.org/way/278942838; direccion El Ceibo 145 Concepcion segun http://www.paginasblancas.com.ar/persona/salta-refrescos-sa
+SUPERNOVA	4459	Arcos Dorados (Mc Donalds)	Rosario	-32.9452288	-60.6455187	https://www.openstreetmap.org/way/555340127
+SUPERNOVA	4312	Arcos Dorados (Mc Donalds)	CPR - Club Provincial Rosario (192)	-32.9720787	-60.6626128	https://www.openstreetmap.org/way/187353791
+SUPERNOVA	4311	Arcos Dorados (Mc Donalds)	CFR - Alto Rosario Shopping (191)	-32.9274979	-60.6683937	https://www.openstreetmap.org/way/542127337
+SUPERNOVA	3620	Assist Card	Implant (CABA)	-32.9469634	-60.6368031	https://www.openstreetmap.org/way/301569762
+SUPERNOVA	4985	Calico	Rosario 2	-32.9722488	-60.7224242	https://www.openstreetmap.org/way/187349080
+SUPERNOVA	4786	Efectivo Si	EFECTIVO SI - San Lorenzo	-32.7504988	-60.7343402	https://www.openstreetmap.org/node/1531220074
+SUPERNOVA	4041	Galeno - COLONOS	Sucursal Rosario- Santa Fe  ART	-32.9382736	-60.6426323	https://www.openstreetmap.org/way/301570167
+SUPERNOVA	3413	Nutrien	Depòsito Portuario (Ponal Group)	-33.3526721	-60.1989655	https://www.openstreetmap.org/way/624798004
+TRELEW	9852	Aerolineas Argentinas	Aeropuerto De Puerto Madryn (PMY)	-42.758652	-65.1018677	https://www.openstreetmap.org/way/333006085
+TUCUMAN	4270	Arcos Dorados (Mc Donalds)	PJT - Portal Jumbo Tucuman (135)	-26.8222179	-65.2678971	https://www.openstreetmap.org/way/96019008
+TUCUMAN	3674	Galeno	Tucumán 2 (ART) (NO USAR)	-26.8303866	-65.2082929	https://www.openstreetmap.org/way/368039210
+TUCUMAN	8669	Molino Cañuelas	Tucumán - Miguel Lilio 365 - SUC CERRADA	-26.832808	-65.2214995	https://www.openstreetmap.org/way/371670017
+TUCUMAN	3792	Salta Refrescos (Región Sur)	Lules	-26.8366512	-65.2641132	https://www.openstreetmap.org/way/1017236337
+VIEDMA	11184	EDERSA S.A.	GRAL. CONESA	-40.1029435	-64.4553416	https://www.openstreetmap.org/way/297417994 (Almirante Brown 560, General Conesa)
