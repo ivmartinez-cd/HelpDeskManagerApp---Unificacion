@@ -10,13 +10,12 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
-    build_costo_bases,
+    base_mas_cercana,
+    bases_de_despacho,
     calcular_kms_a_facturar,
-    coords_base_default,
     maps_url_ida_vuelta,
     validar_prestador_para_distancias,
 )
-from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.errors import (
     FilaSinCoordenadasError,
@@ -27,7 +26,6 @@ from src.modules.liquidaciones.domain.repositories.google_maps_gateway import Go
 from src.modules.liquidaciones.domain.repositories.prestador_repository import PrestadorRepository
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesCatalogoGateway,
-    SigesSucursalPropia,
 )
 from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
 from src.modules.liquidaciones.domain.services.geolocalizacion import (
@@ -90,8 +88,11 @@ class ResolverCoordenadasFila:
         if candidato_idx is not None:
             elegido = await self._candidato(fila, candidato_idx)
             return await self._guardar(
-                tabla_km_id, elegido.latitud, elegido.longitud,
-                PROCEDENCIA_GEOCODE, elegido.formatted_address,
+                tabla_km_id,
+                elegido.latitud,
+                elegido.longitud,
+                PROCEDENCIA_GEOCODE,
+                elegido.formatted_address,
             )
         if latitud is None or longitud is None:
             raise ValidationError("Indicá un candidato o latitud y longitud manuales.")
@@ -155,8 +156,14 @@ class RecalcularKmFila:
         propias = await self._ports.siges.list_sucursales_de_empresa(
             prestador.siges_empresa_id  # type: ignore[arg-type]
         )
-        base = _resolver_base_recalculo(fila, propias, prestador)
         destino = (fila.latitud_destino, fila.longitud_destino)
+        # Misma regla que el cálculo masivo: la base más cercana entre la sede
+        # del PST y las de sus SPST de Siges (antes usaba solo las sedes propias
+        # por `id_costo_servicios` y INFOMAC recalculaba Santiago del Estero
+        # desde Villa Mercedes).
+        base = base_mas_cercana(
+            destino, await bases_de_despacho(self._ports.siges, prestador, propias)
+        )
         tramos = await self._ports.google_maps.distancias_km_ida_vuelta(base, [destino])
         ida, vuelta = tramos[0]
         if ida is None or vuelta is None:
@@ -164,9 +171,7 @@ class RecalcularKmFila:
         return await self._guardar(fila, _Medicion(base, destino, ida, vuelta))
 
     async def _guardar(self, fila: TablaKm, medicion: _Medicion) -> TablaKm:
-        aplica, kms_a_facturar = calcular_kms_a_facturar(
-            medicion.total, fila.umbral_viatico
-        )
+        aplica, kms_a_facturar = calcular_kms_a_facturar(medicion.total, fila.umbral_viatico)
         actualizada = await self._ports.tabla_km.update_distancias(
             fila.id,
             kms_ida=round(medicion.ida, 3),
@@ -192,19 +197,6 @@ def _url_maps_fila(fila: TablaKm, medicion: _Medicion) -> str:
         localidad=fila.localidad_cliente,
         provincia=fila.provincia_cliente,
     )
-
-
-def _resolver_base_recalculo(
-    fila: TablaKm,
-    propias: list[SigesSucursalPropia],
-    prestador: Prestador,
-) -> tuple[float, float]:
-    if fila.id_costo_servicios is not None:
-        costo_bases = build_costo_bases(propias)
-        coords = costo_bases.get(fila.id_costo_servicios)
-        if coords is not None:
-            return coords
-    return coords_base_default(prestador, propias)
 
 
 async def _fila_o_error(repo: TablaKmRepository, tabla_km_id: UUID) -> TablaKm:

@@ -11,11 +11,10 @@ Destinos: coords de Siges cuando existen (`coords_origen='siges'`); si no, la
 resolución local de `sucursal_coordenadas` (geocode confirmado o manual). Una
 sucursal sin ninguna de las dos queda contada en `sin_ubicar`.
 
-Base multi-sede: cada cliente tiene `IDCostoServicios` en Siges; el mismo campo
-está en las sucursales PROPIAS del PST (`Id_Empresa = empresa_id`). Si coinciden,
-el destino sale desde esa base propia; si no hay match, usa la base por defecto
-del prestador. El `latitud_base`/`longitud_base` de cada `PreviewFila` registra
-qué base se usó (confirmado en PST SAN JUAN y INFOMAC, 2026-08-16)."""
+Base multi-sede: cada destino se mide desde la base más cercana entre la sede
+del PST y las sedes de sus SPST de Siges (`bases_de_despacho` en
+`_distancias_comunes.py`). El `latitud_base`/`longitud_base` de cada
+`PreviewFila` registra qué base se usó."""
 
 from collections import defaultdict
 from typing import TypedDict
@@ -24,8 +23,9 @@ from uuid import UUID
 from src.modules.liquidaciones.application.use_cases._distancias_comunes import (
     CalcularDistanciasPorts,
     Destino,
+    base_mas_cercana,
+    bases_de_despacho,
     calcular_kms_a_facturar,
-    coords_base_default,
     desde_periodo_hace_meses,
     es_empresa_activa,
     parse_latlon_siges,
@@ -43,17 +43,12 @@ from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import Sucur
 from src.modules.liquidaciones.domain.entities.tabla_km import UMBRAL_VIATICO_DEFAULT, TablaKm
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesSucursalCliente,
-    SigesSucursalPropia,
 )
 from src.modules.liquidaciones.domain.services.geolocalizacion import (
     PROCEDENCIA_MANUAL,
     PROCEDENCIA_SIGES,
-    haversine_km,
 )
-from src.modules.liquidaciones.domain.services.vinculacion_siges import (
-    normalizar_nombre,
-    spsts_siges_del_prestador,
-)
+from src.modules.liquidaciones.domain.services.vinculacion_siges import normalizar_nombre
 
 _GOOGLE_BATCH = 25
 
@@ -68,12 +63,9 @@ class PreviewCalcularDistancias:
         propias = await self._ports.siges.list_sucursales_de_empresa(
             prestador.siges_empresa_id  # type: ignore[arg-type]
         )
-        base_default = coords_base_default(prestador, propias)
-        # Las sedes de las SPST de Siges del PST entran al mapa de bases: sin
-        # esto, INFOMAC medía Ushuaia desde Villa Mercedes (3.000 km de ida,
-        # 2026-09-05). Salen de Siges por nombre, no de los SPST locales (que
-        # son zonas tarifarias, no bases — 2026-09-07).
-        bases = _bases_con_coords(base_default, propias + await self._sedes_de_spsts(prestador))
+        # Sede del PST + sedes de sus SPST de Siges: sin esto, INFOMAC medía
+        # Ushuaia desde Villa Mercedes (3.000 km de ida, 2026-09-05).
+        bases = await bases_de_despacho(self._ports.siges, prestador, propias)
         destinos, sin_ubicar, sin_actividad = await self._armar_destinos(prestador)
         verificar_tope(2 * len(destinos), self._tope)
         existentes = await self._cargar_existentes(prestador_id)
@@ -86,16 +78,6 @@ class PreviewCalcularDistancias:
             elementos_google=2 * len(destinos),
             sin_actividad=sin_actividad,
         )
-
-    async def _sedes_de_spsts(self, prestador: Prestador) -> list[SigesSucursalPropia]:
-        empresas = await self._ports.siges.list_empresas_activas()
-        pst = next((e for e in empresas if e.siges_empresa_id == prestador.siges_empresa_id), None)
-        if pst is None:
-            return []
-        sedes: list[SigesSucursalPropia] = []
-        for spst in spsts_siges_del_prestador(pst.den_comercial, empresas):
-            sedes += await self._ports.siges.list_sucursales_de_empresa(spst.siges_empresa_id)
-        return sedes
 
     async def _armar_destinos(self, prestador: Prestador) -> tuple[list[Destino], int, int]:
         sucursales = await self._ports.siges.list_sucursales_de_prestador(
@@ -136,13 +118,10 @@ class PreviewCalcularDistancias:
         destinos: list[Destino],
         existentes: dict[tuple[str, str], TablaKm],
     ) -> tuple[list[PreviewFila], int]:
-        # Cada destino se mide desde la base más cercana (sede del PST o de sus
-        # SPST): varias sedes comparten zona tarifaria en Siges, así que
-        # `id_costo_servicios` no alcanza para elegir la sede (INFOMAC, 2026-09-05:
-        # Santa Rosa, Pehuajó y Trenque Lauquen comparten la zona 43).
+        # Cada destino se mide desde la base más cercana (ver `bases_de_despacho`).
         grupos: dict[tuple[float, float], list[Destino]] = defaultdict(list)
         for d in destinos:
-            grupos[_base_mas_cercana(d.coords, bases)].append(d)
+            grupos[base_mas_cercana(d.coords, bases)].append(d)
         filas: list[PreviewFila] = []
         sin_ruta = 0
         for base, grupo in grupos.items():
@@ -272,20 +251,3 @@ def _km_fila(ida: float, vuelta: float, existente: TablaKm | None) -> _CamposKm:
         kms_recorrido_actual=existente.kms_recorrido if existente else None,
         kms_a_facturar_actual=existente.kms_a_facturar if existente else None,
     )
-
-
-def _base_mas_cercana(
-    destino: tuple[float, float], bases: list[tuple[float, float]]
-) -> tuple[float, float]:
-    return min(bases, key=lambda b: haversine_km(destino[0], destino[1], b[0], b[1]))
-
-
-def _bases_con_coords(
-    base_default: tuple[float, float], sedes: list[SigesSucursalPropia]
-) -> list[tuple[float, float]]:
-    bases = [base_default]
-    for sede in sedes:
-        coords = parse_latlon_siges(sede.latitud, sede.longitud)
-        if coords is not None and coords not in bases:
-            bases.append(coords)
-    return bases

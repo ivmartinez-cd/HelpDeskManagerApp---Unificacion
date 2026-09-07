@@ -32,10 +32,11 @@ from src.modules.liquidaciones.domain.repositories.sucursal_coordenadas_reposito
     SucursalCoordenadasRepository,
 )
 from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
-from src.modules.liquidaciones.domain.services.geolocalizacion import armar_direccion
+from src.modules.liquidaciones.domain.services.geolocalizacion import armar_direccion, haversine_km
 from src.modules.liquidaciones.domain.services.vinculacion_siges import (
     nombres_compatibles,
     normalizar_nombre,
+    spsts_siges_del_prestador,
 )
 
 _MAPS_BASE = "https://www.google.com/maps/dir/?api=1"
@@ -63,9 +64,7 @@ def es_empresa_activa(empresa_nombre: str, activos_norm: set[str]) -> bool:
     Mismo criterio en Geocodificar, Distancias y Buscar sucursales (ex-clientes
     = las que no están en el set)."""
     empresa = normalizar_nombre(empresa_nombre)
-    return empresa in activos_norm or any(
-        nombres_compatibles(empresa, a) for a in activos_norm
-    )
+    return empresa in activos_norm or any(nombres_compatibles(empresa, a) for a in activos_norm)
 
 
 def desde_periodo_hace_meses(meses: int) -> str:
@@ -153,17 +152,42 @@ def coords_base_default(
     return coords
 
 
-def build_costo_bases(
-    propias: list[SigesSucursalPropia],
-) -> dict[int, tuple[float, float]]:
-    resultado: dict[int, tuple[float, float]] = {}
-    for s in propias:
-        if s.id_costo_servicios is None:
-            continue
-        coords = parse_latlon_siges(s.latitud, s.longitud)
-        if coords is not None:
-            resultado[s.id_costo_servicios] = coords
-    return resultado
+async def sedes_de_spsts_siges(
+    siges: SigesCatalogoGateway, prestador: Prestador
+) -> list[SigesSucursalPropia]:
+    """Sedes de las empresas SPST de Siges del PST (por convención de nombre,
+    ver `spsts_siges_del_prestador`). No usa los SPST locales: esos son zonas
+    tarifarias, no bases (INFOMAC, 2026-09-07)."""
+    empresas = await siges.list_empresas_activas()
+    pst = next((e for e in empresas if e.siges_empresa_id == prestador.siges_empresa_id), None)
+    if pst is None:
+        return []
+    sedes: list[SigesSucursalPropia] = []
+    for spst in spsts_siges_del_prestador(pst.den_comercial, empresas):
+        sedes += await siges.list_sucursales_de_empresa(spst.siges_empresa_id)
+    return sedes
+
+
+async def bases_de_despacho(
+    siges: SigesCatalogoGateway, prestador: Prestador, propias: list[SigesSucursalPropia]
+) -> list[tuple[float, float]]:
+    """Base por defecto del PST + sus otras sedes propias + sedes de sus SPST
+    de Siges, sin duplicados. Cada destino se mide desde la más cercana
+    (`base_mas_cercana`): varias sedes comparten zona tarifaria, así que
+    `id_costo_servicios` no alcanza para elegir (INFOMAC: Santa Rosa, Pehuajó
+    y Trenque Lauquen comparten zona; Santiago del Estero medía desde Goya)."""
+    bases = [coords_base_default(prestador, propias)]
+    for sede in propias + await sedes_de_spsts_siges(siges, prestador):
+        coords = parse_latlon_siges(sede.latitud, sede.longitud)
+        if coords is not None and coords not in bases:
+            bases.append(coords)
+    return bases
+
+
+def base_mas_cercana(
+    destino: tuple[float, float], bases: list[tuple[float, float]]
+) -> tuple[float, float]:
+    return min(bases, key=lambda b: haversine_km(destino[0], destino[1], b[0], b[1]))
 
 
 async def obtener_coords_base(

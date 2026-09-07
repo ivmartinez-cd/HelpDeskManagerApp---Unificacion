@@ -403,3 +403,27 @@ Decisiones de comportamiento que no estaban en el mockup:
   fecha en la zona (confirmación con la cantidad). Ya no hay borrado de una tarifa suelta.
 - Se eliminó `tarifario-history-timeline.tsx` (sin otros usos). El deep link desde ALT008 sigue
   abriendo el modal de tarifa con tipo/SPST prefijados.
+
+## 14. INFOMAC: vínculos de zona completos y km desde la sede correcta (2026-09-07)
+
+Backup `helpdesk-db_2026-09-07_1315_infomac-vincular-rn-neuquen-y-km.dump`.
+
+- **Vínculos**: 30 filas de Río Negro/Neuquén (6 activas: Cipolletti ×2, Plottier, Cutral Co,
+  Ingeniero Huergo; 24 archivadas) seguían en Genérica → pasaron a Gral. Roca/Neuquén, que es
+  la zona de Siges "General Roca / Rio Negro / Neuquen / Cipoletti". Dos archivadas fuera de
+  zona (Puerto Madryn, 25 de Mayo LP) volvieron a Genérica. Estado final: Genérica 173,
+  Gral. Roca/Neuquén 203, Norte Neuquén 7, Ushuaia 7 — todo consistente por provincia.
+- **Km desde base equivocada**: 23 filas de Santiago del Estero (12 activas) estaban medidas
+  desde Goya o Merlo (660-900 km de ida) porque la SPST "Santiago Del Estero" (1404) no estaba
+  entre las 14 creadas el sábado. Con las bases tomadas de Siges por nombre entra sola; se
+  recalcularon por `POST /tabla-km/{id}/recalcular-km` (6-14 km de ida). Dos pines de La Banda
+  que Gestión tiene 50 km al norte (CEDI Salta Refrescos, Efectivo Sí) se corrigieron por
+  geocodificación local y se recalcularon. La ALT002 de Salta Refrescos en 3952-5 (esperaba
+  1.808 km) desapareció; quedan 10 ALT001 (Santa Rosa/Zapala, decisión de la TL), 1 ALT002
+  real (YAGUAR General Roca) y 2 ALT010.
+- **Código**: `RecalcularKmFila` usaba solo las sedes propias por `id_costo_servicios` y caía a
+  la base default; ahora usa la misma regla que el cálculo masivo (`bases_de_despacho` +
+  `base_mas_cercana`, movidas a `_distancias_comunes.py`).
+- **No tocado**: 45 filas activas sin coordenadas con km negociados por la TL (Cipolletti 89,
+  Chos Malal 326, Zapala 149…); son coherentes con la sede más cercana y la regla es no pisar lo
+  negociado. Mencué (archivada, 367 km de ida desde San Martín de los Andes) es ruta real.
