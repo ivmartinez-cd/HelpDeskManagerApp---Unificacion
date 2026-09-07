@@ -479,3 +479,205 @@ Villa Mercedes (backup `helpdesk-db_2026-09-07_1426_infomac-la-pampa-a-gral-roca
 filas de La Pampa de INFOMAC (Santa Rosa 9, General Pico 4, 25 de Mayo 2, Macachín 1) pasaron
 al SPST Gral. Roca/Neuquén. Reanálisis de 3952-5: las 9 ALT001 de Santa Rosa desaparecieron
 (INFOMAC cobraba bien, a precio Gral. Roca). Goya (Corrientes) sigue en Villa Mercedes.
+
+## 16. Segunda pasada sobre toda la Tabla KM (2026-09-07, solo lectura)
+
+Pedido de Iván: revisar si algo quedó mal tras la carga masiva del sábado (§10-11). Un
+agente de code review sobre los 8 commits del sábado/hoy + 8 agentes en paralelo, uno por
+grupo de prestadores, con reglas mecánicas compartidas
+(`docs/liquidaciones/geoloc-2026-09-07-segunda-revision-hallazgos.tsv`, 459 líneas) y el
+mismo puente `osm.sh` de carril único que el pelotón del sábado. Todo solo lectura: nada de
+esto está aplicado todavía.
+
+### Bugs de código (no de datos)
+
+- **El wizard del frontend aplica el cálculo de km sin `soloSinKm`**: pisa el km de las
+  filas ya negociadas por la TL cada vez que alguien clickea "Aplicar a la Tabla KM…"
+  (`tabla-km-wizard-calcular.tsx` no manda esa opción; el backend defaultea a `False`). Hoy
+  reemplazaría las 767 filas "negociadas sin tocar" del §11.
+- **El preview de distancias cruza filas existentes solo por nombre normalizado, no por
+  `siges_sucursal_id`** (`preview_calcular_distancias.py:_cargar_existentes`) — es el
+  mecanismo exacto de los 46 grupos duplicados de SAN JUAN de abajo: Siges renombra una
+  sucursal, el preview no la reconoce y crea una fila nueva con el mismo
+  `siges_sucursal_id` en vez de actualizar la vieja.
+- **Corregir un pin no invalida el km ya medido con el pin viejo**: `fijar_pin_manual` y
+  `corregir_pin` solo tocan `sucursal_coordenadas`; la fila de `tabla_km` sigue con el km
+  del pin roto hasta el próximo apply completo (bug de arriba) o un recálculo manual por
+  fila — que además (`RecalcularKmFila`) lee `latitud_destino` de la fila, no el override,
+  así que **vuelve a medir contra el pin roto**.
+- Media: ALT002 no distingue "sin km de referencia" de "no factura por estar bajo el
+  umbral" (mismo `kms_a_facturar=0`); el botón "Tomar X km como referencia" puede convalidar
+  un sobrecobro real con un clic. `recalcular-km` por fila no reanaliza las liquidaciones
+  abiertas (`aplicar` sí). Bases de despacho sin validar caja de Argentina. Detalle completo
+  en la transcripción de la revisión, no repetido acá.
+
+### Hallazgos de datos — 459 líneas, por acción
+
+| Acción | Total | Confianza alta |
+|---|---|---|
+| RECALCULAR_KM | 118 | 111 |
+| PIN_MANUAL | 87 | 65 |
+| OK (flag mecánico descartado) | 75 | 48 |
+| TL (decisión de negocio) | 71 | 47 |
+| ARCHIVAR (duplicado) | 45 | 42 |
+| GESTION (corregir en Gestión) | 35 | 4 |
+| CREAR_FILA | 21 | 3 |
+| RENOMBRAR | 6 | 4 |
+| TRASLADAR_KM | 1 | 1 |
+
+Por prestador: SAN JUAN 170, PENTACOM 62, SUPERNOVA 60, INFOMAC 50, el resto ≤15 cada uno
+(30 prestadores sin duplicados ni cobertura pendiente tienen pocos o ningún hallazgo).
+
+### Patrones sistemáticos (no casos sueltos)
+
+- **PENTACOM (42 filas) y SUPERNOVA (44 filas)**: medidas desde la base default (Córdoba
+  capital / Rosario) en vez de la sede más cercana real (Río IV/Villa María/Laboulaye;
+  Santa Fe/Rafaela) — se cargaron antes de que existieran esas sedes o con un job que no
+  las tomó. `RECALCULAR_KM` las corrige solo (la sede ya existe en Siges).
+- **INFOMAC, 28 filas negociadas**: Cipolletti, Centenario, Cutral Co/Plaza Huincul, Choele
+  Choel, Villa Regina, Zapala, Junín de los Andes, Trenque Lauquen, Macachín y otras siguen
+  con el km negociado desde la base histórica (Gral. Roca, Bariloche, Pehuajó, Santa Rosa)
+  aunque hoy hay una sede SPST en la localidad o al lado — la ruta real es 0-45 km, no
+  90-560. Decisión de la TL, no automatizable (son valores negociados).
+- **SAN JUAN**: 46 grupos de duplicados (91 filas) por el bug de arriba — Siges renombra
+  una escuela, queda una fila vieja con nombre viejo (a veces con km negociado) y una nueva
+  sin km. Además el pin de Gestión cae en el **centroide del departamento** en vez de la
+  localidad para varios clusters (Jáchal 213 km cargados vs 159 reales desde Gestión
+  Integral, Rawson, Pocito, Angaco) — en San Juan casi toda `localidad` de Gestión es un
+  departamento, no una ciudad, así que ese indicador solo mecánico da falsos positivos si no
+  se verifica con ruta real. Pendiente para la TL: desde dónde se factura Valle Fértil (la
+  sede SPST está en el pueblo; 9 filas siguen negociadas a precio de viaje desde la capital).
+- **Salta/Cuyo**: el geocoder tomó "Salta" como provincia en vez de ciudad para 4
+  sucursales y las mandó a Tartagal/Salvador Mazza/San Antonio de los Cobres (300+ km de
+  error); y al revés, una dirección real de Río de las Piedras (Metán) geocodificó en la
+  capital. Vale mirar el mismo patrón en otros prestadores con localidad = nombre de
+  provincia.
+- **MDQ (costa atlántica)**: OSRM corta la RP11 en su grafo y manda todo Mar del
+  Plata→Villa Gesell/Cariló/Pinamar por RN2, duplicando el km real (231.9 km calculados vs
+  ~110 reales, confirmado contra lo negociado por la TL para las mismas localidades). No
+  recalculable con OSRM tal cual está: TL.
+- Confirmado como correcto (no se toca): overrides manuales del sábado con fuente citada
+  (San Juan 74 escuelas, Santa Rosa, etc.), rutas de sierra/montaña con ratio alto pero real
+  (Calingasta, Punilla), varias "Natura" de Corrientes con pin bien puesto donde el geocode
+  de comparación es el que estaba mal.
+
+Nada de esto se aplicó todavía — es el inventario para decidir con la TL qué corregir y en
+qué orden.
+
+### Aplicado — mecánicos de confianza alta (2026-09-07, mismo día)
+
+Backup previo `backups/helpdesk-db_2026-09-07_1520_segunda-revision-tabla-km-mecanicos.dump`.
+Decisión de Iván: aplicar los 218 hallazgos de confianza alta con acción `RECALCULAR_KM`
+(111), `PIN_MANUAL` (65) y `ARCHIVAR` (43, incluye uno embebido en un `PIN_MANUAL`) vía API,
+dejando afuera TL (71), GESTION (35) y CREAR_FILA (21) para decidir aparte.
+
+- **Pin corregido** (65): `PUT …/sucursal/{id}/pin-manual` (override en `sucursal_coordenadas`
+  con fuente) + `PUT /tabla-km/{id}/coordenadas` con el mismo punto para que la fila propia
+  quede consistente — necesario por el bug del pin corregido de arriba: `pin-manual` solo
+  toca el override, no la fila. De esas, 36 tenían km medido con el pin viejo y se
+  recalcularon a continuación; las 29 restantes eran filas vacías (quedan con el pin
+  correcto, sin forzar una medición que nadie pidió).
+- **Recalculadas sin cambio de pin** (111): la mayoría son los dos patrones sistemáticos de
+  PENTACOM y SUPERNOVA (medidas desde la base default antes de existir la sede real).
+- **Archivadas** (43): duplicados por renombre de Siges, mayormente SAN JUAN.
+- 320 escrituras, 0 errores.
+- **Efecto neto**: la suma de `kms_a_facturar` en las 153 filas recalculadas (pin fix + km)
+  bajó de 50.536 km a 10.453 km — la mayoría eran filas con pin roto o base equivocada que
+  facturaban km que no correspondían.
+- Reanálisis de las 7 liquidaciones abiertas de prestadores tocados con incidentes:
+  INFOMAC 3952-5, SALTA 3953-4/3954-3/3960-4, SAN JUAN 3944-6/3945-5/3946-4 (`POST
+  /{id}/reanalyze`). PENTACOM y SUPERNOVA no tenían liquidación abierta al momento.
+- Pendiente, sin tocar: los 71 casos `TL` (valores negociados, zonas de sede, bases a
+  definir — Valle Fértil en San Juan, sede SPST 7208 de INFOMAC), 35 `GESTION` (pin a
+  corregir en el sistema de origen, esto no lo cambia), 21 `CREAR_FILA`, 6 `RENOMBRAR`, 1
+  `TRASLADAR_KM`.
+
+### Corregidos los 3 bugs de código (mismo día)
+
+- **Wizard sin `soloSinKm`**: `AplicarDistanciasIn.solo_sin_km` pasa a `default=True` (antes
+  `False`, en contra de su propio comentario); el frontend (`aplicarCalcularDistancias`) lo
+  manda explícito. El modal de confirmación ahora cuenta cuántas filas van a completarse de
+  verdad (sin km) contra cuántas ya tienen km y se preservan, en vez del total genérico
+  "a actualizar" que antes incluía negociadas. Toast final suma las omitidas.
+- **Preview cruzaba solo por nombre**: `preview_calcular_distancias.py` indexa ahora las
+  filas activas por `siges_sucursal_id` además de por nombre (`_ExistentesIndex`), archivadas
+  afuera del índice. Cuando el cruce es por id con un nombre distinto al guardado (Siges
+  renombró la sucursal), la fila adopta el nombre nuevo — si no, el motor de reglas
+  (`_resolucion.py`, matchea por nombre) nunca la vuelve a encontrar aunque el vínculo esté
+  al día. 4 tests nuevos (`test_calcular_distancias_preview.py`,
+  `test_fijar_pin_manual.py`, `test_pines_sospechosos.py`).
+- **Pin corregido no invalidaba el km viejo**: nuevo método de puerto
+  `TablaKmRepository.set_coordenadas_por_siges_sucursal` — `FijarPinManual` y `CorregirPin`
+  lo llaman después de guardar el override en `sucursal_coordenadas`, propagando el pin nuevo
+  al pin propio de cada fila de Tabla KM no archivada de esa sucursal. No dispara una
+  remedición automática (la key de Google es paga): el pin queda consistente y "Recalcular
+  KM" por fila (que lee el pin de la fila, no el override) ya mide contra el correcto.
+- Verificado: ruff + mypy acotados a los archivos tocados, `tsc --noEmit` completo (limpio,
+  coordinado con las otras 2 sesiones activas), 38 tests unitarios de los archivos tocados en
+  verde, backend reiniciado sano (`insumos omitido`, `7 job(s) iniciados`). CI corre el resto
+  en el próximo push.
+
+### Caso puntual: AMI MUSIC Junín, recorrido≠ida+vuelta (2026-09-07)
+
+Iván reportó una fila (JUNIN, AMI MUSIC "A34 - DASH Junin") con 656 km recorridos y 657 km
+facturados en pantalla. La fila en la base tenía `kms_ida`/`kms_vuelta` = 328/328 (medidos
+contra el pin roto de Gestión en Vicuña Mackenna, Córdoba, el mismo caso que ya había
+marcado el pelotón como `GESTION` sin resolver) pero `kms_recorrido`/`kms_a_facturar` = 9,9 —
+alguien ya lo había corregido a mano por "Editar" (ese formulario solo toca el total, no
+ida/vuelta, y no actualiza `updated_at`, por eso parecía "sin tocar desde el sábado"). El 9,9
+es plausible: la dirección real de Siges (Ruta Nacional 7 y Sargento Cabral, Junín) da 3,8-5,5
+km de ruta desde la sede. Lo que veía Iván era el navegador con la página vieja sin refrescar.
+Se limpió el ida/vuelta/origen del pin viejo (quedan en blanco, sin afectar el total
+facturado) para que no quede la inconsistencia latente en el detalle de la fila.
+
+### Pines "GESTION" — segunda vuelta con más tiempo de búsqueda (2026-09-07)
+
+Pedido de Iván: corregir los pines marcados `GESTION` (el dato de origen está mal, no algo
+que arregle el motor) aunque el pin correcto no esté en Gestión. Backup
+`helpdesk-db_2026-09-07_1649_pines-gestion-tercera-pasada.dump`.
+
+De los 35 hallazgos `GESTION`, se buscó el domicilio real de Siges para cada uno (antes los
+escuadrones solo tenían el nombre) y se geocodificó con OSM. **28 resueltos** (19 confianza
+alta, con calle exacta; 9 confianza media, dirección aproximada — marcado en la fuente).
+7 quedaron sin resolver por falta de dato: 2 sucursales cerradas (Nutrien Tancacha, Nutrien
+Gral. Arenales), 2 con dirección demasiado vaga para geocodificar (Musimundo Formosa 3 sin
+calle; Escuela Sup. Sarmiento con "Ruta 319" que no existe en OSM), 1 sin ningún resultado
+(Piero SAIC "Ex Ruta 302"), y 2 casos donde el mejor candidato era solo el centro del pueblo
+sin más precisión (Ullúm; Gral. Alvear Bs.As.) — estos 7 siguen para Gestión o para una
+próxima pasada con otra fuente.
+
+Aplicado igual que los pines de confianza alta del punto anterior: override en
+`sucursal_coordenadas` + pin propio de la fila + recálculo de km en las 17 filas que ya
+tenían medición vieja (las negociadas/vacías solo recibieron el pin, sin forzar km). 28
+overrides, 0 errores. Efecto: SUPERNOVA Santa Fe Anexo pasó de 656/657 km a 13,5 km real
+(estaba en Villa Gobernador Gálvez, no en la capital); Comodoro EANA aeropuerto a 10,6 km
+(coincide con la estimación del escuadrón); San Luis Zucamor a 83,5 km (zona industrial
+sobre RN7, antes 70 km al sur del real); los 4 casos de San Miguel de Tucumán con pin
+compartido en el centroide de la ciudad a 3-4 km reales cada uno, distintos entre sí.
+Reanálisis de las 6 liquidaciones abiertas de los prestadores tocados (BAHIA, SAN JUAN×2,
+MACARONE, INFOMAC).
+
+**Ronda con búsqueda web (mismo día)**: de los 7 que quedaron sin resolver, Iván pidió buscar
+en la web. Resueltos 4 más: Banco Santander 532 Gral. Alvear (la avenida "Juan Domingo Perón"
+de Siges es Av. Presidente Perón, calle real del pueblo — descartaba confundirse con General
+Alvear de Mendoza); Escuela Sup. de Sarmiento Anexo (una nota de prensa da la dirección real,
+"Instituto Superior Sarmiento, 9 de Julio s/n, Villa Media Agua"); ENI N.º 81 Huellitas de
+Amor en Ullum (nota de prensa de la inauguración del edificio nuevo ubica la escuela en
+Barrio José Grimalt — antes con un pin redondeado al centroide del departamento, ahora con
+el barrio real, recalculado a 33,1 km). Quedan **3 sin resolver**, genuinamente sin dato
+disponible: Nutrien Tancacha y Musimundo Formosa 3 (Musimundo cerró varias sucursales del
+NEA — Formosa, Clorinda, Pirané, Las Lomitas, El Colorado — en estos días, así que puede que
+ya no exista la sucursal a ubicar) y Piero SAIC depósito Tucumán (solo aparece su planta de
+Buenos Aires en toda la web). Total de la ronda `GESTION`: **32 de 35 resueltos**.
+
+### Sobre migrar esto a Gestión (pendiente, para más adelante)
+
+Iván pidió pensar, una vez que la cobertura sea alta, cómo migrar el mecanismo de corrección
+de pines a Gestión (que el dato bueno viva en el sistema de origen, no solo acá encima).
+Punto de partida ya verificado: el acceso a Siges/Gestión desde este backend es de **solo
+lectura** (`pyodbc_siges_catalogo_gateway.py`, sin ningún INSERT/UPDATE — coherente con
+`SIGES_READONLY_LIQUIDACIONES_VALIDACION.md`/`SIGES_READONLY_PLANIFICACION_VALIDACION.md`).
+Migrar las correcciones implica conseguir un canal de escritura a Gestión que hoy no existe
+(o un proceso manual de carga del lado de Gestión a partir de lo que tengamos acá) — no es
+un cambio de código de este lado, es una decisión/acceso del otro sistema. Sin más trabajo
+por ahora; retomar cuando la cobertura lo amerite.
