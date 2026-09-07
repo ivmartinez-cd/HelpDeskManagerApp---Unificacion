@@ -107,8 +107,11 @@ class CalculoKmPreviewOut(BaseModel):
 class AplicarDistanciasIn(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     preview_id: uuid.UUID = Field(alias="previewId")
-    # Completar solo filas sin km (no pisa lo negociado por la TL).
-    solo_sin_km: bool = Field(default=False, alias="soloSinKm")
+    # Default True: completar solo filas sin km, nunca pisar lo negociado por
+    # la TL sin que lo pidan explícito (bug 2026-09-07: el wizard del frontend
+    # no mandaba este campo y el default en False pisaba negociados en cada
+    # aplicación completa).
+    solo_sin_km: bool = Field(default=True, alias="soloSinKm")
 
 
 class AplicarDistanciasOut(BaseModel):

@@ -41,6 +41,7 @@ from tests.unit.domain.liquidaciones.fakes_geolocalizacion import (
     FakeNominatimReverseCacheRepository,
     FakeSigesGeoGateway,
     FakeSucursalCoordenadasRepository,
+    FakeTablaKmGeoRepository,
 )
 
 
@@ -73,6 +74,7 @@ def _armar(clientes: list[SigesSucursalCliente]):  # type: ignore[no-untyped-def
     pines_ports = PinesPorts(
         prestadores=prestadores, siges=siges, geocode_cache=geocode_cache,
         geocoding=FakeGeocodingGateway(), sucursal_coords=FakeSucursalCoordenadasRepository(),
+        tabla_km=FakeTablaKmGeoRepository(),
     )
     ports = WorklistCsvPorts(
         calcular_worklist=CalcularWorklistTier2(worklist_ports),

@@ -35,10 +35,10 @@ export const geolocalizacionApi = {
       `/api/liquidaciones/siges/prestador/${prestadorId}/calcular-distancias/preview`,
     ),
 
-  aplicarCalcularDistancias: (prestadorId: string, previewId: string) =>
+  aplicarCalcularDistancias: (prestadorId: string, previewId: string, soloSinKm = true) =>
     httpClient.post<AplicarDistanciasResult>(
       `/api/liquidaciones/siges/prestador/${prestadorId}/calcular-distancias/aplicar`,
-      { previewId },
+      { previewId, soloSinKm },
     ),
 
   geocodificarFaltantes: (prestadorId: string) =>

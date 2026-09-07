@@ -19,13 +19,14 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
 from src.modules.liquidaciones.domain.services.geolocalizacion import PROCEDENCIA_GEOCODE
 from src.shared.domain.errors import ValidationError
 from src.shared.domain.repositories.geocoding_gateway import GeocodeCandidato
-from tests.unit.domain.liquidaciones.factories import make_prestador
+from tests.unit.domain.liquidaciones.factories import make_prestador, make_tabla_km
 from tests.unit.domain.liquidaciones.fakes import FakePrestadorRepository
 from tests.unit.domain.liquidaciones.fakes_geolocalizacion import (
     FakeGeocodeCacheRepository,
     FakeGeocodingGateway,
     FakeSigesGeoGateway,
     FakeSucursalCoordenadasRepository,
+    FakeTablaKmGeoRepository,
 )
 
 _DIRECCION = "Avenida Callao 1337, CABA, Capital Federal, Argentina"
@@ -76,6 +77,7 @@ def _armar(
         geocode_cache=FakeGeocodeCacheRepository(),
         geocoding=geocoding or FakeGeocodingGateway(),
         sucursal_coords=FakeSucursalCoordenadasRepository(),
+        tabla_km=FakeTablaKmGeoRepository(),
     )
     return ports, prestador.id
 
@@ -218,6 +220,33 @@ class TestCorregirPin:
         assert fila.procedencia == PROCEDENCIA_GEOCODE
         assert fila.latitud == _LEJOS.latitud
         assert fila.formatted_address == _LEJOS.formatted_address
+
+    @pytest.mark.asyncio
+    async def test_propaga_el_pin_a_las_filas_de_tabla_km_no_archivadas(self) -> None:
+        """Bug 2026-09-07: corregir un pin solo tocaba el override, así que la
+        fila de Tabla KM seguía midiendo contra el pin roto hasta el próximo
+        cálculo masivo. Una fila archivada (duplicado descartado) no se toca."""
+        ports, prestador_id = _armar([_sucursal()])
+        await ports.geocode_cache.put(_DIRECCION, [_LEJOS])
+        activa = make_tabla_km(
+            prestador_id=prestador_id, siges_sucursal_id=1,
+            latitud_destino=-34.5, longitud_destino=-58.4, coords_origen="siges",
+        )
+        archivada = make_tabla_km(
+            prestador_id=prestador_id, siges_sucursal_id=1, archivada=True,
+            latitud_destino=-34.5, longitud_destino=-58.4, coords_origen="siges",
+        )
+        ports.tabla_km.rows[activa.id] = activa  # type: ignore[attr-defined]
+        ports.tabla_km.rows[archivada.id] = archivada  # type: ignore[attr-defined]
+
+        await CorregirPin(ports).execute(prestador_id, siges_sucursal_id=1)
+
+        tocada = ports.tabla_km.rows[activa.id]  # type: ignore[attr-defined]
+        assert tocada.latitud_destino == _LEJOS.latitud
+        assert tocada.longitud_destino == _LEJOS.longitud
+        assert tocada.coords_origen == PROCEDENCIA_GEOCODE
+        intacta = ports.tabla_km.rows[archivada.id]  # type: ignore[attr-defined]
+        assert intacta.latitud_destino == -34.5
 
     @pytest.mark.asyncio
     async def test_sin_geocode_cacheado_falla(self) -> None:

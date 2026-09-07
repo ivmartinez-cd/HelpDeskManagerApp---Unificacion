@@ -23,6 +23,7 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
 from src.modules.liquidaciones.domain.repositories.sucursal_coordenadas_repository import (
     SucursalCoordenadasRepository,
 )
+from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
 from src.modules.liquidaciones.domain.services.geolocalizacion import (
     PROCEDENCIA_GEOCODE,
     armar_direccion,
@@ -46,6 +47,10 @@ class PinesPorts:
     geocode_cache: GeocodeCacheRepository
     geocoding: GeocodingGateway
     sucursal_coords: SucursalCoordenadasRepository
+    # Solo lo usa CorregirPin, para propagar el pin corregido a las filas de
+    # Tabla KM ya cargadas — sin esto quedaban con el pin viejo hasta el
+    # próximo cálculo masivo (bug 2026-09-07).
+    tabla_km: TablaKmRepository
 
 
 @dataclass(frozen=True)
@@ -228,4 +233,11 @@ class CorregirPin:
             longitud=candidato.longitud,
             procedencia=PROCEDENCIA_GEOCODE,
             formatted_address=candidato.formatted_address,
+        )
+        await self._ports.tabla_km.set_coordenadas_por_siges_sucursal(
+            prestador_id,
+            sucursal.siges_sucursal_id,
+            latitud=candidato.latitud,
+            longitud=candidato.longitud,
+            coords_origen=PROCEDENCIA_GEOCODE,
         )

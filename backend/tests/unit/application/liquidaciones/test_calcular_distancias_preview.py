@@ -175,6 +175,56 @@ class TestPreview:
         assert fila.kms_total == pytest.approx(398.815)
 
     @pytest.mark.asyncio
+    async def test_cruza_por_siges_sucursal_id_aunque_el_nombre_cambio(self) -> None:
+        """Bug 2026-09-07: el preview cruzaba solo por nombre normalizado, así
+        que un renombre en Siges no encontraba la fila existente y creaba una
+        segunda con el mismo `siges_sucursal_id` — 46 grupos duplicados en
+        SAN JUAN. Ahora el `siges_sucursal_id` manda y la fila adopta el
+        nombre nuevo (si no, el motor de reglas nunca la vuelve a encontrar
+        por nombre)."""
+        preview_uc, _, ports, prestador_id = _armar([_sucursal_cliente()])  # siges_id=1
+        existente = make_tabla_km(
+            prestador_id=prestador_id,
+            empresa_nombre="Adecoagro",
+            sucursal_nombre="Las Horquetas (nombre viejo)",
+            siges_sucursal_id=1,
+            kms_recorrido=150.0,
+            kms_a_facturar=150.0,
+            umbral_viatico=20.0,
+        )
+        ports.tabla_km.rows[existente.id] = existente  # type: ignore[attr-defined]
+
+        preview = await preview_uc.execute(prestador_id)
+
+        assert len(preview.filas) == 1
+        fila = preview.filas[0]
+        assert fila.accion == "actualizar"
+        assert fila.tabla_km_id == existente.id
+        assert fila.sucursal_nombre == "Las Horquetas"
+        assert fila.umbral_viatico == 20.0
+
+    @pytest.mark.asyncio
+    async def test_no_cruza_con_una_fila_archivada(self) -> None:
+        """Una fila archivada (duplicado ya descartado) no puede volver a ser
+        'la existente' — el preview tiene que crear una nueva en vez de
+        reactivarla."""
+        preview_uc, _, ports, prestador_id = _armar([_sucursal_cliente()])
+        archivada = make_tabla_km(
+            prestador_id=prestador_id,
+            empresa_nombre="Adecoagro",
+            sucursal_nombre="Las Horquetas",
+            siges_sucursal_id=1,
+            archivada=True,
+        )
+        ports.tabla_km.rows[archivada.id] = archivada  # type: ignore[attr-defined]
+
+        preview = await preview_uc.execute(prestador_id)
+
+        assert len(preview.filas) == 1
+        assert preview.filas[0].accion == "crear"
+        assert preview.filas[0].tabla_km_id is None
+
+    @pytest.mark.asyncio
     async def test_sin_coords_ni_resolucion_queda_sin_ubicar(self) -> None:
         sucursal = _sucursal_cliente(latitud=None, longitud=None)
         preview_uc, _, _, prestador_id = _armar([sucursal])

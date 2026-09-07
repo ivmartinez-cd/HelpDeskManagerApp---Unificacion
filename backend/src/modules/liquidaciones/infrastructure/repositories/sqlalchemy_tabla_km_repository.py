@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, func, or_, select
+from sqlalchemy import ColumnElement, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
@@ -192,6 +192,37 @@ class SqlAlchemyTablaKmRepository:
 
     async def update_archivada(self, tabla_km_id: UUID, archivada: bool) -> TablaKm | None:
         return await _set_campos(self._session, tabla_km_id, archivada=archivada)
+
+    async def set_coordenadas_por_siges_sucursal(
+        self,
+        prestador_id: UUID,
+        siges_sucursal_id: int,
+        *,
+        latitud: float,
+        longitud: float,
+        coords_origen: str,
+    ) -> int:
+        stmt = (
+            update(TablaKmModel)
+            .where(
+                TablaKmModel.prestador_id == prestador_id,
+                TablaKmModel.siges_sucursal_id == siges_sucursal_id,
+                TablaKmModel.archivada.is_(False),
+            )
+            .values(
+                latitud_destino=latitud,
+                longitud_destino=longitud,
+                coords_origen=coords_origen,
+                updated_at=datetime.now(UTC),
+            )
+        )
+        from sqlalchemy.engine import CursorResult
+
+        resultado: CursorResult[tuple[()]] = await self._session.execute(  # type: ignore[assignment]
+            stmt
+        )
+        await self._session.flush()
+        return int(resultado.rowcount or 0)
 
     async def delete(self, tabla_km_id: UUID) -> bool:
         row = await self._session.get(TablaKmModel, tabla_km_id)

@@ -70,6 +70,7 @@ export interface CalculoKmPreview {
 export interface AplicarDistanciasResult {
   creadas: number;
   actualizadas: number;
+  omitidas: number;
 }
 
 export interface PinSospechoso {

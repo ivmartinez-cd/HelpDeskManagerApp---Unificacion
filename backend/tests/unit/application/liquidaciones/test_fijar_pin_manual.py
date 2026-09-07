@@ -10,11 +10,12 @@ from src.modules.liquidaciones.domain.errors import PinManualInvalidoError
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesSucursalCliente,
 )
-from tests.unit.domain.liquidaciones.factories import make_prestador
+from tests.unit.domain.liquidaciones.factories import make_prestador, make_tabla_km
 from tests.unit.domain.liquidaciones.fakes import FakePrestadorRepository
 from tests.unit.domain.liquidaciones.fakes_geolocalizacion import (
     FakeSigesGeoGateway,
     FakeSucursalCoordenadasRepository,
+    FakeTablaKmGeoRepository,
 )
 
 
@@ -24,6 +25,7 @@ def _armar(sucursales: list[SigesSucursalCliente]):
         prestadores=FakePrestadorRepository({prestador.id: prestador}),
         siges=FakeSigesGeoGateway(clientes=sucursales),
         sucursal_coords=FakeSucursalCoordenadasRepository(),
+        tabla_km=FakeTablaKmGeoRepository(),
     )
     return FijarPinManual(ports), ports, prestador.id
 
@@ -54,6 +56,29 @@ async def test_crea_override_manual_con_fuente_aunque_tenga_pin_roto() -> None:
     assert resuelta.formatted_address == "https://osm.org/x"
     fila = await ports.sucursal_coords.get_by_siges_sucursal_id(1)
     assert fila is not None and fila.latitud == -38.7183
+
+
+@pytest.mark.asyncio
+async def test_propaga_el_pin_a_las_filas_de_tabla_km_no_archivadas() -> None:
+    """Bug 2026-09-07: fijar un pin manual solo tocaba el override, así que la
+    fila de Tabla KM seguía con el pin viejo hasta el próximo cálculo masivo
+    (y 'Recalcular KM' por fila, que lee el pin de la fila, medía contra ese
+    mismo pin roto)."""
+    use_case, ports, prestador_id = _armar([_sucursal()])
+    activa = make_tabla_km(
+        prestador_id=prestador_id, siges_sucursal_id=1,
+        latitud_destino=36.778, longitud_destino=-119.417, coords_origen="siges",
+    )
+    ports.tabla_km.rows[activa.id] = activa  # type: ignore[attr-defined]
+
+    await use_case.execute(
+        prestador_id, 1, latitud=-38.7183, longitud=-62.2663, fuente="https://osm.org/x"
+    )
+
+    tocada = ports.tabla_km.rows[activa.id]  # type: ignore[attr-defined]
+    assert tocada.latitud_destino == -38.7183
+    assert tocada.longitud_destino == -62.2663
+    assert tocada.coords_origen == "manual"
 
 
 @pytest.mark.asyncio

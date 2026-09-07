@@ -25,6 +25,7 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
 from src.modules.liquidaciones.domain.repositories.sucursal_coordenadas_repository import (
     SucursalCoordenadasRepository,
 )
+from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
 from src.modules.liquidaciones.domain.services.geolocalizacion import (
     PROCEDENCIA_MANUAL,
     armar_direccion,
@@ -40,6 +41,9 @@ class FijarPinManualPorts:
     prestadores: PrestadorRepository
     siges: SigesCatalogoGateway
     sucursal_coords: SucursalCoordenadasRepository
+    # Para propagar el pin corregido a las filas de Tabla KM ya cargadas — sin
+    # esto quedaban con el pin viejo hasta el próximo cálculo masivo.
+    tabla_km: TablaKmRepository
 
 
 class FijarPinManual:
@@ -91,6 +95,13 @@ class FijarPinManual:
         )
         if resuelta is None:
             raise PinManualInvalidoError("No se pudo guardar la resolución")
+        await self._ports.tabla_km.set_coordenadas_por_siges_sucursal(
+            prestador_id,
+            sucursal.siges_sucursal_id,
+            latitud=latitud,
+            longitud=longitud,
+            coords_origen=PROCEDENCIA_MANUAL,
+        )
         return resuelta
 
     async def _registrar_pendiente(

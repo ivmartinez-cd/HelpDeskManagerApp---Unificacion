@@ -452,3 +452,28 @@ class FakeTablaKmGeoRepository:
         )
         self.rows[tabla_km_id] = actualizada
         return actualizada
+
+    async def set_coordenadas_por_siges_sucursal(
+        self,
+        prestador_id: UUID,
+        siges_sucursal_id: int,
+        *,
+        latitud: float,
+        longitud: float,
+        coords_origen: str,
+    ) -> int:
+        tocadas = 0
+        for tabla_km_id, row in list(self.rows.items()):
+            if (
+                row.prestador_id == prestador_id
+                and row.siges_sucursal_id == siges_sucursal_id
+                and not row.archivada
+            ):
+                self.rows[tabla_km_id] = dataclasses.replace(
+                    row,
+                    latitud_destino=latitud,
+                    longitud_destino=longitud,
+                    coords_origen=coords_origen,
+                )
+                tocadas += 1
+        return tocadas

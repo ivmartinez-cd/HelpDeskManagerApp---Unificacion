@@ -92,7 +92,8 @@ export function MomentoCalcular({ prestador, estado, preview, setPreview, onApli
     setAplicando(true);
     try {
       const res = await liquidacionesApi.aplicarCalcularDistancias(prestador.id, preview.id);
-      toast.success(`Listo: ${res.creadas} filas creadas, ${res.actualizadas} actualizadas`);
+      const omitidas = res.omitidas > 0 ? `, ${res.omitidas} ya tenían km y no se tocaron` : "";
+      toast.success(`Listo: ${res.creadas} filas creadas, ${res.actualizadas} actualizadas${omitidas}`);
       setPreview(null);
       await onAplicado(res);
     } catch (e: unknown) { setError(e instanceof Error ? e.message : "No se pudieron aplicar los km"); }
@@ -100,7 +101,11 @@ export function MomentoCalcular({ prestador, estado, preview, setPreview, onApli
   };
 
   const aCrear = preview?.filas.filter((f) => f.accion === "crear").length ?? 0;
-  const aActualizar = preview?.filas.filter((f) => f.accion === "actualizar").length ?? 0;
+  // "actualizar" en el preview es cualquier fila que ya existe; de esas, solo
+  // se pisan las que todavía no tienen km — el resto (medido o negociado por
+  // la TL) se preserva (aplicar manda soloSinKm=true, ver aplicarCalcularDistancias).
+  const aRellenar = preview?.filas.filter((f) => f.accion === "actualizar" && !((f.kmsAFacturarActual ?? 0) > 0)).length ?? 0;
+  const aConservar = (preview?.filas.filter((f) => f.accion === "actualizar").length ?? 0) - aRellenar;
   const gateSinUbicar = estado.sinCoordenadas > 0 && !calcularIgual && !preview;
 
   return (
@@ -147,10 +152,13 @@ export function MomentoCalcular({ prestador, estado, preview, setPreview, onApli
       <BrandModal isOpen={confirmarAplicar} onClose={() => setConfirmarAplicar(false)} title="¿Aplicar estos km a tu Tabla KM?" widthPx={460}>
         <div className="flex flex-col gap-4">
           <p className="font-body text-sm text-foreground">
-            Se van a crear <span className="font-bold">{aCrear}</span> filas nuevas y actualizar los km de{" "}
-            <span className="font-bold">{aActualizar}</span> existentes.
+            Se van a crear <span className="font-bold">{aCrear}</span> filas nuevas y completar el km de{" "}
+            <span className="font-bold">{aRellenar}</span> que todavía no tenían.
           </p>
           <p className="font-body text-sm text-muted-foreground">
+            {aConservar > 0 && (
+              <>Las <strong>{aConservar}</strong> filas que ya tienen km (medido o negociado por la TL) no se tocan. </>
+            )}
             El umbral de viático y las observaciones de cada fila <strong>no se tocan</strong>. Esta acción no consulta Google (usa el cálculo que ya viste).
           </p>
           <div className="flex justify-end gap-2">

@@ -17,6 +17,7 @@ del PST y las sedes de sus SPST de Siges (`bases_de_despacho` en
 `PreviewFila` registra qué base se usó."""
 
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import TypedDict
 from uuid import UUID
 
@@ -106,17 +107,26 @@ class PreviewCalcularDistancias:
                 destinos.append(destino)
         return destinos, sin_ubicar, sin_actividad
 
-    async def _cargar_existentes(self, prestador_id: UUID) -> dict[tuple[str, str], TablaKm]:
-        return {
-            _clave_tabla_km(f.empresa_nombre, f.sucursal_nombre): f
+    async def _cargar_existentes(self, prestador_id: UUID) -> "_ExistentesIndex":
+        # Archivadas afuera: no tiene que "revivir" un duplicado ya descartado
+        # ni ganarle a la fila vigente en el índice por nombre.
+        filas = [
+            f
             for f in await self._ports.tabla_km.list_by_prestador(prestador_id)
-        }
+            if not f.archivada
+        ]
+        return _ExistentesIndex(
+            por_siges_id={
+                f.siges_sucursal_id: f for f in filas if f.siges_sucursal_id is not None
+            },
+            por_nombre={_clave_tabla_km(f.empresa_nombre, f.sucursal_nombre): f for f in filas},
+        )
 
     async def _calcular_filas(
         self,
         bases: list[tuple[float, float]],
         destinos: list[Destino],
-        existentes: dict[tuple[str, str], TablaKm],
+        existentes: "_ExistentesIndex",
     ) -> tuple[list[PreviewFila], int]:
         # Cada destino se mide desde la base más cercana (ver `bases_de_despacho`).
         grupos: dict[tuple[float, float], list[Destino]] = defaultdict(list)
@@ -135,7 +145,7 @@ class PreviewCalcularDistancias:
         self,
         base: tuple[float, float],
         batch: list[Destino],
-        existentes: dict[tuple[str, str], TablaKm],
+        existentes: "_ExistentesIndex",
         filas: list[PreviewFila],
     ) -> int:
         """Un pedido de matrix por batch; suma filas al preview y devuelve
@@ -176,15 +186,32 @@ def _clave_tabla_km(empresa_nombre: str, sucursal_nombre: str) -> tuple[str, str
     return normalizar_nombre(empresa_nombre), normalizar_nombre(sucursal_nombre)
 
 
+@dataclass(frozen=True)
+class _ExistentesIndex:
+    """Filas activas del prestador, indexadas por `siges_sucursal_id` (prioridad)
+    y por nombre normalizado (fallback, filas legacy sin vínculo). Sin el índice
+    por id, un renombre de sucursal en Siges no encontraba la fila existente y
+    creaba una segunda con el mismo `siges_sucursal_id` — 46 grupos duplicados
+    en SAN JUAN, 2026-09-07."""
+
+    por_siges_id: dict[int, TablaKm]
+    por_nombre: dict[tuple[str, str], TablaKm]
+
+    def buscar(self, s: SigesSucursalCliente) -> TablaKm | None:
+        return self.por_siges_id.get(s.siges_sucursal_id) or self.por_nombre.get(
+            _clave_tabla_km(s.empresa_nombre, s.sucursal_nombre)
+        )
+
+
 def _armar_fila(
     destino: Destino,
     base: tuple[float, float],
     ida: float,
     vuelta: float,
-    existentes: dict[tuple[str, str], TablaKm],
+    existentes: "_ExistentesIndex",
 ) -> PreviewFila:
     s = destino.sucursal
-    existente = existentes.get(_clave_tabla_km(s.empresa_nombre, s.sucursal_nombre))
+    existente = existentes.buscar(s)
     return PreviewFila(
         coords_origen=destino.coords_origen,
         latitud_destino=destino.coords[0],
@@ -209,14 +236,26 @@ class _CamposIdentidad(TypedDict):
 
 
 def _identidad_fila(s: SigesSucursalCliente, existente: TablaKm | None) -> _CamposIdentidad:
-    """Qué fila toca el preview: actualizar la existente (conservando los nombres
-    que ya tiene cargados) o crear una nueva con los nombres de Siges."""
+    """Qué fila toca el preview: actualizar la existente o crear una nueva con
+    los nombres de Siges. El nombre se conserva tal como está cargado salvo que
+    el cruce haya sido por `siges_sucursal_id` con un nombre distinto al
+    guardado — ahí Siges renombró la sucursal y hay que adoptar el nombre
+    nuevo, si no el motor de reglas (que matchea por nombre, `_resolucion.py`)
+    nunca vuelve a encontrar esta fila por más que el vínculo esté al día."""
+    renombrada = existente is not None and existente.siges_sucursal_id == s.siges_sucursal_id and (
+        _clave_tabla_km(existente.empresa_nombre, existente.sucursal_nombre)
+        != _clave_tabla_km(s.empresa_nombre, s.sucursal_nombre)
+    )
     return _CamposIdentidad(
         accion=ACCION_ACTUALIZAR if existente else ACCION_CREAR,
         tabla_km_id=existente.id if existente else None,
         siges_sucursal_id=s.siges_sucursal_id,
-        empresa_nombre=existente.empresa_nombre if existente else s.empresa_nombre,
-        sucursal_nombre=existente.sucursal_nombre if existente else s.sucursal_nombre,
+        empresa_nombre=(
+            existente.empresa_nombre if existente and not renombrada else s.empresa_nombre
+        ),
+        sucursal_nombre=(
+            existente.sucursal_nombre if existente and not renombrada else s.sucursal_nombre
+        ),
         domicilio=s.domicilio,
         localidad=s.localidad,
         provincia=s.provincia,

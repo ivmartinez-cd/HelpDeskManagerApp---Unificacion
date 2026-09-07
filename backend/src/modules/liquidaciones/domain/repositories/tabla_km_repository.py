@@ -139,4 +139,22 @@ class TablaKmRepository(Protocol):
 
     async def update_archivada(self, tabla_km_id: UUID, archivada: bool) -> TablaKm | None: ...
 
+    async def set_coordenadas_por_siges_sucursal(
+        self,
+        prestador_id: UUID,
+        siges_sucursal_id: int,
+        *,
+        latitud: float,
+        longitud: float,
+        coords_origen: str,
+    ) -> int:
+        """Propaga un pin corregido (override en `sucursal_coordenadas`, vía
+        `FijarPinManual` o `CorregirPin`) al pin propio de cada fila no
+        archivada de esa sucursal. Sin esto la fila queda con el pin viejo
+        hasta el próximo cálculo masivo, y "Recalcular KM" por fila (que lee
+        el pin de la fila, no el override) vuelve a medir contra el pin roto
+        (bug 2026-09-07). No toca km ni viático — igual que `set_coordenadas`.
+        Devuelve cuántas filas se tocaron."""
+        ...
+
     async def delete(self, tabla_km_id: UUID) -> bool: ...

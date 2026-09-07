@@ -146,6 +146,7 @@ def _pines_ports(session: AsyncSession) -> PinesPorts:
         geocode_cache=SqlAlchemyGeocodeCacheRepository(session),
         geocoding=require_geocoding_gateway(),
         sucursal_coords=SqlAlchemySucursalCoordenadasRepository(session),
+        tabla_km=SqlAlchemyTablaKmRepository(session),
     )
 
 
@@ -183,5 +184,6 @@ def build_fijar_pin_manual(session: AsyncSession) -> FijarPinManual:
             prestadores=SqlAlchemyPrestadorRepository(session),
             siges=siges_catalogo_gateway(),
             sucursal_coords=SqlAlchemySucursalCoordenadasRepository(session),
+            tabla_km=SqlAlchemyTablaKmRepository(session),
         )
     )
