@@ -244,7 +244,7 @@ export function TablaKmConfig({
         />
       )}
 
-      <EntradaModal key={editing?.id ?? (plantilla ? `plantilla:${plantilla.empresaNombre}::${plantilla.sucursalNombre}` : "nueva")} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); setPlantilla(null); }} prestadores={prestadores} editing={editing} defaultPrestadorId={filtroPst} onSuccess={loadEntradas} plantilla={plantilla} />
+      <EntradaModal key={editing?.id ?? (plantilla ? `plantilla:${plantilla.empresaNombre}::${plantilla.sucursalNombre}` : `nueva:${filtroPst}`)} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); setPlantilla(null); }} prestadores={prestadores} editing={editing} defaultPrestadorId={filtroPst} onSuccess={loadEntradas} plantilla={plantilla} />
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={loadEntradas} />
       {sigesOpen && filtroPst && (
         <SigesTablaKmModal prestadorId={filtroPst} onClose={() => setSigesOpen(false)} onUsar={handleUsarSucursal} />

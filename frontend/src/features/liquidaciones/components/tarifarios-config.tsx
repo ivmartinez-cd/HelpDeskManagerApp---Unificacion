@@ -216,7 +216,7 @@ export function TarifariosConfig({
         <TarifariosMatriz zonas={zonas} tipos={tipos} labelZona={labelZona} canEdit={puedeEditar} acciones={acciones} />
       )}
 
-      <TarifaModal key={editing?.id ?? (plantilla ? `plantilla:${Object.values(plantilla).join("::")}` : "nueva")} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); setPlantilla(null); }} prestadores={prestadores} editing={editing} plantilla={plantilla} defaultPrestadorId={filtroPst} onSuccess={loadTarifarios} />
+      <TarifaModal key={editing?.id ?? (plantilla ? `plantilla:${Object.values(plantilla).join("::")}` : `nueva:${filtroPst}`)} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); setPlantilla(null); }} prestadores={prestadores} editing={editing} plantilla={plantilla} defaultPrestadorId={filtroPst} onSuccess={loadTarifarios} />
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} onSuccess={loadTarifarios} />
       {sigesOpen && filtroPst && (
         <SigesTarifariosModal

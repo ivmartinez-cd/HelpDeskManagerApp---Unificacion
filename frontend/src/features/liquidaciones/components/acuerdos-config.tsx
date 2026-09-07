@@ -137,7 +137,7 @@ export function AcuerdosConfig({
         </div>
       )}
 
-      <AcuerdoModal key={editing?.id ?? (plantilla ? `plantilla:${Object.values(plantilla).join("::")}` : "nuevo")} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); setPlantilla(null); }} prestadores={prestadores} editing={editing} plantilla={plantilla} defaultPrestadorId={filtroPst} onSuccess={loadAcuerdos} />
+      <AcuerdoModal key={editing?.id ?? (plantilla ? `plantilla:${Object.values(plantilla).join("::")}` : `nuevo:${filtroPst}`)} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); setPlantilla(null); }} prestadores={prestadores} editing={editing} plantilla={plantilla} defaultPrestadorId={filtroPst} onSuccess={loadAcuerdos} />
       <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar acuerdo">
         <p className="font-body text-sm text-muted-foreground mb-5">Las liquidaciones abiertas de este prestador se van a reanalizar contra el tarifario. ¿Confirmás?</p>
         <div className="flex justify-end gap-3">
