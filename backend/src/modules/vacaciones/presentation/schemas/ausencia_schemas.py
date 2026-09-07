@@ -12,7 +12,7 @@ from src.modules.vacaciones.application.dtos.ausencia_dtos import (
 )
 from src.modules.vacaciones.application.dtos.solicitud_dtos import AfectaTurnosAviso
 from src.modules.vacaciones.domain.entities.aprobacion import Decision
-from src.modules.vacaciones.domain.entities.ausencia import TipoAusencia
+from src.modules.vacaciones.domain.entities.ausencia import Ausencia, TipoAusencia
 from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud
 
 
@@ -44,10 +44,6 @@ class AusenciaResponse(BaseModel):
         return cls(
             id=a.id,
             empleado_id=a.empleado_id,
-            empleado_nombre=dto.empleado_nombre,
-            empleado_color=dto.empleado_color,
-            sector_nombre=dto.sector_nombre,
-            sector_color=dto.sector_color,
             start_date=a.start_date,
             end_date=a.end_date,
             days_count=a.days_count,
@@ -58,12 +54,24 @@ class AusenciaResponse(BaseModel):
             created_at=a.created_at,
             hora_desde=a.hora_desde,
             hora_hasta=a.hora_hasta,
-            certificado_url=(
-                f"/api/vacaciones/ausencias/{a.id}/certificado"
-                if a.certificado_filename
-                else None
-            ),
+            certificado_url=_certificado_url(a),
+            **_identidad_dto(dto),
         )
+
+
+def _identidad_dto(dto: AusenciaDTO) -> dict[str, str]:
+    return {
+        "empleado_nombre": dto.empleado_nombre,
+        "empleado_color": dto.empleado_color,
+        "sector_nombre": dto.sector_nombre,
+        "sector_color": dto.sector_color,
+    }
+
+
+def _certificado_url(a: Ausencia) -> str | None:
+    if not a.certificado_filename:
+        return None
+    return f"/api/vacaciones/ausencias/{a.id}/certificado"
 
 
 class _RangoAusencia(BaseModel):

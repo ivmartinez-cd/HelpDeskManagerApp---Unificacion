@@ -95,6 +95,12 @@ class FijarPinManual:
         )
         if resuelta is None:
             raise PinManualInvalidoError("No se pudo guardar la resolución")
+        await self._propagar_a_tabla_km(prestador_id, sucursal, latitud, longitud)
+        return resuelta
+
+    async def _propagar_a_tabla_km(
+        self, prestador_id: UUID, sucursal: SigesSucursalCliente, latitud: float, longitud: float
+    ) -> None:
         await self._ports.tabla_km.set_coordenadas_por_siges_sucursal(
             prestador_id,
             sucursal.siges_sucursal_id,
@@ -102,7 +108,6 @@ class FijarPinManual:
             longitud=longitud,
             coords_origen=PROCEDENCIA_MANUAL,
         )
-        return resuelta
 
     async def _registrar_pendiente(
         self, prestador_id: UUID, sucursal: SigesSucursalCliente

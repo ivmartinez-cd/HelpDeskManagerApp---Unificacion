@@ -236,16 +236,7 @@ class _CamposIdentidad(TypedDict):
 
 
 def _identidad_fila(s: SigesSucursalCliente, existente: TablaKm | None) -> _CamposIdentidad:
-    """Qué fila toca el preview: actualizar la existente o crear una nueva con
-    los nombres de Siges. El nombre se conserva tal como está cargado salvo que
-    el cruce haya sido por `siges_sucursal_id` con un nombre distinto al
-    guardado — ahí Siges renombró la sucursal y hay que adoptar el nombre
-    nuevo, si no el motor de reglas (que matchea por nombre, `_resolucion.py`)
-    nunca vuelve a encontrar esta fila por más que el vínculo esté al día."""
-    renombrada = existente is not None and existente.siges_sucursal_id == s.siges_sucursal_id and (
-        _clave_tabla_km(existente.empresa_nombre, existente.sucursal_nombre)
-        != _clave_tabla_km(s.empresa_nombre, s.sucursal_nombre)
-    )
+    renombrada = _fue_renombrada(s, existente)
     return _CamposIdentidad(
         accion=ACCION_ACTUALIZAR if existente else ACCION_CREAR,
         tabla_km_id=existente.id if existente else None,
@@ -260,6 +251,19 @@ def _identidad_fila(s: SigesSucursalCliente, existente: TablaKm | None) -> _Camp
         localidad=s.localidad,
         provincia=s.provincia,
         id_costo_servicios=s.id_costo_servicios,
+    )
+
+
+def _fue_renombrada(s: SigesSucursalCliente, existente: TablaKm | None) -> bool:
+    """Qué fila toca el preview: actualizar la existente o crear una nueva con
+    los nombres de Siges. El nombre se conserva tal como está cargado salvo que
+    el cruce haya sido por `siges_sucursal_id` con un nombre distinto al
+    guardado — ahí Siges renombró la sucursal y hay que adoptar el nombre
+    nuevo, si no el motor de reglas (que matchea por nombre, `_resolucion.py`)
+    nunca vuelve a encontrar esta fila por más que el vínculo esté al día."""
+    return existente is not None and existente.siges_sucursal_id == s.siges_sucursal_id and (
+        _clave_tabla_km(existente.empresa_nombre, existente.sucursal_nombre)
+        != _clave_tabla_km(s.empresa_nombre, s.sucursal_nombre)
     )
 
 

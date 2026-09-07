@@ -58,20 +58,28 @@ def _to_row(row: Any) -> DetalleContadorRow:
         modelo=row.modelo.strip(),
         serie=row.serie.strip(),
         nombre_clase=nombre_clase,
-        fecha_toma_anterior=row.fecha_toma_anterior.date() if row.fecha_toma_anterior else None,
-        contador_anterior=row.contador_anterior,
-        fecha_toma_actual=row.fecha_toma_actual.date() if row.fecha_toma_actual else None,
-        # "Contador Act." del reporte NO repite el valor viejo en una fila
-        # "Falta Contador" (mismo registro físico para actual y anterior) —
-        # verificado contra la captura real, ver docstring de la query.
-        contador_actual=0 if falta_contador else row.contador_actual_bruto,
-        impresiones_reales=float(row.impresiones_reales),
         estado_maquina=row.estado_maquina.strip() if row.estado_maquina else None,
         direccion_ip=(row.direccion_ip or "").strip() or None,
         mascara_ip=(row.mascara_ip or "").strip() or None,
         falta_contador=falta_contador,
         tipo=_tipo(falta_contador, bool(row.es_automatico), nombre_clase),
+        **_lecturas(row, falta_contador),
     )
+
+
+def _lecturas(row: Any, falta_contador: bool) -> dict[str, Any]:
+    return {
+        "fecha_toma_anterior": (
+            row.fecha_toma_anterior.date() if row.fecha_toma_anterior else None
+        ),
+        "contador_anterior": row.contador_anterior,
+        "fecha_toma_actual": row.fecha_toma_actual.date() if row.fecha_toma_actual else None,
+        # "Contador Act." del reporte NO repite el valor viejo en una fila
+        # "Falta Contador" (mismo registro físico para actual y anterior) —
+        # verificado contra la captura real, ver docstring de la query.
+        "contador_actual": 0 if falta_contador else row.contador_actual_bruto,
+        "impresiones_reales": float(row.impresiones_reales),
+    }
 
 
 def _tipo(falta_contador: bool, es_automatico: bool, nombre_clase: str | None) -> str | None:
