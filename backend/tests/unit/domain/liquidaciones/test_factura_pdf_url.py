@@ -1,9 +1,13 @@
-"""`armar_factura_pdf_url` — verificado contra un caso real: liquidación 3943-7
-(La Rioja, Mario Javier Lopez), `getLiquidationById` devolvió
-`Fecha="02/09/2026"` + `RsPrestador="LOPEZ MARIO JAVIER"` + `FacturaLocal="6"`
-+ `FacturaNro="417"`, y la URL real cargada en AyC (botón "Visualizar" de la
-sección FACTURA en webagentes) es
-`.../liquidations/20260902_lopez_mario_javier_fc-6-417_3943-7.pdf`."""
+"""`armar_factura_pdf_url` — verificado contra dos casos reales:
+
+- Liquidación 3943-7 (La Rioja, Mario Javier Lopez), `getLiquidationById`
+  devolvió `Fecha="02/09/2026"` + `RsPrestador="LOPEZ MARIO JAVIER"` +
+  `FacturaLocal="6"` + `FacturaNro="417"`, y la URL real cargada en AyC
+  (botón "Visualizar" de la sección FACTURA en webagentes) es
+  `.../liquidations/20260902_lopez_mario_javier_fc-6-417_3943-7.pdf`.
+- Liquidación 3959-8 (PENTACOM S.A., 2026-09-07), URL real
+  `.../liquidations/20260907_pentacom_s.a._fc-14-2115_3959-8.pdf` — el punto
+  de la abreviatura se conserva, no se convierte en `_`."""
 
 from datetime import date
 
@@ -33,3 +37,17 @@ def test_normaliza_acentos_y_espacios_multiples() -> None:
     )
 
     assert "perez_nono_jose" in url
+
+
+def test_conserva_el_punto_de_una_abreviatura_como_s_a() -> None:
+    url = armar_factura_pdf_url(
+        fecha=date(2026, 9, 7),
+        rs_prestador="PENTACOM S.A.",
+        numero_factura="14-2115",
+        numero_liquidacion="3959-8",
+    )
+
+    assert url == (
+        "https://webagentes.canaldirecto.com.ar/files/webagentes/liquidations/"
+        "20260907_pentacom_s.a._fc-14-2115_3959-8.pdf"
+    )
