@@ -14,10 +14,12 @@ import type {
   Tarifario,
   ZonaSigesEstado,
 } from "../types/liquidaciones";
-import { agruparTarifarios, GrupoTarifaRow, type GrupoTarifa } from "./tarifario-history-timeline";
+import { agruparPorZona, tiposPresentes, type VigenciaZona, type ZonaTarifas } from "../lib/tarifarios-matriz";
 import { SigesTarifariosModal } from "./siges-tarifarios-modal";
 import { type PlantillaTarifa, TarifaModal } from "./tarifa-modal";
 import { CsvImportModal } from "./tarifarios-csv-import-modal";
+import { TarifariosMatriz } from "./tarifarios-matriz";
+import { VigenciaZonaModal } from "./vigencia-zona-modal";
 
 export function TarifariosConfig({
   deepLinkFaltante = null,
@@ -56,7 +58,10 @@ export function TarifariosConfig({
   );
   const [csvOpen, setCsvOpen] = useState(false);
   const [sigesOpen, setSigesOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  // Borrado por vigencia completa de una zona (todas sus tarifas), como se
+  // borra una fila en Siges.
+  const [deletingVigencia, setDeletingVigencia] = useState<VigenciaZona | null>(null);
+  const [vigenciaZona, setVigenciaZona] = useState<ZonaTarifas | null>(null);
   const [spsts, setSpsts] = useState<Spst[]>([]);
   const [zonasSiges, setZonasSiges] = useState<ZonaSigesEstado[]>([]);
 
@@ -66,8 +71,8 @@ export function TarifariosConfig({
       .finally(() => setLoadingPrestadores(false));
   }, []);
 
-  // SPST del prestador seleccionado — solo para resolver el nombre a mostrar
-  // en cada grupo (`GrupoTarifaRow`), la tarifa en sí guarda el spstId crudo.
+  // SPST del prestador seleccionado — solo para resolver el nombre de la zona
+  // cuando no tiene mapeo a Siges; la tarifa en sí guarda el spstId crudo.
   useEffect(() => {
     let cancelado = false;
     const cargar = filtroPst
@@ -113,14 +118,15 @@ export function TarifariosConfig({
   useEffect(() => { void loadTarifarios(); }, [loadTarifarios]);
 
   const handleDelete = async () => {
-    if (!deletingId) return;
+    if (!deletingVigencia) return;
     try {
-      await liquidacionesApi.deleteTarifario(deletingId);
-      toast.success("Tarifa eliminada");
-      setDeletingId(null);
-      void loadTarifarios();
+      for (const t of deletingVigencia.tarifas) await liquidacionesApi.deleteTarifario(t.id);
+      toast.success(`Vigencia eliminada (${deletingVigencia.tarifas.length} tarifas)`);
+      setDeletingVigencia(null);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Error al eliminar");
+    } finally {
+      void loadTarifarios();
     }
   };
 
@@ -135,24 +141,30 @@ export function TarifariosConfig({
     setModalOpen(true);
   };
 
-  const handleActualizar = (grupo: GrupoTarifa) =>
-    abrirModal(null, {
-      tipoServicio: grupo.tipoServicio,
-      spstId: grupo.spstId ?? "",
-      costoServicio: String(grupo.vigente?.costoServicio ?? ""),
-      costoKm: String(grupo.vigente?.costoKm ?? ""),
-    });
+  const labelZona = (spstId: string | null) =>
+    zonaSigesPorSpst.get(spstId ?? "") ??
+    (spstId ? spstsPorId.get(spstId)?.nombre ?? "SPST eliminado" : "Toda la cobertura");
 
   const pstSeleccionado = prestadores.find((p) => p.id === filtroPst) ?? null;
   const loadingTarifarios = filtroPst !== "" && filtroPst !== tarifariosPstId;
-  const zonaDe = (g: GrupoTarifa) => zonaSigesPorSpst.get(g.spstId ?? "");
-  // Mismo orden que Siges dentro de cada tipo: por descripción de zona.
-  const grupos = agruparTarifarios(tarifarios).sort(
-    (a, b) =>
-      a.tipoServicio.localeCompare(b.tipoServicio) ||
-      (zonaDe(a) ?? "").localeCompare(zonaDe(b) ?? "") ||
-      (a.spstId ?? "").localeCompare(b.spstId ?? ""),
+  const tipos = tiposPresentes(tarifarios);
+  // Mismo orden que Siges: por descripción de zona.
+  const zonas = agruparPorZona(tarifarios).sort((a, b) =>
+    labelZona(a.spstId).localeCompare(labelZona(b.spstId)),
   );
+
+  const acciones = {
+    onNuevaVigencia: setVigenciaZona,
+    onEditarTarifa: (t: Tarifario) => abrirModal(t),
+    onNuevaTarifa: (zona: ZonaTarifas, tipo: string, vigencia: VigenciaZona | null) =>
+      abrirModal(null, {
+        tipoServicio: tipo,
+        spstId: zona.spstId ?? "",
+        costoServicio: "",
+        costoKm: String(vigencia?.costoKm ?? ""),
+      }),
+    onEliminarVigencia: (_zona: ZonaTarifas, vigencia: VigenciaZona) => setDeletingVigencia(vigencia),
+  };
 
   const selectCls = "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
 
@@ -162,7 +174,7 @@ export function TarifariosConfig({
         <div>
           <h1 className="font-heading text-xl font-extrabold text-foreground">Estructura de Tarifarios</h1>
           <p className="font-body text-sm text-muted-foreground">
-            {pstSeleccionado ? `${tarifarios.length} tarifas en ${grupos.length} servicios de ${pstSeleccionado.nombreCorto}` : "Seleccioná un prestador para ver sus tarifas"}
+            {pstSeleccionado ? `${pstSeleccionado.nombreCorto}: ${zonas.length} zonas, ${tipos.length} tipos de servicio, ${tarifarios.length} tarifas` : "Seleccioná un prestador para ver sus tarifas"}
           </p>
         </div>
         <div className="flex gap-2">
@@ -201,22 +213,7 @@ export function TarifariosConfig({
       ) : tarifarios.length === 0 ? (
         <BrandEmptyState icon={Briefcase} title={`${pstSeleccionado?.nombreCorto} no tiene tarifas cargadas`} description="Usá el botón '+ Nueva tarifa' para configurar." />
       ) : (
-        <div className="overflow-hidden rounded-[12px] border border-border bg-card">
-          <div className="divide-y divide-border">
-            {grupos.map((grupo) => (
-              <GrupoTarifaRow
-                key={`${grupo.tipoServicio}::${grupo.spstId ?? ""}`}
-                grupo={grupo}
-                spstsPorId={spstsPorId}
-                zonaSiges={zonaDe(grupo)}
-                canEdit={puedeEditar}
-                onActualizar={handleActualizar}
-                onEdit={(t) => abrirModal(t)}
-                onDelete={setDeletingId}
-              />
-            ))}
-          </div>
-        </div>
+        <TarifariosMatriz zonas={zonas} tipos={tipos} labelZona={labelZona} canEdit={puedeEditar} acciones={acciones} />
       )}
 
       <TarifaModal key={editing?.id ?? (plantilla ? `plantilla:${Object.values(plantilla).join("::")}` : "nueva")} isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); setPlantilla(null); }} prestadores={prestadores} editing={editing} plantilla={plantilla} defaultPrestadorId={filtroPst} onSuccess={loadTarifarios} />
@@ -229,10 +226,23 @@ export function TarifariosConfig({
           onChanged={loadTarifarios}
         />
       )}
-      <BrandModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Eliminar tarifa">
-        <p className="font-body text-sm text-muted-foreground mb-5">Esta acción no se puede deshacer. ¿Confirmás la eliminación?</p>
+      {vigenciaZona && filtroPst && (
+        <VigenciaZonaModal
+          prestadorId={filtroPst}
+          spstId={vigenciaZona.spstId}
+          zonaLabel={labelZona(vigenciaZona.spstId)}
+          tipos={tipos}
+          base={vigenciaZona.vigente}
+          onClose={() => setVigenciaZona(null)}
+          onSuccess={loadTarifarios}
+        />
+      )}
+      <BrandModal isOpen={!!deletingVigencia} onClose={() => setDeletingVigencia(null)} title="Eliminar vigencia">
+        <p className="font-body text-sm text-muted-foreground mb-5">
+          Se eliminan las {deletingVigencia?.tarifas.length ?? 0} tarifas de la vigencia {deletingVigencia?.desde ?? ""} de esta zona. Esta acción no se puede deshacer. ¿Confirmás?
+        </p>
         <div className="flex justify-end gap-3">
-          <BrandButton variant="outline" onClick={() => setDeletingId(null)}>Cancelar</BrandButton>
+          <BrandButton variant="outline" onClick={() => setDeletingVigencia(null)}>Cancelar</BrandButton>
           <BrandButton onClick={handleDelete}>Sí, eliminar</BrandButton>
         </div>
       </BrandModal>

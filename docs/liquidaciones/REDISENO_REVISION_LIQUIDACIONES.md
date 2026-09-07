@@ -381,3 +381,25 @@ Gral. Roca/Neuquén"). Ahora la pantalla etiqueta cada grupo con la descripción
 Siges mapeada en `tarifario_zona_maps` (incluida la genérica: "Villa Mercedes / Rio IV /Sgo
 Estero /Bs.As.") y ordena por esa descripción; sin mapeo, cae al nombre del SPST. Aplica a
 todos los PST vinculados a Siges, no solo INFOMAC.
+
+## 13. Tarifarios como matriz por zona (2026-09-07)
+
+Con las zonas nombradas como Siges, la lista tipo × zona repetía cada zona seis veces (24 filas
+para INFOMAC). Iván eligió entre tres mockups la **matriz como `dbo.CostoServicio`**: una fila
+por zona (SPST o genérica), una columna por tipo de servicio, $/km y "desde" de la vigencia
+actual, y el historial desplegable por zona con una fila por vigencia (badge Vigente hoy /
+Inicial y variación del correctivo contra la anterior). Modelo en `lib/tarifarios-matriz.ts`
+(`agruparPorZona`, `tiposPresentes`), tabla en `components/tarifarios-matriz.tsx`.
+
+Decisiones de comportamiento que no estaban en el mockup:
+- **"Nueva vigencia" es por zona** (`vigencia-zona-modal.tsx`): un formulario con todos los tipos
+  precargados desde la vigente, $/km y fecha; cada tipo con importe crea una tarifa (el backend
+  recadena y cierra la anterior); un tipo en blanco no se toca. Son N llamadas a
+  `POST /tarifarios` en serie, con reanálisis best-effort por cada una.
+- **Editar es por celda**: click en un importe (vigente o del historial) abre el modal de tarifa
+  existente para corregir ese valor sin crear vigencia. Una celda vacía ("—") da de alta la tarifa
+  faltante de ese tipo en esa zona.
+- **Borrar es por vigencia**: el tacho de una fila del historial elimina todas las tarifas de esa
+  fecha en la zona (confirmación con la cantidad). Ya no hay borrado de una tarifa suelta.
+- Se eliminó `tarifario-history-timeline.tsx` (sin otros usos). El deep link desde ALT008 sigue
+  abriendo el modal de tarifa con tipo/SPST prefijados.

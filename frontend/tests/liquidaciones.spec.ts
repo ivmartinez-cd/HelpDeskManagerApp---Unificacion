@@ -517,7 +517,7 @@ test.describe("Módulo de Liquidaciones", () => {
     await expect(page.getByRole("button", { name: "Nuevo prestador" })).toBeVisible();
   });
 
-  test("tarifarios: agrupa por servicio y el timeline muestra la variación entre vigencias", async ({
+  test("tarifarios: matriz por zona con historial de vigencias desplegable", async ({
     page,
   }) => {
     await page.route("**/api/liquidaciones/tarifarios**", async (route) => {
@@ -543,20 +543,21 @@ test.describe("Módulo de Liquidaciones", () => {
     await page.goto("/liquidaciones/configuracion/tarifarios");
     await page.getByLabel("Filtrar por prestador").selectOption(PST_ID);
 
-    // Grupo con resumen de la tarifa vigente
-    await expect(page.getByText("2 tarifas en 1 servicios de PENTACOM")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "correctivo" })).toBeVisible();
-    await expect(page.getByText("Costo servicio", { exact: true })).toBeVisible();
+    // Una fila por zona (la genérica, sin mapeo a Siges) y una columna por tipo
+    await expect(page.getByText("PENTACOM: 1 zonas, 1 tipos de servicio, 2 tarifas")).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Correctivo" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Toda la cobertura" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /11\.000,00/ })).toBeVisible();
 
-    // Timeline expandible con badges de vigencia y variación
+    // Historial de vigencias con badges de vigencia y variación del correctivo
     await page.getByRole("button", { name: /Historial \(2\)/ }).click();
-    await expect(page.getByText("Línea de tiempo de tarifas")).toBeVisible();
     await expect(page.getByText("Vigente hoy")).toBeVisible();
     await expect(page.getByText("+10.0%")).toBeVisible();
     await expect(page.getByText("Inicial")).toBeVisible();
+    await expect(page.getByRole("button", { name: /10\.000,00/ })).toBeVisible();
   });
 
-  test("tarifarios: Nueva vigencia desde hoy abre el modal prefijado con el grupo", async ({ page }) => {
+  test("tarifarios: Nueva vigencia abre el modal de la zona prefijado con la vigente", async ({ page }) => {
     await page.route("**/api/liquidaciones/tarifarios**", async (route) => {
       await route.fulfill({
         status: 200,
@@ -579,12 +580,12 @@ test.describe("Módulo de Liquidaciones", () => {
 
     await page.goto("/liquidaciones/configuracion/tarifarios");
     await page.getByLabel("Filtrar por prestador").selectOption(PST_ID);
-    await page.getByRole("button", { name: "Nueva vigencia desde hoy" }).click();
+    await page.getByRole("button", { name: "Nueva vigencia" }).click();
 
-    const dialog = page.getByRole("dialog", { name: "Nueva tarifa" });
+    const dialog = page.getByRole("dialog", { name: "Nueva vigencia — Toda la cobertura" });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByLabel("Tipo de servicio *")).toHaveValue("correctivo");
-    await expect(dialog.getByLabel("Costo servicio (ARS) *")).toHaveValue("11000");
+    await expect(dialog.getByLabel("Correctivo")).toHaveValue("11000");
+    await expect(dialog.getByLabel("Costo por km *")).toHaveValue("550");
   });
 
   test("tabla KM: muestra las entradas del prestador seleccionado", async ({ page }) => {
