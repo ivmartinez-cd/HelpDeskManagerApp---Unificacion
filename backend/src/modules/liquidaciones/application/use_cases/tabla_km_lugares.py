@@ -16,6 +16,7 @@ from src.modules.liquidaciones.application.use_cases._distancias_comunes import 
     maps_url_ida_vuelta,
     validar_prestador_para_distancias,
 )
+from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.errors import (
     FilaSinCoordenadasError,
@@ -86,17 +87,20 @@ class ResolverCoordenadasFila:
     ) -> TablaKm:
         fila = await _fila_o_error(self._ports.tabla_km, tabla_km_id)
         if candidato_idx is not None:
-            elegido = await self._candidato(fila, candidato_idx)
-            return await self._guardar(
-                tabla_km_id,
-                elegido.latitud,
-                elegido.longitud,
-                PROCEDENCIA_GEOCODE,
-                elegido.formatted_address,
-            )
+            return await self._guardar_candidato(fila, candidato_idx)
         if latitud is None or longitud is None:
             raise ValidationError("Indicá un candidato o latitud y longitud manuales.")
         return await self._guardar(tabla_km_id, latitud, longitud, PROCEDENCIA_MANUAL, None)
+
+    async def _guardar_candidato(self, fila: TablaKm, idx: int) -> TablaKm:
+        elegido = await self._candidato(fila, idx)
+        return await self._guardar(
+            fila.id,
+            elegido.latitud,
+            elegido.longitud,
+            PROCEDENCIA_GEOCODE,
+            elegido.formatted_address,
+        )
 
     async def _candidato(self, fila: TablaKm, idx: int) -> GeocodeCandidato:
         direccion = armar_direccion(
@@ -153,22 +157,27 @@ class RecalcularKmFila:
         prestador = await validar_prestador_para_distancias(
             self._ports.prestadores, fila.prestador_id
         )
+        destino = (fila.latitud_destino, fila.longitud_destino)
+        return await self._guardar(fila, await self._medir(fila, prestador, destino))
+
+    async def _medir(
+        self, fila: TablaKm, prestador: Prestador, destino: tuple[float, float]
+    ) -> _Medicion:
+        """Misma regla que el cálculo masivo: la base más cercana entre la sede
+        del PST y las de sus SPST de Siges (antes usaba solo las sedes propias
+        por `id_costo_servicios` y INFOMAC recalculaba Santiago del Estero
+        desde Villa Mercedes)."""
         propias = await self._ports.siges.list_sucursales_de_empresa(
             prestador.siges_empresa_id  # type: ignore[arg-type]
         )
-        destino = (fila.latitud_destino, fila.longitud_destino)
-        # Misma regla que el cálculo masivo: la base más cercana entre la sede
-        # del PST y las de sus SPST de Siges (antes usaba solo las sedes propias
-        # por `id_costo_servicios` y INFOMAC recalculaba Santiago del Estero
-        # desde Villa Mercedes).
         base = base_mas_cercana(
             destino, await bases_de_despacho(self._ports.siges, prestador, propias)
         )
         tramos = await self._ports.google_maps.distancias_km_ida_vuelta(base, [destino])
         ida, vuelta = tramos[0]
         if ida is None or vuelta is None:
-            raise FilaSinCoordenadasError(tabla_km_id)
-        return await self._guardar(fila, _Medicion(base, destino, ida, vuelta))
+            raise FilaSinCoordenadasError(fila.id)
+        return _Medicion(base, destino, ida, vuelta)
 
     async def _guardar(self, fila: TablaKm, medicion: _Medicion) -> TablaKm:
         aplica, kms_a_facturar = calcular_kms_a_facturar(medicion.total, fila.umbral_viatico)

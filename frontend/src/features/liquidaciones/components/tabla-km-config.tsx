@@ -9,7 +9,8 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { PrestadorLiquidacion, Spst, SucursalSiges, Tarifario, TablaKm } from "../types/liquidaciones";
+import { useSpstsZonas } from "../hooks/use-spsts-zonas";
+import type { PrestadorLiquidacion, SucursalSiges, TablaKm } from "../types/liquidaciones";
 import { CsvImportModal, EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
 import { KM_SORT_KEYS, kmSortValue, type KmSortKey, TablaKmTable } from "./tabla-km-table";
 import { SigesTablaKmModal } from "./siges-tabla-km-modal";
@@ -94,28 +95,9 @@ export function TablaKmConfig({
 
   useEffect(() => { void loadEntradas(); }, [loadEntradas]);
 
-  // SPST y SPST-con-tarifario del prestador — insumo de la columna "SPST →
-  // Tarifa" (hace visible en la propia tabla la cadena que resuelve el
-  // precio, en vez de obligar a saltar a SPSTs/Tarifarios para adivinarla).
-  const [spsts, setSpsts] = useState<Spst[]>([]);
-  const [spstsConTarifa, setSpstsConTarifa] = useState<Set<string | null>>(new Set());
-  useEffect(() => {
-    let cancelado = false;
-    const cargar = filtroPst
-      ? Promise.all([
-          liquidacionesApi.listSpsts({ prestadorId: filtroPst }),
-          liquidacionesApi.listTarifarios(filtroPst),
-        ])
-      : Promise.resolve([[], []] as [Spst[], Tarifario[]]);
-    void cargar.then(([spstsData, tarifariosData]) => {
-      if (cancelado) return;
-      setSpsts(spstsData);
-      setSpstsConTarifa(new Set(tarifariosData.map((t) => t.spstId)));
-    });
-    return () => { cancelado = true; };
-  }, [filtroPst]);
-  // `Map` a secas choca con el ícono `Map` de lucide-react importado arriba.
-  const spstsPorId = useMemo(() => new globalThis.Map(spsts.map((s) => [s.id, s])), [spsts]);
+  // SPST → zona de Siges → tarifa de cada fila, visible en la propia tabla en
+  // vez de obligar a saltar a SPSTs/Tarifarios para adivinarla.
+  const { spstsPorId, spstsConTarifa, zonaSigesPorSpst } = useSpstsZonas(filtroPst);
 
   const handleDelete = async () => {
     if (!deletingId) return;
@@ -255,6 +237,7 @@ export function TablaKmConfig({
           puedeEditar={puedeEditar}
           spstsPorId={spstsPorId}
           spstsConTarifa={spstsConTarifa}
+          zonaSigesPorSpst={zonaSigesPorSpst}
           onEdit={(t) => { setEditing(t); setModalOpen(true); }}
           onDelete={setDeletingId}
           onArchivar={puedeEditar ? (t) => void handleArchivar(t) : undefined}

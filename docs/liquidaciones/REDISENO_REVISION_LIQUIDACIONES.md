@@ -427,3 +427,12 @@ Backup `helpdesk-db_2026-09-07_1315_infomac-vincular-rn-neuquen-y-km.dump`.
 - **No tocado**: 45 filas activas sin coordenadas con km negociados por la TL (Cipolletti 89,
   Chos Malal 326, Zapala 149…); son coherentes con la sede más cercana y la regla es no pisar lo
   negociado. Mencué (archivada, 367 km de ida desde San Martín de los Andes) es ruta real.
+
+Tabla KM (misma tarde): la columna "SPST → Tarifa" mostraba "SIN SPST" en naranja para toda fila
+sin SPST, aunque resolviera bien por la tarifa genérica — Iván las leía como "sin vincular".
+Ahora una fila sin SPST muestra "Genérica" + la zona de Siges mapeada a la genérica ("Villa
+Mercedes / Rio IV /Sgo Estero /Bs.As."), y el aviso naranja queda solo para prestadores sin
+tarifa genérica (el caso real de ALT008). Las filas con SPST muestran la zona de Siges en vez
+de la "zona de cobertura" local. Confirmado por Iván: Santa Rosa (La Pampa) y Goya (Corrientes)
+pertenecen al grupo Villa Mercedes, así que las ALT001 de Santa Rosa en 3952-5 son sobreprecio
+real (INFOMAC cobra Gral. Roca). Hook compartido `hooks/use-spsts-zonas.ts`.

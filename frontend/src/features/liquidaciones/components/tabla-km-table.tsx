@@ -27,18 +27,31 @@ function CeldaSpst({
   fila,
   spstsPorId,
   spstsConTarifa,
+  zonaSigesPorSpst,
   onEdit,
 }: {
   fila: TablaKm;
   spstsPorId: Map<string, Spst>;
   spstsConTarifa: Set<string | null>;
+  zonaSigesPorSpst: Map<string, string>;
   onEdit: (t: TablaKm) => void;
 }) {
   if (!fila.spstId) {
+    if (!spstsConTarifa.has(null)) {
+      return (
+        <button type="button" onClick={() => onEdit(fila)} className={warnBadgeCls} title="El prestador no tiene tarifa genérica: sin SPST esta fila no resuelve precio — clic para vincular">
+          Sin SPST
+        </button>
+      );
+    }
+    const zonaGenerica = zonaSigesPorSpst.get("");
     return (
-      <button type="button" onClick={() => onEdit(fila)} className={warnBadgeCls} title="Sin esto no se puede resolver ninguna tarifa — clic para vincular">
-        Sin SPST
-      </button>
+      <div className="flex flex-col gap-0.5" title="Resuelve por la tarifa genérica del prestador (sin SPST propio)">
+        <span className="font-body text-sm text-foreground">Genérica</span>
+        {zonaGenerica && (
+          <span className="truncate font-body text-xs text-muted-foreground" title={zonaGenerica}>{zonaGenerica}</span>
+        )}
+      </div>
     );
   }
   const spst = spstsPorId.get(fila.spstId);
@@ -46,13 +59,14 @@ function CeldaSpst({
     return <span className="font-body text-xs text-muted-foreground">SPST no encontrado</span>;
   }
   const sinTarifa = !spstsConTarifa.has(fila.spstId);
+  const zona = zonaSigesPorSpst.get(fila.spstId) ?? spst.zonaCobertura;
   return (
     <div className="flex flex-col gap-0.5">
       <span className="truncate font-body text-sm text-foreground" title={spst.nombre}>{spst.nombre}</span>
       <span className="flex items-center gap-1.5">
-        {spst.zonaCobertura && (
-          <span className="truncate font-body text-xs text-muted-foreground" title={spst.zonaCobertura}>
-            {spst.zonaCobertura}
+        {zona && (
+          <span className="truncate font-body text-xs text-muted-foreground" title={zona}>
+            {zona}
           </span>
         )}
         {sinTarifa && (
@@ -75,6 +89,7 @@ export function TablaKmTable({
   puedeEditar,
   spstsPorId,
   spstsConTarifa,
+  zonaSigesPorSpst,
   onEdit,
   onDelete,
   onArchivar,
@@ -90,6 +105,8 @@ export function TablaKmTable({
    * este prestador — permite avisar "sin tarifario" en el momento, no semanas
    * después cuando aparece como alerta en una liquidación. */
   spstsConTarifa: Set<string | null>;
+  /** Descripción de zona de Siges por SPST (clave "" = genérica). */
+  zonaSigesPorSpst: Map<string, string>;
   onEdit: (t: TablaKm) => void;
   onDelete: (id: string) => void;
   /** Archivar = ocultar una fila sin actividad reciente; el motor la sigue usando. */
@@ -151,7 +168,7 @@ export function TablaKmTable({
                     </div>
                   </td>
                   <td className={tdCls}>
-                    <CeldaSpst fila={t} spstsPorId={spstsPorId} spstsConTarifa={spstsConTarifa} onEdit={onEdit} />
+                    <CeldaSpst fila={t} spstsPorId={spstsPorId} spstsConTarifa={spstsConTarifa} zonaSigesPorSpst={zonaSigesPorSpst} onEdit={onEdit} />
                   </td>
                   <td className={`${tdCls} text-right tabular-nums text-muted-foreground`}>
                     {t.kmsRecorrido > 0 ? Math.round(t.kmsRecorrido) : "—"}
