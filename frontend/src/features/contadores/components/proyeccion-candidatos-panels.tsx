@@ -43,54 +43,56 @@ export function ProyeccionLecturasTabla({
   if (!datos) return <p className="text-sm text-muted-foreground">Cargando…</p>;
 
   return (
-    <table className="w-full text-xs">
-      <thead>
-        <tr className="text-left text-[10px] uppercase text-muted-foreground">
-          <th className="py-1.5">Fecha</th>
-          <th className="py-1.5">Tipo</th>
-          <th className="py-1.5 text-right">Valor</th>
-          <th className="py-1.5">Valid.</th>
-          <th className="py-1.5">P</th>
-          <th className="py-1.5">L</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-border">
-        {datos.lecturas.map((lectura) => (
-          <tr key={`${lectura.fecha}-${lectura.tipo_toma}-${lectura.valor}`}>
-            <td className="py-2">{formatFecha(lectura.fecha)}</td>
-            <td className="py-2">T{lectura.tipo_toma}</td>
-            <td className="py-2 text-right tabular-nums">{numberFormat.format(lectura.valor)}</td>
-            <td className={cn("py-2", lectura.valido ? "text-success" : "text-warning")}>
-              {lectura.valido ? "✓ ok" : lectura.motivo_invalidez}
-            </td>
-            <td className="py-2">
-              <button
-                disabled={!puedeGestionar}
-                onClick={() => onElegir("partida", lectura)}
-                className={cn(
-                  "h-6 w-6 rounded-[6px] border border-border bg-muted text-[10px] font-extrabold disabled:opacity-40",
-                  seleccion.partida === lectura && "border-success bg-success text-background",
-                )}
-              >
-                P
-              </button>
-            </td>
-            <td className="py-2">
-              <button
-                disabled={!puedeGestionar}
-                onClick={() => onElegir("llegada", lectura)}
-                className={cn(
-                  "h-6 w-6 rounded-[6px] border border-border bg-muted text-[10px] font-extrabold disabled:opacity-40",
-                  seleccion.llegada === lectura && "border-info bg-info text-background",
-                )}
-              >
-                L
-              </button>
-            </td>
+    <div className="max-h-64 overflow-y-auto rounded-[8px] border border-border thin-scrollbar">
+      <table className="w-full text-xs">
+        <thead className="sticky top-0 bg-muted">
+          <tr className="text-left text-[10px] uppercase text-muted-foreground">
+            <th className="py-1.5 pl-2">Fecha</th>
+            <th className="py-1.5">Tipo</th>
+            <th className="py-1.5 text-right">Valor</th>
+            <th className="py-1.5">Valid.</th>
+            <th className="py-1.5">P</th>
+            <th className="py-1.5 pr-2">L</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {datos.lecturas.map((lectura) => (
+            <tr key={`${lectura.fecha}-${lectura.tipo_toma}-${lectura.valor}`}>
+              <td className="py-2 pl-2">{formatFecha(lectura.fecha)}</td>
+              <td className="py-2">T{lectura.tipo_toma}</td>
+              <td className="py-2 text-right tabular-nums">{numberFormat.format(lectura.valor)}</td>
+              <td className={cn("py-2", lectura.valido ? "text-success" : "text-warning")}>
+                {lectura.valido ? "✓ ok" : lectura.motivo_invalidez}
+              </td>
+              <td className="py-2">
+                <button
+                  disabled={!puedeGestionar}
+                  onClick={() => onElegir("partida", lectura)}
+                  className={cn(
+                    "h-6 w-6 rounded-[6px] border border-border bg-muted text-[10px] font-extrabold disabled:opacity-40",
+                    seleccion.partida === lectura && "border-success bg-success text-background",
+                  )}
+                >
+                  P
+                </button>
+              </td>
+              <td className="py-2 pr-2">
+                <button
+                  disabled={!puedeGestionar}
+                  onClick={() => onElegir("llegada", lectura)}
+                  className={cn(
+                    "h-6 w-6 rounded-[6px] border border-border bg-muted text-[10px] font-extrabold disabled:opacity-40",
+                    seleccion.llegada === lectura && "border-info bg-info text-background",
+                  )}
+                >
+                  L
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
