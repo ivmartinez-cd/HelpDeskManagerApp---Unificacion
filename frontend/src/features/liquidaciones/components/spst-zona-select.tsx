@@ -9,7 +9,7 @@ import { useSpstsZonas } from "../hooks/use-spsts-zonas";
  * /Bs.As. — tarifa genérica") en vez de "Sin vincular": para la TL esa zona es
  * una más, no una fila sin vincular (INFOMAC, 2026-09-07). */
 export function SpstZonaSelect({
-  prestadorId, value, onChange, label, hint, soloActivos = true,
+  prestadorId, value, onChange, label, hint, soloActivos = true, disabled = false,
 }: {
   prestadorId: string;
   value: string;
@@ -17,6 +17,7 @@ export function SpstZonaSelect({
   label: string;
   hint?: string;
   soloActivos?: boolean;
+  disabled?: boolean;
 }) {
   const { spsts, spstsConTarifa, zonaSigesPorSpst } = useSpstsZonas(prestadorId);
   const zonaGenerica = zonaSigesPorSpst.get("");
@@ -27,7 +28,7 @@ export function SpstZonaSelect({
       : "Sin vincular (el prestador no tiene tarifa genérica)";
   const lista = soloActivos ? spsts.filter((s) => s.activo) : spsts;
   return (
-    <BrandSelect label={label} hint={hint} value={value} onChange={(e) => onChange(e.target.value)}>
+    <BrandSelect label={label} hint={hint} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)}>
       <option value="">{labelGenerica}</option>
       {lista.map((s) => {
         const zona = zonaSigesPorSpst.get(s.id) ?? s.zonaCobertura;

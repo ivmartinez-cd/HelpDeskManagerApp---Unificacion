@@ -143,7 +143,7 @@ export function TarifariosConfig({
 
   const labelZona = (spstId: string | null) =>
     zonaSigesPorSpst.get(spstId ?? "") ??
-    (spstId ? spstsPorId.get(spstId)?.nombre ?? "SPST eliminado" : "Toda la cobertura");
+    (spstId ? spstsPorId.get(spstId)?.nombre ?? "SPST eliminado" : "Tarifa genérica");
 
   const pstSeleccionado = prestadores.find((p) => p.id === filtroPst) ?? null;
   const loadingTarifarios = filtroPst !== "" && filtroPst !== tarifariosPstId;

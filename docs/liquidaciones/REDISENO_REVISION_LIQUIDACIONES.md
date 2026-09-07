@@ -464,3 +464,12 @@ vincular" y la zona Villa Mercedes no aparecía; ahora la opción vacía se llam
 Siges mapeada a la genérica ("Villa Mercedes / Rio IV /Sgo Estero /Bs.As. — tarifa genérica") y
 las demás muestran su zona de Siges. Si el prestador no tiene tarifa genérica, la opción vacía
 lo avisa.
+
+"Reemplazar todo lo genérico con eso" (Iván): en toda la UI de liquidaciones la tarifa
+genérica se nombra por su zona de Siges — columna SPST → Tarifa de Tabla KM (zona primero,
+"tarifa genérica" como aclaración), selector de zona en el modal de fila, en el modal de tarifa
+y en "Zona de la sucursal" del Gestionar de ALT008 (`SpstZonaSelect` compartido), resultados
+del sync de Siges (creadas/conflictos), etiqueta de grupo en Tarifarios. "Tarifa genérica" queda
+solo como fallback cuando el prestador no tiene zona mapeada a la genérica. La opción del
+select de mapeo de zonas del sync sigue diciendo "Tarifa genérica del prestador (sin SPST)"
+porque ahí la fila ES la zona de Siges que se está mapeando.

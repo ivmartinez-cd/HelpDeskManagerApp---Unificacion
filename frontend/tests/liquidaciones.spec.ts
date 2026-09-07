@@ -546,7 +546,7 @@ test.describe("Módulo de Liquidaciones", () => {
     // Una fila por zona (la genérica, sin mapeo a Siges) y una columna por tipo
     await expect(page.getByText("PENTACOM: 1 zonas, 1 tipos de servicio, 2 tarifas")).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Correctivo" })).toBeVisible();
-    await expect(page.getByRole("cell", { name: "Toda la cobertura" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Tarifa genérica" })).toBeVisible();
     await expect(page.getByRole("button", { name: /11\.000,00/ })).toBeVisible();
 
     // Historial de vigencias con badges de vigencia y variación del correctivo
@@ -582,7 +582,7 @@ test.describe("Módulo de Liquidaciones", () => {
     await page.getByLabel("Filtrar por prestador").selectOption(PST_ID);
     await page.getByRole("button", { name: "Nueva vigencia" }).click();
 
-    const dialog = page.getByRole("dialog", { name: "Nueva vigencia — Toda la cobertura" });
+    const dialog = page.getByRole("dialog", { name: "Nueva vigencia — Tarifa genérica" });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByLabel("Correctivo")).toHaveValue("11000");
     await expect(dialog.getByLabel("Costo por km *")).toHaveValue("550");

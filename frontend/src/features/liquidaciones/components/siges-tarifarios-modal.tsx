@@ -63,7 +63,7 @@ function ZonaMapRow({
           value={seleccion}
           onChange={(e) => setSeleccion(e.target.value)}
         >
-          <option value={GENERICA}>Genérica (tarifario sin SPST)</option>
+          <option value={GENERICA}>Tarifa genérica del prestador (sin SPST)</option>
           {spsts.map((s) => (
             <option key={s.id} value={s.id}>
               {s.nombre}
@@ -79,7 +79,13 @@ function ZonaMapRow({
   );
 }
 
-function ResultadoSyncTarifarios({ resultado }: { resultado: SyncTarifariosResult }) {
+function ResultadoSyncTarifarios({
+  resultado, nombreGenerica,
+}: {
+  resultado: SyncTarifariosResult;
+  /** Zona de Siges mapeada a la genérica del prestador, para nombrarla como tal. */
+  nombreGenerica: string;
+}) {
   return (
     <div className="flex flex-col gap-2">
       <p className={seccionCls}>
@@ -92,7 +98,7 @@ function ResultadoSyncTarifarios({ resultado }: { resultado: SyncTarifariosResul
           key={`${g.tipoServicio}-${g.spstNombre ?? ""}`}
           className="font-body text-sm text-foreground"
         >
-          {g.tipoServicio} · {g.spstNombre ?? "Genérica"} → {g.cantidad} vigencia(s)
+          {g.tipoServicio} · {g.spstNombre ?? nombreGenerica} → {g.cantidad} vigencia(s)
         </p>
       ))}
       {resultado.conflictos.length > 0 && (
@@ -102,7 +108,7 @@ function ResultadoSyncTarifarios({ resultado }: { resultado: SyncTarifariosResul
           </p>
           {resultado.conflictos.map((c, i) => (
             <p key={i} className="font-body text-xs text-muted-foreground">
-              {c.tipoServicio} · {c.spstNombre ?? "Genérica"} · desde {c.vigenciaDesde}:{" "}
+              {c.tipoServicio} · {c.spstNombre ?? nombreGenerica} · desde {c.vigenciaDesde}:{" "}
               {c.campo} local {c.valorLocal} vs {c.valorSiges}
             </p>
           ))}
@@ -110,9 +116,9 @@ function ResultadoSyncTarifarios({ resultado }: { resultado: SyncTarifariosResul
       )}
       {resultado.prestadoresSinGenerica.length > 0 && (
         <p className="font-body text-xs text-destructive mt-2">
-          {resultado.prestadoresSinGenerica.join(", ")} no tiene ninguna tarifa Genérica:
-          las sucursales sin SPST en Tabla KM van a quedar sin precio (ALT008 en cada
-          incidente). Mapeá la zona de la sede del prestador a &quot;Genérica&quot;.
+          {resultado.prestadoresSinGenerica.join(", ")} no tiene tarifa genérica: las
+          sucursales sin SPST en Tabla KM van a quedar sin precio (ALT008 en cada
+          incidente). Mapeá la zona de la sede del prestador a la tarifa genérica.
         </p>
       )}
       {resultado.prestadoresSinVinculo.length > 0 && (
@@ -183,6 +189,8 @@ export function SigesTarifariosModal({
 
   const sinMapear = zonas?.zonas.filter((z) => !z.mapeada) ?? [];
   const mapeadas = zonas?.zonas.filter((z) => z.mapeada) ?? [];
+  const nombreGenerica =
+    mapeadas.find((z) => z.spstId === null)?.descripcionSiges ?? "Tarifa genérica";
 
   return (
     <BrandModal isOpen onClose={onClose} title={`Sincronizar tarifarios · ${prestadorNombre}`} error={error}>
@@ -224,7 +232,7 @@ export function SigesTarifariosModal({
             </div>
           )}
 
-          <ResultadoSyncTarifarios resultado={resultado} />
+          <ResultadoSyncTarifarios resultado={resultado} nombreGenerica={nombreGenerica} />
 
           <div className="flex justify-end gap-3 pt-1">
             <BrandButton variant="outline" onClick={onClose}>Cerrar</BrandButton>

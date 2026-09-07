@@ -44,13 +44,11 @@ function CeldaSpst({
         </button>
       );
     }
-    const zonaGenerica = zonaSigesPorSpst.get("");
+    const zonaGenerica = zonaSigesPorSpst.get("") ?? "Tarifa genérica";
     return (
       <div className="flex flex-col gap-0.5" title="Resuelve por la tarifa genérica del prestador (sin SPST propio)">
-        <span className="font-body text-sm text-foreground">Genérica</span>
-        {zonaGenerica && (
-          <span className="truncate font-body text-xs text-muted-foreground" title={zonaGenerica}>{zonaGenerica}</span>
-        )}
+        <span className="truncate font-body text-sm text-foreground" title={zonaGenerica}>{zonaGenerica}</span>
+        <span className="font-body text-xs text-muted-foreground">tarifa genérica</span>
       </div>
     );
   }
