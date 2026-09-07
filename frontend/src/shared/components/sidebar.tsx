@@ -198,7 +198,7 @@ export function Sidebar({
           <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={closeMobile} />
         )}
 
-        <main className="relative min-h-0 flex-1 overflow-y-auto thin-scrollbar bg-background">
+        <main className="relative min-h-0 min-w-0 flex-1 overflow-y-auto thin-scrollbar bg-background">
           {children}
         </main>
       </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   CalendarDays,
+  FileSearch,
   FileWarning,
   Gauge,
   ReceiptText,
@@ -68,6 +69,12 @@ export function ContadoresNavSubmenu({ onNavigate }: { onNavigate?: () => void }
       label: "Clientes nuevos",
       icon: UserPlus,
       active: pathname === "/contadores/clientes-nuevos",
+    },
+    {
+      href: "/contadores/detalle-proceso",
+      label: "Detalle por proceso",
+      icon: FileSearch,
+      active: pathname === "/contadores/detalle-proceso",
     },
     {
       href: "/contadores",

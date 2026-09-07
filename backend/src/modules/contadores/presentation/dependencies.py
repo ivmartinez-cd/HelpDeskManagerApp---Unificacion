@@ -18,6 +18,9 @@ from src.modules.contadores.infrastructure.siges.pyodbc_clientes_nuevos_gateway 
 from src.modules.contadores.infrastructure.siges.pyodbc_clientes_pendientes_periodo_gateway import (  # noqa: E501
     PyodbcClientesPendientesPeriodoGateway,
 )
+from src.modules.contadores.infrastructure.siges.pyodbc_detalle_contador_proceso_gateway import (
+    PyodbcDetalleContadorProcesoGateway,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_equipos_sin_real_gateway import (
     PyodbcEquiposSinRealGateway,
 )
@@ -181,6 +184,15 @@ def get_falta_contador_proceso_gateway() -> PyodbcFaltaContadorProcesoGateway:
     """Sin TTL a propósito (ver docstring del gateway): cada llamada trae un
     `Nro_Proceso` distinto, no hay universo repetible que cachear."""
     return PyodbcFaltaContadorProcesoGateway(require_mercurio_runner())
+
+
+@lru_cache
+def get_detalle_contador_proceso_gateway() -> PyodbcDetalleContadorProcesoGateway:
+    """Sin TTL a propósito (mismo motivo que `get_falta_contador_proceso_gateway`):
+    cada llamada trae un `Nro_Proceso` distinto, no hay universo repetible
+    que cachear. Sin variante `_or_none`: es la pantalla completa del
+    reporte, sin Siges no hay nada que mostrar."""
+    return PyodbcDetalleContadorProcesoGateway(require_mercurio_runner())
 
 
 @lru_cache

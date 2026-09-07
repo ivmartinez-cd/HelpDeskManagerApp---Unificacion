@@ -35,6 +35,9 @@ from src.modules.contadores.presentation.calendario_router import (
 from src.modules.contadores.presentation.clientes_nuevos_router import (
     router as clientes_nuevos_router,
 )
+from src.modules.contadores.presentation.detalle_contador_proceso_router import (
+    router as detalle_contador_proceso_router,
+)
 from src.modules.contadores.presentation.equipos_sin_real_router import (
     router as equipos_sin_real_router,
 )
@@ -141,6 +144,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     proyeccion_router,
     ftp_clients_router,
     clientes_nuevos_router,
+    detalle_contador_proceso_router,
     sds_router,
     ers_router,
     equipos_sin_real_router,

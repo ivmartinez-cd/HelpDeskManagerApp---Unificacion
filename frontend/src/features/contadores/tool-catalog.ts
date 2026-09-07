@@ -1,6 +1,7 @@
 import {
   ChartColumn,
   Database,
+  FileSearch,
   FileSpreadsheet,
   FolderSync,
   Printer,
@@ -9,7 +10,16 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type ToolKey = "proyeccion" | "db3" | "en0" | "suma-fija" | "ftp" | "sds" | "ers" | "calendario";
+export type ToolKey =
+  | "proyeccion"
+  | "detalle-proceso"
+  | "db3"
+  | "en0"
+  | "suma-fija"
+  | "ftp"
+  | "sds"
+  | "ers"
+  | "calendario";
 
 export interface ToolDef {
   key: ToolKey;
@@ -38,6 +48,15 @@ export const TOOLS: ToolDef[] = [
     icon: ChartColumn,
     description: "Proyecta lecturas de contadores y genera archivos para SiGes.",
     route: "/contadores/proyeccion",
+  },
+
+  {
+    key: "detalle-proceso",
+    label: "Detalle por Proceso",
+    navLabel: "Detalle de Contadores por Proceso",
+    icon: FileSearch,
+    description: "Reporte de contadores por proceso, con opción de ver todo el parque o solo falta contador.",
+    route: "/contadores/detalle-proceso",
   },
 
   {

@@ -3,6 +3,7 @@ import { TOOLS, type ToolKey } from "@/features/contadores/tool-catalog";
 
 const CARD_COLOR: Record<ToolKey, { badge: string; fg: string }> = {
   calendario: { badge: "bg-brand-orange/[0.12]", fg: "text-brand-orange" },
+  "detalle-proceso": { badge: "bg-brand-charcoal/[0.1]", fg: "text-foreground" },
   sds: { badge: "bg-brand-orange/[0.12]", fg: "text-brand-orange" },
   ers: { badge: "bg-brand-orange/[0.12]", fg: "text-brand-orange" },
   ftp: { badge: "bg-brand-charcoal/[0.1]", fg: "text-foreground" },
