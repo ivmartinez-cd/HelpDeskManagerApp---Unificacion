@@ -18,11 +18,12 @@ type IncSortKey =
   | "cobrado"
   | "esperado"
   | "diferencia"
-  | "fecha";
+  | "fecha"
+  | "estado";
 
 const INC_SORT_KEYS: readonly IncSortKey[] = [
   "incidente", "serie", "empresa", "tipo",
-  "kmCobrado", "kmEsperado", "cobrado", "esperado", "diferencia", "fecha",
+  "kmCobrado", "kmEsperado", "cobrado", "esperado", "diferencia", "fecha", "estado",
 ];
 
 export function IncidentesTabla({
@@ -71,6 +72,7 @@ export function IncidentesTabla({
               ? inc.costoServicioCobrado - inc.costoServicioEsperado
               : null;
           case "fecha": return inc.fechaCierre ?? null;
+          case "estado": return inc.estadoValidacion;
         }
       };
       return compareSortValues(getSv(a), getSv(b), sort.direction);
@@ -117,7 +119,7 @@ export function IncidentesTabla({
               <SortableHeader column={{ key: "esperado", label: "Esperado" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <SortableHeader column={{ key: "diferencia", label: "Diferencia" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <SortableHeader column={{ key: "fecha", label: "Fecha" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
-              <th className={thCls}>Estado</th>
+              <SortableHeader column={{ key: "estado", label: "Estado" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
             </tr>
           </thead>
           <tbody>
