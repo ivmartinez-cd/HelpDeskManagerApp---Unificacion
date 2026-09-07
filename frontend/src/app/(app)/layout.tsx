@@ -48,9 +48,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <Suspense fallback={null}>
         <AccessDeniedToast />
       </Suspense>
-      {/* Poller único de chats de WhatsApp pendientes + avisos por umbral, en
-          toda la app (badge del header, banner de Inicio, card, /wati). */}
-      <WatiPendientesProvider>
+      {/* Poller único de chats de WhatsApp pendientes + avisos por umbral al
+          operador de ST (modal bloqueante, ADR-036), en toda la app (badge
+          del header, banner de Inicio, card, /wati). */}
+      <WatiPendientesProvider watiUrl={WATI_URL}>
         <Sidebar watiUrl={WATI_URL}>
           {/* Guard de ruta por permiso (ADR-029): adentro del Sidebar para que
               la nav siga visible mientras redirige a Inicio. */}

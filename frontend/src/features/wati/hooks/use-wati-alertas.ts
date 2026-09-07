@@ -1,91 +1,66 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import type { ConversacionPendiente } from "../types/wati";
+import { avisosStore, claveAviso } from "../utils/avisos-store";
 import { sonarAviso } from "../utils/beep";
-import { nivelEspera, textoEspera, type NivelEspera } from "../utils/espera";
+import { nivelEspera } from "../utils/espera";
 
-const STORAGE_KEY = "wati-alertas-avisadas";
-
-function leerAvisadas(): Set<string> {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    return new Set(raw ? (JSON.parse(raw) as string[]) : []);
-  } catch {
-    return new Set();
-  }
+export interface WatiAvisosState {
+  /** Chats que cruzaron un umbral de espera y el operador todavía no confirmó. */
+  avisos: ConversacionPendiente[];
+  /** Marca todos los avisos abiertos como vistos (cierra el modal). */
+  confirmar: () => void;
 }
 
-function guardarAvisadas(avisadas: Set<string>): void {
-  try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...avisadas]));
-  } catch {
-    // sessionStorage no disponible: el de-dup vive solo en memoria.
-  }
+function claveVigente(p: ConversacionPendiente): string | null {
+  const nivel = nivelEspera(p.minutos_esperando);
+  return nivel === "ok" ? null : claveAviso(p, nivel);
 }
 
-function clave(p: ConversacionPendiente, nivel: NivelEspera): string {
-  return `${p.wa_id}:${nivel}`;
-}
+/** Avisos de WhatsApp para el operador de ST: un chat entra a la lista al
+ * llegar a "atención" y de nuevo al llegar a "crítico", y sale cuando el
+ * operador lo confirma (o cuando deja de estar pendiente). Las confirmaciones
+ * viven en `avisosStore` (sessionStorage), así que sobreviven una recarga,
+ * y se olvidan cuando el chat deja de esperar: si vuelve a esperar se avisa
+ * otra vez. Con `activo` en false no se avisa nada (el usuario no es quien
+ * cubre ST ahora), pero las confirmaciones se conservan. Suena una vez por
+ * cada chat nuevo en la lista. */
+export function useWatiAvisos(pendientes: ConversacionPendiente[], activo: boolean): WatiAvisosState {
+  const confirmadas = useSyncExternalStore(
+    avisosStore.subscribe,
+    avisosStore.getSnapshot,
+    avisosStore.getServerSnapshot,
+  );
+  const sonadas = useRef<Set<string>>(new Set());
 
-function mostrarToast(p: ConversacionPendiente, nivel: NivelEspera, inboxUrl: string | null) {
-  const titulo =
-    nivel === "critico"
-      ? `${p.nombre} lleva ${textoEspera(p.minutos_esperando).replace(/^hace /, "")} sin respuesta`
-      : `${p.nombre} espera respuesta ${textoEspera(p.minutos_esperando)}`;
-  const descripcion = p.sin_asignar
-    ? "Chat sin asignar — nadie lo tiene."
-    : `Asignado a ${p.operador_nombre ?? p.operador_email ?? "—"}.`;
-  const opciones = {
-    id: clave(p, nivel),
-    description: descripcion,
-    duration: Infinity,
-    closeButton: true,
-    action: inboxUrl
-      ? { label: "Abrir WATI", onClick: () => window.open(inboxUrl, "_blank", "noopener") }
-      : undefined,
-  };
-  if (nivel === "critico") toast.error(titulo, opciones);
-  else toast.warning(titulo, opciones);
-}
-
-/** Avisa (toast persistente + sonido) cuando un chat cruza un umbral de
- * espera: una vez al llegar a "atención" y otra al llegar a "crítico", no
- * en cada refresco. El registro de avisados vive en sessionStorage para
- * sobrevivir a una recarga de la pestaña; cuando un chat deja de estar
- * pendiente (lo respondieron o lo cerraron) su aviso se retira solo y se
- * olvida, así que si vuelve a esperar se avisa de nuevo. Al pasar a
- * "crítico" el aviso rojo reemplaza al amarillo. El toast también se puede
- * descartar con la X o con "Abrir WATI". */
-export function useWatiAlertas(pendientes: ConversacionPendiente[], inboxUrl: string | null) {
-  const avisadas = useRef<Set<string> | null>(null);
+  const avisos = useMemo(() => {
+    if (!activo) return [];
+    return pendientes.filter((p) => {
+      const k = claveVigente(p);
+      return k !== null && !confirmadas.has(k);
+    });
+  }, [pendientes, confirmadas, activo]);
 
   useEffect(() => {
-    avisadas.current ??= leerAvisadas();
-    const set = avisadas.current;
     const vigentes = new Set<string>();
-    let nuevos = 0;
     for (const p of pendientes) {
-      const nivel = nivelEspera(p.minutos_esperando);
-      if (nivel === "ok") continue;
-      const k = clave(p, nivel);
-      vigentes.add(k);
-      if (nivel === "critico") {
-        vigentes.add(clave(p, "atencion"));
-        toast.dismiss(clave(p, "atencion"));
-      }
-      if (set.has(k)) continue;
-      set.add(k);
-      mostrarToast(p, nivel, inboxUrl);
-      nuevos += 1;
+      const k = claveVigente(p);
+      if (k) vigentes.add(k);
     }
-    for (const k of [...set]) {
-      if (vigentes.has(k)) continue;
-      set.delete(k);
-      toast.dismiss(k);
-    }
-    guardarAvisadas(set);
-    if (nuevos > 0) sonarAviso();
-  }, [pendientes, inboxUrl]);
+    avisosStore.conservarSolo(vigentes);
+  }, [pendientes]);
+
+  useEffect(() => {
+    const claves = avisos.map((p) => claveVigente(p) ?? "");
+    const nuevos = claves.filter((k) => !sonadas.current.has(k));
+    sonadas.current = new Set(claves);
+    if (nuevos.length > 0) sonarAviso();
+  }, [avisos]);
+
+  const confirmar = useCallback(() => {
+    avisosStore.confirmar(avisos.map((p) => claveVigente(p) ?? "").filter(Boolean));
+  }, [avisos]);
+
+  return { avisos, confirmar };
 }

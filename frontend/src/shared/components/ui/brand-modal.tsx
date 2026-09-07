@@ -13,6 +13,10 @@ interface BrandModalProps {
    * herramientas con formularios más largos piden más aire). */
   widthPx?: number;
   error?: string | null;
+  /** false = modal de acuse obligatorio: sin X ni Escape, solo se cierra
+   * por las acciones que ofrece el contenido (avisos de WATI al operador
+   * de ST, ADR-036). Default true. */
+  dismissible?: boolean;
 }
 
 /** Modal con el chrome de marca del design handoff (overlay oscuro, card
@@ -31,7 +35,15 @@ interface BrandModalProps {
  * mismo motivo que documenta `tooltip.tsx`, algún ancestro con overflow o
  * compositing propio rompe el containing block de `position: fixed`.
  * Portalear evita depender de dónde se monte el trigger. */
-export function BrandModal({ isOpen, onClose, title, children, widthPx = 480, error }: BrandModalProps) {
+export function BrandModal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  widthPx = 480,
+  error,
+  dismissible = true,
+}: BrandModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const titleId = useId();
@@ -71,11 +83,11 @@ export function BrandModal({ isOpen, onClose, title, children, widthPx = 480, er
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) onClose();
+      if (e.key === "Escape" && isOpen && dismissible) onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, dismissible]);
 
   if (!isOpen || !mounted) return null;
 
@@ -100,13 +112,15 @@ export function BrandModal({ isOpen, onClose, title, children, widthPx = 480, er
           >
             {title}
           </h2>
-          <button
-            onClick={onClose}
-            aria-label="Cerrar modal"
-            className="cursor-pointer rounded-[8px] p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          {dismissible && (
+            <button
+              onClick={onClose}
+              aria-label="Cerrar modal"
+              className="cursor-pointer rounded-[8px] p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto thin-scrollbar px-[30px] pb-[30px] pt-3">
