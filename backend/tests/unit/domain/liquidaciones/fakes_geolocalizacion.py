@@ -24,6 +24,7 @@ from src.modules.liquidaciones.domain.repositories.nominatim_reverse_cache_repos
     NominatimCacheado,
 )
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
+    SigesEmpresaInfo,
     SigesSucursalCliente,
     SigesSucursalPropia,
 )
@@ -39,19 +40,26 @@ class FakeSigesGeoGateway:
         self,
         clientes: list[SigesSucursalCliente] | None = None,
         propias: list[SigesSucursalPropia] | None = None,
+        empresas: list[SigesEmpresaInfo] | None = None,
+        sedes_por_empresa: dict[int, list[SigesSucursalPropia]] | None = None,
     ) -> None:
         self.clientes = clientes or []
         self.propias = propias or []
+        self.empresas = empresas or []
+        # Sedes de otras empresas (SPST de Siges); sin entrada, devuelve las
+        # `propias` como si fuera la empresa del PST.
+        self.sedes_por_empresa = sedes_por_empresa or {}
+
+    async def list_empresas_activas(self) -> list[SigesEmpresaInfo]:
+        return list(self.empresas)
 
     async def list_sucursales_de_prestador(
         self, siges_empresa_id: int
     ) -> list[SigesSucursalCliente]:
         return list(self.clientes)
 
-    async def list_sucursales_de_empresa(
-        self, siges_empresa_id: int
-    ) -> list[SigesSucursalPropia]:
-        return list(self.propias)
+    async def list_sucursales_de_empresa(self, siges_empresa_id: int) -> list[SigesSucursalPropia]:
+        return list(self.sedes_por_empresa.get(siges_empresa_id, self.propias))
 
 
 class FakeGeocodingGateway:
@@ -71,9 +79,7 @@ class FakeGeocodeCacheRepository:
     async def get(self, direccion_normalizada: str) -> list[GeocodeCandidato] | None:
         return self.rows.get(direccion_normalizada)
 
-    async def put(
-        self, direccion_normalizada: str, candidatos: list[GeocodeCandidato]
-    ) -> None:
+    async def put(self, direccion_normalizada: str, candidatos: list[GeocodeCandidato]) -> None:
         self.rows[direccion_normalizada] = list(candidatos)
 
 
@@ -84,9 +90,7 @@ class FakeSucursalCoordenadasRepository:
     async def list_by_prestador(self, prestador_id: UUID) -> list[SucursalCoordenadas]:
         return [r for r in self.rows.values() if r.prestador_id == prestador_id]
 
-    async def get_by_siges_sucursal_id(
-        self, siges_sucursal_id: int
-    ) -> SucursalCoordenadas | None:
+    async def get_by_siges_sucursal_id(self, siges_sucursal_id: int) -> SucursalCoordenadas | None:
         return self.rows.get(siges_sucursal_id)
 
     async def upsert_pendiente(
@@ -202,9 +206,7 @@ class FakeMatchingDescarteRepository:
     async def create(self, tabla_km_id: UUID, siges_sucursal_id: int, usuario_email: str) -> None:
         self.rows.setdefault(tabla_km_id, set()).add(siges_sucursal_id)
 
-    async def list_descartados_por_fila(
-        self, tabla_km_ids: list[UUID]
-    ) -> dict[UUID, set[int]]:
+    async def list_descartados_por_fila(self, tabla_km_ids: list[UUID]) -> dict[UUID, set[int]]:
         return {tid: set(self.rows[tid]) for tid in tabla_km_ids if tid in self.rows}
 
 
@@ -235,9 +237,7 @@ class FakeCalculoKmPreviewRepository:
         elementos_google: int,
         sin_actividad: int = 0,
     ) -> CalculoKmPreview:
-        self.rows = {
-            pid: p for pid, p in self.rows.items() if p.prestador_id != prestador_id
-        }
+        self.rows = {pid: p for pid, p in self.rows.items() if p.prestador_id != prestador_id}
         row = CalculoKmPreview(
             id=uuid.uuid4(),
             prestador_id=prestador_id,
@@ -385,9 +385,11 @@ class FakeTablaKmGeoRepository:
             latitud_destino=latitud_destino,
             longitud_destino=longitud_destino,
             coords_origen=coords_origen,
-            siges_sucursal_id=siges_sucursal_id if siges_sucursal_id is not None
+            siges_sucursal_id=siges_sucursal_id
+            if siges_sucursal_id is not None
             else row.siges_sucursal_id,
-            id_costo_servicios=id_costo_servicios if id_costo_servicios is not None
+            id_costo_servicios=id_costo_servicios
+            if id_costo_servicios is not None
             else row.id_costo_servicios,
         )
         self.rows[tabla_km_id] = actualizada
@@ -441,9 +443,11 @@ class FakeTablaKmGeoRepository:
             provincia_cliente=provincia_cliente,
             geocode_formatted_address=None,
             geocode_fecha=None,
-            siges_sucursal_id=siges_sucursal_id if siges_sucursal_id is not None
+            siges_sucursal_id=siges_sucursal_id
+            if siges_sucursal_id is not None
             else row.siges_sucursal_id,
-            id_costo_servicios=id_costo_servicios if id_costo_servicios is not None
+            id_costo_servicios=id_costo_servicios
+            if id_costo_servicios is not None
             else row.id_costo_servicios,
         )
         self.rows[tabla_km_id] = actualizada

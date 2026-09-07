@@ -50,7 +50,10 @@ from src.modules.liquidaciones.domain.services.geolocalizacion import (
     PROCEDENCIA_SIGES,
     haversine_km,
 )
-from src.modules.liquidaciones.domain.services.vinculacion_siges import normalizar_nombre
+from src.modules.liquidaciones.domain.services.vinculacion_siges import (
+    normalizar_nombre,
+    spsts_siges_del_prestador,
+)
 
 _GOOGLE_BATCH = 25
 
@@ -66,10 +69,11 @@ class PreviewCalcularDistancias:
             prestador.siges_empresa_id  # type: ignore[arg-type]
         )
         base_default = coords_base_default(prestador, propias)
-        # Las sedes de los SPST vinculados a Siges entran al mapa de bases por
-        # zona tarifaria (`id_costo_servicios`): sin esto, INFOMAC medía Ushuaia
-        # desde Villa Mercedes (3.000 km de ida, 2026-09-05).
-        bases = _bases_con_coords(base_default, propias + await self._sedes_de_spsts(prestador_id))
+        # Las sedes de las SPST de Siges del PST entran al mapa de bases: sin
+        # esto, INFOMAC medía Ushuaia desde Villa Mercedes (3.000 km de ida,
+        # 2026-09-05). Salen de Siges por nombre, no de los SPST locales (que
+        # son zonas tarifarias, no bases — 2026-09-07).
+        bases = _bases_con_coords(base_default, propias + await self._sedes_de_spsts(prestador))
         destinos, sin_ubicar, sin_actividad = await self._armar_destinos(prestador)
         verificar_tope(2 * len(destinos), self._tope)
         existentes = await self._cargar_existentes(prestador_id)
@@ -83,11 +87,14 @@ class PreviewCalcularDistancias:
             sin_actividad=sin_actividad,
         )
 
-    async def _sedes_de_spsts(self, prestador_id: UUID) -> list[SigesSucursalPropia]:
+    async def _sedes_de_spsts(self, prestador: Prestador) -> list[SigesSucursalPropia]:
+        empresas = await self._ports.siges.list_empresas_activas()
+        pst = next((e for e in empresas if e.siges_empresa_id == prestador.siges_empresa_id), None)
+        if pst is None:
+            return []
         sedes: list[SigesSucursalPropia] = []
-        for spst in await self._ports.spsts.list_by_prestador(prestador_id):
-            if spst.siges_empresa_id is not None:
-                sedes += await self._ports.siges.list_sucursales_de_empresa(spst.siges_empresa_id)
+        for spst in spsts_siges_del_prestador(pst.den_comercial, empresas):
+            sedes += await self._ports.siges.list_sucursales_de_empresa(spst.siges_empresa_id)
         return sedes
 
     async def _armar_destinos(self, prestador: Prestador) -> tuple[list[Destino], int, int]:

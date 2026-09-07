@@ -67,3 +67,33 @@ def proponer_vinculos(
     return {
         local_id: propuesto for local_id, propuesto in por_local.items() if usos[propuesto] == 1
     }
+
+
+def marca_prestador(den_comercial_pst: str) -> str | None:
+    """Primer token del nombre del PST en Siges: `'PST Villa Mercedes - Infomac'`
+    → `'infomac'`, `'PST Cordoba - Pentacom S.A.'` → `'pentacom'`. Es la parte
+    del `Den_Comercial` que las SPST repiten (`'SPST Infomac - Santa Rosa'`)."""
+    _, _, nombre = den_comercial_pst.partition(" - ")
+    resto = nombre or den_comercial_pst
+    tokens = normalizar_nombre(resto).split()
+    return tokens[0] if tokens else None
+
+
+def spsts_siges_del_prestador(
+    den_comercial_pst: str, empresas: list[SigesEmpresaInfo]
+) -> list[SigesEmpresaInfo]:
+    """Empresas SPST de Siges que pertenecen al PST por convención de nombre
+    (`'SPST <marca> - <localidad>'`, tolerando espacios dobles, mayúsculas y
+    guiones pegados). Sirve para tomar sus sedes como bases de despacho sin
+    tener que duplicarlas como SPST locales: en Siges las SPST son bases, no
+    zonas tarifarias, y acá el SPST local ES la zona (caso INFOMAC 2026-09-07:
+    18 SPST locales para 4 zonas de tarifa). Verificado contra todo Siges el
+    2026-09-07: Pentacom 7, Supernova 2, Infomac 19, ninguna ambigua."""
+    marca = marca_prestador(den_comercial_pst)
+    if marca is None:
+        return []
+    return [
+        e
+        for e in empresas
+        if e.tipo == "SPST" and normalizar_nombre(e.den_comercial).split()[:1] == [marca]
+    ]

@@ -322,10 +322,11 @@ tope de consultas y de tiempo desde el arranque.
 - Pasada sobre los 34 prestadores con OpenStreetMap: 982 filas creadas (sucursales con
   actividad que no estaban en la tabla), 1.290 completadas, 767 negociadas sin tocar.
 - Dos errores detectados y corregidos: (a) INFOMAC medía todo desde Villa Mercedes porque
-  Gestión tiene 18 SPST de Infomac con sede propia y nosotros 4 → se crearon los 15 que
+  Gestión tiene 18 SPST de Infomac con sede propia y nosotros 4 → se crearon los 14 que
   faltaban con su sede, se vincularon 29 sucursales por localidad y el cálculo pasó a medir
   **desde la sede más cercana** (varias sedes comparten zona tarifaria, así que
-  `id_costo_servicios` no alcanzaba); (b) 7 resoluciones automáticas de la pasada 1 cayeron
+  `id_costo_servicios` no alcanzaba). **Revertido el 2026-09-07** (ver §12): esos 14 SPST
+  eran bases, no zonas tarifarias, y acá el SPST local ES la zona; (b) 7 resoluciones automáticas de la pasada 1 cayeron
   en otra ciudad (la trampa localidad = provincia otra vez) → revertidas. Los km medidos
   desde base equivocada o con pin roto (328 filas) se volvieron a cero antes de recalcular.
 - Regla ALT002: "cobró 0 km" sin ningún viaje ese día ya no alerta (nunca es sobrecobro);
@@ -336,3 +337,31 @@ Estado final de la Tabla KM: 3.847 filas (2.328 activas), 2.208 con km medido, 1
 facturable (el resto en cero por la regla de viático), 1.813 con pin; 400 sucursales con
 coordenadas resueltas localmente (247 por geocode, 153 manuales con fuente). Los pines de
 Gestión no se tocan: las correcciones viven en `sucursal_coordenadas` y tienen prioridad.
+
+## 12. INFOMAC vuelve a 4 SPST: las SPST de Siges son bases, no zonas (2026-09-07)
+
+Iván detectó que la configuración de SPST de INFOMAC ya no coincidía con Siges: los 14 SPST
+creados el sábado (sección 11, punto a) no tenían tarifa ni mapeo de zona. En nuestro modelo
+el SPST es la **zona tarifaria** (`tarifarios.spst_id`, `tarifario_zona_maps`); en Siges,
+`dbo.CostoServicio` de la empresa 740 tiene exactamente 4 zonas (Villa Mercedes → Genérica,
+Gral. Roca/Neuquén, Norte Neuquén, Ushuaia) y las 19 empresas `SPST Infomac - <localidad>`
+son bases operativas con sede propia, agrupadas dentro de esas zonas. Impacto real: ninguno
+sobre 3952-5 (el motor cae a la tarifa genérica cuando el SPST de la fila no tiene tarifa),
+pero Bariloche y San Martín de los Andes resolvían a precio Villa Mercedes en vez de Gral.
+Roca/Neuquén, y la pantalla de SPST mostraba 18 filas, 14 sin tarifa.
+
+Corrección (backup `helpdesk-db_2026-09-07_1206_infomac-volver-a-4-spst.dump`):
+- 29 filas de Tabla KM reasignadas: Bariloche (3) y San Martín de los Andes (1) al SPST
+  Gral. Roca/Neuquén; Santa Rosa, Pehuajó, Trenque Lauquen, Merlo y Esquel (25) a Genérica.
+  Esquel es Chubut y no figura en ninguna zona de Siges: queda en Genérica salvo que la TL
+  decida otra cosa. Los 14 SPST borrados. Reanálisis de 3952-5: mismas 14 alertas
+  pendientes (10 ALT001, 2 ALT002, 2 ALT010).
+- Código: el cálculo de km sigue midiendo desde la sede más cercana, pero las bases ahora
+  salen de Siges (`spsts_siges_del_prestador` en `vinculacion_siges.py`: empresas `SPST`
+  activas cuyo nombre normalizado empieza con la marca del PST — `'PST Villa Mercedes -
+  Infomac'` → `infomac`), no de los SPST locales. Verificado contra todo Siges: Pentacom 7,
+  Supernova 2, Infomac 19, ninguna SPST ambigua; `SPST AISA - El Dorado` no tiene PST activo.
+  Siges no tiene FK padre→SPST (`ID_GrupoE` es un grupo mixto de 55 empresas), por eso la
+  convención de nombre es la única llave.
+- Aparte: Siges tiene dos SPST `Santiago Del Estero` (1354 inactiva, 1404 activa) que Gestión
+  no mostraba el sábado; entran solas como base por la regla nueva.

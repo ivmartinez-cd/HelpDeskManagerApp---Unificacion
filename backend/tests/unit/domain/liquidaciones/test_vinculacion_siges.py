@@ -6,8 +6,10 @@ from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import
     SigesEmpresaInfo,
 )
 from src.modules.liquidaciones.domain.services.vinculacion_siges import (
+    marca_prestador,
     normalizar_nombre,
     proponer_vinculos,
+    spsts_siges_del_prestador,
 )
 
 
@@ -76,3 +78,38 @@ class TestProponerVinculos:
         )
 
         assert propuestas == {}
+
+
+class TestSpstsSigesDelPrestador:
+    """Nombres reales de Siges (2026-09-07): espacios dobles, minúsculas y
+    guión pegado en las SPST de Infomac; 'S.A.' en el nombre de Pentacom."""
+
+    def test_marca_es_el_primer_token_del_nombre_del_pst(self) -> None:
+        assert marca_prestador("PST Villa Mercedes - Infomac") == "infomac"
+        assert marca_prestador("PST Cordoba - Pentacom S.A.") == "pentacom"
+        assert marca_prestador("PST Rosario - Supernova Servicios SRL") == "supernova"
+        assert marca_prestador("PST ") is None
+
+    def test_agrupa_las_spst_por_marca_tolerando_el_formato(self) -> None:
+        empresas = [
+            _empresa(740, "PST Villa Mercedes - Infomac"),
+            _empresa(1405, "SPST  Infomac - Neuquen", "SPST"),
+            _empresa(1143, "SPST infomac -  Merlo", "SPST"),
+            _empresa(1243, "SPST Infomac-  Pehuajo", "SPST"),
+            _empresa(1271, "SPST Infomac - Santa Rosa", "SPST"),
+            _empresa(600, "PST Rosario - Supernova Servicios SRL"),
+            _empresa(601, "SPST Supernova - Rafaela", "SPST"),
+            _empresa(1086, "SPST AISA - El Dorado", "SPST"),
+        ]
+        infomac = spsts_siges_del_prestador("PST Villa Mercedes - Infomac", empresas)
+        assert [e.siges_empresa_id for e in infomac] == [1405, 1143, 1243, 1271]
+        supernova = spsts_siges_del_prestador("PST Rosario - Supernova Servicios SRL", empresas)
+        assert [e.siges_empresa_id for e in supernova] == [601]
+        assert spsts_siges_del_prestador("PST Caleta - AISA", empresas) == [empresas[7]]
+
+    def test_ignora_pst_aunque_compartan_marca(self) -> None:
+        empresas = [
+            _empresa(740, "PST Villa Mercedes - Infomac"),
+            _empresa(741, "PST Infomac - Otra zona"),
+        ]
+        assert spsts_siges_del_prestador("PST Villa Mercedes - Infomac", empresas) == []

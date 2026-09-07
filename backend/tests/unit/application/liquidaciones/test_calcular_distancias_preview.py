@@ -2,6 +2,7 @@
 convención de facturación, preview sin efectos sobre tabla_km, apply sin
 Google, preservación de umbral/observaciones y control de tope."""
 
+import dataclasses
 from uuid import UUID, uuid4
 
 import pytest
@@ -20,6 +21,7 @@ from src.modules.liquidaciones.domain.errors import (
     TopeLlamadasGoogleError,
 )
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
+    SigesEmpresaInfo,
     SigesSucursalCliente,
     SigesSucursalPropia,
 )
@@ -54,6 +56,16 @@ def _sucursal_cliente(
         provincia="Buenos Aires",
         latitud=latitud,
         longitud=longitud,
+    )
+
+
+def _empresa_siges(siges_id: int, den: str, tipo: str) -> SigesEmpresaInfo:
+    return SigesEmpresaInfo(
+        siges_empresa_id=siges_id,
+        den_comercial=den,
+        razon_social=None,
+        cuit=None,
+        tipo=tipo,  # type: ignore[arg-type]
     )
 
 
@@ -113,9 +125,10 @@ class TestPreview:
 
     @pytest.mark.asyncio
     async def test_destino_se_mide_desde_la_sede_mas_cercana(self) -> None:
-        """La sede del SPST (a 1 km del cliente) gana sobre la base del PST
-        (a 200 km): varias sedes comparten zona tarifaria, así que se elige por
-        distancia, no por `id_costo_servicios`."""
+        """La sede de la SPST de Siges del PST (a 1 km del cliente) gana sobre
+        la base del PST (a 200 km): varias sedes comparten zona tarifaria, así
+        que se elige por distancia, no por `id_costo_servicios`. Las SPST salen
+        de Siges por nombre; no hace falta (ni corresponde) un SPST local."""
         cliente = _sucursal_cliente()
         preview_uc, _, ports, prestador_id = _armar([cliente])
         lat, lon = _DESTINO
@@ -126,15 +139,21 @@ class TestPreview:
             longitud=str(lon).replace(".", ","),
             id_costo_servicios=None,
         )
-        ports.siges.propias.append(sede_spst)  # type: ignore[attr-defined]
-        ports.spsts.rows.append(  # type: ignore[attr-defined]
-            make_spst(prestador_id=prestador_id, siges_empresa_id=5, siges_base_sucursal_id=77)
+        ports.siges.empresas.extend(  # type: ignore[attr-defined]
+            [
+                _empresa_siges(77, "PST Bahia Blanca - Acme Servicios", "PST"),
+                _empresa_siges(5, "SPST  Acme - Cerca", "SPST"),
+                _empresa_siges(6, "SPST Otro - Cerca", "SPST"),
+            ]
         )
+        sede_ajena = dataclasses.replace(sede_spst, siges_sucursal_id=78, latitud="-40,0")
+        ports.siges.sedes_por_empresa.update({5: [sede_spst], 6: [sede_ajena]})  # type: ignore[attr-defined]
 
         preview = await preview_uc.execute(prestador_id)
 
         assert len(preview.filas) == 1
         assert preview.filas[0].latitud_base == pytest.approx(lat + 0.01)
+        assert await ports.spsts.list_by_prestador(prestador_id) == []
 
     @pytest.mark.asyncio
     async def test_fila_existente_preserva_umbral_y_muestra_diff(self) -> None:
