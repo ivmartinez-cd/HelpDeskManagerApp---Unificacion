@@ -26,6 +26,7 @@ from src.shared.infrastructure.config.settings_groups_operativos import (
     LiquidacionesSettings,
     PreventivosSettings,
     SlaSettings,
+    VacacionesSettings,
     WatiSettings,
 )
 
@@ -45,6 +46,7 @@ class Settings(
     WatiSettings,
     AnalisisLogHpSettings,
     LiquidacionesSettings,
+    VacacionesSettings,
 ):
     """Config tipada y fail-fast: falta un campo requerido => la app no arranca."""
 

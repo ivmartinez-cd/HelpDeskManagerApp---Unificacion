@@ -1,12 +1,17 @@
 import uuid
 from datetime import date
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.vacaciones.application.dtos.ausencia_dtos import ListarAusenciasQuery
+from src.modules.vacaciones.application.use_cases.adjuntar_certificado_ausencia import (
+    AdjuntarCertificadoAusencia,
+    AdjuntarCertificadoAusenciaDependencies,
+)
 from src.modules.vacaciones.application.use_cases.decidir_ausencia import (
     DecidirAusencia,
     DecidirAusenciaDependencies,
@@ -52,6 +57,10 @@ from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_sector_reposi
 )
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_solicitud_repository import (  # noqa: E501
     SqlAlchemySolicitudRepository,
+)
+from src.modules.vacaciones.presentation.certificado_storage import (
+    certificados_dir,
+    save_certificado,
 )
 from src.modules.vacaciones.presentation.dependencies.actor import get_actor_vacaciones
 from src.modules.vacaciones.presentation.schemas.ausencia_schemas import (
@@ -186,4 +195,42 @@ async def decidir_ausencia(
     resultado = await DecidirAusencia(deps).execute(ausencia_id, body.to_command(), actor)
     return DecisionAusenciaResponse.build(
         resultado.ausencia.id, resultado.ausencia.status.value, resultado.afecta_turnos
+    )
+
+
+@router.post("/{ausencia_id}/certificado", status_code=status.HTTP_201_CREATED)
+async def adjuntar_certificado(
+    ausencia_id: uuid.UUID,
+    file: UploadFile = File(...),
+    _identity: Identity = _require_create,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> dict[str, uuid.UUID]:
+    """Adjuntar/reemplazar el certificado (orden médica, etc.) de una baja
+    ya cargada, ej. Baja por enfermedad."""
+    filename = await save_certificado(file)
+    deps = AdjuntarCertificadoAusenciaDependencies(
+        ausencias=SqlAlchemyAusenciaRepository(db),
+        auditoria=SqlAlchemyRegistradorAuditoria(db, actor.user_id),
+    )
+    ausencia = await AdjuntarCertificadoAusencia(deps).execute(ausencia_id, filename, actor)
+    return {"id": ausencia.id}
+
+
+@router.get("/{ausencia_id}/certificado")
+async def obtener_certificado(
+    ausencia_id: uuid.UUID,
+    _identity: Identity = _require_view,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> FileResponse:
+    ausencia = await SqlAlchemyAusenciaRepository(db).get_by_id(ausencia_id)
+    if ausencia is None or ausencia.certificado_filename is None:
+        raise HTTPException(404, "Esta baja no tiene un certificado adjunto")
+    path = certificados_dir() / ausencia.certificado_filename
+    if not path.is_file():
+        raise HTTPException(404, "El certificado no se encontró en disco")
+    return FileResponse(
+        path,
+        filename=f"certificado-{ausencia_id}{path.suffix}",
+        content_disposition_type="inline",
     )

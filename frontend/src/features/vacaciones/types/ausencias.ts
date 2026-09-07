@@ -32,6 +32,8 @@ export interface Ausencia {
   /** HH:MM:SS, solo CAMBIO_HORARIO */
   horaDesde: string | null;
   horaHasta: string | null;
+  /** URL del certificado/orden médica adjunta (null si no tiene). */
+  certificadoUrl: string | null;
 }
 
 export interface AusenciaPayload {

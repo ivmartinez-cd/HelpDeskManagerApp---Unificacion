@@ -56,6 +56,12 @@ export const asistenciasApi = {
    * de horario): mismo circuito que las solicitudes de vacaciones. */
   decide: (id: string, decision: "APPROVED" | "REJECTED", comment: string | null) =>
     httpClient.post<DecisionAusenciaResult>(`${BASE}/${id}/decision`, { decision, comment }),
+  /** Adjuntar/reemplazar el certificado (orden médica, etc.) de una baja ya cargada. */
+  uploadCertificado: (id: string, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return httpClient.postForm<{ id: string }>(`${BASE}/${id}/certificado`, form);
+  },
   reporteDescuentos: (year: number, month: number, departmentId?: string) => {
     const q = new URLSearchParams({ year: String(year), month: String(month) });
     if (departmentId) q.set("departmentId", departmentId);

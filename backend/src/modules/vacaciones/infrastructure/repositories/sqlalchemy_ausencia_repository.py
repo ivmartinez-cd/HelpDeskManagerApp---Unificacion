@@ -36,6 +36,7 @@ def _to_entity(row: VacacionesAusenciaModel) -> Ausencia:
         created_at=row.created_at,
         hora_desde=row.hora_desde,
         hora_hasta=row.hora_hasta,
+        certificado_filename=row.certificado_filename,
     )
 
 
@@ -138,3 +139,4 @@ def _apply(row: VacacionesAusenciaModel, ausencia: Ausencia) -> None:
     row.status = ausencia.status.value
     row.hora_desde = ausencia.hora_desde
     row.hora_hasta = ausencia.hora_hasta
+    row.certificado_filename = ausencia.certificado_filename

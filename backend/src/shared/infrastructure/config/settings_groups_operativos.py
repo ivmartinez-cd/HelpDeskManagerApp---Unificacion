@@ -102,6 +102,12 @@ class AnalisisLogHpSettings(BaseSettings):
     analisis_log_hp_snapshot_interval_minutes: int = 720
 
 
+class VacacionesSettings(BaseSettings):
+    """Módulo vacaciones: adjuntos de ausencias (certificados médicos, etc.)."""
+
+    vacaciones_certificados_dir: str = "var/vacaciones/certificados"
+
+
 class LiquidacionesSettings(BaseSettings):
     """Módulo liquidaciones: geocodificación (Google Maps, Georef, Nominatim) y jobs."""
 

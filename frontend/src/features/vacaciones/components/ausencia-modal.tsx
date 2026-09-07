@@ -35,6 +35,11 @@ export function AusenciaModal({ ausencia, empleados, esAdmin, onClose, onSaved }
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [certificadoUrl, setCertificadoUrl] = useState(ausencia?.certificadoUrl ?? null);
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const [uploadingCert, setUploadingCert] = useState(false);
+  const [certError, setCertError] = useState<string | null>(null);
+
   const filtrados = useMemo(() => {
     const ordenados = ordenarPorNombre(empleados);
     const q = busqueda.trim().toLowerCase();
@@ -77,6 +82,22 @@ export function AusenciaModal({ ausencia, empleados, esAdmin, onClose, onSaved }
         setError(err instanceof ApiError ? err.message : "No se pudo guardar la baja.");
       })
       .finally(() => setBusy(false));
+  };
+
+  const subirCertificado = () => {
+    if (!ausencia || !certFile) return;
+    setUploadingCert(true);
+    setCertError(null);
+    asistenciasApi
+      .uploadCertificado(ausencia.id, certFile)
+      .then(() => {
+        setCertificadoUrl(`/api/vacaciones/ausencias/${ausencia.id}/certificado`);
+        setCertFile(null);
+      })
+      .catch((err: unknown) => {
+        setCertError(err instanceof ApiError ? err.message : "No se pudo subir el certificado.");
+      })
+      .finally(() => setUploadingCert(false));
   };
 
   return (
@@ -203,6 +224,45 @@ export function AusenciaModal({ ausencia, empleados, esAdmin, onClose, onSaved }
             <option value="PENDING">Pendiente</option>
             <option value="REJECTED">Rechazada</option>
           </BrandSelect>
+        )}
+
+        {ausencia && tipo === "BAJA_ENFERMEDAD" && (
+          <div>
+            <label className="mb-1.5 block font-body text-[13px] font-semibold text-foreground">
+              Certificado / orden médica{" "}
+              <span className="font-normal text-muted-foreground">(opcional)</span>
+            </label>
+            {certificadoUrl && (
+              <button
+                type="button"
+                onClick={() => window.open(certificadoUrl, "_blank")}
+                className="mb-1.5 block font-body text-[13px] font-semibold text-brand-orange underline underline-offset-2"
+              >
+                Ver certificado adjunto
+              </button>
+            )}
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                accept="application/pdf,image/jpeg,image/png"
+                onChange={(e) => setCertFile(e.target.files?.[0] ?? null)}
+                className="flex-1 font-body text-[12px] text-foreground"
+              />
+              <BrandButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={subirCertificado}
+                loading={uploadingCert}
+                disabled={!certFile}
+              >
+                {certificadoUrl ? "Reemplazar" : "Adjuntar"}
+              </BrandButton>
+            </div>
+            {certError && (
+              <p className="mt-1 font-body text-[12px] text-destructive">{certError}</p>
+            )}
+          </div>
         )}
 
         <div>

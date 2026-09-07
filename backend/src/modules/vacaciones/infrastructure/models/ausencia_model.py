@@ -74,6 +74,7 @@ class VacacionesAusenciaModel(Base):
     )
     hora_desde: Mapped[time | None] = mapped_column(Time, nullable=True)
     hora_hasta: Mapped[time | None] = mapped_column(Time, nullable=True)
+    certificado_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")
     )

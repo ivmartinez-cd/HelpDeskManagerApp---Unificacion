@@ -48,6 +48,8 @@ class Ausencia:
     created_at: datetime
     hora_desde: time | None = None
     hora_hasta: time | None = None
+    certificado_filename: str | None = None
+    """Nombre (uuid + extensión) del certificado/orden médica adjunta, si la hay."""
 
     @property
     def dias_computados(self) -> float:

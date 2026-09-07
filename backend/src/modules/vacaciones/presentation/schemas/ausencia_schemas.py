@@ -36,6 +36,7 @@ class AusenciaResponse(BaseModel):
     # Solo CAMBIO_HORARIO (HH:MM:SS); null en el resto.
     hora_desde: time | None = Field(default=None, serialization_alias="horaDesde")
     hora_hasta: time | None = Field(default=None, serialization_alias="horaHasta")
+    certificado_url: str | None = Field(default=None, serialization_alias="certificadoUrl")
 
     @classmethod
     def from_dto(cls, dto: AusenciaDTO) -> "AusenciaResponse":
@@ -57,6 +58,11 @@ class AusenciaResponse(BaseModel):
             created_at=a.created_at,
             hora_desde=a.hora_desde,
             hora_hasta=a.hora_hasta,
+            certificado_url=(
+                f"/api/vacaciones/ausencias/{a.id}/certificado"
+                if a.certificado_filename
+                else None
+            ),
         )
 
 

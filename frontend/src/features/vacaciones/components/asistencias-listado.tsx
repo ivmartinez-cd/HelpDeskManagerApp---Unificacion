@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, ShieldAlert } from "lucide-react";
+import { Paperclip, Search, ShieldAlert } from "lucide-react";
 import { ApiError } from "@/services/http-client";
 import { BrandEmptyState, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
 import { PaginationBar } from "@/shared/components/ui/pagination-bar";
@@ -11,6 +11,7 @@ import { asistenciasApi } from "../api/asistencias-api";
 import { formatFecha, iniciales } from "../lib/fechas";
 import { TIPO_AUSENCIA, horarioTexto } from "../lib/tipos-ausencia";
 import type { Ausencia, TipoAusencia } from "../types/vacaciones";
+import { CertificadoPreviewModal } from "./certificado-preview-modal";
 import { SolicitudEstadoBadge } from "./solicitud-estado-badge";
 
 const PAGE_SIZE = 25;
@@ -70,6 +71,7 @@ export function AsistenciasListado({
   });
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const anios = useMemo(() => {
     const desde = 2017;
@@ -176,6 +178,7 @@ export function AsistenciasListado({
                 <SortableHeader column={{ key: "tipo", label: "Tipo" }} sort={sort} onToggleSort={handleToggleSort} />
                 <SortableHeader column={{ key: "duracion", label: "Duración" }} sort={sort} onToggleSort={handleToggleSort} />
                 <th className="px-4 py-3">Observaciones</th>
+                <th className="px-4 py-3">Certificado</th>
                 {puedeGestionar && <th className="px-4 py-3" />}
               </tr>
             </thead>
@@ -216,6 +219,20 @@ export function AsistenciasListado({
                   <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground" title={a.reason ?? ""}>
                     {a.reason ?? "—"}
                   </td>
+                  <td className="px-4 py-3">
+                    {a.certificadoUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewUrl(a.certificadoUrl)}
+                        title="Ver certificado adjunto"
+                        className="flex items-center gap-1 rounded-[6px] px-1.5 py-1 text-brand-orange hover:bg-muted"
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
                   {puedeGestionar && (
                     <td className="px-4 py-3">
                       <span className="flex justify-end gap-1.5">
@@ -251,6 +268,10 @@ export function AsistenciasListado({
           onPageChange={setPage}
           noun="bajas"
         />
+      )}
+
+      {previewUrl && (
+        <CertificadoPreviewModal url={previewUrl} onClose={() => setPreviewUrl(null)} />
       )}
     </div>
   );
