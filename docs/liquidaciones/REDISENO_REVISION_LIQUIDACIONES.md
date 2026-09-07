@@ -365,3 +365,11 @@ Corrección (backup `helpdesk-db_2026-09-07_1206_infomac-volver-a-4-spst.dump`):
   convención de nombre es la única llave.
 - Aparte: Siges tiene dos SPST `Santiago Del Estero` (1354 inactiva, 1404 activa) que Gestión
   no mostraba el sábado; entran solas como base por la regla nueva.
+
+Segunda pasada el mismo día (backup `helpdesk-db_2026-09-07_1245_infomac-quitar-spst-villa-mercedes.dump`):
+en Tarifarios seguían apareciendo 5 zonas y no 4, porque el SPST "Villa Mercedes" (la sede del
+PST creada como SPST, deuda de `DEUDA_SPSTS_CREADOS_COMO_PST.md`) conservaba las 150 tarifas
+que el sync del 2026-09-04 le colgó, copia exacta de las 150 genéricas creadas el 05. Se
+borraron esas 150, sus 89 filas de Tabla KM pasaron a Genérica (mismo precio) y se eliminó el
+SPST. INFOMAC queda como Siges: Genérica (Villa Mercedes) + Gral. Roca/Neuquén + Norte Neuquén +
+Ushuaia. Reanálisis de 3952-5: mismas 14 alertas.
