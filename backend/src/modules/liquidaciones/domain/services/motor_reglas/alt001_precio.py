@@ -13,17 +13,24 @@ from src.modules.liquidaciones.domain.value_objects.motor_reglas_resultado impor
 TOLERANCIA_PRECIO = 0.01
 
 
+def precio_esperado(
+    tarifario: Tarifario | None, acuerdo: AcuerdoPrecioCliente | None
+) -> float | None:
+    """Con un acuerdo de precio por cliente, el esperado es el del acuerdo
+    (`precio_esperado`), no el tarifario — ver la entidad. Lo comparten ALT001
+    y ALT011 (doble facturación)."""
+    precio_tarifario = tarifario.costo_servicio if tarifario else None
+    return acuerdo.precio_esperado(precio_tarifario) if acuerdo else precio_tarifario
+
+
 def evaluar_alt001(
     incidente: Incidente,
     tarifario: Tarifario | None,
     acuerdo: AcuerdoPrecioCliente | None = None,
 ) -> list[Hallazgo]:
-    """Con un acuerdo de precio por cliente, el esperado es el del acuerdo
-    (`precio_esperado`), no el tarifario — ver la entidad."""
     if incidente.fecha_cierre is None:
         return []
-    precio_tarifario = tarifario.costo_servicio if tarifario else None
-    esperado = acuerdo.precio_esperado(precio_tarifario) if acuerdo else precio_tarifario
+    esperado = precio_esperado(tarifario, acuerdo)
     if esperado is None:
         return []
     diferencia = abs((incidente.costo_servicio_cobrado or 0) - esperado)

@@ -18,6 +18,7 @@ import { EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
 const CODIGO_ALT001 = "ALT001";
 const CODIGO_ALT002 = "ALT002";
 const CODIGO_ALT008 = "ALT008";
+const CODIGO_ALT011 = "ALT011";
 
 function plantillaDesdeAlerta(alerta: Alerta): PlantillaEntrada {
   const ctx = alerta.datosContexto as { empresa?: string; sucursal?: string } | null;
@@ -78,11 +79,13 @@ export function GestionarAlertaModal({
     !!incidente?.empresaNombre &&
     !!incidente?.sucursalNombre &&
     (alerta.estado === "pendiente" || alerta.estado === "en_revision");
-  // ALT001 pendiente: atajo para dejar asentado el arreglo con ese cliente una
-  // sola vez (acuerdo de precio) en vez de resolver la misma alerta cada mes.
+  // ALT001/ALT011 pendiente: atajo para dejar asentado el arreglo con ese
+  // cliente una sola vez (acuerdo de precio) en vez de resolver la misma
+  // alerta cada mes (ALT011 = cobró el doble; si el cliente siempre paga
+  // doble, el acuerdo lo fija).
   const ctxAlt001 = alerta.datosContexto as { cobrado?: number } | null;
   const linkAcuerdo =
-    alerta.tipoAlerta === CODIGO_ALT001 &&
+    (alerta.tipoAlerta === CODIGO_ALT001 || alerta.tipoAlerta === CODIGO_ALT011) &&
     !!incidente?.empresaNombre &&
     (alerta.estado === "pendiente" || alerta.estado === "en_revision")
       ? `/liquidaciones/configuracion/acuerdos?${new URLSearchParams({

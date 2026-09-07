@@ -37,13 +37,12 @@ from src.modules.liquidaciones.domain.entities.regla_alerta import (
     CODIGO_ALT008_TARIFARIO_INEXISTENTE,
     CODIGO_ALT009_PAR_EMPRESA_SUCURSAL,
     CODIGO_ALT010_SERIE_DUPLICADA,
+    CODIGO_ALT011_DOBLE_FACTURACION,
     ReglaAlerta,
     genera_observaciones,
 )
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.entities.tarifario import (
-    TIPO_CORRECTIVO,
-    TIPO_PREVENTIVO,
     Tarifario,
 )
 from src.modules.liquidaciones.domain.services.acuerdos_precio import resolver_acuerdo
@@ -56,6 +55,12 @@ from src.modules.liquidaciones.domain.services.motor_reglas import (
     alt008_tarifario,
     alt009_spst,
     alt010_serie_duplicada,
+    alt011_doble_facturacion,
+)
+from src.modules.liquidaciones.domain.services.motor_reglas._coincidencias import (
+    _coincidencias_alt010,
+    _duplicados_alt004,
+    _similares_alt003,
 )
 from src.modules.liquidaciones.domain.services.motor_reglas._resolucion import (
     indexar_tablas_km,
@@ -81,6 +86,7 @@ _EVALUADORES_POR_INCIDENTE = (
     CODIGO_ALT008_TARIFARIO_INEXISTENTE,
     CODIGO_ALT009_PAR_EMPRESA_SUCURSAL,
     CODIGO_ALT010_SERIE_DUPLICADA,
+    CODIGO_ALT011_DOBLE_FACTURACION,
 )
 
 
@@ -155,8 +161,10 @@ def _evaluar_regla(
     regla: ReglaAlerta,
 ) -> list[Hallazgo]:
     if codigo == CODIGO_ALT001_PRECIO_INCORRECTO:
+        return _evaluar_alt001(incidente, tarifario, contexto)
+    if codigo == CODIGO_ALT011_DOBLE_FACTURACION:
         acuerdo = resolver_acuerdo(incidente, contexto.acuerdos)
-        return alt001_precio.evaluar_alt001(incidente, tarifario, acuerdo)
+        return alt011_doble_facturacion.evaluar_alt011(incidente, tarifario, acuerdo)
     if codigo == CODIGO_ALT002_KMS_INCORRECTOS:
         return _evaluar_alt002(incidente, tabla_km, contexto, regla)
     if codigo == CODIGO_ALT003_VIATICO_DUPLICADO:
@@ -173,6 +181,19 @@ def _evaluar_regla(
         return alt009_spst.evaluar_alt009(incidente, tabla_km)
     coincidencias = _coincidencias_alt010(incidente, contexto.incidentes_prestador)
     return alt010_serie_duplicada.evaluar_alt010(incidente, coincidencias)
+
+
+def _evaluar_alt001(
+    incidente: Incidente, tarifario: Tarifario | None, contexto: _ContextoMotor
+) -> list[Hallazgo]:
+    """El cobrado exactamente al doble es de ALT011 cuando esa regla está
+    activa: un solo hallazgo por incidente, con el nombre del caso."""
+    acuerdo = resolver_acuerdo(incidente, contexto.acuerdos)
+    if CODIGO_ALT011_DOBLE_FACTURACION in contexto.reglas_activas and (
+        alt011_doble_facturacion.es_doble_facturacion(incidente, tarifario, acuerdo)
+    ):
+        return []
+    return alt001_precio.evaluar_alt001(incidente, tarifario, acuerdo)
 
 
 def _evaluar_alt005(
@@ -199,54 +220,6 @@ def _vecinos_mismo_dia(
             continue
         vecinos.append((otro, resolver_tabla_km(otro, contexto.indice_tablas)))
     return vecinos
-
-
-def _similares_alt003(
-    incidente: Incidente, incidentes_prestador: Sequence[Incidente]
-) -> list[Incidente]:
-    return [
-        i
-        for i in incidentes_prestador
-        if i.id != incidente.id
-        and _mismo_texto(i.empresa_nombre, incidente.empresa_nombre)
-        and _mismo_texto(i.sucursal_nombre, incidente.sucursal_nombre)
-        and i.fecha_cierre == incidente.fecha_cierre
-        and (i.cant_km_cobrado or 0) > 0
-    ]
-
-
-def _mismo_texto(a: str | None, b: str | None) -> bool:
-    return (a or "").strip().lower() == (b or "").strip().lower()
-
-
-def _duplicados_alt004(
-    incidente: Incidente, incidentes_prestador: Sequence[Incidente]
-) -> list[Incidente]:
-    return [
-        i
-        for i in incidentes_prestador
-        if i.id != incidente.id and i.numero_incidente == incidente.numero_incidente
-    ]
-
-
-def _coincidencias_alt010(
-    incidente: Incidente, incidentes_prestador: Sequence[Incidente]
-) -> list[Incidente]:
-    if not incidente.nro_serie or incidente.fecha_cierre is None:
-        return []
-    if incidente.tipo not in (TIPO_PREVENTIVO, TIPO_CORRECTIVO):
-        return []
-    tipo_opuesto = TIPO_CORRECTIVO if incidente.tipo == TIPO_PREVENTIVO else TIPO_PREVENTIVO
-    periodo = (incidente.fecha_cierre.year, incidente.fecha_cierre.month)
-    return [
-        i
-        for i in incidentes_prestador
-        if i.id != incidente.id
-        and i.nro_serie == incidente.nro_serie
-        and i.tipo == tipo_opuesto
-        and i.fecha_cierre is not None
-        and (i.fecha_cierre.year, i.fecha_cierre.month) == periodo
-    ]
 
 
 def _a_alerta(

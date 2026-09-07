@@ -436,3 +436,23 @@ tarifa genérica (el caso real de ALT008). Las filas con SPST muestran la zona d
 de la "zona de cobertura" local. Confirmado por Iván: Santa Rosa (La Pampa) y Goya (Corrientes)
 pertenecen al grupo Villa Mercedes, así que las ALT001 de Santa Rosa en 3952-5 son sobreprecio
 real (INFOMAC cobra Gral. Roca). Hook compartido `hooks/use-spsts-zonas.ts`.
+
+## 15. ALT011 Doble Facturación (2026-09-07)
+
+Caso 841680 (Diarco Bariloche, instalación_desinstalación, $123.916 = 2 × $61.958, "aprobado
+x 2 por JP"). Iván: la doble facturación aparece en cualquier tipo (correctivo, instalación) y
+lo que hace falta es **detectar cuando el prestador cobra doble y se esperaba normal**, no
+aceptarlo. No existía regla: San Juan lo tapaba con la tarifa de instalación cargada al doble
+(92.252 vs 46.126 de Siges) y el resto se resolvía a mano; había 385 ALT001 pendientes con
+cobrado = 2 × tarifario (San Juan 90, Pentacom 63, Corrientes 35, Mendoza 34…). Siges no
+distingue el caso: `IncidenteCosto` tiene una sola línea con el importe doble.
+
+Implementado: regla `ALT011` (`alt011_doble_facturacion.py`, seed `f4b7d2e9a1c5`, riesgo 90):
+dispara cuando el cobrado es exactamente el doble del esperado (tarifario o acuerdo, tolerancia
+$0,01), en cualquier tipo de servicio; cuando está activa, ALT001 no dispara para ese incidente
+(un solo hallazgo, con nombre propio). Apagada en abonos como ALT001. El modal Gestionar ofrece
+el atajo de acuerdo por cliente también para ALT011. Reanálisis de las 19 abiertas: ALT011 en
+3939-4 (Mendoza), 3945-5 (San Juan) y 3952-5 (INFOMAC, el 841680). La resolución previa del
+841680 (ALT001 resuelta) se perdió en la conciliación al cambiar de código y se volvió a cargar
+a mano sobre la ALT011. Pendiente: San Juan sigue con la tarifa de instalación al doble; para
+que ALT011 sirva ahí hay que volverla a 46.126 (decisión de la TL).
