@@ -7,7 +7,7 @@ Create Date: 2026-09-07
 Nueva regla `ALT011` — Doble Facturación: el costo de servicio cobrado es
 exactamente el doble del esperado (tarifario o acuerdo), en cualquier tipo de
 servicio. Separada de `ALT001` para que la TL vea el caso con nombre propio
-(dos tareas reales vs. doble facturación) — ver evaluador en
+(doble aprobado por JP a pedido del prestador vs. doble facturación) — ver evaluador en
 `domain/services/motor_reglas/alt011_doble_facturacion.py`. `riesgo_base=90.0`
 como los duplicados (ALT004/ALT010).
 """
@@ -47,9 +47,9 @@ def upgrade() -> None:
                 "codigo": "ALT011",
                 "nombre": "Doble Facturación",
                 "descripcion": (
-                    "El precio cobrado es exactamente el doble del tarifario: dos "
-                    "tareas reales (instalación + desinstalación, dos equipos) o "
-                    "doble facturación"
+                    "El precio cobrado es exactamente el doble del tarifario: "
+                    "adicional pedido por el prestador y aprobado por JP, o doble "
+                    "facturación"
                 ),
                 "activa": True,
                 "riesgo_base": 90.0,

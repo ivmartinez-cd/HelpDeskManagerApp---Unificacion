@@ -1,11 +1,11 @@
 """ALT011 — Doble Facturación: el costo de servicio cobrado es exactamente el
 doble del esperado (tarifario o acuerdo por cliente), en cualquier tipo de
-servicio. Caso propio, separado de ALT001, porque es la forma en que los
-prestadores cobran dos tareas en un incidente (instalación + desinstalación,
-dos equipos, segunda visita) y la TL necesita verlo como tal para decidir si
-corresponde o si es doble facturación (pedido de Iván, 2026-09-07: 385 ALT001
-pendientes con cobrado = 2 × tarifario, San Juan resolvía el caso cargando la
-tarifa de instalación al doble). Cuando esta regla está activa, ALT001 no
+servicio. Caso propio, separado de ALT001: el prestador le pide a JP cobrar el
+doble por el tiempo o el trabajo que llevó el servicio y JP lo aprueba (o no);
+la TL necesita verlo con nombre para chequear esa aprobación en vez de leerlo
+como un precio cualquiera (pedido de Iván, 2026-09-07: 385 ALT001 pendientes
+con cobrado = 2 × tarifario; San Juan tapaba el caso cargando la tarifa de
+instalación al doble). Cuando esta regla está activa, ALT001 no
 dispara para el mismo incidente (ver `motor.py`)."""
 
 from src.modules.liquidaciones.domain.entities.acuerdo_precio_cliente import (
@@ -58,6 +58,6 @@ def evaluar_alt011(
 def _descripcion(cobrado: float, esperado: float, tipo: str) -> str:
     return (
         f"Cobró el doble del tarifario: ${cobrado:,.2f} = 2 × ${esperado:,.2f} "
-        f"({tipo}). Verificar si son dos tareas reales "
-        f"(instalación + desinstalación, dos equipos) o doble facturación"
+        f"({tipo}). Verificar si JP aprobó el doble (pedido del prestador por "
+        f"tiempo o trabajo) o es doble facturación"
     )

@@ -450,7 +450,9 @@ distingue el caso: `IncidenteCosto` tiene una sola línea con el importe doble.
 Implementado: regla `ALT011` (`alt011_doble_facturacion.py`, seed `f4b7d2e9a1c5`, riesgo 90):
 dispara cuando el cobrado es exactamente el doble del esperado (tarifario o acuerdo, tolerancia
 $0,01), en cualquier tipo de servicio; cuando está activa, ALT001 no dispara para ese incidente
-(un solo hallazgo, con nombre propio). Apagada en abonos como ALT001. El modal Gestionar ofrece
+(un solo hallazgo, con nombre propio). Corrección de Iván al texto: el doble no son "dos
+tareas", es un adicional que el prestador le pide a JP por el tiempo o el trabajo que llevó y
+JP aprueba; la alerta pide verificar esa aprobación. Apagada en abonos como ALT001. El modal Gestionar ofrece
 el atajo de acuerdo por cliente también para ALT011. Reanálisis de las 19 abiertas: ALT011 en
 3939-4 (Mendoza), 3945-5 (San Juan) y 3952-5 (INFOMAC, el 841680). La resolución previa del
 841680 (ALT001 resuelta) se perdió en la conciliación al cambiar de código y se volvió a cargar
