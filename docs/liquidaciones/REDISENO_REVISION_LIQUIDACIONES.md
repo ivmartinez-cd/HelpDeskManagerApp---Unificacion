@@ -458,3 +458,9 @@ el atajo de acuerdo por cliente también para ALT011. Reanálisis de las 19 abie
 841680 (ALT001 resuelta) se perdió en la conciliación al cambiar de código y se volvió a cargar
 a mano sobre la ALT011. Pendiente: San Juan sigue con la tarifa de instalación al doble; para
 que ALT011 sirva ahí hay que volverla a 46.126 (decisión de la TL).
+
+Selector de SPST (Tabla KM y Tarifarios, `spst-zona-select.tsx`): la opción vacía decía "Sin
+vincular" y la zona Villa Mercedes no aparecía; ahora la opción vacía se llama con la zona de
+Siges mapeada a la genérica ("Villa Mercedes / Rio IV /Sgo Estero /Bs.As. — tarifa genérica") y
+las demás muestran su zona de Siges. Si el prestador no tiene tarifa genérica, la opción vacía
+lo avisa.

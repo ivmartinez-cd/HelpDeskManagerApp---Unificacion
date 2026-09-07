@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/shared/components/ui/badge";
 import {
@@ -12,7 +12,8 @@ import {
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import { resumenImportCsv } from "../lib/format";
-import type { PrestadorLiquidacion, Spst, TablaKm } from "../types/liquidaciones";
+import type { PrestadorLiquidacion, TablaKm } from "../types/liquidaciones";
+import { SpstZonaSelect } from "./spst-zona-select";
 import { BuscarLugarModal } from "./tabla-km-lugar-modal";
 
 // Prefill del alta asistida desde Siges (ADR-014 DS3) — solo datos descriptivos,
@@ -69,20 +70,6 @@ export function EntradaModal({
   const [error, setError] = useState<string | null>(null);
   const [buscarLugarOpen, setBuscarLugarOpen] = useState(false);
   const [recalculando, setRecalculando] = useState(false);
-  const [spsts, setSpsts] = useState<Spst[]>([]);
-
-  // SPST de la fila — determina con qué SPST el motor busca tarifario (sin
-  // esto, "Vincular SPST" solo auto-matchea por localidad; muchas rutas
-  // largas/interprovinciales no tienen match automático y quedan sin precio).
-  useEffect(() => {
-    let cancelado = false;
-    const cargar = form.prestadorId
-      ? liquidacionesApi.listSpsts({ prestadorId: form.prestadorId, soloActivos: true })
-      : Promise.resolve([]);
-    void cargar.then((data) => { if (!cancelado) setSpsts(data); });
-    return () => { cancelado = true; };
-  }, [form.prestadorId]);
-
   const handleClose = () => { setForm(entradaAForm(editing, defaultPrestadorId, plantilla)); setError(null); onClose(); };
 
   // Recalcula ida+vuelta reales contra Google usando las coords guardadas de la
@@ -151,19 +138,13 @@ export function EntradaModal({
         </BrandSelect>
         <BrandInput label="Empresa / Cliente *" required value={form.empresaNombre} onChange={(e) => setForm((f) => ({ ...f, empresaNombre: e.target.value }))} />
         <BrandInput label="Sucursal *" required value={form.sucursalNombre} onChange={(e) => setForm((f) => ({ ...f, sucursalNombre: e.target.value }))} />
-        <BrandSelect
-          label="SPST (define la tarifa)"
-          hint="Sin esto no se puede calcular el precio esperado — 'Vincular SPST' solo lo completa cuando la localidad matchea sola."
+        <SpstZonaSelect
+          prestadorId={form.prestadorId}
           value={form.spstId}
-          onChange={(e) => setForm((f) => ({ ...f, spstId: e.target.value }))}
-        >
-          <option value="">Sin vincular</option>
-          {spsts.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nombre}{s.zonaCobertura ? ` — ${s.zonaCobertura}` : ""}
-            </option>
-          ))}
-        </BrandSelect>
+          onChange={(spstId) => setForm((f) => ({ ...f, spstId }))}
+          label="SPST (define la tarifa)"
+          hint="La zona con 'tarifa genérica' es la del prestador sin SPST propio. 'Vincular SPST' solo completa las que matchean por localidad."
+        />
         <BrandInput label="Domicilio cliente" value={form.domicilioCliente} onChange={(e) => setForm((f) => ({ ...f, domicilioCliente: e.target.value }))} />
         <BrandInput label="Localidad" value={form.localidadCliente} onChange={(e) => setForm((f) => ({ ...f, localidadCliente: e.target.value }))} />
         <BrandInput label="Provincia" value={form.provinciaCliente} onChange={(e) => setForm((f) => ({ ...f, provinciaCliente: e.target.value }))} />
