@@ -8,7 +8,12 @@ import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { PrestadorLiquidacion, Spst, Tarifario } from "../types/liquidaciones";
+import type {
+  PrestadorLiquidacion,
+  Spst,
+  Tarifario,
+  ZonaSigesEstado,
+} from "../types/liquidaciones";
 import { agruparTarifarios, GrupoTarifaRow, type GrupoTarifa } from "./tarifario-history-timeline";
 import { SigesTarifariosModal } from "./siges-tarifarios-modal";
 import { type PlantillaTarifa, TarifaModal } from "./tarifa-modal";
@@ -53,6 +58,7 @@ export function TarifariosConfig({
   const [sigesOpen, setSigesOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [spsts, setSpsts] = useState<Spst[]>([]);
+  const [zonasSiges, setZonasSiges] = useState<ZonaSigesEstado[]>([]);
 
   useEffect(() => {
     void liquidacionesApi.listPrestadores(false)
@@ -71,6 +77,25 @@ export function TarifariosConfig({
     return () => { cancelado = true; };
   }, [filtroPst]);
   const spstsPorId = useMemo(() => new Map(spsts.map((s) => [s.id, s])), [spsts]);
+
+  // Zonas de Siges mapeadas a cada SPST (o a la genérica, spstId null): el
+  // tarifario se muestra con el nombre de zona tal cual está en Siges, que es
+  // lo que la TL compara (pedido de Iván, 2026-09-07). Sin vínculo a Siges no
+  // hay zonas y cada grupo cae al nombre del SPST.
+  useEffect(() => {
+    let cancelado = false;
+    const cargar = filtroPst
+      ? liquidacionesApi.getSigesZonas(filtroPst).then((r) => r.zonas)
+      : Promise.resolve([]);
+    void cargar
+      .catch(() => [] as ZonaSigesEstado[])
+      .then((data) => { if (!cancelado) setZonasSiges(data); });
+    return () => { cancelado = true; };
+  }, [filtroPst]);
+  const zonaSigesPorSpst = useMemo(
+    () => new Map(zonasSiges.filter((z) => z.mapeada).map((z) => [z.spstId ?? "", z.descripcionSiges])),
+    [zonasSiges],
+  );
 
   // Trae solo las tarifas del prestador seleccionado — traer el catálogo completo
   // (4832 filas) truncaba a las 500 que trae el backend por default, ver
@@ -120,7 +145,14 @@ export function TarifariosConfig({
 
   const pstSeleccionado = prestadores.find((p) => p.id === filtroPst) ?? null;
   const loadingTarifarios = filtroPst !== "" && filtroPst !== tarifariosPstId;
-  const grupos = agruparTarifarios(tarifarios);
+  const zonaDe = (g: GrupoTarifa) => zonaSigesPorSpst.get(g.spstId ?? "");
+  // Mismo orden que Siges dentro de cada tipo: por descripción de zona.
+  const grupos = agruparTarifarios(tarifarios).sort(
+    (a, b) =>
+      a.tipoServicio.localeCompare(b.tipoServicio) ||
+      (zonaDe(a) ?? "").localeCompare(zonaDe(b) ?? "") ||
+      (a.spstId ?? "").localeCompare(b.spstId ?? ""),
+  );
 
   const selectCls = "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
 
@@ -176,6 +208,7 @@ export function TarifariosConfig({
                 key={`${grupo.tipoServicio}::${grupo.spstId ?? ""}`}
                 grupo={grupo}
                 spstsPorId={spstsPorId}
+                zonaSiges={zonaDe(grupo)}
                 canEdit={puedeEditar}
                 onActualizar={handleActualizar}
                 onEdit={(t) => abrirModal(t)}

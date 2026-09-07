@@ -373,3 +373,11 @@ que el sync del 2026-09-04 le colgó, copia exacta de las 150 genéricas creadas
 borraron esas 150, sus 89 filas de Tabla KM pasaron a Genérica (mismo precio) y se eliminó el
 SPST. INFOMAC queda como Siges: Genérica (Villa Mercedes) + Gral. Roca/Neuquén + Norte Neuquén +
 Ushuaia. Reanálisis de 3952-5: mismas 14 alertas.
+
+Tercera pasada: "tiene que quedar tal cual está en Siges". Los datos ya coincidían (528
+tarifas locales vs 528 de `dbo.CostoServicio` para 740, cero diferencias en vigencia/precio/km);
+lo que difería era el nombre de cada grupo en Tarifarios ("Toda la cobertura", "SPST Infomac -
+Gral. Roca/Neuquén"). Ahora la pantalla etiqueta cada grupo con la descripción de la zona de
+Siges mapeada en `tarifario_zona_maps` (incluida la genérica: "Villa Mercedes / Rio IV /Sgo
+Estero /Bs.As.") y ordena por esa descripción; sin mapeo, cae al nombre del SPST. Aplica a
+todos los PST vinculados a Siges, no solo INFOMAC.

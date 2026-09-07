@@ -160,11 +160,14 @@ function TarifarioHistoryTimeline({
 }
 
 export function GrupoTarifaRow({
-  grupo, spstsPorId, canEdit = true, onActualizar, onEdit, onDelete,
+  grupo, spstsPorId, zonaSiges, canEdit = true, onActualizar, onEdit, onDelete,
 }: {
   grupo: GrupoTarifa;
   /** SPST del prestador, por id — para mostrar su nombre en vez del id crudo. */
   spstsPorId: Map<string, Spst>;
+  /** Descripción de la zona de Siges mapeada a este SPST (o a la genérica):
+   *  cuando existe, el grupo se muestra con ese nombre, tal cual Siges. */
+  zonaSiges?: string;
   /** `liquidaciones.update` (ADR-029): sin esto el historial es solo lectura. */
   canEdit?: boolean;
   onActualizar: (grupo: GrupoTarifa) => void;
@@ -186,9 +189,9 @@ export function GrupoTarifaRow({
               {grupo.tipoServicio.replace(/_/g, " ")}
             </h4>
             <p className="mt-0.5 flex items-center gap-1 font-body text-xs text-muted-foreground">
-              <span>SPST:</span>
+              <span>{zonaSiges ? "Zona Siges:" : "SPST:"}</span>
               <span className="rounded-[6px] bg-muted px-1.5 py-0.5 font-semibold text-foreground">
-                {nombreSpst(grupo.spstId, spstsPorId)}
+                {zonaSiges ?? nombreSpst(grupo.spstId, spstsPorId)}
               </span>
             </p>
           </div>
