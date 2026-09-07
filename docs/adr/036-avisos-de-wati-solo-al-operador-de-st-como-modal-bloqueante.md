@@ -25,12 +25,15 @@ durante el horario de la casilla "ST", pero solo miraba la franja, no quién la 
    Fuera del horario de ST, o si el usuario no es quien lo cubre, **no se avisa a nadie**: el
    badge del header, la card de Inicio y `/wati` siguen mostrando la cola a todos (son
    informativos, no avisos).
-2. **Cómo se avisa**: `BrandModal` con `dismissible={false}` (sin X, sin Escape; prop nueva),
-   que lista los chats que cruzaron un umbral y solo se cierra con "Abrir WATI" (abre la
-   inbox en otra pestaña) o "Ya lo vi". Ambos botones confirman todos los chats listados.
-   Se mantiene el sonido de dos tonos por cada chat nuevo en la lista. Se eliminan los toasts.
-3. **De-dup y persistencia**: clave `wa_id:nivel`; un chat vuelve a avisar al pasar de
-   "atención" a "crítico", y si deja de estar pendiente su confirmación se olvida (si vuelve
+2. **Cómo se avisa, en dos escalones** (ajuste del mismo día: "el modal solo a la hora,
+   antes seguir con el toast"): a los 15 min ("atención") el toast persistente de `sonner`
+   que ya existía, que se da por avisado al mostrarse y se retira solo cuando el chat pasa
+   a crítico o deja de esperar; a la hora ("crítico") `BrandModal` con `dismissible={false}`
+   (sin X, sin Escape; prop nueva), que lista los chats y solo se cierra con "Abrir WATI"
+   (abre la inbox en otra pestaña) o "Ya lo vi". Ambos botones confirman todos los chats
+   listados. Sonido de dos tonos por cada chat nuevo en cualquiera de los dos escalones.
+3. **De-dup y persistencia**: clave `wa_id:nivel`; un chat avisa una vez por escalón (toast
+   en "atención", modal en "crítico"), y si deja de estar pendiente su confirmación se olvida (si vuelve
    a esperar, avisa de nuevo). Las confirmaciones viven en `sessionStorage`
    (`avisos-store.ts`, store externo leído con `useSyncExternalStore` para no hacer
    `setState` dentro de efectos), así una recarga no re-abre lo ya confirmado, pero un chat

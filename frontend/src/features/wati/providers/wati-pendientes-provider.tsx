@@ -33,8 +33,9 @@ const WatiPendientesContext = createContext<WatiPendientesContextValue>(DESHABIL
 /** Un solo poller por pestaña para todo lo que muestra chats de WhatsApp
  * pendientes (badge del header, banner personal, card de Inicio, pantalla
  * /wati) y un solo lector de turnos para saber si es horario de ST y si el
- * usuario logueado es quien lo cubre. Los avisos por umbral (modal
- * bloqueante + sonido, ADR-036) se disparan solo para ese operador. Vive en
+ * usuario logueado es quien lo cubre. Los avisos por umbral (toast a los
+ * 15 min, modal bloqueante a la hora, con sonido; ADR-036) se disparan solo
+ * para ese operador. Vive en
  * el layout de `(app)`, así los avisos llegan en cualquier módulo. */
 export function WatiPendientesProvider({
   watiUrl,
@@ -47,8 +48,8 @@ export function WatiPendientesProvider({
   const habilitado = modules.some((m) => m.key === "wati");
   const estado = useWatiPendientesPolling(habilitado);
   const turno = useTurnoSt(habilitado || Boolean(watiUrl), user.id);
-  const avisos = useWatiAvisos(estado.pendientes, habilitado && turno.soyOperadorSt);
   const inboxUrl = estado.resumen?.inbox_url ?? watiUrl;
+  const avisos = useWatiAvisos(estado.pendientes, habilitado && turno.soyOperadorSt, inboxUrl);
   return (
     <WatiPendientesContext.Provider value={{ habilitado, inboxUrl, ...estado, ...turno, ...avisos }}>
       {children}

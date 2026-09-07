@@ -37,7 +37,8 @@ function FilaAviso({ p }: { p: ConversacionPendiente }) {
 }
 
 /** Aviso bloqueante para el operador que cubre la casilla ST ahora (ADR-036):
- * se abre cuando un chat de WhatsApp cruza un umbral de espera y no se
+ * se abre cuando un chat de WhatsApp llega a 1 h sin respuesta (antes, a los
+ * 15 min, el aviso es un toast) y no se
  * cierra con Escape ni clic afuera — solo con "Abrir WATI" o "Ya lo vi",
  * que confirman todos los chats listados. Lo monta el provider (por props,
  * no por contexto, para no importar el provider desde acá), así aparece en
@@ -62,15 +63,19 @@ export function WatiAvisosModal({
     <BrandModal
       isOpen={abierto}
       onClose={confirmar}
-      title={avisos.length === 1 ? "1 chat de WhatsApp sin responder" : `${avisos.length} chats de WhatsApp sin responder`}
+      title={
+        avisos.length === 1
+          ? "1 chat de WhatsApp lleva 1 hora sin respuesta"
+          : `${avisos.length} chats de WhatsApp llevan 1 hora sin respuesta`
+      }
       dismissible={false}
       widthPx={460}
     >
       <p className="mb-4 flex items-start gap-2 font-body text-[13px] text-muted-foreground">
         <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-orange" aria-hidden="true" />
         <span>
-          Sos el operador de Servicio Técnico en este turno. Estos clientes escribieron y
-          nadie les respondió todavía.
+          Sos el operador de Servicio Técnico en este turno. Estos clientes llevan más de
+          una hora esperando y nadie les respondió todavía.
         </span>
       </p>
       <ul className="thin-scrollbar mb-5 flex max-h-[45vh] flex-col gap-1.5 overflow-y-auto">
