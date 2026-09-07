@@ -473,3 +473,9 @@ del sync de Siges (creadas/conflictos), etiqueta de grupo en Tarifarios. "Tarifa
 solo como fallback cuando el prestador no tiene zona mapeada a la genérica. La opción del
 select de mapeo de zonas del sync sigue diciendo "Tarifa genérica del prestador (sin SPST)"
 porque ahí la fila ES la zona de Siges que se está mapeando.
+
+Corrección de Iván (14:26): **La Pampa / Santa Rosa va en el grupo de General Roca**, no en
+Villa Mercedes (backup `helpdesk-db_2026-09-07_1426_infomac-la-pampa-a-gral-roca.dump`). Las 16
+filas de La Pampa de INFOMAC (Santa Rosa 9, General Pico 4, 25 de Mayo 2, Macachín 1) pasaron
+al SPST Gral. Roca/Neuquén. Reanálisis de 3952-5: las 9 ALT001 de Santa Rosa desaparecieron
+(INFOMAC cobraba bien, a precio Gral. Roca). Goya (Corrientes) sigue en Villa Mercedes.
