@@ -29,18 +29,25 @@ def build_estimation_zero_rows(
         raise NoFaltaContadorRowsError
 
     grouped = _group_by_serie(relevant)
-    return [
-        EstimationZeroRow(
-            serie=serie,
-            fecha=fecha_nueva,
-            tipo=_TIPO_SALIDA,
-            clase_10=acc.clase_10,
-            contador_10=acc.contador_10,
-            clase_20=acc.clase_20,
-            contador_20=acc.contador_20,
-        )
-        for serie, acc in sorted(grouped.items())
-    ]
+    return [_build_row(serie, acc, fecha_nueva) for serie, acc in sorted(grouped.items())]
+
+
+def _build_row(serie: str, acc: _Accumulator, fecha_nueva: str) -> EstimationZeroRow:
+    # A diferencia de db3_export_builder, acá NO se desplaza una serie
+    # solo-color a CLASE_10/CONTADOR_10: `counters_tools.py` (fuente legal
+    # de Estimación en 0, no `csv_en0.py`) deja ese caso con CLASE_10 vacía
+    # y el contador en CLASE_20/CONTADOR_20 — confirmado en
+    # docs/contadores/CONTADORES_CARACTERIZACION.md como comportamiento
+    # correcto, no un bug a corregir.
+    return EstimationZeroRow(
+        serie=serie,
+        fecha=fecha_nueva,
+        tipo=_TIPO_SALIDA,
+        clase_10=acc.clase_10,
+        contador_10=acc.contador_10,
+        clase_20=acc.clase_20,
+        contador_20=acc.contador_20,
+    )
 
 
 def _group_by_serie(rows: list[FaltaContadorSourceRow]) -> dict[str, _Accumulator]:

@@ -43,6 +43,8 @@ def test_estimation_zero_end_to_end_with_real_csv(tmp_path) -> None:
     with open(csv_path, encoding="utf-8") as f:
         content = f.read()
     assert "SER100;07/08/2026;14;10;1500;;0;;" in content
+    # SER101 no tiene contador mono: a diferencia de db3_export_builder, acá
+    # NO se desplaza a CLASE_10 — queda en CLASE_20/CONTADOR_20.
     assert "SER101;07/08/2026;14;;0;20;300;;" in content
     assert "SER102" not in content
 
