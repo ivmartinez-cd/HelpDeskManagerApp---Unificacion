@@ -1,9 +1,10 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.bono_tecnicos.domain.entities.solicitud_tv import EstadoSolicitudTv, SolicitudTv
+from src.modules.bono_tecnicos.domain.value_objects.conteo_tv import ConteoTv
 from src.modules.bono_tecnicos.domain.value_objects.periodo import Periodo
 from src.modules.bono_tecnicos.infrastructure.models.solicitud_tv_model import SolicitudTvModel
 
@@ -88,3 +89,23 @@ class SqlAlchemySolicitudTvRepository:
         )
         rows = (await self._session.execute(stmt)).all()
         return {id_tecnico: cantidad for id_tecnico, cantidad in rows}
+
+    async def contar_por_tecnico_y_periodo(self, anio: int) -> dict[tuple[int, int], ConteoTv]:
+        aprobadas_expr = func.sum(
+            case((SolicitudTvModel.estado == EstadoSolicitudTv.APROBADA.value, 1), else_=0)
+        )
+        stmt = (
+            select(
+                SolicitudTvModel.id_tecnico,
+                SolicitudTvModel.periodo,
+                func.count(),
+                aprobadas_expr,
+            )
+            .where(SolicitudTvModel.periodo.between(anio * 100 + 1, anio * 100 + 12))
+            .group_by(SolicitudTvModel.id_tecnico, SolicitudTvModel.periodo)
+        )
+        rows = (await self._session.execute(stmt)).all()
+        return {
+            (id_tecnico, periodo): ConteoTv(solicitadas=solicitadas, aprobadas=int(aprobadas))
+            for id_tecnico, periodo, solicitadas, aprobadas in rows
+        }

@@ -11,7 +11,9 @@ El filtro `LEFT(Den_Comercial,2)='CD'` de la consulta (ver `query.py`) deja
 pasar además de técnicos algunas filas de `Empresa` que no son personas
 (mesa de ayuda, prestadores, DaaS) y que en Siges también empiezan con "CD" —
 `_TECNICOS_EXCLUIDOS` las saca del resumen, a pedido explícito del usuario
-2026-08-25."""
+2026-08-25 (y 2026-09-08 para Leonardo Pressburger y Lucas Ledesma, que
+aparecían en la vista ejecutiva con 1 incidente suelto en el año y sin
+Puntaje — no son técnicos de planta activos)."""
 
 import unicodedata
 from dataclasses import dataclass
@@ -27,6 +29,8 @@ _TECNICOS_EXCLUIDOS = frozenset(
         "HECTOR ARGUELLO",
         "DIEGO ESTEVEZ",
         "DAAS",
+        "LEONARDO PRESSBURGER",
+        "LUCAS LEDESMA",
     }
 )
 
@@ -45,10 +49,29 @@ class _FilaCategoria:
     cantidad: int
 
 
+@dataclass(frozen=True, slots=True)
+class _FilaCategoriaAnual:
+    tecnico: str
+    id_tecnico: int
+    periodo: int
+    categoria: str
+    cantidad: int
+
+
 def map_row(row: Any) -> _FilaCategoria:
     return _FilaCategoria(
         tecnico=str(row.Tecnico).strip() if row.Tecnico is not None else "",
         id_tecnico=int(row.IdTecnico),
+        categoria=str(row.Categoria).strip() if row.Categoria is not None else "",
+        cantidad=int(row.Cantidad),
+    )
+
+
+def map_row_anual(row: Any) -> _FilaCategoriaAnual:
+    return _FilaCategoriaAnual(
+        tecnico=str(row.Tecnico).strip() if row.Tecnico is not None else "",
+        id_tecnico=int(row.IdTecnico),
+        periodo=int(row.Periodo),
         categoria=str(row.Categoria).strip() if row.Categoria is not None else "",
         cantidad=int(row.Cantidad),
     )
@@ -78,4 +101,36 @@ def pivot_conteos(filas: list[_FilaCategoria], periodo: int) -> list[ConteoTecni
             entrega_insumos=categorias.get("EntregaInsumos", 0),
         )
         for (tecnico, id_tecnico), categorias in por_tecnico.items()
+    ]
+
+
+def _agrupar_por_tecnico_y_periodo(
+    filas: list[_FilaCategoriaAnual],
+) -> dict[tuple[str, int, int], dict[str, int]]:
+    por_tecnico_periodo: dict[tuple[str, int, int], dict[str, int]] = {}
+    for fila in filas:
+        if _normalizar(fila.tecnico) in _TECNICOS_EXCLUIDOS:
+            continue
+        clave = (fila.tecnico, fila.id_tecnico, fila.periodo)
+        por_tecnico_periodo.setdefault(clave, {})[fila.categoria] = fila.cantidad
+    return por_tecnico_periodo
+
+
+def pivot_conteos_por_periodo(filas: list[_FilaCategoriaAnual]) -> list[ConteoTecnico]:
+    """Igual que `pivot_conteos`, pero una fila por técnico+mes en vez de por
+    técnico — el período ya viaja en cada fila (columna calculada de
+    `CONTEOS_TECNICOS_ANUAL_SQL`), no se recibe aparte."""
+    por_tecnico_periodo = _agrupar_por_tecnico_y_periodo(filas)
+    return [
+        ConteoTecnico(
+            tecnico=tecnico,
+            id_tecnico=id_tecnico,
+            periodo=periodo,
+            correctivo=categorias.get("Correctivo", 0),
+            preventivo=categorias.get("Preventivo", 0),
+            inst_des=categorias.get("InstDes", 0),
+            pre_correctivo=categorias.get("PreCorrectivo", 0),
+            entrega_insumos=categorias.get("EntregaInsumos", 0),
+        )
+        for (tecnico, id_tecnico, periodo), categorias in por_tecnico_periodo.items()
     ]

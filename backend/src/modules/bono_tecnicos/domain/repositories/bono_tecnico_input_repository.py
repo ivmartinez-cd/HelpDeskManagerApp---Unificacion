@@ -10,4 +10,9 @@ class BonoTecnicoInputRepository(Protocol):
 
     async def find_by_periodo(self, periodo: Periodo) -> list[BonoTecnicoInput]: ...
 
+    async def find_by_anio(self, anio: int) -> list[BonoTecnicoInput]:
+        """Los Días cargados de los 12 meses del año — para la evolución
+        anual de gerencia, en vez de 12 `find_by_periodo`."""
+        ...
+
     async def upsert(self, input_: BonoTecnicoInput) -> None: ...

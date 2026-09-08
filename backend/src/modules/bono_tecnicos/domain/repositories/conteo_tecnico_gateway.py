@@ -11,3 +11,10 @@ class ConteoTecnicoGateway(Protocol):
     cada técnico de planta ("CD - ...") con al menos un incidente en el período."""
 
     async def find_conteos(self, periodo: Periodo) -> list[ConteoTecnico]: ...
+
+    async def find_conteos_anio(self, anio: int) -> list[ConteoTecnico]:
+        """Los mismos conteos que `find_conteos`, pero de los 12 meses del
+        año en una sola consulta (una fila por técnico+mes con actividad) —
+        evita 12 llamadas al semáforo compartido de MERCURIO (ADR-018).
+        Cacheado por implementación: los meses cerrados no cambian."""
+        ...

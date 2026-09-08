@@ -8,6 +8,7 @@ from src.modules.bono_tecnicos.domain.entities.solicitud_tv import EstadoSolicit
 from src.modules.bono_tecnicos.domain.repositories.tecnico_identity_gateway import (
     TecnicoVinculado,
 )
+from src.modules.bono_tecnicos.domain.value_objects.conteo_tv import ConteoTv
 from src.modules.bono_tecnicos.domain.value_objects.periodo import Periodo
 
 
@@ -54,15 +55,22 @@ class FakeConteoTecnicoGateway:
         self,
         conteos: list[ConteoTecnico] | None = None,
         incidentes: list[IncidenteBono] | None = None,
+        conteos_anio: list[ConteoTecnico] | None = None,
     ) -> None:
         self._conteos = conteos or []
         self._incidentes = incidentes or []
+        self._conteos_anio = conteos_anio if conteos_anio is not None else (conteos or [])
         self.periodos_consultados: list[Periodo] = []
         self.incidentes_consultados: list[tuple[Periodo, int]] = []
+        self.anios_consultados: list[int] = []
 
     async def find_conteos(self, periodo: Periodo) -> list[ConteoTecnico]:
         self.periodos_consultados.append(periodo)
         return self._conteos
+
+    async def find_conteos_anio(self, anio: int) -> list[ConteoTecnico]:
+        self.anios_consultados.append(anio)
+        return self._conteos_anio
 
     async def find_incidentes(self, periodo: Periodo, id_tecnico: int) -> list[IncidenteBono]:
         self.incidentes_consultados.append((periodo, id_tecnico))
@@ -73,10 +81,15 @@ class FakeBonoTecnicoInputRepository:
     def __init__(self, inputs: list[BonoTecnicoInput] | None = None) -> None:
         self._por_clave = {(i.id_tecnico, i.periodo): i for i in (inputs or [])}
         self.periodos_consultados: list[Periodo] = []
+        self.anios_consultados: list[int] = []
 
     async def find_by_periodo(self, periodo: Periodo) -> list[BonoTecnicoInput]:
         self.periodos_consultados.append(periodo)
         return [i for i in self._por_clave.values() if i.periodo == periodo.value]
+
+    async def find_by_anio(self, anio: int) -> list[BonoTecnicoInput]:
+        self.anios_consultados.append(anio)
+        return [i for i in self._por_clave.values() if i.periodo // 100 == anio]
 
     async def upsert(self, input_: BonoTecnicoInput) -> None:
         self._por_clave[(input_.id_tecnico, input_.periodo)] = input_
@@ -140,6 +153,19 @@ class FakeSolicitudTvRepository:
         for s in self._por_id.values():
             if s.periodo == periodo.value and s.estado == EstadoSolicitudTv.APROBADA:
                 conteo[s.id_tecnico] = conteo.get(s.id_tecnico, 0) + 1
+        return conteo
+
+    async def contar_por_tecnico_y_periodo(self, anio: int) -> dict[tuple[int, int], ConteoTv]:
+        conteo: dict[tuple[int, int], ConteoTv] = {}
+        for s in self._por_id.values():
+            if s.periodo // 100 != anio:
+                continue
+            clave = (s.id_tecnico, s.periodo)
+            actual = conteo.get(clave, ConteoTv(0, 0))
+            conteo[clave] = ConteoTv(
+                solicitadas=actual.solicitadas + 1,
+                aprobadas=actual.aprobadas + (1 if s.estado == EstadoSolicitudTv.APROBADA else 0),
+            )
         return conteo
 
 

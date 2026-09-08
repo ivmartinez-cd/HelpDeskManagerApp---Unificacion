@@ -37,3 +37,10 @@ class Periodo:
     @property
     def ultimo_dia(self) -> date:
         return date(self.anio, self.mes, calendar.monthrange(self.anio, self.mes)[1])
+
+
+def periodos_del_anio(anio: int) -> list[Periodo]:
+    """Los 12 `Periodo` de un año calendario, enero a diciembre — la ventana
+    fija que usa la evolución anual de gerencia (a diferencia de la carga
+    mensual, que es un único período elegido a mano)."""
+    return [Periodo(anio * 100 + mes) for mes in range(1, 13)]

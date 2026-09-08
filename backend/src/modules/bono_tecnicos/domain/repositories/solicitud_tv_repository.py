@@ -2,6 +2,7 @@ import uuid
 from typing import Protocol
 
 from src.modules.bono_tecnicos.domain.entities.solicitud_tv import EstadoSolicitudTv, SolicitudTv
+from src.modules.bono_tecnicos.domain.value_objects.conteo_tv import ConteoTv
 from src.modules.bono_tecnicos.domain.value_objects.periodo import Periodo
 
 
@@ -27,4 +28,10 @@ class SolicitudTvRepository(Protocol):
         """Cantidad de solicitudes APROBADA del período, agrupadas por
         `id_tecnico` — el TV que entra al cálculo de Puntaje
         (`GetPuntajesPeriodo`), ya no un valor cargado a mano."""
+        ...
+
+    async def contar_por_tecnico_y_periodo(self, anio: int) -> dict[tuple[int, int], ConteoTv]:
+        """Solicitudes creadas vs. APROBADA de los 12 meses del año,
+        agrupadas por `(id_tecnico, periodo)` — la evolución anual necesita
+        ambas series, no solo las aprobadas del mes actual."""
         ...

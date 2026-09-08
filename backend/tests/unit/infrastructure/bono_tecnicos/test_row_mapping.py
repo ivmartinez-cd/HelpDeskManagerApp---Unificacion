@@ -3,7 +3,9 @@ from typing import Any
 
 from src.modules.bono_tecnicos.infrastructure.mercurio.row_mapping import (
     map_row,
+    map_row_anual,
     pivot_conteos,
+    pivot_conteos_por_periodo,
 )
 
 
@@ -100,3 +102,44 @@ def test_pivot_excluye_filas_que_no_son_tecnicos_reales() -> None:
     conteos = {c.tecnico: c for c in pivot_conteos(filas, periodo=202605)}
 
     assert set(conteos) == {"CD - Ana"}
+
+
+def _row_anual(**overrides: Any) -> SimpleNamespace:
+    base: dict[str, Any] = {
+        "Tecnico": "CD - Agustin HACZEK",
+        "IdTecnico": 501,
+        "Periodo": 202605,
+        "Categoria": "Correctivo",
+        "Cantidad": 47,
+    }
+    base.update(overrides)
+    return SimpleNamespace(**base)
+
+
+def test_map_row_anual_incluye_el_periodo() -> None:
+    fila = map_row_anual(_row_anual(Periodo=202607))
+
+    assert fila.periodo == 202607
+
+
+def test_pivot_por_periodo_separa_el_mismo_tecnico_por_mes() -> None:
+    filas = [
+        map_row_anual(_row_anual(Periodo=202605, Categoria="Correctivo", Cantidad=10)),
+        map_row_anual(_row_anual(Periodo=202606, Categoria="Correctivo", Cantidad=20)),
+    ]
+
+    conteos = {c.periodo: c for c in pivot_conteos_por_periodo(filas)}
+
+    assert conteos[202605].correctivo == 10
+    assert conteos[202606].correctivo == 20
+
+
+def test_pivot_por_periodo_excluye_filas_que_no_son_tecnicos_reales() -> None:
+    filas = [
+        map_row_anual(_row_anual(Tecnico="CD - Ana", IdTecnico=1)),
+        map_row_anual(_row_anual(Tecnico="CD - Mesa de ayuda", IdTecnico=902)),
+    ]
+
+    conteos = {c.tecnico for c in pivot_conteos_por_periodo(filas)}
+
+    assert conteos == {"CD - Ana"}

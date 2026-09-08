@@ -49,3 +49,39 @@ AND YEAR(I.Fecha_Cierre)*100+MONTH(I.Fecha_Cierre) = ?
 GROUP BY E1.Den_Comercial, E1.ID_Empresa, I.ID_Tipo_Incidente
 ORDER BY E1.Den_Comercial
 """
+
+# Misma consulta, pero para un año calendario completo en un solo round trip:
+# agrega `Periodo` como columna calculada al SELECT y al GROUP BY (mismo
+# recurso que `sla/infrastructure/mercurio/query.py`) en vez de filtrar por un
+# único AAAAMM. Evita 12 llamadas al semáforo compartido de MERCURIO
+# (ADR-018, `MERCURIO_MAX_CONCURRENT=3`) que dejarían sin slots a SLA y al
+# resto de los módulos que también consultan Siges.
+CONTEOS_TECNICOS_ANUAL_SQL = """
+SELECT
+    E1.Den_Comercial AS Tecnico,
+    E1.ID_Empresa AS IdTecnico,
+    YEAR(I.Fecha_Cierre)*100+MONTH(I.Fecha_Cierre) AS Periodo,
+    CASE I.ID_Tipo_Incidente
+        WHEN 101 THEN 'Correctivo'
+        WHEN 102 THEN 'Preventivo'
+        WHEN 103 THEN 'InstDes'
+        WHEN 107 THEN 'PreCorrectivo'
+        WHEN 204 THEN 'EntregaInsumos'
+    END AS Categoria,
+    COUNT(*) AS Cantidad
+FROM dbo.Incidente I
+INNER JOIN dbo.Estado_Incidente EI ON I.ID_Estado_Incidente = EI.Id
+INNER JOIN dbo.Tipo_Incidente TI ON I.ID_Tipo_Incidente = TI.Id
+INNER JOIN dbo.Maquina M ON I.ID_Maquina = M.ID_Maquina
+INNER JOIN dbo.Articulo A ON M.ID_Articulo = A.Id_Articulo
+INNER JOIN dbo.ArtGen AG ON A.Id_ArtGen = AG.Id_ArtGen
+INNER JOIN dbo.Sucursal S ON S.Id_Sucursal = I.ID_Sucursal
+INNER JOIN dbo.Empresa E ON I.ID_Empresa = E.ID_Empresa
+INNER JOIN dbo.Empresa E1 ON I.ID_Tecnico = E1.ID_Empresa
+WHERE I.ID_Tipo_Incidente IN (101, 102, 103, 107, 204)
+AND LEFT(E1.Den_Comercial, 2) = 'CD'
+AND I.Fecha_Cierre BETWEEN ? AND ?
+GROUP BY E1.Den_Comercial, E1.ID_Empresa,
+    YEAR(I.Fecha_Cierre)*100+MONTH(I.Fecha_Cierre), I.ID_Tipo_Incidente
+ORDER BY E1.Den_Comercial, Periodo
+"""

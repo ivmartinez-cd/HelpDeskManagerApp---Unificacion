@@ -29,6 +29,13 @@ class SqlAlchemyBonoTecnicoInputRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_row_to_entity(row) for row in rows]
 
+    async def find_by_anio(self, anio: int) -> list[BonoTecnicoInput]:
+        stmt = select(BonoTecnicoInputModel).where(
+            BonoTecnicoInputModel.periodo.between(anio * 100 + 1, anio * 100 + 12)
+        )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_row_to_entity(row) for row in rows]
+
     async def upsert(self, input_: BonoTecnicoInput) -> None:
         stmt = insert(BonoTecnicoInputModel).values(
             id_tecnico=input_.id_tecnico,

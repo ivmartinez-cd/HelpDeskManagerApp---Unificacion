@@ -88,3 +88,24 @@ async def test_count_aprobadas_por_tecnico_solo_cuenta_aprobadas(
     conteo = await repo.count_aprobadas_por_tecnico(Periodo(202605))
 
     assert conteo[id_tecnico] == 3
+
+
+async def test_contar_por_tecnico_y_periodo_separa_solicitadas_de_aprobadas(
+    db_session: AsyncSession,
+) -> None:
+    repo = SqlAlchemySolicitudTvRepository(db_session)
+    id_tecnico = _id_tecnico()
+    aprobada = _solicitud(id_tecnico, fecha=date(2026, 5, 5))
+    await repo.add(aprobada)
+    aprobada.aprobar(datetime.now(UTC), "supervisor@canaldirecto.com.ar")
+    await repo.save(aprobada)
+    pendiente = _solicitud(id_tecnico, fecha=date(2026, 5, 6))
+    await repo.add(pendiente)
+    de_otro_anio = _solicitud(id_tecnico, fecha=date(2025, 5, 6))
+    await repo.add(de_otro_anio)
+
+    conteo = await repo.contar_por_tecnico_y_periodo(2026)
+
+    assert conteo[(id_tecnico, 202605)].solicitadas == 2
+    assert conteo[(id_tecnico, 202605)].aprobadas == 1
+    assert (id_tecnico, 202505) not in conteo

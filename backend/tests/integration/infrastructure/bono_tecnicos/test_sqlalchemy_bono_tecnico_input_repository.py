@@ -54,6 +54,27 @@ async def test_find_by_periodo_no_trae_otros_periodos(db_session: AsyncSession) 
     assert solo_mayo[0].dias == 17
 
 
+async def test_find_by_anio_trae_los_meses_del_anio_e_ignora_otros(
+    db_session: AsyncSession,
+) -> None:
+    repo = SqlAlchemyBonoTecnicoInputRepository(db_session)
+    id_tecnico = _id_tecnico()
+    await repo.upsert(
+        BonoTecnicoInput(id_tecnico=id_tecnico, periodo=202601, tecnico="CD - Ana", dias=10)
+    )
+    await repo.upsert(
+        BonoTecnicoInput(id_tecnico=id_tecnico, periodo=202612, tecnico="CD - Ana", dias=15)
+    )
+    await repo.upsert(
+        BonoTecnicoInput(id_tecnico=id_tecnico, periodo=202501, tecnico="CD - Ana", dias=99)
+    )
+
+    del_2026 = await repo.find_by_anio(2026)
+    propios = [i for i in del_2026 if i.id_tecnico == id_tecnico]
+
+    assert {i.periodo for i in propios} == {202601, 202612}
+
+
 async def test_persiste_medio_dia(db_session: AsyncSession) -> None:
     repo = SqlAlchemyBonoTecnicoInputRepository(db_session)
     id_tecnico = _id_tecnico()
