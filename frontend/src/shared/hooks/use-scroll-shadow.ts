@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/** Si el body con scroll de una card deja contenido cortado abajo — para
- * mostrar un fade en el borde en vez de un renglón partido a la mitad sin
- * aviso (`mask-fade-bottom` en globals.css). Recalcula en scroll/resize y
- * cuando cambia el contenido (ResizeObserver, se dispara al crecer la lista
- * sin que el contenedor cambie de tamaño). */
+/** Si un contenedor con scroll vertical deja contenido cortado abajo — para
+ * mostrar un fade ahí en vez de un renglón partido a la mitad sin aviso
+ * (`mask-fade-bottom` en globals.css). Recalcula en scroll/resize y cuando
+ * cambia el contenido (ResizeObserver, se dispara al crecer la lista sin
+ * que el contenedor cambie de tamaño). */
 export function useScrollShadow<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [bottom, setBottom] = useState(false);

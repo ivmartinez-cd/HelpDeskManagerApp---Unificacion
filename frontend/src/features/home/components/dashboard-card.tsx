@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import { RotateCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/shared/utils/cn";
-import { useScrollShadow } from "../hooks/use-scroll-shadow";
+import { useScrollShadow } from "@/shared/hooks/use-scroll-shadow";
 import { DashboardCardSkeleton } from "./dashboard-card-skeleton";
 
 interface DashboardCardProps {

@@ -1,5 +1,7 @@
-"""OpenpyxlDetalleContadorWriter: header en negrita, 15 columnas en el
-mismo orden de la pantalla, y una fila por `DetalleContadorRow`."""
+"""OpenpyxlDetalleContadorWriter: título con cliente/proceso, header en
+negrita en fila 3, 15 columnas en el mismo orden de la pantalla, una fila
+por `DetalleContadorRow`, y semaforización roja en "Tipo" cuando falta
+contador."""
 
 import io
 
@@ -13,7 +15,7 @@ from src.modules.contadores.infrastructure.xlsx.openpyxl_detalle_contador_writer
 )
 
 
-def _fila() -> DetalleContadorRow:
+def _fila(falta_contador: bool = True) -> DetalleContadorRow:
     return DetalleContadorRow(
         empresa="ISSN",
         sucursal="Botiquin Caviahue",
@@ -29,18 +31,20 @@ def _fila() -> DetalleContadorRow:
         estado_maquina="Activa en Cliente",
         direccion_ip=None,
         mascara_ip=None,
-        falta_contador=True,
-        tipo="FALTA CONTADOR Mono",
+        falta_contador=falta_contador,
+        tipo="FALTA CONTADOR Mono" if falta_contador else None,
     )
 
 
-def test_write_arma_header_y_una_fila_por_registro() -> None:
-    contenido = OpenpyxlDetalleContadorWriter().write([_fila(), _fila()])
+def test_write_arma_titulo_header_y_una_fila_por_registro() -> None:
+    contenido = OpenpyxlDetalleContadorWriter().write([_fila(), _fila()], "ISSN", 99089)
 
     wb = load_workbook(io.BytesIO(contenido))
     ws = wb.active
     assert ws is not None
-    header = [c.value for c in next(ws.iter_rows(min_row=1, max_row=1))]
+    assert ws["A1"].value == "Detalle de Contadores — ISSN · Proceso 99089"
+
+    header = [c.value for c in next(ws.iter_rows(min_row=3, max_row=3))]
     assert header == [
         "Empresa",
         "Sucursal",
@@ -58,18 +62,33 @@ def test_write_arma_header_y_una_fila_por_registro() -> None:
         "Dirección IP",
         "Máscara IP",
     ]
-    assert next(ws.iter_rows(min_row=1, max_row=1))[0].font.bold is True
-    assert ws.max_row == 3
-    primera_fila = [c.value for c in next(ws.iter_rows(min_row=2, max_row=2))]
+    assert next(ws.iter_rows(min_row=3, max_row=3))[0].font.bold is True
+    assert ws.max_row == 5
+    primera_fila = [c.value for c in next(ws.iter_rows(min_row=4, max_row=4))]
     assert primera_fila[0] == "ISSN"
     assert primera_fila[3] == "CNB1R4C0MV"
     assert primera_fila[10] == "FALTA CONTADOR Mono"
 
 
-def test_write_sin_filas_deja_solo_el_header() -> None:
-    contenido = OpenpyxlDetalleContadorWriter().write([])
+def test_write_marca_en_rojo_la_columna_tipo_cuando_falta_contador() -> None:
+    contenido = OpenpyxlDetalleContadorWriter().write(
+        [_fila(falta_contador=True), _fila(falta_contador=False)], "ISSN", 99089
+    )
 
     wb = load_workbook(io.BytesIO(contenido))
     ws = wb.active
     assert ws is not None
-    assert ws.max_row == 1
+    celda_falta = ws.cell(row=4, column=11)
+    celda_ok = ws.cell(row=5, column=11)
+    assert celda_falta.font.color.rgb == "00EF4444"
+    assert celda_falta.font.bold is True
+    assert celda_ok.font.bold is not True
+
+
+def test_write_sin_filas_deja_solo_titulo_y_header() -> None:
+    contenido = OpenpyxlDetalleContadorWriter().write([], "ISSN", 99089)
+
+    wb = load_workbook(io.BytesIO(contenido))
+    ws = wb.active
+    assert ws is not None
+    assert ws.max_row == 3

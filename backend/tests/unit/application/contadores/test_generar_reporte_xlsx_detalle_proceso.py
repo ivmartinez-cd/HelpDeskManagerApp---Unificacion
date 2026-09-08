@@ -24,9 +24,13 @@ class FakePort:
 class FakeWriter:
     def __init__(self) -> None:
         self.filas_recibidas: list[DetalleContadorRow] | None = None
+        self.cliente_recibido: str | None = None
+        self.nro_proceso_recibido: int | None = None
 
-    def write(self, filas: list[DetalleContadorRow]) -> bytes:
+    def write(self, filas: list[DetalleContadorRow], cliente: str, nro_proceso: int) -> bytes:
         self.filas_recibidas = filas
+        self.cliente_recibido = cliente
+        self.nro_proceso_recibido = nro_proceso
         return b"xlsx-bytes"
 
 
@@ -61,6 +65,8 @@ async def test_alcance_todos_incluye_todas_las_filas() -> None:
     resultado = await use_case.execute(99089, "todos")
 
     assert writer.filas_recibidas == proceso.filas
+    assert writer.cliente_recibido == "ISSN"
+    assert writer.nro_proceso_recibido == 99089
     assert resultado.filename == "DetalleContadores_ISSN_99089_Completo.xlsx"
     assert resultado.contenido == b"xlsx-bytes"
 

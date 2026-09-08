@@ -23,7 +23,7 @@ class GenerarReporteXlsxDetalleProcesoUseCase:
     async def execute(self, nro_proceso: int, alcance: AlcanceReporte) -> ReporteXlsxDetalleProceso:
         detalle = await self._port.fetch(nro_proceso)
         filas = _filtrar(detalle.filas, alcance)
-        contenido = self._writer.write(filas)
+        contenido = self._writer.write(filas, detalle.cliente, nro_proceso)
         sufijo = "FaltaContador" if alcance == "falta_contador" else "Completo"
         filename = f"DetalleContadores_{detalle.cliente}_{nro_proceso}_{sufijo}.xlsx"
         return ReporteXlsxDetalleProceso(filename=filename, contenido=contenido)
