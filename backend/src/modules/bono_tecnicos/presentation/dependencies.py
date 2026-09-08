@@ -7,16 +7,6 @@ from functools import lru_cache
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.bono_tecnicos.application.use_cases.crear_solicitud_tv import CrearSolicitudTv
-from src.modules.bono_tecnicos.application.use_cases.crear_solicitud_tv_admin import (
-    CrearSolicitudTvAdmin,
-)
-from src.modules.bono_tecnicos.application.use_cases.crear_solicitud_tv_propia import (
-    CrearSolicitudTvPropia,
-)
-from src.modules.bono_tecnicos.application.use_cases.decidir_solicitud_tv import (
-    DecidirSolicitudTv,
-)
 from src.modules.bono_tecnicos.application.use_cases.get_evolucion_anual import (
     GetEvolucionAnual,
     GetEvolucionAnualPorts,
@@ -29,20 +19,14 @@ from src.modules.bono_tecnicos.application.use_cases.get_puntajes_periodo import
     GetPuntajesPeriodo,
 )
 from src.modules.bono_tecnicos.application.use_cases.guardar_bono_input import GuardarBonoInput
-from src.modules.bono_tecnicos.application.use_cases.listar_solicitudes_tv import (
-    ListarSolicitudesTv,
-)
-from src.modules.bono_tecnicos.application.use_cases.listar_solicitudes_tv_propias import (
-    ListarSolicitudesTvPropias,
-)
 from src.modules.bono_tecnicos.infrastructure.mercurio.pyodbc_conteo_tecnico_gateway import (
     PyodbcConteoTecnicoGateway,
 )
 from src.modules.bono_tecnicos.infrastructure.repositories.sqlalchemy_bono_tecnico_input_repository import (  # noqa: E501
     SqlAlchemyBonoTecnicoInputRepository,
 )
-from src.modules.bono_tecnicos.infrastructure.repositories.sqlalchemy_solicitud_tv_repository import (  # noqa: E501
-    SqlAlchemySolicitudTvRepository,
+from src.modules.bono_tecnicos.infrastructure.tareas_varias.sqlalchemy_tareas_varias_gateway import (  # noqa: E501
+    SqlAlchemyTareasVariasGateway,
 )
 from src.modules.bono_tecnicos.infrastructure.vacaciones.sqlalchemy_dias_sugeridos_gateway import (  # noqa: E501
     SqlAlchemyDiasSugeridosGateway,
@@ -63,7 +47,7 @@ def build_get_puntajes_periodo(session: AsyncSession) -> GetPuntajesPeriodo:
         get_conteo_tecnico_gateway(),
         SqlAlchemyBonoTecnicoInputRepository(session),
         SqlAlchemyDiasSugeridosGateway(session),
-        SqlAlchemySolicitudTvRepository(session),
+        SqlAlchemyTareasVariasGateway(session),
     )
 
 
@@ -80,42 +64,14 @@ def build_get_evolucion_anual(session: AsyncSession) -> GetEvolucionAnual:
         GetEvolucionAnualPorts(
             conteo_gateway=get_conteo_tecnico_gateway(),
             input_repo=SqlAlchemyBonoTecnicoInputRepository(session),
-            solicitud_tv_repo=SqlAlchemySolicitudTvRepository(session),
+            tareas_varias_gateway=SqlAlchemyTareasVariasGateway(session),
         )
     )
-
-
-def build_crear_solicitud_tv(session: AsyncSession) -> CrearSolicitudTv:
-    return CrearSolicitudTv(SqlAlchemySolicitudTvRepository(session))
-
-
-def build_crear_solicitud_tv_propia(session: AsyncSession) -> CrearSolicitudTvPropia:
-    return CrearSolicitudTvPropia(
-        SqlAlchemyTecnicoIdentityGateway(session), build_crear_solicitud_tv(session)
-    )
-
-
-def build_crear_solicitud_tv_admin(session: AsyncSession) -> CrearSolicitudTvAdmin:
-    return CrearSolicitudTvAdmin(SqlAlchemySolicitudTvRepository(session))
-
-
-def build_listar_solicitudes_tv(session: AsyncSession) -> ListarSolicitudesTv:
-    return ListarSolicitudesTv(SqlAlchemySolicitudTvRepository(session))
-
-
-def build_listar_solicitudes_tv_propias(session: AsyncSession) -> ListarSolicitudesTvPropias:
-    return ListarSolicitudesTvPropias(
-        SqlAlchemyTecnicoIdentityGateway(session), SqlAlchemySolicitudTvRepository(session)
-    )
-
-
-def build_decidir_solicitud_tv(session: AsyncSession) -> DecidirSolicitudTv:
-    return DecidirSolicitudTv(SqlAlchemySolicitudTvRepository(session))
 
 
 def build_get_mi_resumen_bono(session: AsyncSession) -> GetMiResumenBono:
     return GetMiResumenBono(
         SqlAlchemyTecnicoIdentityGateway(session),
         build_get_puntajes_periodo(session),
-        SqlAlchemySolicitudTvRepository(session),
+        SqlAlchemyTareasVariasGateway(session),
     )

@@ -12,8 +12,8 @@ from src.modules.bono_tecnicos.domain.repositories.bono_tecnico_input_repository
 from src.modules.bono_tecnicos.domain.repositories.conteo_tecnico_gateway import (
     ConteoTecnicoGateway,
 )
-from src.modules.bono_tecnicos.domain.repositories.solicitud_tv_repository import (
-    SolicitudTvRepository,
+from src.modules.bono_tecnicos.domain.repositories.tareas_varias_gateway import (
+    TareasVariasGateway,
 )
 from src.modules.bono_tecnicos.domain.services.evolucion_anual import (
     PuntoMensual,
@@ -27,7 +27,7 @@ from src.modules.bono_tecnicos.domain.value_objects.conteo_tv import ConteoTv
 class GetEvolucionAnualPorts:
     conteo_gateway: ConteoTecnicoGateway
     input_repo: BonoTecnicoInputRepository
-    solicitud_tv_repo: SolicitudTvRepository
+    tareas_varias_gateway: TareasVariasGateway
 
 
 class GetEvolucionAnual:
@@ -48,8 +48,8 @@ class GetEvolucionAnual:
         conteo_gateway = self._ports.conteo_gateway
         conteos = await conteo_gateway.find_conteos_anio(anio)
         inputs = await self._ports.input_repo.find_by_anio(anio)
-        tv_repo = self._ports.solicitud_tv_repo
-        tv_por_tecnico = await tv_repo.contar_por_tecnico_y_periodo(anio)
+        tareas_varias_gateway = self._ports.tareas_varias_gateway
+        tv_por_tecnico = await tareas_varias_gateway.contar_por_tecnico_y_periodo(anio)
 
         nombres = {c.id_tecnico: c.tecnico for c in conteos}
         tecnicos = [

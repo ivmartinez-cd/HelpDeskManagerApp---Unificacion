@@ -5,9 +5,10 @@ from src.shared.domain.value_objects.permission import Permission
 VIEW = Permission(ModuleKey("bono-tecnicos"), ActionKey("view"))
 # Cargar Días es una escritura, no una lectura.
 UPDATE = Permission(ModuleKey("bono-tecnicos"), ActionKey("update"))
-# Enviar una solicitud de TV propia (mismo criterio que vacaciones.CREATE:
-# ciclo de vida de las solicitudes propias) — del técnico, cuando tenga login.
+# Ver "Mi bono" (GET /mi-resumen): puntaje/días/conteos propios del técnico
+# autenticado. Hasta el split de Tareas Varias a su propio módulo (ver
+# tareas_varias.well_known_permissions) esta acción también habilitaba
+# enviar una TV propia; ese uso se fue con el módulo, el nombre de la acción
+# ("create") queda por el catálogo compartido de acciones (no es renombrable
+# sin migración) pero acá ya solo significa "ver lo propio".
 CREATE = Permission(ModuleKey("bono-tecnicos"), ActionKey("create"))
-# Listar pendientes y aprobar/rechazar solicitudes de TV ajenas — del
-# supervisor, mismo criterio que vacaciones.APPROVE.
-APPROVE = Permission(ModuleKey("bono-tecnicos"), ActionKey("approve"))

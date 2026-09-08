@@ -1,4 +1,3 @@
-import uuid
 from datetime import date
 
 from fastapi import APIRouter, Depends, Query
@@ -14,24 +13,12 @@ from src.modules.bono_tecnicos.application.dtos.puntaje_tecnico_dto import (
     GetPuntajesPeriodoRequest,
     GuardarBonoInputRequest,
 )
-from src.modules.bono_tecnicos.application.dtos.solicitud_tv_dto import (
-    CrearSolicitudTvAdminRequest,
-    CrearSolicitudTvPropiaRequest,
-    DecidirSolicitudTvRequest,
-    ListarSolicitudesTvPropiasRequest,
-    ListarSolicitudesTvRequest,
-)
-from src.modules.bono_tecnicos.domain.well_known_permissions import APPROVE, CREATE, UPDATE, VIEW
+from src.modules.bono_tecnicos.domain.well_known_permissions import CREATE, UPDATE, VIEW
 from src.modules.bono_tecnicos.presentation.dependencies import (
-    build_crear_solicitud_tv_admin,
-    build_crear_solicitud_tv_propia,
-    build_decidir_solicitud_tv,
     build_get_incidentes_tecnico,
     build_get_mi_resumen_bono,
     build_get_puntajes_periodo,
     build_guardar_bono_input,
-    build_listar_solicitudes_tv,
-    build_listar_solicitudes_tv_propias,
 )
 from src.modules.bono_tecnicos.presentation.schemas.incidente_bono_schemas import (
     IncidenteBonoSchema,
@@ -41,12 +28,6 @@ from src.modules.bono_tecnicos.presentation.schemas.puntaje_tecnico_schemas impo
     MiResumenBonoSchema,
     PuntajeTecnicoSchema,
 )
-from src.modules.bono_tecnicos.presentation.schemas.solicitud_tv_schemas import (
-    CrearSolicitudTvAdminBody,
-    CrearSolicitudTvBody,
-    DecisionSolicitudTvBody,
-    SolicitudTvSchema,
-)
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
@@ -55,7 +36,6 @@ router = APIRouter(prefix="/api/bono-tecnicos", tags=["bono-tecnicos"])
 _require_view = Depends(require_permission(VIEW))
 _require_update = Depends(require_permission(UPDATE))
 _require_create = Depends(require_permission(CREATE))
-_require_approve = Depends(require_permission(APPROVE))
 # ~27 técnicos de planta activos al 2026-08; una fila por técnico y período,
 # entra entera en una sola página (mismo criterio que catálogos chicos, §11).
 _MAX_PAGE_SIZE = 100
@@ -106,9 +86,9 @@ async def guardar_input(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     """Carga/corrige Días de un técnico en un período — reemplaza tipear a
-    mano `Lista!$J$6` en el Excel. Tareas Varias ya no se carga acá (ver
-    `POST/PATCH .../solicitudes-tv`). El resumen recalculado se ve pidiendo
-    de nuevo `GET /resumen`."""
+    mano `Lista!$J$6` en el Excel. Tareas Varias se carga en el módulo
+    `tareas_varias` (`POST/PATCH /api/tareas-varias/...`). El resumen
+    recalculado se ve pidiendo de nuevo `GET /resumen`."""
     await build_guardar_bono_input(db).execute(
         GuardarBonoInputRequest(
             id_tecnico=id_tecnico,
@@ -119,56 +99,6 @@ async def guardar_input(
     )
 
 
-@router.post(
-    "/{periodo}/{id_tecnico}/solicitudes-tv",
-    response_model=SolicitudTvSchema,
-    status_code=201,
-)
-async def crear_solicitud_tv_admin(
-    periodo: int,
-    id_tecnico: int,
-    body: CrearSolicitudTvAdminBody,
-    identity: Identity = _require_update,
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> SolicitudTvSchema:
-    """Carga de TV por un supervisor a nombre de cualquier técnico — nace
-    ya APROBADA, a diferencia de `POST /solicitudes-tv` (ver dependencies)."""
-    request = CrearSolicitudTvAdminRequest(
-        id_tecnico=id_tecnico,
-        tecnico=body.tecnico,
-        fecha=body.fecha,
-        razon_social=body.razon_social,
-        sucursal=body.sucursal,
-        tarea_realizada=body.tarea_realizada,
-        resuelta_por_email=identity.user.email,
-    )
-    dto = await build_crear_solicitud_tv_admin(db).execute(request)
-    return SolicitudTvSchema.model_validate(dto)
-
-
-@router.post("/solicitudes-tv", response_model=SolicitudTvSchema, status_code=201)
-async def crear_solicitud_tv(
-    body: CrearSolicitudTvBody,
-    identity: Identity = _require_create,
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> SolicitudTvSchema:
-    """Alta de una solicitud de TV propia — reemplaza la fila que agregaba
-    el Google Form al Sheet legacy. El técnico se resuelve del usuario
-    autenticado (vínculo Empleado↔Siges); 404 si no está vinculado. Queda
-    PENDIENTE hasta que un supervisor la decida; no impacta el Puntaje hasta
-    ser aprobada."""
-    dto = await build_crear_solicitud_tv_propia(db).execute(
-        CrearSolicitudTvPropiaRequest(
-            user_id=identity.user.id,
-            fecha=body.fecha,
-            razon_social=body.razon_social,
-            sucursal=body.sucursal,
-            tarea_realizada=body.tarea_realizada,
-        )
-    )
-    return SolicitudTvSchema.model_validate(dto)
-
-
 @router.get("/mi-resumen", response_model=MiResumenBonoSchema)
 async def get_mi_resumen(
     periodo: int | None = Query(default=None, ge=200001, le=210012),
@@ -176,70 +106,11 @@ async def get_mi_resumen(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> MiResumenBonoSchema:
     """Puntaje/conteos/TV del técnico autenticado en un período — default el
-    mes en curso. Para el card "Mi bono" de Inicio y el detalle en Mis
-    solicitudes de TV. 404 si el usuario no está vinculado a un técnico de
-    Siges (`TecnicoNoVinculadoError`)."""
+    mes en curso. Para el card "Mi bono" de Inicio y Bono Técnicos. 404 si
+    el usuario no está vinculado a un técnico de Siges
+    (`TecnicoNoVinculadoError`)."""
     periodo_efectivo = periodo or int(date.today().strftime("%Y%m"))
     dto = await build_get_mi_resumen_bono(db).execute(
         GetMiResumenBonoRequest(user_id=identity.user.id, periodo=periodo_efectivo)
     )
     return MiResumenBonoSchema.model_validate(dto)
-
-
-@router.get("/solicitudes-tv/mias", response_model=Page[SolicitudTvSchema])
-async def listar_mis_solicitudes_tv(
-    periodo: int = _periodo,
-    estado: str | None = Query(default=None, pattern="^(PENDIENTE|APROBADA|RECHAZADA)$"),
-    page: int = Query(default=1, ge=1),
-    size: int = Query(default=_MAX_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
-    identity: Identity = _require_create,
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> Page[SolicitudTvSchema]:
-    """Historial de solicitudes de TV del técnico autenticado — forzado a su
-    propio `id_tecnico`, nunca a uno pedido por el cliente."""
-    dtos = await build_listar_solicitudes_tv_propias(db).execute(
-        ListarSolicitudesTvPropiasRequest(
-            user_id=identity.user.id, periodo=periodo, estado=estado
-        )
-    )
-    items = [SolicitudTvSchema.model_validate(d) for d in dtos]
-    return Page.of(items, page=page, size=size)
-
-
-@router.get("/solicitudes-tv", response_model=Page[SolicitudTvSchema])
-async def listar_solicitudes_tv(
-    periodo: int = _periodo,
-    estado: str | None = Query(default=None, pattern="^(PENDIENTE|APROBADA|RECHAZADA)$"),
-    id_tecnico: int | None = Query(default=None),
-    page: int = Query(default=1, ge=1),
-    size: int = Query(default=_MAX_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
-    _: Identity = _require_approve,
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> Page[SolicitudTvSchema]:
-    """Cola de aprobación del supervisor: todas las solicitudes de TV de un
-    período, opcionalmente filtradas por estado o técnico."""
-    dtos = await build_listar_solicitudes_tv(db).execute(
-        ListarSolicitudesTvRequest(periodo=periodo, estado=estado, id_tecnico=id_tecnico)
-    )
-    items = [SolicitudTvSchema.model_validate(d) for d in dtos]
-    return Page.of(items, page=page, size=size)
-
-
-@router.patch("/solicitudes-tv/{solicitud_id}/decision", response_model=SolicitudTvSchema)
-async def decidir_solicitud_tv(
-    solicitud_id: uuid.UUID,
-    body: DecisionSolicitudTvBody,
-    identity: Identity = _require_approve,
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> SolicitudTvSchema:
-    """Aprobar/rechazar una solicitud de TV. Solo las APROBADA cuentan en el
-    Puntaje del período (`GET /resumen`)."""
-    dto = await build_decidir_solicitud_tv(db).execute(
-        DecidirSolicitudTvRequest(
-            solicitud_id=solicitud_id,
-            decision=body.decision,
-            motivo=body.motivo,
-            resuelta_por_email=identity.user.email,
-        )
-    )
-    return SolicitudTvSchema.model_validate(dto)

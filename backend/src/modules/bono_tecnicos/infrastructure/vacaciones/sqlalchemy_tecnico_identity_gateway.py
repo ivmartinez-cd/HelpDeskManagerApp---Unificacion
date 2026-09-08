@@ -1,7 +1,9 @@
 """Adapter que resuelve el técnico de Siges de un usuario autenticado
 cruzando con el vínculo Empleado↔Siges de Gestión de Personal (`vacaciones`)
 — dependencia cross-module a propósito, solo en infrastructure, mismo
-criterio que `sqlalchemy_dias_sugeridos_gateway.py`."""
+criterio que `sqlalchemy_dias_sugeridos_gateway.py`. Duplicado del homónimo
+en `tareas_varias.infrastructure.vacaciones` — cada módulo con su propio
+adapter, ninguno depende del otro."""
 
 import uuid
 

@@ -1,5 +1,3 @@
-from datetime import date
-
 from src.modules.bono_tecnicos.application.dtos.evolucion_anual_dto import (
     GetEvolucionAnualRequest,
 )
@@ -8,11 +6,10 @@ from src.modules.bono_tecnicos.application.use_cases.get_evolucion_anual import 
     GetEvolucionAnualPorts,
 )
 from src.modules.bono_tecnicos.domain.entities.bono_tecnico_input import BonoTecnicoInput
-from src.modules.bono_tecnicos.domain.entities.solicitud_tv import EstadoSolicitudTv
 from tests.unit.application.bono_tecnicos.fakes import (
     FakeBonoTecnicoInputRepository,
     FakeConteoTecnicoGateway,
-    FakeSolicitudTvRepository,
+    FakeTareasVariasGateway,
     build_conteo,
     build_solicitud_tv,
 )
@@ -26,7 +23,7 @@ def _use_case(
         GetEvolucionAnualPorts(
             conteo_gateway=conteo_gateway,
             input_repo=FakeBonoTecnicoInputRepository(inputs or []),
-            solicitud_tv_repo=FakeSolicitudTvRepository(solicitudes_tv or []),
+            tareas_varias_gateway=FakeTareasVariasGateway(solicitudes_tv or []),
         )
     )
     return use_case, conteo_gateway
@@ -70,12 +67,8 @@ async def test_arma_la_serie_de_12_meses_por_tecnico() -> None:
 async def test_suma_tv_solicitadas_y_aprobadas_del_anio() -> None:
     conteo_mayo = build_conteo("CD - Ana", id_tecnico=1, periodo=202605, correctivo=10)
     solicitudes = [
-        build_solicitud_tv(
-            id_tecnico=1, fecha=date(2026, 5, 5), estado=EstadoSolicitudTv.APROBADA
-        ),
-        build_solicitud_tv(
-            id_tecnico=1, fecha=date(2026, 5, 6), estado=EstadoSolicitudTv.PENDIENTE
-        ),
+        build_solicitud_tv(id_tecnico=1, periodo=202605, estado="APROBADA"),
+        build_solicitud_tv(id_tecnico=1, periodo=202605, estado="PENDIENTE"),
     ]
     use_case, _ = _use_case(conteos_anio=[conteo_mayo], solicitudes_tv=solicitudes)
 

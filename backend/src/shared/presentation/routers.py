@@ -88,6 +88,9 @@ from src.modules.sla.presentation.derivados_router import router as sla_derivado
 from src.modules.sla.presentation.mesa_ayuda_router import router as sla_mesa_ayuda_router
 from src.modules.sla.presentation.pendientes_router import router as sla_pendientes_router
 from src.modules.sla.presentation.sla_router import router as sla_router
+from src.modules.tareas_varias.presentation.tareas_varias_router import (
+    router as tareas_varias_router,
+)
 from src.modules.turnos.presentation.casillas_router import router as turnos_casillas_router
 from src.modules.turnos.presentation.grilla_variantes_router import (
     router as turnos_grilla_variantes_router,
@@ -176,6 +179,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     sla_derivados_router,
     bono_tecnicos_router,
     bono_tecnicos_evolucion_router,
+    tareas_varias_router,
     prestadores_router,
     preventivos_router,
     # config_router va ANTES: sus rutas son todas literales (/tarifarios, /spsts,

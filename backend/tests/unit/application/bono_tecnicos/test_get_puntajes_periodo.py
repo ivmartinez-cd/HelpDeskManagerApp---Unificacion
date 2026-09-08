@@ -1,5 +1,3 @@
-from datetime import date
-
 from src.modules.bono_tecnicos.application.dtos.puntaje_tecnico_dto import (
     GetPuntajesPeriodoRequest,
 )
@@ -7,12 +5,11 @@ from src.modules.bono_tecnicos.application.use_cases.get_puntajes_periodo import
     GetPuntajesPeriodo,
 )
 from src.modules.bono_tecnicos.domain.entities.bono_tecnico_input import BonoTecnicoInput
-from src.modules.bono_tecnicos.domain.entities.solicitud_tv import EstadoSolicitudTv
 from tests.unit.application.bono_tecnicos.fakes import (
     FakeBonoTecnicoInputRepository,
     FakeConteoTecnicoGateway,
     FakeDiasSugeridosGateway,
-    FakeSolicitudTvRepository,
+    FakeTareasVariasGateway,
     build_conteo,
     build_solicitud_tv,
 )
@@ -25,7 +22,7 @@ def _use_case(
         FakeConteoTecnicoGateway(conteos or []),
         FakeBonoTecnicoInputRepository(inputs or []),
         FakeDiasSugeridosGateway(dias_sugeridos or {}),
-        FakeSolicitudTvRepository(solicitudes_tv or []),
+        FakeTareasVariasGateway(solicitudes_tv or []),
     )
 
 
@@ -64,10 +61,7 @@ async def test_combina_conteo_input_y_solicitudes_tv_aprobadas_para_calcular_el_
         id_tecnico=1314, periodo=202605, tecnico="CD - Agustin HACZEK", dias=17
     )
     solicitudes = [
-        build_solicitud_tv(
-            id_tecnico=1314, fecha=date(2026, 5, d), estado=EstadoSolicitudTv.APROBADA
-        )
-        for d in range(1, 26)
+        build_solicitud_tv(id_tecnico=1314, periodo=202605, estado="APROBADA") for _ in range(25)
     ]
     use_case = _use_case(conteos=[conteo], inputs=[input_], solicitudes_tv=solicitudes)
 
@@ -84,8 +78,8 @@ async def test_solicitudes_pendientes_o_rechazadas_no_suman_tv() -> None:
     conteo = build_conteo("CD - Ana", id_tecnico=1, correctivo=5)
     input_ = BonoTecnicoInput(id_tecnico=1, periodo=202605, tecnico="CD - Ana", dias=10)
     solicitudes = [
-        build_solicitud_tv(id_tecnico=1, estado=EstadoSolicitudTv.PENDIENTE),
-        build_solicitud_tv(id_tecnico=1, estado=EstadoSolicitudTv.RECHAZADA),
+        build_solicitud_tv(id_tecnico=1, periodo=202605, estado="PENDIENTE"),
+        build_solicitud_tv(id_tecnico=1, periodo=202605, estado="RECHAZADA"),
     ]
     use_case = _use_case(conteos=[conteo], inputs=[input_], solicitudes_tv=solicitudes)
 

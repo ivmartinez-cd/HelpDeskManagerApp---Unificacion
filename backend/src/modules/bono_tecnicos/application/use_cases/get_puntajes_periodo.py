@@ -12,8 +12,8 @@ from src.modules.bono_tecnicos.domain.repositories.conteo_tecnico_gateway import
 from src.modules.bono_tecnicos.domain.repositories.dias_sugeridos_gateway import (
     DiasSugeridosGateway,
 )
-from src.modules.bono_tecnicos.domain.repositories.solicitud_tv_repository import (
-    SolicitudTvRepository,
+from src.modules.bono_tecnicos.domain.repositories.tareas_varias_gateway import (
+    TareasVariasGateway,
 )
 from src.modules.bono_tecnicos.domain.services.calculador_puntaje import calcular_puntaje
 from src.modules.bono_tecnicos.domain.value_objects.periodo import Periodo
@@ -35,12 +35,12 @@ class GetPuntajesPeriodo:
         conteo_gateway: ConteoTecnicoGateway,
         input_repo: BonoTecnicoInputRepository,
         dias_sugeridos_gateway: DiasSugeridosGateway,
-        solicitud_tv_repo: SolicitudTvRepository,
+        tareas_varias_gateway: TareasVariasGateway,
     ) -> None:
         self._conteo_gateway = conteo_gateway
         self._input_repo = input_repo
         self._dias_sugeridos_gateway = dias_sugeridos_gateway
-        self._solicitud_tv_repo = solicitud_tv_repo
+        self._tareas_varias_gateway = tareas_varias_gateway
 
     async def execute(self, request: GetPuntajesPeriodoRequest) -> list[PuntajeTecnicoDTO]:
         periodo = Periodo(request.periodo)
@@ -50,7 +50,7 @@ class GetPuntajesPeriodo:
         dias_sugeridos = await self._dias_sugeridos_gateway.get_dias_sugeridos_por_tecnico(
             periodo, [c.id_tecnico for c in conteos]
         )
-        tv_aprobadas = await self._solicitud_tv_repo.count_aprobadas_por_tecnico(periodo)
+        tv_aprobadas = await self._tareas_varias_gateway.count_aprobadas_por_tecnico(periodo)
         return [
             _build_dto(
                 conteo,

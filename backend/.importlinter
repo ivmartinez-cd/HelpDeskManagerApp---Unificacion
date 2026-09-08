@@ -259,6 +259,44 @@ source_modules =
 forbidden_modules =
     src.modules.auth
 
+[importlinter:contract:bono-tecnicos-domain-app-independent-from-tareas-varias]
+name = El domain/application de bono_tecnicos no depende de tareas_varias (solo infrastructure, ver TareasVariasGateway)
+type = forbidden
+source_modules =
+    src.modules.bono_tecnicos.domain
+    src.modules.bono_tecnicos.application
+forbidden_modules =
+    src.modules.tareas_varias
+
+[importlinter:contract:tareas-varias-domain-no-frameworks]
+name = El dominio de tareas_varias no importa frameworks
+type = forbidden
+source_modules =
+    src.modules.tareas_varias.domain
+forbidden_modules =
+    fastapi
+    sqlalchemy
+    pydantic
+    alembic
+
+[importlinter:contract:tareas-varias-domain-app-independent-from-auth]
+name = El domain/application de tareas_varias no depende de auth
+type = forbidden
+source_modules =
+    src.modules.tareas_varias.domain
+    src.modules.tareas_varias.application
+forbidden_modules =
+    src.modules.auth
+
+[importlinter:contract:tareas-varias-domain-app-independent-from-bono-tecnicos]
+name = El domain/application de tareas_varias no depende de bono_tecnicos
+type = forbidden
+source_modules =
+    src.modules.tareas_varias.domain
+    src.modules.tareas_varias.application
+forbidden_modules =
+    src.modules.bono_tecnicos
+
 [importlinter:contract:wati-domain-no-frameworks]
 name = El dominio de wati no importa frameworks
 type = forbidden

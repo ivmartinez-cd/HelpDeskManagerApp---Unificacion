@@ -1,5 +1,3 @@
-from collections import Counter
-
 from src.modules.bono_tecnicos.application.dtos.puntaje_tecnico_dto import (
     GetMiResumenBonoRequest,
     GetPuntajesPeriodoRequest,
@@ -9,33 +7,33 @@ from src.modules.bono_tecnicos.application.dtos.puntaje_tecnico_dto import (
 from src.modules.bono_tecnicos.application.use_cases.get_puntajes_periodo import (
     GetPuntajesPeriodo,
 )
-from src.modules.bono_tecnicos.domain.entities.solicitud_tv import EstadoSolicitudTv
 from src.modules.bono_tecnicos.domain.errors import TecnicoNoVinculadoError
-from src.modules.bono_tecnicos.domain.repositories.solicitud_tv_repository import (
-    SolicitudTvRepository,
+from src.modules.bono_tecnicos.domain.repositories.tareas_varias_gateway import (
+    TareasVariasGateway,
 )
 from src.modules.bono_tecnicos.domain.repositories.tecnico_identity_gateway import (
     TecnicoIdentityGateway,
     TecnicoVinculado,
 )
+from src.modules.bono_tecnicos.domain.value_objects.conteo_tv import ResumenTvTecnico
 from src.modules.bono_tecnicos.domain.value_objects.periodo import Periodo
 
 
 class GetMiResumenBono:
     """El `PuntajeTecnicoDTO` del técnico autenticado (mismo cálculo que
     `GetPuntajesPeriodo`, filtrado al propio `id_tecnico`) + el desglose de
-    sus TV por estado. Para el card "Mi bono" de Inicio y el detalle en
-    Mis solicitudes de TV."""
+    sus TV por estado (`TareasVariasGateway`, módulo `tareas_varias`). Para
+    el card "Mi bono" de Inicio y el detalle en Mis Tareas Varias."""
 
     def __init__(
         self,
         identity_gateway: TecnicoIdentityGateway,
         get_puntajes_periodo: GetPuntajesPeriodo,
-        solicitud_tv_repo: SolicitudTvRepository,
+        tareas_varias_gateway: TareasVariasGateway,
     ) -> None:
         self._identity_gateway = identity_gateway
         self._get_puntajes_periodo = get_puntajes_periodo
-        self._solicitud_tv_repo = solicitud_tv_repo
+        self._tareas_varias_gateway = tareas_varias_gateway
 
     async def execute(self, request: GetMiResumenBonoRequest) -> MiResumenBonoDTO:
         vinculo = await self._identity_gateway.get_por_usuario(request.user_id)
@@ -46,18 +44,17 @@ class GetMiResumenBono:
             GetPuntajesPeriodoRequest(periodo=request.periodo)
         )
         propio = next((p for p in puntajes if p.id_tecnico == vinculo.id_tecnico), None)
-        solicitudes = await self._solicitud_tv_repo.list_by_periodo(
-            periodo, id_tecnico=vinculo.id_tecnico
+        resumen_tv = await self._tareas_varias_gateway.resumen_tecnico(
+            periodo, vinculo.id_tecnico
         )
-        conteo_tv = Counter(s.estado for s in solicitudes)
-        return _build_dto(vinculo, request.periodo, propio, conteo_tv)
+        return _build_dto(vinculo, request.periodo, propio, resumen_tv)
 
 
 def _build_dto(
     vinculo: TecnicoVinculado,
     periodo: int,
     propio: PuntajeTecnicoDTO | None,
-    conteo_tv: Counter[EstadoSolicitudTv],
+    resumen_tv: ResumenTvTecnico,
 ) -> MiResumenBonoDTO:
     base = propio or _sin_actividad(vinculo, periodo)
     return MiResumenBonoDTO(
@@ -72,9 +69,9 @@ def _build_dto(
         dias=base.dias,
         puntaje=base.puntaje,
         dias_sugeridos=base.dias_sugeridos,
-        tv_aprobadas=conteo_tv.get(EstadoSolicitudTv.APROBADA, 0),
-        tv_pendientes=conteo_tv.get(EstadoSolicitudTv.PENDIENTE, 0),
-        tv_rechazadas=conteo_tv.get(EstadoSolicitudTv.RECHAZADA, 0),
+        tv_aprobadas=resumen_tv.aprobadas,
+        tv_pendientes=resumen_tv.pendientes,
+        tv_rechazadas=resumen_tv.rechazadas,
     )
 
 

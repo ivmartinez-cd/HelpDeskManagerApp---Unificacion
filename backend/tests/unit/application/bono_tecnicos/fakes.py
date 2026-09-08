@@ -1,14 +1,13 @@
 import uuid
-from datetime import UTC, date, datetime
+
+from src.modules.bono_tecnicos.domain.repositories.tecnico_identity_gateway import (
+    TecnicoVinculado,
+)
 
 from src.modules.bono_tecnicos.domain.entities.bono_tecnico_input import BonoTecnicoInput
 from src.modules.bono_tecnicos.domain.entities.conteo_tecnico import ConteoTecnico
 from src.modules.bono_tecnicos.domain.entities.incidente_bono import IncidenteBono
-from src.modules.bono_tecnicos.domain.entities.solicitud_tv import EstadoSolicitudTv, SolicitudTv
-from src.modules.bono_tecnicos.domain.repositories.tecnico_identity_gateway import (
-    TecnicoVinculado,
-)
-from src.modules.bono_tecnicos.domain.value_objects.conteo_tv import ConteoTv
+from src.modules.bono_tecnicos.domain.value_objects.conteo_tv import ConteoTv, ResumenTvTecnico
 from src.modules.bono_tecnicos.domain.value_objects.periodo import Periodo
 
 
@@ -97,76 +96,56 @@ class FakeBonoTecnicoInputRepository:
 
 def build_solicitud_tv(
     id_tecnico: int = 1314,
-    tecnico: str = "CD - Agustin HACZEK",
-    fecha: date | None = None,
-    razon_social: str = "Exolgan",
-    sucursal: str = "Dock Sur",
-    tarea_realizada: str = "Se buscan toner en Drago y se llevan a Exolgan.",
-    estado: EstadoSolicitudTv = EstadoSolicitudTv.PENDIENTE,
-) -> SolicitudTv:
-    return SolicitudTv(
-        id=uuid.uuid4(),
-        id_tecnico=id_tecnico,
-        tecnico=tecnico,
-        fecha=fecha or date(2026, 5, 18),
-        razon_social=razon_social,
-        sucursal=sucursal,
-        tarea_realizada=tarea_realizada,
-        estado=estado,
-        creado_en=datetime.now(UTC),
-    )
+    periodo: int = 202605,
+    estado: str = "PENDIENTE",
+) -> tuple[int, int, str]:
+    """Una fila mínima de TV (id_tecnico, periodo, estado) para
+    `FakeTareasVariasGateway` — el detalle de una `SolicitudTv` (fecha,
+    razón social...) vive del otro lado del puerto, en el módulo
+    `tareas_varias` (ver `tests/unit/application/tareas_varias/fakes.py`),
+    bono_tecnicos solo necesita el conteo."""
+    return (id_tecnico, periodo, estado)
 
 
-class FakeSolicitudTvRepository:
-    def __init__(self, solicitudes: list[SolicitudTv] | None = None) -> None:
-        self._por_id: dict[uuid.UUID, SolicitudTv] = {s.id: s for s in (solicitudes or [])}
-        self.add_calls: list[SolicitudTv] = []
-        self.save_calls: list[SolicitudTv] = []
+class FakeTareasVariasGateway:
+    """Doble de `TareasVariasGateway` (`bono_tecnicos.domain.repositories.
+    tareas_varias_gateway`) para no depender del módulo `tareas_varias` en
+    los tests de bono_tecnicos, mismo criterio que el puerto real."""
 
-    async def add(self, solicitud: SolicitudTv) -> None:
-        self.add_calls.append(solicitud)
-        self._por_id[solicitud.id] = solicitud
-
-    async def get_by_id(self, solicitud_id: uuid.UUID) -> SolicitudTv | None:
-        return self._por_id.get(solicitud_id)
-
-    async def save(self, solicitud: SolicitudTv) -> None:
-        self.save_calls.append(solicitud)
-        self._por_id[solicitud.id] = solicitud
-
-    async def list_by_periodo(
-        self,
-        periodo: Periodo,
-        *,
-        estado: EstadoSolicitudTv | None = None,
-        id_tecnico: int | None = None,
-    ) -> list[SolicitudTv]:
-        resultado = [s for s in self._por_id.values() if s.periodo == periodo.value]
-        if estado is not None:
-            resultado = [s for s in resultado if s.estado == estado]
-        if id_tecnico is not None:
-            resultado = [s for s in resultado if s.id_tecnico == id_tecnico]
-        return resultado
+    def __init__(self, solicitudes: list[tuple[int, int, str]] | None = None) -> None:
+        self._solicitudes = solicitudes or []
 
     async def count_aprobadas_por_tecnico(self, periodo: Periodo) -> dict[int, int]:
         conteo: dict[int, int] = {}
-        for s in self._por_id.values():
-            if s.periodo == periodo.value and s.estado == EstadoSolicitudTv.APROBADA:
-                conteo[s.id_tecnico] = conteo.get(s.id_tecnico, 0) + 1
+        for id_tecnico, p, estado in self._solicitudes:
+            if p == periodo.value and estado == "APROBADA":
+                conteo[id_tecnico] = conteo.get(id_tecnico, 0) + 1
         return conteo
 
     async def contar_por_tecnico_y_periodo(self, anio: int) -> dict[tuple[int, int], ConteoTv]:
         conteo: dict[tuple[int, int], ConteoTv] = {}
-        for s in self._por_id.values():
-            if s.periodo // 100 != anio:
+        for id_tecnico, p, estado in self._solicitudes:
+            if p // 100 != anio:
                 continue
-            clave = (s.id_tecnico, s.periodo)
+            clave = (id_tecnico, p)
             actual = conteo.get(clave, ConteoTv(0, 0))
             conteo[clave] = ConteoTv(
                 solicitadas=actual.solicitadas + 1,
-                aprobadas=actual.aprobadas + (1 if s.estado == EstadoSolicitudTv.APROBADA else 0),
+                aprobadas=actual.aprobadas + (1 if estado == "APROBADA" else 0),
             )
         return conteo
+
+    async def resumen_tecnico(self, periodo: Periodo, id_tecnico: int) -> ResumenTvTecnico:
+        propias = [
+            estado
+            for it, p, estado in self._solicitudes
+            if it == id_tecnico and p == periodo.value
+        ]
+        return ResumenTvTecnico(
+            aprobadas=propias.count("APROBADA"),
+            pendientes=propias.count("PENDIENTE"),
+            rechazadas=propias.count("RECHAZADA"),
+        )
 
 
 class FakeTecnicoIdentityGateway:
