@@ -91,6 +91,9 @@ export function ProyeccionCandidatosDrawer({
             tipoToma: r.tipo_toma,
             fuente: r.fuente,
             metodoDetalle: r.metodo_detalle,
+            diasParPl: r.dias_par_pl,
+            tasaDiaria: r.tasa_diaria,
+            diasProyectados: r.dias_proyectados,
           });
         }
       })
@@ -125,6 +128,9 @@ export function ProyeccionCandidatosDrawer({
         tipoToma: r.tipo_toma,
         fuente: r.fuente,
         metodoDetalle: r.metodo_detalle,
+        diasParPl: r.dias_par_pl,
+        tasaDiaria: r.tasa_diaria,
+        diasProyectados: r.dias_proyectados,
       });
     } catch {
       setForzado(null);
@@ -186,6 +192,7 @@ export function ProyeccionCandidatosDrawer({
               puedeGestionar={puedeGestionar}
               forzando={forzando}
               onForzar={forzar}
+              ultimoFacturado={fila.ultimo_facturado_valor}
             />
           )}
 

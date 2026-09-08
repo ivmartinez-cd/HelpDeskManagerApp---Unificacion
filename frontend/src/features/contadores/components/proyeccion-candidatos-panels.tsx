@@ -22,7 +22,12 @@ export interface Calculo {
   tipoToma: number | null;
   fuente: string;
   metodoDetalle: string;
+  diasParPl: number | null;
+  tasaDiaria: number | null;
+  diasProyectados: number | null;
 }
+
+const decimalFormat = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 
 interface ProyeccionLecturasTablaProps {
   datos: CandidatosEquipo | null;
@@ -96,6 +101,65 @@ export function ProyeccionLecturasTabla({
   );
 }
 
+function Fila({ label, valor, destacado }: { label: string; valor: React.ReactNode; destacado?: boolean }) {
+  return (
+    <>
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd
+        className={cn(
+          "text-right tabular-nums",
+          destacado && "font-heading text-base font-extrabold text-brand-orange",
+        )}
+      >
+        {valor}
+      </dd>
+    </>
+  );
+}
+
+/** Detalle completo de la pareja P/L (paridad con `PanelCandidatos.razor`):
+ * Δ días y "Días L → fecha obj." son ACTIVOS (ya descuentan recesos, salen
+ * del motor); Δ contador es la resta cruda de las dos lecturas elegidas. */
+function DetalleParL({
+  seleccion,
+  calculo,
+  ultimoFacturado,
+}: {
+  seleccion: Seleccion;
+  calculo: Calculo;
+  ultimoFacturado: number;
+}) {
+  const deltaContador =
+    seleccion.partida && seleccion.llegada ? seleccion.llegada.valor - seleccion.partida.valor : null;
+  const imp30d = calculo.tasaDiaria !== null ? Math.round(calculo.tasaDiaria * 30) : null;
+  const esPosterior = calculo.diasProyectados !== null && calculo.diasProyectados < 0;
+
+  return (
+    <>
+      <Fila label="Δ días (P → L)" valor={calculo.diasParPl ?? "—"} />
+      <Fila label="Δ contador" valor={deltaContador !== null ? numberFormat.format(deltaContador) : "—"} />
+      <Fila
+        label="Promedio diario"
+        valor={`${calculo.tasaDiaria !== null ? decimalFormat.format(calculo.tasaDiaria) : "—"} /día`}
+      />
+      <Fila label="Imp. 30d" valor={imp30d !== null ? numberFormat.format(imp30d) : "—"} />
+      <Fila label="Días L → fecha obj." valor={calculo.diasProyectados ?? "—"} />
+      <Fila label="Estim. propuesto" valor={calculo.estim !== null ? numberFormat.format(calculo.estim) : "—"} destacado />
+      <Fila label="Últ. facturado" valor={numberFormat.format(ultimoFacturado)} />
+      <Fila
+        label="Impresiones"
+        valor={calculo.impresiones !== null ? numberFormat.format(calculo.impresiones) : "—"}
+        destacado
+      />
+      {esPosterior && (
+        <p className="col-span-2 rounded-[6px] bg-warning/10 px-2 py-1.5 text-[11px] text-warning">
+          ⚠ La Llegada es posterior a la fecha objetivo — el estimado se interpola hacia atrás.
+        </p>
+      )}
+    </>
+  );
+}
+
 interface ProyeccionCalculoPanelProps {
   seleccion: Seleccion;
   calculoVisible: Calculo | null;
@@ -103,6 +167,7 @@ interface ProyeccionCalculoPanelProps {
   puedeGestionar: boolean;
   forzando: MetodoForzado | null;
   onForzar: (metodo: MetodoForzado) => void;
+  ultimoFacturado: number;
 }
 
 export function ProyeccionCalculoPanel({
@@ -112,43 +177,40 @@ export function ProyeccionCalculoPanel({
   puedeGestionar,
   forzando,
   onForzar,
+  ultimoFacturado,
 }: ProyeccionCalculoPanelProps) {
-  const estim =
-    calculoVisible?.estim !== null && calculoVisible?.estim !== undefined
-      ? calculoVisible.estim
-      : forzado?.estim !== null && forzado?.estim !== undefined
-        ? forzado.estim
-        : null;
-  const impresiones =
-    calculoVisible?.impresiones !== null && calculoVisible?.impresiones !== undefined
-      ? calculoVisible.impresiones
-      : forzado?.impresiones !== null && forzado?.impresiones !== undefined
-        ? forzado.impresiones
-        : null;
-
   return (
     <>
       <p className="mb-2 mt-6 text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
         Cálculo
       </p>
       <dl className="grid grid-cols-2 gap-y-2 text-[12.5px]">
-        <dt className="text-muted-foreground">P → L</dt>
-        <dd className="text-right tabular-nums">
-          {seleccion.partida ? formatFecha(seleccion.partida.fecha) : "—"} →{" "}
-          {seleccion.llegada ? formatFecha(seleccion.llegada.fecha) : "—"}
-        </dd>
-        <dt className="text-muted-foreground">Estim. propuesto</dt>
-        <dd className="text-right font-heading text-base font-extrabold text-brand-orange tabular-nums">
-          {estim !== null && estim !== undefined ? numberFormat.format(estim) : "—"}
-        </dd>
-        <dt className="text-muted-foreground">Impresiones del período</dt>
-        <dd className="text-right font-heading text-base font-extrabold text-brand-orange tabular-nums">
-          {impresiones !== null && impresiones !== undefined ? numberFormat.format(impresiones) : "—"}
-        </dd>
-        {!calculoVisible && forzado && (
+        <Fila
+          label="P → L"
+          valor={`${seleccion.partida ? formatFecha(seleccion.partida.fecha) : "—"} → ${
+            seleccion.llegada ? formatFecha(seleccion.llegada.fecha) : "—"
+          }`}
+        />
+        {calculoVisible ? (
+          <DetalleParL seleccion={seleccion} calculo={calculoVisible} ultimoFacturado={ultimoFacturado} />
+        ) : forzado ? (
           <>
-            <dt className="text-muted-foreground">Método forzado</dt>
-            <dd className="text-right text-xs text-muted-foreground">{forzado.metodoDetalle}</dd>
+            <Fila
+              label="Estim. propuesto"
+              valor={forzado.estim !== null ? numberFormat.format(forzado.estim) : "—"}
+              destacado
+            />
+            <Fila
+              label="Impresiones del período"
+              valor={forzado.impresiones !== null ? numberFormat.format(forzado.impresiones) : "—"}
+              destacado
+            />
+            <Fila label="Método forzado" valor={<span className="text-xs">{forzado.metodoDetalle}</span>} />
+          </>
+        ) : (
+          <>
+            <Fila label="Estim. propuesto" valor="—" destacado />
+            <Fila label="Impresiones del período" valor="—" destacado />
           </>
         )}
       </dl>

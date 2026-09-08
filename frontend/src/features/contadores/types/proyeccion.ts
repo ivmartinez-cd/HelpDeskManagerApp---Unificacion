@@ -152,6 +152,9 @@ export interface RecalcularCandidatoResponse {
   metodo_detalle: string;
   semaforo: Semaforo;
   requiere_confirmacion: boolean;
+  dias_par_pl: number | null;
+  tasa_diaria: number | null;
+  dias_proyectados: number | null;
 }
 
 // El último cálculo manual (P/L o método forzado) que el operador vio y

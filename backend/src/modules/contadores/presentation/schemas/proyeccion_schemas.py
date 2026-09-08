@@ -148,6 +148,9 @@ class RecalcularCandidatoResponseSchema(BaseModel):
     metodo_detalle: str
     semaforo: str
     requiere_confirmacion: bool
+    dias_par_pl: int | None
+    tasa_diaria: float | None
+    dias_proyectados: int | None
 
     @classmethod
     def from_resultado(cls, r: EstimacionResultado) -> "RecalcularCandidatoResponseSchema":
@@ -159,6 +162,9 @@ class RecalcularCandidatoResponseSchema(BaseModel):
             metodo_detalle=r.metodo_detalle,
             semaforo=r.semaforo,
             requiere_confirmacion=r.requiere_confirmacion,
+            dias_par_pl=r.dias_par_pl,
+            tasa_diaria=r.tasa_diaria,
+            dias_proyectados=r.dias_proyectados,
         )
 
 
