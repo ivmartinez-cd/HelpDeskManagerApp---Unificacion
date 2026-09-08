@@ -58,19 +58,11 @@ def _build_dto(
 ) -> MiResumenBonoDTO:
     base = propio or _sin_actividad(vinculo, periodo)
     return MiResumenBonoDTO(
-        tecnico=base.tecnico,
-        id_tecnico=base.id_tecnico,
-        periodo=periodo,
-        correctivo=base.correctivo,
-        preventivo=base.preventivo,
-        inst_des=base.inst_des,
-        pre_correctivo=base.pre_correctivo,
-        entrega_insumos=base.entrega_insumos,
-        dias=base.dias,
-        puntaje=base.puntaje,
-        dias_sugeridos=base.dias_sugeridos,
-        tv_aprobadas=resumen_tv.aprobadas,
-        tv_pendientes=resumen_tv.pendientes,
+        tecnico=base.tecnico, id_tecnico=base.id_tecnico, periodo=periodo,
+        correctivo=base.correctivo, preventivo=base.preventivo, inst_des=base.inst_des,
+        pre_correctivo=base.pre_correctivo, entrega_insumos=base.entrega_insumos,
+        dias=base.dias, puntaje=base.puntaje, dias_sugeridos=base.dias_sugeridos,
+        tv_aprobadas=resumen_tv.aprobadas, tv_pendientes=resumen_tv.pendientes,
         tv_rechazadas=resumen_tv.rechazadas,
     )
 

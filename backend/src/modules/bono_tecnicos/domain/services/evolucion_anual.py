@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from src.modules.bono_tecnicos.domain.entities.conteo_tecnico import ConteoTecnico
 from src.modules.bono_tecnicos.domain.services.calculador_puntaje import calcular_puntaje
 from src.modules.bono_tecnicos.domain.value_objects.conteo_tv import ConteoTv
-from src.modules.bono_tecnicos.domain.value_objects.periodo import periodos_del_anio
+from src.modules.bono_tecnicos.domain.value_objects.periodo import Periodo, periodos_del_anio
 
 _DECIMALES = 2
 
@@ -31,40 +31,48 @@ def serie_anual(
     dias_por_periodo: dict[int, float],
     tv_por_periodo: dict[int, ConteoTv],
 ) -> list[PuntoMensual]:
-    """Los 12 puntos del año para un técnico. Un mes sin fila de conteos (sin
-    incidentes cerrados de las 5 categorías) se completa con un conteo en
-    cero, no se salta — así `puntaje` solo queda `None` cuando la causa real
-    es "sin Días cargados" (mismo criterio que `calcular_puntaje`), no por
-    falta de actividad."""
+    """Los 12 puntos del año — un mes sin conteos se completa en cero en vez
+    de saltarse, así `puntaje` solo queda `None` por falta de Días cargados."""
     conteos_por_periodo = {c.periodo: c for c in conteos}
-    puntos = []
-    for periodo in periodos_del_anio(anio):
-        conteo = conteos_por_periodo.get(
-            periodo.value,
-            ConteoTecnico(
-                tecnico=tecnico,
-                id_tecnico=id_tecnico,
-                periodo=periodo.value,
-                correctivo=0,
-                preventivo=0,
-                inst_des=0,
-                pre_correctivo=0,
-                entrega_insumos=0,
-            ),
-        )
-        dias = dias_por_periodo.get(periodo.value, 0.0)
-        tv = tv_por_periodo.get(periodo.value, ConteoTv(0, 0))
-        puntos.append(
-            PuntoMensual(
-                periodo=periodo.value,
-                puntaje=calcular_puntaje(conteo, dias, tv.aprobadas),
-                incidentes=_total_incidentes(conteo),
-                dias=dias,
-                tv_solicitadas=tv.solicitadas,
-                tv_aprobadas=tv.aprobadas,
-            )
-        )
-    return puntos
+    return [
+        _punto_de(p, conteos_por_periodo, tecnico, id_tecnico, dias_por_periodo, tv_por_periodo)
+        for p in periodos_del_anio(anio)
+    ]
+
+
+def _punto_de(
+    periodo: Periodo,
+    conteos_por_periodo: dict[int, ConteoTecnico],
+    tecnico: str,
+    id_tecnico: int,
+    dias_por_periodo: dict[int, float],
+    tv_por_periodo: dict[int, ConteoTv],
+) -> PuntoMensual:
+    vacio = _conteo_vacio(tecnico, id_tecnico, periodo.value)
+    conteo = conteos_por_periodo.get(periodo.value) or vacio
+    dias = dias_por_periodo.get(periodo.value, 0.0)
+    tv = tv_por_periodo.get(periodo.value, ConteoTv(0, 0))
+    return PuntoMensual(
+        periodo=periodo.value,
+        puntaje=calcular_puntaje(conteo, dias, tv.aprobadas),
+        incidentes=_total_incidentes(conteo),
+        dias=dias,
+        tv_solicitadas=tv.solicitadas,
+        tv_aprobadas=tv.aprobadas,
+    )
+
+
+def _conteo_vacio(tecnico: str, id_tecnico: int, periodo: int) -> ConteoTecnico:
+    return ConteoTecnico(
+        tecnico=tecnico,
+        id_tecnico=id_tecnico,
+        periodo=periodo,
+        correctivo=0,
+        preventivo=0,
+        inst_des=0,
+        pre_correctivo=0,
+        entrega_insumos=0,
+    )
 
 
 def promedio_equipo(series: list[list[PuntoMensual]]) -> list[PuntoMensual]:

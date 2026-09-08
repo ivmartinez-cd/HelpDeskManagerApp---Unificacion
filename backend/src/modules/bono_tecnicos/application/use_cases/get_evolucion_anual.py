@@ -5,6 +5,7 @@ from src.modules.bono_tecnicos.application.dtos.evolucion_anual_dto import (
     EvolucionTecnicoDTO,
     GetEvolucionAnualRequest,
 )
+from src.modules.bono_tecnicos.domain.entities.bono_tecnico_input import BonoTecnicoInput
 from src.modules.bono_tecnicos.domain.entities.conteo_tecnico import ConteoTecnico
 from src.modules.bono_tecnicos.domain.repositories.bono_tecnico_input_repository import (
     BonoTecnicoInputRepository,
@@ -45,26 +46,13 @@ class GetEvolucionAnual:
 
     async def execute(self, request: GetEvolucionAnualRequest) -> EvolucionAnualDTO:
         anio = request.anio
-        conteo_gateway = self._ports.conteo_gateway
-        conteos = await conteo_gateway.find_conteos_anio(anio)
+        conteos = await self._ports.conteo_gateway.find_conteos_anio(anio)
         inputs = await self._ports.input_repo.find_by_anio(anio)
-        tareas_varias_gateway = self._ports.tareas_varias_gateway
-        tv_por_tecnico = await tareas_varias_gateway.contar_por_tecnico_y_periodo(anio)
+        tv_por_tecnico = await self._ports.tareas_varias_gateway.contar_por_tecnico_y_periodo(anio)
 
         nombres = {c.id_tecnico: c.tecnico for c in conteos}
         tecnicos = [
-            _build_dto(
-                id_tecnico,
-                tecnico,
-                serie_anual(
-                    anio,
-                    id_tecnico,
-                    tecnico,
-                    _de_tecnico(conteos, id_tecnico),
-                    {i.periodo: i.dias for i in inputs if i.id_tecnico == id_tecnico},
-                    _tv_de_tecnico(tv_por_tecnico, id_tecnico),
-                ),
-            )
+            _tecnico_dto_de(anio, id_tecnico, tecnico, conteos, inputs, tv_por_tecnico)
             for id_tecnico, tecnico in nombres.items()
         ]
         return EvolucionAnualDTO(
@@ -72,6 +60,25 @@ class GetEvolucionAnual:
             tecnicos=tecnicos,
             equipo=promedio_equipo([t.puntos for t in tecnicos]),
         )
+
+
+def _tecnico_dto_de(
+    anio: int,
+    id_tecnico: int,
+    tecnico: str,
+    conteos: list[ConteoTecnico],
+    inputs: list[BonoTecnicoInput],
+    tv_por_tecnico: dict[tuple[int, int], ConteoTv],
+) -> EvolucionTecnicoDTO:
+    puntos = serie_anual(
+        anio,
+        id_tecnico,
+        tecnico,
+        _de_tecnico(conteos, id_tecnico),
+        {i.periodo: i.dias for i in inputs if i.id_tecnico == id_tecnico},
+        _tv_de_tecnico(tv_por_tecnico, id_tecnico),
+    )
+    return _build_dto(id_tecnico, tecnico, puntos)
 
 
 def _de_tecnico(conteos: list[ConteoTecnico], id_tecnico: int) -> list[ConteoTecnico]:

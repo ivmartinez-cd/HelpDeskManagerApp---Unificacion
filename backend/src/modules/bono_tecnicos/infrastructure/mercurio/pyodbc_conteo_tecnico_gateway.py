@@ -65,25 +65,27 @@ class PyodbcConteoTecnicoGateway:
             cacheado = self._anual_cache.get(anio)
             if cacheado is not None and _vigente(cacheado[0], self._anual_cache_ttl_seconds):
                 return cacheado[1]
-            desde = date(anio, 1, 1)
-            hasta_exclusivo = date(anio + 1, 1, 1)
-            rows = await self._runner.fetch_all(
-                CONTEOS_TECNICOS_ANUAL_SQL,
-                (desde, hasta_exclusivo),
-                gateway="bono_tecnicos",
-                log_message=(
-                    "Fallo la consulta anual de conteos de bono de técnicos "
-                    "contra Siges/MERCURIO"
-                ),
-                log_extra={"anio": anio},
-                error_message="No se pudo consultar la base Siges (MERCURIO): {exc}",
-                # Barre los 12 meses del año en un solo round trip: más
-                # pesada que la consulta mensual, timeout más holgado.
-                timeout_override=90.0,
-            )
-            conteos = pivot_conteos_por_periodo([map_row_anual(row) for row in rows])
+            conteos = await self._fetch_conteos_anio(anio)
             self._anual_cache[anio] = (datetime.now(UTC), conteos)
             return conteos
+
+    async def _fetch_conteos_anio(self, anio: int) -> list[ConteoTecnico]:
+        desde = date(anio, 1, 1)
+        hasta_exclusivo = date(anio + 1, 1, 1)
+        rows = await self._runner.fetch_all(
+            CONTEOS_TECNICOS_ANUAL_SQL,
+            (desde, hasta_exclusivo),
+            gateway="bono_tecnicos",
+            log_message=(
+                "Fallo la consulta anual de conteos de bono de técnicos contra Siges/MERCURIO"
+            ),
+            log_extra={"anio": anio},
+            error_message="No se pudo consultar la base Siges (MERCURIO): {exc}",
+            # Barre los 12 meses del año en un solo round trip: más pesada
+            # que la consulta mensual, timeout más holgado.
+            timeout_override=90.0,
+        )
+        return pivot_conteos_por_periodo([map_row_anual(row) for row in rows])
 
     async def find_incidentes(self, periodo: Periodo, id_tecnico: int) -> list[IncidenteBono]:
         desde, hasta_exclusivo = _rango_fechas(periodo)
