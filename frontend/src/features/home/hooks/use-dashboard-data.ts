@@ -11,6 +11,7 @@ import {
   useContadoresResumen,
   useInsumosDashboard,
   useLiquidacionesPendientes,
+  useMiBono,
   useParqueResumen,
   usePendientesResumen,
   useProximosEquipo,
@@ -41,7 +42,8 @@ export function useDashboardData(access: ModuleAccess) {
     return () => clearInterval(id);
   }, []);
 
-  const turnos = useTurnosHoy(refreshKey);
+  const turnos = useTurnosHoy(access.turnos, refreshKey);
+  const miBono = useMiBono(access.bonoTecnicos, refreshKey);
   const calendario = useCalendarioHome(access.contadores, refreshKey);
   const anexosSinProcesar = useAnexosSinProcesar(access.contadores, refreshKey);
   const contadoresResumen = useContadoresResumen(access.contadores, refreshKey);
@@ -58,6 +60,7 @@ export function useDashboardData(access: ModuleAccess) {
   return {
     refreshedAt,
     turnos,
+    miBono,
     calendario,
     anexosSinProcesar,
     contadoresResumen,

@@ -28,11 +28,13 @@ const FUNCIONES_TL: readonly string[] = [
   "contadores-clientes-nuevos",
   "contadores-sin-real-todos",
   "contadores-card-operadores",
+  "contadores-proyeccion-operar",
   "insumos-administracion",
   "prestadores-coberturas",
   "prestadores-card-parque",
   "vacaciones-dashboard",
   "vacaciones-asistencias",
+  "vacaciones-home-office",
   "vacaciones-gestion-humana",
   "vacaciones-reportes",
   "vacaciones-auditoria",
@@ -84,6 +86,17 @@ const TEAM_LEADER: readonly (readonly [string, string])[] = [
   ["wati", "update"],
 ];
 
+/** Funciones que trae por default el perfil Operador (ADR-032). Elegir P/L
+ * en el panel de candidatos de Proyección era hasta ahora exclusivo de
+ * `contadores.manage`; se abre a todo Operador sin darle el resto de manage
+ * (recesos, export ya lo tienen aparte). `vacaciones-home-office` reemplaza
+ * a `vacaciones.create` como lo que abría "Home office y horario" — un
+ * operador de mesa la sigue teniendo por default, un técnico no. */
+const FUNCIONES_OPERADOR: readonly string[] = [
+  "contadores-proyeccion-operar",
+  "vacaciones-home-office",
+];
+
 export const PERMISSION_TEMPLATES: readonly PermissionTemplate[] = [
   {
     key: "solo-lectura",
@@ -97,6 +110,7 @@ export const PERMISSION_TEMPLATES: readonly PermissionTemplate[] = [
     description:
       "Mesa de ayuda: contadores (herramientas), insumos (solicitudes, sin Administración), SLA, preventivos y sus propias vacaciones. Sin Liquidación.",
     grants: OPERADOR,
+    features: FUNCIONES_OPERADOR,
   },
   {
     key: "team-leader",

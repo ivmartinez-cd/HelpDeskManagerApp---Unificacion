@@ -17,9 +17,14 @@ from src.modules.bono_tecnicos.application.use_cases.crear_solicitud_tv_propia i
 from src.modules.bono_tecnicos.application.use_cases.decidir_solicitud_tv import (
     DecidirSolicitudTv,
 )
+from src.modules.bono_tecnicos.application.use_cases.get_evolucion_anual import (
+    GetEvolucionAnual,
+    GetEvolucionAnualPorts,
+)
 from src.modules.bono_tecnicos.application.use_cases.get_incidentes_tecnico import (
     GetIncidentesTecnico,
 )
+from src.modules.bono_tecnicos.application.use_cases.get_mi_resumen_bono import GetMiResumenBono
 from src.modules.bono_tecnicos.application.use_cases.get_puntajes_periodo import (
     GetPuntajesPeriodo,
 )
@@ -70,6 +75,16 @@ def build_get_incidentes_tecnico() -> GetIncidentesTecnico:
     return GetIncidentesTecnico(get_conteo_tecnico_gateway())
 
 
+def build_get_evolucion_anual(session: AsyncSession) -> GetEvolucionAnual:
+    return GetEvolucionAnual(
+        GetEvolucionAnualPorts(
+            conteo_gateway=get_conteo_tecnico_gateway(),
+            input_repo=SqlAlchemyBonoTecnicoInputRepository(session),
+            solicitud_tv_repo=SqlAlchemySolicitudTvRepository(session),
+        )
+    )
+
+
 def build_crear_solicitud_tv(session: AsyncSession) -> CrearSolicitudTv:
     return CrearSolicitudTv(SqlAlchemySolicitudTvRepository(session))
 
@@ -96,3 +111,11 @@ def build_listar_solicitudes_tv_propias(session: AsyncSession) -> ListarSolicitu
 
 def build_decidir_solicitud_tv(session: AsyncSession) -> DecidirSolicitudTv:
     return DecidirSolicitudTv(SqlAlchemySolicitudTvRepository(session))
+
+
+def build_get_mi_resumen_bono(session: AsyncSession) -> GetMiResumenBono:
+    return GetMiResumenBono(
+        SqlAlchemyTecnicoIdentityGateway(session),
+        build_get_puntajes_periodo(session),
+        SqlAlchemySolicitudTvRepository(session),
+    )

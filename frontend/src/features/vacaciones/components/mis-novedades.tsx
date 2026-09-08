@@ -17,8 +17,9 @@ import { SolicitudEstadoBadge } from "./solicitud-estado-badge";
  * para quien no gestiona), con su estado, y el alta. Una PENDING se puede
  * cancelar; las decididas quedan como historial. */
 export function MisNovedades() {
-  const { user, can } = useSession();
-  const puedeCrear = user.isSuperadmin || can("vacaciones", "create") || can("vacaciones", "manage");
+  const { user, can, hasFeature } = useSession();
+  const puedeCrear =
+    user.isSuperadmin || hasFeature("vacaciones-home-office") || can("vacaciones", "manage");
   const [items, setItems] = useState<Ausencia[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [creando, setCreando] = useState(false);

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { accesosApi } from "@/features/home/api/accesos-api";
+import { bonoTecnicosApi } from "@/features/bono-tecnicos/api/bono-tecnicos-api";
+import type { MiResumenBono } from "@/features/bono-tecnicos/types/bono-tecnicos";
 import { contadoresApi } from "@/features/contadores/api/contadores-api";
 import type {
   AnexosSinProcesarResumen,
@@ -74,8 +76,12 @@ export function useRemote<T>(
   return { ...state, refetch: () => setTick((t) => t + 1) };
 }
 
-export function useTurnosHoy(refreshKey = 0): Remote<CurrentShifts> {
-  return useRemote(true, () => turnosApi.getCurrentShifts(), "los turnos del día", refreshKey);
+export function useTurnosHoy(enabled: boolean, refreshKey = 0): Remote<CurrentShifts> {
+  return useRemote(enabled, () => turnosApi.getCurrentShifts(), "los turnos del día", refreshKey);
+}
+
+export function useMiBono(enabled: boolean, refreshKey = 0): Remote<MiResumenBono> {
+  return useRemote(enabled, () => bonoTecnicosApi.getMiResumen(), "tu bono", refreshKey);
 }
 
 /** Ranking personal de rutas más visitadas (30 días, backend). Si falla o

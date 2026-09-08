@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.auth.presentation.dependencies.features import require_feature_or_permission
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.vacaciones.application.dtos.ausencia_dtos import ListarAusenciasQuery
 from src.modules.vacaciones.application.use_cases.adjuntar_certificado_ausencia import (
@@ -33,7 +34,8 @@ from src.modules.vacaciones.application.use_cases.reporte_descuentos import (
 from src.modules.vacaciones.domain.entities.ausencia import TipoAusencia
 from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud
 from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
-from src.modules.vacaciones.domain.well_known_permissions import APPROVE, CREATE, VIEW
+from src.modules.vacaciones.domain.well_known_features import HOME_OFFICE
+from src.modules.vacaciones.domain.well_known_permissions import APPROVE, MANAGE, VIEW
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_auditoria import (
     SqlAlchemyRegistradorAuditoria,
 )
@@ -78,7 +80,11 @@ router = APIRouter(prefix="/api/vacaciones/ausencias", tags=["vacaciones"])
 
 _DEFAULT_SIZE = 200
 _require_view = Depends(require_permission(VIEW))
-_require_create = Depends(require_permission(CREATE))
+# Home office/cambio de horario propio (empleado) o registrar baja de
+# cualquiera (jefe/TL): alcanza con la función granular o con `manage` — ya
+# no comparte permiso con "Solicitudes" (vacaciones.create), ver
+# 322dc267725c_vacaciones_feature_home_office.
+_require_create = Depends(require_feature_or_permission(HOME_OFFICE, MANAGE))
 _require_approve = Depends(require_permission(APPROVE))
 
 

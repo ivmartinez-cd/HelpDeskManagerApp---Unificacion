@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +10,7 @@ from src.modules.bono_tecnicos.application.dtos.incidente_bono_dto import (
     GetIncidentesTecnicoRequest,
 )
 from src.modules.bono_tecnicos.application.dtos.puntaje_tecnico_dto import (
+    GetMiResumenBonoRequest,
     GetPuntajesPeriodoRequest,
     GuardarBonoInputRequest,
 )
@@ -25,6 +27,7 @@ from src.modules.bono_tecnicos.presentation.dependencies import (
     build_crear_solicitud_tv_propia,
     build_decidir_solicitud_tv,
     build_get_incidentes_tecnico,
+    build_get_mi_resumen_bono,
     build_get_puntajes_periodo,
     build_guardar_bono_input,
     build_listar_solicitudes_tv,
@@ -35,6 +38,7 @@ from src.modules.bono_tecnicos.presentation.schemas.incidente_bono_schemas impor
 )
 from src.modules.bono_tecnicos.presentation.schemas.puntaje_tecnico_schemas import (
     GuardarBonoInputBody,
+    MiResumenBonoSchema,
     PuntajeTecnicoSchema,
 )
 from src.modules.bono_tecnicos.presentation.schemas.solicitud_tv_schemas import (
@@ -163,6 +167,23 @@ async def crear_solicitud_tv(
         )
     )
     return SolicitudTvSchema.model_validate(dto)
+
+
+@router.get("/mi-resumen", response_model=MiResumenBonoSchema)
+async def get_mi_resumen(
+    periodo: int | None = Query(default=None, ge=200001, le=210012),
+    identity: Identity = _require_create,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> MiResumenBonoSchema:
+    """Puntaje/conteos/TV del técnico autenticado en un período — default el
+    mes en curso. Para el card "Mi bono" de Inicio y el detalle en Mis
+    solicitudes de TV. 404 si el usuario no está vinculado a un técnico de
+    Siges (`TecnicoNoVinculadoError`)."""
+    periodo_efectivo = periodo or int(date.today().strftime("%Y%m"))
+    dto = await build_get_mi_resumen_bono(db).execute(
+        GetMiResumenBonoRequest(user_id=identity.user.id, periodo=periodo_efectivo)
+    )
+    return MiResumenBonoSchema.model_validate(dto)
 
 
 @router.get("/solicitudes-tv/mias", response_model=Page[SolicitudTvSchema])

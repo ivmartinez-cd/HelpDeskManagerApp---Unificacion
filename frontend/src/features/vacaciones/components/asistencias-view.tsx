@@ -17,8 +17,10 @@ type Tab = "calendario" | "listado" | "reportes" | "novedades";
 
 /** Pestañas del registro (calendario/listado/reportes): piden la función
  * `vacaciones-asistencias`. "Home office y horario" (las solicitudes
- * propias, antes en Mis Solicitudes) se abre con `create`, así un operador
- * entra a pedir home office sin ver el registro del equipo. */
+ * propias, antes en Mis Solicitudes) pide la función `vacaciones-home-office`
+ * — independiente de la anterior, así un operador entra a pedir home office
+ * sin ver el registro del equipo, y un perfil sin ninguna de las dos (ej.
+ * técnico) no ve nada de Asistencias. */
 const TABS_REGISTRO: { value: Tab; label: string }[] = [
   { value: "calendario", label: "Calendario" },
   { value: "listado", label: "Listado y registros" },
@@ -36,7 +38,7 @@ export function AsistenciasView() {
   // igualmente restringe al empleado a registrar solo lo propio).
   const puedeRegistrar = esAdmin || can("vacaciones", "approve");
   const veRegistro = hasFeature("vacaciones-asistencias");
-  const puedeSolicitar = esAdmin || can("vacaciones", "create");
+  const puedeSolicitar = esAdmin || hasFeature("vacaciones-home-office");
   const tabs = [...(veRegistro ? TABS_REGISTRO : []), ...(puedeSolicitar ? [TAB_NOVEDADES] : [])];
 
   const [tab, setTab] = useState<Tab>(veRegistro ? "calendario" : "novedades");

@@ -36,8 +36,11 @@ interface RouteRule {
   prefix: string;
   /** Acciones: alcanza con una. Vacío si la ruta se rige solo por `feature`. */
   anyOf?: RequiredPermission[];
-  /** Función concedible por usuario (clave de `module_feature`). */
-  feature?: string;
+  /** Función(es) concedible(s) por usuario (clave de `module_feature`).
+   * Alcanza con cualquiera cuando son varias (ej. Asistencias: el registro
+   * del equipo y "Home office y horario" son funciones independientes que
+   * comparten la misma ruta). */
+  feature?: string | string[];
   /** Solo la ruta exacta, no sus sub-rutas (para un hub cuya raíz pide más
    * permiso que sus hijas). */
   exact?: boolean;
@@ -57,13 +60,14 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   // funciones concedibles por usuario (ADR-032).
   { prefix: "/vacaciones/solicitudes", anyOf: [p("vacaciones", "manage"), p("vacaciones", "create")] },
   { prefix: "/vacaciones/aprobaciones", anyOf: [p("vacaciones", "manage"), p("vacaciones", "approve")] },
-  // Asistencias: el registro (calendario/listado/reportes) es la función; la
-  // pestaña "Home office y horario" (solicitudes propias) se abre con create,
-  // así un operador entra a pedir home office sin ver el registro del equipo.
+  // Asistencias: el registro (calendario/listado/reportes) y la pestaña
+  // "Home office y horario" (solicitudes propias) son funciones
+  // independientes — un perfil puede tener una sin la otra (ej. técnico:
+  // ninguna de las dos; operador de mesa: solo home office).
   {
     prefix: "/vacaciones/asistencias",
-    feature: "vacaciones-asistencias",
-    anyOf: [p("vacaciones", "manage"), p("vacaciones", "create")],
+    feature: ["vacaciones-asistencias", "vacaciones-home-office"],
+    anyOf: [p("vacaciones", "manage")],
   },
   { prefix: "/vacaciones/gestion", feature: "vacaciones-gestion-humana" },
   { prefix: "/vacaciones/reportes", feature: "vacaciones-reportes" },
@@ -126,12 +130,14 @@ export interface AccessChecks {
 export function canAccessPath(pathname: string, checks: AccessChecks): boolean {
   const rule = ruleForPath(pathname);
   if (!rule) return true;
-  if (rule.feature && checks.hasFeature(rule.feature)) return true;
+  const features = rule.feature === undefined ? [] : ([] as string[]).concat(rule.feature);
+  if (features.some((f) => checks.hasFeature(f))) return true;
   return (rule.anyOf ?? []).some((perm) => checks.can(perm.module, perm.action));
 }
 
 /** Módulo al que pertenece la regla (para el toast de "sin permiso"). */
 export function moduleForRule(rule: RouteRule): string {
   if (rule.anyOf && rule.anyOf.length > 0) return rule.anyOf[0].module;
-  return rule.feature?.split("-")[0] ?? "";
+  const first = ([] as string[]).concat(rule.feature ?? [])[0];
+  return first?.split("-")[0] ?? "";
 }

@@ -3,8 +3,11 @@ import type {
   CrearSolicitudTvAdminBody,
   CrearSolicitudTvBody,
   DecisionSolicitudTvBody,
+  EvolucionEquipo,
+  EvolucionTecnico,
   GuardarBonoInputBody,
   IncidenteBono,
+  MiResumenBono,
   PuntajeTecnico,
   SolicitudTv,
 } from "../types/bono-tecnicos";
@@ -41,6 +44,13 @@ export const bonoTecnicosApi = {
       .get<Page<SolicitudTv>>(`/api/bono-tecnicos/solicitudes-tv/mias?periodo=${periodo}&size=100`)
       .then((p) => p.items),
 
+  /** Puntaje/conteos/TV del técnico autenticado — sin `periodo`, el mes en
+   * curso (backend). */
+  getMiResumen: (periodo?: string) =>
+    httpClient.get<MiResumenBono>(
+      periodo ? `/api/bono-tecnicos/mi-resumen?periodo=${periodo}` : "/api/bono-tecnicos/mi-resumen",
+    ),
+
   getSolicitudesPendientes: (periodo: string) =>
     httpClient
       .get<Page<SolicitudTv>>(
@@ -50,4 +60,12 @@ export const bonoTecnicosApi = {
 
   decidirSolicitud: (id: string, body: DecisionSolicitudTvBody) =>
     httpClient.patch<SolicitudTv>(`/api/bono-tecnicos/solicitudes-tv/${id}/decision`, body),
+
+  getEvolucionAnual: (anio: number) =>
+    httpClient
+      .get<Page<EvolucionTecnico>>(`/api/bono-tecnicos/evolucion-anual?anio=${anio}&size=100`)
+      .then((p) => p.items),
+
+  getEvolucionEquipo: (anio: number) =>
+    httpClient.get<EvolucionEquipo>(`/api/bono-tecnicos/evolucion-anual/equipo?anio=${anio}`),
 };

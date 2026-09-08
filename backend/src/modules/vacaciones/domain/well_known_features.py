@@ -5,6 +5,7 @@ from src.shared.domain.value_objects.feature_key import FeatureKey
 
 DASHBOARD = FeatureKey("vacaciones-dashboard")
 ASISTENCIAS = FeatureKey("vacaciones-asistencias")
+HOME_OFFICE = FeatureKey("vacaciones-home-office")
 GESTION_HUMANA = FeatureKey("vacaciones-gestion-humana")
 REPORTES = FeatureKey("vacaciones-reportes")
 AUDITORIA = FeatureKey("vacaciones-auditoria")

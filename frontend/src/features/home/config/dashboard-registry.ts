@@ -6,6 +6,8 @@ export interface ModuleAccess {
   liquidaciones: boolean;
   vacaciones: boolean;
   wati: boolean;
+  turnos: boolean;
+  bonoTecnicos: boolean;
   /** Cards concedibles por usuario como "funciones" (ADR-032): no alcanza con
    * tener el módulo, se tildan en la grilla de permisos. */
   cardParque: boolean; // feature prestadores-card-parque → card "Parque"
@@ -26,6 +28,8 @@ export function moduleAccessFrom(
     liquidaciones: tiene("liquidaciones"),
     vacaciones: tiene("vacaciones"),
     wati: tiene("wati"),
+    turnos: tiene("turnos"),
+    bonoTecnicos: tiene("bono-tecnicos"),
     cardParque: hasFeature("prestadores-card-parque"),
     cardEquipo: hasFeature("vacaciones-card-equipo"),
     cardOperadores: hasFeature("contadores-card-operadores"),
@@ -34,6 +38,7 @@ export function moduleAccessFrom(
 
 export type CardId =
   | "turnos"
+  | "mi-bono"
   | "clientes-hoy"
   | "wati-pendientes"
   | "insumos"
@@ -47,7 +52,10 @@ export type CardId =
   | "nota";
 
 export const CARD_GUARDS: Record<CardId, (m: ModuleAccess) => boolean> = {
-  turnos: () => true,
+  // Cobertura de operadores de mesa de ayuda: exige turnos.view, no
+  // "cualquier usuario logueado" (bug: un técnico sin ese módulo la veía).
+  turnos: (m) => m.turnos,
+  "mi-bono": (m) => m.bonoTecnicos,
   "clientes-hoy": (m) => m.contadores,
   "wati-pendientes": (m) => m.wati,
   insumos: (m) => m.insumos,
@@ -64,6 +72,7 @@ export const CARD_GUARDS: Record<CardId, (m: ModuleAccess) => boolean> = {
 /** Nombre de cada card tal como se muestra en "Personalizar". */
 export const CARD_LABELS: Record<CardId, string> = {
   turnos: "Turnos del día",
+  "mi-bono": "Mi bono",
   "clientes-hoy": "Clientes de hoy",
   "wati-pendientes": "WhatsApp sin responder",
   insumos: "Insumos sin cargar",
@@ -124,6 +133,7 @@ export const VIEWS: DashboardView[] = [
           { id: "wati-pendientes", w: 3 },
           { id: "insumos", w: 3 },
           { id: "facturacion", w: 3.5 },
+          { id: "mi-bono", w: 3 },
           { id: "nota", w: 2.5 },
         ],
       },
