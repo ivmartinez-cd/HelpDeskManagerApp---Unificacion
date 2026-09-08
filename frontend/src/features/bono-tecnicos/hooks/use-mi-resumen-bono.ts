@@ -14,15 +14,19 @@ export function useMiResumenBono(periodo?: string) {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    bonoTecnicosApi
-      .getMiResumen(periodo)
-      .then((d) => active && setData(d))
-      .catch((err: unknown) => {
+    async function cargar() {
+      setLoading(true);
+      try {
+        const d = await bonoTecnicosApi.getMiResumen(periodo);
+        if (active) setData(d);
+      } catch (err: unknown) {
         console.error("Error al cargar mi resumen de bono:", err);
         if (active) setError(err instanceof Error ? err.message : "No se pudo cargar tu bono.");
-      })
-      .finally(() => active && setLoading(false));
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    void cargar();
     return () => {
       active = false;
     };

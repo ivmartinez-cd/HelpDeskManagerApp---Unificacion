@@ -1,12 +1,11 @@
 import uuid
 
-from src.modules.bono_tecnicos.domain.repositories.tecnico_identity_gateway import (
-    TecnicoVinculado,
-)
-
 from src.modules.bono_tecnicos.domain.entities.bono_tecnico_input import BonoTecnicoInput
 from src.modules.bono_tecnicos.domain.entities.conteo_tecnico import ConteoTecnico
 from src.modules.bono_tecnicos.domain.entities.incidente_bono import IncidenteBono
+from src.modules.bono_tecnicos.domain.repositories.tecnico_identity_gateway import (
+    TecnicoVinculado,
+)
 from src.modules.bono_tecnicos.domain.value_objects.conteo_tv import ConteoTv, ResumenTvTecnico
 from src.modules.bono_tecnicos.domain.value_objects.periodo import Periodo
 
