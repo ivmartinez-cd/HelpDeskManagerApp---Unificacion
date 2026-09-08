@@ -60,18 +60,21 @@ export function Sidebar({
   const preventivosModule = modules.find((m) => m.key === "preventivos");
   const analisisLogHpModule = modules.find((m) => m.key === "analisis-log-hp");
   const bonoTecnicosModule = modules.find((m) => m.key === "bono-tecnicos");
-  // prestadores, sla, preventivos, analisis-log-hp y bono-tecnicos se
-  // muestran anidados bajo Servicio Técnico, no como ítems de nivel superior —
-  // solo reorganización visual del sidebar. Liquidaciones es ítem propio (con
-  // submenú, ver ModuleNavItem) desde 2026-08-28: es facturación mensual, no
-  // operación diaria, y ocupaba casi la mitad del submenú de Servicio Técnico.
+  const tareasVariasModule = modules.find((m) => m.key === "tareas-varias");
+  // prestadores, sla, preventivos, analisis-log-hp, bono-tecnicos y
+  // tareas-varias se muestran anidados bajo Servicio Técnico, no como ítems
+  // de nivel superior — solo reorganización visual del sidebar. Liquidaciones
+  // es ítem propio (con submenú, ver ModuleNavItem) desde 2026-08-28: es
+  // facturación mensual, no operación diaria, y ocupaba casi la mitad del
+  // submenú de Servicio Técnico.
   const topLevelModules = sortedModules.filter(
     (m) =>
       m.key !== "prestadores" &&
       m.key !== "sla" &&
       m.key !== "preventivos" &&
       m.key !== "analisis-log-hp" &&
-      m.key !== "bono-tecnicos",
+      m.key !== "bono-tecnicos" &&
+      m.key !== "tareas-varias",
   );
   // El grupo "Servicio Técnico" no es un módulo del catálogo: se muestra solo si
   // el usuario tiene al menos uno de los módulos que agrupa (ADR-029; antes
@@ -81,7 +84,8 @@ export function Sidebar({
     !!slaModule ||
     !!preventivosModule ||
     !!analisisLogHpModule ||
-    !!bonoTecnicosModule;
+    !!bonoTecnicosModule ||
+    !!tareasVariasModule;
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
@@ -165,6 +169,7 @@ export function Sidebar({
                 hasPreventivos={!!preventivosModule}
                 hasAnalisisLogHp={!!analisisLogHpModule}
                 hasBonoTecnicos={!!bonoTecnicosModule}
+                hasTareasVarias={!!tareasVariasModule}
                 isActive={isActive}
                 submenuOverride={submenuOverride["servicio-tecnico"]}
                 onToggleSubmenu={toggleSubmenu("servicio-tecnico")}

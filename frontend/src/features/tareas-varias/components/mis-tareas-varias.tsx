@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { monthValueToPeriodo } from "../hooks/use-bono-tecnicos";
-import { useMiResumenBono } from "../hooks/use-mi-resumen-bono";
-import { useMisSolicitudesTv } from "../hooks/use-mis-solicitudes-tv";
-import type { EstadoSolicitudTv } from "../types/bono-tecnicos";
-import { MiniStat } from "@/features/home/components/dashboard-card-bits";
+import { monthValueToPeriodo, useMisSolicitudesTv } from "../hooks/use-mis-solicitudes-tv";
+import type { EstadoSolicitudTv } from "../types/tareas-varias";
+import { useMiResumenBono } from "@/features/bono-tecnicos/hooks/use-mi-resumen-bono";
 import { Badge, type BadgeVariant } from "@/shared/components/ui/badge";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
 import { Spinner } from "@/shared/components/ui/spinner";
@@ -20,12 +18,13 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function MisSolicitudesTv() {
+export function MisTareasVarias() {
   const { monthValue, setMonthValue, solicitudes, loading, submitting, error, enviarSolicitud } =
     useMisSolicitudesTv();
-  const { data: resumen, loading: resumenLoading } = useMiResumenBono(
-    monthValueToPeriodo(monthValue),
-  );
+  // Solo el desglose por estado (para la línea de abajo) — el resto de "Mi
+  // bono" (puntaje, días, conteos) ya se ve en Inicio y en Bono Técnicos, no
+  // hace falta repetirlo acá.
+  const { data: resumen } = useMiResumenBono(monthValueToPeriodo(monthValue));
   const [fecha, setFecha] = useState(todayIso());
   const [razonSocial, setRazonSocial] = useState("");
   const [sucursal, setSucursal] = useState("");
@@ -115,31 +114,6 @@ export function MisSolicitudesTv() {
       </form>
 
       <div className="flex flex-col gap-3">
-        <h2 className="font-heading text-lg font-bold text-foreground">Mi bono del período</h2>
-        {!resumenLoading && resumen && (
-          <div className="flex flex-col gap-3 rounded-[12px] border border-border bg-card p-6">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-              <MiniStat
-                label="Puntaje"
-                value={resumen.puntaje !== null ? resumen.puntaje.toFixed(2) : "—"}
-              />
-              <MiniStat label="Días" value={resumen.dias} />
-              <MiniStat label="Correctivo" value={resumen.correctivo} />
-              <MiniStat label="Preventivo" value={resumen.preventivo} />
-              <MiniStat label="Inst-Des" value={resumen.inst_des} />
-              <MiniStat label="Pre-Correctivo" value={resumen.pre_correctivo} />
-              <MiniStat label="Entrega Insumos" value={resumen.entrega_insumos} />
-            </div>
-            <p className="font-body text-[12.5px] text-muted-foreground">
-              TV: <strong className="text-foreground">{resumen.tv_aprobadas}</strong> aprobadas ·{" "}
-              <strong className="text-foreground">{resumen.tv_pendientes}</strong> pendientes ·{" "}
-              <strong className="text-foreground">{resumen.tv_rechazadas}</strong> rechazadas
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-heading text-lg font-bold text-foreground">Mis solicitudes</h2>
           <input
@@ -149,6 +123,13 @@ export function MisSolicitudesTv() {
             className="rounded-[8px] border border-border bg-card px-3 py-1.5 font-body text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand-orange/60"
           />
         </div>
+        {resumen && (
+          <p className="font-body text-[12.5px] text-muted-foreground">
+            <strong className="text-foreground">{resumen.tv_aprobadas}</strong> aprobadas ·{" "}
+            <strong className="text-foreground">{resumen.tv_pendientes}</strong> pendientes ·{" "}
+            <strong className="text-foreground">{resumen.tv_rechazadas}</strong> rechazadas
+          </p>
+        )}
 
         {loading && (
           <div className="flex h-32 items-center justify-center">

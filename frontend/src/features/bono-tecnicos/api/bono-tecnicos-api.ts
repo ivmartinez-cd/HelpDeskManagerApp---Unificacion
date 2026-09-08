@@ -1,15 +1,11 @@
 import { httpClient } from "@/services/http-client";
 import type {
-  CrearSolicitudTvAdminBody,
-  CrearSolicitudTvBody,
-  DecisionSolicitudTvBody,
   EvolucionEquipo,
   EvolucionTecnico,
   GuardarBonoInputBody,
   IncidenteBono,
   MiResumenBono,
   PuntajeTecnico,
-  SolicitudTv,
 } from "../types/bono-tecnicos";
 
 import type { Page } from "@/shared/types/pagination";
@@ -30,36 +26,13 @@ export const bonoTecnicosApi = {
       )
       .then((p) => p.items),
 
-  crearSolicitud: (body: CrearSolicitudTvBody) =>
-    httpClient.post<SolicitudTv>("/api/bono-tecnicos/solicitudes-tv", body),
-
-  crearSolicitudAdmin: (periodo: string, idTecnico: number, body: CrearSolicitudTvAdminBody) =>
-    httpClient.post<SolicitudTv>(
-      `/api/bono-tecnicos/${periodo}/${idTecnico}/solicitudes-tv`,
-      body,
-    ),
-
-  getMisSolicitudes: (periodo: string) =>
-    httpClient
-      .get<Page<SolicitudTv>>(`/api/bono-tecnicos/solicitudes-tv/mias?periodo=${periodo}&size=100`)
-      .then((p) => p.items),
-
   /** Puntaje/conteos/TV del técnico autenticado — sin `periodo`, el mes en
-   * curso (backend). */
+   * curso (backend). Las solicitudes de TV en sí (cargar/aprobar) son del
+   * módulo `tareas-varias`, ver `tareas-varias-api.ts`. */
   getMiResumen: (periodo?: string) =>
     httpClient.get<MiResumenBono>(
       periodo ? `/api/bono-tecnicos/mi-resumen?periodo=${periodo}` : "/api/bono-tecnicos/mi-resumen",
     ),
-
-  getSolicitudesPendientes: (periodo: string) =>
-    httpClient
-      .get<Page<SolicitudTv>>(
-        `/api/bono-tecnicos/solicitudes-tv?periodo=${periodo}&estado=PENDIENTE&size=100`,
-      )
-      .then((p) => p.items),
-
-  decidirSolicitud: (id: string, body: DecisionSolicitudTvBody) =>
-    httpClient.patch<SolicitudTv>(`/api/bono-tecnicos/solicitudes-tv/${id}/decision`, body),
 
   getEvolucionAnual: (anio: number) =>
     httpClient

@@ -7,7 +7,6 @@ interface BuildColumnsOptions {
   savingId: number | null;
   onGuardarDias: (row: PuntajeTecnico, dias: number) => void;
   onVerDetalle: (row: PuntajeTecnico) => void;
-  onCrearTv: (row: PuntajeTecnico) => void;
 }
 
 export function buildBonoTecnicosColumns({
@@ -15,7 +14,6 @@ export function buildBonoTecnicosColumns({
   savingId,
   onGuardarDias,
   onVerDetalle,
-  onCrearTv,
 }: BuildColumnsOptions): StatsColumn<PuntajeTecnico>[] {
   return [
     {
@@ -96,24 +94,11 @@ export function buildBonoTecnicosColumns({
       key: "tareas_varias",
       label: "TV",
       align: "right",
-      className: "w-28",
-      // La cuenta de solicitudes de TV aprobadas del período no es editable
-      // acá (ver SolicitudTv) — el botón abre el modal para cargar una TV a
-      // nombre del técnico, que nace ya APROBADA.
-      render: (row) => (
-        <div className="flex items-center justify-end gap-2">
-          <span>{row.tareas_varias}</span>
-          <button
-            type="button"
-            disabled={!canUpdate}
-            onClick={() => onCrearTv(row)}
-            className="font-body text-xs font-bold text-brand-orange hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
-            title="Cargar TV a nombre de este técnico"
-          >
-            + TV
-          </button>
-        </div>
-      ),
+      className: "w-16",
+      // Cuenta de TV aprobadas del período, de solo lectura acá — cargar o
+      // aprobar una TV es del módulo Tareas Varias (`/tareas-varias`), no de
+      // esta pantalla.
+      render: (row) => row.tareas_varias,
     },
     {
       key: "puntaje",

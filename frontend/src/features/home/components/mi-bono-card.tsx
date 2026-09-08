@@ -44,7 +44,7 @@ export function MiBonoCard({
       loading={loading}
       error={error}
       onRetry={onRetry}
-      footer={<CardLink href="/bono-tecnicos/solicitudes">Ver detalle →</CardLink>}
+      footer={<CardLink href="/tareas-varias">Ver mis Tareas Varias →</CardLink>}
     >
       {!resumen ? (
         <CardEmpty>Sin datos disponibles.</CardEmpty>

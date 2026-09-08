@@ -1,9 +1,7 @@
-import { MisSolicitudesTv } from "@/features/bono-tecnicos/components/mis-solicitudes-tv";
+import { redirect } from "next/navigation";
 
-export const metadata = {
-  title: "Mis Tareas Varias",
-};
-
-export default function MisSolicitudesTvPage() {
-  return <MisSolicitudesTv />;
+/** Ruta vieja de "Mis Tareas Varias", de antes del split del módulo
+ * `tareas_varias` — se mantiene solo para no romper links/bookmarks. */
+export default function MisSolicitudesTvRedirectPage() {
+  redirect("/tareas-varias");
 }

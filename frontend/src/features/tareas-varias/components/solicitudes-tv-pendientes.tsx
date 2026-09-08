@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SolicitudTvAdminModal } from "./solicitud-tv-admin-modal";
 import { useSolicitudesTvPendientes } from "../hooks/use-solicitudes-tv-pendientes";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { Spinner } from "@/shared/components/ui/spinner";
@@ -11,11 +12,10 @@ interface Props {
 }
 
 export function SolicitudesTvPendientes({ periodo, enabled }: Props) {
-  const { solicitudes, loading, decidingId, error, decidir } = useSolicitudesTvPendientes(
-    periodo,
-    enabled,
-  );
+  const { solicitudes, loading, decidingId, error, decidir, crearAdmin } =
+    useSolicitudesTvPendientes(periodo, enabled);
   const [motivoPorId, setMotivoPorId] = useState<Record<string, string>>({});
+  const [mostrarAdminModal, setMostrarAdminModal] = useState(false);
 
   if (!enabled) return null;
 
@@ -25,11 +25,16 @@ export function SolicitudesTvPendientes({ periodo, enabled }: Props) {
         <h2 className="font-heading text-lg font-bold text-foreground">
           Solicitudes de TV pendientes
         </h2>
-        {!loading && solicitudes.length > 0 && (
-          <span className="font-body text-xs font-bold uppercase tracking-wide text-muted-foreground">
-            {solicitudes.length} pendiente{solicitudes.length === 1 ? "" : "s"}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {!loading && solicitudes.length > 0 && (
+            <span className="font-body text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              {solicitudes.length} pendiente{solicitudes.length === 1 ? "" : "s"}
+            </span>
+          )}
+          <BrandButton type="button" variant="outline" size="sm" onClick={() => setMostrarAdminModal(true)}>
+            Cargar a nombre de un técnico
+          </BrandButton>
+        </div>
       </div>
 
       {loading && (
@@ -90,6 +95,13 @@ export function SolicitudesTvPendientes({ periodo, enabled }: Props) {
             </div>
           ))}
         </div>
+      )}
+
+      {mostrarAdminModal && (
+        <SolicitudTvAdminModal
+          onClose={() => setMostrarAdminModal(false)}
+          onSubmit={crearAdmin}
+        />
       )}
     </div>
   );

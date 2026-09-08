@@ -7,13 +7,15 @@ import { cn } from "@/shared/utils/cn";
 
 /** Servicio Técnico: grupo hardcodeado (no es módulo), expandible con
  *  los módulos que agrupa (sla, prestadores, preventivos, analisis-log-hp,
- *  bono-tecnicos). Liquidaciones va aparte, como ítem de nivel superior. */
+ *  bono-tecnicos, tareas-varias). Liquidaciones va aparte, como ítem de
+ *  nivel superior. */
 export function ServicioTecnicoNavItem({
   hasSla,
   hasPrestadores,
   hasPreventivos,
   hasAnalisisLogHp,
   hasBonoTecnicos,
+  hasTareasVarias,
   isActive,
   submenuOverride,
   onToggleSubmenu,
@@ -24,6 +26,7 @@ export function ServicioTecnicoNavItem({
   hasPreventivos: boolean;
   hasAnalisisLogHp: boolean;
   hasBonoTecnicos: boolean;
+  hasTareasVarias: boolean;
   isActive: (route: string) => boolean;
   submenuOverride: boolean | undefined;
   onToggleSubmenu: (expanded: boolean) => void;
@@ -35,9 +38,15 @@ export function ServicioTecnicoNavItem({
     (hasPrestadores && isActive("/prestadores")) ||
     (hasPreventivos && isActive("/preventivos")) ||
     (hasAnalisisLogHp && isActive("/analisis-log-hp")) ||
-    (hasBonoTecnicos && isActive("/bono-tecnicos"));
+    (hasBonoTecnicos && isActive("/bono-tecnicos")) ||
+    (hasTareasVarias && isActive("/tareas-varias"));
   const stcHasSubmenu =
-    hasSla || hasPrestadores || hasPreventivos || hasAnalisisLogHp || hasBonoTecnicos;
+    hasSla ||
+    hasPrestadores ||
+    hasPreventivos ||
+    hasAnalisisLogHp ||
+    hasBonoTecnicos ||
+    hasTareasVarias;
   const stcSubmenuExpanded = submenuOverride ?? stcActive;
   const stcHref = hasPrestadores ? "/prestadores" : hasSla ? "/sla" : "/servicio-tecnico";
   return (
@@ -87,6 +96,7 @@ export function ServicioTecnicoNavItem({
           hasPreventivos={hasPreventivos}
           hasAnalisisLogHp={hasAnalisisLogHp}
           hasBonoTecnicos={hasBonoTecnicos}
+          hasTareasVarias={hasTareasVarias}
           onNavigate={onNavigate}
         />
       )}

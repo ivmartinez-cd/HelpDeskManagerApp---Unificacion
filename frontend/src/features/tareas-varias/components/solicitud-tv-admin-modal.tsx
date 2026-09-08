@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import type { CrearSolicitudTvAdminBody } from "../types/bono-tecnicos";
+import type { CrearSolicitudTvAdminBody } from "../types/tareas-varias";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
 import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
@@ -11,17 +11,18 @@ function todayIso(): string {
 }
 
 interface SolicitudTvAdminModalProps {
-  tecnico: string;
   onClose: () => void;
-  onSubmit: (body: CrearSolicitudTvAdminBody) => Promise<unknown>;
+  onSubmit: (idTecnico: number, body: CrearSolicitudTvAdminBody) => Promise<unknown>;
 }
 
 /** Carga de TV a nombre de un técnico desde el panel de supervisor — mismo
- * formulario que `MisSolicitudesTv`, pero la solicitud nace ya APROBADA
- * (no pasa por la cola de pendientes de `SolicitudesTvPendientes`). El
- * `id_tecnico` no viaja como prop porque el padre ya lo cierra en
- * `onSubmit` (misma fila que abrió el modal). */
-export function SolicitudTvAdminModal({ tecnico, onClose, onSubmit }: SolicitudTvAdminModalProps) {
+ * formulario que `MisTareasVarias`, pero la solicitud nace ya APROBADA (no
+ * pasa por la cola de pendientes). Sin catálogo propio de técnicos en este
+ * módulo (ver Bono Técnicos para el ID), el ID y el nombre se escriben a
+ * mano — mismo criterio que "Cargar Días" ahí. */
+export function SolicitudTvAdminModal({ onClose, onSubmit }: SolicitudTvAdminModalProps) {
+  const [idTecnico, setIdTecnico] = useState("");
+  const [tecnico, setTecnico] = useState("");
   const [fecha, setFecha] = useState(todayIso());
   const [razonSocial, setRazonSocial] = useState("");
   const [sucursal, setSucursal] = useState("");
@@ -31,7 +32,7 @@ export function SolicitudTvAdminModal({ tecnico, onClose, onSubmit }: SolicitudT
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     void submit(async () => {
-      await onSubmit({
+      await onSubmit(Number(idTecnico), {
         tecnico,
         fecha,
         razon_social: razonSocial,
@@ -43,11 +44,30 @@ export function SolicitudTvAdminModal({ tecnico, onClose, onSubmit }: SolicitudT
   };
 
   return (
-    <BrandModal isOpen title={`Cargar TV — ${tecnico}`} onClose={onClose} widthPx={480} error={error}>
+    <BrandModal isOpen title="Cargar TV a nombre de un técnico" onClose={onClose} widthPx={480} error={error}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <p className="font-body text-xs text-muted-foreground">
-          Se registra ya aprobada e impacta el Puntaje del período.
+          Se registra ya aprobada e impacta el Puntaje del bono del período. El ID de técnico es
+          el mismo que se ve en Bono Técnicos.
         </p>
+        <div className="grid grid-cols-2 gap-4">
+          <BrandInput
+            label="ID Técnico"
+            type="number"
+            value={idTecnico}
+            required
+            min={1}
+            onChange={(e) => setIdTecnico(e.target.value)}
+          />
+          <BrandInput
+            label="Técnico"
+            placeholder="Ej. CD - Agustin HACZEK"
+            value={tecnico}
+            required
+            maxLength={200}
+            onChange={(e) => setTecnico(e.target.value)}
+          />
+        </div>
         <BrandInput
           label="Fecha"
           type="date"

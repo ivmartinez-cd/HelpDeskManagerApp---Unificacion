@@ -1,13 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { bonoTecnicosApi } from "../api/bono-tecnicos-api";
-import type { CrearSolicitudTvBody, SolicitudTv } from "../types/bono-tecnicos";
-import { monthValueToPeriodo } from "./use-bono-tecnicos";
+import { tareasVariasApi } from "../api/tareas-varias-api";
+import type { CrearSolicitudTvBody, SolicitudTv } from "../types/tareas-varias";
 
 function currentMonthValue(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** "2026-05" (input `type=month`) -> "202605" (período AAAAMM del backend). */
+export function monthValueToPeriodo(value: string): string {
+  return value.replace("-", "");
 }
 
 export function useMisSolicitudesTv() {
@@ -29,7 +33,7 @@ export function useMisSolicitudesTv() {
 
   const cargar = () => {
     const periodo = monthValueToPeriodo(monthValue);
-    return bonoTecnicosApi
+    return tareasVariasApi
       .getMisSolicitudes(periodo)
       .then(setSolicitudes)
       .catch((err: unknown) => {
@@ -54,7 +58,7 @@ export function useMisSolicitudesTv() {
   const enviarSolicitud = (body: CrearSolicitudTvBody) => {
     setSubmitting(true);
     setError(null);
-    return bonoTecnicosApi
+    return tareasVariasApi
       .crearSolicitud(body)
       .then(() => cargar())
       .catch((err: unknown) => {

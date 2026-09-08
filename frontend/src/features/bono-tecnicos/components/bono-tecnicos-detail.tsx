@@ -4,8 +4,6 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { BonoTecnicoDetalleModal } from "./bono-tecnico-detalle-modal";
 import { buildBonoTecnicosColumns } from "./bono-tecnicos-columns";
-import { SolicitudTvAdminModal } from "./solicitud-tv-admin-modal";
-import { SolicitudesTvPendientes } from "./solicitudes-tv-pendientes";
 import { monthValueToPeriodo, useBonoTecnicos } from "../hooks/use-bono-tecnicos";
 import type { PuntajeTecnico } from "../types/bono-tecnicos";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
@@ -15,7 +13,6 @@ import { StatsTable } from "@/shared/components/ui/stats-table";
 export function BonoTecnicosDetail() {
   const {
     canUpdate,
-    canApprove,
     monthValue,
     setMonthValue,
     filas,
@@ -25,10 +22,8 @@ export function BonoTecnicosDetail() {
     error,
     guardarInput,
     cargarSugeridos,
-    crearSolicitudTvAdmin,
   } = useBonoTecnicos();
   const [detalleRow, setDetalleRow] = useState<PuntajeTecnico | null>(null);
-  const [solicitudTvRow, setSolicitudTvRow] = useState<PuntajeTecnico | null>(null);
 
   const sinDiasCargados = filas.filter((f) => f.puntaje === null).length;
 
@@ -37,7 +32,6 @@ export function BonoTecnicosDetail() {
     savingId,
     onGuardarDias: (row: PuntajeTecnico, dias: number) => guardarInput(row.id_tecnico, dias),
     onVerDetalle: setDetalleRow,
-    onCrearTv: setSolicitudTvRow,
   });
 
   return (
@@ -78,11 +72,6 @@ export function BonoTecnicosDetail() {
 
       {!loading && !error && (
         <div className="flex flex-col gap-6">
-          <SolicitudesTvPendientes
-            periodo={monthValueToPeriodo(monthValue)}
-            enabled={canApprove}
-          />
-
           <KpiGrid>
             <KpiTile label="Técnicos con actividad" value={String(filas.length)} tone="neutral" />
             <KpiTile
@@ -125,15 +114,6 @@ export function BonoTecnicosDetail() {
           periodo={monthValueToPeriodo(monthValue)}
           idTecnico={detalleRow.id_tecnico}
           onClose={() => setDetalleRow(null)}
-        />
-      )}
-
-      {solicitudTvRow && (
-        <SolicitudTvAdminModal
-          key={solicitudTvRow.id_tecnico}
-          tecnico={solicitudTvRow.tecnico}
-          onClose={() => setSolicitudTvRow(null)}
-          onSubmit={(body) => crearSolicitudTvAdmin(solicitudTvRow.id_tecnico, body)}
         />
       )}
     </div>

@@ -12,15 +12,14 @@ type Tab = "gerencia" | "carga";
 
 /** /bono-tecnicos: vista de gerencia (evolución anual, lectura) por defecto,
  * y la carga mensual operativa como pestaña secundaria solo para quien puede
- * cargar Días o aprobar TV — mismo `SegmentedControl` + `?tab=` que
- * `turnos-admin-tabs.tsx`. */
+ * cargar Días — mismo `SegmentedControl` + `?tab=` que `turnos-admin-tabs.tsx`.
+ * Cargar/aprobar TV ya no es de este módulo (ver `tareas-varias`). */
 function BonoTecnicosViewContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user, can } = useSession();
-  const puedeCargar =
-    user.isSuperadmin || can("bono-tecnicos", "update") || can("bono-tecnicos", "approve");
+  const puedeCargar = user.isSuperadmin || can("bono-tecnicos", "update");
 
   const tab: Tab = searchParams.get("tab") === "carga" && puedeCargar ? "carga" : "gerencia";
 

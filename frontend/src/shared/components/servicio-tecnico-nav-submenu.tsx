@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Award,
   CalendarClock,
+  ClipboardCheck,
   ClipboardList,
   FileQuestion,
   FileSearch,
@@ -42,14 +43,14 @@ function buildSections({
   hasPreventivos,
   hasAnalisisLogHp,
   hasBonoTecnicos,
-  bonoTecnicosHref,
+  hasTareasVarias,
 }: {
   hasPrestadores: boolean;
   hasSla: boolean;
   hasPreventivos: boolean;
   hasAnalisisLogHp: boolean;
   hasBonoTecnicos: boolean;
-  bonoTecnicosHref: string;
+  hasTareasVarias: boolean;
 }): NavSectionDef[] {
   const incidentes: NavLinkDef[] = hasSla
     ? [
@@ -72,7 +73,10 @@ function buildSections({
       ? [{ href: "/preventivos", label: "Preventivos por zona", exact: false, icon: CalendarClock }]
       : []),
     ...(hasBonoTecnicos
-      ? [{ href: bonoTecnicosHref, label: "Bono Técnicos", exact: false, icon: Award }]
+      ? [{ href: "/bono-tecnicos", label: "Bono Técnicos", exact: false, icon: Award }]
+      : []),
+    ...(hasTareasVarias
+      ? [{ href: "/tareas-varias", label: "Tareas Varias", exact: false, icon: ClipboardCheck }]
       : []),
   ];
 
@@ -122,6 +126,7 @@ export function ServicioTecnicoNavSubmenu({
   hasPreventivos,
   hasAnalisisLogHp,
   hasBonoTecnicos,
+  hasTareasVarias,
   onNavigate,
 }: {
   hasPrestadores: boolean;
@@ -129,24 +134,24 @@ export function ServicioTecnicoNavSubmenu({
   hasPreventivos: boolean;
   hasAnalisisLogHp: boolean;
   hasBonoTecnicos: boolean;
+  hasTareasVarias: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const { can, hasFeature } = useSession();
   // Los flags `has*` dicen qué módulos tiene el usuario; el mapa central de
   // permisos por ruta (ADR-029) filtra además los ítems cuya pantalla pide
-  // una acción específica.
-  // Mismo criterio que vacaciones (ver sidebar.tsx::hrefDeModulo): si no
-  // llega a la pantalla de "view" (la del supervisor con todos los
-  // técnicos), el link va a la propia (cargar/ver sus solicitudes de TV).
-  const bonoTecnicosHref = can("bono-tecnicos", "view") ? "/bono-tecnicos" : "/bono-tecnicos/solicitudes";
+  // una acción específica — acá especialmente importante: "Bono Técnicos"
+  // pide `view` (pantalla de gerencia) y "Tareas Varias" pide `create` o
+  // `approve` (ADR de separación de Tareas Varias), un técnico de calle solo
+  // ve el segundo.
   const sections = buildSections({
     hasPrestadores,
     hasSla,
     hasPreventivos,
     hasAnalisisLogHp,
     hasBonoTecnicos,
-    bonoTecnicosHref,
+    hasTareasVarias,
   })
     .map((s) => ({ ...s, links: s.links.filter((l) => canAccessPath(l.href, { can, hasFeature })) }))
     .filter((s) => s.links.length > 0);

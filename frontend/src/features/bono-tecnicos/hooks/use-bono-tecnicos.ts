@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { bonoTecnicosApi } from "../api/bono-tecnicos-api";
-import type { CrearSolicitudTvAdminBody, PuntajeTecnico } from "../types/bono-tecnicos";
+import type { PuntajeTecnico } from "../types/bono-tecnicos";
 import { useSession } from "@/services/session-provider";
 
 function currentMonthValue(): string {
@@ -19,7 +19,6 @@ export function monthValueToPeriodo(value: string): string {
 export function useBonoTecnicos() {
   const { user, can } = useSession();
   const canUpdate = user.isSuperadmin || can("bono-tecnicos", "update");
-  const canApprove = user.isSuperadmin || can("bono-tecnicos", "approve");
 
   const [monthValue, setMonthValue] = useState<string>(currentMonthValue());
   const [filas, setFilas] = useState<PuntajeTecnico[]>([]);
@@ -103,24 +102,8 @@ export function useBonoTecnicos() {
     }
   };
 
-  const crearSolicitudTvAdmin = (idTecnico: number, body: CrearSolicitudTvAdminBody) => {
-    const periodo = monthValueToPeriodo(monthValue);
-    setSavingId(idTecnico);
-    setError(null);
-    return bonoTecnicosApi
-      .crearSolicitudAdmin(periodo, idTecnico, body)
-      .then(cargar)
-      .catch((err: unknown) => {
-        console.error("Error al cargar la TV:", err);
-        setError(err instanceof Error ? err.message : "No se pudo cargar la TV.");
-        throw err;
-      })
-      .finally(() => setSavingId(null));
-  };
-
   return {
     canUpdate,
-    canApprove,
     monthValue,
     setMonthValue,
     filas,
@@ -130,6 +113,5 @@ export function useBonoTecnicos() {
     error,
     guardarInput,
     cargarSugeridos,
-    crearSolicitudTvAdmin,
   };
 }

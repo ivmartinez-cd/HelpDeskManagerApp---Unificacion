@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { bonoTecnicosApi } from "../api/bono-tecnicos-api";
-import type { SolicitudTv } from "../types/bono-tecnicos";
+import { tareasVariasApi } from "../api/tareas-varias-api";
+import type { CrearSolicitudTvAdminBody, SolicitudTv } from "../types/tareas-varias";
 
 export function useSolicitudesTvPendientes(periodo: string, enabled: boolean) {
   const [solicitudes, setSolicitudes] = useState<SolicitudTv[]>([]);
@@ -23,7 +23,7 @@ export function useSolicitudesTvPendientes(periodo: string, enabled: boolean) {
 
   const cargar = () => {
     if (!enabled) return Promise.resolve();
-    return bonoTecnicosApi
+    return tareasVariasApi
       .getSolicitudesPendientes(periodo)
       .then(setSolicitudes)
       .catch((err: unknown) => {
@@ -49,7 +49,7 @@ export function useSolicitudesTvPendientes(periodo: string, enabled: boolean) {
   const decidir = (id: string, decision: "APROBADA" | "RECHAZADA", motivo?: string) => {
     setDecidingId(id);
     setError(null);
-    return bonoTecnicosApi
+    return tareasVariasApi
       .decidirSolicitud(id, { decision, motivo })
       .then(() => cargar())
       .catch((err: unknown) => {
@@ -59,5 +59,11 @@ export function useSolicitudesTvPendientes(periodo: string, enabled: boolean) {
       .finally(() => setDecidingId(null));
   };
 
-  return { solicitudes, loading, decidingId, error, decidir };
+  // Nace ya APROBADA (ver CrearSolicitudTvAdminBody): no aparece en la cola
+  // de PENDIENTE, así que no hace falta recargar `solicitudes` después — el
+  // propio modal maneja su `saving`/error (ver `useModalSubmit`).
+  const crearAdmin = (idTecnico: number, body: CrearSolicitudTvAdminBody) =>
+    tareasVariasApi.crearSolicitudAdmin(idTecnico, body);
+
+  return { solicitudes, loading, decidingId, error, decidir, crearAdmin };
 }
