@@ -7,6 +7,7 @@ import type {
   CrearRecesoBody,
   ForzarMetodoBody,
   GrupoEconomicoOption,
+  HistorialEquipo,
   ProcesoOption,
   RecalcularCandidatoBody,
   RecalcularCandidatoResponse,
@@ -79,4 +80,24 @@ export const proyeccionApi = {
     const qs = idGrupoEconomico ? `?id_grupo_economico=${idGrupoEconomico}` : "";
     return httpClient.delete<void>(`${BASE}/recesos/${id}${qs}`);
   },
+
+  // Solo para un proceso real (REGLAS_DE_NEGOCIO §12) — no hay export de
+  // ejemplo, por eso pide la misma `SolicitudTableroReal` que `getTablero`.
+  exportarCsv: (solicitud: SolicitudTableroReal) => {
+    const qs = new URLSearchParams({
+      nro_proceso: String(solicitud.nroProceso),
+      id_grupo_economico: String(solicitud.idGrupoEconomico),
+      id_anexo: String(solicitud.idAnexo),
+      fecha_objetivo: solicitud.fechaObjetivo,
+    });
+    return httpClient.downloadFile(
+      `${BASE}/export?${qs.toString()}`,
+      `Estimacion_${solicitud.nroProceso}_${solicitud.fechaObjetivo}.csv`,
+    );
+  },
+
+  // Línea de tiempo de un equipo (MODELO_DE_DATOS.md §3.6) — vacía para un
+  // equipo de ejemplo (`clase` no numérica), resuelto en el backend.
+  getHistorialEquipo: (idMaquina: number, clase: string) =>
+    httpClient.get<HistorialEquipo>(`${BASE}/equipos/${idMaquina}/${clase}/historial`),
 };

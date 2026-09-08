@@ -26,7 +26,9 @@ async def test_arma_una_fila_por_equipo_y_clase() -> None:
     resultado = await _use_case().execute(_CTX)
 
     assert len(resultado.filas) == 11  # 10 equipos, uno con 2 clases (Mono+Color)
-    assert resultado.resumen.total == 11
+    # "Total equipos" cuenta máquinas físicas distintas (parque), no filas:
+    # el equipo Mono+Color aporta 2 filas pero 1 sola máquina.
+    assert resultado.resumen.total == 10
 
 
 async def test_equipo_real_cargado_es_verde_y_no_se_estima() -> None:

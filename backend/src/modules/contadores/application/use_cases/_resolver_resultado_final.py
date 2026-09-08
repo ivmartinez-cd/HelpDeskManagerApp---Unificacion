@@ -73,6 +73,7 @@ def _resultado_real(clase: ClaseProceso, automatico: EstimacionResultado) -> Est
         impresiones=impresiones,
         tipo_toma=clase.ultimo_contador_facturado.tipo_toma,
         requiere_confirmacion=False,
+        detalle_parque=None,
     )
 
 
@@ -92,4 +93,8 @@ def _resultado_de_manual(
         fuente=manual.fuente,
         metodo_detalle=manual.metodo_detalle,
         requiere_confirmacion=False,
+        detalle_parque=None,
+        dias_par_pl=None,
+        tasa_diaria=None,
+        dias_proyectados=None,
     )

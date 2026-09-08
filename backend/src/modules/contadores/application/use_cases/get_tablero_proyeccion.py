@@ -154,6 +154,10 @@ def _campos_calculo(calculo: _CalculoClase) -> dict[str, Any]:
         semaforo=resultado.semaforo,
         requiere_confirmacion=resultado.requiere_confirmacion,
         nota_operador=calculo.decision.nota if calculo.decision else None,
+        detalle_parque=resultado.detalle_parque,
+        dias_par_pl=resultado.dias_par_pl,
+        tasa_diaria=resultado.tasa_diaria,
+        dias_proyectados=resultado.dias_proyectados,
     )
 
 
@@ -168,10 +172,15 @@ def _resumen_de(filas: list[FilaProyeccionDto]) -> ResumenProyeccionDto:
     pendientes = sum(1 for f in filas if f.fuente == "Pendiente")
     sospechosos = sum(1 for f in filas if f.borde_salto_imposible)
     estimados = len(filas) - reales
+    # "Total equipos" es el parque (máquinas físicas distintas), no la
+    # cantidad de filas: un equipo con clases Mono+Color aporta 2 filas
+    # pero 1 sola máquina. Copia el criterio legacy (GrillaEstimacion.razor
+    # `TotalEquipos => Equipos.Select(e => e.Raw.ID_Maquina).Distinct().Count()`).
+    total_equipos = len({f.id_maquina for f in filas})
     return ResumenProyeccionDto(
         reales=reales,
         estimados=estimados,
         pendientes=pendientes,
         sospechosos=sospechosos,
-        total=len(filas),
+        total=total_equipos,
     )

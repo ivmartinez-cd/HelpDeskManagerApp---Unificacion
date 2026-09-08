@@ -36,6 +36,9 @@ from src.modules.contadores.infrastructure.siges.pyodbc_falta_contador_proceso_g
 from src.modules.contadores.infrastructure.siges.pyodbc_grilla_estimacion_gateway import (
     PyodbcGrillaEstimacionGateway,
 )
+from src.modules.contadores.infrastructure.siges.pyodbc_historial_equipo_gateway import (
+    PyodbcHistorialEquipoGateway,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_operador_gateway import (
     PyodbcOperadorGateway,
 )
@@ -235,3 +238,10 @@ def get_candidatos_equipo_gateway() -> PyodbcCandidatosEquipoGateway:
     """Sin variante `_or_none`: sin Siges no hay candidatos reales que
     mostrar (el fallback a datos de ejemplo lo resuelve el router, no acá)."""
     return PyodbcCandidatosEquipoGateway(require_mercurio_runner())
+
+
+@lru_cache
+def get_historial_equipo_gateway() -> PyodbcHistorialEquipoGateway:
+    """Sin variante `_or_none`: sin Siges no hay historial real que mostrar
+    (equipos de ejemplo devuelven lista vacía, resuelto en el router)."""
+    return PyodbcHistorialEquipoGateway(require_mercurio_runner())

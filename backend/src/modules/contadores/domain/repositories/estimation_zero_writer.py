@@ -4,4 +4,11 @@ from src.modules.contadores.domain.value_objects.estimation_zero_row import Esti
 
 
 class EstimationZeroWriter(Protocol):
-    def write(self, rows: list[EstimationZeroRow], *, output_dir: str, cliente: str) -> str: ...
+    def write(
+        self,
+        rows: list[EstimationZeroRow],
+        *,
+        output_dir: str,
+        cliente: str,
+        nro_proceso: int | None = None,
+    ) -> str: ...

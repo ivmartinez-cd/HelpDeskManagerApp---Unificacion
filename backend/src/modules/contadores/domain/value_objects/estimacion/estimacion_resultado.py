@@ -8,6 +8,20 @@ from src.modules.contadores.domain.value_objects.estimacion.fuente_estimacion im
 
 
 @dataclass(frozen=True, slots=True)
+class DetalleParque:
+    """Auditoría del promedio de parque usado (REGLAS_DE_NEGOCIO §12,
+    LEYENDA_OBSERVACION.md) — alimenta el tooltip "Detalle de estimación"
+    del frontend (`EstimacionTooltip` legacy). `es_mediana_truncada` decide
+    el régimen (N>=5 → P80) igual que `EtiquetaMetodo` del legacy."""
+
+    n_equipos: int
+    n_descartados: int
+    es_mediana_truncada: bool
+    mediana_cruda: float | None
+    media_cruda: float | None
+
+
+@dataclass(frozen=True, slots=True)
 class EstimacionResultado:
     """Salida del motor para un (equipo, clase de contador). `tipo_toma`
     grabado es siempre 14/19/None — nunca 4 (REGLAS_DE_NEGOCIO §4, regla
@@ -35,3 +49,4 @@ class EstimacionResultado:
     t4_sin_revisar: bool = False
     tasa_diaria: float | None = None
     bloqueo_obligatorio: bool = False
+    detalle_parque: DetalleParque | None = None

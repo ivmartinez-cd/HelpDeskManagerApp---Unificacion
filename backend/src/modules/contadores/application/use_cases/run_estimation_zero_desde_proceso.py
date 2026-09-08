@@ -25,4 +25,9 @@ class RunEstimationZeroDesdeProcesoUseCase:
     async def execute(self, request: RunEstimationZeroFromProcesoRequest) -> str:
         proceso = await self._source.fetch(request.nro_proceso)
         rows = build_estimation_zero_rows(proceso.filas, request.fecha_nueva)
-        return self._writer.write(rows, output_dir=request.output_dir, cliente=proceso.cliente)
+        return self._writer.write(
+            rows,
+            output_dir=request.output_dir,
+            cliente=proceso.cliente,
+            nro_proceso=request.nro_proceso,
+        )

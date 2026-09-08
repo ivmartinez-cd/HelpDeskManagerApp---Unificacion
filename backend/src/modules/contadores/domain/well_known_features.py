@@ -11,3 +11,7 @@ CLIENTES_NUEVOS = FeatureKey("contadores-clientes-nuevos")
 # asignados al usuario (cruce por nombre de operador, ADR-009).
 SIN_REAL_TODOS = FeatureKey("contadores-sin-real-todos")
 CARD_OPERADORES = FeatureKey("contadores-card-operadores")
+# Operar el panel de candidatos de Proyección (elegir P/L, forzar método,
+# aceptar, marcar pendiente, nota) sin necesitar `contadores.manage` completo
+# (que también da recesos y export). Ver `require_feature_or_permission`.
+PROYECCION_OPERAR = FeatureKey("contadores-proyeccion-operar")

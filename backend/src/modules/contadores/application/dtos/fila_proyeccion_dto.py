@@ -5,6 +5,9 @@ from src.modules.contadores.domain.value_objects.estimacion.estado_maquina impor
     EstadoMaquina,
     Tecnologia,
 )
+from src.modules.contadores.domain.value_objects.estimacion.estimacion_resultado import (
+    DetalleParque,
+)
 from src.modules.contadores.domain.value_objects.estimacion.fuente_estimacion import (
     Coloreo,
     Semaforo,
@@ -44,3 +47,7 @@ class FilaProyeccionDto:
     requiere_confirmacion: bool
     nota_operador: str | None = None
     es_clase_sintetica: bool = False
+    detalle_parque: DetalleParque | None = None
+    dias_par_pl: int | None = None
+    tasa_diaria: float | None = None
+    dias_proyectados: int | None = None

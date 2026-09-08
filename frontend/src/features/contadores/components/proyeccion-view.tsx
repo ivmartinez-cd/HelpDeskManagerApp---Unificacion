@@ -17,6 +17,7 @@ import type {
   TableroProyeccion,
 } from "../types/proyeccion";
 import { ProyeccionCandidatosDrawer } from "./proyeccion-candidatos-drawer";
+import { ProyeccionHistorialModal } from "./proyeccion-historial-modal";
 import { ProyeccionTabla, type ProyeccionSortKey } from "./proyeccion-tabla";
 
 type FiltroChip = "todos" | "estimar" | "reales" | "sospechosos";
@@ -66,6 +67,7 @@ export function ProyeccionView() {
   const [filtro, setFiltro] = useState<FiltroChip>("todos");
   const [busqueda, setBusqueda] = useState("");
   const [seleccion, setSeleccion] = useState<FilaProyeccion | null>(null);
+  const [verHistorial, setVerHistorial] = useState<FilaProyeccion | null>(null);
   const { sort, toggleSort } = useTableSort<ProyeccionSortKey>({
     initial: { key: "ubicacion", direction: "asc" },
     keys: ["ubicacion", "nro_serie", "modelo", "impresiones"],
@@ -82,6 +84,8 @@ export function ProyeccionView() {
   const [fechaObjetivo, setFechaObjetivo] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exportando, setExportando] = useState(false);
+  const [errorExport, setErrorExport] = useState<string | null>(null);
 
   useEffect(() => {
     void proyeccionApi.listGruposEconomicos().then(setGrupos);
@@ -144,6 +148,16 @@ export function ProyeccionView() {
 
   const contador = (f: FiltroChip) =>
     tablero ? tablero.filas.filter((fila) => aplicaFiltro(fila, f)).length : 0;
+
+  const exportarCsv = useCallback(() => {
+    if (!solicitudActual) return;
+    setExportando(true);
+    setErrorExport(null);
+    proyeccionApi
+      .exportarCsv(solicitudActual)
+      .catch(() => setErrorExport("No se pudo generar el CSV."))
+      .finally(() => setExportando(false));
+  }, [solicitudActual]);
 
   return (
     <div className="flex flex-col gap-6 px-9 py-8">
@@ -234,7 +248,23 @@ export function ProyeccionView() {
             onChange={(e) => setBusqueda(e.target.value)}
           />
         </div>
+        <BrandButton
+          variant="outline"
+          loading={exportando}
+          disabled={!solicitudActual}
+          title={solicitudActual ? undefined : "Elegí un grupo económico y un proceso real para exportar"}
+          onClick={exportarCsv}
+          className="ml-auto"
+        >
+          Exportar CSV
+        </BrandButton>
       </div>
+
+      {errorExport && (
+        <p className="rounded-[8px] bg-destructive/10 px-4 py-3 font-body text-xs text-destructive">
+          {errorExport}
+        </p>
+      )}
 
       {seleccionadas.size > 0 && (
         <div className="flex items-center gap-3 rounded-[8px] border border-brand-orange/40 bg-brand-orange/10 px-4 py-2.5">
@@ -266,6 +296,8 @@ export function ProyeccionView() {
           sort={sort}
           onToggleSort={toggleSort}
           onVerCandidatos={setSeleccion}
+          onVerHistorial={setVerHistorial}
+          fechaObjetivo={fechaObjetivo || null}
           seleccionadas={seleccionadas}
           onToggleSeleccion={toggleSeleccion}
           onToggleSeleccionTodas={toggleSeleccionTodas}
@@ -287,6 +319,14 @@ export function ProyeccionView() {
           onCambio={() => {
             cargar();
           }}
+        />
+      )}
+
+      {verHistorial && (
+        <ProyeccionHistorialModal
+          key={`${verHistorial.id_maquina}-${verHistorial.clase}`}
+          fila={verHistorial}
+          onClose={() => setVerHistorial(null)}
         />
       )}
     </div>

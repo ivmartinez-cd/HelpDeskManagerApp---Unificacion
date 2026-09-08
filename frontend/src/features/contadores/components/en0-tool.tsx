@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Download, FileSpreadsheet } from "lucide-react";
 import { contadoresApi, type EstimationZeroResponse } from "../api/contadores-api";
+import { proyeccionApi } from "../api/proyeccion-api";
+import type { GrupoEconomicoOption, ProcesoOption } from "../types/proyeccion";
 import {
   BrandButton,
   BrandFileInput,
@@ -11,6 +13,7 @@ import {
   BrandResultPanel,
   brandButtonClasses,
 } from "@/shared/components/ui/brand-form";
+import { SearchableSelect } from "@/shared/components/ui/searchable-select";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
 
@@ -23,15 +26,32 @@ const MODOS = [
 
 export function En0Tool() {
   const [modo, setModo] = useState<Modo>("proceso");
+  const [grupos, setGrupos] = useState<GrupoEconomicoOption[]>([]);
+  const [procesos, setProcesos] = useState<ProcesoOption[]>([]);
+  const [idGrupo, setIdGrupo] = useState<string | null>(null);
   const [nroProceso, setNroProceso] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<EstimationZeroResponse | null>(null);
 
+  useEffect(() => {
+    void proyeccionApi.listGruposEconomicos().then(setGrupos);
+  }, []);
+
+  useEffect(() => {
+    if (idGrupo == null) return;
+    void proyeccionApi.listProcesos(Number(idGrupo)).then(setProcesos);
+  }, [idGrupo]);
+
+  const procesosVisibles = idGrupo == null ? [] : procesos;
+  const nroProcesoValido = procesosVisibles.some((p) => String(p.nro_proceso) === nroProceso)
+    ? nroProceso
+    : null;
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!fecha || (modo === "proceso" ? !nroProceso : !file)) {
+    if (!fecha || (modo === "proceso" ? !nroProcesoValido : !file)) {
       toast.error("Por favor completá todos los campos");
       return;
     }
@@ -43,7 +63,7 @@ export function En0Tool() {
       const res =
         modo === "proceso"
           ? await contadoresApi.runEstimationZeroFromProceso({
-              nro_proceso: Number(nroProceso),
+              nro_proceso: Number(nroProcesoValido),
               fecha,
             })
           : await contadoresApi.runEstimationZero(buildFormData(file!, fecha));
@@ -69,15 +89,30 @@ export function En0Tool() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div className="grid gap-5 md:grid-cols-2">
           {modo === "proceso" ? (
-            <BrandInput
-              id="en0-nro-proceso"
-              label="Nro de Proceso"
-              type="number"
-              value={nroProceso}
-              onChange={(e) => setNroProceso(e.target.value)}
-              placeholder="Ej: 99070"
-              required
-            />
+            <>
+              <SearchableSelect
+                label="Cliente (grupo económico)"
+                placeholder="Buscar cliente…"
+                options={grupos.map((g) => ({ id: String(g.id), label: g.descripcion }))}
+                value={idGrupo}
+                onChange={(id) => {
+                  setIdGrupo(id);
+                  setNroProceso("");
+                }}
+              />
+              <SearchableSelect
+                label="Proceso"
+                placeholder={idGrupo ? "Elegir proceso…" : "Elegí primero un cliente"}
+                disabled={!idGrupo}
+                options={procesosVisibles.map((p) => ({
+                  id: String(p.nro_proceso),
+                  label: `${p.periodo_facturacion} · ${p.nombre_anexo}`,
+                  sublabel: `Proc. ${p.nro_proceso} · cierre ${p.periodo_hasta}`,
+                }))}
+                value={nroProcesoValido}
+                onChange={(id) => setNroProceso(id ?? "")}
+              />
+            </>
           ) : (
             <BrandFileInput
               id="en0-file"

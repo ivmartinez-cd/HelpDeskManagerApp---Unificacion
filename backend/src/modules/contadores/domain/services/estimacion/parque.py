@@ -11,11 +11,15 @@ from src.modules.contadores.domain.value_objects.estimacion.contexto_estimacion 
     ContextoEstimacion,
 )
 from src.modules.contadores.domain.value_objects.estimacion.estimacion_resultado import (
+    DetalleParque,
     EstimacionResultado,
 )
 from src.modules.contadores.domain.value_objects.estimacion.fuente_estimacion import (
     FuenteEstimacion,
 )
+from src.modules.contadores.domain.value_objects.estimacion.promedio_parque import PromedioParque
+
+_MUESTRA_MINIMA_MEDIANA_TRUNCADA = 5  # REGLAS_DE_NEGOCIO §5.5: N>=5 usa P80
 
 _BASE = EstimacionResultado(
     estim_propuesto=0,
@@ -60,6 +64,7 @@ class _PropuestaParque:
     impresiones: float
     escalado: _EscaladoPorReceso
     en_alerta: bool
+    promedio: PromedioParque
 
 
 def intentar_parque(ctx: ContextoEstimacion, en_alerta: bool) -> EstimacionResultado | None:
@@ -70,7 +75,7 @@ def intentar_parque(ctx: ContextoEstimacion, en_alerta: bool) -> EstimacionResul
         return None
     escalado = _escalado_por_receso(ctx)
     impresiones = nivel.promedio.valor * escalado.factor
-    propuesta = _PropuestaParque(nivel.fuente, impresiones, escalado, en_alerta)
+    propuesta = _PropuestaParque(nivel.fuente, impresiones, escalado, en_alerta, nivel.promedio)
     resultado = _borrador(ctx, propuesta)
     senales = SenalesRama(es_cascada_parque=True, requiere_confirmacion_otro_motivo=True)
     marcadores = evaluar_marcadores(ctx.entrada, impresiones, senales)
@@ -78,6 +83,14 @@ def intentar_parque(ctx: ContextoEstimacion, en_alerta: bool) -> EstimacionResul
 
 
 def _borrador(ctx: ContextoEstimacion, propuesta: _PropuestaParque) -> EstimacionResultado:
+    promedio = propuesta.promedio
+    detalle = DetalleParque(
+        n_equipos=promedio.n_equipos,
+        n_descartados=promedio.n_descartados,
+        es_mediana_truncada=promedio.n_equipos >= _MUESTRA_MINIMA_MEDIANA_TRUNCADA,
+        mediana_cruda=promedio.mediana_cruda,
+        media_cruda=promedio.media_cruda,
+    )
     return replace(
         _BASE,
         estim_propuesto=ctx.entrada.ultimo_contador_facturado.valor + propuesta.impresiones,
@@ -87,4 +100,5 @@ def _borrador(ctx: ContextoEstimacion, propuesta: _PropuestaParque) -> Estimacio
         meses_sin_real_en_alerta=propuesta.en_alerta,
         ajustado_por_receso=propuesta.escalado.dias_descontados > 0,
         dias_receso_descontados=propuesta.escalado.dias_descontados,
+        detalle_parque=detalle,
     )

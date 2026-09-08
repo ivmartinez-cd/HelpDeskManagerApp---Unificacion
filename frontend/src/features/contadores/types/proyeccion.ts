@@ -31,6 +31,20 @@ export interface FilaProyeccion {
   requiere_confirmacion: boolean;
   nota_operador: string | null;
   es_clase_sintetica: boolean;
+  detalle_parque: DetalleParque | null;
+  dias_par_pl: number | null;
+  tasa_diaria: number | null;
+  dias_proyectados: number | null;
+}
+
+// Auditoría del promedio de parque usado (REGLAS_DE_NEGOCIO §12) — alimenta
+// el tooltip "Detalle de estimación" (paridad con EstimacionTooltip.razor).
+export interface DetalleParque {
+  n_equipos: number;
+  n_descartados: number;
+  es_mediana_truncada: boolean;
+  mediana_cruda: number | null;
+  media_cruda: number | null;
 }
 
 export interface ResumenProyeccion {
@@ -148,6 +162,32 @@ export interface AceptarManualBody {
   tipo_toma: number | null;
   fuente: string;
   metodo_detalle: string;
+}
+
+// Línea de tiempo de un equipo (MODELO_DE_DATOS.md §3.6, DrillDownModal legacy).
+export interface HistorialLectura {
+  fecha: string;
+  valor: number;
+  id_tipo_toma: number;
+  tipo_toma_desc: string;
+  para_facturar: boolean;
+  fc_nro_proceso: number | null;
+  fc_periodo_hasta: string | null;
+  fc_impresiones: number | null;
+  fc_periodo_facturacion: string | null;
+  es_fc: boolean;
+  delta: number | null;
+  es_ingreso: boolean;
+  es_egreso: boolean;
+  es_cambio_empresa: boolean;
+  es_cambio_anexo: boolean;
+  cambio_empresa_vs_anterior: boolean;
+  cambio_sucursal_vs_anterior: boolean;
+  cambio_anexo_vs_anterior: boolean;
+}
+
+export interface HistorialEquipo {
+  lecturas: HistorialLectura[];
 }
 
 export interface Receso {

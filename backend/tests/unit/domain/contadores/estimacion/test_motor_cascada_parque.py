@@ -78,6 +78,37 @@ def test_cliente_tecnologia_antes_que_global() -> None:
     assert resultado.estim_propuesto == 9_000
 
 
+def test_detalle_parque_con_n_mayor_o_igual_a_5_es_mediana_truncada() -> None:
+    entrada = make_input(
+        ultimo_contador_facturado=_SIN_FACTURADO,
+        parque_cliente_modelo=parque(
+            11_000, n_equipos=14, n_descartados=2, mediana_cruda=15_000, media_cruda=18_500
+        ),
+    )
+
+    resultado = estimar(entrada)
+
+    assert resultado.detalle_parque is not None
+    assert resultado.detalle_parque.es_mediana_truncada is True
+    assert resultado.detalle_parque.n_equipos == 14
+    assert resultado.detalle_parque.n_descartados == 2
+    assert resultado.detalle_parque.mediana_cruda == 15_000
+    assert resultado.detalle_parque.media_cruda == 18_500
+
+
+def test_detalle_parque_con_n_menor_a_5_es_mediana_cruda() -> None:
+    entrada = make_input(
+        ultimo_contador_facturado=_SIN_FACTURADO,
+        parque_cliente_modelo=parque(11_000, n_equipos=3),
+    )
+
+    resultado = estimar(entrada)
+
+    assert resultado.detalle_parque is not None
+    assert resultado.detalle_parque.es_mediana_truncada is False
+    assert resultado.detalle_parque.n_descartados == 0
+
+
 def test_ningun_nivel_resuelve_queda_pendiente() -> None:
     entrada = make_input(ultimo_contador_facturado=_SIN_FACTURADO)
 

@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.auth.presentation.dependencies.features import require_feature_or_permission
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.contadores.application.dtos.decision_operador_dto import DecisionManualDto
 from src.modules.contadores.application.dtos.forzar_metodo_request import ForzarMetodoRequest
@@ -40,6 +41,7 @@ from src.modules.contadores.domain.ports.decisiones_operador_port import Decisio
 from src.modules.contadores.domain.value_objects.estimacion.fuente_estimacion import (
     FuenteEstimacion,
 )
+from src.modules.contadores.domain.well_known_features import PROYECCION_OPERAR
 from src.modules.contadores.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.contadores.infrastructure.ejemplo.decisiones_operador_store import (
     get_decisiones_operador_store,
@@ -74,6 +76,10 @@ router = APIRouter()
 
 _require_view = Depends(require_permission(VIEW))
 _require_manage = Depends(require_permission(MANAGE))
+# Elegir P/L, forzar método, aceptar, marcar pendiente y nota: alcanza con la
+# función "Proyección: operar candidatos" sin necesitar `contadores.manage`
+# completo (recesos/export siguen exigiendo manage, ver `proyeccion_router.py`).
+_require_operar = Depends(require_feature_or_permission(PROYECCION_OPERAR, MANAGE))
 
 
 class AceptarManualBody(BaseModel):
@@ -110,7 +116,7 @@ async def get_candidatos(
 @router.post("/candidatos/recalcular", response_model=RecalcularCandidatoResponseSchema)
 async def recalcular_candidato(
     request: RecalcularCandidatoRequest,
-    identity: Identity = _require_manage,
+    identity: Identity = _require_operar,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> RecalcularCandidatoResponseSchema:
     resultado = RecalcularCandidatoUseCase().execute(request, await contexto_ejemplo(None))
@@ -130,7 +136,7 @@ async def recalcular_candidato(
 @router.post("/candidatos/forzar", response_model=RecalcularCandidatoResponseSchema)
 async def forzar_metodo_candidato(
     request: ForzarMetodoRequest,
-    identity: Identity = _require_manage,
+    identity: Identity = _require_operar,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> RecalcularCandidatoResponseSchema:
     """Forzar cascada de parque / entre reales (REGLAS_DE_NEGOCIO §8)."""
@@ -153,7 +159,7 @@ async def forzar_metodo_candidato(
 async def marcar_pendiente(
     id_maquina: int,
     clase: str,
-    identity: Identity = _require_manage,
+    identity: Identity = _require_operar,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await _decisiones_store_de(id_maquina, clase, db).marcar_pendiente(id_maquina, clase)
@@ -165,7 +171,7 @@ async def agregar_nota(
     id_maquina: int,
     clase: str,
     nota: str = Body(embed=True),
-    identity: Identity = _require_manage,
+    identity: Identity = _require_operar,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     await _decisiones_store_de(id_maquina, clase, db).agregar_nota(id_maquina, clase, nota)
@@ -177,7 +183,7 @@ async def aceptar_propuesta(
     id_maquina: int,
     clase: str,
     body: AceptarManualBody | None = None,
-    identity: Identity = _require_manage,
+    identity: Identity = _require_operar,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     manual = _decision_manual_de(body)

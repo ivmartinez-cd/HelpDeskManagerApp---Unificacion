@@ -17,10 +17,18 @@ _FIELDNAMES = (
 
 
 class CsvEstimationZeroWriter:
-    def write(self, rows: list[EstimationZeroRow], *, output_dir: str, cliente: str) -> str:
+    def write(
+        self,
+        rows: list[EstimationZeroRow],
+        *,
+        output_dir: str,
+        cliente: str,
+        nro_proceso: int | None = None,
+    ) -> str:
         out = Path(output_dir)
         out.mkdir(parents=True, exist_ok=True)
-        path = out / f"{cliente}_Limpieza_Cero.csv"
+        sufijo_proceso = f"_Proceso{nro_proceso}" if nro_proceso is not None else ""
+        path = out / f"{cliente}_Estimacion0{sufijo_proceso}.csv"
         with open(path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, delimiter=";", lineterminator="\r\n")
             writer.writerow(_FIELDNAMES)

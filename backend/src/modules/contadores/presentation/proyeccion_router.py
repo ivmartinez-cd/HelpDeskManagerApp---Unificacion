@@ -62,6 +62,9 @@ from src.modules.contadores.presentation.dependencies import (
 from src.modules.contadores.presentation.proyeccion_candidatos_router import (
     router as candidatos_router,
 )
+from src.modules.contadores.presentation.proyeccion_historial_router import (
+    router as historial_router,
+)
 from src.modules.contadores.presentation.schemas.proyeccion_schemas import (
     AnexoOptionSchema,
     GrupoEconomicoOptionSchema,
@@ -79,6 +82,15 @@ _require_manage = Depends(require_permission(MANAGE))
 _TAMANIO_PAGINA_CATALOGO_CHICO = 50
 
 
+def _pagina_completa[T](items: list[T]) -> Page[T]:
+    """Estos combos no tienen paginación en la UI (búsqueda en vivo sobre la
+    lista ya traída, ARCHITECTURE_GUIDE.md §11) — `size` fijo en 50 truncaba
+    en silencio catálogos reales con más de 50 filas (ej. grupos económicos
+    con Siges en producción). `size` nunca por debajo del piso, para no
+    romper metadata de clientes que lo lean, pero jamás corta `items`."""
+    return Page.of(items, page=1, size=max(len(items), _TAMANIO_PAGINA_CATALOGO_CHICO))
+
+
 @router.get("/grupos-economicos", response_model=Page[GrupoEconomicoOptionSchema])
 async def list_grupos_economicos(
     _: Identity = _require_view,
@@ -88,7 +100,7 @@ async def list_grupos_economicos(
     módulo."""
     grupos = await ListGruposEconomicosEstimacionUseCase(get_proceso_estimacion_gateway()).execute()
     items = [GrupoEconomicoOptionSchema.model_validate(g) for g in grupos]
-    return Page.of(items, page=1, size=_TAMANIO_PAGINA_CATALOGO_CHICO)
+    return _pagina_completa(items)
 
 
 @router.get("/procesos", response_model=Page[ProcesoOptionSchema])
@@ -100,7 +112,7 @@ async def list_procesos(
     use_case = ListProcesosPorGrupoEstimacionUseCase(get_proceso_estimacion_gateway())
     procesos = await use_case.execute(id_grupo_economico)
     items = [ProcesoOptionSchema.model_validate(p) for p in procesos]
-    return Page.of(items, page=1, size=_TAMANIO_PAGINA_CATALOGO_CHICO)
+    return _pagina_completa(items)
 
 
 @router.get("/anexos", response_model=Page[AnexoOptionSchema])
@@ -112,7 +124,7 @@ async def list_anexos(
     use_case = ListAnexosPorGrupoEstimacionUseCase(get_proceso_estimacion_gateway())
     anexos = await use_case.execute(id_grupo_economico)
     items = [AnexoOptionSchema.model_validate(a) for a in anexos]
-    return Page.of(items, page=1, size=_TAMANIO_PAGINA_CATALOGO_CHICO)
+    return _pagina_completa(items)
 
 
 @router.get("/tablero", response_model=TableroProyeccionSchema)
@@ -195,7 +207,7 @@ async def list_recesos(
     store = _recesos_store_de(id_grupo_economico, db)
     recesos = await store.listar(id_grupo_economico or ID_GRUPO_ECONOMICO_EJEMPLO)
     items = [RecesoSchema.from_dto(r) for r in recesos]
-    return Page.of(items, page=1, size=_TAMANIO_PAGINA_CATALOGO_CHICO)
+    return _pagina_completa(items)
 
 
 @router.post("/recesos", response_model=RecesoSchema, status_code=201)
@@ -227,3 +239,4 @@ def _recesos_store_de(id_grupo_economico: int | None, db: AsyncSession) -> Reces
 
 
 router.include_router(candidatos_router)
+router.include_router(historial_router)

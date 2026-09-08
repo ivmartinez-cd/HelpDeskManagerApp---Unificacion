@@ -31,11 +31,18 @@ class FakePort:
 
 class FakeWriter:
     def __init__(self) -> None:
-        self.llamada: tuple[list[EstimationZeroRow], str, str] | None = None
+        self.llamada: tuple[list[EstimationZeroRow], str, str, int | None] | None = None
 
-    def write(self, rows: list[EstimationZeroRow], *, output_dir: str, cliente: str) -> str:
-        self.llamada = (rows, output_dir, cliente)
-        return f"{output_dir}/{cliente}_Limpieza_Cero.csv"
+    def write(
+        self,
+        rows: list[EstimationZeroRow],
+        *,
+        output_dir: str,
+        cliente: str,
+        nro_proceso: int | None = None,
+    ) -> str:
+        self.llamada = (rows, output_dir, cliente, nro_proceso)
+        return f"{output_dir}/{cliente}_Estimacion0_Proceso{nro_proceso}.csv"
 
 
 async def test_execute_arma_filas_y_escribe_con_el_cliente_del_proceso() -> None:
@@ -56,11 +63,12 @@ async def test_execute_arma_filas_y_escribe_con_el_cliente_del_proceso() -> None
         )
     )
 
-    assert path == "/tmp/out/Cepas Argentina_Limpieza_Cero.csv"
+    assert path == "/tmp/out/Cepas Argentina_Estimacion0_Proceso99070.csv"
     assert writer.llamada is not None
-    rows, output_dir, cliente = writer.llamada
+    rows, output_dir, cliente, nro_proceso = writer.llamada
     assert output_dir == "/tmp/out"
     assert cliente == "Cepas Argentina"
+    assert nro_proceso == 99070
     assert [r.serie for r in rows] == ["SER1"]
 
 

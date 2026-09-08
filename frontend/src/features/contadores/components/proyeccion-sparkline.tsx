@@ -1,20 +1,29 @@
 "use client";
 
 import { useMemo } from "react";
-import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import {
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
+  Tooltip,
+} from "chart.js";
+import { Chart } from "react-chartjs-2";
 
 /** Mini gráfico de barras de 12 meses de la grilla de Proyección — 11 meses
- * de histórico real + el mes actual (estimado), como describe la sección UX
- * del tablero principal. Sin línea de referencia punteada ni "overflow
- * indicator" (`chartjs-plugin-annotation` no está en el proyecto y no vale
- * la pena sumarlo por un detalle de un sparkline chico) — se puede agregar
- * después si hace falta. */
+ * de histórico real + el mes actual (estimado), paridad con `BarChart.razor`
+ * legacy: línea punteada roja al nivel del mes actual, para comparar de un
+ * vistazo contra el histórico (mixed chart bar+line, nativo de chart.js —
+ * no hace falta `chartjs-plugin-annotation`). */
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, LineController, Tooltip);
 
 const AZUL_HISTORICO = "#60a5fa";
 const ROJO_ACTUAL = "rgba(239, 68, 68, .65)";
+const ROJO_LINEA = "#dc2626";
 
 interface ProyeccionSparklineProps {
   historico12: number[];
@@ -23,13 +32,26 @@ interface ProyeccionSparklineProps {
 export function ProyeccionSparkline({ historico12 }: ProyeccionSparklineProps) {
   const data = useMemo(() => {
     const valores = historico12.length === 12 ? historico12 : Array(12).fill(0);
+    const actual = valores[11];
     return {
       labels: valores.map((_, i) => String(i)),
       datasets: [
         {
+          type: "bar" as const,
           data: valores,
           backgroundColor: valores.map((_, i) => (i === 11 ? ROJO_ACTUAL : AZUL_HISTORICO)),
           borderRadius: 1,
+          order: 2,
+        },
+        {
+          type: "line" as const,
+          data: Array(12).fill(actual),
+          borderColor: ROJO_LINEA,
+          borderWidth: 1.2,
+          borderDash: [3, 3],
+          pointRadius: 0,
+          tension: 0,
+          order: 1,
         },
       ],
     };
@@ -37,7 +59,8 @@ export function ProyeccionSparkline({ historico12 }: ProyeccionSparklineProps) {
 
   return (
     <div style={{ width: 92, height: 32 }}>
-      <Bar
+      <Chart
+        type="bar"
         data={data}
         options={{
           responsive: true,

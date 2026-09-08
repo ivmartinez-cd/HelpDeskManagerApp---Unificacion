@@ -43,8 +43,8 @@ export function ProyeccionCandidatosDrawer({
   onClose,
   onCambio,
 }: ProyeccionCandidatosDrawerProps) {
-  const { can } = useSession();
-  const puedeGestionar = can("contadores", "manage");
+  const { can, hasFeature } = useSession();
+  const puedeGestionar = can("contadores", "manage") || hasFeature("contadores-proyeccion-operar");
   const [datos, setDatos] = useState<CandidatosEquipo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [seleccion, setSeleccion] = useState<Seleccion>({ partida: null, llegada: null });

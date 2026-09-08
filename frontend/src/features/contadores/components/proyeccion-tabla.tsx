@@ -1,11 +1,12 @@
 "use client";
 
-import { Eye } from "lucide-react";
+import { BarChart3, Eye } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { BrandBadge } from "@/shared/components/ui/brand-form";
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import type { SortState } from "@/shared/hooks/use-table-sort";
 import type { FilaProyeccion, Semaforo } from "../types/proyeccion";
+import { DetalleEstimacionIcono } from "./detalle-estimacion-tooltip";
 import { ProyeccionSparkline } from "./proyeccion-sparkline";
 
 export type ProyeccionSortKey = "ubicacion" | "nro_serie" | "modelo" | "impresiones";
@@ -41,31 +42,42 @@ function ImpresionesCell({ fila }: { fila: FilaProyeccion }) {
         ? "text-brand-orange"
         : "text-foreground";
   return (
-    <span
-      className={cn(
-        "font-bold tabular-nums",
-        tono,
-        fila.borde_salto_imposible && "rounded-[8px] border-2 border-dashed border-destructive px-2 py-0.5",
-      )}
-      title={fila.borde_salto_imposible ? "Salto imposible: supera la capacidad física del equipo" : undefined}
-    >
-      {signo}
-      {numberFormat.format(fila.impresiones)}
+    <span className="inline-flex items-center gap-1">
+      <span
+        className={cn(
+          "font-bold tabular-nums",
+          tono,
+          fila.borde_salto_imposible && "rounded-[8px] border-2 border-dashed border-destructive px-2 py-0.5",
+        )}
+        title={fila.borde_salto_imposible ? "Salto imposible: supera la capacidad física del equipo" : undefined}
+      >
+        {signo}
+        {numberFormat.format(fila.impresiones)}
+      </span>
+      <DetalleEstimacionIcono fila={fila} />
     </span>
   );
 }
 
-function EstimCell({ fila }: { fila: FilaProyeccion }) {
+function EstimCell({ fila, fechaObjetivo }: { fila: FilaProyeccion; fechaObjetivo: string | null }) {
   if (fila.estim_propuesto === null) return <span className="text-muted-foreground">—</span>;
   const t4SinRevisar = fila.tipo_toma === 4;
   return (
     <div className="leading-tight">
-      <span className="font-semibold tabular-nums">{numberFormat.format(fila.estim_propuesto)}</span>
+      <span className={cn("font-semibold tabular-nums", fila.es_real ? "text-success" : "text-info")}>
+        {numberFormat.format(fila.estim_propuesto)}
+      </span>
       {fila.tipo_toma !== null && (
         <span className={cn("ml-1 text-[10px] font-bold", t4SinRevisar ? "text-warning" : "text-muted-foreground")}>
           T{fila.tipo_toma}
           {t4SinRevisar && " ⚠"}
         </span>
+      )}
+      {/* Para reales, la fecha de esa lectura puede no coincidir con la fecha
+          objetivo del proceso (dato que el backend todavía no expone para el
+          caso real) — se omite antes que mostrar una fecha incorrecta. */}
+      {!fila.es_real && fechaObjetivo && (
+        <p className="text-xs text-muted-foreground">{formatFecha(fechaObjetivo)}</p>
       )}
     </div>
   );
@@ -98,9 +110,11 @@ interface ProyeccionTablaProps {
   sort: SortState<ProyeccionSortKey>;
   onToggleSort: (key: ProyeccionSortKey) => void;
   onVerCandidatos: (fila: FilaProyeccion) => void;
+  onVerHistorial: (fila: FilaProyeccion) => void;
   seleccionadas: Set<string>;
   onToggleSeleccion: (fila: FilaProyeccion) => void;
   onToggleSeleccionTodas: () => void;
+  fechaObjetivo: string | null;
 }
 
 export function ProyeccionTabla({
@@ -108,9 +122,11 @@ export function ProyeccionTabla({
   sort,
   onToggleSort,
   onVerCandidatos,
+  onVerHistorial,
   seleccionadas,
   onToggleSeleccion,
   onToggleSeleccionTodas,
+  fechaObjetivo,
 }: ProyeccionTablaProps) {
   const grupos = agruparPorEquipo(filas);
   const seleccionablesVisibles = filas.filter(esSeleccionable);
@@ -140,10 +156,10 @@ export function ProyeccionTabla({
             <th className="px-4 py-2.5 text-right">Prom 6m</th>
             <th className="px-4 py-2.5">Cl.</th>
             <th className="px-4 py-2.5 text-right">Últ. facturado</th>
-            <th className="px-4 py-2.5 text-right">Estim. propuesto</th>
+            <th className="px-4 py-2.5 text-right">A facturar</th>
             <SortableHeader column={{ key: "impresiones", label: "Impresiones" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5 text-right" />
+            <th className="px-4 py-2.5">Acc.</th>
             <th className="px-4 py-2.5">Conf.</th>
-            <th className="px-4 py-2.5" />
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -213,32 +229,38 @@ export function ProyeccionTabla({
                   <p className="text-xs text-muted-foreground">{formatFecha(fila.ultimo_facturado_fecha)}</p>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <EstimCell fila={fila} />
+                  <EstimCell fila={fila} fechaObjetivo={fechaObjetivo} />
                 </td>
                 <td className="px-4 py-3 text-right">
                   <ImpresionesCell fila={fila} />
                 </td>
-                {i === 0 && (
-                  <>
-                    <td className="px-4 py-3" rowSpan={claves.length}>
-                      <span
-                        aria-label={SEMAFORO_LABEL[fila.semaforo]}
-                        title={SEMAFORO_LABEL[fila.semaforo]}
-                        className={cn("inline-block h-2.5 w-2.5 rounded-full", SEMAFORO_DOT[fila.semaforo])}
-                      />
-                    </td>
-                    <td className="px-4 py-3" rowSpan={claves.length}>
-                      <button
-                        type="button"
-                        onClick={() => onVerCandidatos(fila)}
-                        title="Ver candidatos"
-                        className="rounded-[8px] border border-border bg-muted p-1.5 text-muted-foreground hover:text-foreground"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </>
-                )}
+                <td className="px-4 py-3">
+                  <div className="flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => onVerCandidatos(fila)}
+                      title="Ver candidatos"
+                      className="rounded-[8px] border border-border bg-muted p-1.5 text-muted-foreground hover:text-foreground"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onVerHistorial(fila)}
+                      title="Ver historial del equipo"
+                      className="rounded-[8px] border border-border bg-muted p-1.5 text-muted-foreground hover:text-foreground"
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    aria-label={SEMAFORO_LABEL[fila.semaforo]}
+                    title={SEMAFORO_LABEL[fila.semaforo]}
+                    className={cn("inline-block h-2.5 w-2.5 rounded-full", SEMAFORO_DOT[fila.semaforo])}
+                  />
+                </td>
               </tr>
             )),
           )}
