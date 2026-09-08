@@ -288,8 +288,8 @@ async def test_triage_no_sobrevive_a_una_baja() -> None:
     )
 
     remotos = [
-        make_remoto("2", costo_servicio_cobrado=1500.0),
-        make_remoto("3", costo_servicio_cobrado=1500.0),
+        make_remoto("2", costo_servicio_cobrado=1500.0, nro_serie="SN-2"),
+        make_remoto("3", costo_servicio_cobrado=1500.0, nro_serie="SN-3"),
     ]
     resultado = await world.use_case.execute(liq, make_cd_liq(2), remotos)
 

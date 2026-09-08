@@ -38,6 +38,7 @@ from src.modules.liquidaciones.domain.entities.regla_alerta import (
     CODIGO_ALT009_PAR_EMPRESA_SUCURSAL,
     CODIGO_ALT010_SERIE_DUPLICADA,
     CODIGO_ALT011_DOBLE_FACTURACION,
+    CODIGO_ALT012_SERIE_MISMO_DIA,
     ReglaAlerta,
     genera_observaciones,
 )
@@ -56,9 +57,11 @@ from src.modules.liquidaciones.domain.services.motor_reglas import (
     alt009_spst,
     alt010_serie_duplicada,
     alt011_doble_facturacion,
+    alt012_serie_mismo_dia,
 )
 from src.modules.liquidaciones.domain.services.motor_reglas._coincidencias import (
     _coincidencias_alt010,
+    _coincidencias_alt012,
     _duplicados_alt004,
     _similares_alt003,
 )
@@ -87,6 +90,7 @@ _EVALUADORES_POR_INCIDENTE = (
     CODIGO_ALT009_PAR_EMPRESA_SUCURSAL,
     CODIGO_ALT010_SERIE_DUPLICADA,
     CODIGO_ALT011_DOBLE_FACTURACION,
+    CODIGO_ALT012_SERIE_MISMO_DIA,
 )
 
 
@@ -179,8 +183,11 @@ def _evaluar_regla(
         return alt008_tarifario.evaluar_alt008(incidente, tarifario, spst_id)
     if codigo == CODIGO_ALT009_PAR_EMPRESA_SUCURSAL:
         return alt009_spst.evaluar_alt009(incidente, tabla_km)
-    coincidencias = _coincidencias_alt010(incidente, contexto.incidentes_prestador)
-    return alt010_serie_duplicada.evaluar_alt010(incidente, coincidencias)
+    if codigo == CODIGO_ALT010_SERIE_DUPLICADA:
+        coincidencias = _coincidencias_alt010(incidente, contexto.incidentes_prestador)
+        return alt010_serie_duplicada.evaluar_alt010(incidente, coincidencias)
+    coincidencias_dia = _coincidencias_alt012(incidente, contexto.incidentes_prestador)
+    return alt012_serie_mismo_dia.evaluar_alt012(incidente, coincidencias_dia)
 
 
 def _evaluar_alt001(

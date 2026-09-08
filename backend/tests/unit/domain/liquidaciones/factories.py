@@ -188,6 +188,7 @@ def reglas_activas_default() -> dict[str, ReglaAlerta]:
         "ALT009": 80.0,
         "ALT010": 90.0,
         "ALT011": 90.0,
+        "ALT012": 90.0,
     }
     return {
         codigo: make_regla(codigo=codigo, riesgo_base=riesgo, activa=True)

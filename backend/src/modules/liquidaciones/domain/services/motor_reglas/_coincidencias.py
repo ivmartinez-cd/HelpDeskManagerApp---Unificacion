@@ -54,3 +54,21 @@ def _coincidencias_alt010(
         and i.fecha_cierre is not None
         and (i.fecha_cierre.year, i.fecha_cierre.month) == periodo
     ]
+
+
+def _coincidencias_alt012(
+    incidente: Incidente, incidentes_prestador: Sequence[Incidente]
+) -> list[Incidente]:
+    """A diferencia de `_coincidencias_alt010` (tipo opuesto, mismo mes), acá
+    alcanza con la misma serie y la misma `fecha_cierre` exacta, sin importar el
+    tipo — cubre el caso de dos incidentes distintos cargando el mismo servicio
+    (p. ej. dos preventivos) el mismo día."""
+    if not incidente.nro_serie or incidente.fecha_cierre is None:
+        return []
+    return [
+        i
+        for i in incidentes_prestador
+        if i.id != incidente.id
+        and i.nro_serie == incidente.nro_serie
+        and i.fecha_cierre == incidente.fecha_cierre
+    ]
