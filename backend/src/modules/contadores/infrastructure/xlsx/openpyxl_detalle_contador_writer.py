@@ -97,8 +97,10 @@ def _isotipo(ws: Worksheet) -> None:
     sidebar, `frontend/public/isotipo-white.svg`, rasterizado a PNG — ver
     `assets/isotipo-white.png`) sobre la barra de título naranja."""
     img = XLImage(str(_ISOTIPO))
-    lado = pixels_to_EMU(18)
-    marca = AnchorMarker(col=0, row=0, colOff=pixels_to_EMU(6), rowOff=pixels_to_EMU(8))
+    lado = pixels_to_EMU(18)  # type: ignore[no-untyped-call]
+    marca = AnchorMarker(
+        col=0, row=0, colOff=pixels_to_EMU(6), rowOff=pixels_to_EMU(8)  # type: ignore[no-untyped-call]
+    )
     img.anchor = OneCellAnchor(_from=marca, ext=XDRPositiveSize2D(lado, lado))
     ws.add_image(img)
 
@@ -119,7 +121,7 @@ def _escribir_fila(ws: Worksheet, num_fila: int, f: DetalleContadorRow) -> None:
     zebra = PatternFill("solid", fgColor=_GRIS_ZEBRA) if num_fila % 2 == 0 else None
     borde = Border(bottom=Side(style="thin", color=_BORDE))
     for idx, ((nombre, _), valor) in enumerate(zip(_COLUMNAS, _fila_a_excel(f), strict=True)):
-        celda = ws.cell(row=num_fila, column=idx + 1, value=valor)
+        celda = ws.cell(row=num_fila, column=idx + 1, value=valor)  # type: ignore[call-overload]
         celda.border = borde
         if zebra:
             celda.fill = zebra

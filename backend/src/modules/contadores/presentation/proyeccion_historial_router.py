@@ -31,7 +31,7 @@ async def get_historial_equipo(
     """Un equipo de ejemplo (`clase` no numérica) no tiene historial real de
     Siges: se devuelve vacío en vez de 404 para que el modal solo muestre
     "Sin lecturas registradas", igual criterio que 0 resultados reales."""
-    equipo, _ = buscar_equipo_y_clase(id_maquina, clase)
+    equipo, _clase = buscar_equipo_y_clase(id_maquina, clase)
     if equipo is not None or not clase.isdigit():
         return HistorialEquipoSchema(lecturas=[])
     use_case = GetHistorialEquipoUseCase(get_historial_equipo_gateway())

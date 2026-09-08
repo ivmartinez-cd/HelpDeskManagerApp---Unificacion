@@ -67,8 +67,10 @@ def _deltas(asc: list[LecturaHistorialSiges]) -> list[float | None]:
     deltas: list[float | None] = []
     valor_previo: float | None = None
     for lec in asc:
-        continua = not tipo_toma.es_inicial_final(lec.id_tipo_toma) and valor_previo is not None
-        deltas.append(lec.valor - valor_previo if continua else None)
+        if valor_previo is None or tipo_toma.es_inicial_final(lec.id_tipo_toma):
+            deltas.append(None)
+        else:
+            deltas.append(lec.valor - valor_previo)
         valor_previo = lec.valor
     return deltas
 
