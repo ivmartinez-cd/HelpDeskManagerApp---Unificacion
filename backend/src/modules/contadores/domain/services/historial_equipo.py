@@ -121,26 +121,42 @@ def _clasificar(
     return replace(lectura, es_cambio_empresa=cambio_empresa, es_cambio_anexo=cambio_anexo)
 
 
+@dataclass(frozen=True, slots=True)
+class _Divisoria:
+    empresa: bool
+    sucursal: bool
+    anexo: bool
+
+    @property
+    def hay_cambio(self) -> bool:
+        return self.empresa or self.sucursal or self.anexo
+
+
+def _divisoria_de(nueva: LecturaHistorialSiges, vieja: LecturaHistorialSiges) -> _Divisoria:
+    """Prioridad empresa > sucursal > anexo — un cambio de empresa implica
+    también sucursal/anexo distintos, una sola línea alcanza."""
+    empresa = _distinto(nueva.snap_id_empresa, vieja.snap_id_empresa)
+    sucursal = not empresa and _distinto(nueva.snap_id_sucursal, vieja.snap_id_sucursal)
+    anexo = not empresa and not sucursal and _distinto(nueva.snap_id_anexo, vieja.snap_id_anexo)
+    return _Divisoria(empresa, sucursal, anexo)
+
+
 def _con_divisorias(
     crudo_desc: list[LecturaHistorialSiges], base_desc: list[LecturaHistorial]
 ) -> list[LecturaHistorial]:
     """Compara cada lectura con la inmediatamente MÁS VIEJA (índice i+1 en la
     lista DESC), igual criterio que `GetCandidatosAsync`. Marca la fila que
     "abre" un segmento de empresa/sucursal/anexo distinto — el frontend
-    dibuja la línea debajo de ella. Prioridad empresa > sucursal > anexo."""
+    dibuja la línea debajo de ella."""
     resultado = list(base_desc)
     for i in range(len(resultado) - 1):
-        nueva, vieja = crudo_desc[i], crudo_desc[i + 1]
-        cambio_emp = _distinto(nueva.snap_id_empresa, vieja.snap_id_empresa)
-        cambio_suc = not cambio_emp and _distinto(nueva.snap_id_sucursal, vieja.snap_id_sucursal)
-        anexo_distinto = _distinto(nueva.snap_id_anexo, vieja.snap_id_anexo)
-        cambio_anx = not cambio_emp and not cambio_suc and anexo_distinto
-        if cambio_emp or cambio_suc or cambio_anx:
+        d = _divisoria_de(crudo_desc[i], crudo_desc[i + 1])
+        if d.hay_cambio:
             resultado[i] = replace(
                 resultado[i],
-                cambio_empresa_vs_anterior=cambio_emp,
-                cambio_sucursal_vs_anterior=cambio_suc,
-                cambio_anexo_vs_anterior=cambio_anx,
+                cambio_empresa_vs_anterior=d.empresa,
+                cambio_sucursal_vs_anterior=d.sucursal,
+                cambio_anexo_vs_anterior=d.anexo,
             )
     return resultado
 

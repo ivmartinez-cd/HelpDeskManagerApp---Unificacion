@@ -77,18 +77,21 @@ def _resultado_real(clase: ClaseProceso, automatico: EstimacionResultado) -> Est
     )
 
 
+def _impresiones_de_manual(manual: DecisionManualDto, clase: ClaseProceso) -> float | None:
+    if manual.contador_propuesto is None:
+        return None
+    return manual.contador_propuesto - clase.ultimo_contador_facturado.valor
+
+
 def _resultado_de_manual(
     manual: DecisionManualDto, clase: ClaseProceso, automatico: EstimacionResultado
 ) -> EstimacionResultado:
-    impresiones = (
-        (manual.contador_propuesto - clase.ultimo_contador_facturado.valor)
-        if manual.contador_propuesto is not None
-        else None
-    )
+    """Limpia el detalle del cálculo automático (parque / P-L) — pertenece a
+    un `fuente`/método distinto al elegido a mano (REGLAS_DE_NEGOCIO §8)."""
     return replace(
         automatico,
         estim_propuesto=manual.contador_propuesto,
-        impresiones=impresiones,
+        impresiones=_impresiones_de_manual(manual, clase),
         tipo_toma=manual.tipo_toma,
         fuente=manual.fuente,
         metodo_detalle=manual.metodo_detalle,
