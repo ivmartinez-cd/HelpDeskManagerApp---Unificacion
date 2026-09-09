@@ -15,6 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.liquidaciones.domain.well_known_permissions import CREATE, UPDATE, VIEW
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_incidente_repository import (
+    SqlAlchemyIncidenteRepository,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_liquidacion_repository import (  # noqa: E501
     SqlAlchemyLiquidacionRepository,
 )
@@ -38,6 +41,8 @@ from src.modules.liquidaciones.presentation.schemas.liquidacion_detalle_schemas 
 )
 from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import (
     EstadoIn,
+    EvolucionIncidentesItemOut,
+    EvolucionIncidentesOut,
     ExtraIn,
     LiquidacionOut,
     PrestadorLiquidacionOut,
@@ -71,6 +76,25 @@ async def list_prestadores(
     rows = await SqlAlchemyPrestadorRepository(db).list_all(solo_activos=solo_activos)
     return Page.of(
         [PrestadorLiquidacionOut.from_entity(p) for p in rows], page=page, size=size
+    )
+
+
+@router.get(
+    "/prestadores/{prestador_id}/evolucion-incidentes", response_model=EvolucionIncidentesOut
+)
+async def get_evolucion_incidentes(
+    prestador_id: UUID,
+    _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> EvolucionIncidentesOut:
+    """Incidentes por período y tipo de TODAS las liquidaciones del prestador —
+    alimenta el gráfico de evolución mensual del detalle de liquidación."""
+    filas = await SqlAlchemyIncidenteRepository(db).count_por_periodo_y_tipo(prestador_id)
+    return EvolucionIncidentesOut(
+        items=[
+            EvolucionIncidentesItemOut(periodo=periodo, tipo=tipo, cantidad=n)
+            for periodo, tipo, n in filas
+        ]
     )
 
 

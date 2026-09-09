@@ -4,7 +4,7 @@ import uuid
 from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
@@ -38,6 +38,18 @@ class SqlAlchemyIncidenteRepository:
         )
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
+
+    async def count_por_periodo_y_tipo(self, prestador_id: UUID) -> list[tuple[str, str, int]]:
+        stmt = (
+            select(LiquidacionModel.periodo, IncidenteModel.tipo, func.count().label("n"))
+            .select_from(IncidenteModel)
+            .join(LiquidacionModel, LiquidacionModel.id == IncidenteModel.liquidacion_id)
+            .where(LiquidacionModel.prestador_id == prestador_id)
+            .group_by(LiquidacionModel.periodo, IncidenteModel.tipo)
+            .order_by(LiquidacionModel.periodo)
+        )
+        result = await self._session.execute(stmt)
+        return [(row[0], row[1], row[2]) for row in result.all()]
 
     async def bulk_create(
         self, liquidacion_id: UUID, incidentes: Sequence[IncidenteImportado]

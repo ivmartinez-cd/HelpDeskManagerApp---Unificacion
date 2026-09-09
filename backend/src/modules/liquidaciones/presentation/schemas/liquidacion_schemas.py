@@ -28,6 +28,22 @@ class ResumenLiquidacionesOut(BaseModel):
     por_prestador: list[PrestadorPendienteOut] = Field(serialization_alias="porPrestador")
 
 
+class EvolucionIncidentesItemOut(BaseModel):
+    """Una fila del gráfico de evolución mensual de incidentes por tipo, del
+    detalle de liquidación (mes × tipo → cantidad)."""
+
+    periodo: str
+    tipo: str
+    cantidad: int
+
+
+class EvolucionIncidentesOut(BaseModel):
+    """No es una colección paginable (§11): es el dataset completo de un
+    gráfico para un prestador puntual, mismo criterio que ResumenLiquidacionesOut."""
+
+    items: list[EvolucionIncidentesItemOut]
+
+
 class EstadoIn(BaseModel):
     estado: ESTADOS_VALIDOS
 

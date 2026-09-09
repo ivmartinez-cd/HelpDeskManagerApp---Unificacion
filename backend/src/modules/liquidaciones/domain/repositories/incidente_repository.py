@@ -25,6 +25,12 @@ class IncidenteRepository(Protocol):
         histórico completo, no solo contra la liquidación que se está evaluando."""
         ...
 
+    async def count_por_periodo_y_tipo(self, prestador_id: UUID) -> list[tuple[str, str, int]]:
+        """Conteo de incidentes agrupado por período de liquidación y tipo, para
+        el gráfico de evolución mensual del detalle de liquidación. Devuelve
+        (periodo, tipo, cantidad) ordenado por período ascendente."""
+        ...
+
     async def bulk_create(
         self, liquidacion_id: UUID, incidentes: Sequence[IncidenteImportado]
     ) -> list[Incidente]:

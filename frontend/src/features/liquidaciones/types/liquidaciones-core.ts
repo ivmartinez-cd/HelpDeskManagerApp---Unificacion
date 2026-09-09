@@ -112,3 +112,11 @@ export interface LiquidacionDetalle {
   incidentes: Incidente[];
   alertas: Alerta[];
 }
+
+/** Fila del gráfico de evolución mensual de incidentes por tipo (todas las
+ * liquidaciones del prestador, no solo la que se está viendo). */
+export interface EvolucionIncidentesItem {
+  periodo: string;
+  tipo: string;
+  cantidad: number;
+}

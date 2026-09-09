@@ -3,6 +3,7 @@ import type {
   Alerta,
   EstadoAlerta,
   EstadoLiquidacion,
+  EvolucionIncidentesItem,
   ImportarLiquidacionResult,
   Liquidacion,
   LiquidacionDetalle,
@@ -52,6 +53,13 @@ export const liquidacionesCoreApi = {
     httpClient.get<Page<string>>("/api/liquidaciones/periodos").then((p) => p.items),
 
   get: (id: string) => httpClient.get<LiquidacionDetalle>(`/api/liquidaciones/${id}`),
+
+  getEvolucionIncidentes: (prestadorId: string) =>
+    httpClient
+      .get<{ items: EvolucionIncidentesItem[] }>(
+        `/api/liquidaciones/prestadores/${prestadorId}/evolucion-incidentes`,
+      )
+      .then((r) => r.items),
 
   importar: (prestadorId: string, file: File) => {
     const fd = new FormData();
