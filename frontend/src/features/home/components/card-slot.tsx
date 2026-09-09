@@ -66,7 +66,8 @@ export function CardSlot({
     case "mi-bono":
       return (
         <MiBonoCard
-          resumen={miBono.data}
+          resumen={miBono.data?.actual ?? null}
+          anterior={miBono.data?.anterior ?? null}
           loading={miBono.loading}
           error={miBono.error}
           onRetry={miBono.refetch}

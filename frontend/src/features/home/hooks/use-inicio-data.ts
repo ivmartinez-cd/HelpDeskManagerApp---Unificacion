@@ -80,17 +80,28 @@ export function useTurnosHoy(enabled: boolean, refreshKey = 0): Remote<CurrentSh
   return useRemote(enabled, () => turnosApi.getCurrentShifts(), "los turnos del día", refreshKey);
 }
 
+export interface MiBonoComparativo {
+  actual: MiResumenBono | null;
+  anterior: MiResumenBono | null;
+}
+
 /** "Mi bono" solo tiene sentido para un técnico vinculado a Siges (ver
  * `bonoTecnicosApi.getVinculoSiges`): `access.bonoTecnicos` solo refleja el
  * módulo (un superadmin ve todos), no el vínculo real — sin este chequeo
  * previo, `getMiResumen()` tira 404 para cualquier no-técnico con acceso al
- * módulo. */
-export function useMiBono(enabled: boolean, refreshKey = 0): Remote<MiResumenBono> {
-  return useRemote<MiResumenBono | null>(
+ * módulo. Trae mes actual y anterior juntos (el backend calcula cualquier
+ * período pasado on-the-fly, no hace falta un endpoint de histórico). */
+export function useMiBono(enabled: boolean, refreshKey = 0): Remote<MiBonoComparativo> {
+  return useRemote<MiBonoComparativo>(
     enabled,
     async () => {
       const { vinculado } = await bonoTecnicosApi.getVinculoSiges();
-      return vinculado ? bonoTecnicosApi.getMiResumen() : null;
+      if (!vinculado) return { actual: null, anterior: null };
+      const [actual, anterior] = await Promise.all([
+        bonoTecnicosApi.getMiResumen(),
+        bonoTecnicosApi.getMiResumen(periodoOffset(-1)),
+      ]);
+      return { actual, anterior };
     },
     "tu bono",
     refreshKey,
