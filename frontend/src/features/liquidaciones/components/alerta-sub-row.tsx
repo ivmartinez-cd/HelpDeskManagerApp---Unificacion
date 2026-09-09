@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { Route } from "lucide-react";
 import Link from "next/link";
-import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/utils/cn";
 import type { Alerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
-import { ESTADO_ALERTA_STYLES } from "../lib/alerta-estados";
+import { ESTADO_ALERTA_TONO } from "../lib/alerta-estados";
 import { formatARS } from "../lib/format";
+import { AlertaEstadoBadge } from "./alerta-estado-badge";
 import { GestionarAlertaModal } from "./gestionar-alerta-modal";
 import { riesgoClass } from "./incidente-badges";
 
@@ -82,15 +82,17 @@ export function AlertaSubRow({
   onChanged: () => void;
 }) {
   const [gestionando, setGestionando] = useState(false);
-  const tdCls = "py-2 px-4 font-body text-xs";
-  const estilo = ESTADO_ALERTA_STYLES[alerta.estado] ?? ESTADO_ALERTA_STYLES.pendiente;
+  const tdCls = "py-2 px-4 font-body text-sm";
+  const tono = ESTADO_ALERTA_TONO[alerta.estado] ?? ESTADO_ALERTA_TONO.pendiente;
+  const Icon = tono.icon;
   const relacionado = alerta.incidenteRelacionadoId
     ? incidentesById[alerta.incidenteRelacionadoId]
     : undefined;
   const faltante = linkFaltante(prestadorId, alerta, incidentesById);
   return (
-    <tr className="border-l-[3px] border-l-destructive/30 bg-destructive/[0.04]">
+    <tr className={cn("border-l-[5px]", tono.rowBorder, tono.rowBg)}>
       <td className={cn(tdCls, "pl-7")} colSpan={4}>
+        <Icon size={15} strokeWidth={2.4} className={cn("mr-1.5 inline-block align-[-2px]", tono.pillText)} aria-hidden="true" />
         <span className="font-semibold text-foreground">{alerta.tipoAlerta}</span>
         {alerta.esGrupo && (
           <span
@@ -128,12 +130,12 @@ export function AlertaSubRow({
           </button>
         )}
       </td>
-      <td className={cn(tdCls, "text-right", riesgoClass(alerta.riesgo))}>
+      <td className={cn(tdCls, "text-right font-semibold tabular-nums", riesgoClass(alerta.riesgo))}>
         {Math.round(alerta.riesgo)}%
       </td>
       <td className={tdCls} colSpan={6}>
         <span className="flex items-center gap-3">
-          <Badge variant={estilo.variant}>{estilo.label}</Badge>
+          <AlertaEstadoBadge estado={alerta.estado} />
           {faltante && (
             <Link
               href={faltante.href}

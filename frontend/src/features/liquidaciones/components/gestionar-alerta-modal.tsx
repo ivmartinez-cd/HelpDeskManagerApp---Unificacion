@@ -3,14 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Badge } from "@/shared/components/ui/badge";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import { CODIGO_ALT009, ESTADO_ALERTA_STYLES, TRANSICIONES_ALERTA } from "../lib/alerta-estados";
+import { CODIGO_ALT009, TRANSICIONES_ALERTA } from "../lib/alerta-estados";
 import { formatARS } from "../lib/format";
 import type { Alerta, EstadoAlerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
 import { riesgoClass } from "./incidente-badges";
+import { AlertaEstadoBadge } from "./alerta-estado-badge";
 import { AlertaKmAcciones } from "./alerta-km-acciones";
 import { AsignarZonaSucursal } from "./asignar-zona-sucursal";
 import { EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
@@ -59,7 +59,6 @@ export function GestionarAlertaModal({
     alerta.incidenteRelacionadoId ?? "",
   );
   const [cargandoSucursal, setCargandoSucursal] = useState(false);
-  const estilo = ESTADO_ALERTA_STYLES[alerta.estado] ?? ESTADO_ALERTA_STYLES.pendiente;
   // El selector de "ruta compartida" es un vínculo MANUAL para una alerta 1:1
   // (ver Alerta.incidenteRelacionadoId) — una alerta ya agrupada por el motor
   // (esGrupo) no lo necesita, el grupo ya está resuelto.
@@ -137,7 +136,7 @@ export function GestionarAlertaModal({
     <BrandModal isOpen onClose={onClose} title={`Gestionar ${alerta.tipoAlerta}`} widthPx={460}>
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
-          <Badge variant={estilo.variant}>{estilo.label}</Badge>
+          <AlertaEstadoBadge estado={alerta.estado} />
           <span className={`font-body text-sm font-semibold tabular-nums ${riesgoClass(alerta.riesgo)}`}>
             {Math.round(alerta.riesgo)}% riesgo
           </span>

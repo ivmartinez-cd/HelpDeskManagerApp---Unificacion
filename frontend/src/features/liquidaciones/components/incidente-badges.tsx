@@ -4,11 +4,18 @@
  * `incidentes-tabla.tsx` porque ese archivo ya superaba el tamaño máximo de
  * archivo (§4). */
 
-export function EstadoValidacionBadge({ estado }: { estado: string }) {
+/** `tonoTexto` (ej. "text-warning") pinta "CON ALERTAS" del mismo color que
+ * el tono de fila calculado por `peorTonoActivo` — sin él cae a rojo, para
+ * los usos que no calculan severidad por incidente. */
+export function EstadoValidacionBadge({ estado, tonoTexto }: { estado: string; tonoTexto?: string }) {
   if (estado === "ok")
     return <span className="font-body text-xs font-semibold text-success">● OK</span>;
   if (estado === "con_alertas")
-    return <span className="font-body text-xs font-semibold text-destructive">● CON ALERTAS</span>;
+    return (
+      <span className={`font-body text-xs font-semibold ${tonoTexto ?? "text-destructive"}`}>
+        ● CON ALERTAS
+      </span>
+    );
   return <span className="font-body text-xs text-muted-foreground">{estado}</span>;
 }
 

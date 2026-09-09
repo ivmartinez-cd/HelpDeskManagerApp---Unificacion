@@ -6,6 +6,7 @@ import { cn } from "@/shared/utils/cn";
 import { incidentUrl } from "@/shared/utils/incident-link";
 import { useSeleccionAlertas } from "../hooks/seleccion-alertas-context";
 import type { Alerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
+import { peorTonoActivo } from "../lib/alerta-estados";
 import { formatARS, formatFechaDia } from "../lib/format";
 import { AlertaSubRow } from "./alerta-sub-row";
 import { EstadoValidacionBadge, TipoBadge } from "./incidente-badges";
@@ -49,6 +50,13 @@ export function IncidenteRow({
       ? incidente.costoServicioCobrado - incidente.costoServicioEsperado
       : null;
   const hasAlertas = alertasInc.length > 0;
+  // Severidad de la fila SIN expandir: la peor entre las alertas activas
+  // (pendiente/en_revisión) — así la TL distingue qué incidente necesita
+  // atención sin tener que abrir cada uno con la flecha (pedido de Iván,
+  // 2026-09-08). Si todas las alertas ya están resueltas/descartadas, no
+  // hay tono (mismo criterio que `estado_validacion === "ok"` en backend).
+  const tono = hasAlertas ? peorTonoActivo(alertasInc) : null;
+  const Icon = tono?.icon;
   return (
     <>
       <tr
@@ -56,6 +64,7 @@ export function IncidenteRow({
         className={cn(
           "border-t border-border transition-colors hover:bg-muted/30",
           hasAlertas ? "cursor-pointer" : "cursor-default",
+          tono && cn("border-l-[4px]", tono.rowBorder, tono.rowBg),
         )}
         onClick={hasAlertas ? onToggle : undefined}
       >
@@ -74,6 +83,7 @@ export function IncidenteRow({
               ) : (
                 <span className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
               ))}
+            {Icon && <Icon size={13} strokeWidth={2.4} className={cn("flex-shrink-0", tono?.pillText)} aria-hidden="true" />}
             {hasAlertas &&
               (expanded ? (
                 <ChevronDown size={12} className="flex-shrink-0 text-muted-foreground" />
@@ -184,7 +194,7 @@ export function IncidenteRow({
           {incidente.fechaCierre ? formatFechaDia(incidente.fechaCierre) : "—"}
         </td>
         <td className={tdCls}>
-          <EstadoValidacionBadge estado={incidente.estadoValidacion} />
+          <EstadoValidacionBadge estado={incidente.estadoValidacion} tonoTexto={tono?.pillText} />
         </td>
       </tr>
       {expanded &&
