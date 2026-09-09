@@ -101,8 +101,8 @@ def _hallazgo_corredor_duplicado(
         for i, t in duplicados
     )
     descripcion = (
-        f"Corredor de ruta compartido: se cobraron {cobrado} km en este incidente "
-        f"y también km en: {refs} el mismo día (mismo SPST, diferencia ≤ 50 km)."
+        f"Ruta compartida: se cobraron {cobrado} km en este incidente "
+        f"y también en: {refs}, el mismo día y un tramo de ruta parecido (diferencia ≤ 50 km)."
     )
     contexto: dict[str, Any] = {
         "tipo": "corredor_duplicado",
@@ -122,8 +122,8 @@ def _hallazgo_corredor_contenido(
         for i, t in sin_km
     )
     descripcion = (
-        f"Este incidente cobró {cobrado} km incluyendo el tramo compartido con: {refs} "
-        f"del mismo corredor. Verificar si es un único viaje o viajes separados."
+        f"Este incidente cobró {cobrado} km que incluyen el tramo compartido con: {refs}. "
+        f"Fijate si fue un viaje único o viajes separados."
     )
     contexto: dict[str, Any] = {
         "tipo": "corredor_contenido",

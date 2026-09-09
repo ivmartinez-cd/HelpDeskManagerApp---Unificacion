@@ -144,7 +144,7 @@ def _clasificar_exceso(
     costo_km_unit = _costo_km_unitario(principal)
     diferencia_monto = round(diferencia_km * costo_km_unit, 2)
     monto_esperado = round(monto_cobrado_total - diferencia_monto, 2)
-    titulo = f"KMs duplicados en corredor — ${diferencia_monto:,.2f} cobrado en exceso"
+    titulo = f"Km cobrados dos veces — ${diferencia_monto:,.2f} de más"
     return "CRITICO", titulo, diferencia_monto, monto_esperado
 
 
@@ -165,8 +165,9 @@ def _descripcion(
     localidades = _localidades(grupo, tablas)
     return (
         f"{len(grupo)} incidentes de {empresa} el {fecha_str} "
-        f"en corredor ({', '.join(localidades)}). "
-        f"KMs cobrados total: {km_totales} | KMs máx. corredor (tabla): {km_max_tabla}."
+        f"en la misma zona ({', '.join(localidades)}). "
+        f"Cobraron {km_totales} km entre todos, pero el viaje son {km_max_tabla} km como máximo. "
+        f"Fijate si fue un solo viaje."
     )
 
 

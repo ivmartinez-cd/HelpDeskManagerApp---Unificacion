@@ -97,7 +97,7 @@ export function AlertaSubRow({
         {alerta.esGrupo && (
           <span
             className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase text-muted-foreground"
-            title={`Agrupa ${alerta.grupoIncidenteIds.length} incidentes del mismo corredor`}
+            title={`Agrupa ${alerta.grupoIncidenteIds.length} incidentes de la misma zona`}
           >
             Grupo ({alerta.grupoIncidenteIds.length})
           </span>
