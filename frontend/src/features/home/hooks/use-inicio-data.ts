@@ -80,8 +80,21 @@ export function useTurnosHoy(enabled: boolean, refreshKey = 0): Remote<CurrentSh
   return useRemote(enabled, () => turnosApi.getCurrentShifts(), "los turnos del día", refreshKey);
 }
 
+/** "Mi bono" solo tiene sentido para un técnico vinculado a Siges (ver
+ * `bonoTecnicosApi.getVinculoSiges`): `access.bonoTecnicos` solo refleja el
+ * módulo (un superadmin ve todos), no el vínculo real — sin este chequeo
+ * previo, `getMiResumen()` tira 404 para cualquier no-técnico con acceso al
+ * módulo. */
 export function useMiBono(enabled: boolean, refreshKey = 0): Remote<MiResumenBono> {
-  return useRemote(enabled, () => bonoTecnicosApi.getMiResumen(), "tu bono", refreshKey);
+  return useRemote<MiResumenBono | null>(
+    enabled,
+    async () => {
+      const { vinculado } = await bonoTecnicosApi.getVinculoSiges();
+      return vinculado ? bonoTecnicosApi.getMiResumen() : null;
+    },
+    "tu bono",
+    refreshKey,
+  );
 }
 
 /** Ranking personal de rutas más visitadas (30 días, backend). Si falla o

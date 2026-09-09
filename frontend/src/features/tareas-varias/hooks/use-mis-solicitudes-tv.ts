@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { bonoTecnicosApi } from "@/features/bono-tecnicos/api/bono-tecnicos-api";
 import { tareasVariasApi } from "../api/tareas-varias-api";
 import type { CrearSolicitudTvBody, SolicitudTv } from "../types/tareas-varias";
 
@@ -31,10 +32,14 @@ export function useMisSolicitudesTv() {
     setSolicitudes([]);
   }
 
+  // Sin vínculo Empleado↔Siges no hay `id_tecnico`: `getMisSolicitudes`
+  // tiraría 404 (un superadmin ve el módulo aunque no sea técnico, ver
+  // `bonoTecnicosApi.getVinculoSiges`).
   const cargar = () => {
     const periodo = monthValueToPeriodo(monthValue);
-    return tareasVariasApi
-      .getMisSolicitudes(periodo)
+    return bonoTecnicosApi
+      .getVinculoSiges()
+      .then(({ vinculado }) => (vinculado ? tareasVariasApi.getMisSolicitudes(periodo) : []))
       .then(setSolicitudes)
       .catch((err: unknown) => {
         console.error("Error al cargar mis solicitudes de TV:", err);

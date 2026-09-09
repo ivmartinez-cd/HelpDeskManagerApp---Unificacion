@@ -17,7 +17,8 @@ export function useMiResumenBono(periodo?: string) {
     async function cargar() {
       setLoading(true);
       try {
-        const d = await bonoTecnicosApi.getMiResumen(periodo);
+        const { vinculado } = await bonoTecnicosApi.getVinculoSiges();
+        const d = vinculado ? await bonoTecnicosApi.getMiResumen(periodo) : null;
         if (active) setData(d);
       } catch (err: unknown) {
         console.error("Error al cargar mi resumen de bono:", err);

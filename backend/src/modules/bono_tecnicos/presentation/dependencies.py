@@ -18,6 +18,7 @@ from src.modules.bono_tecnicos.application.use_cases.get_mi_resumen_bono import 
 from src.modules.bono_tecnicos.application.use_cases.get_puntajes_periodo import (
     GetPuntajesPeriodo,
 )
+from src.modules.bono_tecnicos.application.use_cases.get_vinculo_siges import GetVinculoSiges
 from src.modules.bono_tecnicos.application.use_cases.guardar_bono_input import GuardarBonoInput
 from src.modules.bono_tecnicos.infrastructure.mercurio.pyodbc_conteo_tecnico_gateway import (
     PyodbcConteoTecnicoGateway,
@@ -75,3 +76,7 @@ def build_get_mi_resumen_bono(session: AsyncSession) -> GetMiResumenBono:
         build_get_puntajes_periodo(session),
         SqlAlchemyTareasVariasGateway(session),
     )
+
+
+def build_get_vinculo_siges(session: AsyncSession) -> GetVinculoSiges:
+    return GetVinculoSiges(SqlAlchemyTecnicoIdentityGateway(session))

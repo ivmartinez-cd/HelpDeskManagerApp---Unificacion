@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.auth.presentation.dependencies.identity import get_current_identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.bono_tecnicos.application.dtos.incidente_bono_dto import (
     GetIncidentesTecnicoRequest,
@@ -18,6 +19,7 @@ from src.modules.bono_tecnicos.presentation.dependencies import (
     build_get_incidentes_tecnico,
     build_get_mi_resumen_bono,
     build_get_puntajes_periodo,
+    build_get_vinculo_siges,
     build_guardar_bono_input,
 )
 from src.modules.bono_tecnicos.presentation.schemas.incidente_bono_schemas import (
@@ -27,6 +29,7 @@ from src.modules.bono_tecnicos.presentation.schemas.puntaje_tecnico_schemas impo
     GuardarBonoInputBody,
     MiResumenBonoSchema,
     PuntajeTecnicoSchema,
+    VinculoSigesSchema,
 )
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
@@ -97,6 +100,20 @@ async def guardar_input(
             dias=body.dias,
         )
     )
+
+
+@router.get("/vinculo-siges", response_model=VinculoSigesSchema)
+async def get_vinculo_siges(
+    identity: Identity = Depends(get_current_identity),
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> VinculoSigesSchema:
+    """Si el usuario autenticado tiene vínculo Empleado↔Siges — para que el
+    frontend decida si corresponde mostrar "Mi bono"/Tareas Varias antes de
+    pedir `/mi-resumen` (404 si no hay vínculo). Sin permiso específico: un
+    superadmin ve todos los módulos (`ListVisibleModules`) y dispararía ese
+    404 aunque no sea técnico si esto exigiera `bono-tecnicos.create`."""
+    vinculado = await build_get_vinculo_siges(db).execute(identity.user.id)
+    return VinculoSigesSchema(vinculado=vinculado)
 
 
 @router.get("/mi-resumen", response_model=MiResumenBonoSchema)

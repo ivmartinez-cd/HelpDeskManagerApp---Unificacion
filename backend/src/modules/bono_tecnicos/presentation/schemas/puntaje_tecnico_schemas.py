@@ -23,6 +23,10 @@ class GuardarBonoInputBody(BaseModel):
     dias: float = Field(ge=0, multiple_of=0.5)
 
 
+class VinculoSigesSchema(BaseModel):
+    vinculado: bool
+
+
 class MiResumenBonoSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

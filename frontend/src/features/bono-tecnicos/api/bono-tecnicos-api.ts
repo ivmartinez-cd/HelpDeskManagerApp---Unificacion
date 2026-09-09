@@ -34,6 +34,13 @@ export const bonoTecnicosApi = {
       periodo ? `/api/bono-tecnicos/mi-resumen?periodo=${periodo}` : "/api/bono-tecnicos/mi-resumen",
     ),
 
+  /** Si el usuario autenticado tiene vínculo Empleado↔Siges — chequear antes
+   * de pedir `getMiResumen`/`tareasVariasApi.getMisSolicitudes`, que tiran
+   * 404 sin vínculo (un superadmin ve todos los módulos aunque no sea
+   * técnico, ver `ListVisibleModules`). */
+  getVinculoSiges: () =>
+    httpClient.get<{ vinculado: boolean }>("/api/bono-tecnicos/vinculo-siges"),
+
   getEvolucionAnual: (anio: number) =>
     httpClient
       .get<Page<EvolucionTecnico>>(`/api/bono-tecnicos/evolucion-anual?anio=${anio}&size=100`)
