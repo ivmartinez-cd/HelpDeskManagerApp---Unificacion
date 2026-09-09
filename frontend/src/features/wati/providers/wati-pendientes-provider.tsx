@@ -47,7 +47,7 @@ export function WatiPendientesProvider({
   const { user, modules } = useSession();
   const habilitado = modules.some((m) => m.key === "wati");
   const estado = useWatiPendientesPolling(habilitado);
-  const turno = useTurnoSt(habilitado || Boolean(watiUrl), user.id);
+  const turno = useTurnoSt(habilitado, user.id);
   const inboxUrl = estado.resumen?.inbox_url ?? watiUrl;
   const avisos = useWatiAvisos(estado.pendientes, habilitado && turno.soyOperadorSt, inboxUrl);
   return (

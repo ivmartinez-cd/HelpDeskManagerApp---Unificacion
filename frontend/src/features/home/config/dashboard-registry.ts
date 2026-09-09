@@ -186,6 +186,17 @@ export function cardsDeVista(view: ViewKey, access: ModuleAccess): CardId[] {
   return vista.rows.flatMap((r) => r.cells.map((c) => c.id)).filter((id) => CARD_GUARDS[id](access));
 }
 
+/** Vistas con al menos una card visible para el acceso dado — única fuente
+ * de qué vistas ofrecer, tanto en el selector "Vista" de Inicio como en
+ * "Vista al entrar" de Personalizar. Un usuario muy limitado (ej. técnico
+ * con solo `bono-tecnicos`) no tiene ninguna card en "seguimiento": antes
+ * Personalizar igual dejaba elegirla como vista al entrar, y una vez guardada
+ * el usuario quedaba en una vista vacía sin el selector para volver (no se
+ * renderiza con una sola vista disponible). */
+export function vistasDisponibles(access: ModuleAccess): DashboardView[] {
+  return VIEWS.filter((v) => cardsDeVista(v.key, access).length > 0);
+}
+
 /** Alto total diseñado de una vista (todas las filas, tenga o no cards
  * visibles el usuario). `DashboardGrid` lo usa para que una fila entera
  * ausente (p. ej. usuario sin Liquidaciones/Equipo/Parque) deje ese espacio

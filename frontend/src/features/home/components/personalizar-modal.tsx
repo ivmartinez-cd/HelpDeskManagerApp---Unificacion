@@ -7,6 +7,7 @@ import {
   CARD_LABELS,
   VIEWS,
   cardsDeVista,
+  vistasDisponibles,
   type CardId,
   type ModuleAccess,
   type ViewKey,
@@ -34,21 +35,24 @@ export function PersonalizarModal({
   onRestablecer: () => void;
 }) {
   const ocultos = new Set(prefs.ocultos);
+  const vistas = vistasDisponibles(access);
   return (
     <BrandModal isOpen={isOpen} onClose={onClose} title="Personalizar Inicio" widthPx={460}>
       <div className="flex flex-col gap-5">
-        <section className="flex flex-col gap-2">
-          <h3 className="font-heading text-[11px] font-bold uppercase tracking-[.05em] text-muted-foreground">
-            Vista al entrar
-          </h3>
-          <SegmentedControl
-            label="Vista al entrar"
-            size="sm"
-            value={prefs.vistaInicial}
-            onChange={(v) => onVistaInicial(v as ViewKey)}
-            options={VIEWS.map((v) => ({ value: v.key, label: v.label }))}
-          />
-        </section>
+        {vistas.length > 1 && (
+          <section className="flex flex-col gap-2">
+            <h3 className="font-heading text-[11px] font-bold uppercase tracking-[.05em] text-muted-foreground">
+              Vista al entrar
+            </h3>
+            <SegmentedControl
+              label="Vista al entrar"
+              size="sm"
+              value={prefs.vistaInicial}
+              onChange={(v) => onVistaInicial(v as ViewKey)}
+              options={vistas.map((v) => ({ value: v.key, label: v.label }))}
+            />
+          </section>
+        )}
 
         {VIEWS.map((vista) => {
           const cards = cardsDeVista(vista.key, access);

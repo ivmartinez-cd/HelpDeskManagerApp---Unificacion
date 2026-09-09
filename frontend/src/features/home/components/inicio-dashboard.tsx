@@ -6,11 +6,11 @@ import { useSession } from "@/services/session-provider";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import { quietCards } from "../config/card-quiet";
 import {
-  VIEWS,
   cardsDeVista,
   layoutVisible,
   moduleAccessFrom,
   viewTotalHeight,
+  vistasDisponibles,
   type ViewKey,
 } from "../config/dashboard-registry";
 import { buildKpiTiles } from "../config/kpi-tiles";
@@ -43,11 +43,22 @@ export function InicioDashboard() {
   const [vista, setVista] = useState<ViewKey>("hoy");
   const [personalizando, setPersonalizando] = useState(false);
 
+  const vistas = vistasDisponibles(access);
+  // La vista guardada puede no tener ninguna card para este acceso (ej. un
+  // técnico eligió "Seguimiento" como vista al entrar antes de que
+  // Personalizar excluyera las vistas vacías del selector, o su acceso
+  // cambió después de guardarla): cae a la primera vista con contenido en
+  // vez de dejarlo en una pantalla vacía sin el selector para salir de ahí
+  // (el selector de abajo no se renderiza con una sola vista disponible).
+  const vistaValida = vistas.some((v) => v.key === prefs.vistaInicial)
+    ? prefs.vistaInicial
+    : (vistas[0]?.key ?? "hoy");
+
   // Al cargar las preferencias, abrir con la vista elegida por el usuario.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (cargadas) setVista(prefs.vistaInicial);
-  }, [cargadas, prefs.vistaInicial]);
+    if (cargadas) setVista(vistaValida);
+  }, [cargadas, vistaValida]);
 
   const quiet = quietCards(data);
   const fuera = new Set([...quiet.keys(), ...prefs.ocultos]);
@@ -57,7 +68,6 @@ export function InicioDashboard() {
     .map((id) => quiet.get(id))
     .filter((q) => q !== undefined);
   const tiles = buildKpiTiles(data, access);
-  const vistasDisponibles = VIEWS.filter((v) => cardsDeVista(v.key, access).length > 0);
 
   return (
     <div className="flex flex-col gap-3 px-6 py-3.5 short:gap-2.5 short:px-5 short:py-2.5 xl:h-full">
@@ -90,14 +100,14 @@ export function InicioDashboard() {
 
       <KpiStrip tiles={tiles} />
 
-      {vistasDisponibles.length > 1 && (
+      {vistas.length > 1 && (
         <div className="flex flex-none items-center">
           <SegmentedControl
             label="Vista"
             size="sm"
             value={vista}
             onChange={(v) => setVista(v as ViewKey)}
-            options={vistasDisponibles.map((v) => ({ value: v.key, label: v.label }))}
+            options={vistas.map((v) => ({ value: v.key, label: v.label }))}
           />
         </div>
       )}
