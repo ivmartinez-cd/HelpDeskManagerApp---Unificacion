@@ -94,12 +94,11 @@ export interface CandidatoLectura {
 }
 
 export interface BoxplotParque {
-  minimo: number;
-  q1: number;
+  n_equipos: number;
+  q1: number | null;
   mediana: number;
-  q3: number;
-  maximo: number;
-  valor_equipo: number;
+  q3: number | null;
+  valor_equipo: number | null;
 }
 
 export interface CandidatosEquipo {

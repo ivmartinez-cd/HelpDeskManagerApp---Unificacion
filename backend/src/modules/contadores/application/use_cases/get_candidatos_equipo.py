@@ -1,15 +1,9 @@
-from src.modules.contadores.application.dtos.boxplot_parque_dto import BoxplotParqueDto
 from src.modules.contadores.application.dtos.candidato_lectura_dto import CandidatoLecturaDto
 from src.modules.contadores.application.dtos.candidatos_equipo_dto import CandidatosEquipoDto
 from src.modules.contadores.application.dtos.contexto_proceso_dto import ContextoProcesoDto
+from src.modules.contadores.application.use_cases._boxplot_de_entrada import boxplot_de_entrada
 from src.modules.contadores.application.use_cases._construir_estimacion_input import (
     construir_estimacion_input,
-)
-from src.modules.contadores.domain.services.estimacion.cascada_parque import (
-    resolver_cascada_parque,
-)
-from src.modules.contadores.domain.value_objects.estimacion.estimacion_input import (
-    EstimacionInput,
 )
 from src.modules.contadores.domain.value_objects.estimacion.lectura_ref import LecturaRef
 from src.modules.contadores.infrastructure.ejemplo.datos_ejemplo_proyeccion import (
@@ -39,7 +33,7 @@ class GetCandidatosEquipoUseCase:
             tecnologia=clase_ej.tecnologia,
             velocidad_ppm=clase_ej.velocidad_ppm,
             lecturas=_lecturas_de(clase_ej),
-            boxplot=_boxplot_de(entrada),
+            boxplot=boxplot_de_entrada(entrada),
         )
 
 
@@ -82,21 +76,3 @@ def _a_dto(lectura: LecturaRef, clase: ClaseEjemplo) -> CandidatoLecturaDto:
         motivo_invalidez="PF=0 (Servicio Técnico sin revisar)" if es_t4_sin_revisar else None,
     )
 
-
-def _boxplot_de(entrada: EstimacionInput) -> BoxplotParqueDto | None:
-    """Distribución sintética alrededor del valor de parque usado — el
-    fixture de ejemplo no modela una muestra cruda de equipos, así que el
-    spread es ilustrativo, no una estadística real (aceptable para el
-    alcance de datos de ejemplo; con SiGes real se calcularía de la muestra)."""
-    nivel = resolver_cascada_parque(entrada)
-    if nivel is None:
-        return None
-    valor = nivel.promedio.valor
-    return BoxplotParqueDto(
-        minimo=valor * 0.4,
-        q1=valor * 0.7,
-        mediana=valor,
-        q3=valor * 1.3,
-        maximo=valor * 1.8,
-        valor_equipo=valor,
-    )

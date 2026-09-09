@@ -48,8 +48,18 @@ export const proyeccionApi = {
     return httpClient.get<TableroProyeccion>(`${BASE}/tablero?${qs.toString()}`);
   },
 
-  getCandidatos: (idMaquina: number, clase: string) =>
-    httpClient.get<CandidatosEquipo>(`${BASE}/candidatos/${idMaquina}/${clase}`),
+  // Sin `solicitud`: sin gráfico de parque para un equipo real (necesita la
+  // grilla cacheada de ese proceso — ver ConstructorEntradaSiges).
+  getCandidatos: (idMaquina: number, clase: string, solicitud?: SolicitudTableroReal) => {
+    if (!solicitud) return httpClient.get<CandidatosEquipo>(`${BASE}/candidatos/${idMaquina}/${clase}`);
+    const qs = new URLSearchParams({
+      nro_proceso: String(solicitud.nroProceso),
+      id_grupo_economico: String(solicitud.idGrupoEconomico),
+      id_anexo: String(solicitud.idAnexo),
+      fecha_objetivo: solicitud.fechaObjetivo,
+    });
+    return httpClient.get<CandidatosEquipo>(`${BASE}/candidatos/${idMaquina}/${clase}?${qs.toString()}`);
+  },
 
   recalcularCandidato: (body: RecalcularCandidatoBody) =>
     httpClient.post<RecalcularCandidatoResponse>(`${BASE}/candidatos/recalcular`, body),

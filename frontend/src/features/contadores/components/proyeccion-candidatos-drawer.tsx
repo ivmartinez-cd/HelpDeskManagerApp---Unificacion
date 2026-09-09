@@ -60,7 +60,7 @@ export function ProyeccionCandidatosDrawer({
   // el cuerpo del efecto, ver react-hooks/set-state-in-effect).
   useEffect(() => {
     proyeccionApi
-      .getCandidatos(fila.id_maquina, fila.clase)
+      .getCandidatos(fila.id_maquina, fila.clase, solicitud)
       .then(setDatos)
       .catch(() => {
         setError("No se pudo cargar el panel de candidatos — puede ser lenta o falló la conexión a Siges.");

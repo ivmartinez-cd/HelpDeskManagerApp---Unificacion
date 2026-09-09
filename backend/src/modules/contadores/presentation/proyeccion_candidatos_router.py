@@ -18,6 +18,9 @@ from src.modules.contadores.application.dtos.forzar_metodo_request import Forzar
 from src.modules.contadores.application.dtos.recalcular_candidato_request import (
     RecalcularCandidatoRequest,
 )
+from src.modules.contadores.application.dtos.solicitud_recalculo_siges_dto import (
+    SolicitudRecalculoSigesDto,
+)
 from src.modules.contadores.application.use_cases.forzar_metodo_candidato import (
     ForzarMetodoCandidatoUseCase,
 )
@@ -92,22 +95,52 @@ class AceptarManualBody(BaseModel):
     metodo_detalle: str | None = None
 
 
+def _solicitud_opcional(
+    nro_proceso: int | None,
+    id_grupo_economico: int | None,
+    id_anexo: int | None,
+    fecha_objetivo: date | None,
+) -> SolicitudRecalculoSigesDto | None:
+    if nro_proceso is None or id_grupo_economico is None:
+        return None
+    if id_anexo is None or fecha_objetivo is None:
+        return None
+    return SolicitudRecalculoSigesDto(
+        nro_proceso=nro_proceso,
+        id_grupo_economico=id_grupo_economico,
+        id_anexo=id_anexo,
+        fecha_objetivo=fecha_objetivo,
+    )
+
+
 @router.get("/candidatos/{id_maquina}/{clase}", response_model=CandidatosEquipoSchema)
 async def get_candidatos(
     id_maquina: int,
     clase: str,
     fecha_objetivo: date | None = None,
+    nro_proceso: int | None = None,
+    id_grupo_economico: int | None = None,
+    id_anexo: int | None = None,
     _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db, scope="function"),
 ) -> CandidatosEquipoSchema:
     """`clase` de un equipo de ejemplo es un código (`"A4-B/N"`); `clase` de
     un equipo real de Siges es el `ID_ClaseContador` como string (ver
-    `_clase_de` en `_mapear_filas_grilla_siges.py`) — de ahí el fallback."""
+    `_clase_de` en `_mapear_filas_grilla_siges.py`) — de ahí el fallback. Los
+    query params de selección son opcionales: sin ellos un equipo real igual
+    se muestra, solo sin el gráfico de parque (necesita la grilla cacheada
+    de ese proceso, ver `ConstructorEntradaSiges`)."""
     dto = GetCandidatosEquipoUseCase().execute(
         id_maquina, clase, await contexto_ejemplo(fecha_objetivo)
     )
     if dto is None and clase.isdigit():
-        use_case = GetCandidatosEquipoSigesUseCase(get_candidatos_equipo_gateway())
-        dto = await use_case.execute(id_maquina, int(clase))
+        solicitud = _solicitud_opcional(nro_proceso, id_grupo_economico, id_anexo, fecha_objetivo)
+        use_case = GetCandidatosEquipoSigesUseCase(
+            get_candidatos_equipo_gateway(),
+            get_grilla_estimacion_gateway(),
+            SqlAlchemyRecesosRepository(db),
+        )
+        dto = await use_case.execute(id_maquina, int(clase), solicitud)
     if dto is None:
         raise HTTPException(status_code=404, detail="Equipo o clase no encontrado")
     return CandidatosEquipoSchema.from_dto(dto)

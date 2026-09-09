@@ -100,12 +100,11 @@ class CandidatoLecturaSchema(BaseModel):
 class BoxplotParqueSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    minimo: float
-    q1: float
+    n_equipos: int
+    q1: float | None
     mediana: float
-    q3: float
-    maximo: float
-    valor_equipo: float
+    q3: float | None
+    valor_equipo: float | None
 
     @classmethod
     def from_dto_or_none(cls, dto: BoxplotParqueDto | None) -> "BoxplotParqueSchema | None":
