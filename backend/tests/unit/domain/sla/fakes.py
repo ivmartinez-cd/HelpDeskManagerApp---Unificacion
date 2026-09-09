@@ -35,7 +35,11 @@ class FakeSlaSnapshotRepository:
 
 
 def build_incidente(
-    id_incidente: int, tecnico: str, resultado: str, id_tecnico: int | None = None
+    id_incidente: int,
+    tecnico: str,
+    resultado: str,
+    id_tecnico: int | None = None,
+    region: str = "LOCAL",
 ) -> IncidenteSla:
     """Incidente con los campos que no importan al caso fijados en valores
     neutros. `id_tecnico` por default se deriva del nombre (estable dentro de
@@ -52,7 +56,7 @@ def build_incidente(
         modelo="HP LaserJet",
         tecnico=tecnico,
         id_tecnico=id_tecnico if id_tecnico is not None else abs(hash(tecnico)) % 100_000,
-        region="LOCAL",
+        region=region,
         fecha_operativo=datetime(2026, 8, 4, 15, 30),
         periodo=202608,
         tiempo="12:30",

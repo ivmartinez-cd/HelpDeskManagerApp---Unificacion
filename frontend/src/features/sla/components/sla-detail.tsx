@@ -1,6 +1,7 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
+import { Copy, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import {
   INCIDENTES_PAGE_SIZE,
   MIS_PST,
@@ -8,6 +9,7 @@ import {
   formatUpdatedAt,
   useSlaDetail,
 } from "../hooks/use-sla-detail";
+import { formatearTablaWhatsapp } from "../lib/formato-whatsapp";
 import { incidenteColumns } from "./sla-incidentes-columns";
 import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
@@ -35,6 +37,25 @@ export function SlaDetail() {
     error,
     handleRefresh,
   } = useSlaDetail();
+
+  const handleCopiarWhatsapp = async () => {
+    const [anio, mes] = monthValue.split("-").map(Number);
+    const periodoLabel = new Date(anio, mes - 1, 1).toLocaleDateString("es-AR", {
+      month: "long",
+      year: "numeric",
+    });
+    const texto = formatearTablaWhatsapp(incidentes, periodoLabel);
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast.success(
+        totalIncidentes > incidentes.length
+          ? `Copiado — solo esta página (${incidentes.length} de ${totalIncidentes} vencidos filtrados).`
+          : "Tabla copiada, lista para pegar en WhatsApp.",
+      );
+    } catch {
+      toast.error("No se pudo copiar. Probá de nuevo o copiá manualmente.");
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6 px-9 py-8">
@@ -72,6 +93,15 @@ export function SlaDetail() {
                 </option>
               ))}
           </BrandSelect>
+          <BrandButton
+            variant="outline"
+            onClick={() => void handleCopiarWhatsapp()}
+            disabled={loading || incidentes.length === 0}
+            title="Copiar la tabla de vencidos como texto para pegar en WhatsApp"
+          >
+            <Copy className="h-4 w-4" />
+            Copiar para WhatsApp
+          </BrandButton>
           <div className="flex flex-col items-end gap-1">
             <BrandButton
               onClick={handleRefresh}

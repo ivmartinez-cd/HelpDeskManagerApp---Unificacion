@@ -46,3 +46,6 @@ class IncidenteVencidoDTO:
     rango: str
     sla_horas: int
     horas_vencido: int
+    # "Local" si es Canal Directo (region == LOCAL); si no, el operador interno
+    # dueño del PST externo (mismo mapeo que usa IncidenteDerivadoDTO.operador).
+    agente: str

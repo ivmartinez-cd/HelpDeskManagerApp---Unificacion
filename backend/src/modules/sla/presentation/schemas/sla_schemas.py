@@ -45,3 +45,4 @@ class IncidenteVencidoSchema(BaseModel):
     rango: str
     sla_horas: int
     horas_vencido: int
+    agente: str

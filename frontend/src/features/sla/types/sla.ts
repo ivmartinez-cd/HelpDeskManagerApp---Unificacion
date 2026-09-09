@@ -31,4 +31,7 @@ export interface IncidenteVencido {
   rango: string;
   sla_horas: number;
   horas_vencido: number;
+  /** "Local" si es un incidente de Canal Directo; si no, el operador interno
+   * dueño del PST externo que lo atendió. */
+  agente: string;
 }

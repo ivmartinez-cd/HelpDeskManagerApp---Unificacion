@@ -79,7 +79,9 @@ def build_get_sla_compliance(session: AsyncSession) -> GetSlaCompliance:
 
 def build_list_incidentes_vencidos(session: AsyncSession) -> ListIncidentesVencidos:
     return ListIncidentesVencidos(
-        SqlAlchemySlaSnapshotRepository(session), build_refresh_sla_snapshot(session)
+        SqlAlchemySlaSnapshotRepository(session),
+        build_refresh_sla_snapshot(session),
+        SqlAlchemyPrestadorLookup(session),
     )
 
 

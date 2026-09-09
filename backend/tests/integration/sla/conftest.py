@@ -85,7 +85,7 @@ def lookup(monkeypatch: pytest.MonkeyPatch) -> Lookup:
 
 
 @pytest.fixture
-def sla_gateway(monkeypatch: pytest.MonkeyPatch) -> FakeSlaQueryGateway:
+def sla_gateway(monkeypatch: pytest.MonkeyPatch, lookup: Lookup) -> FakeSlaQueryGateway:
     gateway = FakeSlaQueryGateway(
         [
             build_incidente(1, "Tecnico Propio", RESULTADO_CORRECTO, id_tecnico=PST_PROPIO),
@@ -102,7 +102,7 @@ def sla_gateway(monkeypatch: pytest.MonkeyPatch) -> FakeSlaQueryGateway:
     monkeypatch.setattr(
         sla_router,
         "build_list_incidentes_vencidos",
-        lambda _db: ListIncidentesVencidos(repo, refresher),
+        lambda _db: ListIncidentesVencidos(repo, refresher, lookup),
     )
     return gateway
 

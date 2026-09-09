@@ -112,7 +112,7 @@ async def test_incidentes_vencidos_filtra_a_los_pst_propios_por_default() -> Non
     assert set(body["items"][0]) == {
         "id_incidente", "tecnico", "id_tecnico", "region", "cliente", "sucursal", "modelo",
         "nro_serie", "fecha_ingreso", "fecha_operativo", "tiempo", "rango", "sla_horas",
-        "horas_vencido",
+        "horas_vencido", "agente",
     }
     assert body["items"][0]["id_incidente"] == 2
     assert [i["id_incidente"] for i in todos.json()["items"]] == [2, 3]
