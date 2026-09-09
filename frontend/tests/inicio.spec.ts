@@ -37,6 +37,14 @@ const SHIFT_ST_DE_OTRO_OPERADOR = {
   isNext: false,
 };
 
+// El recordatorio "revisar ahora" es para quien CUBRE la franja ST (ver
+// wati-header-link.tsx) — mismo userId que USER_ID, no cualquier operador.
+const SHIFT_ST_PROPIO = {
+  ...SHIFT_ST_DE_OTRO_OPERADOR,
+  slotId: "slot-3",
+  operadores: [{ userId: USER_ID, userName: "Test Admin" }],
+};
+
 async function mockTurnos(page: Page, shifts: unknown[]) {
   await page.route("**/api/turnos/current", (route) =>
     route.fulfill({
@@ -122,8 +130,10 @@ test.describe("Inicio", () => {
     await expect(accesos.getByRole("link", { name: "Liquidaciones" })).toBeVisible();
   });
 
-  test("el ícono de WATI se destaca dentro del horario de Servicio Técnico", async ({ page }) => {
-    await mockTurnos(page, [SHIFT_ST_DE_OTRO_OPERADOR]);
+  test("el ícono de WATI se destaca cuando cubro la franja de Servicio Técnico", async ({
+    page,
+  }) => {
+    await mockTurnos(page, [SHIFT_ST_PROPIO]);
     await mockAccesos(page, []);
     await page.goto("/");
 
@@ -133,6 +143,17 @@ test.describe("Inicio", () => {
 
   test("el ícono de WATI queda neutro sin turno ST activo", async ({ page }) => {
     await mockTurnos(page, []);
+    await mockAccesos(page, []);
+    await page.goto("/");
+
+    await expect(page.getByTitle("WATI", { exact: true })).toBeVisible();
+    await expect(page.getByText("Revisar ahora")).not.toBeVisible();
+  });
+
+  test("el ícono de WATI queda neutro si la franja ST la cubre otro operador", async ({
+    page,
+  }) => {
+    await mockTurnos(page, [SHIFT_ST_DE_OTRO_OPERADOR]);
     await mockAccesos(page, []);
     await page.goto("/");
 

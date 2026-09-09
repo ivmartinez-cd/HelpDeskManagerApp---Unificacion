@@ -12,7 +12,14 @@ import uuid
 import pytest
 
 from tests.integration.router_testing import client
+from tests.integration.turnos.conftest import _HOY
 from tests.integration.turnos.support import PAGE_KEYS, PREFIX, ReposTitular
+
+# `repos_titular` siembra una franja de todo el día en `_HOY.weekday()`; un día
+# distinto evita que el slot nuevo de este test choque con esa franja (pasaba
+# solo los miércoles, cuando _HOY.weekday() == 2, el valor que este test tenía
+# hardcodeado).
+_DIA_SEMANA_LIBRE = (_HOY.weekday() + 1) % 7
 
 # --- Autorización (complementa test_require_permission_http.py) ----------------
 
@@ -206,7 +213,7 @@ async def test_crear_editar_borrar_slot_y_reasignar(repos_titular: ReposTitular)
         "casillaId": str(repos_titular.casilla.id),
         "horaInicio": "08:00",
         "horaFin": "11:00",
-        "diaSemana": 2,
+        "diaSemana": _DIA_SEMANA_LIBRE,
         "sortOrder": 3,
     }
     # Un usuario que existe en el provider: los ids desconocidos ahora dan 404.
@@ -227,7 +234,7 @@ async def test_crear_editar_borrar_slot_y_reasignar(repos_titular: ReposTitular)
         "casillaId": str(repos_titular.casilla.id),
         "horaInicio": "08:00:00",
         "horaFin": "11:00:00",
-        "diaSemana": 2,
+        "diaSemana": _DIA_SEMANA_LIBRE,
         "sortOrder": 3,
         "asignaciones": [],
     }
