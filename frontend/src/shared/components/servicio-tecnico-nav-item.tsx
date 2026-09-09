@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { ChevronDown, Wrench } from "lucide-react";
+import { useSession } from "@/services/session-provider";
 import { ServicioTecnicoNavSubmenu } from "@/shared/components/servicio-tecnico-nav-submenu";
+import { canAccessPath } from "@/shared/config/route-permissions";
 import { cn } from "@/shared/utils/cn";
 
 /** Servicio Técnico: grupo hardcodeado (no es módulo), expandible con
@@ -48,7 +50,25 @@ export function ServicioTecnicoNavItem({
     hasBonoTecnicos ||
     hasTareasVarias;
   const stcSubmenuExpanded = submenuOverride ?? stcActive;
-  const stcHref = hasPrestadores ? "/prestadores" : hasSla ? "/sla" : "/servicio-tecnico";
+  const { can, hasFeature } = useSession();
+  // El link principal de la fila (no el chevron) tiene que caer en una
+  // pantalla real: antes solo contemplaba prestadores/sla y para cualquier
+  // otro módulo del grupo (ej. un técnico con solo bono-tecnicos) caía a
+  // "/servicio-tecnico", una ruta que no existe ni está mapeada en
+  // route-permissions.ts → pantalla de error. Además de tener el módulo,
+  // hace falta la acción específica que exige esa ruta (`canAccessPath`) —
+  // "bono-tecnicos" con solo `create` (autoservicio) no alcanza para
+  // `/bono-tecnicos`, que pide `view` (gerencia).
+  const candidatos: [boolean, string][] = [
+    [hasPrestadores, "/prestadores"],
+    [hasSla, "/sla"],
+    [hasPreventivos, "/preventivos"],
+    [hasBonoTecnicos, "/bono-tecnicos"],
+    [hasTareasVarias, "/tareas-varias"],
+    [hasAnalisisLogHp, "/analisis-log-hp"],
+  ];
+  const stcHref =
+    candidatos.find(([tiene, href]) => tiene && canAccessPath(href, { can, hasFeature }))?.[1] ?? "/";
   return (
     <div className="flex flex-col">
       <div
