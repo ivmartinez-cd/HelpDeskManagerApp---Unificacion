@@ -95,8 +95,7 @@ class TablaKmRepository(Protocol):
         kms_a_facturar: float,
         url_maps: str | None,
     ) -> TablaKm | None:
-        """Edición completa desde el ABM — no toca el pin destino (`set_coordenadas`/
-        `update_distancias` son los únicos que lo escriben)."""
+        """Edición completa desde el ABM — no toca el pin destino."""
         ...
 
     async def update_vinculo_spst(
