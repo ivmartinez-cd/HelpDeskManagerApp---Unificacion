@@ -40,10 +40,12 @@ class _TablaKmUpdatesMixin:
         aplica_viatico: bool,
         kms_a_facturar: float,
         url_maps: str | None,
-        latitud_destino: float | None = None,
-        longitud_destino: float | None = None,
     ) -> TablaKm | None:
-        # Edición completa desde el ABM; no toca `updated_at` (comportamiento heredado).
+        # Edición completa desde el ABM; no toca `updated_at` (comportamiento heredado)
+        # ni el pin destino (latitud_destino/longitud_destino) — eso lo escriben
+        # solo `set_coordenadas`/`update_distancias`. Antes este método incluía esas
+        # dos columnas en el dict de cambios con default None, así que CUALQUIER
+        # edición desde el ABM las pisaba a NULL aunque el usuario no las tocara.
         cambios = CambiosTablaKm(
             prestador_id=prestador_id,
             spst_id=spst_id,
@@ -58,8 +60,6 @@ class _TablaKmUpdatesMixin:
             aplica_viatico=aplica_viatico,
             kms_a_facturar=kms_a_facturar,
             url_maps=url_maps,
-            latitud_destino=latitud_destino,
-            longitud_destino=longitud_destino,
         )
         return await self._actualizar(tabla_km_id, cambios)
 

@@ -94,9 +94,10 @@ class TablaKmRepository(Protocol):
         aplica_viatico: bool,
         kms_a_facturar: float,
         url_maps: str | None,
-        latitud_destino: float | None = None,
-        longitud_destino: float | None = None,
-    ) -> TablaKm | None: ...
+    ) -> TablaKm | None:
+        """Edición completa desde el ABM — no toca el pin destino (`set_coordenadas`/
+        `update_distancias` son los únicos que lo escriben)."""
+        ...
 
     async def update_vinculo_spst(
         self, tabla_km_id: UUID, *, spst_id: UUID | None

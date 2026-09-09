@@ -104,11 +104,16 @@ def maps_url_ida_vuelta(
 ) -> str:
     """Viaje completo base→cliente→base. Cuando hay dirección de texto usa el
     formato /maps/dir/ con la dirección como waypoint — Google la geocodifica
-    y muestra el lugar correcto aunque el pin de Siges esté desplazado."""
+    y muestra el lugar correcto aunque el pin de Siges esté desplazado.
+
+    `quote(..., safe="")` es necesario porque las direcciones argentinas suelen
+    traer "S/N" (sin número): con el `safe="/"` por default de `quote`, esa
+    barra queda literal y parte el path en un segmento extra, que Google
+    interpreta como un waypoint adicional (ruta de 4 puntos en vez de 3)."""
     base_str = f"{base[0]},{base[1]}"
     direccion = armar_direccion(domicilio, localidad, provincia)
     if direccion:
-        return f"https://www.google.com/maps/dir/{base_str}/{quote(direccion)}/{base_str}"
+        return f"https://www.google.com/maps/dir/{base_str}/{quote(direccion, safe='')}/{base_str}"
     return (
         f"{_MAPS_BASE}"
         f"&origin={base[0]},{base[1]}"
