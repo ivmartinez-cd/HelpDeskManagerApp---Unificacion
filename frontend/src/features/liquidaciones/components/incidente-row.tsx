@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight, ExternalLink, Route } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, History, Route } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
 import { incidentUrl } from "@/shared/utils/incident-link";
@@ -12,6 +12,18 @@ import { AlertaSubRow } from "./alerta-sub-row";
 import { EstadoValidacionBadge, TipoBadge } from "./incidente-badges";
 
 const CODIGO_ALT010 = "ALT010";
+const CODIGO_ALT005 = "ALT005";
+
+/** La alerta individual de ALT005 (`es_grupo=false`) es el mismo hallazgo que
+ * la de grupo cuando ambas caen en el mismo incidente — se oculta acá para no
+ * hacer gestionar dos veces lo mismo. El backend cascadea el estado de la de
+ * grupo a la individual oculta (`actualizar_estado_alerta.py`), así que no
+ * queda huérfana. */
+function alertasSinDuplicadoAlt005(alertas: Alerta[]): Alerta[] {
+  const hayGrupo = alertas.some((a) => a.tipoAlerta === CODIGO_ALT005 && a.esGrupo);
+  if (!hayGrupo) return alertas;
+  return alertas.filter((a) => !(a.tipoAlerta === CODIGO_ALT005 && !a.esGrupo));
+}
 
 /** Fila de un incidente (+ sus alertas expandidas), extraída de
  * `incidentes-tabla.tsx` porque ese archivo ya superaba el tamaño máximo de
@@ -50,6 +62,7 @@ export function IncidenteRow({
       ? incidente.costoServicioCobrado - incidente.costoServicioEsperado
       : null;
   const hasAlertas = alertasInc.length > 0;
+  const alertasVisibles = alertasSinDuplicadoAlt005(alertasInc);
   // Severidad de la fila SIN expandir: la peor entre las alertas activas
   // (pendiente/en_revisión) — así la TL distingue qué incidente necesita
   // atención sin tener que abrir cada uno con la flecha (pedido de Iván,
@@ -57,6 +70,10 @@ export function IncidenteRow({
   // hay tono (mismo criterio que `estado_validacion === "ok"` en backend).
   const tono = hasAlertas ? peorTonoActivo(alertasInc) : null;
   const Icon = tono?.icon;
+  // Tuvo alerta pero ya no queda ninguna activa: marca distinta a "nunca tuvo
+  // nada" para que la TL vea que hubo un caso y se cerró (pedido de Iván,
+  // 2026-09-09 — antes ambos casos se veían idénticos sin abrir la fila).
+  const huboAlertaCerrada = hasAlertas && !tono;
   return (
     <>
       <tr
@@ -83,7 +100,17 @@ export function IncidenteRow({
               ) : (
                 <span className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
               ))}
-            {Icon && <Icon size={13} strokeWidth={2.4} className={cn("flex-shrink-0", tono?.pillText)} aria-hidden="true" />}
+            {Icon ? (
+              <Icon size={13} strokeWidth={2.4} className={cn("flex-shrink-0", tono?.pillText)} aria-hidden="true" />
+            ) : (
+              huboAlertaCerrada && (
+                <span
+                  title={`Tuvo ${alertasInc.length} alerta${alertasInc.length > 1 ? "s" : ""}, ya cerrada${alertasInc.length > 1 ? "s" : ""}`}
+                >
+                  <History size={13} strokeWidth={2.4} className="flex-shrink-0 text-muted-foreground" aria-hidden="true" />
+                </span>
+              )
+            )}
             {hasAlertas &&
               (expanded ? (
                 <ChevronDown size={12} className="flex-shrink-0 text-muted-foreground" />
@@ -198,7 +225,7 @@ export function IncidenteRow({
         </td>
       </tr>
       {expanded &&
-        alertasInc.map((a) => (
+        alertasVisibles.map((a) => (
           <AlertaSubRow
             key={a.id}
             liquidacionId={liquidacionId}

@@ -14,7 +14,7 @@ import { KpiTile } from "./kpi-tile";
 
 export function LiquidacionDetalleHeader({
   liquidacion,
-  alertasPendientes,
+  incidentesConAlertaActiva,
   pst,
   reanalizing,
   onReanalizar,
@@ -24,10 +24,12 @@ export function LiquidacionDetalleHeader({
   onAnulado,
 }: {
   liquidacion: Liquidacion;
-  /** Alertas en estado pendiente/en_revision — a diferencia de
+  /** Incidentes con alguna alerta pendiente/en_revision — no la cantidad de
+   * alertas (un incidente puede tener 2-3, ej. ALT005 grupo + individual, y
+   * eso inflaba el KPI sin representar más trabajo real). A diferencia de
    * `liquidacion.totalAlertas` (fijo por el motor de reglas al importar/reanalizar),
-   * baja en vivo cuando la TL resuelve o descarta una alerta. */
-  alertasPendientes: number;
+   * baja en vivo cuando la TL resuelve o descarta la última alerta abierta de un incidente. */
+  incidentesConAlertaActiva: number;
   pst: PrestadorLiquidacion | undefined;
   reanalizing: boolean;
   onReanalizar: () => void;
@@ -113,9 +115,9 @@ export function LiquidacionDetalleHeader({
           />
           <KpiTile
             icon={<AlertTriangle size={16} />}
-            label="Alertas"
-            value={alertasPendientes.toLocaleString("es-AR")}
-            warn={alertasPendientes > 0}
+            label="Con alertas"
+            value={incidentesConAlertaActiva.toLocaleString("es-AR")}
+            warn={incidentesConAlertaActiva > 0}
           />
           <KpiTile
             icon={<DollarSign size={16} />}

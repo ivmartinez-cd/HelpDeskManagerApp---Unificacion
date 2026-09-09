@@ -11,11 +11,13 @@ import { SeleccionAlertasProvider } from "../hooks/seleccion-alertas-context";
 import type {
   Alerta,
   EstadoLiquidacion,
+  EvolucionIncidentesItem,
   LiquidacionDetalle,
   PrestadorLiquidacion,
 } from "../types/liquidaciones";
 import { AbonoBanner } from "./abono-banner";
 import { AlertasLoteBar } from "./alertas-lote-bar";
+import { EvolucionIncidentesChart } from "./evolucion-incidentes-chart";
 import { ExtraItemSeccion } from "./extra-item-seccion";
 import { IncidentesSeccion } from "./incidentes-seccion";
 import { LiquidacionAlertasBanner } from "./liquidacion-alertas-banner";
@@ -32,6 +34,7 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
   const [reanalizing, setReanalizing] = useState(false);
   const [updatingEstado, setUpdatingEstado] = useState(false);
   const [soloConAlertas, setSoloConAlertas] = useState(false);
+  const [evolucion, setEvolucion] = useState<EvolucionIncidentesItem[] | null>(null);
 
   const load = useCallback(
     () =>
@@ -49,6 +52,23 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
   );
 
   useEffect(() => { void load(); }, [load]);
+
+  // Histórico del prestador (todas sus liquidaciones, no solo esta) para el
+  // gráfico de evolución — no bloquea el render del detalle si falla, y no se
+  // re-pide en cada refresh silencioso (solo cambia si cambia de prestador).
+  const prestadorId = detalle?.liquidacion.prestadorId;
+  useEffect(() => {
+    if (!prestadorId) return;
+    let cancelado = false;
+    liquidacionesApi
+      .getEvolucionIncidentes(prestadorId)
+      .then((items) => { if (!cancelado) setEvolucion(items); })
+      .catch((err: unknown) => {
+        console.error("No se pudo cargar la evolución de incidentes del prestador", err);
+        if (!cancelado) setEvolucion([]);
+      });
+    return () => { cancelado = true; };
+  }, [prestadorId]);
 
   // Refresh silencioso al abrir el detalle: reconcilia esta liquidación contra
   // AyC (estado, costos/km de incidentes) una sola vez por visita a la página.
@@ -128,10 +148,14 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
   // `liquidacion.totalAlertas` es el contador que fija el motor de reglas al
   // importar/reanalizar (cuántas alertas generó esa corrida) — no baja cuando
   // la TL resuelve/descarta una alerta individual (ver ActualizarEstadoAlerta,
-  // que no lo toca). El KPI del header muestra alertas pendientes de revisión,
-  // así que se calcula acá sobre `alertas` (siempre fresco tras cada `load()`).
-  const alertasPendientes = alertas.filter(
-    (a) => a.estado === "pendiente" || a.estado === "en_revision",
+  // que no lo toca). El KPI del header cuenta INCIDENTES con alguna alerta
+  // pendiente/en_revisión, no alertas sueltas: un mismo incidente puede tener
+  // 2-3 alertas (ALT005 grupo + individual, por ejemplo) y sumarlas todas
+  // infla el número sin que represente más trabajo real para la TL (pedido de
+  // Iván, 2026-09-09). Se calcula sobre `alertasByInc` (siempre fresco tras
+  // cada `load()`).
+  const incidentesConAlertaActiva = Object.values(alertasByInc).filter((as) =>
+    as.some((a) => a.estado === "pendiente" || a.estado === "en_revision"),
   ).length;
   const correctivos = incidentes.filter((i) => i.tipo.toLowerCase() !== "preventivo");
   const preventivos = incidentes.filter((i) => i.tipo.toLowerCase() === "preventivo");
@@ -153,7 +177,7 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
       {/* Header */}
       <LiquidacionDetalleHeader
         liquidacion={liquidacion}
-        alertasPendientes={alertasPendientes}
+        incidentesConAlertaActiva={incidentesConAlertaActiva}
         pst={pst}
         reanalizing={reanalizing}
         onReanalizar={() => void handleReanalizar()}
@@ -162,6 +186,16 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
         onActualizado={(updated) => setDetalle({ ...detalle, liquidacion: updated })}
         onAnulado={() => router.push("/liquidaciones/lista")}
       />
+
+      {evolucion && evolucion.length > 0 && (
+        <div className="flex flex-col gap-2 rounded-[12px] border border-border bg-card p-4">
+          <span className="font-heading text-[13px] font-bold text-foreground">
+            Evolución mensual de incidentes por tipo — {pst?.nombreCorto ?? "prestador"} (
+            {new Date().getFullYear()})
+          </span>
+          <EvolucionIncidentesChart items={evolucion} />
+        </div>
+      )}
 
       {/* Banner de alertas */}
       {incConAlertas > 0 && (

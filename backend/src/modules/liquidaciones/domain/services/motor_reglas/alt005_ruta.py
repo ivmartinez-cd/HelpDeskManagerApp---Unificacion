@@ -117,7 +117,7 @@ def _crear_alerta_grupo(
     return AlertaGenerada(
         incidente_id=m.principal.id,
         tipo_alerta="ALT005",
-        descripcion=f"{titulo}. {_descripcion(grupo, tablas, m.km_totales, m.km_max_tabla)}",
+        descripcion=f"{titulo}. {_descripcion(grupo, m.km_totales, m.km_max_tabla)}",
         riesgo=_RIESGO_POR_SEVERIDAD[severidad],
         datos_contexto=_contexto(grupo, tablas, m),
         es_grupo=True,
@@ -154,20 +154,10 @@ def _costo_km_unitario(principal: Incidente) -> float:
     return principal.costo_km_cobrado or 0
 
 
-def _descripcion(
-    grupo: list[Incidente],
-    tablas: Mapping[uuid.UUID, TablaKm],
-    km_totales: float,
-    km_max_tabla: float,
-) -> str:
-    empresa = grupo[0].empresa_nombre or "?"
-    fecha_str = str(grupo[0].fecha_cierre)
-    localidades = _localidades(grupo, tablas)
+def _descripcion(grupo: list[Incidente], km_totales: float, km_max_tabla: float) -> str:
     return (
-        f"{len(grupo)} incidentes de {empresa} el {fecha_str} "
-        f"en la misma zona ({', '.join(localidades)}). "
-        f"Cobraron {km_totales} km entre todos, pero el viaje son {km_max_tabla} km como máximo. "
-        f"Fijate si fue un solo viaje."
+        f"Entre los {len(grupo)} incidentes cobraron {km_totales} km, "
+        f"cuando el viaje son {km_max_tabla} km como máximo."
     )
 
 

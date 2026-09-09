@@ -107,6 +107,39 @@ async def test_vincular_incidente_de_otra_liquidacion_falla() -> None:
         )
 
 
+async def test_resolver_grupo_alt005_cascadea_a_individual_oculta() -> None:
+    """El frontend oculta la alerta individual de ALT005 cuando ya está la de
+    grupo (mismo hallazgo) — sin esta cascada quedaría "pendiente" para
+    siempre, sin nadie que pueda gestionarla."""
+    world = World()
+    liq_id, inc_principal, inc_secundario = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    world.incidentes.rows[inc_principal] = make_incidente(
+        id=inc_principal, liquidacion_id=liq_id, estado_validacion="con_alertas"
+    )
+    world.incidentes.rows[inc_secundario] = make_incidente(
+        id=inc_secundario, liquidacion_id=liq_id, estado_validacion="con_alertas"
+    )
+    grupo = make_alerta(
+        liquidacion_id=liq_id,
+        incidente_id=inc_principal,
+        tipo_alerta="ALT005",
+        estado="pendiente",
+        es_grupo=True,
+        grupo_incidente_ids=(inc_principal, inc_secundario),
+    )
+    individual_secundaria = make_alerta(
+        liquidacion_id=liq_id, incidente_id=inc_secundario, tipo_alerta="ALT005", estado="pendiente"
+    )
+    world.alertas.por_liquidacion[liq_id] = [grupo, individual_secundaria]
+
+    await world.use_case.execute(liq_id, grupo.id, estado="resuelta", justificacion=None)
+
+    hermanas = {a.id: a for a in world.alertas.por_liquidacion[liq_id]}
+    assert hermanas[individual_secundaria.id].estado == "resuelta"
+    assert world.incidentes.rows[inc_principal].estado_validacion == "ok"
+    assert world.incidentes.rows[inc_secundario].estado_validacion == "ok"
+
+
 async def test_vincular_incidente_de_la_misma_liquidacion_persiste() -> None:
     world = World()
     liq_id, inc_id, inc_relacionado_id = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
