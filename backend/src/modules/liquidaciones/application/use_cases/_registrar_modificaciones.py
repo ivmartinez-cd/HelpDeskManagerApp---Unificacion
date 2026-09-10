@@ -65,49 +65,54 @@ def _filas(
     return filas
 
 
-def _base(liquidacion_id: UUID, numero_incidente: str, tipo_cambio: str) -> dict[str, object]:
-    return {
-        "id": uuid.uuid4(),
-        "liquidacion_id": liquidacion_id,
-        "numero_incidente": numero_incidente,
-        "tipo_cambio": tipo_cambio,
-        "detectada_en": datetime.now(UTC),
-        "vista_en": None,
-    }
+def _nueva(
+    liquidacion_id: UUID,
+    numero_incidente: str,
+    tipo_cambio: str,
+    *,
+    campo: str | None,
+    valor_anterior: str | None,
+    valor_nuevo: str | None,
+) -> ModificacionPrestador:
+    return ModificacionPrestador(
+        id=uuid.uuid4(),
+        liquidacion_id=liquidacion_id,
+        numero_incidente=numero_incidente,
+        tipo_cambio=tipo_cambio,
+        campo=campo,
+        valor_anterior=valor_anterior,
+        valor_nuevo=valor_nuevo,
+        detectada_en=datetime.now(UTC),
+        vista_en=None,
+    )
 
 
 def _alta(liquidacion_id: UUID, alta: IncidenteImportado) -> ModificacionPrestador:
-    return ModificacionPrestador(
-        **_base(liquidacion_id, alta.numero_incidente, TIPO_ALTA),
-        campo=None,
-        valor_anterior=None,
-        valor_nuevo=None,
+    return _nueva(
+        liquidacion_id, alta.numero_incidente, TIPO_ALTA,
+        campo=None, valor_anterior=None, valor_nuevo=None,
     )
 
 
 def _baja(liquidacion_id: UUID, numero_incidente: str) -> ModificacionPrestador:
-    return ModificacionPrestador(
-        **_base(liquidacion_id, numero_incidente, TIPO_BAJA),
-        campo=None,
-        valor_anterior=None,
-        valor_nuevo=None,
+    return _nueva(
+        liquidacion_id, numero_incidente, TIPO_BAJA,
+        campo=None, valor_anterior=None, valor_nuevo=None,
     )
 
 
 def _campo(
     liquidacion_id: UUID, numero_incidente: str, campo: CampoModificado
 ) -> ModificacionPrestador:
-    return ModificacionPrestador(
-        **_base(liquidacion_id, numero_incidente, TIPO_MODIFICACION),
-        campo=campo.campo,
-        valor_anterior=campo.valor_anterior,
-        valor_nuevo=campo.valor_nuevo,
+    return _nueva(
+        liquidacion_id, numero_incidente, TIPO_MODIFICACION,
+        campo=campo.campo, valor_anterior=campo.valor_anterior, valor_nuevo=campo.valor_nuevo,
     )
 
 
 def _resumen(liquidacion_id: UUID, cantidad: int) -> ModificacionPrestador:
-    return ModificacionPrestador(
-        **_base(liquidacion_id, "-", TIPO_MODIFICACION),
+    return _nueva(
+        liquidacion_id, "-", TIPO_MODIFICACION,
         campo="resumen",
         valor_anterior=None,
         valor_nuevo=f"{cantidad} incidentes modificados en un reenvío masivo",

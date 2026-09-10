@@ -19,7 +19,7 @@ _TOLERANCIA_FLOAT = 0.005
 
 
 def _str_difiere(local: Any, remoto: Any) -> bool:
-    return (local or "") != remoto
+    return bool((local or "") != remoto)
 
 
 def _float_difiere(local: Any, remoto: Any) -> bool:

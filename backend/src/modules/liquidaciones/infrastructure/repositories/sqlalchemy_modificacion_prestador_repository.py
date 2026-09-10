@@ -44,6 +44,8 @@ class SqlAlchemyModificacionPrestadorRepository:
         return [_to_entity(r) for r in rows]
 
     async def marcar_vistas(self, liquidacion_id: UUID) -> int:
+        from sqlalchemy.engine import CursorResult
+
         stmt = (
             update(ModificacionPrestadorModel)
             .where(
@@ -52,9 +54,11 @@ class SqlAlchemyModificacionPrestadorRepository:
             )
             .values(vista_en=func.now())
         )
-        resultado = await self._session.execute(stmt)
+        resultado: CursorResult[tuple[()]] = await self._session.execute(  # type: ignore[assignment]
+            stmt
+        )
         await self._session.flush()
-        return resultado.rowcount or 0
+        return int(resultado.rowcount)
 
 
 def _a_model(entidad: ModificacionPrestador) -> ModificacionPrestadorModel:

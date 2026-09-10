@@ -38,8 +38,10 @@ export function ModificacionesPrestadorSeccion({ liquidacionId }: { liquidacionI
     descFirstKeys: ["cuando"],
   });
 
+  // No pisa `loading` de nuevo en un refetch (tras "Marcar como vistas") para
+  // no parpadear — mismo patrón que `useWatiPendientesPolling`: arranca en
+  // `true` y solo se apaga una vez, en el primer `finally`.
   const cargar = useCallback(() => {
-    setLoading(true);
     modificacionesApi
       .listByLiquidacion(liquidacionId, 1, 500)
       .then((pagina) => setItems(pagina.items))
