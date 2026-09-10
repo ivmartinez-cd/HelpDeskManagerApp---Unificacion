@@ -26,8 +26,9 @@ terminales). Nunca reabre desde cerrada, y no acepta ningún otro estado que
 AyC reporte para una liquidación aprobada (una regresión aparente —AyC
 reportando un estado anterior— se ignora, no se aplica).
 
-Orden fijo dentro de una liquidación: bajas → cambios → altas → recálculo de
-totales → reanálisis → recálculo de período → pisar estado → traer extra/factura.
+Orden fijo dentro de una liquidación: registrar modificaciones (ADR-038, con el
+valor viejo todavía en pie) → bajas → cambios → altas → recálculo de totales →
+reanálisis → recálculo de período → pisar estado → traer extra/factura.
 El motor de reglas corre sobre el set de incidentes ya reconciliado, antes de
 pisar estado y traer el extra/factura (ninguno de los dos afecta al motor) — si
 reanalizara antes de las bajas, regeneraría alertas para incidentes que está por
@@ -66,6 +67,9 @@ from uuid import UUID
 from src.modules.liquidaciones.application.use_cases._reconciliar_extra_y_factura import (
     actualizar_extra_y_factura,
 )
+from src.modules.liquidaciones.application.use_cases._registrar_modificaciones import (
+    registrar_modificaciones,
+)
 from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion import (
     ReanalizarLiquidacion,
 )
@@ -83,6 +87,9 @@ from src.modules.liquidaciones.domain.repositories.incidente_repository import (
 )
 from src.modules.liquidaciones.domain.repositories.liquidacion_repository import (
     LiquidacionRepository,
+)
+from src.modules.liquidaciones.domain.repositories.modificacion_prestador_repository import (
+    ModificacionPrestadorRepository,
 )
 from src.modules.liquidaciones.domain.services.estados_ayc import estado_local_desde_ayc
 from src.modules.liquidaciones.domain.services.importacion.metadata import periodo_mas_frecuente
@@ -109,6 +116,7 @@ class ReconciliarLiquidacionPorts:
     liquidaciones: LiquidacionRepository
     reanalizar: ReanalizarLiquidacion
     cd_gateway: CdLiquidacionesGateway
+    modificaciones: ModificacionPrestadorRepository
 
 
 @dataclass(frozen=True)
@@ -177,7 +185,7 @@ class ReconciliarLiquidacion:
         en la misma pasada parta de ese total, no del viejo."""
         if not (diff.altas or diff.cambios or diff.bajas):
             return locales, liquidacion
-        nuevo_total = await self._aplicar(liquidacion, diff)
+        nuevo_total = await self._aplicar(liquidacion, diff, locales)
         actuales = await self._ports.incidentes.list_by_liquidacion(liquidacion.id)
         liquidacion_vigente = replace(
             liquidacion, total_importe=nuevo_total, total_incidentes=len(actuales)
@@ -210,7 +218,14 @@ class ReconciliarLiquidacion:
         await self._ports.liquidaciones.update_estado(liquidacion.id, ESTADO_CERRADA)
         return True
 
-    async def _aplicar(self, liquidacion: Liquidacion, diff: DiffIncidentes) -> float:
+    async def _aplicar(
+        self, liquidacion: Liquidacion, diff: DiffIncidentes, locales: list[Incidente]
+    ) -> float:
+        # Antes de tocar nada: acá es donde el valor viejo todavía existe (ver
+        # `_registrar_modificaciones.py`).
+        await registrar_modificaciones(
+            self._ports.modificaciones, liquidacion.id, diff, locales
+        )
         if diff.bajas:
             await self._ports.incidentes.delete_by_ids(diff.bajas)
         if diff.cambios:

@@ -78,6 +78,9 @@ from src.modules.liquidaciones.presentation.liquidaciones_ayc_router import (
 from src.modules.liquidaciones.presentation.liquidaciones_router import (
     router as liquidaciones_router,
 )
+from src.modules.liquidaciones.presentation.modificaciones_router import (
+    router as liquidaciones_modificaciones_router,
+)
 from src.modules.prestadores.presentation.prestadores_router import (
     router as prestadores_router,
 )
@@ -188,6 +191,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     # segmentos como si fueran un UUID (422 en vez de la respuesta real).
     liquidaciones_config_router,
     liquidaciones_alertas_router,
+    liquidaciones_modificaciones_router,
     liquidaciones_ayc_router,
     liquidaciones_router,
     vacaciones_empleados_router,

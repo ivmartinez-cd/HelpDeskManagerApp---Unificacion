@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import type { ConversacionPendiente } from "../types/wati";
+import { sonarAviso } from "@/shared/utils/beep";
 import { avisosStore, claveAviso } from "../utils/avisos-store";
-import { sonarAviso } from "../utils/beep";
 import { nivelEspera } from "../utils/espera";
 import { mostrarToastAtencion, retirarToast } from "../utils/toast-atencion";
 

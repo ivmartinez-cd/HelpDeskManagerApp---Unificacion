@@ -14,6 +14,9 @@ from uuid import UUID
 from src.modules.liquidaciones.domain.entities.alerta import Alerta
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
 from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
+from src.modules.liquidaciones.domain.entities.modificacion_prestador import (
+    ModificacionPrestador,
+)
 from src.modules.liquidaciones.domain.services.conciliar_alertas import AlertaConciliada
 from src.modules.liquidaciones.domain.value_objects.incidente_actualizado import (
     IncidenteActualizado,
@@ -307,3 +310,25 @@ class FakeAlertaRepository:
                 filas[i] = actualizada
                 return actualizada
         return None
+
+
+class FakeModificacionPrestadorRepository:
+    def __init__(self) -> None:
+        self.rows: list[ModificacionPrestador] = []
+
+    async def bulk_create(self, modificaciones: Sequence[ModificacionPrestador]) -> None:
+        self.rows.extend(modificaciones)
+
+    async def list_by_liquidacion(self, liquidacion_id: UUID) -> list[ModificacionPrestador]:
+        return [m for m in self.rows if m.liquidacion_id == liquidacion_id]
+
+    async def list_no_vistas(self) -> list[ModificacionPrestador]:
+        return [m for m in self.rows if m.vista_en is None]
+
+    async def marcar_vistas(self, liquidacion_id: UUID) -> int:
+        actualizadas = 0
+        for i, m in enumerate(self.rows):
+            if m.liquidacion_id == liquidacion_id and m.vista_en is None:
+                self.rows[i] = dataclasses.replace(m, vista_en=datetime(2026, 1, 1))
+                actualizadas += 1
+        return actualizadas

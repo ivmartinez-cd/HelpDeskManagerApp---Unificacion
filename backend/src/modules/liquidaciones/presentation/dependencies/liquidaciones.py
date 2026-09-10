@@ -86,6 +86,9 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_incidente_
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_liquidacion_repository import (  # noqa: E501
     SqlAlchemyLiquidacionRepository,
 )
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_modificacion_prestador_repository import (  # noqa: E501
+    SqlAlchemyModificacionPrestadorRepository,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
@@ -197,6 +200,7 @@ def build_reconciliar_liquidacion(session: AsyncSession) -> ReconciliarLiquidaci
             liquidaciones=SqlAlchemyLiquidacionRepository(session),
             reanalizar=build_reanalizar_liquidacion(session),
             cd_gateway=cd_gateway(),
+            modificaciones=SqlAlchemyModificacionPrestadorRepository(session),
         )
     )
 

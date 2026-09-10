@@ -25,6 +25,7 @@ import { LiquidacionAlertasBanner } from "./liquidacion-alertas-banner";
 import { LiquidacionConfigBanner } from "./liquidacion-config-banner";
 import { LiquidacionDetalleHeader } from "./liquidacion-detalle-header";
 import { ModeloFacturacionSeccion } from "./modelo-facturacion-seccion";
+import { ModificacionesPrestadorSeccion } from "./modificaciones-prestador-seccion";
 
 export function LiquidacionDetalleView({ id }: { id: string }) {
   const router = useRouter();
@@ -211,6 +212,10 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
       <AbonoBanner liquidacion={liquidacion} totalIncidentes={incidentes.length} />
 
       <LiquidacionConfigBanner alertas={alertas} incidentes={incidentes} />
+
+      {/* Historial de cambios que el prestador aplicó sobre esta liquidación
+          (ADR-038) — no son alertas del motor, se ocultan solas si no hay nada. */}
+      <ModificacionesPrestadorSeccion liquidacionId={id} />
 
       <ExtraItemSeccion
         liquidacion={liquidacion}

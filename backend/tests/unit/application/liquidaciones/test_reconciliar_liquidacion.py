@@ -35,6 +35,7 @@ from tests.unit.domain.liquidaciones.fakes_liquidacion import (
     FakeAlertaRepository,
     FakeIncidenteRepository,
     FakeLiquidacionRepository,
+    FakeModificacionPrestadorRepository,
 )
 
 _FECHA = date(2026, 1, 15)
@@ -81,6 +82,7 @@ class World:
         self.alertas = FakeAlertaRepository()
         self.tarifarios = FakeTarifarioRepository()
         self.cd_gateway = FakeCdLiquidacionesGateway()
+        self.modificaciones = FakeModificacionPrestadorRepository()
         self.reanalizar = ReanalizarLiquidacion(
             ReanalizarLiquidacionPorts(
                 liquidaciones=self.liquidaciones,
@@ -97,6 +99,7 @@ class World:
                 liquidaciones=self.liquidaciones,
                 reanalizar=self.reanalizar,
                 cd_gateway=self.cd_gateway,
+                modificaciones=self.modificaciones,
             )
         )
 
@@ -237,6 +240,107 @@ async def test_sin_diferencias_no_toca_nada_pero_reconcilia() -> None:
     assert (resultado.altas, resultado.cambios, resultado.bajas) == (0, 0, 0)
     assert resultado.estado_actualizado is False
     assert world.liquidaciones.rows[liq.id].estado == "recibida"
+
+
+async def test_cambio_registra_modificacion_del_prestador() -> None:
+    """El caso central de ADR-038: el valor viejo tiene que quedar registrado
+    ANTES de que `update_cobrados` lo pise."""
+    world = World()
+    liq = world.con_liquidacion()
+    world.con_incidente(
+        liq.id,
+        numero_incidente="1",
+        costo_servicio_cobrado=1000.0,
+        nro_serie="SN-1",
+        cant_km_cobrado=0.0,
+        costo_km_cobrado=0.0,
+        total_viaje_cobrado=0.0,
+        costo_total_cobrado=1000.0,
+    )
+    remoto = make_remoto("1", costo_servicio_cobrado=1500.0, costo_total_cobrado=1500.0)
+
+    await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    # Un registro por campo modificado (acá cambian tanto `costo_servicio_cobrado`
+    # como `costo_total_cobrado`, ver `campos_modificados_incidente.py`).
+    por_campo = {m.campo: m for m in world.modificaciones.rows}
+    registro = por_campo["costo_servicio_cobrado"]
+    assert registro.liquidacion_id == liq.id
+    assert registro.tipo_cambio == "modificacion"
+    assert registro.valor_anterior == "1000.00"
+    assert registro.valor_nuevo == "1500.00"
+    assert registro.vista_en is None
+
+
+async def test_baja_registra_modificacion_con_numero_incidente() -> None:
+    """`diff.bajas` solo trae el `incidente_id` — el registro tiene que resolver
+    el `numero_incidente` a partir de `locales` ANTES de que se borre."""
+    world = World()
+    liq = world.con_liquidacion()
+    world.con_incidente(
+        liq.id,
+        numero_incidente="1",
+        costo_servicio_cobrado=1000.0,
+        nro_serie="SN-1",
+        cant_km_cobrado=0.0,
+        costo_km_cobrado=0.0,
+        total_viaje_cobrado=0.0,
+        costo_total_cobrado=1000.0,
+    )
+    world.con_incidente(liq.id, numero_incidente="2", costo_servicio_cobrado=1000.0)
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0, costo_total_cobrado=1000.0)
+
+    await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    [registro] = world.modificaciones.rows
+    assert registro.tipo_cambio == "baja"
+    assert registro.numero_incidente == "2"
+
+
+async def test_alta_registra_modificacion() -> None:
+    world = World()
+    liq = world.con_liquidacion()
+    remoto = make_remoto("1", costo_servicio_cobrado=1500.0)
+
+    await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    [registro] = world.modificaciones.rows
+    assert registro.tipo_cambio == "alta"
+    assert registro.numero_incidente == "1"
+
+
+async def test_sin_diff_no_registra_nada() -> None:
+    world = World()
+    liq = world.con_liquidacion()
+    world.con_incidente(
+        liq.id,
+        numero_incidente="1",
+        costo_servicio_cobrado=1500.0,
+        nro_serie="SN-1",
+        cant_km_cobrado=0.0,
+        costo_km_cobrado=0.0,
+        total_viaje_cobrado=0.0,
+        costo_total_cobrado=1500.0,
+    )
+    remoto = make_remoto("1", costo_servicio_cobrado=1500.0)
+
+    await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert world.modificaciones.rows == []
+
+
+async def test_reenvio_masivo_registra_un_solo_resumen() -> None:
+    """Por encima de `_UMBRAL_RESUMEN` incidentes tocados, un evento por campo
+    por incidente sería ruido — se registra un único resumen."""
+    world = World()
+    liq = world.con_liquidacion()
+    remotos = [make_remoto(str(n), costo_servicio_cobrado=1000.0) for n in range(1, 25)]
+
+    await world.use_case.execute(liq, make_cd_liq(24), remotos)
+
+    [registro] = world.modificaciones.rows
+    assert registro.campo == "resumen"
+    assert "24" in (registro.valor_nuevo or "")
 
 
 async def test_triage_sobrevive_a_un_cambio() -> None:

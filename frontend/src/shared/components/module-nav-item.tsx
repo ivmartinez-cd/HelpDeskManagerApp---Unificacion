@@ -15,6 +15,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import type { ModuleSummary } from "@/features/auth/api/auth-api";
+import { useModificacionesPrestador } from "@/features/liquidaciones/providers/modificaciones-provider";
 import { ContadoresNavSubmenu } from "@/shared/components/contadores-nav-submenu";
 import { InsumosNavSubmenu } from "@/shared/components/insumos-nav-submenu";
 import { LiquidacionesNavSubmenu } from "@/shared/components/liquidaciones-nav-submenu";
@@ -54,6 +55,9 @@ export function ModuleNavItem({
   const hasSubmenu = isContadores || isInsumos || isVacaciones || isLiquidaciones;
   const submenuExpanded = submenuOverride ?? active;
   const ModuleIcon = MODULE_ICONS[module.key] ?? Circle;
+  // Modificaciones del prestador sin ver (ADR-038) — solo aplica al ítem de
+  // Liquidaciones, un solo poller para toda la app (ModificacionesProvider).
+  const { total: modificacionesSinVer } = useModificacionesPrestador();
   return (
     <div className="flex flex-col">
       <div
@@ -71,7 +75,15 @@ export function ModuleNavItem({
           className="flex flex-1 items-center gap-2.5 px-3 py-2.5 font-body text-sm no-underline"
         >
           <ModuleIcon className="h-4 w-4 flex-none" aria-hidden="true" />
-          {module.label}
+          <span className="flex-1">{module.label}</span>
+          {isLiquidaciones && modificacionesSinVer > 0 && (
+            <span
+              title={`${modificacionesSinVer} modificación${modificacionesSinVer === 1 ? "" : "es"} del prestador sin ver`}
+              className="rounded-full bg-brand-orange px-1.5 py-0.5 font-heading text-[10px] font-bold leading-none text-white tabular-nums"
+            >
+              {modificacionesSinVer}
+            </span>
+          )}
         </Link>
         {hasSubmenu && (
           <button

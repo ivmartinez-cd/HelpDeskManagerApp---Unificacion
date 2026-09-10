@@ -16,22 +16,30 @@ verificado contra datos reales de producción (liquidaciones 3925-1/3928-8 vs
 orígenes produciría 100% bajas + 100% altas — borrado y recreación masiva con
 pérdida de triage. Un `numero_incidente` duplicado tras normalizar (local o
 remoto) es ambiguo — no se toca, se cuenta en `ambiguos`.
+
+`modificaciones` lleva el detalle campo a campo de cada `cambio` (antes/después,
+ver `campos_modificados_incidente.py`) — lo consume
+`application/use_cases/_registrar_modificaciones.py` para avisarle a la TL que el
+prestador tocó algo, sin que el motor de reglas se entere de esto (ver ADR-038).
 """
 
 from collections.abc import Sequence
-from dataclasses import dataclass
-from datetime import date
+from dataclasses import dataclass, field
 from uuid import UUID
 
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
+from src.modules.liquidaciones.domain.services.campos_modificados_incidente import (
+    campos_modificados,
+)
 from src.modules.liquidaciones.domain.value_objects.incidente_actualizado import (
     IncidenteActualizado,
 )
 from src.modules.liquidaciones.domain.value_objects.incidente_importado import (
     IncidenteImportado,
 )
-
-_TOLERANCIA_FLOAT = 0.005
+from src.modules.liquidaciones.domain.value_objects.incidente_modificado import (
+    IncidenteModificado,
+)
 
 
 @dataclass(frozen=True)
@@ -40,6 +48,7 @@ class DiffIncidentes:
     cambios: list[IncidenteActualizado]
     bajas: list[UUID]
     ambiguos: int
+    modificaciones: list[IncidenteModificado] = field(default_factory=list)
 
 
 def reconciliar_incidentes(
@@ -52,10 +61,12 @@ def reconciliar_incidentes(
     ambiguos += sum(1 for filas in remotos_por_clave.values() if len(filas) > 1)
 
     altas = _detectar_altas(locales_por_clave, remotos_por_clave)
-    cambios = _detectar_cambios(locales_por_clave, remotos_por_clave)
+    cambios, modificaciones = _detectar_cambios(locales_por_clave, remotos_por_clave)
     bajas = _detectar_bajas(locales_por_clave, remotos_por_clave)
 
-    return DiffIncidentes(altas=altas, cambios=cambios, bajas=bajas, ambiguos=ambiguos)
+    return DiffIncidentes(
+        altas=altas, cambios=cambios, bajas=bajas, ambiguos=ambiguos, modificaciones=modificaciones
+    )
 
 
 def _clave(numero_incidente: str) -> str:
@@ -103,8 +114,9 @@ def _detectar_bajas(
 def _detectar_cambios(
     locales_por_clave: dict[str, list[Incidente]],
     remotos_por_clave: dict[str, list[IncidenteImportado]],
-) -> list[IncidenteActualizado]:
+) -> tuple[list[IncidenteActualizado], list[IncidenteModificado]]:
     cambios = []
+    modificaciones = []
     for clave, remotas in remotos_por_clave.items():
         if len(remotas) != 1:
             continue
@@ -112,37 +124,13 @@ def _detectar_cambios(
         if locales is None or len(locales) != 1:
             continue
         local, remoto = locales[0], remotas[0]
-        if _difiere(local, remoto):
+        campos = campos_modificados(local, remoto)
+        if campos:
             cambios.append(_a_actualizado(local.id, remoto))
-    return cambios
-
-
-def _difiere(local: Incidente, remoto: IncidenteImportado) -> bool:
-    return (
-        _str_difiere(local.tipo, remoto.tipo)
-        or _str_difiere(local.empresa_nombre, remoto.empresa_nombre)
-        or _str_difiere(local.sucursal_nombre, remoto.sucursal_nombre)
-        or _str_difiere(local.nro_serie, remoto.nro_serie)
-        or _fecha_difiere(local.fecha_cierre, remoto.fecha_cierre)
-        or local.pasa_it != remoto.pasa_it
-        or _float_difiere(local.costo_servicio_cobrado, remoto.costo_servicio_cobrado)
-        or _float_difiere(local.cant_km_cobrado, remoto.cant_km_cobrado)
-        or _float_difiere(local.costo_km_cobrado, remoto.costo_km_cobrado)
-        or _float_difiere(local.total_viaje_cobrado, remoto.total_viaje_cobrado)
-        or _float_difiere(local.costo_total_cobrado, remoto.costo_total_cobrado)
-    )
-
-
-def _str_difiere(local: str | None, remoto: str) -> bool:
-    return (local or "") != remoto
-
-
-def _fecha_difiere(local: date | None, remoto: date | None) -> bool:
-    return local != remoto
-
-
-def _float_difiere(local: float, remoto: float) -> bool:
-    return abs(local - remoto) > _TOLERANCIA_FLOAT
+            modificaciones.append(
+                IncidenteModificado(local.id, local.numero_incidente, tuple(campos))
+            )
+    return cambios, modificaciones
 
 
 def _a_actualizado(incidente_id: UUID, remoto: IncidenteImportado) -> IncidenteActualizado:

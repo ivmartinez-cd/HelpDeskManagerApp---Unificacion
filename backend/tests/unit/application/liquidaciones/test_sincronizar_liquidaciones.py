@@ -44,6 +44,7 @@ from tests.unit.domain.liquidaciones.fakes_liquidacion import (
     FakeAlertaRepository,
     FakeIncidenteRepository,
     FakeLiquidacionRepository,
+    FakeModificacionPrestadorRepository,
 )
 
 
@@ -133,6 +134,7 @@ class World:
                 liquidaciones=self.liquidaciones,
                 reanalizar=reanalizar,
                 cd_gateway=self.gateway,
+                modificaciones=FakeModificacionPrestadorRepository(),
             )
         )
         self.use_case = SincronizarLiquidaciones(

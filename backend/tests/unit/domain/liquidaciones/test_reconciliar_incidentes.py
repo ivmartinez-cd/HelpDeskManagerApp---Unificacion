@@ -9,6 +9,7 @@ from src.modules.liquidaciones.domain.entities.incidente import Incidente
 from src.modules.liquidaciones.domain.services.reconciliar_incidentes import (
     reconciliar_incidentes,
 )
+from src.modules.liquidaciones.domain.value_objects.campo_modificado import CampoModificado
 from src.modules.liquidaciones.domain.value_objects.incidente_importado import (
     IncidenteImportado,
 )
@@ -99,6 +100,42 @@ def test_cambio_economico_se_detecta() -> None:
     [cambio] = diff.cambios
     assert cambio.incidente_id == local.id
     assert cambio.costo_servicio_cobrado == 1500.0
+
+
+def test_cambio_economico_deja_el_detalle_antes_despues() -> None:
+    """El detalle que consume `_registrar_modificaciones.py` para avisarle a la
+    TL — antes, `_difiere()` solo devolvía un bool y este antes/después se
+    perdía. `costo_total_cobrado` también difiere acá porque `_remoto()` lo
+    deriva de `costo_servicio_cobrado` (ambos con `cant_km_cobrado=0`)."""
+    local = _local(costo_servicio_cobrado=1000.0)
+    remoto = _remoto(costo_servicio_cobrado=1500.0)
+    diff = reconciliar_incidentes([local], [remoto])
+    [modificado] = diff.modificaciones
+    assert modificado.incidente_id == local.id
+    assert modificado.numero_incidente == local.numero_incidente
+    por_campo = {c.campo: c for c in modificado.campos}
+    assert por_campo["costo_servicio_cobrado"] == CampoModificado(
+        "costo_servicio_cobrado", "1000.00", "1500.00"
+    )
+    assert por_campo["costo_total_cobrado"] == CampoModificado(
+        "costo_total_cobrado", "1000.00", "1500.00"
+    )
+
+
+def test_cambio_no_economico_deja_el_detalle_antes_despues() -> None:
+    local = _local(empresa_nombre="Empresa Vieja")
+    remoto = _remoto(empresa_nombre="Empresa Nueva")
+    diff = reconciliar_incidentes([local], [remoto])
+    [modificado] = diff.modificaciones
+    [campo] = modificado.campos
+    assert campo == CampoModificado("empresa_nombre", "Empresa Vieja", "Empresa Nueva")
+
+
+def test_ruido_de_redondeo_no_deja_modificacion() -> None:
+    local = _local(costo_servicio_cobrado=1000.0)
+    remoto = _remoto(costo_servicio_cobrado=1000.004)
+    diff = reconciliar_incidentes([local], [remoto])
+    assert diff.modificaciones == []
 
 
 def test_cambio_no_economico_se_detecta() -> None:
