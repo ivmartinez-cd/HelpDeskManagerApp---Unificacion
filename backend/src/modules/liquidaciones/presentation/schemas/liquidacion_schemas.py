@@ -44,6 +44,36 @@ class EvolucionIncidentesOut(BaseModel):
     items: list[EvolucionIncidentesItemOut]
 
 
+class FacturadoPorPeriodoItemOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    periodo: str
+    total_importe: float = Field(serialization_alias="totalImporte")
+
+
+class FacturadoPorPeriodoOut(BaseModel):
+    """No es una colección paginable (§11): dataset completo del gráfico de
+    evolución de facturado del dashboard ejecutivo, mismo criterio que
+    EvolucionIncidentesOut."""
+
+    items: list[FacturadoPorPeriodoItemOut]
+
+
+class RankingPrestadorOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    nombre_corto: str = Field(serialization_alias="nombreCorto")
+    total_importe: float = Field(serialization_alias="totalImporte")
+    cantidad_liquidaciones: int = Field(serialization_alias="cantidadLiquidaciones")
+
+
+class RankingPrestadoresOut(BaseModel):
+    """No es una colección paginable (§11): catálogo chico (un prestador activo
+    hoy ronda las 35 filas), mismo criterio que ResumenLiquidacionesOut."""
+
+    items: list[RankingPrestadorOut]
+
+
 class EstadoIn(BaseModel):
     estado: ESTADOS_VALIDOS
 

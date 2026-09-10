@@ -44,9 +44,13 @@ from src.modules.liquidaciones.presentation.schemas.liquidacion_schemas import (
     EvolucionIncidentesItemOut,
     EvolucionIncidentesOut,
     ExtraIn,
+    FacturadoPorPeriodoItemOut,
+    FacturadoPorPeriodoOut,
     LiquidacionOut,
     PrestadorLiquidacionOut,
     PrestadorPendienteOut,
+    RankingPrestadoresOut,
+    RankingPrestadorOut,
     ResumenLiquidacionesOut,
 )
 from src.modules.liquidaciones.presentation.schemas.reanalizar_liquidacion_schemas import (
@@ -153,6 +157,35 @@ async def get_resumen_liquidaciones(
     return ResumenLiquidacionesOut(
         pendientes=sum(n for _, n in filas),
         por_prestador=[PrestadorPendienteOut(nombre_corto=nombre, count=n) for nombre, n in filas],
+    )
+
+
+@router.get("/resumen/facturado-por-periodo", response_model=FacturadoPorPeriodoOut)
+async def get_facturado_por_periodo(
+    _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> FacturadoPorPeriodoOut:
+    """Total facturado por período (todos los prestadores) — alimenta el
+    gráfico de evolución del dashboard ejecutivo."""
+    filas = await SqlAlchemyLiquidacionRepository(db).sum_importe_por_periodo()
+    return FacturadoPorPeriodoOut(
+        items=[FacturadoPorPeriodoItemOut(periodo=p, total_importe=t) for p, t in filas]
+    )
+
+
+@router.get("/resumen/ranking-prestadores", response_model=RankingPrestadoresOut)
+async def get_ranking_prestadores(
+    _: Identity = _require_view,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> RankingPrestadoresOut:
+    """Ranking de prestadores por total facturado — alimenta el dashboard
+    ejecutivo."""
+    filas = await SqlAlchemyLiquidacionRepository(db).sum_importe_por_prestador()
+    return RankingPrestadoresOut(
+        items=[
+            RankingPrestadorOut(nombre_corto=n, total_importe=t, cantidad_liquidaciones=c)
+            for n, t, c in filas
+        ]
     )
 
 

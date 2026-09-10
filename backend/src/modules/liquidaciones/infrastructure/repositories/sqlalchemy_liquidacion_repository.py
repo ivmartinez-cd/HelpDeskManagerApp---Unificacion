@@ -198,6 +198,39 @@ class SqlAlchemyLiquidacionRepository:
         result = await self._session.execute(stmt)
         return [(row[0], row[1]) for row in result.all()]
 
+    async def sum_importe_por_periodo(self) -> list[tuple[str, float]]:
+        stmt = (
+            select(
+                LiquidacionModel.periodo,
+                func.sum(LiquidacionModel.total_importe).label("total"),
+            )
+            .group_by(LiquidacionModel.periodo)
+            .order_by(LiquidacionModel.periodo)
+        )
+        result = await self._session.execute(stmt)
+        return [(row[0], float(row[1])) for row in result.all()]
+
+    async def sum_importe_por_prestador(self) -> list[tuple[str, float, int]]:
+        from src.modules.liquidaciones.infrastructure.models.prestador_model import (
+            LiquidacionPrestadorModel,
+        )
+
+        liq = LiquidacionModel.__table__
+        pst = LiquidacionPrestadorModel.__table__
+        stmt = (
+            select(
+                pst.c.nombre_corto,
+                func.sum(liq.c.total_importe).label("total"),
+                func.count().label("n"),
+            )
+            .select_from(liq)
+            .join(pst, liq.c.prestador_id == pst.c.id)
+            .group_by(pst.c.nombre_corto)
+            .order_by(func.sum(liq.c.total_importe).desc())
+        )
+        result = await self._session.execute(stmt)
+        return [(row[0], float(row[1]), row[2]) for row in result.all()]
+
     async def delete(self, liquidacion_id: UUID) -> bool:
         row = await self._session.get(LiquidacionModel, liquidacion_id)
         if row is None:

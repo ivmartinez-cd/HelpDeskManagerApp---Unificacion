@@ -120,3 +120,16 @@ export interface EvolucionIncidentesItem {
   tipo: string;
   cantidad: number;
 }
+
+/** Fila del gráfico de evolución de facturado global (dashboard ejecutivo). */
+export interface FacturadoPorPeriodoItem {
+  periodo: string;
+  totalImporte: number;
+}
+
+/** Fila del ranking de prestadores por total facturado (dashboard ejecutivo). */
+export interface RankingPrestador {
+  nombreCorto: string;
+  totalImporte: number;
+  cantidadLiquidaciones: number;
+}

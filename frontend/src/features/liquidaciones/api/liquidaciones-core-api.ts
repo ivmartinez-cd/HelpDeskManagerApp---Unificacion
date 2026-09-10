@@ -4,11 +4,13 @@ import type {
   EstadoAlerta,
   EstadoLiquidacion,
   EvolucionIncidentesItem,
+  FacturadoPorPeriodoItem,
   ImportarLiquidacionResult,
   Liquidacion,
   LiquidacionDetalle,
   LiquidacionPage,
   PrestadorLiquidacion,
+  RankingPrestador,
 } from "../types/liquidaciones";
 import { fetchCatalogoCompleto, type Page } from "./_shared";
 
@@ -59,6 +61,18 @@ export const liquidacionesCoreApi = {
       .get<{ items: EvolucionIncidentesItem[] }>(
         `/api/liquidaciones/prestadores/${prestadorId}/evolucion-incidentes`,
       )
+      .then((r) => r.items),
+
+  getFacturadoPorPeriodo: () =>
+    httpClient
+      .get<{ items: FacturadoPorPeriodoItem[] }>(
+        "/api/liquidaciones/resumen/facturado-por-periodo",
+      )
+      .then((r) => r.items),
+
+  getRankingPrestadores: () =>
+    httpClient
+      .get<{ items: RankingPrestador[] }>("/api/liquidaciones/resumen/ranking-prestadores")
       .then((r) => r.items),
 
   importar: (prestadorId: string, file: File) => {

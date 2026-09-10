@@ -1,53 +1,49 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import { toast } from "sonner";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
+import type {
+  FacturadoPorPeriodoItem,
+  Liquidacion,
+  PrestadorLiquidacion,
+  RankingPrestador,
+} from "../types/liquidaciones";
 import { formatARS } from "../lib/format";
-import { LiquidacionesDashboardTabla } from "./liquidaciones-dashboard-tabla";
+import { FacturadoEvolucionChart } from "./facturado-evolucion-chart";
 import { LiquidacionesImportModal } from "./liquidaciones-import-modal";
-
-function formatPeriodo(periodo: string): string {
-  const [year, month] = periodo.split("-");
-  if (!year || !month) return periodo;
-  const date = new Date(Number(year), Number(month) - 1);
-  return date.toLocaleDateString("es-AR", { month: "short", year: "numeric" });
-}
+import { RankingPrestadoresTabla } from "./ranking-prestadores-tabla";
 
 export function LiquidacionesDashboard() {
   const { can } = useSession();
   const puedeCrear = can("liquidaciones", "create");
   const [liquidaciones, setLiquidaciones] = useState<Liquidacion[]>([]);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
+  const [facturadoPorPeriodo, setFacturadoPorPeriodo] = useState<FacturadoPorPeriodoItem[]>([]);
+  const [ranking, setRanking] = useState<RankingPrestador[]>([]);
   const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [filtroPrestador, setFiltroPrestador] = useState("");
-  const [filtroPeriodo, setFiltroPeriodo] = useState("");
-  const [filtroAnio, setFiltroAnio] = useState("");
-  const hasAutoSelected = useRef(false);
 
   // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
   // listAll() usa fetchCatalogoCompleto para evitar el truncamiento silencioso.
+  // `prestadores` solo alimenta el select del modal de importación — el
+  // ranking/gráfico ya vienen agregados por nombre desde el backend.
   const load = useCallback(async () => {
     try {
-      const [liqs, prest] = await Promise.all([
+      const [liqs, prest, facturado, top] = await Promise.all([
         liquidacionesApi.listAll(),
         liquidacionesApi.listPrestadores(),
+        liquidacionesApi.getFacturadoPorPeriodo(),
+        liquidacionesApi.getRankingPrestadores(),
       ]);
       setLiquidaciones(liqs);
       setPrestadores(prest);
-      if (!hasAutoSelected.current && liqs.length > 0) {
-        const periodos = [...new Set(liqs.map((l) => l.periodo))].sort().reverse();
-        if (periodos[0]) {
-          setFiltroPeriodo(periodos[0]);
-          hasAutoSelected.current = true;
-        }
-      }
+      setFacturadoPorPeriodo(facturado);
+      setRanking(top);
     } finally {
       setLoading(false);
     }
@@ -57,38 +53,15 @@ export function LiquidacionesDashboard() {
     void load();
   }, [load]);
 
-  const periodosDisponibles = useMemo(
-    () => [...new Set(liquidaciones.map((l) => l.periodo))].sort().reverse(),
-    [liquidaciones],
-  );
-
-  const aniosDisponibles = useMemo(
-    () => [...new Set(liquidaciones.map((l) => l.periodo.slice(0, 4)))].sort().reverse(),
-    [liquidaciones],
-  );
-
-  const filtradas = useMemo(
-    () =>
-      liquidaciones.filter(
-        (l) =>
-          (!filtroPrestador || l.prestadorId === filtroPrestador) &&
-          (!filtroPeriodo || l.periodo === filtroPeriodo) &&
-          (!filtroAnio || l.periodo.startsWith(filtroAnio)),
-      ),
-    [liquidaciones, filtroPrestador, filtroPeriodo, filtroAnio],
-  );
-
-  const prestadorMap = Object.fromEntries(prestadores.map((p) => [p.id, p]));
-  const pendientes = filtradas.filter(
+  const pendientes = liquidaciones.filter(
     (l) =>
       l.estado === "abierta" ||
       l.estado === "preliquidada" ||
       l.estado === "recibida" ||
       l.estado === "observada",
   ).length;
-  const totalIncidentes = filtradas.reduce((s, l) => s + l.totalIncidentes, 0);
-  const totalImporte = filtradas.reduce((s, l) => s + l.totalImporte, 0);
-  const ultimas = filtradas.slice(0, 10);
+  const totalIncidentes = liquidaciones.reduce((s, l) => s + l.totalIncidentes, 0);
+  const totalImporte = liquidaciones.reduce((s, l) => s + l.totalImporte, 0);
 
   const handleSincronizar = async () => {
     setSyncing(true);
@@ -121,9 +94,6 @@ export function LiquidacionesDashboard() {
     );
   }
 
-  const selectCls =
-    "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
-
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
@@ -151,62 +121,14 @@ export function LiquidacionesDashboard() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <select
-          value={filtroPrestador}
-          onChange={(e) => setFiltroPrestador(e.target.value)}
-          className={selectCls}
-          aria-label="Filtrar por prestador"
-        >
-          <option value="">Todos los prestadores</option>
-          {prestadores.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nombreCorto}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={filtroPeriodo}
-          onChange={(e) => setFiltroPeriodo(e.target.value)}
-          className={selectCls}
-          aria-label="Filtrar por período"
-        >
-          <option value="">Todos los períodos</option>
-          {periodosDisponibles.map((p) => (
-            <option key={p} value={p}>
-              {formatPeriodo(p)}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={filtroAnio}
-          onChange={(e) => setFiltroAnio(e.target.value)}
-          className={selectCls}
-          aria-label="Filtrar por año"
-        >
-          <option value="">Todos los años</option>
-          {aniosDisponibles.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </select>
-
-        <span className="font-body text-sm text-muted-foreground">
-          {filtradas.length} liquidaci{filtradas.length === 1 ? "ón" : "ones"}
-        </span>
-      </div>
-
       <KpiGrid className="lg:grid-cols-4">
         <KpiTile
           label="Liquidaciones pendientes"
           value={String(pendientes)}
-          hint={`de ${filtradas.length} en total`}
+          hint={`de ${liquidaciones.length} en total`}
           tone="orange"
         />
-        <KpiTile label="Total importadas" value={String(filtradas.length)} tone="neutral" />
+        <KpiTile label="Total importadas" value={String(liquidaciones.length)} tone="neutral" />
         <KpiTile
           label="Total incidentes"
           value={totalIncidentes.toLocaleString("es-AR")}
@@ -215,7 +137,23 @@ export function LiquidacionesDashboard() {
         <KpiTile label="Total facturado" value={formatARS(totalImporte)} tone="neutral" />
       </KpiGrid>
 
-      <LiquidacionesDashboardTabla ultimas={ultimas} prestadorMap={prestadorMap} />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-2 rounded-[12px] border border-border bg-card p-4">
+          <span className="font-heading text-[13px] font-bold text-foreground">
+            Evolución de facturado — {new Date().getFullYear()}
+          </span>
+          <FacturadoEvolucionChart items={facturadoPorPeriodo} />
+        </div>
+
+        <div className="rounded-[12px] border border-border bg-card p-4">
+          <span className="font-heading text-[13px] font-bold text-foreground">
+            Ranking de prestadores por facturado
+          </span>
+          <div className="mt-3">
+            <RankingPrestadoresTabla items={ranking} />
+          </div>
+        </div>
+      </div>
 
       <LiquidacionesImportModal
         isOpen={importOpen}

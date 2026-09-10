@@ -115,4 +115,17 @@ class LiquidacionRepository(Protocol):
         por prestador. Retorna pares (nombre_corto, count) ordenados por count desc."""
         ...
 
+    async def sum_importe_por_periodo(self) -> list[tuple[str, float]]:
+        """Total facturado (SUM total_importe) agrupado por período, ordenado
+        ascendente. Alimenta el gráfico de evolución del dashboard ejecutivo — sin
+        filtro de año server-side, igual criterio que `evolucion-incidentes` (el
+        front recorta al año en curso)."""
+        ...
+
+    async def sum_importe_por_prestador(self) -> list[tuple[str, float, int]]:
+        """Total facturado y cantidad de liquidaciones agrupado por prestador,
+        ordenado por total desc. Alimenta el ranking de prestadores del dashboard
+        ejecutivo. Retorna (nombre_corto, total_importe, cantidad)."""
+        ...
+
     async def delete(self, liquidacion_id: UUID) -> bool: ...
