@@ -9,7 +9,14 @@ y subía 24.181 a 25) o el valor tal cual está en la tabla. La tolerancia se ap
 contra ambos y alcanza con que una pase: comparar solo contra el redondeado convertía
 en alerta el caso "PST factura el piso/decimal exacto" que la tolerancia original
 siempre aceptó (hallazgo H-4 de la validación 2026-08-13, con contraejemplos reales
-71 vs 71.3 y 45 vs 45.4)."""
+71 vs 71.3 y 45 vs 45.4).
+
+Solo alerta sobrecobro (cobrado > esperado_raw, más allá de la tolerancia) —
+decisión de negocio 2026-09-10: el propósito de la regla es detectar cuando el
+prestador cobra de más, no cuando cobra de menos (eso no genera un perjuicio a
+auditar). `cant_km_cobrado=0` sigue su propio camino (`_evaluar_sin_km_cobrado`,
+ya "nunca es sobrecobro" desde 2026-09-05); cualquier otro subcobro (0 < cobrado <
+esperado_raw) ahora tampoco genera hallazgo."""
 
 from collections.abc import Sequence
 from decimal import ROUND_HALF_UP, Decimal
@@ -39,6 +46,8 @@ def evaluar_alt002(
         return _evaluar_sin_km_cobrado(
             incidente, tabla_km, vecinos_mismo_dia, esperado, esperado_raw
         )
+    if cobrado < esperado_raw:
+        return []
     return [_hallazgo(incidente, cobrado, esperado, esperado_raw, [])]
 
 

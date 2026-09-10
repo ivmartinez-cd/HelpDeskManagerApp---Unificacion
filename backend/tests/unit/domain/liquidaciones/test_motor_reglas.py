@@ -69,7 +69,24 @@ class TestAlt002KmsIncorrectos:
         assert [a for a in resultado.alertas if a.tipo_alerta == "ALT002"] == []
         assert resultado.incidentes_evaluados[0].cant_km_esperado == 100.0
 
-    def test_dispara_sin_ruta_compartida(self) -> None:
+    def test_dispara_sobrecobro_sin_ruta_compartida(self) -> None:
+        tabla = make_tabla_km(kms_a_facturar=100.0)
+        incidente = make_incidente(
+            empresa_nombre=tabla.empresa_nombre,
+            sucursal_nombre=tabla.sucursal_nombre,
+            cant_km_cobrado=140.0,
+        )
+        resultado = ejecutar_motor_reglas(
+            [incidente], [incidente], reglas_activas_default(), [tabla], []
+        )
+        alertas = [a for a in resultado.alertas if a.tipo_alerta == "ALT002"]
+        assert len(alertas) == 1
+        assert alertas[0].datos_contexto["diferencia"] == 40.0
+
+    def test_subcobro_no_dispara_alerta(self) -> None:
+        """Decisión de negocio 2026-09-10: la regla audita sobrecobro, no
+        subcobro — el prestador cobrando de menos no genera un hallazgo, por
+        grande que sea la diferencia."""
         tabla = make_tabla_km(kms_a_facturar=100.0)
         incidente = make_incidente(
             empresa_nombre=tabla.empresa_nombre,
@@ -79,9 +96,7 @@ class TestAlt002KmsIncorrectos:
         resultado = ejecutar_motor_reglas(
             [incidente], [incidente], reglas_activas_default(), [tabla], []
         )
-        alertas = [a for a in resultado.alertas if a.tipo_alerta == "ALT002"]
-        assert len(alertas) == 1
-        assert alertas[0].datos_contexto["diferencia"] == 40.0
+        assert [a for a in resultado.alertas if a.tipo_alerta == "ALT002"] == []
 
     def test_fila_sin_km_marca_sin_referencia_en_vez_de_km_incorrectos(self) -> None:
         tabla = make_tabla_km(kms_a_facturar=0.0)
@@ -202,7 +217,26 @@ class TestAlt002KmsIncorrectos:
         """Caso real reportado 2026-09-10 (Gobierno de San Juan — Esc. Primaria Blas
         Parera): kms_a_facturar=24.181, el decimal (0.181) está por debajo del corte
         de 0.500, así que el "esperado" mostrado en el hallazgo tiene que ser 24, no
-        25 (antes del fix usaba `math.ceil` y subía cualquier decimal)."""
+        25 (antes del fix usaba `math.ceil` y subía cualquier decimal). Cobrado por
+        encima del esperado para que dispare (el sobrecobro sigue auditándose)."""
+        tabla = make_tabla_km(kms_a_facturar=24.181)
+        incidente = make_incidente(
+            empresa_nombre=tabla.empresa_nombre,
+            sucursal_nombre=tabla.sucursal_nombre,
+            cant_km_cobrado=26.0,
+        )
+        resultado = ejecutar_motor_reglas(
+            [incidente], [incidente], reglas_activas_default(), [tabla], []
+        )
+        alertas = [a for a in resultado.alertas if a.tipo_alerta == "ALT002"]
+        assert len(alertas) == 1
+        assert alertas[0].datos_contexto["esperado"] == 24
+        assert "24 km redondeado" in (alertas[0].descripcion or "")
+
+    def test_caso_real_san_juan_blas_parera_ahora_no_dispara(self) -> None:
+        """Mismo caso real de arriba pero con el cobrado real reportado (23.0, por
+        debajo de 24.181): con la decisión de negocio 2026-09-10 de no auditar
+        subcobro, esta combinación puntual deja de generar alerta."""
         tabla = make_tabla_km(kms_a_facturar=24.181)
         incidente = make_incidente(
             empresa_nombre=tabla.empresa_nombre,
@@ -212,10 +246,7 @@ class TestAlt002KmsIncorrectos:
         resultado = ejecutar_motor_reglas(
             [incidente], [incidente], reglas_activas_default(), [tabla], []
         )
-        alertas = [a for a in resultado.alertas if a.tipo_alerta == "ALT002"]
-        assert len(alertas) == 1
-        assert alertas[0].datos_contexto["esperado"] == 24
-        assert "24 km redondeado" in (alertas[0].descripcion or "")
+        assert [a for a in resultado.alertas if a.tipo_alerta == "ALT002"] == []
 
     def test_ruta_compartida_suprime_falso_positivo(self) -> None:
         liquidacion_id = uuid.uuid4()
