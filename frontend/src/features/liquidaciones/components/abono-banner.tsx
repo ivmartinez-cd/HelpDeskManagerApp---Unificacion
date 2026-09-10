@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { FileText } from "lucide-react";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import { formatARS } from "../lib/format";
+import { useMoneda } from "../hooks/moneda-context";
 import type { Liquidacion } from "../types/liquidaciones";
 
 const TIPO_ABONO = "abono";
@@ -24,6 +24,7 @@ export function AbonoBanner({
 }) {
   const [historial, setHistorial] = useState<Liquidacion[] | null>(null);
   const esAbono = liquidacion.tipoLiquidacion === TIPO_ABONO;
+  const { formatMonto } = useMoneda();
 
   useEffect(() => {
     if (!esAbono) return;
@@ -65,7 +66,7 @@ export function AbonoBanner({
           </p>
         ) : (
           <p className="text-muted-foreground">
-            Extra cargado: {formatARS(liquidacion.montoExtra ?? 0)}
+            Extra cargado: {formatMonto(liquidacion.montoExtra ?? 0)}
             {liquidacion.conceptoExtra ? ` — ${liquidacion.conceptoExtra}` : ""}
           </p>
         )}
@@ -77,7 +78,7 @@ export function AbonoBanner({
             <ul className="mt-0.5 text-xs text-muted-foreground">
               {historial.map((l) => (
                 <li key={l.id}>
-                  {l.periodo} · {formatARS(l.montoExtra ?? 0)}
+                  {l.periodo} · {formatMonto(l.montoExtra ?? 0)}
                   {l.conceptoExtra ? ` — ${l.conceptoExtra}` : ""}
                 </li>
               ))}

@@ -107,10 +107,18 @@ export interface ReglaAlerta {
   updatedAt: string;
 }
 
+/** Dólar oficial del período de la liquidación — `null` si el período es
+ * anterior a 2026-01 o todavía no se sincronizó (switch ARS/USD deshabilitado). */
+export interface CotizacionUsd {
+  compra: number;
+  venta: number;
+}
+
 export interface LiquidacionDetalle {
   liquidacion: Liquidacion;
   incidentes: Incidente[];
   alertas: Alerta[];
+  cotizacionUsd: CotizacionUsd | null;
 }
 
 /** Fila del gráfico de evolución mensual de incidentes por tipo (todas las

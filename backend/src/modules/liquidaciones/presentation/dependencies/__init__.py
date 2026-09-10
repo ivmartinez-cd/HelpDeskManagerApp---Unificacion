@@ -24,6 +24,9 @@ from src.modules.liquidaciones.presentation.dependencies.config import (
     build_update_tarifario,
     build_vincular_tabla_km_spst,
 )
+from src.modules.liquidaciones.presentation.dependencies.cotizaciones_dolar import (
+    build_sincronizar_cotizaciones_dolar,
+)
 from src.modules.liquidaciones.presentation.dependencies.estados_ayc import (
     build_observar_liquidacion,
     build_recibir_liquidacion,
@@ -148,6 +151,7 @@ __all__ = [
     "build_reanalizar_liquidacion",
     "build_reanalizar_liquidaciones_abiertas",
     "build_reconciliar_liquidacion_individual",
+    "build_sincronizar_cotizaciones_dolar",
     "build_sincronizar_liquidaciones",
     "build_sync_config_desde_siges",
     "build_sync_tarifarios_desde_siges",

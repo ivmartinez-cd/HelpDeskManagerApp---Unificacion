@@ -4,10 +4,11 @@ import { ChevronDown, ChevronRight, ExternalLink, History, Route } from "lucide-
 import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
 import { incidentUrl } from "@/shared/utils/incident-link";
+import { useMoneda } from "../hooks/moneda-context";
 import { useSeleccionAlertas } from "../hooks/seleccion-alertas-context";
 import type { Alerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
 import { peorTonoActivo } from "../lib/alerta-estados";
-import { formatARS, formatFechaDia } from "../lib/format";
+import { formatFechaDia } from "../lib/format";
 import { AlertaSubRow } from "./alerta-sub-row";
 import { EstadoValidacionBadge, TipoBadge } from "./incidente-badges";
 
@@ -54,6 +55,7 @@ export function IncidenteRow({
   const tdCls = "py-3 px-4 font-body text-sm text-foreground";
   // Tilde de selección múltiple (gestión de alertas en lote): solo incidentes
   // con alertas abiertas; el resto deja el hueco para alinear la columna.
+  const { formatMonto } = useMoneda();
   const seleccion = useSeleccionAlertas();
   const seleccionable = seleccion?.esSeleccionable(incidente.id) ?? false;
   const serieDuplicada = alertasInc.find((a) => a.tipoAlerta === CODIGO_ALT010);
@@ -203,11 +205,9 @@ export function IncidenteRow({
             <span className="text-xs font-semibold text-warning">Sin tabla</span>
           )}
         </td>
-        <td className={`${tdCls} text-right`}>{formatARS(incidente.costoServicioCobrado)}</td>
+        <td className={`${tdCls} text-right`}>{formatMonto(incidente.costoServicioCobrado)}</td>
         <td className={`${tdCls} text-right text-muted-foreground`}>
-          {incidente.costoServicioEsperado !== null
-            ? formatARS(incidente.costoServicioEsperado)
-            : "—"}
+          {formatMonto(incidente.costoServicioEsperado)}
         </td>
         <td
           className={cn(
@@ -215,7 +215,7 @@ export function IncidenteRow({
             diff !== null && (diff > 0 ? "text-destructive" : "text-success"),
           )}
         >
-          {diff !== null ? formatARS(diff) : "—"}
+          {formatMonto(diff)}
         </td>
         <td className={`${tdCls} text-muted-foreground`}>
           {incidente.fechaCierre ? formatFechaDia(incidente.fechaCierre) : "—"}

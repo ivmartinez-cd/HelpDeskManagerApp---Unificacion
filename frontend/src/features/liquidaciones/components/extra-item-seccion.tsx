@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
+import { useMoneda } from "../hooks/moneda-context";
 import type { Liquidacion } from "../types/liquidaciones";
-import { formatARS } from "../lib/format";
 
 const inputCls =
   "rounded-[8px] border border-border bg-background px-3 py-1.5 font-body text-sm text-foreground outline-none focus:border-brand-orange/50";
@@ -20,6 +20,7 @@ export function ExtraItemSeccion({
   const [concepto, setConcepto] = useState(liquidacion.conceptoExtra ?? "");
   const [monto, setMonto] = useState(liquidacion.montoExtra?.toString() ?? "");
   const [saving, setSaving] = useState(false);
+  const { formatMonto } = useMoneda();
 
   const handleSave = async () => {
     setSaving(true);
@@ -102,7 +103,7 @@ export function ExtraItemSeccion({
             {liquidacion.conceptoExtra ?? "—"}
           </span>
           <span className="font-heading text-xl font-extrabold text-foreground">
-            {formatARS(liquidacion.montoExtra)}
+            {formatMonto(liquidacion.montoExtra)}
           </span>
         </div>
       ) : (

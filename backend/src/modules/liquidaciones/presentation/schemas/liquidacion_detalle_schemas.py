@@ -143,10 +143,18 @@ class AlertasEstadoLoteOut(BaseModel):
     actualizadas: int
 
 
+class CotizacionUsdOut(BaseModel):
+    compra: float
+    venta: float
+
+
 class LiquidacionDetalleOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     liquidacion: LiquidacionOut
     incidentes: list[IncidenteOut]
     alertas: list[AlertaOut]
+    cotizacion_usd: CotizacionUsdOut | None = Field(None, serialization_alias="cotizacionUsd")
 
     @classmethod
     def from_dto(cls, dto: LiquidacionDetalle) -> "LiquidacionDetalleOut":
@@ -154,4 +162,9 @@ class LiquidacionDetalleOut(BaseModel):
             liquidacion=LiquidacionOut.from_entity(dto.liquidacion),
             incidentes=[IncidenteOut.from_dto(i) for i in dto.incidentes],
             alertas=[AlertaOut.from_entity(a) for a in dto.alertas],
+            cotizacion_usd=(
+                CotizacionUsdOut(compra=dto.cotizacion_usd.compra, venta=dto.cotizacion_usd.venta)
+                if dto.cotizacion_usd
+                else None
+            ),
         )

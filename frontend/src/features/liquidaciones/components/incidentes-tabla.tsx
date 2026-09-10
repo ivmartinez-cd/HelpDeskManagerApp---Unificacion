@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
+import { useMoneda } from "../hooks/moneda-context";
 import type { Alerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
-import { formatARS } from "../lib/format";
 import { computeRutasCompartidas } from "../lib/rutas-compartidas";
 import { IncidenteRow } from "./incidente-row";
 
@@ -45,6 +45,7 @@ export function IncidentesTabla({
   alertasByInc: Record<string, Alerta[]>;
   onAlertaChanged: () => void;
 }) {
+  const { formatMonto } = useMoneda();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const { sort, toggleSort } = useTableSort<IncSortKey>({
     initial: { key: "incidente", direction: "asc" },
@@ -146,11 +147,11 @@ export function IncidentesTabla({
           KMs: <span className="text-foreground">{Math.round(totalKms).toLocaleString("es-AR")}</span>
         </span>
         <span className="text-muted-foreground">
-          Costo servicio: <span className="text-foreground">{formatARS(totalServicio)}</span>
+          Costo servicio: <span className="text-foreground">{formatMonto(totalServicio)}</span>
         </span>
         <span className="text-muted-foreground">
           Total general:{" "}
-          <span className="font-semibold text-foreground">{formatARS(totalGeneral)}</span>
+          <span className="font-semibold text-foreground">{formatMonto(totalGeneral)}</span>
         </span>
       </div>
     </div>

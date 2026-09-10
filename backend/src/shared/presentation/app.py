@@ -73,6 +73,7 @@ def _jobs_liquidaciones(settings: Settings) -> list[asyncio.Task[None]]:
     return start_liquidaciones_background_jobs(
         settings.liquidaciones_reconciliar_interval_minutes,
         settings.liquidaciones_sync_tarifarios_interval_minutes,
+        settings.liquidaciones_sync_cotizaciones_interval_minutes,
     )
 
 

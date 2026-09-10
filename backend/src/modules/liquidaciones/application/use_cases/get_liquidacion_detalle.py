@@ -10,13 +10,20 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from src.modules.liquidaciones.application.dtos.liquidacion_detalle import (
+    CotizacionUsdDetalle,
     IncidenteDetalle,
     LiquidacionDetalle,
+)
+from src.modules.liquidaciones.application.use_cases.sincronizar_cotizaciones_dolar import (
+    PERIODO_INICIO,
 )
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.errors import LiquidacionNoEncontradaError
 from src.modules.liquidaciones.domain.repositories.alerta_repository import AlertaRepository
+from src.modules.liquidaciones.domain.repositories.cotizacion_dolar_repository import (
+    CotizacionDolarRepository,
+)
 from src.modules.liquidaciones.domain.repositories.incidente_repository import (
     IncidenteRepository,
 )
@@ -38,6 +45,7 @@ class GetLiquidacionDetallePorts:
     incidentes: IncidenteRepository
     alertas: AlertaRepository
     tablas_km: TablaKmRepository
+    cotizaciones: CotizacionDolarRepository
 
 
 class GetLiquidacionDetalle:
@@ -55,7 +63,16 @@ class GetLiquidacionDetalle:
             liquidacion=liquidacion,
             incidentes=[_enriquecer(i, indice) for i in incidentes],
             alertas=await self._ports.alertas.list_by_liquidacion(liquidacion_id),
+            cotizacion_usd=await self._cotizacion_usd(liquidacion.periodo),
         )
+
+    async def _cotizacion_usd(self, periodo: str) -> CotizacionUsdDetalle | None:
+        if periodo < PERIODO_INICIO:
+            return None
+        cotizacion = await self._ports.cotizaciones.get_by_periodo(periodo)
+        if cotizacion is None:
+            return None
+        return CotizacionUsdDetalle(compra=cotizacion.compra, venta=cotizacion.venta)
 
 
 def _enriquecer(

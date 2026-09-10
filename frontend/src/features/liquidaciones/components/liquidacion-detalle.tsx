@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { ApiError } from "@/services/http-client";
 import { liquidacionesApi } from "../api/liquidaciones-api";
+import { MonedaProvider } from "../hooks/moneda-context";
 import { SeleccionAlertasProvider } from "../hooks/seleccion-alertas-context";
 import type {
   Alerta,
@@ -165,6 +166,7 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
   const incidentesById = Object.fromEntries(incidentes.map((i) => [i.id, i]));
 
   return (
+    <MonedaProvider cotizacion={detalle.cotizacionUsd}>
     <SeleccionAlertasProvider alertasByInc={alertasByInc}>
     <div className="flex flex-col gap-5 p-6">
       <Link
@@ -248,5 +250,6 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
       <AlertasLoteBar liquidacionId={id} onChanged={() => void load()} />
     </div>
     </SeleccionAlertasProvider>
+    </MonedaProvider>
   );
 }

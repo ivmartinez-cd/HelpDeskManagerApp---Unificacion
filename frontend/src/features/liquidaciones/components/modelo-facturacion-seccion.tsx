@@ -1,5 +1,5 @@
+import { useMoneda } from "../hooks/moneda-context";
 import type { Incidente } from "../types/liquidaciones";
-import { formatARS } from "../lib/format";
 
 interface Renglon {
   cant: number;
@@ -35,22 +35,23 @@ const tdNum = "px-4 py-2.5 text-center font-body text-sm";
 const tdMoney = "px-4 py-2.5 text-right font-body text-sm";
 
 function FilaConcepto({ item, renglon }: { item: string; renglon: Renglon }) {
+  const { formatMonto } = useMoneda();
   return (
     <>
       <tr className="border-t border-border">
         <td className={tdItem}>{item}</td>
         <td className={tdDesc}>{item === "1" ? "Correctivos" : "Preventivos"}</td>
         <td className={`${tdNum} font-semibold`}>{renglon.cant}</td>
-        <td className={tdMoney}>{formatARS(renglon.unitServ)}</td>
-        <td className={`${tdMoney} font-bold text-foreground`}>{formatARS(renglon.totalServ)}</td>
+        <td className={tdMoney}>{formatMonto(renglon.unitServ)}</td>
+        <td className={`${tdMoney} font-bold text-foreground`}>{formatMonto(renglon.totalServ)}</td>
       </tr>
       {renglon.kmCant > 0 && (
         <tr>
           <td className={tdItem} />
           <td className={tdSub}>viático</td>
           <td className={tdNum}>{renglon.kmCant}</td>
-          <td className={tdMoney}>{formatARS(renglon.kmUnit)}</td>
-          <td className={`${tdMoney} font-semibold text-foreground`}>{formatARS(renglon.kmTotal)}</td>
+          <td className={tdMoney}>{formatMonto(renglon.kmUnit)}</td>
+          <td className={`${tdMoney} font-semibold text-foreground`}>{formatMonto(renglon.kmTotal)}</td>
         </tr>
       )}
     </>
@@ -64,6 +65,7 @@ export function ModeloFacturacionSeccion({
   incidentes: Incidente[];
   totalImporte: number;
 }) {
+  const { formatMonto } = useMoneda();
   const correctivos = incidentes.filter((i) => i.tipo.toLowerCase() !== "preventivo");
   const preventivos = incidentes.filter((i) => i.tipo.toLowerCase() === "preventivo");
   if (correctivos.length === 0 && preventivos.length === 0) return null;
@@ -97,7 +99,7 @@ export function ModeloFacturacionSeccion({
                 Total general
               </td>
               <td className="px-4 py-3 text-right font-heading text-base font-extrabold text-brand-orange">
-                {formatARS(totalImporte)}
+                {formatMonto(totalImporte)}
               </td>
             </tr>
           </tfoot>

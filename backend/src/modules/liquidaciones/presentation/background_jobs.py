@@ -12,6 +12,11 @@
   nunca pisa un conflicto local≠Siges (queda logueado y visible en el modal).
   Si creó algo, reanaliza las liquidaciones abiertas para que las alertas de
   precio/tarifario se actualicen solas. Solo lectura contra Siges.
+- liquidaciones_sync_cotizaciones: cada 1440 min (1 día, configurable) — dólar
+  oficial por período (YYYY-MM) desde 2026-01, para el switch ARS/USD del
+  detalle de liquidación (ver `SincronizarCotizacionesDolar`). Meses cerrados
+  desde ArgentinaDatos (valor definitivo), mes en curso desde dolarapi.com (se
+  pisa cada corrida hasta que el mes cierra).
 
 Corren bajo DISABLE_BACKGROUND_JOBS igual que los demás módulos (CLAUDE.md).
 """
@@ -23,8 +28,12 @@ from collections.abc import Awaitable, Callable
 from src.modules.liquidaciones.application.dtos.siges_tarifarios import (
     SyncTarifariosResultado,
 )
+from src.modules.liquidaciones.application.use_cases.sincronizar_cotizaciones_dolar import (
+    SincronizarCotizacionesDolarResultado,
+)
 from src.modules.liquidaciones.presentation.dependencies import (
     build_reanalizar_liquidaciones_abiertas,
+    build_sincronizar_cotizaciones_dolar,
     build_sincronizar_liquidaciones,
     build_sync_tarifarios_desde_siges,
 )
@@ -107,6 +116,20 @@ def _warn_pendientes_de_la_ui(resultado: SyncTarifariosResultado) -> None:
         )
 
 
+async def _ciclo_sync_cotizaciones() -> None:
+    factory = get_sessionmaker()
+    async with factory() as session:
+        resultado = await build_sincronizar_cotizaciones_dolar(session).execute()
+        await session.commit()
+    _log_sync_cotizaciones(resultado)
+
+
+def _log_sync_cotizaciones(resultado: SincronizarCotizacionesDolarResultado) -> None:
+    logger.info(
+        "liquidaciones_sync_cotizaciones: OK — actualizados=%d", resultado.actualizados
+    )
+
+
 async def background_liquidaciones_reconciliar_task(interval_minutes: int) -> None:
     await _loop("liquidaciones_reconciliar", _ciclo_reconciliar, interval_minutes)
 
@@ -115,12 +138,21 @@ async def background_liquidaciones_sync_tarifarios_task(interval_minutes: int) -
     await _loop("liquidaciones_sync_tarifarios", _ciclo_sync_tarifarios, interval_minutes)
 
 
+async def background_liquidaciones_sync_cotizaciones_task(interval_minutes: int) -> None:
+    await _loop("liquidaciones_sync_cotizaciones", _ciclo_sync_cotizaciones, interval_minutes)
+
+
 def start_liquidaciones_background_jobs(
-    interval_minutes: int, sync_tarifarios_interval_minutes: int
+    interval_minutes: int,
+    sync_tarifarios_interval_minutes: int,
+    sync_cotizaciones_interval_minutes: int,
 ) -> list[asyncio.Task[None]]:
     return [
         asyncio.create_task(background_liquidaciones_reconciliar_task(interval_minutes)),
         asyncio.create_task(
             background_liquidaciones_sync_tarifarios_task(sync_tarifarios_interval_minutes)
+        ),
+        asyncio.create_task(
+            background_liquidaciones_sync_cotizaciones_task(sync_cotizaciones_interval_minutes)
         ),
     ]

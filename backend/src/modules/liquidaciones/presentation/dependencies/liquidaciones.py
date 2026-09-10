@@ -77,6 +77,9 @@ from src.modules.liquidaciones.infrastructure.importers.pandas_prestador_maestro
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_alerta_repository import (
     SqlAlchemyAlertaRepository,
 )
+from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_cotizacion_dolar_repository import (  # noqa: E501
+    SqlAlchemyCotizacionDolarRepository,
+)
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_incidente_repository import (  # noqa: E501
     SqlAlchemyIncidenteRepository,
 )
@@ -170,6 +173,7 @@ def build_get_liquidacion_detalle(session: AsyncSession) -> GetLiquidacionDetall
             incidentes=SqlAlchemyIncidenteRepository(session),
             alertas=SqlAlchemyAlertaRepository(session),
             tablas_km=SqlAlchemyTablaKmRepository(session),
+            cotizaciones=SqlAlchemyCotizacionDolarRepository(session),
         )
     )
 

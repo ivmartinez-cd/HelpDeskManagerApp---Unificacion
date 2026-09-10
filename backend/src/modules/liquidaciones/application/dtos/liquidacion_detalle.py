@@ -20,7 +20,18 @@ class IncidenteDetalle:
 
 
 @dataclass(frozen=True)
+class CotizacionUsdDetalle:
+    """Dólar oficial del período de la liquidación — `None` si el período es
+    anterior a 2026-01 o todavía no se sincronizó (switch ARS/USD del
+    frontend queda deshabilitado en ese caso)."""
+
+    compra: float
+    venta: float
+
+
+@dataclass(frozen=True)
 class LiquidacionDetalle:
     liquidacion: Liquidacion
     incidentes: list[IncidenteDetalle]
     alertas: list[Alerta]
+    cotizacion_usd: CotizacionUsdDetalle | None

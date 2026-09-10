@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Route } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
+import { useMoneda } from "../hooks/moneda-context";
 import type { Alerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
 import { ESTADO_ALERTA_TONO } from "../lib/alerta-estados";
-import { formatARS } from "../lib/format";
 import { AlertaEstadoBadge } from "./alerta-estado-badge";
 import { GestionarAlertaModal } from "./gestionar-alerta-modal";
 import { riesgoClass } from "./incidente-badges";
@@ -81,6 +81,7 @@ export function AlertaSubRow({
   alerta: Alerta;
   onChanged: () => void;
 }) {
+  const { formatMonto } = useMoneda();
   const [gestionando, setGestionando] = useState(false);
   const tdCls = "py-2 px-4 font-body text-sm";
   const tono = ESTADO_ALERTA_TONO[alerta.estado] ?? ESTADO_ALERTA_TONO.pendiente;
@@ -107,8 +108,8 @@ export function AlertaSubRow({
         )}
         {alerta.esGrupo && alerta.diferencia !== null && (
           <span className="ml-2 text-muted-foreground">
-            Cobrado {formatARS(alerta.montoCobrado ?? 0)} vs. esperado{" "}
-            {formatARS(alerta.montoEsperado ?? 0)}
+            Cobrado {formatMonto(alerta.montoCobrado ?? 0)} vs. esperado{" "}
+            {formatMonto(alerta.montoEsperado ?? 0)}
           </span>
         )}
         {alerta.justificacion && (

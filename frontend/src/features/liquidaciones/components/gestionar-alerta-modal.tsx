@@ -6,8 +6,8 @@ import { toast } from "sonner";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
+import { useMoneda } from "../hooks/moneda-context";
 import { CODIGO_ALT009, TRANSICIONES_ALERTA } from "../lib/alerta-estados";
-import { formatARS } from "../lib/format";
 import type { Alerta, EstadoAlerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
 import { riesgoClass } from "./incidente-badges";
 import { AlertaEstadoBadge } from "./alerta-estado-badge";
@@ -52,6 +52,7 @@ export function GestionarAlertaModal({
   onClose: () => void;
   onChanged: () => void;
 }) {
+  const { formatMonto } = useMoneda();
   const [enviando, setEnviando] = useState(false);
   const [transicion, setTransicion] = useState<{ estado: EstadoAlerta; label: string; pideJustificacion?: boolean } | null>(null);
   const [justificacion, setJustificacion] = useState("");
@@ -151,9 +152,9 @@ export function GestionarAlertaModal({
         )}
         {alerta.esGrupo && alerta.diferencia !== null && (
           <p className="font-body text-xs text-muted-foreground">
-            Cobrado {formatARS(alerta.montoCobrado ?? 0)} · Esperado{" "}
-            {formatARS(alerta.montoEsperado ?? 0)} · Diferencia{" "}
-            {formatARS(alerta.diferencia)}
+            Cobrado {formatMonto(alerta.montoCobrado ?? 0)} · Esperado{" "}
+            {formatMonto(alerta.montoEsperado ?? 0)} · Diferencia{" "}
+            {formatMonto(alerta.diferencia)}
           </p>
         )}
         {alerta.justificacion && (

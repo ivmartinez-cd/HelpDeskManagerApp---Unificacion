@@ -1,12 +1,13 @@
 "use client";
 
 import { AlertTriangle, Calendar, DollarSign, ExternalLink, Receipt } from "lucide-react";
+import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import type {
   EstadoLiquidacion,
   Liquidacion,
   PrestadorLiquidacion,
 } from "../types/liquidaciones";
-import { formatARS } from "../lib/format";
+import { type Moneda, useMoneda } from "../hooks/moneda-context";
 import { AyCAccionesBar } from "./ayc-acciones-bar";
 import { EstadoBadge } from "./estado-badge";
 import { EstadoSelector } from "./estado-selector";
@@ -38,6 +39,7 @@ export function LiquidacionDetalleHeader({
   onActualizado: (updated: Liquidacion) => void;
   onAnulado: () => void;
 }) {
+  const { moneda, setMoneda, cotizacion, formatMonto } = useMoneda();
   return (
     <div className="rounded-[12px] border border-border bg-card p-5">
       {/* Row 1: título + estado badge | reanalizar */}
@@ -122,8 +124,22 @@ export function LiquidacionDetalleHeader({
           <KpiTile
             icon={<DollarSign size={16} />}
             label="Total facturado"
-            value={formatARS(liquidacion.totalImporte)}
+            value={formatMonto(liquidacion.totalImporte)}
           />
+          {cotizacion && (
+            <div className="flex items-end pb-1">
+              <SegmentedControl
+                label="Moneda"
+                size="sm"
+                value={moneda}
+                onChange={(v) => setMoneda(v as Moneda)}
+                options={[
+                  { value: "ARS", label: "ARS" },
+                  { value: "USD", label: "USD" },
+                ]}
+              />
+            </div>
+          )}
         </div>
         <div className="flex flex-col items-end gap-2">
           {!liquidacion.numeroLiquidacion && (

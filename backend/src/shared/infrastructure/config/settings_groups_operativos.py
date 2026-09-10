@@ -166,3 +166,9 @@ class LiquidacionesSettings(BaseSettings):
     # hasta que alguien apretara el botón. Siges publica por trimestre; una
     # pasada diaria alcanza y es solo lectura contra Siges.
     liquidaciones_sync_tarifarios_interval_minutes: int = 1440
+
+    # Cadencia del job que sincroniza el dólar oficial por período (switch
+    # ARS/USD del detalle de liquidación, desde 2026-01) — ArgentinaDatos para
+    # meses cerrados, dolarapi.com para el mes en curso. Ninguna de las dos
+    # fuentes publica más de una vez por día hábil; una pasada diaria alcanza.
+    liquidaciones_sync_cotizaciones_interval_minutes: int = 1440
