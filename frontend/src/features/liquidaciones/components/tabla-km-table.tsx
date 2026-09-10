@@ -172,7 +172,7 @@ export function TablaKmTable({
                     {t.kmsRecorrido > 0 ? Math.round(t.kmsRecorrido) : "—"}
                   </td>
                   <td className={`${tdCls} text-right tabular-nums`}>
-                    {t.kmsAFacturar > 0 ? Math.ceil(t.kmsAFacturar) : "—"}
+                    {t.kmsAFacturar > 0 ? Math.round(t.kmsAFacturar) : "—"}
                   </td>
                   <td className={`${tdCls} text-center`}>
                     {t.aplicaViatico

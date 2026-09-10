@@ -3,15 +3,16 @@ positivo cuando el tramo es una ruta compartida (otro incidente del mismo día/c
 ya cobró el km, y este vino en $0 a propósito).
 
 La comparación acepta dos formas válidas de facturar un km decimal de la Tabla KM
-(ej. 20.5 km medidos): el entero superior (`math.ceil`, lo habitual — P1, commit
-1b562e4) o el valor tal cual está en la tabla. La tolerancia se aplica contra ambos
-y alcanza con que una pase: comparar solo contra el ceil convertía en alerta el caso
-"PST factura el piso/decimal exacto" que la tolerancia original siempre aceptó
-(hallazgo H-4 de la validación 2026-08-13, con contraejemplos reales 71 vs 71.3 y
-45 vs 45.4)."""
+(ej. 20.5 km medidos): el entero redondeado estándar (round-half-up: sube desde
+0.500, no desde cualquier decimal — corregido 2026-09-10, antes usaba `math.ceil`
+y subía 24.181 a 25) o el valor tal cual está en la tabla. La tolerancia se aplica
+contra ambos y alcanza con que una pase: comparar solo contra el redondeado convertía
+en alerta el caso "PST factura el piso/decimal exacto" que la tolerancia original
+siempre aceptó (hallazgo H-4 de la validación 2026-08-13, con contraejemplos reales
+71 vs 71.3 y 45 vs 45.4)."""
 
-import math
 from collections.abc import Sequence
+from decimal import ROUND_HALF_UP, Decimal
 
 from src.modules.liquidaciones.domain.entities.incidente import Incidente
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
@@ -29,7 +30,7 @@ def evaluar_alt002(
         return []
     cobrado = incidente.cant_km_cobrado or 0
     esperado_raw = tabla_km.kms_a_facturar or 0.0
-    esperado = math.ceil(esperado_raw)
+    esperado = _redondear_half_up(esperado_raw)
     if _dentro_de_tolerancia(cobrado, esperado, esperado_raw, tolerancia_km):
         return []
     if esperado_raw <= 0:
@@ -59,6 +60,12 @@ def _evaluar_sin_km_cobrado(
     if not candidatos:
         return []
     return [_hallazgo(incidente, 0.0, esperado, esperado_raw, candidatos)]
+
+
+def _redondear_half_up(valor: float) -> int:
+    """Round-half-up estándar: sube solo desde 0.500 (24.181 → 24, 24.5 → 25),
+    no desde cualquier decimal como hacía el `math.ceil` anterior."""
+    return int(Decimal(str(valor)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
 def _dentro_de_tolerancia(cobrado: float, esperado: int, esperado_raw: float, tol: float) -> bool:

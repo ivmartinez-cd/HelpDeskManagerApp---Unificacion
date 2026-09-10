@@ -145,9 +145,9 @@ class TestAlt002KmsIncorrectos:
         assert alerta.datos_contexto["candidatos"][0]["numero_incidente"] == "777"
         assert "#777" in (alerta.descripcion or "")
 
-    def test_kms_decimal_cobrado_ceil_no_dispara(self) -> None:
-        """kms_a_facturar=20.5: el PST cobra 21 (ceil correcto). Con tolerancia
-        estricta (0) no debe disparar porque ceil(20.5)=21=cobrado."""
+    def test_kms_decimal_medio_redondea_para_arriba(self) -> None:
+        """kms_a_facturar=20.5: round-half-up sube a 21 (el corte exacto de 0.500
+        redondea para arriba). Con tolerancia estricta (0) no debe disparar."""
         tabla = make_tabla_km(kms_a_facturar=20.5)
         incidente = make_incidente(
             empresa_nombre=tabla.empresa_nombre,
@@ -197,6 +197,25 @@ class TestAlt002KmsIncorrectos:
         )
         resultado = ejecutar_motor_reglas([incidente], [incidente], reglas, [tabla], [])
         assert [a for a in resultado.alertas if a.tipo_alerta == "ALT002"] == []
+
+    def test_kms_decimal_bajo_no_redondea_para_arriba(self) -> None:
+        """Caso real reportado 2026-09-10 (Gobierno de San Juan — Esc. Primaria Blas
+        Parera): kms_a_facturar=24.181, el decimal (0.181) está por debajo del corte
+        de 0.500, así que el "esperado" mostrado en el hallazgo tiene que ser 24, no
+        25 (antes del fix usaba `math.ceil` y subía cualquier decimal)."""
+        tabla = make_tabla_km(kms_a_facturar=24.181)
+        incidente = make_incidente(
+            empresa_nombre=tabla.empresa_nombre,
+            sucursal_nombre=tabla.sucursal_nombre,
+            cant_km_cobrado=23.0,
+        )
+        resultado = ejecutar_motor_reglas(
+            [incidente], [incidente], reglas_activas_default(), [tabla], []
+        )
+        alertas = [a for a in resultado.alertas if a.tipo_alerta == "ALT002"]
+        assert len(alertas) == 1
+        assert alertas[0].datos_contexto["esperado"] == 24
+        assert "24 km redondeado" in (alertas[0].descripcion or "")
 
     def test_ruta_compartida_suprime_falso_positivo(self) -> None:
         liquidacion_id = uuid.uuid4()
