@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Download } from "lucide-react";
+import { Copy, Download } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import { SearchableSelect } from "@/shared/components/ui/searchable-select";
@@ -10,6 +11,7 @@ import { BrandButton, brandButtonClasses } from "@/shared/components/ui/brand-fo
 import { compareSortValues, useTableSort, type SortValue } from "@/shared/hooks/use-table-sort";
 import { proyeccionApi } from "../api/proyeccion-api";
 import { detalleContadorProcesoApi, type AlcanceReporte } from "../api/detalle-contador-proceso-api";
+import { formatearTablaWhatsapp } from "../lib/formato-whatsapp";
 import type { GrupoEconomicoOption, ProcesoOption } from "../types/proyeccion";
 import type { DetalleContadorProceso, DetalleContadorRow } from "../types/detalle-contador-proceso";
 import { DetalleContadorTabla, SORT_KEYS, type SortKey } from "./detalle-contador-tabla";
@@ -84,6 +86,18 @@ export function DetalleContadorProcesoView() {
   }, [detalle, alcance, sort]);
 
   const faltantes = detalle ? detalle.filas.filter((f) => f.falta_contador).length : 0;
+
+  const handleCopiarWhatsapp = async () => {
+    if (!detalle) return;
+    const alcanceLabel = ALCANCES.find((a) => a.value === alcance)?.label ?? "";
+    const texto = formatearTablaWhatsapp(filasVisibles, detalle.cliente, alcanceLabel);
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast.success("Tabla copiada, lista para pegar en WhatsApp.");
+    } catch {
+      toast.error("No se pudo copiar. Probá de nuevo o copiá manualmente.");
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6 px-9 py-8">
@@ -165,14 +179,25 @@ export function DetalleContadorProcesoView() {
               value={alcance}
               onChange={(v) => setAlcance(v as AlcanceReporte)}
             />
-            <a
-              href={detalleContadorProcesoApi.getXlsxUrl(Number(idProcesoValido), alcance)}
-              className={brandButtonClasses({ variant: "outline" })}
-              title="Descarga el mismo listado de abajo en un Excel, listo para mandarle al cliente"
-            >
-              <Download className="h-4 w-4" />
-              Descargar XLSX
-            </a>
+            <div className="flex items-end gap-2">
+              <BrandButton
+                variant="outline"
+                onClick={() => void handleCopiarWhatsapp()}
+                disabled={filasVisibles.length === 0}
+                title="Copiar la tabla de abajo como texto para pegar en WhatsApp"
+              >
+                <Copy className="h-4 w-4" />
+                Copiar para WhatsApp
+              </BrandButton>
+              <a
+                href={detalleContadorProcesoApi.getXlsxUrl(Number(idProcesoValido), alcance)}
+                className={brandButtonClasses({ variant: "outline" })}
+                title="Descarga el mismo listado de abajo en un Excel, listo para mandarle al cliente"
+              >
+                <Download className="h-4 w-4" />
+                Descargar XLSX
+              </a>
+            </div>
           </div>
 
           <DetalleContadorTabla filas={filasVisibles} sort={sort} onToggleSort={toggleSort} />
