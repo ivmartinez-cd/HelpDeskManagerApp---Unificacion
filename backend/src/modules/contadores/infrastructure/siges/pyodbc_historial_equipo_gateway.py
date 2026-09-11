@@ -1,5 +1,5 @@
 """Adapter pyodbc del puerto HistorialEquipoPort — línea de tiempo de un
-equipo contra Siges/MERCURIO. Plomería pyodbc en el `MercurioQueryRunner`
+equipo contra Siges/ORION. Plomería pyodbc en el `OrionQueryRunner`
 compartido (ADR-018), misma cuenta que el resto de `contadores`
 (`SiGesReadOnly`, solo lectura)."""
 
@@ -10,13 +10,13 @@ from src.modules.contadores.domain.ports.historial_equipo_port import LecturaHis
 from src.modules.contadores.infrastructure.siges.historial_equipo_query import (
     HISTORIAL_EQUIPO_SQL,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 _GATEWAY = "historial_equipo"
 
 
 class PyodbcHistorialEquipoGateway:
-    def __init__(self, runner: MercurioQueryRunner) -> None:
+    def __init__(self, runner: OrionQueryRunner) -> None:
         self._runner = runner
 
     async def fetch_historial(
@@ -28,7 +28,7 @@ class PyodbcHistorialEquipoGateway:
             HISTORIAL_EQUIPO_SQL,
             params,
             gateway=_GATEWAY,
-            log_message="Fallo el historial del equipo contra Siges/MERCURIO",
+            log_message="Fallo el historial del equipo contra Siges/ORION",
             log_extra={"id_maquina": id_maquina, "id_clase_contador": id_clase_contador},
         )
         return [_lectura_de(r) for r in rows]

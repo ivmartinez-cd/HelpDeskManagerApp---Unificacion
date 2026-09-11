@@ -12,7 +12,7 @@ Solo lectura, SQL parametrizado, conexión efímera. Uso (contenedor backend):
 import pyodbc
 
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TIMEOUT_SECONDS = 20
 _PENTACOM_ID = 137  # dbo.Empresa 'PST Cordoba - Pentacom S.A.' (ronda 1)
@@ -95,22 +95,36 @@ def _imprimir(cursor: pyodbc.Cursor, titulo: str, sql: str, *params: object) -> 
 
 def main() -> None:
     settings = get_settings()
-    if not settings.sla_mercurio_host:
-        raise SystemExit("Falta SLA_MERCURIO_HOST en .env")
+    if not settings.orion_host:
+        raise SystemExit("Falta ORION_HOST en .env")
     connection = pyodbc.connect(
-        build_mercurio_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
+        build_orion_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
     )
     try:
         connection.timeout = _TIMEOUT_SECONDS
         cursor = connection.cursor()
-        _imprimir(cursor, "CostoServicio PENTACOM (últimas vigencias)", _SQL_TARIFAS_PENTACOM, _PENTACOM_ID)
+        _imprimir(
+            cursor,
+            "CostoServicio PENTACOM (últimas vigencias)",
+            _SQL_TARIFAS_PENTACOM,
+            _PENTACOM_ID,
+        )
         _imprimir(cursor, "CostoServicio total", _SQL_COSTOS_TOTAL)
-        _imprimir(cursor, "CostoServicio cobertura por empresa (top 40 por vigencia)", _SQL_COBERTURA_COSTOS)
+        _imprimir(
+            cursor,
+            "CostoServicio cobertura por empresa (top 40 por vigencia)",
+            _SQL_COBERTURA_COSTOS,
+        )
         _imprimir(cursor, "IncidenteCosto columnas", _SQL_INCIDENTE_COSTO_COLS)
         _imprimir(cursor, "IncidenteCosto muestra", _SQL_INCIDENTE_COSTO_MUESTRA)
         _imprimir(cursor, "Empresa: inventario PST/SPST por Estado", _SQL_EMPRESA_PST_INVENTARIO)
         _imprimir(cursor, "Empresa: PST activos", _SQL_PST_ACTIVOS)
-        _imprimir(cursor, "Sucursal: pares cliente-sucursal de PENTACOM", _SQL_SUCURSALES_DE_PST, _PENTACOM_ID)
+        _imprimir(
+            cursor,
+            "Sucursal: pares cliente-sucursal de PENTACOM",
+            _SQL_SUCURSALES_DE_PST,
+            _PENTACOM_ID,
+        )
         _imprimir(cursor, "Sucursal: muestra pares PENTACOM", _SQL_SUCURSALES_MUESTRA, _PENTACOM_ID)
         _imprimir(cursor, "Liquidacion recientes", _SQL_LIQ_RECIENTES)
         _imprimir(cursor, "Liquidacion total", _SQL_LIQ_TOTAL)

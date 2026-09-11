@@ -1,6 +1,6 @@
 """Adapter pyodbc del puerto EstadoProcesoAnexosPort — consulta en vivo a
 Siges. Mismo esqueleto que `PyodbcEstadoCierreGruposGateway` (plomería en
-`MercurioQueryRunner`, ADR-018, caché TTL), pero con `_consultar()` extraído:
+`OrionQueryRunner`, ADR-018, caché TTL), pero con `_consultar()` extraído:
 la query no lleva parámetros, así que `list_estado` no necesita calcular
 `hoy` — se mantiene igual de corto sin repetir la deuda de tamaño del
 gateway hermano (`scripts/sizes-baseline.json`)."""
@@ -16,11 +16,11 @@ from src.modules.contadores.domain.entities.estado_proceso_anexo import (
 from src.modules.contadores.infrastructure.siges.estado_proceso_anexos_query import (
     ESTADO_PROCESO_ANEXOS_SQL,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 
 class PyodbcEstadoProcesoAnexosGateway:
-    def __init__(self, runner: MercurioQueryRunner, cache_ttl_seconds: float) -> None:
+    def __init__(self, runner: OrionQueryRunner, cache_ttl_seconds: float) -> None:
         self._runner = runner
         self._cache_ttl_seconds = cache_ttl_seconds
         self._lock = asyncio.Lock()
@@ -41,7 +41,7 @@ class PyodbcEstadoProcesoAnexosGateway:
             ESTADO_PROCESO_ANEXOS_SQL,
             gateway="estado_proceso_anexos",
             log_message=(
-                "Fallo la consulta de anexos sin proceso contra Siges/MERCURIO"
+                "Fallo la consulta de anexos sin proceso contra Siges/ORION"
             ),
         )
         return EstadoProcesoAnexosSnapshot(

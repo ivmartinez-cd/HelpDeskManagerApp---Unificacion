@@ -1,4 +1,4 @@
-"""Explora Siges/MERCURIO (cuenta SiGesReadOnly) buscando una señal confiable de
+"""Explora Siges/ORION (cuenta SiGesReadOnly) buscando una señal confiable de
 "cliente nuevo" / "instalación nueva", para evaluar una alerta de calendario de
 onboarding (mensajes de instalación, etc.). Solo lectura: mismo patrón que
 `explore_siges_planificacion.py` (verifica roles antes de leer, conexión efímera,
@@ -20,7 +20,7 @@ Uso (dentro del contenedor backend): uv run python scripts/explore_siges_nuevos_
 import pyodbc
 
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TIMEOUT_SECONDS = 60
 
@@ -195,7 +195,7 @@ def _ronda5_primera_actividad(cursor: pyodbc.Cursor) -> None:
 def main() -> None:
     settings = get_settings()
     conn = pyodbc.connect(
-        build_mercurio_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
+        build_orion_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
     )
     try:
         conn.timeout = _TIMEOUT_SECONDS

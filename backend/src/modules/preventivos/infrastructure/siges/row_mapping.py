@@ -1,6 +1,6 @@
 """Mapeo de filas pyodbc a entidades — acceso por nombre de columna (falla
 ruidoso con AttributeError si la consulta cambia), mismo criterio que
-sla/infrastructure/mercurio/row_mapping.py."""
+sla/infrastructure/orion/row_mapping.py."""
 
 from typing import Any
 

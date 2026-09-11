@@ -25,7 +25,7 @@ from src.modules.liquidaciones.domain.services.vinculacion_siges import normaliz
 from src.modules.liquidaciones.infrastructure.siges.query import SUCURSALES_DE_PRESTADOR_SQL
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_sessionmaker
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TIMEOUT_SECONDS = 30
 _PRESTADOR_ID = "eda1e000-b50f-4475-bf2c-4d1bc3cf116e"  # San Juan - Gestion Integral
@@ -59,7 +59,7 @@ async def _datos_locales() -> tuple[list[tuple[str, str]], set[str]]:
 def _sucursales_siges() -> list[tuple[str, str]]:
     settings = get_settings()
     connection = pyodbc.connect(
-        build_mercurio_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
+        build_orion_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
     )
     try:
         connection.timeout = _TIMEOUT_SECONDS
@@ -203,7 +203,9 @@ def main() -> None:
 
     print(f"\n=== Resumen anclaje por empresa ({len(no_encontradas)} filas) ===")
     print(f"  con empresa exacta en Siges (compara solo sucursal): {con_empresa_exacta}")
-    print(f"  sin empresa exacta en Siges (empresa también difiere/no existe): {sin_empresa_exacta}")
+    print(
+        f"  sin empresa exacta en Siges (empresa también difiere/no existe): {sin_empresa_exacta}"
+    )
     if ratios_con_empresa:
         rs = sorted(ratios_con_empresa, reverse=True)
         print("\n=== Distribución de ratio_sucursal (solo con empresa exacta, calibración N2) ===")

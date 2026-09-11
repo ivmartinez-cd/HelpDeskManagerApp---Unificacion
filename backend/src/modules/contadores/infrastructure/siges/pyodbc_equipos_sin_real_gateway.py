@@ -1,10 +1,10 @@
 """Adapter pyodbc del puerto EquiposSinRealPort — consulta en vivo a Siges.
 
-La plomería pyodbc vive en el `MercurioQueryRunner` compartido (ADR-018); acá
+La plomería pyodbc vive en el `OrionQueryRunner` compartido (ADR-018); acá
 quedan los casos especiales propios de esta consulta: recorre Contadores
 completo (~10 s), así que tiene timeout propio (120 s, vía `timeout_override`)
 y una caché TTL en memoria — la UI reordena/pagina/filtra sobre el mismo
-universo y cada interacción no puede costar otra pasada por MERCURIO. El lock
+universo y cada interacción no puede costar otra pasada por ORION. El lock
 serializa refrescos concurrentes (una sola consulta en vuelo)."""
 
 import asyncio
@@ -19,12 +19,12 @@ from src.modules.contadores.infrastructure.siges.equipos_sin_real_query import (
     EQUIPOS_SIN_REAL_SQL,
     PARQUE_ELEGIBLE_SQL,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 
 class PyodbcEquiposSinRealGateway:
     def __init__(
-        self, runner: MercurioQueryRunner, timeout_seconds: float, cache_ttl_seconds: float
+        self, runner: OrionQueryRunner, timeout_seconds: float, cache_ttl_seconds: float
     ) -> None:
         self._runner = runner
         self._timeout_seconds = timeout_seconds
@@ -47,7 +47,7 @@ class PyodbcEquiposSinRealGateway:
                 EQUIPOS_SIN_REAL_SQL,
                 gateway="equipos_sin_real",
                 log_message=(
-                    "Fallo la consulta de equipos sin contador real contra Siges/MERCURIO"
+                    "Fallo la consulta de equipos sin contador real contra Siges/ORION"
                 ),
                 timeout_override=self._timeout_seconds,
             )
@@ -67,7 +67,7 @@ class PyodbcEquiposSinRealGateway:
             rows = await self._runner.fetch_all(
                 PARQUE_ELEGIBLE_SQL,
                 gateway="equipos_sin_real",
-                log_message="Fallo el conteo de parque elegible contra Siges/MERCURIO",
+                log_message="Fallo el conteo de parque elegible contra Siges/ORION",
                 timeout_override=self._timeout_seconds,
             )
             self._parque = {int(row.id_empresa): int(row.cantidad) for row in rows}

@@ -1,9 +1,9 @@
-"""Plomería compartida de las consultas pyodbc a Siges/MERCURIO (ADR-018).
+"""Plomería compartida de las consultas pyodbc a Siges/ORION (ADR-018).
 
-Todo gateway de módulo contra MERCURIO delega acá el esqueleto que antes
+Todo gateway de módulo contra ORION delega acá el esqueleto que antes
 duplicaba: pyodbc es síncrono, así que la consulta corre en un thread
 (`asyncio.to_thread`); conexión nueva por consulta a propósito (fetch
-esporádico, resiliente a cortes de red/reinicios de MERCURIO sin pooling
+esporádico, resiliente a cortes de red/reinicios de ORION sin pooling
 propio — las conexiones pyodbc no son thread-safe para compartir); timeout de
 login y de consulta; `pyodbc.Error` → `ExternalServiceError` con log
 contextualizado (§6). El semáforo acota las consultas simultáneas de todo el
@@ -26,7 +26,7 @@ from src.shared.domain.errors import ExternalServiceError
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_ERROR_MESSAGE = "No se pudo consultar la base Siges (MERCURIO)"
+DEFAULT_ERROR_MESSAGE = "No se pudo consultar la base Siges (ORION)"
 
 # Encolar detrás del semáforo no consume el timeout de login/consulta (la
 # espera es previa al connect), así que un apilamiento no genera timeouts
@@ -34,7 +34,7 @@ DEFAULT_ERROR_MESSAGE = "No se pudo consultar la base Siges (MERCURIO)"
 _SEMAPHORE_WAIT_WARNING_SECONDS = 10.0
 
 
-class MercurioQueryRunner:
+class OrionQueryRunner:
     def __init__(
         self, connection_string: str, timeout_seconds: float, max_concurrent: int = 3
     ) -> None:
@@ -79,7 +79,7 @@ class MercurioQueryRunner:
         espera = time.monotonic() - inicio
         if espera >= _SEMAPHORE_WAIT_WARNING_SECONDS:
             logger.warning(
-                "La consulta a Siges/MERCURIO esperó %.1f s el semáforo de concurrencia",
+                "La consulta a Siges/ORION esperó %.1f s el semáforo de concurrencia",
                 espera,
                 extra={"gateway": gateway},
             )

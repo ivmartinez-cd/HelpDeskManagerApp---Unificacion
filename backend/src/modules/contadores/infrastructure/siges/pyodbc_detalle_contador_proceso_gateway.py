@@ -23,13 +23,13 @@ from src.modules.contadores.domain.value_objects.detalle_contador_row import (
 from src.modules.contadores.infrastructure.siges.detalle_contador_proceso_query import (
     DETALLE_CONTADORES_POR_PROCESO_SQL,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 _CLASE_NOMBRE = {10: "Mono", 20: "Color"}
 
 
 class PyodbcDetalleContadorProcesoGateway:
-    def __init__(self, runner: MercurioQueryRunner) -> None:
+    def __init__(self, runner: OrionQueryRunner) -> None:
         self._runner = runner
 
     async def fetch(self, nro_proceso: int) -> DetalleContadorProceso:
@@ -38,7 +38,7 @@ class PyodbcDetalleContadorProcesoGateway:
             (nro_proceso,),
             gateway="detalle_contador_proceso",
             log_message=(
-                "Fallo la consulta de detalle de contadores por proceso contra Siges/MERCURIO"
+                "Fallo la consulta de detalle de contadores por proceso contra Siges/ORION"
             ),
         )
         if not rows:

@@ -42,7 +42,7 @@ class ListPrestadoresAgrupadosDependencies:
     asignaciones: AsignacionHistorialRepository
     siges: SigesPrestadorGateway | None = None
     """Para el parque de equipos en vivo — `None` (o caído) degrada al último
-    valor persistido por el sync, el listado nunca se rompe por MERCURIO."""
+    valor persistido por el sync, el listado nunca se rompe por ORION."""
 
 
 class ListPrestadoresAgrupados:
@@ -97,7 +97,7 @@ class ListPrestadoresAgrupados:
     async def _equipos_en_vivo(self, prestadores: list[Prestador]) -> dict[int, int]:
         """Parque de equipos actual desde Siges, por `siges_empresa_id`. Un PST
         con parque vacío se devuelve como 0 explícito (que pise el valor
-        persistido); si MERCURIO no responde se devuelve vacío y el listado
+        persistido); si ORION no responde se devuelve vacío y el listado
         cae al último valor conocido."""
         if self._deps.siges is None or not prestadores:
             return {}

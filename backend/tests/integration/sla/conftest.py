@@ -1,7 +1,7 @@
 """Fixtures de los tests de routers de sla: sesión fake (view / view+update /
 sin grant) y los factories de ambos routers monkeypatcheados con gateways y
 repos en memoria (tests/unit/domain/sla/fakes.py,
-tests/unit/application/sla/fakes_pendientes.py). Sin DB ni MERCURIO."""
+tests/unit/application/sla/fakes_pendientes.py). Sin DB ni ORION."""
 
 from __future__ import annotations
 

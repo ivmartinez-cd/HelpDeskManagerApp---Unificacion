@@ -18,7 +18,7 @@ class SyncPrestadoresDesdeSiges:
     """Caso de uso: actualiza `den_comercial`/`razon_social`/`cuit`/`equipos`
     de los PST ya conocidos con el estado actual de Siges (`equipos` es el
     parque activo contado desde `Maquina`, misma definición que el reporte
-    legacy — queda persistido como último valor conocido para cuando MERCURIO
+    legacy — queda persistido como último valor conocido para cuando ORION
     no responda). A propósito NO crea PST nuevos ni desactiva los que falten
     en la respuesta — el alta/baja es siempre una decisión explícita desde la
     UI (ver plan: evitar el problema del legacy, que creó automáticamente ~29

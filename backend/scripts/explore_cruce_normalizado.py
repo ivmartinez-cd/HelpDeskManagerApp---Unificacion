@@ -15,7 +15,7 @@ from sqlalchemy import text
 
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_sessionmaker
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TIMEOUT_SECONDS = 30
 
@@ -48,7 +48,7 @@ async def _clientes_locales() -> list[str]:
 def _empresas() -> list[tuple[int, str]]:
     settings = get_settings()
     connection = pyodbc.connect(
-        build_mercurio_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
+        build_orion_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
     )
     try:
         connection.timeout = _TIMEOUT_SECONDS

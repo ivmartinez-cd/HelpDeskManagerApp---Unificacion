@@ -1,6 +1,6 @@
 """Adapter pyodbc del puerto ClientesPendientesPeriodoPort — consulta en vivo
 a Siges. Mismo esqueleto que `PyodbcEstadoCierreGruposGateway`: plomería en
-`MercurioQueryRunner` (ADR-018), acá el parámetro es el período inmediato
+`OrionQueryRunner` (ADR-018), acá el parámetro es el período inmediato
 anterior (no el mes en curso) y la caché TTL."""
 
 import asyncio
@@ -18,11 +18,11 @@ from src.modules.contadores.domain.services.periodos_facturacion import (
 from src.modules.contadores.infrastructure.siges.clientes_pendientes_periodo_query import (
     CLIENTES_PENDIENTES_PERIODO_SQL,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 
 class PyodbcClientesPendientesPeriodoGateway:
-    def __init__(self, runner: MercurioQueryRunner, cache_ttl_seconds: float) -> None:
+    def __init__(self, runner: OrionQueryRunner, cache_ttl_seconds: float) -> None:
         self._runner = runner
         self._cache_ttl_seconds = cache_ttl_seconds
         self._lock = asyncio.Lock()
@@ -42,7 +42,7 @@ class PyodbcClientesPendientesPeriodoGateway:
                 gateway="clientes_pendientes_periodo",
                 log_message=(
                     "Fallo la consulta de clientes pendientes del período anterior "
-                    "contra Siges/MERCURIO"
+                    "contra Siges/ORION"
                 ),
             )
             self._snapshot = ClientesPendientesPeriodo(

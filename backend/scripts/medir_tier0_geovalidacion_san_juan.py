@@ -20,7 +20,7 @@ from src.modules.liquidaciones.infrastructure.siges.query import (
     SUCURSALES_DE_PRESTADOR_SQL,
 )
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TIMEOUT_SECONDS = 30
 _SIGES_EMPRESA_ID = 504  # San Juan - Gestion Integral
@@ -30,7 +30,7 @@ _BASE_SUCURSAL_ID = 2649  # prestadores.siges_base_sucursal_id de San Juan - Ges
 def _conectar() -> pyodbc.Connection:
     settings = get_settings()
     conn = pyodbc.connect(
-        build_mercurio_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
+        build_orion_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
     )
     conn.timeout = _TIMEOUT_SECONDS
     return conn
@@ -73,7 +73,9 @@ def main() -> None:
     finally:
         conn.close()
 
-    print(f"Sucursales activas evaluadas (SAN JUAN, empresa {_SIGES_EMPRESA_ID}): {len(sucursales)}")
+    print(
+        f"Sucursales activas evaluadas (SAN JUAN, empresa {_SIGES_EMPRESA_ID}): {len(sucursales)}"
+    )
     print(f"Base de despacho: {base if base else 'no configurada — distancia a base NO evaluada'}")
 
     hallazgos = evaluar_tier0(sucursales, base=base)

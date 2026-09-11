@@ -2,29 +2,30 @@
 
 Mapa de todos los sistemas externos que consume el backend: qué módulos los usan, por qué
 puerto/adapter, desde qué endpoints/jobs, con qué timeout, qué política de retry y cómo
-degradan sin configuración. Relevado el 2026-08-14 y actualizado tras el refactor de
-acceso compartido a MERCURIO/wsAyC (ADR-018). Los hallazgos pre-refactor y su corrección
-están documentados en el ADR; acá queda el estado vigente.
+degradan sin configuración. Relevado el 2026-08-14, actualizado tras el refactor de
+acceso compartido a MERCURIO/wsAyC (ADR-018) y tras la migración del host de Siges de
+MERCURIO a ORION (ADR-039, 2026-09-11). Los hallazgos de cada refactor están documentados
+en su ADR; acá queda el estado vigente.
 
-Inventario verificado con grep sobre `backend/src`: **6 gateways pyodbc** (SIGES/MERCURIO),
+Inventario verificado con grep sobre `backend/src`: **6 gateways pyodbc** (SIGES/ORION),
 **2 gateways zeep** (wsAyC), **9 archivos httpx** (Insight, SDS Portal, SDS web, Epson ERS,
 Gestión web, feriados), **1 smtplib** (SMTP), **1 ftplib** (FTP db3).
 
 ---
 
-## 1. SIGES / MERCURIO (SQL Server, pyodbc)
+## 1. SIGES / ORION (SQL Server, pyodbc)
 
-Base `Siges` del SQL Server MERCURIO, cuenta de solo lectura `SiGesReadOnly`. La
-plomería vive en `shared/infrastructure/mercurio/` (ADR-018): `connection.py` arma el
-connection string (settings bajo el nombre histórico `sla_mercurio_*` — no se renombran:
-integración verificada en producción), `query_runner.py` (`MercurioQueryRunner`) ejecuta
-toda consulta — pyodbc es síncrono, corre en `asyncio.to_thread`, conexión efímera por
-consulta, timeout de login + consulta (`sla_mercurio_timeout_seconds`, default 30 s),
-`pyodbc.Error` → `ExternalServiceError` (→ 502) con log contextualizado — y
-`factories.py::require_mercurio_runner()` es el singleton de proceso con el chequeo de
-host definido una vez.
+Base `Siges` del SQL Server ORION (motor de consultas/reportes — hasta 2026-09-11 se
+consultaba MERCURIO, el motor productivo con escrituras; ADR-039), cuenta de solo lectura
+`SiGesReadOnly`. La plomería vive en `shared/infrastructure/orion/` (ADR-018): `connection.py`
+arma el connection string (settings `orion_*`, sin prefijo de módulo — es config de toda
+la app), `query_runner.py` (`OrionQueryRunner`) ejecuta toda consulta — pyodbc es síncrono,
+corre en `asyncio.to_thread`, conexión efímera por consulta, timeout de login + consulta
+(`orion_timeout_seconds`, default 30 s), `pyodbc.Error` → `ExternalServiceError` (→ 502) con
+log contextualizado — y `factories.py::require_orion_runner()` es el singleton de proceso
+con el chequeo de host definido una vez.
 
-**Concurrencia**: semáforo de proceso en el runner (`MERCURIO_MAX_CONCURRENT`, default 3).
+**Concurrencia**: semáforo de proceso en el runner (`ORION_MAX_CONCURRENT`, default 3).
 La espera es previa al connect (no consume timeouts); si una consulta espera >10 s el
 runner loguea warning con el gateway en `extra`.
 
@@ -33,7 +34,7 @@ mapeo de filas, y delegan la plomería en el runner.
 
 | Módulo | Adapter (infrastructure) | Puerto (domain) | Factory | Consumidores | Timeout | Sin config |
 |---|---|---|---|---|---|---|
-| sla | `mercurio/pyodbc_sla_query_gateway.py` | `SlaQueryGateway` | `get_sla_query_gateway` (`lru_cache`) | `GET /api/sla/resumen`, `GET /api/sla/incidentes-vencidos`, `POST /api/sla/actualizar` (refresh on-demand del snapshot), job `sla/presentation/background_jobs.py` (refresco periódico) | 30 s | fail-fast 502 ("falta SLA_MERCURIO_HOST"); el job loguea y no arranca |
+| sla | `orion/pyodbc_sla_query_gateway.py` | `SlaQueryGateway` | `get_sla_query_gateway` (`lru_cache`) | `GET /api/sla/resumen`, `GET /api/sla/incidentes-vencidos`, `POST /api/sla/actualizar` (refresh on-demand del snapshot), job `sla/presentation/background_jobs.py` (refresco periódico) | 30 s | fail-fast 502 ("falta ORION_HOST"); el job loguea y no arranca |
 | prestadores | `siges/pyodbc_prestador_gateway.py` | `SigesPrestadorGateway` | `get_prestador_siges_gateway` (`lru_cache`) y `_or_none` | `GET /api/prestadores` (listado, `_or_none`: degrada al último parque persistido), sync de parque (estricta) | 30 s | listado degrada con warning; sync fail-fast 502 |
 | contadores | `siges/pyodbc_operador_gateway.py` | `OperadorCatalogPort` | `get_operador_catalog_gateway` (`lru_cache`) | `GET /api/contadores/calendario/operadores` (catálogo, ADR-012) | 30 s | fail-fast 502 |
 | contadores | `siges/pyodbc_parque_cliente_gateway.py` | `ParqueClientePort` | `get_parque_cliente_gateway` (`lru_cache`) y `_or_none` | card de Inicio `resumen-clientes` (`_or_none`: va sin impresoras), búsqueda de empresas del modal (estricta) | 30 s | card degrada con warning; búsqueda fail-fast 502 |
@@ -215,12 +216,17 @@ fresco por request en producción).
 
 Resuelto con advisory locks de Postgres (ADR-008) — fuera del alcance de este mapa.
 
-## Alcance del refactor (ADR-018)
+## Alcance del refactor (ADR-018) y migración de host (ADR-039)
 
-El refactor centralizó SOLO la plomería de **MERCURIO** (runner compartido + factory
-única + semáforo de concurrencia) y **wsAyC** (provider único del cliente zeep,
+El refactor de ADR-018 centralizó SOLO la plomería de **MERCURIO** (runner compartido +
+factory única + semáforo de concurrencia) y **wsAyC** (provider único del cliente zeep,
 constantes a settings). Los puertos de domain, el SQL de `query.py` y el parsing SOAP por
 módulo son negocio y quedaron donde estaban. El patrón queda disponible para el resto
 (Insight/SDS/ERS/Gestión web/FTP/feriados/SMTP), inventariado acá y no migrado en esa
 pasada. Hallazgos pre-refactor, mediciones y decisiones: ADR-018 y los scripts
 `backend/scripts/medir_*.py` / `smoke_*.py`.
+
+ADR-039 (2026-09-11) reusó esa misma plomería sin tocar su diseño: solo cambió el host
+(MERCURIO → ORION) y sacó el prefijo `sla_` de las settings (ahora `orion_*`, config de
+toda la app). Ver `backend/scripts/explore_orion_vs_mercurio.py` para la evidencia de
+paridad que sostuvo la decisión.

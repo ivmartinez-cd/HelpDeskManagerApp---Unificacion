@@ -19,7 +19,7 @@ from src.modules.liquidaciones.infrastructure.siges.query import (
     SUCURSALES_DE_PRESTADOR_SQL,
 )
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _SIGES_EMPRESA_ID = 504
 _BASE_SUCURSAL_ID = 2649
@@ -29,7 +29,7 @@ _TIMEOUT_SECONDS = 30
 def _conectar() -> pyodbc.Connection:
     settings = get_settings()
     conn = pyodbc.connect(
-        build_mercurio_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
+        build_orion_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
     )
     conn.timeout = _TIMEOUT_SECONDS
     return conn

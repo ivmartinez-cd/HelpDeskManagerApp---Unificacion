@@ -1,6 +1,6 @@
 """Adapter pyodbc del puerto ProcesoEstimacionPort — combos de selección del
-Estimador de Contadores contra Siges/MERCURIO. Plomería pyodbc en el
-`MercurioQueryRunner` compartido (ADR-018), misma cuenta que el resto de
+Estimador de Contadores contra Siges/ORION. Plomería pyodbc en el
+`OrionQueryRunner` compartido (ADR-018), misma cuenta que el resto de
 `contadores` (`SiGesReadOnly`, solo lectura)."""
 
 from src.modules.contadores.domain.ports.proceso_estimacion_port import (
@@ -13,20 +13,20 @@ from src.modules.contadores.infrastructure.siges.proceso_estimacion_query import
     GRUPOS_ECONOMICOS_ACTIVOS_SQL,
     PROCESOS_POR_GRUPO_ECONOMICO_SQL,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 _GATEWAY = "proceso_estimacion"
 
 
 class PyodbcProcesoEstimacionGateway:
-    def __init__(self, runner: MercurioQueryRunner) -> None:
+    def __init__(self, runner: OrionQueryRunner) -> None:
         self._runner = runner
 
     async def list_grupos_economicos_activos(self) -> list[GrupoEconomicoOption]:
         rows = await self._runner.fetch_all(
             GRUPOS_ECONOMICOS_ACTIVOS_SQL,
             gateway=_GATEWAY,
-            log_message="Fallo el catálogo de grupos económicos activos contra Siges/MERCURIO",
+            log_message="Fallo el catálogo de grupos económicos activos contra Siges/ORION",
         )
         return [GrupoEconomicoOption(id=int(r.id), descripcion=str(r.descripcion)) for r in rows]
 
@@ -35,7 +35,7 @@ class PyodbcProcesoEstimacionGateway:
             PROCESOS_POR_GRUPO_ECONOMICO_SQL,
             [id_grupo_economico],
             gateway=_GATEWAY,
-            log_message="Fallo la lista de procesos del grupo económico contra Siges/MERCURIO",
+            log_message="Fallo la lista de procesos del grupo económico contra Siges/ORION",
             log_extra={"id_grupo_economico": id_grupo_economico},
         )
         return [
@@ -54,7 +54,7 @@ class PyodbcProcesoEstimacionGateway:
             ANEXOS_POR_GRUPO_ECONOMICO_SQL,
             [id_grupo_economico],
             gateway=_GATEWAY,
-            log_message="Fallo la lista de anexos del grupo económico contra Siges/MERCURIO",
+            log_message="Fallo la lista de anexos del grupo económico contra Siges/ORION",
             log_extra={"id_grupo_economico": id_grupo_economico},
         )
         return [

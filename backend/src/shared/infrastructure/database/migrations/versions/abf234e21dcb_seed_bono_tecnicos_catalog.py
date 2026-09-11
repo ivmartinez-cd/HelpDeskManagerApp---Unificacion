@@ -18,7 +18,7 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 # Deshabilitado (is_enabled=False) hasta que el módulo completo (backend +
-# pantalla de detalle) esté probado end-to-end contra MERCURIO — mismo
+# pantalla de detalle) esté probado end-to-end contra ORION — mismo
 # criterio de dos pasos que usó sla.
 MODULES = [("bono-tecnicos", "Bono Técnicos", "/bono-tecnicos", "award", 16, False)]
 

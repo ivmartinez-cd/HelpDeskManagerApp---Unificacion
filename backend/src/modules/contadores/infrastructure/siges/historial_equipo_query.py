@@ -1,4 +1,4 @@
-"""Consulta read-only contra Siges/MERCURIO para la línea de tiempo de un
+"""Consulta read-only contra Siges/ORION para la línea de tiempo de un
 equipo (MODELO_DE_DATOS.md §3.6) — `HISTORIAL_EQUIPO_SQL` portada tal cual
 de `Queries/GetHistorialEquipo.sql` (el código gana si contradice los
 documentos, ver brief de migración). `WITH (NOLOCK)` intencional, mismo

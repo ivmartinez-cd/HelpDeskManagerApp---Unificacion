@@ -1,5 +1,5 @@
 """Factories de los casos de uso de vínculo/sync contra Siges (ADR-014) — el
-gateway pyodbc usa el runner compartido de MERCURIO (ADR-018): singleton de
+gateway pyodbc usa el runner compartido de ORION (ADR-018): singleton de
 proceso con chequeo de host, igual que sla/prestadores/contadores."""
 
 from functools import lru_cache
@@ -63,14 +63,14 @@ from src.modules.liquidaciones.infrastructure.siges.pyodbc_siges_catalogo_gatewa
     PyodbcSigesCatalogoGateway,
 )
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.factories import require_mercurio_runner
+from src.shared.infrastructure.orion.factories import require_orion_runner
 
 
 @lru_cache
 def siges_catalogo_gateway() -> PyodbcSigesCatalogoGateway:
     """Singleton de proceso — también lo consumen los builders de
     `dependencies/geolocalizacion.py`."""
-    return PyodbcSigesCatalogoGateway(require_mercurio_runner())
+    return PyodbcSigesCatalogoGateway(require_orion_runner())
 
 
 @lru_cache

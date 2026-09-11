@@ -102,7 +102,7 @@ async def test_periodo_invalido_lanza_error_sin_consultar() -> None:
     assert gateway.periodos_consultados == []
 
 
-async def test_lee_del_snapshot_cacheado_sin_volver_a_consultar_mercurio() -> None:
+async def test_lee_del_snapshot_cacheado_sin_volver_a_consultar_orion() -> None:
     gateway = FakeSlaQueryGateway([build_incidente(1, "CD - Ana", RESULTADO_VENCIDO)])
     repo = FakeSlaSnapshotRepository()
     use_case = GetSlaCompliance(repo, RefreshSlaSnapshot(gateway, repo))

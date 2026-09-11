@@ -1,6 +1,6 @@
 # Catálogo de datos disponibles en SigesReadOnly
 
-Referencia acumulada de lo que efectivamente se sabe sobre el esquema de Siges/MERCURIO, para
+Referencia acumulada de lo que efectivamente se sabe sobre el esquema de Siges/ORION, para
 no tener que re-explorar desde cero la próxima vez que un módulo necesite un dato que podría
 vivir ahí. Nace de la investigación de `ADR-012` (validar si Siges podía reemplazar el scraping
 del Calendario de Contadores — ver `SIGES_READONLY_PLANIFICACION_VALIDACION.md` para esa
@@ -19,17 +19,20 @@ Cada tabla está marcada con su nivel de confianza:
 
 ## 1. Acceso
 
-- Host: `MERCURIO.cdsa.com.ar` (env `SLA_MERCURIO_HOST`). Base: `Siges` (env
-  `SLA_MERCURIO_DATABASE`, visible en `DB_NAME()` como `SiGes`).
-- Cuenta de solo lectura: `SLA_MERCURIO_USER=SiGesReadOnly` — **no es una instancia separada**,
-  es la misma base que ya usa el módulo `sla` en producción, con una cuenta distinta.
-  Verificado con `IS_ROLEMEMBER`/`fn_my_permissions` (2026-08-13): `db_datareader=True`,
-  `db_datawriter=False`, `db_owner=False`, `db_ddladmin=False`, cero permisos de
-  `INSERT`/`UPDATE`/`DELETE`/`ALTER`/`CREATE`/`CONTROL` a nivel base. Solo lectura real, no solo
-  de nombre.
-- Patrón de conexión: `build_mercurio_connection_string` (`backend/src/shared/infrastructure/
-  mercurio/connection.py`) + `pyodbc.connect(...)`, conexión efímera por consulta, igual que
-  `PyodbcSlaQueryGateway` (`backend/src/modules/sla/infrastructure/mercurio/
+- Host: `reportes.cdsa.com.ar` / `Orion.cdsa.com.ar` (env `ORION_HOST`) — hasta 2026-09-11 se
+  usaba `MERCURIO.cdsa.com.ar`, el motor productivo con escrituras; ADR-039 migró a ORION, el
+  motor de consultas/reportes, para no competir con esas escrituras. Base: `Siges` (env
+  `ORION_DATABASE`, visible en `DB_NAME()` como `SiGes`).
+- Cuenta de solo lectura: `ORION_USER=SiGesReadOnly` — **no es una instancia separada**, es la
+  misma base y cuenta que ya usaba el módulo `sla` contra Mercurio, verificada igual de solo
+  lectura en Orion (`explore_orion_vs_mercurio.py`). Verificado con
+  `IS_ROLEMEMBER`/`fn_my_permissions` (2026-08-13, contra Mercurio en su momento):
+  `db_datareader=True`, `db_datawriter=False`, `db_owner=False`, `db_ddladmin=False`, cero
+  permisos de `INSERT`/`UPDATE`/`DELETE`/`ALTER`/`CREATE`/`CONTROL` a nivel base. Solo lectura
+  real, no solo de nombre.
+- Patrón de conexión: `build_orion_connection_string` (`backend/src/shared/infrastructure/
+  orion/connection.py`) + `pyodbc.connect(...)`, conexión efímera por consulta, igual que
+  `PyodbcSlaQueryGateway` (`backend/src/modules/sla/infrastructure/orion/
   pyodbc_sla_query_gateway.py`). Todo SQL parametrizado con `?`, nunca interpolado
   (`ARCHITECTURE_GUIDE.md` §8). Errores de `pyodbc.Error` envueltos en `ExternalServiceError`.
 - Script de exploración reusable: `backend/scripts/explore_siges_planificacion.py` (mismo

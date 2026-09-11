@@ -36,7 +36,7 @@ def test_campos_clave_existen_con_su_tipo(monkeypatch: pytest.MonkeyPatch) -> No
     assert isinstance(s.smtp_pass, SecretStr) and isinstance(s.smtp_port, int)
     assert isinstance(s.session_cookie_name, str)
     assert isinstance(s.sds_delete_dry_run, bool) and isinstance(s.disable_background_jobs, bool)
-    assert isinstance(s.sla_mercurio_timeout_seconds, float)
+    assert isinstance(s.orion_timeout_seconds, float)
     assert isinstance(s.wati_poll_interval_minutes, int)
     assert isinstance(s.app_timezone, str)
 
@@ -65,7 +65,7 @@ def test_campos_se_leen_del_entorno_con_su_mismo_nombre(
         ENVIRONMENT="production",
         SMTP_HOST="mailpit",
         DISABLE_BACKGROUND_JOBS="true",
-        SLA_MERCURIO_HOST="SERVIDOR,1434",
+        ORION_HOST="SERVIDOR,1434",
         GOOGLE_MAPS_MAX_CALLS_PER_RUN="7",
         WATI_API_TOKEN="tok",
     )
@@ -73,7 +73,7 @@ def test_campos_se_leen_del_entorno_con_su_mismo_nombre(
     assert s.environment == "production"
     assert s.smtp_host == "mailpit"
     assert s.disable_background_jobs is True
-    assert s.sla_mercurio_host == "SERVIDOR,1434"
+    assert s.orion_host == "SERVIDOR,1434"
     assert s.google_maps_max_calls_per_run == 7
     assert s.wati_api_token.get_secret_value() == "tok"
 

@@ -1,6 +1,6 @@
 """Adapter pyodbc del puerto CandidatosEquipoPort — panel de candidatos
-manuales del Estimador contra Siges/MERCURIO. Plomería pyodbc en el
-`MercurioQueryRunner` compartido (ADR-018), misma cuenta que el resto de
+manuales del Estimador contra Siges/ORION. Plomería pyodbc en el
+`OrionQueryRunner` compartido (ADR-018), misma cuenta que el resto de
 `contadores` (`SiGesReadOnly`, solo lectura)."""
 
 from datetime import date, datetime
@@ -14,14 +14,14 @@ from src.modules.contadores.infrastructure.siges.candidatos_query import (
     CANDIDATOS_EQUIPO_SQL,
     METADATA_EQUIPO_SQL,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 _GATEWAY = "candidatos_equipo"
 _TIPO_TOMA_T4 = 4
 
 
 class PyodbcCandidatosEquipoGateway:
-    def __init__(self, runner: MercurioQueryRunner) -> None:
+    def __init__(self, runner: OrionQueryRunner) -> None:
         self._runner = runner
 
     async def fetch_lecturas(
@@ -31,7 +31,7 @@ class PyodbcCandidatosEquipoGateway:
             CANDIDATOS_EQUIPO_SQL,
             [id_maquina, id_clase_contador],
             gateway=_GATEWAY,
-            log_message="Fallo la lista de candidatos del equipo contra Siges/MERCURIO",
+            log_message="Fallo la lista de candidatos del equipo contra Siges/ORION",
             log_extra={"id_maquina": id_maquina, "id_clase_contador": id_clase_contador},
         )
         return [_lectura_de(r) for r in rows]
@@ -41,7 +41,7 @@ class PyodbcCandidatosEquipoGateway:
             METADATA_EQUIPO_SQL,
             [id_maquina],
             gateway=_GATEWAY,
-            log_message="Fallo la metadata del equipo contra Siges/MERCURIO",
+            log_message="Fallo la metadata del equipo contra Siges/ORION",
             log_extra={"id_maquina": id_maquina},
         )
         if not rows:

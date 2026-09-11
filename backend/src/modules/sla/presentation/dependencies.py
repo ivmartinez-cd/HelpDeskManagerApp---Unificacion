@@ -1,6 +1,6 @@
 """Factories del módulo sla — gateways y use cases. Singletons de proceso
 (`lru_cache`) como los gateways de insumos. El chequeo de host y el runner con
-su semáforo viven en `require_mercurio_runner` (ADR-018)."""
+su semáforo viven en `require_orion_runner` (ADR-018)."""
 
 from functools import lru_cache
 
@@ -22,16 +22,16 @@ from src.modules.sla.application.use_cases.refresh_pendientes_snapshot import (
     RefreshPendientesSnapshot,
 )
 from src.modules.sla.application.use_cases.refresh_sla_snapshot import RefreshSlaSnapshot
-from src.modules.sla.infrastructure.mercurio.pyodbc_derivados_query_gateway import (
+from src.modules.sla.infrastructure.orion.pyodbc_derivados_query_gateway import (
     PyodbcDerivadosQueryGateway,
 )
-from src.modules.sla.infrastructure.mercurio.pyodbc_mesa_ayuda_query_gateway import (
+from src.modules.sla.infrastructure.orion.pyodbc_mesa_ayuda_query_gateway import (
     PyodbcMesaAyudaQueryGateway,
 )
-from src.modules.sla.infrastructure.mercurio.pyodbc_pendientes_query_gateway import (
+from src.modules.sla.infrastructure.orion.pyodbc_pendientes_query_gateway import (
     PyodbcPendientesQueryGateway,
 )
-from src.modules.sla.infrastructure.mercurio.pyodbc_sla_query_gateway import (
+from src.modules.sla.infrastructure.orion.pyodbc_sla_query_gateway import (
     PyodbcSlaQueryGateway,
 )
 from src.modules.sla.infrastructure.repositories.sqlalchemy_pendientes_snapshot_repository import (
@@ -44,27 +44,27 @@ from src.modules.sla.infrastructure.repositories.sqlalchemy_sla_snapshot_reposit
     SqlAlchemySlaSnapshotRepository,
 )
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.factories import require_mercurio_runner
+from src.shared.infrastructure.orion.factories import require_orion_runner
 
 
 @lru_cache
 def get_sla_query_gateway() -> PyodbcSlaQueryGateway:
-    return PyodbcSlaQueryGateway(require_mercurio_runner())
+    return PyodbcSlaQueryGateway(require_orion_runner())
 
 
 @lru_cache
 def get_pendientes_query_gateway() -> PyodbcPendientesQueryGateway:
-    return PyodbcPendientesQueryGateway(require_mercurio_runner())
+    return PyodbcPendientesQueryGateway(require_orion_runner())
 
 
 @lru_cache
 def get_mesa_ayuda_query_gateway() -> PyodbcMesaAyudaQueryGateway:
-    return PyodbcMesaAyudaQueryGateway(require_mercurio_runner())
+    return PyodbcMesaAyudaQueryGateway(require_orion_runner())
 
 
 @lru_cache
 def get_derivados_query_gateway() -> PyodbcDerivadosQueryGateway:
-    return PyodbcDerivadosQueryGateway(require_mercurio_runner())
+    return PyodbcDerivadosQueryGateway(require_orion_runner())
 
 
 def build_refresh_sla_snapshot(session: AsyncSession) -> RefreshSlaSnapshot:

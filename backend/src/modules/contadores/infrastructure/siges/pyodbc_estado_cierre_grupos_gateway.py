@@ -1,6 +1,6 @@
 """Adapter pyodbc del puerto EstadoCierreGruposPort — consulta en vivo a
 Siges. Mismo esqueleto que `PyodbcAnexosPendientesGateway`: plomería en
-`MercurioQueryRunner` (ADR-018), acá solo el parámetro dinámico (mes en
+`OrionQueryRunner` (ADR-018), acá solo el parámetro dinámico (mes en
 curso) y la caché TTL."""
 
 import asyncio
@@ -16,11 +16,11 @@ from src.modules.contadores.domain.services.periodos_facturacion import periodo_
 from src.modules.contadores.infrastructure.siges.estado_cierre_grupos_query import (
     ESTADO_CIERRE_GRUPOS_SQL,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 
 class PyodbcEstadoCierreGruposGateway:
-    def __init__(self, runner: MercurioQueryRunner, cache_ttl_seconds: float) -> None:
+    def __init__(self, runner: OrionQueryRunner, cache_ttl_seconds: float) -> None:
         self._runner = runner
         self._cache_ttl_seconds = cache_ttl_seconds
         self._lock = asyncio.Lock()
@@ -38,7 +38,7 @@ class PyodbcEstadoCierreGruposGateway:
                 (periodo_de(hoy_argentina()),),
                 gateway="estado_cierre_grupos",
                 log_message=(
-                    "Fallo la consulta de estado de cierre por grupo contra Siges/MERCURIO"
+                    "Fallo la consulta de estado de cierre por grupo contra Siges/ORION"
                 ),
             )
             self._snapshot = EstadoCierreGruposSnapshot(

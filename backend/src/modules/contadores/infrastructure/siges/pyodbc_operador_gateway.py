@@ -1,17 +1,17 @@
 """Adapter pyodbc del puerto OperadorCatalogPort — resuelve identidad real
 (nombre/apellido/color) de operadores de Gestión contra `dbo.UsuariosWeb` en
-Siges/MERCURIO (ver ADR-012). La plomería pyodbc vive en el
-`MercurioQueryRunner` compartido (ADR-018)."""
+Siges/ORION (ver ADR-012). La plomería pyodbc vive en el
+`OrionQueryRunner` compartido (ADR-018)."""
 
 from typing import Any
 
 from src.modules.contadores.domain.entities.operador import Operador
 from src.modules.contadores.infrastructure.siges.query import build_usuarios_web_por_logins_sql
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 
 class PyodbcOperadorGateway:
-    def __init__(self, runner: MercurioQueryRunner) -> None:
+    def __init__(self, runner: OrionQueryRunner) -> None:
         self._runner = runner
 
     async def find_by_logins(self, logins: list[str]) -> list[Operador]:
@@ -21,7 +21,7 @@ class PyodbcOperadorGateway:
             build_usuarios_web_por_logins_sql(len(logins)),
             logins,
             gateway="operadores",
-            log_message="Fallo la consulta de operadores contra Siges/MERCURIO",
+            log_message="Fallo la consulta de operadores contra Siges/ORION",
             log_extra={"cantidad_logins": len(logins)},
         )
         return [_to_operador(row) for row in rows]

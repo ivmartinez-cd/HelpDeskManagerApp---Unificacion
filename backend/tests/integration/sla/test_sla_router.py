@@ -42,7 +42,7 @@ async def test_sesion_valida_sin_grant_devuelve_403(method: str, path: str) -> N
 
 @pytest.mark.usefixtures("_sesion_view", "sla_gateway")
 async def test_actualizar_con_solo_view_devuelve_403() -> None:
-    """El refresh en vivo contra MERCURIO exige `update`, no `view`."""
+    """El refresh en vivo contra ORION exige `update`, no `view`."""
     async with client() as c:
         response = await c.post(f"{SLA}/actualizar", params={"periodo": PERIODO})
 

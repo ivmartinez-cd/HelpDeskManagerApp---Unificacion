@@ -156,7 +156,7 @@ async def test_operador_pool_excluido() -> None:
 async def test_siges_caido_degrada_a_solo_clientes() -> None:
     events = [_event("1", "ACME", "vipaez")]
     parque = AsyncMock()
-    parque.list_empresas_activas.side_effect = ExternalServiceError("MERCURIO caído")
+    parque.list_empresas_activas.side_effect = ExternalServiceError("ORION caído")
     deps = GetResumenClientesOperadorDependencies(
         calendar=_calendar_mock(events), alias=_alias_mock(), parque=parque
     )

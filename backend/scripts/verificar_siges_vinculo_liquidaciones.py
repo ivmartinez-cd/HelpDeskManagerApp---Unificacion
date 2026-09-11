@@ -31,7 +31,7 @@ from src.modules.liquidaciones.infrastructure.siges.pyodbc_siges_catalogo_gatewa
 )
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_sessionmaker
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 
 def _verificar_rutas() -> None:
@@ -60,7 +60,7 @@ async def main() -> None:
 
     settings = get_settings()
     gateway = PyodbcSigesCatalogoGateway(
-        build_mercurio_connection_string(settings), settings.sla_mercurio_timeout_seconds
+        build_orion_connection_string(settings), settings.orion_timeout_seconds
     )
     async with get_sessionmaker()() as session:
         ports = SigesConfigPorts(

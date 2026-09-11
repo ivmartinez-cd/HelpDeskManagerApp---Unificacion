@@ -1,4 +1,4 @@
-"""Busca en `dbo.Empresa` (Siges/MERCURIO) candidatos por texto para PST que
+"""Busca en `dbo.Empresa` (Siges/ORION) candidatos por texto para PST que
 todavía no están cargados en `modules/prestadores`. Script operativo de un
 solo uso, read-only (misma cuenta `db_datareader` que ya usa el módulo sla —
 sin permisos de escritura, verificado en `pyodbc_prestador_gateway.py`).
@@ -9,7 +9,7 @@ Uso: `uv run python scripts/lookup_siges_empresas.py`
 import pyodbc
 
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TERMINOS = [
     "Formosa",
@@ -41,7 +41,7 @@ def _buscar(cursor: pyodbc.Cursor, termino: str) -> list[pyodbc.Row]:
 
 def main() -> None:
     settings = get_settings()
-    conn_str = build_mercurio_connection_string(settings)
+    conn_str = build_orion_connection_string(settings)
     with pyodbc.connect(conn_str, timeout=15) as conn:
         conn.timeout = 15
         cursor = conn.cursor()

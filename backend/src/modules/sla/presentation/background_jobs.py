@@ -2,12 +2,12 @@
 
 Auto-sync (configurable vía settings):
 - sla_refresh: cada 240 min (4 h) — snapshot del período mensual actual contra
-  Mercurio/Siges. Estable dentro del mes; el botón "Actualizar" fuerza uno inmediato.
+  Orion/Siges. Estable dentro del mes; el botón "Actualizar" fuerza uno inmediato.
 - pendientes_refresh: cada 60 min (1 h) — backlog de incidentes sin cerrar,
   transversal a períodos; cambia con cada cierre en Gestión, por eso el intervalo
   es más corto.
 
-Sin SLA_MERCURIO_HOST configurado, los gateways lanzan ExternalServiceError
+Sin ORION_HOST configurado, los gateways lanzan ExternalServiceError
 en cada ciclo — se loguea y se reintenta en el próximo intervalo."""
 
 import asyncio

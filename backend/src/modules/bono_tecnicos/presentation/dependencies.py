@@ -1,7 +1,7 @@
 """Factories del módulo bono_tecnicos — gateway, repositorio y casos de uso.
 Singleton de proceso (`lru_cache`) para el gateway, como el resto de los
-módulos que consultan Mercurio. El chequeo de host y el runner con su
-semáforo viven en `require_mercurio_runner` (ADR-018)."""
+módulos que consultan Orion. El chequeo de host y el runner con su
+semáforo viven en `require_orion_runner` (ADR-018)."""
 
 from functools import lru_cache
 
@@ -20,7 +20,7 @@ from src.modules.bono_tecnicos.application.use_cases.get_puntajes_periodo import
 )
 from src.modules.bono_tecnicos.application.use_cases.get_vinculo_siges import GetVinculoSiges
 from src.modules.bono_tecnicos.application.use_cases.guardar_bono_input import GuardarBonoInput
-from src.modules.bono_tecnicos.infrastructure.mercurio.pyodbc_conteo_tecnico_gateway import (
+from src.modules.bono_tecnicos.infrastructure.orion.pyodbc_conteo_tecnico_gateway import (
     PyodbcConteoTecnicoGateway,
 )
 from src.modules.bono_tecnicos.infrastructure.repositories.sqlalchemy_bono_tecnico_input_repository import (  # noqa: E501
@@ -35,12 +35,12 @@ from src.modules.bono_tecnicos.infrastructure.vacaciones.sqlalchemy_dias_sugerid
 from src.modules.bono_tecnicos.infrastructure.vacaciones.sqlalchemy_tecnico_identity_gateway import (  # noqa: E501
     SqlAlchemyTecnicoIdentityGateway,
 )
-from src.shared.infrastructure.mercurio.factories import require_mercurio_runner
+from src.shared.infrastructure.orion.factories import require_orion_runner
 
 
 @lru_cache
 def get_conteo_tecnico_gateway() -> PyodbcConteoTecnicoGateway:
-    return PyodbcConteoTecnicoGateway(require_mercurio_runner())
+    return PyodbcConteoTecnicoGateway(require_orion_runner())
 
 
 def build_get_puntajes_periodo(session: AsyncSession) -> GetPuntajesPeriodo:

@@ -54,7 +54,7 @@ async def get_resumen(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[PuntajeTecnicoSchema]:
     """Resumen del bono del período: conteos por categoría (en vivo contra
-    MERCURIO, sin cache) + Días/Tareas Varias cargados a mano + Puntaje.
+    ORION, sin cache) + Días/Tareas Varias cargados a mano + Puntaje.
     `puntaje` viene `null` mientras no se hayan cargado Días para ese
     técnico y período."""
     dtos = await build_get_puntajes_periodo(db).execute(GetPuntajesPeriodoRequest(periodo=periodo))
@@ -72,7 +72,7 @@ async def get_incidentes(
 ) -> Page[IncidenteBonoSchema]:
     """Detalle de incidentes de un técnico y período, agrupables por
     categoría en el cliente — equivalente a las tablas por categoría de
-    "Tecnicos.xlsx" para ese técnico. En vivo contra MERCURIO, sin cache."""
+    "Tecnicos.xlsx" para ese técnico. En vivo contra ORION, sin cache."""
     dtos = await build_get_incidentes_tecnico().execute(
         GetIncidentesTecnicoRequest(periodo=periodo, id_tecnico=id_tecnico)
     )

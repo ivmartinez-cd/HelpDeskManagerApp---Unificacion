@@ -35,7 +35,7 @@ def build_snapshot(
 ) -> SlaSnapshot:
     """La misma cuenta Correcto/Vencido que reemplazaba la tabla dinámica de
     Excel manual — movida acá desde el use case para que RefreshSlaSnapshot
-    (el único que consulta MERCURIO) sea la única fuente de un snapshot."""
+    (el único que consulta ORION) sea la única fuente de un snapshot."""
     vencidos = [i for i in incidentes if i.es_vencido]
     total, cant_vencidos = len(incidentes), len(vencidos)
     return SlaSnapshot(

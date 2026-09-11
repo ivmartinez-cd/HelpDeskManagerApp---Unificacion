@@ -17,11 +17,11 @@ from src.modules.contadores.infrastructure.siges.pyodbc_falta_contador_proceso_g
     PyodbcFaltaContadorProcesoGateway,
 )
 from src.shared.domain.errors import ExternalServiceError
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 
 class FakeRunner:
-    """Imita `MercurioQueryRunner.fetch_all` registrando cada llamada."""
+    """Imita `OrionQueryRunner.fetch_all` registrando cada llamada."""
 
     def __init__(self, filas_por_sql: dict[str, list[Any]] | None = None) -> None:
         self.filas_por_sql = filas_por_sql or {}
@@ -80,7 +80,7 @@ async def test_fetch_sin_filas_falta_contador_devuelve_lista_vacia() -> None:
 
 
 async def test_error_de_pyodbc_se_envuelve_en_external_service_error() -> None:
-    runner = MercurioQueryRunner(
+    runner = OrionQueryRunner(
         "DRIVER={Driver Inexistente};SERVER=nohost;DATABASE=Siges;UID=x;PWD=x",
         timeout_seconds=1.0,
     )

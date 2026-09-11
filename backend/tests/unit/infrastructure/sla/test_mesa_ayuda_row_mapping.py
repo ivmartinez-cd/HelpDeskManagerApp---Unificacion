@@ -2,7 +2,7 @@ from datetime import datetime
 from types import SimpleNamespace
 from typing import Any
 
-from src.modules.sla.infrastructure.mercurio.mesa_ayuda_row_mapping import map_row
+from src.modules.sla.infrastructure.orion.mesa_ayuda_row_mapping import map_row
 
 
 def _row(**overrides: Any) -> SimpleNamespace:

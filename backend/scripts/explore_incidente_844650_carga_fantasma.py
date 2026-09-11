@@ -12,7 +12,7 @@ Uso (dentro del contenedor backend):
 import pyodbc
 
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TIMEOUT_SECONDS = 60
 _ID_INCIDENTE = 844650
@@ -201,13 +201,13 @@ def _historial_cliente(cursor: pyodbc.Cursor, id_empresa: int | None) -> None:
 
 def main() -> None:
     settings = get_settings()
-    if not settings.sla_mercurio_host:
+    if not settings.orion_host:
         raise SystemExit(
-            "Falta SLA_MERCURIO_HOST en .env — no hay acceso a MERCURIO desde este entorno."
+            "Falta ORION_HOST en .env — no hay acceso a ORION desde este entorno."
         )
 
-    conn_str = build_mercurio_connection_string(settings)
-    print("Conectando a MERCURIO…")
+    conn_str = build_orion_connection_string(settings)
+    print("Conectando a ORION…")
     connection = pyodbc.connect(conn_str, timeout=_TIMEOUT_SECONDS, autocommit=True)
     try:
         connection.timeout = _TIMEOUT_SECONDS

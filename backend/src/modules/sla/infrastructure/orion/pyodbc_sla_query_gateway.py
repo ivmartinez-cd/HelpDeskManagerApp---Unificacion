@@ -1,7 +1,7 @@
 """Adapter pyodbc del puerto SlaQueryGateway — consulta en vivo a Siges.
 
 La plomería pyodbc (thread, conexión efímera, timeouts, semáforo de
-concurrencia, traducción de errores) vive en el `MercurioQueryRunner`
+concurrencia, traducción de errores) vive en el `OrionQueryRunner`
 compartido (ADR-018); acá quedan el SQL, el mapeo de filas y el contexto de
 error propios de sla."""
 
@@ -9,13 +9,13 @@ from datetime import timedelta
 
 from src.modules.sla.domain.entities.incidente_sla import IncidenteSla
 from src.modules.sla.domain.value_objects.periodo import Periodo
-from src.modules.sla.infrastructure.mercurio.query import INCIDENTES_SLA_SQL
-from src.modules.sla.infrastructure.mercurio.row_mapping import map_row
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.modules.sla.infrastructure.orion.query import INCIDENTES_SLA_SQL
+from src.modules.sla.infrastructure.orion.row_mapping import map_row
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 
 class PyodbcSlaQueryGateway:
-    def __init__(self, runner: MercurioQueryRunner) -> None:
+    def __init__(self, runner: OrionQueryRunner) -> None:
         self._runner = runner
 
     async def find_incidentes(self, periodo: Periodo) -> list[IncidenteSla]:
@@ -29,8 +29,8 @@ class PyodbcSlaQueryGateway:
             INCIDENTES_SLA_SQL,
             (desde, hasta_exclusivo, periodo.value),
             gateway="sla",
-            log_message="Fallo la consulta de SLA contra Siges/MERCURIO",
+            log_message="Fallo la consulta de SLA contra Siges/ORION",
             log_extra={"periodo": periodo.value},
-            error_message="No se pudo consultar la base Siges (MERCURIO): {exc}",
+            error_message="No se pudo consultar la base Siges (ORION): {exc}",
         )
         return [map_row(row) for row in rows]

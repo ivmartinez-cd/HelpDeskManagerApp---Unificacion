@@ -19,7 +19,7 @@ depends_on: str | Sequence[str] | None = None
 
 # Deshabilitado (is_enabled=False) hasta que el módulo completo (backend +
 # card de Inicio + pantalla de detalle) esté probado end-to-end contra
-# MERCURIO — mismo criterio de dos pasos que usó contadores.
+# ORION — mismo criterio de dos pasos que usó contadores.
 MODULES = [("sla", "SLA", "/sla", "gauge", 15, False)]
 
 # "view" ya existe en el catálogo de acciones (seed_catalog); solo se declara

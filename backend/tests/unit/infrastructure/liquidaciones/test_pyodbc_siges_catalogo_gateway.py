@@ -1,5 +1,5 @@
 """PyodbcSigesCatalogoGateway: SQL que se envía y mapeo de filas pyodbc a los
-DTOs del puerto. Sin conexión real: el MercurioQueryRunner se reemplaza por un
+DTOs del puerto. Sin conexión real: el OrionQueryRunner se reemplaza por un
 fake que registra llamadas y devuelve filas armadas a mano."""
 
 from datetime import datetime

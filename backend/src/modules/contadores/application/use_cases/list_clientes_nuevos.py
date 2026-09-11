@@ -1,6 +1,6 @@
 """Listado de fichas anotado con lo que Siges sabe de cada empresa cruzada.
 Sin gateway (Siges no configurado) o si Siges falla, las fichas salen sin
-anotación: el seguimiento manual de la TL no depende de MERCURIO."""
+anotación: el seguimiento manual de la TL no depende de ORION."""
 
 import logging
 from dataclasses import dataclass

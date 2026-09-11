@@ -2,7 +2,7 @@
 — consulta en vivo a Siges.
 
 La plomería pyodbc (thread, conexión efímera, timeouts, semáforo de
-concurrencia, traducción de errores) vive en el `MercurioQueryRunner`
+concurrencia, traducción de errores) vive en el `OrionQueryRunner`
 compartido (ADR-018); acá quedan el SQL, el mapeo de filas y el contexto de
 error propios de bono_tecnicos."""
 
@@ -12,23 +12,23 @@ from datetime import UTC, date, datetime, timedelta
 from src.modules.bono_tecnicos.domain.entities.conteo_tecnico import ConteoTecnico
 from src.modules.bono_tecnicos.domain.entities.incidente_bono import IncidenteBono
 from src.modules.bono_tecnicos.domain.value_objects.periodo import Periodo
-from src.modules.bono_tecnicos.infrastructure.mercurio.incidentes_query import (
+from src.modules.bono_tecnicos.infrastructure.orion.incidentes_query import (
     INCIDENTES_TECNICO_SQL,
 )
-from src.modules.bono_tecnicos.infrastructure.mercurio.incidentes_row_mapping import (
+from src.modules.bono_tecnicos.infrastructure.orion.incidentes_row_mapping import (
     map_row as map_incidente_row,
 )
-from src.modules.bono_tecnicos.infrastructure.mercurio.query import (
+from src.modules.bono_tecnicos.infrastructure.orion.query import (
     CONTEOS_TECNICOS_ANUAL_SQL,
     CONTEOS_TECNICOS_SQL,
 )
-from src.modules.bono_tecnicos.infrastructure.mercurio.row_mapping import (
+from src.modules.bono_tecnicos.infrastructure.orion.row_mapping import (
     map_row,
     map_row_anual,
     pivot_conteos,
     pivot_conteos_por_periodo,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 _ANUAL_CACHE_TTL_SEGUNDOS = 600.0
 
@@ -36,7 +36,7 @@ _ANUAL_CACHE_TTL_SEGUNDOS = 600.0
 class PyodbcConteoTecnicoGateway:
     def __init__(
         self,
-        runner: MercurioQueryRunner,
+        runner: OrionQueryRunner,
         *,
         anual_cache_ttl_seconds: float = _ANUAL_CACHE_TTL_SEGUNDOS,
     ) -> None:
@@ -51,9 +51,9 @@ class PyodbcConteoTecnicoGateway:
             CONTEOS_TECNICOS_SQL,
             (desde, hasta_exclusivo, periodo.value),
             gateway="bono_tecnicos",
-            log_message="Fallo la consulta de conteos de bono de técnicos contra Siges/MERCURIO",
+            log_message="Fallo la consulta de conteos de bono de técnicos contra Siges/ORION",
             log_extra={"periodo": periodo.value},
-            error_message="No se pudo consultar la base Siges (MERCURIO): {exc}",
+            error_message="No se pudo consultar la base Siges (ORION): {exc}",
         )
         return pivot_conteos([map_row(row) for row in rows], periodo.value)
 
@@ -77,10 +77,10 @@ class PyodbcConteoTecnicoGateway:
             (desde, hasta_exclusivo),
             gateway="bono_tecnicos",
             log_message=(
-                "Fallo la consulta anual de conteos de bono de técnicos contra Siges/MERCURIO"
+                "Fallo la consulta anual de conteos de bono de técnicos contra Siges/ORION"
             ),
             log_extra={"anio": anio},
-            error_message="No se pudo consultar la base Siges (MERCURIO): {exc}",
+            error_message="No se pudo consultar la base Siges (ORION): {exc}",
             # Barre los 12 meses del año en un solo round trip: más pesada
             # que la consulta mensual, timeout más holgado.
             timeout_override=90.0,
@@ -93,9 +93,9 @@ class PyodbcConteoTecnicoGateway:
             INCIDENTES_TECNICO_SQL,
             (id_tecnico, desde, hasta_exclusivo, periodo.value),
             gateway="bono_tecnicos",
-            log_message="Fallo la consulta de incidentes de bono de técnicos contra Siges/MERCURIO",
+            log_message="Fallo la consulta de incidentes de bono de técnicos contra Siges/ORION",
             log_extra={"periodo": periodo.value, "id_tecnico": id_tecnico},
-            error_message="No se pudo consultar la base Siges (MERCURIO): {exc}",
+            error_message="No se pudo consultar la base Siges (ORION): {exc}",
         )
         return [map_incidente_row(row) for row in rows]
 

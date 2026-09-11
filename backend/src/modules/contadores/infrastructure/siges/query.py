@@ -1,5 +1,5 @@
 """Consulta read-only contra `dbo.UsuariosWeb` de Siges — misma cuenta
-`db_datareader` (`SLA_MERCURIO_USER`) que ya usa `sla`/`prestadores`, sin
+`db_datareader` (`ORION_USER`) que ya usa `sla`/`prestadores`, sin
 permisos de escritura (verificado con `IS_ROLEMEMBER`/`fn_my_permissions`,
 ver ADR-012). No hay forma verificada de filtrar solo "operadores de
 facturación" en `UsuariosWeb` — la tabla tiene empleados de todo tipo — así

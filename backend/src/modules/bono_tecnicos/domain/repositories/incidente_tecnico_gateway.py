@@ -5,7 +5,7 @@ from src.modules.bono_tecnicos.domain.value_objects.periodo import Periodo
 
 
 class IncidenteTecnicoGateway(Protocol):
-    """Puerto de consulta en vivo a Siges (servidor MERCURIO) para el
+    """Puerto de consulta en vivo a Siges (servidor ORION) para el
     detalle de incidentes de un técnico puntual — mismo filtro base que
     `ConteoTecnicoGateway`, sin agrupar, para la pantalla de detalle."""
 

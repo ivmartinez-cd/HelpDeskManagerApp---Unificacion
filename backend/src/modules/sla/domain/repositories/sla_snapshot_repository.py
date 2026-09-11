@@ -6,7 +6,7 @@ from src.modules.sla.domain.entities.sla_snapshot import SlaSnapshot
 class SlaSnapshotRepository(Protocol):
     """Puerto de persistencia del snapshot cacheado — un registro por período,
     reescrito en cada refresh (ver RefreshSlaSnapshot). Nunca pega contra
-    Siges/MERCURIO, eso es responsabilidad exclusiva de SlaQueryGateway."""
+    Siges/ORION, eso es responsabilidad exclusiva de SlaQueryGateway."""
 
     async def get(self, periodo: int) -> SlaSnapshot | None: ...
 

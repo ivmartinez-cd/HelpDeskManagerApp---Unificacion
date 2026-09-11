@@ -52,7 +52,7 @@ class EquipoSinReal:
 @dataclass(frozen=True)
 class EquiposSinRealSnapshot:
     """Resultado de una consulta al parque con su marca de tiempo — la
-    consulta es cara (~10s contra MERCURIO) y se sirve cacheada, así que la
+    consulta es cara (~10s contra ORION) y se sirve cacheada, así que la
     UI necesita saber de cuándo son los datos."""
 
     equipos: list[EquipoSinReal]

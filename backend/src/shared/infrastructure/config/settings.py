@@ -24,6 +24,7 @@ from src.shared.infrastructure.config.settings_groups import (
 from src.shared.infrastructure.config.settings_groups_operativos import (
     AnalisisLogHpSettings,
     LiquidacionesSettings,
+    OrionSettings,
     PreventivosSettings,
     SlaSettings,
     VacacionesSettings,
@@ -41,6 +42,7 @@ class Settings(
     ContadoresSettings,
     InsumosSettings,
     CanalDirectoSettings,
+    OrionSettings,
     SlaSettings,
     PreventivosSettings,
     WatiSettings,

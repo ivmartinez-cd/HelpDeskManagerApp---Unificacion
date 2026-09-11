@@ -1,6 +1,6 @@
 """Adapter pyodbc del puerto ParqueClientePort — catálogo de empresas activas
-y conteo de impresoras por cliente contra Siges/MERCURIO. La plomería pyodbc
-vive en el `MercurioQueryRunner` compartido (ADR-018)."""
+y conteo de impresoras por cliente contra Siges/ORION. La plomería pyodbc
+vive en el `OrionQueryRunner` compartido (ADR-018)."""
 
 from src.modules.contadores.domain.ports.parque_cliente_port import (
     EmpresaConParque,
@@ -11,18 +11,18 @@ from src.modules.contadores.infrastructure.siges.query import (
     EMPRESAS_BUSCAR_SQL,
     build_impresoras_por_empresa_sql,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 
 class PyodbcParqueClienteGateway:
-    def __init__(self, runner: MercurioQueryRunner) -> None:
+    def __init__(self, runner: OrionQueryRunner) -> None:
         self._runner = runner
 
     async def list_empresas_activas(self) -> list[EmpresaSiges]:
         rows = await self._runner.fetch_all(
             EMPRESAS_ACTIVAS_SQL,
             gateway="parque_cliente",
-            log_message="Fallo el catálogo de empresas activas contra Siges/MERCURIO",
+            log_message="Fallo el catálogo de empresas activas contra Siges/ORION",
         )
         return [
             EmpresaSiges(id=int(row.ID_Empresa), den_comercial=str(row.Den_Comercial).strip())
@@ -36,7 +36,7 @@ class PyodbcParqueClienteGateway:
             build_impresoras_por_empresa_sql(len(empresa_ids)),
             empresa_ids,
             gateway="parque_cliente",
-            log_message="Fallo el conteo de impresoras por cliente contra Siges/MERCURIO",
+            log_message="Fallo el conteo de impresoras por cliente contra Siges/ORION",
             log_extra={"cantidad_empresas": len(empresa_ids)},
         )
         return {int(row.ID_Empresa): int(row.impresoras) for row in rows}
@@ -48,7 +48,7 @@ class PyodbcParqueClienteGateway:
             EMPRESAS_BUSCAR_SQL,
             [f"%{texto.strip()}%"],
             gateway="parque_cliente",
-            log_message="Fallo la búsqueda de empresas contra Siges/MERCURIO",
+            log_message="Fallo la búsqueda de empresas contra Siges/ORION",
             log_extra={"texto": texto},
         )
         return [

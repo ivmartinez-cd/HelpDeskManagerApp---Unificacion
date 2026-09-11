@@ -16,7 +16,7 @@ Uso (dentro del contenedor backend):
 import pyodbc
 
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TIMEOUT_SECONDS = 60
 
@@ -49,7 +49,14 @@ WHERE TABLE_NAME = ?
 ORDER BY ORDINAL_POSITION
 """
 
-_TABLAS_IMPORTE = ["Factura_Renta", "Factura_Detalle", "Factura_Cabecera", "Informe_Factura", "Moneda", "Empresa"]
+_TABLAS_IMPORTE = [
+    "Factura_Renta",
+    "Factura_Detalle",
+    "Factura_Cabecera",
+    "Informe_Factura",
+    "Moneda",
+    "Empresa",
+]
 
 # Roemmers SUMCDSI0077/C2: DEMORADO 202607, USD 6.472,41 en el legacy.
 _SQL_RENTA_PROCESO = """
@@ -95,10 +102,10 @@ def _renta_roemmers(cursor: pyodbc.Cursor) -> None:
 
 def main() -> None:
     settings = get_settings()
-    if not settings.sla_mercurio_host:
-        raise SystemExit("Falta SLA_MERCURIO_HOST en .env.")
+    if not settings.orion_host:
+        raise SystemExit("Falta ORION_HOST en .env.")
 
-    conn_str = build_mercurio_connection_string(settings)
+    conn_str = build_orion_connection_string(settings)
     connection = pyodbc.connect(conn_str, timeout=_TIMEOUT_SECONDS, autocommit=True)
     try:
         connection.timeout = _TIMEOUT_SECONDS

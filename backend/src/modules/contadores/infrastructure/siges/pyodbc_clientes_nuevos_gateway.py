@@ -1,6 +1,6 @@
 """Adapter pyodbc del puerto `ClientesNuevosSigesPort` — consulta en vivo a
 Siges con caché TTL por consulta (mismo esqueleto que
-`PyodbcAnexosPendientesGateway`: la plomería es el `MercurioQueryRunner`
+`PyodbcAnexosPendientesGateway`: la plomería es el `OrionQueryRunner`
 compartido, ADR-018). Las dos consultas son livianas (subconsultas sobre
 `MaquinaUFisica`/`Contrato` filtradas por empresa) — alcanza el timeout
 general del runner."""
@@ -18,13 +18,13 @@ from src.modules.contadores.infrastructure.siges.clientes_nuevos_query import (
     CANDIDATOS_SQL,
     build_resumen_instalaciones_sql,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 _GATEWAY = "clientes_nuevos"
 
 
 class PyodbcClientesNuevosGateway:
-    def __init__(self, runner: MercurioQueryRunner, cache_ttl_seconds: float) -> None:
+    def __init__(self, runner: OrionQueryRunner, cache_ttl_seconds: float) -> None:
         self._runner = runner
         self._ttl = cache_ttl_seconds
         self._lock = asyncio.Lock()

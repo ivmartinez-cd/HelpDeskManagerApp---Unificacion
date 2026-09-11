@@ -1,5 +1,5 @@
 """SQL read-only contra `dbo.Empresa` de Siges para el catálogo de PST/SPST
-(ADR-014). Misma cuenta `db_datareader` (`SLA_MERCURIO_USER`) que ya usan los
+(ADR-014). Misma cuenta `db_datareader` (`ORION_USER`) que ya usan los
 módulos sla/prestadores. `Estado = 0` es **activo** (semántica invertida,
 verificada con dato real — ver ADR-014). Sin parámetros de usuario: los LIKE
 son literales fijos, no se interpola nada (ARCHITECTURE_GUIDE §8)."""

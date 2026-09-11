@@ -22,7 +22,7 @@ from src.modules.liquidaciones.domain.services.vinculacion_siges import normaliz
 from src.modules.liquidaciones.infrastructure.siges.query import SUCURSALES_DE_PRESTADOR_SQL
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_sessionmaker
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _PRESTADOR_ID = "eda1e000-b50f-4475-bf2c-4d1bc3cf116e"
 _SIGES_EMPRESA_ID = 504
@@ -41,7 +41,7 @@ async def _locales() -> list[tuple[str, str]]:
 def _siges_sucursales() -> list[SigesSucursalCliente]:
     settings = get_settings()
     connection = pyodbc.connect(
-        build_mercurio_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
+        build_orion_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
     )
     try:
         connection.timeout = _TIMEOUT_SECONDS
@@ -65,9 +65,13 @@ def _siges_sucursales() -> list[SigesSucursalCliente]:
 def main() -> None:
     locales = asyncio.run(_locales())
     siges = _siges_sucursales()
-    claves_siges = {(normalizar_nombre(s.empresa_nombre), normalizar_nombre(s.sucursal_nombre)) for s in siges}
+    claves_siges = {
+        (normalizar_nombre(s.empresa_nombre), normalizar_nombre(s.sucursal_nombre)) for s in siges
+    }
     no_encontradas = [
-        (e, s) for e, s in locales if (normalizar_nombre(e), normalizar_nombre(s)) not in claves_siges
+        (e, s)
+        for e, s in locales
+        if (normalizar_nombre(e), normalizar_nombre(s)) not in claves_siges
     ]
 
     filas = [FilaSinMatch(uuid4(), e, s) for e, s in no_encontradas]
@@ -98,7 +102,9 @@ def main() -> None:
         empresa, sucursal = por_id[fila.id]
         print(f"LOCAL: {empresa!r} | {sucursal!r}")
         for c in cands:
-            siges_nombre = next(s.sucursal_nombre for s in siges if s.siges_sucursal_id == c.siges_sucursal_id)
+            siges_nombre = next(
+                s.sucursal_nombre for s in siges if s.siges_sucursal_id == c.siges_sucursal_id
+            )
             print(f"  -> [{c.nivel} score={c.score:.3f}] {siges_nombre!r}  ({c.motivo})")
         print()
 

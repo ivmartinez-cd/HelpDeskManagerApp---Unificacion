@@ -125,7 +125,7 @@ export function SlaDetail() {
         <>
           {/* Un período ya snapshoteado responde en <1s y el modal ni aparece
               (delay de 1s); uno nuevo/viejo dispara la consulta completa a
-              MERCURIO (~40s) y acá el modal evita el spinner eterno. */}
+              Siges (~40s) y acá el modal evita el spinner eterno. */}
           <SigesLoadingModal
             etapas={[
               { hasta: 3, texto: "Buscando el resumen del período…" },
@@ -136,7 +136,7 @@ export function SlaDetail() {
               { hasta: 35, texto: "Cruzando incidentes y tiempos del período…" },
               { texto: "Un momento más — la consulta completa ronda los 40 segundos…" },
             ]}
-            nota="Los períodos ya consultados se sirven al instante desde el snapshot local; uno nuevo requiere la consulta completa a MERCURIO (~40 segundos, queda guardada)."
+            nota="Los períodos ya consultados se sirven al instante desde el snapshot local; uno nuevo requiere la consulta completa a Siges (~40 segundos, queda guardada)."
           />
           <div className="flex h-64 items-center justify-center">
             <Spinner />
@@ -152,7 +152,7 @@ export function SlaDetail() {
             { hasta: 40, texto: "Un momento más, ya casi está…" },
             { texto: "La base está lenta hoy — seguimos esperando la respuesta…" },
           ]}
-          nota="Actualizar fuerza la consulta completa a MERCURIO (~40 segundos) y recalcula el snapshot del período."
+          nota="Actualizar fuerza la consulta completa a Siges (~40 segundos) y recalcula el snapshot del período."
         />
       )}
 

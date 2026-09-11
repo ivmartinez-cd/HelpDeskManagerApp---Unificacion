@@ -1,12 +1,12 @@
 """Adapter pyodbc del puerto AnexosPendientesPort — consulta en vivo a Siges.
 
 Mismo esqueleto que `PyodbcEquiposSinRealGateway`: la plomería vive en el
-`MercurioQueryRunner` compartido (ADR-018) y acá quedan los parámetros
+`OrionQueryRunner` compartido (ADR-018) y acá quedan los parámetros
 dinámicos (el corte de período — ahora inclusivo del mes en curso, ver
 `anexos_pendientes_query.py` — y la ventana de recencia de 12 meses ruedan
 solos con el calendario — el "más dinámico" pedido sobre el legacy, que los
 tomaba de un formulario) y la caché TTL: la UI reordena/filtra sobre el
-mismo universo sin otra pasada por MERCURIO."""
+mismo universo sin otra pasada por ORION."""
 
 import asyncio
 from datetime import UTC, datetime
@@ -25,13 +25,13 @@ from src.modules.contadores.domain.services.periodos_facturacion import (
 from src.modules.contadores.infrastructure.siges.anexos_pendientes_query import (
     ANEXOS_PENDIENTES_SQL,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 _VENTANA_RECENCIA_MESES = 12
 
 
 class PyodbcAnexosPendientesGateway:
-    def __init__(self, runner: MercurioQueryRunner, cache_ttl_seconds: float) -> None:
+    def __init__(self, runner: OrionQueryRunner, cache_ttl_seconds: float) -> None:
         self._runner = runner
         self._cache_ttl_seconds = cache_ttl_seconds
         self._lock = asyncio.Lock()
@@ -48,7 +48,7 @@ class PyodbcAnexosPendientesGateway:
                 (periodo_de(hoy), restar_meses(hoy, _VENTANA_RECENCIA_MESES)),
                 gateway="anexos_pendientes",
                 log_message=(
-                    "Fallo la consulta de anexos pendientes de cierre contra Siges/MERCURIO"
+                    "Fallo la consulta de anexos pendientes de cierre contra Siges/ORION"
                 ),
             )
             self._snapshot = AnexosPendientesSnapshot(

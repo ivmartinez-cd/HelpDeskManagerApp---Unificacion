@@ -12,7 +12,7 @@ from src.modules.contadores.application.dtos.fila_grilla_siges_dto import FilaGr
 from src.modules.contadores.infrastructure.siges.grilla_estimacion_query import (
     GRILLA_ESTIMACION_SQL,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 _GATEWAY = "grilla_estimacion"
 # Pipeline de 11 pasos sin los índices recomendados (MIGRACION_SISTEMAS.md §3):
@@ -27,7 +27,7 @@ _CACHE_TTL_SECONDS = 600.0
 
 
 class PyodbcGrillaEstimacionGateway:
-    def __init__(self, runner: MercurioQueryRunner) -> None:
+    def __init__(self, runner: OrionQueryRunner) -> None:
         self._runner = runner
         self._lock = asyncio.Lock()
         self._cache: dict[tuple[int, date], tuple[float, list[FilaGrillaSigesDto]]] = {}
@@ -44,7 +44,7 @@ class PyodbcGrillaEstimacionGateway:
             GRILLA_ESTIMACION_SQL,
             [nro_proceso, fecha_objetivo],
             gateway=_GATEWAY,
-            log_message="Fallo la grilla de estimación contra Siges/MERCURIO",
+            log_message="Fallo la grilla de estimación contra Siges/ORION",
             log_extra={"nro_proceso": nro_proceso, "fecha_objetivo": str(fecha_objetivo)},
             timeout_override=_TIMEOUT_SECONDS,
         )

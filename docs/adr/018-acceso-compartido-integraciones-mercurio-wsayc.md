@@ -2,6 +2,11 @@
 
 ## Estado: Aceptado e implementado (2026-08-14)
 
+**Superseded parcialmente por [ADR-039](039-siges-desde-orion-en-vez-de-mercurio.md)**
+(2026-09-11): la sección "Env vars: no se renombran" de este ADR y el nombre `MERCURIO`
+del runner/settings quedaron reemplazados por Orion. La decisión de arquitectura de este
+ADR (plomería compartida, singleton, semáforo) sigue vigente sin cambios.
+
 ## Contexto
 
 Cuatro módulos consultan la base Siges del SQL Server MERCURIO (sla,

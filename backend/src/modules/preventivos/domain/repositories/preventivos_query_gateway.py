@@ -10,7 +10,7 @@ from src.modules.preventivos.domain.entities.zona_parque import ZonaParque
 class PreventivosQueryGateway(Protocol):
     """Puerto de consulta a Siges. Devuelve el parque COMPLETO de una zona:
     filtros, búsqueda y orden son del caso de uso, para que una interacción de
-    UI no dispare otra pasada por MERCURIO (mismo criterio que
+    UI no dispare otra pasada por ORION (mismo criterio que
     EquiposSinRealPort de contadores)."""
 
     async def list_equipos_por_zona(

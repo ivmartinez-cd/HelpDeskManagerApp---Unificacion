@@ -1,7 +1,7 @@
 """Factories del vínculo Empleado↔Siges — gateway y casos de uso. Singleton
 de proceso (`lru_cache`) para el gateway, como el resto de los módulos que
-consultan Mercurio. El chequeo de host y el runner con su semáforo viven en
-`require_mercurio_runner` (ADR-018)."""
+consultan Orion. El chequeo de host y el runner con su semáforo viven en
+`require_orion_runner` (ADR-018)."""
 
 from functools import lru_cache
 
@@ -18,12 +18,12 @@ from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_empleado_repo
 from src.modules.vacaciones.infrastructure.siges.pyodbc_siges_tecnico_gateway import (
     PyodbcSigesTecnicoGateway,
 )
-from src.shared.infrastructure.mercurio.factories import require_mercurio_runner
+from src.shared.infrastructure.orion.factories import require_orion_runner
 
 
 @lru_cache
 def get_siges_tecnico_gateway() -> PyodbcSigesTecnicoGateway:
-    return PyodbcSigesTecnicoGateway(require_mercurio_runner())
+    return PyodbcSigesTecnicoGateway(require_orion_runner())
 
 
 def _ports(db: AsyncSession) -> SigesVinculoPorts:

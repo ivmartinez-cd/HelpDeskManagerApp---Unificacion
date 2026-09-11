@@ -1,6 +1,6 @@
 """Factory del gateway del módulo contra Siges — mismo patrón que
 contadores/presentation/dependencies.py: singleton de proceso (`lru_cache`),
-runner compartido vía `require_mercurio_runner` (ADR-018)."""
+runner compartido vía `require_orion_runner` (ADR-018)."""
 
 from functools import lru_cache
 
@@ -8,7 +8,7 @@ from src.modules.preventivos.infrastructure.siges.pyodbc_preventivos_gateway imp
     PyodbcPreventivosGateway,
 )
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.factories import require_mercurio_runner
+from src.shared.infrastructure.orion.factories import require_orion_runner
 
 # El TTL evita repetir la consulta cara contra Siges en cada paginación/filtro
 # de la misma pantalla; el botón "Actualizar" fuerza refresh. Medido en frío
@@ -28,7 +28,7 @@ _ZONAS_CACHE_TTL_SECONDS = 1800.0
 @lru_cache
 def get_preventivos_gateway() -> PyodbcPreventivosGateway:
     return PyodbcPreventivosGateway(
-        require_mercurio_runner(),
+        require_orion_runner(),
         _CACHE_TTL_SECONDS,
         get_settings().preventivos_meses_actividad,
         zonas_cache_ttl_seconds=_ZONAS_CACHE_TTL_SECONDS,

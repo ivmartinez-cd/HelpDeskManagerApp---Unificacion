@@ -18,7 +18,7 @@ Uso (dentro del contenedor backend):
 import pyodbc
 
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TIMEOUT_SECONDS = 60
 
@@ -112,7 +112,9 @@ def _fechas_pendientes(cursor: pyodbc.Cursor) -> None:
 def _agujeros(cursor: pyodbc.Cursor) -> None:
     cursor.execute(_SQL_AGUJEROS, "2025-08-01")
     filas = list(cursor.fetchall())
-    print(f"\n=== Pendientes que no son última fila (agujeros), proceso >= 2025-08 ({len(filas)}) ===")
+    print(
+        f"\n=== Pendientes que no son última fila (agujeros), proceso >= 2025-08 ({len(filas)}) ==="
+    )
     for f in filas:
         print(
             f"  {f.Fecha_Proceso} periodo={f.periodo} rn={f.rn} "
@@ -122,10 +124,10 @@ def _agujeros(cursor: pyodbc.Cursor) -> None:
 
 def main() -> None:
     settings = get_settings()
-    if not settings.sla_mercurio_host:
-        raise SystemExit("Falta SLA_MERCURIO_HOST en .env.")
+    if not settings.orion_host:
+        raise SystemExit("Falta ORION_HOST en .env.")
 
-    conn_str = build_mercurio_connection_string(settings)
+    conn_str = build_orion_connection_string(settings)
     connection = pyodbc.connect(conn_str, timeout=_TIMEOUT_SECONDS, autocommit=True)
     try:
         connection.timeout = _TIMEOUT_SECONDS

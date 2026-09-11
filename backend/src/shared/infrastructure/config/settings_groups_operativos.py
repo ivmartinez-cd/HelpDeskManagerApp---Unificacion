@@ -8,30 +8,38 @@ from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 
 
-class SlaSettings(BaseSettings):
-    """Módulo sla: base Siges (SQL Server MERCURIO) y jobs de refresco."""
+class OrionSettings(BaseSettings):
+    """Base Siges del SQL Server ORION (consultas/reportes) — compartida por
+    sla, contadores, liquidaciones, prestadores, preventivos, vacaciones y
+    bono_tecnicos (ADR-039: reemplaza a MERCURIO, el motor productivo, para no
+    competir con sus escrituras). Sin prefijo de módulo porque no es propia de
+    ninguno."""
 
-    # Consulta en vivo a la base Siges del SQL Server MERCURIO. Sin host configurado
-    # los endpoints de sla responden 502 con mensaje claro (ver get_sla_query_gateway);
-    # el default vacío evita romper el arranque de los demás módulos en entornos sin
-    # acceso a esa red. `host` admite "SERVIDOR,puerto" si no es el 1433 default.
-    sla_mercurio_host: str = ""
-    sla_mercurio_database: str = "Siges"
-    sla_mercurio_user: str = ""
-    sla_mercurio_password: SecretStr = SecretStr("")
-    sla_mercurio_driver: str = "{ODBC Driver 18 for SQL Server}"
+    # Consulta en vivo a la base Siges del SQL Server ORION. Sin host configurado
+    # los endpoints que consultan Siges responden 502 con mensaje claro (ver
+    # require_orion_runner); el default vacío evita romper el arranque de los
+    # demás módulos en entornos sin acceso a esa red. `host` admite
+    # "SERVIDOR,puerto" si no es el 1433 default.
+    orion_host: str = ""
+    orion_database: str = "Siges"
+    orion_user: str = ""
+    orion_password: SecretStr = SecretStr("")
+    orion_driver: str = "{ODBC Driver 18 for SQL Server}"
     # SQL Server legacy sin certificado confiable: el driver 18 encripta por
     # default y el handshake falla; apagado replica el comportamiento del
     # driver 17 con el que se consultaba esta base hasta ahora.
-    sla_mercurio_encrypt: bool = False
-    sla_mercurio_timeout_seconds: float = 30.0
-    # Tope de consultas simultáneas a MERCURIO de todo el proceso (semáforo del
-    # MercurioQueryRunner compartido, ADR-018). Sin prefijo sla_ porque es
-    # config nueva de toda la app, no del módulo sla.
-    mercurio_max_concurrent: int = 3
+    orion_encrypt: bool = False
+    orion_timeout_seconds: float = 30.0
+    # Tope de consultas simultáneas a ORION de todo el proceso (semáforo del
+    # OrionQueryRunner compartido, ADR-018/ADR-039).
+    orion_max_concurrent: int = 3
+
+
+class SlaSettings(BaseSettings):
+    """Módulo sla: jobs de refresco del snapshot de SLA y pendientes."""
 
     # Cadencia del job de fondo que refresca el snapshot del período actual —
-    # sin esto, Inicio y /sla pegarían en vivo contra MERCURIO (~40s) en cada
+    # sin esto, Inicio y /sla pegarían en vivo contra ORION (~40s) en cada
     # carga. El botón "Actualizar" siempre fuerza un refresh inmediato aparte.
     sla_refresh_interval_minutes: int = 240
     # Cadencia del job de fondo que refresca el backlog de incidentes sin cerrar.

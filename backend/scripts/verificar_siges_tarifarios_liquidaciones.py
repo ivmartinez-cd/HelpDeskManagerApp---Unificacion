@@ -38,7 +38,7 @@ from src.modules.liquidaciones.infrastructure.siges.pyodbc_siges_catalogo_gatewa
 )
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_sessionmaker
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 # Mapeos manuales confirmados a ojo. Valor None = zona genérica (sin zona).
 # Los códigos TMT* son la tarifa genérica de cada PST (hipótesis confirmada por
@@ -54,8 +54,10 @@ _SIN_MAPEAR_A_PROPOSITO = {"GSJ - Escuelas Valle Fertil", "GSJ - GI Centro Civic
 
 def _resumir_sync(titulo: str, r: SyncTarifariosResultado) -> None:
     print(f"\n=== {titulo} ===")
-    print(f"creados={r.creados} sin_cambios={r.sin_cambios} conflictos={len(r.conflictos)} "
-          f"zonas_sin_mapear={len(r.zonas_sin_mapear)} sin_vinculo={len(r.prestadores_sin_vinculo)}")
+    print(
+        f"creados={r.creados} sin_cambios={r.sin_cambios} conflictos={len(r.conflictos)} "
+        f"zonas_sin_mapear={len(r.zonas_sin_mapear)} sin_vinculo={len(r.prestadores_sin_vinculo)}"
+    )
     creados_por_pst = Counter()
     for g in r.grupos_creados:
         creados_por_pst[g.prestador] += g.cantidad
@@ -75,7 +77,7 @@ async def main() -> None:
     aplicar = "--aplicar" in sys.argv
     settings = get_settings()
     gateway = PyodbcSigesCatalogoGateway(
-        build_mercurio_connection_string(settings), settings.sla_mercurio_timeout_seconds
+        build_orion_connection_string(settings), settings.orion_timeout_seconds
     )
     async with get_sessionmaker()() as session:
         ports = SigesTarifariosPorts(

@@ -1,6 +1,6 @@
 """Glue de los jobs de fondo de sla: el loop nunca muere por un ciclo fallido,
 respeta el intervalo, y cada ciclo compone sus dependencias y commitea.
-Todo mockeado — acá no se toca Mercurio, la DB ni nada real."""
+Todo mockeado — acá no se toca Orion, la DB ni nada real."""
 
 from types import SimpleNamespace
 from typing import Any
@@ -60,7 +60,7 @@ class TestLoop:
         esperas: list[float] = []
 
         async def ciclo() -> None:
-            raise ValueError("mercurio caído")
+            raise ValueError("orion caído")
 
         monkeypatch.setattr(bj.asyncio, "sleep", _sleep_que_corta(esperas))
         # La excepción del ciclo NO propaga: el loop la traga y llega al sleep.

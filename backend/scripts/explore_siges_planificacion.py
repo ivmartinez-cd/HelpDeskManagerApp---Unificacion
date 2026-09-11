@@ -1,4 +1,4 @@
-"""Explora el esquema de Siges/MERCURIO buscando el dominio de "planificación de
+"""Explora el esquema de Siges/ORION buscando el dominio de "planificación de
 facturación" que hoy se scrapea de Gestión (ver ADR-012 y
 SIGES_READONLY_PLANIFICACION_VALIDACION.md). Antes de leer nada, verifica y muestra
 qué permisos tiene realmente la cuenta conectada, para no asumir "solo lectura" solo
@@ -25,7 +25,7 @@ Uso (dentro del contenedor backend, con `uv`):
 import pyodbc
 
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TIMEOUT_SECONDS = 15
 
@@ -113,12 +113,12 @@ def _cruzar_cliente(cursor: pyodbc.Cursor, nombre: str) -> None:
 
 def main() -> None:
     settings = get_settings()
-    if not settings.sla_mercurio_host:
+    if not settings.orion_host:
         raise SystemExit(
-            "Falta SLA_MERCURIO_HOST en .env — no hay conexión configurada a Siges/MERCURIO."
+            "Falta ORION_HOST en .env — no hay conexión configurada a Siges/ORION."
         )
 
-    conn_str = build_mercurio_connection_string(settings)
+    conn_str = build_orion_connection_string(settings)
     connection = pyodbc.connect(conn_str, timeout=_TIMEOUT_SECONDS, autocommit=True)
     try:
         connection.timeout = _TIMEOUT_SECONDS

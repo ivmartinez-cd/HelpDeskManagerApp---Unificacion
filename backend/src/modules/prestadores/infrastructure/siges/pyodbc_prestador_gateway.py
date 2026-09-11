@@ -1,5 +1,5 @@
 """Adapter pyodbc del puerto SigesPrestadorGateway. La plomería pyodbc vive en
-el `MercurioQueryRunner` compartido (ADR-018); acá quedan el SQL y el mapeo de
+el `OrionQueryRunner` compartido (ADR-018); acá quedan el SQL y el mapeo de
 filas propios de prestadores."""
 
 from typing import Any
@@ -11,7 +11,7 @@ from src.modules.prestadores.infrastructure.siges.query import (
     build_empresa_por_ids_sql,
     build_equipos_por_prestador_sql,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 
 def _texto(value: Any) -> str | None:
@@ -22,7 +22,7 @@ def _texto(value: Any) -> str | None:
 
 
 class PyodbcPrestadorGateway:
-    def __init__(self, runner: MercurioQueryRunner) -> None:
+    def __init__(self, runner: OrionQueryRunner) -> None:
         self._runner = runner
 
     async def find_by_siges_ids(self, siges_empresa_ids: list[int]) -> list[SigesPrestadorInfo]:
@@ -32,7 +32,7 @@ class PyodbcPrestadorGateway:
             build_empresa_por_ids_sql(len(siges_empresa_ids)),
             siges_empresa_ids,
             gateway="prestadores",
-            log_message="Fallo la consulta de prestadores contra Siges/MERCURIO",
+            log_message="Fallo la consulta de prestadores contra Siges/ORION",
             log_extra={"cantidad_ids": len(siges_empresa_ids)},
         )
         return [
@@ -52,7 +52,7 @@ class PyodbcPrestadorGateway:
             build_equipos_por_prestador_sql(len(siges_empresa_ids)),
             siges_empresa_ids,
             gateway="prestadores",
-            log_message="Fallo el conteo de equipos por PST contra Siges/MERCURIO",
+            log_message="Fallo el conteo de equipos por PST contra Siges/ORION",
             log_extra={"cantidad_ids": len(siges_empresa_ids)},
         )
         return {int(row.ID_Prestador): int(row.equipos) for row in rows}

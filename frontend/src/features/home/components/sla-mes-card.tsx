@@ -127,7 +127,7 @@ export function SlaMesCard({
     setSyncing(true);
     try {
       await slaApi.refreshResumen(periodo);
-      toast.success("SLA actualizado contra MERCURIO");
+      toast.success("SLA actualizado contra Siges");
       onSynced?.();
     } catch {
       toast.error("Error al actualizar el SLA");
@@ -149,7 +149,7 @@ export function SlaMesCard({
           type="button"
           onClick={() => void handleSincronizar()}
           disabled={syncing || !historia || !canUpdate}
-          title={canUpdate ? "Actualizar SLA (consulta completa a MERCURIO, ~40 s)" : "Sin permiso para actualizar"}
+          title={canUpdate ? "Actualizar SLA (consulta completa a Siges, ~40 s)" : "Sin permiso para actualizar"}
           aria-label="Actualizar SLA"
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border border-border text-muted-foreground transition-colors hover:border-brand-orange/60 hover:text-brand-orange disabled:opacity-50"
         >

@@ -18,14 +18,14 @@ from src.modules.contadores.infrastructure.siges.falta_contador_proceso_query im
     CLIENTE_POR_PROCESO_SQL,
     FALTA_CONTADOR_POR_PROCESO_SQL,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 _CLASE_NOMBRE = {10: "Mono", 20: "Color"}
 _TIPO_FALTA_CONTADOR = "FALTA CONTADOR"
 
 
 class PyodbcFaltaContadorProcesoGateway:
-    def __init__(self, runner: MercurioQueryRunner) -> None:
+    def __init__(self, runner: OrionQueryRunner) -> None:
         self._runner = runner
 
     async def fetch(self, nro_proceso: int) -> ProcesoFaltaContador:
@@ -33,7 +33,7 @@ class PyodbcFaltaContadorProcesoGateway:
             CLIENTE_POR_PROCESO_SQL,
             (nro_proceso,),
             gateway="falta_contador_proceso_cliente",
-            log_message="Fallo la consulta de cliente por proceso contra Siges/MERCURIO",
+            log_message="Fallo la consulta de cliente por proceso contra Siges/ORION",
         )
         if not cliente_rows:
             raise ProcesoNoEncontradoError(nro_proceso)
@@ -42,7 +42,7 @@ class PyodbcFaltaContadorProcesoGateway:
             FALTA_CONTADOR_POR_PROCESO_SQL,
             (nro_proceso,),
             gateway="falta_contador_proceso",
-            log_message="Fallo la consulta de falta contador por proceso contra Siges/MERCURIO",
+            log_message="Fallo la consulta de falta contador por proceso contra Siges/ORION",
         )
         return ProcesoFaltaContador(
             cliente=cliente_rows[0].cliente.strip(),

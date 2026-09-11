@@ -20,7 +20,7 @@ completo de la distinción.
   listado lo cuenta en vivo desde Siges (`Sucursal.ID_Prestador` → `Maquina`, misma
   definición de "activo" que el reporte legacy, ver
   `docs/siges/SIGES_READONLY_CATALOGO_DATOS.md` §3) y la columna local solo guarda el
-  último valor conocido, refrescado por el sync, como fallback si MERCURIO no responde),
+  último valor conocido, refrescado por el sync, como fallback si ORION no responde),
   `operador_id` (puntero rápido al operador vigente), `is_active`.
 - `prestador_contacto`: nombre/teléfono/email de contacto. Un PST puede tener varios.
 - `prestador_asignacion_historial`: tramos `operador_id, desde, hasta` — `hasta=None` es

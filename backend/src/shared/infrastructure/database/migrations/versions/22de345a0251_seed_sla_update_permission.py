@@ -18,7 +18,7 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 # "update" ya existe en el catálogo de acciones (seed_catalog); habilita el
-# botón "Actualizar" que fuerza un refresh en vivo contra MERCURIO.
+# botón "Actualizar" que fuerza un refresh en vivo contra ORION.
 MODULE_ACTIONS = [("sla", "update")]
 
 _module_action = sa.table(

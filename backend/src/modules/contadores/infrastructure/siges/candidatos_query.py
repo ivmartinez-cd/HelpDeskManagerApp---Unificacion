@@ -1,4 +1,4 @@
-"""Consultas read-only contra Siges/MERCURIO para el panel de candidatos
+"""Consultas read-only contra Siges/ORION para el panel de candidatos
 manuales del Estimador (MODELO_DE_DATOS.md §3.6) — `CANDIDATOS_EQUIPO_SQL`
 portada tal cual de `Queries/GetCandidatos.sql` (el código gana si contradice
 los documentos, ver brief de migración). `WITH (NOLOCK)` es intencional,

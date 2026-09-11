@@ -21,7 +21,7 @@ from src.modules.bono_tecnicos.domain.value_objects.periodo import Periodo
 
 class GetPuntajesPeriodo:
     """Resumen del bono de un período: conteos por categoría (consulta en
-    vivo a Siges/MERCURIO, sin cache) + Días cargados a mano (Postgres propia)
+    vivo a Siges/ORION, sin cache) + Días cargados a mano (Postgres propia)
     + Tareas Varias (cuenta de `SolicitudTv` APROBADA del período) + Puntaje
     calculado + Días sugeridos (a partir de las ausencias del empleado
     vinculado en Gestión de Personal, si lo hay — ver `dias_sugeridos_

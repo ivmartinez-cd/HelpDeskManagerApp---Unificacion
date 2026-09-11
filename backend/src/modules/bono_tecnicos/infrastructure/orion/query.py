@@ -52,9 +52,9 @@ ORDER BY E1.Den_Comercial
 
 # Misma consulta, pero para un año calendario completo en un solo round trip:
 # agrega `Periodo` como columna calculada al SELECT y al GROUP BY (mismo
-# recurso que `sla/infrastructure/mercurio/query.py`) en vez de filtrar por un
-# único AAAAMM. Evita 12 llamadas al semáforo compartido de MERCURIO
-# (ADR-018, `MERCURIO_MAX_CONCURRENT=3`) que dejarían sin slots a SLA y al
+# recurso que `sla/infrastructure/orion/query.py`) en vez de filtrar por un
+# único AAAAMM. Evita 12 llamadas al semáforo compartido de ORION
+# (ADR-018, `ORION_MAX_CONCURRENT=3`) que dejarían sin slots a SLA y al
 # resto de los módulos que también consultan Siges.
 CONTEOS_TECNICOS_ANUAL_SQL = """
 SELECT

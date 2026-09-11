@@ -18,7 +18,7 @@ from src.modules.liquidaciones.domain.services.vinculacion_siges import normaliz
 from src.modules.liquidaciones.infrastructure.siges.query import SUCURSALES_DE_PRESTADOR_SQL
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_sessionmaker
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _PRESTADOR_ID = "9f39c270-6f4a-4cc4-96d8-2300a63ed782"  # Cordoba - Pentacom S.A.
 _SIGES_EMPRESA_ID = 137
@@ -37,7 +37,7 @@ async def _locales() -> list[tuple[str, str]]:
 def _siges_sucursales() -> list[tuple[str, str]]:
     settings = get_settings()
     conn = pyodbc.connect(
-        build_mercurio_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
+        build_orion_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
     )
     try:
         conn.timeout = _TIMEOUT_SECONDS

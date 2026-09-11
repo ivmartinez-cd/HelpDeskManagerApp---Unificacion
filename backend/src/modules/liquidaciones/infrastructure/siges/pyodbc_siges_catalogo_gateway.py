@@ -1,5 +1,5 @@
 """Adapter pyodbc del puerto SigesCatalogoGateway. La plomería pyodbc vive en
-el `MercurioQueryRunner` compartido (ADR-018); acá quedan el SQL y el mapeo de
+el `OrionQueryRunner` compartido (ADR-018); acá quedan el SQL y el mapeo de
 filas propios del catálogo PST/SPST de liquidaciones."""
 
 from typing import Any
@@ -18,7 +18,7 @@ from src.modules.liquidaciones.infrastructure.siges.query import (
     SUCURSALES_DE_PRESTADOR_SQL,
     build_costos_habilitados_sql,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 
 def _texto(value: Any) -> str | None:
@@ -53,14 +53,14 @@ def _domicilio(value: Any) -> str | None:
 
 
 class PyodbcSigesCatalogoGateway:
-    def __init__(self, runner: MercurioQueryRunner) -> None:
+    def __init__(self, runner: OrionQueryRunner) -> None:
         self._runner = runner
 
     async def list_empresas_activas(self) -> list[SigesEmpresaInfo]:
         rows = await self._runner.fetch_all(
             EMPRESAS_PST_ACTIVAS_SQL,
             gateway="siges_catalogo",
-            log_message="Fallo la consulta del catálogo PST/SPST contra Siges/MERCURIO",
+            log_message="Fallo la consulta del catálogo PST/SPST contra Siges/ORION",
         )
         return [
             SigesEmpresaInfo(
@@ -82,7 +82,7 @@ class PyodbcSigesCatalogoGateway:
             build_costos_habilitados_sql(len(siges_empresa_ids)),
             siges_empresa_ids,
             gateway="siges_catalogo",
-            log_message="Fallo la consulta de CostoServicio contra Siges/MERCURIO",
+            log_message="Fallo la consulta de CostoServicio contra Siges/ORION",
             log_extra={"cantidad_ids": len(siges_empresa_ids)},
         )
         return [
@@ -108,7 +108,7 @@ class PyodbcSigesCatalogoGateway:
             SUCURSALES_DE_PRESTADOR_SQL,
             (siges_empresa_id,),
             gateway="siges_catalogo",
-            log_message="Fallo la consulta de sucursales contra Siges/MERCURIO",
+            log_message="Fallo la consulta de sucursales contra Siges/ORION",
             log_extra={"siges_empresa_id": siges_empresa_id},
         )
         return [
@@ -132,7 +132,7 @@ class PyodbcSigesCatalogoGateway:
             CUADRICULAS_DE_PRESTADOR_SQL,
             (siges_empresa_id,),
             gateway="siges_catalogo",
-            log_message="Fallo la consulta de cuadrículas contra Siges/MERCURIO",
+            log_message="Fallo la consulta de cuadrículas contra Siges/ORION",
             log_extra={"siges_empresa_id": siges_empresa_id},
         )
         return [str(row.Cuadricula).strip() for row in rows]
@@ -144,7 +144,7 @@ class PyodbcSigesCatalogoGateway:
             SUCURSALES_DE_EMPRESA_SQL,
             (siges_empresa_id,),
             gateway="siges_catalogo",
-            log_message="Fallo la consulta de sucursales propias contra Siges/MERCURIO",
+            log_message="Fallo la consulta de sucursales propias contra Siges/ORION",
             log_extra={"siges_empresa_id": siges_empresa_id},
         )
         return [

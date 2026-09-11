@@ -90,7 +90,7 @@ class FakeSiges:
         self, empresa_ids: frozenset[int], *, force_refresh: bool = False
     ) -> dict[int, ResumenSigesClienteNuevo]:
         if self._falla:
-            raise ExternalServiceError("MERCURIO caído")
+            raise ExternalServiceError("ORION caído")
         return {k: v for k, v in self._resumen.items() if k in empresa_ids}
 
     async def candidatos_desde(

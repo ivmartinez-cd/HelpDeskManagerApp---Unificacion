@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 from typing import Any
 
-from src.modules.bono_tecnicos.infrastructure.mercurio.row_mapping import (
+from src.modules.bono_tecnicos.infrastructure.orion.row_mapping import (
     map_row,
     map_row_anual,
     pivot_conteos,

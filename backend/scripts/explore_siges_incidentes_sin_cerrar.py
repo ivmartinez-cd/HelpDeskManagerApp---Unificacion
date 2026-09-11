@@ -12,7 +12,7 @@ Uso (dentro del contenedor backend):
 import pyodbc
 
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TIMEOUT_SECONDS = 60
 _TIPOS_ST = (101, 108)
@@ -120,7 +120,9 @@ def _catalogo_estado(cursor: pyodbc.Cursor) -> None:
 def _conteo_por_estado_tipos_st(cursor: pyodbc.Cursor) -> None:
     cursor.execute(_SQL_CONTEO_POR_ESTADO)
     filas = list(cursor.fetchall())
-    print(f"\n=== Incidentes tipo (101,108) por estado — últimos 24 meses ({len(filas)} estados) ===")
+    print(
+        f"\n=== Incidentes tipo (101,108) por estado — últimos 24 meses ({len(filas)} estados) ==="
+    )
     for f in filas:
         print(f"  id={f.id_estado}  {f.estado!r}: {f.cantidad}")
 
@@ -149,7 +151,7 @@ def _correlatividad(cursor: pyodbc.Cursor) -> None:
         print(f"\n=== Estado_Incidente_ST_Correlatividad ({len(filas)} filas) ===")
         print("  Columnas:", cols)
         for f in filas:
-            print(" ", dict(zip(cols, f)))
+            print(" ", dict(zip(cols, f, strict=True)))
     except pyodbc.Error as e:
         print(f"\n=== Estado_Incidente_ST_Correlatividad — NO EXISTE o error: {e} ===")
 
@@ -162,7 +164,7 @@ def _motivo_finalizacion(cursor: pyodbc.Cursor) -> None:
         print(f"\n=== MotivoFinalizacion ({len(filas)} filas) ===")
         print("  Columnas:", cols)
         for f in filas:
-            print(" ", dict(zip(cols, f)))
+            print(" ", dict(zip(cols, f, strict=True)))
     except pyodbc.Error as e:
         print(f"\n=== MotivoFinalizacion — NO EXISTE o error: {e} ===")
 
@@ -189,7 +191,7 @@ def _vista_informe_muestra(cursor: pyodbc.Cursor) -> None:
         print(f"\n=== VW_InformeIncidenteST — muestra de {len(filas)} filas ===")
         print("  Columnas:", cols)
         for f in filas:
-            print(" ", dict(zip(cols, f)))
+            print(" ", dict(zip(cols, f, strict=True)))
     except pyodbc.Error as e:
         print(f"\n=== VW_InformeIncidenteST — error al consultar: {e} ===")
 
@@ -197,7 +199,7 @@ def _vista_informe_muestra(cursor: pyodbc.Cursor) -> None:
 def _incidentes_con_y_sin_tiempo(cursor: pyodbc.Cursor) -> None:
     cursor.execute(_SQL_SIN_TIEMPO)
     filas = list(cursor.fetchall())
-    print(f"\n=== Incidentes (101,108) últimos 24m: con/sin fila en IncidenteTiempo ===")
+    print("\n=== Incidentes (101,108) últimos 24m: con/sin fila en IncidenteTiempo ===")
     for f in filas:
         print(f"  id={f.id_estado} {f.estado!r}: total={f.total} sin_tiempo={f.sin_tiempo}")
 
@@ -205,7 +207,9 @@ def _incidentes_con_y_sin_tiempo(cursor: pyodbc.Cursor) -> None:
 def _muestra_recientes(cursor: pyodbc.Cursor) -> None:
     cursor.execute(_SQL_MUESTRA_INCIDENTES_RECIENTES)
     filas = list(cursor.fetchall())
-    print(f"\n=== Muestra incidentes recientes (101,108) — últimos 3 meses ({len(filas)} filas) ===")
+    print(
+        f"\n=== Muestra incidentes recientes (101,108) — últimos 3 meses ({len(filas)} filas) ==="
+    )
     for f in filas:
         print(
             f"  ID={f.ID_Incidente}  Ingreso={f.Fecha_Ingreso}  "
@@ -216,11 +220,11 @@ def _muestra_recientes(cursor: pyodbc.Cursor) -> None:
 
 def main() -> None:
     settings = get_settings()
-    if not settings.sla_mercurio_host:
-        raise SystemExit("Falta SLA_MERCURIO_HOST en .env — no hay acceso a MERCURIO desde este entorno.")
+    if not settings.orion_host:
+        raise SystemExit("Falta ORION_HOST en .env — no hay acceso a ORION desde este entorno.")
 
-    conn_str = build_mercurio_connection_string(settings)
-    print("Conectando a MERCURIO…")
+    conn_str = build_orion_connection_string(settings)
+    print("Conectando a ORION…")
     connection = pyodbc.connect(conn_str, timeout=_TIMEOUT_SECONDS, autocommit=True)
     try:
         connection.timeout = _TIMEOUT_SECONDS

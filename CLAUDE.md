@@ -35,7 +35,7 @@ Regla dura, no opcional, para toda sesión de trabajo en este repo — no solo l
   momento. Antes de reiniciar el backend con código de jobs a medio hacer
   (`backend/src/modules/*/presentation/background_jobs.py`,
   `backend/src/modules/*/application/jobs/`, o cualquier cosa que un job ejecute contra
-  SOAP/Insight/wsAyC/Gestión/Mercurio), apagarlos temporalmente y avisarlo:
+  SOAP/Insight/wsAyC/Gestión/Orion), apagarlos temporalmente y avisarlo:
   ```
   # .env  (temporal, volver a false al terminar)
   DISABLE_BACKGROUND_JOBS=true
@@ -69,6 +69,10 @@ en el historial de git).
   falta información real, buscarla (web, código, comandos) antes de responder; si sigue sin ser
   verificable, decirlo explícitamente en vez de rellenar con una respuesta plausible pero
   infundada.
+- **Menos técnico, más claro** (2026-09-11): al explicar qué hace una feature/reporte, responder
+  en términos de negocio (qué trae, qué filtra, de dónde sale el dato) — no como changelog de
+  código. Nada de nombres de archivo/clase/función, fragmentos de SQL, ni citas `file:line` salvo
+  que el usuario pida el detalle técnico o esté depurando código con él.
 
 ## Cumplimiento de ARCHITECTURE_GUIDE.md
 

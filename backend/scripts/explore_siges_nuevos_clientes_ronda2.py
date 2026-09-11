@@ -10,7 +10,7 @@ Uso (dentro del contenedor backend): uv run python scripts/explore_siges_nuevos_
 import pyodbc
 
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TIMEOUT_SECONDS = 60
 _SQL_ROLES = "SELECT IS_ROLEMEMBER('db_datawriter') AS w, IS_ROLEMEMBER('db_owner') AS o"
@@ -113,7 +113,7 @@ def _ronda_instalaciones(cursor: pyodbc.Cursor) -> None:
 
 def main() -> None:
     conn = pyodbc.connect(
-        build_mercurio_connection_string(get_settings()), timeout=_TIMEOUT_SECONDS, autocommit=True
+        build_orion_connection_string(get_settings()), timeout=_TIMEOUT_SECONDS, autocommit=True
     )
     try:
         conn.timeout = _TIMEOUT_SECONDS

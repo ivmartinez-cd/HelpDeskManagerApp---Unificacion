@@ -19,7 +19,7 @@ class TecnicoVencidos:
 
 @dataclass(frozen=True, slots=True)
 class SlaSnapshot:
-    """Resultado de una consulta a Siges/MERCURIO ya agregado y persistido —
+    """Resultado de una consulta a Siges/ORION ya agregado y persistido —
     lo que RefreshSlaSnapshot guarda y lo que las lecturas (GetSlaCompliance,
     ListIncidentesVencidos) devuelven mientras no haya un refresh más nuevo."""
 

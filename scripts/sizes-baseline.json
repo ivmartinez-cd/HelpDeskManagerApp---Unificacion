@@ -283,7 +283,7 @@
     "func backend/src/modules/sla/application/use_cases/get_pendientes_resumen.py::execute (32)",
     "func backend/src/modules/sla/application/use_cases/get_sla_compliance.py::execute (22)",
     "func backend/src/modules/sla/application/use_cases/refresh_pendientes_snapshot.py::_build_snapshot (41)",
-    "func backend/src/modules/sla/infrastructure/mercurio/row_mapping.py::map_row (21)",
+    "func backend/src/modules/sla/infrastructure/orion/row_mapping.py::map_row (21)",
     "func backend/src/modules/sla/infrastructure/repositories/sqlalchemy_pendientes_snapshot_repository.py::_row_to_snapshot (23)",
     "func backend/src/modules/sla/infrastructure/repositories/sqlalchemy_pendientes_snapshot_repository.py::_snapshot_to_values (21)",
     "func backend/src/modules/sla/infrastructure/repositories/sqlalchemy_sla_snapshot_repository.py::_incidente_to_json (21)",
@@ -345,6 +345,6 @@
     "func backend/src/modules/wati/domain/services/derivar_conversacion.py::derivar_conversacion (22)",
     "func backend/src/modules/wati/infrastructure/wati_api/httpx_wati_gateway.py::__init__ (22)",
     "func backend/src/shared/domain/services/asignacion_override_resolver.py::resolver_override_aplicable (26)",
-    "func backend/src/shared/infrastructure/mercurio/query_runner.py::fetch_all (30)"
+    "func backend/src/shared/infrastructure/orion/query_runner.py::fetch_all (30)"
   ]
 }

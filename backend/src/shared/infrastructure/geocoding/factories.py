@@ -1,5 +1,5 @@
 """Factory compartida del gateway de geocodificación (mismo patrón que
-`shared/infrastructure/mercurio/factories.py`, ADR-018): singleton de proceso,
+`shared/infrastructure/orion/factories.py`, ADR-018): singleton de proceso,
 un solo lugar que lee la config. Desde 2026-09-05 elige proveedor por
 `GEOCODING_PROVEEDOR`: Google (key corporativa, paga) o Nominatim/OpenStreetMap
 (gratis, 1 req/s). La settings sigue viviendo bajo `LiquidacionesSettings`

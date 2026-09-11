@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 from typing import Any
 
-from src.modules.bono_tecnicos.infrastructure.mercurio.incidentes_row_mapping import map_row
+from src.modules.bono_tecnicos.infrastructure.orion.incidentes_row_mapping import map_row
 
 
 def _row(**overrides: Any) -> SimpleNamespace:

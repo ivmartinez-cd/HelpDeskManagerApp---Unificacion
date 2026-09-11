@@ -1,4 +1,4 @@
-"""SQL real completo de la grilla de estimación contra Siges/MERCURIO —
+"""SQL real completo de la grilla de estimación contra Siges/ORION —
 copiado tal cual de `Queries/GetGrillaEstimacion.sql` del proyecto original
 (el código gana si contradice los documentos, ver brief de migración): NO se
 reescribió la lógica a mano, se ejecuta el mismo script ya validado en

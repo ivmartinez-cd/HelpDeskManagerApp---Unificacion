@@ -86,7 +86,7 @@ async def refresh(
     identity: Identity = _require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PendientesResumenResponse:
-    """Fuerza una consulta en vivo a MERCURIO y actualiza el snapshot."""
+    """Fuerza una consulta en vivo a ORION y actualiza el snapshot."""
     await build_refresh_pendientes_snapshot(db).execute()
     siges_ids_filtro = await _resolver_filtro(db, identity, None)
     result = await build_get_pendientes_resumen(db).execute(siges_ids_filtro=siges_ids_filtro)

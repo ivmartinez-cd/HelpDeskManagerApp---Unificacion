@@ -1,6 +1,6 @@
 """Prueba de concurrencia del refactor de integraciones (SOLO LECTURA).
 
-Dispara en paralelo consultas MERCURIO (más que el tope del semáforo, para
+Dispara en paralelo consultas ORION (más que el tope del semáforo, para
 ejercitar el encolado) y llamadas wsAyC (getTopLiquidations sobre el provider
 compartido con Session por llamada) y verifica que todo complete sin deadlock
 ni timeouts nuevos.
@@ -37,12 +37,12 @@ async def main() -> None:
     cd = ZeepCdLiquidacionesGateway()
 
     tareas = [
-        _cronometrada("mercurio.parque.1", parque.list_empresas_activas()),
-        _cronometrada("mercurio.parque.2", parque.list_empresas_activas()),
-        _cronometrada("mercurio.operadores.1", operadores.find_by_logins(["vipaez"])),
-        _cronometrada("mercurio.operadores.2", operadores.find_by_logins(["vipaez"])),
-        _cronometrada("mercurio.prestadores.1", prestadores.find_by_siges_ids(SIGES_IDS)),
-        _cronometrada("mercurio.prestadores.2", prestadores.find_by_siges_ids(SIGES_IDS)),
+        _cronometrada("orion.parque.1", parque.list_empresas_activas()),
+        _cronometrada("orion.parque.2", parque.list_empresas_activas()),
+        _cronometrada("orion.operadores.1", operadores.find_by_logins(["vipaez"])),
+        _cronometrada("orion.operadores.2", operadores.find_by_logins(["vipaez"])),
+        _cronometrada("orion.prestadores.1", prestadores.find_by_siges_ids(SIGES_IDS)),
+        _cronometrada("orion.prestadores.2", prestadores.find_by_siges_ids(SIGES_IDS)),
         *[
             _cronometrada(f"wsayc.top.{empresa}", cd.get_liquidaciones(empresa, top=5))
             for empresa in EMPRESAS_CD

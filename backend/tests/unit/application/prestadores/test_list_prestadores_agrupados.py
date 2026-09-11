@@ -215,7 +215,7 @@ async def test_siges_caido_degrada_al_ultimo_parque_persistido() -> None:
     prestadores = FakePrestadorRepository()
     users = FakeUserProvider()
     siges = FakeSigesPrestadorGateway()
-    siges.fail_equipos = ExternalServiceError("MERCURIO caído")
+    siges.fail_equipos = ExternalServiceError("ORION caído")
 
     pst = _prestador(siges_id=740, nombre="PST Villa Mercedes", operador_id=None, equipos=800)
     prestadores.rows[pst.id] = pst

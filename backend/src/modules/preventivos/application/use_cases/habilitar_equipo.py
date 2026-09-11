@@ -19,7 +19,7 @@ from src.modules.preventivos.domain.repositories.habilitacion_repository import 
 class HabilitarEquipoUseCase:
     """Marca local, sin escribir nada en Gestión/Siges (alcance v1 del módulo).
     No valida la máquina contra Siges a propósito: los ids llegan del listado
-    de la misma pantalla y validar acá costaría una pasada extra por MERCURIO
+    de la misma pantalla y validar acá costaría una pasada extra por ORION
     en cada toggle."""
 
     def __init__(self, habilitaciones: HabilitacionRepository) -> None:

@@ -40,7 +40,7 @@ async def get_resumen(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SlaResumenResponse:
     """Cumplimiento del período (Correcto vs. Vencido) + desglose de vencidos
-    por técnico/PST — lee el snapshot cacheado, no consulta MERCURIO en vivo
+    por técnico/PST — lee el snapshot cacheado, no consulta ORION en vivo
     salvo cold start (ver GetSlaCompliance)."""
     use_case = build_get_sla_compliance(db)
     result = await use_case.execute(GetSlaComplianceRequest(periodo=periodo))
@@ -97,7 +97,7 @@ async def refresh_resumen(
     _: Identity = _require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SlaResumenResponse:
-    """Fuerza una consulta en vivo a MERCURIO y guarda el snapshot nuevo —
+    """Fuerza una consulta en vivo a ORION y guarda el snapshot nuevo —
     mismo camino que corre el job de fondo cada SLA_REFRESH_INTERVAL_MINUTES,
     pero a demanda desde el botón "Actualizar" de la pantalla de SLA."""
     await build_refresh_sla_snapshot(db).execute(periodo)

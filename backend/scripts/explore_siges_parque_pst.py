@@ -17,7 +17,7 @@ Uso (dentro del contenedor backend):
 import pyodbc
 
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TIMEOUT_SECONDS = 30
 
@@ -81,7 +81,10 @@ def _catalogo_estado_maquina(cursor: pyodbc.Cursor) -> None:
 def _sucursales_del_pst(cursor: pyodbc.Cursor) -> None:
     cursor.execute(_SQL_SUCURSALES_DEL_PST, _PST_VILLA_MERCEDES)
     f = cursor.fetchone()
-    print(f"\n=== Sucursales con ID_Prestador={_PST_VILLA_MERCEDES}: {f.total} (activas={f.activas}) ===")
+    print(
+        f"\n=== Sucursales con ID_Prestador={_PST_VILLA_MERCEDES}: "
+        f"{f.total} (activas={f.activas}) ==="
+    )
 
 
 def _parque_por_estado(cursor: pyodbc.Cursor) -> None:
@@ -133,16 +136,19 @@ def _paridad_legacy(cursor: pyodbc.Cursor) -> None:
     cursor.execute(_SQL_PARIDAD_LEGACY, _PST_VILLA_MERCEDES)
     f = cursor.fetchone()
     print("\n=== Paridad contra reporte legacy (esperado 841) ===")
-    print(f"  Estado=0 y NOT IN ('De Baja','Backup Fijo'), sucursales activas: {f.con_sucursal_activa}")
+    print(
+        "  Estado=0 y NOT IN ('De Baja','Backup Fijo'), "
+        f"sucursales activas: {f.con_sucursal_activa}"
+    )
     print(f"  Ídem sin filtrar estado de sucursal: {f.sin_filtro_sucursal}")
 
 
 def main() -> None:
     settings = get_settings()
-    if not settings.sla_mercurio_host:
-        raise SystemExit("Falta SLA_MERCURIO_HOST en .env.")
+    if not settings.orion_host:
+        raise SystemExit("Falta ORION_HOST en .env.")
 
-    conn_str = build_mercurio_connection_string(settings)
+    conn_str = build_orion_connection_string(settings)
     connection = pyodbc.connect(conn_str, timeout=_TIMEOUT_SECONDS, autocommit=True)
     try:
         connection.timeout = _TIMEOUT_SECONDS

@@ -167,7 +167,7 @@ class FakeSigesPrestadorGateway:
         self.calls: list[list[int]] = []
         self.equipos_calls: list[list[int]] = []
         self.fail_equipos: Exception | None = None
-        """Si se setea, count_equipos_by_siges_ids lanza esto — simula MERCURIO caído."""
+        """Si se setea, count_equipos_by_siges_ids lanza esto — simula ORION caído."""
 
     async def find_by_siges_ids(self, siges_empresa_ids: list[int]) -> list[SigesPrestadorInfo]:
         self.calls.append(siges_empresa_ids)

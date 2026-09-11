@@ -4,7 +4,7 @@ frío 2026-08-26 contra el backend real: ZONAS_SQL 5.2 s, PARQUE_ZONA_SQL
 4.5 s (los `_ACTIVIDAD_EMPRESA_JOIN`/`_EMPRESA_VIVA_WHERE` de query.py barren
 `Contadores`/`Incidente` completas, sin filtrar por zona) — muy por encima
 del 0.2-0.4 s que este módulo asumía. La UI pagina/filtra/reordena sobre el
-mismo universo: una caché TTL evita pagar una pasada por MERCURIO en cada
+mismo universo: una caché TTL evita pagar una pasada por ORION en cada
 interacción, y su `consultado_en` alimenta el sello de frescura de la
 pantalla. El catálogo de zonas cambia mucho menos seguido que el parque de
 una zona puntual (es un conteo agregado, no el estado operativo que un
@@ -30,13 +30,13 @@ from src.modules.preventivos.infrastructure.siges.row_mapping import (
     map_sucursal_geocoding_row,
     map_zona_row,
 )
-from src.shared.infrastructure.mercurio.query_runner import MercurioQueryRunner
+from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 
 class PyodbcPreventivosGateway:
     def __init__(
         self,
-        runner: MercurioQueryRunner,
+        runner: OrionQueryRunner,
         cache_ttl_seconds: float,
         meses_actividad: int,
         zonas_cache_ttl_seconds: float | None = None,
@@ -67,7 +67,7 @@ class PyodbcPreventivosGateway:
                 PARQUE_ZONA_SQL,
                 (self._meses_actividad, self._meses_actividad, zona),
                 gateway="preventivos_parque_zona",
-                log_message="Falló la consulta del parque de preventivos contra Siges/MERCURIO",
+                log_message="Falló la consulta del parque de preventivos contra Siges/ORION",
                 log_extra={"zona": zona},
             )
             snapshot = ParqueZonaSnapshot(
@@ -87,7 +87,7 @@ class PyodbcPreventivosGateway:
                 ZONAS_SQL,
                 (self._meses_actividad, self._meses_actividad),
                 gateway="preventivos_zonas",
-                log_message="Falló el catálogo de zonas de preventivos contra Siges/MERCURIO",
+                log_message="Falló el catálogo de zonas de preventivos contra Siges/ORION",
             )
             self._zonas = [map_zona_row(row) for row in rows]
             self._zonas_consultadas_en = datetime.now(UTC)
@@ -100,7 +100,7 @@ class PyodbcPreventivosGateway:
             SUCURSALES_GEOCODING_SQL,
             (self._meses_actividad, self._meses_actividad),
             gateway="preventivos_sucursales_geocoding",
-            log_message="Falló la consulta de sucursales para geocoding contra Siges/MERCURIO",
+            log_message="Falló la consulta de sucursales para geocoding contra Siges/ORION",
         )
         return [map_sucursal_geocoding_row(row) for row in rows]
 

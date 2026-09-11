@@ -39,7 +39,7 @@ async def get_evolucion_anual(
 ) -> Page[EvolucionTecnicoSchema]:
     """Evolución mensual del año por técnico (puntaje, incidentes, TV
     solicitadas/aprobadas) — vista de gerencia. Una sola consulta anual
-    cacheada contra Siges/MERCURIO (ver `PyodbcConteoTecnicoGateway`), no 12
+    cacheada contra Siges/ORION (ver `PyodbcConteoTecnicoGateway`), no 12
     llamadas mes a mes."""
     dto = await build_get_evolucion_anual(db).execute(GetEvolucionAnualRequest(anio=anio))
     items = [EvolucionTecnicoSchema.model_validate(t) for t in dto.tecnicos]

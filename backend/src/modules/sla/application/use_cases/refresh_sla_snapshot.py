@@ -8,7 +8,7 @@ from src.modules.sla.domain.value_objects.periodo import Periodo
 
 
 class RefreshSlaSnapshot:
-    """Único caso de uso que pega en vivo contra Siges/MERCURIO — lo dispara
+    """Único caso de uso que pega en vivo contra Siges/ORION — lo dispara
     el botón "Actualizar", el job de fondo periódico, o un cache-miss de
     GetSlaCompliance/ListIncidentesVencidos. Siempre persiste lo que trae."""
 

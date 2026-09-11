@@ -69,7 +69,7 @@ class _FakeParque:
 
     async def list_empresas_activas(self) -> list[EmpresaSiges]:
         if self._caido:
-            raise ExternalServiceError("MERCURIO caído")
+            raise ExternalServiceError("ORION caído")
         return self._empresas
 
     async def count_impresoras_by_empresa_ids(self, empresa_ids: list[int]) -> dict[int, int]:

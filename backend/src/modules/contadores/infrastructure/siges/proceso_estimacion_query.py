@@ -1,4 +1,4 @@
-"""Consultas read-only contra Siges/MERCURIO para los combos de selección
+"""Consultas read-only contra Siges/ORION para los combos de selección
 del Estimador de Contadores (MODELO_DE_DATOS.md §3.1-§3.3) — portadas tal
 cual del SQL real del proyecto original (`Queries/GetGruposEconomicos.sql`,
 `GetProcesos.sql`, `GetAnexos.sql`; el código gana si contradice los

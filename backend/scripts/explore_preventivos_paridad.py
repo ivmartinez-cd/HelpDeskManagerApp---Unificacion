@@ -1,5 +1,5 @@
 """Paridad de "preventivos por zona" entre la réplica SiGesReadOnly y el
-MERCURIO productivo vía wsAyC (SOLO lecturas SOAP: getMachineBySerial +
+ORION productivo vía wsAyC (SOLO lecturas SOAP: getMachineBySerial +
 getMachineIncidents — nada de persist*/void*).
 
 Para cada caso de la zona SUR (ronda 3): corre la consulta productiva del
@@ -17,7 +17,7 @@ import pyodbc
 from src.modules.insumos.infrastructure.soap.zeep_wsayc_gateway import ZeepWsAycGateway
 from src.modules.preventivos.infrastructure.siges.query import PARQUE_ZONA_SQL
 from src.shared.infrastructure.config.settings import get_settings
-from src.shared.infrastructure.mercurio.connection import build_mercurio_connection_string
+from src.shared.infrastructure.orion.connection import build_orion_connection_string
 
 _TIMEOUT_SECONDS = 60
 
@@ -32,7 +32,7 @@ _CASOS = [
 def _replica_por_maquina() -> dict[int, tuple[str, str, object, object]]:
     settings = get_settings()
     conn = pyodbc.connect(
-        build_mercurio_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
+        build_orion_connection_string(settings), timeout=_TIMEOUT_SECONDS, autocommit=True
     )
     try:
         conn.timeout = _TIMEOUT_SECONDS
