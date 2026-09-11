@@ -58,6 +58,13 @@ export function PreventivosMapaSeccion({ zona, mapa, canUpdate }: PreventivosMap
             />
           ) : (
             <>
+              <p className="font-body text-xs text-muted-foreground">
+                {numberFormat.format(mapa.puntos.length)} sucursal(es) ·{" "}
+                {numberFormat.format(
+                  mapa.puntos.reduce((total, punto) => total + punto.cant_maquinas, 0),
+                )}{" "}
+                equipo(s) — cada pin del mapa agrupa todos los equipos de una sucursal.
+              </p>
               {mapa.sinUbicar > 0 && (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-[8px] bg-muted/30 px-4 py-3">
                   <p className="font-body text-xs text-muted-foreground">

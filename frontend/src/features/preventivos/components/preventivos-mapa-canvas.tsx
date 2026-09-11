@@ -141,9 +141,16 @@ export function PreventivosMapaCanvas({
       if (cancelado || !containerRef.current) return;
       if (!mapRef.current) {
         const mapa = L.map(containerRef.current).setView(CENTRO_DEFAULT, ZOOM_DEFAULT);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        }).addTo(mapa);
+        // CARTO Basemaps en vez del tile server público de OSM: este último
+        // nos bloqueó ("Access blocked") por uso directo sin cache propia,
+        // algo que su usage policy no permite para tráfico sostenido.
+        L.tileLayer(
+          `https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${process.env.NEXT_PUBLIC_CARTO_API_KEY}`,
+          {
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          },
+        ).addTo(mapa);
         // Delegación: el popup es HTML string (no JSX), así que el botón
         // "Corregir ubicación" no tiene onClick de React — se engancha acá,
         // una sola vez, cada vez que Leaflet abre CUALQUIER popup del mapa.
