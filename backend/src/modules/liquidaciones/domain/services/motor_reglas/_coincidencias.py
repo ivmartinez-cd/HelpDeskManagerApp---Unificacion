@@ -60,9 +60,11 @@ def _coincidencias_alt012(
     incidente: Incidente, incidentes_prestador: Sequence[Incidente]
 ) -> list[Incidente]:
     """A diferencia de `_coincidencias_alt010` (tipo opuesto, mismo mes), acá
-    alcanza con la misma serie y la misma `fecha_cierre` exacta, sin importar el
-    tipo — cubre el caso de dos incidentes distintos cargando el mismo servicio
-    (p. ej. dos preventivos) el mismo día."""
+    exige la misma serie, el mismo tipo y la misma `fecha_cierre` exacta — cubre
+    el caso de dos incidentes distintos cargando el mismo servicio (p. ej. dos
+    preventivos) el mismo día. El caso de tipo opuesto el mismo día ya lo cubre
+    ALT010 con más especificidad, así que se excluye acá para no duplicar
+    alertas."""
     if not incidente.nro_serie or incidente.fecha_cierre is None:
         return []
     return [
@@ -70,5 +72,6 @@ def _coincidencias_alt012(
         for i in incidentes_prestador
         if i.id != incidente.id
         and i.nro_serie == incidente.nro_serie
+        and i.tipo == incidente.tipo
         and i.fecha_cierre == incidente.fecha_cierre
     ]

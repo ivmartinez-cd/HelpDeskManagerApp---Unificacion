@@ -448,7 +448,8 @@ class TestAlt012SerieMismoDia:
         assert alertas[0].datos_contexto["serie_repetida_mismo_dia"] is True
         assert alertas[0].riesgo == 90.0
 
-    def test_dispara_tipo_distinto_misma_serie_mismo_dia(self) -> None:
+    def test_no_dispara_tipo_distinto_misma_serie_mismo_dia(self) -> None:
+        """Tipo opuesto el mismo día ya lo cubre ALT010; ALT012 no debe duplicarla."""
         fecha = date(2026, 1, 10)
         preventivo = make_incidente(
             numero_incidente="1", nro_serie="SN-2", tipo="preventivo", fecha_cierre=fecha
@@ -460,7 +461,7 @@ class TestAlt012SerieMismoDia:
             [correctivo], [preventivo, correctivo], reglas_activas_default(), [], []
         )
         alertas = [a for a in resultado.alertas if a.tipo_alerta == "ALT012"]
-        assert len(alertas) == 1
+        assert alertas == []
 
 
 class TestAlt005RutaCompartida:

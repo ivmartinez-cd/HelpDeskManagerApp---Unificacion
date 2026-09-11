@@ -1,11 +1,10 @@
 """ALT012 — Serie Repetida Mismo Día: la misma serie (`nro_serie`) aparece en dos o
-más incidentes distintos con la misma `fecha_cierre`, sin importar el tipo de
-servicio. A diferencia de ALT010 (que solo compara preventivo vs correctivo dentro
-del mismo mes), esta regla cubre el caso de dos cargas del mismo equipo el mismo
-día — por ejemplo dos preventivos duplicados con números de incidente distintos
-(caso real reportado por Iván 2026-09-08). Puede coincidir con ALT010 cuando además
-el tipo es opuesto y el día coincide exacto; no se suprimen entre sí porque
-describen coincidencias distintas (mismo mes vs mismo día exacto)."""
+más incidentes distintos del mismo tipo con la misma `fecha_cierre`. A diferencia
+de ALT010 (que compara preventivo vs correctivo dentro del mismo mes), esta regla
+cubre el caso de dos cargas del mismo tipo de servicio el mismo día — por ejemplo
+dos preventivos duplicados con números de incidente distintos (caso real reportado
+por Iván 2026-09-08). El caso de tipo opuesto el mismo día lo cubre solo ALT010:
+ALT012 exige mismo tipo para no duplicar esa alerta (2026-09-11)."""
 
 from collections.abc import Sequence
 
