@@ -3,7 +3,7 @@ FROM python:3.12-slim
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 # Driver ODBC de Microsoft para SQL Server — lo necesita pyodbc (módulo sla,
-# consulta en vivo a Siges/MERCURIO). La clave es la de 2025: el repo de
+# consulta en vivo a Siges/ORION). La clave es la de 2025: el repo de
 # Debian 13 ya no está firmado con la microsoft.asc clásica.
 RUN apt-get update && apt-get install -y --no-install-recommends curl gnupg2 \
     && curl -fsSL https://packages.microsoft.com/keys/microsoft-2025.asc \

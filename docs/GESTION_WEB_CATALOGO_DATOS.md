@@ -10,7 +10,7 @@ App Symfony (PHP 8.3 / Apache) con Bootstrap 3 + jQuery. No tiene API REST públ
 server-side rendered HTML con algunos endpoints AJAX/JSON para los formularios. El backend ya la
 accede vía scraping de sesión (módulo `sla`/planificación, `gestion_session_refresher.py`).
 
-**Dato clave**: gestion.cdsa.com.ar es una UI directa sobre la base de datos Siges/MERCURIO.
+**Dato clave**: gestion.cdsa.com.ar es una UI directa sobre la base de datos Siges/ORION.
 El conteo de sucursales activas es idéntico en ambas fuentes (12.455), y una fila real
 (id=14554) verificó coincidencia exacta campo por campo. Salvo los tres campos marcados abajo
 como "solo Gestión", **todos los datos del módulo Gestión están disponibles en SigesReadOnly
@@ -162,7 +162,7 @@ los datos masivamente son:
 2. **Endpoint AJAX por id** — `GET /sucursal/ajax-by-id?id=X` itera IDs 1..14554 vía sesión.
    Más estructurado que el HTML pero igual de frágil y lento (14k requests).
 
-3. **SigesReadOnly directo (recomendado)** — Una sola consulta SQL a MERCURIO con los joins
+3. **SigesReadOnly directo (recomendado)** — Una sola consulta SQL a ORION con los joins
    `Sucursal → Empresa → Ciudad → TipoPreventivo` devuelve todos los campos en <1 s.
    Sin dependencia de la app web, sin sesión, sin fraguamiento ante cambios de UI.
 
@@ -201,8 +201,8 @@ WHERE S.Estado = 0          -- activas
 ORDER BY S.Id_Sucursal DESC;
 ```
 
-Acceso vía el `MercurioQueryRunner` ya configurado en el backend
-(`shared/infrastructure/mercurio/`), misma cuenta `SiGesReadOnly`, mismo patrón que todos
+Acceso vía el `OrionQueryRunner` ya configurado en el backend
+(`shared/infrastructure/orion/`), misma cuenta `SiGesReadOnly`, mismo patrón que todos
 los módulos existentes.
 
 ---
