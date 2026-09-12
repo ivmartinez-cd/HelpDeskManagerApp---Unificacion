@@ -8,18 +8,28 @@ Mismo catálogo Estado_Incidente que usan pendientes_query.py (500) y
 mesa_ayuda_query.py (NOT IN 600/700/710/900); ver docs/siges/
 SIGES_READONLY_CATALOGO_DATOS.md.
 
-Que el incidente esté HOY en estado Derivado no alcanza: un caso puede haber
-pasado por 'En Curso' (300) o cualquier otro estado intermedio (ej. 'En
-Espera de Repuestos') y haber vuelto a Derivado después — ahí sí hubo una
-visita previa, no es "sin consultar". El historial completo de cambios de
-estado vive en `dbo.Instancia` (una fila por transición, `ID_Estado_Instancia`
-usa el mismo catálogo Estado_Incidente; columna `Estado` es un flag propio de
-la fila, no el estado del incidente — confirmado con
-scripts/explore_siges_instancia.py contra el incidente real 842550: 5
-instancias, Pendiente→Derivado→En Curso→En Espera de Repuestos→Derivado).
-El `NOT EXISTS` exige que la ÚNICA transición registrada haya sido
-Pendiente (110) → Derivado (200) — cualquier otro estado en el historial
-(incluida una re-derivación sin haber pasado por 300) descarta el incidente.
+Que el incidente esté HOY en estado Derivado no alcanza para decidir solo:
+importa si hubo una consulta ('En Curso', 300) DESPUÉS de la última vez que
+entró en Derivado, no si tuvo una consulta alguna vez en toda su historia.
+Caso real (incidente 846012, reportado 2026-09-12): Pendiente→Derivado→En
+Curso→En Espera de Repuestos (ER)→Derivado de nuevo — al volver de ER queda
+una consulta nueva pendiente aunque ya haya tenido una visita antes; con el
+criterio viejo (cualquier estado fuera de 110/200 en toda la historia
+descarta el incidente) este caso desaparecía de la pantalla sin que nadie lo
+haya consultado. Confirmado con Iván que la regla es por la ÚLTIMA
+derivación, no por el historial completo.
+
+El historial de cambios de estado vive en `dbo.Instancia` (una fila por
+transición, `ID_Instancia` autoincremental en orden de inserción,
+`ID_Estado_Instancia` usa el mismo catálogo Estado_Incidente; columna
+`Estado` es un flag propio de la fila, no el estado del incidente —
+confirmado con scripts/explore_siges_instancia.py). Se usa `ID_Instancia`
+para ordenar transiciones, no `Fecha`: en el caso real 846012 dos filas
+consecutivas (En Espera de Repuestos y el Derivado siguiente) comparten el
+mismo `Fecha` exacto, así que `Fecha` no alcanza para saber cuál fue
+posterior. El `NOT EXISTS` excluye el incidente solo si existe una fila
+En Curso (300) con `ID_Instancia` mayor al de la última fila Derivado (200)
+de ese incidente — es decir, si ya hubo consulta para la derivación vigente.
 
 Sin JOIN a `dbo.IncidenteTiempo`: un incidente Derivado no está finalizado,
 no tiene fila ahí (mismo razonamiento que mesa_ayuda_query.py).
@@ -57,9 +67,15 @@ AND I.ID_Estado_Incidente = 200
 AND I.Fecha_Ingreso >= ?
 AND I.Fecha_Ingreso < DATEADD(day, 1, ?)
 AND NOT EXISTS (
-    SELECT 1 FROM dbo.Instancia INS
-    WHERE INS.ID_Incidente = I.ID_Incidente
-    AND INS.ID_Estado_Instancia NOT IN (110, 200)
+    SELECT 1 FROM dbo.Instancia INS_CURSO
+    WHERE INS_CURSO.ID_Incidente = I.ID_Incidente
+    AND INS_CURSO.ID_Estado_Instancia = 300
+    AND INS_CURSO.ID_Instancia > (
+        SELECT MAX(INS_DER.ID_Instancia)
+        FROM dbo.Instancia INS_DER
+        WHERE INS_DER.ID_Incidente = I.ID_Incidente
+        AND INS_DER.ID_Estado_Instancia = 200
+    )
 )
 ORDER BY I.Fecha_Ingreso ASC
 """
