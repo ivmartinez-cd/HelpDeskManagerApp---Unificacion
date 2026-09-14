@@ -167,7 +167,7 @@ class PrecargaSlotResponse(BaseModel):
 class PrecargaGrillaResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    ausente_user_id: uuid.UUID = Field(serialization_alias="ausenteUserId")
+    ausente_user_id: uuid.UUID | None = Field(default=None, serialization_alias="ausenteUserId")
     ausente_nombre: str | None = Field(serialization_alias="ausenteNombre")
     desde: date
     hasta: date

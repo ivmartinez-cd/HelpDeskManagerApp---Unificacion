@@ -78,6 +78,8 @@ export function ModoVacacionesView({ precargaInicial = null }: ModoVacacionesVie
     void load();
   }, [load]);
 
+
+
   const filtradas = useMemo(
     () => (variantes ?? []).filter((v) => filtro === "todas" || deriveEstadoVariante(v) === filtro),
     [variantes, filtro],
@@ -111,7 +113,7 @@ export function ModoVacacionesView({ precargaInicial = null }: ModoVacacionesVie
         {puedeEditar && editor.modo === "cerrado" && (
           <BrandButton onClick={() => setEditor({ modo: "alta", precarga: null })}>
             <Plus className="h-4 w-4" />
-            Nueva grilla de vacaciones
+            Nuevo horario especial
           </BrandButton>
         )}
       </div>
@@ -145,55 +147,59 @@ export function ModoVacacionesView({ precargaInicial = null }: ModoVacacionesVie
         />
       )}
 
-      <div className="flex flex-wrap items-end gap-3">
-        <SegmentedControl
-          label="Filtrar por estado"
-          size="sm"
-          options={FILTROS}
-          value={filtro}
-          onChange={(v) => setFiltro(v as typeof filtro)}
-        />
-      </div>
-
-      {variantes === null && !error && (
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 3 }, (_, i) => (
-            <BrandSkeleton key={i} className="h-12 w-full" />
-          ))}
-        </div>
-      )}
-
-      {error && (
-        <div className="flex items-center justify-between gap-4 rounded-[12px] border border-destructive/20 bg-destructive/10 px-5 py-4">
-          <p className="font-body text-sm text-foreground">{error}</p>
-          <BrandButton variant="outline" size="sm" onClick={() => void load()}>
-            Reintentar
-          </BrandButton>
-        </div>
-      )}
-
-      {variantes !== null && !error && (
+      {editor.modo === "cerrado" && (
         <>
-          {filtradas.length === 0 ? (
-            <BrandEmptyState
-              icon={CalendarOff}
-              title="No hay grillas de vacaciones"
-              description="Creá una para cubrir una ausencia re-cortando franjas sin tocar la grilla titular."
+          <div className="flex flex-wrap items-end gap-3">
+            <SegmentedControl
+              label="Filtrar por estado"
+              size="sm"
+              options={FILTROS}
+              value={filtro}
+              onChange={(v) => setFiltro(v as typeof filtro)}
             />
-          ) : (
-            <VariantesTabla
-              rows={filtradas}
-              canMutar={puedeEditar}
-              onPreview={setPrevisualizando}
-              onEdit={(v) => setEditor({ modo: "edicion", variante: v })}
-              onCancel={setCancelando}
-            />
+          </div>
+
+          {variantes === null && !error && (
+            <div className="flex flex-col gap-2">
+              {Array.from({ length: 3 }, (_, i) => (
+                <BrandSkeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
           )}
-          <p className="rounded-[8px] bg-muted/30 px-4 py-3 font-body text-xs text-muted-foreground">
-            Al vencer la vigencia, Turnos del día vuelve automáticamente a la grilla titular. Las grillas
-            de vacaciones no modifican la Configuración de Turnos ni su historial; cancelar es la única
-            reversión anticipada y queda registrada.
-          </p>
+
+          {error && (
+            <div className="flex items-center justify-between gap-4 rounded-[12px] border border-destructive/20 bg-destructive/10 px-5 py-4">
+              <p className="font-body text-sm text-foreground">{error}</p>
+              <BrandButton variant="outline" size="sm" onClick={() => void load()}>
+                Reintentar
+              </BrandButton>
+            </div>
+          )}
+
+          {variantes !== null && !error && (
+            <>
+              {filtradas.length === 0 ? (
+                <BrandEmptyState
+                  icon={CalendarOff}
+                  title="No hay horarios especiales"
+                  description="Creá uno para contingencias o ausencias re-cortando franjas sin tocar la grilla titular."
+                />
+              ) : (
+                <VariantesTabla
+                  rows={filtradas}
+                  canMutar={puedeEditar}
+                  onPreview={setPrevisualizando}
+                  onEdit={(v) => setEditor({ modo: "edicion", variante: v })}
+                  onCancel={setCancelando}
+                />
+              )}
+              <p className="rounded-[8px] bg-muted/30 px-4 py-3 font-body text-xs text-muted-foreground">
+                Al vencer la vigencia, Turnos del día vuelve automáticamente a la grilla titular. Los horarios
+                especiales no modifican la Configuración de Turnos ni su historial; cancelar es la única
+                reversión anticipada y queda registrada.
+              </p>
+            </>
+          )}
         </>
       )}
 
@@ -206,7 +212,7 @@ export function ModoVacacionesView({ precargaInicial = null }: ModoVacacionesVie
       )}
 
       {cancelando && (
-        <BrandModal isOpen onClose={() => setCancelando(null)} title="Cancelar grilla de vacaciones" widthPx={460}>
+        <BrandModal isOpen onClose={() => setCancelando(null)} title="Cancelar horario especial" widthPx={460}>
           <p className="font-body text-sm text-foreground">
             ¿Cancelar la grilla{" "}
             <span className="font-semibold">

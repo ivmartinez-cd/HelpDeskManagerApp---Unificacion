@@ -83,7 +83,7 @@ export interface PrecargaSlot {
 }
 
 export interface PrecargaGrilla {
-  ausenteUserId: string;
+  ausenteUserId: string | null;
   ausenteNombre: string | null;
   desde: string;
   hasta: string;

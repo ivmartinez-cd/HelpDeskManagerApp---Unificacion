@@ -118,7 +118,7 @@ class PrecargaSlotDTO:
 
 @dataclass(frozen=True, slots=True)
 class PrecargaGrillaDTO:
-    ausente_user_id: uuid.UUID
+    ausente_user_id: uuid.UUID | None
     ausente_nombre: str | None
     desde: date
     hasta: date

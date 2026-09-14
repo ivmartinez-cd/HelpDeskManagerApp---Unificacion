@@ -89,11 +89,18 @@ def _validar_operador_sin_solape(slots: list[VarianteSlot]) -> None:
 
 
 def advertencias_de_cobertura(
-    variante_slots: list[VarianteSlot], titular_slots: list[Slot]
+    variante_slots: list[VarianteSlot],
+    titular_slots: list[Slot],
+    dias_activos: set[int] | None = None,
 ) -> list[AdvertenciaCobertura]:
     """HUECO = tramo que la titular cubre en esa casilla+día y la variante no;
     SIN_OPERADOR = franja de la variante sin nadie asignado."""
-    advertencias = [
+    advertencias = _franjas_sin_operador(variante_slots)
+    return advertencias + _huecos(variante_slots, titular_slots, dias_activos)
+
+
+def _franjas_sin_operador(slots: list[VarianteSlot]) -> list[AdvertenciaCobertura]:
+    return [
         AdvertenciaCobertura(
             tipo="SIN_OPERADOR",
             casilla_id=s.casilla_id,
@@ -101,32 +108,40 @@ def advertencias_de_cobertura(
             hora_inicio=s.hora_inicio,
             hora_fin=s.hora_fin,
         )
-        for s in variante_slots
+        for s in slots
         if not s.user_ids
     ]
-    advertencias += _huecos(variante_slots, titular_slots)
-    return advertencias
 
 
 def _huecos(
-    variante_slots: list[VarianteSlot], titular_slots: list[Slot]
+    variante_slots: list[VarianteSlot],
+    titular_slots: list[Slot],
+    dias_activos: set[int] | None = None,
 ) -> list[AdvertenciaCobertura]:
-    titular = _agrupar(titular_slots)
-    variante = _agrupar(variante_slots)
+    titular, variante = _agrupar(titular_slots), _agrupar(variante_slots)
     huecos: list[AdvertenciaCobertura] = []
     for (casilla_id, dia), intervalos in sorted(titular.items(), key=_orden_grupo):
-        cubierto = _unir(variante.get((casilla_id, dia), []))
-        huecos += [
-            AdvertenciaCobertura(
-                tipo="HUECO",
-                casilla_id=casilla_id,
-                dia_semana=dia,
-                hora_inicio=inicio,
-                hora_fin=fin,
-            )
-            for inicio, fin in _restar(_unir(intervalos), cubierto)
-        ]
+        if dias_activos is not None and dia not in dias_activos:
+            continue
+        cubierto = variante.get((casilla_id, dia), [])
+        huecos += _huecos_del_grupo(casilla_id, dia, intervalos, cubierto)
     return huecos
+
+
+def _huecos_del_grupo(
+    casilla_id: uuid.UUID, dia: int, base: list[Intervalo], cubierto_raw: list[Intervalo]
+) -> list[AdvertenciaCobertura]:
+    cubierto = _unir(cubierto_raw)
+    return [
+        AdvertenciaCobertura(
+            tipo="HUECO",
+            casilla_id=casilla_id,
+            dia_semana=dia,
+            hora_inicio=inicio,
+            hora_fin=fin,
+        )
+        for inicio, fin in _restar(_unir(base), cubierto)
+    ]
 
 
 def _orden_grupo(item: tuple[tuple[uuid.UUID, int], list[Intervalo]]) -> tuple[str, int]:

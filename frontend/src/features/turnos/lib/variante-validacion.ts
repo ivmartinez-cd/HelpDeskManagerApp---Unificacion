@@ -141,17 +141,23 @@ function erroresDeOperadores(
 }
 
 /** Tramos que la grilla titular cubre y la variante no, por casilla+día. */
-export function huecosDeCobertura(franjas: FranjaEditable[], titular: Slot[]): HuecoCobertura[] {
+export function huecosDeCobertura(
+  franjas: FranjaEditable[],
+  titular: Slot[],
+  diasActivos?: Set<number>,
+): HuecoCobertura[] {
   const variante = agrupar(franjas.filter((f) => f.horaInicio && f.horaFin));
   const huecos: HuecoCobertura[] = [];
   for (const [clave, slots] of agrupar(titular)) {
-    const [casillaId, dia] = clave.split("|");
+    const [casillaId, diaStr] = clave.split("|");
+    const dia = Number(diaStr);
+    if (diasActivos && !diasActivos.has(dia)) continue;
     const cubierto = unir(
       (variante.get(clave) ?? []).map((f): Intervalo => [aMinutos(f.horaInicio), aMinutos(f.horaFin)]),
     );
     const base = unir(slots.map((s): Intervalo => [aMinutos(s.horaInicio), aMinutos(s.horaFin)]));
     for (const [inicio, fin] of restar(base, cubierto)) {
-      huecos.push({ casillaId, diaSemana: Number(dia), horaInicio: aHhmm(inicio), horaFin: aHhmm(fin) });
+      huecos.push({ casillaId, diaSemana: dia, horaInicio: aHhmm(inicio), horaFin: aHhmm(fin) });
     }
   }
   return huecos;
@@ -159,4 +165,22 @@ export function huecosDeCobertura(franjas: FranjaEditable[], titular: Slot[]): H
 
 export function franjasSinOperador(franjas: FranjaEditable[]): FranjaEditable[] {
   return franjas.filter((f) => f.userIds.length === 0);
+}
+
+
+export function diasActivosDeRango(desde: string, hasta: string): Set<number> | undefined {
+  if (!desde || !hasta) return undefined;
+  const dDesde = new Date(desde + "T12:00:00");
+  const dHasta = new Date(hasta + "T12:00:00");
+  const diffDays = Math.round((dHasta.getTime() - dDesde.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 6) {
+    const set = new Set<number>();
+    for (let i = 0; i <= diffDays; i++) {
+      const d = new Date(dDesde.getTime() + i * 24 * 60 * 60 * 1000);
+      const day = d.getDay();
+      set.add(day === 0 ? 6 : day - 1);
+    }
+    return set;
+  }
+  return undefined;
 }

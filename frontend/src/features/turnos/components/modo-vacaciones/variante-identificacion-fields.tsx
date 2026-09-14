@@ -34,11 +34,11 @@ export function VarianteIdentificacionFields({
     <>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_160px_160px_auto]">
         <SearchableSelect
-          label="¿Quién falta?"
+          label="Operador ausente (opcional)"
           options={opcionesAusente}
           value={ausenteId}
           onChange={setAusenteId}
-          placeholder="Buscá operador…"
+          placeholder="Opcional: buscá operador que falta…"
           disabled={esEdicion}
         />
         <BrandInput
@@ -61,7 +61,7 @@ export function VarianteIdentificacionFields({
             variant="outline"
             onClick={precargar}
             loading={precargando}
-            disabled={!ausenteId || !desde || !hasta || rangoInvalido}
+            disabled={!desde || !hasta || rangoInvalido}
             title="Trae la grilla titular con las franjas del ausente marcadas como huecos a resolver"
           >
             <Download className="h-4 w-4" />
@@ -78,7 +78,7 @@ export function VarianteIdentificacionFields({
           label="Motivo"
           value={motivo}
           maxLength={200}
-          placeholder="Vacaciones M. J. Vela"
+          placeholder="Ej. Ajuste del día / Vacaciones M. J. Vela"
           onChange={(e) => setMotivo(e.target.value)}
         />
         <BrandInput

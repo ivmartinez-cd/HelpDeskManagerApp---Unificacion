@@ -267,3 +267,25 @@ async def test_crear_con_operador_inexistente_es_not_found_no_500() -> None:
             esc.command([esc.franja(esc.caso.insumos.id, time(8), time(9), fantasma)])
         )
     assert esc.variantes.rows == {}
+
+
+
+async def test_precarga_sin_ausente_conserva_todos_los_operadores() -> None:
+    esc = _Escenario()
+    deps = PrecargarGrillaVarianteDependencies(base=esc.deps, asignaciones=esc.asignaciones)
+
+    dto = await PrecargarGrillaVariante(deps).execute(
+        desde=VIGENCIA_DESDE, hasta=VIGENCIA_HASTA
+    )
+
+    assert dto.ausente_user_id is None
+    assert dto.ausente_nombre is None
+    assert all(not s.requiere_cobertura for s in dto.slots)
+    # Ningún operador fue filtrado
+    lunes_insumos = next(
+        s
+        for s in dto.slots
+        if s.dia_semana == 0 and s.casilla_nombre == "INSUMOS" and s.hora_inicio == time(8)
+    )
+    assert len(lunes_insumos.operadores) == 1
+    assert lunes_insumos.operadores[0].user_id == esc.caso.majo

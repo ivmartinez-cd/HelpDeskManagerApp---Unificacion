@@ -118,7 +118,7 @@ async def create_grilla_variante(
 
 @router.post("/precarga")
 async def precargar_grilla_variante(
-    ausente_user_id: uuid.UUID = Query(alias="ausenteUserId"),
+    ausente_user_id: uuid.UUID | None = Query(default=None, alias="ausenteUserId"),
     desde: date = Query(),
     hasta: date = Query(),
     _identity: Identity = _require_view,

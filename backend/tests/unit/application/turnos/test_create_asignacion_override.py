@@ -12,6 +12,7 @@ from src.modules.turnos.domain.errors import (
     InvalidOverrideRangeError,
     OverlappingOverrideError,
     OverrideMismoOperadorError,
+    ReemplazanteConTurnoSolapadoError,
     UsuarioNotFoundError,
 )
 from src.modules.turnos.domain.repositories.user_provider import UserInfo
@@ -125,3 +126,53 @@ async def test_operador_inexistente_es_not_found_no_500() -> None:
             _command(operador_reemplazante_id=fantasma)
         )
     assert repo.rows == {}
+
+
+
+async def test_rechaza_reemplazante_con_turno_solapado_en_otra_casilla() -> None:
+    from datetime import time
+
+    from src.modules.turnos.domain.entities.asignacion import Asignacion
+    from src.modules.turnos.domain.entities.slot import Slot
+    from tests.unit.domain.turnos.fakes import FakeAsignacionRepository, FakeSlotRepository
+
+    repo = FakeAsignacionOverrideRepository()
+    slots_repo = FakeSlotRepository()
+    asigs_repo = FakeAsignacionRepository()
+
+    casilla_insumos = uuid.uuid4()
+    casilla_st = uuid.uuid4()
+
+    # Slot de Victor en ST: 9 a 13 (Lunes, dia 0)
+    slot_victor = Slot(
+        id=uuid.uuid4(), casilla_id=casilla_st, hora_inicio=time(9), hora_fin=time(13),
+        dia_semana=0, sort_order=0,
+    )
+    # Slot de Luna en Insumos: 11 a 13 (Lunes, dia 0)
+    slot_luna = Slot(
+        id=uuid.uuid4(), casilla_id=casilla_insumos, hora_inicio=time(11), hora_fin=time(13),
+        dia_semana=0, sort_order=0,
+    )
+
+    asig_victor = Asignacion(
+        id=uuid.uuid4(), slot_id=slot_victor.id, user_id=_AUSENTE,
+        vigente_desde=date(2026, 1, 1), vigente_hasta=None,
+    )
+    asig_luna = Asignacion(
+        id=uuid.uuid4(), slot_id=slot_luna.id, user_id=_REEMPLAZANTE,
+        vigente_desde=date(2026, 1, 1), vigente_hasta=None,
+    )
+    slots_repo.rows = {slot_victor.id: slot_victor, slot_luna.id: slot_luna}
+    asigs_repo.rows = {asig_victor.id: asig_victor, asig_luna.id: asig_luna}
+
+    deps = CreateAsignacionOverrideDependencies(
+        overrides=repo,
+        users=_deps(repo).users,
+        slots=slots_repo,
+        asignaciones=asigs_repo,
+    )
+
+    with pytest.raises(ReemplazanteConTurnoSolapadoError):
+        await CreateAsignacionOverride(deps).execute(
+            _command(slot_ids=[slot_victor.id], desde=date(2026, 9, 14), hasta=date(2026, 9, 14))
+        )

@@ -4,6 +4,7 @@ advertencias y armado del DTO con nombres resueltos."""
 
 import uuid
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 
 from src.modules.turnos.application.dtos.grilla_variante_dtos import (
     AdvertenciaCoberturaDTO,
@@ -78,13 +79,21 @@ async def validar_variante(
         raise OverlappingVarianteError()
 
 
+def dias_de_vigencia(desde: date, hasta: date) -> set[int] | None:
+    delta = (hasta - desde).days
+    if delta < 6:
+        return {(desde + timedelta(days=i)).weekday() for i in range(delta + 1)}
+    return None
+
+
 async def calcular_advertencias(
     deps: GrillaVarianteDependencies, variante: GrillaVariante
 ) -> list[AdvertenciaCobertura]:
     """Huecos vs. titular + franjas sin operador + cubrientes con vacaciones
     aprobadas solapadas. Nunca bloquea."""
     titulares = await deps.slots.list_all()
-    advertencias = advertencias_de_cobertura(variante.slots, titulares)
+    dias = dias_de_vigencia(variante.desde, variante.hasta)
+    advertencias = advertencias_de_cobertura(variante.slots, titulares, dias)
     user_ids = list({u for s in variante.slots for u in s.user_ids})
     ausencias = await deps.ausencias.ausencias_aprobadas_en(
         user_ids, variante.desde, variante.hasta

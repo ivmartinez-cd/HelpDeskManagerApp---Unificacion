@@ -22,9 +22,11 @@ export const grillaVariantesApi = {
 
   cancel: (id: string) => httpClient.post<void>(`${BASE}/${id}/cancelar`),
 
-  /** Solo lectura: la grilla titular con las franjas del ausente marcadas. */
-  precargar: (ausenteUserId: string, desde: string, hasta: string) => {
-    const q = new URLSearchParams({ ausenteUserId, desde, hasta });
+  /** Solo lectura: la grilla titular con las franjas del ausente marcadas (o completa si ausenteUserId es null). */
+  precargar: (ausenteUserId: string | null, desde: string, hasta: string) => {
+    const params: Record<string, string> = { desde, hasta };
+    if (ausenteUserId) params.ausenteUserId = ausenteUserId;
+    const q = new URLSearchParams(params);
     return httpClient.post<PrecargaGrilla>(`${BASE}/precarga?${q.toString()}`);
   },
 };

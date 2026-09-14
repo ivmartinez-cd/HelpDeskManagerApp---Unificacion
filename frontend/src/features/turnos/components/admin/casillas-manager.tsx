@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarClock, Edit2, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { turnosApi } from "../../api/turnos-api";
@@ -9,12 +10,14 @@ import { Button } from "@/shared/components/ui/button";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useSession } from "@/services/session-provider";
 import { CasillaFormModal } from "./casilla-form-modal";
+import { CasillaPlantillaBanner } from "./casilla-plantilla-banner";
 import { SlotFormModal } from "./slot-form-modal";
 import { SlotsTable } from "./slots-table";
 
 export function CasillasManager() {
   // turnos.view abre la grilla; toda mutación (casillas, franjas, asignaciones)
   // es turnos.manage (ADR-029) — los botones se ocultan, el backend igual corta.
+  const router = useRouter();
   const { can } = useSession();
   const puedeEditar = can("turnos", "manage");
   const [casillas, setCasillas] = useState<Casilla[]>([]);
@@ -164,6 +167,11 @@ export function CasillasManager() {
 
   return (
     <div className="flex flex-col gap-6">
+      <CasillaPlantillaBanner
+        puedeEditar={puedeEditar}
+        onAjustarTurnosHoy={() => router.push("/turnos?tab=variantes&ajustar=hoy")}
+      />
+
       {/* Selector de Casillas y botón de crear */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -211,6 +219,17 @@ export function CasillasManager() {
         </div>
 
         <div className="flex items-center gap-2">
+          {puedeEditar && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/turnos?tab=variantes&ajustar=hoy")}
+              className="gap-1.5 border-brand-orange/40 text-brand-orange hover:bg-brand-orange/10"
+            >
+              <CalendarClock className="h-4 w-4" />
+              Ajustar turnos de hoy
+            </Button>
+          )}
           <Link href="/turnos/coberturas">
             <Button variant="outline" size="sm" className="gap-1.5">
               <CalendarClock className="h-4 w-4" />

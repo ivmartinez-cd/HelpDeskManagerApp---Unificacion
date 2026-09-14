@@ -111,6 +111,15 @@ class OverlappingOverrideError(BusinessRuleViolationError):
         )
 
 
+class ReemplazanteConTurnoSolapadoError(BusinessRuleViolationError):
+    default_code: ClassVar[str] = "REEMPLAZANTE_CON_TURNO_SOLAPADO"
+
+    def __init__(self, detalle: str) -> None:
+        super().__init__(
+            f"El operador reemplazante ya tiene un turno asignado que se superpone: {detalle}"
+        )
+
+
 # --- Intercambio de turnos (ADR-026) ----------------------------------------------
 
 

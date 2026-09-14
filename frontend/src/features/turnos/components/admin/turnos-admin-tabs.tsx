@@ -7,30 +7,42 @@ import { ModoVacacionesView } from "../modo-vacaciones/modo-vacaciones-view";
 import type { PrecargaInicial } from "../modo-vacaciones/variante-editor";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { hoyIso } from "../../lib/variante-estado";
 
 const TABS = [
   { value: "titular", label: "Grilla titular" },
-  { value: "vacaciones", label: "Modo vacaciones" },
+  { value: "variantes", label: "Horarios especiales" },
 ];
 
-type Tab = "titular" | "vacaciones";
+type Tab = "titular" | "variantes";
 
-/** /turnos: grilla titular (casillas/franjas/enroque) y modo vacaciones
- * (ADR-025) como pestañas — mismo SegmentedControl que el dashboard de Inicio.
- * `?tab=vacaciones&ausente=&desde=&hasta=&motivo=` abre el editor precargado
- * (CTA "Armar grilla de cobertura" de Aprobaciones). */
+/** /turnos: grilla titular (casillas/franjas/enroque) y horarios especiales / grillas alternativas
+ * como pestañas.
+ * `?tab=variantes&ajustar=hoy` abre el editor precargado para el día de hoy. */
 function TurnosAdminTabsContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const tab: Tab = searchParams.get("tab") === "vacaciones" ? "vacaciones" : "titular";
+  const rawTab = searchParams.get("tab");
+  const tab: Tab = rawTab === "variantes" || rawTab === "vacaciones" ? "variantes" : "titular";
 
   const ausente = searchParams.get("ausente");
   const desde = searchParams.get("desde");
   const hasta = searchParams.get("hasta");
+  const ajustar = searchParams.get("ajustar");
+
   const precargaInicial: PrecargaInicial | null =
-    tab === "vacaciones" && ausente && desde && hasta
-      ? { ausenteId: ausente, desde, hasta, motivo: searchParams.get("motivo") ?? "" }
+    tab === "variantes"
+      ? ajustar === "hoy"
+        ? {
+            ausenteId: null,
+            desde: hoyIso(),
+            hasta: hoyIso(),
+            motivo: `Ajuste del día ${hoyIso().slice(8, 10)}/${hoyIso().slice(5, 7)}`,
+          }
+        : ausente && desde && hasta
+          ? { ausenteId: ausente, desde, hasta, motivo: searchParams.get("motivo") ?? "" }
+          : null
       : null;
 
   return (
@@ -44,7 +56,7 @@ function TurnosAdminTabsContent() {
       {tab === "titular" ? (
         <CasillasManager />
       ) : (
-        <ModoVacacionesView precargaInicial={precargaInicial} />
+        <ModoVacacionesView key={precargaInicial ? `${precargaInicial.desde}-${precargaInicial.hasta}-${precargaInicial.ausenteId ?? "none"}` : "default"} precargaInicial={precargaInicial} />
       )}
     </div>
   );

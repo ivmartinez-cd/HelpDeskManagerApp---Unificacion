@@ -12,6 +12,7 @@ import type {
 } from "../../types/grilla-variantes";
 import {
   DIAS_SEMANA,
+  diasActivosDeRango,
   erroresDeFranjas,
   franjasSinOperador,
   huecosDeCobertura,
@@ -115,7 +116,9 @@ export function VarianteEditor({
     () => erroresDeFranjas(franjas, nombreCasilla, nombreUser),
     [franjas, nombreCasilla, nombreUser],
   );
-  const huecos = useMemo(() => huecosDeCobertura(franjas, titular), [franjas, titular]);
+  const diasActivos = useMemo(() => diasActivosDeRango(desde, hasta), [desde, hasta]);
+
+  const huecos = useMemo(() => huecosDeCobertura(franjas, titular, diasActivos), [franjas, titular, diasActivos]);
   const sinOperador = useMemo(() => franjasSinOperador(franjas), [franjas]);
   const keysConError = useMemo(() => new Set(errores.flatMap((e) => e.keys)), [errores]);
   const rangoInvalido = Boolean(desde && hasta && hasta < desde);
@@ -123,7 +126,7 @@ export function VarianteEditor({
     Boolean(desde && hasta) && !rangoInvalido && franjas.length > 0 && errores.length === 0;
 
   const precargar = useCallback(() => {
-    if (!ausenteId || !desde || !hasta || hasta < desde) return;
+    if (!desde || !hasta || hasta < desde) return;
     setPrecargando(true);
     setError(null);
     grillaVariantesApi
@@ -141,7 +144,7 @@ export function VarianteEditor({
           })),
         );
         setAusencias(p.advertencias);
-        setMotivo((m) => m || `Vacaciones ${p.ausenteNombre ?? ""}`.trim());
+        setMotivo((m) => m || (p.ausenteNombre ? `Ausencia ${p.ausenteNombre}` : `Ajuste ${formatDiaMes(desde)}`));
         const primerDia = p.slots.find((s) => s.requiereCobertura)?.diaSemana ?? p.slots[0]?.diaSemana;
         if (primerDia !== undefined) setDiaActivo(primerDia);
       })
@@ -155,7 +158,7 @@ export function VarianteEditor({
   // Llegada desde Aprobaciones (query params): precarga una sola vez al montar.
   const autoPrecargado = useRef(false);
   useEffect(() => {
-    if (autoPrecargado.current || !precargaInicial?.ausenteId || variante) return;
+    if (autoPrecargado.current || !precargaInicial?.desde || variante) return;
     autoPrecargado.current = true;
     precargar();
   }, [precargaInicial, variante, precargar]);
@@ -209,12 +212,12 @@ export function VarianteEditor({
 
   return (
     <section
-      aria-label={variante ? "Editar grilla de vacaciones" : "Nueva grilla de vacaciones"}
+      aria-label={variante ? "Editar horario especial" : "Nuevo horario especial"}
       className="flex flex-col gap-5 rounded-[14px] border border-border bg-card p-5"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h2 className="font-heading text-lg font-extrabold text-foreground">
-          {variante ? "Editar grilla de vacaciones" : "Nueva grilla de vacaciones"}
+          {variante ? "Editar horario especial" : "Nuevo horario especial"}
         </h2>
         <p className="max-w-xl font-body text-xs text-muted-foreground">
           La grilla titular no se toca: durante la vigencia, Turnos del día muestra esta grilla y
@@ -278,7 +281,7 @@ export function VarianteEditor({
           Cancelar
         </BrandButton>
         <BrandButton type="button" onClick={guardar} loading={saving} disabled={!puedeGuardar}>
-          {variante ? "Guardar cambios" : "Guardar grilla"}
+          {variante ? "Guardar cambios" : "Guardar horario especial"}
         </BrandButton>
       </div>
     </section>
