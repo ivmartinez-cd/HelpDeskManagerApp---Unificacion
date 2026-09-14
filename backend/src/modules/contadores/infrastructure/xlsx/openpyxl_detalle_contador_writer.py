@@ -31,8 +31,9 @@ from src.modules.contadores.domain.value_objects.detalle_contador_row import (
 _NARANJA = "F7941D"
 _GRIS = "58595B"
 _ROJO_FALTA = "EF4444"
-_GRIS_ZEBRA = "F2F2F2"
 _BORDE = "DDDDDD"
+_FUENTE = "Tahoma"
+_TAMANO_FUENTE = 10
 _ISOTIPO = Path(__file__).parent / "assets" / "isotipo-white.png"
 _ARGENTINA_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
 
@@ -112,25 +113,23 @@ def _encabezado(ws: Worksheet) -> None:
         ws.column_dimensions[col].width = ancho
         celda = ws[f"{col}{_FILA_HEADER}"]
         celda.value = nombre
-        celda.font = Font(bold=True, color="FFFFFF")
+        celda.font = Font(name=_FUENTE, size=_TAMANO_FUENTE, bold=True, color="FFFFFF")
         celda.fill = PatternFill("solid", fgColor=_GRIS)
         celda.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
 
 def _escribir_fila(ws: Worksheet, num_fila: int, f: DetalleContadorRow) -> None:
-    zebra = PatternFill("solid", fgColor=_GRIS_ZEBRA) if num_fila % 2 == 0 else None
     borde = Border(bottom=Side(style="thin", color=_BORDE))
     for idx, ((nombre, _), valor) in enumerate(zip(_COLUMNAS, _fila_a_excel(f), strict=True)):
         celda = ws.cell(row=num_fila, column=idx + 1, value=valor)  # type: ignore[call-overload]
         celda.border = borde
-        if zebra:
-            celda.fill = zebra
+        celda.font = Font(name=_FUENTE, size=_TAMANO_FUENTE)
         if nombre in _NUMERICAS:
             celda.alignment = Alignment(horizontal="right")
         elif nombre in _FECHAS:
             celda.alignment = Alignment(horizontal="center")
         if nombre == "Tipo" and f.falta_contador:
-            celda.font = Font(bold=True, color=_ROJO_FALTA)
+            celda.font = Font(name=_FUENTE, size=_TAMANO_FUENTE, bold=True, color=_ROJO_FALTA)
 
 
 def _fila_a_excel(f: DetalleContadorRow) -> list[object]:

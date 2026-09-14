@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Copy, Download } from "lucide-react";
+import { Copy, Download, Mail } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
@@ -12,6 +12,8 @@ import { compareSortValues, useTableSort, type SortValue } from "@/shared/hooks/
 import { proyeccionApi } from "../api/proyeccion-api";
 import { detalleContadorProcesoApi, type AlcanceReporte } from "../api/detalle-contador-proceso-api";
 import { formatearTablaWhatsapp } from "../lib/formato-whatsapp";
+import { formatearTablaMailHtml, formatearTablaMailTexto } from "../lib/formato-mail";
+import { copiarHtmlYTexto, copiarTexto } from "@/shared/utils/clipboard";
 import type { GrupoEconomicoOption, ProcesoOption } from "../types/proyeccion";
 import type { DetalleContadorProceso, DetalleContadorRow } from "../types/detalle-contador-proceso";
 import { DetalleContadorTabla, SORT_KEYS, type SortKey } from "./detalle-contador-tabla";
@@ -92,8 +94,20 @@ export function DetalleContadorProcesoView() {
     const alcanceLabel = ALCANCES.find((a) => a.value === alcance)?.label ?? "";
     const texto = formatearTablaWhatsapp(filasVisibles, detalle.cliente, alcanceLabel);
     try {
-      await navigator.clipboard.writeText(texto);
+      await copiarTexto(texto);
       toast.success("Tabla copiada, lista para pegar en WhatsApp.");
+    } catch {
+      toast.error("No se pudo copiar. Probá de nuevo o copiá manualmente.");
+    }
+  };
+
+  const handleCopiarMail = async () => {
+    if (!detalle) return;
+    const html = formatearTablaMailHtml(filasVisibles, detalle.cliente);
+    const texto = formatearTablaMailTexto(filasVisibles, detalle.cliente);
+    try {
+      await copiarHtmlYTexto(html, texto);
+      toast.success("Tabla copiada con formato, lista para pegar en un mail.");
     } catch {
       toast.error("No se pudo copiar. Probá de nuevo o copiá manualmente.");
     }
@@ -188,6 +202,15 @@ export function DetalleContadorProcesoView() {
               >
                 <Copy className="h-4 w-4" />
                 Copiar para WhatsApp
+              </BrandButton>
+              <BrandButton
+                variant="outline"
+                onClick={() => void handleCopiarMail()}
+                disabled={filasVisibles.length === 0}
+                title="Copiar la tabla de abajo con el mismo formato del Excel, lista para pegar en un mail"
+              >
+                <Mail className="h-4 w-4" />
+                Copiar para mail
               </BrandButton>
               <a
                 href={detalleContadorProcesoApi.getXlsxUrl(Number(idProcesoValido), alcance)}
