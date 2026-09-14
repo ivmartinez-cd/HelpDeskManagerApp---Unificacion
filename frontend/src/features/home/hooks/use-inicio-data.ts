@@ -80,28 +80,42 @@ export function useTurnosHoy(enabled: boolean, refreshKey = 0): Remote<CurrentSh
   return useRemote(enabled, () => turnosApi.getCurrentShifts(), "los turnos del día", refreshKey);
 }
 
-export interface MiBonoComparativo {
-  actual: MiResumenBono | null;
-  anterior: MiResumenBono | null;
+export interface MiBonoHistoria {
+  /** Cronológico: [hace 5 meses, ..., mes anterior, mes actual] — mismo
+   * formato que `SlaHistoria`, para el mismo tratamiento de card (número +
+   * comparación + sparkline). Un mes sin datos (o cuyo fetch falló) queda en
+   * null; solo el mes actual es fatal. */
+  resumenes: (MiResumenBono | null)[];
+  periodos: string[];
 }
+
+const MI_BONO_MESES = 6;
 
 /** "Mi bono" solo tiene sentido para un técnico vinculado a Siges (ver
  * `bonoTecnicosApi.getVinculoSiges`): `access.bonoTecnicos` solo refleja el
  * módulo (un superadmin ve todos), no el vínculo real — sin este chequeo
  * previo, `getMiResumen()` tira 404 para cualquier no-técnico con acceso al
- * módulo. Trae mes actual y anterior juntos (el backend calcula cualquier
- * período pasado on-the-fly, no hace falta un endpoint de histórico). */
-export function useMiBono(enabled: boolean, refreshKey = 0): Remote<MiBonoComparativo> {
-  return useRemote<MiBonoComparativo>(
+ * módulo. Trae 6 meses (el backend calcula cualquier período pasado
+ * on-the-fly, no hace falta un endpoint de histórico) para la card de Inicio,
+ * mismo patrón que `useSlaHistoria`. */
+export function useMiBono(enabled: boolean, refreshKey = 0): Remote<MiBonoHistoria> {
+  const periodos = Array.from({ length: MI_BONO_MESES }, (_, i) => periodoOffset(i - MI_BONO_MESES + 1));
+  return useRemote<MiBonoHistoria>(
     enabled,
     async () => {
       const { vinculado } = await bonoTecnicosApi.getVinculoSiges();
-      if (!vinculado) return { actual: null, anterior: null };
-      const [actual, anterior] = await Promise.all([
-        bonoTecnicosApi.getMiResumen(),
-        bonoTecnicosApi.getMiResumen(periodoOffset(-1)),
-      ]);
-      return { actual, anterior };
+      if (!vinculado) return { resumenes: periodos.map(() => null), periodos };
+      const resumenes = await Promise.all(
+        periodos.map((p, i) =>
+          bonoTecnicosApi.getMiResumen(p).catch((err: unknown) => {
+            // El mes actual sí corta la card; la historia previa degrada a null.
+            if (i === periodos.length - 1) throw err;
+            console.error(`Error al cargar el resumen de bono de ${p}:`, err);
+            return null;
+          }),
+        ),
+      );
+      return { resumenes, periodos };
     },
     "tu bono",
     refreshKey,

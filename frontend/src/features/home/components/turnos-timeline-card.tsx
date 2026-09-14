@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { useSession } from "@/services/session-provider";
+
 import { CalendarClock, Clock } from "lucide-react";
 import { useMemo } from "react";
 import { TurnosTimeline, ejeHorario, type TimelineShift } from "@/features/turnos/components/turnos-timeline";
@@ -24,6 +27,8 @@ export function TurnosTimelineCard({
   error: string | null;
   onRetry?: () => void;
 }) {
+  const { can } = useSession();
+  const puedeEditar = can("turnos", "manage");
   // Línea "ahora" y badge, recalculados cada 30 s (comportamiento del handoff).
   const now = useNow(30_000);
   const timelineShifts = useMemo<TimelineShift[]>(
@@ -48,12 +53,24 @@ export function TurnosTimelineCard({
           <MiTurnoBanner shifts={shifts} loading={loading} />
           {varianteActiva && (
             <span
-              title={varianteActiva.motivo ?? "Grilla de vacaciones"}
+              title={varianteActiva.motivo ?? "Grilla alternativa"}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand-orange/[0.13] px-2.5 py-1 font-heading text-[10.5px] font-bold text-brand-orange"
             >
               <CalendarClock className="h-3 w-3" />
-              Grilla de vacaciones hasta el {formatDiaMes(varianteActiva.hasta)}
+              {varianteActiva.motivo
+                ? `${varianteActiva.motivo} (hasta el ${formatDiaMes(varianteActiva.hasta)})`
+                : `Horario especial hasta el ${formatDiaMes(varianteActiva.hasta)}`}
             </span>
+          )}
+          {puedeEditar && (
+            <Link
+              href="/turnos?tab=variantes&ajustar=hoy"
+              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-brand-orange/30 bg-brand-orange/5 px-2.5 py-1 font-heading text-[10.5px] font-bold text-brand-orange transition-colors hover:bg-brand-orange/15"
+              title="Ajustar la distribución de turnos de hoy sin tocar la grilla permanente"
+            >
+              <CalendarClock className="h-3 w-3" />
+              Ajustar turnos de hoy
+            </Link>
           )}
           {hhmm && (
             <span
