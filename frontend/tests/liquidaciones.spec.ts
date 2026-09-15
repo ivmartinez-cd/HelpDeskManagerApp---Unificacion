@@ -165,13 +165,21 @@ test.describe("Módulo de Liquidaciones", () => {
     // auth/me y auth/modules los maneja el mock backend global (global-setup.ts)
     // Acá solo mockeamos los datos de negocio (llamadas client-side)
 
-    await page.route("**/api/liquidaciones/prestadores**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ items: [PRESTADOR], total: 1, page: 1, size: 500 }),
-      });
-    });
+    // Predicate por pathname exacto: un glob **/api/liquidaciones/prestadores**
+    // también pisaba /api/liquidaciones/prestadores/{id}/evolucion-incidentes
+    // (agregado en f40302c7) y el fixture de catálogo ([PRESTADOR], sin
+    // `periodo`) reventaba EvolucionIncidentesChart con un error boundary que
+    // tumbaba toda la pantalla de detalle.
+    await page.route(
+      (url) => url.pathname === "/api/liquidaciones/prestadores",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ items: [PRESTADOR], total: 1, page: 1, size: 500 }),
+        });
+      },
+    );
 
     // Usa función predicate para evitar ambigüedad con /api/liquidaciones/prestadores
     await page.route(
@@ -188,26 +196,50 @@ test.describe("Módulo de Liquidaciones", () => {
 
   // ── Dashboard ─────────────────────────────────────────────────────────────
 
-  test("dashboard muestra los 4 KPI tiles y la tabla de últimas liquidaciones @smoke", async ({
+  const RANKING_PRESTADOR = { nombreCorto: "PENTACOM", totalImporte: 88117657.65, cantidadLiquidaciones: 1 };
+
+  test("dashboard muestra los 4 KPI tiles y el ranking de prestadores por facturado @smoke", async ({
     page,
   }) => {
+    await page.route("**/api/liquidaciones/resumen/ranking-prestadores**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ items: [RANKING_PRESTADOR] }),
+      });
+    });
+    await page.route("**/api/liquidaciones/resumen/facturado-por-periodo**", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [] }) });
+    });
+
     await page.goto("/liquidaciones");
 
     await expect(page.getByText("Liquidaciones pendientes")).toBeVisible();
     await expect(page.getByText("Total importadas")).toBeVisible();
     await expect(page.getByText("Total incidentes")).toBeVisible();
-    await expect(page.getByText("Total facturado")).toBeVisible();
+    // "Total facturado" también es la columna ordenable del ranking (abajo) —
+    // el tile del KPI grid es el primero en el DOM.
+    await expect(page.getByText("Total facturado").first()).toBeVisible();
 
-    await expect(page.getByText("Últimas liquidaciones")).toBeVisible();
-    await expect(page.getByRole("cell", { name: "Córdoba — Pentacom S.A." })).toBeVisible();
+    // El dashboard ejecutivo (5bf89216, 2026-09-10) sacó la tabla "Últimas
+    // liquidaciones"/"Ver todas": ahora es Evolución de facturado + Ranking.
+    await expect(page.getByText("Ranking de prestadores por facturado")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "PENTACOM" })).toBeVisible();
   });
 
-  test("dashboard muestra el link 'Ver todas' que navega a la lista", async ({ page }) => {
+  test("dashboard: el link 'Listado' del menú navega a la lista", async ({ page }) => {
+    await page.route("**/api/liquidaciones/resumen/ranking-prestadores**", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [] }) });
+    });
+    await page.route("**/api/liquidaciones/resumen/facturado-por-periodo**", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [] }) });
+    });
+
     await page.goto("/liquidaciones");
 
-    const verTodasLink = page.getByRole("link", { name: "Ver todas" });
-    await expect(verTodasLink).toBeVisible();
-    await verTodasLink.click();
+    const listadoLink = page.getByRole("link", { name: "Listado" });
+    await expect(listadoLink).toBeVisible();
+    await listadoLink.click();
     await expect(page).toHaveURL("/liquidaciones/lista");
   });
 
@@ -266,13 +298,14 @@ test.describe("Módulo de Liquidaciones", () => {
     await expect(page.getByText("liquidacion_0001_20260812.xls")).toBeVisible();
     await expect(page.getByText("2026-08")).toBeVisible();
     await expect(page.getByText("42")).toBeVisible();
-    // KPI de alertas cuenta pendientes/en_revision en vivo sobre `alertas`
-    // (fix 8272396), no el liquidacion.totalAlertas=3 fijado al importar —
-    // el fixture ALERTA trae una sola alerta en estado "pendiente". El valor
-    // "1" solo, sin scopear al tile, matchea otros "1" de la página (celdas
-    // de tabla, contador de issues de Next dev overlay).
+    // KPI de alertas cuenta INCIDENTES con alguna alerta activa (ALT005 sin
+    // duplicado visual, 719a46a0), no el liquidacion.totalAlertas=3 fijado al
+    // importar — el fixture ALERTA trae una sola alerta en estado "pendiente"
+    // sobre un solo incidente. El valor "1" solo, sin scopear al tile,
+    // matchea otros "1" de la página (celdas de tabla, contador de issues de
+    // Next dev overlay).
     const alertasTileValor = page
-      .getByText("Alertas", { exact: true })
+      .getByText("Con alertas", { exact: true })
       .locator("xpath=following-sibling::span");
     await expect(alertasTileValor).toHaveText("1");
     await expect(page.getByRole("button", { name: "↻ Reanalizar" })).toBeVisible();

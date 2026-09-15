@@ -135,24 +135,28 @@ test.describe("Modo vacaciones (grilla variante de turnos)", () => {
     );
 
     await page.goto("/turnos");
-    await page.getByRole("radio", { name: "Modo vacaciones" }).click();
-    await expect(page.getByText("No hay grillas de vacaciones")).toBeVisible();
-    await page.getByRole("button", { name: "Nueva grilla de vacaciones" }).click();
+    await page.getByRole("radio", { name: "Horarios especiales" }).click();
+    await expect(page.getByText("No hay horarios especiales")).toBeVisible();
+    await page.getByRole("button", { name: "Nuevo horario especial" }).click();
 
-    const editor = page.getByRole("region", { name: "Nueva grilla de vacaciones" });
-    await editor.getByRole("combobox", { name: "¿Quién falta?" }).click();
+    const editor = page.getByRole("region", { name: "Nuevo horario especial" });
+    await editor.getByRole("combobox", { name: "Operador ausente (opcional)" }).click();
     await page.getByRole("option", { name: /Maria Jose Vela/ }).click();
     await editor.getByLabel("Desde").fill("2026-08-24");
     await editor.getByLabel("Hasta").fill("2026-08-28");
     await editor.getByRole("button", { name: "Precargar" }).click();
 
+    // Con más de una casilla el editor arranca filtrado en la primera (INSUMOS):
+    // "Ver todas" para ver las 7 franjas del lunes juntas.
+    await editor.getByRole("tab", { name: "Ver todas" }).click();
+
     // 7 franjas del lunes, las 2 de Majo marcadas como hueco a resolver (sin operador)
     await expect(page.getByTestId("franja-fila")).toHaveCount(7);
     await expect(page.locator('[data-requiere-cobertura="true"]')).toHaveCount(2);
-    await expect(editor.getByLabel("Motivo")).toHaveValue("Vacaciones Maria Jose Vela");
+    await expect(editor.getByLabel("Motivo")).toHaveValue("Ausencia Maria Jose Vela");
     // Franjas sin operador = advertencia, no error: guardar sigue habilitado
     await expect(editor.getByText("INSUMOS · Lunes 08:00–11:00: franja sin operador asignado")).toBeVisible();
-    const guardar = editor.getByRole("button", { name: "Guardar grilla" });
+    const guardar = editor.getByRole("button", { name: "Guardar horario especial" });
     await expect(guardar).toBeEnabled();
 
     // Re-cortar INSUMOS 8–11 → 8:30–11 con Mariano: aparece el hueco 8:00–8:30 como advertencia
@@ -190,7 +194,7 @@ test.describe("Modo vacaciones (grilla variante de turnos)", () => {
       hasta: string;
       slots: { casillaId: string; diaSemana: number; horaInicio: string; horaFin: string; userIds: string[] }[];
     };
-    expect(body.motivo).toBe("Vacaciones Maria Jose Vela");
+    expect(body.motivo).toBe("Ausencia Maria Jose Vela");
     expect([body.desde, body.hasta]).toEqual(["2026-08-24", "2026-08-28"]);
     const resumen = body.slots
       .map((s) => `${s.casillaId === INSUMOS ? "INSUMOS" : "ST"} ${s.horaInicio}-${s.horaFin} ${s.userIds.join(",")}`)
@@ -224,7 +228,7 @@ test.describe("Modo vacaciones (grilla variante de turnos)", () => {
     await expect(page.getByLabel("Estado: Cancelada")).toBeVisible();
 
     await page.getByRole("button", { name: "Cancelar Vacaciones M. J. Vela" }).click();
-    const confirm = page.getByRole("dialog", { name: "Cancelar grilla de vacaciones" });
+    const confirm = page.getByRole("dialog", { name: "Cancelar horario especial" });
     await confirm.getByRole("button", { name: "Cancelar grilla" }).click();
     await expect(async () => {
       expect(cancelCalled).toBe(true);
@@ -313,7 +317,7 @@ test.describe("Modo vacaciones (grilla variante de turnos)", () => {
       }),
     );
     await page.goto("/");
-    await expect(page.getByText("Grilla de vacaciones hasta el 28/08")).toBeVisible();
+    await expect(page.getByText("Vacaciones M. J. Vela (hasta el 28/08)")).toBeVisible();
     await expect(page.getByText("Mariano Gomez").first()).toBeVisible();
   });
 
