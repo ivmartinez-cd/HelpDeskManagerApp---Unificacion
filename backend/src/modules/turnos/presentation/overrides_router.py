@@ -37,12 +37,6 @@ from src.modules.turnos.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.turnos.infrastructure.repositories.sqlalchemy_asignacion_override_repository import (  # noqa: E501
     SqlAlchemyAsignacionOverrideRepository,
 )
-from src.modules.turnos.infrastructure.repositories.sqlalchemy_asignacion_repository import (
-    SqlAlchemyAsignacionRepository,
-)
-from src.modules.turnos.infrastructure.repositories.sqlalchemy_slot_repository import (
-    SqlAlchemySlotRepository,
-)
 from src.modules.turnos.infrastructure.repositories.sqlalchemy_user_provider import (
     SqlAlchemyUserProvider,
 )
@@ -88,8 +82,6 @@ async def create_override(
     deps = CreateAsignacionOverrideDependencies(
         overrides=SqlAlchemyAsignacionOverrideRepository(db),
         users=SqlAlchemyUserProvider(db),
-        slots=SqlAlchemySlotRepository(db),
-        asignaciones=SqlAlchemyAsignacionRepository(db),
     )
     dto = await CreateAsignacionOverride(deps).execute(
         CreateAsignacionOverrideCommand(
@@ -116,8 +108,6 @@ async def update_override(
     deps = UpdateAsignacionOverrideDependencies(
         overrides=SqlAlchemyAsignacionOverrideRepository(db),
         users=SqlAlchemyUserProvider(db),
-        slots=SqlAlchemySlotRepository(db),
-        asignaciones=SqlAlchemyAsignacionRepository(db),
     )
     dto = await UpdateAsignacionOverride(deps).execute(
         UpdateAsignacionOverrideCommand(

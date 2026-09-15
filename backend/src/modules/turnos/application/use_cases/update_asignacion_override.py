@@ -9,9 +9,6 @@ from src.modules.turnos.application.dtos.turno_dtos import (
 from src.modules.turnos.application.use_cases.asignacion_override_dto_builder import (
     build_asignacion_override_dto,
 )
-from src.modules.turnos.application.use_cases.override_solapamiento_support import (
-    validar_reemplazante_sin_solape,
-)
 from src.modules.turnos.domain.errors import (
     AsignacionOverrideNotFoundError,
     InvalidOverrideRangeError,
@@ -24,8 +21,6 @@ from src.modules.turnos.domain.repositories.asignacion_override_repository impor
     AsignacionOverrideRepository,
     TurnoAsignacionOverride,
 )
-from src.modules.turnos.domain.repositories.asignacion_repository import AsignacionRepository
-from src.modules.turnos.domain.repositories.slot_repository import SlotRepository
 from src.modules.turnos.domain.repositories.user_provider import UserProvider
 from src.shared.domain.services.asignacion_override_resolver import hay_solapamiento
 from src.shared.domain.value_objects.asignacion_override import AsignacionOverride
@@ -35,8 +30,6 @@ from src.shared.domain.value_objects.asignacion_override import AsignacionOverri
 class UpdateAsignacionOverrideDependencies:
     overrides: AsignacionOverrideRepository
     users: UserProvider
-    slots: SlotRepository | None = None
-    asignaciones: AsignacionRepository | None = None
 
 
 class UpdateAsignacionOverride:
@@ -55,14 +48,6 @@ class UpdateAsignacionOverride:
         if existing.intercambio_id is not None:
             raise OverrideEsIntercambioError()
         _validar_campos(command)
-        await validar_reemplazante_sin_solape(
-            self._deps.slots,
-            self._deps.asignaciones,
-            reemplazante_id=command.operador_reemplazante_id,
-            ausente_id=command.operador_ausente_id,
-            desde=command.desde,
-            slot_ids=command.slot_ids,
-        )
 
         alcance: Literal["TOTAL"] | frozenset[uuid.UUID] = (
             "TOTAL" if command.slot_ids is None else frozenset(command.slot_ids)
