@@ -18,6 +18,7 @@ from tests.unit.domain.liquidaciones.factories import (
 from tests.unit.domain.liquidaciones.fakes import FakeTablaKmRepository
 from tests.unit.domain.liquidaciones.fakes_liquidacion import (
     FakeAlertaRepository,
+    FakeCotizacionDolarRepository,
     FakeIncidenteRepository,
     FakeLiquidacionRepository,
 )
@@ -36,6 +37,7 @@ def _armar(liquidaciones=None, incidentes=None, tabla_km=None) -> GetLiquidacion
             incidentes=inc_repo,
             alertas=FakeAlertaRepository(),
             tablas_km=FakeTablaKmRepository(tabla_km or []),
+            cotizaciones=FakeCotizacionDolarRepository(),
         )
     )
 

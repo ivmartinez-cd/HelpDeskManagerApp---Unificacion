@@ -8,7 +8,7 @@ Postgres en `tests/integration`)."""
 import dataclasses
 import uuid
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from src.modules.liquidaciones.domain.entities.alerta import Alerta
@@ -16,6 +16,9 @@ from src.modules.liquidaciones.domain.entities.incidente import Incidente
 from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
 from src.modules.liquidaciones.domain.entities.modificacion_prestador import (
     ModificacionPrestador,
+)
+from src.modules.liquidaciones.domain.repositories.cotizacion_dolar_repository import (
+    CotizacionDolar,
 )
 from src.modules.liquidaciones.domain.services.conciliar_alertas import AlertaConciliada
 from src.modules.liquidaciones.domain.value_objects.incidente_actualizado import (
@@ -310,6 +313,31 @@ class FakeAlertaRepository:
                 filas[i] = actualizada
                 return actualizada
         return None
+
+
+class FakeCotizacionDolarRepository:
+    def __init__(self) -> None:
+        self.rows: dict[str, CotizacionDolar] = {}
+
+    async def get_by_periodo(self, periodo: str) -> CotizacionDolar | None:
+        return self.rows.get(periodo)
+
+    async def upsert(
+        self,
+        periodo: str,
+        compra: float,
+        venta: float,
+        fecha_cotizacion: date,
+        fuente: str,
+    ) -> None:
+        self.rows[periodo] = CotizacionDolar(
+            periodo=periodo,
+            compra=compra,
+            venta=venta,
+            fecha_cotizacion=fecha_cotizacion,
+            fuente=fuente,
+            updated_at=datetime(2026, 1, 1),
+        )
 
 
 class FakeModificacionPrestadorRepository:

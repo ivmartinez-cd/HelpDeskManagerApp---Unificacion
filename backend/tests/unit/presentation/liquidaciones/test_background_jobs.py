@@ -176,14 +176,26 @@ class TestStart:
         async def sync_tarifarios(interval_minutes: int) -> None:
             arrancados.append(("sync_tarifarios", interval_minutes))
 
+        async def sync_cotizaciones(interval_minutes: int) -> None:
+            arrancados.append(("sync_cotizaciones", interval_minutes))
+
         monkeypatch.setattr(bj, "background_liquidaciones_reconciliar_task", reconciliar)
         monkeypatch.setattr(bj, "background_liquidaciones_sync_tarifarios_task", sync_tarifarios)
+        monkeypatch.setattr(
+            bj, "background_liquidaciones_sync_cotizaciones_task", sync_cotizaciones
+        )
 
         tasks = bj.start_liquidaciones_background_jobs(
-            interval_minutes=120, sync_tarifarios_interval_minutes=1440
+            interval_minutes=120,
+            sync_tarifarios_interval_minutes=1440,
+            sync_cotizaciones_interval_minutes=720,
         )
         for t in tasks:
             await t
 
-        assert len(tasks) == 2
-        assert arrancados == [("reconciliar", 120), ("sync_tarifarios", 1440)]
+        assert len(tasks) == 3
+        assert arrancados == [
+            ("reconciliar", 120),
+            ("sync_tarifarios", 1440),
+            ("sync_cotizaciones", 720),
+        ]
