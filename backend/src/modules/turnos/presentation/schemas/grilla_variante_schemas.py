@@ -66,6 +66,10 @@ class AdvertenciaCoberturaResponse(BaseModel):
     desde: date | None = None
     hasta: date | None = None
     detalle: str | None = None
+    casilla_id_b: uuid.UUID | None = Field(default=None, serialization_alias="casillaIdB")
+    casilla_nombre_b: str | None = Field(default=None, serialization_alias="casillaNombreB")
+    hora_inicio_b: time | None = Field(default=None, serialization_alias="horaInicioB")
+    hora_fin_b: time | None = Field(default=None, serialization_alias="horaFinB")
 
     @classmethod
     def from_dto(cls, dto: AdvertenciaCoberturaDTO) -> "AdvertenciaCoberturaResponse":
@@ -81,6 +85,10 @@ class AdvertenciaCoberturaResponse(BaseModel):
             desde=dto.desde,
             hasta=dto.hasta,
             detalle=dto.detalle,
+            casilla_id_b=dto.casilla_id_b,
+            casilla_nombre_b=dto.casilla_nombre_b,
+            hora_inicio_b=dto.hora_inicio_b,
+            hora_fin_b=dto.hora_fin_b,
         )
 
 

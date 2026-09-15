@@ -11,7 +11,6 @@ from src.modules.turnos.domain.errors import (
     InvalidVarianteRangeError,
     VarianteFranjaInvalidaError,
     VarianteFranjasSolapadasError,
-    VarianteOperadorSolapadoError,
     VarianteSinFranjasError,
 )
 from src.modules.turnos.domain.services.grilla_variante_reglas import (
@@ -94,12 +93,18 @@ def test_franjas_de_la_misma_casilla_y_dia_no_se_superponen() -> None:
     )
 
 
-def test_mismo_operador_en_franjas_solapadas_de_distinta_casilla_es_error() -> None:
+def test_mismo_operador_en_franjas_solapadas_de_distinta_casilla_es_advertencia() -> None:
     luna = uuid.uuid4()
-    with pytest.raises(VarianteOperadorSolapadoError):
-        validar_franjas(
-            [_franja(INSUMOS, time(11), time(13), luna), _franja(ST, time(12), time(14), luna)]
-        )
+    solapadas = [_franja(INSUMOS, time(11), time(13), luna), _franja(ST, time(12), time(14), luna)]
+    validar_franjas(solapadas)  # no bloquea: puede ser la única cobertura posible
+
+    advertencias = advertencias_de_cobertura(solapadas, [])
+    assert [a.tipo for a in advertencias] == ["OPERADOR_SOLAPADO"]
+    (a,) = advertencias
+    assert a.user_id == luna
+    assert (a.casilla_id, a.hora_inicio, a.hora_fin) == (INSUMOS, time(11), time(13))
+    assert (a.casilla_id_b, a.hora_inicio_b, a.hora_fin_b) == (ST, time(12), time(14))
+
     # El mismo operador en franjas contiguas o de distinto día no es problema
     validar_franjas(
         [

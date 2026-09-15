@@ -35,7 +35,6 @@ from src.modules.turnos.domain.errors import (
     UsuarioNotFoundError,
     VarianteCasillaInvalidaError,
     VarianteNoEditableError,
-    VarianteOperadorSolapadoError,
 )
 from src.modules.turnos.domain.repositories.ausencias_lookup import AusenciaAprobada
 from src.modules.turnos.domain.repositories.user_provider import UserInfo
@@ -135,22 +134,39 @@ async def test_crear_rechaza_solape_de_vigencia_con_otra_activa() -> None:
         await CreateGrillaVariante(esc.deps).execute(otra)
 
 
-async def test_crear_rechaza_casilla_inexistente_y_operador_duplicado_en_solape() -> None:
+async def test_crear_rechaza_casilla_inexistente() -> None:
     esc = _Escenario()
     c = esc.caso
     with pytest.raises(VarianteCasillaInvalidaError):
         await CreateGrillaVariante(esc.deps).execute(
             esc.command([esc.franja(uuid.uuid4(), time(8), time(9), c.luna)])
         )
-    with pytest.raises(VarianteOperadorSolapadoError):
-        await CreateGrillaVariante(esc.deps).execute(
-            esc.command(
-                [
-                    esc.franja(c.insumos.id, time(11), time(13), c.luna),
-                    esc.franja(c.st.id, time(12), time(14), c.luna),
-                ]
-            )
+
+
+async def test_crear_advierte_operador_duplicado_en_solape_sin_bloquear() -> None:
+    esc = _Escenario()
+    c = esc.caso
+    dto = await CreateGrillaVariante(esc.deps).execute(
+        esc.command(
+            [
+                esc.franja(c.insumos.id, time(11), time(13), c.luna),
+                esc.franja(c.st.id, time(12), time(14), c.luna),
+            ]
         )
+    )
+    solapados = [a for a in dto.advertencias if a.tipo == "OPERADOR_SOLAPADO"]
+    assert len(solapados) == 1
+    assert solapados[0].user_name == "Luna Torres"
+    assert (solapados[0].casilla_nombre, solapados[0].hora_inicio, solapados[0].hora_fin) == (
+        "INSUMOS",
+        time(11),
+        time(13),
+    )
+    assert (
+        solapados[0].casilla_nombre_b,
+        solapados[0].hora_inicio_b,
+        solapados[0].hora_fin_b,
+    ) == ("ST", time(12), time(14))
 
 
 async def test_crear_advierte_cubriente_con_vacaciones_aprobadas_solapadas() -> None:

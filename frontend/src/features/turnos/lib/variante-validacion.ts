@@ -80,12 +80,12 @@ function solapan(a: FranjaEditable, b: FranjaEditable): boolean {
   return aMinutos(a.horaInicio) < aMinutos(b.horaFin) && aMinutos(b.horaInicio) < aMinutos(a.horaFin);
 }
 
-/** Errores duros: inicio >= fin, solape en la misma casilla+día, un operador
- * en dos franjas que se pisan (cualquier casilla, mismo día). */
+/** Errores duros: inicio >= fin, solape en la misma casilla+día. Un operador
+ * en dos franjas que se pisan (cualquier casilla, mismo día) es advertencia,
+ * no error: ver `advertenciasDeOperadores`. */
 export function erroresDeFranjas(
   franjas: FranjaEditable[],
   nombreCasilla: (id: string) => string,
-  nombreUser: (id: string) => string,
 ): ErrorFranja[] {
   const errores: ErrorFranja[] = [];
   for (const f of franjas) {
@@ -114,30 +114,35 @@ export function erroresDeFranjas(
       }
     }
   }
-  errores.push(...erroresDeOperadores(validas, nombreCasilla, nombreUser));
   return errores;
 }
 
-function erroresDeOperadores(
+/** Un mismo operador en dos franjas que se pisan (cualquier casilla, mismo
+ * día): no bloquea, puede ser la única cobertura posible (mismo criterio que
+ * Coberturas para el reemplazante). */
+export function advertenciasDeOperadores(
   franjas: FranjaEditable[],
   nombreCasilla: (id: string) => string,
   nombreUser: (id: string) => string,
 ): ErrorFranja[] {
-  const errores: ErrorFranja[] = [];
-  for (let i = 0; i < franjas.length; i++) {
-    for (let j = i + 1; j < franjas.length; j++) {
-      const a = franjas[i];
-      const b = franjas[j];
+  const validas = franjas.filter(
+    (f) => f.horaInicio && f.horaFin && aMinutos(f.horaInicio) < aMinutos(f.horaFin),
+  );
+  const advertencias: ErrorFranja[] = [];
+  for (let i = 0; i < validas.length; i++) {
+    for (let j = i + 1; j < validas.length; j++) {
+      const a = validas[i];
+      const b = validas[j];
       if (a.diaSemana !== b.diaSemana || !solapan(a, b)) continue;
       for (const userId of a.userIds.filter((u) => b.userIds.includes(u))) {
-        errores.push({
+        advertencias.push({
           keys: [a.key, b.key],
           mensaje: `${nombreUser(userId)} está en ${nombreCasilla(a.casillaId)} ${a.horaInicio}–${a.horaFin} y en ${nombreCasilla(b.casillaId)} ${b.horaInicio}–${b.horaFin} (${DIAS_SEMANA[a.diaSemana]}).`,
         });
       }
     }
   }
-  return errores;
+  return advertencias;
 }
 
 /** Tramos que la grilla titular cubre y la variante no, por casilla+día. */

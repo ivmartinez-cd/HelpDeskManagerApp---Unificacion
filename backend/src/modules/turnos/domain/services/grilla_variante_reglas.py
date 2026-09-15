@@ -14,23 +14,24 @@ from src.modules.turnos.domain.errors import (
     InvalidVarianteRangeError,
     VarianteFranjaInvalidaError,
     VarianteFranjasSolapadasError,
-    VarianteOperadorSolapadoError,
     VarianteSinFranjasError,
 )
 from src.modules.turnos.domain.services.franja_reglas import (
     detalle_franja_invalida,
     detalle_solape_por_casilla,
-    rango,
 )
 
-TipoAdvertencia = Literal["HUECO", "SIN_OPERADOR", "OPERADOR_AUSENTE"]
+TipoAdvertencia = Literal["HUECO", "SIN_OPERADOR", "OPERADOR_AUSENTE", "OPERADOR_SOLAPADO"]
 
 
 @dataclass(frozen=True, slots=True)
 class AdvertenciaCobertura:
     """No bloquea el guardado: un hueco puede ser deliberado (INSUMOS sin
-    nadie 8:00-8:30 en el caso real). `casilla_id`/`dia_semana`/horas aplican
-    a HUECO y SIN_OPERADOR; `user_id`/`desde`/`hasta` a OPERADOR_AUSENTE."""
+    nadie 8:00-8:30 en el caso real), y un operador solapado puede ser la
+    única cobertura posible. `casilla_id`/`dia_semana`/horas aplican a HUECO
+    y SIN_OPERADOR; `user_id`/`desde`/`hasta` a OPERADOR_AUSENTE;
+    `casilla_id`+`hora_inicio`/`hora_fin` (franja A) más
+    `casilla_id_b`+`hora_inicio_b`/`hora_fin_b` (franja B) a OPERADOR_SOLAPADO."""
 
     tipo: TipoAdvertencia
     casilla_id: uuid.UUID | None = None
@@ -42,6 +43,10 @@ class AdvertenciaCobertura:
     hasta: date | None = None
     # OPERADOR_AUSENTE: qué lo ausenta ('Vacaciones', 'Horario 08:00–17:00'…).
     detalle: str | None = None
+    # OPERADOR_SOLAPADO: la segunda franja en la que cae el mismo operador.
+    casilla_id_b: uuid.UUID | None = None
+    hora_inicio_b: time | None = None
+    hora_fin_b: time | None = None
 
 
 Intervalo = tuple[time, time]
@@ -71,21 +76,35 @@ def validar_franjas(slots: list[VarianteSlot]) -> None:
     solape = detalle_solape_por_casilla(slots)
     if solape is not None:
         raise VarianteFranjasSolapadasError(solape)
-    _validar_operador_sin_solape(slots)
 
 
-def _validar_operador_sin_solape(slots: list[VarianteSlot]) -> None:
+def _operadores_solapados(slots: list[VarianteSlot]) -> list[AdvertenciaCobertura]:
+    """Un mismo operador en dos franjas que se pisan (cualquier casilla,
+    mismo día) no bloquea: cubrir a un ausente puede terminar solapando al
+    reemplazante cuando no hay otra opción (mismo criterio que Coberturas)."""
     por_user_dia: dict[tuple[uuid.UUID, int], list[VarianteSlot]] = {}
     for s in slots:
         for user_id in s.user_ids:
             por_user_dia.setdefault((user_id, s.dia_semana), []).append(s)
+    advertencias: list[AdvertenciaCobertura] = []
     for (user_id, dia), franjas in por_user_dia.items():
         ordenadas = sorted(franjas, key=lambda s: s.hora_inicio)
         for anterior, actual in zip(ordenadas, ordenadas[1:], strict=False):
             if actual.hora_inicio < anterior.hora_fin:
-                raise VarianteOperadorSolapadoError(
-                    f"operador {user_id} en {rango(anterior)} y {rango(actual)} (día {dia})"
+                advertencias.append(
+                    AdvertenciaCobertura(
+                        tipo="OPERADOR_SOLAPADO",
+                        casilla_id=anterior.casilla_id,
+                        dia_semana=dia,
+                        hora_inicio=anterior.hora_inicio,
+                        hora_fin=anterior.hora_fin,
+                        user_id=user_id,
+                        casilla_id_b=actual.casilla_id,
+                        hora_inicio_b=actual.hora_inicio,
+                        hora_fin_b=actual.hora_fin,
+                    )
                 )
+    return advertencias
 
 
 def advertencias_de_cobertura(
@@ -94,8 +113,10 @@ def advertencias_de_cobertura(
     dias_activos: set[int] | None = None,
 ) -> list[AdvertenciaCobertura]:
     """HUECO = tramo que la titular cubre en esa casilla+día y la variante no;
-    SIN_OPERADOR = franja de la variante sin nadie asignado."""
+    SIN_OPERADOR = franja de la variante sin nadie asignado; OPERADOR_SOLAPADO
+    = un mismo operador en dos franjas que se pisan."""
     advertencias = _franjas_sin_operador(variante_slots)
+    advertencias += _operadores_solapados(variante_slots)
     return advertencias + _huecos(variante_slots, titular_slots, dias_activos)
 
 

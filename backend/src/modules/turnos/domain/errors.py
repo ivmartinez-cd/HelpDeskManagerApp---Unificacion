@@ -179,15 +179,6 @@ class VarianteFranjasSolapadasError(ValidationError):
         super().__init__(f"Dos franjas de la misma casilla y día se superponen: {detalle}")
 
 
-class VarianteOperadorSolapadoError(ValidationError):
-    default_code: ClassVar[str] = "VARIANTE_OPERADOR_SOLAPADO"
-
-    def __init__(self, detalle: str) -> None:
-        super().__init__(
-            f"Un mismo operador está asignado a dos franjas que se superponen: {detalle}"
-        )
-
-
 class VarianteNoEditableError(BusinessRuleViolationError):
     default_code: ClassVar[str] = "VARIANTE_NO_EDITABLE"
 

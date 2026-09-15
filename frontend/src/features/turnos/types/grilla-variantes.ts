@@ -10,7 +10,7 @@ export type VarianteEstadoDb = "ACTIVA" | "CANCELADA";
 
 export type VarianteEstadoUi = "vigente" | "programada" | "vencida" | "cancelada";
 
-export type TipoAdvertencia = "HUECO" | "SIN_OPERADOR" | "OPERADOR_AUSENTE";
+export type TipoAdvertencia = "HUECO" | "SIN_OPERADOR" | "OPERADOR_AUSENTE" | "OPERADOR_SOLAPADO";
 
 export interface AdvertenciaCobertura {
   tipo: TipoAdvertencia;
@@ -26,6 +26,11 @@ export interface AdvertenciaCobertura {
   hasta: string | null;
   /** OPERADOR_AUSENTE: qué lo ausenta ('Vacaciones', 'Horario 08:00–17:00'…). */
   detalle?: string | null;
+  /** OPERADOR_SOLAPADO: la segunda franja en la que cae el mismo operador. */
+  casillaIdB?: string | null;
+  casillaNombreB?: string | null;
+  horaInicioB?: string | null;
+  horaFinB?: string | null;
 }
 
 export interface VarianteSlot {

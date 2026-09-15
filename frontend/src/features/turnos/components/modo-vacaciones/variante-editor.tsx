@@ -12,6 +12,7 @@ import type {
 } from "../../types/grilla-variantes";
 import {
   DIAS_SEMANA,
+  advertenciasDeOperadores,
   diasActivosDeRango,
   erroresDeFranjas,
   franjasSinOperador,
@@ -113,7 +114,11 @@ export function VarianteEditor({
   );
 
   const errores = useMemo(
-    () => erroresDeFranjas(franjas, nombreCasilla, nombreUser),
+    () => erroresDeFranjas(franjas, nombreCasilla),
+    [franjas, nombreCasilla],
+  );
+  const operadoresSolapados = useMemo(
+    () => advertenciasDeOperadores(franjas, nombreCasilla, nombreUser),
     [franjas, nombreCasilla, nombreUser],
   );
   const diasActivos = useMemo(() => diasActivosDeRango(desde, hasta), [desde, hasta]);
@@ -272,6 +277,7 @@ export function VarianteEditor({
         errores={errores}
         huecos={huecos}
         sinOperador={sinOperador}
+        operadoresSolapados={operadoresSolapados}
         ausencias={ausencias}
         nombreCasilla={nombreCasilla}
       />

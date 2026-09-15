@@ -9,23 +9,30 @@ interface VarianteAdvertenciasProps {
   errores: ErrorFranja[];
   huecos: HuecoCobertura[];
   sinOperador: FranjaEditable[];
+  /** Un mismo operador en dos franjas que se pisan (cualquier casilla) */
+  operadoresSolapados: ErrorFranja[];
   /** OPERADOR_AUSENTE: cubrientes con vacaciones aprobadas dentro del rango */
   ausencias: AdvertenciaCobertura[];
   nombreCasilla: (id: string) => string;
 }
 
-/** Panel de validación en vivo del editor (ADR-025): los solapes son error y
- * bloquean el guardado; los huecos respecto de la titular, las franjas sin
- * operador y los cubrientes ausentes son advertencias visibles pero no
- * bloquean — un hueco puede ser deliberado. */
+/** Panel de validación en vivo del editor (ADR-025): los solapes de franja en
+ * la misma casilla son error y bloquean el guardado; los huecos respecto de
+ * la titular, las franjas sin operador, un operador en dos franjas que se
+ * pisan y los cubrientes ausentes son advertencias visibles pero no
+ * bloquean — pueden ser deliberados o la única cobertura posible. */
 export function VarianteAdvertencias({
   errores,
   huecos,
   sinOperador,
+  operadoresSolapados,
   ausencias,
   nombreCasilla,
 }: VarianteAdvertenciasProps) {
-  if (errores.length + huecos.length + sinOperador.length + ausencias.length === 0) {
+  if (
+    errores.length + huecos.length + sinOperador.length + operadoresSolapados.length + ausencias.length ===
+    0
+  ) {
     return (
       <p className="flex items-center gap-2 rounded-[10px] border border-border bg-muted/30 px-4 py-3 font-body text-xs text-muted-foreground">
         <Info className="h-4 w-4" />
@@ -45,8 +52,17 @@ export function VarianteAdvertencias({
           ))}
         </ul>
       )}
-      {(huecos.length > 0 || sinOperador.length > 0 || ausencias.length > 0) && (
+      {(huecos.length > 0 ||
+        sinOperador.length > 0 ||
+        operadoresSolapados.length > 0 ||
+        ausencias.length > 0) && (
         <ul className="flex flex-col gap-1 rounded-[10px] border border-warning/20 bg-warning/10 px-4 py-3">
+          {operadoresSolapados.map((o, i) => (
+            <li key={`o${i}`} className="flex items-start gap-2 font-body text-xs text-foreground">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+              <span>{o.mensaje}</span>
+            </li>
+          ))}
           {huecos.map((h, i) => (
             <li key={`h${i}`} className="flex items-start gap-2 font-body text-xs text-foreground">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />

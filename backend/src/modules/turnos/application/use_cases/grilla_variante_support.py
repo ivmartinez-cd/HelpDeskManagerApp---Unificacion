@@ -199,4 +199,8 @@ def advertencia_dto(
         desde=a.desde,
         hasta=a.hasta,
         detalle=a.detalle,
+        casilla_id_b=a.casilla_id_b,
+        casilla_nombre_b=casillas.get(a.casilla_id_b) if a.casilla_id_b is not None else None,
+        hora_inicio_b=a.hora_inicio_b,
+        hora_fin_b=a.hora_fin_b,
     )

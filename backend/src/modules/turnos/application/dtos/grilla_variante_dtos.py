@@ -44,7 +44,8 @@ class UpdateGrillaVarianteCommand:
 class AdvertenciaCoberturaDTO:
     """Advertencia no bloqueante (ver `grilla_variante_reglas`). Los campos
     opcionales dependen del `tipo`: HUECO/SIN_OPERADOR llevan casilla+día+horas;
-    OPERADOR_AUSENTE lleva user + rango de la ausencia."""
+    OPERADOR_AUSENTE lleva user + rango de la ausencia; OPERADOR_SOLAPADO lleva
+    user + franja A (casilla/horas) + franja B (casilla_id_b/horas_b)."""
 
     tipo: str
     casilla_id: uuid.UUID | None = None
@@ -57,6 +58,10 @@ class AdvertenciaCoberturaDTO:
     detalle: str | None = None
     desde: date | None = None
     hasta: date | None = None
+    casilla_id_b: uuid.UUID | None = None
+    casilla_nombre_b: str | None = None
+    hora_inicio_b: time | None = None
+    hora_fin_b: time | None = None
 
 
 @dataclass(frozen=True, slots=True)
