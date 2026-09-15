@@ -1,19 +1,28 @@
 #!/usr/bin/env bash
-# pre-push — solo muestra qué commits se van a subir (para revisar el git log, no pushear a
-# ciegas). NO corre ninguna verificación local.
+# pre-push — muestra qué commits se van a subir (para revisar el git log, no pushear a ciegas)
+# y corre ruff sobre los .py de backend tocados en ese rango. Nada más.
 #
 # Historia: hasta el 2026-09-02 corría `make check-fast` (lint-imports + ruff + mypy + pytest
 # unit + gates sizes/guards). Medido ese día con la máquina ociosa, sobre el HDD USB:
 # 42 + 5 + 108 + 101 + 29 s ≈ 5 min por push; con varias sesiones de Claude en paralelo dejaba
 # el disco saturado y freezaba las demás terminales (incidentes 2026-09-01 y 2026-09-02). Un
-# push no debería poder colgar la máquina: TODO corre en GitHub Actions
-# (.github/workflows/ci.yml): lint-imports, ruff, mypy, pytest unit + integración, gates
-# §4/§6/§8/§11, eslint, tsc y la suite completa de Playwright. Quien pushea sigue la corrida
-# con `make ci` (gh run watch) y arregla si queda rojo — `main` en GitHub puede quedar rojo
-# unos minutos, esa es la contrapartida aceptada.
+# push no debería poder colgar la máquina: TODO (lint-imports, mypy, pytest unit + integración,
+# gates §4/§6/§8/§11, eslint, tsc, Playwright) sigue corriendo solo en GitHub Actions
+# (.github/workflows/ci.yml). Quien pushea sigue la corrida con `make ci` (gh run watch) y
+# arregla si queda rojo — `main` en GitHub puede quedar rojo unos minutos, esa es la
+# contrapartida aceptada.
+#
+# 2026-09-15: se sumó el ruff de acá abajo (mismo criterio que pre-commit, ≈5 s, solo backend)
+# porque además de GitHub ahora se pushea a un remoto Gitea sin runner propio — un error de
+# ruff que antes recién aparecía en GitHub Actions ahora se detecta antes de salir de la
+# máquina. No se tocó nada más: mypy/pytest/tsc/Playwright siguen siendo demasiado caros para
+# este disco (ver medición arriba), automáticos o no.
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
 remote="${1:-origin}"
+
+red()  { printf '\033[31m✘ %s\033[0m\n' "$*"; }
+yel()  { printf '\033[33m! %s\033[0m\n' "$*"; }
 
 z40='0000000000000000000000000000000000000000'
 ranges=()
@@ -31,6 +40,27 @@ echo "pre-push → $remote. Commits a subir:"
 for r in "${ranges[@]}"; do
   git log --oneline --no-decorate "$r" 2>/dev/null | sed 's/^/    /'
 done
+
+# --- ruff sobre los .py de backend tocados en el rango (no borrados) ----------------------
+pyfiles=$(
+  for r in "${ranges[@]}"; do
+    git diff --name-only --diff-filter=ACMR "$r" -- 'backend/*.py' 2>/dev/null
+  done | sed 's#^backend/##' | sort -u | tr '\n' ' '
+)
+if [[ -n "${pyfiles// /}" ]]; then
+  BACKEND=helpdesk-manager-backend
+  if docker exec "$BACKEND" true 2>/dev/null; then
+    # shellcheck disable=SC2086
+    if ! docker exec "$BACKEND" uv run ruff check $pyfiles; then
+      red "pre-push: ruff falló sobre archivos del rango a pushear."
+      echo "  Arreglá y volvé a pushear. Saltear (no recomendado): git push --no-verify"
+      exit 1
+    fi
+  else
+    yel "pre-push: el contenedor $BACKEND no responde — salteo ruff. CI lo corre igual."
+  fi
+fi
+
 echo "Verificación completa en GitHub Actions — seguirla con: make ci"
 echo
 exit 0
