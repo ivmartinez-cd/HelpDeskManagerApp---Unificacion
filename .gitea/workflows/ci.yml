@@ -1,0 +1,19 @@
+# Gitea Actions busca primero en .gitea/workflows/, y solo cae a
+# .github/workflows/ si esta carpeta no existe (compatibilidad para repos
+# migrados de GitHub) -- por eso este remoto quedaba encolando
+# "CI / backend, frontend, e2e (push) Waiting to run" en cada push, sin
+# ningún runner registrado en gitea.canaldirecto.com.ar para tomarlos
+# (pedido de Iván 15/9: sacarlo). Esta versión, al existir, bloquea esa
+# caída y no dispara solo con push, así que no vuelve a encolar nada.
+#
+# La verificación real sigue siendo GitHub Actions
+# (.github/workflows/ci.yml) sobre origin -- gitea es solo el respaldo, ver
+# "Cuándo pushear" en CLAUDE.md.
+name: CI (ver GitHub Actions)
+on:
+  workflow_dispatch: {}
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "La verificación real corre en GitHub Actions (origin), no en Gitea."
