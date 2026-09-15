@@ -18,6 +18,7 @@ def _deps(
         reset_tokens=tokens_repo,
         tokens=FakeSessionTokenGenerator(),
         frontend_url="http://front",
+        logo_base64="",
     )
 
 

@@ -25,7 +25,9 @@ def encolar_mail(background_tasks: BackgroundTasks, mail: PendingMail | None) ->
 
 async def _enviar(mailer: Mailer, mail: PendingMail) -> None:
     try:
-        await mailer.send(to=mail.to, subject=mail.subject, body=mail.body)
+        await mailer.send(
+            to=mail.to, subject=mail.subject, body=mail.body, html_body=mail.html_body
+        )
     except Exception:
         # Ya se respondió 202: no hay a quién propagarle el error, pero un
         # reset que no llega tiene que quedar en el log.

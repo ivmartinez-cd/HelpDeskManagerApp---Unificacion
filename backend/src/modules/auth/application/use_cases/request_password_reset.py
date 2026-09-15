@@ -1,6 +1,7 @@
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from html import escape
 from typing import Literal
 
 from src.modules.auth.domain.entities.password_reset_token import PasswordResetToken
@@ -27,6 +28,23 @@ _BODIES: dict[ResetPurpose, str] = {
     "(vence en 30 minutos): {link}",
     "reset": "Usá este link para restablecer tu contraseña (vence en 30 minutos): {link}",
 }
+_INTROS: dict[ResetPurpose, str] = {
+    "activation": "Para activar tu cuenta y elegir tu contraseña, hacé clic en el botón.",
+    "reset": (
+        "Recibimos un pedido para restablecer tu contraseña. "
+        "Elegí una nueva haciendo clic en el botón."
+    ),
+}
+_CTAS: dict[ResetPurpose, str] = {
+    "activation": "Activar cuenta",
+    "reset": "Restablecer contraseña",
+}
+# Naranja/gris institucional Canal Directo (#F7941D/#58595B), no el azul
+# genérico de otros mails del proyecto.
+_ESTILO_BOTON = (
+    "background-color:#F7941D;color:#ffffff;padding:12px 28px;text-decoration:none;"
+    "border-radius:6px;font-weight:600;font-size:15px;display:inline-block"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +55,7 @@ class PendingMail:
     to: str
     subject: str
     body: str
+    html_body: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,6 +64,7 @@ class RequestPasswordResetDependencies:
     reset_tokens: ResetTokenRepository
     tokens: SessionTokenGenerator
     frontend_url: str
+    logo_base64: str
 
 
 class RequestPasswordReset:
@@ -85,4 +105,29 @@ class RequestPasswordReset:
             to=user.email.value,
             subject=_SUBJECTS[purpose],
             body=_BODIES[purpose].format(link=link),
+            html_body=_html_body(user.full_name, link, purpose, self._deps.logo_base64),
         )
+
+
+def _html_body(full_name: str, link: str, purpose: ResetPurpose, logo_base64: str) -> str:
+    return f"""
+  <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:auto;color:#333333">
+    <div style="text-align:center;padding-bottom:20px;margin-bottom:20px;
+                border-bottom:1px solid #e5e7eb">
+      <img src="data:image/png;base64,{logo_base64}" width="140" height="26" alt="Canal Directo" />
+    </div>
+    <p style="font-size:15px">Hola {escape(full_name)},</p>
+    <p style="font-size:15px;line-height:1.5">{_INTROS[purpose]}</p>
+    <div style="margin:28px 0;text-align:center">
+      <a href="{link}" style="{_ESTILO_BOTON}">{_CTAS[purpose]}</a>
+    </div>
+    <p style="font-size:13px;color:#58595B">
+      Este link vence en 30 minutos. Si no lo pediste vos, ignorá este mail.
+    </p>
+    <p style="font-size:12px;color:#9CA3AF;word-break:break-all">
+      Si el botón no funciona, copiá y pegá este link en el navegador:
+      <a href="{link}" style="color:#58595B">{link}</a>
+    </p>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0" />
+    <p style="color:#58595B;font-size:12px;margin:0">Canal Directo — HelpDesk Manager</p>
+  </div>"""

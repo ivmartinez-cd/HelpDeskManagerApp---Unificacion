@@ -30,6 +30,7 @@ from src.modules.auth.application.use_cases.revoke_session import (
 )
 from src.modules.auth.domain.value_objects.raw_password import MAX_PASSWORD_LENGTH
 from src.modules.auth.infrastructure.argon2_password_hasher import Argon2PasswordHasher
+from src.modules.auth.infrastructure.mail_logo import get_logo_base64
 from src.modules.auth.infrastructure.repositories.sqlalchemy_feature_repositories import (
     SqlAlchemyFeatureGrantRepository,
 )
@@ -160,6 +161,7 @@ async def forgot_password(
         reset_tokens=SqlAlchemyResetTokenRepository(db),
         tokens=SecureTokenGenerator(),
         frontend_url=get_settings().frontend_url,
+        logo_base64=get_logo_base64(),
     )
     mail = await RequestPasswordReset(deps).execute(payload.email)
     encolar_mail(background_tasks, mail)

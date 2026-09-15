@@ -15,6 +15,7 @@ from src.modules.auth.domain.errors import AccountDisabledError, UserNotFoundErr
 from src.modules.auth.domain.repositories.operador_color_lookup import OperadorColorLookup
 from src.modules.auth.domain.well_known_permissions import MANAGE_ADMIN
 from src.modules.auth.infrastructure.argon2_password_hasher import Argon2PasswordHasher
+from src.modules.auth.infrastructure.mail_logo import get_logo_base64
 from src.modules.auth.infrastructure.repositories.sqlalchemy_reset_token_repository import (
     SqlAlchemyResetTokenRepository,
 )
@@ -132,6 +133,7 @@ async def _send_password_link(
         reset_tokens=SqlAlchemyResetTokenRepository(db),
         tokens=SecureTokenGenerator(),
         frontend_url=get_settings().frontend_url,
+        logo_base64=get_logo_base64(),
     )
     mail = await RequestPasswordReset(deps).execute(user_email, purpose=purpose)
     encolar_mail(background_tasks, mail)
