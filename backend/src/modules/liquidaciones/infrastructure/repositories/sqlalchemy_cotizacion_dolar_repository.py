@@ -3,6 +3,7 @@ cotizaciones_dolar)."""
 
 from datetime import UTC, date, datetime
 
+from sqlalchemy.dialects.postgresql import Insert
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,25 +31,27 @@ class SqlAlchemyCotizacionDolarRepository:
         fecha_cotizacion: date,
         fuente: str,
     ) -> None:
-        stmt = pg_insert(CotizacionDolarModel).values(
-            periodo=periodo,
-            compra=compra,
-            venta=venta,
-            fecha_cotizacion=fecha_cotizacion,
-            fuente=fuente,
-            updated_at=datetime.now(UTC),
-        )
-        stmt = stmt.on_conflict_do_update(
-            index_elements=[CotizacionDolarModel.periodo],
-            set_={
-                "compra": stmt.excluded.compra,
-                "venta": stmt.excluded.venta,
-                "fecha_cotizacion": stmt.excluded.fecha_cotizacion,
-                "fuente": stmt.excluded.fuente,
-                "updated_at": stmt.excluded.updated_at,
-            },
-        )
+        stmt = _upsert_stmt(periodo, compra, venta, fecha_cotizacion, fuente)
         await self._session.execute(stmt)
+
+
+def _upsert_stmt(
+    periodo: str, compra: float, venta: float, fecha_cotizacion: date, fuente: str
+) -> Insert:
+    stmt = pg_insert(CotizacionDolarModel).values(
+        periodo=periodo, compra=compra, venta=venta,
+        fecha_cotizacion=fecha_cotizacion, fuente=fuente, updated_at=datetime.now(UTC),
+    )
+    return stmt.on_conflict_do_update(
+        index_elements=[CotizacionDolarModel.periodo],
+        set_={
+            "compra": stmt.excluded.compra,
+            "venta": stmt.excluded.venta,
+            "fecha_cotizacion": stmt.excluded.fecha_cotizacion,
+            "fuente": stmt.excluded.fuente,
+            "updated_at": stmt.excluded.updated_at,
+        },
+    )
 
 
 def _to_entity(row: CotizacionDolarModel) -> CotizacionDolar:

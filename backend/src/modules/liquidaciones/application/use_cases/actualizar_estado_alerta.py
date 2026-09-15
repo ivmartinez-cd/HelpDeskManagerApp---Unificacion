@@ -44,18 +44,18 @@ class ActualizarEstadoAlerta:
     ) -> Alerta | None:
         await self._validar_incidente_relacionado(liquidacion_id, incidente_relacionado_id)
         actualizada = await self._ports.alertas.update_estado(
-            liquidacion_id,
-            alerta_id,
-            estado=estado,
-            justificacion=justificacion,
+            liquidacion_id, alerta_id, estado=estado, justificacion=justificacion,
             incidente_relacionado_id=incidente_relacionado_id,
         )
         if actualizada is None:
             return None
+        await self._propagar_y_recalcular(liquidacion_id, actualizada)
+        return actualizada
+
+    async def _propagar_y_recalcular(self, liquidacion_id: UUID, actualizada: Alerta) -> None:
         afectados = {actualizada.incidente_id}
         afectados |= await self._cascada_grupo_alt005(liquidacion_id, actualizada)
         await self._recalcular_estados(liquidacion_id, afectados)
-        return actualizada
 
     async def _validar_incidente_relacionado(
         self, liquidacion_id: UUID, incidente_relacionado_id: UUID | None
@@ -70,14 +70,7 @@ class ActualizarEstadoAlerta:
         if not grupo.es_grupo or grupo.tipo_alerta != _CODIGO_ALT005:
             return set()
         hermanas = await self._ports.alertas.list_by_liquidacion(liquidacion_id)
-        individuales = [
-            h
-            for h in hermanas
-            if h.tipo_alerta == _CODIGO_ALT005
-            and not h.es_grupo
-            and h.incidente_id in grupo.grupo_incidente_ids
-            and h.estado != grupo.estado
-        ]
+        individuales = _individuales_a_cascadear(hermanas, grupo)
         for h in individuales:
             await self._ports.alertas.update_estado(
                 liquidacion_id,
@@ -94,3 +87,14 @@ class ActualizarEstadoAlerta:
             estados = [a.estado for a in hermanas if a.incidente_id == incidente_id]
             nuevo_estado = recalcular_estado_incidente(estados)
             await self._ports.incidentes.update_estado_validacion(incidente_id, nuevo_estado)
+
+
+def _individuales_a_cascadear(hermanas: list[Alerta], grupo: Alerta) -> list[Alerta]:
+    return [
+        h
+        for h in hermanas
+        if h.tipo_alerta == _CODIGO_ALT005
+        and not h.es_grupo
+        and h.incidente_id in grupo.grupo_incidente_ids
+        and h.estado != grupo.estado
+    ]

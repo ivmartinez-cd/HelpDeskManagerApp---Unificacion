@@ -40,6 +40,19 @@ def evaluar_alt002(
     esperado = _redondear_half_up(esperado_raw)
     if _dentro_de_tolerancia(cobrado, esperado, esperado_raw, tolerancia_km):
         return []
+    return _decidir_hallazgo(
+        incidente, tabla_km, vecinos_mismo_dia, cobrado, esperado, esperado_raw
+    )
+
+
+def _decidir_hallazgo(
+    incidente: Incidente,
+    tabla_km: TablaKm,
+    vecinos_mismo_dia: Sequence[tuple[Incidente, TablaKm | None]],
+    cobrado: float,
+    esperado: int,
+    esperado_raw: float,
+) -> list[Hallazgo]:
     if esperado_raw <= 0:
         return [_hallazgo_sin_referencia(incidente, cobrado)]
     if cobrado == 0:

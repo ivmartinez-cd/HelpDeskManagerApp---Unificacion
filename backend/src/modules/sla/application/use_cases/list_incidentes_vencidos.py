@@ -50,17 +50,21 @@ class ListIncidentesVencidos:
         exclusivamente -- lo resuelve la capa de presentación a partir del
         operador logueado, este caso de uso no sabe nada de operadores."""
         snapshot = await self._repo.get(periodo) or await self._refresher.execute(periodo)
-        incidentes = snapshot.incidentes_vencidos
-        if siges_ids_filtro is not None:
-            filtro = set(siges_ids_filtro)
-            incidentes = [i for i in incidentes if i.id_tecnico in filtro]
+        incidentes = _filtrar_por_tecnico(snapshot.incidentes_vencidos, siges_ids_filtro)
         pst_to_operador = await self._pst_lookup.get_pst_to_operador_mapping()
-        return [
-            _to_dto(
-                i,
-                AGENTE_LOCAL
-                if i.region == "LOCAL"
-                else pst_to_operador.get(i.id_tecnico, AGENTE_SIN_OPERADOR),
-            )
-            for i in incidentes
-        ]
+        return [_to_dto(i, _agente(i, pst_to_operador)) for i in incidentes]
+
+
+def _filtrar_por_tecnico(
+    incidentes: list[IncidenteSla], siges_ids_filtro: list[int] | None
+) -> list[IncidenteSla]:
+    if siges_ids_filtro is None:
+        return incidentes
+    filtro = set(siges_ids_filtro)
+    return [i for i in incidentes if i.id_tecnico in filtro]
+
+
+def _agente(incidente: IncidenteSla, pst_to_operador: dict[int, str]) -> str:
+    if incidente.region == "LOCAL":
+        return AGENTE_LOCAL
+    return pst_to_operador.get(incidente.id_tecnico, AGENTE_SIN_OPERADOR)

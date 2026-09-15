@@ -1,9 +1,10 @@
 """Implementación Postgres del puerto LiquidacionRepository (tabla liquidaciones)."""
 
 import uuid
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import and_, func, select, update
+from sqlalchemy import Select, and_, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.liquidaciones.domain.entities.liquidacion import (
@@ -29,17 +30,7 @@ class SqlAlchemyLiquidacionRepository:
         periodo: str | None = None,
         anio: int | None = None,
     ) -> list[Liquidacion]:
-        stmt = select(LiquidacionModel).order_by(
-            LiquidacionModel.periodo.desc(), LiquidacionModel.fecha_importacion.desc()
-        )
-        if prestador_id is not None:
-            stmt = stmt.where(LiquidacionModel.prestador_id == prestador_id)
-        if estado is not None:
-            stmt = stmt.where(LiquidacionModel.estado == estado)
-        if periodo is not None:
-            stmt = stmt.where(LiquidacionModel.periodo == periodo)
-        if anio is not None:
-            stmt = stmt.where(LiquidacionModel.periodo.startswith(f"{anio}-"))
+        stmt = _filtered_stmt(prestador_id, estado, periodo, anio)
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_entity(row) for row in rows]
 
@@ -181,54 +172,15 @@ class SqlAlchemyLiquidacionRepository:
         await self._session.execute(stmt)
 
     async def count_pendientes_por_prestador(self) -> list[tuple[str, int]]:
-        from src.modules.liquidaciones.infrastructure.models.prestador_model import (
-            LiquidacionPrestadorModel,
-        )
-
-        liq = LiquidacionModel.__table__
-        pst = LiquidacionPrestadorModel.__table__
-        stmt = (
-            select(pst.c.nombre_corto, func.count().label("n"))
-            .select_from(liq)
-            .join(pst, liq.c.prestador_id == pst.c.id)
-            .where(liq.c.estado.notin_([ESTADO_APROBADA, ESTADO_CERRADA]))
-            .group_by(pst.c.nombre_corto)
-            .order_by(func.count().desc())
-        )
-        result = await self._session.execute(stmt)
+        result = await self._session.execute(_count_pendientes_stmt())
         return [(row[0], row[1]) for row in result.all()]
 
     async def sum_importe_por_periodo(self) -> list[tuple[str, float]]:
-        stmt = (
-            select(
-                LiquidacionModel.periodo,
-                func.sum(LiquidacionModel.total_importe).label("total"),
-            )
-            .group_by(LiquidacionModel.periodo)
-            .order_by(LiquidacionModel.periodo)
-        )
-        result = await self._session.execute(stmt)
+        result = await self._session.execute(_sum_importe_por_periodo_stmt())
         return [(row[0], float(row[1])) for row in result.all()]
 
     async def sum_importe_por_prestador(self) -> list[tuple[str, float, int]]:
-        from src.modules.liquidaciones.infrastructure.models.prestador_model import (
-            LiquidacionPrestadorModel,
-        )
-
-        liq = LiquidacionModel.__table__
-        pst = LiquidacionPrestadorModel.__table__
-        stmt = (
-            select(
-                pst.c.nombre_corto,
-                func.sum(liq.c.total_importe).label("total"),
-                func.count().label("n"),
-            )
-            .select_from(liq)
-            .join(pst, liq.c.prestador_id == pst.c.id)
-            .group_by(pst.c.nombre_corto)
-            .order_by(func.sum(liq.c.total_importe).desc())
-        )
-        result = await self._session.execute(stmt)
+        result = await self._session.execute(_sum_importe_por_prestador_stmt())
         return [(row[0], float(row[1]), row[2]) for row in result.all()]
 
     async def delete(self, liquidacion_id: UUID) -> bool:
@@ -238,6 +190,71 @@ class SqlAlchemyLiquidacionRepository:
         await self._session.delete(row)
         await self._session.flush()
         return True
+
+
+def _filtered_stmt(
+    prestador_id: UUID | None, estado: str | None, periodo: str | None, anio: int | None
+) -> Select[tuple[LiquidacionModel]]:
+    stmt = select(LiquidacionModel).order_by(
+        LiquidacionModel.periodo.desc(), LiquidacionModel.fecha_importacion.desc()
+    )
+    if prestador_id is not None:
+        stmt = stmt.where(LiquidacionModel.prestador_id == prestador_id)
+    if estado is not None:
+        stmt = stmt.where(LiquidacionModel.estado == estado)
+    if periodo is not None:
+        stmt = stmt.where(LiquidacionModel.periodo == periodo)
+    if anio is not None:
+        stmt = stmt.where(LiquidacionModel.periodo.startswith(f"{anio}-"))
+    return stmt
+
+
+def _count_pendientes_stmt() -> Select[Any]:
+    from src.modules.liquidaciones.infrastructure.models.prestador_model import (
+        LiquidacionPrestadorModel,
+    )
+
+    liq = LiquidacionModel.__table__
+    pst = LiquidacionPrestadorModel.__table__
+    return (
+        select(pst.c.nombre_corto, func.count().label("n"))
+        .select_from(liq)
+        .join(pst, liq.c.prestador_id == pst.c.id)
+        .where(liq.c.estado.notin_([ESTADO_APROBADA, ESTADO_CERRADA]))
+        .group_by(pst.c.nombre_corto)
+        .order_by(func.count().desc())
+    )
+
+
+def _sum_importe_por_periodo_stmt() -> Select[Any]:
+    return (
+        select(
+            LiquidacionModel.periodo,
+            func.sum(LiquidacionModel.total_importe).label("total"),
+        )
+        .group_by(LiquidacionModel.periodo)
+        .order_by(LiquidacionModel.periodo)
+    )
+
+
+def _sum_importe_por_prestador_stmt() -> Select[Any]:
+    from src.modules.liquidaciones.infrastructure.models.prestador_model import (
+        LiquidacionPrestadorModel,
+    )
+
+    liq = LiquidacionModel.__table__
+    pst = LiquidacionPrestadorModel.__table__
+    return (
+        select(
+            pst.c.nombre_corto,
+            func.sum(liq.c.total_importe).label("total"),
+            func.count().label("n"),
+        )
+        .select_from(liq)
+        .join(pst, liq.c.prestador_id == pst.c.id)
+        .group_by(pst.c.nombre_corto)
+        .order_by(func.sum(liq.c.total_importe).desc())
+    )
 
 
 def _to_entity(row: LiquidacionModel) -> Liquidacion:
