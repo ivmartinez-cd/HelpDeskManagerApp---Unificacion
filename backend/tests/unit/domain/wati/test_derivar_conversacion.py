@@ -68,10 +68,33 @@ def test_el_bot_no_cuenta_como_respuesta_una_vez_que_termino_su_flujo() -> None:
 
 
 def test_mientras_el_bot_sigue_atendiendo_no_se_reclama_respuesta_humana() -> None:
-    conv = _derivar([msg_cliente(0, "hola"), msg_bot(1), msg_cliente(2, "1"), msg_bot(3)])
+    eventos = [msg_cliente(0, "hola"), msg_bot(1), msg_cliente(2, "1"), msg_bot(3)]
+
+    conv = derivar_conversacion("549111", "Cliente", eventos, en(4))
 
     assert conv.bot_activo
-    assert not conv.espera_respuesta(AHORA)
+    assert not conv.espera_respuesta(en(4))
+
+
+def test_bot_colgado_sin_ended_deja_de_tapar_la_espera_pasada_la_gracia() -> None:
+    """Caso real (2026-09-14): el bot dice "la comunicamos con un técnico" y
+    WATI nunca manda "Ended:" -- el cliente insiste y nadie lo ve nunca."""
+    eventos = [msg_bot(0), msg_cliente(1, "hola"), msg_cliente(2, "sigo esperando")]
+
+    conv = _derivar(eventos)  # AHORA = en(60): 60 min sin novedades del bot
+
+    assert not conv.bot_activo
+    assert conv.espera_respuesta(AHORA)
+    assert conv.esperando_desde == en(1)
+
+
+def test_bot_colgado_sin_ended_sigue_activo_dentro_de_la_gracia() -> None:
+    eventos = [msg_bot(0), msg_cliente(1, "hola")]
+
+    conv = derivar_conversacion("549111", "Cliente", eventos, en(2))
+
+    assert conv.bot_activo
+    assert not conv.espera_respuesta(en(2))
 
 
 def test_cierre_sin_respuesta_no_queda_pendiente() -> None:

@@ -7,17 +7,27 @@
 - Un cierre de ticket sin respuesta también la cierra (no hay nada que
   responder), pero un mensaje posterior la reabre.
 - Mientras el chatbot sigue en su flujo (mandó mensajes y no hubo "Ended:"
-  ni intervención humana después) no se reclama respuesta humana.
+  ni intervención humana después) no se reclama respuesta humana -- pero
+  solo por una gracia corta (`_GRACIA_BOT`) desde que el cliente volvió a
+  escribir: si WATI nunca manda el "Ended:" (pasa, ver `_GRACIA_BOT`), el
+  flujo no puede quedar activo para siempre.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from src.modules.wati.domain.entities.conversacion import ConversacionWati
 from src.modules.wati.domain.value_objects.evento import EventoWati
 
 _BOT = "bot"
 _MAX_TEXTO = 160
+_GRACIA_BOT = timedelta(minutes=5)
+"""Caso real (2026-09-14): el bot dice "la comunicamos con un técnico" y
+WATI nunca manda el evento ticket "Ended:" -- el flujo queda colgado y sin
+esta gracia `bot_activo` seguía True para siempre, ocultando la espera. Los
+pasos del bot son casi instantáneos (segundos), así que 5 minutos sin un
+mensaje nuevo del bot (ni cierre ni respuesta humana) alcanza para asumir
+que el flujo terminó."""
 
 
 @dataclass
@@ -71,13 +81,14 @@ class _Acumulador:
         if nombre and nombre.strip().lower() != _BOT:
             self.operador_nombre = nombre.strip()
 
-    @property
-    def bot_activo(self) -> bool:
+    def bot_activo(self, ahora: datetime) -> bool:
         if self.ultimo_bot is None:
             return False
         if self.fin_bot is not None and self.fin_bot >= self.ultimo_bot:
             return False
-        return self.ultima_humana is None or self.ultima_humana < self.ultimo_bot
+        if self.ultima_humana is not None and self.ultima_humana >= self.ultimo_bot:
+            return False
+        return ahora - self.ultimo_bot < _GRACIA_BOT
 
 
 def derivar_conversacion(
@@ -98,7 +109,7 @@ def derivar_conversacion(
         ultima_respuesta_at=acum.ultima_humana,
         ultimo_bot_at=acum.ultimo_bot,
         cerrada_at=acum.cerrada,
-        bot_activo=acum.bot_activo,
+        bot_activo=acum.bot_activo(ahora),
         ultimo_texto_cliente=acum.ultimo_texto,
         sincronizado_at=ahora,
     )
