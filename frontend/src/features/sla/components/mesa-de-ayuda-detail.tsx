@@ -1,8 +1,10 @@
 "use client";
 
-import { Headset, RefreshCw } from "lucide-react";
+import { Copy, Headset, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { mesaAyudaApi } from "../api/mesa-ayuda-api";
+import { formatearMesaAyudaWhatsapp } from "../lib/formato-whatsapp";
 import { mesaDeAyudaColumns } from "./mesa-de-ayuda-columns";
 import type { IncidenteMesaAyuda } from "../types/mesa-ayuda";
 import { useSession } from "@/services/session-provider";
@@ -11,6 +13,7 @@ import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { StatsTable } from "@/shared/components/ui/stats-table";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { cn } from "@/shared/utils/cn";
+import { copiarTexto } from "@/shared/utils/clipboard";
 
 const TODOS = "__todos__";
 const PAGE_SIZE = 100;
@@ -106,6 +109,16 @@ export function MesaDeAyudaDetail() {
     paginaActual * PAGE_SIZE,
   );
 
+  const handleCopiarWhatsapp = async () => {
+    const texto = formatearMesaAyudaWhatsapp(filtrados);
+    try {
+      await copiarTexto(texto);
+      toast.success("Tabla copiada, lista para pegar en WhatsApp.");
+    } catch {
+      toast.error("No se pudo copiar. Probá de nuevo o copiá manualmente.");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 px-9 py-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -134,6 +147,15 @@ export function MesaDeAyudaDetail() {
               </option>
             ))}
           </BrandSelect>
+          <BrandButton
+            variant="outline"
+            onClick={() => void handleCopiarWhatsapp()}
+            disabled={loading || filtrados.length === 0}
+            title="Copiar la tabla de abajo como texto para pegar en WhatsApp"
+          >
+            <Copy className="h-4 w-4" />
+            Copiar para WhatsApp
+          </BrandButton>
           <BrandButton onClick={handleRefresh} loading={refreshing} disabled={loading}>
             {!refreshing && <RefreshCw className="h-4 w-4" />}
             Actualizar

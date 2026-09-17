@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Printer, RefreshCw, SearchX } from "lucide-react";
+import { Copy, Printer, RefreshCw, SearchX } from "lucide-react";
+import { toast } from "sonner";
 import { contadoresApi } from "../api/contadores-api";
+import { formatearAnexosPendientesWhatsapp } from "../lib/formato-whatsapp-anexos";
 import type {
   AnexoPendiente,
   AnexosPendientesResumen,
@@ -18,6 +20,7 @@ import {
 } from "@/shared/components/ui/brand-form";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
+import { copiarTexto } from "@/shared/utils/clipboard";
 
 const FILTROS_ESTADO = [
   { value: "todos", label: "Todos" },
@@ -94,6 +97,18 @@ export function AnexosPendientesView() {
     void load(true).finally(() => setRefreshing(false));
   };
 
+  const handleCopiarWhatsapp = async () => {
+    if (!rows || rows.length === 0) return;
+    const periodoLabel = resumen ? formatPeriodo(resumen.periodo_referencia) : "";
+    const texto = formatearAnexosPendientesWhatsapp(rows, periodoLabel);
+    try {
+      await copiarTexto(texto);
+      toast.success("Tabla copiada, lista para pegar en WhatsApp.");
+    } catch {
+      toast.error("No se pudo copiar. Probá de nuevo o copiá manualmente.");
+    }
+  };
+
   useEffect(() => {
     void load();
   }, [load]);
@@ -119,6 +134,15 @@ export function AnexosPendientesView() {
           <BrandButton variant="outline" loading={refreshing} onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4" />
             Actualizar
+          </BrandButton>
+          <BrandButton
+            variant="outline"
+            onClick={() => void handleCopiarWhatsapp()}
+            disabled={!rows || rows.length === 0}
+            title="Copiar la tabla de abajo como texto para pegar en WhatsApp"
+          >
+            <Copy className="h-4 w-4" />
+            Copiar para WhatsApp
           </BrandButton>
           <BrandButton onClick={() => window.print()} disabled={!rows || rows.length === 0}>
             <Printer className="h-4 w-4" />

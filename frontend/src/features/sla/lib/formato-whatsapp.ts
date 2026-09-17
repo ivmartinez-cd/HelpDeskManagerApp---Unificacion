@@ -1,3 +1,6 @@
+import type { IncidenteDerivado } from "../types/derivados";
+import type { IncidenteMesaAyuda } from "../types/mesa-ayuda";
+import type { IncidenteSinCerrar } from "../types/pendientes";
 import type { IncidenteVencido } from "../types/sla";
 
 // Se probó primero una tabla monospace (```...```) con columnas alineadas a
@@ -61,6 +64,101 @@ export function formatearTablaWhatsapp(
 
   return [
     `📋 *Tablero SLA — vencidos ${periodoLabel}*`,
+    `${incidentes.length} incidentes`,
+    "",
+    bloques.join("\n\n\n"),
+  ].join("\n");
+}
+
+// Mismos criterios de agrupado/anclas que arriba, adaptados a cada shape de
+// "Incidentes sin consultar" / "Pendientes a Cerrar" / "Mesa de Ayuda" — no
+// comparten columnas con IncidenteVencido así que no reutilizan sus formatters.
+
+function agruparPor<T>(incidentes: T[], clave: (row: T) => string): [string, T[]][] {
+  const grupos = new Map<string, T[]>();
+  for (const row of incidentes) {
+    const lista = grupos.get(clave(row)) ?? [];
+    lista.push(row);
+    grupos.set(clave(row), lista);
+  }
+  return [...grupos.entries()].sort((a, b) => b[1].length - a[1].length);
+}
+
+function formatearIncidenteDerivado(row: IncidenteDerivado): string {
+  const marca = row.demorado ? "🔴" : "🟡";
+  return (
+    `${marca} *#${row.id_incidente}* — ${row.cliente}, ${row.sucursal}\n` +
+    `🖨️ ${row.modelo} — ${row.tecnico}\n` +
+    `📅 Ingreso ${formatFecha(row.fecha_ingreso)} · sin consultar hace *${row.dias_desde_ingreso} día(s)*`
+  );
+}
+
+export function formatearDerivadosWhatsapp(
+  incidentes: IncidenteDerivado[],
+  periodoLabel: string,
+): string {
+  const bloques = agruparPor(incidentes, (row) => row.tecnico).map(([tecnico, filas]) =>
+    [
+      `👤 *${tecnico}* (${filas.length})`,
+      "",
+      filas.map(formatearIncidenteDerivado).join("\n\n"),
+    ].join("\n"),
+  );
+
+  return [
+    `📋 *Incidentes sin consultar — ${periodoLabel}*`,
+    `${incidentes.length} incidentes`,
+    "",
+    bloques.join("\n\n\n"),
+  ].join("\n");
+}
+
+function formatearPendienteACerrar(row: IncidenteSinCerrar): string {
+  const marca = row.dias_en_estado >= 30 ? "🔴" : "🟡";
+  return (
+    `${marca} *#${row.id_incidente}* — ${row.cliente}, ${row.sucursal}\n` +
+    `🖨️ ${row.modelo} — ${row.tecnico}\n` +
+    `📅 Ingreso ${formatFecha(row.fecha_ingreso)} → Finalizado ${formatFecha(row.fecha_finalizacion)} · *${row.dias_en_estado} día(s)* sin cerrar`
+  );
+}
+
+export function formatearPendientesACerrarWhatsapp(incidentes: IncidenteSinCerrar[]): string {
+  const bloques = agruparPor(incidentes, (row) => row.tecnico).map(([tecnico, filas]) =>
+    [
+      `👤 *${tecnico}* (${filas.length})`,
+      "",
+      filas.map(formatearPendienteACerrar).join("\n\n"),
+    ].join("\n"),
+  );
+
+  return [
+    `📋 *Pendientes a Cerrar*`,
+    `${incidentes.length} incidentes`,
+    "",
+    bloques.join("\n\n\n"),
+  ].join("\n");
+}
+
+function formatearIncidenteMesaAyuda(row: IncidenteMesaAyuda): string {
+  const marca = row.demorado ? "🔴" : "🟡";
+  return (
+    `${marca} *#${row.id_incidente}* — ${row.cliente}, ${row.sucursal}\n` +
+    `🖨️ ${row.modelo}\n` +
+    `📅 Ingreso ${formatFecha(row.fecha_ingreso)} · *${row.dias_transcurridos} día(s)* transcurridos`
+  );
+}
+
+export function formatearMesaAyudaWhatsapp(incidentes: IncidenteMesaAyuda[]): string {
+  const bloques = agruparPor(incidentes, (row) => row.operador).map(([operador, filas]) =>
+    [
+      `👤 *${operador}* (${filas.length})`,
+      "",
+      filas.map(formatearIncidenteMesaAyuda).join("\n\n"),
+    ].join("\n"),
+  );
+
+  return [
+    `📋 *Incidentes Mesa de Ayuda*`,
     `${incidentes.length} incidentes`,
     "",
     bloques.join("\n\n\n"),

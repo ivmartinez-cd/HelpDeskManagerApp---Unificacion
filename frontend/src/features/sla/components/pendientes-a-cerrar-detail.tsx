@@ -1,8 +1,10 @@
 "use client";
 
-import { ClipboardList, RefreshCw } from "lucide-react";
+import { ClipboardList, Copy, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { pendientesApi } from "../api/pendientes-api";
+import { formatearPendientesACerrarWhatsapp } from "../lib/formato-whatsapp";
 import type { IncidenteSinCerrar } from "../types/pendientes";
 import { prestadoresApi } from "@/features/prestadores/api/prestadores-api";
 import type { OperadorOption } from "@/features/prestadores/types/prestadores";
@@ -11,6 +13,7 @@ import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
 import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { StatsTable, type StatsColumn } from "@/shared/components/ui/stats-table";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { copiarTexto } from "@/shared/utils/clipboard";
 import { incidentUrl } from "@/shared/utils/incident-link";
 
 const MIS_PST = "__mis_pst__";
@@ -154,6 +157,20 @@ export function PendientesACerrarDetail() {
       .finally(() => setRefreshing(false));
   };
 
+  const handleCopiarWhatsapp = async () => {
+    const texto = formatearPendientesACerrarWhatsapp(incidentes);
+    try {
+      await copiarTexto(texto);
+      toast.success(
+        total > incidentes.length
+          ? `Copiado — solo esta página (${incidentes.length} de ${total} pendientes a cerrar).`
+          : "Tabla copiada, lista para pegar en WhatsApp.",
+      );
+    } catch {
+      toast.error("No se pudo copiar. Probá de nuevo o copiá manualmente.");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 px-9 py-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -185,6 +202,15 @@ export function PendientesACerrarDetail() {
               ))}
             </BrandSelect>
           )}
+          <BrandButton
+            variant="outline"
+            onClick={() => void handleCopiarWhatsapp()}
+            disabled={loading || incidentes.length === 0}
+            title="Copiar la tabla de abajo como texto para pegar en WhatsApp"
+          >
+            <Copy className="h-4 w-4" />
+            Copiar para WhatsApp
+          </BrandButton>
           <div className="flex flex-col items-end gap-1">
             <BrandButton
               onClick={handleRefresh}

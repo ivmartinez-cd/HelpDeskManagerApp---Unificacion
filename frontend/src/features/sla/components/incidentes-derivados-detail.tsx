@@ -1,17 +1,20 @@
 "use client";
 
-import { FileQuestion } from "lucide-react";
+import { Copy, FileQuestion } from "lucide-react";
+import { toast } from "sonner";
 import {
   DERIVADOS_PAGE_SIZE,
   MIS_PST,
   TODOS,
   useIncidentesDerivados,
 } from "../hooks/use-incidentes-derivados";
+import { formatearDerivadosWhatsapp } from "../lib/formato-whatsapp";
 import { incidentesDerivadosColumns } from "./incidentes-derivados-columns";
-import { BrandSelect } from "@/shared/components/ui/brand-form";
+import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
 import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { StatsTable } from "@/shared/components/ui/stats-table";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { copiarTexto } from "@/shared/utils/clipboard";
 
 export function IncidentesDerivadosDetail() {
   const {
@@ -29,6 +32,25 @@ export function IncidentesDerivadosDetail() {
     error,
     isSuperadmin,
   } = useIncidentesDerivados();
+
+  const handleCopiarWhatsapp = async () => {
+    const [anio, mes] = monthValue.split("-").map(Number);
+    const periodoLabel = new Date(anio, mes - 1, 1).toLocaleDateString("es-AR", {
+      month: "long",
+      year: "numeric",
+    });
+    const texto = formatearDerivadosWhatsapp(incidentes, periodoLabel);
+    try {
+      await copiarTexto(texto);
+      toast.success(
+        total > incidentes.length
+          ? `Copiado — solo esta página (${incidentes.length} de ${total} sin consultar).`
+          : "Tabla copiada, lista para pegar en WhatsApp.",
+      );
+    } catch {
+      toast.error("No se pudo copiar. Probá de nuevo o copiá manualmente.");
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6 px-9 py-8">
@@ -73,6 +95,15 @@ export function IncidentesDerivadosDetail() {
               ))}
             </BrandSelect>
           )}
+          <BrandButton
+            variant="outline"
+            onClick={() => void handleCopiarWhatsapp()}
+            disabled={loading || incidentes.length === 0}
+            title="Copiar la tabla de abajo como texto para pegar en WhatsApp"
+          >
+            <Copy className="h-4 w-4" />
+            Copiar para WhatsApp
+          </BrandButton>
         </div>
       </div>
 
