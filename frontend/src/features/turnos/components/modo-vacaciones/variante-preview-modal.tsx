@@ -2,8 +2,13 @@
 
 import { useMemo, useState } from "react";
 import type { GrillaVariante, VarianteSlot } from "../../types/grilla-variantes";
-import { DIAS_SEMANA } from "../../lib/variante-validacion";
-import { formatFecha, hhmm } from "../../lib/variante-estado";
+import {
+  DIAS_SEMANA,
+  diaInicialVigente,
+  diaSemanaDeIso,
+  diasActivosDeRango,
+} from "../../lib/variante-validacion";
+import { formatFecha, hhmm, hoyIso } from "../../lib/variante-estado";
 import { TurnosTimeline, type TimelineShift } from "../turnos-timeline";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
@@ -38,15 +43,25 @@ function aTimeline(slots: VarianteSlot[]): TimelineShift[] {
  * a ver los operadores en Inicio durante la vigencia. Si todos los días con
  * franjas son idénticos se muestra un solo timeline; si no, pestañas por día. */
 export function VariantePreviewModal({ variante, ordenCasillas, onClose }: VariantePreviewModalProps) {
+  // Sólo los días que la vigencia alcanza: mostrar un lunes en una grilla que
+  // corre de martes a viernes hace creer que ese día se va a aplicar.
   const porDia = useMemo(() => {
+    const delRango = diasActivosDeRango(variante.desde, variante.hasta);
     const mapa = new Map<number, VarianteSlot[]>();
-    for (const s of variante.slots) mapa.set(s.diaSemana, [...(mapa.get(s.diaSemana) ?? []), s]);
+    for (const s of variante.slots) {
+      if (delRango && !delRango.has(s.diaSemana)) continue;
+      mapa.set(s.diaSemana, [...(mapa.get(s.diaSemana) ?? []), s]);
+    }
     return Array.from(mapa.entries()).sort(([a], [b]) => a - b);
-  }, [variante.slots]);
+  }, [variante.slots, variante.desde, variante.hasta]);
 
   const dias = porDia.map(([d]) => d);
   const todosIguales = porDia.length > 1 && new Set(porDia.map(([, s]) => firmaDia(s))).size === 1;
-  const [diaActivo, setDiaActivo] = useState<number>(dias[0] ?? 0);
+  // Arranca en el día de hoy cuando la grilla ya está vigente: es el que se
+  // contrasta contra Turnos del día.
+  const [diaActivo, setDiaActivo] = useState<number>(() =>
+    diaInicialVigente(undefined, diaSemanaDeIso(hoyIso()), dias),
+  );
   const slotsVisibles = todosIguales ? porDia[0][1] : (porDia.find(([d]) => d === diaActivo)?.[1] ?? []);
 
   const rotuloDias = todosIguales

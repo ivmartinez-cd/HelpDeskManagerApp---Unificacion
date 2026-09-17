@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "@/services/http-client";
 import { grillaVariantesApi } from "../../api/grilla-variantes-api";
 import type { Casilla, Slot, UserOption } from "../../types/turnos";
@@ -10,15 +10,9 @@ import type {
   GrillaVariante,
   GrillaVariantePayload,
 } from "../../types/grilla-variantes";
-import {
-  DIAS_SEMANA,
-  advertenciasDeOperadores,
-  diasActivosDeRango,
-  erroresDeFranjas,
-  franjasSinOperador,
-  huecosDeCobertura,
-} from "../../lib/variante-validacion";
+import { DIAS_SEMANA, diaInicialVigente, diaSemanaDeIso } from "../../lib/variante-validacion";
 import { formatDiaMes, hhmm } from "../../lib/variante-estado";
+import { useVarianteDerivados } from "../../hooks/use-variante-derivados";
 import { VarianteAdvertencias } from "./variante-advertencias";
 import { VarianteDiaTabs } from "./variante-dia-tabs";
 import { VarianteFranjasPorDia } from "./variante-franjas-por-dia";
@@ -79,56 +73,16 @@ export function VarianteEditor({
   const [franjas, setFranjas] = useState<FranjaEditable[]>(() =>
     variante ? desdeVariante(variante) : [],
   );
-  const [diaActivo, setDiaActivo] = useState(0);
+  const [diaElegido, setDiaElegido] = useState(0);
   const [ausencias, setAusencias] = useState<AdvertenciaCobertura[]>([]);
   const [precargando, setPrecargando] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const nombreCasilla = useCallback(
-    (id: string) => casillas.find((c) => c.id === id)?.nombre ?? "?",
-    [casillas],
-  );
-  const nombreUser = useCallback(
-    (id: string) => users.find((u) => u.id === id)?.fullName ?? id,
-    [users],
-  );
-  const ausenciaPorUser = useMemo(
-    () => new Map(ausencias.filter((a) => a.userId).map((a) => [a.userId as string, a])),
-    [ausencias],
-  );
-  const opcionesOperador = useMemo(
-    () =>
-      users.map((u) => {
-        const aus = ausenciaPorUser.get(u.id);
-        return {
-          id: u.id,
-          label: u.fullName,
-          sublabel:
-            aus && aus.desde && aus.hasta
-              ? `vacaciones ${formatDiaMes(aus.desde)}–${formatDiaMes(aus.hasta)}`
-              : undefined,
-        };
-      }),
-    [users, ausenciaPorUser],
-  );
-
-  const errores = useMemo(
-    () => erroresDeFranjas(franjas, nombreCasilla),
-    [franjas, nombreCasilla],
-  );
-  const operadoresSolapados = useMemo(
-    () => advertenciasDeOperadores(franjas, nombreCasilla, nombreUser),
-    [franjas, nombreCasilla, nombreUser],
-  );
-  const diasActivos = useMemo(() => diasActivosDeRango(desde, hasta), [desde, hasta]);
-
-  const huecos = useMemo(() => huecosDeCobertura(franjas, titular, diasActivos), [franjas, titular, diasActivos]);
-  const sinOperador = useMemo(() => franjasSinOperador(franjas), [franjas]);
-  const keysConError = useMemo(() => new Set(errores.flatMap((e) => e.keys)), [errores]);
-  const rangoInvalido = Boolean(desde && hasta && hasta < desde);
-  const puedeGuardar =
-    Boolean(desde && hasta) && !rangoInvalido && franjas.length > 0 && errores.length === 0;
+  const {
+    nombreCasilla, opcionesOperador, errores, operadoresSolapados, diasActivos,
+    huecos, sinOperador, keysConError, rangoInvalido, diaActivo, franjasVigentes, puedeGuardar,
+  } = useVarianteDerivados({ casillas, titular, users, franjas, ausencias, desde, hasta, diaElegido });
 
   const precargar = useCallback(() => {
     if (!desde || !hasta || hasta < desde) return;
@@ -137,8 +91,11 @@ export function VarianteEditor({
     grillaVariantesApi
       .precargar(ausenteId, desde, hasta)
       .then((p) => {
+        // Sólo los días que el rango alcanza: una grilla de martes a viernes no
+        // debe traer franjas de lunes — nunca se aplicarían en Inicio.
+        const slots = p.slots.filter((s) => !diasActivos || diasActivos.has(s.diaSemana));
         setFranjas(
-          p.slots.map((s) => ({
+          slots.map((s) => ({
             key: nuevaKey(),
             casillaId: s.casillaId,
             diaSemana: s.diaSemana,
@@ -150,15 +107,20 @@ export function VarianteEditor({
         );
         setAusencias(p.advertencias);
         setMotivo((m) => m || (p.ausenteNombre ? `Ausencia ${p.ausenteNombre}` : `Ajuste ${formatDiaMes(desde)}`));
-        const primerDia = p.slots.find((s) => s.requiereCobertura)?.diaSemana ?? p.slots[0]?.diaSemana;
-        if (primerDia !== undefined) setDiaActivo(primerDia);
+        const conCobertura = slots.find((s) => s.requiereCobertura)?.diaSemana;
+        setDiaElegido(
+          conCobertura ??
+            diaInicialVigente(diasActivos, diaSemanaDeIso(desde), [
+              ...new Set(slots.map((s) => s.diaSemana)),
+            ]),
+        );
       })
       .catch((err: unknown) => {
         console.error("Error al precargar la grilla titular:", err);
         setError(err instanceof ApiError ? err.message : "No se pudo precargar la grilla titular.");
       })
       .finally(() => setPrecargando(false));
-  }, [ausenteId, desde, hasta]);
+  }, [ausenteId, desde, hasta, diasActivos]);
 
   // Llegada desde Aprobaciones (query params): precarga una sola vez al montar.
   const autoPrecargado = useRef(false);
@@ -181,7 +143,7 @@ export function VarianteEditor({
       const base = prev.filter((f) => f.diaSemana === diaActivo);
       const otros = prev.filter((f) => f.diaSemana === diaActivo || f.diaSemana > 4);
       const copias = [0, 1, 2, 3, 4]
-        .filter((d) => d !== diaActivo)
+        .filter((d) => d !== diaActivo && (!diasActivos || diasActivos.has(d)))
         .flatMap((d) => base.map((f) => ({ ...f, key: nuevaKey(), diaSemana: d })));
       return [...otros, ...copias];
     });
@@ -195,7 +157,7 @@ export function VarianteEditor({
       origenTexto: origenTexto.trim() || null,
       desde,
       hasta,
-      slots: franjas.map((f) => ({
+      slots: franjasVigentes.map((f) => ({
         casillaId: f.casillaId,
         diaSemana: f.diaSemana,
         horaInicio: f.horaInicio,
@@ -257,7 +219,8 @@ export function VarianteEditor({
       <VarianteDiaTabs
         franjas={franjas}
         diaActivo={diaActivo}
-        setDiaActivo={setDiaActivo}
+        setDiaActivo={setDiaElegido}
+        diasActivos={diasActivos}
         hayFranjasDelDia={franjasDelDia.length > 0}
         onCopiarALaborables={copiarDiaALaborables}
       />

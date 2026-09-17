@@ -189,3 +189,24 @@ export function diasActivosDeRango(desde: string, hasta: string): Set<number> | 
   }
   return undefined;
 }
+
+/** "2026-09-15" → 0=lunes … 6=domingo (fecha local, no UTC). */
+export function diaSemanaDeIso(iso: string): number {
+  const d = new Date(iso + "T12:00:00").getDay();
+  return d === 0 ? 6 : d - 1;
+}
+
+/** Día en el que conviene pararse al abrir editor/preview: hoy si el rango lo
+ * alcanza, si no el primer día que sí aplica. `diasActivos` undefined (rango
+ * de una semana o más) = todos los días aplican. */
+export function diaInicialVigente(
+  diasActivos: Set<number> | undefined,
+  hoyDia: number,
+  disponibles?: number[],
+): number {
+  const candidatos = (disponibles ?? [0, 1, 2, 3, 4, 5, 6]).filter(
+    (d) => !diasActivos || diasActivos.has(d),
+  );
+  if (candidatos.length === 0) return disponibles?.[0] ?? hoyDia;
+  return candidatos.includes(hoyDia) ? hoyDia : candidatos[0];
+}
