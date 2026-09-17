@@ -33,6 +33,9 @@ def _fila(falta_contador: bool = True) -> DetalleContadorRow:
         mascara_ip=None,
         falta_contador=falta_contador,
         tipo="FALTA CONTADOR Mono" if falta_contador else None,
+        nro_proceso=99089,
+        nombre_anexo="Anexo Principal",
+        periodo_facturacion="2026-08",
     )
 
 

@@ -15,6 +15,9 @@ export interface DetalleContadorRow {
   mascara_ip: string | null;
   falta_contador: boolean;
   tipo: string | null;
+  nro_proceso: number;
+  nombre_anexo: string;
+  periodo_facturacion: string;
 }
 
 export interface DetalleContadorProceso {

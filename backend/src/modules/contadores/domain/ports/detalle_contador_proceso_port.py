@@ -28,3 +28,10 @@ class DetalleContadorProcesoPort(Protocol):
         en `Factura_Contador` (distinto de "existe pero sin filas", que no
         es un caso real verificado — todo proceso facturable tiene equipos)."""
         ...
+
+    async def fetch_by_grupo(self, id_grupo_economico: int) -> DetalleContadorProceso:
+        """Trae de una sola vez todos los procesos/anexos recientes del
+        grupo económico (cada fila viaja con su propio `nro_proceso`), para
+        que la pantalla muestre todo el parque del cliente sin tener que
+        elegir un proceso puntual primero. Grupo sin filas no es error."""
+        ...

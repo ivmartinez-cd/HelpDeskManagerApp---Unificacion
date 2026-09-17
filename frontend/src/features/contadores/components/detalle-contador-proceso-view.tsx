@@ -9,6 +9,7 @@ import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import { SearchableSelect } from "@/shared/components/ui/searchable-select";
 import { BrandButton, brandButtonClasses } from "@/shared/components/ui/brand-form";
 import { compareSortValues, useTableSort, type SortValue } from "@/shared/hooks/use-table-sort";
+import { cn } from "@/shared/utils/cn";
 import { proyeccionApi } from "../api/proyeccion-api";
 import { detalleContadorProcesoApi, type AlcanceReporte } from "../api/detalle-contador-proceso-api";
 import { formatearTablaWhatsapp } from "../lib/formato-whatsapp";
@@ -33,7 +34,13 @@ function valorOrdenable(fila: DetalleContadorRow, key: SortKey): SortValue {
  * (misma noción de "cliente" del resto del módulo). Toda columna es
  * ordenable (pedido del usuario: "toda tabla se tiene que poder filtrar
  * por la columna" — acá se resolvió como orden ascendente/descendente al
- * click del título, mismo patrón que `proyeccion-tabla.tsx`). */
+ * click del título, mismo patrón que `proyeccion-tabla.tsx`).
+ *
+ * Elegir un cliente ya trae TODOS sus anexos/procesos recientes en una sola
+ * consulta (pedido del usuario, 2026-09-17: antes había que elegir también
+ * un proceso puntual para poder cargar). El selector de Proceso queda como
+ * filtro opcional sobre lo ya cargado — click de nuevo sobre la opción
+ * elegida la deselecciona (comportamiento propio de `SearchableSelect`). */
 export function DetalleContadorProcesoView() {
   const [grupos, setGrupos] = useState<GrupoEconomicoOption[]>([]);
   const [procesos, setProcesos] = useState<ProcesoOption[]>([]);
@@ -59,40 +66,50 @@ export function DetalleContadorProcesoView() {
     void proyeccionApi.listProcesos(Number(idGrupo)).then(setProcesos);
   }, [idGrupo]);
 
+  // Disparado desde el onChange del selector de cliente (evento de usuario,
+  // no un efecto) para no resetear cargando/error/detalle sincrónicamente
+  // dentro de un useEffect (react-hooks/set-state-in-effect) — mismo
+  // criterio que ya usa `proyeccion-view.tsx` para el resto del combo.
+  const cargarDetallePorGrupo = (idGrupoElegido: string) => {
+    setCargando(true);
+    setError(null);
+    setDetalle(null);
+    detalleContadorProcesoApi
+      .getDetallePorGrupo(Number(idGrupoElegido))
+      .then(setDetalle)
+      .catch((err: unknown) =>
+        setError(err instanceof Error ? err.message : "No se pudo cargar el cliente."),
+      )
+      .finally(() => setCargando(false));
+  };
+
   const procesosVisibles = idGrupo == null ? [] : procesos;
   const idProcesoValido = procesosVisibles.some((p) => String(p.nro_proceso) === idProceso)
     ? idProceso
     : null;
 
-  const cargar = () => {
-    if (!idProcesoValido) return;
-    setCargando(true);
-    setError(null);
-    setDetalle(null);
-    detalleContadorProcesoApi
-      .getDetalle(Number(idProcesoValido))
-      .then(setDetalle)
-      .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : "No se pudo cargar el proceso."),
-      )
-      .finally(() => setCargando(false));
-  };
+  const clienteLabel = grupos.find((g) => String(g.id) === idGrupo)?.descripcion ?? detalle?.cliente ?? "";
+
+  const filasDelCliente = useMemo(() => {
+    if (!detalle) return [];
+    if (!idProcesoValido) return detalle.filas;
+    return detalle.filas.filter((f) => String(f.nro_proceso) === idProcesoValido);
+  }, [detalle, idProcesoValido]);
 
   const filasVisibles = useMemo(() => {
-    if (!detalle) return [];
     const filtradas =
-      alcance === "todos" ? detalle.filas : detalle.filas.filter((f) => f.falta_contador);
+      alcance === "todos" ? filasDelCliente : filasDelCliente.filter((f) => f.falta_contador);
     return [...filtradas].sort((a, b) =>
       compareSortValues(valorOrdenable(a, sort.key), valorOrdenable(b, sort.key), sort.direction),
     );
-  }, [detalle, alcance, sort]);
+  }, [filasDelCliente, alcance, sort]);
 
-  const faltantes = detalle ? detalle.filas.filter((f) => f.falta_contador).length : 0;
+  const faltantes = filasDelCliente.filter((f) => f.falta_contador).length;
 
   const handleCopiarWhatsapp = async () => {
     if (!detalle) return;
     const alcanceLabel = ALCANCES.find((a) => a.value === alcance)?.label ?? "";
-    const texto = formatearTablaWhatsapp(filasVisibles, detalle.cliente, alcanceLabel);
+    const texto = formatearTablaWhatsapp(filasVisibles, clienteLabel, alcanceLabel);
     try {
       await copiarTexto(texto);
       toast.success("Tabla copiada, lista para pegar en WhatsApp.");
@@ -103,8 +120,8 @@ export function DetalleContadorProcesoView() {
 
   const handleCopiarMail = async () => {
     if (!detalle) return;
-    const html = formatearTablaMailHtml(filasVisibles, detalle.cliente);
-    const texto = formatearTablaMailTexto(filasVisibles, detalle.cliente);
+    const html = formatearTablaMailHtml(filasVisibles, clienteLabel);
+    const texto = formatearTablaMailTexto(filasVisibles, clienteLabel);
     try {
       await copiarHtmlYTexto(html, texto);
       toast.success("Tabla copiada con formato, lista para pegar en un mail.");
@@ -129,7 +146,8 @@ export function DetalleContadorProcesoView() {
         </h1>
         <p className="font-body text-sm text-muted-foreground">
           Reconstrucción del reporte &ldquo;Detalle de contadores por nro de proceso&rdquo; — elegí
-          el proceso y mostrá todo el parque o solo los equipos con falta de contador.
+          un cliente para traer todo su parque, y si querés acotalo a un anexo puntual con el
+          selector de Proceso.
         </p>
       </div>
 
@@ -143,14 +161,18 @@ export function DetalleContadorProcesoView() {
             onChange={(id) => {
               setIdGrupo(id);
               setIdProceso(null);
-              setDetalle(null);
+              if (id == null) {
+                setDetalle(null);
+              } else {
+                cargarDetallePorGrupo(id);
+              }
             }}
           />
         </div>
         <div className="w-[280px]">
           <SearchableSelect
-            label="Proceso"
-            placeholder={idGrupo ? "Elegir proceso…" : "Elegí primero un cliente"}
+            label="Proceso (opcional, filtra un anexo)"
+            placeholder={idGrupo ? "Todos los anexos" : "Elegí primero un cliente"}
             disabled={!idGrupo}
             options={procesosVisibles.map((p) => ({
               id: String(p.nro_proceso),
@@ -161,9 +183,6 @@ export function DetalleContadorProcesoView() {
             onChange={setIdProceso}
           />
         </div>
-        <BrandButton loading={cargando} disabled={!idProcesoValido} onClick={cargar}>
-          Cargar
-        </BrandButton>
       </div>
 
       {error && (
@@ -175,9 +194,9 @@ export function DetalleContadorProcesoView() {
       {detalle && (
         <>
           <KpiGrid className="sm:grid-cols-3">
-            <KpiTile label="Cliente" value={detalle.cliente} />
+            <KpiTile label="Cliente" value={clienteLabel} />
             <KpiTile label="Falta contador" value={String(faltantes)} tone="danger" />
-            <KpiTile label="Total equipos" value={String(detalle.filas.length)} />
+            <KpiTile label="Total equipos" value={String(filasDelCliente.length)} />
           </KpiGrid>
 
           <div className="flex flex-wrap items-end justify-between gap-3">
@@ -187,7 +206,7 @@ export function DetalleContadorProcesoView() {
                 value: a.value,
                 label:
                   a.value === "todos"
-                    ? `${a.label} (${detalle.filas.length})`
+                    ? `${a.label} (${filasDelCliente.length})`
                     : `${a.label} (${faltantes})`,
               }))}
               value={alcance}
@@ -212,14 +231,24 @@ export function DetalleContadorProcesoView() {
                 <Mail className="h-4 w-4" />
                 Copiar para mail
               </BrandButton>
-              <a
-                href={detalleContadorProcesoApi.getXlsxUrl(Number(idProcesoValido), alcance)}
-                className={brandButtonClasses({ variant: "outline" })}
-                title="Descarga el mismo listado de abajo en un Excel, listo para mandarle al cliente"
-              >
-                <Download className="h-4 w-4" />
-                Descargar XLSX
-              </a>
+              {idProcesoValido ? (
+                <a
+                  href={detalleContadorProcesoApi.getXlsxUrl(Number(idProcesoValido), alcance)}
+                  className={brandButtonClasses({ variant: "outline" })}
+                  title="Descarga el mismo listado de abajo en un Excel, listo para mandarle al cliente"
+                >
+                  <Download className="h-4 w-4" />
+                  Descargar XLSX
+                </a>
+              ) : (
+                <span
+                  className={cn(brandButtonClasses({ variant: "outline" }), "cursor-not-allowed opacity-60")}
+                  title="Elegí un proceso puntual en el selector para descargar el Excel de ese anexo"
+                >
+                  <Download className="h-4 w-4" />
+                  Descargar XLSX
+                </span>
+              )}
             </div>
           </div>
 
@@ -227,10 +256,14 @@ export function DetalleContadorProcesoView() {
         </>
       )}
 
-      {!detalle && !cargando && (
+      {!idGrupo && !cargando && (
         <p className="text-sm text-muted-foreground">
-          Elegí un cliente y un proceso, y apretá Cargar.
+          Elegí un cliente para ver todo su parque de equipos.
         </p>
+      )}
+
+      {cargando && !detalle && (
+        <p className="text-sm text-muted-foreground">Cargando el parque del cliente…</p>
       )}
     </div>
   );

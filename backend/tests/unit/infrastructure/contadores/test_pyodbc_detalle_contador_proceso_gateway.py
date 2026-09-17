@@ -13,6 +13,7 @@ import pytest
 
 from src.modules.contadores.domain.errors import ProcesoNoEncontradoError
 from src.modules.contadores.infrastructure.siges.detalle_contador_proceso_query import (
+    DETALLE_CONTADORES_POR_GRUPO_SQL,
     DETALLE_CONTADORES_POR_PROCESO_SQL,
 )
 from src.modules.contadores.infrastructure.siges.pyodbc_detalle_contador_proceso_gateway import (
@@ -52,6 +53,9 @@ def _fila(**overrides: Any) -> SimpleNamespace:
         estado_maquina="Activa en Cliente",
         direccion_ip=" ",
         mascara_ip=" ",
+        nro_proceso=99089,
+        nombre_anexo="Anexo Principal ",
+        periodo_facturacion="2026-08",
         falta_contador=1,
         es_automatico=0,
     )
@@ -79,6 +83,9 @@ async def test_fetch_falta_contador_muestra_contador_actual_en_cero_y_tipo() -> 
     assert fila.mascara_ip is None
     assert fila.falta_contador is True
     assert fila.tipo == "FALTA CONTADOR Mono"
+    assert fila.nro_proceso == 99089
+    assert fila.nombre_anexo == "Anexo Principal"
+    assert fila.periodo_facturacion == "2026-08"
     assert runner.llamadas == [
         (DETALLE_CONTADORES_POR_PROCESO_SQL, (99089,), "detalle_contador_proceso"),
     ]
@@ -122,6 +129,38 @@ async def test_fetch_sin_filas_levanta_proceso_no_encontrado() -> None:
 
     with pytest.raises(ProcesoNoEncontradoError):
         await gateway.fetch(1)
+
+
+async def test_fetch_by_grupo_junta_filas_de_varios_procesos() -> None:
+    filas = [
+        _fila(nro_proceso=99089, nombre_anexo="Anexo A", periodo_facturacion="2026-08"),
+        _fila(
+            nro_proceso=99070,
+            nombre_anexo="Anexo B",
+            periodo_facturacion="2026-07",
+            serie="OTRA",
+        ),
+    ]
+    runner = FakeRunner({DETALLE_CONTADORES_POR_GRUPO_SQL: filas})
+    gateway = PyodbcDetalleContadorProcesoGateway(runner)  # type: ignore[arg-type]
+
+    resultado = await gateway.fetch_by_grupo(42)
+
+    assert resultado.cliente == "ISSN"
+    assert [f.nro_proceso for f in resultado.filas] == [99089, 99070]
+    assert runner.llamadas == [
+        (DETALLE_CONTADORES_POR_GRUPO_SQL, (42,), "detalle_contador_proceso"),
+    ]
+
+
+async def test_fetch_by_grupo_sin_filas_no_levanta_error() -> None:
+    runner = FakeRunner({})
+    gateway = PyodbcDetalleContadorProcesoGateway(runner)  # type: ignore[arg-type]
+
+    resultado = await gateway.fetch_by_grupo(42)
+
+    assert resultado.cliente == ""
+    assert resultado.filas == []
 
 
 async def test_error_de_pyodbc_se_envuelve_en_external_service_error() -> None:

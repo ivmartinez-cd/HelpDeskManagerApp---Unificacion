@@ -19,6 +19,9 @@ from src.modules.auth.presentation.dependencies.permissions import require_permi
 from src.modules.contadores.application.use_cases.generar_reporte_xlsx_detalle_proceso import (
     GenerarReporteXlsxDetalleProcesoUseCase,
 )
+from src.modules.contadores.application.use_cases.get_detalle_contador_por_grupo import (
+    GetDetalleContadorPorGrupoUseCase,
+)
 from src.modules.contadores.application.use_cases.get_detalle_contador_proceso import (
     GetDetalleContadorProcesoUseCase,
 )
@@ -38,6 +41,18 @@ router = APIRouter(prefix="/api/contadores/detalle-proceso", tags=["contadores-d
 _require_view = Depends(require_permission(VIEW))
 _require_export = Depends(require_permission(EXPORT))
 _XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+@router.get("/por-grupo/{id_grupo_economico}")
+async def get_detalle_contador_por_grupo(
+    id_grupo_economico: int, _: Identity = _require_view
+) -> DetalleContadorProcesoSchema:
+    """Trae de una sola vez todos los procesos/anexos recientes del cliente
+    (pedido del usuario: elegir cliente ya trae todo el parque, el selector
+    de Proceso queda como filtro opcional sobre lo ya cargado)."""
+    use_case = GetDetalleContadorPorGrupoUseCase(get_detalle_contador_proceso_gateway())
+    resultado = await use_case.execute(id_grupo_economico)
+    return DetalleContadorProcesoSchema.from_domain(resultado)
 
 
 @router.get("/{nro_proceso}")

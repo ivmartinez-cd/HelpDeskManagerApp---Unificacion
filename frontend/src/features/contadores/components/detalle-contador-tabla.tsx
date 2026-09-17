@@ -11,6 +11,7 @@ import type { DetalleContadorRow } from "../types/detalle-contador-proceso";
 
 export type SortKey =
   | "empresa"
+  | "nombre_anexo"
   | "sucursal"
   | "modelo"
   | "serie"
@@ -28,6 +29,7 @@ export type SortKey =
 
 export const SORT_KEYS: readonly SortKey[] = [
   "empresa",
+  "nombre_anexo",
   "sucursal",
   "modelo",
   "serie",
@@ -60,21 +62,22 @@ function formatFecha(iso: string | null): string {
  * largo que su columna se trunca con "…" (`title` muestra el valor
  * completo al pasar el mouse). */
 const ANCHOS_COL = [
-  8, // Empresa
-  9.4, // Sucursal
-  9.4, // Modelo
-  7.2, // Serie
-  8, // Sector
-  5.8, // Toma Ant.
-  5.4, // Cont. Ant.
-  5.8, // Toma Act.
-  5.4, // Cont. Act.
-  5.4, // Impr.
-  8, // Tipo
-  4, // Clase
-  7.2, // Estado
-  5.4, // Dir. IP
-  5.4, // Másc. IP
+  9, // Empresa
+  9, // Proceso/Anexo
+  9.5, // Sucursal
+  9.5, // Modelo
+  6, // Serie
+  6, // Sector
+  5, // Toma Ant.
+  4.5, // Cont. Ant.
+  5, // Toma Act.
+  4.5, // Cont. Act.
+  4.5, // Impr.
+  9, // Tipo
+  3.5, // Clase
+  6, // Estado
+  4.5, // Dir. IP
+  4.5, // Másc. IP
 ] as const;
 
 interface DetalleContadorTablaProps {
@@ -95,6 +98,7 @@ export function DetalleContadorTabla({ filas, sort, onToggleSort }: DetalleConta
         <thead>
           <tr className="border-b border-border font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
             <SortableHeader column={{ key: "empresa", label: "Empresa" }} sort={sort} onToggleSort={onToggleSort} thClassName="truncate px-2.5 py-2.5" />
+            <SortableHeader column={{ key: "nombre_anexo", label: "Proceso/Anexo" }} sort={sort} onToggleSort={onToggleSort} thClassName="truncate px-2.5 py-2.5" />
             <SortableHeader column={{ key: "sucursal", label: "Sucursal" }} sort={sort} onToggleSort={onToggleSort} thClassName="truncate px-2.5 py-2.5" />
             <SortableHeader column={{ key: "modelo", label: "Modelo" }} sort={sort} onToggleSort={onToggleSort} thClassName="truncate px-2.5 py-2.5" />
             <SortableHeader column={{ key: "serie", label: "Serie" }} sort={sort} onToggleSort={onToggleSort} thClassName="truncate px-2.5 py-2.5" />
@@ -114,7 +118,7 @@ export function DetalleContadorTabla({ filas, sort, onToggleSort }: DetalleConta
         <tbody className="divide-y divide-border">
           {filas.length === 0 ? (
             <tr>
-              <td colSpan={15} className="px-2.5 py-6 text-center text-muted-foreground">
+              <td colSpan={16} className="px-2.5 py-6 text-center text-muted-foreground">
                 Sin filas para este alcance.
               </td>
             </tr>
@@ -123,6 +127,12 @@ export function DetalleContadorTabla({ filas, sort, onToggleSort }: DetalleConta
               <tr key={`${fila.serie}-${fila.nombre_clase}-${i}`} className="hover:bg-muted/30">
                 <td className="truncate px-2.5 py-2" title={fila.empresa}>
                   {fila.empresa}
+                </td>
+                <td
+                  className="truncate px-2.5 py-2"
+                  title={`${fila.periodo_facturacion} · ${fila.nombre_anexo} · Proc. ${fila.nro_proceso}`}
+                >
+                  {fila.periodo_facturacion} · {fila.nombre_anexo}
                 </td>
                 <td className="truncate px-2.5 py-2" title={fila.sucursal}>
                   {fila.sucursal}

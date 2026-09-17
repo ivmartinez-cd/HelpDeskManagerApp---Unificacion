@@ -40,10 +40,24 @@ reporte compartida por el usuario (serie `CNB1R4C0MV`, ISSN → Nro_Proceso
 
 `ID_ClaseContador IN (10, 20)` (Mono/Color) es el mismo recorte que ya usa
 `FALTA_CONTADOR_POR_PROCESO_SQL` — no hay evidencia de que el reporte legacy
-incluya otras clases, y no se investigó esa hipótesis."""
+incluya otras clases, y no se investigó esa hipótesis.
 
-DETALLE_CONTADORES_POR_PROCESO_SQL = """
-SELECT
+`nro_proceso`/`nombre_anexo`/`periodo_facturacion` se suman via el mismo join
+`Factura_Anexo`→`Anexo` que ya usa `PROCESOS_POR_GRUPO_ECONOMICO_SQL`
+(`proceso_estimacion_query.py`) para no perder de qué proceso/anexo es cada
+fila cuando `DETALLE_CONTADORES_POR_GRUPO_SQL` junta varios procesos en una
+sola respuesta.
+
+`DETALLE_CONTADORES_POR_GRUPO_SQL` acota a `Anexo` activos (`ID_EstadoAnexo = 1`,
+mismo filtro que `PROCESOS_POR_GRUPO_ECONOMICO_SQL` usa para el combo de
+Proceso) y, dentro de esos, a su `Nro_Proceso` más reciente (subquery por
+`PeriodoHasta DESC`) — probado sin acotar contra un cliente real (Autopistas
+del Sol, grupo 543): sin el recorte de proceso más reciente trae 7604 filas
+de 148 procesos desde 2019 (todo el historial), no el parque actual.
+"Elegí un cliente y traé todos los anexos" (pedido del usuario) es el
+snapshot vigente de cada anexo activo, uno por anexo, no el historial."""
+
+_SELECT_FILAS = """
     E.Den_Comercial         AS empresa,
     Suc.Descripcion         AS sucursal,
     Sec.descripcion         AS sector,
@@ -58,11 +72,17 @@ SELECT
     EstMaq.Descripcion      AS estado_maquina,
     M.Direccion_IP          AS direccion_ip,
     M.Mascara_IP            AS mascara_ip,
+    FC.Nro_Proceso          AS nro_proceso,
+    A.NombreAnexo           AS nombre_anexo,
+    CONVERT(varchar(7), FA.PeriodoDesde, 120) AS periodo_facturacion,
     CASE WHEN FC.ID_ContadorActual = FC.ID_ContadorAnterior THEN 1 ELSE 0 END
         AS falta_contador,
     CASE WHEN FC.ID_ContadorActual <> FC.ID_ContadorAnterior
               AND FC.ImpresionesReales = 0
          THEN 1 ELSE 0 END AS es_automatico
+"""
+
+_FROM_FILAS = """
 FROM       dbo.Factura_Contador FC     WITH (NOLOCK)
 INNER JOIN dbo.Maquina          M      WITH (NOLOCK) ON M.ID_Maquina     = FC.ID_Maquina
 INNER JOIN dbo.Empresa          E      WITH (NOLOCK) ON E.ID_Empresa     = FC.ID_Empresa
@@ -73,7 +93,29 @@ LEFT  JOIN dbo.Sector           Sec    WITH (NOLOCK) ON Sec.Id_Empresa   = FC.ID
 INNER JOIN dbo.Articulo         Art    WITH (NOLOCK) ON Art.ID_Articulo  = M.ID_Articulo
 INNER JOIN dbo.ArtGen           AG     WITH (NOLOCK) ON AG.Id_ArtGen     = Art.ID_ArtGen
 LEFT  JOIN dbo.Estado_Maquina   EstMaq WITH (NOLOCK) ON EstMaq.Id        = M.ID_Estado_Maquina
+INNER JOIN dbo.Factura_Anexo    FA     WITH (NOLOCK) ON FA.Nro_Proceso   = FC.Nro_Proceso
+INNER JOIN dbo.Anexo            A      WITH (NOLOCK) ON A.ID_Anexo       = FA.ID_Anexo
+"""
+
+DETALLE_CONTADORES_POR_PROCESO_SQL = f"""
+SELECT{_SELECT_FILAS}
+{_FROM_FILAS}
 WHERE FC.Nro_Proceso = ?
   AND FC.ID_ClaseContador IN (10, 20)
 ORDER BY M.Nro_Serie, FC.ID_ClaseContador
+"""
+
+DETALLE_CONTADORES_POR_GRUPO_SQL = f"""
+SELECT{_SELECT_FILAS}
+{_FROM_FILAS}
+WHERE A.ID_GrupoE = ?
+  AND A.ID_EstadoAnexo = 1
+  AND FC.ID_ClaseContador IN (10, 20)
+  AND FA.Nro_Proceso = (
+        SELECT TOP 1 FA2.Nro_Proceso
+        FROM dbo.Factura_Anexo FA2 WITH (NOLOCK)
+        WHERE FA2.ID_Anexo = FA.ID_Anexo
+        ORDER BY FA2.PeriodoHasta DESC, FA2.Nro_Proceso DESC
+      )
+ORDER BY A.NombreAnexo, M.Nro_Serie, FC.ID_ClaseContador
 """

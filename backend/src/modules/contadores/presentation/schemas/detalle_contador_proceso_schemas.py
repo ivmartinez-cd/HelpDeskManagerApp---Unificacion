@@ -26,6 +26,9 @@ class DetalleContadorRowSchema(BaseModel):
     mascara_ip: str | None
     falta_contador: bool
     tipo: str | None
+    nro_proceso: int
+    nombre_anexo: str
+    periodo_facturacion: str
 
 
 class DetalleContadorProcesoSchema(BaseModel):

@@ -21,6 +21,7 @@ from src.modules.contadores.domain.value_objects.detalle_contador_row import (
     DetalleContadorRow,
 )
 from src.modules.contadores.infrastructure.siges.detalle_contador_proceso_query import (
+    DETALLE_CONTADORES_POR_GRUPO_SQL,
     DETALLE_CONTADORES_POR_PROCESO_SQL,
 )
 from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
@@ -47,6 +48,23 @@ class PyodbcDetalleContadorProcesoGateway:
         filas = [_to_row(r) for r in rows]
         return DetalleContadorProceso(cliente=filas[0].empresa, filas=filas)
 
+    async def fetch_by_grupo(self, id_grupo_economico: int) -> DetalleContadorProceso:
+        """A diferencia de `fetch`, un grupo económico sin filas en la
+        ventana consultada es un estado legítimo (cliente sin procesos
+        recientes), no un "grupo no encontrado" — no levanta error, devuelve
+        vacío."""
+        rows = await self._runner.fetch_all(
+            DETALLE_CONTADORES_POR_GRUPO_SQL,
+            (id_grupo_economico,),
+            gateway="detalle_contador_proceso",
+            log_message=(
+                "Fallo la consulta de detalle de contadores por grupo económico "
+                "contra Siges/ORION"
+            ),
+        )
+        filas = [_to_row(r) for r in rows]
+        return DetalleContadorProceso(cliente=filas[0].empresa if filas else "", filas=filas)
+
 
 def _to_row(row: Any) -> DetalleContadorRow:
     falta_contador = bool(row.falta_contador)
@@ -63,6 +81,9 @@ def _to_row(row: Any) -> DetalleContadorRow:
         mascara_ip=(row.mascara_ip or "").strip() or None,
         falta_contador=falta_contador,
         tipo=_tipo(falta_contador, bool(row.es_automatico), nombre_clase),
+        nro_proceso=row.nro_proceso,
+        nombre_anexo=row.nombre_anexo.strip(),
+        periodo_facturacion=row.periodo_facturacion,
         **_lecturas(row, falta_contador),
     )
 
