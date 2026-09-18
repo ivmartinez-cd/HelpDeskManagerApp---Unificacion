@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Switch } from "@/shared/components/ui/switch";
+import { copiarTexto } from "@/shared/utils/clipboard";
 import { useDesktopNotifications } from "../../hooks/use-desktop-notifications";
 import type { NotificationSupport } from "../../hooks/use-desktop-notifications";
 
@@ -60,7 +61,7 @@ export function PreferencesCard() {
 
   async function handleCopyBrowserUrl() {
     try {
-      await navigator.clipboard.writeText(BROWSER_SETTINGS_URL);
+      await copiarTexto(BROWSER_SETTINGS_URL);
       setTestMessage("Dirección copiada — pegala en la barra de direcciones.");
     } catch {
       setTestMessage("No se pudo copiar. Escribila manualmente en la barra de direcciones.");

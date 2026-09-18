@@ -17,6 +17,7 @@ import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
 import { StatsTable } from "@/shared/components/ui/stats-table";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { copiarTexto } from "@/shared/utils/clipboard";
 
 export function SlaDetail() {
   const {
@@ -46,7 +47,7 @@ export function SlaDetail() {
     });
     const texto = formatearTablaWhatsapp(incidentes, periodoLabel);
     try {
-      await navigator.clipboard.writeText(texto);
+      await copiarTexto(texto);
       toast.success(
         totalIncidentes > incidentes.length
           ? `Copiado — solo esta página (${incidentes.length} de ${totalIncidentes} vencidos filtrados).`
