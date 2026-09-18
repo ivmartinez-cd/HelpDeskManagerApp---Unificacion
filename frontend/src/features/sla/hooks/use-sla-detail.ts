@@ -8,12 +8,10 @@ import type { OperadorOption } from "@/features/prestadores/types/prestadores";
 import { useSession } from "@/services/session-provider";
 
 export const MIS_PST = "__mis_pst__";
-export const TODOS = "__todos__";
 export const CD_LOCAL = "__cd_local__";
 
 function scopeToFiltro(scope: string): FiltroOperador | undefined {
   if (scope === MIS_PST) return undefined;
-  if (scope === TODOS) return { todos: true };
   if (scope === CD_LOCAL) return { soloLocal: true };
   return { operadorId: scope };
 }
@@ -71,7 +69,7 @@ export function useSlaDetail() {
 
   useEffect(() => {
     if (!canVerOperadores) return;
-    prestadoresApi.listOperadores().then(setOperadores).catch(() => setOperadores([]));
+    prestadoresApi.listOperadores({ conPst: true }).then(setOperadores).catch(() => setOperadores([]));
   }, [canVerOperadores]);
 
   useEffect(() => {

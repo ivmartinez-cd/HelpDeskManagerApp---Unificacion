@@ -122,10 +122,19 @@ async def list_prestadores(
 async def list_operadores(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=1000),
+    con_pst: bool = Query(
+        default=False,
+        alias="conPst",
+        description="Solo usuarios con al menos un PST activo asignado (operadores de MDA)",
+    ),
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[OperadorOptionResponse]:
     users = await SqlAlchemyUserProvider(db).list_all_active_users()
+    if con_pst:
+        prestadores = await SqlAlchemyPrestadorRepository(db).list_all()
+        con_cartera = {p.operador_id for p in prestadores}
+        users = [u for u in users if u.id in con_cartera]
     return Page.of([OperadorOptionResponse.from_info(u) for u in users], page=page, size=size)
 
 

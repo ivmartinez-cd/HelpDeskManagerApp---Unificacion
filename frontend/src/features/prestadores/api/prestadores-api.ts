@@ -17,9 +17,10 @@ export const prestadoresApi = {
 
   getPrestador: (id: string) => httpClient.get<Prestador>(`/api/prestadores/${id}`),
 
-  listOperadores: () =>
+  /** `conPst`: solo usuarios con al menos un PST activo asignado (operadores de MDA). */
+  listOperadores: (opts?: { conPst?: boolean }) =>
     httpClient
-      .get<Page<OperadorOption>>("/api/prestadores/operadores")
+      .get<Page<OperadorOption>>(`/api/prestadores/operadores${opts?.conPst ? "?conPst=true" : ""}`)
       .then((p) => p.items),
 
   createPrestador: (payload: CreatePrestadorPayload) =>
