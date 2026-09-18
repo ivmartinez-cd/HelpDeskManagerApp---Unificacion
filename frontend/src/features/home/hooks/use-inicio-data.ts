@@ -262,22 +262,36 @@ function addDiasIso(iso: string, n: number): string {
 export interface ProximosEquipo {
   vacaciones: Solicitud[];
   homeOffice: Ausencia[];
+  bajas: Ausencia[];
 }
 
-/** Próximos 21 días: vacaciones aprobadas y home office agendado, para la
- * card "Próximos días del equipo" de Inicio. Reusa /solicitudes y /ausencias
- * filtrando por start_date en rango (mismo semántica en ambos repos). */
+// /ausencias filtra por start_date (no por solapamiento, a diferencia de
+// /solicitudes): para no perder una ausencia que ya empezó y sigue en curso
+// se pide desde antes y se descarta acá lo que ya terminó.
+const AUSENCIA_EN_CURSO_DIAS_ATRAS = 60;
+
+/** Próximos 21 días (más lo que está en curso hoy): vacaciones aprobadas,
+ * home office agendado y bajas por enfermedad aprobadas, para la card
+ * "Equipo" de Inicio. Reusa /solicitudes y /ausencias. */
 export function useProximosEquipo(enabled: boolean, refreshKey = 0): Remote<ProximosEquipo> {
   return useRemote(
     enabled,
     async () => {
-      const desde = hoyIso();
-      const hasta = addDiasIso(desde, PROXIMOS_EQUIPO_DIAS);
-      const [vacaciones, homeOffice] = await Promise.all([
-        solicitudesApi.list({ status: "APPROVED", desde, hasta }),
-        asistenciasApi.list({ tipo: "HOME_OFFICE", desde, hasta }),
+      const hoy = hoyIso();
+      const hasta = addDiasIso(hoy, PROXIMOS_EQUIPO_DIAS);
+      const desdeAusencias = addDiasIso(hoy, -AUSENCIA_EN_CURSO_DIAS_ATRAS);
+      const vigentes = (lista: Ausencia[]) => lista.filter((a) => a.endDate >= hoy);
+      const [vacaciones, homeOffice, bajas] = await Promise.all([
+        solicitudesApi.list({ status: "APPROVED", desde: hoy, hasta }),
+        asistenciasApi.list({ tipo: "HOME_OFFICE", desde: desdeAusencias, hasta }),
+        asistenciasApi.list({
+          tipo: "BAJA_ENFERMEDAD",
+          status: "APPROVED",
+          desde: desdeAusencias,
+          hasta,
+        }),
       ]);
-      return { vacaciones, homeOffice };
+      return { vacaciones, homeOffice: vigentes(homeOffice), bajas: vigentes(bajas) };
     },
     "los próximos días del equipo",
     refreshKey,

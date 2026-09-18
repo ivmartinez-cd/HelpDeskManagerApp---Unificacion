@@ -5,17 +5,35 @@ import { DashboardCard } from "@/features/home/components/dashboard-card";
 import { CardEmpty, CardLink, CountBadge } from "@/features/home/components/dashboard-card-bits";
 import type { ProximosEquipo } from "@/features/home/hooks/use-inicio-data";
 import { formatRango, iniciales } from "../lib/fechas";
+import type { Ausencia } from "../types/vacaciones";
 
 interface Item {
   id: string;
-  tipo: "vacacion" | "home_office";
+  tipo: "vacacion" | "home_office" | "baja";
   nombre: string;
   color: string;
   startDate: string;
   endDate: string;
 }
 
-function armarLista({ vacaciones, homeOffice }: ProximosEquipo): Item[] {
+const ETIQUETA: Record<Item["tipo"], string> = {
+  vacacion: "Vacaciones",
+  home_office: "Home office",
+  baja: "Baja por enfermedad",
+};
+
+function ausenciaItem(a: Ausencia, tipo: Item["tipo"]): Item {
+  return {
+    id: a.id,
+    tipo,
+    nombre: a.empleadoNombre,
+    color: a.empleadoColor,
+    startDate: a.startDate,
+    endDate: a.endDate,
+  };
+}
+
+function armarLista({ vacaciones, homeOffice, bajas }: ProximosEquipo): Item[] {
   const items: Item[] = [
     ...vacaciones.map((s) => ({
       id: s.id,
@@ -25,14 +43,8 @@ function armarLista({ vacaciones, homeOffice }: ProximosEquipo): Item[] {
       startDate: s.startDate,
       endDate: s.endDate,
     })),
-    ...homeOffice.map((a) => ({
-      id: a.id,
-      tipo: "home_office" as const,
-      nombre: a.empleadoNombre,
-      color: a.empleadoColor,
-      startDate: a.startDate,
-      endDate: a.endDate,
-    })),
+    ...homeOffice.map((a) => ausenciaItem(a, "home_office")),
+    ...bajas.map((a) => ausenciaItem(a, "baja")),
   ];
   return items.sort((a, b) => a.startDate.localeCompare(b.startDate));
 }
@@ -54,7 +66,7 @@ export function ProximosEquipoCard({
     <DashboardCard
       icon={CalendarDays}
       title="Equipo"
-      subtitle="Vacaciones y home office · 3 semanas"
+      subtitle="Vacaciones, home office y bajas · 3 semanas"
       loading={loading}
       error={error}
       onRetry={onRetry}
@@ -78,7 +90,7 @@ export function ProximosEquipoCard({
                   {item.nombre}
                 </span>
                 <span className="block truncate font-body text-[11px] text-muted-foreground">
-                  {item.tipo === "home_office" ? "Home office" : "Vacaciones"} · {formatRango(item.startDate, item.endDate)}
+                  {ETIQUETA[item.tipo]} · {formatRango(item.startDate, item.endDate)}
                 </span>
               </span>
             </li>

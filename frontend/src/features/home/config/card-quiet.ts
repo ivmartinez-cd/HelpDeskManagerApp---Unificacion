@@ -69,7 +69,8 @@ export function quietCards(d: DashboardData): Map<CardId, QuietInfo> {
     !eq.error &&
     eq.data &&
     eq.data.vacaciones.length === 0 &&
-    eq.data.homeOffice.length === 0
+    eq.data.homeOffice.length === 0 &&
+    eq.data.bajas.length === 0
   ) {
     add({ id: "proximos-equipo", label: "Equipo", texto: "nada agendado", href: "/vacaciones" });
   }
