@@ -4,6 +4,7 @@ from src.modules.sla.domain.entities.incidente_sla import IncidenteSla
 from src.modules.sla.domain.repositories.prestador_lookup import PrestadorLookup
 from src.modules.sla.domain.repositories.sla_snapshot_repository import SlaSnapshotRepository
 
+REGION_LOCAL = "LOCAL"
 AGENTE_LOCAL = "Local"
 AGENTE_SIN_OPERADOR = "Sin operador asignado"
 
@@ -43,14 +44,23 @@ class ListIncidentesVencidos:
         self._pst_lookup = pst_lookup
 
     async def execute(
-        self, periodo: int, *, siges_ids_filtro: list[int] | None = None
+        self,
+        periodo: int,
+        *,
+        siges_ids_filtro: list[int] | None = None,
+        solo_local: bool = False,
     ) -> list[IncidenteVencidoDTO]:
         """`siges_ids_filtro=None` trae todos los vencidos del período;
         con una lista (aunque esté vacía) filtra a esos `id_tecnico`
         exclusivamente -- lo resuelve la capa de presentación a partir del
-        operador logueado, este caso de uso no sabe nada de operadores."""
+        operador logueado, este caso de uso no sabe nada de operadores.
+        `solo_local=True` agrupa los vencidos de Canal Directo (región LOCAL),
+        que no tienen operador de PST; ignora `siges_ids_filtro`."""
         snapshot = await self._repo.get(periodo) or await self._refresher.execute(periodo)
-        incidentes = _filtrar_por_tecnico(snapshot.incidentes_vencidos, siges_ids_filtro)
+        if solo_local:
+            incidentes = [i for i in snapshot.incidentes_vencidos if i.region == REGION_LOCAL]
+        else:
+            incidentes = _filtrar_por_tecnico(snapshot.incidentes_vencidos, siges_ids_filtro)
         pst_to_operador = await self._pst_lookup.get_pst_to_operador_mapping()
         return [_to_dto(i, _agente(i, pst_to_operador)) for i in incidentes]
 
@@ -65,6 +75,6 @@ def _filtrar_por_tecnico(
 
 
 def _agente(incidente: IncidenteSla, pst_to_operador: dict[int, str]) -> str:
-    if incidente.region == "LOCAL":
+    if incidente.region == REGION_LOCAL:
         return AGENTE_LOCAL
     return pst_to_operador.get(incidente.id_tecnico, AGENTE_SIN_OPERADOR)

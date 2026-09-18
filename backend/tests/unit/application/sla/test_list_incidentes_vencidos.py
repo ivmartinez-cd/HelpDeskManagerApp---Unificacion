@@ -91,6 +91,19 @@ async def test_agente_es_local_para_cd_y_operador_del_pst_para_el_resto() -> Non
     assert agentes[3] == AGENTE_SIN_OPERADOR
 
 
+async def test_solo_local_deja_los_de_canal_directo_e_ignora_el_filtro_de_tecnicos() -> None:
+    incidentes = [
+        build_incidente(1, "CD", RESULTADO_VENCIDO, id_tecnico=100, region="LOCAL"),
+        build_incidente(2, "PST Trelew", RESULTADO_VENCIDO, id_tecnico=200, region="INTERIOR"),
+        build_incidente(3, "CD", RESULTADO_VENCIDO, id_tecnico=101, region="LOCAL"),
+    ]
+    use_case = _build_use_case(FakeSlaQueryGateway(incidentes))
+
+    result = await use_case.execute(202608, siges_ids_filtro=[200], solo_local=True)
+
+    assert [dto.id_incidente for dto in result] == [1, 3]
+
+
 async def test_filtro_vacio_no_devuelve_ningun_incidente() -> None:
     incidentes = [build_incidente(1, "PST Trelew", RESULTADO_VENCIDO, id_tecnico=100)]
     use_case = _build_use_case(FakeSlaQueryGateway(incidentes))

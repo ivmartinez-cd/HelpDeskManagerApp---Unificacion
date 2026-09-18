@@ -3,6 +3,7 @@
 import { Copy, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import {
+  CD_LOCAL,
   INCIDENTES_PAGE_SIZE,
   MIS_PST,
   TODOS,
@@ -87,6 +88,7 @@ export function SlaDetail() {
           >
             <option value={MIS_PST}>Mis PST</option>
             <option value={TODOS}>Todos</option>
+            <option value={CD_LOCAL}>CD Local</option>
             {canVerOperadores &&
               operadores.map((op) => (
                 <option key={op.id} value={op.id}>

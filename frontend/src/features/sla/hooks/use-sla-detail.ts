@@ -9,10 +9,12 @@ import { useSession } from "@/services/session-provider";
 
 export const MIS_PST = "__mis_pst__";
 export const TODOS = "__todos__";
+export const CD_LOCAL = "__cd_local__";
 
 function scopeToFiltro(scope: string): FiltroOperador | undefined {
   if (scope === MIS_PST) return undefined;
   if (scope === TODOS) return { todos: true };
+  if (scope === CD_LOCAL) return { soloLocal: true };
   return { operadorId: scope };
 }
 

@@ -58,6 +58,11 @@ async def list_incidentes_vencidos(
         alias="operadorId",
         description="Ver los PST de otro operador en vez de los propios",
     ),
+    solo_local: bool = Query(
+        default=False,
+        alias="soloLocal",
+        description="Solo los vencidos de Canal Directo (región LOCAL), sin filtro por operador",
+    ),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_MAX_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
     identity: Identity = _require_view,
@@ -70,10 +75,13 @@ async def list_incidentes_vencidos(
     operador_id`) — si no tiene ninguno asignado (ej. un admin sin cartera
     propia), se ve todo sin filtrar, porque forzar una vista vacía no sirve
     de nada. `todos=true` saltea el filtro explícitamente; `operadorId`
-    permite mirar la cartera de otro operador puntual."""
-    siges_ids_filtro = await _resolver_filtro_operador(db, identity, todos, operador_id)
+    permite mirar la cartera de otro operador puntual; `soloLocal=true` trae
+    los de Canal Directo (región LOCAL), que no pertenecen a ningún operador."""
+    siges_ids_filtro = (
+        None if solo_local else await _resolver_filtro_operador(db, identity, todos, operador_id)
+    )
     dtos = await build_list_incidentes_vencidos(db).execute(
-        periodo, siges_ids_filtro=siges_ids_filtro
+        periodo, siges_ids_filtro=siges_ids_filtro, solo_local=solo_local
     )
     items = [IncidenteVencidoSchema.model_validate(d) for d in dtos]
     return Page.of(items, page=page, size=size)

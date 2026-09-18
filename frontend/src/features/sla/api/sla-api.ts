@@ -8,6 +8,8 @@ export interface FiltroOperador {
   todos?: boolean;
   /** Ver los PST de otro operador puntual en vez de los propios. */
   operadorId?: string;
+  /** Solo los vencidos de Canal Directo (región LOCAL), sin operador de PST. */
+  soloLocal?: boolean;
 }
 
 function filtroQuery(filtro?: FiltroOperador): string {
@@ -15,6 +17,7 @@ function filtroQuery(filtro?: FiltroOperador): string {
   const params = new URLSearchParams();
   if (filtro.todos) params.set("todos", "true");
   if (filtro.operadorId) params.set("operadorId", filtro.operadorId);
+  if (filtro.soloLocal) params.set("soloLocal", "true");
   const qs = params.toString();
   return qs ? `&${qs}` : "";
 }
