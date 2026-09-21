@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ApiError } from "@/services/http-client";
 import { BrandButton, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { TimeInput } from "@/shared/components/ui/time-input";
 import { asistenciasApi } from "../api/asistencias-api";
 import { nombreCompleto, ordenarPorNombre } from "../lib/empleados";
 import { hoyIso } from "../lib/fechas";
@@ -175,18 +176,8 @@ export function AusenciaModal({ ausencia, empleados, esAdmin, onClose, onSaved }
 
         {tipo === "CAMBIO_HORARIO" && (
           <div className="grid grid-cols-2 gap-3">
-            <BrandInput
-              label="Horario desde"
-              type="time"
-              value={horaDesde}
-              onChange={(e) => setHoraDesde(e.target.value)}
-            />
-            <BrandInput
-              label="Horario hasta"
-              type="time"
-              value={horaHasta}
-              onChange={(e) => setHoraHasta(e.target.value)}
-            />
+            <TimeInput label="Horario desde" value={horaDesde} onChange={setHoraDesde} />
+            <TimeInput label="Horario hasta" value={horaHasta} onChange={setHoraHasta} />
           </div>
         )}
 

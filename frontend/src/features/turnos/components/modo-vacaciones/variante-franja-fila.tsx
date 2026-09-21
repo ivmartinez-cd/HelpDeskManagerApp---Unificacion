@@ -3,6 +3,7 @@
 import { Trash2 } from "lucide-react";
 import type { FranjaEditable } from "../../types/grilla-variantes";
 import { SearchableSelect, type SearchableSelectOption } from "@/shared/components/ui/searchable-select";
+import { TimeInput } from "@/shared/components/ui/time-input";
 import { cn } from "@/shared/utils/cn";
 
 interface VarianteFranjaFilaProps {
@@ -13,9 +14,6 @@ interface VarianteFranjaFilaProps {
   onChange: (cambios: Partial<FranjaEditable>) => void;
   onRemove: () => void;
 }
-
-const inputHoraClass =
-  "w-[104px] rounded-[8px] border border-border bg-card px-2.5 py-[7px] font-mono text-sm text-foreground outline-none focus:ring-2 focus:ring-brand-orange/40";
 
 /** Una franja del editor: re-cortar límites (inputs time), asignar operadores
  * (mismo catálogo que GET /users) y eliminar. `requiereCobertura` resalta
@@ -42,26 +40,18 @@ export function VarianteFranjaFila({
             : "border-border bg-card",
       )}
     >
-      <label className="flex flex-col gap-1 font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-        Inicio
-        <input
-          type="time"
-          aria-label={`Inicio ${etiqueta}`}
-          value={franja.horaInicio}
-          onChange={(e) => onChange({ horaInicio: e.target.value })}
-          className={inputHoraClass}
-        />
-      </label>
-      <label className="flex flex-col gap-1 font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-        Fin
-        <input
-          type="time"
-          aria-label={`Fin ${etiqueta}`}
-          value={franja.horaFin}
-          onChange={(e) => onChange({ horaFin: e.target.value })}
-          className={inputHoraClass}
-        />
-      </label>
+      <TimeInput
+        label="Inicio"
+        aria-label={`Inicio ${etiqueta}`}
+        value={franja.horaInicio}
+        onChange={(horaInicio) => onChange({ horaInicio })}
+      />
+      <TimeInput
+        label="Fin"
+        aria-label={`Fin ${etiqueta}`}
+        value={franja.horaFin}
+        onChange={(horaFin) => onChange({ horaFin })}
+      />
       <div className="min-w-[260px] flex-1">
         <SearchableSelect
           multiple

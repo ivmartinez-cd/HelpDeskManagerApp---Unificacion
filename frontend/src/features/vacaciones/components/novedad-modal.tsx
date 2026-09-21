@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ApiError } from "@/services/http-client";
 import { BrandButton, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { TimeInput } from "@/shared/components/ui/time-input";
 import { asistenciasApi } from "../api/asistencias-api";
 import { hoyIso } from "../lib/fechas";
 import { TIPO_AUSENCIA } from "../lib/tipos-ausencia";
@@ -92,18 +93,8 @@ export function NovedadModal({
 
         {esCambioHorario && (
           <div className="grid grid-cols-2 gap-3">
-            <BrandInput
-              label="Horario desde"
-              type="time"
-              value={horaDesde}
-              onChange={(e) => setHoraDesde(e.target.value)}
-            />
-            <BrandInput
-              label="Horario hasta"
-              type="time"
-              value={horaHasta}
-              onChange={(e) => setHoraHasta(e.target.value)}
-            />
+            <TimeInput label="Horario desde" value={horaDesde} onChange={setHoraDesde} />
+            <TimeInput label="Horario hasta" value={horaHasta} onChange={setHoraHasta} />
           </div>
         )}
 

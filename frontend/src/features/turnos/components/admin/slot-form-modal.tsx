@@ -2,8 +2,8 @@
 
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
 import { Modal } from "@/shared/components/ui/modal";
+import { TimeInput } from "@/shared/components/ui/time-input";
 import type { UserOption } from "../../types/turnos";
 
 interface Props {
@@ -44,10 +44,10 @@ export function SlotFormModal({
             <label className="font-body text-xs font-semibold text-foreground">
               Hora Inicio (HH:MM)
             </label>
-            <Input
-              type="time"
+            <TimeInput
+              aria-label="Hora Inicio"
               value={horaInicio}
-              onChange={(e) => setHoraInicio(e.target.value)}
+              onChange={setHoraInicio}
               required
             />
           </div>
@@ -55,12 +55,7 @@ export function SlotFormModal({
             <label className="font-body text-xs font-semibold text-foreground">
               Hora Fin (HH:MM)
             </label>
-            <Input
-              type="time"
-              value={horaFin}
-              onChange={(e) => setHoraFin(e.target.value)}
-              required
-            />
+            <TimeInput aria-label="Hora Fin" value={horaFin} onChange={setHoraFin} required />
           </div>
         </div>
 

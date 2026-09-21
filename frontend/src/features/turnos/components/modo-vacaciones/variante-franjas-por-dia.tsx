@@ -7,6 +7,7 @@ import type { SearchableSelectOption } from "@/shared/components/ui/searchable-s
 import type { Casilla } from "../../types/turnos";
 import type { FranjaEditable } from "../../types/grilla-variantes";
 import { cn } from "@/shared/utils/cn";
+import { useOrdenEstableFranjas } from "../../lib/variante-orden";
 import { VarianteFranjaFila } from "./variante-franja-fila";
 
 interface Props {
@@ -174,6 +175,7 @@ export function VarianteFranjasPorDia({
   }, [tabValido, casillas]);
 
   const casillaActivaObj = casillas.find((c) => c.id === tabValido);
+  const franjasOrdenadas = useOrdenEstableFranjas(franjasDelDia);
 
   return (
     <div className="flex flex-col gap-4">
@@ -231,9 +233,7 @@ export function VarianteFranjasPorDia({
       )}
 
       {casillasFiltradas.map((casilla) => {
-        const filas = franjasDelDia
-          .filter((f) => f.casillaId === casilla.id)
-          .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+        const filas = franjasOrdenadas.filter((f) => f.casillaId === casilla.id);
         return (
           <CasillaGrupo
             key={casilla.id}
