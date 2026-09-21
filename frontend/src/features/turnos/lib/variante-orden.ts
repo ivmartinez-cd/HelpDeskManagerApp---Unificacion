@@ -3,25 +3,27 @@
  * del tipeo (el input se corría bajo el cursor). Cada franja fija su
  * posición una sola vez, al aparecer; franjas existentes no se mueven. */
 
-import { useMemo, useRef } from "react";
+import { useState } from "react";
 import type { FranjaEditable } from "../types/grilla-variantes";
 
 export function useOrdenEstableFranjas(franjas: FranjaEditable[]): FranjaEditable[] {
-  const ordenRef = useRef<Map<string, number>>(new Map());
+  const [orden, setOrden] = useState<string[]>([]);
 
-  return useMemo(() => {
-    const orden = ordenRef.current;
-    const keysActuales = new Set(franjas.map((f) => f.key));
-    for (const key of orden.keys()) {
-      if (!keysActuales.has(key)) orden.delete(key);
-    }
+  const vigentes = new Set(franjas.map((f) => f.key));
+  const conservadas = orden.filter((key) => vigentes.has(key));
+  const conocidas = new Set(conservadas);
+  const nuevas = franjas
+    .filter((f) => !conocidas.has(f.key))
+    .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))
+    .map((f) => f.key);
+  const siguiente = [...conservadas, ...nuevas];
 
-    const nuevas = franjas
-      .filter((f) => !orden.has(f.key))
-      .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
-    const base = orden.size;
-    nuevas.forEach((f, i) => orden.set(f.key, base + i));
+  // Ajuste de estado durante el render (patrón documentado por React): se
+  // vuelve a renderizar de inmediato con el orden ya fijado.
+  if (siguiente.length !== orden.length || siguiente.some((key, i) => key !== orden[i])) {
+    setOrden(siguiente);
+  }
 
-    return [...franjas].sort((a, b) => (orden.get(a.key) ?? 0) - (orden.get(b.key) ?? 0));
-  }, [franjas]);
+  const posicion = new Map(siguiente.map((key, i) => [key, i]));
+  return [...franjas].sort((a, b) => (posicion.get(a.key) ?? 0) - (posicion.get(b.key) ?? 0));
 }
