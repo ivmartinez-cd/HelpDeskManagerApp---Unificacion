@@ -19,9 +19,16 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(payload, ensure_ascii=False)
 
 
+# Clientes HTTP/SOAP de terceros: en DEBUG vuelcan headers (Authorization de Insight) y sobres
+# SOAP con credenciales. Quedan en WARNING sea cual sea el nivel raíz.
+_QUIET_THIRD_PARTY_LOGGERS = ("httpcore", "httpx", "zeep", "urllib3")
+
+
 def configure_logging(level: str = "INFO") -> None:
     handler = logging.StreamHandler()
     handler.setFormatter(JsonFormatter())
     root = logging.getLogger()
     root.handlers = [handler]
     root.setLevel(level)
+    for name in _QUIET_THIRD_PARTY_LOGGERS:
+        logging.getLogger(name).setLevel(logging.WARNING)
