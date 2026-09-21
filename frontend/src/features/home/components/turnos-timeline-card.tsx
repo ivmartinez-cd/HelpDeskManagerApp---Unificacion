@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useSession } from "@/services/session-provider";
 
-import { CalendarClock, Clock } from "lucide-react";
+import { CalendarClock, Clock, RotateCw } from "lucide-react";
 import { useMemo } from "react";
 import { TurnosTimeline, ejeHorario, type TimelineShift } from "@/features/turnos/components/turnos-timeline";
 import { formatDiaMes } from "@/features/turnos/lib/variante-estado";
 import type { ResolvedShift, VarianteActiva } from "@/features/turnos/types/turnos";
+import { cn } from "@/shared/utils/cn";
 import { useNow } from "../hooks/use-now";
 import { DashboardCard } from "./dashboard-card";
 import { MiTurnoBanner } from "./mi-turno-banner";
@@ -87,6 +88,17 @@ export function TurnosTimelineCard({
               />
               {inHours ? `Ahora ${hhmm}` : `Fuera de horario · ${hhmm}`}
             </span>
+          )}
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              disabled={loading}
+              title="Actualizar turnos del día"
+              className="inline-flex shrink-0 items-center justify-center rounded-full border border-border p-1.5 text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
+            >
+              <RotateCw className={cn("h-3 w-3", loading && "animate-spin")} />
+            </button>
           )}
         </div>
       }
