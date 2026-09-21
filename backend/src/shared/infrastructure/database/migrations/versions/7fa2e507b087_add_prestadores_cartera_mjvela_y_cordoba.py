@@ -102,6 +102,23 @@ def _operador_ids(bind: sa.engine.Connection) -> dict[str, uuid.UUID]:
     }
 
 
+def _operador_saliente_id(
+    operador_ids: dict[str, uuid.UUID], email: str
+) -> uuid.UUID | None:
+    """ID del operador anterior, o None si ese usuario no existe en esta base.
+
+    Algunos de los emails de operador saliente (imartinez) no los siembra
+    ninguna migración: existen en producción porque se crearon a mano. Sobre
+    una base creada desde cero no están, y el acceso por clave directa hacía
+    fallar toda la migración con KeyError.
+
+    `prestador_asignacion_historial.operador_id` admite NULL, así que en ese
+    caso se pierde solo el nombre del operador de ese tramo histórico; el
+    resto de los datos (prestador, contacto, fechas del tramo) se carga igual.
+    """
+    return operador_ids.get(email)
+
+
 def upgrade() -> None:
     bind = op.get_bind()
     operador_ids = _operador_ids(bind)
@@ -132,7 +149,7 @@ def upgrade() -> None:
             _historial.insert().values(
                 id=uuid.uuid4(),
                 prestador_id=prestador_id,
-                operador_id=operador_ids[operador_saliente_email],
+                operador_id=_operador_saliente_id(operador_ids, operador_saliente_email),
                 desde=_DESDE_DESCONOCIDA,
                 hasta=_HASTA_SALIDA_OPERADOR_ANTERIOR,
             )
@@ -151,7 +168,7 @@ def upgrade() -> None:
             _historial.insert().values(
                 id=uuid.uuid4(),
                 prestador_id=prestador_id,
-                operador_id=operador_ids[operador_saliente_email],
+                operador_id=_operador_saliente_id(operador_ids, operador_saliente_email),
                 desde=_DESDE_DESCONOCIDA,
                 hasta=_HASTA_SALIDA_OPERADOR_ANTERIOR,
             )

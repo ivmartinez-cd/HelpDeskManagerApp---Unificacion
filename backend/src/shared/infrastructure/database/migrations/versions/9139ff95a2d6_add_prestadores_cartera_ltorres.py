@@ -153,13 +153,35 @@ _historial = sa.table(
 )
 
 
+def _operador_saliente_id(
+    operador_ids: dict[str, uuid.UUID], email: str
+) -> uuid.UUID | None:
+    """ID del operador anterior, o None si ese usuario no existe en esta base.
+
+    Algunos de los emails de operador saliente (imartinez) no los siembra
+    ninguna migración: existen en producción porque se crearon a mano. Sobre
+    una base creada desde cero no están, y el acceso por clave directa hacía
+    fallar toda la migración con KeyError.
+
+    `prestador_asignacion_historial.operador_id` admite NULL, así que en ese
+    caso se pierde solo el nombre del operador de ese tramo histórico; el
+    resto de los datos (prestador, contacto, fechas del tramo) se carga igual.
+    """
+    return operador_ids.get(email)
+
+
 def upgrade() -> None:
     bind = op.get_bind()
     operador_ids: dict[str, uuid.UUID] = {
         row[0]: row[1]
         for row in bind.execute(sa.text("SELECT email, id FROM app_user")).fetchall()
     }
-    ltorres_id = operador_ids["ltorres@canaldirecto.com.ar"]
+    ltorres_id = operador_ids.get("ltorres@canaldirecto.com.ar")
+    if ltorres_id is None:
+        raise RuntimeError(
+            "No existe el usuario ltorres@canaldirecto.com.ar: es el operador actual "
+            "de los PST que carga esta migración y prestador.operador_id no admite NULL."
+        )
 
     for siges_id, den_comercial, razon_social, cuit, operador_saliente_email, equipos, (
         nombre,
@@ -195,7 +217,7 @@ def upgrade() -> None:
                 _historial.insert().values(
                     id=uuid.uuid4(),
                     prestador_id=prestador_id,
-                    operador_id=operador_ids[operador_saliente_email],
+                    operador_id=_operador_saliente_id(operador_ids, operador_saliente_email),
                     desde=_DESDE_DESCONOCIDA,
                     hasta=_HASTA_SALIDA_OPERADOR_ANTERIOR,
                 )
@@ -230,7 +252,7 @@ def upgrade() -> None:
             _historial.insert().values(
                 id=uuid.uuid4(),
                 prestador_id=prestador_id,
-                operador_id=operador_ids[operador_saliente_email],
+                operador_id=_operador_saliente_id(operador_ids, operador_saliente_email),
                 desde=_DESDE_DESCONOCIDA,
                 hasta=_HASTA_SALIDA_OPERADOR_ANTERIOR,
             )
