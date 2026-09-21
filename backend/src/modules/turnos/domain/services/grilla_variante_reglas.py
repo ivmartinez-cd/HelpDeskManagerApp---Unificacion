@@ -78,32 +78,42 @@ def validar_franjas(slots: list[VarianteSlot]) -> None:
         raise VarianteFranjasSolapadasError(solape)
 
 
-def _operadores_solapados(slots: list[VarianteSlot]) -> list[AdvertenciaCobertura]:
-    """Un mismo operador en dos franjas que se pisan (cualquier casilla,
-    mismo día) no bloquea: cubrir a un ausente puede terminar solapando al
-    reemplazante cuando no hay otra opción (mismo criterio que Coberturas)."""
+def _franjas_por_user_dia(
+    slots: list[VarianteSlot],
+) -> dict[tuple[uuid.UUID, int], list[VarianteSlot]]:
     por_user_dia: dict[tuple[uuid.UUID, int], list[VarianteSlot]] = {}
     for s in slots:
         for user_id in s.user_ids:
             por_user_dia.setdefault((user_id, s.dia_semana), []).append(s)
+    return por_user_dia
+
+
+def _solapamiento(
+    user_id: uuid.UUID, dia: int, anterior: VarianteSlot, actual: VarianteSlot
+) -> AdvertenciaCobertura:
+    return AdvertenciaCobertura(
+        tipo="OPERADOR_SOLAPADO",
+        casilla_id=anterior.casilla_id,
+        dia_semana=dia,
+        hora_inicio=anterior.hora_inicio,
+        hora_fin=anterior.hora_fin,
+        user_id=user_id,
+        casilla_id_b=actual.casilla_id,
+        hora_inicio_b=actual.hora_inicio,
+        hora_fin_b=actual.hora_fin,
+    )
+
+
+def _operadores_solapados(slots: list[VarianteSlot]) -> list[AdvertenciaCobertura]:
+    """Un mismo operador en dos franjas que se pisan (cualquier casilla,
+    mismo día) no bloquea: cubrir a un ausente puede terminar solapando al
+    reemplazante cuando no hay otra opción (mismo criterio que Coberturas)."""
     advertencias: list[AdvertenciaCobertura] = []
-    for (user_id, dia), franjas in por_user_dia.items():
+    for (user_id, dia), franjas in _franjas_por_user_dia(slots).items():
         ordenadas = sorted(franjas, key=lambda s: s.hora_inicio)
         for anterior, actual in zip(ordenadas, ordenadas[1:], strict=False):
             if actual.hora_inicio < anterior.hora_fin:
-                advertencias.append(
-                    AdvertenciaCobertura(
-                        tipo="OPERADOR_SOLAPADO",
-                        casilla_id=anterior.casilla_id,
-                        dia_semana=dia,
-                        hora_inicio=anterior.hora_inicio,
-                        hora_fin=anterior.hora_fin,
-                        user_id=user_id,
-                        casilla_id_b=actual.casilla_id,
-                        hora_inicio_b=actual.hora_inicio,
-                        hora_fin_b=actual.hora_fin,
-                    )
-                )
+                advertencias.append(_solapamiento(user_id, dia, anterior, actual))
     return advertencias
 
 

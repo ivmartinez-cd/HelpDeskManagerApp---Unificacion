@@ -183,10 +183,14 @@ def operator_view(user_id: uuid.UUID, users: dict[uuid.UUID, UserInfo]) -> Opera
     )
 
 
+def _nombre_usuario(users: dict[uuid.UUID, UserInfo], user_id: uuid.UUID | None) -> str | None:
+    user = users.get(user_id) if user_id is not None else None
+    return user.full_name if user else None
+
+
 def advertencia_dto(
     a: AdvertenciaCobertura, casillas: dict[uuid.UUID, str], users: dict[uuid.UUID, UserInfo]
 ) -> AdvertenciaCoberturaDTO:
-    user = users.get(a.user_id) if a.user_id is not None else None
     return AdvertenciaCoberturaDTO(
         tipo=a.tipo,
         casilla_id=a.casilla_id,
@@ -195,7 +199,7 @@ def advertencia_dto(
         hora_inicio=a.hora_inicio,
         hora_fin=a.hora_fin,
         user_id=a.user_id,
-        user_name=user.full_name if user else None,
+        user_name=_nombre_usuario(users, a.user_id),
         desde=a.desde,
         hasta=a.hasta,
         detalle=a.detalle,

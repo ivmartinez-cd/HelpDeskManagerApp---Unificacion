@@ -109,17 +109,16 @@ class RequestPasswordReset:
         )
 
 
-def _html_body(full_name: str, link: str, purpose: ResetPurpose, logo_base64: str) -> str:
-    return f"""
+_HTML_TEMPLATE = """
   <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:auto;color:#333333">
     <div style="text-align:center;padding-bottom:20px;margin-bottom:20px;
                 border-bottom:1px solid #e5e7eb">
       <img src="data:image/png;base64,{logo_base64}" width="140" height="26" alt="Canal Directo" />
     </div>
-    <p style="font-size:15px">Hola {escape(full_name)},</p>
-    <p style="font-size:15px;line-height:1.5">{_INTROS[purpose]}</p>
+    <p style="font-size:15px">Hola {full_name},</p>
+    <p style="font-size:15px;line-height:1.5">{intro}</p>
     <div style="margin:28px 0;text-align:center">
-      <a href="{link}" style="{_ESTILO_BOTON}">{_CTAS[purpose]}</a>
+      <a href="{link}" style="{estilo_boton}">{cta}</a>
     </div>
     <p style="font-size:13px;color:#58595B">
       Este link vence en 30 minutos. Si no lo pediste vos, ignorá este mail.
@@ -131,3 +130,14 @@ def _html_body(full_name: str, link: str, purpose: ResetPurpose, logo_base64: st
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0" />
     <p style="color:#58595B;font-size:12px;margin:0">Canal Directo — HelpDesk Manager</p>
   </div>"""
+
+
+def _html_body(full_name: str, link: str, purpose: ResetPurpose, logo_base64: str) -> str:
+    return _HTML_TEMPLATE.format(
+        full_name=escape(full_name),
+        link=link,
+        intro=_INTROS[purpose],
+        cta=_CTAS[purpose],
+        estilo_boton=_ESTILO_BOTON,
+        logo_base64=logo_base64,
+    )
