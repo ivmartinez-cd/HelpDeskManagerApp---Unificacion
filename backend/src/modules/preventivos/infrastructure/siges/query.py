@@ -75,12 +75,20 @@ dentro del bbox de Argentina.
 
 # Los dos parámetros de PARQUE_ZONA_SQL: (meses_actividad, meses_actividad,
 # zona) — pyodbc no soporta parámetros con nombre.
+# La toma `ID_TipoToma = 13` ('Contador Final') no cuenta como actividad: es
+# la lectura de cierre al retirar el equipo, o sea señal de baja, no de
+# cliente vivo (caso reportado 2026-09-22, Telecom Argentina: sin tomas reales
+# desde 2020 ni incidentes desde 2025-02, 95 máquinas todavía 'Activa en
+# Cliente', y seguía apareciendo solo por 9 tomas 'Contador Final' de 2026).
+# Estimado (14) / Promedio Instalación (19) sí cuentan: indican que el anexo
+# se sigue facturando.
 _ACTIVIDAD_EMPRESA_JOIN = """
 LEFT JOIN (
     SELECT M2.ID_Empresa, MAX(CT.FechaTomaContador) AS ultima_toma
     FROM dbo.Contadores CT
     INNER JOIN dbo.Maquina M2 ON M2.ID_Maquina = CT.ID_Maquina
     WHERE CT.Estado = 0
+      AND CT.ID_TipoToma <> 13
     GROUP BY M2.ID_Empresa
 ) TOMA ON TOMA.ID_Empresa = E.ID_Empresa
 LEFT JOIN (
