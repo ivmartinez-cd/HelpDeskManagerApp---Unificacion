@@ -371,4 +371,40 @@ test.describe("Modo vacaciones (grilla variante de turnos)", () => {
       `/turnos?tab=vacaciones&ausente=${MAJO}&desde=2026-08-24&hasta=2026-08-28&motivo=Vacaciones+Maria+Jose+Vela`,
     );
   });
+
+  test("editor: los días del rango sin franjas se completan copiando el día armado (caso Internación)", async ({
+    page,
+  }) => {
+    // Titular de lunes a jueves; la variante se guardó con franjas solo del
+    // lunes pero rige 21–23/09: martes y miércoles se veían vacíos en Inicio.
+    const titularLaJ = [0, 1, 2, 3].flatMap((dia) => SLOTS.map((s) => ({ ...s, id: `${s.id}-${dia}`, diaSemana: dia })));
+    const internacion = {
+      ...VARIANTE_GUARDADA,
+      motivo: "Internación",
+      desde: "2099-01-05", // lunes
+      hasta: "2099-01-07", // miércoles
+      advertencias: [],
+      slots: [
+        { casillaId: INSUMOS, casillaNombre: "INSUMOS", diaSemana: 0, horaInicio: "08:00:00", horaFin: "12:00:00", sortOrder: 0, operadores: [op(MAJO)] },
+        { casillaId: ST, casillaNombre: "ST", diaSemana: 0, horaInicio: "09:00:00", horaFin: "13:00:00", sortOrder: 1, operadores: [op(LUNA)] },
+      ],
+    };
+    await mockTurnos(page, [internacion]);
+    await page.route("**/api/turnos/slots**", (r) =>
+      r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(page_(titularLaJ)) }),
+    );
+
+    await page.goto("/turnos?tab=vacaciones");
+    await page.getByRole("button", { name: /^Editar Internación/ }).click();
+    const editor = page.getByRole("region", { name: "Editar horario especial" });
+    const dias = editor.getByRole("tablist", { name: "Día de semana" });
+    await expect(dias.getByRole("tab", { name: "Martes (2)" })).toBeVisible();
+    await expect(dias.getByRole("tab", { name: "Miércoles (2)" })).toBeVisible();
+    await expect(editor.getByText(/Martes, Miércoles: se completaron copiando el Lunes/)).toBeVisible();
+
+    // Extender el "hasta" completa el día nuevo; el sábado no está en la titular.
+    await editor.getByLabel("Hasta").fill("2099-01-10");
+    await expect(dias.getByRole("tab", { name: "Jueves (2)" })).toBeVisible();
+    await expect(dias.getByRole("tab", { name: "Sábado", exact: true })).toBeVisible();
+  });
 });

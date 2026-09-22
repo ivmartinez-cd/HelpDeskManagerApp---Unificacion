@@ -11,7 +11,8 @@ import type {
   GrillaVariantePayload,
 } from "../../types/grilla-variantes";
 import { DIAS_SEMANA, diaInicialVigente, diaSemanaDeIso } from "../../lib/variante-validacion";
-import { formatDiaMes, hhmm } from "../../lib/variante-estado";
+import { formatDiaMes, hhmm, hoyIso } from "../../lib/variante-estado";
+import { completarDiasDelRango, type Completado } from "../../lib/variante-completar";
 import { useVarianteDerivados } from "../../hooks/use-variante-derivados";
 import { VarianteAdvertencias } from "./variante-advertencias";
 import { VarianteDiaTabs } from "./variante-dia-tabs";
@@ -70,9 +71,15 @@ export function VarianteEditor({
   const [hasta, setHasta] = useState(variante?.hasta ?? precargaInicial?.hasta ?? "");
   const [motivo, setMotivo] = useState(variante?.motivo ?? precargaInicial?.motivo ?? "");
   const [origenTexto, setOrigenTexto] = useState(variante?.origenTexto ?? "");
-  const [franjas, setFranjas] = useState<FranjaEditable[]>(() =>
-    variante ? desdeVariante(variante) : [],
+  // Una variante guardada antes de completar días (p. ej. extendida desde
+  // "Ajustar turnos de hoy") se abre ya completa para corregirla al guardar.
+  const [inicial] = useState<Completado>(() =>
+    variante
+      ? completarDiasDelRango(desdeVariante(variante), variante.desde, variante.hasta, titular, diaSemanaDeIso(hoyIso()), nuevaKey)
+      : { franjas: [], agregados: [], diaOrigen: null },
   );
+  const [franjas, setFranjas] = useState<FranjaEditable[]>(inicial.franjas);
+  const [completado, setCompletado] = useState<Completado>(inicial);
   const [diaElegido, setDiaElegido] = useState(0);
   const [ausencias, setAusencias] = useState<AdvertenciaCobertura[]>([]);
   const [precargando, setPrecargando] = useState(false);
@@ -106,6 +113,7 @@ export function VarianteEditor({
           })),
         );
         setAusencias(p.advertencias);
+        setCompletado({ franjas: [], agregados: [], diaOrigen: null });
         setMotivo((m) => m || (p.ausenteNombre ? `Ausencia ${p.ausenteNombre}` : `Ajuste ${formatDiaMes(desde)}`));
         const conCobertura = slots.find((s) => s.requiereCobertura)?.diaSemana;
         setDiaElegido(
@@ -129,6 +137,15 @@ export function VarianteEditor({
     autoPrecargado.current = true;
     precargar();
   }, [precargaInicial, variante, precargar]);
+
+  const cambiarRango = (nuevoDesde: string, nuevoHasta: string) => {
+    setDesde(nuevoDesde);
+    setHasta(nuevoHasta);
+    const r = completarDiasDelRango(franjas, nuevoDesde, nuevoHasta, titular, diaActivo, nuevaKey);
+    if (r.agregados.length === 0) return;
+    setFranjas(r.franjas);
+    setCompletado(r);
+  };
 
   const actualizar = (key: string, cambios: Partial<FranjaEditable>) =>
     setFranjas((prev) => prev.map((f) => (f.key === key ? { ...f, ...cambios } : f)));
@@ -204,9 +221,9 @@ export function VarianteEditor({
         ausenteId={ausenteId}
         setAusenteId={setAusenteId}
         desde={desde}
-        setDesde={setDesde}
+        setDesde={(v) => cambiarRango(v, hasta)}
         hasta={hasta}
-        setHasta={setHasta}
+        setHasta={(v) => cambiarRango(desde, v)}
         rangoInvalido={rangoInvalido}
         precargar={precargar}
         precargando={precargando}
@@ -224,6 +241,14 @@ export function VarianteEditor({
         hayFranjasDelDia={franjasDelDia.length > 0}
         onCopiarALaborables={copiarDiaALaborables}
       />
+
+      {completado.agregados.length > 0 && completado.diaOrigen !== null && (
+        <p className="rounded-[10px] border border-brand-orange/30 bg-brand-orange/5 px-4 py-2 font-body text-xs text-foreground">
+          {completado.agregados.map((d) => DIAS_SEMANA[d]).join(", ")}: se completaron copiando el{" "}
+          {DIAS_SEMANA[completado.diaOrigen]} para que el rango no quede vacío en Turnos del día.
+          Revisalos antes de guardar.
+        </p>
+      )}
 
       <VarianteFranjasPorDia
         casillas={casillas}
