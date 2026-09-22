@@ -40,7 +40,7 @@ class SqlAlchemyUserRepository:
     async def list_page(
         self, *, page: int, size: int, query: str | None
     ) -> tuple[list[User], int]:
-        filters = []
+        filters = [AppUser.is_placeholder.is_(False)]
         if query:
             like = f"%{query}%"
             filters.append(or_(AppUser.email.ilike(like), AppUser.full_name.ilike(like)))

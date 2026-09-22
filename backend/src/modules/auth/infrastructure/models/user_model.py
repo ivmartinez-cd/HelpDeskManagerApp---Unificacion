@@ -29,6 +29,10 @@ class AppUser(Base):
     )
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     color: Mapped[str | None] = mapped_column(String)
+    # Referencia histórica (ex operadores), no un usuario real: fuera del ABM.
+    is_placeholder: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
 
 
 class Department(Base):
