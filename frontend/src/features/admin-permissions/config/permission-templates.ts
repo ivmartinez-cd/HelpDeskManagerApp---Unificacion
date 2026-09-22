@@ -28,6 +28,7 @@ const FUNCIONES_TL: readonly string[] = [
   "contadores-clientes-nuevos",
   "contadores-sin-real-todos",
   "contadores-card-operadores",
+  "contadores-calendario-todos",
   "contadores-proyeccion-operar",
   "insumos-administracion",
   "prestadores-coberturas",

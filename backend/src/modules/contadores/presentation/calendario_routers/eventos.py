@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.auth.presentation.dependencies.features import tiene_feature
 from src.modules.contadores.application.dtos.get_calendar_events_request import (
     GetCalendarEventsRequest,
 )
@@ -23,6 +24,7 @@ from src.modules.contadores.application.use_cases.get_mi_operador import GetMiOp
 from src.modules.contadores.application.use_cases.get_pending_clients import (
     GetPendingClientsUseCase,
 )
+from src.modules.contadores.domain.well_known_features import CALENDARIO_TODOS
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_asignacion_override_repository import (  # noqa: E501
     SqlAlchemyAsignacionOverrideRepository,
 )
@@ -54,7 +56,7 @@ async def get_calendario_events(
     start: date = Query(..., description="Fecha de inicio (YYYY-MM-DD)"),
     end: date = Query(..., description="Fecha de fin (YYYY-MM-DD)"),
     operador_id: str | None = Query(
-        default=None, description="Solo superadmin: filtra por un operador puntual"
+        default=None, description="Solo con \"ver todos\": filtra por un operador puntual"
     ),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=500, ge=1, le=MAX_PAGE_SIZE),
@@ -68,7 +70,8 @@ async def get_calendario_events(
     request = GetCalendarEventsRequest(
         start_date=start.isoformat(),
         end_date=end.isoformat(),
-        is_superadmin=identity.user.is_superadmin,
+        # "Ver todos" = superadmin o la función CALENDARIO_TODOS (ADR-032).
+        is_superadmin=tiene_feature(identity, CALENDARIO_TODOS),
         full_name=identity.user.full_name,
         operador_id=operador_id,
     )

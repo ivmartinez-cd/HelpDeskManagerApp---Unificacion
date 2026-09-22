@@ -42,7 +42,8 @@ function buildGridDays(startDate: string): GridDay[] {
 }
 
 export function CalendarioTool() {
-  const { user } = useSession();
+  const { hasFeature } = useSession();
+  const verTodos = hasFeature("contadores-calendario-todos");
   const defaultDates = useMemo(() => getMonthDateRange(0), []);
   const {
     startDate,
@@ -65,7 +66,7 @@ export function CalendarioTool() {
   } = useCalendarioEvents({
     initialStart: defaultDates.startStr,
     initialEnd: defaultDates.endStr,
-    canFilterByOperador: user.isSuperadmin,
+    canFilterByOperador: verTodos,
   });
 
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -171,7 +172,7 @@ export function CalendarioTool() {
         setStartDate={setStartDate}
         endDate={endDate}
         setEndDate={setEndDate}
-        showOperadorFilter={user.isSuperadmin}
+        showOperadorFilter={verTodos}
         operadorId={operadorId}
         setOperadorId={setOperadorId}
         operadores={operadores}
