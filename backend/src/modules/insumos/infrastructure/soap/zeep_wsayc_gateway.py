@@ -16,6 +16,7 @@ from typing import Any
 from src.modules.insumos.domain.value_objects.cd_supply import CdIncident, CdMachine, CdSupply
 from src.modules.insumos.domain.value_objects.serial_number import clean_serial
 from src.modules.insumos.infrastructure.soap import wsayc_parsing as parsing
+from src.shared.domain.errors import ExternalPermissionDeniedError
 from src.shared.infrastructure.wsayc.client_provider import (
     WsAycClientProvider,
     get_wsayc_client_provider,
@@ -122,6 +123,9 @@ class ZeepWsAycGateway:
                 )
             )
             return str(raw).strip().lower() == "true"
+        except ExternalPermissionDeniedError:
+            # El caller muestra "No tenés permisos..." en vez del "intentá de nuevo".
+            raise
         except Exception as exc:
             logger.error("SOAP voidSupply(%d) falló", supply_id, exc_info=exc)
             return False
@@ -134,6 +138,8 @@ class ZeepWsAycGateway:
                 )
             )
             return str(raw).strip().lower() == "true"
+        except ExternalPermissionDeniedError:
+            raise
         except Exception as exc:
             logger.error("SOAP voidIncident(%d) falló", incident_id, exc_info=exc)
             return False

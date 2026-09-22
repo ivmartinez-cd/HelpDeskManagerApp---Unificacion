@@ -128,6 +128,9 @@ class FakeWsAycGateway:
         self.machine_incidents: list[CdIncident] = []
         self.void_supply_result = True
         self.void_incident_result = True
+        # Si está seteado, persist_new_supply / void_supply lo lanzan (ej. ACL del wsAyC).
+        self.persist_error: Exception | None = None
+        self.void_error: Exception | None = None
         self.voided_supplies: list[int] = []
         self.voided_incidents: list[int] = []
 
@@ -143,6 +146,8 @@ class FakeWsAycGateway:
         return self.article_parts
 
     async def persist_new_supply(self, payload: dict[str, object]) -> int:
+        if self.persist_error is not None:
+            raise self.persist_error
         self.persisted_payloads.append(payload)
         return self.persist_result
 
@@ -174,6 +179,8 @@ class FakeWsAycGateway:
         return self.supplies_for_empresa
 
     async def void_supply(self, supply_id: int) -> bool:
+        if self.void_error is not None:
+            raise self.void_error
         self.voided_supplies.append(supply_id)
         return self.void_supply_result
 

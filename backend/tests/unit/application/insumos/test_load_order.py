@@ -37,6 +37,7 @@ from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply, CdS
 from src.modules.insumos.domain.value_objects.order_request import ContactInfo
 from src.modules.insumos.domain.value_objects.pending_validation import PendingValidation
 from src.modules.insumos.domain.value_objects.zone_contacts import ZoneContacts
+from src.shared.domain.errors import ExternalPermissionDeniedError
 from tests.unit.domain.insumos.fakes import (
     FakeClientOrderNotifier,
     FakeCustomerRepository,
@@ -422,6 +423,19 @@ async def test_serie_no_activa_audita_failed_y_devuelve_error() -> None:
     assert len(failed) == 1
     # El claim se liberó igual (el próximo intento no queda trabado).
     assert world.claims.released == [("SERIE1", "CF230A")]
+
+
+async def test_sin_permiso_en_el_wsayc_avisa_al_usuario_y_audita_failed() -> None:
+    world = World()
+    world.wsayc.persist_error = ExternalPermissionDeniedError(
+        ExternalPermissionDeniedError.user_message
+    )
+
+    result = await world.use_case.execute(_command())
+
+    assert not result.ok
+    assert result.error == "No tenés permisos para realizar esta acción. Avisale al administrador."
+    assert [r.event for r in world.audit.records] == [EVENT_FAILED]
 
 
 async def test_insumo_ambiguo_devuelve_opciones_para_el_operador() -> None:

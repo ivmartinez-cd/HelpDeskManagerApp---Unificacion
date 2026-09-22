@@ -184,4 +184,8 @@ class CanalDirectoSettings(BaseSettings):
     wsayc_wsdl_url: str = "https://wsg.cdsisa.com.ar/wsAyC_server.php?wsdl"
     wsayc_endpoint: str = "https://wsg.cdsisa.com.ar/wsAyC_server.php"
     wsayc_timeout_seconds: float = 30.0
-
+    # Desde sep-2026 el wsAyC exige login: usuario de servicios web de CDS (id_tipo = 11),
+    # distinto del de WebAgentes (CD_USERNAME). Vacío no rompe el arranque: las llamadas
+    # fallan con un error claro hasta configurarlo. La ACL de CDS define qué métodos habilita.
+    wsayc_username: str = ""
+    wsayc_password: SecretStr = SecretStr("")

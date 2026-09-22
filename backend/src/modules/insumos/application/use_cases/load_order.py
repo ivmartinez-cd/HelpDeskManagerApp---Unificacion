@@ -49,6 +49,7 @@ from src.modules.insumos.domain.services.zone_delivery_notice import detect_sucu
 from src.modules.insumos.domain.value_objects.incident_request import IncidentRequest
 from src.modules.insumos.domain.value_objects.order_request import OrderRequest
 from src.modules.insumos.domain.value_objects.zone_contacts import ZoneContacts
+from src.shared.domain.errors import ExternalPermissionDeniedError
 
 logger = logging.getLogger(__name__)
 
@@ -92,8 +93,8 @@ class LoadOrder:
             return self._handle_ambiguous_supply(command, resolved, exc)
         except InsumoNoConfiguradoError as exc:
             return self._handle_insumo_no_configurado(command, resolved, exc)
-        except Exception:
-            return await self._handle_creation_failed(command, resolved)
+        except Exception as exc:
+            return await self._handle_creation_failed(command, resolved, exc)
 
     async def _handle_inactive_device(
         self, command: LoadOrderCommand, resolved: ResolvedRequest
@@ -147,15 +148,18 @@ class LoadOrder:
         return failure(str(exc))
 
     async def _handle_creation_failed(
-        self, command: LoadOrderCommand, resolved: ResolvedRequest
+        self, command: LoadOrderCommand, resolved: ResolvedRequest, exc: Exception
     ) -> LoadOrderResult:
         # Detalle técnico al log del server, no al audit — el historial es visible
         # para cualquier operador (hallazgo #8 del legacy).
         logger.exception("No se pudo crear el pedido para request %s", command.hp_request_id)
-        error = (
-            "No se pudo crear el pedido en Canal Directo. Verificá la conexión e "
-            "intentá de nuevo."
-        )
+        if isinstance(exc, ExternalPermissionDeniedError):
+            error = exc.message
+        else:
+            error = (
+                "No se pudo crear el pedido en Canal Directo. Verificá la conexión e "
+                "intentá de nuevo."
+            )
         await self._record_failure(command, resolved, error)
         return failure(error)
 
@@ -222,8 +226,8 @@ class LoadOrder:
                 )
             )
             return success(incident_id, None, resolved.warn, zone_override)
-        except Exception:
-            return await self._handle_creation_failed(command, resolved)
+        except Exception as exc:
+            return await self._handle_creation_failed(command, resolved, exc)
 
     async def _create_incident(
         self, command: LoadOrderCommand, incident: IncidentRequest

@@ -28,6 +28,7 @@ from src.modules.insumos.domain.value_objects import cd_state
 from src.modules.insumos.domain.value_objects.cd_datetime import parse_cd_datetime
 from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply, CdSupply
 from src.modules.insumos.domain.value_objects.serial_number import serial_from_supply_fields
+from src.shared.domain.errors import ExternalPermissionDeniedError
 
 logger = logging.getLogger(__name__)
 
@@ -65,11 +66,15 @@ class CancelOrder:
     ) -> CancelResult:
         is_incident = await self._is_incident(supply_id)
         kind = "incidente" if is_incident else "pedido"
-        voided = await (
-            self._ports.wsayc.void_incident(supply_id)
-            if is_incident
-            else self._ports.wsayc.void_supply(supply_id)
-        )
+        try:
+            voided = await (
+                self._ports.wsayc.void_incident(supply_id)
+                if is_incident
+                else self._ports.wsayc.void_supply(supply_id)
+            )
+        except ExternalPermissionDeniedError as exc:
+            # El método puntual que falta habilitar ya quedó logueado en el provider.
+            return CancelResult(ok=False, error=exc.message)
         if not voided:
             return CancelResult(
                 ok=False,

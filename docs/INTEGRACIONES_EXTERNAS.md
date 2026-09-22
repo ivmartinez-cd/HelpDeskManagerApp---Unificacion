@@ -62,6 +62,17 @@ Config en settings: `WSAYC_WSDL_URL`, `WSAYC_ENDPOINT`, `WSAYC_TIMEOUT_SECONDS` 
 `asyncio.to_thread`. **Transporte sin reintentos — regla de negocio dura**: toda
 operación SOAP viaja como POST y reintentar `persistNewSupply` duplica pedidos reales.
 
+**Autenticación (desde sep-2026)**: CDS securitizó el servicio. El provider hace `login()`
+con `WSAYC_USERNAME`/`WSAYC_PASSWORD` (usuario de servicios web, id_tipo = 11 — no el de
+WebAgentes), guarda un token por proceso y lo manda como `Authorization: Bearer` en cada
+operación (`shared/infrastructure/wsayc/auth.py`). Fault `AuthenticationError` (token de
+8 h vencido) → re-login y se repite la operación **una** vez; es la única excepción a
+"sin reintentos" y es segura porque el servidor rechaza antes de ejecutar. Login rechazado
+→ 5 min sin reintentar (el scan lanza llamadas en paralelo). Fault `AuthorizationError`
+(la ACL de CDS no habilita el método) → `ExternalPermissionDeniedError`: insumos muestra
+"No tenés permisos para realizar esta acción. Avisale al administrador." al anular/cargar
+y el método puntual queda en el log. Port del cambio equivalente del legacy SDSInsumos.
+
 | Módulo | Adapter | Instanciación | Operaciones (lectura / escritura) | Manejo de errores |
 |---|---|---|---|---|
 | insumos | `soap/zeep_wsayc_gateway.py` (`ZeepWsAycGateway`) | singleton de proceso (`wiring.py::get_wsayc_gateway`, `lru_cache`) sobre el provider compartido | L: `getMachineBySerial`, `getMachineIncidents`, `getArticleParts`, `getSupplyById`, `getIncidentById`, `getSupplyDetails`, `getTopSupplies` · E: `persistNewSupply`, `persistNewIncident`, `voidSupply`, `voidIncident` | por método, a propósito distinto: los persist y `getMachineBySerial` propagan crudo (el caller distingue); el resto degrada a vacío/None con warning; los void degradan a `False` con error |

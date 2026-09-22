@@ -67,6 +67,17 @@ class ExternalServiceError(InfrastructureError):
     default_code: ClassVar[str] = "EXTERNAL_SERVICE_ERROR"
 
 
+class ExternalPermissionDeniedError(ExternalServiceError):
+    """El servicio externo aceptó la identidad de la app pero su ACL no la habilita
+    para esa operación (ej. wsAyC 403). No es un 403 de la app: queda en 502 para que
+    el frontend no lo confunda con un permiso propio del usuario logueado."""
+
+    default_code: ClassVar[str] = "EXTERNAL_PERMISSION_DENIED"
+    user_message: ClassVar[str] = (
+        "No tenés permisos para realizar esta acción. Avisale al administrador."
+    )
+
+
 class InvalidModuleKeyError(ValidationError):
     """`ModuleKey`/`ActionKey` viven en shared (ver ADR-007): todo módulo de
     negocio los usa para declarar sus propios permisos, no son de auth."""

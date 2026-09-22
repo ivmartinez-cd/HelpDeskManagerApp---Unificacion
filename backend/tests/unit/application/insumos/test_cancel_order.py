@@ -7,6 +7,7 @@ from src.modules.insumos.domain.entities.processed_request import (
     ProcessedRequest,
 )
 from src.modules.insumos.domain.value_objects.cd_supply import CdSupply
+from src.shared.domain.errors import ExternalPermissionDeniedError
 from tests.unit.domain.insumos.fakes import (
     FakeOrderAuditRepository,
     FakeProcessedRequestRepository,
@@ -120,6 +121,20 @@ async def test_void_fallido_devuelve_error_sin_liberar() -> None:
 
     assert result.ok is False
     assert result.error is not None and "No se pudo anular el pedido" in result.error
+    assert world.processed.rows[974325].status == "CREATED"
+
+
+async def test_sin_permiso_en_el_wsayc_avisa_al_usuario_sin_liberar() -> None:
+    world = World()
+    await world.with_processed()
+    world.wsayc.void_error = ExternalPermissionDeniedError(
+        ExternalPermissionDeniedError.user_message
+    )
+
+    result = await world.use_case.execute(974325)
+
+    assert result.ok is False
+    assert result.error == "No tenés permisos para realizar esta acción. Avisale al administrador."
     assert world.processed.rows[974325].status == "CREATED"
 
 
