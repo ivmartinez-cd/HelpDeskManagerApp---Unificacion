@@ -11,8 +11,10 @@ from src.modules.preventivos.infrastructure.siges.query import (
 )
 
 
-def test_parque_zona_tiene_tres_placeholders_meses_meses_zona() -> None:
-    assert PARQUE_ZONA_SQL.count("?") == 3
+def test_parque_zona_tiene_cuatro_placeholders_zona_meses_meses_zona() -> None:
+    # La zona va dos veces: acota el barrido de `Incidente` y filtra el
+    # universo de máquinas (ver el JOIN a `SZ` en query.py).
+    assert PARQUE_ZONA_SQL.count("?") == 4
     assert PARQUE_ZONA_SQL.rstrip().endswith("S.Cuadricula = ?")
 
 

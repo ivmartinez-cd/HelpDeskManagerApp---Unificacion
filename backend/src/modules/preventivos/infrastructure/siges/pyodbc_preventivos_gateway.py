@@ -1,16 +1,16 @@
 """Adapter pyodbc del puerto PreventivosQueryGateway — consulta en vivo a
 Siges vía el runner compartido (ADR-018; nada de plomería propia). Medido
-2026-09-23 contra el backend real, ya con las consultas de query.py
-optimizadas: ZONAS_SQL 0.4 s, PARQUE_ZONA_SQL 6-17 s según el tamaño de la
-zona (antes 12-35 s: las zonas grandes pasaban los 30 s del timeout general
-de ORION y la pantalla devolvía 502) — muy por encima del 0.2-0.4 s que este
-módulo asumía. La UI pagina/filtra/reordena sobre el mismo universo: una
-caché TTL evita pagar una pasada por ORION en cada interacción, y su
-`consultado_en` alimenta el sello de frescura de la pantalla. El catálogo de
-zonas cambia mucho menos seguido que el parque de una zona puntual (es un
-conteo agregado, no el estado operativo que un usuario habilita/deshabilita)
-— tiene su propio TTL, más largo, para que la consulta cara de arriba se
-pague con menos frecuencia. El lock serializa refrescos concurrentes."""
+2026-09-23 contra el backend real, con las consultas de query.py ya
+optimizadas: ZONAS_SQL 0.4 s y PARQUE_ZONA_SQL 0.1-0.7 s según el tamaño de
+la zona (antes 5.4 s y 9-34 s: las zonas más grandes se pasaban de los 30 s
+del timeout general de ORION y la pantalla devolvía 502). La UI
+pagina/filtra/reordena sobre el mismo universo: una caché TTL evita pagar una
+pasada por ORION en cada interacción, y su `consultado_en` alimenta el sello
+de frescura de la pantalla. El catálogo de zonas cambia mucho menos seguido
+que el parque de una zona puntual (es un conteo agregado, no el estado
+operativo que un usuario habilita/deshabilita) — tiene su propio TTL, más
+largo, para que la consulta de arriba se pague con menos frecuencia. El lock
+serializa refrescos concurrentes."""
 
 import asyncio
 from datetime import UTC, datetime
@@ -31,8 +31,6 @@ from src.modules.preventivos.infrastructure.siges.row_mapping import (
     map_zona_row,
 )
 from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
-
-_PARQUE_TIMEOUT_SECONDS = 60.0
 
 
 class PyodbcPreventivosGateway:
@@ -67,16 +65,10 @@ class PyodbcPreventivosGateway:
                 return vigente
             rows = await self._runner.fetch_all(
                 PARQUE_ZONA_SQL,
-                (self._meses_actividad, self._meses_actividad, zona),
+                (zona, self._meses_actividad, self._meses_actividad, zona),
                 gateway="preventivos_parque_zona",
                 log_message="Falló la consulta del parque de preventivos contra Siges/ORION",
                 log_extra={"zona": zona},
-                # Presupuesto propio, más ancho que los 30 s generales de
-                # ORION (bug real 2026-09-23): las zonas grandes tardan 14-17 s
-                # y con la base cargada llegaban a pasarse, dejando la pantalla
-                # en 502. Es una consulta de usuario detrás de una caché TTL,
-                # no un job — esperar vale más que fallar.
-                timeout_override=_PARQUE_TIMEOUT_SECONDS,
             )
             snapshot = ParqueZonaSnapshot(
                 equipos=tuple(map_equipo_row(row) for row in rows),

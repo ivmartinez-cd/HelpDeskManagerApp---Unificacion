@@ -64,9 +64,10 @@ parametrizadas — ARCHITECTURE_GUIDE §8). Fuentes confirmadas con dato real el
   nada): con N=3 caen 39 empresas / 792 máquinas, todas con años de
   inactividad.
 
-Medido 2026-09-23 contra el backend real, con la zona más grande que se
-consulta (CABA-N/OESTE, ~940 equipos): 14-17 s. Alcanza para consulta en vivo
-con la caché TTL del gateway, sin snapshot local.
+Medido 2026-09-23 contra el backend real, sobre las 8 zonas que se consultan:
+0.1-0.7 s (la más grande, OESTE, 942 equipos, 0.6 s). Alcanza de sobra para
+consulta en vivo, sin snapshot local. Antes de las optimizaciones de esa
+fecha eran 9-34 s y las zonas más grandes se pasaban del timeout de ORION.
 
 `Sucursal.Latitud`/`Longitud` (agregadas 2026-08-22 para el mapa de clientes)
 son texto libre, no siempre numérico: el parseo y la validación de rango
@@ -75,8 +76,10 @@ cual. Cobertura medida sobre el universo real: 96.4% de las sucursales caen
 dentro del bbox de Argentina.
 """
 
-# Los dos parámetros de PARQUE_ZONA_SQL: (meses_actividad, meses_actividad,
-# zona) — pyodbc no soporta parámetros con nombre.
+# Parámetros de PARQUE_ZONA_SQL, en orden de aparición: (zona,
+# meses_actividad, meses_actividad, zona) — pyodbc no soporta parámetros con
+# nombre, y la zona aparece dos veces: una acota el barrido de `Incidente` (ver
+# el JOIN a `SZ` más abajo) y la otra filtra el universo de máquinas.
 # La toma `ID_TipoToma = 13` ('Contador Final') no cuenta como actividad: es
 # la lectura de cierre al retirar el equipo, o sea señal de baja, no de
 # cliente vivo (caso reportado 2026-09-22, Telecom Argentina: sin tomas reales
@@ -91,8 +94,9 @@ dentro del bbox de Argentina.
 # para quedarse con el MAX por empresa obliga a barrer ambas tablas completas
 # antes de filtrar nada. Es la misma condición: MAX(fecha) >= corte equivale a
 # EXISTS(fecha >= corte). Medido contra el backend real el 2026-09-23 —
-# catálogo de zonas 5.4 s → 0.4 s (mismas 14 zonas, mismos conteos), parque de
-# CABA-N 35 s → 18 s.
+# catálogo de zonas 5.4 s → 0.4 s (mismas 14 zonas, mismos conteos), y el
+# parque de CABA-N 35 s → 18 s (los 18 s restantes eran el barrido de
+# `Incidente`, ver el JOIN a `SZ` más abajo).
 _EMPRESA_VIVA_WHERE = """
   AND (EXISTS (
         SELECT 1
@@ -173,6 +177,16 @@ LEFT JOIN (
     -- siguiente, que corría `fecha_tentativa` un día de más contra el valor
     -- real (caso confirmado 2026-08-26: incidente 830662, Fecha_Ingreso 20/04
     -- vs Fecha_Cierre 21/04 — el listado legacy usa 20/04).
+    --
+    -- El INNER JOIN a `Sucursal` acota el barrido a las sucursales de la zona
+    -- consultada (agregado 2026-09-23): sin él esta subconsulta agrupaba
+    -- `Incidente` entera —todas las zonas del país— para después tirar el
+    -- 95% en el JOIN de abajo. No cambia el resultado: el JOIN ya exige
+    -- `INC.ID_Sucursal = M.ID_Sucursal`, y `M.ID_Sucursal` siempre es una
+    -- sucursal de la zona (lo impone el filtro por `S.Cuadricula` del
+    -- WHERE). Medido
+    -- contra el backend real: CABA-N 16.4 s → 0.5 s, OESTE 13.9 s → 0.9 s,
+    -- con filas idénticas.
     SELECT I.ID_Maquina, I.ID_Sucursal,
            MAX(CASE WHEN I.ID_Tipo_Incidente = 102
                     THEN (CASE WHEN I.Fecha_Cierre > '1900-01-01'
@@ -181,6 +195,9 @@ LEFT JOIN (
            MAX(CASE WHEN I.ID_Tipo_Incidente = 103
                     THEN I.Fecha_Ingreso END) AS fecha_instalacion
     FROM dbo.Incidente I
+    INNER JOIN dbo.Sucursal SZ
+        ON SZ.Id_Sucursal = I.ID_Sucursal
+       AND SZ.Cuadricula = ?
     WHERE I.ID_Tipo_Incidente IN (102, 103)
       AND I.ID_Estado_Incidente IN (500, 600, 700, 710)
     GROUP BY I.ID_Maquina, I.ID_Sucursal
