@@ -10,6 +10,7 @@ from typing import Any
 import pytest
 
 from src.modules.preventivos.infrastructure.siges.pyodbc_preventivos_gateway import (
+    _PARQUE_TIMEOUT_SECONDS,
     PyodbcPreventivosGateway,
 )
 from src.modules.preventivos.infrastructure.siges.query import PARQUE_ZONA_SQL, ZONAS_SQL
@@ -41,11 +42,19 @@ class FakeRunner:
     def __init__(self, filas_por_sql: dict[str, list[Any]] | None = None) -> None:
         self.filas_por_sql = filas_por_sql or {}
         self.llamadas: list[tuple[str, tuple[object, ...], str]] = []
+        self.timeouts: list[float | None] = []
 
     async def fetch_all(
-        self, sql: str, params: Sequence[object] = (), *, gateway: str, **_: Any
+        self,
+        sql: str,
+        params: Sequence[object] = (),
+        *,
+        gateway: str,
+        timeout_override: float | None = None,
+        **_: Any,
     ) -> list[Any]:
         self.llamadas.append((sql, tuple(params), gateway))
+        self.timeouts.append(timeout_override)
         return list(self.filas_por_sql.get(sql, []))
 
 
@@ -72,6 +81,18 @@ async def test_consulta_el_parque_con_meses_de_actividad_y_zona() -> None:
     assert runner.llamadas == [(PARQUE_ZONA_SQL, (4, 4, "SUR"), "preventivos_parque_zona")]
     assert [e.id_maquina for e in snapshot.equipos] == [1, 2]
     assert snapshot.consultado_en.tzinfo is UTC
+
+
+async def test_el_parque_pide_mas_tiempo_que_el_timeout_general_de_orion() -> None:
+    # Las zonas grandes (~940 equipos) tardan 14-17 s medidos contra Siges y
+    # con la base cargada se pasaban de los 30 s generales, dejando la
+    # pantalla en 502 (bug real 2026-09-23).
+    runner = FakeRunner({PARQUE_ZONA_SQL: [_fila_equipo(1)]})
+
+    await _gateway(runner).list_equipos_por_zona("CABA-N")
+
+    assert runner.timeouts == [_PARQUE_TIMEOUT_SECONDS]
+    assert _PARQUE_TIMEOUT_SECONDS > 30.0
 
 
 async def test_segunda_lectura_de_la_misma_zona_sale_de_cache() -> None:

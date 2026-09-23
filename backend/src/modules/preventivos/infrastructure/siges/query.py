@@ -30,7 +30,8 @@ parametrizadas — ARCHITECTURE_GUIDE §8). Fuentes confirmadas con dato real el
   mismo problema.
 - Fecha de instalación = MAX de `Incidente` tipo 103 (Instalación-
   Desinstalación) en estado terminal no anulado, pero por `Fecha_Ingreso`
-  (no `Fecha_Cierre` como el preventivo — ver comentario en INST más abajo).
+  (no `Fecha_Cierre` como el preventivo — ver el comentario de `INC` más
+  abajo).
   Ancla de `fecha_tentativa` cuando el equipo nunca tuvo un preventivo real
   en su sucursal actual (caso confirmado 2026-08-26, Cepas Argentinas/
   MXBC179G54: sus dos incidentes tipo 102 están en estado 900 Anulado — por
@@ -63,8 +64,9 @@ parametrizadas — ARCHITECTURE_GUIDE §8). Fuentes confirmadas con dato real el
   nada): con N=3 caen 39 empresas / 792 máquinas, todas con años de
   inactividad.
 
-Medido 2026-08-14 (rondas 3 y 11): 0.7-2.0 s por zona con el filtro de
-actividad — alcanza consulta en vivo, sin snapshot local.
+Medido 2026-09-23 contra el backend real, con la zona más grande que se
+consulta (CABA-N/OESTE, ~940 equipos): 14-17 s. Alcanza para consulta en vivo
+con la caché TTL del gateway, sin snapshot local.
 
 `Sucursal.Latitud`/`Longitud` (agregadas 2026-08-22 para el mapa de clientes)
 son texto libre, no siempre numérico: el parseo y la validación de rango
@@ -82,25 +84,31 @@ dentro del bbox de Argentina.
 # Cliente', y seguía apareciendo solo por 9 tomas 'Contador Final' de 2026).
 # Estimado (14) / Promedio Instalación (19) sí cuentan: indican que el anexo
 # se sigue facturando.
-_ACTIVIDAD_EMPRESA_JOIN = """
-LEFT JOIN (
-    SELECT M2.ID_Empresa, MAX(CT.FechaTomaContador) AS ultima_toma
-    FROM dbo.Contadores CT
-    INNER JOIN dbo.Maquina M2 ON M2.ID_Maquina = CT.ID_Maquina
-    WHERE CT.Estado = 0
-      AND CT.ID_TipoToma <> 13
-    GROUP BY M2.ID_Empresa
-) TOMA ON TOMA.ID_Empresa = E.ID_Empresa
-LEFT JOIN (
-    SELECT I2.ID_Empresa, MAX(I2.Fecha_Ingreso) AS ultimo_incidente
-    FROM dbo.Incidente I2
-    GROUP BY I2.ID_Empresa
-) INC ON INC.ID_Empresa = E.ID_Empresa
-"""
-
+# Chequeo por EXISTS, no por LEFT JOIN a un MAX agrupado (cambiado 2026-09-23
+# por timeouts reales): preguntar "¿hay alguna toma/incidente posterior al
+# corte?" deja que SQL Server corte en la primera fila que lo cumple y use el
+# índice por empresa, mientras que agrupar `Contadores`/`Incidente` enteras
+# para quedarse con el MAX por empresa obliga a barrer ambas tablas completas
+# antes de filtrar nada. Es la misma condición: MAX(fecha) >= corte equivale a
+# EXISTS(fecha >= corte). Medido contra el backend real el 2026-09-23 —
+# catálogo de zonas 5.4 s → 0.4 s (mismas 14 zonas, mismos conteos), parque de
+# CABA-N 35 s → 18 s.
 _EMPRESA_VIVA_WHERE = """
-  AND (TOMA.ultima_toma >= DATEADD(month, -?, GETDATE())
-       OR INC.ultimo_incidente >= DATEADD(month, -?, GETDATE()))
+  AND (EXISTS (
+        SELECT 1
+        FROM dbo.Contadores CT
+        INNER JOIN dbo.Maquina M2 ON M2.ID_Maquina = CT.ID_Maquina
+        WHERE M2.ID_Empresa = E.ID_Empresa
+          AND CT.Estado = 0
+          AND CT.ID_TipoToma <> 13
+          AND CT.FechaTomaContador >= DATEADD(month, -?, GETDATE())
+       )
+       OR EXISTS (
+        SELECT 1
+        FROM dbo.Incidente I2
+        WHERE I2.ID_Empresa = E.ID_Empresa
+          AND I2.Fecha_Ingreso >= DATEADD(month, -?, GETDATE())
+       ))
 """
 
 # Solo impresoras (regla del usuario, 2026-08-14): el parque de Siges mezcla
@@ -133,8 +141,8 @@ SELECT
     S.descripcion AS sucursal,
     S.Cuadricula AS zona,
     TP.Dias AS frecuencia_dias,
-    UP.fecha_ultimo_preventivo,
-    INST.fecha_instalacion,
+    INC.fecha_ultimo_preventivo,
+    INC.fecha_instalacion,
     S.Domicilio AS domicilio,
     S.Latitud AS latitud,
     S.Longitud AS longitud
@@ -145,6 +153,10 @@ INNER JOIN dbo.Articulo A ON A.Id_Articulo = M.ID_Articulo
 INNER JOIN dbo.ArtGen AG ON AG.Id_ArtGen = A.Id_ArtGen
 {_TIPO_PREVENTIVO_JOIN}
 LEFT JOIN (
+    -- Una sola pasada por `Incidente` para las dos fechas (unificado
+    -- 2026-09-23 por timeouts reales: dos subconsultas agrupadas eran dos
+    -- barridos de la misma tabla; medido, 18 s → 14 s en CABA-N).
+    --
     -- Agrupa también por ID_Sucursal (el de `Incidente`, histórico —no el
     -- actual de `Maquina`— así el JOIN de abajo exige que coincida con la
     -- sucursal de HOY): un equipo reasignado entre clientes arrastra su
@@ -153,32 +165,26 @@ LEFT JOIN (
     -- Fiter - Congreso/Z8PMB3BC600409X: su único Preventivo real es de 2024,
     -- hecho en OPDEA — otro cliente — antes de que el equipo llegara a Fiter
     -- en agosto 2024; afecta 2160/16205 máquinas activas, ~13% del parque).
+    --
+    -- Preventivo (tipo 102) por fecha de cierre: es un servicio donde importa
+    -- cuándo se completó. Instalación (tipo 103) por Fecha_Ingreso: es un
+    -- evento puntual donde importa cuándo el equipo entró en servicio — el
+    -- cierre es un trámite administrativo posterior, a veces al día
+    -- siguiente, que corría `fecha_tentativa` un día de más contra el valor
+    -- real (caso confirmado 2026-08-26: incidente 830662, Fecha_Ingreso 20/04
+    -- vs Fecha_Cierre 21/04 — el listado legacy usa 20/04).
     SELECT I.ID_Maquina, I.ID_Sucursal,
-           MAX(CASE WHEN I.Fecha_Cierre > '1900-01-01' THEN I.Fecha_Cierre
-                    ELSE I.Fecha_Ingreso END) AS fecha_ultimo_preventivo
+           MAX(CASE WHEN I.ID_Tipo_Incidente = 102
+                    THEN (CASE WHEN I.Fecha_Cierre > '1900-01-01'
+                               THEN I.Fecha_Cierre ELSE I.Fecha_Ingreso END)
+               END) AS fecha_ultimo_preventivo,
+           MAX(CASE WHEN I.ID_Tipo_Incidente = 103
+                    THEN I.Fecha_Ingreso END) AS fecha_instalacion
     FROM dbo.Incidente I
-    WHERE I.ID_Tipo_Incidente = 102
+    WHERE I.ID_Tipo_Incidente IN (102, 103)
       AND I.ID_Estado_Incidente IN (500, 600, 700, 710)
     GROUP BY I.ID_Maquina, I.ID_Sucursal
-) UP ON UP.ID_Maquina = M.ID_Maquina AND UP.ID_Sucursal = M.ID_Sucursal
-LEFT JOIN (
-    -- A diferencia de UP (preventivo): acá se usa Fecha_Ingreso siempre, no
-    -- Fecha_Cierre. Un preventivo es un servicio que importa cuándo se
-    -- completó (cierre); una instalación es un evento puntual donde importa
-    -- cuándo el equipo entró en servicio (ingreso) — cierre es un trámite
-    -- administrativo posterior, a veces al día siguiente, que corría
-    -- `fecha_tentativa` un día de más contra el valor real (caso confirmado
-    -- 2026-08-26: incidente 830662, Fecha_Ingreso 20/04 vs Fecha_Cierre
-    -- 21/04 — el listado legacy usa 20/04).
-    -- Mismo scoping por sucursal que UP, y por la misma razón: una
-    -- instalación en el cliente anterior no es "cuándo llegó" al actual.
-    SELECT I.ID_Maquina, I.ID_Sucursal, MAX(I.Fecha_Ingreso) AS fecha_instalacion
-    FROM dbo.Incidente I
-    WHERE I.ID_Tipo_Incidente = 103
-      AND I.ID_Estado_Incidente IN (500, 600, 700, 710)
-    GROUP BY I.ID_Maquina, I.ID_Sucursal
-) INST ON INST.ID_Maquina = M.ID_Maquina AND INST.ID_Sucursal = M.ID_Sucursal
-{_ACTIVIDAD_EMPRESA_JOIN}
+) INC ON INC.ID_Maquina = M.ID_Maquina AND INC.ID_Sucursal = M.ID_Sucursal
 WHERE S.Estado = 0
   AND M.Estado = 0
   AND M.ID_Estado_Maquina = 1
@@ -211,7 +217,6 @@ INNER JOIN dbo.Empresa E
 INNER JOIN dbo.Articulo A ON A.Id_Articulo = M.ID_Articulo
 INNER JOIN dbo.ArtGen AG ON AG.Id_ArtGen = A.Id_ArtGen
 {_TIPO_PREVENTIVO_JOIN}
-{_ACTIVIDAD_EMPRESA_JOIN}
 WHERE S.Estado = 0
   AND LTRIM(RTRIM(S.Cuadricula)) <> ''
 {_EMPRESA_VIVA_WHERE}
@@ -245,7 +250,6 @@ INNER JOIN dbo.Articulo A ON A.Id_Articulo = M.ID_Articulo
 INNER JOIN dbo.ArtGen AG ON AG.Id_ArtGen = A.Id_ArtGen
 LEFT JOIN dbo.Ciudad C ON C.Id_Ciudad = S.Id_Ciudad
 {_TIPO_PREVENTIVO_JOIN}
-{_ACTIVIDAD_EMPRESA_JOIN}
 WHERE S.Estado = 0
   AND M.Estado = 0
   AND M.ID_Estado_Maquina = 1
