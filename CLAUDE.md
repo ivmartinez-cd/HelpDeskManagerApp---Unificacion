@@ -104,16 +104,16 @@ en una auditoría aparte. Concretamente:
   — y al pushear se sigue la corrida de CI con `make ci` (`gh run watch`); si queda rojo, se
   arregla y se vuelve a pushear. Si CI falla, no está terminado. **No correr local** `make check`,
   `make check-fast`, `uv run lint-imports`, `uv run mypy src`, `uv run pytest tests/unit`
-  completo ni Playwright salvo pedido explícito del usuario: medido el 2026-09-02 con la
-  máquina ociosa sobre el HDD USB, lint-imports 42 s, mypy 108 s, pytest unit 101 s,
-  sizes+guards 29 s — con 3-4 sesiones de Claude en paralelo cada corrida saturaba el disco y
-  freezaba las demás terminales. `lint-imports` sigue siendo la regla más importante y no es
-  opinable: la hace cumplir CI, no el ojo. `make test-module` también es caro en este disco
-  (contadores, 286 tests: pytest dice 32 s pero la corrida tarda ≈2 min de reloj por el
-  arranque de `uv` y los imports desde el HDD): usarlo cuando el cambio lo amerite, no por
-  rutina; ruff sí, siempre.
+  completo ni Playwright salvo pedido explícito del usuario. La regla sigue vigente por
+  decisión del usuario, pero su motivo original ya no aplica tal cual: los números que la
+  justificaban (2026-09-02: lint-imports 42 s, mypy 108 s, pytest unit 101 s, sizes+guards
+  29 s, con el disco saturado si había 3-4 sesiones en paralelo) se midieron en la máquina
+  anterior — WSL sobre un HDD USB — y **no** están re-medidos en esta (Ubuntu nativo sobre
+  NVMe, ver más abajo). `lint-imports` sigue siendo la regla más importante y no es
+  opinable: la hace cumplir CI, no el ojo. `make test-module`: usarlo cuando el cambio lo
+  amerite, no por rutina; ruff sí, siempre.
 - Las desviaciones conscientes del texto literal de la guía se documentan como ADR en
-  `backend/docs/adr/` (ver `007-vocabulario-de-permisos-en-shared-excepcion-de-presentation.md`
+  `docs/adr/` (ver `007-vocabulario-de-permisos-en-shared-excepcion-de-presentation.md`
   como ejemplo) — una excepción sin ADR es una violación, no una decisión.
 
 ## Frontend recarga solo; el backend requiere restart explícito
@@ -122,22 +122,23 @@ en una auditoría aparte. Concretamente:
 así que editar un archivo de `frontend/` se refleja solo en ~2 s. La app es un entorno de
 pruebas que los compañeros del usuario usan mientras él corrige cosas en vivo: modo dev es el
 estado correcto, no un parche. Antes corría `next build && next start` en cada arranque, y
-`reiniciar.sh frontend` re-corría ese build completo tras cada edición: medido el 2026-09-02,
-~3 min por vuelta con la presión de I/O del WSL en `full avg10=89%` (el 89% del tiempo TODAS las
-tareas del sistema bloqueadas esperando el HDD USB, con CPU y RAM casi libres). Eso era lo que
-freezaba las demás terminales en cada implementación.
+`reiniciar.sh frontend` re-corría ese build completo tras cada edición: ~3 min por vuelta en la
+máquina anterior (WSL sobre HDD USB), que era lo que freezaba las demás terminales en cada
+implementación. En esta máquina el build sería más rápido, pero el modo dev se queda igual: el
+punto es que los compañeros ven el cambio al recargar, sin esperar ningún build.
 
 **Backend: sí reiniciar.** Uvicorn corre sin `--reload` — decisión deliberada, no una
 limitación: el `--reload` relanzaba los background jobs con cada guardado y así se disparó el
 mail real del incidente 2026-08-12. El código sigue bind-monteado (`./backend:/app`), pero
 editar un archivo de `backend/` **no tiene ningún efecto** hasta reiniciar el contenedor.
 
-**Docker corre en WSL (Ubuntu-24.04), no en Windows.** Desde 2026-08-21 el repo se edita
-**directo en la copia de Linux** (`/home/ivan/proyectos/helpdesk-manager`, la misma que montan
-los contenedores) — ya no hay una copia paralela en Windows ni un paso de rsync entre medio
-(leer `/mnt/c` desde WSL es lento, por eso el bind mount siempre apuntó a Linux). El único paso
-a recordar tras editar es `scripts/wsl/reiniciar.sh`, corrido desde una terminal WSL parada en
-el repo:
+**Docker corre en Ubuntu nativo — ya no hay WSL ni Windows de por medio** (migración
+2026-09-24; antes el stack vivía en WSL sobre un HDD USB, y de ahí salen varias de las
+mediciones históricas de este archivo). El repo se edita directo en el checkout que montan los
+contenedores: `/home/ivan-martinez/proyectos/canal/helpdesk-manager`, sobre el NVMe de la
+máquina. Los scripts ya no dependen de esa ruta (`scripts/wsl/reiniciar.sh` deduce la raíz del
+repo de su propia ubicación); el directorio conserva el nombre `wsl/` solo por historia. El
+único paso a recordar tras editar es:
 
 ```
 bash scripts/wsl/reiniciar.sh backend          # tras editar backend/
@@ -149,8 +150,8 @@ bash scripts/wsl/reiniciar.sh backend          # tras editar backend/
   `alembic upgrade head` + uvicorn; el script aborta si `DISABLE_INSUMOS_BACKGROUND_JOBS` no
   está en `true` y avisa si el log muestra jobs iniciados sin la línea `insumos omitido`.
   Recordar que `docker restart` NO relee `.env` — para cambios de variables de entorno hace
-  falta, parado en `/home/ivan/proyectos/helpdesk-manager`,
-  `docker compose up -d --force-recreate backend`.
+  falta, parado en la raíz del repo, `docker compose up -d --force-recreate backend`
+  (o `make recreate-backend`).
 - **Frontend** (`helpdesk-manager-frontend`): corre `next dev` (Fast Refresh). Tras editar
   `frontend/` **no hay que hacer nada**: la ruta se recompila sola en ~2 s (medido con el disco
   ocioso) y el navegador la toma al recargar. `reiniciar.sh frontend` detecta el modo dev, avisa
@@ -160,17 +161,21 @@ bash scripts/wsl/reiniciar.sh backend          # tras editar backend/
   El comando lo fija `command:` en `docker-compose.yml`; para servir un build de producción,
   `FRONTEND_CMD=npm run build && npm run start` en `.env` + `docker compose up -d
   --force-recreate frontend`.
-- Cualquier comando `docker …` / `docker compose …` se corre directo en la terminal WSL, parado
-  en el repo — ya no hace falta pasar por `wsl.exe` desde Windows.
-- Playwright local (`frontend/`): corre en el **host WSL**, no en el contenedor (la imagen es
-  Alpine y no soporta los navegadores). Setup hecho el 2026-08-21: node por nvm
-  (`export PATH=$HOME/.nvm/versions/node/v24.19.0/bin:$PATH`, en shells no interactivos no está
-  en el PATH), `npm ci` en `frontend/`, Chromium en `~/.cache/ms-playwright/` y las libs de
-  sistema por `apt`. El puerto 3001 lo ocupa otro contenedor del usuario (`stc_api`); usar
-  `PW_PORT=3011 ./node_modules/.bin/playwright test …` parado en `frontend/`. Gotchas:
-  `frontend/node_modules` y `frontend/.next` son puntos de montaje de volúmenes de Docker
-  (los crea como directorios vacíos de root; si vuelven a quedar así tras un `compose up`,
-  `rmdir` + `mkdir` como usuario propio — el contenedor usa sus volúmenes y no se entera); y
+- Cualquier comando `docker …` / `docker compose …` se corre directo en la terminal, parado en
+  el repo.
+- **Acceso desde otras máquinas de la LAN** (para que un compañero pruebe la app): esta PC es
+  `192.168.178.39`, así que la URL es `http://192.168.178.39:3000`. Cada IP nueva desde la que
+  se entre hay que agregarla en **dos** lugares, o la app falla de formas confusas:
+  `allowedDevOrigins` en `frontend/next.config.ts` (si falta, la página carga pero React nunca
+  hidrata: el login no responde y no hay error visible) y `_ORIGENES_DEV` en
+  `backend/src/shared/presentation/app.py` (CORS; solo hace falta si algo llama al backend
+  fuera del rewrite `/api/*` de Next, que es same-origin).
+- **Playwright no está instalado en este host** (no hay node/nvm ni `~/.cache/ms-playwright`);
+  la suite la corre CI. Si hace falta correrla local, se instala primero (node + `npm ci` en
+  `frontend/` + `npx playwright install --with-deps chromium`). Gotchas que siguen valiendo:
+  `frontend/node_modules` y `frontend/.next` son puntos de montaje de volúmenes de Docker (los
+  crea como directorios vacíos de root; si vuelven a quedar así tras un `compose up`, `rmdir` +
+  `mkdir` como usuario propio — el contenedor usa sus volúmenes y no se entera); y
   `playwright.config.ts` borra `http_proxy`/`https_proxy` del entorno porque el proxy
   corporativo rechaza `localhost` y todas las navegaciones terminan en `net::ERR_ABORTED`.
 
@@ -187,22 +192,25 @@ sesiones para poder probar en el navegador.
 ## Varias sesiones de Claude en paralelo sobre el mismo checkout
 
 El usuario trabaja habitualmente con **varias sesiones de Claude Code abiertas a la vez** (3 o
-4, cada una en su ventana, lanzadas con `~/.local/bin/dev` / `hdm`), todas sobre **este mismo
-checkout** — no hay worktrees ni ramas por sesión. Consecuencia: `git status` mezcla el trabajo
-en curso de todas, y un archivo puede estar siendo editado por otra sesión en este momento.
+4, cada una en su ventana), todas sobre **este mismo checkout** — no hay worktrees ni ramas por
+sesión. Consecuencia: `git status` mezcla el trabajo en curso de todas, y un archivo puede estar
+siendo editado por otra sesión en este momento.
 
-Existen dos mecanismos de coordinación; usarlos, no asumir que se está solo:
+> **Ojo (2026-09-24): el registro automático ya no está funcionando.** Los scripts auxiliares
+> (`~/.local/bin/claude-session-registry`, `claude-git-guard`, `claude-push-reminder`,
+> `claude-build-lock`, `hd-status`, `dev`/`hdm`) **no se migraron** desde la máquina anterior:
+> `.claude/settings.local.json` los sigue invocando pero no existen, así que los hooks no hacen
+> nada y `.claude/sessions/edits.tsv` está vacío. Hasta que se reinstalen, las reglas de abajo
+> hay que cumplirlas **a mano**: no hay aviso automático ni bloqueo que las haga cumplir.
 
-1. **Registro de ediciones entre sesiones (automático, por hooks).** Hooks en
-   `.claude/settings.local.json` corren `~/.local/bin/claude-session-registry`: cada
-   `Edit`/`Write` de cualquier sesión queda anotado en `.claude/sessions/edits.tsv` (hora,
-   sesión, módulo, archivo), y antes de editar un archivo que **otra** sesión tocó hace poco
-   llega un aviso por `additionalContext` (mismo archivo = aviso fuerte; mismo módulo = aviso
-   suave). Al arrancar una sesión también llega el resumen de las demás. Qué hacer cuando
+Mecanismos de coordinación; usarlos, no asumir que se está solo:
+
+1. **Registro de ediciones entre sesiones** (`.claude/sessions/edits.tsv`, hoy sin alimentar —
+   ver aviso). Cuando funciona, cada `Edit`/`Write` queda anotado y antes de editar un archivo
+   que **otra** sesión tocó hace poco llega un aviso por `additionalContext`. Qué hacer cuando
    aparece el aviso: releer el archivo (pudo cambiar), no pisar ni revertir ni reformatear lo
    ajeno, y **no commitear archivos que no sean de la propia tarea** — al commitear, agregar
    explícitamente los archivos propios (`git add <archivos>`), nunca `git add -A`/`git add .`.
-   Para ver el registro a mano: `hd-status` o `claude-session-registry status`.
 2. **Comunicación directa entre sesiones.** `ListAgents` lista las otras sesiones de Claude
    abiertas en esta máquina; `SendMessage` les manda un mensaje y pueden responder. Usarlo
    cuando el registro muestra que otra sesión está en el mismo módulo/archivo y hace falta
@@ -215,18 +223,19 @@ sigue activa, decírselo al usuario antes de seguir, no resolverlo pisando.
 
 ## Guardas automáticas de git (se cumplen solas, no son opcionales)
 
-Además de las reglas de arriba hay tres guardas mecánicas. No intentar rodearlas; si una
-bloquea algo que de verdad hace falta, explicárselo al usuario y que decida él.
+Estas reglas se cumplen igual **esté o no la guarda instalada** (ver el aviso de la sección
+anterior: `claude-git-guard` hoy no existe en esta máquina, así que nada las bloquea). No
+intentar rodearlas; si una bloquea algo que de verdad hace falta, explicárselo al usuario y que
+decida él.
 
-- **`claude-git-guard`** (hook PreToolUse de Claude sobre `Bash`, en
-  `.claude/settings.local.json`): **deniega** `git add -A` / `--all` / `.`, `git commit -a` /
-  `-am` y `git push --force`. Motivo: con varias sesiones sobre el mismo checkout, esos
-  comandos suben trabajo ajeno o reescriben historia compartida. Siempre `git add <archivos
-  propios>` explícito y `git commit` sin `-a`.
-- **`.githooks/pre-commit`** (≈5 s): rechaza el commit si algún archivo staged fue editado más
-  recientemente por **otra** sesión de Claude (según el registro de sesiones); override
-  consciente y coordinado: `ALLOW_FOREIGN=1 git commit …`. Si hay `.py` staged en `backend/`,
-  corre `ruff` sobre esos archivos dentro del contenedor. Nada más.
+- **Nunca** `git add -A` / `--all` / `.`, `git commit -a` / `-am`, ni `git push --force`.
+  Motivo: con varias sesiones sobre el mismo checkout, esos comandos suben trabajo ajeno o
+  reescriben historia compartida. Siempre `git add <archivos propios>` explícito y `git commit`
+  sin `-a`. (Lo denegaba el hook `claude-git-guard`, hoy ausente.)
+- **`.githooks/pre-commit`** (≈5 s): si hay `.py` staged en `backend/`, corre `ruff` sobre esos
+  archivos dentro del contenedor. Su otro control — rechazar el commit si un archivo staged fue
+  editado más recientemente por **otra** sesión de Claude — depende del registro de sesiones y
+  hoy no tiene datos que mirar; override consciente, cuando vuelva: `ALLOW_FOREIGN=1 git commit …`.
 - **`.githooks/pre-push`** (instantáneo): lista los commits que se van a subir (leerlos, no
   pushear a ciegas). **No corre ninguna verificación local** desde el 2026-09-02.
 - **CI en GitHub Actions** (`.github/workflows/ci.yml`): corre en cada push a `main` y en cada
@@ -254,10 +263,10 @@ CI en cada push. Localmente, solo si el usuario lo pide explícitamente.
 Directo) es el **respaldo**: lo que no está pusheado existe solo en el disco de esta PC. Regla:
 
 - **Pushear al cerrar cada bloque de trabajo** (feature terminada y probada, fin de una
-  migración) **y siempre al final del día de trabajo**, antes del `wsl --shutdown`.
+  migración) **y siempre al final del día de trabajo**, antes de apagar la máquina.
 - **Hacerlo proactivamente cuando se detecte la condición**, sin esperar a que el usuario lo
-  pida de nuevo: el hook de arranque avisa si hay **≥5 commits sin pushear o el más viejo
-  tiene más de 24 h**; `hd-status` muestra lo mismo. En ese caso, al terminar la tarea en
+  pida de nuevo: **≥5 commits sin pushear o el más viejo con más de 24 h** (lo avisaba el hook
+  de arranque, hoy ausente: revisarlo a mano con `git log origin/main..`). En ese caso, al terminar la tarea en
   curso (no en el medio), correr `git push origin main` y decirlo en el resumen final — y
   después seguir la corrida de CI con `make ci`; si falla, arreglarlo antes de cerrar la tarea.
   Nunca `--no-verify`.

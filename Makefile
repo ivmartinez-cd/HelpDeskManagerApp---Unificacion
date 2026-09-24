@@ -1,4 +1,4 @@
-# Atajos de desarrollo (se corren en WSL, parado en la raíz del repo).
+# Atajos de desarrollo (se corren parado en la raíz del repo).
 # Los contenedores no recargan código solos — ver CLAUDE.md "Sin hot reload".
 
 BACKEND  := helpdesk-manager-backend
@@ -125,4 +125,4 @@ logs-frontend:  ## Últimas 100 líneas del frontend, siguiendo
 
 mailpit:  ## Abre la bandeja de Mailpit (mails de dev)
 	@echo "Mailpit: http://localhost:8025"
-	@command -v wslview >/dev/null && wslview http://localhost:8025 || true
+	@command -v xdg-open >/dev/null && xdg-open http://localhost:8025 >/dev/null 2>&1 || true

@@ -1,8 +1,7 @@
 #!/bin/bash
-# Reinicia el servicio pedido tras editar código en la copia de Linux que montan los
-# contenedores (docker corre en WSL, ya no hay copia paralela en Windows).
+# Reinicia el servicio pedido tras editar código en el checkout que montan los contenedores.
 #
-# Uso (se corre DENTRO de WSL, parado en el repo):
+# Uso (parado en el repo):
 #   bash scripts/wsl/reiniciar.sh backend       # restart backend (exige DISABLE_INSUMOS_BACKGROUND_JOBS=true)
 #   bash scripts/wsl/reiniciar.sh frontend      # normalmente NO hace falta (ver abajo)
 #
@@ -18,7 +17,9 @@
 # ya no hace falta porque el repo se edita directo acá.
 set -euo pipefail
 
-LIN="${HDM_LINUX:-/home/ivan/proyectos/helpdesk-manager}"
+# Raíz del repo: se deduce de la ubicación de este script (así no depende de dónde esté
+# clonado; docker corre en Linux nativo, ya no en WSL). HDM_LINUX la sobreescribe.
+LIN="${HDM_LINUX:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 SVC="${1:-}"
 FORCE="${2:-}"
 ESPERA_MAX="${HDM_ESPERA_MAX:-600}"
