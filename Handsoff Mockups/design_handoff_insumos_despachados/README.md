@@ -97,8 +97,9 @@ Pendiente (amarillo), Sin respuesta (gris).
 - **Azul "cerrado" (`#1D4ED8` / `#93C5FD`) — a confirmar con el usuario.** Es un color de estado,
   no de marca, y no es ninguna de las líneas excluidas (violeta, celeste, magenta), pero es el
   único azul de la pantalla. Se implementó tal cual el mockup hasta que se confirme.
-- **"Ver en OCA" es un link genérico** a `https://www.oca.com.ar/`, igual que el mockup: no hay una
-  URL de seguimiento por guía estable. Por eso el pie muestra la guía seleccionable para pegarla.
+- **"Ver en OCA" abre el seguimiento de la guía** en
+  `https://oca.com.ar/Seguimiento/Paquetes/<guía>` (decisión del usuario, 2026-09-24; el mockup
+  tenía un link genérico a la home de OCA).
 - **La pantalla lee de HDM y nunca espera a OCA**: todo sale de lo que el job de fondo ya guardó.
   "Actualizar ahora" no bloquea: lanza la corrida en el backend y la pantalla la sigue por
   polling.

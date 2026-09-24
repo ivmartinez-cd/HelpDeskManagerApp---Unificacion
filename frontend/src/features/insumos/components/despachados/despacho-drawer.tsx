@@ -16,7 +16,9 @@ import { TONO } from "./semaforo";
 
 /** Link genérico de OCA, igual que el mockup: OCA no publica una URL de
  * seguimiento por guía estable (anotado en el README del handoff). */
-const OCA_URL = "https://www.oca.com.ar/";
+/** Seguimiento público de OCA para una guía. */
+const urlSeguimientoOca = (guia: string) =>
+  `https://oca.com.ar/Seguimiento/Paquetes/${encodeURIComponent(guia)}`;
 
 interface Props {
   guia: string | null;
@@ -130,7 +132,7 @@ export function DespachoDrawer({ guia, estado, canUpdate, onClose, onRegistrar, 
       footer={
         <>
           <a
-            href={OCA_URL}
+            href={guia ? urlSeguimientoOca(guia) : undefined}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 font-body text-sm font-bold text-[#b45f06] no-underline hover:underline dark:text-brand-orange"
