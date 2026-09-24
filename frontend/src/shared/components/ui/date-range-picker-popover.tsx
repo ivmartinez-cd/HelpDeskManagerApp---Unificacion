@@ -59,7 +59,9 @@ export function DateRangePickerPopover({
         {label}
       </button>
       {open && (
-        <div className="absolute right-0 z-50 mt-2 rounded-[12px] bg-card shadow-[0_20px_60px_rgba(0,0,0,.25)]">
+        // `w-max`: sin ancho propio, un posicionado absoluto hereda el ancho del trigger y el
+        // Patrón 4 (flex-wrap) se apila en una columna angosta.
+        <div className="absolute right-0 z-50 mt-2 w-max max-w-[calc(100vw-2rem)] rounded-[12px] bg-card shadow-[0_20px_60px_rgba(0,0,0,.25)]">
           <DateRangePicker
             {...pickerProps}
             value={value}
