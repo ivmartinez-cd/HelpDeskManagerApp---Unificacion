@@ -28,8 +28,25 @@ yel()  { printf '\033[33m! %s\033[0m\n' "$*"; }
 pyfiles=$(grep -E '^backend/.*\.py$' <<<"$staged" | sed 's#^backend/##' | tr '\n' ' ')
 if [[ -n "${pyfiles// /}" ]]; then
   if docker exec "$BACKEND" true 2>/dev/null; then
-    # shellcheck disable=SC2086
-    docker exec "$BACKEND" uv run ruff check $pyfiles || { red "ruff (archivos staged)"; exit 1; }
+    # El contenedor solo monta el checkout principal: si el commit sale de otra worktree
+    # (`git worktree add`), sus .py nuevos no existen ahí y ruff falla con E902. En ese caso
+    # se corre el mismo ruff en un contenedor temporal que monta ESTA worktree (misma imagen,
+    # mismo venv, ambos en solo lectura, sin red).
+    fmt='{{range .Mounts}}{{if eq .Destination "%s"}}{{if .Name}}{{.Name}}{{else}}{{.Source}}{{end}}{{end}}{{end}}'
+    # shellcheck disable=SC2059
+    montado=$(docker inspect "$BACKEND" --format "$(printf "$fmt" /app)")
+    if [[ "$montado" -ef "$PWD/backend" ]]; then
+      # shellcheck disable=SC2086
+      docker exec "$BACKEND" uv run ruff check $pyfiles || { red "ruff (archivos staged)"; exit 1; }
+    else
+      # shellcheck disable=SC2059
+      venv=$(docker inspect "$BACKEND" --format "$(printf "$fmt" /app/.venv)")
+      imagen=$(docker inspect "$BACKEND" --format '{{.Config.Image}}')
+      # shellcheck disable=SC2086
+      docker run --rm --network none --entrypoint /venv/bin/ruff \
+        -v "$PWD/backend:/app:ro" -v "$venv:/venv:ro" -w /app "$imagen" \
+        check --no-cache $pyfiles || { red "ruff (archivos staged, worktree)"; exit 1; }
+    fi
   else
     yel "pre-commit: el contenedor $BACKEND no responde — salteo ruff (no hay CI que lo corra después)."
   fi
