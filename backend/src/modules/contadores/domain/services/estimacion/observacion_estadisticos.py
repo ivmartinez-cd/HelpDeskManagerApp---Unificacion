@@ -1,61 +1,95 @@
-from src.modules.contadores.domain.services.estimacion.antiguedad import meses_entre
-from src.modules.contadores.domain.services.estimacion.observacion_etiquetas import ETIQUETAS_PARQUE
-from src.modules.contadores.domain.value_objects.estimacion.estimacion_input import EstimacionInput
+"""Niveles "impresiones", "estadísticos" y "contexto" de la observación del CSV —
+`ResumenObservacion.Impresiones` / `Estadisticos` / `Parque` / `Par` /
+`Contexto` del Estimador de Contadores v1.7. Números en cultura invariante
+(punto decimal), a diferencia del `DetalleCalculo` de la grilla."""
+
+from decimal import ROUND_HALF_UP, Decimal
+
+from src.modules.contadores.domain.services.estimacion.observacion_etiquetas import (
+    FUENTES_PARQUE,
+)
 from src.modules.contadores.domain.value_objects.estimacion.estimacion_resultado import (
     EstimacionResultado,
 )
-from src.modules.contadores.domain.value_objects.estimacion.promedio_parque import PromedioParque
+from src.modules.contadores.domain.value_objects.estimacion.fuente_estimacion import (
+    FuenteEstimacion,
+)
+
+_CENTESIMO = Decimal("0.01")
+_METODOS_PAR = frozenset({"EntreReales", "T4ST_Proyectado", "T4ST_Valor"})
 
 
-def estadisticos_base(
-    resultados: dict[str, EstimacionResultado], entrada: EstimacionInput
+def signo(valor: float) -> str:
+    """`{x:+0;-0}` sobre decimal: el signo lo decide el valor, la magnitud se
+    redondea lejos del cero; el cero sale con "+"."""
+    numero = Decimal(repr(valor))
+    magnitud = int(abs(numero).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+    return f"-{magnitud}" if numero < 0 else f"+{magnitud}"
+
+
+def impresiones(
+    mono: EstimacionResultado | None, color: EstimacionResultado | None, ambas: bool
 ) -> str:
-    """Estadísticos de respaldo del primer resultado que tenga (LEYENDA_OBSERVACION
-    § Estadísticos) — parque o regla de tres, según cuál método se usó."""
-    for r in resultados.values():
-        texto = _estadistico_de(r, entrada)
-        if texto:
-            return texto
+    """Nivel 2: "+146 imp" con una sola clase estimada, "Mono +146 Color +38"
+    con las dos."""
+    if not ambas:
+        una = mono if mono is not None else color
+        if una is None or una.impresiones is None:
+            return ""
+        return f"{signo(una.impresiones)} imp"
+    partes = []
+    if mono is not None and mono.impresiones is not None:
+        partes.append(f"Mono {signo(mono.impresiones)}")
+    if color is not None and color.impresiones is not None:
+        partes.append(f"Color {signo(color.impresiones)}")
+    return " ".join(partes)
+
+
+def estadisticos(resultado: EstimacionResultado) -> str:
+    """Nivel 3: respaldo de la mediana del parque o el par de la regla de
+    tres. `T4ST_Valor` entra por la P/L manual con Llegada T4 (tiene par); en
+    el "T4 tal cual" esos campos no existen y el nivel queda vacío solo."""
+    if resultado.metodo == "MedianaTruncadaP80":
+        return _parque("P80", resultado)
+    if resultado.metodo == "MedianaCruda":
+        return _parque("mediana", resultado)
+    if resultado.metodo in _METODOS_PAR:
+        return _par(resultado)
     return ""
 
 
-def _estadistico_de(r: EstimacionResultado, entrada: EstimacionInput) -> str:
-    if r.fuente in ETIQUETAS_PARQUE:
-        return _estadistico_parque(r, entrada)
-    if r.dias_par_pl is not None and r.tasa_diaria is not None and r.dias_proyectados is not None:
-        tasa = f"{r.tasa_diaria:.1f}".replace(".", ",")
-        return f"{r.dias_par_pl}d {tasa}/dia extrap +{r.dias_proyectados}d"
-    return ""
-
-
-def _estadistico_parque(r: EstimacionResultado, entrada: EstimacionInput) -> str:
-    promedio = _promedio_de(entrada, r.fuente)
-    if promedio is None:
+def _parque(nombre: str, resultado: EstimacionResultado) -> str:
+    detalle = resultado.detalle_parque
+    if detalle is None or detalle.n_equipos <= 0:
         return ""
-    if promedio.n_descartados > 0:
-        return f"P80 {promedio.n_equipos}eq(-{promedio.n_descartados} desc)"
-    return f"mediana {promedio.n_equipos}eq"
+    desc = f"(-{detalle.n_descartados} desc)" if detalle.n_descartados > 0 else ""
+    return f"{nombre} {detalle.n_equipos}eq{desc}"
 
 
-def _promedio_de(entrada: EstimacionInput, fuente: str) -> PromedioParque | None:
-    return {
-        "Parque_Cliente_Modelo": entrada.parque_cliente_modelo,
-        "Parque_Grupo_Modelo": entrada.parque_grupo_modelo,
-        "Parque_Cliente_Tec": entrada.parque_cliente_tecnologia,
-        "Parque_Global_Modelo": entrada.parque_global_modelo,
-    }.get(fuente)
+def _par(r: EstimacionResultado) -> str:
+    partes = []
+    if r.dias_par_pl is not None and r.dias_par_pl > 0:
+        partes.append(f"{r.dias_par_pl}d")
+    if r.tasa_diaria is not None and r.tasa_diaria != 0:
+        partes.append(f"{_hasta_dos_decimales(r.tasa_diaria)}/dia")
+    if r.dias_proyectados is not None and r.dias_proyectados != 0:
+        extrap = f"+{r.dias_proyectados}" if r.dias_proyectados > 0 else str(r.dias_proyectados)
+        partes.append(f"extrap {extrap}d")
+    return " ".join(partes)
 
 
-def contexto_antiguedad(
-    resultados: dict[str, EstimacionResultado], entrada: EstimacionInput
-) -> str:
-    """"sin real Nm" — pieza de menor prioridad de conservación, sacrificada
-    primero al recortar (REGLAS_DE_NEGOCIO §12). Es informativo de por qué
-    se fue al parque, no depende de si esa antigüedad superó el umbral de
-    alerta de §5.4 (LEYENDA_OBSERVACION.md: ejemplo con 3 meses, por debajo
-    de ambos umbrales, igual se muestra)."""
-    hay_parque = any(r.fuente in ETIQUETAS_PARQUE for r in resultados.values())
-    if entrada.ultimo_real is None or not hay_parque:
+def _hasta_dos_decimales(valor: float) -> str:
+    """`{x:0.##}` en cultura invariante: 3.4 / 12 / 98765.43."""
+    redondeado = Decimal(repr(valor)).quantize(_CENTESIMO, rounding=ROUND_HALF_UP)
+    texto = f"{redondeado:f}".rstrip("0").rstrip(".")
+    return "0" if texto in ("", "-0") else texto
+
+
+def contexto(fuente: FuenteEstimacion, meses_sin_real: int | None) -> str:
+    """Nivel 4: por qué se cayó al parque. Solo con fuente de parque; con 0
+    meses (o sin real) el legacy dice "sin historia propia"."""
+    if fuente not in FUENTES_PARQUE:
         return ""
-    meses = meses_entre(entrada.ultimo_real.fecha, entrada.fecha_objetivo)
-    return f"sin real {meses}m"
+    if meses_sin_real is not None and meses_sin_real > 0:
+        return f"sin real {meses_sin_real}m"
+    return "sin historia propia"

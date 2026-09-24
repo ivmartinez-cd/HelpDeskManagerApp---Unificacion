@@ -2,270 +2,193 @@
 
 import { BarChart3, Eye } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import { BrandBadge } from "@/shared/components/ui/brand-form";
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import type { SortState } from "@/shared/hooks/use-table-sort";
-import type { FilaProyeccion, Semaforo } from "../types/proyeccion";
-import { DetalleEstimacionIcono } from "./detalle-estimacion-tooltip";
+import type { FilaProyeccion } from "../types/proyeccion";
+import {
+  AFacturarCell,
+  ImpresionesCell,
+  MesesCell,
+  ModeloCell,
+  SemaforoCell,
+  UbicacionCell,
+  UltimoFacturadoCell,
+} from "./proyeccion-celdas";
+import { compararEsAr, n0 } from "./proyeccion-formato";
 import { ProyeccionSparkline } from "./proyeccion-sparkline";
 
 export type ProyeccionSortKey = "ubicacion" | "nro_serie" | "modelo" | "impresiones";
 
-const SEMAFORO_DOT: Record<Semaforo, string> = {
-  VERDE: "bg-success",
-  AMARILLO: "bg-warning",
-  NARANJA: "bg-brand-orange",
-  ROJO: "bg-destructive",
-};
-
-const SEMAFORO_LABEL: Record<Semaforo, string> = {
-  VERDE: "Verde — real, o estimado de alta confianza",
-  AMARILLO: "Amarillo — requiere confirmación (T4 sin revisar, receso, backup/tránsito)",
-  NARANJA: "Naranja — desvío del propio equipo",
-  ROJO: "Rojo — parque (sin historia), pendiente o salto imposible",
-};
-
-const numberFormat = new Intl.NumberFormat("es-AR");
-
-function formatFecha(iso: string): string {
-  const [y, m, d] = iso.split("-");
-  return `${d}/${m}/${y}`;
-}
-
-function ImpresionesCell({ fila }: { fila: FilaProyeccion }) {
-  if (fila.impresiones === null) return <span className="text-muted-foreground">—</span>;
-  const signo = fila.impresiones >= 0 ? "+" : "";
-  const tono =
-    fila.coloreo === "AZUL"
-      ? "text-info"
-      : fila.coloreo === "NARANJA"
-        ? "text-brand-orange"
-        : "text-foreground";
-  return (
-    <span className="inline-flex items-center gap-1">
-      <span
-        className={cn(
-          "font-bold tabular-nums",
-          tono,
-          fila.borde_salto_imposible && "rounded-[8px] border-2 border-dashed border-destructive px-2 py-0.5",
-        )}
-        title={fila.borde_salto_imposible ? "Salto imposible: supera la capacidad física del equipo" : undefined}
-      >
-        {signo}
-        {numberFormat.format(fila.impresiones)}
-      </span>
-      <DetalleEstimacionIcono fila={fila} />
-    </span>
-  );
-}
-
-function EstimCell({ fila, fechaObjetivo }: { fila: FilaProyeccion; fechaObjetivo: string | null }) {
-  if (fila.estim_propuesto === null) return <span className="text-muted-foreground">—</span>;
-  const t4SinRevisar = fila.tipo_toma === 4;
-  return (
-    <div className="leading-tight">
-      <span className={cn("font-semibold tabular-nums", fila.es_real ? "text-success" : "text-info")}>
-        {numberFormat.format(fila.estim_propuesto)}
-      </span>
-      {fila.tipo_toma !== null && (
-        <span className={cn("ml-1 text-[10px] font-bold", t4SinRevisar ? "text-warning" : "text-muted-foreground")}>
-          T{fila.tipo_toma}
-          {t4SinRevisar && " ⚠"}
-        </span>
-      )}
-      {/* Para reales, la fecha de esa lectura puede no coincidir con la fecha
-          objetivo del proceso (dato que el backend todavía no expone para el
-          caso real) — se omite antes que mostrar una fecha incorrecta. */}
-      {!fila.es_real && fechaObjetivo && (
-        <p className="text-xs text-muted-foreground">{formatFecha(fechaObjetivo)}</p>
-      )}
-    </div>
-  );
-}
-
-interface FilaAgrupada {
-  claves: FilaProyeccion[];
-}
-
-function agruparPorEquipo(filas: FilaProyeccion[]): FilaAgrupada[] {
-  const porId = new Map<number, FilaProyeccion[]>();
-  for (const fila of filas) {
-    const lista = porId.get(fila.id_maquina) ?? [];
-    lista.push(fila);
-    porId.set(fila.id_maquina, lista);
-  }
-  return Array.from(porId.values()).map((claves) => ({ claves }));
-}
-
-export function esSeleccionable(fila: FilaProyeccion): boolean {
-  return !fila.es_real && fila.estim_propuesto !== null;
+/** Las clases de un equipo (Cl.10 primero), como `GrupoEquipo` del legacy. */
+export interface GrupoEquipo {
+  filas: FilaProyeccion[];
 }
 
 export function claveFila(fila: FilaProyeccion): string {
   return `${fila.id_maquina}-${fila.clase}`;
 }
 
+/** Agrupa por máquina conservando el orden de llegada y ordena las clases. */
+export function agruparPorEquipo(filas: FilaProyeccion[]): GrupoEquipo[] {
+  const porId = new Map<number, FilaProyeccion[]>();
+  for (const fila of filas) porId.set(fila.id_maquina, [...(porId.get(fila.id_maquina) ?? []), fila]);
+  return Array.from(porId.values()).map((lista) => ({
+    filas: [...lista].sort((a, b) => Number(a.clase) - Number(b.clase)),
+  }));
+}
+
+function valorOrden(g: GrupoEquipo, key: ProyeccionSortKey): string | number {
+  const p = g.filas[0];
+  if (key === "nro_serie") return p.nro_serie;
+  if (key === "modelo") return p.modelo;
+  if (key === "impresiones") return g.filas.slice(0, 2).reduce((s, f) => s + (f.impresiones ?? 0), 0);
+  return `${p.empresa}|${p.sucursal}|${p.sector}`;
+}
+
+/** Orden por equipo (no por fila), estable, con la cultura es-AR para texto;
+ * "impresiones" suma las dos clases del equipo. */
+export function ordenarGrupos(grupos: GrupoEquipo[], sort: SortState<ProyeccionSortKey>): GrupoEquipo[] {
+  const factor = sort.direction === "asc" ? 1 : -1;
+  return [...grupos].sort((a, b) => {
+    const va = valorOrden(a, sort.key);
+    const vb = valorOrden(b, sort.key);
+    const cmp = typeof va === "number" && typeof vb === "number" ? va - vb : compararEsAr(String(va), String(vb));
+    return cmp * factor;
+  });
+}
+
 interface ProyeccionTablaProps {
-  filas: FilaProyeccion[];
+  grupos: GrupoEquipo[];
   sort: SortState<ProyeccionSortKey>;
   onToggleSort: (key: ProyeccionSortKey) => void;
+  activa: FilaProyeccion | null;
   onVerCandidatos: (fila: FilaProyeccion) => void;
   onVerHistorial: (fila: FilaProyeccion) => void;
-  seleccionadas: Set<string>;
-  onToggleSeleccion: (fila: FilaProyeccion) => void;
-  onToggleSeleccionTodas: () => void;
   fechaObjetivo: string | null;
 }
 
-export function ProyeccionTabla({
-  filas,
-  sort,
-  onToggleSort,
-  onVerCandidatos,
-  onVerHistorial,
-  seleccionadas,
-  onToggleSeleccion,
-  onToggleSeleccionTodas,
-  fechaObjetivo,
-}: ProyeccionTablaProps) {
-  const grupos = agruparPorEquipo(filas);
-  const seleccionablesVisibles = filas.filter(esSeleccionable);
-  const todasSeleccionadas =
-    seleccionablesVisibles.length > 0 && seleccionablesVisibles.every((f) => seleccionadas.has(claveFila(f)));
+const TH = "px-3 py-2.5";
 
+export function ProyeccionTabla(props: ProyeccionTablaProps) {
+  const { grupos, sort, onToggleSort } = props;
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
       <table className="w-full min-w-[1180px] text-left text-sm">
         <thead>
           <tr className="border-b border-border font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-            <th className="px-4 py-2.5">
-              <input
-                type="checkbox"
-                aria-label="Seleccionar todas las filas con propuesta"
-                checked={todasSeleccionadas}
-                disabled={seleccionablesVisibles.length === 0}
-                onChange={onToggleSeleccionTodas}
-                className="h-4 w-4 accent-brand-orange"
-              />
-            </th>
-            <SortableHeader column={{ key: "ubicacion", label: "Ubicación" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
-            <SortableHeader column={{ key: "nro_serie", label: "Nro. serie" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
-            <SortableHeader column={{ key: "modelo", label: "Modelo" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
-            <th className="px-4 py-2.5">Meses sin real</th>
-            <th className="px-4 py-2.5">12 meses</th>
-            <th className="px-4 py-2.5 text-right">Prom 6m</th>
-            <th className="px-4 py-2.5">Cl.</th>
-            <th className="px-4 py-2.5 text-right">Últ. facturado</th>
-            <th className="px-4 py-2.5 text-right">A facturar</th>
-            <SortableHeader column={{ key: "impresiones", label: "Impresiones" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5 text-right" />
-            <th className="px-4 py-2.5">Acc.</th>
-            <th className="px-4 py-2.5">Conf.</th>
+            <SortableHeader column={{ key: "ubicacion", label: "Ubicación" }} sort={sort} onToggleSort={onToggleSort} thClassName={TH} />
+            <SortableHeader column={{ key: "nro_serie", label: "Nro. serie" }} sort={sort} onToggleSort={onToggleSort} thClassName={TH} />
+            <SortableHeader column={{ key: "modelo", label: "Modelo" }} sort={sort} onToggleSort={onToggleSort} thClassName={TH} />
+            <th className={cn(TH, "text-center")}>Meses sin real</th>
+            <th className={cn(TH, "text-center")}>12 meses</th>
+            <th className={cn(TH, "text-right")}>Prom 6m</th>
+            <th className={cn(TH, "text-center")}>Cl.</th>
+            <th className={cn(TH, "text-right")}>Últ. facturado</th>
+            <th className={cn(TH, "text-right")}>A facturar</th>
+            <SortableHeader column={{ key: "impresiones", label: "Impresiones" }} sort={sort} onToggleSort={onToggleSort} thClassName={cn(TH, "text-right")} />
+            <th className={cn(TH, "text-center")}>Acc.</th>
+            <th className={cn(TH, "text-center")}>Conf.</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {grupos.map(({ claves }) =>
-            claves.map((fila, i) => (
-              <tr key={claveFila(fila)} className="hover:bg-muted/30">
-                <td className="px-4 py-3">
-                  <input
-                    type="checkbox"
-                    aria-label={`Seleccionar ${fila.nro_serie} clase ${fila.clase}`}
-                    checked={seleccionadas.has(claveFila(fila))}
-                    disabled={!esSeleccionable(fila)}
-                    onChange={() => onToggleSeleccion(fila)}
-                    title={esSeleccionable(fila) ? undefined : "Nada para aceptar: ya es real o requiere revisión individual"}
-                    className="h-4 w-4 accent-brand-orange disabled:opacity-30"
-                  />
-                </td>
-                {i === 0 && (
-                  <>
-                    <td className="px-4 py-3" rowSpan={claves.length}>
-                      <p className="font-semibold text-foreground">{fila.empresa}</p>
-                      <p className="text-xs text-muted-foreground">{fila.sucursal}</p>
-                      <p className="text-xs text-info">Sector: {fila.sector}</p>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs" rowSpan={claves.length}>
-                      {fila.nro_serie}
-                      {fila.estado_maquina !== "NORMAL" && (
-                        <BrandBadge variant="warning">
-                          {fila.estado_maquina === "BACKUP" ? "Backup" : "En tránsito"}
-                        </BrandBadge>
-                      )}
-                    </td>
-                    <td className="max-w-[200px] px-4 py-3" rowSpan={claves.length}>
-                      <p className="truncate font-semibold" title={fila.modelo}>{fila.modelo}</p>
-                      <p className="text-xs uppercase text-muted-foreground">{fila.tecnologia}</p>
-                    </td>
-                    <td className="px-4 py-3" rowSpan={claves.length}>
-                      {fila.meses_sin_real === null ? (
-                        "—"
-                      ) : (
-                        <span className={fila.meses_sin_real > 12 || (fila.tecnologia === "COLOR" && fila.meses_sin_real > 6) ? "font-bold text-destructive" : ""}>
-                          {fila.meses_sin_real}
-                        </span>
-                      )}
-                    </td>
-                  </>
-                )}
-                <td className="px-4 py-3">
-                  <ProyeccionSparkline historico12={fila.historico_12} />
-                </td>
-                <td className="px-4 py-3 text-right tabular-nums">
-                  {fila.prom_6_facturados !== null ? numberFormat.format(fila.prom_6_facturados) : "—"}
-                </td>
-                <td className="px-4 py-3">
-                  {fila.clase}
-                  {fila.es_clase_sintetica && (
-                    <span
-                      title="Clase sintética: el equipo la tiene declarada en su modo de operación, pero nadie cargó todavía su lectura para este proceso"
-                      className="ml-1 text-[10px] font-bold text-muted-foreground"
-                    >
-                      *
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-right leading-tight">
-                  <p className="tabular-nums">{numberFormat.format(fila.ultimo_facturado_valor)}</p>
-                  <p className="text-xs text-muted-foreground">{formatFecha(fila.ultimo_facturado_fecha)}</p>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <EstimCell fila={fila} fechaObjetivo={fechaObjetivo} />
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <ImpresionesCell fila={fila} />
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => onVerCandidatos(fila)}
-                      title="Ver candidatos"
-                      className="rounded-[8px] border border-border bg-muted p-1.5 text-muted-foreground hover:text-foreground"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onVerHistorial(fila)}
-                      title="Ver historial del equipo"
-                      className="rounded-[8px] border border-border bg-muted p-1.5 text-muted-foreground hover:text-foreground"
-                    >
-                      <BarChart3 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    aria-label={SEMAFORO_LABEL[fila.semaforo]}
-                    title={SEMAFORO_LABEL[fila.semaforo]}
-                    className={cn("inline-block h-2.5 w-2.5 rounded-full", SEMAFORO_DOT[fila.semaforo])}
-                  />
-                </td>
-              </tr>
-            )),
-          )}
+          {grupos.map((g) => g.filas.map((fila, i) => <FilaTabla key={claveFila(fila)} {...props} grupo={g} fila={fila} primera={i === 0} />))}
         </tbody>
       </table>
     </div>
+  );
+}
+
+interface FilaTablaProps extends ProyeccionTablaProps {
+  grupo: GrupoEquipo;
+  fila: FilaProyeccion;
+  primera: boolean;
+}
+
+/** "sin historia propia": la fila principal sale de la cascada T19 por modelo. */
+function esT19(fila: FilaProyeccion): boolean {
+  return ["Parque_Cliente_Modelo", "Parque_Grupo_Modelo", "Parque_Global_Modelo"].includes(fila.fuente);
+}
+
+function FilaTabla({ grupo, fila, primera, activa, fechaObjetivo, onVerCandidatos, onVerHistorial }: FilaTablaProps) {
+  const principal = grupo.filas[0];
+  const span = grupo.filas.length;
+  const equipoActivo = activa?.id_maquina === fila.id_maquina;
+  const botonActivo = equipoActivo && activa?.clase === fila.clase;
+  return (
+    <tr className={cn("hover:bg-muted/30", equipoActivo && "bg-brand-orange/5", primera && "border-t-2 border-t-border")}>
+      {primera && (
+        <>
+          <td className="px-3 py-3 align-top" rowSpan={span}>
+            <UbicacionCell fila={principal} />
+          </td>
+          <td className="px-3 py-3 align-top font-mono text-xs" rowSpan={span}>
+            {principal.nro_serie}
+            <div className="mt-1 flex flex-wrap gap-1 font-body">
+              {esT19(principal) && <Badge className="border-destructive bg-destructive/10 text-destructive">sin historia propia</Badge>}
+              {principal.editado_por_operador && (
+                <Badge className="border-warning bg-warning/10 text-warning" title="P/L modificado por operador">editado</Badge>
+              )}
+            </div>
+          </td>
+          <td className="max-w-[200px] px-3 py-3 align-top" rowSpan={span}>
+            <ModeloCell fila={principal} />
+          </td>
+          <td className="px-3 py-3 text-center align-top" rowSpan={span}>
+            <MesesCell fila={principal} />
+          </td>
+        </>
+      )}
+      <td className="px-3 py-3">
+        <ProyeccionSparkline historico12={fila.historico_12} impresiones={fila.impresiones} prom6={fila.prom_6_facturados} />
+      </td>
+      <td className="px-3 py-3 text-right tabular-nums">{n0(fila.prom_6_facturados)}</td>
+      <td className="px-3 py-3 text-center">{fila.clase}</td>
+      <td className="px-3 py-3 text-right leading-tight">
+        <UltimoFacturadoCell fila={fila} />
+      </td>
+      <td className="px-3 py-3 text-right leading-tight">
+        <AFacturarCell fila={fila} fechaObjetivo={fechaObjetivo} />
+      </td>
+      <td className="px-3 py-3 text-right">
+        <ImpresionesCell fila={fila} />
+      </td>
+      <td className="px-3 py-3">
+        <div className="flex justify-center gap-1.5">
+          <IconButton titulo={`Ver candidatos (Cl. ${fila.clase})`} activo={botonActivo} onClick={() => onVerCandidatos(fila)}>
+            <Eye className="h-4 w-4" />
+          </IconButton>
+          <IconButton titulo={`Historial del contador (Cl. ${fila.clase})`} onClick={() => onVerHistorial(fila)}>
+            <BarChart3 className="h-4 w-4" />
+          </IconButton>
+        </div>
+      </td>
+      <td className="px-3 py-3 text-center">
+        <SemaforoCell fila={fila} />
+      </td>
+    </tr>
+  );
+}
+
+function Badge({ className, title, children }: { className: string; title?: string; children: React.ReactNode }) {
+  return (
+    <span title={title} className={cn("rounded-full border px-1.5 py-px text-[10px] font-bold", className)}>
+      {children}
+    </span>
+  );
+}
+
+function IconButton({ titulo, activo, onClick, children }: { titulo: string; activo?: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={titulo}
+      className={cn(
+        "rounded-[8px] border border-border bg-muted p-1.5 text-muted-foreground hover:text-foreground",
+        activo && "border-brand-orange bg-brand-orange/10 text-brand-orange",
+      )}
+    >
+      {children}
+    </button>
   );
 }

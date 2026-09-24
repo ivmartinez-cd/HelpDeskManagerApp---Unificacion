@@ -46,6 +46,14 @@ def test_delta_entre_dos_reales_consecutivos() -> None:
     assert mas_vieja.delta is None  # primera lectura del período
 
 
+def test_delta_con_decimales_se_resta_en_decimal_como_el_legacy() -> None:
+    crudo = [_lectura(date(2026, 2, 1), 1234.1), _lectura(date(2026, 1, 1), 1233.8)]
+
+    mas_reciente = enriquecer_historial(crudo)[0]
+
+    assert mas_reciente.delta == 0.3  # en float daba 0.2999999999999545
+
+
 def test_delta_es_none_para_inicial_final_reinicial() -> None:
     crudo = [
         _lectura(date(2026, 2, 1), 100, id_tipo_toma=8),  # T8 Inicial

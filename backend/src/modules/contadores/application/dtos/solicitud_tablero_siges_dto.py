@@ -13,3 +13,6 @@ class SolicitudTableroSigesDto:
     id_grupo_economico: int
     id_anexo: int
     fecha_objetivo: date
+    # Quién carga/opera la grilla: cada operador reusa SU última carga
+    # (v1.7: la lista en memoria de su circuito). `None` = sin identificar.
+    operador: str | None = None

@@ -1,50 +1,44 @@
-"""Store en memoria de decisiones del operador del modo ejemplo (marcar
-pendiente / agregar nota / aceptar, con o sin valor manual) — mismo criterio
-temporal que `recesos_store.py`. Implementa `DecisionesOperadorPort` con
-métodos `async def` sin I/O real, para tratar ejemplo y real de forma
-uniforme — ver `SqlAlchemyDecisionesOperadorRepository` para el modo real
-(Postgres)."""
+"""Store en memoria de decisiones del operador del modo ejemplo — mismo
+criterio temporal que `recesos_store.py`. Implementa `DecisionesOperadorPort`
+(una decisión vigente por proceso, equipo y clase) con métodos `async def`
+sin I/O real, para tratar ejemplo y real de forma uniforme — ver
+`SqlAlchemyDecisionesOperadorRepository` para el modo real (Postgres)."""
 
+from dataclasses import replace
+from datetime import UTC, datetime
 from functools import lru_cache
 
 from src.modules.contadores.application.dtos.decision_operador_dto import (
-    DecisionManualDto,
+    ClaveDecisionDto,
     DecisionOperadorDto,
 )
+
+_Clave = tuple[int, int, str]
 
 
 class DecisionesOperadorStore:
     def __init__(self) -> None:
-        self._decisiones: dict[tuple[int, str], DecisionOperadorDto] = {}
+        self._decisiones: dict[_Clave, DecisionOperadorDto] = {}
 
-    async def listar_todas(self) -> dict[tuple[int, str], DecisionOperadorDto]:
-        return dict(self._decisiones)
+    async def listar_por_proceso(
+        self, nro_proceso: int
+    ) -> dict[tuple[int, str], DecisionOperadorDto]:
+        return {
+            (id_maquina, clase): decision
+            for (proceso, id_maquina, clase), decision in self._decisiones.items()
+            if proceso == nro_proceso
+        }
 
-    async def obtener(self, id_maquina: int, clase: str) -> DecisionOperadorDto | None:
-        return self._decisiones.get((id_maquina, clase))
+    async def obtener(self, clave: ClaveDecisionDto) -> DecisionOperadorDto | None:
+        return self._decisiones.get(_clave(clave))
 
-    async def marcar_pendiente(self, id_maquina: int, clase: str) -> None:
-        actual = await self.obtener(id_maquina, clase) or DecisionOperadorDto()
-        self._decisiones[(id_maquina, clase)] = DecisionOperadorDto(
-            pendiente=True, nota=actual.nota, manual=actual.manual
-        )
+    async def guardar(self, clave: ClaveDecisionDto, decision: DecisionOperadorDto) -> None:
+        """Pisa la decisión de la fila ("último gana")."""
+        self._decisiones[_clave(clave)] = replace(decision, actualizado_en=datetime.now(UTC))
 
-    async def agregar_nota(self, id_maquina: int, clase: str, nota: str) -> None:
-        actual = await self.obtener(id_maquina, clase) or DecisionOperadorDto()
-        self._decisiones[(id_maquina, clase)] = DecisionOperadorDto(
-            pendiente=actual.pendiente, nota=nota, manual=actual.manual
-        )
 
-    async def aceptar(
-        self, id_maquina: int, clase: str, manual: DecisionManualDto | None = None
-    ) -> None:
-        if manual is None:
-            self._decisiones.pop((id_maquina, clase), None)
-            return
-        actual = await self.obtener(id_maquina, clase)
-        self._decisiones[(id_maquina, clase)] = DecisionOperadorDto(
-            pendiente=False, nota=actual.nota if actual else None, manual=manual
-        )
+def _clave(clave: ClaveDecisionDto) -> _Clave:
+    return (clave.nro_proceso, clave.id_maquina, clave.clase)
 
 
 @lru_cache

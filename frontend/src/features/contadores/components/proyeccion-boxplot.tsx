@@ -1,165 +1,106 @@
 import type { BoxplotParque } from "../types/proyeccion";
+import { n0, redondeoBancario } from "./proyeccion-formato";
 
-/** Boxplot del parque de referencia (panel de candidatos) — sin librería:
- * no hay un componente equivalente en el resto de la app ni un plugin de
- * boxplot ya instalado, así que se arma con SVG plano y los tokens de color
- * existentes (`--info`, `--accent`). Paridad con `CalcularBoxplotData` /
- * `RenderBoxplot` de `PanelCandidatos.razor`: bigotes de Tukey (Q1±1.5·IQR)
- * calculados acá porque el backend solo expone los estadísticos crudos
- * (q1/q3/n/valor propio del equipo), no una decisión de presentación. */
+/** Boxplot del parque del cliente en el panel de candidatos — puerto de
+ * `CalcularBoxplotData` / `RenderBoxplot` de `PanelCandidatos.razor` (v1.7):
+ * caja Q1–Q3, línea del promedio del parque, bigotes de Tukey (Q1±1.5·IQR,
+ * piso 0) y el punto "este equipo" en la estimación vigente (la vista
+ * previa de la P/L si hay una; si no, las impresiones de la fila). */
 
-const numberFormat = new Intl.NumberFormat("es-AR");
-
-const ANCHO = 340;
-const ALTO = 92;
-const MARGEN_L = 10;
-const MARGEN_R = 10;
-const USABLE = ANCHO - MARGEN_L - MARGEN_R;
-const BAR_Y = 34;
-const BAR_H = 20;
-const MID_Y = BAR_Y + BAR_H / 2;
-const TICK_H = 7;
-const LBL_Y = ALTO - 6;
-
-interface ProyeccionBoxplotProps {
-  data: BoxplotParque;
-}
+const W = 290;
+const H = 90;
+const BAR_Y = 32;
+const BAR_H = 18;
+const MARGEN = 12;
+const USABLE = W - MARGEN * 2;
+const MID_Y = BAR_Y + Math.floor(BAR_H / 2);
+const TICK_H = 6;
+const LBL_Y = H - 4;
 
 interface Escala {
   lo: number;
   hi: number;
-  whiskerLo: number | null;
-  whiskerHi: number | null;
+  wlo: number | null;
+  whi: number | null;
 }
 
-function calcularEscala({ q1, q3, mediana, valor_equipo }: BoxplotParque): Escala {
-  let whiskerLo: number | null = null;
-  let whiskerHi: number | null = null;
+function escala({ q1, q3, mediana: prom }: BoxplotParque, estim: number | null): Escala | null {
+  let wlo: number | null = null;
+  let whi: number | null = null;
   if (q1 !== null && q3 !== null) {
-    const iqr = q3 - q1;
-    whiskerLo = Math.max(0, q1 - 1.5 * iqr);
-    whiskerHi = q3 + 1.5 * iqr;
+    wlo = Math.max(0, q1 - 1.5 * (q3 - q1));
+    whi = q3 + 1.5 * (q3 - q1);
   }
-  const ancla = valor_equipo ?? mediana;
-  const lo = Math.max(0, Math.min(whiskerLo ?? q1 ?? mediana * 0.6, ancla) * 0.85);
-  const hiCrudo = Math.max(whiskerHi ?? q3 ?? mediana * 1.4, ancla) * 1.15;
-  return { lo, hi: hiCrudo <= lo ? lo + 1 : hiCrudo, whiskerLo, whiskerHi };
+  const lo = Math.max(0, Math.min(wlo ?? q1 ?? prom * 0.6, estim ?? prom) * 0.85);
+  const hi = Math.max(whi ?? q3 ?? prom * 1.4, estim ?? prom) * 1.15;
+  return hi <= lo ? null : { lo, hi, wlo, whi };
 }
 
-function descripcion({ q1, q3, valor_equipo }: BoxplotParque): string | null {
-  if (valor_equipo === null || q1 === null || q3 === null) return null;
-  const dentro = valor_equipo >= q1 && valor_equipo <= q3;
-  return (
-    `Estimación ${numberFormat.format(valor_equipo)} págs cae ${dentro ? "dentro" : "fuera"} del rango sano ` +
-    "del parque (Q1–Q3). Sin descartes IQR aplicados."
+function descripcion(q1: number | null, q3: number | null, estim: number | null, conBigotes: boolean): string | null {
+  if (estim === null) return null;
+  const dentro = q1 !== null && q3 !== null && estim >= q1 && estim <= q3;
+  return `Estimación ${n0(estim)} págs cae ${dentro ? "dentro" : "fuera"} del rango sano del parque (Q1–Q3).${
+    conBigotes ? " Sin descartes IQR aplicados." : ""
+  }`;
+}
+
+interface ProyeccionBoxplotProps {
+  data: BoxplotParque;
+  estimacion: number | null;
+  // Encabezado de la sección: no se muestra si no hay gráfico que dibujar.
+  titulo: React.ReactNode;
+}
+
+export function ProyeccionBoxplot({ data, estimacion, titulo }: ProyeccionBoxplotProps) {
+  const e = escala(data, estimacion);
+  if (e === null || data.mediana <= 0) return null;
+  const { q1, q3, mediana: prom, n_equipos } = data;
+  const x = (v: number) => MARGEN + redondeoBancario(((v - e.lo) / (e.hi - e.lo)) * USABLE);
+  const xQ1 = q1 !== null ? x(q1) : MARGEN + Math.floor(USABLE / 4);
+  const xQ3 = q3 !== null ? x(q3) : MARGEN + Math.floor((USABLE * 3) / 4);
+  const xProm = x(prom);
+  const xWLo = e.wlo !== null ? x(e.wlo) : MARGEN;
+  const xWHi = e.whi !== null ? x(e.whi) : W - MARGEN;
+  // Como `RenderBoxplot`: fuera por la izquierda (x < 0, p. ej. un negativo
+  // conservado entre reales) no se dibuja; si no, se recorta a [6, W−6].
+  const xCrudo = estimacion !== null ? x(estimacion) : -1;
+  const xEstim = xCrudo >= 0 ? Math.min(Math.max(xCrudo, 6), W - 6) : null;
+  const desc = descripcion(q1, q3, estimacion, e.wlo !== null || e.whi !== null);
+  const etiqueta = (vx: number, texto: string, anchor: "start" | "middle" | "end") => (
+    <text x={vx} y={LBL_Y} textAnchor={anchor} fontSize={8.5} fill="var(--muted-foreground)">
+      {texto}
+    </text>
   );
-}
-
-export function ProyeccionBoxplot({ data }: ProyeccionBoxplotProps) {
-  const { q1, q3, mediana, valor_equipo, n_equipos } = data;
-  const { lo, hi, whiskerLo, whiskerHi } = calcularEscala(data);
-  const x = (v: number) => MARGEN_L + ((v - lo) / (hi - lo)) * USABLE;
-  const xMediana = x(mediana);
-  const xEstim = valor_equipo !== null ? Math.min(Math.max(x(valor_equipo), 6), ANCHO - 6) : null;
-  const desc = descripcion(data);
 
   return (
     <div>
-      <svg
-        viewBox={`0 0 ${ANCHO} ${ALTO}`}
-        width="100%"
-        height={ALTO}
-        role="img"
-        aria-label="Distribución del parque de referencia"
-      >
-        <line x1={0} y1={MID_Y} x2={ANCHO} y2={MID_Y} stroke="var(--border)" strokeWidth={1} />
-
-        {q1 !== null && q3 !== null && whiskerLo !== null && whiskerHi !== null && (
-          <>
-            <line
-              x1={x(whiskerLo)}
-              y1={MID_Y}
-              x2={x(q1)}
-              y2={MID_Y}
-              stroke="var(--muted-foreground)"
-              strokeDasharray="2,2"
-            />
-            <line
-              x1={x(q3)}
-              y1={MID_Y}
-              x2={x(whiskerHi)}
-              y2={MID_Y}
-              stroke="var(--muted-foreground)"
-              strokeDasharray="2,2"
-            />
-            <line
-              x1={x(whiskerLo)}
-              y1={MID_Y - TICK_H}
-              x2={x(whiskerLo)}
-              y2={MID_Y + TICK_H}
-              stroke="var(--muted-foreground)"
-            />
-            <line
-              x1={x(whiskerHi)}
-              y1={MID_Y - TICK_H}
-              x2={x(whiskerHi)}
-              y2={MID_Y + TICK_H}
-              stroke="var(--muted-foreground)"
-            />
-            <rect
-              x={x(q1)}
-              y={BAR_Y}
-              width={Math.max(x(q3) - x(q1), 1)}
-              height={BAR_H}
-              fill="var(--info)"
-              fillOpacity={0.25}
-              stroke="var(--info)"
-              strokeWidth={1.5}
-              rx={3}
-            />
-          </>
-        )}
-
-        <line x1={xMediana} y1={BAR_Y} x2={xMediana} y2={BAR_Y + BAR_H} stroke="var(--info)" strokeWidth={2} />
-
+      {titulo}
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} role="img" aria-label="Distribución del parque del cliente">
+        <line x1={xWLo} y1={MID_Y} x2={xQ1} y2={MID_Y} stroke="var(--muted-foreground)" strokeDasharray="2,2" />
+        <line x1={xQ3} y1={MID_Y} x2={xWHi} y2={MID_Y} stroke="var(--muted-foreground)" strokeDasharray="2,2" />
+        <line x1={xWLo} y1={MID_Y - TICK_H} x2={xWLo} y2={MID_Y + TICK_H} stroke="var(--muted-foreground)" />
+        <line x1={xWHi} y1={MID_Y - TICK_H} x2={xWHi} y2={MID_Y + TICK_H} stroke="var(--muted-foreground)" />
+        <rect x={xQ1} y={BAR_Y} width={Math.max(1, xQ3 - xQ1)} height={BAR_H} fill="var(--info)" fillOpacity={0.25}
+          stroke="var(--info)" strokeWidth={1.5} rx={3} />
+        <line x1={xProm} y1={BAR_Y} x2={xProm} y2={BAR_Y + BAR_H} stroke="var(--info)" strokeWidth={2} />
         {xEstim !== null && (
           <>
-            <text x={xEstim} y={BAR_Y - 8} textAnchor="middle" fontSize={9.5} fontWeight={700} fill="var(--accent)">
+            <text x={xEstim} y={BAR_Y - 6} textAnchor="middle" fontSize={9.5} fontWeight={700} fill="var(--accent)">
               este equipo
             </text>
             <circle cx={xEstim} cy={MID_Y} r={5} fill="var(--accent)" />
           </>
         )}
-
         {n_equipos > 0 && (
-          <text x={ANCHO - 2} y={10} textAnchor="end" fontSize={9} fill="var(--muted-foreground)">
+          <text x={W - 2} y={10} textAnchor="end" fontSize={9} fill="var(--muted-foreground)">
             n={n_equipos}
           </text>
         )}
-
-        {whiskerLo !== null && (
-          <text x={x(whiskerLo)} y={LBL_Y} textAnchor="start" fontSize={8.5} fill="var(--muted-foreground)">
-            {numberFormat.format(whiskerLo)}
-          </text>
-        )}
-        {q1 !== null && (
-          <text x={x(q1)} y={LBL_Y} textAnchor="middle" fontSize={8.5} fill="var(--muted-foreground)">
-            Q1 {numberFormat.format(q1)}
-          </text>
-        )}
-        <text x={xMediana} y={LBL_Y} textAnchor="middle" fontSize={8.5} fill="var(--muted-foreground)">
-          prom {numberFormat.format(mediana)}
-        </text>
-        {q3 !== null && (
-          <text x={x(q3)} y={LBL_Y} textAnchor="middle" fontSize={8.5} fill="var(--muted-foreground)">
-            Q3 {numberFormat.format(q3)}
-          </text>
-        )}
-        {whiskerHi !== null && (
-          <text x={x(whiskerHi)} y={LBL_Y} textAnchor="end" fontSize={8.5} fill="var(--muted-foreground)">
-            {numberFormat.format(whiskerHi)}
-          </text>
-        )}
+        {e.wlo !== null && etiqueta(xWLo, n0(e.wlo), "start")}
+        {q1 !== null && etiqueta(xQ1, `Q1 ${n0(q1)}`, "middle")}
+        {etiqueta(xProm, `x̄ ${n0(prom)}`, "middle")}
+        {q3 !== null && etiqueta(xQ3, `Q3 ${n0(q3)}`, "middle")}
+        {e.whi !== null && etiqueta(xWHi, n0(e.whi), "end")}
       </svg>
       {desc && <p className="mt-1 text-[11px] text-muted-foreground">{desc}</p>}
     </div>

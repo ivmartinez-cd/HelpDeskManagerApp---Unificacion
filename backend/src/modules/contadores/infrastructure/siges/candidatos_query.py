@@ -1,16 +1,14 @@
 """Consultas read-only contra Siges/ORION para el panel de candidatos
 manuales del Estimador (MODELO_DE_DATOS.md §3.6) — `CANDIDATOS_EQUIPO_SQL`
-portada tal cual de `Queries/GetCandidatos.sql` (el código gana si contradice
-los documentos, ver brief de migración). `WITH (NOLOCK)` es intencional,
-mismo criterio que el resto de `contadores` (`MIGRACION_SISTEMAS.md` §7).
-
-Una desviación consciente respecto al .sql original: se usa
-`C.Para_Facturar` (a nivel de fila) en vez de `TT.Para_Facturar` (a nivel de
-Tipo_Toma, constante) — el join a `Tipo_Toma` del .sql original queda afuera.
-El criterio de "T4 sin revisar" que ya usa la grilla real
-(`grilla_estimacion_query.py`, paso #T4ST) es `Contadores.Para_Facturar > 0`,
-no el flag fijo de `Tipo_Toma` — se necesita ese mismo criterio acá para
-marcar la validez de cada lectura de forma consistente en toda la app.
+portada tal cual de `Queries/GetCandidatos.sql` del legacy: INNER JOIN a
+`Tipo_Toma` (descripción y `Para_Facturar` del TIPO de toma, no de la fila de
+`Contadores`) y snapshot de empresa/sucursal/anexo de cada lectura para
+marcar los cambios de ubicación entre lecturas vecinas (se calculan en
+`PyodbcCandidatosEquipoGateway`, como `SiGesRepository.GetCandidatosAsync`).
+Los alias de columna solo existen para leer por nombre desde pyodbc; el
+orden y el contenido son los del .sql original. `WITH (NOLOCK)` es
+intencional, mismo criterio que el resto de `contadores`
+(`MIGRACION_SISTEMAS.md` §7).
 
 `METADATA_EQUIPO_SQL` no viene de un .sql documentado (el panel original
 recibía esta identidad ya resuelta desde la grilla) — son los mismos joins de
@@ -21,15 +19,25 @@ directamente)."""
 
 CANDIDATOS_EQUIPO_SQL = """
 SELECT TOP 24
+    C.ID_Contador,
+    C.ID_Maquina,
+    C.ID_ClaseContador,
     C.FechaTomaContador,
-    C.ID_TipoToma,
     C.Contador,
-    C.Para_Facturar
+    C.ID_TipoToma,
+    TT.Descripcion     AS DescTipoToma,
+    TT.Para_Facturar   AS Para_Facturar,
+    C.ID_Empresa,
+    C.ID_Sucursal,
+    C.ID_Anexo
 FROM  Contadores  C  WITH (NOLOCK)
-WHERE  C.ID_Maquina       = ?
-  AND  C.ID_ClaseContador = ?
-  AND  C.Estado          <> 1
-ORDER BY C.FechaTomaContador DESC, C.ID_Contador DESC
+INNER JOIN Tipo_Toma TT WITH (NOLOCK)
+    ON  TT.id          = C.ID_TipoToma
+WHERE C.ID_Maquina       = ?
+  AND C.ID_ClaseContador = ?
+  AND C.Estado          <> 1
+ORDER BY C.FechaTomaContador DESC,
+         C.ID_Contador        DESC
 """
 
 METADATA_EQUIPO_SQL = """

@@ -33,6 +33,7 @@ def _campos_equipo(equipo: EquipoProceso, clase: ClaseProceso) -> dict[str, Any]
         parque_cliente_tecnologia=clase.parque_cliente_tecnologia,
         parque_global_modelo=clase.parque_global_modelo,
         prom_6_facturados=clase.prom_6_facturados,
+        impresiones_reales=clase.impresiones_reales,
     )
 
 

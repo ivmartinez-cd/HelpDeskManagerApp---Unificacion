@@ -5,6 +5,8 @@ from src.modules.contadores.application.use_cases._boxplot_de_entrada import box
 from src.modules.contadores.application.use_cases._construir_estimacion_input import (
     construir_estimacion_input,
 )
+from src.modules.contadores.domain.ports.candidatos_equipo_port import LecturaCandidataSiges
+from src.modules.contadores.domain.value_objects.estimacion.estimacion_input import EstimacionInput
 from src.modules.contadores.domain.value_objects.estimacion.lectura_ref import LecturaRef
 from src.modules.contadores.infrastructure.ejemplo.datos_ejemplo_proyeccion import (
     ClaseEjemplo,
@@ -13,6 +15,7 @@ from src.modules.contadores.infrastructure.ejemplo.datos_ejemplo_proyeccion impo
 )
 
 _TIPO_TOMA_ST = 4
+_ETIQUETA_OK = "✓ ok"
 
 
 class GetCandidatosEquipoUseCase:
@@ -35,6 +38,17 @@ class GetCandidatosEquipoUseCase:
             lecturas=_lecturas_de(clase_ej),
             boxplot=boxplot_de_entrada(entrada),
         )
+
+
+def entrada_ejemplo(
+    id_maquina: int, clase: str, ctx: ContextoProcesoDto
+) -> EstimacionInput | None:
+    """La fila de un equipo de ejemplo tal como la calcula el tablero —
+    `None` si el equipo/clase no existe."""
+    equipo, clase_ej = buscar_equipo_y_clase(id_maquina, clase)
+    if equipo is None or clase_ej is None:
+        return None
+    return construir_estimacion_input(equipo, clase_ej, ctx)
 
 
 def buscar_equipo_y_clase(
@@ -67,12 +81,30 @@ def _lecturas_de(clase: ClaseEjemplo) -> list[CandidatoLecturaDto]:
 
 
 def _a_dto(lectura: LecturaRef, clase: ClaseEjemplo) -> CandidatoLecturaDto:
-    es_t4_sin_revisar = lectura.tipo_toma == _TIPO_TOMA_ST and not clase.t4_revisado
+    """Mismas reglas que el panel real (`EsUsableComoCandidate` y
+    `ValidacionLabel` del legacy, en `LecturaCandidataSiges`): un T4 sin
+    revisar es "⚠ T4-PF0" pero igual se puede elegir como P/L. Las lecturas
+    de ejemplo no existen en Siges: sin `id_contador`."""
+    candidata = _candidata_de(lectura, clase)
+    etiqueta = candidata.etiqueta_validacion
+    valido = etiqueta == _ETIQUETA_OK
     return CandidatoLecturaDto(
         fecha=lectura.fecha,
         tipo_toma=lectura.tipo_toma,
         valor=lectura.valor,
-        valido=not es_t4_sin_revisar,
-        motivo_invalidez="PF=0 (Servicio Técnico sin revisar)" if es_t4_sin_revisar else None,
+        valido=valido,
+        motivo_invalidez=None if valido else etiqueta,
+        para_facturar=candidata.para_facturar,
+        usable=candidata.usable,
+        etiqueta_validacion=etiqueta,
     )
 
+
+def _candidata_de(lectura: LecturaRef, clase: ClaseEjemplo) -> LecturaCandidataSiges:
+    return LecturaCandidataSiges(
+        id_contador=0,
+        fecha=lectura.fecha,
+        tipo_toma=lectura.tipo_toma,
+        valor=lectura.valor,
+        para_facturar=lectura.tipo_toma != _TIPO_TOMA_ST or clase.t4_revisado,
+    )

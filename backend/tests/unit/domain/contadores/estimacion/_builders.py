@@ -12,6 +12,8 @@ from src.modules.contadores.domain.value_objects.estimacion.receso_cliente impor
 
 FECHA_OBJETIVO_DEFAULT = date(2026, 4, 30)
 
+# Sin contador anterior (equipo sin facturar): el motor usa 0 donde el legacy
+# hace `ContadorAnterior_Valor.GetValueOrDefault()`.
 _BASE = EstimacionInput(
     pendiente_estimar=True,
     fecha_objetivo=FECHA_OBJETIVO_DEFAULT,
@@ -20,7 +22,7 @@ _BASE = EstimacionInput(
     estado_maquina="NORMAL",
     tecnologia="MONO",
     velocidad_ppm=45.0,
-    ultimo_contador_facturado=LecturaRef(0, date(2026, 1, 1), 1),
+    ultimo_contador_facturado=None,
     ultimo_real=None,
     fecha_ultimo_real_no_t4=None,
     real_anterior=None,
@@ -37,8 +39,10 @@ _BASE = EstimacionInput(
 )
 
 
-def lectura(valor: float, fecha: date, tipo_toma: int = 1) -> LecturaRef:
-    return LecturaRef(valor, fecha, tipo_toma)
+def lectura(
+    valor: float, fecha: date, tipo_toma: int = 1, para_facturar: bool = True
+) -> LecturaRef:
+    return LecturaRef(valor, fecha, tipo_toma, para_facturar)
 
 
 def parque(valor: float, n_equipos: int = 8, **kwargs: float | None) -> PromedioParque:

@@ -6,6 +6,7 @@ modal. Lógica pura de dominio — sin acceso a datos."""
 
 from dataclasses import dataclass, replace
 from datetime import date
+from decimal import Decimal
 
 from src.modules.contadores.domain.ports.historial_equipo_port import LecturaHistorialSiges
 from src.modules.contadores.domain.value_objects import tipo_toma
@@ -70,7 +71,9 @@ def _deltas(asc: list[LecturaHistorialSiges]) -> list[float | None]:
         if valor_previo is None or tipo_toma.es_inicial_final(lec.id_tipo_toma):
             deltas.append(None)
         else:
-            deltas.append(lec.valor - valor_previo)
+            # En decimal, como el legacy: en float 1234.1 - 1233.8 daba
+            # 0.2999999999999545 en vez de 0.3.
+            deltas.append(float(Decimal(repr(lec.valor)) - Decimal(repr(valor_previo))))
         valor_previo = lec.valor
     return deltas
 

@@ -20,10 +20,21 @@ const Y_BAR_TOP = 168;
 const Y_BAR_BASE = 248;
 const Y_AXIS_X = 263;
 
+// `TipoToma.Reales` e iniciales/finales/reinicio del legacy.
 const TIPOS_REALES = new Set([1, 2, 3, 6, 7, 9, 10, 12, 15, 17, 20, 21, 22, 23]);
 const INICIALES_FINALES = new Set([8, 13, 16]);
 
-function colorPunto(idTipoToma: number): string {
+export const esTipoReal = (t: number) => TIPOS_REALES.has(t);
+export const esInicialFinal = (t: number) => INICIALES_FINALES.has(t);
+
+/** Orden cronológico del legacy (fecha y, a igual fecha, ID_Contador): la
+ * API las devuelve de la más nueva a la más vieja, así que se invierten
+ * antes del orden estable por fecha. */
+export function ordenCronologico(lecturas: HistorialLectura[]): HistorialLectura[] {
+  return [...lecturas].reverse().sort((a, b) => a.fecha.localeCompare(b.fecha));
+}
+
+export function colorPunto(idTipoToma: number): string {
   if (idTipoToma === 4) return "#ca8a04";
   if (idTipoToma === 14 || idTipoToma === 19) return "#ea580c";
   if (INICIALES_FINALES.has(idTipoToma)) return "#2563eb";
@@ -37,8 +48,11 @@ function formatImp(v: number): string {
   return v.toFixed(0);
 }
 
-const numberFormat = new Intl.NumberFormat("es-AR");
-const mesFormat = new Intl.DateTimeFormat("es-AR", { month: "short", year: "2-digit" });
+const numberFormat = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
+// Siempre en UTC: las fechas son días sin hora (UTC 00:00); en hora local
+// (UTC−3) un día 1 caería en el mes anterior.
+const mesFormat = new Intl.DateTimeFormat("es-AR", { month: "short", year: "2-digit", timeZone: "UTC" });
+const DIA_MS = 86_400_000;
 
 interface Hover {
   left: number;
@@ -48,11 +62,12 @@ interface Hover {
 
 function useEscalas(asc: HistorialLectura[]) {
   return useMemo(() => {
-    const fechas = asc.map((l) => new Date(l.fecha).getTime());
-    const fechaMin = Math.min(...fechas);
-    const fechaMax = Math.max(...fechas) || fechaMin + 86_400_000;
-    const rangoFechas = fechaMax - fechaMin || 1;
-    const x = (fecha: string) => X_MIN + ((new Date(fecha).getTime() - fechaMin) / rangoFechas) * (X_MAX - X_MIN);
+    // Fechas como instantes UTC 00:00 (`DateOnly` del legacy): todas las
+    // lecturas del mismo día → fechaMax = fechaMin + 1 día.
+    const fechaMin = asc.length > 0 ? Date.parse(asc[0].fecha) : 0;
+    const ultima = asc.length > 0 ? Date.parse(asc[asc.length - 1].fecha) : 0;
+    const fechaMax = ultima === fechaMin ? fechaMin + DIA_MS : ultima;
+    const x = (fecha: string) => X_MIN + ((Date.parse(fecha) - fechaMin) / (fechaMax - fechaMin)) * (X_MAX - X_MIN);
 
     const valores = asc.map((l) => l.valor);
     let valMin = Math.min(...valores);
@@ -75,10 +90,7 @@ function useEscalas(asc: HistorialLectura[]) {
 }
 
 export function HistorialChart({ lecturas }: { lecturas: HistorialLectura[] }) {
-  const asc = useMemo(
-    () => [...lecturas].sort((a, b) => a.fecha.localeCompare(b.fecha)),
-    [lecturas],
-  );
+  const asc = useMemo(() => ordenCronologico(lecturas), [lecturas]);
   const [hover, setHover] = useState<Hover | null>(null);
   const escalas = useEscalas(asc);
 
@@ -125,7 +137,7 @@ export function HistorialChart({ lecturas }: { lecturas: HistorialLectura[] }) {
             <circle
               cx={p.cx}
               cy={p.cy}
-              r={p.lectura.es_fc || INICIALES_FINALES.has(p.lectura.id_tipo_toma) ? 5 : 4}
+              r={esTipoReal(p.lectura.id_tipo_toma) || esInicialFinal(p.lectura.id_tipo_toma) ? 5 : 4}
               fill={colorPunto(p.lectura.id_tipo_toma)}
               stroke="#fff"
               strokeWidth={2}
@@ -201,18 +213,19 @@ export function HistorialChart({ lecturas }: { lecturas: HistorialLectura[] }) {
 function mesesEtiqueta(fechaMinMs: number, fechaMaxMs: number): { x: number; label: string }[] {
   const min = new Date(fechaMinMs);
   const max = new Date(fechaMaxMs);
-  const mesesRango = Math.round((fechaMaxMs - fechaMinMs) / (1000 * 60 * 60 * 24 * 30.44));
+  const mesesRango = Math.round((fechaMaxMs - fechaMinMs) / (DIA_MS * 30.44));
   const paso = mesesRango > 15 ? 3 : mesesRango > 8 ? 2 : 1;
-  const rango = fechaMaxMs - fechaMinMs || 1;
   const etiquetas: { x: number; label: string }[] = [];
-  const cursor = new Date(min.getFullYear(), min.getMonth(), 1);
-  const fin = new Date(max.getFullYear(), max.getMonth(), 1);
+  // `EnumerarMeses`: del 1° del mes de fechaMin al 1° del mes de fechaMax.
+  let cursor = Date.UTC(min.getUTCFullYear(), min.getUTCMonth(), 1);
+  const fin = Date.UTC(max.getUTCFullYear(), max.getUTCMonth(), 1);
   while (cursor <= fin) {
-    if (cursor.getMonth() % paso === 0) {
-      const x = X_MIN + ((cursor.getTime() - fechaMinMs) / rango) * (X_MAX - X_MIN);
-      if (x >= X_MIN && x <= X_MAX) etiquetas.push({ x, label: mesFormat.format(cursor) });
+    const d = new Date(cursor);
+    if (d.getUTCMonth() % paso === 0) {
+      const x = X_MIN + ((cursor - fechaMinMs) / (fechaMaxMs - fechaMinMs)) * (X_MAX - X_MIN);
+      if (x >= X_MIN && x <= X_MAX) etiquetas.push({ x, label: mesFormat.format(d) });
     }
-    cursor.setMonth(cursor.getMonth() + 1);
+    cursor = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1);
   }
   return etiquetas;
 }
@@ -231,17 +244,48 @@ function PuntoTooltip({ lectura }: { lectura: HistorialLectura }) {
           {numberFormat.format(lectura.delta)} imp.
         </p>
       )}
-      {lectura.es_fc && (
-        <span className="mt-1 inline-block rounded-full bg-info/20 px-2 py-0.5 font-bold text-info">
-          ✓ Usado en facturación
-        </span>
-      )}
+      <PuntoBadge lectura={lectura} />
     </div>
   );
 }
 
+function PuntoBadge({ lectura }: { lectura: HistorialLectura }) {
+  const clase = "mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold";
+  if (lectura.es_fc) return <span className={`${clase} bg-info/20 text-info`}>✓ Usado en facturación</span>;
+  if (lectura.id_tipo_toma === 4 && !lectura.para_facturar) {
+    return <span className={`${clase} bg-warning/20 text-warning`}>⚠ PF = 0, no facturado</span>;
+  }
+  if (esInicialFinal(lectura.id_tipo_toma)) {
+    return <span className={`${clase} bg-info/10 text-info`}>{validacionHistorial(lectura)}</span>;
+  }
+  return null;
+}
+
+/** `ValidacionLabel` de `HistorialLectura` (v1.7). */
+export function validacionHistorial(l: HistorialLectura): string {
+  const t = l.id_tipo_toma;
+  if (t === 14 || t === 19) return "—";
+  if (t === 4) return l.para_facturar ? "T4 facturado" : "⚠ PF = 0";
+  if (t === 16) return "Reinicio de contador";
+  if (t === 8 || t === 13) return validacionInicialFinal(l);
+  return esTipoReal(t) ? "✓ Válida" : "—";
+}
+
+function validacionInicialFinal(l: HistorialLectura): string {
+  if (l.es_fc) return "✓ Válida";
+  if (l.es_cambio_empresa) return "Cambio de empresa";
+  if (l.es_cambio_anexo) return "Cambio de anexo";
+  if (l.es_ingreso) return "Ingreso del equipo";
+  if (l.es_egreso) return "Egreso del equipo";
+  return l.id_tipo_toma === 8 ? "Apertura" : "Cierre";
+}
+
+const periodoFormat = new Intl.DateTimeFormat("es-AR", { month: "short", year: "numeric", timeZone: "UTC" });
+
 function BarraTooltip({ lectura }: { lectura: HistorialLectura }) {
-  const periodo = lectura.fc_periodo_facturacion ?? lectura.fc_periodo_hasta;
+  const periodo =
+    lectura.fc_periodo_facturacion ??
+    (lectura.fc_periodo_hasta ? periodoFormat.format(new Date(`${lectura.fc_periodo_hasta}T00:00:00Z`)) : null);
   return (
     <div className="min-w-[120px]">
       {periodo && <p className="text-muted-foreground">{periodo}</p>}

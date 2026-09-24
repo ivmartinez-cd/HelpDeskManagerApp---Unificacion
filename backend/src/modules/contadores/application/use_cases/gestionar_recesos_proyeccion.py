@@ -12,7 +12,8 @@ class CrearRecesoRequest:
     id_anexo: int | None
     fecha_desde: date
     fecha_hasta: date
-    descripcion: str
+    # Opcional en el legacy (`Recesos.razor`).
+    descripcion: str = ""
 
 
 class GestionarRecesosProyeccionUseCase:
@@ -23,19 +24,26 @@ class GestionarRecesosProyeccionUseCase:
         return await self._store.listar(id_grupo_economico)
 
     async def crear(self, request: CrearRecesoRequest) -> RecesoDto:
-        # Un receso invertido se persistía y participaba del tablero (F7).
-        if request.fecha_desde > request.fecha_hasta:
-            raise RecesoRangoInvalidoError()
-        return await self._store.crear(
-            RecesoDto(
-                id=0,
-                id_grupo_economico=request.id_grupo_economico,
-                id_anexo=request.id_anexo,
-                fecha_desde=request.fecha_desde,
-                fecha_hasta=request.fecha_hasta,
-                descripcion=request.descripcion,
-            )
-        )
+        return await self._store.crear(_receso_de(0, request))
+
+    async def actualizar(self, id_receso: int, request: CrearRecesoRequest) -> RecesoDto | None:
+        """El "Editar" de `Recesos.razor` (`ActualizarAsync`). `None` si no existe."""
+        return await self._store.actualizar(_receso_de(id_receso, request))
 
     async def eliminar(self, id_receso: int) -> None:
         await self._store.eliminar(id_receso)
+
+
+def _receso_de(id_receso: int, request: CrearRecesoRequest) -> RecesoDto:
+    # Un receso invertido se persistía y participaba del tablero (F7);
+    # `Recesos.razor` lo rechaza ("'Hasta' no puede ser anterior a 'Desde'").
+    if request.fecha_desde > request.fecha_hasta:
+        raise RecesoRangoInvalidoError()
+    return RecesoDto(
+        id=id_receso,
+        id_grupo_economico=request.id_grupo_economico,
+        id_anexo=request.id_anexo,
+        fecha_desde=request.fecha_desde,
+        fecha_hasta=request.fecha_hasta,
+        descripcion=request.descripcion,
+    )

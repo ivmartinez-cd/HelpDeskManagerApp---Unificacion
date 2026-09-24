@@ -1,16 +1,18 @@
-"""Dos de las cinco acciones manuales del operador (REGLAS_DE_NEGOCIO §8):
-ignoran lo que decidió la cascada automática y fuerzan un método puntual,
-aunque hubiera uno "mejor" disponible (historia propia, T4). Las otras tres
-acciones (elegir P/L a mano, marcar pendiente, agregar nota) ya existían
-antes de este archivo — ver `recalcular_manual.py` y
-`decisiones_operador_store.py`."""
+"""`ForzarCascada` y `ForzarEntreReales` del legacy: el operador ignora lo que
+decidió la cascada automática y fuerza un método puntual, aunque hubiera uno
+"mejor" disponible (historia propia, T4)."""
 
-from src.modules.contadores.domain.services.estimacion.antiguedad import historia_en_alerta
+from dataclasses import replace
+
 from src.modules.contadores.domain.services.estimacion.entre_dos_reales import (
-    intentar_entre_dos_reales,
+    estimar_entre_reales,
+    hay_par_entre_reales,
 )
-from src.modules.contadores.domain.services.estimacion.parque import intentar_parque
-from src.modules.contadores.domain.services.estimacion.validez_t4 import par_valido
+from src.modules.contadores.domain.services.estimacion.marcadores import finalizar
+from src.modules.contadores.domain.services.estimacion.parque import estimar_cascada_t19
+from src.modules.contadores.domain.services.estimacion.resultados_sin_estimacion import (
+    resultado_pendiente,
+)
 from src.modules.contadores.domain.value_objects.estimacion.contexto_estimacion import (
     ContextoEstimacion,
 )
@@ -18,26 +20,35 @@ from src.modules.contadores.domain.value_objects.estimacion.estimacion_resultado
     EstimacionResultado,
 )
 
+_PREFIJO_CASCADA = "Forzado a T19 (cascada) por operador · "
+_PREFIJO_ENTRE_REALES = "Forzado a entre reales por operador · "
+
 
 def forzar_entre_reales(ctx: ContextoEstimacion) -> EstimacionResultado | None:
-    """Fuerza la regla de tres sobre el par real anterior/último real si
-    existe y es válido — `None` si no hay par o el par no cumple las reglas
-    de validez de §5.2 (15 días, Llegada ≥ Partida). A diferencia del cálculo
-    automático, no importa si la historia está "vieja" (en alerta) ni si
-    había un T4 mejor: el operador decidió confiar en este par igual."""
-    entrada = ctx.entrada
-    if entrada.ultimo_real is None or entrada.real_anterior is None:
+    """Regla de tres sobre el par real anterior / último real — `None` solo
+    si no hay par válido (15 días y último real mayor). No importa si la
+    historia está vieja, ni si había un T4 mejor, y un negativo se conserva:
+    el operador decidió confiar en este par."""
+    if not hay_par_entre_reales(ctx.entrada):
         return None
-    if not par_valido(entrada.real_anterior, entrada.ultimo_real):
-        return None
-    return intentar_entre_dos_reales(ctx)
+    return _forzado(estimar_entre_reales(ctx), ctx, _PREFIJO_ENTRE_REALES)
 
 
-def forzar_cascada_parque(ctx: ContextoEstimacion) -> EstimacionResultado | None:
-    """Fuerza la cascada de parque (§5.5) aunque hubiera un método mejor
-    disponible — `None` si ningún nivel de parque tiene datos suficientes
-    (mismo criterio que el cálculo automático, el operador no puede forzar
-    un dato que no existe)."""
-    entrada = ctx.entrada
-    en_alerta = historia_en_alerta(entrada.ultimo_real, entrada.tecnologia, entrada.fecha_objetivo)
-    return intentar_parque(ctx, en_alerta)
+def forzar_cascada_parque(ctx: ContextoEstimacion) -> EstimacionResultado:
+    """Cascada de parque T19 aunque hubiera un método mejor. Si ningún nivel
+    tiene datos, el resultado forzado es la fila pendiente (como el legacy:
+    `EstimarCascadaT19 ?? Pendiente`), nunca `None`."""
+    borrador = estimar_cascada_t19(ctx) or resultado_pendiente()
+    return _forzado(borrador, ctx, _PREFIJO_CASCADA)
+
+
+def _forzado(
+    borrador: EstimacionResultado, ctx: ContextoEstimacion, prefijo: str
+) -> EstimacionResultado:
+    """Prefijo en el detalle y marca `ForzadoPorOperador` — salvo en la fila
+    pendiente, que en el legacy no tiene decisión donde anotar la marca."""
+    final = finalizar(borrador, ctx.entrada)
+    marcas = final.marcas
+    if final.fuente != "Pendiente":
+        marcas = marcas | {"ForzadoPorOperador"}
+    return replace(final, detalle_calculo=prefijo + final.detalle_calculo, marcas=marcas)

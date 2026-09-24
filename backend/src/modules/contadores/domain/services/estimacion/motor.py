@@ -1,16 +1,25 @@
+"""`CalculadorContadores.Calcular` del Estimador de Contadores legacy."""
+
 from src.modules.contadores.domain.services.estimacion.antiguedad import historia_en_alerta
 from src.modules.contadores.domain.services.estimacion.entre_dos_reales import (
-    hay_par_utilizable,
-    intentar_entre_dos_reales,
+    conserva_negativo,
+    estimar_entre_reales,
+    hay_par_entre_reales,
 )
 from src.modules.contadores.domain.services.estimacion.estado_especial import (
     resolver_backup,
     resolver_en_transito,
 )
-from src.modules.contadores.domain.services.estimacion.parque import intentar_parque
+from src.modules.contadores.domain.services.estimacion.marcadores import finalizar
+from src.modules.contadores.domain.services.estimacion.parque import estimar_cascada_t19
 from src.modules.contadores.domain.services.estimacion.recesos import recesos_aplicables
+from src.modules.contadores.domain.services.estimacion.resultados_sin_estimacion import (
+    resultado_pendiente,
+    resultado_real,
+)
 from src.modules.contadores.domain.services.estimacion.t4_como_llegada import (
-    intentar_t4_como_llegada,
+    estimar_con_t4,
+    t4_aplicable,
 )
 from src.modules.contadores.domain.value_objects.estimacion.contexto_estimacion import (
     ContextoEstimacion,
@@ -20,73 +29,46 @@ from src.modules.contadores.domain.value_objects.estimacion.estimacion_resultado
     EstimacionResultado,
 )
 
-_RESULTADO_SIN_ESTIMAR = EstimacionResultado(
-    estim_propuesto=None,
-    impresiones=None,
-    tipo_toma=None,
-    fuente="Sin_Estimar",
-    metodo_detalle="Lectura real cargada para el período",
-    requiere_confirmacion=False,
-    semaforo="VERDE",
-    borde_salto_imposible=False,
-    coloreo=None,
-    nota_operador=None,
-    meses_sin_real_en_alerta=False,
-    dias_par_pl=None,
-    ajustado_por_receso=False,
-    dias_receso_descontados=0,
-)
-
 
 def estimar(entrada: EstimacionInput) -> EstimacionResultado:
-    """Cascada de decisión completa para un (equipo, clase de contador)
-    pendiente de estimar (REGLAS_DE_NEGOCIO §5). El primer caso que aplica
-    gana; cada `intentar_*` devuelve `None` cuando no aplica y se sigue
-    probando el siguiente nivel."""
+    """Cascada de decisión completa para un (equipo, clase de contador). Fila
+    ya real: no se estima. Backup / En tránsito tienen su propia regla. El
+    resto: entre dos reales → T4 ST como Llegada → cascada de parque T19 →
+    pendiente; el primer caso que aplica gana."""
     if not entrada.pendiente_estimar:
-        return _RESULTADO_SIN_ESTIMAR
+        return resultado_real(entrada)
     if entrada.estado_maquina == "BACKUP":
-        return resolver_backup(entrada)
+        return finalizar(resolver_backup(entrada), entrada)
     if entrada.estado_maquina == "EN_TRANSITO":
-        return resolver_en_transito(entrada)
-    return _estimar_normal(entrada)
+        return finalizar(resolver_en_transito(entrada), entrada)
+    return finalizar(_estimar_normal(entrada), entrada)
+
+
+def contexto_de(entrada: EstimacionInput) -> ContextoEstimacion:
+    recesos = recesos_aplicables(entrada.recesos, entrada.id_anexo, entrada.id_grupo_economico)
+    return ContextoEstimacion(entrada, recesos)
 
 
 def _estimar_normal(entrada: EstimacionInput) -> EstimacionResultado:
-    recesos = recesos_aplicables(entrada.recesos, entrada.id_anexo, entrada.id_grupo_economico)
-    ctx = ContextoEstimacion(entrada, recesos)
+    ctx = contexto_de(entrada)
+    resultado = _entre_reales(ctx)
+    if resultado is None and t4_aplicable(entrada):
+        resultado = estimar_con_t4(ctx)
+    if resultado is None:
+        resultado = estimar_cascada_t19(ctx)
+    return resultado if resultado is not None else resultado_pendiente()
+
+
+def _entre_reales(ctx: ContextoEstimacion) -> EstimacionResultado | None:
+    """Solo con historia propia no vieja (`MesesEnAlerta`) y par válido. Un
+    resultado negativo se descarta (cae al T4 / parque), salvo que el último
+    real sea un T4 corrector todavía válido (`conserva_negativo`)."""
+    entrada = ctx.entrada
     en_alerta = historia_en_alerta(entrada.ultimo_real, entrada.tecnologia, entrada.fecha_objetivo)
-
-    if hay_par_utilizable(entrada, en_alerta):
-        resultado = intentar_entre_dos_reales(ctx)
-        if resultado is not None:
-            return resultado
-
-    resultado_t4 = intentar_t4_como_llegada(ctx, en_alerta)
-    if resultado_t4 is not None:
-        return resultado_t4
-
-    resultado_parque = intentar_parque(ctx, en_alerta)
-    if resultado_parque is not None:
-        return resultado_parque
-
-    return _resultado_pendiente(en_alerta)
-
-
-def _resultado_pendiente(en_alerta: bool) -> EstimacionResultado:
-    return EstimacionResultado(
-        estim_propuesto=None,
-        impresiones=None,
-        tipo_toma=None,
-        fuente="Pendiente",
-        metodo_detalle="Sin datos suficientes para estimar",
-        requiere_confirmacion=True,
-        semaforo="ROJO",
-        borde_salto_imposible=False,
-        coloreo=None,
-        nota_operador=None,
-        meses_sin_real_en_alerta=en_alerta,
-        dias_par_pl=None,
-        ajustado_por_receso=False,
-        dias_receso_descontados=0,
-    )
+    if en_alerta or not hay_par_entre_reales(entrada):
+        return None
+    resultado = estimar_entre_reales(ctx)
+    negativo = resultado.impresiones is not None and resultado.impresiones < 0
+    if negativo and not conserva_negativo(entrada):
+        return None
+    return resultado

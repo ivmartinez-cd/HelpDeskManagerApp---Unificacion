@@ -1,17 +1,17 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from src.modules.contadores.application.dtos.boxplot_parque_dto import BoxplotParqueDto
-from src.modules.contadores.application.dtos.candidatos_equipo_dto import CandidatosEquipoDto
 from src.modules.contadores.application.dtos.receso_dto import RecesoDto
+from src.modules.contadores.application.dtos.resumen_proyeccion_dto import (
+    RestauracionDecisionesDto,
+)
 from src.modules.contadores.application.use_cases.get_tablero_proyeccion import (
     TableroProyeccionResult,
 )
 from src.modules.contadores.domain.services.historial_equipo import LecturaHistorial
 from src.modules.contadores.domain.value_objects.estimacion.estimacion_resultado import (
     DetalleParque,
-    EstimacionResultado,
 )
 
 
@@ -29,6 +29,23 @@ class DetalleParqueSchema(BaseModel):
         return cls.model_validate(dto) if dto is not None else None
 
 
+class NivelParqueHistoricoSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    n: int
+    p80: float | None
+    cruda: float | None
+
+
+class ParqueHistoricoSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    cliente_modelo: NivelParqueHistoricoSchema
+    grupo_modelo: NivelParqueHistoricoSchema
+    cliente_tec: NivelParqueHistoricoSchema
+    global_modelo: NivelParqueHistoricoSchema
+
+
 class FilaProyeccionSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -44,9 +61,9 @@ class FilaProyeccionSchema(BaseModel):
     meses_sin_real: int | None
     historico_12: tuple[float, ...]
     prom_6_facturados: float | None
-    ultimo_facturado_valor: float
-    ultimo_facturado_fecha: date
-    ultimo_facturado_tipo: int
+    ultimo_facturado_valor: float | None
+    ultimo_facturado_fecha: date | None
+    ultimo_facturado_tipo: int | None
     es_real: bool
     estim_propuesto: float | None
     tipo_toma: int | None
@@ -57,12 +74,28 @@ class FilaProyeccionSchema(BaseModel):
     borde_salto_imposible: bool
     semaforo: str
     requiere_confirmacion: bool
-    nota_operador: str | None
     es_clase_sintetica: bool
     detalle_parque: DetalleParqueSchema | None
     dias_par_pl: int | None
     tasa_diaria: float | None
     dias_proyectados: int | None
+    detalle_calculo: str
+    fecha_toma_actual: date | None
+    editado_por_operador: bool
+    guia_operador: str | None
+    metodo: str
+    etiqueta_nivel: str
+    t4_sin_revisar: bool
+    meses_sin_real_en_alerta: bool
+    estado_maquina_desc: str
+    empresa_actual_desc: str | None
+    id_art_gen: int | None
+    id_modo_oper: int
+    ultimo_real_fecha: date | None
+    ultimo_real_tipo: int | None
+    real_anterior_fecha: date | None
+    real_anterior_tipo: int | None
+    parque_historico: ParqueHistoricoSchema | None
 
 
 class ResumenProyeccionSchema(BaseModel):
@@ -75,95 +108,33 @@ class ResumenProyeccionSchema(BaseModel):
     total: int
 
 
+class RestauracionDecisionesSchema(BaseModel):
+    """Banner "Restauramos N decisiones de una sesión anterior (M
+    descartadas)". `vigentes_hasta` es lo que se manda como `descartar_hasta`
+    al apretar "Descartar y empezar limpio"."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    restauradas: int
+    descartadas: int
+    vigentes_hasta: datetime | None
+
+    @classmethod
+    def from_dto(cls, dto: RestauracionDecisionesDto) -> "RestauracionDecisionesSchema":
+        return cls.model_validate(dto)
+
+
 class TableroProyeccionSchema(BaseModel):
     filas: list[FilaProyeccionSchema]
     resumen: ResumenProyeccionSchema
+    restauracion: RestauracionDecisionesSchema
 
     @classmethod
     def from_result(cls, result: TableroProyeccionResult) -> "TableroProyeccionSchema":
         return cls(
             filas=[FilaProyeccionSchema.model_validate(f) for f in result.filas],
             resumen=ResumenProyeccionSchema.model_validate(result.resumen),
-        )
-
-
-class CandidatoLecturaSchema(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    fecha: date
-    tipo_toma: int
-    valor: float
-    valido: bool
-    motivo_invalidez: str | None
-
-
-class BoxplotParqueSchema(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    n_equipos: int
-    q1: float | None
-    mediana: float
-    q3: float | None
-    valor_equipo: float | None
-
-    @classmethod
-    def from_dto_or_none(cls, dto: BoxplotParqueDto | None) -> "BoxplotParqueSchema | None":
-        return cls.model_validate(dto) if dto is not None else None
-
-
-class CandidatosEquipoSchema(BaseModel):
-    id_maquina: int
-    nro_serie: str
-    empresa: str
-    sucursal: str
-    sector: str
-    modelo: str
-    tecnologia: str
-    velocidad_ppm: float | None
-    lecturas: list[CandidatoLecturaSchema]
-    boxplot: BoxplotParqueSchema | None
-
-    @classmethod
-    def from_dto(cls, dto: CandidatosEquipoDto) -> "CandidatosEquipoSchema":
-        return cls(
-            id_maquina=dto.id_maquina,
-            nro_serie=dto.nro_serie,
-            empresa=dto.empresa,
-            sucursal=dto.sucursal,
-            sector=dto.sector,
-            modelo=dto.modelo,
-            tecnologia=dto.tecnologia,
-            velocidad_ppm=dto.velocidad_ppm,
-            lecturas=[CandidatoLecturaSchema.model_validate(lectura) for lectura in dto.lecturas],
-            boxplot=BoxplotParqueSchema.from_dto_or_none(dto.boxplot),
-        )
-
-
-class RecalcularCandidatoResponseSchema(BaseModel):
-    estim_propuesto: float | None
-    impresiones: float | None
-    tipo_toma: int | None
-    fuente: str
-    metodo_detalle: str
-    semaforo: str
-    requiere_confirmacion: bool
-    dias_par_pl: int | None
-    tasa_diaria: float | None
-    dias_proyectados: int | None
-
-    @classmethod
-    def from_resultado(cls, r: EstimacionResultado) -> "RecalcularCandidatoResponseSchema":
-        return cls(
-            estim_propuesto=r.estim_propuesto,
-            impresiones=r.impresiones,
-            tipo_toma=r.tipo_toma,
-            fuente=r.fuente,
-            metodo_detalle=r.metodo_detalle,
-            semaforo=r.semaforo,
-            requiere_confirmacion=r.requiere_confirmacion,
-            dias_par_pl=r.dias_par_pl,
-            tasa_diaria=r.tasa_diaria,
-            dias_proyectados=r.dias_proyectados,
+            restauracion=RestauracionDecisionesSchema.from_dto(result.restauracion),
         )
 
 

@@ -1,25 +1,28 @@
-"""Herramienta Proyección — reactivada primero con datos de ejemplo (ver
-`infrastructure/ejemplo/datos_ejemplo_proyeccion.py`), ya conectada a Siges
-real para combos, grilla y candidatos (`SiGesReadOnly`). Sin selección real
-de grupo/proceso, `/tablero` sigue devolviendo el tablero de ejemplo — ver
-docstring de `get_tablero` más abajo. Los endpoints de candidatos viven en
-`proyeccion_candidatos_router.py` (mismo prefix, incluido al final de este
+"""Herramienta Proyección (Estimador de Contadores v1.7) — combos, grilla y
+candidatos contra Siges real (`SiGesReadOnly`). Sin selección real de
+grupo/proceso, `/tablero` devuelve el tablero de ejemplo (ver
+`infrastructure/ejemplo/datos_ejemplo_proyeccion.py`). Los endpoints de
+candidatos y de recesos viven en `proyeccion_candidatos_router.py` y
+`proyeccion_recesos_router.py` (mismo prefix, incluidos al final de este
 archivo) para no pasar el máximo de 300 líneas."""
 
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.auth.presentation.dependencies.features import require_feature_or_permission
 from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.contadores.application.dtos.decision_operador_dto import (
+    SolicitudRestauracionDto,
+)
 from src.modules.contadores.application.dtos.solicitud_tablero_siges_dto import (
     SolicitudTableroSigesDto,
 )
-from src.modules.contadores.application.use_cases.generar_export_csv import GenerarExportCsvUseCase
-from src.modules.contadores.application.use_cases.gestionar_recesos_proyeccion import (
-    CrearRecesoRequest,
-    GestionarRecesosProyeccionUseCase,
+from src.modules.contadores.application.use_cases.generar_export_csv import (
+    GenerarExportCsvUseCase,
+    OpcionesExportCsv,
 )
 from src.modules.contadores.application.use_cases.get_tablero_proyeccion import (
     GetTableroProyeccionUseCase,
@@ -36,15 +39,17 @@ from src.modules.contadores.application.use_cases.list_grupos_economicos_estimac
 from src.modules.contadores.application.use_cases.list_procesos_por_grupo_estimacion import (
     ListProcesosPorGrupoEstimacionUseCase,
 )
-from src.modules.contadores.domain.ports.recesos_port import RecesosPort
+from src.modules.contadores.domain.services.estimacion.codificacion_cp1252 import (
+    codificar_cp1252,
+)
+from src.modules.contadores.domain.well_known_features import PROYECCION_OPERAR
 from src.modules.contadores.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.contadores.infrastructure.ejemplo.datos_ejemplo_proyeccion import (
-    ID_GRUPO_ECONOMICO_EJEMPLO,
+    NRO_PROCESO_EJEMPLO,
 )
 from src.modules.contadores.infrastructure.ejemplo.decisiones_operador_store import (
     get_decisiones_operador_store,
 )
-from src.modules.contadores.infrastructure.ejemplo.recesos_store import get_recesos_ejemplo_store
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_decisiones_operador_repository import (  # noqa: E501
     SqlAlchemyDecisionesOperadorRepository,
 )
@@ -55,7 +60,9 @@ from src.modules.contadores.infrastructure.repositories.sqlalchemy_recesos_repos
     SqlAlchemyRecesosRepository,
 )
 from src.modules.contadores.presentation._proyeccion_contexto_ejemplo import contexto_ejemplo
+from src.modules.contadores.presentation._proyeccion_solicitud_real import operador_de
 from src.modules.contadores.presentation.dependencies import (
+    get_candidatos_equipo_gateway,
     get_grilla_estimacion_gateway,
     get_proceso_estimacion_gateway,
 )
@@ -65,11 +72,13 @@ from src.modules.contadores.presentation.proyeccion_candidatos_router import (
 from src.modules.contadores.presentation.proyeccion_historial_router import (
     router as historial_router,
 )
+from src.modules.contadores.presentation.proyeccion_recesos_router import (
+    router as recesos_router,
+)
 from src.modules.contadores.presentation.schemas.proyeccion_schemas import (
     AnexoOptionSchema,
     GrupoEconomicoOptionSchema,
     ProcesoOptionSchema,
-    RecesoSchema,
     TableroProyeccionSchema,
 )
 from src.shared.infrastructure.database.session import get_db
@@ -78,7 +87,9 @@ from src.shared.presentation.schemas.pagination import Page
 router = APIRouter(prefix="/api/contadores/proyeccion", tags=["contadores-proyeccion"])
 
 _require_view = Depends(require_permission(VIEW))
-_require_manage = Depends(require_permission(MANAGE))
+# Exportar alcanza con el mismo permiso que opera la grilla (el legacy no
+# separa quién decide de quién exporta).
+_require_operar = Depends(require_feature_or_permission(PROYECCION_OPERAR, MANAGE))
 _TAMANIO_PAGINA_CATALOGO_CHICO = 50
 
 
@@ -133,33 +144,41 @@ async def get_tablero(
     nro_proceso: int | None = None,
     id_grupo_economico: int | None = None,
     id_anexo: int | None = None,
-    _: Identity = _require_view,
+    descartar_hasta: datetime | None = None,
+    identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> TableroProyeccionSchema:
-    """Sin `nro_proceso` (ni el resto de la selección real) sigue devolviendo
-    el tablero de ejemplo — el día que el frontend siempre mande la
-    selección real, este fallback se puede sacar."""
+    """Sin selección real, el de ejemplo. Restaura las decisiones del proceso
+    salvo las anteriores a `descartar_hasta` ("Descartar y empezar limpio")."""
     if nro_proceso is None or id_grupo_economico is None or id_anexo is None:
-        store = get_decisiones_operador_store()
-        ctx = await contexto_ejemplo(fecha_objetivo)
-        resultado = await GetTableroProyeccionUseCase(store).execute(ctx)
-        return TableroProyeccionSchema.from_result(resultado)
+        return await _tablero_ejemplo(fecha_objetivo, descartar_hasta)
     if fecha_objetivo is None:
         raise HTTPException(422, detail="fecha_objetivo es requerida para el tablero real")
-    solicitud = SolicitudTableroSigesDto(nro_proceso, id_grupo_economico, id_anexo, fecha_objetivo)
-    return await _get_tablero_real(solicitud, db)
+    solicitud = SolicitudTableroSigesDto(
+        nro_proceso, id_grupo_economico, id_anexo, fecha_objetivo, operador_de(identity)
+    )
+    resultado = await _tablero_real(db).execute(solicitud, descartar_hasta)
+    return TableroProyeccionSchema.from_result(resultado)
 
 
-async def _get_tablero_real(
-    solicitud: SolicitudTableroSigesDto, db: AsyncSession
+async def _tablero_ejemplo(
+    fecha_objetivo: date | None, descartar_hasta: datetime | None
 ) -> TableroProyeccionSchema:
-    use_case = GetTableroProyeccionSigesUseCase(
+    ctx = await contexto_ejemplo(fecha_objetivo)
+    restauracion = SolicitudRestauracionDto(NRO_PROCESO_EJEMPLO, descartar_hasta)
+    use_case = GetTableroProyeccionUseCase(get_decisiones_operador_store())
+    return TableroProyeccionSchema.from_result(await use_case.execute(ctx, restauracion))
+
+
+def _tablero_real(db: AsyncSession) -> GetTableroProyeccionSigesUseCase:
+    """Con los candidatos de Siges para releer una P/L manual por
+    `ID_Contador` al restaurarla, como el legacy."""
+    return GetTableroProyeccionSigesUseCase(
         get_grilla_estimacion_gateway(),
         SqlAlchemyDecisionesOperadorRepository(db),
         SqlAlchemyRecesosRepository(db),
+        get_candidatos_equipo_gateway(),
     )
-    resultado = await use_case.execute(solicitud)
-    return TableroProyeccionSchema.from_result(resultado)
 
 
 @router.get("/export")
@@ -168,75 +187,48 @@ async def exportar_csv(
     id_grupo_economico: int,
     id_anexo: int,
     fecha_objetivo: date,
-    _: Identity = _require_manage,
+    solo_estimados: bool = False,
+    descartar_hasta: datetime | None = None,
+    identity: Identity = _require_operar,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Response:
-    """Export a SiGes (REGLAS_DE_NEGOCIO §12) — solo para un proceso real,
-    no hay export de ejemplo. Windows-1252 sin BOM (mismo importador que el
-    sistema original), separador ';', una fila por equipo."""
-    solicitud = SolicitudTableroSigesDto(nro_proceso, id_grupo_economico, id_anexo, fecha_objetivo)
-    use_case = GenerarExportCsvUseCase(
+    """Export a SiGes (`CsvExportService` v1.7) de los equipos efectivos del
+    tablero — solo proceso real. `solo_estimados`: opción "Solo estimados"
+    del menú (sin reales ni pendientes). Windows-1252 sin BOM, separador ";",
+    una fila por máquina."""
+    solicitud = SolicitudTableroSigesDto(
+        nro_proceso, id_grupo_economico, id_anexo, fecha_objetivo, operador_de(identity)
+    )
+    opciones = OpcionesExportCsv(solo_estimados, descartar_hasta)
+    contenido = await _export(db).execute(solicitud, opciones)
+    return _response_csv(contenido, _nombre_csv(nro_proceso, fecha_objetivo, solo_estimados))
+
+
+def _export(db: AsyncSession) -> GenerarExportCsvUseCase:
+    return GenerarExportCsvUseCase(
         get_grilla_estimacion_gateway(),
         SqlAlchemyDecisionesOperadorRepository(db),
         SqlAlchemyRecesosRepository(db),
         SqlAlchemyEstimLogRepository(db),
+        get_candidatos_equipo_gateway(),
     )
-    contenido = await use_case.execute(solicitud)
-    return _response_csv(contenido, nro_proceso, fecha_objetivo)
 
 
-def _response_csv(contenido: str, nro_proceso: int, fecha_objetivo: date) -> Response:
-    nombre = f"Estimacion_{nro_proceso}_{fecha_objetivo.isoformat()}.csv"
+def _nombre_csv(nro_proceso: int, fecha_objetivo: date, solo_estimados: bool) -> str:
+    """`Estimacion_{NroProceso}_{yyyyMMdd}[_estimados].csv`, como el legacy."""
+    sufijo = "_estimados" if solo_estimados else ""
+    return f"Estimacion_{nro_proceso}_{fecha_objetivo:%Y%m%d}{sufijo}.csv"
+
+
+def _response_csv(contenido: str, nombre: str) -> Response:
+    """Windows-1252 sin BOM, con el mismo "best fit" de .NET que el legacy."""
     return Response(
-        content=contenido.encode("cp1252", errors="replace"),
+        content=codificar_cp1252(contenido),
         media_type="text/csv; charset=windows-1252",
         headers={"Content-Disposition": f'attachment; filename="{nombre}"'},
     )
 
 
-@router.get("/recesos", response_model=Page[RecesoSchema])
-async def list_recesos(
-    id_grupo_economico: int | None = None,
-    _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> Page[RecesoSchema]:
-    """Sin `id_grupo_economico` (o si coincide con el de ejemplo), lista los
-    recesos de ejemplo — con un grupo económico real, los de ese grupo en
-    Postgres (la pantalla de administración todavía no ofrece elegir grupo,
-    pero el contrato ya soporta un proceso real)."""
-    store = _recesos_store_de(id_grupo_economico, db)
-    recesos = await store.listar(id_grupo_economico or ID_GRUPO_ECONOMICO_EJEMPLO)
-    items = [RecesoSchema.from_dto(r) for r in recesos]
-    return _pagina_completa(items)
-
-
-@router.post("/recesos", response_model=RecesoSchema, status_code=201)
-async def crear_receso(
-    request: CrearRecesoRequest,
-    _: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> RecesoSchema:
-    store = _recesos_store_de(request.id_grupo_economico, db)
-    use_case = GestionarRecesosProyeccionUseCase(store)
-    return RecesoSchema.from_dto(await use_case.crear(request))
-
-
-@router.delete("/recesos/{id_receso}", status_code=204)
-async def eliminar_receso(
-    id_receso: int,
-    id_grupo_economico: int | None = None,
-    _: Identity = _require_manage,
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> None:
-    store = _recesos_store_de(id_grupo_economico, db)
-    await GestionarRecesosProyeccionUseCase(store).eliminar(id_receso)
-
-
-def _recesos_store_de(id_grupo_economico: int | None, db: AsyncSession) -> RecesosPort:
-    if id_grupo_economico is None or id_grupo_economico == ID_GRUPO_ECONOMICO_EJEMPLO:
-        return get_recesos_ejemplo_store()
-    return SqlAlchemyRecesosRepository(db)
-
-
 router.include_router(candidatos_router)
+router.include_router(recesos_router)
 router.include_router(historial_router)

@@ -1,134 +1,140 @@
-"""Panel de candidatos del Estimador — extraído de `proyeccion_router.py` para
-respetar el máximo de 300 líneas por archivo (ARCHITECTURE_GUIDE.md §4);
-se incluye en ese router (mismo prefix, ver `router.include_router` al final
-de ese archivo)."""
+"""Panel de candidatos y acciones del operador sobre una fila del tablero de
+Proyección — incluido en `proyeccion_router.py` (mismo prefix). Mismo flujo
+que `PanelCandidatos` + `GrillaEstimacion` del legacy:
 
-from datetime import date
-from typing import cast
+- `recalcular`: vista previa de una P/L manual (no guarda ni audita).
+- `forzar`: "Usar T19 (cascada)" / "Usar entre reales", se aplica al toque.
+- `aceptar`: con Partida y Llegada, "Aceptar P/L manual" (con la observación
+  escrita); sin ellas, "Aceptar sugerencia" (solo si la fila tiene valor
+  propuesto; la observación escrita se descarta, como en v1.7).
+- `marcar-pendiente`: la fila queda en blanco, con la observación escrita.
 
-from fastapi import APIRouter, Body, Depends, HTTPException
-from pydantic import BaseModel
+"+ Agregar nota" del legacy solo muestra la caja de texto: no hay una acción
+que guarde una observación suelta.
+
+Todas operan sobre la fila efectiva que muestra la grilla
+(`_proyeccion_fila_vigente.py`, incluido el corte `descartar_hasta` de
+"Descartar y empezar limpio"). La lógica de cada acción (decisión del
+proceso + auditoría) vive en `_proyeccion_acciones.py`."""
+
+from dataclasses import replace
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.features import require_feature_or_permission
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.contadores.application.dtos.candidatos_equipo_dto import CandidatosEquipoDto
-from src.modules.contadores.application.dtos.decision_operador_dto import DecisionManualDto
+from src.modules.contadores.application.dtos.decision_operador_dto import ParPartidaLlegadaDto
 from src.modules.contadores.application.dtos.forzar_metodo_request import ForzarMetodoRequest
-from src.modules.contadores.application.dtos.recalcular_candidato_request import (
-    RecalcularCandidatoRequest,
-)
-from src.modules.contadores.application.dtos.solicitud_recalculo_siges_dto import (
-    SolicitudRecalculoSigesDto,
-)
-from src.modules.contadores.application.use_cases.forzar_metodo_candidato import (
-    ForzarMetodoCandidatoUseCase,
-)
-from src.modules.contadores.application.use_cases.forzar_metodo_candidato_siges import (
-    ForzarMetodoCandidatoSigesUseCase,
-)
+from src.modules.contadores.application.use_cases.forzar_metodo_candidato import forzar_metodo
 from src.modules.contadores.application.use_cases.get_candidatos_equipo import (
     GetCandidatosEquipoUseCase,
-    buscar_equipo_y_clase,
 )
 from src.modules.contadores.application.use_cases.get_candidatos_equipo_siges import (
     GetCandidatosEquipoSigesUseCase,
 )
-from src.modules.contadores.application.use_cases.recalcular_candidato import (
-    RecalcularCandidatoUseCase,
-)
-from src.modules.contadores.application.use_cases.recalcular_candidato_siges import (
-    RecalcularCandidatoSigesUseCase,
-)
-from src.modules.contadores.domain.ports.decisiones_operador_port import DecisionesOperadorPort
-from src.modules.contadores.domain.value_objects.estimacion.fuente_estimacion import (
-    FuenteEstimacion,
-)
+from src.modules.contadores.application.use_cases.recalcular_candidato import recalcular_pl
 from src.modules.contadores.domain.well_known_features import PROYECCION_OPERAR
 from src.modules.contadores.domain.well_known_permissions import MANAGE, VIEW
-from src.modules.contadores.infrastructure.ejemplo.decisiones_operador_store import (
-    get_decisiones_operador_store,
-)
-from src.modules.contadores.infrastructure.repositories.sqlalchemy_decisiones_operador_repository import (  # noqa: E501
-    SqlAlchemyDecisionesOperadorRepository,
-)
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_recesos_repository import (
     SqlAlchemyRecesosRepository,
 )
-from src.modules.contadores.presentation._proyeccion_auditoria import (
-    registrar_accion,
-    registrar_metodo_forzado,
-    registrar_pl_manual,
-)
+from src.modules.contadores.presentation import _proyeccion_acciones as acciones
+from src.modules.contadores.presentation._proyeccion_acciones import FilaAccion
 from src.modules.contadores.presentation._proyeccion_contexto_ejemplo import contexto_ejemplo
+from src.modules.contadores.presentation._proyeccion_fila_vigente import (
+    FilaVigente,
+    fila_vigente,
+    par_de_siges,
+)
 from src.modules.contadores.presentation._proyeccion_solicitud_real import (
-    es_solicitud_real,
-    solicitud_de,
+    operador_de,
+    solicitud_real_de,
 )
 from src.modules.contadores.presentation.dependencies import (
     get_candidatos_equipo_gateway,
     get_grilla_estimacion_gateway,
 )
-from src.modules.contadores.presentation.schemas.proyeccion_schemas import (
+from src.modules.contadores.presentation.schemas.proyeccion_candidatos_schemas import (
     CandidatosEquipoSchema,
     RecalcularCandidatoResponseSchema,
+)
+from src.modules.contadores.presentation.schemas.proyeccion_decisiones_schemas import (
+    AccionDecisionBody,
+    AceptarDecisionBody,
+    RecalcularPLBody,
+    SeleccionProcesoSchema,
 )
 from src.shared.infrastructure.database.session import get_db
 
 router = APIRouter()
 
 _require_view = Depends(require_permission(VIEW))
-_require_manage = Depends(require_permission(MANAGE))
-# Elegir P/L, forzar método, aceptar, marcar pendiente y nota: alcanza con la
+# Elegir P/L, forzar método, aceptar y marcar pendiente: alcanza con la
 # función "Proyección: operar candidatos" sin necesitar `contadores.manage`
-# completo (recesos/export siguen exigiendo manage, ver `proyeccion_router.py`).
+# completo (recesos siguen exigiendo manage, ver `proyeccion_router.py`).
 _require_operar = Depends(require_feature_or_permission(PROYECCION_OPERAR, MANAGE))
+_db = Depends(get_db, scope="function")
 
 
-class AceptarManualBody(BaseModel):
-    """El último cálculo que el operador vio (P/L manual o método forzado) y
-    decidió confirmar — si viene vacío, "aceptar" confirma el automático."""
-
-    contador_propuesto: float | None = None
-    tipo_toma: int | None = None
-    fuente: str | None = None
-    metodo_detalle: str | None = None
-
-
-def _solicitud_opcional(
-    nro_proceso: int | None,
-    id_grupo_economico: int | None,
-    id_anexo: int | None,
-    fecha_objetivo: date | None,
-) -> SolicitudRecalculoSigesDto | None:
-    if nro_proceso is None or id_grupo_economico is None:
-        return None
-    if id_anexo is None or fecha_objetivo is None:
-        return None
-    return SolicitudRecalculoSigesDto(
-        nro_proceso=nro_proceso,
-        id_grupo_economico=id_grupo_economico,
-        id_anexo=id_anexo,
-        fecha_objetivo=fecha_objetivo,
+@router.get("/candidatos/{id_maquina}/{clase}", response_model=CandidatosEquipoSchema)
+async def get_candidatos(
+    id_maquina: int,
+    clase: str,
+    seleccion: SeleccionProcesoSchema = Depends(),
+    identity: Identity = _require_view,
+    db: AsyncSession = _db,
+) -> CandidatosEquipoSchema:
+    """Selección real opcional: sin ella un equipo real igual se muestra,
+    solo sin el gráfico de parque (necesita la grilla ya cargada del proceso)."""
+    operador = operador_de(identity)
+    dto = await _resolver_dto_candidatos(id_maquina, clase, seleccion, db, operador)
+    if dto is None:
+        raise HTTPException(status_code=404, detail="Equipo o clase no encontrado")
+    vigente = await fila_vigente(id_maquina, clase, seleccion, db, operador)
+    return CandidatosEquipoSchema.from_dto(
+        _con_boxplot_vigente(dto, vigente), _metodos_disponibles(vigente)
     )
+
+
+def _metodos_disponibles(vigente: FilaVigente | None) -> tuple[bool, bool]:
+    """(cascada, entre reales): los botones "Usar …" que el legacy ofrece
+    para la fila efectiva (`PuedeUsarCascada` / `PuedeUsarEntreReales`,
+    respetando "Descartar y empezar limpio") — lo mismo que después acepta
+    `/candidatos/forzar`."""
+    if vigente is None:
+        return False, False
+    cascada = forzar_metodo("cascada_parque", vigente.entrada, vigente.resultado) is not None
+    entre = forzar_metodo("entre_reales", vigente.entrada, vigente.resultado) is not None
+    return cascada, entre
+
+
+def _con_boxplot_vigente(
+    dto: CandidatosEquipoDto, vigente: FilaVigente | None
+) -> CandidatosEquipoDto:
+    """El "este equipo" del boxplot es `Equipo.Impresiones` de la fila efectiva
+    (con la decisión del operador), como `PanelCandidatos.razor`."""
+    if dto.boxplot is None or vigente is None:
+        return dto
+    boxplot = replace(dto.boxplot, valor_equipo=vigente.resultado.impresiones)
+    return replace(dto, boxplot=boxplot)
 
 
 async def _resolver_dto_candidatos(
     id_maquina: int,
     clase: str,
-    fecha_objetivo: date | None,
-    nro_proceso: int | None,
-    id_grupo_economico: int | None,
-    id_anexo: int | None,
+    seleccion: SeleccionProcesoSchema,
     db: AsyncSession,
+    operador: str,
 ) -> CandidatosEquipoDto | None:
-    dto = GetCandidatosEquipoUseCase().execute(
-        id_maquina, clase, await contexto_ejemplo(fecha_objetivo)
-    )
-    if dto is not None or not clase.isdigit():
-        return dto
-    solicitud = _solicitud_opcional(nro_proceso, id_grupo_economico, id_anexo, fecha_objetivo)
+    solicitud = solicitud_real_de(seleccion, clase, operador)
+    if solicitud is None:
+        ctx = await contexto_ejemplo(seleccion.fecha_objetivo)
+        dto = GetCandidatosEquipoUseCase().execute(id_maquina, clase, ctx)
+        if dto is not None or not clase.isdigit():
+            return dto
     use_case = GetCandidatosEquipoSigesUseCase(
         get_candidatos_equipo_gateway(), get_grilla_estimacion_gateway(),
         SqlAlchemyRecesosRepository(db),
@@ -136,67 +142,30 @@ async def _resolver_dto_candidatos(
     return await use_case.execute(id_maquina, int(clase), solicitud)
 
 
-@router.get("/candidatos/{id_maquina}/{clase}", response_model=CandidatosEquipoSchema)
-async def get_candidatos(
-    id_maquina: int,
-    clase: str,
-    fecha_objetivo: date | None = None,
-    nro_proceso: int | None = None,
-    id_grupo_economico: int | None = None,
-    id_anexo: int | None = None,
-    _: Identity = _require_view,
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> CandidatosEquipoSchema:
-    """Query params de selección opcionales: sin ellos un equipo real igual
-    se muestra, solo sin el gráfico de parque (necesita la grilla cacheada
-    de ese proceso, ver `ConstructorEntradaSiges`)."""
-    dto = await _resolver_dto_candidatos(
-        id_maquina, clase, fecha_objetivo, nro_proceso, id_grupo_economico, id_anexo, db
-    )
-    if dto is None:
-        raise HTTPException(status_code=404, detail="Equipo o clase no encontrado")
-    return CandidatosEquipoSchema.from_dto(dto)
-
-
 @router.post("/candidatos/recalcular", response_model=RecalcularCandidatoResponseSchema)
 async def recalcular_candidato(
-    request: RecalcularCandidatoRequest,
-    identity: Identity = _require_operar,
-    db: AsyncSession = Depends(get_db, scope="function"),
+    body: RecalcularPLBody, identity: Identity = _require_operar, db: AsyncSession = _db
 ) -> RecalcularCandidatoResponseSchema:
-    resultado = RecalcularCandidatoUseCase().execute(request, await contexto_ejemplo(None))
-    if resultado is None and es_solicitud_real(request):
-        use_case = RecalcularCandidatoSigesUseCase(
-            get_grilla_estimacion_gateway(), SqlAlchemyRecesosRepository(db)
-        )
-        resultado = await use_case.execute(request, solicitud_de(request))
+    """Vista previa (`PanelCandidatos.RecomputarPreview`): no guarda ni audita.
+    En el modo real la P/L se relee de Siges por `ID_Contador`."""
+    par = await par_de_siges(body.par(), body)
+    acciones.validar_lecturas_usables(par)
+    fila = FilaAccion(par.id_maquina, par.clase, body, operador_de(identity))
+    entrada = await acciones.entrada_o_404(fila, db)
+    resultado = recalcular_pl(par, entrada)
     if resultado is None:
-        raise HTTPException(
-            status_code=422, detail="Pareja Partida/Llegada inválida (separación < 15 días o L < P)"
-        )
-    await registrar_pl_manual(db, identity, request, resultado)
+        raise HTTPException(status_code=422, detail=acciones.PL_INVALIDA)
     return RecalcularCandidatoResponseSchema.from_resultado(resultado)
 
 
 @router.post("/candidatos/forzar", response_model=RecalcularCandidatoResponseSchema)
 async def forzar_metodo_candidato(
-    request: ForzarMetodoRequest,
-    identity: Identity = _require_operar,
-    db: AsyncSession = Depends(get_db, scope="function"),
+    request: ForzarMetodoRequest, identity: Identity = _require_operar, db: AsyncSession = _db
 ) -> RecalcularCandidatoResponseSchema:
-    """Forzar cascada de parque / entre reales (REGLAS_DE_NEGOCIO §8)."""
-    resultado = ForzarMetodoCandidatoUseCase().execute(request, await contexto_ejemplo(None))
-    if resultado is None and es_solicitud_real(request):
-        use_case = ForzarMetodoCandidatoSigesUseCase(
-            get_grilla_estimacion_gateway(), SqlAlchemyRecesosRepository(db)
-        )
-        resultado = await use_case.execute(request, solicitud_de(request))
-    if resultado is None:
-        raise HTTPException(
-            status_code=422,
-            detail="No se pudo forzar ese método: no hay datos suficientes (par válido o parque)",
-        )
-    await registrar_metodo_forzado(db, identity, request, resultado)
+    """Se aplica al toque, como los botones "Usar …" del legacy. 422 si el
+    legacy no ofrece ese botón para la fila (sin par válido, cascada sin
+    datos, o la fila ya sale de ese método)."""
+    resultado = await acciones.forzar(request, identity, db)
     return RecalcularCandidatoResponseSchema.from_resultado(resultado)
 
 
@@ -204,67 +173,32 @@ async def forzar_metodo_candidato(
 async def marcar_pendiente(
     id_maquina: int,
     clase: str,
+    body: AccionDecisionBody | None = None,
     identity: Identity = _require_operar,
-    db: AsyncSession = Depends(get_db, scope="function"),
+    db: AsyncSession = _db,
 ) -> None:
-    await _decisiones_store_de(id_maquina, clase, db).marcar_pendiente(id_maquina, clase)
-    await registrar_accion(db, identity, id_maquina, clase, "marcar_pendiente")
-
-
-@router.post("/candidatos/{id_maquina}/{clase}/nota", status_code=204)
-async def agregar_nota(
-    id_maquina: int,
-    clase: str,
-    nota: str = Body(embed=True),
-    identity: Identity = _require_operar,
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> None:
-    await _decisiones_store_de(id_maquina, clase, db).agregar_nota(id_maquina, clase, nota)
-    await registrar_accion(db, identity, id_maquina, clase, "agregar_nota", observacion=nota)
+    """Graba la observación escrita junto con la acción (`HandleMarcarPendiente`)."""
+    body = body or AccionDecisionBody()
+    fila = FilaAccion(id_maquina, clase, body, operador_de(identity))
+    await acciones.marcar_pendiente(fila, body, identity, db)
 
 
 @router.post("/candidatos/{id_maquina}/{clase}/aceptar", status_code=204)
-async def aceptar_propuesta(
+async def aceptar(
     id_maquina: int,
     clase: str,
-    body: AceptarManualBody | None = None,
+    body: AceptarDecisionBody | None = None,
     identity: Identity = _require_operar,
-    db: AsyncSession = Depends(get_db, scope="function"),
+    db: AsyncSession = _db,
 ) -> None:
-    manual = _decision_manual_de(body)
-    await _decisiones_store_de(id_maquina, clase, db).aceptar(id_maquina, clase, manual)
-    campos = (
-        {
-            "contador_propuesto": manual.contador_propuesto,
-            "tipo_toma_grabado": manual.tipo_toma,
-            "fuente": manual.fuente,
-            "metodo_detalle": manual.metodo_detalle,
-        }
-        if manual
-        else {}
-    )
-    await registrar_accion(db, identity, id_maquina, clase, "aceptar_sugerencia", **campos)
-
-
-def _decision_manual_de(body: AceptarManualBody | None) -> DecisionManualDto | None:
-    if body is None or body.fuente is None:
-        return None
-    return DecisionManualDto(
-        contador_propuesto=body.contador_propuesto,
-        tipo_toma=body.tipo_toma,
-        fuente=cast(FuenteEstimacion, body.fuente),
-        metodo_detalle=body.metodo_detalle or "",
-    )
-
-
-def _decisiones_store_de(id_maquina: int, clase: str, db: AsyncSession) -> DecisionesOperadorPort:
-    """Un equipo real de Siges nunca aparece en `equipos_ejemplo()` — a
-    diferencia de `es_solicitud_real` (que solo mira si `clase` es numérica),
-    acá hace falta esa verificación extra porque el equipo de ejemplo id=1
-    también tiene clase "10" (numérica): sin este chequeo, sus decisiones se
-    escribirían en Postgres en vez del store en memoria (bug real, visto
-    2026-09-05)."""
-    equipo, _ = buscar_equipo_y_clase(id_maquina, clase)
-    if equipo is None and clase.isdigit():
-        return SqlAlchemyDecisionesOperadorRepository(db)
-    return get_decisiones_operador_store()
+    """Con Partida y Llegada, "Aceptar P/L manual"; sin ninguna de las dos,
+    "Aceptar sugerencia" (ignora `nota`, ver `aceptar_sugerencia`)."""
+    body = body or AceptarDecisionBody()
+    fila = FilaAccion(id_maquina, clase, body, operador_de(identity))
+    if body.partida is None and body.llegada is None:
+        await acciones.aceptar_sugerencia(fila, identity, db)
+        return
+    if body.partida is None or body.llegada is None:
+        raise HTTPException(status_code=422, detail="Falta la Partida o la Llegada")
+    par = ParPartidaLlegadaDto(id_maquina, clase, body.partida.a_dto(), body.llegada.a_dto())
+    await acciones.aceptar_pl(fila, par, body, identity, db)

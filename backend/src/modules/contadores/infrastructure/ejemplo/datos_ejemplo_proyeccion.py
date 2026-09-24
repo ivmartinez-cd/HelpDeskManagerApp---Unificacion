@@ -71,6 +71,11 @@ def _equipo_real_cargado() -> EquipoEjemplo:
         LecturaRef(118_500, date(2026, 3, 31), 1),
         ya_real=True,
         valor_real_cargado=122_300,
+        # Como una fila real de Siges: FC_ImpresionesReales y la fecha/tipo
+        # del contador actual (122.300 − 118.500 = 3.800 del período).
+        impresiones_reales=3_800,
+        tipo_toma_actual=1,
+        fecha_toma_actual=date(2026, 4, 28),
         prom_6_facturados=3_600,
         historico_12=historico_ejemplo(3600, 3800),
     )

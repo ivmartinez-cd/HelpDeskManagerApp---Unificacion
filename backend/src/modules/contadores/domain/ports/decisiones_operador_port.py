@@ -1,23 +1,30 @@
 from typing import Protocol
 
 from src.modules.contadores.application.dtos.decision_operador_dto import (
-    DecisionManualDto,
+    ClaveDecisionDto,
     DecisionOperadorDto,
 )
 
 
 class DecisionesOperadorPort(Protocol):
-    """Estado vigente (pendiente/nota/valor manual aceptado) de la decisión
-    del operador sobre una fila del tablero — complementa, no reemplaza, la
-    auditoría append-only de `EstimLogPort` (esa es el historial completo;
-    esta es solo el último estado, para no reconstruirlo del historial en
-    cada carga del tablero ni del export). `listar_todas` existe para
-    resolver el tablero completo con una sola consulta en vez de una por
-    fila (evita N+1)."""
+    """Decisión vigente del operador por (proceso, equipo, clase) — complementa,
+    no reemplaza, la auditoría append-only de `EstimLogPort` (esa es el
+    historial completo; esta es solo la última acción de cada fila, lo que el
+    legacy obtiene con `GetUltimasDecisionesProcesoAsync`). `listar_por_proceso`
+    resuelve el tablero completo con una sola consulta (evita N+1)."""
 
-    async def listar_todas(self) -> dict[tuple[int, str], DecisionOperadorDto]: ...
-    async def marcar_pendiente(self, id_maquina: int, clase: str) -> None: ...
-    async def agregar_nota(self, id_maquina: int, clase: str, nota: str) -> None: ...
-    async def aceptar(
-        self, id_maquina: int, clase: str, manual: DecisionManualDto | None = None
-    ) -> None: ...
+    async def listar_por_proceso(
+        self, nro_proceso: int
+    ) -> dict[tuple[int, str], DecisionOperadorDto]:
+        """Clave del dict: (id_maquina, clase)."""
+        ...
+
+    async def obtener(self, clave: ClaveDecisionDto) -> DecisionOperadorDto | None:
+        """La decisión vigente de una sola fila (la que el panel está
+        mostrando: `EquipoEfectivo` del legacy)."""
+        ...
+
+    async def guardar(self, clave: ClaveDecisionDto, decision: DecisionOperadorDto) -> None:
+        """Pisa la decisión vigente de esa fila ("último gana", como
+        `Estim_Log` del legacy)."""
+        ...

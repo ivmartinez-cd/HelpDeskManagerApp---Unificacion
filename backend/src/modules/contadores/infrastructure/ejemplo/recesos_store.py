@@ -19,10 +19,23 @@ class RecesosEjemploStore:
     async def listar(self, id_grupo_economico: int) -> list[RecesoDto]:
         return [r for r in self._recesos if r.id_grupo_economico == id_grupo_economico]
 
+    async def listar_para_proceso(
+        self, id_anexo: int, ids_grupo: list[int]
+    ) -> list[RecesoDto]:
+        return [
+            r for r in self._recesos if r.id_anexo == id_anexo or r.id_grupo_economico in ids_grupo
+        ]
+
     async def crear(self, receso_sin_id: RecesoDto) -> RecesoDto:
         receso = replace(receso_sin_id, id=self._next_id)
         self._next_id += 1
         self._recesos.append(receso)
+        return receso
+
+    async def actualizar(self, receso: RecesoDto) -> RecesoDto | None:
+        if not any(r.id == receso.id for r in self._recesos):
+            return None
+        self._recesos = [receso if r.id == receso.id else r for r in self._recesos]
         return receso
 
     async def eliminar(self, id_receso: int) -> None:

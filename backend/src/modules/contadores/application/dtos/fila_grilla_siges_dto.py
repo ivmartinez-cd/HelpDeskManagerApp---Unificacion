@@ -6,7 +6,13 @@ from datetime import date
 class FilaGrillaSigesDto:
     """Una fila cruda del SELECT final de `GRILLA_ESTIMACION_SQL` — mismo
     orden posicional 0-73 que documenta el .sql original (`SiGesRepository`
-    en el código .NET también lee por índice, no por nombre)."""
+    en el código .NET también lee por índice, no por nombre).
+
+    `historico` va en el orden de `EquipoGrillaRaw.Historico11` del legacy:
+    H11..H01, del proceso cerrado más viejo al más reciente (columnas 50..40
+    del SELECT). `fc_fecha_cont_actual`/`fc_tipo_toma_cont_actual` (columnas
+    52/53) son la fecha y el tipo de toma del contador ya cargado en el
+    proceso — solo vienen en filas con lectura real (NULL si falta estimar)."""
 
     id_maquina: int
     id_clase_contador: int
@@ -69,3 +75,9 @@ class FilaGrillaSigesDto:
     pgl_mediana_cruda: float | None
     pgl_media_cruda: float | None
     ultimo_real_no_t4_fecha: date | None
+    fc_fecha_cont_actual: date | None = None
+    fc_tipo_toma_cont_actual: int | None = None
+    # Col 33 `PromGlobalModelo_Imp`: base del fallback de salto imposible
+    # (3 × este valor) que el legacy solo usa si la velocidad por defecto
+    # de la tecnología está configurada en 0.
+    prom_global_modelo_imp: float | None = None

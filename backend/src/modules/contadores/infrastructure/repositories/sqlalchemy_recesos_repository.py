@@ -1,6 +1,6 @@
 from dataclasses import replace
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.contadores.application.dtos.receso_dto import RecesoDto
@@ -21,6 +21,18 @@ class SqlAlchemyRecesosRepository:
         rows = (await self._session.execute(stmt)).scalars().all()
         return [_to_dto(row) for row in rows]
 
+    async def listar_para_proceso(
+        self, id_anexo: int, ids_grupo: list[int]
+    ) -> list[RecesoDto]:
+        stmt = select(EstimRecesoModel).where(
+            or_(
+                EstimRecesoModel.id_anexo == id_anexo,
+                EstimRecesoModel.id_grupo_economico.in_(ids_grupo),
+            )
+        )
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return [_to_dto(row) for row in rows]
+
     async def crear(self, receso_sin_id: RecesoDto) -> RecesoDto:
         row = EstimRecesoModel(
             id_grupo_economico=receso_sin_id.id_grupo_economico,
@@ -32,6 +44,18 @@ class SqlAlchemyRecesosRepository:
         self._session.add(row)
         await self._session.flush()
         return replace(receso_sin_id, id=row.id)
+
+    async def actualizar(self, receso: RecesoDto) -> RecesoDto | None:
+        row = await self._session.get(EstimRecesoModel, receso.id)
+        if row is None:
+            return None
+        row.id_grupo_economico = receso.id_grupo_economico
+        row.id_anexo = receso.id_anexo
+        row.fecha_desde = receso.fecha_desde
+        row.fecha_hasta = receso.fecha_hasta
+        row.descripcion = receso.descripcion
+        await self._session.flush()
+        return receso
 
     async def eliminar(self, id_receso: int) -> None:
         await self._session.execute(

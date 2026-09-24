@@ -3,10 +3,10 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True, slots=True)
 class PromedioParque:
-    """Valor representativo ya resuelto de un nivel de la cascada de parque
-    (REGLAS_DE_NEGOCIO §5.5), más las métricas de auditoría que necesita el
-    detalle de observación (§12). `q1`/`q3` solo aplican al nivel
-    Cliente+Tecnología cuando se aplicó el criterio IQR."""
+    """Valor representativo ya resuelto por la consulta de un nivel de la
+    cascada de parque (`Prom` del legacy: mediana truncada P80 con N>=5,
+    mediana cruda con N=2..4, NULL con N<=1), más las métricas de auditoría
+    del tooltip. `q1`/`q3` solo vienen en el nivel Cliente+Tecnología."""
 
     valor: float
     n_equipos: int

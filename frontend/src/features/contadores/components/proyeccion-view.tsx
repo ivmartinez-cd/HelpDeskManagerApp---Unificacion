@@ -1,298 +1,94 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
-import { SegmentedControl } from "@/shared/components/ui/segmented-control";
-import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
-import { useTableSort } from "@/shared/hooks/use-table-sort";
-import { proyeccionApi } from "../api/proyeccion-api";
-import { useLoteAceptarProyeccion } from "../hooks/use-lote-aceptar-proyeccion";
-import type {
-  FilaProyeccion,
-  GrupoEconomicoOption,
-  ProcesoOption,
-  SolicitudTableroReal,
-  TableroProyeccion,
-} from "../types/proyeccion";
-import { ProyeccionBarraLote } from "./proyeccion-barra-lote";
-import { ProyeccionCandidatosDrawer } from "./proyeccion-candidatos-drawer";
-import { ProyeccionHistorialModal } from "./proyeccion-historial-modal";
+import { BrandButton } from "@/shared/components/ui/brand-form";
+import { useSession } from "@/services/session-provider";
+import { useTableroProyeccion } from "../hooks/use-tablero-proyeccion";
+import { ProyeccionGrilla } from "./proyeccion-grilla";
+import { ProyeccionBannerRestauracion } from "./proyeccion-resumen";
 import { ProyeccionSelectores } from "./proyeccion-selectores";
-import { ProyeccionTabla, type ProyeccionSortKey } from "./proyeccion-tabla";
 
-type FiltroChip = "todos" | "estimar" | "reales" | "sospechosos";
+/** Pantalla de Proyección — `Index.razor` del Estimador v1.7: combos,
+ * "Cargar", errores de conexión/carga, banner de restauración y la grilla
+ * del tablero cargado. */
 
-const FILTROS: { value: FiltroChip; label: string }[] = [
-  { value: "todos", label: "Todos" },
-  { value: "estimar", label: "A estimar" },
-  { value: "reales", label: "Reales" },
-  { value: "sospechosos", label: "Sospechosos" },
-];
-
-function coincideBusqueda(fila: FilaProyeccion, termino: string): boolean {
-  const q = termino.toLowerCase();
+function Alerta({ titulo, detalle, children }: { titulo: string; detalle: string; children?: React.ReactNode }) {
   return (
-    fila.nro_serie.toLowerCase().includes(q) ||
-    fila.sucursal.toLowerCase().includes(q) ||
-    fila.sector.toLowerCase().includes(q)
+    <div className="rounded-[8px] bg-destructive/10 px-4 py-3 font-body text-xs text-destructive">
+      <strong>{titulo}</strong>
+      <p className="text-muted-foreground">{detalle}</p>
+      {children}
+    </div>
   );
 }
 
-function aplicaFiltro(fila: FilaProyeccion, filtro: FiltroChip): boolean {
-  if (filtro === "estimar") return !fila.es_real;
-  if (filtro === "reales") return fila.es_real;
-  if (filtro === "sospechosos") return fila.borde_salto_imposible;
-  return true;
-}
-
-function ordenar(filas: FilaProyeccion[], key: ProyeccionSortKey, dir: "asc" | "desc"): FilaProyeccion[] {
-  const factor = dir === "asc" ? 1 : -1;
-  const valor = (f: FilaProyeccion): string | number => {
-    if (key === "ubicacion") return `${f.empresa} ${f.sucursal}`;
-    if (key === "nro_serie") return f.nro_serie;
-    if (key === "modelo") return f.modelo;
-    return f.impresiones ?? Number.NEGATIVE_INFINITY;
-  };
-  return [...filas].sort((a, b) => {
-    const va = valor(a);
-    const vb = valor(b);
-    if (va < vb) return -1 * factor;
-    if (va > vb) return 1 * factor;
-    return 0;
-  });
-}
-
-export function ProyeccionView() {
-  const [tablero, setTablero] = useState<TableroProyeccion | null>(null);
-  const [filtro, setFiltro] = useState<FiltroChip>("todos");
-  const [busqueda, setBusqueda] = useState("");
-  const [seleccion, setSeleccion] = useState<FilaProyeccion | null>(null);
-  const [verHistorial, setVerHistorial] = useState<FilaProyeccion | null>(null);
-  const { sort, toggleSort } = useTableSort<ProyeccionSortKey>({
-    initial: { key: "ubicacion", direction: "asc" },
-    keys: ["ubicacion", "nro_serie", "modelo", "impresiones"],
-  });
-
-  // Combos reales contra Siges (MODELO_DE_DATOS §3.1/§3.2) — el tablero de
-  // abajo todavía carga datos de ejemplo (ver nota al pie): sirven para
-  // dejar el circuito de selección probado mientras se porta la consulta
-  // real de la grilla (la compleja, MODELO_DE_DATOS §3.4).
-  const [grupos, setGrupos] = useState<GrupoEconomicoOption[]>([]);
-  const [procesos, setProcesos] = useState<ProcesoOption[]>([]);
-  const [idGrupo, setIdGrupo] = useState<string | null>(null);
-  const [idProceso, setIdProceso] = useState<string | null>(null);
-  const [fechaObjetivo, setFechaObjetivo] = useState("");
-  const [cargando, setCargando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [exportando, setExportando] = useState(false);
-  const [errorExport, setErrorExport] = useState<string | null>(null);
-
-  useEffect(() => {
-    void proyeccionApi.listGruposEconomicos().then(setGrupos);
-  }, []);
-
-  useEffect(() => {
-    if (idGrupo == null) return;
-    void proyeccionApi.listProcesos(Number(idGrupo)).then(setProcesos);
-  }, [idGrupo]);
-
-  // Derivados en vez de resetear estado a mano en el efecto de arriba
-  // (react-hooks/set-state-in-effect): sin grupo no hay procesos que
-  // mostrar, y si el proceso elegido ya no está en la lista del grupo
-  // actual (porque el grupo cambió) se trata como null.
-  const procesosVisibles = idGrupo == null ? [] : procesos;
-  const idProcesoValido = procesosVisibles.some((p) => String(p.nro_proceso) === idProceso)
-    ? idProceso
-    : null;
-  const procesoElegido = procesosVisibles.find((p) => String(p.nro_proceso) === idProcesoValido);
-
-  const solicitudActual: SolicitudTableroReal | undefined = useMemo(
-    () =>
-      idGrupo && procesoElegido && fechaObjetivo
-        ? {
-            nroProceso: procesoElegido.nro_proceso,
-            idGrupoEconomico: Number(idGrupo),
-            idAnexo: procesoElegido.id_anexo,
-            fechaObjetivo,
-          }
-        : undefined,
-    [idGrupo, procesoElegido, fechaObjetivo],
-  );
-
-  const cargar = useCallback(() => {
-    setCargando(true);
-    setError(null);
-    proyeccionApi
-      .getTablero(solicitudActual)
-      .then(setTablero)
-      .catch(() => setError("No se pudo cargar la grilla — puede ser lenta o falló la conexión a Siges."))
-      .finally(() => setCargando(false));
-  }, [solicitudActual]);
-
-  const filasVisibles = useMemo(() => {
-    if (!tablero) return [];
-    const filtradas = tablero.filas
-      .filter((f) => aplicaFiltro(f, filtro))
-      .filter((f) => (busqueda ? coincideBusqueda(f, busqueda) : true));
-    return ordenar(filtradas, sort.key, sort.direction);
-  }, [tablero, filtro, busqueda, sort]);
-
-  const {
-    seleccionadas,
-    aceptando: aceptandoLote,
-    toggleSeleccion,
-    toggleSeleccionTodas,
-    limpiarSeleccion,
-    aceptarSeleccionadas,
-  } = useLoteAceptarProyeccion(tablero, filasVisibles, cargar);
-
-  const contador = (f: FiltroChip) =>
-    tablero ? tablero.filas.filter((fila) => aplicaFiltro(fila, f)).length : 0;
-
-  const exportarCsv = useCallback(() => {
-    if (!solicitudActual) return;
-    setExportando(true);
-    setErrorExport(null);
-    proyeccionApi
-      .exportarCsv(solicitudActual)
-      .catch(() => setErrorExport("No se pudo generar el CSV."))
-      .finally(() => setExportando(false));
-  }, [solicitudActual]);
-
+function Encabezado() {
   return (
-    <div className="flex flex-col gap-6 px-9 py-8">
+    <>
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/contadores" className="hover:text-foreground">
-          Centro de Contadores
-        </Link>
+        <Link href="/contadores" className="hover:text-foreground">Centro de Contadores</Link>
         <span>›</span>
         <span className="font-semibold text-foreground">Proyección</span>
-        <Link href="/contadores/proyeccion/recesos" className="ml-auto hover:text-foreground">
-          Recesos →
-        </Link>
+        <Link href="/contadores/proyeccion/recesos" className="ml-auto hover:text-foreground">Recesos →</Link>
       </div>
-
       <h1 className="font-heading text-[25px] font-extrabold uppercase tracking-[-.03em] text-foreground">
         Proyección de contadores
       </h1>
+    </>
+  );
+}
+
+export function ProyeccionView() {
+  const { can, hasFeature } = useSession();
+  const puedeOperar = can("contadores", "manage") || hasFeature("contadores-proyeccion-operar");
+  const t = useTableroProyeccion();
+  const { tablero } = t;
+
+  return (
+    <div className="flex flex-col gap-6 px-9 py-8">
+      <Encabezado />
+      {t.errorConexion && <Alerta titulo="Error conectando a SiGes." detalle={t.errorConexion} />}
 
       <ProyeccionSelectores
-        grupos={grupos}
-        procesosVisibles={procesosVisibles}
-        idGrupo={idGrupo}
-        idProcesoValido={idProcesoValido}
-        fechaObjetivo={fechaObjetivo}
-        cargando={cargando}
-        onChangeGrupo={setIdGrupo}
-        onChangeProceso={(id, proceso) => {
-          setIdProceso(id);
-          if (proceso) setFechaObjetivo(proceso.periodo_hasta);
-        }}
-        onChangeFecha={setFechaObjetivo}
-        onCargar={cargar}
+        grupos={t.grupos}
+        procesosVisibles={t.procesosVisibles}
+        idGrupo={t.idGrupo}
+        idProcesoValido={t.idProcesoValido}
+        procesoElegido={t.procesoElegido}
+        fechaObjetivo={t.fechaObjetivo}
+        cargando={t.cargando}
+        onChangeGrupo={t.elegirGrupo}
+        onChangeProceso={t.elegirProceso}
+        onChangeFecha={t.setFechaObjetivo}
+        onCargar={t.cargar}
       />
 
-      {error && (
-        <p className="rounded-[8px] bg-destructive/10 px-4 py-3 font-body text-xs text-destructive">
-          {error}
-        </p>
+      {t.error && (
+        <Alerta titulo="Error al cargar la grilla." detalle={t.error}>
+          <BrandButton variant="outline" size="sm" className="mt-2" onClick={tablero ? t.recargar : t.cargar}>
+            Reintentar
+          </BrandButton>
+        </Alerta>
       )}
 
-      {tablero && (
-        <KpiGrid className="sm:grid-cols-3 lg:grid-cols-5">
-          <KpiTile label="Reales" value={String(tablero.resumen.reales)} />
-          <KpiTile label="Estimados" value={String(tablero.resumen.estimados)} tone="orange" />
-          <KpiTile label="Pendientes" value={String(tablero.resumen.pendientes)} tone="danger" />
-          <KpiTile label="Sospechosos" value={String(tablero.resumen.sospechosos)} tone="danger" />
-          <KpiTile label="Total equipos" value={String(tablero.resumen.total)} />
-        </KpiGrid>
+      {t.banner && (
+        <ProyeccionBannerRestauracion restauracion={t.banner} onDescartar={t.descartarRestauracion} onCerrar={t.ocultarBanner} />
       )}
 
-      <div className="flex flex-wrap items-end gap-3">
-        <SegmentedControl
-          options={FILTROS.map((f) => ({ value: f.value, label: `${f.label} (${contador(f.value)})` }))}
-          value={filtro}
-          onChange={(v) => setFiltro(v as FiltroChip)}
+      {tablero ? (
+        <ProyeccionGrilla
+          tablero={tablero}
+          contexto={t.contexto}
+          descartes={t.descartes}
+          puedeOperar={puedeOperar}
+          recargar={t.recargar}
         />
-        <div className="min-w-[260px]">
-          <BrandInput
-            label="Buscar"
-            type="search"
-            placeholder="Nro. serie / sucursal / sector…"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
-        </div>
-        <BrandButton
-          variant="outline"
-          loading={exportando}
-          disabled={!solicitudActual}
-          title={solicitudActual ? undefined : "Elegí un grupo económico y un proceso real para exportar"}
-          onClick={exportarCsv}
-          className="ml-auto"
-        >
-          Exportar CSV
-        </BrandButton>
-      </div>
-
-      {errorExport && (
-        <p className="rounded-[8px] bg-destructive/10 px-4 py-3 font-body text-xs text-destructive">
-          {errorExport}
-        </p>
-      )}
-
-      <ProyeccionBarraLote
-        cantidad={seleccionadas.size}
-        aceptando={aceptandoLote}
-        onAceptar={aceptarSeleccionadas}
-        onCancelar={limpiarSeleccion}
-      />
-
-      {!tablero ? (
+      ) : (
         <p className="text-sm text-muted-foreground">
-          {cargando
-            ? "Cargando…"
+          {t.cargando
+            ? "Cargando grilla de estimación…"
             : "Elegí un grupo económico y un proceso (o dejalo en blanco para ver datos de ejemplo) y apretá Cargar."}
         </p>
-      ) : (
-        <ProyeccionTabla
-          filas={filasVisibles}
-          sort={sort}
-          onToggleSort={toggleSort}
-          onVerCandidatos={setSeleccion}
-          onVerHistorial={setVerHistorial}
-          fechaObjetivo={fechaObjetivo || null}
-          seleccionadas={seleccionadas}
-          onToggleSeleccion={toggleSeleccion}
-          onToggleSeleccionTodas={toggleSeleccionTodas}
-        />
-      )}
-
-      <p className="rounded-[8px] bg-muted/30 px-4 py-3 font-body text-xs text-muted-foreground">
-        Con Grupo económico y Proceso elegidos, la grilla consulta Siges en vivo (puede tardar —
-        sin los índices recomendados en `MIGRACION_SISTEMAS.md`). Sin selección, muestra datos de
-        ejemplo.
-      </p>
-
-      {seleccion && (
-        <ProyeccionCandidatosDrawer
-          key={`${seleccion.id_maquina}-${seleccion.clase}`}
-          fila={seleccion}
-          solicitud={solicitudActual}
-          onClose={() => setSeleccion(null)}
-          onCambio={() => {
-            cargar();
-          }}
-        />
-      )}
-
-      {verHistorial && (
-        <ProyeccionHistorialModal
-          key={`${verHistorial.id_maquina}-${verHistorial.clase}`}
-          fila={verHistorial}
-          onClose={() => setVerHistorial(null)}
-        />
       )}
     </div>
   );

@@ -3,6 +3,9 @@ Estimador de Contadores contra Siges/ORION. Plomería pyodbc en el
 `OrionQueryRunner` compartido (ADR-018), misma cuenta que el resto de
 `contadores` (`SiGesReadOnly`, solo lectura)."""
 
+from datetime import date, datetime
+from typing import Any
+
 from src.modules.contadores.domain.ports.proceso_estimacion_port import (
     AnexoOption,
     GrupoEconomicoOption,
@@ -43,7 +46,7 @@ class PyodbcProcesoEstimacionGateway:
                 nro_proceso=int(r.Nro_Proceso),
                 periodo_facturacion=str(r.PeriodoFacturacion),
                 nombre_anexo=str(r.NombreAnexo),
-                periodo_hasta=r.PeriodoHasta,
+                periodo_hasta=_d(r.PeriodoHasta),
                 id_anexo=int(r.ID_Anexo),
             )
             for r in rows
@@ -60,3 +63,9 @@ class PyodbcProcesoEstimacionGateway:
         return [
             AnexoOption(id_anexo=int(r.ID_Anexo), nombre_anexo=str(r.NombreAnexo)) for r in rows
         ]
+
+
+def _d(valor: Any) -> date:
+    """`DateOnly.FromDateTime` del legacy: pyodbc/FreeTDS entrega la columna
+    `date` como `datetime` (00:00), y la fecha objetivo por defecto es esta."""
+    return valor.date() if isinstance(valor, datetime) else valor

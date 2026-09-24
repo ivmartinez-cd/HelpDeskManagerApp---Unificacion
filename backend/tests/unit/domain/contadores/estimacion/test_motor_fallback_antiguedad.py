@@ -1,7 +1,10 @@
-"""CASOS_DE_PRUEBA.md §3 — fallback por antigüedad (REGLAS_DE_NEGOCIO §5.4)."""
+"""Fallback por antigüedad (`MesesSinReal` / `MesesEnAlerta` del legacy):
+historia propia de más de 12 meses (mono) o 6 (color) no se usa para la
+regla de tres."""
 
 from datetime import date
 
+from src.modules.contadores.domain.services.estimacion.antiguedad import meses_entre
 from src.modules.contadores.domain.services.estimacion.motor import estimar
 from tests.unit.domain.contadores.estimacion._builders import lectura, make_input, parque
 
@@ -20,6 +23,10 @@ def test_mono_mas_de_12_meses_cae_a_parque() -> None:
     assert resultado.tipo_toma == 19
     assert resultado.meses_sin_real_en_alerta is True
     assert resultado.estim_propuesto == 92_000
+    assert resultado.detalle_calculo == (
+        "Historia propia vieja (14m sin real) · Parque del cliente · misma tecnología (Mono) · "
+        "Mediana truncada P80 · 8 equipos (0 descartados) · +12000 imp"
+    )
 
 
 def test_color_mas_de_6_meses_cae_a_parque() -> None:
@@ -34,6 +41,16 @@ def test_color_mas_de_6_meses_cae_a_parque() -> None:
 
     assert resultado.fuente == "Parque_Cliente_Tec"
     assert resultado.meses_sin_real_en_alerta is True
+
+
+def test_la_alerta_se_marca_en_cualquier_rama() -> None:
+    entrada = make_input(
+        tecnologia="COLOR",
+        ultimo_real=lectura(50_000, date(2025, 9, 30)),
+        estado_maquina="EN_TRANSITO",
+    )
+
+    assert estimar(entrada).meses_sin_real_en_alerta is True
 
 
 def test_muestra_chica_sin_iqr_no_falla() -> None:
@@ -62,3 +79,9 @@ def test_limite_exacto_de_12_meses_no_dispara_alerta() -> None:
 
     assert resultado.meses_sin_real_en_alerta is False
     assert resultado.fuente == "Historia_Propia"
+
+
+def test_meses_sin_real_nunca_es_negativo() -> None:
+    assert meses_entre(date(2026, 6, 16), date(2026, 5, 31)) == 0
+    assert meses_entre(date(2026, 3, 31), date(2026, 4, 30)) == 0
+    assert meses_entre(date(2026, 3, 30), date(2026, 4, 30)) == 1

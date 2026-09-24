@@ -29,9 +29,10 @@ class EntradaEstimLog:
 @dataclass(frozen=True, slots=True)
 class ResumenAuditoriaMaquina:
     """Lo que el export necesita del historial de un equipo (REGLAS_DE_NEGOCIO
-    §12): la observación manual más reciente y un identificador corto de la
-    última entrada del log, para que un reclamo de facturación lleve a la
-    decisión completa. Solo existe para equipos que el operador tocó."""
+    §12): la observación manual más reciente y el número (entero, como el
+    `Estim_Log.Id` del legacy) de la última entrada del log, para que un
+    reclamo de facturación lleve a la decisión completa. Solo existe para
+    equipos que el operador tocó."""
 
     id_log_corto: str
     observacion_manual: str | None

@@ -23,6 +23,17 @@ class _StoreEnMemoria:
         self.recesos.append(receso)
         return receso
 
+    async def listar_para_proceso(self, id_anexo: int, ids_grupo: list[int]) -> list[RecesoDto]:
+        return [
+            r for r in self.recesos if r.id_anexo == id_anexo or r.id_grupo_economico in ids_grupo
+        ]
+
+    async def actualizar(self, receso: RecesoDto) -> RecesoDto | None:
+        if not any(r.id == receso.id for r in self.recesos):
+            return None
+        self.recesos = [receso if r.id == receso.id else r for r in self.recesos]
+        return receso
+
     async def eliminar(self, id_receso: int) -> None:
         self.recesos = [r for r in self.recesos if r.id != id_receso]
 
@@ -58,3 +69,31 @@ async def test_rechaza_receso_con_fecha_desde_posterior_a_fecha_hasta() -> None:
         )
 
     assert store.recesos == []
+
+
+async def test_editar_pisa_los_campos_y_valida_el_rango() -> None:
+    store = _StoreEnMemoria()
+    use_case = GestionarRecesosProyeccionUseCase(store)
+    creado = await use_case.crear(_request(date(2026, 12, 26), date(2026, 12, 26)))
+
+    editado = await use_case.actualizar(creado.id, _request(date(2026, 12, 20), date(2026, 12, 31)))
+
+    assert editado is not None
+    esperado = replace(creado, fecha_desde=date(2026, 12, 20), fecha_hasta=date(2026, 12, 31))
+    assert store.recesos == [esperado]
+    with pytest.raises(RecesoRangoInvalidoError):
+        await use_case.actualizar(creado.id, _request(date(2026, 12, 31), date(2026, 12, 20)))
+
+
+async def test_editar_un_receso_inexistente_devuelve_none() -> None:
+    use_case = GestionarRecesosProyeccionUseCase(_StoreEnMemoria())
+
+    assert await use_case.actualizar(99, _request(date(2026, 12, 26), date(2026, 12, 26))) is None
+
+
+async def test_descripcion_es_opcional() -> None:
+    request = CrearRecesoRequest(417, None, date(2026, 12, 26), date(2026, 12, 26))
+
+    creado = await GestionarRecesosProyeccionUseCase(_StoreEnMemoria()).crear(request)
+
+    assert creado.descripcion == ""

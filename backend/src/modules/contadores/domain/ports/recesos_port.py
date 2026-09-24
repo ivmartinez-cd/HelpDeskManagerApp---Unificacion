@@ -13,5 +13,16 @@ class RecesosPort(Protocol):
     la misma tabla."""
 
     async def listar(self, id_grupo_economico: int) -> list[RecesoDto]: ...
+    async def listar_para_proceso(
+        self, id_anexo: int, ids_grupo: list[int]
+    ) -> list[RecesoDto]:
+        """`ListarParaProcesoAsync` del legacy: los del anexo del proceso
+        (cualquiera sea su grupo) más los de los grupos dados."""
+        ...
+
     async def crear(self, receso_sin_id: RecesoDto) -> RecesoDto: ...
+    async def actualizar(self, receso: RecesoDto) -> RecesoDto | None:
+        """`None` si no existe un receso con ese id."""
+        ...
+
     async def eliminar(self, id_receso: int) -> None: ...

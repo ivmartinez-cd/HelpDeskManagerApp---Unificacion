@@ -8,8 +8,9 @@ class BoxplotParqueDto:
     `q3` llegan `None` cuando el nivel de parque resuelto no trae criterio
     IQR (solo Cliente+Tecnología lo calcula hoy, ver `PromedioParque`); el
     frontend arma los bigotes de Tukey y decide qué mostrar. `valor_equipo`
-    es la propuesta automática del motor para este equipo (paridad con
-    `Equipo.Impresiones` de `PanelCandidatos.razor`), no el valor del parque."""
+    es `Equipo.Impresiones` de `PanelCandidatos.razor`: las impresiones de la
+    fila efectiva (con la decisión del operador; el router las completa), no
+    el valor del parque."""
 
     n_equipos: int
     q1: float | None

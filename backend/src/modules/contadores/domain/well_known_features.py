@@ -14,7 +14,8 @@ CARD_OPERADORES = FeatureKey("contadores-card-operadores")
 # Calendario con los eventos de todos los operadores (y el filtro por operador);
 # sin esta función cada uno ve solo los suyos y los que cubre.
 CALENDARIO_TODOS = FeatureKey("contadores-calendario-todos")
-# Operar el panel de candidatos de Proyección (elegir P/L, forzar método,
-# aceptar, marcar pendiente, nota) sin necesitar `contadores.manage` completo
-# (que también da recesos y export). Ver `require_feature_or_permission`.
+# Operar la Proyección (panel de candidatos: elegir P/L, forzar método,
+# aceptar, marcar pendiente; y exportar el CSV a SiGes) sin necesitar
+# `contadores.manage` completo (que además da la gestión de recesos). Ver
+# `require_feature_or_permission`.
 PROYECCION_OPERAR = FeatureKey("contadores-proyeccion-operar")

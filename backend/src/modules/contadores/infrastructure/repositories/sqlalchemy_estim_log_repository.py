@@ -59,6 +59,7 @@ def _acumular(
 ) -> ResumenAuditoriaMaquina:
     observacion = row.observacion.strip() if row.observacion else None
     return ResumenAuditoriaMaquina(
-        id_log_corto=str(row.id)[:8],
+        # `Max(e.Id)` del legacy: el número más alto de la máquina.
+        id_log_corto=str(max(row.nro, int(actual.id_log_corto)) if actual else row.nro),
         observacion_manual=observacion or (actual.observacion_manual if actual else None),
     )

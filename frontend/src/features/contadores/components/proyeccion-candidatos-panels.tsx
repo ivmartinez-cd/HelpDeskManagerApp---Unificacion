@@ -1,99 +1,110 @@
 "use client";
 
+import { Fragment } from "react";
 import { cn } from "@/shared/utils/cn";
-import { BrandButton } from "@/shared/components/ui/brand-form";
-import type { CandidatoLectura, CandidatosEquipo, MetodoForzado } from "../types/proyeccion";
+import type { CandidatoLectura, CandidatosEquipo, RecalcularCandidatoResponse } from "../types/proyeccion";
+import { claveLectura, diasParCalendario, type Seleccion } from "../hooks/use-candidatos-proyeccion";
+import { diasEntre, fechaCorta, n0, n2, redondeoBancario } from "./proyeccion-formato";
 
-export function formatFecha(iso: string): string {
-  const [y, m, d] = iso.split("-");
-  return `${d}/${m}/${y}`;
+/** Lista de lecturas y caja "Cálculo" de `PanelCandidatos.razor` (v1.7). */
+
+function abrev(desc: string): string {
+  return desc.length <= 12 ? desc : `${desc.slice(0, 12)}…`;
 }
 
-export const numberFormat = new Intl.NumberFormat("es-AR");
-
-export interface Seleccion {
-  partida: CandidatoLectura | null;
-  llegada: CandidatoLectura | null;
+/** `ValidCss`: estimados en gris, T4 y WebCliente en amarillo, resto ok. */
+function tonoValidacion(l: CandidatoLectura): string {
+  if (l.tipo_toma === 14 || l.tipo_toma === 19) return "text-muted-foreground";
+  if (l.tipo_toma === 4 || l.tipo_toma === 18) return "text-warning";
+  return "text-success";
 }
 
-export interface Calculo {
-  estim: number | null;
-  impresiones: number | null;
-  tipoToma: number | null;
-  fuente: string;
-  metodoDetalle: string;
-  diasParPl: number | null;
-  tasaDiaria: number | null;
-  diasProyectados: number | null;
+const DIVISORIA: { campo: keyof CandidatoLectura; texto: string; clase: string }[] = [
+  { campo: "cambio_empresa_vs_anterior", texto: "cambio de empresa", clase: "border-t-2 border-destructive text-destructive" },
+  { campo: "cambio_sucursal_vs_anterior", texto: "cambio de sucursal", clase: "border-t-2 border-brand-orange text-brand-orange" },
+  { campo: "cambio_anexo_vs_anterior", texto: "cambio de anexo", clase: "border-t border-dashed border-warning text-warning" },
+];
+
+/** Línea que marca dónde el equipo cambió de ubicación (empresa > sucursal > anexo). */
+function Divisoria({ lectura }: { lectura: CandidatoLectura }) {
+  const d = DIVISORIA.find((x) => lectura[x.campo] === true);
+  if (!d) return null;
+  return (
+    <tr aria-hidden>
+      <td colSpan={6} className={cn("px-2 pb-0.5 pt-0 text-[10px] font-semibold", d.clase)}>
+        {d.texto}
+      </td>
+    </tr>
+  );
 }
 
-const decimalFormat = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
+function BotonPL({ rol, activa, puede, onClick }: { rol: "P" | "L"; activa: boolean; puede: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      disabled={!puede}
+      title={rol === "P" ? "Asignar como Partida" : "Asignar como Llegada"}
+      onClick={onClick}
+      className={cn(
+        "h-6 w-6 rounded-[6px] border border-border bg-muted text-[10px] font-extrabold disabled:opacity-40",
+        activa && (rol === "P" ? "border-success bg-success text-background" : "border-info bg-info text-background"),
+      )}
+    >
+      {rol}
+    </button>
+  );
+}
 
-interface ProyeccionLecturasTablaProps {
+interface LecturasProps {
   datos: CandidatosEquipo | null;
   error: string | null;
   seleccion: Seleccion;
   puedeGestionar: boolean;
-  onElegir: (rol: "partida" | "llegada", lectura: CandidatoLectura) => void;
+  onToggle: (rol: keyof Seleccion, lectura: CandidatoLectura) => void;
 }
 
-export function ProyeccionLecturasTabla({
-  datos,
-  error,
-  seleccion,
-  puedeGestionar,
-  onElegir,
-}: ProyeccionLecturasTablaProps) {
-  if (error) return <p className="text-sm text-warning">{error}</p>;
-  if (!datos) return <p className="text-sm text-muted-foreground">Cargando…</p>;
-
+export function ProyeccionLecturasTabla({ datos, error, seleccion, puedeGestionar, onToggle }: LecturasProps) {
+  if (error) return <p className="rounded-[8px] bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>;
+  if (!datos) return <p className="text-sm text-muted-foreground">Cargando lecturas…</p>;
+  if (datos.lecturas.length === 0) return <p className="text-sm text-muted-foreground">Sin lecturas registradas para este equipo.</p>;
   return (
-    <div className="max-h-64 overflow-y-auto rounded-[8px] border border-border thin-scrollbar">
+    <div className="max-h-72 overflow-y-auto rounded-[8px] border border-border thin-scrollbar">
       <table className="w-full text-xs">
         <thead className="sticky top-0 bg-muted">
           <tr className="text-left text-[10px] uppercase text-muted-foreground">
             <th className="py-1.5 pl-2">Fecha</th>
             <th className="py-1.5">Tipo</th>
             <th className="py-1.5 text-right">Valor</th>
-            <th className="py-1.5">Valid.</th>
-            <th className="py-1.5">P</th>
-            <th className="py-1.5 pr-2">L</th>
+            <th className="py-1.5 text-center">Valid.</th>
+            <th className="py-1.5 text-center">P</th>
+            <th className="py-1.5 pr-2 text-center">L</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-border">
-          {datos.lecturas.map((lectura) => (
-            <tr key={`${lectura.fecha}-${lectura.tipo_toma}-${lectura.valor}`}>
-              <td className="py-2 pl-2">{formatFecha(lectura.fecha)}</td>
-              <td className="py-2">T{lectura.tipo_toma}</td>
-              <td className="py-2 text-right tabular-nums">{numberFormat.format(lectura.valor)}</td>
-              <td className={cn("py-2", lectura.valido ? "text-success" : "text-warning")}>
-                {lectura.valido ? "✓ ok" : lectura.motivo_invalidez}
-              </td>
-              <td className="py-2">
-                <button
-                  disabled={!puedeGestionar}
-                  onClick={() => onElegir("partida", lectura)}
-                  className={cn(
-                    "h-6 w-6 rounded-[6px] border border-border bg-muted text-[10px] font-extrabold disabled:opacity-40",
-                    seleccion.partida === lectura && "border-success bg-success text-background",
-                  )}
-                >
-                  P
-                </button>
-              </td>
-              <td className="py-2 pr-2">
-                <button
-                  disabled={!puedeGestionar}
-                  onClick={() => onElegir("llegada", lectura)}
-                  className={cn(
-                    "h-6 w-6 rounded-[6px] border border-border bg-muted text-[10px] font-extrabold disabled:opacity-40",
-                    seleccion.llegada === lectura && "border-info bg-info text-background",
-                  )}
-                >
-                  L
-                </button>
-              </td>
-            </tr>
+        <tbody>
+          {datos.lecturas.map((l, i) => (
+            <Fragment key={claveLectura(l, i)}>
+              <tr className={cn("border-t border-border", !l.usable && "opacity-55")}>
+                <td className="py-1.5 pl-2">{fechaCorta(l.fecha)}</td>
+                <td className="py-1.5" title={l.desc_tipo_toma}>
+                  T{l.tipo_toma}
+                  <span className="block text-[10px] text-muted-foreground">{abrev(l.desc_tipo_toma)}</span>
+                </td>
+                <td className="py-1.5 text-right font-semibold tabular-nums">{n0(l.valor)}</td>
+                <td className={cn("whitespace-nowrap py-1.5 text-center text-[11px] font-semibold", tonoValidacion(l))}>
+                  {l.etiqueta_validacion}
+                </td>
+                {(["partida", "llegada"] as const).map((rol) => (
+                  <td key={rol} className={cn("py-1.5 text-center", rol === "llegada" && "pr-2")}>
+                    {l.usable ? (
+                      <BotonPL rol={rol === "partida" ? "P" : "L"} activa={seleccion[rol] === l} puede={puedeGestionar} onClick={() => onToggle(rol, l)} />
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+              <Divisoria lectura={l} />
+            </Fragment>
           ))}
         </tbody>
       </table>
@@ -101,142 +112,78 @@ export function ProyeccionLecturasTabla({
   );
 }
 
-function Fila({ label, valor, destacado }: { label: string; valor: React.ReactNode; destacado?: boolean }) {
+function Fila({ label, children, destacado }: { label: string; children: React.ReactNode; destacado?: boolean }) {
   return (
     <>
       <dt className="text-muted-foreground">{label}</dt>
-      <dd
-        className={cn(
-          "text-right tabular-nums",
-          destacado && "font-heading text-base font-extrabold text-brand-orange",
-        )}
-      >
-        {valor}
-      </dd>
+      <dd className={cn("text-right tabular-nums", destacado && "font-heading text-base font-extrabold text-brand-orange")}>{children}</dd>
     </>
   );
 }
 
-/** Detalle completo de la pareja P/L (paridad con `PanelCandidatos.razor`):
- * Δ días y "Días L → fecha obj." son ACTIVOS (ya descuentan recesos, salen
- * del motor); Δ contador es la resta cruda de las dos lecturas elegidas. */
-function DetalleParL({
-  seleccion,
-  calculo,
-  ultimoFacturado,
-}: {
-  seleccion: Seleccion;
-  calculo: Calculo;
-  ultimoFacturado: number;
-}) {
-  const deltaContador =
-    seleccion.partida && seleccion.llegada ? seleccion.llegada.valor - seleccion.partida.valor : null;
-  const imp30d = calculo.tasaDiaria !== null ? Math.round(calculo.tasaDiaria * 30) : null;
-  const esPosterior = calculo.diasProyectados !== null && calculo.diasProyectados < 0;
+function Aviso({ tono, children }: { tono: "warning" | "info"; children: React.ReactNode }) {
+  const color = tono === "warning" ? "bg-warning/10 text-warning" : "bg-info/10 text-info";
+  return <p className={cn("col-span-2 rounded-[6px] px-2 py-1.5 text-[11px]", color)}>{children}</p>;
+}
 
+function Referencia({ rol, lectura }: { rol: "P" | "L"; lectura: CandidatoLectura | null }) {
+  return (
+    <Fila label={rol}>
+      {lectura ? `${fechaCorta(lectura.fecha)}  T${lectura.tipo_toma}  →  ${n0(lectura.valor)}` : <span className="text-muted-foreground">— Sin seleccionar —</span>}
+    </Fila>
+  );
+}
+
+/** Días activos con los calendario al lado si el receso los redujo. */
+function DiasConReceso({ activos, calendario, ajusto }: { activos: number | null; calendario: number | null; ajusto: boolean }) {
+  if (activos === null) return <>—</>;
   return (
     <>
-      <Fila label="Δ días (P → L)" valor={calculo.diasParPl ?? "—"} />
-      <Fila label="Δ contador" valor={deltaContador !== null ? numberFormat.format(deltaContador) : "—"} />
-      <Fila
-        label="Promedio diario"
-        valor={`${calculo.tasaDiaria !== null ? decimalFormat.format(calculo.tasaDiaria) : "—"} /día`}
-      />
-      <Fila label="Imp. 30d" valor={imp30d !== null ? numberFormat.format(imp30d) : "—"} />
-      <Fila label="Días L → fecha obj." valor={calculo.diasProyectados ?? "—"} />
-      <Fila label="Estim. propuesto" valor={calculo.estim !== null ? numberFormat.format(calculo.estim) : "—"} destacado />
-      <Fila label="Últ. facturado" valor={numberFormat.format(ultimoFacturado)} />
-      <Fila
-        label="Impresiones"
-        valor={calculo.impresiones !== null ? numberFormat.format(calculo.impresiones) : "—"}
-        destacado
-      />
-      {esPosterior && (
-        <p className="col-span-2 rounded-[6px] bg-warning/10 px-2 py-1.5 text-[11px] text-warning">
-          ⚠ La Llegada es posterior a la fecha objetivo — el estimado se interpola hacia atrás.
-        </p>
-      )}
+      {activos}
+      {ajusto && calendario !== null && calendario !== activos && <span className="text-info"> (de {calendario} cal.)</span>}
     </>
   );
 }
 
-interface ProyeccionCalculoPanelProps {
+interface CalculoProps {
   seleccion: Seleccion;
-  calculoVisible: Calculo | null;
-  forzado: Calculo | null;
-  puedeGestionar: boolean;
-  forzando: MetodoForzado | null;
-  onForzar: (metodo: MetodoForzado) => void;
-  ultimoFacturado: number;
+  preview: RecalcularCandidatoResponse | null;
+  errorPreview: string | null;
+  fechaObjetivo: string | null;
+  ultimoFacturado: number | null;
 }
 
-export function ProyeccionCalculoPanel({
-  seleccion,
-  calculoVisible,
-  forzado,
-  puedeGestionar,
-  forzando,
-  onForzar,
-  ultimoFacturado,
-}: ProyeccionCalculoPanelProps) {
+export function ProyeccionCalculoPanel({ seleccion, preview, errorPreview, fechaObjetivo, ultimoFacturado }: CalculoProps) {
+  const { partida, llegada } = seleccion;
+  const invertido = !!partida && !!llegada && partida.fecha >= llegada.fecha;
+  const diasCal = diasParCalendario(seleccion);
+  const diasObjCal = llegada && fechaObjetivo ? diasEntre(llegada.fecha, fechaObjetivo) : null;
+  const diasPar = preview?.dias_par_pl ?? null;
+  const diasObj = preview?.dias_proyectados ?? null;
+  const ajusto = !!preview && ((diasCal !== null && diasPar !== null && diasPar < diasCal) || (diasObjCal !== null && diasObj !== null && diasObj < diasObjCal));
+  const delta = partida && llegada && !invertido ? llegada.valor - partida.valor : null;
+  const tasa = preview?.tasa_diaria ?? null;
   return (
-    <>
-      <p className="mb-2 mt-6 text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
-        Cálculo
-      </p>
-      <dl className="grid grid-cols-2 gap-y-2 text-[12.5px]">
-        <Fila
-          label="P → L"
-          valor={`${seleccion.partida ? formatFecha(seleccion.partida.fecha) : "—"} → ${
-            seleccion.llegada ? formatFecha(seleccion.llegada.fecha) : "—"
-          }`}
-        />
-        {calculoVisible ? (
-          <DetalleParL seleccion={seleccion} calculo={calculoVisible} ultimoFacturado={ultimoFacturado} />
-        ) : forzado ? (
-          <>
-            <Fila
-              label="Estim. propuesto"
-              valor={forzado.estim !== null ? numberFormat.format(forzado.estim) : "—"}
-              destacado
-            />
-            <Fila
-              label="Impresiones del período"
-              valor={forzado.impresiones !== null ? numberFormat.format(forzado.impresiones) : "—"}
-              destacado
-            />
-            <Fila label="Método forzado" valor={<span className="text-xs">{forzado.metodoDetalle}</span>} />
-          </>
-        ) : (
-          <>
-            <Fila label="Estim. propuesto" valor="—" destacado />
-            <Fila label="Impresiones del período" valor="—" destacado />
-          </>
-        )}
-      </dl>
-
-      {puedeGestionar && (
-        <div className="mt-3 flex gap-2">
-          <BrandButton
-            variant="outline"
-            className="flex-1 text-xs"
-            loading={forzando === "entre_reales"}
-            disabled={forzando !== null}
-            onClick={() => onForzar("entre_reales")}
-          >
-            Forzar entre reales
-          </BrandButton>
-          <BrandButton
-            variant="outline"
-            className="flex-1 text-xs"
-            loading={forzando === "cascada_parque"}
-            disabled={forzando !== null}
-            onClick={() => onForzar("cascada_parque")}
-          >
-            Forzar cascada de parque
-          </BrandButton>
-        </div>
+    <dl className="grid grid-cols-2 gap-y-1.5 text-[12.5px]">
+      <Referencia rol="P" lectura={partida} />
+      <Referencia rol="L" lectura={llegada} />
+      {invertido && <Aviso tono="warning">⚠ Partida posterior a Llegada — intercambiá las selecciones</Aviso>}
+      {!invertido && diasCal !== null && diasCal < 15 && <Aviso tono="warning">⚠ Separación {diasCal} días — mínimo recomendado: 15 días</Aviso>}
+      {ajusto && <Aviso tono="info">↺ Ajustado por receso — se descuentan los días sin uso</Aviso>}
+      {diasObj !== null && diasObj < 0 && (
+        <Aviso tono="warning">
+          ⚠ La Llegada es posterior a la fecha objetivo — el estimado se interpola hacia atrás (queda por debajo de la lectura)
+        </Aviso>
       )}
-    </>
+      {errorPreview && <Aviso tono="warning">{errorPreview}</Aviso>}
+      <Fila label="Δ días (P → L)"><DiasConReceso activos={diasPar} calendario={diasCal} ajusto={ajusto} /></Fila>
+      <Fila label="Δ contador">{n0(delta)}</Fila>
+      <Fila label="Promedio diario">{n2(tasa)} /día</Fila>
+      <Fila label="Imp. 30d">{n0(tasa === null ? null : redondeoBancario(tasa * 30))}</Fila>
+      <Fila label="Días L → fecha obj."><DiasConReceso activos={diasObj} calendario={diasObjCal} ajusto={ajusto} /></Fila>
+      <Fila label="Estim. propuesto" destacado>{n0(preview?.estim_propuesto)}</Fila>
+      <Fila label="Últ. facturado">{n0(ultimoFacturado)}</Fila>
+      <Fila label="Impresiones" destacado>{n0(preview?.impresiones)}</Fila>
+    </dl>
   );
 }

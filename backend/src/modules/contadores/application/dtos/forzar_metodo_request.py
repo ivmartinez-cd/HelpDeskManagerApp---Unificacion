@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 
 MetodoForzado = Literal["entre_reales", "cascada_parque"]
@@ -16,3 +16,6 @@ class ForzarMetodoRequest:
     id_grupo_economico: int | None = None
     id_anexo: int | None = None
     fecha_objetivo: date | None = None
+    # "Descartar y empezar limpio" del banner: la fila vigente ignora las
+    # decisiones guardadas hasta ese momento (como el tablero).
+    descartar_hasta: datetime | None = None

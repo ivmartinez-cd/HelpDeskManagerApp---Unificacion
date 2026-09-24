@@ -1,117 +1,109 @@
 from datetime import UTC, datetime
 from typing import Any, cast
 
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.contadores.application.dtos.decision_operador_dto import (
-    DecisionManualDto,
+    AccionDecision,
+    ClaveDecisionDto,
     DecisionOperadorDto,
-)
-from src.modules.contadores.domain.value_objects.estimacion.fuente_estimacion import (
-    FuenteEstimacion,
+    LecturaElegidaDto,
 )
 from src.modules.contadores.infrastructure.models.decision_operador_model import (
     DecisionOperadorModel,
 )
 
+_M = DecisionOperadorModel
+
 
 class SqlAlchemyDecisionesOperadorRepository:
     """Sin commit: el límite transaccional vive en `get_db` (scope="function",
-    ADR-030). `_upsert` centraliza el patrón (una fila por equipo+clase, se
-    pisa) que usan las cuatro acciones."""
+    ADR-030). `_upsert` centraliza el patrón (una fila por proceso+equipo+clase,
+    se pisa) que usan todas las acciones."""
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def listar_todas(self) -> dict[tuple[int, str], DecisionOperadorDto]:
-        rows = (await self._session.execute(select(DecisionOperadorModel))).scalars().all()
-        return {(row.id_maquina, row.clase): _to_dto(row) for row in rows}
+    async def listar_por_proceso(
+        self, nro_proceso: int
+    ) -> dict[tuple[int, str], DecisionOperadorDto]:
+        stmt = select(_M).where(_M.nro_proceso == nro_proceso)
+        rows = (await self._session.execute(stmt)).scalars().all()
+        return {(row.id_maquina, row.clase): _a_dto(row) for row in rows}
 
-    async def marcar_pendiente(self, id_maquina: int, clase: str) -> None:
-        actual = await self._obtener(id_maquina, clase)
-        await self._upsert(
-            id_maquina, clase,
-            pendiente=True, nota=actual.nota if actual else None,
-            manual=actual.manual if actual else None,
+    async def guardar(self, clave: ClaveDecisionDto, decision: DecisionOperadorDto) -> None:
+        await self._upsert(clave, decision)
+
+    async def obtener(self, clave: ClaveDecisionDto) -> DecisionOperadorDto | None:
+        stmt = select(_M).where(
+            _M.nro_proceso == clave.nro_proceso,
+            _M.id_maquina == clave.id_maquina,
+            _M.clase == clave.clase,
         )
+        row = (await self._session.execute(stmt)).scalar_one_or_none()
+        return _a_dto(row) if row is not None else None
 
-    async def agregar_nota(self, id_maquina: int, clase: str, nota: str) -> None:
-        actual = await self._obtener(id_maquina, clase)
-        await self._upsert(
-            id_maquina, clase,
-            pendiente=actual.pendiente if actual else False, nota=nota,
-            manual=actual.manual if actual else None,
-        )
-
-    async def aceptar(
-        self, id_maquina: int, clase: str, manual: DecisionManualDto | None = None
-    ) -> None:
-        if manual is None:
-            await self._session.execute(
-                delete(DecisionOperadorModel).where(
-                    DecisionOperadorModel.id_maquina == id_maquina,
-                    DecisionOperadorModel.clase == clase,
-                )
-            )
-            return
-        actual = await self._obtener(id_maquina, clase)
-        await self._upsert(
-            id_maquina, clase,
-            pendiente=False, nota=actual.nota if actual else None, manual=manual,
-        )
-
-    async def _obtener(self, id_maquina: int, clase: str) -> DecisionOperadorDto | None:
-        row = await self._session.get(DecisionOperadorModel, (id_maquina, clase))
-        return _to_dto(row) if row is not None else None
-
-    async def _upsert(
-        self,
-        id_maquina: int,
-        clase: str,
-        *,
-        pendiente: bool,
-        nota: str | None,
-        manual: DecisionManualDto | None,
-    ) -> None:
-        valores = _valores_de(pendiente, nota, manual)
-        stmt = pg_insert(DecisionOperadorModel).values(
-            id_maquina=id_maquina, clase=clase, **valores
+    async def _upsert(self, clave: ClaveDecisionDto, decision: DecisionOperadorDto) -> None:
+        valores = _valores_de(decision)
+        stmt = pg_insert(_M).values(
+            nro_proceso=clave.nro_proceso, id_maquina=clave.id_maquina, clase=clave.clase, **valores
         )
         await self._session.execute(
             stmt.on_conflict_do_update(
-                index_elements=[DecisionOperadorModel.id_maquina, DecisionOperadorModel.clase],
-                set_=valores,
+                index_elements=[_M.nro_proceso, _M.id_maquina, _M.clase], set_=valores
             )
         )
 
 
-def _valores_de(
-    pendiente: bool, nota: str | None, manual: DecisionManualDto | None
-) -> dict[str, Any]:
+def _valores_de(decision: DecisionOperadorDto) -> dict[str, Any]:
     return {
-        "pendiente": pendiente,
-        "nota": nota,
-        "manual_contador_propuesto": manual.contador_propuesto if manual else None,
-        "manual_tipo_toma": manual.tipo_toma if manual else None,
-        "manual_fuente": manual.fuente if manual else None,
-        "manual_metodo_detalle": manual.metodo_detalle if manual else None,
+        "accion": decision.accion,
+        **_columnas_lectura("partida", decision.partida),
+        **_columnas_lectura("llegada", decision.llegada),
         "actualizado_en": datetime.now(UTC),
     }
 
 
-def _to_dto(row: DecisionOperadorModel) -> DecisionOperadorDto:
-    manual = None
-    if row.manual_fuente is not None:
-        manual = DecisionManualDto(
-            contador_propuesto=(
-                float(row.manual_contador_propuesto)
-                if row.manual_contador_propuesto is not None
-                else None
-            ),
-            tipo_toma=row.manual_tipo_toma,
-            fuente=cast(FuenteEstimacion, row.manual_fuente),
-            metodo_detalle=row.manual_metodo_detalle or "",
-        )
-    return DecisionOperadorDto(pendiente=row.pendiente, nota=row.nota, manual=manual)
+def _columnas_lectura(prefijo: str, lectura: LecturaElegidaDto | None) -> dict[str, Any]:
+    return {
+        f"{prefijo}_id_contador": lectura.id_contador if lectura else None,
+        f"{prefijo}_fecha": lectura.fecha if lectura else None,
+        f"{prefijo}_valor": lectura.valor if lectura else None,
+        f"{prefijo}_tipo_toma": lectura.tipo_toma if lectura else None,
+        f"{prefijo}_para_facturar": lectura.para_facturar if lectura else None,
+    }
+
+
+def _a_dto(row: DecisionOperadorModel) -> DecisionOperadorDto:
+    return DecisionOperadorDto(
+        accion=cast(AccionDecision, row.accion),
+        partida=_partida_de(row),
+        llegada=_llegada_de(row),
+        actualizado_en=row.actualizado_en,
+    )
+
+
+def _partida_de(row: DecisionOperadorModel) -> LecturaElegidaDto | None:
+    if row.partida_fecha is None or row.partida_valor is None or row.partida_tipo_toma is None:
+        return None
+    return LecturaElegidaDto(
+        fecha=row.partida_fecha,
+        valor=float(row.partida_valor),
+        tipo_toma=row.partida_tipo_toma,
+        id_contador=row.partida_id_contador,
+        para_facturar=row.partida_para_facturar is not False,
+    )
+
+
+def _llegada_de(row: DecisionOperadorModel) -> LecturaElegidaDto | None:
+    if row.llegada_fecha is None or row.llegada_valor is None or row.llegada_tipo_toma is None:
+        return None
+    return LecturaElegidaDto(
+        fecha=row.llegada_fecha,
+        valor=float(row.llegada_valor),
+        tipo_toma=row.llegada_tipo_toma,
+        id_contador=row.llegada_id_contador,
+        para_facturar=row.llegada_para_facturar is not False,
+    )

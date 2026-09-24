@@ -1,36 +1,29 @@
-from dataclasses import dataclass
+from src.modules.contadores.domain.value_objects.estimacion.estimacion_resultado import (
+    EstimacionResultado,
+)
+from src.modules.contadores.domain.value_objects.estimacion.fuente_estimacion import (
+    FuenteEstimacion,
+    Semaforo,
+)
 
-from src.modules.contadores.domain.value_objects.estimacion.fuente_estimacion import Semaforo
-
-
-@dataclass(frozen=True, slots=True)
-class SenalesSemaforo:
-    """Condiciones ya evaluadas por el motor, en el orden exacto que
-    REGLAS_DE_NEGOCIO §7.3 define para decidir el color final."""
-
-    ya_real: bool
-    salto_imposible: bool
-    es_cascada_parque: bool
-    pendiente: bool
-    t4_sin_revisar: bool
-    requiere_confirmacion_otro_motivo: bool
-    coloreo_activo: bool
+# Parque_Cliente_Tec NO está: en el legacy queda AMARILLO (pide confirmación
+# como toda la cascada, pero no es rojo). "Pendiente" es `RequierePendiente`.
+_FUENTES_ROJAS: frozenset[FuenteEstimacion] = frozenset(
+    {"Parque_Cliente_Modelo", "Parque_Grupo_Modelo", "Parque_Global_Modelo", "Pendiente"}
+)
 
 
-def resolver_semaforo(senales: SenalesSemaforo) -> Semaforo:
-    """Evalúa en orden — el primero que aplica define el color final."""
-    if senales.ya_real:
-        return "VERDE"
-    if senales.salto_imposible:
+def resolver_semaforo(resultado: EstimacionResultado, t4_revisado: bool) -> Semaforo:
+    """`CalcularSemaforo` del legacy para una fila pendiente de estimar (la
+    fila ya real es siempre VERDE y no pasa por acá). Evalúa en orden: el
+    primero que aplica define el color. Espera `borde_salto_imposible` y
+    `coloreo` ya calculados."""
+    if resultado.borde_salto_imposible or resultado.fuente in _FUENTES_ROJAS:
         return "ROJO"
-    if senales.es_cascada_parque:
-        return "ROJO"
-    if senales.pendiente:
-        return "ROJO"
-    if senales.t4_sin_revisar:
+    if resultado.fuente == "T4_ST" and not t4_revisado:
         return "AMARILLO"
-    if senales.requiere_confirmacion_otro_motivo:
+    if resultado.requiere_confirmacion:
         return "AMARILLO"
-    if senales.coloreo_activo:
+    if resultado.coloreo in ("AZUL", "NARANJA"):
         return "NARANJA"
     return "VERDE"
