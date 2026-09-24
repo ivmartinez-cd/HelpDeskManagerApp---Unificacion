@@ -193,3 +193,10 @@ class DespachadosSettings(BaseSettings):
     # `dbo.Distribucion.Id` de los transportes OCA (verificado 2026-09-24): 3 OCA,
     # 9 OCA SP, 10 OCA Prioritario. En el .env va como JSON: [3,9,10].
     despachados_distribuciones_oca: tuple[int, ...] = (3, 9, 10)
+    # Webservice e-Pak de OCA (GET público, sin credenciales). Sale por el proxy
+    # corporativo. Timeout corto: con los reintentos ante 5xx, una guía colgada no
+    # puede frenar el lote más de ~50 s.
+    oca_url_estado_actual: str = (
+        "https://webservice.oca.com.ar/ePak_tracking/Oep_TrackEPak.asmx/GetEnvioEstadoActual"
+    )
+    oca_timeout_segundos: float = 15.0

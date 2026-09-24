@@ -223,6 +223,43 @@ fresco por request en producción).
   assigned to <email>") y cierre ("The chat has been closed by agent …"); el bot aparece como
   `operatorName: "Bot"`; salida a Internet vía `HTTPS_PROXY` (httpx `trust_env`).
 
+## 15. OCA e-Pak (seguimiento de envíos, httpx, solo lectura)
+
+- **Qué es**: el webservice público de seguimiento de OCA (e-Pak). Se usa solo
+  `GetEnvioEstadoActual`, que devuelve el último estado de un envío a partir de la guía.
+  Lo usa **Insumos > Despachados** para seguir los remitos de insumos despachados por OCA.
+- **Dónde**: puerto `OcaSeguimientoGateway` en `insumos/domain/repositories/`; adapter
+  `insumos/infrastructure/oca/httpx_oca_seguimiento_gateway.py`
+  (`HttpxOcaSeguimientoGateway`, `AsyncClient` persistente con `aclose()`) y parser
+  `oca/parseo_estado_oca.py`.
+- **Endpoint**: `GET https://webservice.oca.com.ar/ePak_tracking/Oep_TrackEPak.asmx/GetEnvioEstadoActual?numeroEnvio=<guía>&ordenRetiro=`
+  (orden de retiro vacía). URL y timeout salen de `OCA_URL_ESTADO_ACTUAL` y
+  `OCA_TIMEOUT_SEGUNDOS` (default 15 s).
+- **Sin autenticación, solo lectura**: no lleva credenciales y el módulo nunca escribe en
+  OCA (las acciones en OCA quedan fuera de alcance de v1).
+- **Respuesta**: DataSet XML de .NET; la fila está en `//NewDataSet/Table` (el `xs:schema`
+  del DataSet nombra "Table" solo como atributo, no se confunde). Sin `Table` = OCA no
+  conoce la guía → `None`, no es error. Los estados de acuse llegan sin `IdEstado`;
+  `FechaEstado` es dd/mm/aaaa sin hora. XML mal formado, un XML que no es un DataSet (una
+  página del proxy, un error de IIS) o `FechaEstado`/`IdEstado` ilegibles →
+  `RespuestaOcaInvalidaError` (subclase de `ExternalServiceError`). El log lleva el valor
+  ilegible o el comienzo de una respuesta que no es un DataSet, nunca la fila completa
+  (trae destinatario, mail y documento).
+- **Timeout y reintentos**: timeout configurable (connect 5 s). Reintentos solo ante
+  429/500/502/503/504 o falla de transporte (incluye timeouts), con esperas de 0,5 s y 1 s
+  (3 intentos en total): es seguro porque es un GET sin efectos. Cualquier otro status
+  (4xx, o 3xx: httpx no sigue redirecciones) falla sin reintentar. Toda falla termina en
+  `ExternalServiceError` con la guía en el mensaje y en el log (`exc_info`); en los
+  errores HTTP, también el comienzo del cuerpo (en ASMX es lo único que dice la causa).
+- **Red**: sale a Internet por el proxy corporativo (`HTTPS_PROXY`, httpx `trust_env`),
+  con User-Agent propio `helpdesk-manager/1.0 (+insumos-despachados)` — el proxy rechazó
+  el UA por defecto de las librerías Python con WATI.
+- **Ritmo**: la pausa de 0,3 s entre guías y el recorrido del lote son del job de
+  Despachados, no del adapter.
+- **Si falla**: el job conserva el último estado guardado del envío, deja la guía y el
+  error en el log y sigue con el resto del lote (un error de OCA no corta la corrida).
+- **Verificado**: probado desde el contenedor el 2026-09-24 contra una guía real.
+
 ## Locks entre workers
 
 Resuelto con advisory locks de Postgres (ADR-008) — fuera del alcance de este mapa.
