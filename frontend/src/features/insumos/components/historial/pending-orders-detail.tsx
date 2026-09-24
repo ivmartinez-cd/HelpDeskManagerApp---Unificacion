@@ -1,9 +1,17 @@
 "use client";
 
 import { ExternalLink } from "lucide-react";
-import { StatusBadge, TonerBar, toneForStatusKey } from "../shared";
+import {
+  SortableHeader,
+  StatusBadge,
+  TonerBar,
+  toneForStatusKey,
+  type SortableColumn,
+} from "../shared";
 import type { PendingOrderRow } from "../../types";
 import { EMPTY_VALUE, formatArgDateTime } from "../../utils/format";
+import { isoSortValue, useOptionalTableSort, useSortedRows } from "../../hooks/use-optional-table-sort";
+import type { SortValue } from "../../hooks/use-table-sort";
 import { sdsDeviceUrl } from "./audit-events";
 
 /** Sub-tabla de la fila expandida de "Pedidos Pendientes": un renglón por
@@ -13,29 +21,63 @@ import { sdsDeviceUrl } from "./audit-events";
 
 const thClass =
   "whitespace-nowrap px-2 py-2 text-left font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground";
+type OrderSortKey =
+  | "store"
+  | "serial"
+  | "description"
+  | "sku"
+  | "currentPercentLeft"
+  | "currentDaysLeft"
+  | "currentPagesLeft"
+  | "supplyStatus"
+  | "orderId"
+  | "createdAt";
+
+/** Todas las columnas ordenan. Las métricas ordenan por el valor de HOY (el
+ * grande de la celda), "Estado" por el estado en Canal Directo y "Cargado el"
+ * como fecha. Sin orden inicial: se respeta el del backend (más viejos primero). */
+const COLUMNS: readonly SortableColumn<OrderSortKey>[] = [
+  { key: "store", label: "Sucursal" },
+  { key: "serial", label: "Serie" },
+  { key: "description", label: "Insumo" },
+  { key: "sku", label: "SKU" },
+  { key: "currentPercentLeft", label: "Nivel", className: "text-right" },
+  { key: "currentDaysLeft", label: "Días rest.", className: "text-right" },
+  { key: "currentPagesLeft", label: "Págs. rest.", className: "text-right" },
+  { key: "supplyStatus", label: "Estado" },
+  { key: "orderId", label: "Pedido CD" },
+  { key: "createdAt", label: "Cargado el" },
+];
+const DESC_FIRST: readonly OrderSortKey[] = ["createdAt"];
+
+function orderSortValue(order: PendingOrderRow, key: OrderSortKey): SortValue {
+  return key === "createdAt" ? isoSortValue(order.createdAt) : order[key];
+}
+
 const tdClass = "px-2 py-2 font-body text-[12px] text-foreground";
 const iniClass = "font-body text-[10.5px] text-muted-foreground";
 
 export function PendingOrdersDetail({ orders }: { orders: PendingOrderRow[] }) {
+  const { sort, toggleSort } = useOptionalTableSort(DESC_FIRST);
+  const sortedOrders = useSortedRows(orders, sort, orderSortValue);
   return (
     <div className="overflow-x-auto rounded-[8px] border border-border bg-card">
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-border">
-            <th className={thClass}>Sucursal</th>
-            <th className={thClass}>Serie</th>
-            <th className={thClass}>Insumo</th>
-            <th className={thClass}>SKU</th>
-            <th className={`${thClass} text-right`}>Nivel</th>
-            <th className={`${thClass} text-right`}>Días rest.</th>
-            <th className={`${thClass} text-right`}>Págs. rest.</th>
-            <th className={thClass}>Estado</th>
-            <th className={thClass}>Pedido CD</th>
-            <th className={thClass}>Cargado el</th>
+            {COLUMNS.map((column) => (
+              <SortableHeader
+                key={column.key}
+                column={column}
+                sort={sort}
+                onToggleSort={toggleSort}
+                thClassName={thClass}
+              />
+            ))}
           </tr>
         </thead>
         <tbody>
-          {orders.map((order) => {
+          {sortedOrders.map((order) => {
             const deviceUrl = sdsDeviceUrl(order.deviceId);
             return (
               <tr key={order.hpRequestId} className="border-b border-border last:border-0">

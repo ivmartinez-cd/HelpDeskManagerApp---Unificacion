@@ -3,7 +3,10 @@
 import { Check, Loader2, Phone } from "lucide-react";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { cn } from "@/shared/utils/cn";
+import { boolSortValue, useOptionalTableSort, useSortedRows } from "../../hooks/use-optional-table-sort";
+import type { SortValue } from "../../hooks/use-table-sort";
 import type { CustomerRow } from "../../types";
+import { SortableHeader, type SortableColumn } from "../shared";
 
 interface CustomersTableProps {
   rows: CustomerRow[];
@@ -13,6 +16,26 @@ interface CustomersTableProps {
   onToggle: (row: CustomerRow, enabled: boolean) => void;
   onToggleClientMail: (row: CustomerRow, enabled: boolean) => void;
   onOpenContacts: (row: CustomerRow) => void;
+}
+
+type CustomerSortKey = "enabled" | "name" | "client_mail_enabled" | "has_contacts";
+
+/** Todas las columnas ordenan. Las de sí/no ("Activo", "Aviso por mail",
+ * "Contactos" = tiene o no contactos cargados) muestran primero los "sí" al
+ * primer click. Sin orden inicial: se respeta el orden en que llega la lista. */
+const COLUMNS: readonly SortableColumn<CustomerSortKey>[] = [
+  { key: "enabled", label: "Activo", className: "w-16 text-left" },
+  { key: "name", label: "Cliente", className: "text-left" },
+  { key: "client_mail_enabled", label: "Aviso por mail", className: "w-36 text-center" },
+  { key: "has_contacts", label: "Contactos", className: "w-32 text-right" },
+];
+const DESC_FIRST: readonly CustomerSortKey[] = ["enabled", "client_mail_enabled", "has_contacts"];
+
+const HEAD_CELL =
+  "px-4 py-3 font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground";
+
+function customerSortValue(row: CustomerRow, key: CustomerSortKey): SortValue {
+  return key === "name" ? row.name : boolSortValue(row[key]);
 }
 
 /** Tabla de clientes con toggle de monitoreo, aviso por mail al cliente y
@@ -26,27 +49,26 @@ export function CustomersTable({
   onToggleClientMail,
   onOpenContacts,
 }: CustomersTableProps) {
+  const { sort, toggleSort } = useOptionalTableSort(DESC_FIRST);
+  const sortedRows = useSortedRows(rows, sort, customerSortValue);
   return (
     <div className="overflow-x-auto rounded-[10px] border border-border">
       <table className="w-full min-w-[520px]">
         <thead>
           <tr className="border-b border-border bg-muted/50">
-            <th className="w-16 px-4 py-3 text-left font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-              Activo
-            </th>
-            <th className="px-4 py-3 text-left font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-              Cliente
-            </th>
-            <th className="w-36 px-4 py-3 text-center font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-              Aviso por mail
-            </th>
-            <th className="w-32 px-4 py-3 text-right font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-              Contactos
-            </th>
+            {COLUMNS.map((column) => (
+              <SortableHeader
+                key={column.key}
+                column={column}
+                sort={sort}
+                onToggleSort={toggleSort}
+                thClassName={HEAD_CELL}
+              />
+            ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {rows.map((row) => {
+          {sortedRows.map((row) => {
             const busy = busyId === row.customer_id;
             const notifyBusy = notifyBusyId === row.customer_id;
             return (

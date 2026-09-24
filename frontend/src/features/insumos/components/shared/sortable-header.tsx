@@ -2,7 +2,7 @@
 
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import type { SortState } from "../../hooks/use-table-sort";
+import type { SortDirection } from "../../hooks/use-table-sort";
 
 /** Header de columna ordenable, compartido por las tablas de Equipos Nuevos,
  * Equipos Offline e Historial de auditoría — antes triplicado literal en cada
@@ -17,12 +17,17 @@ export interface SortableColumn<K extends string> {
 
 interface SortableHeaderProps<K extends string> {
   column: SortableColumn<K>;
-  sort: SortState<K>;
+  /** `key: null` = tabla todavía sin ordenar por el usuario (orden del
+   * backend): ningún header queda activo. Un `SortState<K>` encaja tal cual. */
+  sort: { key: K | null; direction: SortDirection };
   onToggleSort: (key: K) => void;
   /** Clases del `<th>`. Las tablas de equipos ponen la tipografía del header
    * en el `<tr>` padre y acá solo va el padding; la de auditoría la lleva en
    * el propio `<th>`, así que necesita pisar el default. */
   thClassName?: string;
+  /** Clases extra del botón, para tablas cuyo header no va en mayúsculas
+   * (p. ej. `normal-case tracking-normal`); `cn` resuelve el conflicto. */
+  buttonClassName?: string;
 }
 
 export function SortableHeader<K extends string>({
@@ -30,6 +35,7 @@ export function SortableHeader<K extends string>({
   sort,
   onToggleSort,
   thClassName = "px-4 py-3",
+  buttonClassName,
 }: SortableHeaderProps<K>) {
   const active = sort.key === column.key;
   const Icon = !active ? ChevronsUpDown : sort.direction === "asc" ? ArrowUp : ArrowDown;
@@ -44,6 +50,7 @@ export function SortableHeader<K extends string>({
         onClick={() => onToggleSort(column.key)}
         className={cn(
           "inline-flex cursor-pointer items-center gap-1 uppercase tracking-wide transition-colors hover:text-foreground",
+          buttonClassName,
           active && "text-brand-orange",
         )}
       >

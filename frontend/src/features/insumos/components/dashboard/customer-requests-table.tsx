@@ -6,7 +6,10 @@ import { cn } from "@/shared/utils/cn";
 import type { DashboardData } from "../../hooks/use-dashboard-data";
 import type { OrderActions } from "../../hooks/use-order-actions";
 import type { RequestRow } from "../../types";
+import { useOptionalTableSort, useSortedRows } from "../../hooks/use-optional-table-sort";
+import { SortableHeader, type SortableColumn } from "../shared";
 import { CustomerRequestsPanel } from "./customer-requests-panel";
+import { CUSTOMER_DESC_FIRST, customerSortValue, type CustomerSortKey } from "./customer-requests-sort";
 
 /** Tabla de clientes con solicitudes pendientes (Patrón 1 del handoff): fila
  * padre = cliente, expandible a la tabla anidada de solicitudes.
@@ -16,6 +19,18 @@ import { CustomerRequestsPanel } from "./customer-requests-panel";
  * Contadores, no de Insumos. Lo que sí se toma del Patrón 1 es el caret que
  * rota 90° — sin avatar/iniciales, per handoff sds_insumos.
  */
+
+/** Todas las columnas ordenan; sin orden inicial (se respeta el del backend).
+ * La fila expandida viaja con su cliente porque la clave es `customerId`. */
+const COLUMNS: readonly SortableColumn<CustomerSortKey>[] = [
+  { key: "name", label: "Cliente", className: "text-left" },
+  { key: "pending", label: "Pendientes" },
+  { key: "critical", label: "Críticos" },
+  { key: "urgent", label: "Urgentes" },
+  { key: "warning", label: "Atención" },
+  { key: "good", label: "OK" },
+  { key: "loaded", label: "Cargados" },
+];
 
 const HEAD_CELL =
   "px-4 py-2.5 text-right font-body text-[11px] font-semibold uppercase tracking-wider text-muted-foreground";
@@ -48,39 +63,27 @@ export function CustomerRequestsTable({
   nowMs,
   onOpenDetail,
 }: CustomerRequestsTableProps) {
+  const { sort, toggleSort } = useOptionalTableSort(CUSTOMER_DESC_FIRST);
+  const customers = useSortedRows(data.customersWithPending, sort, customerSortValue);
   return (
     <div className="overflow-hidden rounded-[12px] border border-border bg-card">
       <table className="w-full border-collapse font-body text-sm">
         <thead>
           <tr className="border-b border-border bg-muted/40">
-            <th
-              className={cn(HEAD_CELL, "text-left")}
-              scope="col"
-            >
-              Cliente
-            </th>
-            <th className={HEAD_CELL} scope="col">
-              Pendientes
-            </th>
-            <th className={HEAD_CELL} scope="col">
-              Críticos
-            </th>
-            <th className={HEAD_CELL} scope="col">
-              Urgentes
-            </th>
-            <th className={HEAD_CELL} scope="col">
-              Atención
-            </th>
-            <th className={HEAD_CELL} scope="col">
-              OK
-            </th>
-            <th className={HEAD_CELL} scope="col">
-              Cargados
-            </th>
+            {COLUMNS.map((column) => (
+              <SortableHeader
+                key={column.key}
+                column={column}
+                sort={sort}
+                onToggleSort={toggleSort}
+                thClassName={HEAD_CELL}
+                buttonClassName="tracking-wider"
+              />
+            ))}
           </tr>
         </thead>
         <tbody>
-          {data.customersWithPending.map((customer) => {
+          {customers.map((customer) => {
             const expanded = data.expanded.has(customer.customerId);
             return (
               <Fragment key={customer.customerId}>

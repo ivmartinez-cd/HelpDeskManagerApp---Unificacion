@@ -6,6 +6,9 @@ import type { DashboardData } from "../../hooks/use-dashboard-data";
 import { isCountdownExpired } from "../../hooks/use-countdown-clock";
 import type { OrderActions } from "../../hooks/use-order-actions";
 import type { CustomerSummary, RequestRow as RequestRowType } from "../../types";
+import { useOptionalTableSort, useSortedRows } from "../../hooks/use-optional-table-sort";
+import { SortableHeader, type SortableColumn } from "../shared";
+import { REQUEST_DESC_FIRST, requestSortValue, type RequestSortKey } from "./customer-requests-sort";
 import { RequestRow } from "./request-row";
 
 /** Panel expandido de un cliente: toolbar de acciones masivas + tabla anidada
@@ -13,6 +16,20 @@ import { RequestRow } from "./request-row";
  */
 
 const HEAD_CELL = "px-2 py-2 text-left font-semibold";
+
+/** Columnas con dato, todas ordenables (el checkbox y "Acción" no). Sin orden
+ * inicial: se ve el orden del backend hasta que el usuario clickea. */
+const COLUMNS: readonly SortableColumn<RequestSortKey>[] = [
+  { key: "time", label: "Solicitud" },
+  { key: "store", label: "Sucursal" },
+  { key: "serial", label: "Serie" },
+  { key: "description", label: "Descripción" },
+  { key: "sku", label: "SKU" },
+  { key: "percentLeft", label: "%", className: "text-right" },
+  { key: "daysLeft", label: "Días rest.", className: "text-right" },
+  { key: "pagesLeft", label: "Págs. rest.", className: "text-right" },
+  { key: "status", label: "Estado" },
+];
 
 interface CustomerRequestsPanelProps {
   customer: CustomerSummary;
@@ -33,6 +50,8 @@ export function CustomerRequestsPanel({
 }: CustomerRequestsPanelProps) {
   const customerId = customer.customerId;
   const rows = data.pendingRequests(customerId);
+  const { sort, toggleSort } = useOptionalTableSort(REQUEST_DESC_FIRST);
+  const sortedRows = useSortedRows(rows, sort, requestSortValue);
   const selectedIds = data.selected[customerId];
   const selectedCount = selectedIds?.size ?? 0;
   const batchRunning = actions.batchRunning[customerId] ?? false;
@@ -129,20 +148,21 @@ export function CustomerRequestsPanel({
                   className="cursor-pointer accent-brand-orange"
                 />
               </th>
-              <th className={HEAD_CELL}>Solicitud</th>
-              <th className={HEAD_CELL}>Sucursal</th>
-              <th className={HEAD_CELL}>Serie</th>
-              <th className={HEAD_CELL}>Descripción</th>
-              <th className={HEAD_CELL}>SKU</th>
-              <th className={`${HEAD_CELL} text-right`}>%</th>
-              <th className={`${HEAD_CELL} text-right`}>Días rest.</th>
-              <th className={`${HEAD_CELL} text-right`}>Págs. rest.</th>
-              <th className={HEAD_CELL}>Estado</th>
+              {COLUMNS.map((column) => (
+                <SortableHeader
+                  key={column.key}
+                  column={column}
+                  sort={sort}
+                  onToggleSort={toggleSort}
+                  thClassName={HEAD_CELL}
+                  buttonClassName="normal-case tracking-normal"
+                />
+              ))}
               <th className={`${HEAD_CELL} w-36`}>Acción</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {sortedRows.map((row) => (
               <RequestRow
                 key={row.requestId}
                 row={row}

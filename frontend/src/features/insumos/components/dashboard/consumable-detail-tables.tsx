@@ -1,14 +1,41 @@
 "use client";
 
-import { StatusBadge, tonerLevelColor } from "../shared";
+import { SortableHeader, StatusBadge, tonerLevelColor, type SortableColumn } from "../shared";
 import type { ConsumableDetailState } from "../../hooks/use-consumable-detail";
 import type { RequestRow } from "../../types";
 import { EMPTY_VALUE, formatArgDateTime } from "../../utils/format";
 import { labelled, Note, REASON_LABELS, SectionLabel } from "./consumable-detail-primitives";
+import { useOptionalTableSort, useSortedRows } from "../../hooks/use-optional-table-sort";
+import {
+  REQUEST_HISTORY_DESC_FIRST,
+  requestHistorySortValue,
+  SUPPLY_DESC_FIRST,
+  supplySortValue,
+  type RequestHistorySortKey,
+  type SupplySortKey,
+} from "./consumable-detail-sort";
 import { toneForRequestStatus, toneForSupplyStatus } from "./consumable-status-tones";
 
 /** Las dos tablas inferiores del modal de detalle de consumible: historial de
- * solicitudes en HP SDS y pedidos recientes en Canal Directo. */
+ * solicitudes en HP SDS y pedidos recientes en Canal Directo. Todas las
+ * columnas ordenan (criterios en `consumable-detail-sort.ts`). */
+
+const HEAD_CELL = "px-2 py-1 font-semibold";
+
+const REQUEST_COLUMNS: readonly SortableColumn<RequestHistorySortKey>[] = [
+  { key: "requested", label: "Fecha" },
+  { key: "requestId", label: "ID" },
+  { key: "reason", label: "Motivo" },
+  { key: "requestedLevel", label: "Nivel indicado" },
+  { key: "status", label: "Estado" },
+];
+
+const SUPPLY_COLUMNS: readonly SortableColumn<SupplySortKey>[] = [
+  { key: "fecha", label: "Fecha" },
+  { key: "sku", label: "SKU" },
+  { key: "descripcion", label: "Descripción" },
+  { key: "estado", label: "Estado" },
+];
 
 export function RequestsHistorySection({
   row,
@@ -19,6 +46,8 @@ export function RequestsHistorySection({
   requests: ConsumableDetailState["requests"];
   consumableUnavailable: boolean;
 }) {
+  const { sort, toggleSort } = useOptionalTableSort(REQUEST_HISTORY_DESC_FIRST);
+  const sortedRequests = useSortedRows(requests.data, sort, requestHistorySortValue);
   return (
     <section>
       <SectionLabel>Historial de solicitudes (HP SDS)</SectionLabel>
@@ -35,15 +64,20 @@ export function RequestsHistorySection({
           <table className="w-full border-collapse font-body text-xs">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="px-2 py-1 font-semibold">Fecha</th>
-                <th className="px-2 py-1 font-semibold">ID</th>
-                <th className="px-2 py-1 font-semibold">Motivo</th>
-                <th className="px-2 py-1 font-semibold">Nivel indicado</th>
-                <th className="px-2 py-1 font-semibold">Estado</th>
+                {REQUEST_COLUMNS.map((column) => (
+                  <SortableHeader
+                    key={column.key}
+                    column={column}
+                    sort={sort}
+                    onToggleSort={toggleSort}
+                    thClassName={HEAD_CELL}
+                    buttonClassName="normal-case tracking-normal"
+                  />
+                ))}
               </tr>
             </thead>
             <tbody>
-              {requests.data.map((item) => (
+              {sortedRequests.map((item) => (
                 <tr key={item.requestId} className="border-b border-border/50">
                   <td className="whitespace-nowrap px-2 py-1">
                     {formatArgDateTime(item.requested)}
@@ -78,6 +112,8 @@ export function RequestsHistorySection({
 }
 
 export function SuppliesSection({ supplies }: { supplies: ConsumableDetailState["supplies"] }) {
+  const { sort, toggleSort } = useOptionalTableSort(SUPPLY_DESC_FIRST);
+  const sortedSupplies = useSortedRows(supplies.data, sort, supplySortValue);
   return (
     <section>
       <SectionLabel>Pedidos recientes en Canal Directo</SectionLabel>
@@ -92,14 +128,20 @@ export function SuppliesSection({ supplies }: { supplies: ConsumableDetailState[
           <table className="w-full border-collapse font-body text-xs">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="px-2 py-1 font-semibold">Fecha</th>
-                <th className="px-2 py-1 font-semibold">SKU</th>
-                <th className="px-2 py-1 font-semibold">Descripción</th>
-                <th className="px-2 py-1 font-semibold">Estado</th>
+                {SUPPLY_COLUMNS.map((column) => (
+                  <SortableHeader
+                    key={column.key}
+                    column={column}
+                    sort={sort}
+                    onToggleSort={toggleSort}
+                    thClassName={HEAD_CELL}
+                    buttonClassName="normal-case tracking-normal"
+                  />
+                ))}
               </tr>
             </thead>
             <tbody>
-              {supplies.data.map((supply) => (
+              {sortedSupplies.map((supply) => (
                 <tr key={supply.supply_id_full} className="border-b border-border/50">
                   <td className="whitespace-nowrap px-2 py-1">
                     {supply.fecha || EMPTY_VALUE}

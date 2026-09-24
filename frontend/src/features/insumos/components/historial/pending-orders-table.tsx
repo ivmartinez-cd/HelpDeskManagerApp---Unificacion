@@ -5,6 +5,9 @@ import { CheckCircle2, ChevronRight, ChevronsDownUp, ChevronsUpDown } from "luci
 import { cn } from "@/shared/utils/cn";
 import type { DateRange, PendingOrderRow } from "../../types";
 import { toArgDateKey } from "../../utils/format";
+import { useOptionalTableSort, useSortedRows } from "../../hooks/use-optional-table-sort";
+import type { SortValue } from "../../hooks/use-table-sort";
+import { SortableHeader, type SortableColumn } from "../shared";
 import { PendingOrdersDetail } from "./pending-orders-detail";
 
 /** Pestaña "Pedidos Pendientes": los pedidos propios que siguen circulando en
@@ -45,6 +48,21 @@ function matchesRange(order: PendingOrderRow, range: DateRange | null): boolean 
   return key >= range.startDate && key <= range.endDate;
 }
 
+type GroupSortKey = "customerName" | "count";
+
+/** Orden inicial = el de siempre (cliente A→Z); la cantidad arranca de mayor
+ * a menor. La clave de fila es `customerId`, así la expansión sigue al grupo. */
+const COLUMNS: readonly SortableColumn<GroupSortKey>[] = [
+  { key: "customerName", label: "Cliente", className: "text-left" },
+  { key: "count", label: "Pendientes de entrega", className: "text-right" },
+];
+const GROUP_DESC_FIRST: readonly GroupSortKey[] = ["count"];
+const INITIAL_SORT = { key: "customerName", direction: "asc" } as const;
+
+function groupSortValue(group: CustomerGroup, key: GroupSortKey): SortValue {
+  return key === "count" ? group.orders.length : group.customerName;
+}
+
 const headThClass =
   "px-4 py-2.5 font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground";
 
@@ -67,7 +85,7 @@ export function PendingOrdersTable({
     if (initialExpandedCustomerId !== null) setExpanded(new Set([initialExpandedCustomerId]));
   }
 
-  const groups = useMemo<CustomerGroup[]>(() => {
+  const filteredGroups = useMemo<CustomerGroup[]>(() => {
     const term = search.trim().toLowerCase();
     const map = new Map<number, CustomerGroup>();
     for (const order of orders) {
@@ -83,8 +101,10 @@ export function PendingOrdersTable({
         });
       }
     }
-    return [...map.values()].sort((a, b) => a.customerName.localeCompare(b.customerName, "es-AR"));
+    return [...map.values()];
   }, [orders, search, range]);
+  const { sort, toggleSort } = useOptionalTableSort(GROUP_DESC_FIRST, INITIAL_SORT);
+  const groups = useSortedRows(filteredGroups, sort, groupSortValue);
 
   const toggle = (customerId: number) => {
     setExpanded((prev) => {
@@ -144,12 +164,15 @@ export function PendingOrdersTable({
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-border bg-muted/40">
-              <th scope="col" className={`${headThClass} text-left`}>
-                Cliente
-              </th>
-              <th scope="col" className={`${headThClass} text-right`}>
-                Pendientes de entrega
-              </th>
+              {COLUMNS.map((column) => (
+                <SortableHeader
+                  key={column.key}
+                  column={column}
+                  sort={sort}
+                  onToggleSort={toggleSort}
+                  thClassName={headThClass}
+                />
+              ))}
             </tr>
           </thead>
           <tbody>
