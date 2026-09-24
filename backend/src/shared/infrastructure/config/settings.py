@@ -23,6 +23,7 @@ from src.shared.infrastructure.config.settings_groups import (
 )
 from src.shared.infrastructure.config.settings_groups_operativos import (
     AnalisisLogHpSettings,
+    DespachadosSettings,
     LiquidacionesSettings,
     OrionSettings,
     PreventivosSettings,
@@ -49,6 +50,7 @@ class Settings(
     AnalisisLogHpSettings,
     LiquidacionesSettings,
     VacacionesSettings,
+    DespachadosSettings,
 ):
     """Config tipada y fail-fast: falta un campo requerido => la app no arranca."""
 

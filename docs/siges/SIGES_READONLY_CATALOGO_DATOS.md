@@ -489,6 +489,55 @@ instalación, seguimiento). Scripts: `backend/scripts/explore_siges_nuevos_clien
   `AnexoMovimientoLog` (movimiento de máquinas entre anexos, último 2023), `MaquinaMotivoMov`
   (catálogo sin tabla de movimientos con fecha visible), `MaquinaInstalacion` (solo un contador).
 
+### Despachos OCA de insumos: `Remito_Cab` + `Distribucion` + `Incidente_Insumo_C`/`Incidente_Insumo_D` (confirmado 2026-09-24)
+
+Usado por: **Insumos > Despachados** (seguimiento en OCA de los insumos despachados; consulta
+en `backend/src/modules/insumos/infrastructure/siges/consulta_despachos.py`). Verificado con
+consultas de solo lectura el 2026-09-24; los conteos son de los 30 días previos a esa fecha.
+
+- **`dbo.Distribucion`** (transportistas, ver §4): OCA son `3` `'OCA'`, `9` `'OCA SP'` y `10`
+  `'OCA Prioritario'`, los tres activos. `6`, `7` y `8` (`'NO USAR Oca'`) están dados de baja:
+  `Estado=1` marca la baja (misma semántica invertida que `Empresa`). Guías de 19 dígitos en
+  30 días: 557 en `3`, 73 en `9`, 108 en `10`.
+- **`dbo.Remito_Cab`**, columnas usadas: `Id_Remito` int (PK), `Remito_Local` tinyint,
+  `Remito_Nro` int, `Fecha_Remito` smalldatetime, `Id_Empresa` int, `Id_Sucursal` int,
+  `Id_Estado_Remito` tinyint, `Entrega_a` varchar(100), `ID_Distribucion` int (FK
+  `Distribucion`), `Guia` varchar(50), `Bultos` int, `TipoRemito` char(1), `Estado` tinyint.
+  - `Guia` = número de envío OCA. Los rastreables tienen exactamente 19 dígitos; hay remitos
+    cargados con `'FALTA'` u otros valores → filtrar con
+    `LEN(Guia) = 19 AND Guia NOT LIKE '%[^0-9]%'`.
+  - `TipoRemito`: `'I'` = insumos, `'R'` = repuestos (fusores, rodillos, bandejas). En 30 días
+    de OCA: 578 remitos `'I'`, **todos** enlazan a `Incidente_Insumo_D.ID_Remito` (71 con más
+    de un incidente); 160 `'R'`, **ninguno** enlaza a un incidente de insumos. OCA Prioritario
+    (`10`) fue 100 % `'R'` en esa ventana.
+  - `Remito_Local = 1` y `Estado = 0` en todos los remitos OCA observados. El significado de
+    `Estado` sigue sin confirmar: no se usa como filtro.
+  - Una misma guía puede aparecer en más de un remito: 1 guía repetida entre las 699 guías
+    del relevamiento de estados OCA (remitos del 26/08 al 24/09/2026).
+- **`dbo.Estado_Remito`**: 1 Generado, 2 Impreso, 3 Despachado, 4 Fichado-Predespacho,
+  5 Entregado.
+- **`dbo.Incidente_Insumo_D`** (ítems del pedido de insumos): `ID_Incidente_Insumo` int,
+  `Item` tinyint, `ID_Remito` int → `Remito_Cab.Id_Remito`. Una fila por ítem: un incidente
+  con varios ítems en el mismo remito repite el par (remito, incidente), de ahí el `DISTINCT`.
+- **`dbo.Incidente_Insumo_C`** (cabecera del pedido): `ID_Incidente_Insumo` int,
+  `NroIncidente` varchar(13) (el número con el que se conoce el pedido),
+  `Nro_Incidente_Cliente` varchar(20) (`''` si el cliente no dio referencia), `ID_Empresa`,
+  `ID_Sucursal`.
+- **`dbo.Estado_Incidente_Insumo`**: 0 Anulado, 1 Pendiente, 2 Remito Generado, 3 Remito
+  Impreso, 4 Despachado, 5 Entregado, 6 En Proceso.
+- ⚠️ El "Entregado" de SiGes no siempre coincide con OCA: 5 casos en Entregado que OCA
+  mostraba en "Visita a Domicilio en Curso". Para saber si el envío llegó, la fuente es OCA.
+
+```sql
+FROM dbo.Remito_Cab rc
+LEFT JOIN dbo.Incidente_Insumo_D d ON d.ID_Remito = rc.Id_Remito      -- sin perder remitos sin incidente
+LEFT JOIN dbo.Incidente_Insumo_C c ON c.ID_Incidente_Insumo = d.ID_Incidente_Insumo
+WHERE rc.ID_Distribucion IN (?, ?, ?)                                  -- 3, 9, 10 (configurable)
+  AND rc.TipoRemito = 'I'                                              -- solo insumos
+  AND LEN(rc.Guia) = 19 AND rc.Guia NOT LIKE '%[^0-9]%'                -- guía OCA rastreable
+  AND rc.Fecha_Remito >= DATEADD(day, -?, CAST(GETDATE() AS date))     -- ventana en días
+```
+
 ## 4. Candidatas exploradas — columnas confirmadas, dato real pendiente [CANDIDATA]
 
 Útiles para casos de uso futuros que no sean el Calendario de Contadores. Ninguna de estas fue
@@ -499,13 +548,16 @@ negocio", igual que tenía `UsuariosWeb` antes de la ronda 4 de la investigació
 
 Logística de remitos (**confirmado que es de insumos/repuestos, no de facturación** — ver §5).
 Útil si algún módulo necesita rastrear entregas de insumos/repuestos por cliente.
+**`Remito_Cab` ya está confirmada con dato real para los despachos OCA de insumos** (§3,
+2026-09-24, la usa Insumos > Despachados); `Remito_Det` y `Remito_Maquina` siguen
+**[CANDIDATA]**.
 
 `Remito_Cab`: `Id_Remito` (PK), `Remito_Local`, `Remito_Nro`, `Fecha_Remito`, `Id_Empresa` (FK
 cliente), `Id_Sucursal`, `Id_Estado_Remito`, `Id_Proveedor`, `Entrega_a`, `Imprimio`,
 `Fecha_Entrega`, `Firmante`, `ID_Distribucion` (FK `Distribucion`), `Guia`, `Bultos`,
 `NroFCDistribucion`, `CostoDistribucion`, `CostoSeguro`, `TipoRemito` (`'I'`=Insumos,
-`'R'`=Repuestos — inferido por el patrón de datos, no documentado formalmente), `Estado`,
-`Fecha_Mod`, `Usuario_Mod`.
+`'R'`=Repuestos — confirmado por el patrón de datos el 2026-09-24, ver §3; sin catálogo formal
+en SiGes), `Estado`, `Fecha_Mod`, `Usuario_Mod`.
 
 `Remito_Det`: `Id_Remito` (FK), `Item`, `Id_Articulo`, `Cantidad`, `Descripcion_Articulo`,
 `Estado`, `Fecha_Mod`, `Usuario_Mod`.
@@ -522,6 +574,9 @@ las 57 filas reales (Andreani, OCA, Credifin, `'Propio'`, técnicos por nombre `
 feature de preventivos y **no lo es** — las zonas geográficas viven en `Sucursal.Cuadricula`
 (ver §3). `Sucursal.Distribucion` (int) sí apunta acá: es el medio de despacho habitual de la
 sucursal (Propio 5252 activas, OCA 5218, Credifin 1655…).
+
+OCA (confirmado 2026-09-24, ver §3 "Despachos OCA de insumos"): `3` `'OCA'`, `9` `'OCA SP'` y
+`10` `'OCA Prioritario'` activos; `6`/`7`/`8` `'NO USAR Oca'` dados de baja (`Estado=1`).
 
 ### `dbo.Vendedor`
 
@@ -552,7 +607,8 @@ Documentadas para no perder tiempo re-explorándolas si alguien busca lo mismo e
   facturación de Gestión son planificación futura (hasta +90 días) — nunca podrían cruzar en el
   tiempo, sin importar el cliente. Verificado con 3 clientes reales (`YKK`, `EDERSA`, `YAGUAR`)
   y 15 remitos reales. Siguen siendo **[CANDIDATA]** válida para otro caso de uso (logística de
-  insumos/repuestos en sí), solo descartadas para planificación de facturación.
+  insumos/repuestos en sí), solo descartadas para planificación de facturación. `Remito_Cab`
+  quedó confirmada para ese otro uso el 2026-09-24 (§3, despachos OCA de insumos).
 - **`Reservas`, `MaquinaInstalacion`, `Objeto_Balance`, `Instancia`/`Instancia_Motivos` como
   vínculo operador↔cliente/evento**: inspeccionadas por columna completa, ninguna tiene una
   columna que asigne un `UsuariosWeb` como responsable de un cliente/evento hacia adelante (solo
@@ -667,9 +723,12 @@ suscriptor de replicación (consistente con ser una réplica de solo lectura).
 
 - `UsuariosWeb.id_empresa=1` — probable "Canal Directo" como empresa interna, sin confirmar
   contra `Empresa`.
-- `Remito_Cab.TipoRemito` (`'I'`/`'R'`) — el significado "Insumos"/"Repuestos" es una inferencia
-  razonable por el patrón de datos, no está documentado en ningún lado ni confirmado contra un
-  catálogo (`Estado_Remito` tiene `Descripcion`, pero no se verificó si cubre `TipoRemito`).
+- `Remito_Cab.TipoRemito` (`'I'`/`'R'`) — "Insumos"/"Repuestos" quedó confirmado por el patrón
+  de datos el 2026-09-24 (§3: los 578 `'I'` de OCA enlazan todos a incidentes de insumos, los
+  160 `'R'` ninguno y son fusores, rodillos, bandejas), pero sigue sin un catálogo formal en
+  SiGes: `Estado_Remito` es el estado del remito (Generado…Entregado), no su tipo.
+- `Remito_Cab.Estado` — `0` en todos los remitos OCA observados el 2026-09-24; significado sin
+  confirmar (no asumir la semántica invertida de `Empresa`/`Distribucion` sin verificarla).
 - El listado del §6 es una foto del 2026-08-13 — si se necesita para algo crítico, re-confirmar
   que no cambió (`INFORMATION_SCHEMA.TABLES`), sobre todo porque esta es una réplica y podría
   haber objetos que aparecen/desaparecen según el estado de sincronización.

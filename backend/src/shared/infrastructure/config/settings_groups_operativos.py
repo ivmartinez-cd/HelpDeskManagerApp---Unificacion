@@ -1,5 +1,5 @@
 """Grupos temáticos de campos de `Settings` (mixins, ver settings.py) — mitad
-operativa (sla/preventivos/wati/analisis-log-hp/liquidaciones), separada de
+operativa (sla/preventivos/wati/analisis-log-hp/liquidaciones/despachados), separada de
 `settings_groups.py` por el límite de 300 líneas de archivo (§4). Mismo
 criterio de composición: ver el docstring de módulo de `settings_groups.py`.
 """
@@ -180,3 +180,16 @@ class LiquidacionesSettings(BaseSettings):
     # meses cerrados, dolarapi.com para el mes en curso. Ninguna de las dos
     # fuentes publica más de una vez por día hábil; una pasada diaria alcanza.
     liquidaciones_sync_cotizaciones_interval_minutes: int = 1440
+
+
+class DespachadosSettings(BaseSettings):
+    """Insumos > Despachados: seguimiento en OCA de los remitos de insumos
+    despachados. Solo lectura contra Siges/ORION y OCA; escribe en la base de HDM."""
+
+    # Ventana de búsqueda de remitos nuevos en Siges (días corridos hacia atrás
+    # desde hoy). Un envío que ya se sigue no sale del seguimiento al quedar fuera
+    # de la ventana: sigue hasta que OCA lo cierre.
+    despachados_dias_ventana: int = 30
+    # `dbo.Distribucion.Id` de los transportes OCA (verificado 2026-09-24): 3 OCA,
+    # 9 OCA SP, 10 OCA Prioritario. En el .env va como JSON: [3,9,10].
+    despachados_distribuciones_oca: tuple[int, ...] = (3, 9, 10)
