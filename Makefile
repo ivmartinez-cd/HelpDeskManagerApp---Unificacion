@@ -21,23 +21,20 @@ help:  ## Lista los targets
 status:  ## Estado del entorno (contenedores, modo test, jobs, git)
 	@hd-status
 
-# --- Verificación completa: la corre GitHub Actions en cada push (.github/workflows/ci.yml).
-# Local SOLO si el usuario lo pide. Medido el 2026-09-02 con la máquina ociosa sobre el HDD USB:
+# --- Verificación completa. Desde el 2026-09-24 no hay CI (GitHub abandonado, Gitea sin
+# runner): esto es el único lugar donde corre, así que va a mano antes de dar por terminado un
+# módulo. Referencia de costo en la máquina anterior (WSL sobre HDD USB, 2026-09-02):
 # lint-imports 42 s, ruff 5 s, mypy 108 s, pytest unit 101 s, sizes+guards 29 s (≈5 min).
-# Con varias sesiones de Claude en paralelo eso satura el disco y freeza las demás terminales;
-# por eso ningún hook de git lo corre (ver CLAUDE.md "Guardas automáticas de git").
-check: lint-imports ruff mypy test test-integration sizes guards  ## Verificación completa (la corre CI; local solo a pedido): lint-imports + ruff + mypy + pytest unit + integración + gates
+# Sin re-medir en esta máquina (Ubuntu nativo sobre NVMe). Ningún hook de git lo corre.
+check: lint-imports ruff mypy test test-integration sizes guards  ## Verificación completa (sin CI, corrésla vos): lint-imports + ruff + mypy + pytest unit + integración + gates
 	@echo "✔ check completo"
 
-check-fast: lint-imports ruff mypy test sizes guards  ## check sin test-integration (local solo a pedido; ya no lo usa ningún hook)
+check-fast: lint-imports ruff mypy test sizes guards  ## check sin test-integration (ningún hook lo corre)
 	@echo "✔ check-fast completo"
 
-test-module:  ## pytest unit SOLO del módulo M, opcional (≈2 min de reloj en este disco por arranque de uv/imports; make test-module M=contadores)
+test-module:  ## pytest unit SOLO del módulo M (make test-module M=contadores)
 	@test -n "$(M)" || { echo "Uso: make test-module M=<modulo>   (ej. contadores, turnos, vacaciones)"; exit 2; }
 	$(EXEC) sh -c 'uv run pytest tests/unit/*/$(M) -q'
-
-ci:  ## Sigue la corrida de CI del último push a main (gh run watch); falla si CI falló
-	@sleep 5; id=$$(gh run list --branch main --limit 1 --json databaseId --jq '.[0].databaseId'); echo "CI run $$id: https://github.com/ivmartinez-cd/HelpDeskManagerApp---Unificacion/actions/runs/$$id"; gh run watch "$$id" --exit-status
 
 lint-imports:  ## Contratos de capas/módulos (la regla más importante)
 	$(EXEC) uv run lint-imports

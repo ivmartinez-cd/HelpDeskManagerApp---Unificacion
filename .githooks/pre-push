@@ -3,20 +3,15 @@
 # y corre ruff sobre los .py de backend tocados en ese rango. Nada más.
 #
 # Historia: hasta el 2026-09-02 corría `make check-fast` (lint-imports + ruff + mypy + pytest
-# unit + gates sizes/guards). Medido ese día con la máquina ociosa, sobre el HDD USB:
-# 42 + 5 + 108 + 101 + 29 s ≈ 5 min por push; con varias sesiones de Claude en paralelo dejaba
-# el disco saturado y freezaba las demás terminales (incidentes 2026-09-01 y 2026-09-02). Un
-# push no debería poder colgar la máquina: TODO (lint-imports, mypy, pytest unit + integración,
-# gates §4/§6/§8/§11, eslint, tsc, Playwright) sigue corriendo solo en GitHub Actions
-# (.github/workflows/ci.yml). Quien pushea sigue la corrida con `make ci` (gh run watch) y
-# arregla si queda rojo — `main` en GitHub puede quedar rojo unos minutos, esa es la
-# contrapartida aceptada.
+# unit + gates sizes/guards): ≈5 min por push sobre el HDD USB de la máquina anterior, y con
+# varias sesiones de Claude en paralelo dejaba el disco saturado y freezaba las demás
+# terminales. Se sacó todo de acá porque GitHub Actions lo corría igual en cada push.
 #
-# 2026-09-15: se sumó el ruff de acá abajo (mismo criterio que pre-commit, ≈5 s, solo backend)
-# porque además de GitHub ahora se pushea a un remoto Gitea sin runner propio — un error de
-# ruff que antes recién aparecía en GitHub Actions ahora se detecta antes de salir de la
-# máquina. No se tocó nada más: mypy/pytest/tsc/Playwright siguen siendo demasiado caros para
-# este disco (ver medición arriba), automáticos o no.
+# 2026-09-24: GitHub quedó abandonado y el Gitea de Canal Directo (único remoto vivo) no tiene
+# runner, así que YA NO HAY CI: lo que no se corre en esta máquina no se corre en ningún lado.
+# Este hook sigue sin correr la verificación completa — un push no debería poder colgar la
+# máquina, y encadenarla acá empuja a `--no-verify` — pero eso significa que `make check` hay
+# que correrlo a mano antes de dar por terminado un módulo (ver CLAUDE.md).
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
 remote="${1:-origin}"
@@ -61,6 +56,6 @@ if [[ -n "${pyfiles// /}" ]]; then
   fi
 fi
 
-echo "Verificación completa en GitHub Actions — seguirla con: make ci"
+echo "Recordá: no hay CI. La verificación completa la corrés vos: make check"
 echo
 exit 0

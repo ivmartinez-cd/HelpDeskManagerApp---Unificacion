@@ -7,12 +7,11 @@
 #  2) Backend: ruff sobre los .py staged, dentro del contenedor (sintaxis, imports sin usar,
 #     etc.). Es lo único que corre acá.
 #
-# Lo que YA NO corre acá (2026-09-02; medido con la máquina ociosa sobre el HDD USB:
-# lint-imports 42 s, mypy 108 s, sizes+guards 29 s — con 3-4 sesiones de Claude en paralelo
-# cada commit dejaba el disco saturado varios minutos): lint-imports, mypy y los gates
-# §4/§6/§8/§11. Todo eso lo corre GitHub Actions (.github/workflows/ci.yml) en cada push, con
-# su propio disco/CPU. Quien pushea sigue la corrida con `make ci` (gh run watch) y arregla si
-# queda rojo.
+# Lo que NO corre acá: lint-imports, mypy y los gates §4/§6/§8/§11 — se sacaron el 2026-09-02
+# porque tardaban minutos sobre el HDD USB de la máquina anterior y GitHub Actions los corría
+# igual en cada push. Desde el 2026-09-24 ya no hay CI (GitHub abandonado, Gitea sin runner),
+# así que eso hay que correrlo a mano: `make check` antes de dar por terminado un módulo
+# (ver CLAUDE.md).
 # Saltear: git commit --no-verify (solo si sabés por qué).
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1

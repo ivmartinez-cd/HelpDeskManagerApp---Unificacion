@@ -94,24 +94,26 @@ en una auditoría aparte. Concretamente:
 - **Tamaños máximos (§4)**: archivo ≤300 líneas, clase ≤200, función ≤20. Si un archivo se pasa,
   separar en módulos por responsabilidad en el momento, no siguiendo agregando al mismo archivo.
 - **Verificación antes de dar por terminado un módulo** (no solo al final de todo el proyecto):
-  la verificación completa la corre **GitHub Actions en cada push** (`.github/workflows/ci.yml`:
-  `lint-imports`, `ruff`, `mypy`, pytest unit + integración, gates §4/§6/§8/§11, eslint, `tsc`
-  y la suite de Playwright). Localmente solo se corre lo barato y acotado al módulo tocado —
+  **hoy no hay CI**. GitHub quedó abandonado (2026-09-24) y el Gitea de Canal Directo, que es
+  el único remoto vivo, no tiene runner registrado — `.gitea/workflows/ci.yml` es un no-op a
+  propósito, para que no encole corridas que nadie va a tomar. O sea: **lo que no se corre en
+  esta máquina, no se corre en ningún lado**.
   ```
   uv run ruff check <archivos tocados>     # segundos, dentro del contenedor del backend
-  make test-module M=<modulo>              # OPCIONAL: pytest unit solo de tests/unit/*/<modulo>
+  make test-module M=<modulo>              # pytest unit solo de tests/unit/*/<modulo>
+  make check                               # verificación completa que exige ARCHITECTURE_GUIDE.md
   ```
-  — y al pushear se sigue la corrida de CI con `make ci` (`gh run watch`); si queda rojo, se
-  arregla y se vuelve a pushear. Si CI falla, no está terminado. **No correr local** `make check`,
-  `make check-fast`, `uv run lint-imports`, `uv run mypy src`, `uv run pytest tests/unit`
-  completo ni Playwright salvo pedido explícito del usuario. La regla sigue vigente por
-  decisión del usuario, pero su motivo original ya no aplica tal cual: los números que la
-  justificaban (2026-09-02: lint-imports 42 s, mypy 108 s, pytest unit 101 s, sizes+guards
-  29 s, con el disco saturado si había 3-4 sesiones en paralelo) se midieron en la máquina
-  anterior — WSL sobre un HDD USB — y **no** están re-medidos en esta (Ubuntu nativo sobre
-  NVMe, ver más abajo). `lint-imports` sigue siendo la regla más importante y no es
-  opinable: la hace cumplir CI, no el ojo. `make test-module`: usarlo cuando el cambio lo
-  amerite, no por rutina; ruff sí, siempre.
+  Mientras no haya runner, `make check` (o al menos `make check-fast`) hay que correrlo antes
+  de dar por terminado un módulo: es la única red que queda. `lint-imports` sigue siendo la
+  regla más importante y no es opinable — antes la hacía cumplir CI; ahora, nadie salvo esta
+  corrida. `ruff`, siempre.
+
+  Historia, para que no confunda: hasta el 2026-09-02 regía lo contrario ("no correr `make
+  check` local"), porque en la máquina anterior — WSL sobre un HDD USB — lint-imports tardaba
+  42 s, mypy 108 s, pytest unit 101 s y sizes+guards 29 s, y con 3-4 sesiones en paralelo cada
+  corrida saturaba el disco y freezaba las demás terminales. Esta máquina es Ubuntu nativo
+  sobre NVMe y esos números **no** están re-medidos; la razón de fondo de aquella regla (que
+  CI lo corría igual) ya no existe.
 - Las desviaciones conscientes del texto literal de la guía se documentan como ADR en
   `docs/adr/` (ver `007-vocabulario-de-permisos-en-shared-excepcion-de-presentation.md`
   como ejemplo) — una excepción sin ADR es una violación, no una decisión.
@@ -238,44 +240,41 @@ decida él.
   hoy no tiene datos que mirar; override consciente, cuando vuelva: `ALLOW_FOREIGN=1 git commit …`.
 - **`.githooks/pre-push`** (instantáneo): lista los commits que se van a subir (leerlos, no
   pushear a ciegas). **No corre ninguna verificación local** desde el 2026-09-02.
-- **CI en GitHub Actions** (`.github/workflows/ci.yml`): corre en cada push a `main` y en cada
-  PR, sin tocar esta máquina, **toda** la verificación: backend `lint-imports` + `ruff` + `mypy`
-  + pytest unit + `test-integration` (service container de Postgres propio del runner; el schema
-  sale de `Base.metadata.create_all`, no de Alembic) + gates §4/§6/§8/§11
-  (`scripts/check_sizes.py` y `check_guards.py --committed`); frontend eslint + `tsc --noEmit`;
-  y la **suite completa de Playwright** (job `e2e`). La suite es hermética — `tests/global-setup.ts`
-  levanta un backend mock en 18099 y cada spec mockea sus datos con `page.route()`; no toca el
-  backend real ni datos reales — así que CI la reemplaza por completo; localmente solo se corre a
-  pedido del usuario (`PW_PORT=3011 npx playwright test` en `frontend/`). Historia: hasta el
-  2026-09-01 el pre-push corría todo esto local y un push dejó el HDD saturado ~40 min; el
-  2026-09-02 se midió que incluso `check-fast` tardaba ≈5 min con la máquina ociosa y se sacó
-  todo de los hooks. Contrapartida aceptada: `main` en GitHub puede quedar rojo unos minutos;
-  quien pushea sigue la corrida con `make ci` y arregla.
+- **No hay CI** (ver la sección de arriba): ningún push dispara verificación en ningún lado.
+  El workflow de GitHub Actions (`.github/workflows/ci.yml`) quedó en el repo como referencia
+  de qué tiene que correr — backend `lint-imports` + `ruff` + `mypy` + pytest unit +
+  integración + gates §4/§6/§8/§11, frontend eslint + `tsc --noEmit`, y la suite de Playwright
+  — pero nadie lo ejecuta. Si en algún momento se registra un runner en el Gitea de Canal
+  Directo, ese workflow es el punto de partida y esta sección vuelve a cambiar.
+  La suite de Playwright es hermética (`tests/global-setup.ts` levanta un backend mock en 18099
+  y cada spec mockea sus datos con `page.route()`: no toca el backend real ni datos reales),
+  así que correrla local es seguro — pero hoy Playwright no está instalado en este host.
 - Los hooks de git se activan por clon con `make hooks` (`git config core.hooksPath
   .githooks`). `--no-verify` existe, pero usarlo es una decisión del usuario, no de Claude.
 
-`make check` sigue siendo la verificación canónica que exige `ARCHITECTURE_GUIDE.md`; la corre
-CI en cada push. Localmente, solo si el usuario lo pide explícitamente.
+`make check` es la verificación canónica que exige `ARCHITECTURE_GUIDE.md` y, sin CI, el único
+lugar donde corre es acá.
 
 ### Cuándo pushear (decisión del usuario, 2026-08-21)
 
-`main` es la rama de trabajo y el remoto (`origin` en GitHub; a futuro el Gitea de Canal
-Directo) es el **respaldo**: lo que no está pusheado existe solo en el disco de esta PC. Regla:
+`develop` es la rama de trabajo y `origin` — el Gitea de Canal Directo
+(`git@gitea.cdsa.com.ar:imartinez/Helpdesk-manager.git`, por SSH) — es el **respaldo**: lo que
+no está pusheado existe solo en el disco de esta PC. El remoto `github` quedó abandonado el
+2026-09-24; no pushear ahí. Regla:
 
 - **Pushear al cerrar cada bloque de trabajo** (feature terminada y probada, fin de una
   migración) **y siempre al final del día de trabajo**, antes de apagar la máquina.
 - **Hacerlo proactivamente cuando se detecte la condición**, sin esperar a que el usuario lo
   pida de nuevo: **≥5 commits sin pushear o el más viejo con más de 24 h** (lo avisaba el hook
-  de arranque, hoy ausente: revisarlo a mano con `git log origin/main..`). En ese caso, al terminar la tarea en
-  curso (no en el medio), correr `git push origin main` y decirlo en el resumen final — y
-  después seguir la corrida de CI con `make ci`; si falla, arreglarlo antes de cerrar la tarea.
+  de arranque, hoy ausente: revisarlo a mano con `git log origin/develop..`). En ese caso, al
+  terminar la tarea en curso (no en el medio), correr `git push` y decirlo en el resumen final.
   Nunca `--no-verify`.
 - **Una sola sesión pushea.** Si `git status`/el registro de sesiones muestran que otra
   sesión está commiteando en ese momento, esperar a que termine o coordinar por
   `SendMessage`; pushear en paralelo desde varias sesiones solo duplica el `pre-push`.
-- El `pre-push` ya no cuesta nada, pero igual pushear por bloque de trabajo y no por cada
-  commit chico: cada push dispara una corrida de CI y cancela la anterior en curso. Nunca
-  `force push` (bloqueado por `claude-git-guard`).
+- El `pre-push` casi no cuesta (lista los commits y corre `ruff` sobre los `.py` de backend del
+  rango), pero igual pushear por bloque de trabajo y no por cada commit chico. Nunca
+  `force push`.
 
 `make help` lista el resto de atajos (`status`, `restart-*`,
 `recreate-backend`, `logs-*`, `mailpit`, `typecheck-frontend`). Antes de una migración o un

@@ -6,14 +6,16 @@
 # (pedido de Iván 15/9: sacarlo). Esta versión, al existir, bloquea esa
 # caída y no dispara solo con push, así que no vuelve a encolar nada.
 #
-# La verificación real sigue siendo GitHub Actions
-# (.github/workflows/ci.yml) sobre origin -- gitea es solo el respaldo, ver
-# "Cuándo pushear" en CLAUDE.md.
-name: CI (ver GitHub Actions)
+# 2026-09-24: GitHub quedó abandonado, así que este remoto ya no es "solo el
+# respaldo" -- es el único. Mientras no se registre un runner acá, NO hay
+# verificación automática en ningún lado: `make check` se corre a mano antes
+# de dar por terminado un modulo (ver CLAUDE.md). Si algun dia hay runner,
+# .github/workflows/ci.yml es el punto de partida.
+name: CI (sin runner: la verificacion se corre a mano)
 on:
   workflow_dispatch: {}
 jobs:
   noop:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "La verificación real corre en GitHub Actions (origin), no en Gitea."
+      - run: echo "Sin runner registrado: la verificacion se corre a mano con make check."
