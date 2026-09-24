@@ -94,9 +94,9 @@ Pendiente (amarillo), Sin respuesta (gris).
   `insumos:update` (o superadmin); la ruta la cubre `insumos:view`.
 
 ## Decisiones y desvíos respecto del mockup
-- **Azul "cerrado" (`#1D4ED8` / `#93C5FD`) — a confirmar con el usuario.** Es un color de estado,
-  no de marca, y no es ninguna de las líneas excluidas (violeta, celeste, magenta), pero es el
-  único azul de la pantalla. Se implementó tal cual el mockup hasta que se confirme.
+- **Azul "cerrado" (`#1D4ED8` / `#93C5FD`) — confirmado por el usuario (2026-09-24).** Es un
+  color de estado, no de marca, y no es ninguna de las líneas excluidas (violeta, celeste,
+  magenta). Se usa solo en el semáforo para "Entregado/cerrado".
 - **"Ver en OCA" abre el seguimiento de la guía** en
   `https://oca.com.ar/Seguimiento/Paquetes/<guía>` (decisión del usuario, 2026-09-24; el mockup
   tenía un link genérico a la home de OCA).

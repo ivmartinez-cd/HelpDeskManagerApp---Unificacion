@@ -48,9 +48,16 @@ Regla dura, no opcional, para toda sesión de trabajo en este repo — no solo l
   ```
   Al terminar, volver a `DISABLE_BACKGROUND_JOBS=false` y recrear de nuevo: dejar los jobs
   apagados "por las dudas" rompe la actualización automática que los compañeros esperan.
+- **Insumos > Despachados tiene su propio flag**: `DISABLE_DESPACHADOS_BACKGROUND_JOBS`
+  (default `true`, independiente del de insumos). Su job consulta Siges/ORION y OCA reales,
+  solo lectura, y escribe únicamente en las tablas `insumos_despacho_*` de HDM: no manda mails
+  ni escribe afuera. Arranca apagado hasta que el usuario lo valide; encenderlo es decisión
+  suya. "Actualizar ahora" en la pantalla corre la misma sincronización aunque el flag esté en
+  `true`. Detalle en `docs/insumos/DESPACHADOS.md`.
 - Verificación del arranque sano: en el log, después de `Application startup complete`, tiene
-  que aparecer `background_jobs: insumos omitido (DISABLE_INSUMOS_BACKGROUND_JOBS=true)` y
-  `background_jobs: 7 job(s) iniciados`. `reiniciar.sh backend` y `make recreate-backend`
+  que aparecer `background_jobs: insumos omitido (DISABLE_INSUMOS_BACKGROUND_JOBS=true)`,
+  `background_jobs: despachados omitido (DISABLE_DESPACHADOS_BACKGROUND_JOBS=true)` (mientras
+  siga apagado) y `background_jobs: 8 job(s) iniciados`. `reiniciar.sh backend` y `make recreate-backend`
   abortan/avisan si `DISABLE_INSUMOS_BACKGROUND_JOBS` no está en `true`.
 
 ## Idioma y estilo de comunicación
