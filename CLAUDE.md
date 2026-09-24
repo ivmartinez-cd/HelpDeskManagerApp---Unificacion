@@ -244,8 +244,10 @@ decida él.
   El workflow de GitHub Actions (`.github/workflows/ci.yml`) quedó en el repo como referencia
   de qué tiene que correr — backend `lint-imports` + `ruff` + `mypy` + pytest unit +
   integración + gates §4/§6/§8/§11, frontend eslint + `tsc --noEmit`, y la suite de Playwright
-  — pero nadie lo ejecuta. Si en algún momento se registra un runner en el Gitea de Canal
-  Directo, ese workflow es el punto de partida y esta sección vuelve a cambiar.
+  — pero nadie lo ejecuta, y el usuario decidió el 2026-09-24 dejarlo así por ahora. Antes de
+  volver a proponer un runner, saber que hay dos obstáculos reales (ver el comentario de
+  `.gitea/workflows/ci.yml`): el certificado de `gitea.cdsa.com.ar` está vencido desde el
+  2025-10-13 y es autofirmado, y el runner necesitaría el socket de Docker de esta máquina.
   La suite de Playwright es hermética (`tests/global-setup.ts` levanta un backend mock en 18099
   y cada spec mockea sus datos con `page.route()`: no toca el backend real ni datos reales),
   así que correrla local es seguro — pero hoy Playwright no está instalado en este host.

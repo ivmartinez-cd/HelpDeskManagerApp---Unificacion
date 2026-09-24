@@ -9,8 +9,19 @@
 # 2026-09-24: GitHub quedó abandonado, así que este remoto ya no es "solo el
 # respaldo" -- es el único. Mientras no se registre un runner acá, NO hay
 # verificación automática en ningún lado: `make check` se corre a mano antes
-# de dar por terminado un modulo (ver CLAUDE.md). Si algun dia hay runner,
-# .github/workflows/ci.yml es el punto de partida.
+# de dar por terminado un modulo (ver CLAUDE.md). Decision de Ivan ese mismo
+# dia: queda asi por ahora, no se levanta runner.
+#
+# Si alguna vez se retoma, .github/workflows/ci.yml es el punto de partida (la
+# sintaxis es la misma; ojo que en Gitea los `services` se alcanzan por el
+# NOMBRE del servicio, no por localhost como en GitHub). Los dos obstaculos
+# concretos, medidos el 2026-09-24:
+#   1. El certificado de gitea.cdsa.com.ar es autofirmado (CN=gitea) y VENCIO
+#      el 2025-10-13, asi que act_runner no puede registrarse por HTTPS sin
+#      desactivar la validacion TLS. La salida sana es renovar el certificado,
+#      no poner `insecure: true`.
+#   2. El runner necesita /var/run/docker.sock, o sea control total del docker
+#      de esta maquina, incluidos los contenedores de la app.
 name: CI (sin runner: la verificacion se corre a mano)
 on:
   workflow_dispatch: {}
