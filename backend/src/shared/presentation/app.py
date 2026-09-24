@@ -121,6 +121,8 @@ _ORIGENES_DEV = (
     "http://127.0.0.1:3000",
     "http://localhost:3010",
     "http://127.0.0.1:3010",
+    # Acceso desde otras máquinas de la LAN al frontend de esta PC.
+    "http://192.168.178.39:3000",
 )
 
 
