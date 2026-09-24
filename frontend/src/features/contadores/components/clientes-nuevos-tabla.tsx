@@ -16,8 +16,25 @@ import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 
-type SortKey = "cliente" | "operador" | "corte" | "fc" | "instalados" | "estado";
-const SORT_KEYS: readonly SortKey[] = ["cliente", "operador", "corte", "fc", "instalados", "estado"];
+type SortKey =
+  | "cliente"
+  | "operador"
+  | "vendedor"
+  | "corte"
+  | "fc"
+  | "implementacion"
+  | "instalados"
+  | "estado";
+const SORT_KEYS: readonly SortKey[] = [
+  "cliente",
+  "operador",
+  "vendedor",
+  "corte",
+  "fc",
+  "implementacion",
+  "instalados",
+  "estado",
+];
 
 interface ClientesNuevosTablaProps {
   rows: ClienteNuevo[];
@@ -35,10 +52,14 @@ function valorOrden(f: ClienteNuevo, key: SortKey, operadorMeta: Map<string, Ope
       return f.cliente;
     case "operador":
       return f.operador_id ? (operadorMeta.get(f.operador_id)?.nombre ?? f.operador_id) : null;
+    case "vendedor":
+      return f.vendedor;
     case "corte":
       return f.dia_corte;
     case "fc":
       return f.fecha_estimada_primera_facturacion;
+    case "implementacion":
+      return f.fecha_estimada_implementacion;
     case "instalados":
       return f.siges?.equipos_instalados ?? null;
     case "estado":
@@ -144,10 +165,10 @@ export function ClientesNuevosTabla({
           <tr className="border-b border-border">
             {col("cliente", "Cliente")}
             {col("operador", "Operador")}
-            <th className={TH}>Vendedor</th>
+            {col("vendedor", "Vendedor")}
             {col("corte", "Corte")}
             {col("fc", "1ª facturación")}
-            <th className={TH}>Impl. estimada</th>
+            {col("implementacion", "Impl. estimada")}
             {col("instalados", "Instalados (Siges)")}
             {col("estado", "Estado")}
             {canEdit && <th className={TH} />}

@@ -6,7 +6,7 @@ contra Siges."""
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from src.modules.contadores.application.dtos.equipo_sin_real_anotado import (
     EquipoSinRealAnotado,
@@ -22,7 +22,7 @@ from src.modules.contadores.application.use_cases.operador_por_empresa import (
 from src.modules.contadores.domain.ports.equipos_sin_real_port import EquiposSinRealPort
 from src.modules.contadores.domain.services.estado_maquina_sin_real import ACTIVA_EN_CLIENTE
 
-_SORT_KEYS: dict[SortBy, Callable[[EquipoSinRealAnotado], int | str | tuple[int, str]]] = {
+_SORT_KEYS: dict[SortBy, Callable[[EquipoSinRealAnotado], int | str | date | tuple[int, str]]] = {
     "meses": lambda a: a.equipo.meses_sin_real,
     "cliente": lambda a: a.equipo.cliente.casefold(),
     "sucursal": lambda a: a.equipo.sucursal.casefold(),
@@ -30,6 +30,14 @@ _SORT_KEYS: dict[SortBy, Callable[[EquipoSinRealAnotado], int | str | tuple[int,
     # Tupla para que los equipos sin operador queden siempre al final del
     # orden ascendente, no mezclados como "".
     "operador": lambda a: (0, a.operador.nombre.casefold()) if a.operador else (1, ""),
+    "serie": lambda a: a.equipo.serie.casefold(),
+    # La misma fecha que muestra la columna: la instalación si nunca tuvo real.
+    "ultimo_real": lambda a: a.equipo.fecha_ultimo_real or a.equipo.fecha_referencia,
+    "promedio": lambda a: a.equipo.imp_prom_3m,
+    "estado": lambda a: a.equipo.estado_maquina.casefold(),
+    "observaciones": lambda a: (
+        (0, a.equipo.observaciones.casefold()) if a.equipo.observaciones.strip() else (1, "")
+    ),
 }
 
 

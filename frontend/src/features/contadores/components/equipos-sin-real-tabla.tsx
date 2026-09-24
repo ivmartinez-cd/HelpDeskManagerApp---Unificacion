@@ -70,16 +70,16 @@ export function EquiposSinRealTabla({ rows, sort, onToggleSort }: EquiposSinReal
       <table className="w-full min-w-[1120px] text-left">
         <thead>
           <tr className="border-b border-border font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-            <th className="px-4 py-2.5">Serie</th>
+            <SortableHeader column={{ key: "serie", label: "Serie" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
             <SortableHeader column={{ key: "modelo", label: "Modelo" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
             <SortableHeader column={{ key: "cliente", label: "Cliente" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
             <SortableHeader column={{ key: "sucursal", label: "Sucursal" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
             <SortableHeader column={{ key: "operador", label: "Operador" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
-            <th className="px-4 py-2.5">Últ. real</th>
+            <SortableHeader column={{ key: "ultimo_real", label: "Últ. real" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
             <SortableHeader column={{ key: "meses", label: "Meses sin real" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
-            <th className="px-4 py-2.5 text-right">Prom. 3M</th>
-            <th className="px-4 py-2.5">Estado</th>
-            <th className="px-4 py-2.5">Observaciones</th>
+            <SortableHeader column={{ key: "promedio", label: "Prom. 3M" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5 text-right" />
+            <SortableHeader column={{ key: "estado", label: "Estado" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
+            <SortableHeader column={{ key: "observaciones", label: "Observaciones" }} sort={sort} onToggleSort={onToggleSort} thClassName="px-4 py-2.5" />
           </tr>
         </thead>
         <tbody className="divide-y divide-border">

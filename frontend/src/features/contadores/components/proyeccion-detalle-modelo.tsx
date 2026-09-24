@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { SortableHeader } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import type { FilaProyeccion } from "../types/proyeccion";
 import { compararEsAr, n0, TEC_LABEL } from "./proyeccion-formato";
 
@@ -80,13 +82,41 @@ function agruparPorModelo(filas: FilaProyeccion[]): FilaDetalle[] {
   return [...m.values()].map(detalleDe).sort((a, b) => compararEsAr(a.modelo, b.modelo));
 }
 
+const promTotal = (d: FilaDetalle) => (d.equipos > 0 ? (d.imp10 + d.imp20) / d.equipos : 0);
+
+type SortKey = keyof FilaDetalle | "impTotal" | "promTotal";
+
+/** Encabezados en el orden de la tabla, con el valor por el que ordena cada uno. */
+const COLUMNAS: { key: SortKey; label: string; valor: (d: FilaDetalle) => string | number | null }[] = [
+  { key: "modelo", label: "Modelo", valor: (d) => d.modelo },
+  { key: "tec", label: "Tec.", valor: (d) => d.tec },
+  { key: "equipos", label: "Equipos", valor: (d) => d.equipos },
+  { key: "imp10", label: "Imp. Período (Cl. 10)", valor: (d) => d.imp10 },
+  { key: "imp20", label: "Imp. Período (Cl. 20)", valor: (d) => d.imp20 },
+  { key: "impTotal", label: "Imp. Período (Total)", valor: (d) => d.imp10 + d.imp20 },
+  { key: "promMono", label: "Prom. Mono", valor: (d) => d.promMono },
+  { key: "promColor", label: "Prom. Color", valor: (d) => d.promColor },
+  { key: "promTotal", label: "Prom. Total", valor: promTotal },
+  { key: "medMono", label: "Med. P80 Mono", valor: (d) => d.medMono },
+  { key: "medColor", label: "Med. P80 Color", valor: (d) => d.medColor },
+  { key: "medTotal", label: "Med. P80 Total", valor: (d) => d.medTotal },
+];
+
+const DESC_PRIMERO: readonly SortKey[] = COLUMNAS.slice(2).map((c) => c.key);
+
+function valorOrden(d: FilaDetalle, key: SortKey) {
+  return COLUMNAS.find((c) => c.key === key)?.valor(d);
+}
+
 const guion = (v: number | null) => (v === null ? "—" : n0(v));
 const siPositivo = (v: number) => (v > 0 ? n0(v) : "—");
 
 export function ProyeccionDetalleModelo({ filas }: { filas: FilaProyeccion[] }) {
   const [abierto, setAbierto] = useState(false);
-  if (filas.length === 0 || filas.some((f) => f.id_art_gen === undefined || f.id_modo_oper === undefined)) return null;
-  const detalle = agruparPorModelo(filas);
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const disponible = filas.length > 0 && filas.every((f) => f.id_art_gen !== undefined && f.id_modo_oper !== undefined);
+  const detalle = useSortedRows(disponible ? agruparPorModelo(filas) : [], sort, valorOrden);
+  if (!disponible) return null;
   const totEquipos = detalle.reduce((s, d) => s + d.equipos, 0);
   const tot10 = detalle.reduce((s, d) => s + d.imp10, 0);
   const tot20 = detalle.reduce((s, d) => s + d.imp20, 0);
@@ -109,9 +139,14 @@ export function ProyeccionDetalleModelo({ filas }: { filas: FilaProyeccion[] }) 
           <table className="w-full min-w-[980px] text-right text-xs tabular-nums">
             <thead className="text-[10px] font-bold uppercase text-muted-foreground">
               <tr>
-                {["Modelo", "Tec.", "Equipos", "Imp. Período (Cl. 10)", "Imp. Período (Cl. 20)", "Imp. Período (Total)",
-                  "Prom. Mono", "Prom. Color", "Prom. Total", "Med. P80 Mono", "Med. P80 Color", "Med. P80 Total"].map((h, i) => (
-                  <th key={h} className={i < 2 ? "px-3 py-2 text-left" : "px-3 py-2"}>{h}</th>
+                {COLUMNAS.map((c, i) => (
+                  <SortableHeader
+                    key={c.key}
+                    column={c}
+                    sort={sort}
+                    onToggleSort={toggleSort}
+                    thClassName={i < 2 ? "px-3 py-2 text-left" : "px-3 py-2"}
+                  />
                 ))}
               </tr>
             </thead>
@@ -126,7 +161,7 @@ export function ProyeccionDetalleModelo({ filas }: { filas: FilaProyeccion[] }) 
                   <td className="px-3 py-1.5">{n0(d.imp10 + d.imp20)}</td>
                   <td className="px-3 py-1.5">{guion(d.promMono)}</td>
                   <td className="px-3 py-1.5">{guion(d.promColor)}</td>
-                  <td className="px-3 py-1.5">{n0(d.equipos > 0 ? (d.imp10 + d.imp20) / d.equipos : 0)}</td>
+                  <td className="px-3 py-1.5">{n0(promTotal(d))}</td>
                   <td className="px-3 py-1.5">{guion(d.medMono)}</td>
                   <td className="px-3 py-1.5">{guion(d.medColor)}</td>
                   <td className="px-3 py-1.5">{guion(d.medTotal)}</td>

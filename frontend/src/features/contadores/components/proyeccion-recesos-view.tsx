@@ -1,7 +1,10 @@
 "use client";
 
+import { useCallback } from "react";
 import Link from "next/link";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { SearchableSelect } from "@/shared/components/ui/searchable-select";
 import { useSession } from "@/services/session-provider";
 import { useRecesosProyeccion } from "../hooks/use-recesos-proyeccion";
@@ -80,23 +83,54 @@ function nombreAnexo(r: Receso, anexos: AnexoOption[]): string {
   return anexos.find((a) => a.id_anexo === r.id_anexo)?.nombre_anexo ?? String(r.id_anexo);
 }
 
-const COLUMNAS = ["Grupo", "Anexo", "Desde", "Hasta", "Días", "Descripción", "Acciones"];
+type SortKey = "grupo" | "anexo" | "desde" | "hasta" | "dias" | "descripcion";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "grupo", label: "Grupo" },
+  { key: "anexo", label: "Anexo" },
+  { key: "desde", label: "Desde" },
+  { key: "hasta", label: "Hasta" },
+  { key: "dias", label: "Días", className: "text-right" },
+  { key: "descripcion", label: "Descripción" },
+];
+
+const DESC_PRIMERO: readonly SortKey[] = ["dias"];
+
+function nombreGrupo(r: Receso, grupos: GrupoEconomicoOption[]): string {
+  return grupos.find((g) => g.id === r.id_grupo_economico)?.descripcion ?? String(r.id_grupo_economico);
+}
+
+function useRecesosOrdenados({ lista, grupos, anexos }: Pick<ListaProps, "lista" | "grupos" | "anexos">) {
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const valorOrden = useCallback(
+    (r: Receso, key: SortKey) => {
+      if (key === "grupo") return nombreGrupo(r, grupos);
+      if (key === "anexo") return nombreAnexo(r, anexos);
+      if (key === "dias") return diasEntre(r.fecha_desde, r.fecha_hasta);
+      return key === "desde" ? r.fecha_desde : key === "hasta" ? r.fecha_hasta : r.descripcion;
+    },
+    [grupos, anexos],
+  );
+  return { sort, toggleSort, filas: useSortedRows(lista, sort, valorOrden) };
+}
 
 function ListaRecesos({ lista, grupos, anexos, puedeGestionar, onEditar, onEliminar }: ListaProps) {
+  const { sort, toggleSort, filas } = useRecesosOrdenados({ lista, grupos, anexos });
   return (
     <div className="overflow-hidden rounded-[12px] border border-border bg-card">
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-border text-[11px] font-bold uppercase text-muted-foreground">
             {COLUMNAS.map((c) => (
-              <th key={c} className={c === "Días" || c === "Acciones" ? "px-4 py-2.5 text-right" : "px-4 py-2.5"}>{c}</th>
+              <SortableHeader key={c.key} column={c} sort={sort} onToggleSort={toggleSort} thClassName="px-4 py-2.5" />
             ))}
+            <th className="px-4 py-2.5 text-right">Acciones</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {lista.map((r) => (
+          {filas.map((r) => (
             <tr key={r.id}>
-              <td className="px-4 py-3">{grupos.find((g) => g.id === r.id_grupo_economico)?.descripcion ?? r.id_grupo_economico}</td>
+              <td className="px-4 py-3">{nombreGrupo(r, grupos)}</td>
               <td className="px-4 py-3">{nombreAnexo(r, anexos)}</td>
               <td className="px-4 py-3">{fechaLarga(r.fecha_desde)}</td>
               <td className="px-4 py-3">{fechaLarga(r.fecha_hasta)}</td>

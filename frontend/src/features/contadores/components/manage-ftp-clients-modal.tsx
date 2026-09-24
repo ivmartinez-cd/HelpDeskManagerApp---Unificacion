@@ -5,9 +5,19 @@ import { toast } from "sonner";
 import { Plus, SquarePen, Trash2 } from "lucide-react";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { BrandSkeleton } from "@/shared/components/ui/brand-form";
+import { SortableHeader } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { contadoresApi, type FtpClient } from "../api/contadores-api";
 import { useFtpClients } from "../hooks/use-ftp-clients";
 import { FtpClientModal } from "./ftp-client-modal";
+
+type SortKey = "cliente" | "servidor";
+
+function valorOrden(client: FtpClient, key: SortKey) {
+  return key === "cliente" ? client.name : client.host;
+}
+
+const TH = "px-3 py-2.5";
 
 interface Props {
   isOpen: boolean;
@@ -35,10 +45,15 @@ export function ManageFtpClientsModal({ isOpen, onClose }: Props) {
     }
   };
 
-  const filtered = clients.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.host.toLowerCase().includes(search.toLowerCase()),
+  const { sort, toggleSort } = useOptionalTableSort<SortKey>();
+  const filtered = useSortedRows(
+    clients.filter(
+      (c) =>
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        c.host.toLowerCase().includes(search.toLowerCase()),
+    ),
+    sort,
+    valorOrden,
   );
 
   return (
@@ -82,8 +97,8 @@ export function ManageFtpClientsModal({ isOpen, onClose }: Props) {
               <table className="w-full text-left font-body text-[13px]">
                 <thead className="sticky top-0 border-b border-border bg-muted text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                   <tr>
-                    <th className="px-3 py-2.5">Cliente</th>
-                    <th className="px-3 py-2.5">Servidor</th>
+                    <SortableHeader column={{ key: "cliente", label: "Cliente" }} sort={sort} onToggleSort={toggleSort} thClassName={TH} />
+                    <SortableHeader column={{ key: "servidor", label: "Servidor" }} sort={sort} onToggleSort={toggleSort} thClassName={TH} />
                     <th className="px-3 py-2.5 text-right">Acciones</th>
                   </tr>
                 </thead>

@@ -15,6 +15,7 @@ from src.modules.auth.presentation.dependencies.features import tiene_feature
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.contadores.application.dtos.list_equipos_sin_real_request import (
     ListEquiposSinRealRequest,
+    SortBy,
 )
 from src.modules.contadores.application.use_cases.get_equipos_sin_real_resumen import (
     GetEquiposSinRealResumenUseCase,
@@ -76,9 +77,7 @@ def _operador_mapa(db: AsyncSession) -> MapaOperadorPorEmpresa | None:
 async def list_equipos_sin_real(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=50, ge=1, le=_MAX_PAGE_SIZE),
-    sort_by: Literal["meses", "cliente", "sucursal", "modelo", "operador"] = Query(
-        default="meses"
-    ),
+    sort_by: SortBy = Query(default="meses"),
     sort_dir: Literal["asc", "desc"] = Query(default="desc"),
     min_meses: int = Query(default=3, ge=1),
     search: str | None = Query(default=None, max_length=120),

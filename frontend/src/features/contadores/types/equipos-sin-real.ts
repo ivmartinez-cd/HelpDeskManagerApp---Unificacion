@@ -55,7 +55,17 @@ export interface EquiposSinRealResumen {
   consultado_en: string;
 }
 
-export type EquiposSinRealSortKey = "meses" | "cliente" | "sucursal" | "modelo" | "operador";
+export type EquiposSinRealSortKey =
+  | "meses"
+  | "cliente"
+  | "sucursal"
+  | "modelo"
+  | "operador"
+  | "serie"
+  | "ultimo_real"
+  | "promedio"
+  | "estado"
+  | "observaciones";
 
 export interface EquiposSinRealListParams {
   page: number;

@@ -3,6 +3,8 @@
 import type { AnexoPendiente, EstadoAnexoPendiente } from "../types/anexos-pendientes";
 import { formatFecha } from "./equipos-sin-real-tabla";
 import { BrandBadge } from "@/shared/components/ui/brand-form";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 
 export const ESTADO_META: Record<
   EstadoAnexoPendiente,
@@ -27,25 +29,59 @@ export function formatImporteUsd(importe: string): string {
   return usdFormat.format(Number(importe));
 }
 
+type SortKey =
+  | "periodo"
+  | "estado"
+  | "grupo"
+  | "anexo"
+  | "operador"
+  | "vendedor"
+  | "moneda"
+  | "fecha_proceso"
+  | "importe_usd";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "periodo", label: "Período" },
+  { key: "estado", label: "Estado" },
+  { key: "grupo", label: "Grupo" },
+  { key: "anexo", label: "Anexo" },
+  { key: "operador", label: "Operador" },
+  { key: "vendedor", label: "Vendedor" },
+  { key: "moneda", label: "Moneda" },
+  { key: "fecha_proceso", label: "Últ. proceso" },
+  { key: "importe_usd", label: "USD", className: "text-right" },
+];
+
+const DESC_PRIMERO: readonly SortKey[] = ["periodo", "fecha_proceso", "importe_usd"];
+
+function valorOrden(a: AnexoPendiente, key: SortKey) {
+  if (key === "estado") return ESTADO_META[a.estado].label;
+  if (key === "operador") return a.operador_nombre;
+  if (key === "importe_usd") return Number(a.importe_usd);
+  return a[key];
+}
+
 export function AnexosPendientesTabla({ rows }: { rows: AnexoPendiente[] }) {
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const filas = useSortedRows(rows, sort, valorOrden);
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
       <table className="w-full min-w-[1060px] text-left">
         <thead>
           <tr className="border-b border-border font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-            <th className="px-4 py-2.5">Período</th>
-            <th className="px-4 py-2.5">Estado</th>
-            <th className="px-4 py-2.5">Grupo</th>
-            <th className="px-4 py-2.5">Anexo</th>
-            <th className="px-4 py-2.5">Operador</th>
-            <th className="px-4 py-2.5">Vendedor</th>
-            <th className="px-4 py-2.5">Moneda</th>
-            <th className="px-4 py-2.5">Últ. proceso</th>
-            <th className="px-4 py-2.5 text-right">USD</th>
+            {COLUMNAS.map((column) => (
+              <SortableHeader
+                key={column.key}
+                column={column}
+                sort={sort}
+                onToggleSort={toggleSort}
+                thClassName="px-4 py-2.5"
+              />
+            ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {rows.map((a) => {
+          {filas.map((a) => {
             const meta = ESTADO_META[a.estado];
             return (
               <tr key={a.id_anexo} className="font-body text-sm hover:bg-muted/30">

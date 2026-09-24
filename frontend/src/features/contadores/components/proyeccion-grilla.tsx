@@ -10,7 +10,8 @@ import { ProyeccionDetalleModeloHistorico } from "./proyeccion-detalle-modelo-hi
 import { ProyeccionHistorialModal } from "./proyeccion-historial-modal";
 import { ProyeccionLeyenda } from "./proyeccion-leyenda";
 import { ProyeccionKpis } from "./proyeccion-resumen";
-import { agruparPorEquipo, ordenarGrupos, ProyeccionTabla, type ProyeccionSortKey } from "./proyeccion-tabla";
+import { ordenarGrupos, PROYECCION_DESC_PRIMERO, PROYECCION_SORT_KEYS, type ProyeccionSortKey } from "./proyeccion-orden";
+import { agruparPorEquipo, ProyeccionTabla } from "./proyeccion-tabla";
 import { aplicaFiltro, coincideBusqueda, type FiltroChip, ProyeccionToolbar } from "./proyeccion-toolbar";
 
 /** `GrillaEstimacion.razor` (v1.7) de un tablero ya cargado. El padre la
@@ -56,7 +57,8 @@ export function ProyeccionGrilla({ tablero, contexto, descartes, puedeOperar, re
   const [historial, setHistorial] = useState<FilaProyeccion | null>(null);
   const { sort, toggleSort } = useTableSort<ProyeccionSortKey>({
     initial: { key: "ubicacion", direction: "asc" },
-    keys: ["ubicacion", "nro_serie", "modelo", "impresiones"],
+    keys: PROYECCION_SORT_KEYS,
+    descFirstKeys: PROYECCION_DESC_PRIMERO,
   });
   const panel = usePanel(descartes, recargar);
   const exportCsv = useExportCsvProyeccion(contexto);

@@ -1,8 +1,11 @@
 "use client";
 
+import { useCallback } from "react";
 import type { AnexoSinProcesar } from "../types/calendario";
 import { formatFecha } from "./equipos-sin-real-tabla";
 import { formatPeriodo } from "./anexos-pendientes-tabla";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 
 /** `operador_id` → nombre/color del catálogo local de operadores (ver
  * AnexosSinProcesarView, que lo resuelve una sola vez para toda la tabla). */
@@ -11,6 +14,27 @@ export interface OperadorInfo {
   color: string | null;
 }
 
+type SortKey =
+  | "cliente"
+  | "anexo"
+  | "operador"
+  | "fecha_evento"
+  | "dias_vencido"
+  | "periodo_esperado"
+  | "ultimo_periodo_procesado";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "cliente", label: "Cliente" },
+  { key: "anexo", label: "Anexo" },
+  { key: "operador", label: "Operador" },
+  { key: "fecha_evento", label: "Evento vencido desde" },
+  { key: "dias_vencido", label: "Días vencido", className: "text-right" },
+  { key: "periodo_esperado", label: "Se esperaba" },
+  { key: "ultimo_periodo_procesado", label: "Último procesado" },
+];
+
+const DESC_PRIMERO: readonly SortKey[] = ["dias_vencido"];
+
 export function AnexosSinProcesarTabla({
   rows,
   operadores,
@@ -18,22 +42,33 @@ export function AnexosSinProcesarTabla({
   rows: AnexoSinProcesar[];
   operadores: Record<string, OperadorInfo>;
 }) {
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const valorOrden = useCallback(
+    (a: AnexoSinProcesar, key: SortKey) =>
+      key === "operador"
+        ? a.operador_id && (operadores[a.operador_id]?.nombre ?? a.operador_id)
+        : a[key],
+    [operadores],
+  );
+  const filas = useSortedRows(rows, sort, valorOrden);
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
       <table className="w-full min-w-[980px] text-left">
         <thead>
           <tr className="border-b border-border font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-            <th className="px-4 py-2.5">Cliente</th>
-            <th className="px-4 py-2.5">Anexo</th>
-            <th className="px-4 py-2.5">Operador</th>
-            <th className="px-4 py-2.5">Evento vencido desde</th>
-            <th className="px-4 py-2.5 text-right">Días vencido</th>
-            <th className="px-4 py-2.5">Se esperaba</th>
-            <th className="px-4 py-2.5">Último procesado</th>
+            {COLUMNAS.map((column) => (
+              <SortableHeader
+                key={column.key}
+                column={column}
+                sort={sort}
+                onToggleSort={toggleSort}
+                thClassName="px-4 py-2.5"
+              />
+            ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {rows.map((a) => {
+          {filas.map((a) => {
             const operador = a.operador_id ? operadores[a.operador_id] : undefined;
             return (
               <tr key={a.id_anexo} className="font-body text-sm hover:bg-muted/30">

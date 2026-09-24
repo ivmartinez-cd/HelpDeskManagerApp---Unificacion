@@ -29,6 +29,11 @@ const SORT_KEYS: readonly EquiposSinRealSortKey[] = [
   "sucursal",
   "modelo",
   "operador",
+  "serie",
+  "ultimo_real",
+  "promedio",
+  "estado",
+  "observaciones",
 ];
 
 /** Cortes alineados a los umbrales de severidad del backend
@@ -76,7 +81,7 @@ export function EquiposSinRealView() {
   const { sort, toggleSort } = useTableSort<EquiposSinRealSortKey>({
     initial: { key: "meses", direction: "desc" },
     keys: SORT_KEYS,
-    descFirstKeys: ["meses"],
+    descFirstKeys: ["meses", "promedio"],
   });
 
   // La búsqueda espera 350ms de inactividad antes de pegarle al backend.

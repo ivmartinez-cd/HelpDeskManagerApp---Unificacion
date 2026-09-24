@@ -5,6 +5,12 @@ import { toast } from "sonner";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Switch } from "@/shared/components/ui/switch";
 import { BrandSkeleton } from "@/shared/components/ui/brand-form";
+import { SortableHeader } from "@/shared/components/ui/sortable-header";
+import {
+  boolSortValue,
+  useOptionalTableSort,
+  useSortedRows,
+} from "@/shared/hooks/use-optional-table-sort";
 import { contadoresApi } from "../api/contadores-api";
 import type { PickerClientType } from "./client-picker-process-modal";
 
@@ -13,6 +19,14 @@ interface MeterClient {
   name: string;
   suma_color: boolean;
 }
+
+type SortKey = "cliente" | "suma_color";
+
+function valorOrden(client: MeterClient, key: SortKey) {
+  return key === "cliente" ? client.name : boolSortValue(client.suma_color);
+}
+
+const TH = "px-3 py-2.5";
 
 const TITLE: Record<"sds" | "ers", string> = {
   sds: "Clientes HP SDS",
@@ -62,7 +76,12 @@ export function ManageMeterClientsModal({ isOpen, type, onClose }: Props) {
     }
   };
 
-  const filtered = clients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
+  const { sort, toggleSort } = useOptionalTableSort<SortKey>();
+  const filtered = useSortedRows(
+    clients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase())),
+    sort,
+    valorOrden,
+  );
 
   return (
     <BrandModal isOpen={isOpen} onClose={onClose} title={TITLE[type]} widthPx={560}>
@@ -91,8 +110,8 @@ export function ManageMeterClientsModal({ isOpen, type, onClose }: Props) {
             <table className="w-full text-left font-body text-[13px]">
               <thead className="sticky top-0 border-b border-border bg-muted text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                 <tr>
-                  <th className="px-3 py-2.5">Cliente</th>
-                  <th className="px-3 py-2.5">Suma Color</th>
+                  <SortableHeader column={{ key: "cliente", label: "Cliente" }} sort={sort} onToggleSort={toggleSort} thClassName={TH} />
+                  <SortableHeader column={{ key: "suma_color", label: "Suma Color" }} sort={sort} onToggleSort={toggleSort} thClassName={TH} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">

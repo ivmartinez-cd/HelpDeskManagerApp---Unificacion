@@ -310,3 +310,11 @@ async def test_resumen_calcula_parque_total_por_operador_sin_duplicar_por_equipo
     assert por_nombre["Victor Paez"] == 60
     assert por_nombre["Ana Gomez"] == 8
     assert por_nombre["Sin operador asignado"] is None
+
+
+@pytest.mark.asyncio
+async def test_ordena_por_serie_desc() -> None:
+    result = await _use_case().execute(
+        ListEquiposSinRealRequest(min_meses=1, sort_by="serie", sort_dir="desc")
+    )
+    assert [a.equipo.serie for a in result.equipos] == ["S4", "S3", "S2", "S1"]

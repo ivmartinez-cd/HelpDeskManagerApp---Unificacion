@@ -14,15 +14,9 @@ import {
   UbicacionCell,
   UltimoFacturadoCell,
 } from "./proyeccion-celdas";
-import { compararEsAr, n0 } from "./proyeccion-formato";
+import { n0 } from "./proyeccion-formato";
+import type { GrupoEquipo, ProyeccionSortKey } from "./proyeccion-orden";
 import { ProyeccionSparkline } from "./proyeccion-sparkline";
-
-export type ProyeccionSortKey = "ubicacion" | "nro_serie" | "modelo" | "impresiones";
-
-/** Las clases de un equipo (Cl.10 primero), como `GrupoEquipo` del legacy. */
-export interface GrupoEquipo {
-  filas: FilaProyeccion[];
-}
 
 export function claveFila(fila: FilaProyeccion): string {
   return `${fila.id_maquina}-${fila.clase}`;
@@ -35,26 +29,6 @@ export function agruparPorEquipo(filas: FilaProyeccion[]): GrupoEquipo[] {
   return Array.from(porId.values()).map((lista) => ({
     filas: [...lista].sort((a, b) => Number(a.clase) - Number(b.clase)),
   }));
-}
-
-function valorOrden(g: GrupoEquipo, key: ProyeccionSortKey): string | number {
-  const p = g.filas[0];
-  if (key === "nro_serie") return p.nro_serie;
-  if (key === "modelo") return p.modelo;
-  if (key === "impresiones") return g.filas.slice(0, 2).reduce((s, f) => s + (f.impresiones ?? 0), 0);
-  return `${p.empresa}|${p.sucursal}|${p.sector}`;
-}
-
-/** Orden por equipo (no por fila), estable, con la cultura es-AR para texto;
- * "impresiones" suma las dos clases del equipo. */
-export function ordenarGrupos(grupos: GrupoEquipo[], sort: SortState<ProyeccionSortKey>): GrupoEquipo[] {
-  const factor = sort.direction === "asc" ? 1 : -1;
-  return [...grupos].sort((a, b) => {
-    const va = valorOrden(a, sort.key);
-    const vb = valorOrden(b, sort.key);
-    const cmp = typeof va === "number" && typeof vb === "number" ? va - vb : compararEsAr(String(va), String(vb));
-    return cmp * factor;
-  });
 }
 
 interface ProyeccionTablaProps {
@@ -79,15 +53,15 @@ export function ProyeccionTabla(props: ProyeccionTablaProps) {
             <SortableHeader column={{ key: "ubicacion", label: "Ubicación" }} sort={sort} onToggleSort={onToggleSort} thClassName={TH} />
             <SortableHeader column={{ key: "nro_serie", label: "Nro. serie" }} sort={sort} onToggleSort={onToggleSort} thClassName={TH} />
             <SortableHeader column={{ key: "modelo", label: "Modelo" }} sort={sort} onToggleSort={onToggleSort} thClassName={TH} />
-            <th className={cn(TH, "text-center")}>Meses sin real</th>
-            <th className={cn(TH, "text-center")}>12 meses</th>
-            <th className={cn(TH, "text-right")}>Prom 6m</th>
-            <th className={cn(TH, "text-center")}>Cl.</th>
-            <th className={cn(TH, "text-right")}>Últ. facturado</th>
-            <th className={cn(TH, "text-right")}>A facturar</th>
+            <SortableHeader column={{ key: "meses", label: "Meses sin real" }} sort={sort} onToggleSort={onToggleSort} thClassName={cn(TH, "text-center")} />
+            <SortableHeader column={{ key: "historico", label: "12 meses" }} sort={sort} onToggleSort={onToggleSort} thClassName={cn(TH, "text-center")} />
+            <SortableHeader column={{ key: "prom6", label: "Prom 6m" }} sort={sort} onToggleSort={onToggleSort} thClassName={cn(TH, "text-right")} />
+            <SortableHeader column={{ key: "clases", label: "Cl." }} sort={sort} onToggleSort={onToggleSort} thClassName={cn(TH, "text-center")} />
+            <SortableHeader column={{ key: "ultimo_facturado", label: "Últ. facturado" }} sort={sort} onToggleSort={onToggleSort} thClassName={cn(TH, "text-right")} />
+            <SortableHeader column={{ key: "a_facturar", label: "A facturar" }} sort={sort} onToggleSort={onToggleSort} thClassName={cn(TH, "text-right")} />
             <SortableHeader column={{ key: "impresiones", label: "Impresiones" }} sort={sort} onToggleSort={onToggleSort} thClassName={cn(TH, "text-right")} />
             <th className={cn(TH, "text-center")}>Acc.</th>
-            <th className={cn(TH, "text-center")}>Conf.</th>
+            <SortableHeader column={{ key: "semaforo", label: "Conf." }} sort={sort} onToggleSort={onToggleSort} thClassName={cn(TH, "text-center")} />
           </tr>
         </thead>
         <tbody className="divide-y divide-border">

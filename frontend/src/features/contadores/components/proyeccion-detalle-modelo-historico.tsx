@@ -2,6 +2,9 @@
 
 import { Fragment, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { SortableHeader } from "@/shared/components/ui/sortable-header";
+import type { SortDirection } from "@/shared/hooks/use-table-sort";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import type { FilaProyeccion, NivelParque, ParqueHistorico } from "../types/proyeccion";
 import { compararEsAr, n0 } from "./proyeccion-formato";
 
@@ -53,6 +56,32 @@ function agrupar(filas: FilaProyeccion[]): FilaHist[] {
     .sort((a, b) => compararEsAr(a.modelo, b.modelo) || compararEsAr(a.clase, b.clase));
 }
 
+type Medida = "n" | "p80" | "cruda";
+type SortKey = "modelo" | "clase" | "equipos" | `${keyof ParqueHistorico}:${Medida}`;
+
+const MEDIDAS: { medida: Medida; label: string }[] = [
+  { medida: "n", label: "N" },
+  { medida: "p80", label: "Med. P80" },
+  { medida: "cruda", label: "Cruda" },
+];
+
+/** Todas menos Modelo y Clase arrancan de mayor a menor. */
+const DESC_PRIMERO: readonly SortKey[] = [
+  "equipos",
+  ...NIVELES.flatMap((n) => MEDIDAS.map((m) => `${n.clave}:${m.medida}` as const)),
+];
+
+function valorOrden(f: FilaHist, key: SortKey) {
+  if (key === "modelo" || key === "clase" || key === "equipos") return f[key];
+  const [nivel, medida] = key.split(":") as [keyof ParqueHistorico, Medida];
+  return f.parque[nivel][medida];
+}
+
+interface OrdenProps {
+  sort: { key: SortKey | null; direction: SortDirection };
+  onToggleSort: (key: SortKey) => void;
+}
+
 // `Ni`: 0 equipos → "—".
 const ni = (n: number) => (n > 0 ? n0(n) : "—");
 
@@ -66,13 +95,16 @@ function CeldasNivel({ nivel }: { nivel: NivelParque }) {
   );
 }
 
-function Encabezado() {
+function Encabezado(orden: OrdenProps) {
+  const col = (key: SortKey, label: string, thClassName: string, rowSpan?: number) => (
+    <SortableHeader key={key} column={{ key, label }} {...orden} thClassName={thClassName} rowSpan={rowSpan} />
+  );
   return (
     <thead className="text-[10px] font-bold uppercase text-muted-foreground">
       <tr>
-        <th rowSpan={2} className="px-3 py-2 text-left">Modelo</th>
-        <th rowSpan={2} className="px-3 py-2 text-left">Clase</th>
-        <th rowSpan={2} className="px-3 py-2">Equipos (proceso)</th>
+        {col("modelo", "Modelo", "px-3 py-2 text-left", 2)}
+        {col("clase", "Clase", "px-3 py-2 text-left", 2)}
+        {col("equipos", "Equipos (proceso)", "px-3 py-2", 2)}
         {NIVELES.map((n) => (
           <th key={n.clave} colSpan={3} className="border-l border-border px-3 py-2 text-center">{n.titulo}</th>
         ))}
@@ -80,9 +112,9 @@ function Encabezado() {
       <tr>
         {NIVELES.map((n) => (
           <Fragment key={n.clave}>
-            <th className="border-l border-border px-3 py-1">N</th>
-            <th className="px-3 py-1">Med. P80</th>
-            <th className="px-3 py-1">Cruda</th>
+            {MEDIDAS.map((m, i) =>
+              col(`${n.clave}:${m.medida}`, m.label, i === 0 ? "border-l border-border px-3 py-1" : "px-3 py-1"),
+            )}
           </Fragment>
         ))}
       </tr>
@@ -92,10 +124,13 @@ function Encabezado() {
 
 export function ProyeccionDetalleModeloHistorico({ filas }: { filas: FilaProyeccion[] }) {
   const [abierto, setAbierto] = useState(false);
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
   const faltanDatos = filas.some(
     (f) => f.id_art_gen === undefined || f.id_modo_oper === undefined || f.parque_historico == null,
   );
-  if (filas.length === 0 || faltanDatos) return null;
+  const disponible = filas.length > 0 && !faltanDatos;
+  const filasHist = useSortedRows(disponible ? agrupar(filas) : [], sort, valorOrden);
+  if (!disponible) return null;
   return (
     <section className="rounded-[12px] border border-border bg-card">
       <button type="button" onClick={() => setAbierto((a) => !a)} className="flex w-full items-center gap-2 px-4 py-3 text-left">
@@ -109,9 +144,9 @@ export function ProyeccionDetalleModeloHistorico({ filas }: { filas: FilaProyecc
       {abierto && (
         <div className="overflow-x-auto border-t border-border">
           <table className="w-full min-w-[1100px] text-right text-xs tabular-nums">
-            <Encabezado />
+            <Encabezado sort={sort} onToggleSort={toggleSort} />
             <tbody className="divide-y divide-border">
-              {agrupar(filas).map((f) => (
+              {filasHist.map((f) => (
                 <tr key={f.clave}>
                   <td className="px-3 py-1.5 text-left">{f.modelo}</td>
                   <td className="px-3 py-1.5 text-left">{f.clase}</td>

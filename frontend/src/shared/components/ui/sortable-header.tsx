@@ -2,7 +2,7 @@
 
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import type { SortState } from "@/shared/hooks/use-table-sort";
+import type { SortDirection } from "@/shared/hooks/use-table-sort";
 
 export interface SortableColumn<K extends string> {
   key: K;
@@ -12,9 +12,13 @@ export interface SortableColumn<K extends string> {
 
 interface SortableHeaderProps<K extends string> {
   column: SortableColumn<K>;
-  sort: SortState<K>;
+  /** `key: null` = tabla sin ordenar todavía por el usuario (orden del
+   * backend): ningún encabezado queda activo. Un `SortState<K>` encaja tal cual. */
+  sort: { key: K | null; direction: SortDirection };
   onToggleSort: (key: K) => void;
   thClassName?: string;
+  /** Para encabezados de dos niveles: la columna ocupa ambas filas. */
+  rowSpan?: number;
 }
 
 export function SortableHeader<K extends string>({
@@ -22,12 +26,14 @@ export function SortableHeader<K extends string>({
   sort,
   onToggleSort,
   thClassName = "px-4 py-3",
+  rowSpan,
 }: SortableHeaderProps<K>) {
   const active = sort.key === column.key;
   const Icon = !active ? ChevronsUpDown : sort.direction === "asc" ? ArrowUp : ArrowDown;
   return (
     <th
       scope="col"
+      rowSpan={rowSpan}
       aria-sort={active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}
       className={cn(thClassName, column.className)}
     >

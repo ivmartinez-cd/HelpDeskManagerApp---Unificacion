@@ -1,7 +1,18 @@
 from dataclasses import dataclass
 from typing import Literal
 
-SortBy = Literal["meses", "cliente", "sucursal", "modelo", "operador"]
+SortBy = Literal[
+    "meses",
+    "cliente",
+    "sucursal",
+    "modelo",
+    "operador",
+    "serie",
+    "ultimo_real",
+    "promedio",
+    "estado",
+    "observaciones",
+]
 SortDir = Literal["asc", "desc"]
 
 
