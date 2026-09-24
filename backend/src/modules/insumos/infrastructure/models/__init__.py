@@ -6,6 +6,18 @@ from src.modules.insumos.infrastructure.models.customer_zone_contact_model impor
     CustomerZoneContactModel,
 )
 from src.modules.insumos.infrastructure.models.dca_monitor_model import DcaMonitorModel
+from src.modules.insumos.infrastructure.models.despacho_accion_model import DespachoAccionModel
+from src.modules.insumos.infrastructure.models.despacho_corrida_model import (
+    DespachoCorridaModel,
+)
+from src.modules.insumos.infrastructure.models.despacho_envio_model import DespachoEnvioModel
+from src.modules.insumos.infrastructure.models.despacho_estado_historial_model import (
+    DespachoEstadoHistorialModel,
+)
+from src.modules.insumos.infrastructure.models.despacho_remito_model import (
+    DespachoIncidenteModel,
+    DespachoRemitoModel,
+)
 from src.modules.insumos.infrastructure.models.dismissed_supply_model import (
     DismissedSupplyModel,
 )
@@ -41,6 +53,12 @@ __all__ = [
     "CustomerConfigModel",
     "CustomerZoneContactModel",
     "DcaMonitorModel",
+    "DespachoAccionModel",
+    "DespachoCorridaModel",
+    "DespachoEnvioModel",
+    "DespachoEstadoHistorialModel",
+    "DespachoIncidenteModel",
+    "DespachoRemitoModel",
     "DismissedSupplyModel",
     "DispatchUnconfirmedNotificationModel",
     "KnownDeviceModel",
