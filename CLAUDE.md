@@ -194,50 +194,38 @@ sesiones para poder probar en el navegador.
 ## Varias sesiones de Claude en paralelo sobre el mismo checkout
 
 El usuario trabaja habitualmente con **varias sesiones de Claude Code abiertas a la vez** (3 o
-4, cada una en su ventana), todas sobre **este mismo checkout** — no hay worktrees ni ramas por
+4, en la app de escritorio), todas sobre **este mismo checkout** — no hay worktrees ni ramas por
 sesión. Consecuencia: `git status` mezcla el trabajo en curso de todas, y un archivo puede estar
 siendo editado por otra sesión en este momento.
 
-> **Ojo (2026-09-24): el registro automático ya no está funcionando.** Los scripts auxiliares
-> (`~/.local/bin/claude-session-registry`, `claude-git-guard`, `claude-push-reminder`,
-> `claude-build-lock`, `hd-status`, `dev`/`hdm`) **no se migraron** desde la máquina anterior:
-> `.claude/settings.local.json` los sigue invocando pero no existen, así que los hooks no hacen
-> nada y `.claude/sessions/edits.tsv` está vacío. Hasta que se reinstalen, las reglas de abajo
-> hay que cumplirlas **a mano**: no hay aviso automático ni bloqueo que las haga cumplir.
+**No hay ningún mecanismo automático que avise de eso** (hubo uno, por hooks, que no sobrevivió
+a la migración de máquina del 2026-09-24). O sea: nada va a advertir que otra sesión tocó el
+archivo que estás por editar. Las reglas se cumplen a ojo:
 
-Mecanismos de coordinación; usarlos, no asumir que se está solo:
+- **Releer el archivo antes de editarlo** si pasó un rato desde la última lectura: pudo cambiar
+  abajo tuyo.
+- **No pisar, revertir ni reformatear trabajo ajeno**, aunque parezca a medio hacer.
+- **No commitear lo que no es de la propia tarea**: `git add <archivos propios>` explícito,
+  nunca `git add -A` / `git add .`. Ante la duda, `git diff` del archivo antes de stagearlo.
+- **Hablar con las otras sesiones.** `ListAgents` lista las que están abiertas; `SendMessage` les
+  manda un mensaje y pueden responder. Usarlo cuando hay que tocar un módulo/archivo que otra
+  sesión está trabajando (quién toca qué, si algo está a medio hacer), y **siempre** antes de un
+  `reiniciar.sh`/`compose up` que va a cortar el stack que las demás están probando.
 
-1. **Registro de ediciones entre sesiones** (`.claude/sessions/edits.tsv`, hoy sin alimentar —
-   ver aviso). Cuando funciona, cada `Edit`/`Write` queda anotado y antes de editar un archivo
-   que **otra** sesión tocó hace poco llega un aviso por `additionalContext`. Qué hacer cuando
-   aparece el aviso: releer el archivo (pudo cambiar), no pisar ni revertir ni reformatear lo
-   ajeno, y **no commitear archivos que no sean de la propia tarea** — al commitear, agregar
-   explícitamente los archivos propios (`git add <archivos>`), nunca `git add -A`/`git add .`.
-2. **Comunicación directa entre sesiones.** `ListAgents` lista las otras sesiones de Claude
-   abiertas en esta máquina; `SendMessage` les manda un mensaje y pueden responder. Usarlo
-   cuando el registro muestra que otra sesión está en el mismo módulo/archivo y hace falta
-   coordinar (quién toca qué, si algo está a medio hacer, si se puede reiniciar un contenedor
-   que la otra está usando), o cuando un `reiniciar.sh`/`compose up` va a cortar el stack que
-   las demás están probando.
+Si hace falta sí o sí modificar algo que otra sesión está tocando, decírselo al usuario antes de
+seguir, no resolverlo pisando.
 
-Si un aviso del registro se refiere a un archivo que hay que modificar sí o sí y la otra sesión
-sigue activa, decírselo al usuario antes de seguir, no resolverlo pisando.
+## Reglas de git
 
-## Guardas automáticas de git (se cumplen solas, no son opcionales)
-
-Estas reglas se cumplen igual **esté o no la guarda instalada** (ver el aviso de la sección
-anterior: `claude-git-guard` hoy no existe en esta máquina, así que nada las bloquea). No
-intentar rodearlas; si una bloquea algo que de verdad hace falta, explicárselo al usuario y que
-decida él.
+Nada las hace cumplir automáticamente: son reglas, no guardas. No intentar rodearlas; si una
+estorba algo que de verdad hace falta, explicárselo al usuario y que decida él.
 
 - **Nunca** `git add -A` / `--all` / `.`, `git commit -a` / `-am`, ni `git push --force`.
   Motivo: con varias sesiones sobre el mismo checkout, esos comandos suben trabajo ajeno o
   reescriben historia compartida. Siempre `git add <archivos propios>` explícito y `git commit`
-  sin `-a`. (Lo denegaba el hook `claude-git-guard`, hoy ausente.)
+  sin `-a`.
 - **`.githooks/pre-commit`** (≈5 s): si hay `.py` staged en `backend/`, corre `ruff` sobre esos
-  archivos dentro del contenedor. Su otro control — rechazar el commit si un archivo staged fue
-  editado más recientemente por **otra** sesión de Claude — depende del registro de sesiones y
-  hoy no tiene datos que mirar; override consciente, cuando vuelva: `ALLOW_FOREIGN=1 git commit …`.
+  archivos dentro del contenedor. Nada más.
 - **`.githooks/pre-push`** (instantáneo): lista los commits que se van a subir (leerlos, no
   pushear a ciegas). **No corre ninguna verificación local** desde el 2026-09-02.
 - **No hay CI** (ver la sección de arriba): ningún push dispara verificación en ningún lado.
