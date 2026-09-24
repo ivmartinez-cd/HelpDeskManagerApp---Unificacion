@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 # usa su propia clave para no bloquearse entre sí.
 OFFLINE_VERIFY_LOCK_KEY: int = 1_001_001
 OFFLINE_DELETE_LOCK_KEY: int = 1_001_002
+INSUMOS_DESPACHADOS_SINCRONIZAR_LOCK_KEY: int = 1_001_003
 LIQUIDACIONES_SINCRONIZAR_LOCK_KEY: int = 1_002_001
 
 

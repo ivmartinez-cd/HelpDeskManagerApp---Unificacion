@@ -36,6 +36,15 @@ from src.modules.insumos.presentation.dependencies.customers import (
     build_sync_customers,
     build_toggle_customer,
 )
+from src.modules.insumos.presentation.dependencies.despachados import (
+    build_cerrar_alerta_despacho,
+    build_consultar_actualizacion,
+    build_listar_despachos,
+    build_obtener_detalle_despacho,
+    build_registrar_accion_despacho,
+    build_resumir_despachos,
+    build_sincronizar_despachos,
+)
 from src.modules.insumos.presentation.dependencies.mail_log import (
     build_list_mail_log,
 )
@@ -81,6 +90,8 @@ __all__ = [
     "build_bulk_seed_contacts",
     "build_bulk_toggle_customers",
     "build_cancel_order",
+    "build_cerrar_alerta_despacho",
+    "build_consultar_actualizacion",
     "build_count_new_devices",
     "build_count_offline_candidates",
     "build_delete_offline_devices",
@@ -112,12 +123,17 @@ __all__ = [
     "build_list_offline_outages",
     "build_list_pending_orders",
     "build_list_requests",
+    "build_listar_despachos",
     "build_load_order",
+    "build_obtener_detalle_despacho",
     "build_preview_zone_contacts_import",
     "build_reconcile_order",
+    "build_registrar_accion_despacho",
+    "build_resumir_despachos",
     "build_save_insumos_config",
     "build_set_client_mail_enabled",
     "build_set_zone_contact",
+    "build_sincronizar_despachos",
     "build_sync_customers",
     "build_sync_monitor_status",
     "build_sync_new_devices",

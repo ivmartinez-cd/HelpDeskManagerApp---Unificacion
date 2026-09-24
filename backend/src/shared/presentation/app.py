@@ -83,12 +83,28 @@ def _jobs_wati(settings: Settings) -> list[asyncio.Task[None]]:
     return start_wati_background_jobs(settings.wati_poll_interval_minutes)
 
 
+def _jobs_despachados(settings: Settings) -> list[asyncio.Task[None]]:
+    """Insumos > Despachados consulta ORION y OCA reales: tiene su propio flag, apagado
+    por default, independiente del de insumos."""
+    if settings.disable_despachados_background_jobs:
+        logger.info(
+            "background_jobs: despachados omitido (DISABLE_DESPACHADOS_BACKGROUND_JOBS=true)"
+        )
+        return []
+    from src.modules.insumos.presentation.despachados_jobs import (
+        start_despachados_background_jobs,
+    )
+
+    return start_despachados_background_jobs(settings)
+
+
 def _iniciar_background_jobs(settings: Settings) -> list[asyncio.Task[None]]:
     """Imports perezosos a propósito: los módulos de jobs no se cargan (ni sus
     clientes externos) cuando `DISABLE_BACKGROUND_JOBS=true`. Mismo orden de
     arranque de siempre: insumos, sla, analisis_log_hp, contadores,
     liquidaciones, wati. `DISABLE_INSUMOS_BACKGROUND_JOBS=true` apaga solo
-    insumos (el poller que manda mail real) y deja correr el resto."""
+    insumos (el poller que manda mail real) y deja correr el resto; despachados
+    tiene su propio flag (`DISABLE_DESPACHADOS_BACKGROUND_JOBS`)."""
     if settings.disable_background_jobs:
         return []
     tasks: list[asyncio.Task[None]] = []
@@ -99,6 +115,7 @@ def _iniciar_background_jobs(settings: Settings) -> list[asyncio.Task[None]]:
     tasks += _jobs_sla(settings)
     for arrancar in (_jobs_analisis_log_hp, _jobs_contadores, _jobs_liquidaciones, _jobs_wati):
         tasks += arrancar(settings)
+    tasks += _jobs_despachados(settings)
     logger.info("background_jobs: %d job(s) iniciados", len(tasks))
     return tasks
 

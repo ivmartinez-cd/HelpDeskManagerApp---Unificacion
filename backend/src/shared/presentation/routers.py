@@ -53,6 +53,12 @@ from src.modules.insumos.presentation.alerts_router import router as insumos_ale
 from src.modules.insumos.presentation.audit_router import router as insumos_audit_router
 from src.modules.insumos.presentation.config_router import router as insumos_config_router
 from src.modules.insumos.presentation.customers_router import router as insumos_customers_router
+from src.modules.insumos.presentation.despachados_acciones_router import (
+    router as insumos_despachados_acciones_router,
+)
+from src.modules.insumos.presentation.despachados_router import (
+    router as insumos_despachados_router,
+)
 from src.modules.insumos.presentation.devices_router import router as insumos_devices_router
 from src.modules.insumos.presentation.health_router import router as insumos_health_router
 from src.modules.insumos.presentation.mail_log_router import router as insumos_mail_log_router
@@ -170,6 +176,8 @@ ROUTERS: tuple[APIRouter, ...] = (
     insumos_offline_devices_router,
     insumos_alerts_router,
     insumos_health_router,
+    insumos_despachados_router,
+    insumos_despachados_acciones_router,
     turnos_router,
     turnos_casillas_router,
     turnos_slots_router,

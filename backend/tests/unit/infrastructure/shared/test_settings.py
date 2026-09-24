@@ -110,3 +110,26 @@ def test_config_final_y_campos_planos(monkeypatch: pytest.MonkeyPatch) -> None:
     campos_mixins = {f for m in mixins for f in m.model_fields}
     assert campos_mixins == set(Settings.model_fields)
     assert all(not m.model_config.get("frozen") for m in mixins)
+
+
+def test_despachados_arranca_apagado_y_lee_la_ventana_del_entorno(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    assert Settings.model_fields["disable_despachados_background_jobs"].default is True
+
+    s = _settings(
+        monkeypatch,
+        DESPACHADOS_DIAS_SEMANA="[0,2,4]",
+        DESPACHADOS_HORA_INICIO="9",
+        OCA_PAUSA_SEGUNDOS="0.5",
+    )
+
+    assert s.despachados_dias_semana == (0, 2, 4)
+    assert (s.despachados_hora_inicio, s.oca_pausa_segundos) == (9, 0.5)
+
+
+def test_despachados_dias_sin_movimiento_menor_a_uno_hace_fallar_el_arranque(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with pytest.raises(ValidationError):
+        _settings(monkeypatch, DESPACHADOS_DIAS_SIN_MOVIMIENTO="0")

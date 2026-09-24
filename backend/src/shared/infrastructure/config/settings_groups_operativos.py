@@ -4,7 +4,7 @@ operativa (sla/preventivos/wati/analisis-log-hp/liquidaciones/despachados), sepa
 criterio de composición: ver el docstring de módulo de `settings_groups.py`.
 """
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings
 
 
@@ -200,3 +200,21 @@ class DespachadosSettings(BaseSettings):
         "https://webservice.oca.com.ar/ePak_tracking/Oep_TrackEPak.asmx/GetEnvioEstadoActual"
     )
     oca_timeout_segundos: float = 15.0
+    # Pausa entre dos consultas seguidas a OCA: es un webservice público, no hay que
+    # martillarlo (la corrida es secuencial a propósito).
+    oca_pausa_segundos: float = 0.3
+    # Días hábiles sin cambio de `FechaEstado` para pasar un envío abierto a amarillo
+    # (también: días de gracia para que OCA registre una guía nueva). Mínimo 1.
+    despachados_dias_sin_movimiento: int = Field(default=3, ge=1)
+
+    # El job consulta ORION y OCA reales: arranca apagado hasta que el usuario lo
+    # valide en dev. Independiente de DISABLE_BACKGROUND_JOBS (que igual lo apaga).
+    disable_despachados_background_jobs: bool = True
+    # Cadencia del job programado; "Actualizar ahora" corre aparte, cuando se pide.
+    despachados_intervalo_minutos: int = 120
+    # Ventana del job en hora Argentina: días (0 = lunes … 6 = domingo; en el .env
+    # como JSON, p. ej. [0,1,2,3,4,5]) y horas [inicio, fin). Fuera de la ventana
+    # el ciclo no consulta nada (solo deja una línea de log).
+    despachados_dias_semana: tuple[int, ...] = (0, 1, 2, 3, 4, 5)
+    despachados_hora_inicio: int = 8
+    despachados_hora_fin: int = 20
