@@ -3,7 +3,10 @@
 from collections.abc import Collection, Sequence
 from typing import Protocol
 
-from src.modules.insumos.domain.entities.despachados.envio_seguido import EnvioSeguido
+from src.modules.insumos.domain.entities.despachados.envio_seguido import (
+    CierreAlerta,
+    EnvioSeguido,
+)
 from src.modules.insumos.domain.value_objects.despachados.cambio_estado import CambioEstado
 from src.modules.insumos.domain.value_objects.despachados.clasificacion import ColorSemaforo
 from src.modules.insumos.domain.value_objects.despachados.despacho_siges import DespachoSiges
@@ -28,6 +31,11 @@ class EnviosDespachoRepository(Protocol):
     async def actualizar(self, envio: EnvioSeguido) -> None:
         """Persiste estado OCA, clasificación, última consulta/error y cierre de alerta.
         No toca los datos de Siges (cliente, sucursal, fecha de remito)."""
+        ...
+
+    async def registrar_cierre_alerta(self, guia: str, cierre: CierreAlerta) -> None:
+        """Escribe solo el cierre de la alerta (quién y cuándo): no pisa el estado de OCA ni
+        la clasificación que el job haya guardado entretanto. Sin envío, no hace nada."""
         ...
 
 

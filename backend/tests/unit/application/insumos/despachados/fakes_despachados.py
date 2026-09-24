@@ -1,4 +1,5 @@
-"""Fakes en memoria de los puertos de Insumos > Despachados y datos de prueba.
+"""Fakes en memoria de los puertos de Insumos > Despachados y datos de prueba (los de Siges,
+OCA y el mundo de `SincronizarDespachos` están en `fakes_sincronizacion.py`).
 
 Calendario de referencia: `AHORA` es el jueves 24/09/2026 a las 12:00 en Argentina; el
 lunes 12/10/2026 es feriado.
@@ -8,7 +9,7 @@ orden del flujo (la FK de remito a envío y el cierre de toda corrida sin termin
 un caso de uso que las viola pasa los tests unit y falla recién en producción.
 """
 
-from collections.abc import Awaitable, Callable, Collection, Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import replace
 from datetime import UTC, date, datetime
 from typing import Any
@@ -17,8 +18,6 @@ from zoneinfo import ZoneInfo
 
 from src.modules.insumos.application.use_cases.despachados.sincronizar_despachos import (
     ConfigSincronizacion,
-    SincronizarDespachos,
-    SincronizarDespachosPorts,
 )
 from src.modules.insumos.domain.entities.despachados.accion_registrada import (
     AccionNueva,
@@ -29,7 +28,10 @@ from src.modules.insumos.domain.entities.despachados.corrida import (
     OrigenCorrida,
     ResumenCorrida,
 )
-from src.modules.insumos.domain.entities.despachados.envio_seguido import EnvioSeguido
+from src.modules.insumos.domain.entities.despachados.envio_seguido import (
+    CierreAlerta,
+    EnvioSeguido,
+)
 from src.modules.insumos.domain.value_objects.despachados.cambio_estado import CambioEstado
 from src.modules.insumos.domain.value_objects.despachados.clasificacion import (
     ClasificacionEnvio,
@@ -40,7 +42,6 @@ from src.modules.insumos.domain.value_objects.despachados.despacho_siges import 
     IncidenteInsumo,
 )
 from src.modules.insumos.domain.value_objects.despachados.estado_oca import EstadoOca
-from tests.unit.application.insumos._offline_fakes import FakeExclusiveLock
 
 AHORA = datetime(2026, 9, 24, 15, 0, tzinfo=UTC)
 HOY = date(2026, 9, 24)
@@ -114,48 +115,18 @@ def envio(guia: str = GUIA_A, **cambios: Any) -> EnvioSeguido:
     return replace(base, **cambios)
 
 
-class FakeDespachosSiges:
-    def __init__(self, despachos: Sequence[DespachoSiges] = ()) -> None:
-        self.despachos = list(despachos)
-        self.error: Exception | None = None
-        self.llamadas: list[tuple[int, tuple[int, ...]]] = []
-
-    async def listar_despachos_oca(
-        self, *, dias_ventana: int, distribuciones: tuple[int, ...]
-    ) -> list[DespachoSiges]:
-        self.llamadas.append((dias_ventana, distribuciones))
-        if self.error is not None:
-            raise self.error
-        return list(self.despachos)
-
-
-Respuesta = EstadoOca | None | Exception
-
-
-class FakeOcaSeguimiento:
-    """Responde según `respuestas` (una excepción se lanza); `al_responder` simula lo que
-    pasa en HDM mientras OCA contesta (p. ej. un operador cierra una alerta)."""
-
-    def __init__(self, eventos: list[str]) -> None:
-        self.respuestas: dict[str, Respuesta] = {}
-        self.al_responder: Callable[[str], Awaitable[None]] | None = None
-        self._eventos = eventos
-
-    async def consultar_estado_actual(self, guia: str) -> EstadoOca | None:
-        self._eventos.append(f"oca {guia}")
-        if self.al_responder is not None:
-            await self.al_responder(guia)
-        respuesta = self.respuestas.get(guia)
-        if isinstance(respuesta, Exception):
-            raise respuesta
-        return respuesta
-
-
 class FakeEnviosDespacho:
-    def __init__(self, envios: Sequence[EnvioSeguido] = ()) -> None:
+    """`eventos`, si se pasa, anota cada `actualizar` para verificar su orden respecto de las
+    confirmaciones; `cierres` guarda lo que se escribió con `registrar_cierre_alerta`."""
+
+    def __init__(
+        self, envios: Sequence[EnvioSeguido] = (), eventos: list[str] | None = None
+    ) -> None:
         self.envios = {e.guia: e for e in envios}
         self.creados: list[EnvioSeguido] = []
         self.actualizados: list[EnvioSeguido] = []
+        self.cierres: list[tuple[str, CierreAlerta]] = []
+        self._eventos = [] if eventos is None else eventos
 
     async def guias_seguidas(self, guias: Collection[str]) -> set[str]:
         return {guia for guia in guias if guia in self.envios}
@@ -173,8 +144,14 @@ class FakeEnviosDespacho:
         return self.envios.get(guia)
 
     async def actualizar(self, envio: EnvioSeguido) -> None:
+        self._eventos.append(f"actualizar {envio.guia}")
         self.actualizados.append(envio)
         self.envios[envio.guia] = envio
+
+    async def registrar_cierre_alerta(self, guia: str, cierre: CierreAlerta) -> None:
+        self.cierres.append((guia, cierre))
+        if guia in self.envios:
+            self.envios[guia] = replace(self.envios[guia], cierre_alerta=cierre)
 
 
 class ClaveForaneaVioladaError(Exception):
@@ -212,13 +189,15 @@ class FakeHistorialEstados:
 
 class FakeCorridasDespacho:
     """`iniciadas` guarda cada corrida como se inició y `terminadas` el resumen con que se
-    cerró; `ultima()` las combina como la base (con `terminada_en` si ya se cerró)."""
+    cerró; `ultima()` las combina como la base (con `terminada_en` si ya se cerró).
+    `eventos`, si se pasa, anota cada `terminar`."""
 
-    def __init__(self) -> None:
+    def __init__(self, eventos: list[str] | None = None) -> None:
         self.iniciadas: list[Corrida] = []
         self.terminadas: dict[int, ResumenCorrida] = {}
         self.interrumpidas: list[str] = []
         self.error_al_terminar: Exception | None = None
+        self._eventos = [] if eventos is None else eventos
 
     async def iniciar(self, origen: OrigenCorrida, usuario_nombre: str | None) -> Corrida:
         corrida = Corrida(len(self.iniciadas) + 1, origen, AHORA, usuario_nombre)
@@ -226,6 +205,7 @@ class FakeCorridasDespacho:
         return corrida
 
     async def terminar(self, corrida_id: int, resumen: ResumenCorrida) -> None:
+        self._eventos.append(f"terminar corrida {corrida_id}")
         if self.error_al_terminar is not None:
             raise self.error_al_terminar
         self.terminadas[corrida_id] = resumen
@@ -282,45 +262,3 @@ class FakeAccionesDespacho:
 
     async def listar_por_guia(self, guia: str) -> list[AccionRegistrada]:
         return [a for a in reversed(self.acciones) if a.guia == guia]
-
-
-class MundoSincronizacion:
-    """Todos los puertos de `SincronizarDespachos` en memoria. `eventos` registra en orden
-    las consultas a OCA, las pausas y las confirmaciones."""
-
-    def __init__(self, *, envios: Sequence[EnvioSeguido] = (), candado_libre: bool = True) -> None:
-        self.eventos: list[str] = []
-        self.siges = FakeDespachosSiges()
-        self.oca = FakeOcaSeguimiento(self.eventos)
-        self.envios = FakeEnviosDespacho(envios)
-        self.remitos = FakeRemitosDespacho(self.envios)
-        self.historial = FakeHistorialEstados()
-        self.corridas = FakeCorridasDespacho()
-        self.feriados = FakeCalendarioFeriados()
-        self.candado = FakeExclusiveLock(candado_libre)
-        self.ahora = AHORA
-
-    async def confirmar(self) -> None:
-        self.eventos.append("confirmar")
-
-    async def pausar(self, segundos: float) -> None:
-        self.eventos.append(f"pausa {segundos}")
-
-    def caso_de_uso(self, config: ConfigSincronizacion = CONFIG) -> SincronizarDespachos:
-        ports = SincronizarDespachosPorts(
-            siges=self.siges,
-            oca=self.oca,
-            envios=self.envios,
-            remitos=self.remitos,
-            historial=self.historial,
-            corridas=self.corridas,
-            feriados=self.feriados,
-            candado=self.candado,
-            confirmar=self.confirmar,
-            reloj=lambda: self.ahora,
-            pausar=self.pausar,
-        )
-        return SincronizarDespachos(ports, config)
-
-    async def correr(self, origen: OrigenCorrida = OrigenCorrida.PROGRAMADA) -> ResumenCorrida:
-        return await self.caso_de_uso().execute(origen)

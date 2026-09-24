@@ -66,7 +66,7 @@ def columnas_seguimiento(envio: EnvioSeguido) -> dict[str, Any]:
         **_columnas_clasificacion(envio.clasificacion),
         "consultado_en": envio.consultado_en,
         **_columnas_error(envio.ultimo_error),
-        **_columnas_cierre(envio.cierre_alerta),
+        **columnas_cierre(envio.cierre_alerta),
     }
 
 
@@ -145,7 +145,8 @@ def _columnas_error(error: ErrorConsulta | None) -> dict[str, Any]:
     return {"ultimo_error": error.mensaje, "ultimo_error_en": error.ocurrido_en}
 
 
-def _columnas_cierre(cierre: CierreAlerta | None) -> dict[str, Any]:
+def columnas_cierre(cierre: CierreAlerta | None) -> dict[str, Any]:
+    """Las tres columnas del cierre de la alerta (todas NULL si está abierta)."""
     if cierre is None:
         return dict.fromkeys(
             ("alerta_cerrada_en", "alerta_cerrada_por_id", "alerta_cerrada_por_nombre")

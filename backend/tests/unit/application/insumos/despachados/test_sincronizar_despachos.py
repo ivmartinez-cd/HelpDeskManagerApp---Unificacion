@@ -1,10 +1,11 @@
-"""Tests de SincronizarDespachos: alta desde Siges, consulta a OCA de los abiertos, errores
-que no cortan el lote, candado y registro de la corrida."""
+"""Tests de SincronizarDespachos: alta desde Siges, consulta a OCA de los abiertos, orden de
+las escrituras y confirmaciones, historial y alertas. Los errores, el candado y los feriados
+están en `test_sincronizar_despachos_errores.py`."""
 
 import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import replace
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 
 import pytest
 
@@ -20,20 +21,22 @@ from src.modules.insumos.domain.entities.despachados.envio_seguido import (
     CierreAlerta,
     ErrorConsulta,
 )
-from src.modules.insumos.domain.errores_despachados import SincronizacionDespachosEnCursoError
 from src.modules.insumos.domain.value_objects.despachados.clasificacion import ColorSemaforo
 from src.shared.domain.errors import ExternalServiceError
 from tests.unit.application.insumos.despachados.fakes_despachados import (
     AHORA,
+    CONFIG,
     GUIA_A,
     GUIA_B,
     GUIA_C,
-    HOY,
     VERDE,
-    MundoSincronizacion,
     despacho,
     envio,
     estado_oca,
+)
+from tests.unit.application.insumos.despachados.fakes_sincronizacion import (
+    MundoSincronizacion,
+    mensajes_de_log,
 )
 
 NARANJA = replace(VERDE, color=ColorSemaforo.NARANJA, alerta=True)
@@ -49,10 +52,6 @@ COLGADA = Corrida(1, OrigenCorrida.PROGRAMADA, AHORA - timedelta(hours=3), None)
 
 def _eventos_oca(mundo: MundoSincronizacion) -> list[str]:
     return [e for e in mundo.eventos if e.startswith(("oca", "pausa"))]
-
-
-def _mensajes(caplog: pytest.LogCaptureFixture, texto: str) -> list[str]:
-    return [r.getMessage() for r in caplog.records if texto in r.getMessage()]
 
 
 def _operador_cierra_la_alerta(mundo: MundoSincronizacion) -> Callable[[str], Awaitable[None]]:
@@ -86,7 +85,7 @@ class TestCaminoFeliz:
         assert [guia for guia, _, _ in mundo.historial.registros] == [GUIA_A, GUIA_B]
         assert mundo.corridas.terminadas == {1: resumen}
 
-    async def test_confirma_despues_de_cada_paso(self) -> None:
+    async def test_actualiza_y_confirma_cada_guia_antes_de_seguir(self) -> None:
         mundo = MundoSincronizacion(envios=[envio(GUIA_A), envio(GUIA_B)])
 
         await mundo.correr()
@@ -95,11 +94,14 @@ class TestCaminoFeliz:
             "confirmar",  # corrida iniciada
             "confirmar",  # guías y remitos de Siges
             f"oca {GUIA_A}",
+            f"actualizar {GUIA_A}",
             "confirmar",
             "pausa 0.3",
             f"oca {GUIA_B}",
+            f"actualizar {GUIA_B}",
             "confirmar",
-            "confirmar",  # corrida terminada
+            "terminar corrida 1",
+            "confirmar",
         ]
 
     async def test_registra_origen_y_usuario_de_una_corrida_manual(self) -> None:
@@ -152,6 +154,21 @@ class TestCaminoFeliz:
             "pausa 0.3",
             f"oca {GUIA_C}",
         ]
+
+    @pytest.mark.parametrize(
+        ("dias_sin_movimiento", "color"),
+        [(3, ColorSemaforo.VERDE), (1, ColorSemaforo.AMARILLO)],
+    )
+    async def test_los_dias_sin_movimiento_salen_de_la_configuracion(
+        self, dias_sin_movimiento: int, color: ColorSemaforo
+    ) -> None:
+        mundo = MundoSincronizacion(envios=[envio()])
+        mundo.oca.respuestas = {GUIA_A: estado_oca()}  # 1 día hábil sin movimiento
+        config = replace(CONFIG, dias_sin_movimiento=dias_sin_movimiento)
+
+        await mundo.caso_de_uso(config).execute(OrigenCorrida.PROGRAMADA)
+
+        assert mundo.envios.envios[GUIA_A].clasificacion.color is color
 
     async def test_no_consulta_los_envios_cerrados(self) -> None:
         cerrado = envio(GUIA_B, clasificacion=replace(VERDE, abierto=False))
@@ -221,123 +238,8 @@ class TestHistorialYAlertas:
         with caplog.at_level(logging.WARNING):
             await mundo.correr()
 
-        avisos = _mensajes(caplog, "fuera del catálogo")
+        avisos = mensajes_de_log(caplog, "fuera del catálogo")
         assert len(avisos) == 1
         assert GUIA_A in avisos[0]
         assert "999" in avisos[0]
         assert "Estado raro" in avisos[0]
-
-
-class TestErrores:
-    async def test_un_error_de_oca_no_corta_el_lote_y_queda_registrado(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
-        mundo = MundoSincronizacion(envios=[envio(GUIA_A), envio(GUIA_B)])
-        mundo.oca.respuestas = {GUIA_A: ExternalServiceError("timeout"), GUIA_B: estado_oca(GUIA_B)}
-
-        with caplog.at_level(logging.WARNING):
-            resumen = await mundo.correr()
-
-        assert resumen == ResumenCorrida(consultas_ok=1, consultas_error=1)
-        con_error = mundo.envios.envios[GUIA_A]
-        assert con_error.ultimo_error == ErrorConsulta(mensaje="timeout", ocurrido_en=AHORA)
-        assert con_error.consultado_en is None
-        assert mundo.envios.envios[GUIA_B].estado_oca == estado_oca(GUIA_B)
-        fallos = _mensajes(caplog, "falló la consulta a OCA")
-        assert len(fallos) == 1
-        assert GUIA_A in fallos[0]
-
-    async def test_con_siges_caido_igual_consulta_los_abiertos(self) -> None:
-        mundo = MundoSincronizacion(envios=[envio()])
-        mundo.siges.error = ExternalServiceError("Siges no responde")
-        mundo.oca.respuestas = {GUIA_A: estado_oca()}
-
-        resumen = await mundo.correr()
-
-        assert resumen == ResumenCorrida(
-            consultas_ok=1, error="No se pudo leer Siges: Siges no responde"
-        )
-        assert mundo.remitos.guardados == []
-        assert mundo.envios.envios[GUIA_A].estado_oca == estado_oca()
-        assert mundo.corridas.terminadas == {1: resumen}
-
-    async def test_con_el_candado_ocupado_no_toca_nada(self) -> None:
-        mundo = MundoSincronizacion(envios=[envio()], candado_libre=False)
-
-        with pytest.raises(SincronizacionDespachosEnCursoError):
-            await mundo.correr()
-
-        assert mundo.corridas.interrumpidas == []
-        assert mundo.corridas.iniciadas == []
-        assert mundo.siges.llamadas == []
-        assert mundo.eventos == []
-
-    async def test_un_error_inesperado_termina_la_corrida_con_el_error_y_se_relanza(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
-        mundo = MundoSincronizacion(envios=[envio(GUIA_A), envio(GUIA_B)])
-        mundo.oca.respuestas = {GUIA_B: RuntimeError("se rompió")}
-
-        with caplog.at_level(logging.ERROR), pytest.raises(RuntimeError, match="se rompió"):
-            await mundo.correr()
-
-        assert mundo.corridas.terminadas == {
-            1: ResumenCorrida(consultas_ok=1, error="RuntimeError: se rompió")
-        }
-        assert any(r.exc_info is not None for r in caplog.records)
-
-    async def test_si_no_puede_terminar_la_corrida_relanza_el_error_original(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
-        mundo = MundoSincronizacion(envios=[envio()])
-        mundo.oca.respuestas = {GUIA_A: RuntimeError("se rompió")}
-        mundo.corridas.error_al_terminar = ConnectionError("sin base")
-
-        with caplog.at_level(logging.ERROR), pytest.raises(RuntimeError, match="se rompió"):
-            await mundo.correr()
-
-        assert _mensajes(caplog, "no se pudo registrar el final")
-
-
-class TestFeriados:
-    async def test_pide_feriados_de_400_dias_atras_a_60_adelante(self) -> None:
-        mundo = MundoSincronizacion()
-
-        await mundo.correr()
-
-        assert mundo.feriados.consultas == [(HOY - timedelta(400), HOY + timedelta(60))]
-
-    async def test_hoy_es_la_fecha_argentina(self) -> None:
-        mundo = MundoSincronizacion()
-        mundo.ahora = datetime(2026, 9, 25, 2, 0, tzinfo=UTC)  # 24/09 23:00 en Argentina
-
-        await mundo.correr()
-
-        assert mundo.feriados.consultas[0][1] == HOY + timedelta(60)
-
-    async def test_avisa_si_el_anio_no_tiene_feriados_cargados(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
-        mundo = MundoSincronizacion()
-        mundo.feriados.feriados = frozenset()
-
-        with caplog.at_level(logging.WARNING):
-            await mundo.correr()
-
-        avisos = _mensajes(caplog, "feriados cargados")
-        assert len(avisos) == 1
-        assert "2026" in avisos[0]
-
-    async def test_cerca_de_fin_de_anio_avisa_por_el_anio_siguiente(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
-        mundo = MundoSincronizacion()
-        mundo.ahora = datetime(2026, 12, 10, 15, 0, tzinfo=UTC)
-        mundo.feriados.feriados = frozenset({date(2026, 12, 8), date(2026, 12, 25)})
-
-        with caplog.at_level(logging.WARNING):
-            await mundo.correr()
-
-        avisos = _mensajes(caplog, "feriados cargados")
-        assert len(avisos) == 1
-        assert "2027" in avisos[0]

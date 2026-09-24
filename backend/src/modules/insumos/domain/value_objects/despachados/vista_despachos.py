@@ -17,7 +17,8 @@ class FiltrosDespachos:
     ventana de búsqueda en Siges): así "Entregados/Devueltos (30 días)" no crece para
     siempre y un envío abierto viejo nunca desaparece de la vista."""
     texto: str = ""
-    """Busca (sin distinguir mayúsculas) en guía, cliente, número de remito e incidente."""
+    """Busca (sin distinguir mayúsculas ni tildes) en guía, cliente, número de remito e
+    incidente."""
     colores: tuple[ColorSemaforo, ...] = ()
     """Vacío = todos los colores."""
     operativa: str | None = None

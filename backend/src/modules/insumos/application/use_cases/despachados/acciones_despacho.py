@@ -3,6 +3,9 @@ acción (y, si se pide, dar la alerta por atendida) y cerrar la alerta.
 
 Lo escrito queda en la transacción del request: estos casos de uso no confirman por su
 cuenta (ADR-010). Una alerta cerrada se reabre sola si OCA informa otro problema.
+
+El cierre escribe solo sus columnas (`registrar_cierre_alerta`), no el envío entero: si el
+job guardó otro estado de OCA entre la lectura y la escritura del request, no se pisa.
 """
 
 from collections.abc import Callable
@@ -76,8 +79,8 @@ class RegistrarAccionDespacho:
             _accion_nueva(guia, replace(datos, detalle=detalle), usuario)
         )
         if datos.cerrar_alerta:
-            cerrado = _con_alerta_cerrada(envio, self._ports.reloj(), usuario)
-            await self._ports.envios.actualizar(cerrado)
+            cierre = _cierre(self._ports.reloj(), usuario)
+            await self._ports.envios.registrar_cierre_alerta(guia, cierre)
         return accion
 
 
@@ -93,9 +96,9 @@ class CerrarAlertaDespacho:
             raise AlertaDespachoNoAbiertaError(guia)
         if not await self._ports.acciones.listar_por_guia(guia):
             raise CierreAlertaSinAccionError(guia)
-        cerrado = _con_alerta_cerrada(envio, self._ports.reloj(), usuario)
-        await self._ports.envios.actualizar(cerrado)
-        return cerrado
+        cierre = _cierre(self._ports.reloj(), usuario)
+        await self._ports.envios.registrar_cierre_alerta(guia, cierre)
+        return replace(envio, cierre_alerta=cierre)
 
 
 def _detalle_valido(detalle: str) -> str:
@@ -128,8 +131,5 @@ def _accion_nueva(guia: str, datos: DatosAccion, usuario: UsuarioActuante) -> Ac
     )
 
 
-def _con_alerta_cerrada(
-    envio: EnvioSeguido, ahora: datetime, usuario: UsuarioActuante
-) -> EnvioSeguido:
-    cierre = CierreAlerta(cerrada_en=ahora, usuario_id=usuario.id, usuario_nombre=usuario.nombre)
-    return replace(envio, cierre_alerta=cierre)
+def _cierre(ahora: datetime, usuario: UsuarioActuante) -> CierreAlerta:
+    return CierreAlerta(cerrada_en=ahora, usuario_id=usuario.id, usuario_nombre=usuario.nombre)

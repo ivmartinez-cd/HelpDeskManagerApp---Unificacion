@@ -4,22 +4,19 @@ y estado de la actualización), con fakes en memoria.
 `AHORA` es el jueves 24/09/2026 a las 12:00 en Argentina; el lunes 12/10/2026 es feriado.
 """
 
-from collections.abc import Sequence
 from dataclasses import replace
 from datetime import UTC, date, datetime
-from typing import Any
 
 import pytest
 
 from src.modules.insumos.application.dtos.despachados import (
-    ConfigConsulta,
     CriterioListado,
     DetalleDespacho,
     EstadoActualizacion,
     ListadoDespachos,
+    TarjetasDespachos,
 )
 from src.modules.insumos.application.use_cases.despachados.consultas_despachos import (
-    ConsultaDespachosPorts,
     ConsultarActualizacion,
     ListarDespachos,
     ObtenerDetalleDespacho,
@@ -30,159 +27,28 @@ from src.modules.insumos.domain.entities.despachados.accion_registrada import (
     ResultadoAccion,
     TipoAccion,
 )
-from src.modules.insumos.domain.entities.despachados.corrida import (
-    Corrida,
-    OrigenCorrida,
-    ResumenCorrida,
-)
 from src.modules.insumos.domain.errores_despachados import EnvioDespachoNoEncontradoError
 from src.modules.insumos.domain.value_objects.despachados.cambio_estado import CambioEstado
 from src.modules.insumos.domain.value_objects.despachados.clasificacion import ColorSemaforo
-from src.modules.insumos.domain.value_objects.despachados.estado_oca import EstadoOca
 from src.modules.insumos.domain.value_objects.despachados.vista_despachos import (
-    FilaDespacho,
     FiltrosDespachos,
-    Pagina,
-    ResumenDespachos,
+)
+from tests.unit.application.insumos.despachados.fakes_consulta_despachos import (
+    CONFIG,
+    PAGINA,
+    RESUMEN,
+    MundoConsulta,
+    corrida,
+    fila,
 )
 from tests.unit.application.insumos.despachados.fakes_despachados import (
     AHORA,
-    ARGENTINA,
     GUIA_A,
     GUIA_B,
     VERDE,
-    FakeAccionesDespacho,
-    FakeCalendarioFeriados,
-    FakeEnviosDespacho,
-    FakeRemitosDespacho,
     despacho,
     envio,
 )
-
-CONFIG = ConfigConsulta(dias_ventana=30, zona_horaria=ARGENTINA)
-PAGINA = Pagina(limite=25, desplazamiento=50)
-RESUMEN = ResumenDespachos(
-    por_color=dict.fromkeys(ColorSemaforo, 1),
-    alertas_rojas=1,
-    alertas_naranjas=1,
-    naranjas_sin_accion=0,
-    limite_mas_proximo=date(2026, 9, 25),
-    operativas=("434324",),
-)
-
-
-def fila(guia: str, color: ColorSemaforo = ColorSemaforo.VERDE, **cambios: Any) -> FilaDespacho:
-    base = FilaDespacho(
-        guia=guia,
-        color=color,
-        alerta_abierta=False,
-        observacion="",
-        fecha_limite=None,
-        estado="En viaje",
-        motivo="",
-        sucursal_oca="Rosario",
-        fecha_estado=date(2026, 9, 23),
-        operativa="434324",
-        cliente="Cliente Test",
-        fecha_remito=date(2026, 9, 22),
-        numero_remito=50001,
-        cantidad_remitos=1,
-        incidente="440001",
-        cantidad_incidentes=1,
-        ultima_accion=None,
-        con_error=False,
-    )
-    return replace(base, **cambios)
-
-
-def corrida(corrida_id: int, terminada_en: datetime | None) -> Corrida:
-    return Corrida(
-        id=corrida_id,
-        origen=OrigenCorrida.PROGRAMADA,
-        iniciada_en=datetime(2026, 9, 24, 13, corrida_id, tzinfo=UTC),
-        usuario_nombre=None,
-        terminada_en=terminada_en,
-        resumen=ResumenCorrida(consultas_ok=corrida_id),
-    )
-
-
-class FakeConsultaDespachos:
-    def __init__(self) -> None:
-        self.filas: list[FilaDespacho] = []
-        self.total = 0
-        self.listados: list[tuple[FiltrosDespachos, Pagina]] = []
-        self.contados: list[FiltrosDespachos] = []
-        self.resumidos: list[date] = []
-
-    async def listar(self, filtros: FiltrosDespachos, pagina: Pagina) -> list[FilaDespacho]:
-        self.listados.append((filtros, pagina))
-        return list(self.filas)
-
-    async def contar(self, filtros: FiltrosDespachos) -> int:
-        self.contados.append(filtros)
-        return self.total
-
-    async def resumir(self, alcance_desde: date) -> ResumenDespachos:
-        self.resumidos.append(alcance_desde)
-        return RESUMEN
-
-
-class FakeHistorialConsulta:
-    def __init__(self) -> None:
-        self.cambios: dict[str, list[CambioEstado]] = {}
-
-    async def registrar(self, guia: str, estado: EstadoOca, color: ColorSemaforo) -> None:
-        raise AssertionError("una consulta no registra cambios")
-
-    async def listar_por_guia(self, guia: str) -> list[CambioEstado]:
-        return list(self.cambios.get(guia, []))
-
-
-class FakeCorridasConsulta:
-    def __init__(self, corridas: Sequence[Corrida] = ()) -> None:
-        self.corridas = list(corridas)
-        self.pedidos_de_terminada = 0
-
-    async def iniciar(self, origen: OrigenCorrida, usuario_nombre: str | None) -> Corrida:
-        raise AssertionError("una consulta no inicia corridas")
-
-    async def terminar(self, corrida_id: int, resumen: ResumenCorrida) -> None:
-        raise AssertionError("una consulta no termina corridas")
-
-    async def cerrar_interrumpidas(self, motivo: str) -> int:
-        raise AssertionError("una consulta no cierra corridas")
-
-    async def ultima(self) -> Corrida | None:
-        return self.corridas[-1] if self.corridas else None
-
-    async def ultima_terminada(self) -> Corrida | None:
-        self.pedidos_de_terminada += 1
-        terminadas = [c for c in self.corridas if c.terminada_en is not None]
-        return terminadas[-1] if terminadas else None
-
-
-class MundoConsulta:
-    def __init__(self, ahora: datetime = AHORA) -> None:
-        self.consulta = FakeConsultaDespachos()
-        self.envios = FakeEnviosDespacho()
-        self.remitos = FakeRemitosDespacho()
-        self.historial = FakeHistorialConsulta()
-        self.acciones = FakeAccionesDespacho()
-        self.corridas = FakeCorridasConsulta()
-        self.feriados = FakeCalendarioFeriados()
-        self.ahora = ahora
-
-    def ports(self) -> ConsultaDespachosPorts:
-        return ConsultaDespachosPorts(
-            consulta=self.consulta,
-            envios=self.envios,
-            remitos=self.remitos,
-            historial=self.historial,
-            acciones=self.acciones,
-            corridas=self.corridas,
-            feriados=self.feriados,
-            reloj=lambda: self.ahora,
-        )
 
 
 async def test_listar_arma_los_filtros_con_el_alcance_y_devuelve_el_total() -> None:
@@ -250,13 +116,42 @@ async def test_listar_sin_filas_rojas_no_pide_feriados() -> None:
     assert mundo.feriados.consultas == []
 
 
-async def test_resumir_usa_el_mismo_alcance_que_el_listado() -> None:
+async def test_tarjetas_usan_el_mismo_alcance_que_el_listado() -> None:
     mundo = MundoConsulta()
 
-    resumen = await ResumirDespachos(mundo.ports(), CONFIG).execute()
+    tarjetas = await ResumirDespachos(mundo.ports(), CONFIG).execute()
 
-    assert resumen == RESUMEN
+    # El límite más próximo es el viernes 25/09: vence el próximo día hábil.
+    assert tarjetas == TarjetasDespachos(resumen=RESUMEN, dias_habiles_limite_mas_proximo=1)
     assert mundo.consulta.resumidos == [date(2026, 8, 25)]
+    assert mundo.feriados.consultas == [(date(2026, 9, 24), date(2026, 9, 25))]
+
+
+@pytest.mark.parametrize(
+    ("limite", "dias"),
+    [
+        pytest.param(date(2026, 10, 13), 12, id="cruza-el-feriado-del-12-10"),
+        pytest.param(date(2026, 9, 24), 0, id="vence-hoy"),
+        pytest.param(date(2026, 9, 22), -2, id="vencido"),
+    ],
+)
+async def test_tarjeta_roja_cuenta_dias_habiles_con_feriados(limite: date, dias: int) -> None:
+    mundo = MundoConsulta()
+    mundo.consulta.resumen = replace(RESUMEN, limite_mas_proximo=limite)
+
+    tarjetas = await ResumirDespachos(mundo.ports(), CONFIG).execute()
+
+    assert tarjetas.dias_habiles_limite_mas_proximo == dias
+
+
+async def test_tarjetas_sin_rojos_con_limite_no_piden_feriados() -> None:
+    mundo = MundoConsulta()
+    mundo.consulta.resumen = replace(RESUMEN, limite_mas_proximo=None)
+
+    tarjetas = await ResumirDespachos(mundo.ports(), CONFIG).execute()
+
+    assert tarjetas.dias_habiles_limite_mas_proximo is None
+    assert mundo.feriados.consultas == []
 
 
 async def _mundo_con_detalle(color: ColorSemaforo, limite: date | None) -> MundoConsulta:

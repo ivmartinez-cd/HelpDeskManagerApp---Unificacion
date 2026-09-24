@@ -51,6 +51,9 @@ class SincronizarDespachosPorts:
     candado: ExclusiveLock
     confirmar: Callable[[], Awaitable[None]]
     """Confirma (commit) lo escrito hasta ahí: la corrida confirma después de cada guía."""
+    revertir: Callable[[], Awaitable[None]]
+    """Descarta (rollback) lo escrito desde la última confirmación: ante un error inesperado,
+    para no confirmar una guía a medio escribir junto con el final de la corrida."""
     reloj: Callable[[], datetime]
     """Hora actual, aware en UTC."""
     pausar: Callable[[float], Awaitable[None]]

@@ -9,7 +9,10 @@ from src.modules.insumos.domain.entities.despachados.envio_seguido import EnvioS
 from src.modules.insumos.domain.value_objects.despachados.cambio_estado import CambioEstado
 from src.modules.insumos.domain.value_objects.despachados.clasificacion import ColorSemaforo
 from src.modules.insumos.domain.value_objects.despachados.despacho_siges import DespachoSiges
-from src.modules.insumos.domain.value_objects.despachados.vista_despachos import FilaDespacho
+from src.modules.insumos.domain.value_objects.despachados.vista_despachos import (
+    FilaDespacho,
+    ResumenDespachos,
+)
 
 
 @dataclass(frozen=True)
@@ -38,6 +41,14 @@ class ListadoDespachos:
     filas: list[FilaDespacho]
     total: int
     """Total de envíos que cumplen el criterio, sin paginar."""
+
+
+@dataclass(frozen=True)
+class TarjetasDespachos:
+    resumen: ResumenDespachos
+    dias_habiles_limite_mas_proximo: int | None
+    """Días hábiles de hoy a `resumen.limite_mas_proximo` (0 vence hoy, negativo vencido);
+    None si no hay ningún envío en rojo con fecha límite."""
 
 
 @dataclass(frozen=True)

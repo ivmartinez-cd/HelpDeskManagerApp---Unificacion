@@ -1,10 +1,13 @@
 """SQL de la pantalla de Despachados: alcance, filtros, orden por urgencia y columnas de cada
 fila (primer remito, incidentes y última acción) resueltas en la misma consulta, sin N+1.
 
-Todo parametrizado: el texto del usuario va como parámetro de ILIKE, con `%`, `_` y `\\`
-escapados para que se busquen literales.
+Todo parametrizado: el texto del usuario va como parámetro de LIKE, con `%`, `_` y `\\`
+escapados para que se busquen literales. La búsqueda no distingue mayúsculas ni tildes: la
+columna se compara en minúsculas y sin tildes (`translate` en SQL) contra el texto
+normalizado igual en Python.
 """
 
+import unicodedata
 from datetime import date
 from typing import Any
 
@@ -40,6 +43,9 @@ _REMITO = DespachoRemitoModel
 _INCIDENTE = DespachoIncidenteModel
 _ACCION = DespachoAccionModel
 _ESCAPE = "\\"
+_CON_TILDE = "áéíóúüñÁÉÍÓÚÜÑ"
+_SIN_TILDE = "aeiouunaeiouun"
+"""Las mayúsculas acentuadas también: `lower()` no las baja si la base usa la collation C."""
 _ColumnaTexto = ColumnElement[str] | InstrumentedAttribute[str]
 
 _RANGO_URGENCIA = {
@@ -81,9 +87,16 @@ def condiciones(filtros: FiltrosDespachos) -> list[ColumnElement[bool]]:
     return resultado
 
 
+def _sin_tildes_en_minusculas(texto: str) -> str:
+    descompuesto = unicodedata.normalize("NFKD", texto.lower())
+    return "".join(c for c in descompuesto if not unicodedata.combining(c))
+
+
 def _patron_literal(texto: str) -> str:
-    """`%texto%` con los comodines de LIKE del usuario escapados (se buscan literales)."""
-    escapado = texto.replace(_ESCAPE, _ESCAPE * 2).replace("%", "\\%").replace("_", "\\_")
+    """`%texto%` en minúsculas, sin tildes y con los comodines de LIKE del usuario escapados
+    (se buscan literales)."""
+    normalizado = _sin_tildes_en_minusculas(texto)
+    escapado = normalizado.replace(_ESCAPE, _ESCAPE * 2).replace("%", "\\%").replace("_", "\\_")
     return f"%{escapado}%"
 
 
@@ -91,7 +104,8 @@ def _coincide_texto(texto: str) -> ColumnElement[bool]:
     patron = _patron_literal(texto)
 
     def coincide(columna: _ColumnaTexto) -> ColumnElement[bool]:
-        return columna.ilike(patron, escape=_ESCAPE)
+        normalizada = func.translate(func.lower(columna), _CON_TILDE, _SIN_TILDE)
+        return normalizada.like(patron, escape=_ESCAPE)
 
     del_remito = _REMITO.guia == _ENVIO.guia
     remito = select(_REMITO.id_remito).where(

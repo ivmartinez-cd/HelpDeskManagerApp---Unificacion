@@ -7,13 +7,17 @@ from sqlalchemy import Select, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.insumos.domain.entities.despachados.envio_seguido import EnvioSeguido
+from src.modules.insumos.domain.entities.despachados.envio_seguido import (
+    CierreAlerta,
+    EnvioSeguido,
+)
 from src.modules.insumos.infrastructure.models.despacho_envio_model import DespachoEnvioModel
 from src.modules.insumos.infrastructure.repositories._lotes_despachos import (
     FILAS_POR_LOTE,
 )
 from src.modules.insumos.infrastructure.repositories.mapeo_envio_despacho import (
     columnas_alta,
+    columnas_cierre,
     columnas_seguimiento,
     envio_desde_fila,
 )
@@ -61,6 +65,17 @@ class SqlAlchemyEnviosDespachoRepository:
             update(DespachoEnvioModel)
             .where(DespachoEnvioModel.guia == envio.guia)
             .values(**columnas_seguimiento(envio), actualizado_en=func.clock_timestamp())
+        )
+        await self._session.execute(stmt)
+        await self._session.flush()
+
+    async def registrar_cierre_alerta(self, guia: str, cierre: CierreAlerta) -> None:
+        """Solo `alerta_cerrada_*` (y `actualizado_en`): el operador que cierra la alerta no
+        pisa lo que el job haya escrito en las columnas de OCA mientras tanto."""
+        stmt = (
+            update(DespachoEnvioModel)
+            .where(DespachoEnvioModel.guia == guia)
+            .values(**columnas_cierre(cierre), actualizado_en=func.clock_timestamp())
         )
         await self._session.execute(stmt)
         await self._session.flush()

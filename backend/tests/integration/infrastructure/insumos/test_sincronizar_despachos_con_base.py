@@ -6,6 +6,7 @@ flujo: la FK de remito a envío (el alta de envíos va antes que los remitos) y 
 las hace cumplir la base de verdad. Siges, OCA, los feriados y el candado siguen en memoria.
 """
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,6 +20,7 @@ from src.modules.insumos.domain.entities.despachados.corrida import (
     OrigenCorrida,
     ResumenCorrida,
 )
+from src.modules.insumos.domain.entities.despachados.envio_seguido import EnvioSeguido
 from src.modules.insumos.infrastructure.models.despacho_corrida_model import (
     DespachoCorridaModel,
 )
@@ -40,15 +42,24 @@ from tests.unit.application.insumos.despachados.fakes_despachados import (
     CONFIG,
     GUIA_A,
     FakeCalendarioFeriados,
-    FakeDespachosSiges,
-    FakeOcaSeguimiento,
     despacho,
     estado_oca,
+)
+from tests.unit.application.insumos.despachados.fakes_sincronizacion import (
+    FakeDespachosSiges,
+    FakeOcaSeguimiento,
 )
 
 
 async def _sin_pausa(segundos: float) -> None:
     return None
+
+
+class EnviosQueFallanAlActualizar(SqlAlchemyEnviosDespachoRepository):
+    """Un error inesperado a mitad de una guía: el historial ya se escribió, el envío no."""
+
+    async def actualizar(self, envio: EnvioSeguido) -> None:
+        raise RuntimeError("se rompió")
 
 
 class MundoConBase:
@@ -74,6 +85,7 @@ class MundoConBase:
             feriados=FakeCalendarioFeriados(),
             candado=FakeExclusiveLock(),
             confirmar=self.session.commit,
+            revertir=self.session.rollback,
             reloj=lambda: AHORA,
             pausar=_sin_pausa,
         )
@@ -130,3 +142,20 @@ async def test_cierra_la_corrida_colgada_pero_no_la_que_esta_corriendo(
         (colgada.id, MOTIVO_INTERRUMPIDA, True),
         (en_curso.id, None, True),
     ]
+
+
+async def test_un_error_inesperado_descarta_lo_que_la_guia_llego_a_escribir(
+    db_session: AsyncSession,
+) -> None:
+    mundo = MundoConBase(db_session)
+    mundo.siges.despachos = [despacho(GUIA_A, 1)]
+    mundo.oca.respuestas = {GUIA_A: estado_oca(GUIA_A)}
+    mundo.envios = EnviosQueFallanAlActualizar(db_session)
+
+    with pytest.raises(RuntimeError, match="se rompió"):
+        await mundo.correr()
+
+    assert await mundo.historial.listar_por_guia(GUIA_A) == []
+    assert await mundo.envios.obtener(GUIA_A) is not None  # el alta ya estaba confirmada
+    [(_, error, terminada)] = await mundo.corridas_guardadas()
+    assert (error, terminada) == ("RuntimeError: se rompió", True)

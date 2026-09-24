@@ -16,6 +16,7 @@ from src.modules.insumos.application.dtos.despachados import (
     DetalleDespacho,
     EstadoActualizacion,
     ListadoDespachos,
+    TarjetasDespachos,
 )
 from src.modules.insumos.domain.entities.despachados.envio_seguido import EnvioSeguido
 from src.modules.insumos.domain.errores_despachados import EnvioDespachoNoEncontradoError
@@ -38,7 +39,6 @@ from src.modules.insumos.domain.value_objects.despachados.vista_despachos import
     FilaDespacho,
     FiltrosDespachos,
     Pagina,
-    ResumenDespachos,
 )
 
 
@@ -74,9 +74,17 @@ class ResumirDespachos:
         self._ports = ports
         self._config = config
 
-    async def execute(self) -> ResumenDespachos:
+    async def execute(self) -> TarjetasDespachos:
+        """Contadores de las tarjetas, con los días hábiles que faltan para la fecha límite
+        más próxima (la tarjeta roja), contados con el calendario de feriados."""
         hoy = _hoy(self._ports, self._config)
-        return await self._ports.consulta.resumir(_alcance_desde(hoy, self._config))
+        resumen = await self._ports.consulta.resumir(_alcance_desde(hoy, self._config))
+        limite = resumen.limite_mas_proximo
+        if limite is None:
+            return TarjetasDespachos(resumen=resumen, dias_habiles_limite_mas_proximo=None)
+        feriados = await _feriados_entre(self._ports.feriados, hoy, [limite])
+        dias = dias_habiles_hasta(hoy, limite, feriados)
+        return TarjetasDespachos(resumen=resumen, dias_habiles_limite_mas_proximo=dias)
 
 
 class ObtenerDetalleDespacho:

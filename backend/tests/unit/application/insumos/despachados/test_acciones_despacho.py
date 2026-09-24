@@ -83,7 +83,7 @@ class TestRegistrarAccion:
             creada_en=AHORA,
         )
         assert mundo.acciones.acciones == [accion]
-        assert mundo.envios.actualizados == []
+        assert (mundo.envios.cierres, mundo.envios.actualizados) == ([], [])
 
     async def test_puede_cerrar_la_alerta_abierta(self) -> None:
         mundo = Mundo()
@@ -91,8 +91,15 @@ class TestRegistrarAccion:
         accion = await mundo.registrar.execute(GUIA_A, _datos(cerrar_alerta=True), USUARIO)
 
         assert accion.cerro_alerta is True
-        assert mundo.envios.envios[GUIA_A].cierre_alerta == CIERRE_DE_ANA
+        assert mundo.envios.cierres == [(GUIA_A, CIERRE_DE_ANA)]
         assert mundo.envios.envios[GUIA_A].alerta_abierta is False
+
+    async def test_el_cierre_escribe_solo_el_cierre_y_no_el_envio_entero(self) -> None:
+        mundo = Mundo()
+
+        await mundo.registrar.execute(GUIA_A, _datos(cerrar_alerta=True), USUARIO)
+
+        assert mundo.envios.actualizados == []
 
     @pytest.mark.parametrize("detalle", ["", "   \n\t "])
     async def test_el_detalle_es_obligatorio(self, detalle: str) -> None:
@@ -137,7 +144,7 @@ class TestRegistrarAccion:
             await mundo.registrar.execute(guia, _datos(cerrar_alerta=True), USUARIO)
 
         assert mundo.acciones.acciones == []
-        assert mundo.envios.actualizados == []
+        assert mundo.envios.cierres == []
 
 
 class TestCerrarAlerta:
@@ -149,6 +156,8 @@ class TestCerrarAlerta:
 
         assert cerrado.cierre_alerta == CIERRE_DE_ANA
         assert mundo.envios.envios[GUIA_A] == cerrado
+        assert mundo.envios.cierres == [(GUIA_A, CIERRE_DE_ANA)]
+        assert mundo.envios.actualizados == []
 
     async def test_sin_acciones_no_se_puede_cerrar(self) -> None:
         mundo = Mundo()
@@ -156,7 +165,7 @@ class TestCerrarAlerta:
         with pytest.raises(CierreAlertaSinAccionError):
             await mundo.cerrar.execute(GUIA_A, USUARIO)
 
-        assert mundo.envios.actualizados == []
+        assert mundo.envios.cierres == []
 
     async def test_la_guia_tiene_que_estar_seguida(self) -> None:
         with pytest.raises(EnvioDespachoNoEncontradoError):

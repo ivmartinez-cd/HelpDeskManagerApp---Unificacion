@@ -63,8 +63,8 @@ class SincronizarDespachos:
         return corrida
 
     async def _correr(self, corrida: Corrida) -> ResumenCorrida:
-        """Un error inesperado (no de Siges ni de OCA) corta la corrida: queda registrado en
-        ella, con lo que llegó a hacer, y se relanza."""
+        """Un error inesperado (no de Siges ni de OCA) corta la corrida: se descarta lo no
+        confirmado, queda registrado en ella con lo que llegó a hacer y se relanza."""
         lote = LoteDespachos(self._ports, self._config)
         try:
             await lote.ejecutar()
@@ -86,9 +86,11 @@ class SincronizarDespachos:
         await self._ports.confirmar()
 
     async def _terminar_tras_fallo(self, corrida: Corrida, avance: AvanceCorrida) -> None:
-        """Si ni siquiera se puede registrar el final (p. ej. la base se cayó), la corrida
-        queda abierta y la próxima la cierra como interrumpida; el error original sigue."""
+        """Descarta lo que quedó a medio escribir y registra el final con el error. Si ni
+        siquiera eso se puede (p. ej. la base se cayó), la corrida queda abierta y la próxima
+        la cierra como interrumpida; el error original sigue."""
         try:
+            await self._ports.revertir()
             await self._terminar(corrida, avance.a_resumen())
         except Exception as exc:
             logger.error(
