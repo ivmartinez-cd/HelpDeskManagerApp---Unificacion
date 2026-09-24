@@ -11,15 +11,26 @@ PGDB     ?= helpdesk
 TEST_DB  := helpdesk-db-test
 NET      := helpdesk-manager_default
 
-.PHONY: help status check check-fast test-module ci lint-imports ruff mypy test test-integration sizes sizes-wip guards guards-wip lint-frontend typecheck-frontend hooks \
+.PHONY: help status check check-fast test-module lint-imports ruff mypy test test-integration sizes sizes-wip guards guards-wip lint-frontend typecheck-frontend hooks \
         db-backup db-restore restart-backend restart-frontend recreate-backend \
         logs-backend logs-frontend mailpit up ps
 
 help:  ## Lista los targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[1m%-18s\033[0m %s\n", $$1, $$2}'
 
-status:  ## Estado del entorno (contenedores, modo test, jobs, git)
-	@hd-status
+status:  ## Estado del entorno (contenedores, jobs, git)
+	@echo "--- contenedores ---"
+	@docker compose ps --format 'table {{.Service}}\t{{.Status}}' 2>/dev/null || docker compose ps
+	@echo "--- jobs de fondo (.env / contenedor) ---"
+	@grep -E '^DISABLE_(INSUMOS_)?BACKGROUND_JOBS=' .env || echo "(sin flags en .env)"
+	@$(EXEC) printenv DISABLE_BACKGROUND_JOBS DISABLE_INSUMOS_BACKGROUND_JOBS 2>/dev/null \
+	  | paste -sd'/' - | sed 's/^/en el contenedor: /' || echo "(backend apagado)"
+	@echo "--- git ---"
+	@printf 'rama: %s\n' "$$(git rev-parse --abbrev-ref HEAD)"
+	@n=$$(git log --oneline @{u}.. 2>/dev/null | wc -l); \
+	  if [ "$$n" -gt 0 ]; then echo "sin pushear: $$n commit(s)"; git log --oneline @{u}.. | sed 's/^/    /'; \
+	  else echo "sin pushear: nada"; fi
+	@git status --short | head -15
 
 # --- Verificación completa. Desde el 2026-09-24 no hay CI (GitHub abandonado, Gitea sin
 # runner): esto es el único lugar donde corre, así que va a mano antes de dar por terminado un
