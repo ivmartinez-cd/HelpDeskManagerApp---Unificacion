@@ -4,6 +4,7 @@ tarjetas, estado de la actualización y detalle de una guía. Leen solo la base 
 Las rutas fijas van antes de `/despachados/{guia}` a propósito."""
 
 from datetime import date
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +13,11 @@ from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.insumos.application.dtos.despachados import CriterioListado
 from src.modules.insumos.domain.value_objects.despachados.clasificacion import ColorSemaforo
-from src.modules.insumos.domain.value_objects.despachados.vista_despachos import Pagina
+from src.modules.insumos.domain.value_objects.despachados.vista_despachos import (
+    ColumnaOrden,
+    OrdenDespachos,
+    Pagina,
+)
 from src.modules.insumos.domain.well_known_permissions import VIEW
 from src.modules.insumos.presentation.dependencies import (
     build_consultar_actualizacion,
@@ -51,20 +56,31 @@ def parsear_colores(texto: str) -> tuple[ColorSemaforo, ...]:
     return tuple(ColorSemaforo(valor) for valor in valores)
 
 
+def orden_listado(
+    orden: ColumnaOrden = Query(default=ColumnaOrden.URGENCIA),
+    direccion: Literal["asc", "desc"] = Query(default="asc"),
+) -> OrdenDespachos:
+    """Columna por la que ordenar (`urgencia` ignora la dirección) y `asc`/`desc`. Un valor
+    fuera de la lista es un 400 `VALIDATION_ERROR`."""
+    return OrdenDespachos(columna=orden, descendente=direccion == "desc")
+
+
 def criterio_listado(
     texto: str = Query(default="", max_length=100),
     colores: str = Query(default=""),
     operativa: str = Query(default=""),
     remito_desde: date | None = Query(default=None, alias="remitoDesde"),
     remito_hasta: date | None = Query(default=None, alias="remitoHasta"),
+    orden: OrdenDespachos = Depends(orden_listado),
 ) -> CriterioListado:
-    """Filtros de la tabla desde el query string (operativa vacía = todas)."""
+    """Filtros y orden de la tabla desde el query string (operativa vacía = todas)."""
     return CriterioListado(
         texto=texto.strip(),
         colores=parsear_colores(colores),
         operativa=operativa.strip() or None,
         remito_desde=remito_desde,
         remito_hasta=remito_hasta,
+        orden=orden,
     )
 
 

@@ -144,6 +144,7 @@ def _filtros(criterio: CriterioListado, alcance_desde: date) -> FiltrosDespachos
         remito_desde=criterio.remito_desde,
         remito_hasta=criterio.remito_hasta,
         solo_alertas_abiertas=criterio.solo_alertas_abiertas,
+        orden=criterio.orden,
     )
 
 

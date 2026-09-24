@@ -31,7 +31,9 @@ from src.modules.insumos.domain.errores_despachados import EnvioDespachoNoEncont
 from src.modules.insumos.domain.value_objects.despachados.cambio_estado import CambioEstado
 from src.modules.insumos.domain.value_objects.despachados.clasificacion import ColorSemaforo
 from src.modules.insumos.domain.value_objects.despachados.vista_despachos import (
+    ColumnaOrden,
     FiltrosDespachos,
+    OrdenDespachos,
 )
 from tests.unit.application.insumos.despachados.fakes_consulta_despachos import (
     CONFIG,
@@ -78,6 +80,17 @@ async def test_listar_arma_los_filtros_con_el_alcance_y_devuelve_el_total() -> N
     assert listado == ListadoDespachos(filas=[fila(GUIA_A)], total=51)
     assert mundo.consulta.listados == [(filtros, PAGINA)]
     assert mundo.consulta.contados == [filtros]
+    assert filtros.orden == OrdenDespachos(ColumnaOrden.URGENCIA, descendente=False)
+
+
+async def test_listar_pasa_el_orden_elegido_al_repositorio() -> None:
+    mundo = MundoConsulta()
+    orden = OrdenDespachos(ColumnaOrden.FECHA_ESTADO, descendente=True)
+
+    await ListarDespachos(mundo.ports(), CONFIG).execute(CriterioListado(orden=orden), PAGINA)
+
+    filtros, _ = mundo.consulta.listados[0]
+    assert filtros.orden == orden
 
 
 async def test_hoy_es_el_dia_en_argentina_y_no_en_utc() -> None:

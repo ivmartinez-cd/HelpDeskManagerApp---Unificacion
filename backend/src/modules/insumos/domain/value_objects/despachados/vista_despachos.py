@@ -1,13 +1,48 @@
 """Lo que la pantalla de Despachados lee de la base de HDM (nunca espera a OCA)."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
+from enum import StrEnum
 
 from src.modules.insumos.domain.entities.despachados.accion_registrada import (
     ResultadoAccion,
     TipoAccion,
 )
 from src.modules.insumos.domain.value_objects.despachados.clasificacion import ColorSemaforo
+
+
+class ColumnaOrden(StrEnum):
+    """Por qué columna de la tabla se ordena el listado."""
+
+    URGENCIA = "urgencia"
+    """El orden por defecto: rango del semáforo con sus desempates internos (rojo por fecha
+    límite, naranja y amarillo por fecha de estado más vieja, el resto por la más nueva).
+    Ignora la dirección: siempre va de lo más urgente a lo menos."""
+    COLOR = "color"
+    """Solo el rango del semáforo (rojo, naranja, amarillo, verde, gris, cerrado)."""
+    GUIA = "guia"
+    REMITO = "remito"
+    """Número del primer remito de la guía."""
+    CLIENTE = "cliente"
+    INCIDENTE = "incidente"
+    """Primer incidente del primer remito."""
+    ESTADO = "estado"
+    """Texto del último estado de OCA."""
+    SUCURSAL = "sucursal"
+    """Sucursal OCA del último estado."""
+    FECHA_REMITO = "fecha_remito"
+    FECHA_ESTADO = "fecha_estado"
+    LIMITE = "limite"
+    """Fecha límite del envío."""
+
+
+@dataclass(frozen=True, slots=True)
+class OrdenDespachos:
+    """Orden de la tabla. Los vacíos (sin remito, sin estado OCA, sin límite) van siempre al
+    final, en las dos direcciones; a igual valor desempata la guía, ascendente."""
+
+    columna: ColumnaOrden = ColumnaOrden.URGENCIA
+    descendente: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +61,8 @@ class FiltrosDespachos:
     remito_hasta: date | None = None
     solo_alertas_abiertas: bool = False
     """La bandeja "Requieren acción": rojo o naranja sin cierre de alerta."""
+    orden: OrdenDespachos = field(default_factory=OrdenDespachos)
+    """No filtra: viaja con los filtros para que el listado lo aplique en SQL."""
 
 
 @dataclass(frozen=True, slots=True)

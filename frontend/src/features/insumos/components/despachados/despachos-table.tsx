@@ -3,13 +3,25 @@
 import type { ReactNode } from "react";
 import { BrandSkeleton } from "@/shared/components/ui/brand-form";
 import { PaginationBar } from "@/shared/components/ui/pagination-bar";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import type { SortState } from "@/shared/hooks/use-table-sort";
 import { formatPlainDate } from "@/shared/utils/date-arg";
 import { cn } from "@/shared/utils/cn";
-import type { FilaDespacho } from "../../types/despachados";
+import type { ColumnaOrdenDespachos, FilaDespacho } from "../../types/despachados";
 import { ChipSemaforo, ConExtra, EstadoOcaCelda, LimiteCelda, TD, TH, claseFila } from "./despacho-celdas";
 import { alTeclearFila } from "./despacho-celdas";
 
-const COLUMNAS = ["Color", "Guía", "Remito", "Cliente", "Incidente", "Estado OCA", "Sucursal", "Fecha estado", "Límite / aviso"];
+const COLUMNAS: SortableColumn<ColumnaOrdenDespachos>[] = [
+  { key: "color", label: "Color" },
+  { key: "guia", label: "Guía" },
+  { key: "remito", label: "Remito" },
+  { key: "cliente", label: "Cliente" },
+  { key: "incidente", label: "Incidente" },
+  { key: "estado", label: "Estado OCA" },
+  { key: "sucursal", label: "Sucursal" },
+  { key: "fecha_estado", label: "Fecha estado" },
+  { key: "limite", label: "Límite / aviso" },
+];
 export const TAMANIOS_PAGINA = [25, 50, 100] as const;
 
 interface Props {
@@ -22,11 +34,15 @@ interface Props {
   size: number;
   onPage: (page: number) => void;
   onSize: (size: number) => void;
+  /** Con `urgencia` (el defecto) ningún encabezado queda activo. */
+  orden: SortState<ColumnaOrdenDespachos>;
+  onOrdenar: (columna: ColumnaOrdenDespachos) => void;
   seleccionada: string | null;
   onAbrir: (guia: string) => void;
 }
 
-/** "Todos los despachos": filtros + tabla paginada en el servidor. Las filas
+/** "Todos los despachos": filtros + tabla ordenada y paginada en el servidor.
+ * Cada encabezado ordena por su columna (clic: asc; otro clic: desc). Las filas
  * son clickeables y accesibles por teclado (Enter/Espacio abren el panel). */
 export function DespachosTable(props: Props) {
   const { filas, loading, seleccionada, onAbrir } = props;
@@ -43,8 +59,8 @@ export function DespachosTable(props: Props) {
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-border bg-muted/40">
-              {COLUMNAS.map((h) => (
-                <th key={h} scope="col" className={TH}>{h}</th>
+              {COLUMNAS.map((c) => (
+                <SortableHeader key={c.key} column={c} sort={props.orden} onToggleSort={props.onOrdenar} thClassName={TH} />
               ))}
             </tr>
           </thead>

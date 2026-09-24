@@ -1,5 +1,6 @@
-"""SQL de la pantalla de Despachados: alcance, filtros, orden por urgencia y columnas de cada
+"""SQL de la pantalla de Despachados: alcance, filtros y columnas de cada
 fila (primer remito, incidentes y última acción) resueltas en la misma consulta, sin N+1.
+El ORDER BY vive en `_sql_orden_despachos.py`.
 
 Todo parametrizado: el texto del usuario va como parámetro de LIKE, con `%`, `_` y `\\`
 escapados para que se busquen literales. La búsqueda no distingue mayúsculas ni tildes: la
@@ -16,7 +17,6 @@ from sqlalchemy import (
     Select,
     String,
     and_,
-    case,
     cast,
     func,
     or_,
@@ -37,6 +37,7 @@ from src.modules.insumos.infrastructure.models.despacho_remito_model import (
     DespachoIncidenteModel,
     DespachoRemitoModel,
 )
+from src.modules.insumos.infrastructure.repositories._sql_orden_despachos import orden_filas
 
 _ENVIO = DespachoEnvioModel
 _REMITO = DespachoRemitoModel
@@ -47,17 +48,6 @@ _CON_TILDE = "áéíóúüñÁÉÍÓÚÜÑ"
 _SIN_TILDE = "aeiouunaeiouun"
 """Las mayúsculas acentuadas también: `lower()` no las baja si la base usa la collation C."""
 _ColumnaTexto = ColumnElement[str] | InstrumentedAttribute[str]
-
-_RANGO_URGENCIA = {
-    ColorSemaforo.ROJO.value: 0,
-    ColorSemaforo.NARANJA.value: 1,
-    ColorSemaforo.AMARILLO.value: 2,
-    ColorSemaforo.VERDE.value: 3,
-    ColorSemaforo.GRIS.value: 4,
-    ColorSemaforo.CERRADO.value: 5,
-}
-_EN_ESPERA = (ColorSemaforo.NARANJA.value, ColorSemaforo.AMARILLO.value)
-_RESTO = (ColorSemaforo.VERDE.value, ColorSemaforo.GRIS.value, ColorSemaforo.CERRADO.value)
 
 
 def alerta_abierta() -> ColumnElement[bool]:
@@ -117,22 +107,6 @@ def _coincide_texto(texto: str) -> ColumnElement[bool]:
         .where(del_remito, or_(coincide(_INCIDENTE.numero), coincide(_INCIDENTE.numero_cliente)))
     )
     return or_(coincide(_ENVIO.guia), coincide(_ENVIO.cliente), remito.exists(), incidente.exists())
-
-
-def _orden_por_urgencia() -> tuple[ColumnElement[Any], ...]:
-    """Rojo, naranja, amarillo, verde, gris, cerrado. Rojo por fecha límite; naranja y
-    amarillo por fecha de estado más vieja; el resto por la más nueva. Desempata la guía."""
-    rango = case(_RANGO_URGENCIA, value=_ENVIO.color, else_=len(_RANGO_URGENCIA))
-    limite_rojo = case((_ENVIO.color == ColorSemaforo.ROJO.value, _ENVIO.fecha_limite))
-    estado_en_espera = case((_ENVIO.color.in_(_EN_ESPERA), _ENVIO.oca_fecha_estado))
-    estado_resto = case((_ENVIO.color.in_(_RESTO), _ENVIO.oca_fecha_estado))
-    return (
-        rango,
-        limite_rojo.asc().nulls_last(),
-        estado_en_espera.asc().nulls_last(),
-        estado_resto.desc().nulls_last(),
-        _ENVIO.guia.asc(),
-    )
 
 
 def _primer_remito() -> LateralFromClause:
@@ -216,14 +190,15 @@ _COLUMNAS_FILA = (
 
 
 def listar_filas(filtros: FiltrosDespachos, pagina: Pagina) -> Select[Any]:
-    """Una página de filas, ordenada por urgencia, en una sola sentencia."""
+    """Una página de filas, en el orden pedido (por defecto, urgencia), en una sola
+    sentencia."""
     return (
         select(*_COLUMNAS_FILA)
         .select_from(_ENVIO)
         .outerjoin(_PRIMER_REMITO, true())
         .outerjoin(_ULTIMA_ACCION, true())
         .where(*condiciones(filtros))
-        .order_by(*_orden_por_urgencia())
+        .order_by(*orden_filas(filtros.orden, _PRIMER_REMITO))
         .limit(pagina.limite)
         .offset(pagina.desplazamiento)
     )

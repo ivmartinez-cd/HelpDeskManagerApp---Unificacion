@@ -18,7 +18,8 @@ const DESPACHADOS = `${BASE}/despachados`;
  * lecturas salen de la base de HDM: ninguna espera a OCA. "Actualizar ahora"
  * responde 202 y la pantalla sigue el avance con `getActualizacion`. */
 export const despachadosApi = {
-  /** Tabla "Todos los despachos": filtrada y paginada en SQL, rojos primero. */
+  /** Tabla "Todos los despachos": filtrada, ordenada y paginada en SQL (por
+   * defecto, rojos primero). */
   listar: (filtros: FiltrosDespachos, page: number, size: number) =>
     httpClient.get<Page<FilaDespacho>>(
       `${DESPACHADOS}${toQuery({
@@ -27,6 +28,9 @@ export const despachadosApi = {
         operativa: filtros.operativa || undefined,
         remitoDesde: filtros.remitoDesde,
         remitoHasta: filtros.remitoHasta,
+        // Sin orden elegido no se manda nada: el backend ordena por urgencia.
+        orden: filtros.orden === "urgencia" ? undefined : filtros.orden,
+        direccion: filtros.orden === "urgencia" ? undefined : filtros.direccion,
         page,
         size,
       })}`,

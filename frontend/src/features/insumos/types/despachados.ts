@@ -166,7 +166,22 @@ export interface DetalleDespacho {
   acciones: AccionDespacho[];
 }
 
-/** Filtros de la tabla "Todos los despachos" (query string del listado). */
+/** Columna por la que se ordena la tabla (`orden` del listado). `urgencia` es
+ * el orden por defecto (rojos primero, con sus desempates) e ignora la dirección. */
+export type ColumnaOrdenDespachos =
+  | "urgencia"
+  | "color"
+  | "guia"
+  | "remito"
+  | "cliente"
+  | "incidente"
+  | "estado"
+  | "sucursal"
+  | "fecha_remito"
+  | "fecha_estado"
+  | "limite";
+
+/** Filtros y orden de la tabla "Todos los despachos" (query string del listado). */
 export interface FiltrosDespachos {
   texto: string;
   /** Uno o más colores separados por coma (`"verde,amarillo"`); vacío = todos. */
@@ -174,4 +189,6 @@ export interface FiltrosDespachos {
   operativa: string;
   remitoDesde: string | null;
   remitoHasta: string | null;
+  orden: ColumnaOrdenDespachos;
+  direccion: "asc" | "desc";
 }

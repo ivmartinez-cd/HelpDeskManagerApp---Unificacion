@@ -1,6 +1,6 @@
 """Entradas y salidas de los casos de uso de lectura de Insumos > Despachados."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, tzinfo
 
 from src.modules.insumos.domain.entities.despachados.accion_registrada import AccionRegistrada
@@ -11,6 +11,7 @@ from src.modules.insumos.domain.value_objects.despachados.clasificacion import C
 from src.modules.insumos.domain.value_objects.despachados.despacho_siges import DespachoSiges
 from src.modules.insumos.domain.value_objects.despachados.vista_despachos import (
     FilaDespacho,
+    OrdenDespachos,
     ResumenDespachos,
 )
 
@@ -25,6 +26,8 @@ class CriterioListado:
     remito_desde: date | None = None
     remito_hasta: date | None = None
     solo_alertas_abiertas: bool = False
+    orden: OrdenDespachos = field(default_factory=OrdenDespachos)
+    """Columna y dirección elegidas en la tabla; por defecto, urgencia."""
 
 
 @dataclass(frozen=True)

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { despachadosApi } from "../api/despachados-api";
 import type { FilaDespacho, FiltrosDespachos } from "../types/despachados";
 
-/** Tabla "Todos los despachos": filtros y paginación los resuelve el backend
+/** Tabla "Todos los despachos": filtros, orden y paginación los resuelve el backend
  * en SQL; este hook solo traduce el estado de la pantalla a la llamada y
  * descarta respuestas viejas (token por corrida). La búsqueda llega ya
  * debounceada desde la vista. */
@@ -24,8 +24,8 @@ interface Query {
 }
 
 function claveDe({ filtros, page, size }: Query): string {
-  const { texto, colores, operativa, remitoDesde, remitoHasta } = filtros;
-  return [texto, colores, operativa, remitoDesde, remitoHasta, page, size].join("|");
+  const { texto, colores, operativa, remitoDesde, remitoHasta, orden, direccion } = filtros;
+  return [texto, colores, operativa, remitoDesde, remitoHasta, orden, direccion, page, size].join("|");
 }
 
 export function mensajeDeError(err: unknown, fallback: string): string {

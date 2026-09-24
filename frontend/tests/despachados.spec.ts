@@ -121,15 +121,8 @@ const DETALLE_NARANJA = {
 };
 
 const CORRIDA = {
-  id: 1,
-  origen: "programada",
-  usuarioNombre: null,
-  iniciadaEn: "2026-09-24T13:38:00Z",
-  terminadaEn: "2026-09-24T13:40:00Z",
-  enviosNuevos: 0,
-  consultasOk: 120,
-  consultasError: 0,
-  error: null,
+  id: 1, origen: "programada", usuarioNombre: null, iniciadaEn: "2026-09-24T13:38:00Z",
+  terminadaEn: "2026-09-24T13:40:00Z", enviosNuevos: 0, consultasOk: 120, consultasError: 0, error: null,
 };
 
 interface Mock {
@@ -209,6 +202,25 @@ test.describe("Insumos › Despachados", () => {
 
     await tarjeta.click();
     await expect(tarjeta).toHaveAttribute("aria-pressed", "false");
+  });
+
+  test("los encabezados ordenan en el servidor (orden/direccion) y vuelven a la página 1", async ({ page }) => {
+    const mock = await mockDespachados(page);
+    await page.goto("/insumos/despachados");
+    const ultimo = () => mock.listados.at(-1)?.searchParams;
+    await expect.poll(() => ultimo()?.has("orden")).toBe(false);
+
+    const cliente = page.getByRole("columnheader", { name: "Cliente" });
+    await cliente.getByRole("button").click();
+    await expect.poll(() => [ultimo()?.get("orden"), ultimo()?.get("direccion"), ultimo()?.get("page")]).toEqual(["cliente", "asc", "1"]);
+    await expect(cliente).toHaveAttribute("aria-sort", "ascending");
+    await cliente.getByRole("button").click();
+    await expect.poll(() => ultimo()?.get("direccion")).toBe("desc");
+    await expect(cliente).toHaveAttribute("aria-sort", "descending");
+
+    await page.getByRole("columnheader", { name: "Fecha estado" }).getByRole("button").click();
+    await expect.poll(() => [ultimo()?.get("orden"), ultimo()?.get("direccion")]).toEqual(["fecha_estado", "desc"]);
+    await expect(cliente).toHaveAttribute("aria-sort", "none");
   });
 
   test("abrir el panel lateral de una guía", async ({ page }) => {

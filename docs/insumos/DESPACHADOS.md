@@ -107,7 +107,7 @@ la conexión compartida de ORION (`ORION_*`).
 
 | Método y ruta | Permiso | Qué hace |
 |---|---|---|
-| `GET /despachados` | `insumos.view` | Listado paginado por urgencia; filtros `texto`, `colores`, `operativa`, `remitoDesde`, `remitoHasta` |
+| `GET /despachados` | `insumos.view` | Listado paginado; filtros `texto`, `colores`, `operativa`, `remitoDesde`, `remitoHasta`; orden `orden` + `direccion` (ver abajo) |
 | `GET /despachados/requieren-accion` | `insumos.view` | Rojo y naranja con alerta abierta (la pantalla ya no lo usa: se sacó la bandeja) |
 | `GET /despachados/resumen` | `insumos.view` | Tarjetas y contadores del menú |
 | `GET /despachados/actualizacion` | `insumos.view` | Corrida en curso y última terminada |
@@ -115,6 +115,24 @@ la conexión compartida de ORION (`ORION_*`).
 | `GET /despachados/{guia}` | `insumos.view` | Detalle: estado, remitos, cambios, acciones |
 | `POST /despachados/{guia}/acciones` | `insumos.update` | Registrar acción (opcionalmente cierra la alerta) |
 | `POST /despachados/{guia}/cerrar-alerta` | `insumos.update` | Cerrar la alerta (exige al menos una acción registrada) |
+
+**Orden del listado** (`GET /despachados`): lo resuelve el backend en SQL, antes de paginar.
+
+- `orden`: `urgencia` (defecto), `color`, `guia`, `remito`, `cliente`, `incidente`, `estado`,
+  `sucursal`, `fecha_remito`, `fecha_estado`, `limite`. `direccion`: `asc` (defecto) o `desc`.
+  Un valor fuera de la lista es un 400 `VALIDATION_ERROR`.
+- `urgencia` es el orden de siempre (rojo por fecha límite, naranja y amarillo por la fecha de
+  estado más vieja, el resto por la más nueva) e **ignora `direccion`**. `color` ordena solo por
+  el rango del semáforo (rojo → cerrado), sin esos desempates.
+- `remito` es el número del primer remito de la guía; `incidente`, el primer incidente de ese
+  remito; `estado` y `sucursal`, el último estado y la sucursal que informó OCA; `limite`, la
+  fecha límite. Los textos se comparan en minúsculas.
+- Los vacíos (sin remito, sin incidente, sin estado de OCA, sin límite) van siempre al final,
+  en las dos direcciones. A igual valor desempata la guía, ascendente.
+- Pantalla: cada encabezado de "Todos los despachos" ordena por su columna (primer clic `asc`,
+  segundo `desc`; "Fecha estado" arranca en `desc`). Al entrar no hay encabezado activo (orden
+  por urgencia); "Limpiar filtros" vuelve a ese orden. Cambiar el orden vuelve a la página 1.
+  `fecha_remito` está en la API pero la columna "Remito" ordena por número.
 
 ## Catálogo de estados OCA y semáforo
 

@@ -20,6 +20,10 @@ from src.modules.insumos.application.use_cases.despachados.consultas_despachos i
     ResumirDespachos,
 )
 from src.modules.insumos.domain.value_objects.despachados.clasificacion import ColorSemaforo
+from src.modules.insumos.domain.value_objects.despachados.vista_despachos import (
+    ColumnaOrden,
+    OrdenDespachos,
+)
 from tests.integration.router_testing import client, install_session, uninstall_session
 from tests.unit.application.insumos.despachados.fakes_consulta_despachos import (
     CONFIG,
@@ -138,6 +142,21 @@ async def test_listado_sin_filtros_usa_los_defaults(mundo: MundoConsulta) -> Non
     assert (response.json()["page"], response.json()["size"]) == (1, 25)
     filtros, _ = mundo.consulta.listados[0]
     assert (filtros.texto, filtros.colores, filtros.operativa) == ("", (), None)
+    assert filtros.orden == OrdenDespachos(ColumnaOrden.URGENCIA, descendente=False)
+
+
+@pytest.mark.usefixtures("_sesion_view")
+@pytest.mark.parametrize(("direccion", "descendente"), [("asc", False), ("desc", True)])
+async def test_listado_pasa_el_orden_al_caso_de_uso(
+    mundo: MundoConsulta, direccion: str, descendente: bool
+) -> None:
+    params = {"orden": "fecha_estado", "direccion": direccion}
+    async with client() as c:
+        response = await c.get(_BASE, params=params)
+
+    assert response.status_code == 200
+    filtros, _ = mundo.consulta.listados[0]
+    assert filtros.orden == OrdenDespachos(ColumnaOrden.FECHA_ESTADO, descendente)
 
 
 @pytest.mark.usefixtures("_sesion_view", "mundo")
@@ -151,8 +170,12 @@ async def test_color_invalido_devuelve_400_con_los_validos() -> None:
 
 
 @pytest.mark.usefixtures("_sesion_view", "mundo")
-@pytest.mark.parametrize("params", [{"size": "101"}, {"page": "0"}, {"remitoDesde": "ayer"}])
-async def test_paginacion_o_fecha_invalida_devuelve_400(params: dict[str, str]) -> None:
+@pytest.mark.parametrize(
+    "params",
+    [{"size": "101"}, {"page": "0"}, {"remitoDesde": "ayer"}]
+    + [{"orden": "operativa"}, {"orden": "cliente", "direccion": "arriba"}],
+)
+async def test_paginacion_fecha_u_orden_invalidos_devuelven_400(params: dict[str, str]) -> None:
     async with client() as c:
         response = await c.get(_BASE, params=params)
 

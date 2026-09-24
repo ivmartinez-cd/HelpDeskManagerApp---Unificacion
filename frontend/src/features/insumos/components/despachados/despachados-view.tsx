@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useSession } from "@/services/session-provider";
+import type { SortState } from "@/shared/hooks/use-table-sort";
 import type { DateRange } from "@/shared/types/date-range";
 import { despachadosApi } from "../../api/despachados-api";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
@@ -11,13 +12,23 @@ import { useDespachoDetalle } from "../../hooks/use-despacho-detalle";
 import { useDespachadosActualizacion } from "../../hooks/use-despachados-actualizacion";
 import { mensajeDeError, useDespachadosListado } from "../../hooks/use-despachados-listado";
 import { useDespachadosTablero } from "../../hooks/use-despachados-tablero";
-import type { FiltrosDespachos, NuevaAccionDespacho } from "../../types/despachados";
+import type { ColumnaOrdenDespachos, FiltrosDespachos, NuevaAccionDespacho } from "../../types/despachados";
 import { DespachadosCards, TARJETAS } from "./despachados-cards";
 import { DespachadosHeader } from "./despachados-header";
 import { DespachoDrawer } from "./despacho-drawer";
 import { DespachosFilters } from "./despachos-filters";
 import { DespachosTable, TAMANIOS_PAGINA } from "./despachos-table";
 import { RegistrarAccionModal, type ObjetivoAccion } from "./registrar-accion-modal";
+
+/** Sin columna elegida la tabla va por urgencia (ningún encabezado activo). */
+const ORDEN_INICIAL: SortState<ColumnaOrdenDespachos> = { key: "urgencia", direction: "asc" };
+/** Las fechas arrancan por la más nueva al elegir su columna. */
+const DESC_PRIMERO: readonly ColumnaOrdenDespachos[] = ["fecha_remito", "fecha_estado"];
+
+function alternar(prev: SortState<ColumnaOrdenDespachos>, key: ColumnaOrdenDespachos): SortState<ColumnaOrdenDespachos> {
+  if (prev.key === key) return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+  return { key, direction: DESC_PRIMERO.includes(key) ? "desc" : "asc" };
+}
 
 /** Pantalla `/insumos/despachados`: seguimiento de los envíos por OCA.
  *
@@ -33,6 +44,7 @@ export function DespachadosView() {
   const [texto, setTexto] = useState("");
   const [operativa, setOperativa] = useState("");
   const [rango, setRango] = useState<DateRange | null>(null);
+  const [orden, setOrden] = useState(ORDEN_INICIAL);
   const [page, setPage] = useState(1);
   const [size, setSize] = useState<number>(TAMANIOS_PAGINA[0]);
   const [guiaAbierta, setGuiaAbierta] = useState<string | null>(null);
@@ -46,13 +58,15 @@ export function DespachadosView() {
       operativa,
       remitoDesde: rango?.startDate ?? null,
       remitoHasta: rango?.endDate ?? null,
+      orden: orden.key,
+      direccion: orden.direction,
     }),
-    [textoDebounced, colores, operativa, rango],
+    [textoDebounced, colores, operativa, rango, orden],
   );
 
-  // Cualquier cambio de filtro vuelve a la página 1 (ajuste durante el render,
-  // mismo patrón que historial-view).
-  const claveFiltros = `${textoDebounced}|${colores}|${operativa}|${rango?.startDate}|${rango?.endDate}|${size}`;
+  // Cualquier cambio de filtro u orden vuelve a la página 1 (ajuste durante el
+  // render, mismo patrón que historial-view).
+  const claveFiltros = `${textoDebounced}|${colores}|${operativa}|${rango?.startDate}|${rango?.endDate}|${size}|${orden.key}|${orden.direction}`;
   const [claveAnterior, setClaveAnterior] = useState(claveFiltros);
   if (claveFiltros !== claveAnterior) {
     setClaveAnterior(claveFiltros);
@@ -85,6 +99,7 @@ export function DespachadosView() {
     setTexto("");
     setOperativa("");
     setRango(null);
+    setOrden(ORDEN_INICIAL);
   };
 
   const guardarAccion = async (guia: string, body: NuevaAccionDespacho) => {
@@ -149,6 +164,8 @@ export function DespachadosView() {
         size={size}
         onPage={setPage}
         onSize={setSize}
+        orden={orden}
+        onOrdenar={(key) => setOrden((prev) => alternar(prev, key))}
         seleccionada={guiaAbierta}
         onAbrir={setGuiaAbierta}
       />
