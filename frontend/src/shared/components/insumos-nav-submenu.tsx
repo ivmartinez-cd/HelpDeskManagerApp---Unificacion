@@ -9,6 +9,7 @@ import {
   Monitor,
   MonitorOff,
   Settings,
+  Truck,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import { useSession } from "@/services/session-provider";
 import { canAccessPath } from "@/shared/config/route-permissions";
 import { cn } from "@/shared/utils/cn";
 import { useInsumosNavCounts } from "@/features/insumos/hooks/use-insumos-nav-counts";
+import { useDespachadosNavCounts } from "@/features/insumos/hooks/use-despachados-nav-counts";
 
 /** Submenú de Insumos en la barra lateral, con el patrón de secciones +
  * badges del mockup del handoff (antes era una lista plana de 7 links sin
@@ -29,7 +31,7 @@ interface NavLinkDef {
   exact: boolean;
   icon: LucideIcon;
   accent?: boolean;
-  badge?: "solicitudes" | "offline";
+  badge?: "solicitudes" | "offline" | "despachados";
 }
 
 interface NavSectionDef {
@@ -55,6 +57,14 @@ const SECTIONS: NavSectionDef[] = [
         exact: false,
         icon: History,
         accent: true,
+      },
+      {
+        href: "/insumos/despachados",
+        label: "Despachados",
+        exact: false,
+        icon: Truck,
+        accent: true,
+        badge: "despachados",
       },
     ],
   },
@@ -100,10 +110,19 @@ const SECTIONS: NavSectionDef[] = [
   },
 ];
 
-function CountPill({ value, tone }: { value: number; tone: "orange" | "red" }) {
+function CountPill({
+  value,
+  tone,
+  title,
+}: {
+  value: number;
+  tone: "orange" | "red";
+  title?: string;
+}) {
   if (value <= 0) return null;
   return (
     <span
+      title={title}
       className={cn(
         "inline-flex h-[18px] min-w-[18px] flex-none items-center justify-center rounded-full px-1 font-body text-[10px] font-bold tabular-nums text-white",
         tone === "red" ? "bg-[#ef4444]" : "bg-brand-orange",
@@ -118,11 +137,13 @@ function NavLinkRow({
   link,
   active,
   counts,
+  despachados,
   onNavigate,
 }: {
   link: NavLinkDef;
   active: boolean;
   counts: ReturnType<typeof useInsumosNavCounts>;
+  despachados: ReturnType<typeof useDespachadosNavCounts>;
   onNavigate?: () => void;
 }) {
   const Icon = link.icon;
@@ -149,6 +170,16 @@ function NavLinkRow({
         </span>
       )}
       {link.badge === "offline" && <CountPill value={counts.offline} tone="red" />}
+      {link.badge === "despachados" && (
+        <span className="flex flex-none items-center gap-1">
+          <CountPill value={despachados.rojas} tone="red" title={`${despachados.rojas} en sucursal`} />
+          <CountPill
+            value={despachados.naranjas}
+            tone="orange"
+            title={`${despachados.naranjas} con visita fallida`}
+          />
+        </span>
+      )}
     </Link>
   );
 }
@@ -156,6 +187,8 @@ function NavLinkRow({
 export function InsumosNavSubmenu({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const counts = useInsumosNavCounts();
+  // Fetch aparte: si Despachados falla, los otros contadores siguen andando.
+  const despachados = useDespachadosNavCounts();
   const { can, hasFeature } = useSession();
   // Mapa central de permisos por ruta (ADR-029): hoy todo /insumos/* se abre
   // con `view`, pero si una pantalla pasa a pedir otra acción se oculta sola.
@@ -181,6 +214,7 @@ export function InsumosNavSubmenu({ onNavigate }: { onNavigate?: () => void }) {
                 link={link}
                 active={active}
                 counts={counts}
+                despachados={despachados}
                 onNavigate={onNavigate}
               />
             );

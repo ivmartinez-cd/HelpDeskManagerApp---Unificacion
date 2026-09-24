@@ -4,6 +4,7 @@ import {
   type InputHTMLAttributes,
   type ReactNode,
   type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
 } from "react";
 import { Loader2, type LucideIcon } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
@@ -74,6 +75,48 @@ export function BrandSelect({ label, hint, id, className, children, ...props }: 
         {children}
       </select>
       {hint && <p className="font-body text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+interface BrandTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label: string;
+  hint?: string;
+  /** Mensaje de validación bajo el campo (marca `aria-invalid`). */
+  error?: string | null;
+}
+
+export function BrandTextarea({ label, hint, error, id, className, ...props }: BrandTextareaProps) {
+  const generatedId = useId();
+  const textareaId = id ?? generatedId;
+  const messageId = `${textareaId}-msg`;
+  const message = error || hint;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={textareaId} className={brandFieldLabelClass}>
+        {label}
+      </label>
+      <textarea
+        id={textareaId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={message ? messageId : undefined}
+        {...props}
+        className={cn(
+          "min-h-24 w-full resize-y rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-orange/40",
+          className,
+        )}
+      />
+      {message && (
+        <p
+          id={messageId}
+          className={cn(
+            "font-body text-xs",
+            error ? "font-semibold text-destructive" : "text-muted-foreground",
+          )}
+        >
+          {message}
+        </p>
+      )}
     </div>
   );
 }
