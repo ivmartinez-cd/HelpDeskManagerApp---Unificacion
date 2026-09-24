@@ -9,6 +9,7 @@ from datetime import date
 import pytest
 
 from src.modules.insumos.domain.services.despachados.dias_habiles import (
+    dias_habiles_hasta,
     dias_habiles_transcurridos,
     es_dia_habil,
     fecha_limite_retiro,
@@ -99,3 +100,24 @@ def test_dias_habiles_transcurridos_excluye_el_dia_inicial(
     desde: date, hasta: date, esperado: int
 ) -> None:
     assert dias_habiles_transcurridos(desde, hasta, FERIADO_12_OCT | FIN_DE_AÑO) == esperado
+
+
+@pytest.mark.parametrize(
+    ("hoy", "limite", "esperado"),
+    [
+        pytest.param(date(2026, 9, 25), date(2026, 9, 25), 0, id="vence-hoy"),
+        pytest.param(date(2026, 9, 24), date(2026, 9, 25), 1, id="vence-manana"),
+        pytest.param(date(2026, 9, 25), date(2026, 9, 28), 1, id="viernes-vence-el-lunes"),
+        pytest.param(date(2026, 9, 26), date(2026, 9, 28), 1, id="sabado-vence-el-lunes"),
+        pytest.param(date(2026, 10, 9), date(2026, 10, 16), 4, id="saltea-feriado"),
+        pytest.param(date(2026, 9, 28), date(2026, 9, 25), -1, id="vencio-el-viernes"),
+        pytest.param(date(2026, 9, 30), date(2026, 9, 25), -3, id="vencido-hace-tres"),
+        pytest.param(date(2026, 10, 13), date(2026, 10, 9), -1, id="vencido-con-feriado"),
+        pytest.param(date(2026, 9, 26), date(2026, 9, 25), -1, id="sabado-tras-vencer"),
+        pytest.param(date(2026, 10, 12), date(2026, 10, 9), -1, id="feriado-tras-vencer"),
+    ],
+)
+def test_dias_habiles_hasta_el_limite(hoy: date, limite: date, esperado: int) -> None:
+    """0 = vence hoy, positivo = días hábiles que faltan, negativo = vencido (aunque hoy
+    no sea hábil)."""
+    assert dias_habiles_hasta(hoy, limite, FERIADO_12_OCT) == esperado

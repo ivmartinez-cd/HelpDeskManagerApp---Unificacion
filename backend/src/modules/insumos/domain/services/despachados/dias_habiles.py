@@ -39,3 +39,12 @@ def dias_habiles_transcurridos(desde: date, hasta: date, feriados: frozenset[dat
     """Días hábiles `d` con `desde < d <= hasta`; 0 si `hasta <= desde`."""
     dias = (desde + _UN_DIA * n for n in range(1, (hasta - desde).days + 1))
     return sum(1 for dia in dias if es_dia_habil(dia, feriados))
+
+
+def dias_habiles_hasta(hoy: date, limite: date, feriados: frozenset[date]) -> int:
+    """Días hábiles que faltan de `hoy` a `limite`: 0 = vence hoy, 1 = vence el próximo día
+    hábil, negativo = vencido (-1 si venció el último día hábil). Un límite pasado siempre
+    da negativo, aunque hoy no sea hábil: el sábado, un límite del viernes da -1, no 0."""
+    if limite >= hoy:
+        return dias_habiles_transcurridos(hoy, limite, feriados)
+    return -max(1, dias_habiles_transcurridos(limite, hoy, feriados))
