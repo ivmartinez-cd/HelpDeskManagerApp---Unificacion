@@ -148,7 +148,7 @@ export function ProyeccionRecesosView() {
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Link href="/contadores" className="hover:text-foreground">Centro de Contadores</Link>
         <span>›</span>
-        <Link href="/contadores/proyeccion" className="hover:text-foreground">Proyección</Link>
+        <Link href="/contadores/proyeccion" className="hover:text-foreground">Estimador de contadores</Link>
         <span>›</span>
         <span className="font-semibold text-foreground">Recesos</span>
       </div>

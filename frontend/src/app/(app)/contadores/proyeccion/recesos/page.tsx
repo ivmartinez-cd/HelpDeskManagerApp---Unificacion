@@ -1,7 +1,7 @@
 import { ProyeccionRecesosView } from "@/features/contadores/components/proyeccion-recesos-view";
 
 export const metadata = {
-  title: "Recesos — Proyección de contadores",
+  title: "Recesos — Estimador de contadores",
 };
 
 export default function ProyeccionRecesosPage() {

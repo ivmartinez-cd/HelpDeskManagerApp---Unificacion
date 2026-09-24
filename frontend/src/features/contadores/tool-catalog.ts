@@ -43,10 +43,10 @@ export interface ToolDef {
 export const TOOLS: ToolDef[] = [
   {
     key: "proyeccion",
-    label: "Proyección",
-    navLabel: "Proyección Contadores",
+    label: "Estimador de contadores",
+    navLabel: "Estimador de contadores",
     icon: ChartColumn,
-    description: "Proyecta lecturas de contadores y genera archivos para SiGes.",
+    description: "Estima lecturas de contadores y genera archivos para SiGes.",
     route: "/contadores/proyeccion",
   },
 

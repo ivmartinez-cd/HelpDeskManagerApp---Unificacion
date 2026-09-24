@@ -28,11 +28,11 @@ function Encabezado() {
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Link href="/contadores" className="hover:text-foreground">Centro de Contadores</Link>
         <span>›</span>
-        <span className="font-semibold text-foreground">Proyección</span>
+        <span className="font-semibold text-foreground">Estimador de contadores</span>
         <Link href="/contadores/proyeccion/recesos" className="ml-auto hover:text-foreground">Recesos →</Link>
       </div>
       <h1 className="font-heading text-[25px] font-extrabold uppercase tracking-[-.03em] text-foreground">
-        Proyección de contadores
+        Estimador de contadores
       </h1>
     </>
   );
