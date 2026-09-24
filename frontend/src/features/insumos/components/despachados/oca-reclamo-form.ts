@@ -60,13 +60,29 @@ function idMotivo(form: FormularioB24): string | undefined {
   return campo?.items?.find((i) => i.label === OCA_FORM.motivo)?.value;
 }
 
-/** Datos de dominio -> valores del formulario. Los vacíos no se mandan (así no
- * se pisa nada con ""); sin contacto van solo la guía y el comentario. */
-export function valoresFormulario(reclamo: ReclamoOca, form: FormularioB24): Record<string, string> {
+/** Nombre y apellido del operador a partir del nombre completo de HDM (no se
+ * guardan por separado): la última palabra es el apellido y el resto el nombre.
+ * Un apellido compuesto sale partido; el operador lo corrige antes de enviar. */
+export function partirNombreCompleto(nombreCompleto: string): { nombre: string; apellido: string } {
+  const partes = nombreCompleto.trim().split(/\s+/).filter(Boolean);
+  if (partes.length < 2) return { nombre: partes[0] ?? "", apellido: "" };
+  return { nombre: partes.slice(0, -1).join(" "), apellido: partes[partes.length - 1] };
+}
+
+/** Datos de dominio -> valores del formulario. Nombre y apellido son los del
+ * operador logueado (pedido del usuario); empresa, CUIT, mail y teléfono, los de
+ * la cuenta OCA de la guía. Los vacíos no se mandan (así no se pisa nada con
+ * ""); sin contacto van el operador, la guía y el comentario. */
+export function valoresFormulario(
+  reclamo: ReclamoOca,
+  form: FormularioB24,
+  operadorNombreCompleto: string,
+): Record<string, string> {
   const c = reclamo.contacto;
+  const operador = partirNombreCompleto(operadorNombreCompleto);
   const valores: Record<string, string | undefined> = {
-    [CAMPO.nombre]: c?.nombre,
-    [CAMPO.apellido]: c?.apellido,
+    [CAMPO.nombre]: operador.nombre,
+    [CAMPO.apellido]: operador.apellido,
     [CAMPO.empresa]: c?.empresa,
     [CAMPO.cuit]: c?.cuit,
     [CAMPO.telefono]: c?.telefono,

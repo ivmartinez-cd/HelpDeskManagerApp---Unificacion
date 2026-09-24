@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { useSession } from "@/services/session-provider";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { BrandButton, BrandSkeleton } from "@/shared/components/ui/brand-form";
 import { copiarTexto } from "@/shared/utils/clipboard";
@@ -31,6 +32,7 @@ export function ReclamarOcaModal({ guia, onClose }: Props) {
 }
 
 function Contenido({ guia, onClose }: { guia: string; onClose: Props["onClose"] }) {
+  const operador = useSession().user.fullName;
   const [reclamo, setReclamo] = useState<ReclamoOca | null>(null);
   const [estado, setEstado] = useState<Estado>("cargando");
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +69,7 @@ function Contenido({ guia, onClose }: { guia: string; onClose: Props["onClose"] 
     });
     espera.promesa
       .then((form) => {
-        form.setValues(valoresFormulario(reclamo, form));
+        form.setValues(valoresFormulario(reclamo, form, operador));
         setEstado("listo");
       })
       .catch(() => setEstado("respaldo"));
@@ -76,7 +78,7 @@ function Contenido({ guia, onClose }: { guia: string; onClose: Props["onClose"] 
       espera.cancelar();
       limpiar();
     };
-  }, [reclamo]);
+  }, [reclamo, operador]);
 
   return (
     <BrandModal isOpen onClose={() => onClose(reclamo)} title="Reclamar en OCA" widthPx={720} error={error}>

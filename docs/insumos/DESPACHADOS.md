@@ -147,8 +147,9 @@ ya completado; el operador lo revisa, adjunta lo que haga falta, pasa la verific
 - **No es una API de OCA**: esa página solo incrusta un formulario CRM de Bitrix24 (formulario
   65 de `oca.bitrix24.es`). HDM incrusta el mismo formulario y lo completa con la función que
   trae Bitrix24 (`setValues`). No se puede precargar por URL.
-- **Qué se precarga**: nombre, apellido, empresa, CUIT y mail de la cuenta de Canal Directo que
-  despachó, la guía, el motivo "Otros motivos" y un comentario armado con lo que HDM sabe del
+- **Qué se precarga**: nombre y apellido del operador logueado (HDM guarda solo el nombre
+  completo: la última palabra va como apellido y el resto como nombre; se corrige a mano si hace
+  falta), empresa, CUIT y mail de la cuenta de Canal Directo que despachó, la guía, el motivo "Otros motivos" y un comentario armado con lo que HDM sabe del
   envío (estado y motivo de OCA, fecha y sucursal, fecha límite si está en rojo, cliente,
   incidentes, remitos y bultos). Teléfono no hay en ninguna cuenta.
 - **Qué cuenta**: se reconoce por el **prefijo de la guía**, no por la operativa que informa
