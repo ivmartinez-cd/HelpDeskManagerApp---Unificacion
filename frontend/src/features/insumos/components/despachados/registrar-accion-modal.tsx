@@ -13,6 +13,9 @@ export interface ObjetivoAccion {
   guia: string;
   cliente: string;
   alertaAbierta: boolean;
+  /** Precarga (p. ej. al volver de "Reclamar en OCA": tipo reclamo y el comentario). */
+  tipo?: TipoAccion;
+  detalle?: string;
 }
 
 interface Props {
@@ -36,8 +39,8 @@ export function RegistrarAccionModal({ objetivo, onClose, onGuardar }: Props) {
 function Formulario({ objetivo, onClose, onGuardar }: Props & { objetivo: ObjetivoAccion }) {
   const id = useId();
   const { user } = useSession();
-  const [tipo, setTipo] = useState<TipoAccion | null>(null);
-  const [detalle, setDetalle] = useState("");
+  const [tipo, setTipo] = useState<TipoAccion | null>(objetivo.tipo ?? null);
+  const [detalle, setDetalle] = useState(objetivo.detalle?.slice(0, DETALLE_MAX) ?? "");
   const [resultado, setResultado] = useState<ResultadoAccion>("pendiente");
   const [cerrarAlerta, setCerrarAlerta] = useState(false);
   const [intentado, setIntentado] = useState(false);

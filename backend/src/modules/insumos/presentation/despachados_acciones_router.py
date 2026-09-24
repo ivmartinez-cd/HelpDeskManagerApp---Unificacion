@@ -1,5 +1,6 @@
-"""Endpoints que escriben de Insumos > Despachados: "Actualizar ahora", registrar una
-acción sobre una guía y cerrar su alerta. Exigen `insumos.update`.
+"""Endpoints para actuar sobre Insumos > Despachados: "Actualizar ahora", registrar una
+acción sobre una guía, cerrar su alerta y preparar un reclamo en OCA. Exigen
+`insumos.update`.
 
 "Actualizar ahora" no espera a OCA: lanza la corrida en segundo plano y responde 202; la
 pantalla sigue su avance con `GET /despachados/actualizacion`.
@@ -21,10 +22,14 @@ from src.modules.insumos.presentation.dependencies import (
     build_consultar_actualizacion,
     build_registrar_accion_despacho,
 )
-from src.modules.insumos.presentation.dependencies.despachados import get_despachados_lock
+from src.modules.insumos.presentation.dependencies.despachados import (
+    build_preparar_reclamo_oca,
+    get_despachados_lock,
+)
 from src.modules.insumos.presentation.despachados_jobs import lanzar_actualizacion_manual
 from src.modules.insumos.presentation.despachados_router import PATRON_GUIA
 from src.modules.insumos.presentation.schemas.despachados_detalle_schemas import EnvioOut
+from src.modules.insumos.presentation.schemas.despachados_reclamo_schemas import ReclamoOcaOut
 from src.modules.insumos.presentation.schemas.despachados_schemas import (
     AccionIn,
     AccionOut,
@@ -102,3 +107,17 @@ async def cerrar_alerta(
     fila sin otra lectura). 409 si no está abierta o si todavía no hay ninguna acción."""
     envio = await build_cerrar_alerta_despacho(db).execute(guia, _usuario(identity))
     return EnvioOut.from_envio(envio)
+
+
+@router.get("/despachados/{guia}/reclamo-oca", response_model=ReclamoOcaOut)
+async def preparar_reclamo_oca(
+    guia: str = Path(pattern=PATRON_GUIA),
+    _: Identity = _require_update,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> ReclamoOcaOut:
+    """Datos para precargar el formulario público de reclamos de OCA (contacto de la cuenta
+    según el prefijo de la guía, o null; comentario sugerido). No escribe ni llama a OCA:
+    exige `insumos.update` porque es el primer paso de una acción. 404 si la guía no se
+    sigue."""
+    reclamo = await build_preparar_reclamo_oca(db).execute(guia)
+    return ReclamoOcaOut.from_reclamo(reclamo)

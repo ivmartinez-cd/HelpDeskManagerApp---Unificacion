@@ -8,6 +8,7 @@ import type {
   FilaDespacho,
   FiltrosDespachos,
   NuevaAccionDespacho,
+  ReclamoOca,
   ResumenDespachos,
 } from "../types/despachados";
 import { BASE, toQuery, type Page } from "./insumos-api-base";
@@ -60,4 +61,9 @@ export const despachadosApi = {
   /** Da la alerta por atendida (exige al menos una acción registrada). */
   cerrarAlerta: (guia: string) =>
     httpClient.post<EnvioDespacho>(`${DESPACHADOS}/${encodeURIComponent(guia)}/cerrar-alerta`),
+
+  /** Datos para precargar el formulario de reclamos de OCA (contacto de la
+   * cuenta, comentario sugerido). No escribe nada. */
+  getReclamoOca: (guia: string) =>
+    httpClient.get<ReclamoOca>(`${DESPACHADOS}/${encodeURIComponent(guia)}/reclamo-oca`),
 };

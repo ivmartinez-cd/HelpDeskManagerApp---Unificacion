@@ -11,7 +11,8 @@ devuelva el envío al remitente.
 - **Qué guarda HDM**: el último estado de cada guía, los cambios observados, las acciones que
   registra el operador y cada corrida del job. La pantalla lee solo de la base de HDM: nunca
   espera a OCA.
-- **Fuera de alcance (v1)**: acciones en OCA, avisos por WhatsApp o mail, retiro de vacíos,
+- **Fuera de alcance (v1)**: acciones automáticas en OCA (el reclamo lo envía el operador desde
+  el formulario de OCA, ver "Reclamar en OCA"), avisos por WhatsApp o mail, retiro de vacíos,
   remitos sin guía ("FALTA").
 
 ## Arquitectura
@@ -26,7 +27,7 @@ Vive dentro del módulo `insumos` (backend `backend/src/modules/insumos`, fronte
 | Aplicación | Sincronizar, registrar acción, cerrar alerta, consultas de la pantalla | `application/use_cases/despachados/`, `application/dtos/despachados.py` |
 | Infraestructura | Consulta a Siges (pyodbc sobre el runner compartido de ORION), cliente OCA (httpx + ElementTree), repositorios SQLAlchemy, feriados de `vacaciones_feriado` | `infrastructure/siges/`, `infrastructure/oca/`, `infrastructure/repositories/*despach*`, `infrastructure/vacaciones/` |
 | Presentación | Endpoints, job de fondo, "Actualizar ahora" | `presentation/despachados_router.py`, `presentation/despachados_acciones_router.py`, `presentation/despachados_jobs.py`, `presentation/dependencies/despachados.py` |
-| Frontend | Pantalla, API, hooks, panel lateral (`BrandDrawer`), modal "Registrar acción" | `features/insumos/components/despachados/`, `features/insumos/api/despachados-api.ts`, `app/(app)/insumos/despachados/` |
+| Frontend | Pantalla, API, hooks, panel lateral (`BrandDrawer`), modales "Registrar acción" y "Reclamar en OCA" | `features/insumos/components/despachados/`, `features/insumos/api/despachados-api.ts`, `app/(app)/insumos/despachados/` |
 
 Diseño aprobado: `Handsoff Mockups/design_handoff_insumos_despachados/` (mockup + README con las
 decisiones de UI).
@@ -86,6 +87,7 @@ recrear el contenedor: `docker compose up -d --force-recreate backend`.
 | `OCA_URL_ESTADO_ACTUAL` | webservice e-Pak | Endpoint `GetEnvioEstadoActual` |
 | `OCA_TIMEOUT_SEGUNDOS` | `15` | Timeout por consulta (con 2 reintentos cortos ante 5xx) |
 | `OCA_PAUSA_SEGUNDOS` | `0.3` | Pausa entre consultas a OCA |
+| `OCA_RECLAMO_CONTACTOS` | 26108… y 211… (ver "Reclamar en OCA") | Contacto que se precarga en el formulario de reclamos según el prefijo de la guía (JSON, reemplaza la lista entera) |
 
 El plazo de retiro en sucursal (5 días hábiles) es una regla fija del dominio. Siges se lee con
 la conexión compartida de ORION (`ORION_*`).
@@ -115,6 +117,7 @@ la conexión compartida de ORION (`ORION_*`).
 | `GET /despachados/{guia}` | `insumos.view` | Detalle: estado, remitos, cambios, acciones |
 | `POST /despachados/{guia}/acciones` | `insumos.update` | Registrar acción (opcionalmente cierra la alerta) |
 | `POST /despachados/{guia}/cerrar-alerta` | `insumos.update` | Cerrar la alerta (exige al menos una acción registrada) |
+| `GET /despachados/{guia}/reclamo-oca` | `insumos.update` | Datos para precargar el formulario de reclamos de OCA (no escribe nada; 404 si la guía no se sigue) |
 
 **Orden del listado** (`GET /despachados`): lo resuelve el backend en SQL, antes de paginar.
 
@@ -133,6 +136,45 @@ la conexión compartida de ORION (`ORION_*`).
   segundo `desc`; "Fecha estado" arranca en `desc`). Al entrar no hay encabezado activo (orden
   por urgencia); "Limpiar filtros" vuelve a ese orden. Cambiar el orden vuelve a la página 1.
   `fecha_remito` está en la API pero la columna "Remito" ordena por número.
+
+## Reclamar en OCA
+
+Botón del panel lateral (solo con `insumos.update`). Abre un modal con el **formulario público
+de reclamos para grandes cuentas de OCA** (https://int.oca.com.ar/grandescuentas/) incrustado y
+ya completado; el operador lo revisa, adjunta lo que haga falta, pasa la verificación y lo
+**envía él mismo**. HDM no envía nada a OCA ni guarda nada al abrirlo.
+
+- **No es una API de OCA**: esa página solo incrusta un formulario CRM de Bitrix24 (formulario
+  65 de `oca.bitrix24.es`). HDM incrusta el mismo formulario y lo completa con la función que
+  trae Bitrix24 (`setValues`). No se puede precargar por URL.
+- **Qué se precarga**: nombre, apellido, empresa, CUIT y mail de la cuenta de Canal Directo que
+  despachó, la guía, el motivo "Otros motivos" y un comentario armado con lo que HDM sabe del
+  envío (estado y motivo de OCA, fecha y sucursal, fecha límite si está en rojo, cliente,
+  incidentes, remitos y bultos). Teléfono no hay en ninguna cuenta.
+- **Qué cuenta**: se reconoce por el **prefijo de la guía**, no por la operativa que informa
+  OCA. Gana el prefijo más largo; si ninguno coincide, el contacto va vacío y el operador lo
+  completa a mano (guía y comentario igual se precargan).
+
+  | Prefijo | Cuenta OCA | Empresa | Mail | CUIT |
+  |---|---|---|---|---|
+  | `26108` | 434324 OCA CORREO | Canal Directo Soluciones de Impresión | ocacdsisa@canaldirecto.com.ar | 30709381101 |
+  | `211` | 443913 OCA CLIENTE | Canal Directo SA | ocacd@canaldirecto.com.ar | 30683465840 |
+
+  Las operativas 434305 y 436233 usan estos mismos prefijos, así que quedan cubiertas. Se
+  cambia con `OCA_RECLAMO_CONTACTOS` (ver `.env.example`).
+- **Si el formulario no carga** (OCA o Bitrix24 caídos, bloqueados por la red, o 15 s sin
+  respuesta): el modal avisa y ofrece el link a la página de OCA y el comentario para copiar.
+- **Al cerrar el modal** aparece un aviso que ofrece "Registrar acción" con el tipo "Reclamo a
+  OCA" y el comentario como detalle; el operador lo revisa y guarda (no se registra solo).
+- **Riesgo**: depende de un formulario de terceros. Si OCA cambia o reemplaza el formulario
+  (otro id, otros nombres de campo, otro loader), el precargado deja de funcionar o completa
+  campos equivocados. Todo lo que depende de Bitrix24 está en un solo archivo del frontend,
+  `features/insumos/components/despachados/oca-reclamo-form.ts`; el respaldo (link + comentario
+  copiable) sigue sirviendo mientras tanto.
+- **Headers**: la app no emite Content-Security-Policy (`frontend/next.config.ts`), así que no
+  hubo que habilitar nada para `cdn.bitrix24.es` / `oca.bitrix24.es`. Si algún día se agrega
+  una CSP, tiene que permitir esos orígenes en `script-src`, `connect-src`, `style-src`,
+  `img-src` y `font-src` (y `frame-src` si OCA vuelve a activar la verificación reCAPTCHA).
 
 ## Catálogo de estados OCA y semáforo
 
@@ -167,5 +209,7 @@ primero que coincide gana.
 - Unit: `tests/unit/{domain,application,infrastructure,presentation}/insumos/` (archivos con
   `despach`, `semaforo`, `oca`, `dias_habiles`, `ventana_job`).
 - Integración (base descartable): `tests/integration/infrastructure/insumos/*despach*`,
-  `tests/integration/test_despachados_router.py`, `tests/integration/test_despachados_acciones_router.py`.
-- E2E: `frontend/tests/despachados.spec.ts` (datos simulados con `page.route`).
+  `tests/integration/test_despachados_router.py`, `tests/integration/test_despachados_acciones_router.py`,
+  `tests/integration/test_despachados_reclamo_router.py`.
+- E2E: `frontend/tests/despachados.spec.ts` y `frontend/tests/despachados-reclamo-oca.spec.ts`
+  (datos simulados con `page.route`; el de reclamo bloquea Bitrix24 y verifica el respaldo).

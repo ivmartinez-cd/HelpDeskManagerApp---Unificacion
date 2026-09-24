@@ -12,12 +12,13 @@ import { useDespachoDetalle } from "../../hooks/use-despacho-detalle";
 import { useDespachadosActualizacion } from "../../hooks/use-despachados-actualizacion";
 import { mensajeDeError, useDespachadosListado } from "../../hooks/use-despachados-listado";
 import { useDespachadosTablero } from "../../hooks/use-despachados-tablero";
-import type { ColumnaOrdenDespachos, FiltrosDespachos, NuevaAccionDespacho } from "../../types/despachados";
+import type { ColumnaOrdenDespachos, FiltrosDespachos, NuevaAccionDespacho, ReclamoOca } from "../../types/despachados";
 import { DespachadosCards, TARJETAS } from "./despachados-cards";
 import { DespachadosHeader } from "./despachados-header";
 import { DespachoDrawer } from "./despacho-drawer";
 import { DespachosFilters } from "./despachos-filters";
 import { DespachosTable, TAMANIOS_PAGINA } from "./despachos-table";
+import { ReclamarOcaModal } from "./reclamar-oca-modal";
 import { RegistrarAccionModal, type ObjetivoAccion } from "./registrar-accion-modal";
 
 /** Sin columna elegida la tabla va por urgencia (ningún encabezado activo). */
@@ -49,6 +50,7 @@ export function DespachadosView() {
   const [size, setSize] = useState<number>(TAMANIOS_PAGINA[0]);
   const [guiaAbierta, setGuiaAbierta] = useState<string | null>(null);
   const [objetivo, setObjetivo] = useState<ObjetivoAccion | null>(null);
+  const [guiaReclamo, setGuiaReclamo] = useState<string | null>(null);
 
   const textoDebounced = useDebouncedValue(texto.trim(), 350);
   const filtros = useMemo<FiltrosDespachos>(
@@ -119,6 +121,28 @@ export function DespachadosView() {
     }
   };
 
+  // Al cerrar "Reclamar en OCA" se ofrece registrar el reclamo como acción; el
+  // operador confirma y guarda en el modal de siempre.
+  const cerrarReclamo = (reclamo: ReclamoOca | null) => {
+    setGuiaReclamo(null);
+    const envio = detalle.detalle?.envio;
+    if (!reclamo || envio?.guia !== reclamo.guia) return;
+    toast("¿Registrás el reclamo a OCA como acción?", {
+      duration: 20_000,
+      action: {
+        label: "Registrar acción",
+        onClick: () =>
+          setObjetivo({
+            guia: envio.guia,
+            cliente: envio.cliente,
+            alertaAbierta: envio.alertaAbierta,
+            tipo: "reclamo_oca",
+            detalle: reclamo.comentario,
+          }),
+      },
+    });
+  };
+
   const tarjeta = TARJETAS.find((t) => t.clave === colores);
   const subtitulo = tarjeta
     ? `Filtrado por la tarjeta "${tarjeta.label}". Tocala de nuevo para ver todos.`
@@ -178,8 +202,11 @@ export function DespachadosView() {
         onRegistrar={(d) =>
           setObjetivo({ guia: d.envio.guia, cliente: d.envio.cliente, alertaAbierta: d.envio.alertaAbierta })
         }
+        onReclamar={setGuiaReclamo}
         onCerrarAlerta={cerrarAlerta}
       />
+
+      <ReclamarOcaModal guia={guiaReclamo} onClose={cerrarReclamo} />
 
       <RegistrarAccionModal objetivo={objetivo} onClose={() => setObjetivo(null)} onGuardar={guardarAccion} />
     </div>

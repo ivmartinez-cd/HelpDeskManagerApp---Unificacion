@@ -4,7 +4,7 @@ operativa (sla/preventivos/wati/analisis-log-hp/liquidaciones/despachados), sepa
 criterio de composición: ver el docstring de módulo de `settings_groups.py`.
 """
 
-from pydantic import Field, SecretStr
+from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import BaseSettings
 
 
@@ -182,6 +182,44 @@ class LiquidacionesSettings(BaseSettings):
     liquidaciones_sync_cotizaciones_interval_minutes: int = 1440
 
 
+class ContactoReclamoOcaConfig(BaseModel):
+    """Una regla de "Reclamar en OCA": las guías que empiezan con `prefijo` se reclaman
+    con este contacto. `cuenta` solo documenta a qué cuenta/operativa de OCA corresponde."""
+
+    prefijo: str
+    cuenta: str = ""
+    nombre: str = ""
+    apellido: str = ""
+    empresa: str = ""
+    email: str = ""
+    cuit: str = ""
+    telefono: str = ""
+
+
+# Contactos verificados con el usuario el 2026-09-24. Las operativas 434305 y 436233
+# comparten estos prefijos de guía, así que quedan cubiertas por las mismas reglas.
+_CONTACTOS_RECLAMO_OCA = (
+    ContactoReclamoOcaConfig(
+        prefijo="26108",
+        cuenta="434324 OCA CORREO",
+        nombre="Canal Directo",
+        apellido="Soluciones de Impresión",
+        empresa="Canal Directo Soluciones de Impresión",
+        email="ocacdsisa@canaldirecto.com.ar",
+        cuit="30709381101",
+    ),
+    ContactoReclamoOcaConfig(
+        prefijo="211",
+        cuenta="443913 OCA CLIENTE",
+        nombre="Canal",
+        apellido="Directo",
+        empresa="Canal Directo SA",
+        email="ocacd@canaldirecto.com.ar",
+        cuit="30683465840",
+    ),
+)
+
+
 class DespachadosSettings(BaseSettings):
     """Insumos > Despachados: seguimiento en OCA de los remitos de insumos
     despachados. Solo lectura contra Siges/ORION y OCA; escribe en la base de HDM."""
@@ -218,3 +256,9 @@ class DespachadosSettings(BaseSettings):
     despachados_dias_semana: tuple[int, ...] = (0, 1, 2, 3, 4, 5)
     despachados_hora_inicio: int = 8
     despachados_hora_fin: int = 20
+
+    # "Reclamar en OCA": contacto que se precarga en el formulario público de grandes
+    # cuentas según el prefijo de la guía (gana el prefijo más largo; sin coincidencia,
+    # el formulario se abre sin contacto). En el .env va como JSON: lista de objetos con
+    # prefijo, cuenta, nombre, apellido, empresa, email, cuit y telefono.
+    oca_reclamo_contactos: tuple[ContactoReclamoOcaConfig, ...] = _CONTACTOS_RECLAMO_OCA

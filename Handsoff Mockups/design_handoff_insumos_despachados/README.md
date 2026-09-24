@@ -66,12 +66,18 @@ Pendiente (amarillo), Sin respuesta (gris).
 5. **Panel lateral** (`min(480px, 100vw)`): chip, "Guía N" con botón copiar, cliente · incidente;
    secciones Estado OCA actual (con recuadro de alerta), Remito(s), Cliente e incidente, Cambios
    de estado observados (timeline, el primero con marca "Actual"), Acciones registradas (+ botón
-   "Registrar acción"); pie "Ver en OCA" y la guía seleccionable.
+   "Reclamar en OCA" y "Registrar acción"); pie "Ver en OCA" y la guía seleccionable.
 6. **Modal "Registrar acción"** (520px): tipo como tarjetas de opción (Llamado al cliente, Mail al
    cliente, Reclamo a OCA, Otro), Detalle obligatorio, Resultado (segmentado, default Pendiente),
    "Cerrar la alerta al guardar esta acción" (solo si hay alerta abierta), recuadro "Registra
    <usuario>", Cancelar / Guardar acción.
-7. **Menú**: item "Despachados" (`Truck`) en Insumos › Principal, después de Historial, con pills
+7. **Modal "Reclamar en OCA"** (720px, no estaba en el mockup — pedido del usuario,
+   2026-09-24): incrusta el formulario público de reclamos para grandes cuentas de OCA ya
+   precargado (contacto de la cuenta, guía, motivo "Otros motivos", comentario sugerido). El
+   operador revisa, adjunta y envía él mismo. Si el formulario no carga: aviso, link a la página
+   de OCA y el comentario para copiar. Al cerrarlo, un toast ofrece "Registrar acción" con tipo
+   Reclamo a OCA y el comentario como detalle.
+8. **Menú**: item "Despachados" (`Truck`) en Insumos › Principal, después de Historial, con pills
    de alertas rojas y naranjas abiertas.
 
 ## Interacciones
@@ -90,7 +96,7 @@ Pendiente (amarillo), Sin respuesta (gris).
   resultado. 409 (ya hay una corrida) → toast informativo y se sigue esa corrida.
 - Registrar acción / cerrar alerta: toast de confirmación y refresco de tarjetas, tabla y
   panel. Los errores del backend se muestran en el banner del modal.
-- Botones de escritura (Actualizar ahora, Registrar acción, Cerrar alerta) solo con
+- Botones de escritura (Actualizar ahora, Reclamar en OCA, Registrar acción, Cerrar alerta) solo con
   `insumos:update` (o superadmin); la ruta la cubre `insumos:view`.
 
 ## Decisiones y desvíos respecto del mockup

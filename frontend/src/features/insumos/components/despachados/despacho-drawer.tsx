@@ -26,6 +26,7 @@ interface Props {
   canUpdate: boolean;
   onClose: () => void;
   onRegistrar: (detalle: DetalleDespacho) => void;
+  onReclamar: (guia: string) => void;
   onCerrarAlerta: (guia: string) => Promise<void>;
 }
 
@@ -104,7 +105,7 @@ function subtituloDe(detalle: DetalleDespacho): string {
 }
 
 /** Panel lateral con el detalle de una guía (`GET /despachados/{guia}`). */
-export function DespachoDrawer({ guia, estado, canUpdate, onClose, onRegistrar, onCerrarAlerta }: Props) {
+export function DespachoDrawer({ guia, estado, canUpdate, onClose, onRegistrar, onReclamar, onCerrarAlerta }: Props) {
   const { detalle, error } = estado;
   const envio = detalle?.envio;
   return (
@@ -176,9 +177,14 @@ export function DespachoDrawer({ guia, estado, canUpdate, onClose, onRegistrar, 
             detalle={detalle}
             accion={
               canUpdate && (
-                <BrandButton type="button" size="sm" className="rounded-[8px] normal-case tracking-normal" onClick={() => onRegistrar(detalle)}>
-                  Registrar acción
-                </BrandButton>
+                <div className="flex flex-wrap gap-2">
+                  <BrandButton type="button" variant="outline" size="sm" className="rounded-[8px] normal-case tracking-normal" onClick={() => onReclamar(detalle.envio.guia)}>
+                    Reclamar en OCA
+                  </BrandButton>
+                  <BrandButton type="button" size="sm" className="rounded-[8px] normal-case tracking-normal" onClick={() => onRegistrar(detalle)}>
+                    Registrar acción
+                  </BrandButton>
+                </div>
               )
             }
           />

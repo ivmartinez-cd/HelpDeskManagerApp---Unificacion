@@ -192,3 +192,26 @@ export interface FiltrosDespachos {
   orden: ColumnaOrdenDespachos;
   direccion: "asc" | "desc";
 }
+
+/** Contacto de la cuenta de Canal Directo en OCA (según el prefijo de la guía). */
+export interface ContactoReclamoOca {
+  nombre: string;
+  apellido: string;
+  empresa: string;
+  email: string;
+  /** Solo dígitos. */
+  cuit: string;
+  /** "" si la cuenta no tiene uno cargado. */
+  telefono: string;
+}
+
+/** `GET /despachados/{guia}/reclamo-oca`: datos para precargar el formulario
+ * público de reclamos de OCA. */
+export interface ReclamoOca {
+  guia: string;
+  /** La última que informó OCA; "" si todavía no registra la guía. */
+  operativa: string;
+  /** null si ninguna regla reconoce el prefijo de la guía. */
+  contacto: ContactoReclamoOca | null;
+  comentario: string;
+}

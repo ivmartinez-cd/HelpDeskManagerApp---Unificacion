@@ -133,3 +133,21 @@ def test_despachados_dias_sin_movimiento_menor_a_uno_hace_fallar_el_arranque(
 ) -> None:
     with pytest.raises(ValidationError):
         _settings(monkeypatch, DESPACHADOS_DIAS_SIN_MOVIMIENTO="0")
+
+
+def test_contactos_de_reclamo_oca_por_prefijo_con_default_y_sobreescribibles(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("OCA_RECLAMO_CONTACTOS", raising=False)
+    por_defecto = {c.prefijo: c for c in _settings(monkeypatch).oca_reclamo_contactos}
+    assert set(por_defecto) == {"26108", "211"}
+    assert por_defecto["26108"].email == "ocacdsisa@canaldirecto.com.ar"
+    assert por_defecto["211"].cuit == "30683465840"
+
+    s = _settings(
+        monkeypatch,
+        OCA_RECLAMO_CONTACTOS='[{"prefijo": "999", "cuenta": "prueba", "email": "x@y.z"}]',
+    )
+
+    (unico,) = s.oca_reclamo_contactos
+    assert (unico.prefijo, unico.email, unico.nombre) == ("999", "x@y.z", "")

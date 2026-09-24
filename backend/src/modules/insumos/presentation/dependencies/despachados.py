@@ -26,10 +26,15 @@ from src.modules.insumos.application.use_cases.despachados.consultas_despachos i
     ObtenerDetalleDespacho,
     ResumirDespachos,
 )
+from src.modules.insumos.application.use_cases.despachados.reclamo_oca import PrepararReclamoOca
 from src.modules.insumos.application.use_cases.despachados.sincronizar_despachos import (
     ConfigSincronizacion,
     SincronizarDespachos,
     SincronizarDespachosPorts,
+)
+from src.modules.insumos.domain.value_objects.despachados.reclamo_oca import (
+    ContactoReclamoOca,
+    ReglaContactoReclamo,
 )
 from src.modules.insumos.infrastructure.oca.httpx_oca_seguimiento_gateway import (
     HttpxOcaSeguimientoGateway,
@@ -152,6 +157,31 @@ def build_obtener_detalle_despacho(session: AsyncSession) -> ObtenerDetalleDespa
 def build_consultar_actualizacion(session: AsyncSession) -> ConsultarActualizacion:
     """Estado de la última corrida."""
     return ConsultarActualizacion(_consulta_ports(session))
+
+
+def reglas_contacto_reclamo() -> tuple[ReglaContactoReclamo, ...]:
+    """Contactos de "Reclamar en OCA" por prefijo de guía, desde settings."""
+    return tuple(
+        ReglaContactoReclamo(
+            prefijo=c.prefijo,
+            cuenta=c.cuenta,
+            contacto=ContactoReclamoOca(
+                nombre=c.nombre,
+                apellido=c.apellido,
+                empresa=c.empresa,
+                email=c.email,
+                cuit=c.cuit,
+                telefono=c.telefono,
+            ),
+        )
+        for c in get_settings().oca_reclamo_contactos
+    )
+
+
+def build_preparar_reclamo_oca(session: AsyncSession) -> PrepararReclamoOca:
+    """Datos para el formulario de reclamos de OCA de una guía."""
+    detalle = ObtenerDetalleDespacho(_consulta_ports(session), config_consulta())
+    return PrepararReclamoOca(detalle, reglas_contacto_reclamo())
 
 
 def build_registrar_accion_despacho(session: AsyncSession) -> RegistrarAccionDespacho:
