@@ -18,15 +18,13 @@ import { DespachoDrawer } from "./despacho-drawer";
 import { DespachosFilters } from "./despachos-filters";
 import { DespachosTable, TAMANIOS_PAGINA } from "./despachos-table";
 import { RegistrarAccionModal, type ObjetivoAccion } from "./registrar-accion-modal";
-import { RequierenAccionTable } from "./requieren-accion-table";
 
 /** Pantalla `/insumos/despachados`: seguimiento de los envíos por OCA.
  *
  * Todo sale de la base de HDM (lo que el job de fondo ya consultó a OCA); la
  * pantalla nunca espera a OCA. "Actualizar ahora" lanza la corrida en el
  * backend y la sigue por polling (`useDespachadosActualizacion`); al terminar
- * se refresca todo. Las tarjetas y el `<select>` de color comparten el mismo
- * filtro (`colores`). */
+ * se refresca todo. El color se filtra solo desde las tarjetas. */
 export function DespachadosView() {
   const { user, can } = useSession();
   const canUpdate = user.isSuperadmin || can("insumos", "update");
@@ -99,7 +97,7 @@ export function DespachadosView() {
   const cerrarAlerta = async (guia: string) => {
     try {
       await despachadosApi.cerrarAlerta(guia);
-      toast.success('Alerta cerrada. El envío sale de "Requieren acción".');
+      toast.success("Alerta cerrada");
       refrescarTodo();
     } catch (err) {
       toast.error(mensajeDeError(err, "No se pudo cerrar la alerta"));
@@ -130,23 +128,12 @@ export function DespachadosView() {
 
       <DespachadosCards resumen={tablero.resumen} seleccion={colores} onSeleccion={seleccionarTarjeta} />
 
-      <RequierenAccionTable
-        filas={tablero.bandeja}
-        loading={tablero.loading}
-        seleccionada={guiaAbierta}
-        canUpdate={canUpdate}
-        onAbrir={setGuiaAbierta}
-        onRegistrar={(f) => setObjetivo({ guia: f.guia, cliente: f.cliente, alertaAbierta: f.alertaAbierta })}
-      />
-
       <DespachosTable
         subtitulo={subtitulo}
         filtros={
           <DespachosFilters
             texto={texto}
             onTexto={setTexto}
-            colores={colores}
-            onColores={setColores}
             operativa={operativa}
             onOperativa={setOperativa}
             operativas={tablero.resumen?.operativas ?? []}

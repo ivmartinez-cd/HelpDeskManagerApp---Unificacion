@@ -7,7 +7,7 @@ import { formatPlainDate } from "@/shared/utils/date-arg";
 import { cn } from "@/shared/utils/cn";
 import type { FilaDespacho } from "../../types/despachados";
 import { ChipSemaforo, ConExtra, EstadoOcaCelda, LimiteCelda, TD, TH, claseFila } from "./despacho-celdas";
-import { alTeclearFila } from "./requieren-accion-table";
+import { alTeclearFila } from "./despacho-celdas";
 
 const COLUMNAS = ["Color", "Guía", "Remito", "Cliente", "Incidente", "Estado OCA", "Sucursal", "Fecha estado", "Límite / aviso"];
 export const TAMANIOS_PAGINA = [25, 50, 100] as const;

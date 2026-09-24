@@ -108,7 +108,7 @@ la conexión compartida de ORION (`ORION_*`).
 | Método y ruta | Permiso | Qué hace |
 |---|---|---|
 | `GET /despachados` | `insumos.view` | Listado paginado por urgencia; filtros `texto`, `colores`, `operativa`, `remitoDesde`, `remitoHasta` |
-| `GET /despachados/requieren-accion` | `insumos.view` | Bandeja: rojo y naranja con alerta abierta |
+| `GET /despachados/requieren-accion` | `insumos.view` | Rojo y naranja con alerta abierta (la pantalla ya no lo usa: se sacó la bandeja) |
 | `GET /despachados/resumen` | `insumos.view` | Tarjetas y contadores del menú |
 | `GET /despachados/actualizacion` | `insumos.view` | Corrida en curso y última terminada |
 | `POST /despachados/actualizar` | `insumos.update` | "Actualizar ahora" (202 / 409) |
@@ -134,7 +134,8 @@ primero que coincide gana.
 - **Guía que OCA todavía no conoce**: verde "Esperando ingreso en OCA" durante 3 días hábiles
   desde el remito; después, amarillo "Sin datos en OCA". Si OCA deja de informar una guía que
   ya tenía estado, se conserva el último conocido.
-- **Alertas**: la bandeja "Requieren acción" muestra rojo y naranja sin cierre. Un operador
+- **Alertas**: rojo y naranja sin cierre; se ven con las tarjetas "Visita fallida" / "En
+  sucursal" y los contadores del menú (la bandeja "Requieren acción" se sacó). Un operador
   cierra la alerta registrando una acción (o con "Cerrar alerta", que exige alguna acción
   previa). Se **reabre sola** si OCA informa un estado distinto que vuelve a tener alerta.
 - **Feriados**: los de la tabla `vacaciones_feriado` de HDM (los mismos que usa Vacaciones),

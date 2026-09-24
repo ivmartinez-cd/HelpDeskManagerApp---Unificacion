@@ -155,7 +155,6 @@ async function mockDespachados(page: Page): Promise<Mock> {
     const url = new URL(request.url());
     const path = url.pathname.replace(/^.*\/api\/insumos\/despachados/, "");
     if (path === "/resumen") return json(route, RESUMEN);
-    if (path === "/requieren-accion") return json(route, { items: [FILA_ROJA, FILA_NARANJA], total: 2, page: 1, size: 500 });
     if (path === "/actualizacion") return json(route, mock.actualizacion());
     if (path === "/actualizar" && request.method() === "POST") {
       mock.actualizarLlamado = true;
@@ -178,7 +177,7 @@ async function mockDespachados(page: Page): Promise<Mock> {
 }
 
 test.describe("Insumos › Despachados", () => {
-  test("carga tarjetas, bandeja y tabla con datos mockeados @smoke", async ({ page }) => {
+  test("carga tarjetas y tabla con datos mockeados @smoke", async ({ page }) => {
     await mockDespachados(page);
     await page.goto("/insumos/despachados");
 
@@ -187,11 +186,11 @@ test.describe("Insumos › Despachados", () => {
     await expect(page.getByRole("button", { name: /^En sucursal/ })).toContainText("La más próxima vence mañana (25/09)");
     await expect(page.getByRole("button", { name: /^En tránsito/ })).toContainText("107");
 
-    const bandeja = page.getByRole("region", { name: /Requieren acción/ });
-    await expect(bandeja.getByText("Sin acción registrada")).toBeVisible();
-    await expect(bandeja.getByText("vence mañana (25/09)")).toBeVisible();
+    await expect(page.getByRole("region", { name: /Requieren acción/ })).toHaveCount(0);
+    await expect(page.getByLabel("Color")).toHaveCount(0);
 
     const todos = page.getByRole("region", { name: "Todos los despachos" });
+    await expect(todos.getByText("vence mañana (25/09)")).toBeVisible();
     await expect(todos.getByText("Sin movimiento hace 4 días hábiles")).toBeVisible();
     await expect(todos.getByText("Mostrando")).toContainText("de 3 despachos");
   });
@@ -203,7 +202,6 @@ test.describe("Insumos › Despachados", () => {
     const tarjeta = page.getByRole("button", { name: /^Visita fallida/ });
     await tarjeta.click();
     await expect(tarjeta).toHaveAttribute("aria-pressed", "true");
-    await expect(page.getByLabel("Color")).toHaveValue("naranja");
     await expect.poll(() => mock.listados.at(-1)?.searchParams.get("colores")).toBe("naranja");
     const todos = page.getByRole("region", { name: "Todos los despachos" });
     await expect(todos.getByText(/Filtrado por la tarjeta "Visita fallida"/)).toBeVisible();
@@ -233,9 +231,10 @@ test.describe("Insumos › Despachados", () => {
     const mock = await mockDespachados(page);
     await page.goto("/insumos/despachados");
 
-    const bandeja = page.getByRole("region", { name: /Requieren acción/ });
-    await bandeja
-      .getByRole("row", { name: new RegExp(FILA_NARANJA.guia) })
+    const todos = page.getByRole("region", { name: "Todos los despachos" });
+    await todos.getByRole("cell", { name: FILA_NARANJA.guia }).click();
+    await page
+      .getByRole("dialog", { name: `Guía ${FILA_NARANJA.guia}` })
       .getByRole("button", { name: "Registrar acción" })
       .click();
     const dialog = page.getByRole("dialog", { name: "Registrar acción" });

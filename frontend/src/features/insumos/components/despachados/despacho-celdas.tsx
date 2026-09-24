@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from "react";
 import { TriangleAlert } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { formatArgDateTime } from "../../utils/format";
@@ -18,7 +19,7 @@ import {
   textoLimite,
 } from "./semaforo";
 
-/** Piezas chicas compartidas por la bandeja, la tabla y el panel lateral. El
+/** Piezas chicas compartidas por la tabla y el panel lateral. El
  * color nunca va solo: chip = ícono + texto + color. */
 
 const CHIP_BASE =
@@ -132,3 +133,11 @@ export function claseFila(seleccionada: boolean): string {
 export const TH =
   "whitespace-nowrap px-3 py-2.5 text-left font-body text-[11px] font-bold uppercase tracking-[.025em] text-muted-foreground first:pl-5 last:pr-5";
 export const TD = "px-3 py-[11px] align-top font-body text-[13px] leading-[18px] first:pl-5 last:pr-5";
+
+/** Activa una fila con Enter/Espacio (el click lo maneja `onClick`). */
+export function alTeclearFila(e: KeyboardEvent<HTMLTableRowElement>, abrir: () => void) {
+  if (e.target !== e.currentTarget) return;
+  if (e.key !== "Enter" && e.key !== " ") return;
+  e.preventDefault();
+  abrir();
+}

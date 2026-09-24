@@ -19,7 +19,7 @@ export interface UltimaAccionDespacho {
   creadaEn: string;
 }
 
-/** Fila de la tabla y de la bandeja "Requieren acción" (`FilaDespachoOut`). */
+/** Fila de la tabla "Todos los despachos" (`FilaDespachoOut`). */
 export interface FilaDespacho {
   guia: string;
   color: ColorSemaforo;

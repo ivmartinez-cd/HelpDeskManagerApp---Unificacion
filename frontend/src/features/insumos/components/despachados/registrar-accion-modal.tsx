@@ -139,7 +139,7 @@ function Formulario({ objetivo, onClose, onGuardar }: Props & { objetivo: Objeti
             <span>
               Cerrar la alerta al guardar esta acción
               <span className="block text-xs text-muted-foreground">
-                El envío sale de &quot;Requieren acción&quot;. Si OCA informa otro problema, se vuelve a abrir.
+                Si OCA informa otro problema, la alerta se vuelve a abrir.
               </span>
             </span>
           </label>

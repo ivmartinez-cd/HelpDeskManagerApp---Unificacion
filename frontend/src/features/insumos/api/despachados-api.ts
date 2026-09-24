@@ -32,13 +32,6 @@ export const despachadosApi = {
       })}`,
     ),
 
-  /** Bandeja "Requieren acción": rojos y naranjas con la alerta abierta, en el
-   * orden del backend. Sin paginar en la UI (el backend trae hasta 500). */
-  listarRequierenAccion: () =>
-    httpClient
-      .get<Page<FilaDespacho>>(`${DESPACHADOS}/requieren-accion`)
-      .then((p) => p.items),
-
   /** Tarjetas por color, contadores de alertas y opciones de operativa. */
   getResumen: () => httpClient.get<ResumenDespachos>(`${DESPACHADOS}/resumen`),
 

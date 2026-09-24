@@ -56,12 +56,12 @@ Pendiente (amarillo), Sin respuesta (gris).
    ícono, número Montserrat 800 26px en el color del semáforo, pista de 12px ("N sin acción
    registrada", "La más próxima vence mañana (25/09)", "N sin movimiento (amarillo)", "Últimos 30
    días") y marca "Filtrando" cuando está presionada.
-3. **Bandeja "Requieren acción"** (pill con la cantidad): rojos y naranjas con la alerta abierta,
-   en el orden del backend (lo que vence antes, primero). Columnas: Color, Guía, Cliente,
-   Incidente, Estado OCA (+ motivo), Sucursal, Límite, Última acción (o "Sin acción registrada"
-   en naranja) y botón "Registrar acción".
-4. **Tabla "Todos los despachos"**: filtros (Buscar, Color, Operativa, Fecha de remito, "Limpiar
-   filtros"), columnas Color, Guía, Remito (+ fecha), Cliente, Incidente, Estado OCA, Sucursal,
+3. ~~Bandeja "Requieren acción"~~: **sacada por decisión del usuario (2026-09-24)**. Las
+   alertas se ven con las tarjetas "Visita fallida" / "En sucursal" (que filtran la tabla) y los
+   contadores del menú; "Registrar acción" se abre desde el panel lateral.
+4. **Tabla "Todos los despachos"**: filtros (Buscar, Operativa, Fecha de remito, "Limpiar
+   filtros"; el color se filtra solo con las tarjetas, sin selector propio — decisión del
+   usuario, 2026-09-24), columnas Color, Guía, Remito (+ fecha), Cliente, Incidente, Estado OCA, Sucursal,
    Fecha estado, Límite / aviso; paginación 25/50/100.
 5. **Panel lateral** (`min(480px, 100vw)`): chip, "Guía N" con botón copiar, cliente · incidente;
    secciones Estado OCA actual (con recuadro de alerta), Remito(s), Cliente e incidente, Cambios
@@ -88,7 +88,7 @@ Pendiente (amarillo), Sin respuesta (gris).
 - "Actualizar ahora": POST → 202, el botón pasa a "Actualizando…" y se pollea
   `/despachados/actualizacion` cada 3 s; al terminar se refresca todo y aparece un toast con el
   resultado. 409 (ya hay una corrida) → toast informativo y se sigue esa corrida.
-- Registrar acción / cerrar alerta: toast de confirmación y refresco de tarjetas, bandeja, tabla y
+- Registrar acción / cerrar alerta: toast de confirmación y refresco de tarjetas, tabla y
   panel. Los errores del backend se muestran en el banner del modal.
 - Botones de escritura (Actualizar ahora, Registrar acción, Cerrar alerta) solo con
   `insumos:update` (o superadmin); la ruta la cubre `insumos:view`.

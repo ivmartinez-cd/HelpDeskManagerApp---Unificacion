@@ -2,17 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { despachadosApi } from "../api/despachados-api";
-import type { FilaDespacho, ResumenDespachos } from "../types/despachados";
+import type { ResumenDespachos } from "../types/despachados";
 import { mensajeDeError } from "./use-despachados-listado";
 
-/** Parte de arriba de Despachados: tarjetas (`/resumen`) y bandeja
- * "Requieren acción" (`/requieren-accion`, sin paginar, en el orden del
- * backend). Las dos lecturas son de la base de HDM, baratas: se piden juntas
- * y se recargan juntas después de una acción o de "Actualizar ahora". */
+/** Tarjetas de Despachados (`/resumen`, lectura barata de la base de HDM):
+ * se recargan después de una acción o de "Actualizar ahora". */
 
 export interface DespachadosTableroState {
   resumen: ResumenDespachos | null;
-  bandeja: FilaDespacho[];
   loading: boolean;
   error: string | null;
   reload: () => Promise<void>;
@@ -20,7 +17,6 @@ export interface DespachadosTableroState {
 
 export function useDespachadosTablero(): DespachadosTableroState {
   const [resumen, setResumen] = useState<ResumenDespachos | null>(null);
-  const [bandeja, setBandeja] = useState<FilaDespacho[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const runToken = useRef(0);
@@ -29,13 +25,9 @@ export function useDespachadosTablero(): DespachadosTableroState {
     const token = ++runToken.current;
     setLoading(true);
     try {
-      const [nuevoResumen, filas] = await Promise.all([
-        despachadosApi.getResumen(),
-        despachadosApi.listarRequierenAccion(),
-      ]);
+      const nuevoResumen = await despachadosApi.getResumen();
       if (token !== runToken.current) return;
       setResumen(nuevoResumen);
-      setBandeja(filas);
       setError(null);
     } catch (err) {
       if (token !== runToken.current) return;
@@ -50,5 +42,5 @@ export function useDespachadosTablero(): DespachadosTableroState {
     void reload();
   }, [reload]);
 
-  return { resumen, bandeja, loading, error, reload };
+  return { resumen, loading, error, reload };
 }
