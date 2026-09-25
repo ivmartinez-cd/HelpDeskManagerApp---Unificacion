@@ -251,4 +251,21 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
+
+  /* Controles nativos (ícono de calendario/reloj de <input type="date|time">,
+     scrollbars, popup del picker) siguen al tema: sin esto el navegador los
+     pinta en claro y el ícono queda negro sobre fondo oscuro. */
+  :root {
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+  ::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.7;
+  }
+  ::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
 }
