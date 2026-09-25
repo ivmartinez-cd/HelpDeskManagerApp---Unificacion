@@ -1,7 +1,7 @@
 # Plan: unificar Usuarios y Empleados en "Personas"
 
-Estado: **fase 1 terminada** (2026-09-25): autovínculo por mail en producción de dev y datos
-limpios (12 empleados vinculados, ninguna cuenta activa sin ficha). Próximo: fase 2.
+Estado: **fase 2 terminada** (2026-09-25): backend `/api/personas` con permisos propios
+(ADR-040), módulo sembrado apagado hasta que exista la pantalla. Próximo: fase 3 (frontend).
 
 ## Problema
 
@@ -68,14 +68,17 @@ visible para el usuario. Lo que cambia es:
 2. **Nombre, mail y color, una sola fuente de edición.** La ficha unificada escribe en los dos
    lados en la misma transacción. Editar desde un lado solo ya no es posible porque las
    pantallas viejas desaparecen.
-3. **Lectura unificada en el backend.** Un endpoint paginado (`Page[T]`) que devuelve la unión
-   "empleados ∪ cuentas no vinculadas", con filtro, búsqueda y orden en el servidor.
+3. **Lectura unificada en el backend.** Un endpoint paginado (`Page[T]`) que devuelve las
+   fichas con su cuenta si la tienen (toda cuenta nace de una ficha), con filtro, búsqueda y
+   orden en el servidor.
    Ubicación propuesta: módulo nuevo `personas` que solo compone (lee de ambos, delega las
    escrituras a los casos de uso existentes de auth y vacaciones). Hoy vacaciones ya depende
    de auth y no al revés; `personas` depende de los dos y nadie depende de `personas`.
    Requiere **ADR** (nuevo módulo de composición) y un contrato de import-linter nuevo.
-4. **Permisos:** listar y editar Datos/Laboral con `vacaciones.manage` o admin; Acceso solo
-   admin. Sin permisos nuevos.
+4. **Permisos propios** (decisión 2026-09-25): `personas.view`, `personas.update` (nombre,
+   mail, color) y `personas.manage` (dar/quitar acceso). Backfill desde `vacaciones.manage` /
+   `admin.manage`. Cambiar el mail de quien entra a la app exige `manage`. Los datos
+   laborales se siguen editando con `vacaciones.manage` por `/api/vacaciones/empleados`.
 
 ## Limpieza de datos (antes de la migración)
 
@@ -107,6 +110,21 @@ Migración de datos única (Alembic), precedida de `make db-backup TAG=personas-
 
 Cada fase se puede cortar y dejar andando sola.
 
+## Fase 2: qué quedó hecho
+
+Endpoints (`/api/personas`, ADR-040):
+
+| Método | Ruta | Permiso | Qué hace |
+|---|---|---|---|
+| GET | `/api/personas` | `view` | Lista paginada; filtros `q`, `sectorId`, `activa`, `entraALaApp`; orden `sortBy` (nombre, email, sector, cargo, acceso, estado) + `sortDir` |
+| GET | `/api/personas/{id}` | `view` | Ficha |
+| PATCH | `/api/personas/{id}/datos` | `update` (+`manage` si cambia el mail de quien entra) | Nombre, mail y color en ficha y cuenta |
+| POST | `/api/personas/{id}/acceso` | `manage` | Crea la cuenta y manda el link de activación, o reactiva la que había |
+| DELETE | `/api/personas/{id}/acceso` | `manage` | Desactiva la cuenta (no la desvincula) |
+
+Verificado contra la base de dev: 42 personas (11 entran a la app, 30 activas sin acceso, 1
+inactiva); dar acceso, editar datos y quitar acceso probados en una transacción descartada.
+
 ## Decisiones tomadas (2026-09-25)
 
 - Marcia Pollero es ex empleada (ficha inactiva). Franco Lombardi es empleado; su mail es
@@ -120,6 +138,7 @@ Cada fase se puede cortar y dejar andando sola.
   prestadores pasaron a la cuenta actual. Backup previo:
   `backups/helpdesk-db_2026-09-25_1627_pre-mail-ivan.dump`.
 - Las dudas nuevas se consultan en el momento en que aparecen.
+- Permisos propios de Personas con backfill (fase 2).
 
 ## Preguntas abiertas (para Iván)
 

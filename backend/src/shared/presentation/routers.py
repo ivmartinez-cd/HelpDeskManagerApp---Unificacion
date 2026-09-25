@@ -87,6 +87,7 @@ from src.modules.liquidaciones.presentation.liquidaciones_router import (
 from src.modules.liquidaciones.presentation.modificaciones_router import (
     router as liquidaciones_modificaciones_router,
 )
+from src.modules.personas.presentation.personas_router import router as personas_router
 from src.modules.prestadores.presentation.prestadores_router import (
     router as prestadores_router,
 )
@@ -158,6 +159,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     auth_router,
     admin_permissions_router,
     admin_users_router,
+    personas_router,
     route_visits_router,
     dashboard_prefs_router,
     user_note_router,
