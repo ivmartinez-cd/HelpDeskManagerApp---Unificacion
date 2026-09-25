@@ -45,13 +45,13 @@ export function ReporteImprimible({ reporte, incidentes, generadoEn, onListo }: 
         <GraficoEvolucion reporte={reporte} alto={200} claro />
       </div>
       <div style={SECCION}>
-        <GraficoCategorias reporte={reporte} alto={200} claro />
+        <GraficoCategorias reporte={reporte} alto={240} claro />
       </div>
       <div style={SECCION}>
         <GraficoSubcategorias reporte={reporte} alto={280} claro />
       </div>
       <div style={SECCION}>
-        <GraficoSucursales reporte={reporte} alto={220} claro />
+        <GraficoSucursales reporte={reporte} alto={240} claro />
       </div>
       <DetalleImprimible reporte={reporte} incidentes={incidentes} />
       <footer

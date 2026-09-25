@@ -44,10 +44,15 @@ function useExpandidas() {
 /** Tabla "Detalle de incidentes": búsqueda, orden y paginación en el servidor
  * sobre la selección filtrada. Vuelve a la página 1 si cambia la búsqueda, el
  * orden, el pedido o los filtros; recarga también cuando sube `version`. */
+const SIN_DESC_PRIMERO: readonly CampoOrden[] = [];
+
 export function useTablaIncidentes(estado: EstadoDashboard) {
   const { pedido, filtros, version } = estado;
   const busqueda = useBusqueda();
-  const { sort, toggleSort } = useOptionalTableSort<CampoOrden>();
+  // Como el legacy: asc → desc → vuelve al orden del reporte (más reciente primero).
+  const { sort, toggleSort } = useOptionalTableSort<CampoOrden>(SIN_DESC_PRIMERO, undefined, {
+    cycleToUnsorted: true,
+  });
   const [page, setPage] = useState(1);
   const expandidas = useExpandidas();
 

@@ -83,18 +83,18 @@ export function OportunidadesMejora({ reporte, onFiltrar }: Props) {
                 activa={activa === item.subcategoria}
                 onClick={() => onFiltrar("subcategoria", item.subcategoria)}
                 insignia={
+                  // Como el legacy: la sucursal sale solo cuando concentra los casos;
+                  // "repartido" es lo normal y no aporta información.
                   item.concentrado && (
-                    <span className="rounded-full bg-warning/10 px-2 py-0.5 font-body text-[10px] font-bold uppercase tracking-wide text-warning">
-                      Concentrado
+                    <span
+                      title={`${item.sucursal_principal} · ${formatearPct(item.sucursal_principal_pct)}`}
+                      className="flex max-w-[50%] items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 font-body text-[11px] font-bold text-warning"
+                    >
+                      <MapPin className="h-3 w-3 flex-none" aria-hidden="true" />
+                      <span className="truncate">{item.sucursal_principal}</span>
+                      <span className="flex-none">· {formatearPct(item.sucursal_principal_pct)}</span>
                     </span>
                   )
-                }
-                detalle={
-                  <span className="flex items-center gap-1 font-body text-xs text-muted-foreground">
-                    <MapPin className="h-3 w-3 flex-none" aria-hidden="true" />
-                    {item.sucursal_principal} · {formatearEntero(item.sucursal_principal_cantidad)} casos (
-                    {formatearPct(item.sucursal_principal_pct)})
-                  </span>
                 }
               />
             ))}
@@ -123,10 +123,9 @@ interface FilaProps {
   activa: boolean;
   onClick: () => void;
   insignia?: ReactNode;
-  detalle?: ReactNode;
 }
 
-function Fila({ nombre, color, cantidad, pct, maximo, activa, onClick, insignia, detalle }: FilaProps) {
+function Fila({ nombre, color, cantidad, pct, maximo, activa, onClick, insignia }: FilaProps) {
   const ancho = maximo > 0 ? (cantidad / maximo) * 100 : 0;
   return (
     <button
@@ -151,7 +150,6 @@ function Fila({ nombre, color, cantidad, pct, maximo, activa, onClick, insignia,
       <span className="block h-1.5 w-full rounded-[3px] bg-foreground/10" aria-hidden="true">
         <span className="block h-1.5 rounded-[3px]" style={{ width: `${ancho}%`, background: color }} />
       </span>
-      {detalle}
     </button>
   );
 }

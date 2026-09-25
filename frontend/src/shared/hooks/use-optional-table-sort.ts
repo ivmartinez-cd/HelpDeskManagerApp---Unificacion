@@ -15,21 +15,30 @@ export interface OptionalSortState<K extends string> {
 
 const UNSORTED = { key: null, direction: "asc" } as const;
 
+/** `cycleToUnsorted`: el tercer clic sobre la misma columna vuelve al orden de
+ * llegada (primero → segundo sentido → sin orden). Opt-in: replica tablas de un
+ * legacy que ciclaban así (reporte de incidentes); el resto alterna asc ↔ desc. */
+export interface OptionalSortOptions {
+  cycleToUnsorted?: boolean;
+}
+
 export function useOptionalTableSort<K extends string>(
   descFirstKeys: readonly K[] = [],
   initial: OptionalSortState<K> = UNSORTED,
+  { cycleToUnsorted = false }: OptionalSortOptions = {},
 ) {
   const [sort, setSort] = useState<OptionalSortState<K>>(initial);
 
   const toggleSort = useCallback(
     (key: K) => {
-      setSort((prev) =>
-        prev.key === key
-          ? { key, direction: prev.direction === "asc" ? "desc" : "asc" }
-          : { key, direction: descFirstKeys.includes(key) ? "desc" : "asc" },
-      );
+      setSort((prev) => {
+        const first: SortDirection = descFirstKeys.includes(key) ? "desc" : "asc";
+        if (prev.key !== key) return { key, direction: first };
+        if (cycleToUnsorted && prev.direction !== first) return UNSORTED;
+        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+      });
     },
-    [descFirstKeys],
+    [descFirstKeys, cycleToUnsorted],
   );
 
   return { sort, toggleSort };

@@ -17,14 +17,14 @@ interface EstadoIA {
 }
 
 const INACTIVA: EstadoIA = { fase: "inactiva", inicio: 0, duracionMs: 0, resultado: null, mensaje: null };
-const MS_EXITO_VISIBLE = 6000;
+const MS_EXITO_VISIBLE = 4000;
 
 /** Cronómetro que avanza solo mientras `activo`. */
 function useAhora(activo: boolean): number {
   const [ahora, setAhora] = useState(() => Date.now());
   useEffect(() => {
     if (!activo) return;
-    const handle = setInterval(() => setAhora(Date.now()), 500);
+    const handle = setInterval(() => setAhora(Date.now()), 100);
     return () => clearInterval(handle);
   }, [activo]);
   return ahora;

@@ -12,6 +12,7 @@ from typing import Literal
 
 from src.modules.reporte_incidentes.application.use_cases.armar_reporte import ReporteArmado
 from src.modules.reporte_incidentes.domain.entities.incidente import Incidente
+from src.modules.reporte_incidentes.domain.services.colores import color_por_nombre
 from src.modules.reporte_incidentes.domain.services.filtros import (
     Filtros,
     OpcionesFiltro,
@@ -54,7 +55,11 @@ class VistaReporte:
 
 
 def colores_categorias(reporte: ReporteArmado) -> dict[str, str]:
-    colores = {c.nombre: c.color for c in reporte.taxonomia}
+    """Taxonomía, los dos grises fijos y, para las categorías que quedaron en
+    la caché pero ya no existen en la taxonomía, el color por nombre del legacy."""
+    huerfanas = {i.categoria for i in reporte.incidentes if i.categoria}
+    colores = {nombre: color_por_nombre(nombre) for nombre in sorted(huerfanas)}
+    colores.update({c.nombre: c.color for c in reporte.taxonomia})
     return {**colores, SIN_CLASIFICAR: COLOR_SIN_CLASIFICAR, PENDIENTE: COLOR_PENDIENTE}
 
 

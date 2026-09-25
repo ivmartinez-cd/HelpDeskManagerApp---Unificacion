@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { RotateCw } from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
 import { useReporte } from "../../hooks/use-reporte";
 import { RUTA_SELECCION } from "../../lib/url-reporte";
 import { EncabezadoReporte } from "./encabezado-reporte";
@@ -14,6 +16,7 @@ import { GraficosReporte } from "./graficos-reporte";
 import { TablaIncidentes } from "../tabla/tabla-incidentes";
 import { PanelPendientes } from "../tabla/panel-pendientes";
 import { TipificacionIA } from "../tabla/tipificacion-ia";
+import { CLASE_BOTON_NARANJA } from "../tabla/estilos";
 
 /** Dashboard del reporte (port de `app/dashboard/page.tsx` del legacy), de
  * arriba abajo en el mismo orden. KPIs, evolución y tabla siguen los filtros;
@@ -29,10 +32,18 @@ export function ReporteDashboard() {
   if (estado.error) {
     return (
       <div className="flex flex-col items-start gap-3 p-6">
+        <p className="font-body text-sm font-bold text-foreground">No pudimos generar el reporte</p>
         <p className="font-body text-sm text-destructive">{estado.error}</p>
-        <Link href={RUTA_SELECCION} className="font-body text-sm text-brand-orange underline">
-          Elegir otro cliente
-        </Link>
+        <div className="flex items-center gap-4">
+          {/* Como el legacy: ante un corte momentáneo de wsAyC, reintentar sin recargar. */}
+          <Button size="sm" className={CLASE_BOTON_NARANJA} onClick={estado.recargar}>
+            <RotateCw className="h-3.5 w-3.5" aria-hidden="true" />
+            Reintentar
+          </Button>
+          <Link href={RUTA_SELECCION} className="font-body text-sm text-brand-orange underline">
+            Elegir otro cliente
+          </Link>
+        </div>
       </div>
     );
   }

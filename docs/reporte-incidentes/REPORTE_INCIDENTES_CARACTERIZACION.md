@@ -268,7 +268,8 @@ salida (≈ US$ 0,0017 con los precios configurados).
 
 **Diferencias de UI con el legacy (a propósito)**
 - Gráfico de sucursales en naranja de marca (el legacy usaba 6 colores; regla de marca).
-- Tabla ordenable por cualquier columna, en el backend (regla de tablas de HDM).
+- Tabla ordenable por cualquier columna, en el backend (regla de tablas de HDM). El clic cicla
+  como el legacy: ascendente → descendente → vuelve al orden del reporte.
 - El panel "Pendientes de revisión" es una lista de trabajo (como el mockup), no tabla ordenable.
 - Clientes recientes dentro del desplegable del buscador, no como chips.
 - Sin la bandeja de sugerencias de subcategorías (el legacy nunca la alimentaba).
@@ -286,6 +287,25 @@ salida (≈ US$ 0,0017 con los precios configurados).
 - **Acceso restringido:** solo lo ven el usuario admin (superadmin, ve todo) y Ariel Otero, con
   `view` + `update` (otorgados desde la API de administración de permisos, con auditoría). Nadie
   más tiene permisos sobre `reporte-incidentes`; para sumar a alguien, se otorga desde Usuarios.
+
+**Auditoría final de paridad (2026-09-25).** Se recorrió todo el fuente del legacy contra HDM;
+reglas, prompt, taxonomía (comparados byte a byte), mapeo de wsAyC, KPIs, gráficos, filtros,
+tabla, detalle, ABM y PDF quedaron iguales. Diferencias encontradas y corregidas:
+- **Doble carga sobre wsAyC en frío**: el resumen y la tabla piden el mismo reporte a la vez y
+  cada uno bajaba los incidentes por su cuenta (~1.150 llamadas en vez de ~577 para 3 meses de
+  un cliente mediano). `TTLCache` (compartido) ahora deduplica los cálculos en vuelo, como la
+  caché del legacy.
+- **Pantalla de error**: vuelve el botón "Reintentar" del legacy.
+- **Oportunidades de Mejora**: la sucursal principal sale solo cuando concentra los casos (≥ 30%),
+  como insignia; "repartido" no se muestra, igual que el legacy.
+- **Categorías borradas de la taxonomía** que siguen en la caché: color estable derivado del
+  nombre (mismo hash del legacy, en `#rrggbb`), en vez del gris de "Pendiente".
+- **Aviso de la IA**: cronómetro en segundos con un decimal (cada 100 ms) y éxito visible 4 s.
+- **PDF**: dona y sucursales a 240 px de alto, como el legacy.
+
+Quedan como están (sin impacto): "Limpiar todo" visible con un solo filtro, Enter en el buscador
+de clientes solo con la lista abierta, recorte de celdas por 2 líneas en vez de 75 caracteres, y
+el modo demo con datos ficticios del legacy (`USE_MOCK`), que no se portó.
 
 ## 9. Backlog
 

@@ -8,9 +8,9 @@ import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
 import { CLASE_BOTON_NARANJA } from "./estilos";
 
-function mmss(ms: number): string {
-  const segundos = Math.floor(ms / 1000);
-  return `${String(Math.floor(segundos / 60)).padStart(2, "0")}:${String(segundos % 60).padStart(2, "0")}`;
+/** Segundos con un decimal, como el cronómetro del legacy ("12,3 s"). */
+function segundos(ms: number): string {
+  return `${(ms / 1000).toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} s`;
 }
 
 function casos(n: number): string {
@@ -94,7 +94,7 @@ export function TipificacionIA({ estado }: { estado: EstadoDashboard }) {
           icono={<Loader2 className="h-[18px] w-[18px] animate-spin" aria-hidden="true" />}
           tonoIcono={naranja}
           titulo="Tipificando con IA…"
-          derecha={<span className="font-heading text-sm font-bold tabular-nums text-brand-orange">{mmss(ia.transcurridoMs)}</span>}
+          derecha={<span className="font-heading text-sm font-bold tabular-nums text-brand-orange">{segundos(ia.transcurridoMs)}</span>}
         >
           {casos(ia.pendientes)} sin tipificar en el período. El reporte se actualiza solo al terminar.
         </Toast>
@@ -107,7 +107,7 @@ export function TipificacionIA({ estado }: { estado: EstadoDashboard }) {
           titulo="Tipificación completada"
           onCerrar={ia.cerrar}
         >
-          {casos(ia.resultado?.tipificados ?? 0)} en {mmss(ia.transcurridoMs)}
+          {casos(ia.resultado?.tipificados ?? 0)} en {segundos(ia.transcurridoMs)}
           {(ia.resultado?.fallidos ?? 0) > 0 && ` · ${casos(ia.resultado?.fallidos ?? 0)} sin respuesta de la IA`}
         </Toast>
       );
@@ -122,7 +122,7 @@ export function TipificacionIA({ estado }: { estado: EstadoDashboard }) {
         >
           <p>
             {ia.fase === "saturada"
-              ? `No se tipificó ningún caso (${mmss(ia.transcurridoMs)}). Los ${casos(ia.pendientes)} siguen pendientes.`
+              ? `No se tipificó ningún caso (${segundos(ia.transcurridoMs)}). Los ${casos(ia.pendientes)} siguen pendientes.`
               : ia.mensaje}
           </p>
           <Button size="sm" className={cn(CLASE_BOTON_NARANJA, "mt-2 h-7 px-2.5")} onClick={ia.reintentar}>
