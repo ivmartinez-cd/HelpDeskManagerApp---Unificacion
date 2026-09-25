@@ -15,7 +15,10 @@ from src.modules.auth.infrastructure.models.permission_models import (
     UserModuleScope,
 )
 from src.modules.auth.infrastructure.models.user_model import AppUser
-from src.modules.vacaciones.domain.repositories.auditoria import FiltrosAuditoria
+from src.modules.vacaciones.domain.repositories.auditoria import (
+    FiltrosAuditoria,
+    OrdenAuditoria,
+)
 from src.modules.vacaciones.infrastructure.models.audit_log_model import (
     VacacionesAuditLogModel,
 )
@@ -124,6 +127,35 @@ async def test_list_pagina_search_matchea_accion_entidad_o_email(
         FiltrosAuditoria(search=entidad.lower()), offset=0, limit=10
     )
     assert total == 2
+
+
+async def test_list_pagina_ordena_por_etiqueta_de_accion_y_por_usuario(
+    db_session: AsyncSession,
+) -> None:
+    primero = await _user(db_session, "Aaa Orden")
+    ultimo = await _user(db_session, "Zzz Orden")
+    entidad = f"Ent-{uuid.uuid4().hex[:8]}"
+    await SqlAlchemyRegistradorAuditoria(db_session, ultimo.id).registrar(
+        "DELETE", entidad, None, {}
+    )
+    await SqlAlchemyRegistradorAuditoria(db_session, None).registrar("UPDATE", entidad, None, {})
+    await SqlAlchemyRegistradorAuditoria(db_session, primero.id).registrar(
+        "APPROVE", entidad, None, {}
+    )
+    repo = SqlAlchemyAuditoriaRepository(db_session)
+
+    async def acciones(campo: str, descendente: bool) -> list[str]:
+        orden = OrdenAuditoria(campo=campo, descendente=descendente)  # type: ignore[arg-type]
+        filas, _ = await repo.list_pagina(
+            FiltrosAuditoria(entidad=entidad), offset=0, limit=10, orden=orden
+        )
+        return [r.accion for r in filas]
+
+    # Aprobación < Edición < Eliminación (el código en inglés daría APPROVE, DELETE, UPDATE).
+    assert await acciones("accion", False) == ["APPROVE", "UPDATE", "DELETE"]
+    # Por email; el registro sin usuario queda al final en ambos sentidos.
+    assert await acciones("usuario", False) == ["APPROVE", "DELETE", "UPDATE"]
+    assert await acciones("usuario", True) == ["DELETE", "APPROVE", "UPDATE"]
 
 
 async def test_registrador_nunca_lanza_si_la_sesion_falla() -> None:

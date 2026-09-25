@@ -1,6 +1,8 @@
 "use client";
 
 import { Search } from "lucide-react";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import type { FilaEmpleadoReporte, ReporteVacaciones } from "../types/vacaciones";
 
 function iniciales(nombre: string): string {
@@ -15,6 +17,28 @@ function iniciales(nombre: string): string {
 
 const TH = "px-3.5 py-2.5 text-right font-heading text-[10px] uppercase tracking-[.05em]";
 
+type EmpleadoKey = "nombre" | "used" | "pending" | "available";
+const COLUMNAS_EMPLEADO: SortableColumn<EmpleadoKey>[] = [
+  { key: "nombre", label: "Empleado", className: "text-left" },
+  { key: "used", label: "Cons.", className: "text-[#F7941D]" },
+  { key: "pending", label: "Pend." },
+  { key: "available", label: "Disp." },
+];
+const EMPLEADO_DESC_PRIMERO: readonly EmpleadoKey[] = ["used", "pending", "available"];
+const valorEmpleado = (f: FilaEmpleadoReporte, key: EmpleadoKey) => f[key];
+
+type Sector = ReporteVacaciones["porSector"][number];
+type SectorKey = "nombre" | "empleados" | "annual" | "used" | "available";
+const COLUMNAS_SECTOR: SortableColumn<SectorKey>[] = [
+  { key: "nombre", label: "Sector", className: "text-left" },
+  { key: "empleados", label: "Empl." },
+  { key: "annual", label: "Anuales" },
+  { key: "used", label: "Cons.", className: "text-[#F7941D]" },
+  { key: "available", label: "Disp." },
+];
+const SECTOR_DESC_PRIMERO: readonly SectorKey[] = ["empleados", "annual", "used", "available"];
+const valorSector = (s: Sector, key: SectorKey) => s[key];
+
 export function TablaEmpleados({
   filas,
   filtro,
@@ -24,6 +48,8 @@ export function TablaEmpleados({
   filtro: string;
   onFiltro: (v: string) => void;
 }) {
+  const { sort, toggleSort } = useOptionalTableSort(EMPLEADO_DESC_PRIMERO);
+  const ordenadas = useSortedRows(filas, sort, valorEmpleado);
   return (
     <div className="overflow-hidden rounded-[12px] border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
@@ -42,14 +68,13 @@ export function TablaEmpleados({
       <table className="w-full font-body text-[13px]">
         <thead>
           <tr className="border-b border-border bg-muted/30 text-muted-foreground">
-            <th className={`${TH} text-left`}>Empleado</th>
-            <th className={`${TH} text-[#F7941D]`}>Cons.</th>
-            <th className={TH}>Pend.</th>
-            <th className={TH}>Disp.</th>
+            {COLUMNAS_EMPLEADO.map((c) => (
+              <SortableHeader key={c.key} column={c} sort={sort} onToggleSort={toggleSort} thClassName={TH} />
+            ))}
           </tr>
         </thead>
         <tbody>
-          {filas.map((f) => (
+          {ordenadas.map((f) => (
             <tr key={f.nombre} className="border-b border-border/60 last:border-0">
               <td className="px-3.5 py-2.5">
                 <div className="flex items-center gap-2">
@@ -85,6 +110,8 @@ export function TablaEmpleados({
 }
 
 export function TablaSectores({ data }: { data: ReporteVacaciones }) {
+  const { sort, toggleSort } = useOptionalTableSort(SECTOR_DESC_PRIMERO);
+  const sectores = useSortedRows(data.porSector, sort, valorSector);
   return (
     <div className="overflow-hidden rounded-[12px] border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
@@ -93,15 +120,13 @@ export function TablaSectores({ data }: { data: ReporteVacaciones }) {
       <table className="w-full font-body text-[13px]">
         <thead>
           <tr className="border-b border-border bg-muted/30 text-muted-foreground">
-            <th className={`${TH} text-left`}>Sector</th>
-            <th className={TH}>Empl.</th>
-            <th className={TH}>Anuales</th>
-            <th className={`${TH} text-[#F7941D]`}>Cons.</th>
-            <th className={TH}>Disp.</th>
+            {COLUMNAS_SECTOR.map((c) => (
+              <SortableHeader key={c.key} column={c} sort={sort} onToggleSort={toggleSort} thClassName={TH} />
+            ))}
           </tr>
         </thead>
         <tbody>
-          {data.porSector.map((s) => (
+          {sectores.map((s) => (
             <tr key={s.nombre} className="border-b border-border/60 last:border-0">
               <td className="px-3.5 py-2.5">
                 <div className="flex items-center gap-[7px]">

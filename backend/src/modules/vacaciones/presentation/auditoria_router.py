@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +10,11 @@ from src.modules.vacaciones.application.use_cases.listar_auditoria import (
     ListarAuditoria,
     ListarAuditoriaDependencies,
 )
-from src.modules.vacaciones.domain.repositories.auditoria import FiltrosAuditoria
+from src.modules.vacaciones.domain.repositories.auditoria import (
+    CampoOrdenAuditoria,
+    FiltrosAuditoria,
+    OrdenAuditoria,
+)
 from src.modules.vacaciones.domain.well_known_features import AUDITORIA
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_auditoria import (
     SqlAlchemyAuditoriaRepository,
@@ -39,6 +44,8 @@ async def list_auditoria(
     hasta: date | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=200),
+    sort_by: CampoOrdenAuditoria = Query(default="fecha"),
+    sort_dir: Literal["asc", "desc"] = Query(default="desc"),
     _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[RegistroAuditoriaResponse]:
@@ -49,6 +56,7 @@ async def list_auditoria(
     filtros = FiltrosAuditoria(
         search=search, entidad=entidad, accion=accion, desde=desde, hasta=hasta
     )
-    dtos, total = await ListarAuditoria(deps).execute(filtros, page=page, size=size)
+    orden = OrdenAuditoria(campo=sort_by, descendente=sort_dir == "desc")
+    dtos, total = await ListarAuditoria(deps).execute(filtros, page=page, size=size, orden=orden)
     items = [RegistroAuditoriaResponse.from_dto(d) for d in dtos]
     return Page(items=items, total=total, page=page, size=size)

@@ -6,15 +6,19 @@ import { formatFecha, iniciales } from "../lib/fechas";
 import type { Solicitud } from "../types/vacaciones";
 import { SolicitudEstadoBadge } from "./solicitud-estado-badge";
 
-export type SolicitudSortKey = "empleado" | "inicio" | "dias" | "estado";
-export const SOLICITUD_SORT_KEYS: readonly SolicitudSortKey[] = ["empleado", "inicio", "dias", "estado"];
+export type SolicitudSortKey = "empleado" | "inicio" | "dias" | "anioCargo" | "estado" | "motivo";
+export const SOLICITUD_SORT_KEYS: readonly SolicitudSortKey[] = [
+  "empleado", "inicio", "dias", "anioCargo", "estado", "motivo",
+];
 
 export function solicitudSortValue(s: Solicitud, key: SolicitudSortKey) {
   switch (key) {
     case "empleado": return s.empleadoNombre;
     case "inicio": return s.startDate;
     case "dias": return s.daysRequested;
+    case "anioCargo": return s.chargedToYear;
     case "estado": return s.status;
+    case "motivo": return s.reason;
   }
 }
 
@@ -39,9 +43,9 @@ export function SolicitudesTabla({
             <SortableHeader column={{ key: "empleado", label: "Empleado" }} sort={sort} onToggleSort={onToggleSort} />
             <SortableHeader column={{ key: "inicio", label: "Rango" }} sort={sort} onToggleSort={onToggleSort} />
             <SortableHeader column={{ key: "dias", label: "Días" }} sort={sort} onToggleSort={onToggleSort} />
-            <th className="px-4 py-3">Año cargo</th>
+            <SortableHeader column={{ key: "anioCargo", label: "Año cargo" }} sort={sort} onToggleSort={onToggleSort} />
             <SortableHeader column={{ key: "estado", label: "Estado" }} sort={sort} onToggleSort={onToggleSort} />
-            <th className="px-4 py-3">Motivo</th>
+            <SortableHeader column={{ key: "motivo", label: "Motivo" }} sort={sort} onToggleSort={onToggleSort} />
             <th className="px-4 py-3" />
           </tr>
         </thead>

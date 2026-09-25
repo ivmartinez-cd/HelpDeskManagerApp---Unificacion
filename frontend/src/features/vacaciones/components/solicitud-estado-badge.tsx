@@ -6,7 +6,8 @@ const ESTILOS: Record<EstadoSolicitud, string> = {
   REJECTED: "bg-red-500/15 text-red-600 dark:text-red-400",
 };
 
-const LABELS: Record<EstadoSolicitud, string> = {
+/** Etiqueta visible del estado (también la usan las tablas para ordenar). */
+export const ESTADO_SOLICITUD_LABEL: Record<EstadoSolicitud, string> = {
   PENDING: "Pendiente",
   APPROVED: "Aprobada",
   REJECTED: "Rechazada",
@@ -17,7 +18,7 @@ export function SolicitudEstadoBadge({ estado }: { estado: EstadoSolicitud }) {
     <span
       className={`inline-block rounded-[20px] px-2.5 py-1 font-body text-xs font-semibold ${ESTILOS[estado]}`}
     >
-      {LABELS[estado]}
+      {ESTADO_SOLICITUD_LABEL[estado]}
     </span>
   );
 }

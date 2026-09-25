@@ -8,6 +8,8 @@ import {
   BrandSelect,
   BrandSkeleton,
 } from "@/shared/components/ui/brand-form";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { asistenciasApi } from "../api/asistencias-api";
 import { gestionApi } from "../api/gestion-api";
 import { iniciales } from "../lib/fechas";
@@ -26,6 +28,30 @@ function detalle(r: DescuentoRow): string {
   return partes.length > 0 ? partes.join(" + ") : "Sin bajas";
 }
 
+type SortKey = "tecnico" | "descontados" | "enfermedad" | "guardias" | "detalle";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "tecnico", label: "Técnico" },
+  { key: "descontados", label: "Días desc.", className: "text-right" },
+  { key: "enfermedad", label: "Días enf.", className: "text-right" },
+  { key: "guardias", label: "Guardias", className: "text-right" },
+  { key: "detalle", label: "Detalle" },
+];
+
+const DESC_PRIMERO: readonly SortKey[] = ["descontados", "enfermedad", "guardias"];
+
+function valorOrden(r: DescuentoRow, key: SortKey) {
+  switch (key) {
+    case "tecnico": return `${r.lastName}, ${r.firstName}`;
+    case "descontados": return r.diasDescontados;
+    case "enfermedad": return r.diasEnfermedad;
+    case "guardias": return r.guardias;
+    case "detalle": return detalle(r);
+  }
+}
+
+const SIN_FILAS: DescuentoRow[] = [];
+
 export function AsistenciasDescuentos({ esAdmin }: { esAdmin: boolean }) {
   const hoy = new Date();
   const [mes, setMes] = useState(hoy.getMonth() + 1);
@@ -34,6 +60,8 @@ export function AsistenciasDescuentos({ esAdmin }: { esAdmin: boolean }) {
   const [sectorId, setSectorId] = useState("");
   const [filas, setFilas] = useState<DescuentoRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const ordenadas = useSortedRows(filas ?? SIN_FILAS, sort, valorOrden);
 
   const anios = useMemo(() => {
     const desde = 2017;
@@ -148,15 +176,13 @@ export function AsistenciasDescuentos({ esAdmin }: { esAdmin: boolean }) {
           <table className="w-full min-w-[640px] font-body text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30 text-left font-heading text-[11px] uppercase tracking-[.06em] text-muted-foreground">
-                <th className="px-4 py-3">Técnico</th>
-                <th className="px-4 py-3 text-right">Días desc.</th>
-                <th className="px-4 py-3 text-right">Días enf.</th>
-                <th className="px-4 py-3 text-right">Guardias</th>
-                <th className="px-4 py-3">Detalle</th>
+                {COLUMNAS.map((c) => (
+                  <SortableHeader key={c.key} column={c} sort={sort} onToggleSort={toggleSort} />
+                ))}
               </tr>
             </thead>
             <tbody>
-              {filas.map((r) => (
+              {ordenadas.map((r) => (
                 <tr key={r.empleadoId} className="border-b border-border/60 last:border-0">
                   <td className="px-4 py-3">
                     <span className="flex items-center gap-2.5">

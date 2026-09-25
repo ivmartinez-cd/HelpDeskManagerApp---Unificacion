@@ -8,13 +8,18 @@ contexto, en el punto donde se atrapa (§6 de la guía).
 import logging
 import uuid
 from datetime import timedelta
+from typing import Any
 
-from sqlalchemy import Select, func, or_, select
+from sqlalchemy import ColumnElement, Select, case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.infrastructure.models.user_model import AppUser
 from src.modules.vacaciones.domain.entities.registro_auditoria import RegistroAuditoria
-from src.modules.vacaciones.domain.repositories.auditoria import FiltrosAuditoria
+from src.modules.vacaciones.domain.repositories.auditoria import (
+    ORDEN_POR_DEFECTO,
+    FiltrosAuditoria,
+    OrdenAuditoria,
+)
 from src.modules.vacaciones.infrastructure.models.audit_log_model import (
     VacacionesAuditLogModel,
 )
@@ -97,12 +102,64 @@ def _aplicar_filtros(
     return stmt
 
 
+# Etiquetas que muestra la pantalla (`frontend/.../vacaciones/lib/auditoria.ts`):
+# se ordena por ellas y no por el código legacy en inglés, para que el orden
+# coincida con lo que se lee. Un código sin etiqueta ordena por sí mismo.
+_ETIQUETA_ACCION = {
+    "CREATE": "Creación",
+    "UPDATE": "Edición",
+    "DELETE": "Eliminación",
+    "APPROVE": "Aprobación",
+    "REJECT": "Rechazo",
+    "IMPORT": "Importación",
+    "LOGIN": "Login",
+    "RESET_PASSWORD": "Reset clave",
+}
+_ETIQUETA_ENTIDAD = {
+    "VacationRequest": "Solicitud",
+    "Absence": "Baja",
+    "Employee": "Empleado",
+    "Department": "Sector",
+    "Position": "Cargo",
+    "Holiday": "Feriado",
+    "SystemConfig": "Configuración",
+    "User": "Usuario",
+}
+
+
+def _columna_orden(campo: str) -> ColumnElement[Any]:
+    log = VacacionesAuditLogModel
+    if campo == "accion":
+        return case(_ETIQUETA_ACCION, value=log.accion, else_=log.accion)
+    if campo == "entidad":
+        return case(_ETIQUETA_ENTIDAD, value=log.entidad, else_=log.entidad)
+    if campo == "usuario":
+        return select(AppUser.email).where(AppUser.id == log.user_id).scalar_subquery()
+    return log.created_at.expression
+
+
+def _clausulas_orden(orden: OrdenAuditoria) -> list[ColumnElement[Any]]:
+    """Columna pedida (vacíos al final) y, de desempate, más nuevo primero."""
+    columna = _columna_orden(orden.campo)
+    principal = columna.desc() if orden.descendente else columna.asc()
+    return [
+        principal.nulls_last(),
+        VacacionesAuditLogModel.created_at.desc(),
+        VacacionesAuditLogModel.id.asc(),
+    ]
+
+
 class SqlAlchemyAuditoriaRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
     async def list_pagina(
-        self, filtros: FiltrosAuditoria, *, offset: int, limit: int
+        self,
+        filtros: FiltrosAuditoria,
+        *,
+        offset: int,
+        limit: int,
+        orden: OrdenAuditoria = ORDEN_POR_DEFECTO,
     ) -> tuple[list[RegistroAuditoria], int]:
         base = _aplicar_filtros(select(VacacionesAuditLogModel), filtros)
         total = (
@@ -113,7 +170,7 @@ class SqlAlchemyAuditoriaRepository:
         rows = (
             (
                 await self._session.execute(
-                    base.order_by(VacacionesAuditLogModel.created_at.desc())
+                    base.order_by(*_clausulas_orden(orden))
                     .offset(offset)
                     .limit(limit)
                 )

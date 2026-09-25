@@ -7,7 +7,7 @@ atrape y loguee sus propios errores.
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Protocol
+from typing import Literal, Protocol
 
 from src.modules.vacaciones.domain.entities.registro_auditoria import RegistroAuditoria
 
@@ -46,9 +46,30 @@ class FiltrosAuditoria:
     hasta: date | None = None
 
 
+CampoOrdenAuditoria = Literal["fecha", "accion", "entidad", "usuario"]
+
+
+@dataclass(frozen=True, slots=True)
+class OrdenAuditoria:
+    """Columna de la tabla por la que se ordena. Acción y entidad ordenan por
+    su etiqueta en castellano (la que ve el usuario), no por el código legacy;
+    los registros sin usuario van al final en ambos sentidos."""
+
+    campo: CampoOrdenAuditoria = "fecha"
+    descendente: bool = True
+
+
+ORDEN_POR_DEFECTO = OrdenAuditoria()
+
+
 class AuditoriaRepository(Protocol):
     async def list_pagina(
-        self, filtros: FiltrosAuditoria, *, offset: int, limit: int
+        self,
+        filtros: FiltrosAuditoria,
+        *,
+        offset: int,
+        limit: int,
+        orden: OrdenAuditoria = ORDEN_POR_DEFECTO,
     ) -> tuple[list[RegistroAuditoria], int]:
-        """Página ordenada por created_at desc + total de la consulta."""
+        """Página en el orden pedido (empates: más nuevo primero) + total."""
         ...

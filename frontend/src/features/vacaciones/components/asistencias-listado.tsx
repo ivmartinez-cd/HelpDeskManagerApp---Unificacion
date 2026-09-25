@@ -6,6 +6,7 @@ import { ApiError } from "@/services/http-client";
 import { BrandEmptyState, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
 import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
+import { boolSortValue } from "@/shared/hooks/use-optional-table-sort";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { asistenciasApi } from "../api/asistencias-api";
 import { formatFecha, iniciales } from "../lib/fechas";
@@ -34,8 +35,10 @@ function duracionTexto(a: Ausencia): string {
   return incluyeFinDeSemana(a) ? `${dias} (incluye fin de semana)` : dias;
 }
 
-type AusenciaSortKey = "empleado" | "fecha" | "tipo" | "duracion";
-const AUSENCIA_SORT_KEYS: readonly AusenciaSortKey[] = ["empleado", "fecha", "tipo", "duracion"];
+type AusenciaSortKey = "empleado" | "fecha" | "tipo" | "duracion" | "observaciones" | "certificado";
+const AUSENCIA_SORT_KEYS: readonly AusenciaSortKey[] = [
+  "empleado", "fecha", "tipo", "duracion", "observaciones", "certificado",
+];
 
 function ausenciaSortValue(a: Ausencia, key: AusenciaSortKey) {
   switch (key) {
@@ -43,6 +46,8 @@ function ausenciaSortValue(a: Ausencia, key: AusenciaSortKey) {
     case "fecha": return a.startDate;
     case "tipo": return TIPO_AUSENCIA[a.tipo].label;
     case "duracion": return a.halfDay ? 0.5 : a.daysCount;
+    case "observaciones": return a.reason;
+    case "certificado": return boolSortValue(Boolean(a.certificadoUrl));
   }
 }
 
@@ -67,7 +72,7 @@ export function AsistenciasListado({
   const { sort, toggleSort } = useTableSort<AusenciaSortKey>({
     initial: { key: "fecha", direction: "desc" },
     keys: AUSENCIA_SORT_KEYS,
-    descFirstKeys: ["fecha"],
+    descFirstKeys: ["fecha", "duracion", "certificado"],
   });
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -177,8 +182,8 @@ export function AsistenciasListado({
                 <SortableHeader column={{ key: "fecha", label: "Fecha" }} sort={sort} onToggleSort={handleToggleSort} />
                 <SortableHeader column={{ key: "tipo", label: "Tipo" }} sort={sort} onToggleSort={handleToggleSort} />
                 <SortableHeader column={{ key: "duracion", label: "Duración" }} sort={sort} onToggleSort={handleToggleSort} />
-                <th className="px-4 py-3">Observaciones</th>
-                <th className="px-4 py-3">Certificado</th>
+                <SortableHeader column={{ key: "observaciones", label: "Observaciones" }} sort={sort} onToggleSort={handleToggleSort} />
+                <SortableHeader column={{ key: "certificado", label: "Certificado" }} sort={sort} onToggleSort={handleToggleSort} />
                 {puedeGestionar && <th className="px-4 py-3" />}
               </tr>
             </thead>

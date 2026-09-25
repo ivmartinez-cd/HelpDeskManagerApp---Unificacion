@@ -10,9 +10,29 @@ import {
   BrandInput,
 } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { gestionApi } from "../api/gestion-api";
 import { formatFecha, hoyIso } from "../lib/fechas";
 import type { Feriado, FeriadoPayload } from "../types/vacaciones";
+
+type SortKey = "fecha" | "nombre" | "computo";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "fecha", label: "Fecha" },
+  { key: "nombre", label: "Nombre" },
+  { key: "computo", label: "Cómputo" },
+];
+
+const computoLabel = (f: Feriado) => (f.deductsVacation ? "Cuenta como día" : "Desplaza inicio");
+
+function valorOrden(f: Feriado, key: SortKey) {
+  switch (key) {
+    case "fecha": return f.date;
+    case "nombre": return f.name;
+    case "computo": return computoLabel(f);
+  }
+}
 
 interface Props {
   feriados: Feriado[];
@@ -30,6 +50,8 @@ export function FeriadosTab({
   onChanged,
 }: Props) {
   const [editando, setEditando] = useState<Feriado | null>(null);
+  const { sort, toggleSort } = useOptionalTableSort<SortKey>();
+  const filas = useSortedRows(feriados, sort, valorOrden);
   const [anioImport, setAnioImport] = useState(new Date().getFullYear());
   const [importando, setImportando] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
@@ -109,14 +131,14 @@ export function FeriadosTab({
           <table className="w-full min-w-[560px] font-body text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30 text-left font-heading text-[11px] uppercase tracking-[.06em] text-muted-foreground">
-                <th className="px-4 py-3">Fecha</th>
-                <th className="px-4 py-3">Nombre</th>
-                <th className="px-4 py-3">Cómputo</th>
+                {COLUMNAS.map((c) => (
+                  <SortableHeader key={c.key} column={c} sort={sort} onToggleSort={toggleSort} />
+                ))}
                 {puedeGestionar && <th className="px-4 py-3" />}
               </tr>
             </thead>
             <tbody>
-              {feriados.map((f) => (
+              {filas.map((f) => (
                 <tr key={f.id} className="border-b border-border/60 last:border-0">
                   <td className="px-4 py-3 font-semibold text-foreground">
                     {formatFecha(f.date)}
@@ -124,7 +146,7 @@ export function FeriadosTab({
                   <td className="px-4 py-3 text-foreground">{f.name}</td>
                   <td className="px-4 py-3">
                     <BrandBadge variant={f.deductsVacation ? "neutral" : "accent"}>
-                      {f.deductsVacation ? "Cuenta como día" : "Desplaza inicio"}
+                      {computoLabel(f)}
                     </BrandBadge>
                   </td>
                   {puedeGestionar && (

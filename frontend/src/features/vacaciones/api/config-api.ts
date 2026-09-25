@@ -1,5 +1,6 @@
 import { httpClient } from "@/services/http-client";
 import type {
+  AuditoriaSortKey,
   ConfigUpdatePayload,
   ConfigVacaciones,
   Exclusion,
@@ -21,11 +22,19 @@ export const configApi = {
   deleteExclusion: (id: string) =>
     httpClient.delete<void>(`${BASE}/exclusiones/${id}`),
 
-  listAuditoria: (params: { search?: string; page?: number; size?: number }) => {
+  listAuditoria: (params: {
+    search?: string;
+    page?: number;
+    size?: number;
+    sortBy?: AuditoriaSortKey;
+    sortDir?: "asc" | "desc";
+  }) => {
     const q = new URLSearchParams();
     if (params.search) q.set("search", params.search);
     if (params.page) q.set("page", String(params.page));
     if (params.size) q.set("size", String(params.size));
+    if (params.sortBy) q.set("sort_by", params.sortBy);
+    if (params.sortDir) q.set("sort_dir", params.sortDir);
     const query = q.size > 0 ? `?${q.toString()}` : "";
     return httpClient.get<Page<RegistroAuditoria>>(`${BASE}/auditoria${query}`);
   },

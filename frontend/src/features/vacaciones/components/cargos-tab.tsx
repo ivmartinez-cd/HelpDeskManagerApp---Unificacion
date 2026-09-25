@@ -9,8 +9,29 @@ import {
   BrandInput,
 } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { gestionApi } from "../api/gestion-api";
 import type { Cargo, CargoPayload } from "../types/vacaciones";
+
+type SortKey = "cargo" | "empleados" | "limite";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "cargo", label: "Cargo" },
+  { key: "empleados", label: "Empleados", className: "text-right" },
+  // "Sin límite" (null) queda al final en ambos sentidos.
+  { key: "limite", label: "Límite simultáneo", className: "text-right" },
+];
+
+const DESC_PRIMERO: readonly SortKey[] = ["empleados", "limite"];
+
+function valorOrden(c: Cargo, key: SortKey) {
+  switch (key) {
+    case "cargo": return c.name;
+    case "empleados": return c.empleadosCount;
+    case "limite": return c.maxSimultaneos;
+  }
+}
 
 interface Props {
   cargos: Cargo[];
@@ -28,6 +49,8 @@ export function CargosTab({
   onChanged,
 }: Props) {
   const [editando, setEditando] = useState<Cargo | null>(null);
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const filas = useSortedRows(cargos, sort, valorOrden);
 
   return (
     <div className="flex flex-col gap-4">
@@ -42,14 +65,14 @@ export function CargosTab({
           <table className="w-full min-w-[560px] font-body text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30 text-left font-heading text-[11px] uppercase tracking-[.06em] text-muted-foreground">
-                <th className="px-4 py-3">Cargo</th>
-                <th className="px-4 py-3 text-right">Empleados</th>
-                <th className="px-4 py-3 text-right">Límite simultáneo</th>
+                {COLUMNAS.map((c) => (
+                  <SortableHeader key={c.key} column={c} sort={sort} onToggleSort={toggleSort} />
+                ))}
                 {puedeGestionar && <th className="px-4 py-3" />}
               </tr>
             </thead>
             <tbody>
-              {cargos.map((c) => (
+              {filas.map((c) => (
                 <tr key={c.id} className="border-b border-border/60 last:border-0">
                   <td className="px-4 py-3 font-semibold text-foreground">{c.name}</td>
                   <td className="px-4 py-3 text-right text-muted-foreground">

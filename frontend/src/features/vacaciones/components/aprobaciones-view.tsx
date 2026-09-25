@@ -9,12 +9,11 @@ import {
   BrandSkeleton,
 } from "@/shared/components/ui/brand-form";
 import { solicitudesApi } from "../api/solicitudes-api";
-import { formatRango } from "../lib/fechas";
 import type { Solicitud } from "../types/vacaciones";
 import { AprobacionCard } from "./aprobacion-card";
 import { avisoDeVacaciones, AvisoAfectaTurnos } from "./aviso-afecta-turnos";
+import { HistorialDecisionesTabla } from "./historial-decisiones-tabla";
 import { NovedadesPendientes, type AvisoTurnos } from "./novedades-aprobacion";
-import { SolicitudEstadoBadge } from "./solicitud-estado-badge";
 
 export function AprobacionesView() {
   const [solicitudes, setSolicitudes] = useState<Solicitud[] | null>(null);
@@ -132,49 +131,7 @@ export function AprobacionesView() {
               <h2 className="font-heading text-sm font-bold uppercase tracking-[.05em] text-foreground">
                 Historial de decisiones
               </h2>
-              <div className="overflow-x-auto rounded-[12px] border border-border">
-                <table className="w-full min-w-[720px] font-body text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/30 text-left font-heading text-[11px] uppercase tracking-[.06em] text-muted-foreground">
-                      <th className="px-4 py-3">Empleado</th>
-                      <th className="px-4 py-3">Rango</th>
-                      <th className="px-4 py-3 text-right">Días</th>
-                      <th className="px-4 py-3">Decisión</th>
-                      <th className="px-4 py-3">Decisor</th>
-                      <th className="px-4 py-3">Comentario</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historial.map((s) => {
-                      const ultima = s.aprobaciones[0];
-                      return (
-                        <tr key={s.id} className="border-b border-border/60 last:border-0">
-                          <td className="px-4 py-3 font-semibold text-foreground">
-                            {s.empleadoNombre}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {formatRango(s.startDate, s.endDate)}
-                          </td>
-                          <td className="px-4 py-3 text-right text-foreground">
-                            {s.daysRequested}
-                          </td>
-                          <td className="px-4 py-3">
-                            <SolicitudEstadoBadge
-                              estado={ultima.decision === "APPROVED" ? "APPROVED" : "REJECTED"}
-                            />
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {ultima.approverEmail ?? "—"}
-                          </td>
-                          <td className="max-w-[220px] truncate px-4 py-3 text-muted-foreground">
-                            {ultima.comment ?? "—"}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <HistorialDecisionesTabla historial={historial} />
             </section>
           )}
         </>

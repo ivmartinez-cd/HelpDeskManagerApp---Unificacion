@@ -5,12 +5,36 @@ import { CalendarClock, Plus } from "lucide-react";
 import { ApiError } from "@/services/http-client";
 import { useSession } from "@/services/session-provider";
 import { BrandButton, BrandEmptyState, BrandSkeleton } from "@/shared/components/ui/brand-form";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { asistenciasApi } from "../api/asistencias-api";
 import { formatFecha, iniciales } from "../lib/fechas";
 import { TIPO_AUSENCIA, horarioTexto } from "../lib/tipos-ausencia";
 import { TIPOS_SOLICITABLES, type Ausencia } from "../types/vacaciones";
 import { NovedadModal } from "./novedad-modal";
-import { SolicitudEstadoBadge } from "./solicitud-estado-badge";
+import { ESTADO_SOLICITUD_LABEL, SolicitudEstadoBadge } from "./solicitud-estado-badge";
+
+type SortKey = "empleado" | "tipo" | "fechas" | "horario" | "estado" | "motivo";
+const SORT_KEYS: readonly SortKey[] = ["empleado", "tipo", "fechas", "horario", "estado", "motivo"];
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "empleado", label: "Empleado" },
+  { key: "tipo", label: "Tipo" },
+  { key: "fechas", label: "Fechas" },
+  { key: "horario", label: "Horario" },
+  { key: "estado", label: "Estado" },
+  { key: "motivo", label: "Motivo" },
+];
+
+function valorOrden(a: Ausencia, key: SortKey) {
+  switch (key) {
+    case "empleado": return a.empleadoNombre;
+    case "tipo": return TIPO_AUSENCIA[a.tipo].label;
+    case "fechas": return a.startDate;
+    case "horario": return horarioTexto(a);
+    case "estado": return ESTADO_SOLICITUD_LABEL[a.status];
+    case "motivo": return a.reason;
+  }
+}
 
 /** Pestaña "Home office y horario" de Asistencias (hasta 2026-09-03 vivía en
  * Mis Solicitudes): las novedades propias (el backend ya acota a lo propio
@@ -24,6 +48,12 @@ export function MisNovedades() {
   const [error, setError] = useState<string | null>(null);
   const [creando, setCreando] = useState(false);
   const [cancelandoId, setCancelandoId] = useState<string | null>(null);
+  // Arranca como antes: la más reciente primero.
+  const { sort, toggleSort } = useTableSort<SortKey>({
+    initial: { key: "fechas", direction: "desc" },
+    keys: SORT_KEYS,
+    descFirstKeys: ["fechas"],
+  });
 
   const load = useCallback(
     () =>
@@ -45,8 +75,11 @@ export function MisNovedades() {
   }, [load]);
 
   const ordenadas = useMemo(
-    () => [...(items ?? [])].sort((a, b) => b.startDate.localeCompare(a.startDate)),
-    [items],
+    () =>
+      [...(items ?? [])].sort((a, b) =>
+        compareSortValues(valorOrden(a, sort.key), valorOrden(b, sort.key), sort.direction),
+      ),
+    [items, sort],
   );
 
   const cancelar = (a: Ausencia) => {
@@ -106,12 +139,9 @@ export function MisNovedades() {
           <table className="w-full min-w-[720px] font-body text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30 text-left font-heading text-[11px] uppercase tracking-[.06em] text-muted-foreground">
-                <th className="px-4 py-3">Empleado</th>
-                <th className="px-4 py-3">Tipo</th>
-                <th className="px-4 py-3">Fechas</th>
-                <th className="px-4 py-3">Horario</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3">Motivo</th>
+                {COLUMNAS.map((c) => (
+                  <SortableHeader key={c.key} column={c} sort={sort} onToggleSort={toggleSort} />
+                ))}
                 <th className="px-4 py-3" />
               </tr>
             </thead>

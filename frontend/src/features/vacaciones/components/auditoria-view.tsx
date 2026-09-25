@@ -3,6 +3,8 @@
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { ChevronRight, ScrollText, Search } from "lucide-react";
 import { BrandButton, BrandEmptyState, BrandSkeleton } from "@/shared/components/ui/brand-form";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { type SortState, useTableSort } from "@/shared/hooks/use-table-sort";
 import { configApi } from "../api/config-api";
 import {
   ACCION_LABEL,
@@ -11,9 +13,18 @@ import {
   ENTIDAD_LABEL,
 } from "../lib/auditoria";
 import { ReportesAuditoriaTabs } from "./reportes-auditoria-tabs";
-import type { Page, RegistroAuditoria } from "../types/vacaciones";
+import type { AuditoriaSortKey, Page, RegistroAuditoria } from "../types/vacaciones";
 
 const PAGE_SIZE = 50;
+
+// El log pagina en el servidor: el orden lo resuelve el backend sobre todos
+// los registros, no sobre la página cargada.
+const SORT_KEYS: readonly AuditoriaSortKey[] = ["fecha", "accion", "entidad", "usuario"];
+const DESC_PRIMERO: readonly AuditoriaSortKey[] = ["fecha"];
+const COL_FECHA: SortableColumn<AuditoriaSortKey> = { key: "fecha", label: "Fecha" };
+const COL_ACCION: SortableColumn<AuditoriaSortKey> = { key: "accion", label: "Acción" };
+const COL_ENTIDAD: SortableColumn<AuditoriaSortKey> = { key: "entidad", label: "Entidad" };
+const COL_USUARIO: SortableColumn<AuditoriaSortKey> = { key: "usuario", label: "Usuario" };
 
 function formatFechaHora(iso: string): string {
   const d = new Date(iso);
@@ -30,10 +41,21 @@ export function AuditoriaView() {
   const [data, setData] = useState<Page<RegistroAuditoria> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expandido, setExpandido] = useState<string | null>(null);
+  const { sort, toggleSort } = useTableSort<AuditoriaSortKey>({
+    initial: { key: "fecha", direction: "desc" },
+    keys: SORT_KEYS,
+    descFirstKeys: DESC_PRIMERO,
+  });
 
-  const load = useCallback((search: string, page: number) => {
+  const load = useCallback((search: string, page: number, orden: SortState<AuditoriaSortKey>) => {
     configApi
-      .listAuditoria({ search: search || undefined, page, size: PAGE_SIZE })
+      .listAuditoria({
+        search: search || undefined,
+        page,
+        size: PAGE_SIZE,
+        sortBy: orden.key,
+        sortDir: orden.direction,
+      })
       .then((p) => {
         setData(p);
         setError(null);
@@ -45,9 +67,14 @@ export function AuditoriaView() {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => load(busqueda, pagina), busqueda ? 350 : 0);
+    const timer = setTimeout(() => load(busqueda, pagina, sort), busqueda ? 350 : 0);
     return () => clearTimeout(timer);
-  }, [busqueda, pagina, load]);
+  }, [busqueda, pagina, sort, load]);
+
+  const ordenarPor = (key: AuditoriaSortKey) => {
+    toggleSort(key);
+    setPagina(1);
+  };
 
   const registros = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -83,7 +110,7 @@ export function AuditoriaView() {
       {error && (
         <div className="flex items-center justify-between gap-4 rounded-[12px] border border-destructive/20 bg-destructive/10 px-5 py-4">
           <p className="font-body text-sm text-foreground">{error}</p>
-          <BrandButton variant="outline" size="sm" onClick={() => load(busqueda, pagina)}>
+          <BrandButton variant="outline" size="sm" onClick={() => load(busqueda, pagina, sort)}>
             Reintentar
           </BrandButton>
         </div>
@@ -111,11 +138,11 @@ export function AuditoriaView() {
             <table className="w-full min-w-[760px] font-body text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30 text-left font-heading text-[10.5px] uppercase tracking-[.05em] text-muted-foreground">
-                  <th className="px-4 py-3">Fecha</th>
-                  <th className="px-4 py-3">Acción</th>
-                  <th className="px-4 py-3">Entidad</th>
+                  <SortableHeader column={COL_FECHA} sort={sort} onToggleSort={ordenarPor} />
+                  <SortableHeader column={COL_ACCION} sort={sort} onToggleSort={ordenarPor} />
+                  <SortableHeader column={COL_ENTIDAD} sort={sort} onToggleSort={ordenarPor} />
                   <th className="px-4 py-3">Descripción</th>
-                  <th className="px-4 py-3">Usuario</th>
+                  <SortableHeader column={COL_USUARIO} sort={sort} onToggleSort={ordenarPor} />
                   <th className="w-9 px-4 py-3" />
                 </tr>
               </thead>

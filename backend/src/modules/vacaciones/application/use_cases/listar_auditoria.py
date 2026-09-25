@@ -5,8 +5,10 @@ from dataclasses import dataclass
 
 from src.modules.vacaciones.domain.entities.registro_auditoria import RegistroAuditoria
 from src.modules.vacaciones.domain.repositories.auditoria import (
+    ORDEN_POR_DEFECTO,
     AuditoriaRepository,
     FiltrosAuditoria,
+    OrdenAuditoria,
 )
 from src.modules.vacaciones.domain.repositories.user_directory import UserDirectory
 
@@ -28,19 +30,26 @@ class ListarAuditoria:
         self._deps = deps
 
     async def execute(
-        self, filtros: FiltrosAuditoria, *, page: int, size: int
+        self,
+        filtros: FiltrosAuditoria,
+        *,
+        page: int,
+        size: int,
+        orden: OrdenAuditoria = ORDEN_POR_DEFECTO,
     ) -> tuple[list[RegistroAuditoriaDTO], int]:
         registros, total = await self._deps.auditoria.list_pagina(
-            filtros, offset=(page - 1) * size, limit=size
+            filtros, offset=(page - 1) * size, limit=size, orden=orden
         )
+        return await self._con_email(registros), total
+
+    async def _con_email(self, registros: list[RegistroAuditoria]) -> list[RegistroAuditoriaDTO]:
         users = await self._deps.users.get_by_ids(
             [r.user_id for r in registros if r.user_id is not None]
         )
-        dtos = [
+        return [
             RegistroAuditoriaDTO(
                 registro=r,
                 user_email=users[r.user_id].email if r.user_id in users else None,
             )
             for r in registros
         ]
-        return dtos, total
