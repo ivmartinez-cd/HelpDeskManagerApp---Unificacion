@@ -283,6 +283,10 @@ salida (≈ US$ 0,0017 con los precios configurados).
   `reporte-incidentes-siges` se conservan como archivo, sin borrarlos. No hay período de
   convivencia.
 
+- **Acceso restringido:** solo lo ven el usuario admin (superadmin, ve todo) y Ariel Otero, con
+  `view` + `update` (otorgados desde la API de administración de permisos, con auditoría). Nadie
+  más tiene permisos sobre `reporte-incidentes`; para sumar a alguien, se otorga desde Usuarios.
+
 ## 9. Backlog
 
 - Persistir el historial de costos de IA (hoy solo log) — si algún día se quiere controlar saldo
