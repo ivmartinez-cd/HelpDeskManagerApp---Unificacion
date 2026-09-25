@@ -37,6 +37,9 @@ from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_sector_reposi
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_solicitud_repository import (
     SqlAlchemySolicitudRepository,
 )
+from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_user_directory import (
+    SqlAlchemyUserDirectory,
+)
 from src.modules.vacaciones.infrastructure.system_clock import SystemClock
 from src.modules.vacaciones.presentation.dependencies.actor import get_actor_vacaciones
 from src.modules.vacaciones.presentation.schemas.empleado_schemas import (
@@ -70,6 +73,7 @@ def _deps(
         auditoria=SqlAlchemyRegistradorAuditoria(
             db, identity.user.id if identity else None
         ),
+        usuarios=SqlAlchemyUserDirectory(db),
     )
 
 

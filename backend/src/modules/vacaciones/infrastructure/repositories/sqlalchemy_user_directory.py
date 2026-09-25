@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.infrastructure.models.user_model import AppUser
@@ -32,3 +32,12 @@ class SqlAlchemyUserDirectory:
         stmt = select(AppUser).where(AppUser.id.in_(user_ids))
         rows = (await self._session.execute(stmt)).scalars().all()
         return {r.id: _to_info(r) for r in rows}
+
+    async def get_activo_by_email(self, email: str) -> UserInfo | None:
+        stmt = select(AppUser).where(
+            func.lower(AppUser.email) == email.strip().lower(),
+            AppUser.is_active.is_(True),
+            AppUser.is_placeholder.is_(False),
+        )
+        row = (await self._session.execute(stmt)).scalar_one_or_none()
+        return _to_info(row) if row else None

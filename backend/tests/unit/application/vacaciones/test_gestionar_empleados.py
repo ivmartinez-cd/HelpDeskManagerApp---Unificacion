@@ -24,6 +24,7 @@ from src.modules.vacaciones.domain.errors import (
     EmpleadoNoEncontradoError,
     NombreDuplicadoError,
 )
+from src.modules.vacaciones.domain.repositories.user_directory import UserInfo
 from src.shared.domain.errors import NotFoundError
 from tests.unit.application.vacaciones.fakes import (
     FakeCargoRepo,
@@ -32,6 +33,7 @@ from tests.unit.application.vacaciones.fakes import (
     FakeEmpleadoRepo,
     FakeSectorRepo,
     FakeSolicitudRepo,
+    FakeUserDirectory,
     FixedClock,
 )
 from tests.unit.domain.vacaciones.factories import make_actor, make_config, make_empleado
@@ -45,6 +47,7 @@ def _deps(
     sector: Sector,
     cargo: Cargo,
     ciclos: FakeCicloRepo | None = None,
+    usuarios: FakeUserDirectory | None = None,
 ) -> GestionEmpleadosDependencies:
     return GestionEmpleadosDependencies(
         empleados=empleados,
@@ -54,6 +57,7 @@ def _deps(
         config=FakeConfigRepo(make_config()),
         clock=FixedClock(_HOY),
         solicitudes=FakeSolicitudRepo(),
+        usuarios=usuarios,
     )
 
 
@@ -185,3 +189,53 @@ async def test_delete_empleado_y_no_encontrado() -> None:
     assert await empleados.get_by_id(empleado.id) is None
     with pytest.raises(EmpleadoNoEncontradoError):
         await DeleteEmpleado(deps).execute(empleado.id)
+
+
+def _cuenta(email: str = "LPerez@canal.com") -> UserInfo:
+    return UserInfo(id=uuid.uuid4(), email=email, full_name="Laura Pérez")
+
+
+async def test_create_empleado_se_vincula_a_la_cuenta_con_el_mismo_mail() -> None:
+    sector, cargo = _sector(), _cargo()
+    cuenta = _cuenta()
+    usuarios = FakeUserDirectory([cuenta])
+    deps = _deps(FakeEmpleadoRepo([]), sector=sector, cargo=cargo, usuarios=usuarios)
+
+    creado = await CreateEmpleado(deps).execute(_command(sector, cargo))
+
+    assert creado.user_id == cuenta.id
+
+
+async def test_create_empleado_respeta_la_cuenta_elegida_a_mano() -> None:
+    sector, cargo = _sector(), _cargo()
+    otra = uuid.uuid4()
+    usuarios = FakeUserDirectory([_cuenta()])
+    deps = _deps(FakeEmpleadoRepo([]), sector=sector, cargo=cargo, usuarios=usuarios)
+
+    creado = await CreateEmpleado(deps).execute(_command(sector, cargo, user_id=otra))
+
+    assert creado.user_id == otra
+
+
+async def test_no_autovincula_una_cuenta_ya_vinculada_a_otro_empleado() -> None:
+    sector, cargo = _sector(), _cargo()
+    cuenta = _cuenta()
+    otro = make_empleado(email="otro@canal.com", user_id=cuenta.id)
+    usuarios = FakeUserDirectory([cuenta])
+    deps = _deps(FakeEmpleadoRepo([otro]), sector=sector, cargo=cargo, usuarios=usuarios)
+
+    creado = await CreateEmpleado(deps).execute(_command(sector, cargo))
+
+    assert creado.user_id is None
+
+
+async def test_update_empleado_se_vincula_al_editar_si_coincide_el_mail() -> None:
+    sector, cargo = _sector(), _cargo()
+    cuenta = _cuenta()
+    empleado = make_empleado(email="lperez@canal.com", department_id=sector.id, cargo_id=cargo.id)
+    usuarios = FakeUserDirectory([cuenta])
+    deps = _deps(FakeEmpleadoRepo([empleado]), sector=sector, cargo=cargo, usuarios=usuarios)
+
+    editado = await UpdateEmpleado(deps).execute(empleado.id, _command(sector, cargo))
+
+    assert editado.user_id == cuenta.id

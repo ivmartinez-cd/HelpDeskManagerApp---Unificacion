@@ -468,6 +468,10 @@ class FakeUserDirectory:
     async def get_by_ids(self, user_ids: list[uuid.UUID]) -> dict[uuid.UUID, UserInfo]:
         return {i: self._items[i] for i in user_ids if i in self._items}
 
+    async def get_activo_by_email(self, email: str) -> UserInfo | None:
+        buscado = email.strip().lower()
+        return next((u for u in self._items.values() if u.email.lower() == buscado), None)
+
 
 class FakeFeriadosExternosProvider:
     def __init__(self, feriados: list[FeriadoImportado] | None = None) -> None:

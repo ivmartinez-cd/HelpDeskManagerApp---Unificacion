@@ -1,5 +1,5 @@
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from src.modules.vacaciones.application.dtos.gestion_dtos import (
     EmpleadoCommand,
@@ -39,6 +39,7 @@ from src.modules.vacaciones.domain.repositories.empleado_repository import (
 from src.modules.vacaciones.domain.repositories.solicitud_repository import (
     SolicitudRepository,
 )
+from src.modules.vacaciones.domain.repositories.user_directory import UserDirectory
 from src.modules.vacaciones.domain.services.antiguedad import (
     dias_por_antiguedad,
     referencia_para_anio,
@@ -60,6 +61,25 @@ class GestionEmpleadosDependencies:
     clock: Clock
     solicitudes: SolicitudRepository
     auditoria: RegistradorAuditoria = RegistradorAuditoriaNulo()
+    usuarios: UserDirectory | None = None
+
+
+async def _autovincular_cuenta(
+    deps: GestionEmpleadosDependencies,
+    command: EmpleadoCommand,
+    empleado_id: uuid.UUID | None = None,
+) -> EmpleadoCommand:
+    """Sin cuenta elegida, vincula la cuenta activa con el mismo mail (unificación
+    Personas, fase 1) salvo que ya esté vinculada a otro empleado."""
+    if command.user_id is not None or deps.usuarios is None:
+        return command
+    cuenta = await deps.usuarios.get_activo_by_email(command.email)
+    if cuenta is None:
+        return command
+    vinculado = await deps.empleados.get_by_user_id(cuenta.id)
+    if vinculado is not None and vinculado.id != empleado_id:
+        return command
+    return replace(command, user_id=cuenta.id)
 
 
 class ListEmpleados:
@@ -131,6 +151,7 @@ class CreateEmpleado:
         await _validar_referencias(self._deps, command)
         if await self._deps.empleados.get_by_email(command.email) is not None:
             raise NombreDuplicadoError("email", command.email)
+        command = await _autovincular_cuenta(self._deps, command)
         if command.user_id is not None:
             vinculado = await self._deps.empleados.get_by_user_id(command.user_id)
             if vinculado is not None:
@@ -155,6 +176,7 @@ class UpdateEmpleado:
         if actual is None:
             raise EmpleadoNoEncontradoError(empleado_id)
         await _validar_referencias(self._deps, command)
+        command = await _autovincular_cuenta(self._deps, command, empleado_id)
         await self._validar_unicos(actual, command)
         if command.hire_date != actual.hire_date:
             await self._recalcular_ciclos(empleado_id, command)
