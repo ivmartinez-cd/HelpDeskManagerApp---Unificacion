@@ -2,17 +2,33 @@
 
 import { useState, type FormEvent } from "react";
 import { monthValueToPeriodo, useMisSolicitudesTv } from "../hooks/use-mis-solicitudes-tv";
-import type { EstadoSolicitudTv } from "../types/tareas-varias";
+import type { EstadoSolicitudTv, SolicitudTv } from "../types/tareas-varias";
 import { useMiResumenBono } from "@/features/bono-tecnicos/hooks/use-mi-resumen-bono";
 import { Badge, type BadgeVariant } from "@/shared/components/ui/badge";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 
 const ESTADO_BADGE: Record<EstadoSolicitudTv, BadgeVariant> = {
   PENDIENTE: "warning",
   APROBADA: "success",
   RECHAZADA: "danger",
 };
+
+type SortKey = "fecha" | "razon_social" | "sucursal" | "tarea_realizada" | "estado";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "fecha", label: "Fecha" },
+  { key: "razon_social", label: "Razón Social" },
+  { key: "sucursal", label: "Sucursal" },
+  { key: "tarea_realizada", label: "Tarea" },
+  { key: "estado", label: "Estado" },
+];
+
+const DESC_PRIMERO: readonly SortKey[] = ["fecha"];
+
+const valorOrden = (s: SolicitudTv, key: SortKey) => s[key];
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -30,6 +46,8 @@ export function MisTareasVarias() {
   const [sucursal, setSucursal] = useState("");
   const [tareaRealizada, setTareaRealizada] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const filas = useSortedRows(solicitudes, sort, valorOrden);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -149,15 +167,19 @@ export function MisTareasVarias() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-left font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-2">Fecha</th>
-                  <th className="px-4 py-2">Razón Social</th>
-                  <th className="px-4 py-2">Sucursal</th>
-                  <th className="px-4 py-2">Tarea</th>
-                  <th className="px-4 py-2">Estado</th>
+                  {COLUMNAS.map((c) => (
+                    <SortableHeader
+                      key={c.key}
+                      column={c}
+                      sort={sort}
+                      onToggleSort={toggleSort}
+                      thClassName="px-4 py-2"
+                    />
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {solicitudes.map((s) => (
+                {filas.map((s) => (
                   <tr key={s.id} className="border-b border-border/60 last:border-0">
                     <td className="px-4 py-2 font-body text-foreground">{s.fecha}</td>
                     <td className="px-4 py-2 font-body text-foreground">{s.razon_social}</td>

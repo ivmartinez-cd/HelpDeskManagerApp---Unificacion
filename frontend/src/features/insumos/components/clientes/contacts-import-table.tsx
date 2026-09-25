@@ -1,5 +1,7 @@
 "use client";
 
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { cn } from "@/shared/utils/cn";
 import { selectableImportRow } from "../../hooks/use-contacts-import";
 import type { ZoneContactPreviewRow } from "../../types";
@@ -40,6 +42,27 @@ function statusFor(row: ZoneContactPreviewRow): { tone: StatusTone; label: strin
   return { tone: "ok", label: "Nueva" };
 }
 
+type SortKey = "zona" | "contacto" | "email" | "telefono" | "estado";
+
+/** Ordenan por el valor entrante (lo que se va a guardar), no por el actual. */
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "zona", label: "Zona" },
+  { key: "contacto", label: "Contacto" },
+  { key: "email", label: "Email" },
+  { key: "telefono", label: "Teléfono" },
+  { key: "estado", label: "Estado" },
+];
+
+function valorOrden(row: ZoneContactPreviewRow, key: SortKey) {
+  switch (key) {
+    case "zona": return row.zone;
+    case "contacto": return row.apellido.trim() ? contactLabel(row.apellido, row.nombre) : null;
+    case "email": return row.email.trim();
+    case "telefono": return row.telefono.trim();
+    case "estado": return statusFor(row).label;
+  }
+}
+
 interface ContactsImportTableProps {
   rows: readonly ZoneContactPreviewRow[];
   selected: ReadonlySet<string>;
@@ -51,6 +74,8 @@ export function ContactsImportTable({ rows, selected, onToggle, onToggleAll }: C
   const selectableRows = rows.filter(selectableImportRow);
   const allSelected = selectableRows.length > 0 && selectableRows.every((r) => selected.has(r.zone));
   const someSelected = selectableRows.some((r) => selected.has(r.zone));
+  const { sort, toggleSort } = useOptionalTableSort<SortKey>();
+  const filas = useSortedRows(rows, sort, valorOrden);
 
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
@@ -70,15 +95,13 @@ export function ContactsImportTable({ rows, selected, onToggle, onToggleAll }: C
                 disabled={selectableRows.length === 0}
               />
             </th>
-            <th scope="col" className="px-4 py-3">Zona</th>
-            <th scope="col" className="px-4 py-3">Contacto</th>
-            <th scope="col" className="px-4 py-3">Email</th>
-            <th scope="col" className="px-4 py-3">Teléfono</th>
-            <th scope="col" className="px-4 py-3">Estado</th>
+            {COLUMNAS.map((c) => (
+              <SortableHeader key={c.key} column={c} sort={sort} onToggleSort={toggleSort} />
+            ))}
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => {
+          {filas.map((row) => {
             const selectable = selectableImportRow(row);
             const isSelected = selected.has(row.zone);
             const status = statusFor(row);
