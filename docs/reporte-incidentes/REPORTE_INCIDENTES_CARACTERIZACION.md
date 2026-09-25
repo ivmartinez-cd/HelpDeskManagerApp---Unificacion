@@ -303,9 +303,12 @@ tabla, detalle, ABM y PDF quedaron iguales. Diferencias encontradas y corregidas
 - **Aviso de la IA**: cronómetro en segundos con un decimal (cada 100 ms) y éxito visible 4 s.
 - **PDF**: dona y sucursales a 240 px de alto, como el legacy.
 
-Quedan como están (sin impacto): "Limpiar todo" visible con un solo filtro, Enter en el buscador
-de clientes solo con la lista abierta, recorte de celdas por 2 líneas en vez de 75 caracteres, y
-el modo demo con datos ficticios del legacy (`USE_MOCK`), que no se portó.
+- **Detalles menores** (segunda pasada, mismo día): "Limpiar todo" aparece solo con 2 o más
+  filtros; Enter en el buscador de clientes elige aunque la lista esté cerrada; reporte del
+  cliente y solución se cortan a 75 caracteres con "..." (texto completo en el tooltip y el detalle).
+
+No se portó el modo demo con datos ficticios del legacy (`USE_MOCK`): era una herramienta de
+desarrollo, y en HDM el reporte siempre sale de wsAyC real.
 
 ## 9. Backlog
 

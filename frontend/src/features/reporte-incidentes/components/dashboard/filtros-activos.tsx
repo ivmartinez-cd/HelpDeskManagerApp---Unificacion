@@ -40,14 +40,17 @@ export function FiltrosActivos({ estado }: { estado: EstadoDashboard }) {
           </button>
         </span>
       ))}
-      <button
-        type="button"
-        disabled={estado.navegando}
-        onClick={estado.limpiarFiltros}
-        className="cursor-pointer px-1.5 py-1 font-body text-xs font-semibold text-muted-foreground underline hover:text-foreground disabled:opacity-50"
-      >
-        Limpiar todo
-      </button>
+      {/* Como el legacy: con un solo filtro alcanza la × del chip. */}
+      {activas.length > 1 && (
+        <button
+          type="button"
+          disabled={estado.navegando}
+          onClick={estado.limpiarFiltros}
+          className="cursor-pointer px-1.5 py-1 font-body text-xs font-semibold text-muted-foreground underline hover:text-foreground disabled:opacity-50"
+        >
+          Limpiar todo
+        </button>
+      )}
     </div>
   );
 }

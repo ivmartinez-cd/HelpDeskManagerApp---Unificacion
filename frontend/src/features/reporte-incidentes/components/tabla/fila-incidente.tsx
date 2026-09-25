@@ -10,7 +10,14 @@ import { URL_WEBAGENTES } from "./estilos";
 
 export const CANTIDAD_COLUMNAS = 8;
 const TD = "border-t border-border px-3 py-3 align-top font-body text-[13px] leading-[18px] text-foreground";
-const RECORTE = "line-clamp-2";
+/** Como el legacy: corta a 75 caracteres con "..." (el texto completo queda en
+ * el `title` y en el detalle expandido). */
+const LIMITE_RECORTE = 75;
+
+function recortar(texto: string | null | undefined): string {
+  if (!texto || texto === "—") return "—";
+  return texto.length <= LIMITE_RECORTE ? texto : `${texto.slice(0, LIMITE_RECORTE)}...`;
+}
 
 const detener = (e: MouseEvent) => e.stopPropagation();
 
@@ -130,11 +137,11 @@ export function FilaIncidente({
           )}
         </td>
         <td className={TD}>
-          <span className={RECORTE} title={incidente.descripcion}>{incidente.descripcion || "—"}</span>
+          <span title={incidente.descripcion}>{recortar(incidente.descripcion)}</span>
         </td>
         <td className={cn(TD, "text-muted-foreground")}>{incidente.causa ?? "—"}</td>
         <td className={TD}>
-          <span className={RECORTE} title={incidente.solucion ?? undefined}>{incidente.solucion || "—"}</span>
+          <span title={incidente.solucion ?? undefined}>{recortar(incidente.solucion)}</span>
         </td>
         <td className={TD}>
           <CeldaTipificacion incidente={incidente} estado={estado} />

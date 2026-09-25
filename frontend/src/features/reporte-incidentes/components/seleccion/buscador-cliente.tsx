@@ -55,7 +55,8 @@ export function BuscadorCliente({ onSeleccionar }: Props) {
     } else if (e.key === "Enter") {
       e.preventDefault();
       const elegida = opciones[activo];
-      if (elegida && abierto) elegir(elegida);
+      // Como el legacy: Enter elige aunque la lista esté cerrada.
+      if (elegida) elegir(elegida);
     } else if (e.key === "Escape") {
       setAbierto(false);
     }
