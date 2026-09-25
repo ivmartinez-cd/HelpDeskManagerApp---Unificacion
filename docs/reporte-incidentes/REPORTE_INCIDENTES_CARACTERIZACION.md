@@ -246,4 +246,32 @@ salida (≈ US$ 0,0017 con los precios configurados).
   todo pendiente en silencio y mostrar "IA saturada".
 - Color de categoría validado como hexadecimal (el legacy no lo validaba).
 
-**Sigue:** fase 4 (frontend, con el mockup en https://claude.ai/artifact/7pXFLAv41fu76vkf5HP1bD).
+**Fase 4: hecha (frontend) y módulo habilitado en dev** (migración `e5b2d7a9c1f4`, 2026-09-25).
+
+- Rutas: `/reporte-incidentes` (selección de cliente y rango) y `/reporte-incidentes/reporte`
+  (dashboard; estado en la URL: `empresa`, `periodo`, `meses`, `sucursal`, `categoria`,
+  `subcategoria`). Código en `frontend/src/features/reporte-incidentes/`.
+- Menú: Servicio Técnico › Incidentes › "Reporte ejecutivo" (grupo virtual, junto a SLA). Ruta
+  protegida con `reporte-incidentes:view`; Categorías, corrección y tipificación con `update`.
+- Referencia visual: mockup en claude.ai Design con el design system "HelpDesk Manager"
+  (https://claude.ai/artifact/7pXFLAv41fu76vkf5HP1bD). Sin handoff: decisión del usuario
+  (estilo HDM, misma estructura que el legacy).
+- **Tipificación con IA automática, como el legacy** (decisión de Iván 2026-09-25): al abrir un
+  reporte con casos sin tipificar se dispara sola, solo para quien tiene `update`. Quien solo
+  tiene `view` ve un aviso. Sin clave: aviso `IA_NO_CONFIGURADA`, sin reintentos en bucle.
+- PDF: mismo mecanismo que Análisis Logs HP (`shared/hooks/use-export-pdf.ts`, movido desde
+  analisis-log-hp): popup con el reporte A4 claro sin filtros + `window.print()`; los canvas de
+  Chart.js se reemplazan por imágenes antes de copiar el HTML.
+- Probado en el navegador con el cliente 452 (jun–ago 2026): selección, dashboard, filtros por
+  click, detalle expandido, categorías y contenido del PDF (288 incidentes, 4 gráficos como
+  imagen, top 50). No se probó el diálogo de impresión real (el panel no abre popups).
+
+**Diferencias de UI con el legacy (a propósito)**
+- Gráfico de sucursales en naranja de marca (el legacy usaba 6 colores; regla de marca).
+- Tabla ordenable por cualquier columna, en el backend (regla de tablas de HDM).
+- El panel "Pendientes de revisión" es una lista de trabajo (como el mockup), no tabla ordenable.
+- Clientes recientes dentro del desplegable del buscador, no como chips.
+- Sin la bandeja de sugerencias de subcategorías (el legacy nunca la alimentaba).
+
+**Pendiente (extras a decidir):** costos de IA persistidos, precalentado automático, herramientas
+de evaluación del clasificador. Y: uso en paralelo con el legacy y apagado del legacy.

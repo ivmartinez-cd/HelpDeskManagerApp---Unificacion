@@ -7,7 +7,7 @@ import { useSession } from "@/services/session-provider";
 import type { DateRange } from "@/shared/types/date-range";
 import type { AnalysisResult, SdsExtractResult, Severity } from "../types/analisis-log-hp";
 import { analisisLogHpApi } from "../api/analisis-log-hp-api";
-import { useExportPdf } from "../hooks/use-export-pdf";
+import { useExportPdf } from "@/shared/hooks/use-export-pdf";
 import { filterEventsByDateRange, filterIncidentsByDateRange } from "../utils/date-filter";
 import { AiDiagnosisCard, buildPayload } from "./ai-diagnosis-card";
 import { AnalysisCollapsibles } from "./analysis-collapsibles";

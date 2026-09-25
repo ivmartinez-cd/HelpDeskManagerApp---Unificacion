@@ -9,6 +9,7 @@ import {
   ClipboardList,
   FileQuestion,
   FileSearch,
+  FileBarChart,
   Gauge,
   Headset,
   UserRoundCheck,
@@ -44,6 +45,7 @@ function buildSections({
   hasAnalisisLogHp,
   hasBonoTecnicos,
   hasTareasVarias,
+  hasReporteIncidentes,
 }: {
   hasPrestadores: boolean;
   hasSla: boolean;
@@ -51,15 +53,21 @@ function buildSections({
   hasAnalisisLogHp: boolean;
   hasBonoTecnicos: boolean;
   hasTareasVarias: boolean;
+  hasReporteIncidentes: boolean;
 }): NavSectionDef[] {
-  const incidentes: NavLinkDef[] = hasSla
-    ? [
-        { href: "/sla", label: "Tablero SLA", exact: true, icon: Gauge },
-        { href: "/sla/pendientes-a-cerrar", label: "Pendientes a cerrar", exact: false, icon: ClipboardList },
-        { href: "/incidentes-sin-consultar", label: "Sin consultar", exact: false, icon: FileQuestion },
-        { href: "/sla/mesa-de-ayuda", label: "Mesa de Ayuda", exact: false, icon: Headset },
-      ]
-    : [];
+  const incidentes: NavLinkDef[] = [
+    ...(hasSla
+      ? [
+          { href: "/sla", label: "Tablero SLA", exact: true, icon: Gauge },
+          { href: "/sla/pendientes-a-cerrar", label: "Pendientes a cerrar", exact: false, icon: ClipboardList },
+          { href: "/incidentes-sin-consultar", label: "Sin consultar", exact: false, icon: FileQuestion },
+          { href: "/sla/mesa-de-ayuda", label: "Mesa de Ayuda", exact: false, icon: Headset },
+        ]
+      : []),
+    ...(hasReporteIncidentes
+      ? [{ href: "/reporte-incidentes", label: "Reporte ejecutivo", exact: false, icon: FileBarChart }]
+      : []),
+  ];
 
   const prestadores: NavLinkDef[] = hasPrestadores
     ? [
@@ -127,6 +135,7 @@ export function ServicioTecnicoNavSubmenu({
   hasAnalisisLogHp,
   hasBonoTecnicos,
   hasTareasVarias,
+  hasReporteIncidentes,
   onNavigate,
 }: {
   hasPrestadores: boolean;
@@ -135,6 +144,7 @@ export function ServicioTecnicoNavSubmenu({
   hasAnalisisLogHp: boolean;
   hasBonoTecnicos: boolean;
   hasTareasVarias: boolean;
+  hasReporteIncidentes: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -152,6 +162,7 @@ export function ServicioTecnicoNavSubmenu({
     hasAnalisisLogHp,
     hasBonoTecnicos,
     hasTareasVarias,
+    hasReporteIncidentes,
   })
     .map((s) => ({ ...s, links: s.links.filter((l) => canAccessPath(l.href, { can, hasFeature })) }))
     .filter((s) => s.links.length > 0);

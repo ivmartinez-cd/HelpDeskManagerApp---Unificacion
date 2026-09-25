@@ -18,6 +18,7 @@ export function ServicioTecnicoNavItem({
   hasAnalisisLogHp,
   hasBonoTecnicos,
   hasTareasVarias,
+  hasReporteIncidentes,
   isActive,
   submenuOverride,
   onToggleSubmenu,
@@ -29,6 +30,7 @@ export function ServicioTecnicoNavItem({
   hasAnalisisLogHp: boolean;
   hasBonoTecnicos: boolean;
   hasTareasVarias: boolean;
+  hasReporteIncidentes: boolean;
   isActive: (route: string) => boolean;
   submenuOverride: boolean | undefined;
   onToggleSubmenu: (expanded: boolean) => void;
@@ -41,14 +43,16 @@ export function ServicioTecnicoNavItem({
     (hasPreventivos && isActive("/preventivos")) ||
     (hasAnalisisLogHp && isActive("/analisis-log-hp")) ||
     (hasBonoTecnicos && isActive("/bono-tecnicos")) ||
-    (hasTareasVarias && isActive("/tareas-varias"));
+    (hasTareasVarias && isActive("/tareas-varias")) ||
+    (hasReporteIncidentes && isActive("/reporte-incidentes"));
   const stcHasSubmenu =
     hasSla ||
     hasPrestadores ||
     hasPreventivos ||
     hasAnalisisLogHp ||
     hasBonoTecnicos ||
-    hasTareasVarias;
+    hasTareasVarias ||
+    hasReporteIncidentes;
   const stcSubmenuExpanded = submenuOverride ?? stcActive;
   const { can, hasFeature } = useSession();
   // El link principal de la fila (no el chevron) tiene que caer en una
@@ -66,6 +70,7 @@ export function ServicioTecnicoNavItem({
     [hasBonoTecnicos, "/bono-tecnicos"],
     [hasTareasVarias, "/tareas-varias"],
     [hasAnalisisLogHp, "/analisis-log-hp"],
+    [hasReporteIncidentes, "/reporte-incidentes"],
   ];
   const stcHref =
     candidatos.find(([tiene, href]) => tiene && canAccessPath(href, { can, hasFeature }))?.[1] ?? "/";
@@ -117,6 +122,7 @@ export function ServicioTecnicoNavItem({
           hasAnalisisLogHp={hasAnalisisLogHp}
           hasBonoTecnicos={hasBonoTecnicos}
           hasTareasVarias={hasTareasVarias}
+          hasReporteIncidentes={hasReporteIncidentes}
           onNavigate={onNavigate}
         />
       )}

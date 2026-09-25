@@ -6,7 +6,8 @@ import { toast } from "sonner";
 /** Port de `Printer-Logs-Analyzer/frontend/src/hooks/useExportPdf.ts`: abre un
  * popup con el reporte ejecutivo clonado + los estilos actuales, espera fuentes
  * e imágenes, y dispara `window.print()` (PDF vía "Guardar como PDF" del
- * navegador — sin jsPDF/html2canvas, igual que el legacy). */
+ * navegador — sin jsPDF/html2canvas, igual que el legacy). Lo usan
+ * analisis-log-hp y reporte-incidentes. */
 
 function escapeHtml(value: string): string {
   return value
@@ -46,6 +47,26 @@ function buildHeadMarkup(title: string): string {
   `;
 }
 
+/** outerHTML del reporte con cada `<canvas>` (Chart.js) cambiado por un `<img>`
+ * de su contenido: el HTML serializado no lleva lo dibujado en el canvas. */
+function markupWithCanvasAsImages(root: HTMLElement): string {
+  const originals = root.querySelectorAll("canvas");
+  if (originals.length === 0) return root.outerHTML;
+  const clone = root.cloneNode(true) as HTMLElement;
+  clone.querySelectorAll("canvas").forEach((copy, i) => {
+    const original = originals[i];
+    if (!original) return;
+    const img = document.createElement("img");
+    img.src = original.toDataURL("image/png");
+    img.alt = "";
+    img.style.cssText = original.style.cssText;
+    img.style.width = `${original.clientWidth}px`;
+    img.style.height = `${original.clientHeight}px`;
+    copy.replaceWith(img);
+  });
+  return clone.outerHTML;
+}
+
 async function waitForImages(doc: Document): Promise<void> {
   const images = Array.from(doc.images).filter((img) => !img.complete);
   await Promise.all(
@@ -80,18 +101,22 @@ export function useExportPdf(fileStem: string) {
   const [exportingPdf, setExportingPdf] = useState(false);
   const printReportRef = useRef<HTMLDivElement>(null);
 
-  async function handleExportPdf(onBeforePrint?: () => Promise<void>) {
+  /** `openedWindow`: popup abierto por el caller en el mismo click, antes de
+   * esperas largas (fetch), para que el navegador no lo bloquee. Si el reporte
+   * no se puede armar, se cierra. */
+  async function handleExportPdf(onBeforePrint?: () => Promise<void>, openedWindow?: Window | null) {
     setExportingPdf(true);
     try {
       if (onBeforePrint) await onBeforePrint();
 
-      const reportMarkup = printReportRef.current?.outerHTML;
+      const reportMarkup = printReportRef.current && markupWithCanvasAsImages(printReportRef.current);
       if (!reportMarkup) {
+        openedWindow?.close();
         toast.error("No se pudo preparar el reporte ejecutivo");
         return;
       }
 
-      const printWindow = window.open("", "_blank");
+      const printWindow = openedWindow && !openedWindow.closed ? openedWindow : window.open("", "_blank");
       if (!printWindow) {
         toast.error("El navegador bloqueó la ventana emergente. Permití popups para este sitio.");
         return;

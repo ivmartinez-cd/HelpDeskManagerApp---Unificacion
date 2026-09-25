@@ -96,6 +96,8 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { prefix: "/prestadores/coberturas", feature: "prestadores-coberturas" },
   { prefix: "/prestadores", anyOf: [p("prestadores", "view")] },
   { prefix: "/sla", anyOf: [p("sla", "view")] },
+  // Reporte ejecutivo de incidentes; tipificar/corregir/categorías piden update (por botón).
+  { prefix: "/reporte-incidentes", anyOf: [p("reporte-incidentes", "view")] },
   // Pantalla de primer nivel, fuera del árbol /sla, pero del mismo módulo.
   { prefix: "/incidentes-sin-consultar", anyOf: [p("sla", "view")] },
   { prefix: "/preventivos", anyOf: [p("preventivos", "view")] },
