@@ -1,7 +1,7 @@
 # Plan: unificar Usuarios y Empleados en "Personas"
 
-Estado: **fase 1 en curso** (2026-09-25). Autovínculo por mail implementado; limpieza de
-datos lista en `limpieza_fase1.sql`, pendiente de correr.
+Estado: **fase 1 terminada** (2026-09-25): autovínculo por mail en producción de dev y datos
+limpios (12 empleados vinculados, ninguna cuenta activa sin ficha). Próximo: fase 2.
 
 ## Problema
 
@@ -109,16 +109,18 @@ Cada fase se puede cortar y dejar andando sola.
 
 ## Decisiones tomadas (2026-09-25)
 
-- Marcia Pollero es ex empleada. Franco Lombardi es empleado y su mail es `cds@…`.
-- La ficha de Iván se vincula a `admin@example.com`.
+- Marcia Pollero es ex empleada (ficha inactiva). Franco Lombardi es empleado; su mail es
+  `cds@…` y su color pasó a `#f97316` para no repetir el de Ariel Otero.
 - Color: gana el de la cuenta.
+- **Toda persona con acceso a la app tiene ficha de empleado.** Para dar acceso primero se
+  cargan los datos laborales; en la fase 2 no hay "personas solo con acceso".
+- **Iván entra con `imartinez@canaldirecto.com.ar`.** Su cuenta superadmin (ex
+  `admin@example.com`) tomó ese mail; la cuenta vieja quedó inactiva como
+  `imartinez-cuenta-vieja@example.invalid` y sus 5 registros de historial de asignación de
+  prestadores pasaron a la cuenta actual. Backup previo:
+  `backups/helpdesk-db_2026-09-25_1627_pre-mail-ivan.dump`.
 - Las dudas nuevas se consultan en el momento en que aparecen.
 
 ## Preguntas abiertas (para Iván)
 
-- **¿Toda persona con acceso debe tener ficha de empleado?** Hoy solo queda
-  `admin@example.com` sin ficha propia (usa la de `imartinez@…`). Bloquea la fase 2.
 - **Nombre de la pantalla**: "Personas" o "Equipo". Bloquea la fase 3.
-- **Mail de Iván**: tras la limpieza su ficha dice `imartinez@…` y su cuenta
-  `admin@example.com`; es el único vinculado con mails distintos. Bloquea la fase 2 (la
-  ficha unificada tiene un solo mail).
