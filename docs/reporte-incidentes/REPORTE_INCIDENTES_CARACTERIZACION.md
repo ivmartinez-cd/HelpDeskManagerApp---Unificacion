@@ -217,12 +217,16 @@ token y wsAyC exige login JWT desde sep-2026, así que hoy el legacy no trae dat
 equivalencia se apoya en los tests portados y en el mapeo campo a campo de §2.
 
 **Divergencias conscientes**
-- Sin reintentos ante 429/5xx (el transporte compartido de wsAyC no reintenta nunca). Un fallo
-  devuelve 502 y se vuelve a pedir.
+- Reintentos: el transporte compartido de wsAyC no reintenta nunca (por las escrituras de
+  insumos); el gateway del reporte, que solo lee, reintenta 2 veces ante errores de red/proxy
+  (el legacy, 3). Se agregó el 2026-09-25 tras un corte momentáneo de `proxy.cdsa.com.ar` que
+  tiró un reporte entero de ~600 llamadas.
 - Cliente inexistente → 404 (el legacy caía al primer cliente de la lista).
 - En la tabla, los valores vacíos van al final en ambos sentidos (convención de HDM).
 
-**Fase 3: hecha (backend), sin probar contra Gemini real (no hay `GEMINI_API_KEY`).**
+**Fase 3: hecha (backend). Probada contra Gemini real el 2026-09-25**: cliente 452, jun–ago 2026,
+7 casos pendientes → 1 llamada, 7 tipificados con confianza alta, 2.577 tokens de entrada y 359 de
+salida (≈ US$ 0,0017 con los precios configurados).
 
 - Prompt portado literal (`reglas_prompt.py` copiado de `TAXONOMY_RULES_V1`; rol, confianza,
   determinismo y ASCII textuales), ajuste a la taxonomía y lectura de la respuesta en

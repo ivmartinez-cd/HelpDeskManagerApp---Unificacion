@@ -6,14 +6,20 @@ cada llamada corre en `asyncio.to_thread`, acotada por un semáforo (el legacy
 usaba 4 en paralelo) porque un mes de N incidentes cuesta 1 + 2×N llamadas.
 
 Caché en memoria como el legacy: empresas 1 h, el resto `ttl_segundos`
-(15 min). Divergencia consciente: el legacy reintentaba 3 veces ante 429/5xx;
-acá un fallo se propaga como `ExternalServiceError` (el transporte compartido
-no reintenta nunca) y el usuario vuelve a pedir el reporte."""
+(15 min). Reintentos: el transporte compartido no reintenta nunca (por las
+escrituras de insumos); acá TODAS las operaciones son lecturas, así que se
+reintentan hasta 2 veces con espera creciente ante errores de red/proxy/timeout
+(el legacy lo hacía 3 veces): un reporte son ~600 llamadas y un corte momentáneo
+del proxy corporativo en una sola tiraba todo (visto el 2026-09-25). Un fault
+SOAP o un error de negocio no se reintenta."""
 
 import asyncio
 import logging
+import random
 from datetime import date
 from typing import Any
+
+import requests
 
 from src.modules.reporte_incidentes.domain.entities.incidente import (
     DetalleIncidente,
@@ -29,6 +35,8 @@ from src.shared.infrastructure.wsayc.client_provider import WsAycClientProvider
 logger = logging.getLogger(__name__)
 
 _TTL_EMPRESAS_SEGUNDOS = 3600
+_REINTENTOS = 2
+_ESPERA_BASE_SEGUNDOS = 1.0
 
 
 class ZeepIncidentesGateway:
@@ -69,7 +77,7 @@ class ZeepIncidentesGateway:
     async def _llamar(self, operacion: str, **kwargs: str) -> object:
         async with self._semaforo:
             try:
-                return await asyncio.to_thread(self._invocar, operacion, kwargs)
+                return await self._con_reintentos(operacion, kwargs)
             except AppError:
                 raise
             except Exception as exc:
@@ -80,6 +88,20 @@ class ZeepIncidentesGateway:
                 raise ExternalServiceError(
                     "No se pudo consultar wsAyC de Canal Directo. Probá de nuevo en unos minutos."
                 ) from exc
+
+    async def _con_reintentos(self, operacion: str, kwargs: dict[str, str]) -> object:
+        for intento in range(_REINTENTOS + 1):
+            try:
+                return await asyncio.to_thread(self._invocar, operacion, kwargs)
+            except requests.exceptions.RequestException as exc:
+                if intento == _REINTENTOS:
+                    raise
+                logger.info(
+                    "wsAyC %s: error de red, reintento %d", operacion, intento + 1,
+                    extra={"operacion": operacion, "error": repr(exc)},
+                )
+                await asyncio.sleep(_ESPERA_BASE_SEGUNDOS * 2**intento + random.random())
+        raise AssertionError("inalcanzable")
 
     def _invocar(self, operacion: str, kwargs: dict[str, str]) -> Any:
         return getattr(self._provider.service(), operacion)(**kwargs)
