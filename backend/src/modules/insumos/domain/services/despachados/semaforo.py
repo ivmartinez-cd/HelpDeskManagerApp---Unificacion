@@ -38,6 +38,10 @@ ESTADOS_ACUSE_SIN_ID = frozenset(
     {"Acuse en Rendicion", "Envio a Rendir a Otra Suc", "Rendicion de Acuse Finalizado"}
 )
 """Estados de acuse: OCA los informa sin `IdEstado`, se reconocen por el texto."""
+ESTADOS_PENDIENTE_RETIRO_SIN_ID = frozenset({"Listo para programar en Drivin"})
+"""Guía ya cargada en OCA, con el retiro en origen por programar (visto por primera vez el
+25/09/2026, sin `IdEstado`, en despachos del día; después pasan a "Retirado en Origen").
+Verde con aviso; con motivo, naranja; sin cambios en `dias_sin_movimiento`, amarillo."""
 ESTADOS_CONOCIDOS = (
     ESTADOS_VERDES
     | ESTADOS_VERDES_SOLO_SIN_MOTIVO
@@ -55,6 +59,7 @@ SIN_MOTIVO = "Sin Motivo"
 OBSERVACION_ESTADO_NUEVO = "Estado nuevo, revisar"
 OBSERVACION_SIN_DATOS = "Sin datos en OCA"
 OBSERVACION_ESPERANDO_INGRESO = "Esperando ingreso en OCA"
+OBSERVACION_PENDIENTE_RETIRO = "Pendiente de retiro por OCA"
 
 _VERDE = ClasificacionEnvio(
     color=ColorSemaforo.VERDE,
@@ -79,14 +84,16 @@ def normalizar_texto(texto: str) -> str:
 
 
 _ACUSES_NORMALIZADOS = frozenset(normalizar_texto(t) for t in ESTADOS_ACUSE_SIN_ID)
+_PENDIENTE_RETIRO_NORMALIZADOS = frozenset(
+    normalizar_texto(t) for t in ESTADOS_PENDIENTE_RETIRO_SIN_ID
+)
 _SIN_MOTIVO_NORMALIZADO = normalizar_texto(SIN_MOTIVO)
 
 
 def clasificar_estado(estado: EstadoOca, contexto: ContextoClasificacion) -> ClasificacionEnvio:
-    """Color del semáforo según esta precedencia: cerrado (8, 56, acuses) > gris cerrado
-    (13) > rojo (45) > naranja (48 o con motivo) > gris abierto (49) > estado nuevo
-    (amarillo) > verde, o amarillo si lleva `dias_sin_movimiento` hábiles sin cambios.
-    """
+    """Precedencia: cerrado (8, 56, acuses) > gris cerrado (13) > rojo (45) > pendiente de
+    retiro > estado nuevo > naranja (48 o con motivo) > gris abierto (49) > verde, o
+    amarillo si lleva `dias_sin_movimiento` hábiles sin cambios."""
     if _es_cerrado(estado):
         return _CERRADO
     if estado.id_estado in ESTADOS_GRIS_CERRADO:
@@ -94,6 +101,8 @@ def clasificar_estado(estado: EstadoOca, contexto: ContextoClasificacion) -> Cla
     if estado.id_estado in ESTADOS_ROJOS:
         limite = fecha_limite_retiro(estado.fecha_estado, contexto.feriados, DIAS_LIMITE_RETIRO)
         return replace(_VERDE, color=ColorSemaforo.ROJO, alerta=True, fecha_limite=limite)
+    if _es_pendiente_retiro(estado):
+        return _pendiente_retiro(estado, contexto)
     if estado.id_estado not in ESTADOS_CONOCIDOS:
         return _estado_nuevo(estado)
     if estado.id_estado in ESTADOS_NARANJA or _tiene_motivo(estado):
@@ -117,6 +126,23 @@ def _es_cerrado(estado: EstadoOca) -> bool:
     if estado.id_estado is None:
         return normalizar_texto(estado.estado) in _ACUSES_NORMALIZADOS
     return estado.id_estado in ESTADOS_CERRADOS
+
+
+def _es_pendiente_retiro(estado: EstadoOca) -> bool:
+    """Retiro en origen por programar: llega sin `IdEstado`, se reconoce por el texto."""
+    if estado.id_estado is not None:
+        return False
+    return normalizar_texto(estado.estado) in _PENDIENTE_RETIRO_NORMALIZADOS
+
+
+def _pendiente_retiro(estado: EstadoOca, contexto: ContextoClasificacion) -> ClasificacionEnvio:
+    """Verde con aviso; naranja si trae motivo; amarillo si no se mueve (regla general)."""
+    if _tiene_motivo(estado):
+        return _NARANJA
+    clasificacion = _verde_o_sin_movimiento(estado.fecha_estado, contexto)
+    if clasificacion.color is ColorSemaforo.AMARILLO:
+        return clasificacion
+    return replace(clasificacion, observacion=OBSERVACION_PENDIENTE_RETIRO)
 
 
 def _tiene_motivo(estado: EstadoOca) -> bool:

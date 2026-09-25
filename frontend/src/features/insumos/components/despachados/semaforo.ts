@@ -106,11 +106,13 @@ const ETIQUETA_COLOR: Record<ColorSemaforo, string> = {
 };
 
 /** Texto del chip. Los matices salen del estado de OCA y de la observación que
- * arma el backend ("Estado nuevo, revisar", "Sin datos en OCA"). */
+ * arma el backend ("Estado nuevo, revisar", "Sin datos en OCA",
+ * "Pendiente de retiro por OCA"). */
 export function etiquetaChip(color: ColorSemaforo, estado: string, observacion: string): string {
   if (color === "gris" && /cancelad/i.test(estado)) return "Cancelado";
   if (color === "amarillo" && observacion === "Estado nuevo, revisar") return "Estado desconocido";
   if (color === "amarillo" && observacion === "Sin datos en OCA") return "Sin datos";
+  if (color === "verde" && observacion === "Pendiente de retiro por OCA") return "Por retirar";
   return ETIQUETA_COLOR[color];
 }
 

@@ -187,6 +187,7 @@ primero que coincide gana.
 | 1 | Cerrado (azul) | `IdEstado` 8 (Entregado) o 56 (Acuse digitalizado); o, sin `IdEstado`, los textos "Acuse en Rendicion", "Envio a Rendir a Otra Suc", "Rendicion de Acuse Finalizado" | No | No |
 | 2 | Gris | 13 (Devuelto al Remitente), con o sin motivo | No | No |
 | 3 | Rojo | 45 (En Espera de Retiro por Sucursal). Fecha límite = 5 días hábiles contando el día de ingreso (o el hábil siguiente), sin sábados, domingos ni feriados | Sí | Sí |
+| 3b | Verde "Por retirar" | Sin `IdEstado`, texto "Listo para programar en Drivin": la guía ya está en OCA y falta que pasen a retirarla (visto en despachos del día; después pasan a "Retirado en Origen"). Aviso "Pendiente de retiro por OCA"; con motivo, naranja; sin cambios en 3 días hábiles, amarillo | No | Sí |
 | 4 | Naranja | 48 (Reprogramado para nueva visita), o cualquier motivo distinto de "Sin Motivo" (vacío cuenta como "Sin Motivo") | Sí | Sí |
 | 5 | Gris | 49 (Retiro Cancelado): queda abierto para revisar | No | Sí |
 | 6 | Amarillo | `IdEstado` fuera del catálogo → "Estado nuevo, revisar" (y warning en el log) | No | Sí |

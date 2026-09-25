@@ -214,3 +214,28 @@ def test_texto_de_acuse_con_id_estado_no_cierra_el_envio() -> None:
     estado = estado_oca(99, "Acuse en Rendicion", "Sin Motivo")
 
     assert clasificar_estado(estado, contexto_en(LUNES_21_SEP)) == ESTADO_NUEVO
+
+
+@pytest.mark.parametrize(
+    "texto", ["Listo para programar en Drivin", "  LISTO para programar en DRIVIN "]
+)
+def test_listo_para_programar_en_drivin_es_verde_pendiente_de_retiro(texto: str) -> None:
+    estado = estado_oca(None, texto, "Sin Motivo")
+
+    assert clasificar_estado(estado, contexto_en(LUNES_21_SEP)) == replace(
+        VERDE, observacion="Pendiente de retiro por OCA"
+    )
+
+
+def test_pendiente_de_retiro_con_motivo_es_naranja() -> None:
+    estado = estado_oca(None, "Listo para programar en Drivin", "Domicilio Incompleto")
+
+    assert clasificar_estado(estado, contexto_en(LUNES_21_SEP)) == NARANJA
+
+
+def test_pendiente_de_retiro_sin_movimiento_pasa_a_amarillo() -> None:
+    estado = estado_oca(None, "Listo para programar en Drivin", "Sin Motivo")
+
+    clasificacion = clasificar_estado(estado, contexto_en(date(2026, 9, 24)))
+
+    assert clasificacion == replace(AMARILLO, observacion="Sin movimiento hace 3 días hábiles")
