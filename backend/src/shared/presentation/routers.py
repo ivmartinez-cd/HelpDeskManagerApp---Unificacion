@@ -96,6 +96,9 @@ from src.modules.preventivos.presentation.preventivos_router import (
 from src.modules.reporte_incidentes.presentation.reporte_router import (
     router as reporte_incidentes_router,
 )
+from src.modules.reporte_incidentes.presentation.tipificacion_router import (
+    router as reporte_incidentes_tipificacion_router,
+)
 from src.modules.sla.presentation.derivados_router import router as sla_derivados_router
 from src.modules.sla.presentation.mesa_ayuda_router import router as sla_mesa_ayuda_router
 from src.modules.sla.presentation.pendientes_router import router as sla_pendientes_router
@@ -197,6 +200,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     prestadores_router,
     preventivos_router,
     reporte_incidentes_router,
+    reporte_incidentes_tipificacion_router,
     # config_router va ANTES: sus rutas son todas literales (/tarifarios, /spsts,
     # /tabla-km, ...), mientras que liquidaciones_router tiene un catch-all
     # GET/DELETE/PATCH /{liquidacion_id} que, registrado primero, interceptaba esos

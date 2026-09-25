@@ -222,6 +222,24 @@ equivalencia se apoya en los tests portados y en el mapeo campo a campo de §2.
 - Cliente inexistente → 404 (el legacy caía al primer cliente de la lista).
 - En la tabla, los valores vacíos van al final en ambos sentidos (convención de HDM).
 
-**Sigue:** fase 3 (tipificación con Gemini + corrección manual + ABM de categorías; falta
-`GEMINI_API_KEY`), fase 4 (frontend, con el mockup en
-https://claude.ai/artifact/7pXFLAv41fu76vkf5HP1bD).
+**Fase 3: hecha (backend), sin probar contra Gemini real (no hay `GEMINI_API_KEY`).**
+
+- Prompt portado literal (`reglas_prompt.py` copiado de `TAXONOMY_RULES_V1`; rol, confianza,
+  determinismo y ASCII textuales), ajuste a la taxonomía y lectura de la respuesta en
+  `domain/services/prompt_tipificacion.py`.
+- Adapter `infrastructure/gemini/gemini_clasificador.py` sobre la API REST con httpx (sin SDK
+  nuevo): JSON con schema, `thinkingBudget` 1, modelo `gemini-3.5-flash` con fallback
+  `gemini-3.5-flash-lite`, 1 reintento ante 429/5xx/red por modelo. Settings
+  `REPORTE_INCIDENTES_GEMINI_*` e `..._IA_LOTE`/`..._IA_CONCURRENCIA` (25 / 4), precios para
+  informar el costo. La clave es `GEMINI_API_KEY`; `GEMINI_MODEL` del .env NO se usa (lo tiene
+  en `gemini-2.5-pro` para otra cosa).
+- Endpoints: `POST /tipificar` (UPDATE; devuelve casos, tipificados, fallidos, tokens y costo
+  USD, y lo loguea), `PUT /tipificacion` (corrección manual, confianza alta, origen `manual`),
+  `GET/POST /categorias`, `PUT/DELETE /categorias/{nombre}`.
+- Como el legacy: solo van a la IA los casos sin nada guardado (media/baja guardados quedan para
+  revisión manual); lo que la IA no ubica en la taxonomía no se guarda.
+- Diferencia: sin clave, `POST /tipificar` responde 502 `IA_NO_CONFIGURADA` en vez de dejar
+  todo pendiente en silencio y mostrar "IA saturada".
+- Color de categoría validado como hexadecimal (el legacy no lo validaba).
+
+**Sigue:** fase 4 (frontend, con el mockup en https://claude.ai/artifact/7pXFLAv41fu76vkf5HP1bD).

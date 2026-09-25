@@ -27,6 +27,10 @@ from src.modules.reporte_incidentes.presentation.dependencies import (
     get_incidentes_gateway,
 )
 from src.modules.reporte_incidentes.presentation.mappers import a_respuesta
+from src.modules.reporte_incidentes.presentation.query_params import (
+    filtros_crudos,
+    pedido_reporte,
+)
 from src.modules.reporte_incidentes.presentation.schemas.reporte_schemas import (
     EmpresaSchema,
     IncidenteSchema,
@@ -42,18 +46,6 @@ _db = Depends(get_db, scope="function")
 # La tabla muestra 50 por página (como el legacy); el tope cubre el reporte
 # imprimible y un rango largo de un cliente chico.
 _MAX_PAGE_SIZE = 500
-
-
-def pedido_reporte(
-    empresa_id: str = Query(..., min_length=1),
-    periodo: str | None = Query(None, description="Mes final AAAA-MM (default: el actual)"),
-    meses: int | None = Query(None, description="Cantidad de meses del rango (1 a 24)"),
-) -> PedidoReporte:
-    return PedidoReporte(empresa_id=empresa_id, periodo=periodo, meses=meses)
-
-
-def filtros_crudos(sucursal: str = "", categoria: str = "", subcategoria: str = "") -> Filtros:
-    return Filtros(sucursal=sucursal, categoria=categoria, subcategoria=subcategoria)
 
 
 def _plano(texto: str) -> str:

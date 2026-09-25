@@ -16,10 +16,14 @@ COLOR_PENDIENTE = "#9aa0a6"
 COLOR_SIN_CLASIFICAR = "#6b7689"
 
 
-def clave_caso(incidente: Incidente) -> str:
+def clave_de(descripcion: str, causa: str | None, solucion: str | None) -> str:
     """Clave de la caché: el mismo texto que ve la IA (+ causa), así dos
     incidentes con idéntico contenido comparten tipificación."""
-    return f"{incidente.descripcion}|{incidente.causa or ''}|{incidente.solucion or ''}"
+    return f"{descripcion}|{causa or ''}|{solucion or ''}"
+
+
+def clave_caso(incidente: Incidente) -> str:
+    return clave_de(incidente.descripcion, incidente.causa, incidente.solucion)
 
 
 def hash_clave(clave: str) -> str:

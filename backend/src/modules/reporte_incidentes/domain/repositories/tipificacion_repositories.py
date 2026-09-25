@@ -11,6 +11,17 @@ class TaxonomiaRepository(Protocol):
         """Categorías en el orden configurado."""
         ...
 
+    async def crear(self, categoria: Categoria) -> None:
+        """Alta al final del orden."""
+        ...
+
+    async def reemplazar(self, nombre_anterior: str, categoria: Categoria) -> None:
+        """Reemplaza la categoría (y sus subcategorías) conservando su lugar."""
+        ...
+
+    async def eliminar(self, nombre: str) -> None:
+        ...
+
 
 class TipificacionCacheRepository(Protocol):
     async def obtener(self, claves: set[str]) -> dict[str, TipificacionGuardada]:
