@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { isoSortValue, useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { analisisLogHpApi } from "../api/analisis-log-hp-api";
 
 type Alert = Record<string, unknown>;
@@ -39,20 +41,53 @@ function severityLabel(level: number): { label: string; color: string } {
   return { label: "Bajo", color: "#3b82f6" };
 }
 
+type SortKey = "fecha" | "clase" | "descripcion" | "severidad" | "ciclos" | "resuelto";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "fecha", label: "Fecha" },
+  { key: "clase", label: "Clase" },
+  { key: "descripcion", label: "Descripción" },
+  { key: "severidad", label: "Severidad" },
+  { key: "ciclos", label: "Ciclos motor" },
+  // Las activas (sin fecha de resolución) quedan al final.
+  { key: "resuelto", label: "Resuelto" },
+];
+
+const DESC_PRIMERO: readonly SortKey[] = ["fecha", "severidad", "ciclos", "resuelto"];
+
+function valorOrden(a: Alert, key: SortKey) {
+  switch (key) {
+    case "fecha": return isoSortValue(str(a, "date"));
+    case "clase": return ALERT_CLASS_LABEL[str(a, "alertClass")] ?? str(a, "alertClass");
+    case "descripcion": return str(a, "description");
+    case "severidad": return num(a, "severityLevel");
+    case "ciclos": return num(a, "engineCycles");
+    case "resuelto": return isoSortValue(str(a, "cleared"));
+  }
+}
+
 function AlertsTable({ alerts, emptyText }: { alerts: Alert[]; emptyText: string }) {
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const filas = useSortedRows(alerts, sort, valorOrden);
   if (!alerts.length) return <p className="font-body text-[13px] text-muted-foreground">{emptyText}</p>;
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left" style={{ minWidth: 560 }}>
         <thead>
           <tr className="border-b border-border/50">
-            {["Fecha", "Clase", "Descripción", "Severidad", "Ciclos motor", "Resuelto"].map((h) => (
-              <th key={h} className="py-1.5 pr-4 font-body text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{h}</th>
+            {COLUMNAS.map((c) => (
+              <SortableHeader
+                key={c.key}
+                column={c}
+                sort={sort}
+                onToggleSort={toggleSort}
+                thClassName="py-1.5 pr-4 font-body text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+              />
             ))}
           </tr>
         </thead>
         <tbody>
-          {alerts.map((a, i) => {
+          {filas.map((a, i) => {
             const sev = severityLabel(num(a, "severityLevel"));
             const cleared = str(a, "cleared");
             const alertClass = str(a, "alertClass");

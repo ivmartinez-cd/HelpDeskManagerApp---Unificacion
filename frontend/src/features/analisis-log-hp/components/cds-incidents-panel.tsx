@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { cdDateSortValue, useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { analisisLogHpApi } from "../api/analisis-log-hp-api";
 import type { CdsIncident } from "../types/analisis-log-hp";
 import { formatIncidentNumber } from "../utils/check-digit";
@@ -38,21 +40,55 @@ function JobsCell({ inc }: { inc: CdsIncident }) {
   );
 }
 
+type SortKey = "fecha" | "incidente" | "motivo" | "repuestos" | "tareas" | "contador";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "fecha", label: "Fecha" },
+  { key: "incidente", label: "Incidente" },
+  { key: "motivo", label: "Motivo" },
+  // Repuestos y tareas ordenan por el texto que se ve (artículos / tareas).
+  { key: "repuestos", label: "Repuestos" },
+  { key: "tareas", label: "Tareas realizadas" },
+  { key: "contador", label: "Contador" },
+];
+
+const DESC_PRIMERO: readonly SortKey[] = ["fecha", "contador"];
+
+function valorOrden(inc: CdsIncident, key: SortKey) {
+  switch (key) {
+    case "fecha": return cdDateSortValue(inc.fecha);
+    case "incidente": return inc.numero_incidente;
+    case "motivo": return inc.motivo;
+    case "repuestos": return inc.repuestos.map((r) => r.articulo).join(", ");
+    case "tareas": return inc.tareas_realizadas.join(", ");
+    case "contador": {
+      const n = Number.parseInt(inc.contador ?? "", 10);
+      return Number.isNaN(n) ? inc.contador : n;
+    }
+  }
+}
+
 function IncidentsTable({ incidents }: { incidents: CdsIncident[] }) {
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const filas = useSortedRows(incidents, sort, valorOrden);
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left" style={{ minWidth: 720 }}>
         <thead>
           <tr className="border-b border-border/50">
-            {["Fecha", "Incidente", "Motivo", "Repuestos", "Tareas realizadas", "Contador"].map((h) => (
-              <th key={h} className="py-1.5 pr-4 font-body text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                {h}
-              </th>
+            {COLUMNAS.map((c) => (
+              <SortableHeader
+                key={c.key}
+                column={c}
+                sort={sort}
+                onToggleSort={toggleSort}
+                thClassName="py-1.5 pr-4 font-body text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+              />
             ))}
           </tr>
         </thead>
         <tbody>
-          {incidents.map((inc) => (
+          {filas.map((inc) => (
             <tr key={inc.id || inc.numero_incidente} className="border-b border-border/30 hover:bg-white/[.02] align-top">
               <td className="py-2 pr-4 font-body text-[11px] text-muted-foreground">{inc.fecha}</td>
               <td className="py-2 pr-4 font-body text-[12px]">

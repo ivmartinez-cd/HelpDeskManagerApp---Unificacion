@@ -4,12 +4,8 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import type { AnalysisResult, Severity } from "../types/analisis-log-hp";
 import { analisisLogHpApi } from "../api/analisis-log-hp-api";
-import {
-  SEV_COLOR,
-  filterIncidentsBySeverity,
-  fmtDatetime,
-  normSev,
-} from "../utils/analysis-utils";
+import { SEV_COLOR, filterIncidentsBySeverity } from "../utils/analysis-utils";
+import { EventsTable, IncidentsTable } from "./analysis-tablas";
 import { CdsIncidentsPanel } from "./cds-incidents-panel";
 import { SdsAlertsPanel } from "./sds-alerts-panel";
 
@@ -46,75 +42,6 @@ function Section({ title, color, count, children }: SectionProps) {
         )}
       </button>
       {open && <div className="pb-4">{children}</div>}
-    </div>
-  );
-}
-
-function IncidentsTable({ analysis, activeSeverities }: { analysis: AnalysisResult; activeSeverities: Set<Severity> }) {
-  const visible = filterIncidentsBySeverity(analysis.incidents, activeSeverities);
-  if (!visible.length) return <p className="font-body text-[13px] text-muted-foreground">Sin incidentes.</p>;
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left" style={{ minWidth: 480 }}>
-        <thead>
-          <tr className="border-b border-border/50">
-            {["Código", "Severidad", "Ocurrencias", "Inicio", "Fin"].map((h) => (
-              <th key={h} className="py-1.5 pr-4 font-body text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {visible.map((inc) => {
-            const sev = normSev(inc.severity);
-            return (
-              <tr key={inc.id} className="border-b border-border/30 hover:bg-white/[.02]">
-                <td className="py-2 pr-4 font-mono text-[12px]" style={{ color: SEV_COLOR[sev] }}>{inc.code}</td>
-                <td className="py-2 pr-4 font-body text-[11px]" style={{ color: SEV_COLOR[sev] }}>{sev}</td>
-                <td className="py-2 pr-4 font-body text-[12px] text-foreground">{inc.occurrences}</td>
-                <td className="py-2 pr-4 font-body text-[11px] text-muted-foreground">{fmtDatetime(inc.start_time)}</td>
-                <td className="py-2 pr-4 font-body text-[11px] text-muted-foreground">{fmtDatetime(inc.end_time)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function EventsTable({ analysis }: { analysis: AnalysisResult }) {
-  const events = [...analysis.events].sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  ).slice(0, 100);
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left" style={{ minWidth: 540 }}>
-        <thead>
-          <tr className="border-b border-border/50">
-            {["Timestamp", "Código", "Tipo", "Contador"].map((h) => (
-              <th key={h} className="py-1.5 pr-4 font-body text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {events.map((ev, i) => {
-            const sev = normSev(ev.code_severity);
-            return (
-              <tr key={i} className="border-b border-border/30 hover:bg-white/[.02]">
-                <td className="py-1.5 pr-4 font-mono text-[11px] text-muted-foreground">{fmtDatetime(ev.timestamp)}</td>
-                <td className="py-1.5 pr-4 font-mono text-[12px]" style={{ color: SEV_COLOR[sev] }}>{ev.code}</td>
-                <td className="py-1.5 pr-4 font-body text-[11px] text-muted-foreground">{ev.type}</td>
-                <td className="py-1.5 pr-4 font-body text-[11px] text-foreground">{ev.counter.toLocaleString("es-AR")}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      {analysis.events.length > 100 && (
-        <p className="mt-2 font-body text-[11px] text-muted-foreground">
-          Mostrando 100 de {analysis.events.length} eventos.
-        </p>
-      )}
     </div>
   );
 }
