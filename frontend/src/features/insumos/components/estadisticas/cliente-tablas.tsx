@@ -2,35 +2,39 @@ import { EMPTY_VALUE, formatArgDateTime, formatNumber } from "../../utils/format
 import { StatsTable, type StatsColumn } from "./stats-table";
 import type { CustomerDetailResponse, DeviceStat, FailureReason, RecentFailure, SkuStat } from "../../types";
 
-/** Los cuatro rankings del detalle de cliente. Salen todos armados y ordenados
- * del backend (`topSkus`, `topDevices`, `failureReasons`, `recentFailures`):
- * acá solo se formatean. */
+/** Los cuatro rankings del detalle de cliente. Salen armados y ordenados del
+ * backend (`topSkus`, `topDevices`, `failureReasons`, `recentFailures`); acá
+ * se formatean y cada encabezado reordena lo recibido. */
 
 const skuColumns: StatsColumn<SkuStat>[] = [
-  { key: "sku", label: "SKU", render: (row) => <span className="font-semibold">{row.sku}</span> },
+  { key: "sku", label: "SKU", sortField: "sku", render: (row) => <span className="font-semibold">{row.sku}</span> },
   {
     key: "description",
     label: "Descripción",
+    sortField: "description",
     render: (row) => <span className="text-muted-foreground">{row.description || EMPTY_VALUE}</span>,
   },
-  { key: "count", label: "Pedidos", align: "right", render: (row) => formatNumber(row.count) },
+  { key: "count", label: "Pedidos", align: "right", sortField: "count", descFirst: true, render: (row) => formatNumber(row.count) },
 ];
 
 const deviceColumns: StatsColumn<DeviceStat>[] = [
   {
     key: "serial",
     label: "N° de serie",
+    sortField: "deviceSerial",
     render: (row) => <span className="font-semibold">{row.deviceSerial}</span>,
   },
-  { key: "count", label: "Pedidos", align: "right", render: (row) => formatNumber(row.count) },
+  { key: "count", label: "Pedidos", align: "right", sortField: "count", descFirst: true, render: (row) => formatNumber(row.count) },
 ];
 
 const failureReasonColumns: StatsColumn<FailureReason>[] = [
-  { key: "reason", label: "Motivo", render: (row) => row.reason },
-  { key: "count", label: "Veces", align: "right", render: (row) => formatNumber(row.count) },
+  { key: "reason", label: "Motivo", sortField: "reason", render: (row) => row.reason },
+  { key: "count", label: "Veces", align: "right", sortField: "count", descFirst: true, render: (row) => formatNumber(row.count) },
   {
     key: "lastAt",
     label: "Último",
+    sortField: "lastAt",
+    descFirst: true,
     align: "right",
     render: (row) => (
       <span className="text-muted-foreground">{formatArgDateTime(row.lastAt)}</span>
@@ -42,13 +46,16 @@ const recentFailureColumns: StatsColumn<RecentFailure>[] = [
   {
     key: "createdAt",
     label: "Fecha",
+    sortField: "createdAt",
+    descFirst: true,
     render: (row) => <span className="whitespace-nowrap">{formatArgDateTime(row.createdAt)}</span>,
   },
-  { key: "sku", label: "SKU", render: (row) => row.sku || EMPTY_VALUE },
-  { key: "serial", label: "Equipo", render: (row) => row.deviceSerial || EMPTY_VALUE },
+  { key: "sku", label: "SKU", sortField: "sku", render: (row) => row.sku || EMPTY_VALUE },
+  { key: "serial", label: "Equipo", sortField: "deviceSerial", render: (row) => row.deviceSerial || EMPTY_VALUE },
   {
     key: "detail",
     label: "Detalle",
+    sortField: "detail",
     render: (row) => <span className="text-muted-foreground">{row.detail || EMPTY_VALUE}</span>,
   },
 ];

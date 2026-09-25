@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { slaApi, type FiltroOperador } from "../api/sla-api";
+import { incidenteColumns } from "../components/sla-incidentes-columns";
 import type { IncidenteVencido, SlaResumen } from "../types/sla";
 import { prestadoresApi } from "@/features/prestadores/api/prestadores-api";
 import type { OperadorOption } from "@/features/prestadores/types/prestadores";
 import { useSession } from "@/services/session-provider";
+import { statsSortField, useStatsServerSort } from "@/shared/components/ui/stats-table-sort";
 
 export const MIS_PST = "__mis_pst__";
 export const CD_LOCAL = "__cd_local__";
@@ -52,6 +54,10 @@ export function useSlaDetail() {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Pagina en el servidor: el backend ordena todos los vencidos del período.
+  const { sort, onToggleSort } = useStatsServerSort(incidenteColumns, () => setPage(1));
+  const sortBy = statsSortField(incidenteColumns, sort.key);
+  const sortDir = sort.direction;
 
   // Resetear datos al cambiar de período o de operador — "ajustar estado
   // durante el render" en vez de dentro del efecto (mismo patrón que
@@ -78,7 +84,7 @@ export function useSlaDetail() {
     const filtro = scopeToFiltro(scope);
     Promise.all([
       slaApi.getResumen(periodo),
-      slaApi.listIncidentesVencidos(periodo, filtro, page, INCIDENTES_PAGE_SIZE),
+      slaApi.listIncidentesVencidos(periodo, filtro, page, INCIDENTES_PAGE_SIZE, { sortBy, sortDir }),
     ])
       .then(([res, inc]) => {
         if (!active) return;
@@ -97,7 +103,7 @@ export function useSlaDetail() {
     return () => {
       active = false;
     };
-  }, [monthValue, scope, page]);
+  }, [monthValue, scope, page, sortBy, sortDir]);
 
   const handleRefresh = () => {
     const periodo = monthValueToPeriodo(monthValue);
@@ -109,7 +115,10 @@ export function useSlaDetail() {
       .then(() =>
         Promise.all([
           slaApi.getResumen(periodo),
-          slaApi.listIncidentesVencidos(periodo, filtro, page, INCIDENTES_PAGE_SIZE),
+          slaApi.listIncidentesVencidos(periodo, filtro, page, INCIDENTES_PAGE_SIZE, {
+            sortBy,
+            sortDir,
+          }),
         ]),
       )
       .then(([res, inc]) => {
@@ -137,6 +146,8 @@ export function useSlaDetail() {
     totalIncidentes,
     page,
     setPage,
+    sort,
+    onToggleSort,
     loading,
     refreshing,
     error,

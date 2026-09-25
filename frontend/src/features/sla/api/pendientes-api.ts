@@ -1,5 +1,6 @@
 import { httpClient } from "@/services/http-client";
 import type { IncidenteSinCerrar, PendientesResumen } from "../types/pendientes";
+import { aplicarOrden, type OrdenServidor } from "./orden-servidor";
 
 import type { Page } from "@/shared/types/pagination";
 
@@ -14,13 +15,14 @@ export const pendientesApi = {
     prestadorId?: number;
     page?: number;
     size?: number;
-  }) => {
+  } & OrdenServidor) => {
     const p = new URLSearchParams({
       page: String(params?.page ?? 1),
       size: String(params?.size ?? 100),
     });
     if (params?.operadorId) p.set("operadorId", params.operadorId);
     if (params?.prestadorId != null) p.set("prestadorId", String(params.prestadorId));
+    aplicarOrden(p, params);
     return httpClient.get<Page<IncidenteSinCerrar>>(`/api/sla/pendientes-a-cerrar?${p.toString()}`);
   },
 

@@ -28,6 +28,8 @@ export function IncidentesDerivadosDetail() {
     total,
     page,
     setPage,
+    sort,
+    onToggleSort,
     loading,
     error,
     isSuperadmin,
@@ -129,6 +131,8 @@ export function IncidentesDerivadosDetail() {
                 : undefined
             }
             columns={incidentesDerivadosColumns}
+            sort={sort}
+            onToggleSort={onToggleSort}
             rows={incidentes}
             rowKey={(row) => String(row.id_incidente)}
             emptyLabel="Sin incidentes derivados sin consultar para el período y filtro seleccionados."

@@ -12,6 +12,7 @@ export const incidentesDerivadosColumns: StatsColumn<IncidenteDerivado>[] = [
   {
     key: "id",
     label: "ID",
+    sortField: "id_incidente",
     className: "w-20",
     render: (row) => (
       <a
@@ -24,20 +25,24 @@ export const incidentesDerivadosColumns: StatsColumn<IncidenteDerivado>[] = [
       </a>
     ),
   },
-  { key: "tecnico", label: "Técnico (PST)", render: (row) => row.tecnico },
-  { key: "operador", label: "Operador", render: (row) => row.operador ?? "—" },
-  { key: "cliente", label: "Cliente", render: (row) => row.cliente },
-  { key: "sucursal", label: "Sucursal", render: (row) => row.sucursal },
-  { key: "modelo", label: "Modelo", render: (row) => row.modelo },
-  { key: "nro_serie", label: "N° Serie", render: (row) => row.nro_serie },
+  { key: "tecnico", label: "Técnico (PST)", sortField: "tecnico", render: (row) => row.tecnico },
+  { key: "operador", label: "Operador", sortField: "operador", render: (row) => row.operador ?? "—" },
+  { key: "cliente", label: "Cliente", sortField: "cliente", render: (row) => row.cliente },
+  { key: "sucursal", label: "Sucursal", sortField: "sucursal", render: (row) => row.sucursal },
+  { key: "modelo", label: "Modelo", sortField: "modelo", render: (row) => row.modelo },
+  { key: "nro_serie", label: "N° Serie", sortField: "nro_serie", render: (row) => row.nro_serie },
   {
     key: "fecha_ingreso",
     label: "Ingreso",
+    sortField: "fecha_ingreso",
+    descFirst: true,
     render: (row) => <span className="tabular-nums">{formatFecha(row.fecha_ingreso)}</span>,
   },
   {
     key: "dias",
     label: "Días",
+    sortField: "dias_desde_ingreso",
+    descFirst: true,
     align: "right",
     className: "w-20",
     render: (row) => (

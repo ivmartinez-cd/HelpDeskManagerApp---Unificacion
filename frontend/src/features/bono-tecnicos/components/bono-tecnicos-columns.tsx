@@ -19,6 +19,7 @@ export function buildBonoTecnicosColumns({
     {
       key: "tecnico",
       label: "Técnico",
+      sortField: "tecnico",
       render: (row) => (
         <button
           type="button"
@@ -32,31 +33,48 @@ export function buildBonoTecnicosColumns({
     {
       key: "correctivo",
       label: "Correctivo",
+      sortField: "correctivo",
+      descFirst: true,
       align: "right",
       render: (row) => row.correctivo,
     },
     {
       key: "preventivo",
       label: "Preventivo",
+      sortField: "preventivo",
+      descFirst: true,
       align: "right",
       render: (row) => row.preventivo,
     },
-    { key: "inst_des", label: "Inst-Des", align: "right", render: (row) => row.inst_des },
+    {
+      key: "inst_des",
+      label: "Inst-Des",
+      sortField: "inst_des",
+      descFirst: true,
+      align: "right",
+      render: (row) => row.inst_des,
+    },
     {
       key: "pre_correctivo",
       label: "Pre-Correctivo",
+      sortField: "pre_correctivo",
+      descFirst: true,
       align: "right",
       render: (row) => row.pre_correctivo,
     },
     {
       key: "entrega_insumos",
       label: "Entrega Insumos",
+      sortField: "entrega_insumos",
+      descFirst: true,
       align: "right",
       render: (row) => row.entrega_insumos,
     },
     {
       key: "dias",
       label: "Días",
+      sortField: "dias",
+      descFirst: true,
       align: "right",
       className: "w-36",
       render: (row) => {
@@ -93,6 +111,8 @@ export function buildBonoTecnicosColumns({
     {
       key: "tareas_varias",
       label: "TV",
+      sortField: "tareas_varias",
+      descFirst: true,
       align: "right",
       className: "w-16",
       // Cuenta de TV aprobadas del período, de solo lectura acá — cargar o
@@ -103,6 +123,8 @@ export function buildBonoTecnicosColumns({
     {
       key: "puntaje",
       label: "Puntaje",
+      sortField: "puntaje",
+      descFirst: true,
       align: "right",
       className: "w-24",
       render: (row) => (

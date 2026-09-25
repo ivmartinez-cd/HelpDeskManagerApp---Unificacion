@@ -11,6 +11,7 @@ import { useSession } from "@/services/session-provider";
 import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
 import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { StatsTable } from "@/shared/components/ui/stats-table";
+import { useStatsSort } from "@/shared/components/ui/stats-table-sort";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { cn } from "@/shared/utils/cn";
 import { copiarTexto } from "@/shared/utils/clipboard";
@@ -102,15 +103,19 @@ export function MesaDeAyudaDetail() {
     setPrevOperador(operador);
     setPage(1);
   }
+  // Pagina en el navegador: se ordena la lista completa y después se corta.
+  const { sort, onToggleSort, ordenadas } = useStatsSort(mesaDeAyudaColumns, filtrados, () =>
+    setPage(1),
+  );
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE));
   const paginaActual = Math.min(page, totalPaginas);
-  const incidentes = filtrados.slice(
+  const incidentes = ordenadas.slice(
     (paginaActual - 1) * PAGE_SIZE,
     paginaActual * PAGE_SIZE,
   );
 
   const handleCopiarWhatsapp = async () => {
-    const texto = formatearMesaAyudaWhatsapp(filtrados);
+    const texto = formatearMesaAyudaWhatsapp([...ordenadas]);
     try {
       await copiarTexto(texto);
       toast.success("Tabla copiada, lista para pegar en WhatsApp.");
@@ -181,11 +186,13 @@ export function MesaDeAyudaDetail() {
             title="Incidentes de Mesa de Ayuda sin cerrar"
             subtitle={
               filtrados.length > 0
-                ? `${filtrados.length} incidente${filtrados.length !== 1 ? "s" : ""} — ordenados por días transcurridos (mayor primero)`
+                ? `${filtrados.length} incidente${filtrados.length !== 1 ? "s" : ""}${sort.key === null ? " — ordenados por días transcurridos (mayor primero)" : ""}`
                 : undefined
             }
             columns={mesaDeAyudaColumns}
             rows={incidentes}
+            sort={sort}
+            onToggleSort={onToggleSort}
             rowKey={(row) => String(row.id_incidente)}
             rowClassName={(row) =>
               cn(row.demorado && "bg-[#dc2626]/[0.07] dark:bg-[#f87171]/[0.08]")

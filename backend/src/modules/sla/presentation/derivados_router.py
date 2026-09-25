@@ -1,4 +1,5 @@
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +13,7 @@ from src.modules.sla.infrastructure.repositories.sqlalchemy_prestador_lookup imp
 from src.modules.sla.presentation.dependencies import build_list_incidentes_derivados
 from src.modules.sla.presentation.schemas.derivados_schemas import IncidenteDerivadoSchema
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.ordenar import DireccionOrden, ordenar_por_campo
 from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/sla/incidentes-derivados", tags=["sla-derivados"])
@@ -26,18 +28,33 @@ _operador_id = Query(
 )
 
 
+# Columnas de la tabla de derivados que se pueden ordenar (campos del schema).
+CampoOrdenDerivados = Literal[
+    "id_incidente",
+    "tecnico",
+    "operador",
+    "cliente",
+    "sucursal",
+    "modelo",
+    "nro_serie",
+    "fecha_ingreso",
+    "dias_desde_ingreso",
+]
+
+
 @router.get("", response_model=Page[IncidenteDerivadoSchema])
 async def list_incidentes_derivados(
     periodo: int = _periodo,
     operador_id: uuid.UUID | None = _operador_id,
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_MAX_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
+    sort_by: CampoOrdenDerivados | None = Query(default=None),
+    sort_dir: DireccionOrden = Query(default="asc"),
     identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[IncidenteDerivadoSchema]:
     """Incidentes de PST del interior en estado Derivado (200) del período,
     ordenados por días desde el ingreso descendente (los más viejos primero).
-
     Por default filtra a los PST del operador logueado. Superadmin sin
     operadorId ve todos. Consulta en vivo, sin snapshot."""
     siges_ids_filtro = await _resolver_filtro(db, identity, operador_id)
@@ -45,7 +62,7 @@ async def list_incidentes_derivados(
         periodo, siges_ids_filtro=siges_ids_filtro
     )
     items = [IncidenteDerivadoSchema.model_validate(d) for d in dtos]
-    return Page.of(items, page=page, size=size)
+    return Page.of(ordenar_por_campo(items, sort_by, sort_dir), page=page, size=size)
 
 
 async def _resolver_filtro(

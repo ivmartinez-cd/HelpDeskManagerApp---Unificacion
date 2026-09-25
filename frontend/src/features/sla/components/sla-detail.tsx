@@ -33,6 +33,8 @@ export function SlaDetail() {
     totalIncidentes,
     page,
     setPage,
+    sort,
+    onToggleSort,
     loading,
     refreshing,
     error,
@@ -196,6 +198,8 @@ export function SlaDetail() {
             }
             columns={incidenteColumns}
             rows={incidentes}
+            sort={sort}
+            onToggleSort={onToggleSort}
             rowKey={(row) => String(row.id_incidente)}
             emptyLabel="Sin incidentes vencidos en el período seleccionado."
           />

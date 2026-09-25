@@ -61,6 +61,7 @@ export function EstadisticasGlobales() {
     {
       key: "customer",
       label: "Cliente",
+      sortField: "customerName",
       render: (row) => (
         <Link
           href={`/insumos/estadisticas/clientes/${row.customerId}${rangeToQuery(range)}`}
@@ -70,21 +71,22 @@ export function EstadisticasGlobales() {
         </Link>
       ),
     },
-    { key: "created", label: "Creados", align: "right", render: (row) => formatNumber(row.created) },
-    { key: "failed", label: "Fallidos", align: "right", render: (row) => formatNumber(row.failed) },
-    { key: "total", label: "Total", align: "right", render: (row) => formatNumber(row.total) },
+    { key: "created", label: "Creados", align: "right", sortField: "created", descFirst: true, render: (row) => formatNumber(row.created) },
+    { key: "failed", label: "Fallidos", align: "right", sortField: "failed", descFirst: true, render: (row) => formatNumber(row.failed) },
+    { key: "total", label: "Total", align: "right", sortField: "total", descFirst: true, render: (row) => formatNumber(row.total) },
   ];
 
   const skuColumns: StatsColumn<SkuStat>[] = [
-    { key: "sku", label: "SKU", render: (row) => <span className="font-semibold">{row.sku}</span> },
+    { key: "sku", label: "SKU", sortField: "sku", render: (row) => <span className="font-semibold">{row.sku}</span> },
     {
       key: "description",
       label: "Descripción",
+      sortField: "description",
       render: (row) => (
         <span className="text-muted-foreground">{row.description || EMPTY_VALUE}</span>
       ),
     },
-    { key: "count", label: "Pedidos", align: "right", render: (row) => formatNumber(row.count) },
+    { key: "count", label: "Pedidos", align: "right", sortField: "count", descFirst: true, render: (row) => formatNumber(row.count) },
   ];
 
   return (

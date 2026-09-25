@@ -1,4 +1,5 @@
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +20,7 @@ from src.modules.sla.presentation.schemas.pendientes_schemas import (
     PendientesResumenResponse,
 )
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.ordenar import DireccionOrden, ordenar_por_campo
 from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/sla/pendientes-a-cerrar", tags=["sla-pendientes"])
@@ -45,6 +47,20 @@ async def get_resumen(
     return PendientesResumenResponse.model_validate(result)
 
 
+# Columnas de la tabla de pendientes que se pueden ordenar (campos del schema).
+CampoOrdenPendientes = Literal[
+    "id_incidente",
+    "tecnico",
+    "cliente",
+    "sucursal",
+    "modelo",
+    "nro_serie",
+    "fecha_ingreso",
+    "fecha_finalizacion",
+    "dias_en_estado",
+]
+
+
 @router.get("", response_model=Page[IncidenteSinCerrarSchema])
 async def list_pendientes(
     operador_id: uuid.UUID | None = Query(
@@ -59,6 +75,8 @@ async def list_pendientes(
     ),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_MAX_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
+    sort_by: CampoOrdenPendientes | None = Query(default=None),
+    sort_dir: DireccionOrden = Query(default="asc"),
     identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[IncidenteSinCerrarSchema]:
@@ -78,7 +96,7 @@ async def list_pendientes(
         siges_ids_filtro = [prestador_id]
     dtos = await build_list_pendientes(db).execute(siges_ids_filtro=siges_ids_filtro)
     items = [IncidenteSinCerrarSchema.model_validate(d) for d in dtos]
-    return Page.of(items, page=page, size=size)
+    return Page.of(ordenar_por_campo(items, sort_by, sort_dir), page=page, size=size)
 
 
 @router.post("/actualizar", response_model=PendientesResumenResponse)

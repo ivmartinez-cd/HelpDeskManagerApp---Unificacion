@@ -12,6 +12,7 @@ import { useSession } from "@/services/session-provider";
 import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
 import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { StatsTable, type StatsColumn } from "@/shared/components/ui/stats-table";
+import { statsSortField, useStatsServerSort } from "@/shared/components/ui/stats-table-sort";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { copiarTexto } from "@/shared/utils/clipboard";
 import { incidentUrl } from "@/shared/utils/incident-link";
@@ -38,6 +39,7 @@ const columns: StatsColumn<IncidenteSinCerrar>[] = [
   {
     key: "id",
     label: "ID",
+    sortField: "id_incidente",
     className: "w-20",
     render: (row) => (
       <a
@@ -50,24 +52,30 @@ const columns: StatsColumn<IncidenteSinCerrar>[] = [
       </a>
     ),
   },
-  { key: "tecnico", label: "Técnico (PST)", render: (row) => row.tecnico },
-  { key: "cliente", label: "Cliente", render: (row) => row.cliente },
-  { key: "sucursal", label: "Sucursal", render: (row) => row.sucursal },
-  { key: "modelo", label: "Modelo", render: (row) => row.modelo },
-  { key: "nro_serie", label: "N° Serie", render: (row) => row.nro_serie },
+  { key: "tecnico", label: "Técnico (PST)", sortField: "tecnico", render: (row) => row.tecnico },
+  { key: "cliente", label: "Cliente", sortField: "cliente", render: (row) => row.cliente },
+  { key: "sucursal", label: "Sucursal", sortField: "sucursal", render: (row) => row.sucursal },
+  { key: "modelo", label: "Modelo", sortField: "modelo", render: (row) => row.modelo },
+  { key: "nro_serie", label: "N° Serie", sortField: "nro_serie", render: (row) => row.nro_serie },
   {
     key: "fecha_ingreso",
     label: "Ingreso",
+    sortField: "fecha_ingreso",
+    descFirst: true,
     render: (row) => <span className="tabular-nums">{formatFecha(row.fecha_ingreso)}</span>,
   },
   {
     key: "fecha_finalizacion",
     label: "Finalizado",
+    sortField: "fecha_finalizacion",
+    descFirst: true,
     render: (row) => <span className="tabular-nums">{formatFecha(row.fecha_finalizacion)}</span>,
   },
   {
     key: "dias",
     label: "Días",
+    sortField: "dias_en_estado",
+    descFirst: true,
     align: "right",
     className: "w-20",
     render: (row) => (
@@ -98,6 +106,10 @@ export function PendientesACerrarDetail() {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Pagina en el servidor: el backend ordena todos los pendientes.
+  const { sort, onToggleSort } = useStatsServerSort(columns, () => setPage(1));
+  const sortBy = statsSortField(columns, sort.key);
+  const sortDir = sort.direction;
 
   const [prevScope, setPrevScope] = useState(scope);
   if (scope !== prevScope) {
@@ -117,7 +129,7 @@ export function PendientesACerrarDetail() {
     let active = true;
     const operadorId = scope === TODOS ? undefined : scope === MIS_PST ? undefined : scope;
     pendientesApi
-      .listPendientes({ operadorId, page, size: PAGE_SIZE })
+      .listPendientes({ operadorId, page, size: PAGE_SIZE, sortBy, sortDir })
       .then((res) => {
         if (!active) return;
         setIncidentes(res.items);
@@ -136,7 +148,7 @@ export function PendientesACerrarDetail() {
     return () => {
       active = false;
     };
-  }, [scope, page]);
+  }, [scope, page, sortBy, sortDir]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -144,7 +156,9 @@ export function PendientesACerrarDetail() {
     const operadorId = scope === TODOS ? undefined : scope === MIS_PST ? undefined : scope;
     pendientesApi
       .refresh()
-      .then(() => pendientesApi.listPendientes({ operadorId, page, size: PAGE_SIZE }))
+      .then(() =>
+        pendientesApi.listPendientes({ operadorId, page, size: PAGE_SIZE, sortBy, sortDir }),
+      )
       .then((res) => {
         setIncidentes(res.items);
         setTotal(res.total);
@@ -252,6 +266,8 @@ export function PendientesACerrarDetail() {
                 : undefined
             }
             columns={columns}
+            sort={sort}
+            onToggleSort={onToggleSort}
             rows={incidentes}
             rowKey={(row) => String(row.id_incidente)}
             emptyLabel="Sin incidentes pendientes a cerrar para el filtro seleccionado."

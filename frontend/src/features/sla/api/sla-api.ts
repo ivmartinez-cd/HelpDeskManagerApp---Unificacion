@@ -1,5 +1,6 @@
 import { httpClient } from "@/services/http-client";
 import type { IncidenteVencido, SlaResumen } from "../types/sla";
+import { aplicarOrden, type OrdenServidor } from "./orden-servidor";
 
 import type { Page } from "@/shared/types/pagination";
 
@@ -26,10 +27,18 @@ export const slaApi = {
   getResumen: (periodo: string) =>
     httpClient.get<SlaResumen>(`/api/sla/resumen?periodo=${periodo}`),
 
-  listIncidentesVencidos: (periodo: string, filtro?: FiltroOperador, page = 1, size = 100) =>
-    httpClient.get<Page<IncidenteVencido>>(
-      `/api/sla/incidentes-vencidos?periodo=${periodo}&page=${page}&size=${size}${filtroQuery(filtro)}`,
-    ),
+  listIncidentesVencidos: (
+    periodo: string,
+    filtro?: FiltroOperador,
+    page = 1,
+    size = 100,
+    orden?: OrdenServidor,
+  ) => {
+    const ordenQs = aplicarOrden(new URLSearchParams(), orden).toString();
+    return httpClient.get<Page<IncidenteVencido>>(
+      `/api/sla/incidentes-vencidos?periodo=${periodo}&page=${page}&size=${size}${filtroQuery(filtro)}${ordenQs ? `&${ordenQs}` : ""}`,
+    );
+  },
 
   refreshResumen: (periodo: string) =>
     httpClient.post<SlaResumen>(`/api/sla/actualizar?periodo=${periodo}`),

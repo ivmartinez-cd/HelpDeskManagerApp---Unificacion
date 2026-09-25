@@ -1,4 +1,5 @@
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +21,7 @@ from src.modules.sla.presentation.schemas.sla_schemas import (
     SlaResumenResponse,
 )
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.schemas.ordenar import DireccionOrden, ordenar_por_campo
 from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/sla", tags=["sla"])
@@ -47,6 +49,21 @@ async def get_resumen(
     return SlaResumenResponse.model_validate(result)
 
 
+# Columnas de la tabla de vencidos que se pueden ordenar (campos del schema).
+CampoOrdenVencidos = Literal[
+    "id_incidente",
+    "tecnico",
+    "region",
+    "cliente",
+    "sucursal",
+    "modelo",
+    "fecha_operativo",
+    "rango",
+    "sla_horas",
+    "horas_vencido",
+]
+
+
 @router.get("/incidentes-vencidos", response_model=Page[IncidenteVencidoSchema])
 async def list_incidentes_vencidos(
     periodo: int = _periodo,
@@ -65,6 +82,8 @@ async def list_incidentes_vencidos(
     ),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_MAX_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
+    sort_by: CampoOrdenVencidos | None = Query(default=None),
+    sort_dir: DireccionOrden = Query(default="asc"),
     identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[IncidenteVencidoSchema]:
@@ -84,7 +103,7 @@ async def list_incidentes_vencidos(
         periodo, siges_ids_filtro=siges_ids_filtro, solo_local=solo_local
     )
     items = [IncidenteVencidoSchema.model_validate(d) for d in dtos]
-    return Page.of(items, page=page, size=size)
+    return Page.of(ordenar_por_campo(items, sort_by, sort_dir), page=page, size=size)
 
 
 async def _resolver_filtro_operador(

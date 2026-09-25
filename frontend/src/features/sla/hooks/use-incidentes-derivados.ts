@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { derivadosApi } from "../api/derivados-api";
+import { incidentesDerivadosColumns } from "../components/incidentes-derivados-columns";
 import type { IncidenteDerivado } from "../types/derivados";
 import { prestadoresApi } from "@/features/prestadores/api/prestadores-api";
 import type { OperadorOption } from "@/features/prestadores/types/prestadores";
 import { useSession } from "@/services/session-provider";
+import { statsSortField, useStatsServerSort } from "@/shared/components/ui/stats-table-sort";
 
 export const MIS_PST = "__mis_pst__";
 export const TODOS = "__todos__";
@@ -39,6 +41,10 @@ export function useIncidentesDerivados() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  // Pagina en el servidor: el backend ordena todos los derivados del período.
+  const { sort, onToggleSort } = useStatsServerSort(incidentesDerivadosColumns, () => setPage(1));
+  const sortBy = statsSortField(incidentesDerivadosColumns, sort.key);
+  const sortDir = sort.direction;
 
   const [prevKey, setPrevKey] = useState(`${monthValue}|${scope}`);
   const currentKey = `${monthValue}|${scope}`;
@@ -63,6 +69,8 @@ export function useIncidentesDerivados() {
         operadorId: scopeToOperadorId(scope),
         page,
         size: DERIVADOS_PAGE_SIZE,
+        sortBy,
+        sortDir,
       })
       .then((res) => {
         if (!active) return;
@@ -82,7 +90,7 @@ export function useIncidentesDerivados() {
     return () => {
       active = false;
     };
-  }, [monthValue, scope, page]);
+  }, [monthValue, scope, page, sortBy, sortDir]);
 
   return {
     canVerOperadores,
@@ -95,6 +103,8 @@ export function useIncidentesDerivados() {
     total,
     page,
     setPage,
+    sort,
+    onToggleSort,
     loading,
     error,
     isSuperadmin: user.isSuperadmin,

@@ -7,6 +7,7 @@ import { BrandButton, BrandStatTile } from "@/shared/components/ui/brand-form";
 import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { StatsTable, type StatsColumn } from "@/shared/components/ui/stats-table";
+import { useStatsSort } from "@/shared/components/ui/stats-table-sort";
 import { watiApi } from "../api/wati-api";
 import { useWatiPendientes } from "../providers/wati-pendientes-provider";
 import type { ConversacionPendiente } from "../types/wati";
@@ -33,6 +34,8 @@ const columns: StatsColumn<ConversacionPendiente>[] = [
   {
     key: "espera",
     label: "Esperando",
+    sortField: "minutos_esperando",
+    descFirst: true,
     className: "w-36",
     render: (row) => {
       const color = COLOR_NIVEL[nivelEspera(row.minutos_esperando)];
@@ -48,11 +51,22 @@ const columns: StatsColumn<ConversacionPendiente>[] = [
       );
     },
   },
-  { key: "nombre", label: "Cliente", render: (row) => <span className="font-semibold">{row.nombre}</span> },
-  { key: "wa_id", label: "Número", render: (row) => <span className="tabular-nums">{row.wa_id}</span> },
+  {
+    key: "nombre",
+    label: "Cliente",
+    sortField: "nombre",
+    render: (row) => <span className="font-semibold">{row.nombre}</span>,
+  },
+  {
+    key: "wa_id",
+    label: "Número",
+    sortField: "wa_id",
+    render: (row) => <span className="tabular-nums">{row.wa_id}</span>,
+  },
   {
     key: "operador",
     label: "Operador asignado",
+    sortValue: (row) => (row.sin_asignar ? "Sin asignar" : row.operador_nombre),
     render: (row) =>
       row.sin_asignar ? (
         <span className="font-bold text-brand-orange">Sin asignar</span>
@@ -68,12 +82,15 @@ const columns: StatsColumn<ConversacionPendiente>[] = [
   {
     key: "desde",
     label: "Escribió",
+    sortField: "esperando_desde",
+    descFirst: true,
     className: "w-28",
     render: (row) => <span className="tabular-nums">{formatHora(row.esperando_desde)}</span>,
   },
   {
     key: "texto",
     label: "Último mensaje",
+    sortField: "ultimo_texto_cliente",
     render: (row) => (
       <span className="line-clamp-2 text-muted-foreground">{row.ultimo_texto_cliente || "—"}</span>
     ),
@@ -105,6 +122,8 @@ export function WatiPendientesDetail() {
   }
 
   const vencida = resumen ? sincronizacionVencida(resumen.sincronizado_at) : false;
+  // Pagina en el navegador: se ordena la lista completa y después se corta.
+  const { sort, onToggleSort, ordenadas } = useStatsSort(columns, pendientes, () => setPage(1));
   const totalPaginas = Math.max(1, Math.ceil(pendientes.length / PAGE_SIZE));
   const paginaActual = Math.min(page, totalPaginas);
 
@@ -174,9 +193,11 @@ export function WatiPendientesDetail() {
         <>
           <StatsTable
             title="Chats esperando respuesta"
-            subtitle="Del más antiguo al más nuevo. Se actualiza solo cada minuto."
+            subtitle={`${sort.key === null ? "Del más antiguo al más nuevo. " : ""}Se actualiza solo cada minuto.`}
             columns={columns}
-            rows={pendientes.slice((paginaActual - 1) * PAGE_SIZE, paginaActual * PAGE_SIZE)}
+            rows={ordenadas.slice((paginaActual - 1) * PAGE_SIZE, paginaActual * PAGE_SIZE)}
+            sort={sort}
+            onToggleSort={onToggleSort}
             rowKey={(row) => row.wa_id}
             emptyLabel="Sin chats esperando respuesta."
           />
