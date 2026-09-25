@@ -1,9 +1,11 @@
 import uuid
+from typing import Any
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.domain.entities.user import User
+from src.modules.auth.domain.repositories.user_repository import CampoOrdenUsuarios
 from src.modules.auth.domain.value_objects.email import Email
 from src.modules.auth.domain.value_objects.password_hash import PasswordHash
 from src.modules.auth.infrastructure.models.user_model import AppUser
@@ -38,23 +40,20 @@ class SqlAlchemyUserRepository:
         await self._session.flush()
 
     async def list_page(
-        self, *, page: int, size: int, query: str | None
+        self,
+        *,
+        page: int,
+        size: int,
+        query: str | None,
+        orden: CampoOrdenUsuarios = "usuario",
+        descendente: bool = False,
     ) -> tuple[list[User], int]:
-        filters = [AppUser.is_placeholder.is_(False)]
-        if query:
-            like = f"%{query}%"
-            filters.append(or_(AppUser.email.ilike(like), AppUser.full_name.ilike(like)))
-        total = await self._session.scalar(
-            select(func.count()).select_from(AppUser).where(*filters)
-        )
-        stmt = (
-            select(AppUser)
-            .where(*filters)
-            .order_by(AppUser.full_name)
-            .offset((page - 1) * size)
-            .limit(size)
-        )
-        rows = (await self._session.execute(stmt)).scalars().all()
+        filters = _filtros(query)
+        conteo = select(func.count()).select_from(AppUser).where(*filters)
+        total = await self._session.scalar(conteo)
+        stmt = select(AppUser).where(*filters).order_by(*_clausulas_orden(orden, descendente))
+        pagina = stmt.offset((page - 1) * size).limit(size)
+        rows = (await self._session.execute(pagina)).scalars().all()
         return [_to_entity(row) for row in rows], total or 0
 
     async def count_active_superadmins(self) -> int:
@@ -64,6 +63,28 @@ class SqlAlchemyUserRepository:
             .where(AppUser.is_superadmin.is_(True), AppUser.is_active.is_(True))
         )
         return (await self._session.execute(stmt)).scalar_one()
+
+
+def _filtros(query: str | None) -> list[ColumnElement[bool]]:
+    """Sin placeholders; `query` busca en email o nombre."""
+    filters: list[ColumnElement[bool]] = [AppUser.is_placeholder.is_(False)]
+    if query:
+        like = f"%{query}%"
+        filters.append(or_(AppUser.email.ilike(like), AppUser.full_name.ilike(like)))
+    return filters
+
+
+def _clausulas_orden(orden: CampoOrdenUsuarios, descendente: bool) -> list[ColumnElement[Any]]:
+    """Ascendente = como se lee la etiqueta: "Administrador" antes que
+    "Usuario" (superadmin primero) y "Activo" antes que "Inactivo"."""
+    if orden == "rol":
+        columna, invertida = AppUser.is_superadmin.expression, True
+    elif orden == "estado":
+        columna, invertida = AppUser.is_active.expression, True
+    else:
+        columna, invertida = func.lower(AppUser.full_name), False
+    principal = columna.desc() if descendente != invertida else columna.asc()
+    return [principal, func.lower(AppUser.full_name).asc(), AppUser.id.asc()]
 
 
 def _to_entity(model: AppUser) -> User:

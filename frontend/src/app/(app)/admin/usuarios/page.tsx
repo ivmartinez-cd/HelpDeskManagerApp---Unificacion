@@ -4,11 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import { KeyRound, Palette, Plus, Shield, ShieldOff, Sliders } from "lucide-react";
 import { BrandBadge, BrandButton, BrandEmptyState, BrandInput } from "@/shared/components/ui/brand-form";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
 import { CreateUserModal } from "@/features/admin-users/components/create-user-modal";
 import { EditUserColorModal } from "@/features/admin-users/components/edit-user-color-modal";
-import type { AdminUser } from "@/features/admin-users/api/admin-users-api";
+import type { AdminUser, AdminUserSortKey } from "@/features/admin-users/api/admin-users-api";
 import { useAdminUsers } from "@/features/admin-users/hooks/use-admin-users";
 import { useSession } from "@/services/session-provider";
+
+const COLUMNAS: SortableColumn<AdminUserSortKey>[] = [
+  { key: "usuario", label: "Usuario" },
+  { key: "rol", label: "Rol" },
+  { key: "estado", label: "Estado" },
+];
 
 export default function AdminUsersPage() {
   const {
@@ -24,6 +31,8 @@ export default function AdminUsersPage() {
     toggleActive,
     updateColor,
     triggerPasswordReset,
+    sort,
+    ordenarPor,
   } = useAdminUsers();
   const { user: currentUser } = useSession();
   const [modalOpen, setModalOpen] = useState(false);
@@ -62,9 +71,9 @@ export default function AdminUsersPage() {
           <table className="w-full text-left font-body text-sm">
             <thead>
               <tr className="border-b border-border text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3">Usuario</th>
-                <th className="px-4 py-3">Rol</th>
-                <th className="px-4 py-3">Estado</th>
+                {COLUMNAS.map((c) => (
+                  <SortableHeader key={c.key} column={c} sort={sort} onToggleSort={ordenarPor} />
+                ))}
                 <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>

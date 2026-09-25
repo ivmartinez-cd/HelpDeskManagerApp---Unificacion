@@ -2,10 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { adminUsersApi, type AdminUser } from "@/features/admin-users/api/admin-users-api";
+import {
+  adminUsersApi,
+  type AdminUser,
+  type AdminUserSortKey,
+} from "@/features/admin-users/api/admin-users-api";
 import { ApiError } from "@/services/http-client";
+import { useTableSort } from "@/shared/hooks/use-table-sort";
 
 const PAGE_SIZE = 20;
+const SORT_KEYS: readonly AdminUserSortKey[] = ["usuario", "rol", "estado"];
 
 function errorMessage(error: unknown): string {
   return error instanceof ApiError ? error.message : "Error de red";
@@ -17,11 +23,22 @@ export function useAdminUsers() {
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  // Pagina en el servidor: el backend ordena todos los usuarios, no la página.
+  const { sort, toggleSort } = useTableSort<AdminUserSortKey>({
+    initial: { key: "usuario", direction: "asc" },
+    keys: SORT_KEYS,
+  });
 
   const reload = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await adminUsersApi.list({ page, size: PAGE_SIZE, q: query || undefined });
+      const result = await adminUsersApi.list({
+        page,
+        size: PAGE_SIZE,
+        q: query || undefined,
+        sortBy: sort.key,
+        sortDir: sort.direction,
+      });
       setItems(result.items);
       setTotal(result.total);
     } catch (error) {
@@ -29,7 +46,7 @@ export function useAdminUsers() {
     } finally {
       setLoading(false);
     }
-  }, [page, query]);
+  }, [page, query, sort]);
 
   useEffect(() => {
     // fetch-on-mount/on-page-or-query-change; `reload` flips `loading`
@@ -40,6 +57,11 @@ export function useAdminUsers() {
 
   function search(q: string): void {
     setQuery(q);
+    setPage(1);
+  }
+
+  function ordenarPor(key: AdminUserSortKey): void {
+    toggleSort(key);
     setPage(1);
   }
 
@@ -99,5 +121,7 @@ export function useAdminUsers() {
     toggleActive,
     updateColor,
     triggerPasswordReset,
+    sort,
+    ordenarPor,
   };
 }

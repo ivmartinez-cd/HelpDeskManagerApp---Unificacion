@@ -1,4 +1,5 @@
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +14,7 @@ from src.modules.auth.application.use_cases.request_password_reset import (
 from src.modules.auth.application.use_cases.update_user import UpdateUser, UpdateUserDependencies
 from src.modules.auth.domain.errors import AccountDisabledError, UserNotFoundError
 from src.modules.auth.domain.repositories.operador_color_lookup import OperadorColorLookup
+from src.modules.auth.domain.repositories.user_repository import CampoOrdenUsuarios
 from src.modules.auth.domain.well_known_permissions import MANAGE_ADMIN
 from src.modules.auth.infrastructure.argon2_password_hasher import Argon2PasswordHasher
 from src.modules.auth.infrastructure.mail_logo import get_logo_base64
@@ -46,10 +48,14 @@ async def list_users(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=20, ge=1, le=_MAX_PAGE_SIZE),
     q: str | None = Query(default=None),
+    sort_by: CampoOrdenUsuarios = Query(default="usuario"),
+    sort_dir: Literal["asc", "desc"] = Query(default="asc"),
     _: Identity = _require_manage_admin,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[AdminUserResponse]:
-    users, total = await SqlAlchemyUserRepository(db).list_page(page=page, size=size, query=q)
+    users, total = await SqlAlchemyUserRepository(db).list_page(
+        page=page, size=size, query=q, orden=sort_by, descendente=sort_dir == "desc"
+    )
     items = [AdminUserResponse.from_domain(user) for user in users]
     return Page(items=items, total=total, page=page, size=size)
 
