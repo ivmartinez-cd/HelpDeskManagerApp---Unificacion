@@ -8,6 +8,7 @@ import { labelMes, rangoDeGrilla } from "../lib/calendario";
 import { formatRango, hoyIso, iniciales } from "../lib/fechas";
 import type { DashboardResumen, EventoCalendario } from "../types/vacaciones";
 import { VacacionesMonthGrid } from "./vacaciones-month-grid";
+import { VacacionesSemanaProxima } from "./vacaciones-semana-proxima";
 
 export function DashboardView() {
   const hoy = hoyIso();
@@ -192,6 +193,7 @@ export function DashboardView() {
                   ))}
                 </div>
               )}
+              <VacacionesSemanaProxima hoy={hoy} />
             </div>
           </div>
         </>

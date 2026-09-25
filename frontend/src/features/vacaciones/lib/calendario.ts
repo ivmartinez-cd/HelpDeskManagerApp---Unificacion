@@ -83,3 +83,21 @@ export function rangoDeGrilla(year: number, month: number): { desde: string; has
   const celdas = buildGridDays(year, month, "");
   return { desde: celdas[0].iso, hasta: celdas[celdas.length - 1].iso };
 }
+
+function sumarDias(iso: string, dias: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return toIso(new Date(y, m - 1, d + dias));
+}
+
+/** Lunes a domingo de la semana siguiente a la de `hoyIso` (ambos inclusive). */
+export function rangoSemanaProxima(hoyIso: string): { desde: string; hasta: string } {
+  const [y, m, d] = hoyIso.split("-").map(Number);
+  const offset = (new Date(y, m - 1, d).getDay() + 6) % 7;
+  const desde = sumarDias(hoyIso, 7 - offset);
+  return { desde, hasta: sumarDias(desde, 6) };
+}
+
+/** Último día inclusive de un evento (el `end` del wire es exclusivo). */
+export function finInclusivo(evento: EventoCalendario): string {
+  return sumarDias(evento.end, -1);
+}
