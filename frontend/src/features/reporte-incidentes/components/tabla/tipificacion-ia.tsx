@@ -13,10 +13,6 @@ function mmss(ms: number): string {
   return `${String(Math.floor(segundos / 60)).padStart(2, "0")}:${String(segundos % 60).padStart(2, "0")}`;
 }
 
-function usd(valor: number): string {
-  return `US$ ${valor.toLocaleString("es-AR", { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`;
-}
-
 function casos(n: number): string {
   return `${n.toLocaleString("es-AR")} caso${n === 1 ? "" : "s"}`;
 }
@@ -111,7 +107,7 @@ export function TipificacionIA({ estado }: { estado: EstadoDashboard }) {
           titulo="Tipificación completada"
           onCerrar={ia.cerrar}
         >
-          {casos(ia.resultado?.tipificados ?? 0)} en {mmss(ia.transcurridoMs)} · costo {usd(ia.resultado?.costo_usd ?? 0)}
+          {casos(ia.resultado?.tipificados ?? 0)} en {mmss(ia.transcurridoMs)}
           {(ia.resultado?.fallidos ?? 0) > 0 && ` · ${casos(ia.resultado?.fallidos ?? 0)} sin respuesta de la IA`}
         </Toast>
       );

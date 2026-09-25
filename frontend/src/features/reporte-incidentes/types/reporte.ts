@@ -146,9 +146,6 @@ export interface ResultadoIA {
   tipificados: number;
   fallidos: number;
   llamadas: number;
-  tokens_entrada: number;
-  tokens_salida: number;
-  costo_usd: number;
 }
 
 export interface CategoriaDetalle {

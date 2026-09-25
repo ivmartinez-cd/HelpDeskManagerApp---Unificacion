@@ -273,5 +273,25 @@ salida (≈ US$ 0,0017 con los precios configurados).
 - Clientes recientes dentro del desplegable del buscador, no como chips.
 - Sin la bandeja de sugerencias de subcategorías (el legacy nunca la alimentaba).
 
-**Pendiente (extras a decidir):** costos de IA persistidos, precalentado automático, herramientas
-de evaluación del clasificador. Y: uso en paralelo con el legacy y apagado del legacy.
+## 8. Decisiones de cierre (Iván, 2026-09-25)
+
+- **Costo de la IA: no se muestra.** Ni en pantalla ni en la respuesta de `POST /tipificar`
+  (igual que el legacy, que lo dejaba solo en la consola del servidor). Queda en el log del
+  backend (`ia_costo`: casos, llamadas, tokens y costo estimado de cada corrida).
+- **Legacy apagado.** No se usa (además, sin el token JWT de wsAyC no trae datos reales desde
+  sep-2026). HDM queda como única versión; los repos `reporte-incidentes` y
+  `reporte-incidentes-siges` se conservan como archivo, sin borrarlos. No hay período de
+  convivencia.
+
+## 9. Backlog
+
+- Persistir el historial de costos de IA (hoy solo log) — si algún día se quiere controlar saldo
+  o poner un tope mensual.
+- Precalentado de reportes (legacy: `/api/prewarm` manual): hoy la primera apertura de un
+  cliente/rango tarda ~30 s y después queda 15 min en caché. Opciones evaluadas: botón manual
+  para admins o job nocturno (este último gasta IA solo y carga wsAyC a diario).
+- Herramientas de evaluación del clasificador (legacy: `/api/corpus`, `/api/classify-eval` y
+  `scripts/score.mjs`): retomar si cambian las reglas del prompt o el modelo. Los archivos de
+  casos etiquetados (`_fewshot.json`, `_test.json`, `_labels.json`) no están en el repo legacy.
+- Bandeja de sugerencias de subcategorías (el legacy la tenía armada pero nunca la alimentaba).
+- Probar el diálogo de impresión real del PDF (el contenido está verificado; el popup no).

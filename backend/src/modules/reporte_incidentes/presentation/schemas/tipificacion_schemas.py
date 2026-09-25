@@ -3,7 +3,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ResultadoIASchema(BaseModel):
     """Resultado de una corrida de tipificación con IA. `tipificados` = 0 con
-    `fallidos` > 0 es el "IA saturada" del legacy (la pantalla ofrece reintentar)."""
+    `fallidos` > 0 es el "IA saturada" del legacy (la pantalla ofrece reintentar).
+    Tokens y costo NO viajan al navegador (decisión de Iván, 2026-09-25, igual que
+    el legacy): quedan solo en el log del backend (`ia_costo`)."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -11,9 +13,6 @@ class ResultadoIASchema(BaseModel):
     tipificados: int
     fallidos: int
     llamadas: int
-    tokens_entrada: int
-    tokens_salida: int
-    costo_usd: float
 
 
 class CorreccionRequest(BaseModel):
