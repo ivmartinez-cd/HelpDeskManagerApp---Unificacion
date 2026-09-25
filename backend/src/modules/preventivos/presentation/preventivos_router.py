@@ -3,6 +3,8 @@ calculado y habilitación local (v1: solo marca en esta app, sin escribir en
 Gestión/Siges — ver ADR del módulo). Visibilidad sin filtro por operador: las
 zonas son geografía local, no cartera de PST."""
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +18,7 @@ from src.modules.preventivos.application.dtos.habilitar_request import (
     HabilitarEquipoRequest,
 )
 from src.modules.preventivos.application.dtos.list_equipos_request import (
+    CampoOrdenEquipos,
     ListEquiposPorZonaRequest,
 )
 from src.modules.preventivos.application.dtos.punto_mapa_preventivo import (
@@ -144,13 +147,23 @@ async def list_equipos(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=50, ge=1, le=_MAX_PAGE_SIZE),
     refresh: bool = Query(default=False, description="Fuerza re-consultar Siges"),
+    sort_by: CampoOrdenEquipos | None = Query(
+        default=None, description="Sin valor: vencidos primero, más atrasado arriba"
+    ),
+    sort_dir: Literal["asc", "desc"] = Query(default="asc"),
     _: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> EquiposPreventivosPage:
     use_case = _build_equipos_use_case(db)
     result = await use_case.execute(
         ListEquiposPorZonaRequest(
-            zona=zona, estado=estado, habilitado=habilitado, search=q, force_refresh=refresh
+            zona=zona,
+            estado=estado,
+            habilitado=habilitado,
+            search=q,
+            force_refresh=refresh,
+            orden=sort_by,
+            descendente=sort_dir == "desc",
         )
     )
     schemas = [EquipoPreventivoSchema.from_anotado(a) for a in result.equipos]

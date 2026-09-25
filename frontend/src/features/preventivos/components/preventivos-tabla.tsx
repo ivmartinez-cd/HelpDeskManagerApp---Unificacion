@@ -1,11 +1,14 @@
 "use client";
 
-import type { EquipoPreventivo, EstadoPreventivo } from "../types/preventivos";
+import type { EquipoPreventivo, EstadoPreventivo, PreventivoSortKey } from "../types/preventivos";
 import { BrandBadge } from "@/shared/components/ui/brand-form";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import type { OptionalSortState } from "@/shared/hooks/use-optional-table-sort";
 import { Switch } from "@/shared/components/ui/switch";
 
-/** El orden ya viene del backend (vencidos primero, más atrasado arriba);
- * acá solo se mapea cada estado a un color/etiqueta. */
+/** El orden viene del backend (por defecto vencidos primero, más atrasado
+ * arriba; o la columna que se toque); acá solo se mapea cada estado a un
+ * color/etiqueta. */
 export const ESTADO_META: Record<
   EstadoPreventivo,
   { label: string; variant: "neutral" | "accent" | "success" | "warning" | "danger" }
@@ -105,8 +108,22 @@ function HabilitacionCell({
   );
 }
 
+const COLUMNAS: SortableColumn<PreventivoSortKey>[] = [
+  { key: "cliente", label: "Cliente" },
+  { key: "sucursal", label: "Sucursal" },
+  { key: "equipo", label: "Equipo" },
+  { key: "ultimo_preventivo", label: "Últ. preventivo" },
+  { key: "frecuencia", label: "Frecuencia" },
+  { key: "vencimiento", label: "Próx. vencimiento" },
+  // Por urgencia: vencido, sin preventivo, por vencer, al día, sin frecuencia.
+  { key: "estado", label: "Estado" },
+  { key: "habilitado", label: "Habilitado" },
+];
+
 interface PreventivosTablaProps {
   rows: EquipoPreventivo[];
+  sort: OptionalSortState<PreventivoSortKey>;
+  onToggleSort: (key: PreventivoSortKey) => void;
   canUpdate: boolean;
   pendingId: number | null;
   onToggleHabilitacion: (equipo: EquipoPreventivo) => void;
@@ -114,6 +131,8 @@ interface PreventivosTablaProps {
 
 export function PreventivosTabla({
   rows,
+  sort,
+  onToggleSort,
   canUpdate,
   pendingId,
   onToggleHabilitacion,
@@ -123,14 +142,15 @@ export function PreventivosTabla({
       <table className="w-full min-w-[1080px] text-left">
         <thead>
           <tr className="border-b border-border font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-            <th className="px-4 py-2.5">Cliente</th>
-            <th className="px-4 py-2.5">Sucursal</th>
-            <th className="px-4 py-2.5">Equipo</th>
-            <th className="px-4 py-2.5">Últ. preventivo</th>
-            <th className="px-4 py-2.5">Frecuencia</th>
-            <th className="px-4 py-2.5">Próx. vencimiento</th>
-            <th className="px-4 py-2.5">Estado</th>
-            <th className="px-4 py-2.5">Habilitado</th>
+            {COLUMNAS.map((c) => (
+              <SortableHeader
+                key={c.key}
+                column={c}
+                sort={sort}
+                onToggleSort={onToggleSort}
+                thClassName="px-4 py-2.5"
+              />
+            ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-border">

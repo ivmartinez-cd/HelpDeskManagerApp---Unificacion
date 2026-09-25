@@ -3,6 +3,7 @@ from datetime import date, timedelta
 import pytest
 
 from src.modules.preventivos.application.dtos.list_equipos_request import (
+    CampoOrdenEquipos,
     ListEquiposPorZonaRequest,
 )
 from src.modules.preventivos.application.use_cases.list_equipos_por_zona import (
@@ -133,3 +134,50 @@ async def test_habilitacion_sin_preventivo_posterior_sigue_activa() -> None:
 
     assert result.equipos[0].habilitacion is not None
     assert repo.habilitaciones[0].activa is True
+
+
+async def _ids(
+    use_case: ListEquiposPorZonaUseCase, orden: CampoOrdenEquipos, descendente: bool
+) -> list[int]:
+    result = await use_case.execute(
+        ListEquiposPorZonaRequest(zona="SUR", orden=orden, descendente=descendente)
+    )
+    return [a.equipo.id_maquina for a in result.equipos]
+
+
+async def test_ordena_por_columna_de_texto_sin_distinguir_mayusculas() -> None:
+    equipos = [
+        build_equipo(1, cliente="banco"),
+        build_equipo(2, cliente="Arcor"),
+        build_equipo(3, cliente="Coto"),
+    ]
+    use_case = _use_case(FakePreventivosQueryGateway(equipos))
+
+    assert await _ids(use_case, "cliente", descendente=False) == [2, 1, 3]
+    assert await _ids(use_case, "cliente", descendente=True) == [3, 1, 2]
+
+
+async def test_columna_vacia_queda_al_final_en_ambos_sentidos() -> None:
+    equipos = [
+        build_equipo(1, frecuencia_dias=90),
+        build_equipo(2, frecuencia_dias=None),
+        build_equipo(3, frecuencia_dias=365),
+    ]
+    use_case = _use_case(FakePreventivosQueryGateway(equipos))
+
+    assert await _ids(use_case, "frecuencia", descendente=False) == [1, 3, 2]
+    assert await _ids(use_case, "frecuencia", descendente=True) == [3, 1, 2]
+
+
+async def test_ordena_por_fecha_de_habilitacion() -> None:
+    hace_un_anio = date.today() - timedelta(days=365)
+    equipos = [build_equipo(i, fecha_ultimo_preventivo=hace_un_anio) for i in (1, 2, 3)]
+    habilitaciones = [
+        build_habilitacion(1, habilitado_hace_dias=5),
+        build_habilitacion(3, habilitado_hace_dias=1),
+    ]
+    repo = FakeHabilitacionRepository(habilitaciones)
+    use_case = _use_case(FakePreventivosQueryGateway(equipos), repo)
+
+    assert await _ids(use_case, "habilitado", descendente=True) == [3, 1, 2]
+    assert await _ids(use_case, "habilitado", descendente=False) == [1, 3, 2]

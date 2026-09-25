@@ -5,11 +5,16 @@ import { preventivosApi } from "../api/preventivos-api";
 import type {
   EquipoPreventivo,
   EstadoPreventivo,
+  PreventivoSortKey,
   ZonaParque,
 } from "../types/preventivos";
 import { useSession } from "@/services/session-provider";
+import { useOptionalTableSort } from "@/shared/hooks/use-optional-table-sort";
 
 export const POR_PAGINA = 50;
+
+/** Habilitado: el primer clic pone arriba la habilitación más reciente. */
+const DESC_PRIMERO: readonly PreventivoSortKey[] = ["habilitado"];
 
 export function usePreventivosView() {
   const { user, modules, can } = useSession();
@@ -30,6 +35,9 @@ export function usePreventivosView() {
   const [busqueda, setBusqueda] = useState("");
   const [busquedaAplicada, setBusquedaAplicada] = useState("");
   const [vista, setVista] = useState<"tabla" | "mapa">("mapa");
+  // Pagina en el servidor: el orden lo resuelve el backend sobre todo el
+  // parque filtrado. Sin columna activa rige el orden de negocio.
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
 
   // La búsqueda espera 350ms de inactividad antes de pegarle al backend.
   useEffect(() => {
@@ -76,6 +84,8 @@ export function usePreventivosView() {
           page: pagina,
           size: POR_PAGINA,
           refresh,
+          sortBy: sort.key ?? undefined,
+          sortDir: sort.direction,
         })
         .then((page) => {
           setRows(page.items);
@@ -88,7 +98,7 @@ export function usePreventivosView() {
           setError("No se pudo consultar el parque. Reintentá.");
         });
     },
-    [zona, estado, soloHabilitados, busquedaAplicada, pagina],
+    [zona, estado, soloHabilitados, busquedaAplicada, pagina, sort],
   );
 
   useEffect(() => {
@@ -156,6 +166,11 @@ export function usePreventivosView() {
     setPagina(1);
   };
 
+  const ordenarPor = (key: PreventivoSortKey) => {
+    toggleSort(key);
+    setPagina(1);
+  };
+
   return {
     tieneModulo,
     canUpdate,
@@ -183,5 +198,7 @@ export function usePreventivosView() {
     handleSelectZona,
     handleEstadoChange,
     handleSoloHabilitadosChange,
+    sort,
+    ordenarPor,
   };
 }

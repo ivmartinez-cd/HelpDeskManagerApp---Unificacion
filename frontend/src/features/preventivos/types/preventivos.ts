@@ -47,6 +47,17 @@ export interface EquiposPreventivosPage extends Page<EquipoPreventivo> {
   consultado_en: string;
 }
 
+/** Columnas de la tabla que el backend sabe ordenar (`sort_by`). */
+export type PreventivoSortKey =
+  | "cliente"
+  | "sucursal"
+  | "equipo"
+  | "ultimo_preventivo"
+  | "frecuencia"
+  | "vencimiento"
+  | "estado"
+  | "habilitado";
+
 export interface ListEquiposParams {
   zona: string;
   estado?: EstadoPreventivo;
@@ -55,6 +66,9 @@ export interface ListEquiposParams {
   page?: number;
   size?: number;
   refresh?: boolean;
+  /** Sin valor: orden de negocio (vencidos primero, más atrasado arriba). */
+  sortBy?: PreventivoSortKey;
+  sortDir?: "asc" | "desc";
 }
 
 export interface ConteoEstadoPreventivo {

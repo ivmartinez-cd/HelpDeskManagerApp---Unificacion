@@ -34,6 +34,10 @@ export const preventivosApi = {
     }
     if (params.q) searchParams.set("q", params.q);
     if (params.refresh) searchParams.set("refresh", "true");
+    if (params.sortBy) {
+      searchParams.set("sort_by", params.sortBy);
+      searchParams.set("sort_dir", params.sortDir ?? "asc");
+    }
     return httpClient.get<EquiposPreventivosPage>(
       `/api/preventivos/equipos?${searchParams.toString()}`,
     );

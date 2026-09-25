@@ -16,6 +16,7 @@ from src.modules.preventivos.application.dtos.equipo_preventivo_anotado import (
 from src.modules.preventivos.application.dtos.list_equipos_request import (
     ListEquiposPorZonaRequest,
 )
+from src.modules.preventivos.application.use_cases.orden_equipos import ordenar_equipos
 from src.modules.preventivos.domain.entities.equipo_preventivo import EquipoPreventivo
 from src.modules.preventivos.domain.entities.habilitacion_preventivo import (
     HabilitacionPreventivo,
@@ -27,10 +28,7 @@ from src.modules.preventivos.domain.repositories.habilitacion_repository import 
 from src.modules.preventivos.domain.repositories.preventivos_query_gateway import (
     PreventivosQueryGateway,
 )
-from src.modules.preventivos.domain.services.vencimiento import (
-    ORDEN_ESTADO_PRIORIDAD,
-    calcular_vencimiento,
-)
+from src.modules.preventivos.domain.services.vencimiento import calcular_vencimiento
 from src.modules.preventivos.domain.services.zonas import zona_excluida
 
 # Las fechas de Siges son hora local de Argentina; "hoy" del cálculo de
@@ -66,8 +64,8 @@ class ListEquiposPorZonaUseCase:
             for equipo in snapshot.equipos
         ]
         filtrados = [a for a in anotados if _pasa_filtros(a, request)]
-        filtrados.sort(key=_orden_default)
-        return ListEquiposResult(equipos=filtrados, consultado_en=snapshot.consultado_en)
+        ordenados = ordenar_equipos(filtrados, request.orden, request.descendente)
+        return ListEquiposResult(equipos=ordenados, consultado_en=snapshot.consultado_en)
 
     async def _exigir_zona_conocida(self, zona: str) -> None:
         """El catálogo de zonas está cacheado en el gateway (30 min); una zona
@@ -149,17 +147,3 @@ def _pasa_filtros(anotado: EquipoPreventivoAnotado, request: ListEquiposPorZonaR
         if not any(q in campo.lower() for campo in campos):
             return False
     return True
-
-
-def _orden_default(anotado: EquipoPreventivoAnotado) -> tuple[int, int, str, str]:
-    """Vencidos primero y el más atrasado arriba (la vista "se quedó sin
-    servicios, qué le doy"); después los que nunca tuvieron preventivo, los
-    por vencer más próximos, al día y sin frecuencia al final."""
-    if anotado.estado == "vencido":
-        secundario = -(anotado.dias_vencido or 0)
-    elif anotado.proximo_vencimiento is not None:
-        secundario = anotado.proximo_vencimiento.toordinal()
-    else:
-        secundario = 0
-    cliente = anotado.equipo.cliente.lower()
-    return (ORDEN_ESTADO_PRIORIDAD[anotado.estado], secundario, cliente, anotado.equipo.serie)

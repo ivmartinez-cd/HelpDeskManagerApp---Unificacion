@@ -58,6 +58,8 @@ export function PreventivosView() {
     handleSelectZona,
     handleEstadoChange,
     handleSoloHabilitadosChange,
+    sort,
+    ordenarPor,
   } = usePreventivosView();
 
   const mapa = usePuntosMapa({
@@ -209,6 +211,8 @@ export function PreventivosView() {
           ) : (
             <PreventivosTabla
               rows={rows}
+              sort={sort}
+              onToggleSort={ordenarPor}
               canUpdate={canUpdate}
               pendingId={pendingId}
               onToggleHabilitacion={handleToggleHabilitacion}
