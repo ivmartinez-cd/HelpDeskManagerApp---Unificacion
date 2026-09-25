@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Badge } from "@/shared/components/ui/badge";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type {
   AplicarDistanciasResult, CalculoKmPreview, EstadoAsistenteKm, PrestadorLiquidacion,
@@ -21,18 +23,48 @@ const LABEL_COORDS_ORIGEN: Record<string, string> = {
 const th = "py-2 px-3 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
 const td = "py-1.5 px-3 font-body text-[13px]";
 
+type FilaPreview = CalculoKmPreview["filas"][number];
+type SortKey = "empresa" | "sucursal" | "actual" | "ida" | "vuelta" | "total" | "origen" | "accion";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "empresa", label: "Empresa" },
+  { key: "sucursal", label: "Sucursal" },
+  { key: "actual", label: "Actual", className: "text-right" },
+  { key: "ida", label: "Ida", className: "text-right" },
+  { key: "vuelta", label: "Vuelta", className: "text-right" },
+  { key: "total", label: "Total", className: "text-right" },
+  { key: "origen", label: "Origen del pin" },
+  { key: "accion", label: "Acción" },
+];
+
+const DESC_PRIMERO: readonly SortKey[] = ["actual", "ida", "vuelta", "total"];
+
+function valorOrden(f: FilaPreview, key: SortKey) {
+  switch (key) {
+    case "empresa": return f.empresaNombre;
+    case "sucursal": return f.sucursalNombre;
+    case "actual": return f.kmsRecorridoActual;
+    case "ida": return f.kmsIda;
+    case "vuelta": return f.kmsVuelta;
+    case "total": return f.kmsTotal;
+    case "origen": return LABEL_COORDS_ORIGEN[f.coordsOrigen] ?? f.coordsOrigen;
+    case "accion": return f.accion === "crear" ? "nueva" : "actualiza";
+  }
+}
+
 function TablaPreview({ preview }: { preview: CalculoKmPreview }) {
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const filas = useSortedRows(preview.filas, sort, valorOrden);
   return (
     <div className="max-h-[32vh] overflow-y-auto rounded-[8px] border border-border">
       <table className="w-full">
         <thead className="sticky top-0 bg-card"><tr className="bg-muted/40">
-          <th className={th}>Empresa</th><th className={th}>Sucursal</th>
-          <th className={`${th} text-right`}>Actual</th><th className={`${th} text-right`}>Ida</th>
-          <th className={`${th} text-right`}>Vuelta</th><th className={`${th} text-right`}>Total</th>
-          <th className={th}>Origen del pin</th><th className={th}>Acción</th>
+          {COLUMNAS.map((c) => (
+            <SortableHeader key={c.key} column={c} sort={sort} onToggleSort={toggleSort} thClassName={th} />
+          ))}
         </tr></thead>
         <tbody>
-          {preview.filas.map((f) => (
+          {filas.map((f) => (
             <tr key={`${f.empresaNombre}::${f.sucursalNombre}`} className="border-t border-border">
               <td className={td}><span className="block max-w-[130px] truncate text-foreground" title={f.empresaNombre}>{f.empresaNombre}</span></td>
               <td className={td}><span className="block max-w-[160px] truncate text-foreground" title={f.sucursalNombre}>{f.sucursalNombre}</span></td>

@@ -1,18 +1,36 @@
 "use client";
 
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
+import { boolSortValue } from "@/shared/hooks/use-optional-table-sort";
 import type { SortState } from "@/shared/hooks/use-table-sort";
 import type { Spst, TablaKm } from "../types/liquidaciones";
 
-export type KmSortKey = "empresa" | "sucursal" | "kmsRec" | "kmsFact";
-export const KM_SORT_KEYS: readonly KmSortKey[] = ["empresa", "sucursal", "kmsRec", "kmsFact"];
+export type KmSortKey = "empresa" | "sucursal" | "spst" | "kmsRec" | "kmsFact" | "viatico";
+export const KM_SORT_KEYS: readonly KmSortKey[] = ["empresa", "sucursal", "spst", "kmsRec", "kmsFact", "viatico"];
 
-export function kmSortValue(t: TablaKm, key: KmSortKey) {
+/** Mapas de SPST del prestador que la columna "SPST → Tarifa" necesita. */
+export interface SpstsContexto {
+  spstsPorId: Map<string, Spst>;
+  spstsConTarifa: Set<string | null>;
+  zonaSigesPorSpst: Map<string, string>;
+}
+
+/** Lo que se lee en la columna "SPST → Tarifa" (ver `CeldaSpst`): el SPST, o
+ * la zona genérica si la fila resuelve por la tarifa genérica. "Sin SPST" y
+ * "SPST no encontrado" quedan vacíos, al final. */
+function spstSortValue(t: TablaKm, ctx: SpstsContexto) {
+  if (t.spstId) return ctx.spstsPorId.get(t.spstId)?.nombre ?? null;
+  return ctx.spstsConTarifa.has(null) ? (ctx.zonaSigesPorSpst.get("") ?? "Tarifa genérica") : null;
+}
+
+export function kmSortValue(t: TablaKm, key: KmSortKey, ctx: SpstsContexto) {
   switch (key) {
     case "empresa": return t.empresaNombre;
     case "sucursal": return t.sucursalNombre;
+    case "spst": return spstSortValue(t, ctx);
     case "kmsRec": return t.kmsRecorrido;
     case "kmsFact": return t.kmsAFacturar;
+    case "viatico": return boolSortValue(t.aplicaViatico);
   }
 }
 
@@ -134,10 +152,10 @@ export function TablaKmTable({
             <tr className="bg-muted/40">
               <SortableHeader column={{ key: "empresa", label: "Empresa" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <SortableHeader column={{ key: "sucursal", label: "Sucursal" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
-              <th className={thCls} title="Determina qué tarifa se le cobra al incidente: SPST → tarifario">SPST → Tarifa</th>
+              <SortableHeader column={{ key: "spst", label: "SPST → Tarifa", title: "Determina qué tarifa se le cobra al incidente: SPST → tarifario" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <SortableHeader column={{ key: "kmsRec", label: "KMs rec." }} sort={sort} onToggleSort={toggleSort} thClassName={`${thCls} text-right`} />
               <SortableHeader column={{ key: "kmsFact", label: "KMs fact." }} sort={sort} onToggleSort={toggleSort} thClassName={`${thCls} text-right`} />
-              <th className={`${thCls} text-center`}>Viático</th>
+              <SortableHeader column={{ key: "viatico", label: "Viático" }} sort={sort} onToggleSort={toggleSort} thClassName={`${thCls} text-center`} />
               <th className={`${thCls} text-right`}></th>
             </tr>
           </thead>

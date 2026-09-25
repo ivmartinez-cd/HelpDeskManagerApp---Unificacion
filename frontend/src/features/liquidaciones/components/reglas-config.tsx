@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/shared/components/ui/badge";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { Tooltip } from "@/shared/components/ui/tooltip";
+import { boolSortValue, useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { cn } from "@/shared/utils/cn";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { ReglaAlerta } from "../types/liquidaciones";
@@ -12,6 +14,30 @@ import type { ReglaAlerta } from "../types/liquidaciones";
 const thCls =
   "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
 const tdCls = "py-3 px-4 font-body text-sm text-foreground";
+
+type SortKey = "codigo" | "nombre" | "descripcion" | "riesgoBase" | "activa" | "observaciones";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "codigo", label: "Código" },
+  { key: "nombre", label: "Nombre" },
+  { key: "descripcion", label: "Descripción" },
+  { key: "riesgoBase", label: "Riesgo base", className: "text-right" },
+  { key: "activa", label: "Activa" },
+  {
+    key: "observaciones",
+    label: "Observaciones",
+    title: "Segundo switch, solo para ALT005: además de la Alerta por-incidente, agrupa por corredor en otra alerta aparte",
+  },
+];
+
+const DESC_PRIMERO: readonly SortKey[] = ["riesgoBase", "activa", "observaciones"];
+
+function valorOrden(r: ReglaAlerta, key: SortKey) {
+  if (key === "activa") return boolSortValue(r.activa);
+  // Solo ALT005 tiene el switch; el resto muestra "—" y va al final.
+  if (key === "observaciones") return r.codigo === "ALT005" ? boolSortValue(r.generaObservaciones) : null;
+  return r[key];
+}
 
 function ToggleSwitch({ checked, onToggle, disabled }: {
   checked: boolean;
@@ -44,6 +70,8 @@ export function ReglasConfig() {
   const [reglas, setReglas] = useState<ReglaAlerta[]>([]);
   const [loading, setLoading] = useState(true);
   const [togglingCodigo, setTogglingCodigo] = useState<string | null>(null);
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const filas = useSortedRows(reglas, sort, valorOrden);
 
   const load = useCallback(async () => {
     try {
@@ -116,21 +144,13 @@ export function ReglasConfig() {
           <table className="w-full">
             <thead>
               <tr className="bg-muted/40">
-                <th className={thCls}>Código</th>
-                <th className={thCls}>Nombre</th>
-                <th className={thCls}>Descripción</th>
-                <th className={`${thCls} text-right`}>Riesgo base</th>
-                <th className={thCls}>Activa</th>
-                <th
-                  className={thCls}
-                  title="Segundo switch, solo para ALT005: además de la Alerta por-incidente, agrupa por corredor en otra alerta aparte"
-                >
-                  Observaciones
-                </th>
+                {COLUMNAS.map((c) => (
+                  <SortableHeader key={c.key} column={c} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+                ))}
               </tr>
             </thead>
             <tbody>
-              {reglas.map((r) => (
+              {filas.map((r) => (
                 <tr key={r.codigo} className={cn("border-t border-border", !r.activa && "opacity-60")}>
                   <td className={`${tdCls} font-semibold`}>
                     <span className="flex items-center gap-2">

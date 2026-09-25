@@ -1,15 +1,19 @@
 "use client";
 
 import { ChevronDown, ChevronUp, History, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { BrandButton } from "@/shared/components/ui/brand-form";
+import { SortableHeader } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { formatARS, formatFechaDia } from "../lib/format";
 import { labelTipo, type VigenciaZona, type ZonaTarifas } from "../lib/tarifarios-matriz";
 import type { Tarifario } from "../types/liquidaciones";
 
 // Matriz de tarifarios "como Siges": una fila por zona, una columna por tipo
 // de servicio, historial de vigencias desplegable por zona. Misma estética de
-// tabla que `spsts-config.tsx` (thCls/tdCls).
+// tabla que `spsts-config.tsx` (thCls/tdCls). La tabla principal ordena por
+// cualquier encabezado (valores de la vigencia de hoy); el historial de cada
+// zona queda cronológico, porque marca la variación contra la vigencia anterior.
 
 const thCls =
   "py-3 px-3 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left whitespace-nowrap";
@@ -199,6 +203,17 @@ function FilaZona({
   );
 }
 
+/** "zona", "km", "desde" o `tipo:<tipo de servicio>`. */
+type SortKey = string;
+
+function valorOrden(zona: ZonaTarifas, key: SortKey, labelZona: (spstId: string | null) => string) {
+  const vigente = zona.vigente;
+  if (key === "zona") return labelZona(zona.spstId);
+  if (key === "km") return vigente?.costoKm;
+  if (key === "desde") return vigente?.desde;
+  return vigente?.porTipo[key.slice("tipo:".length)]?.costoServicio;
+}
+
 export function TarifariosMatriz({
   zonas, tipos, labelZona, canEdit, acciones,
 }: {
@@ -208,20 +223,26 @@ export function TarifariosMatriz({
   canEdit: boolean;
   acciones: MatrizAcciones;
 }) {
+  const { sort, toggleSort } = useOptionalTableSort<SortKey>();
+  const valor = useCallback((z: ZonaTarifas, key: SortKey) => valorOrden(z, key, labelZona), [labelZona]);
+  const filas = useSortedRows(zonas, sort, valor);
+  const col = (key: SortKey, label: string, alinear = "") => (
+    <SortableHeader key={key} column={{ key, label }} sort={sort} onToggleSort={toggleSort} thClassName={`${thCls} ${alinear}`} />
+  );
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
       <table className="w-full">
         <thead>
           <tr className="bg-muted/40">
-            <th className={thCls}>Zona Siges</th>
-            {tipos.map((tipo) => <th key={tipo} className={`${thCls} text-right`}>{labelTipo(tipo)}</th>)}
-            <th className={`${thCls} text-right`}>$/km</th>
-            <th className={thCls}>Desde</th>
+            {col("zona", "Zona Siges")}
+            {tipos.map((tipo) => col(`tipo:${tipo}`, labelTipo(tipo), "text-right"))}
+            {col("km", "$/km", "text-right")}
+            {col("desde", "Desde")}
             <th className={`${thCls} text-right`}>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {zonas.map((zona) => (
+          {filas.map((zona) => (
             <FilaZona key={zona.spstId ?? ""} zona={zona} label={labelZona(zona.spstId)} tipos={tipos} canEdit={canEdit} acciones={acciones} />
           ))}
         </tbody>

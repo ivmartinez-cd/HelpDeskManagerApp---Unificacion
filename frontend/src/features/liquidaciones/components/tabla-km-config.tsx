@@ -138,10 +138,10 @@ export function TablaKmConfig({
     const base = q
       ? visibles.filter((e) => e.empresaNombre.toLowerCase().includes(q) || e.sucursalNombre.toLowerCase().includes(q))
       : visibles;
-    return [...base].sort((a, b) =>
-      compareSortValues(kmSortValue(a, sort.key), kmSortValue(b, sort.key), sort.direction),
-    );
-  }, [entradas, q, sort, mostrarArchivadas]);
+    const ctx = { spstsPorId, spstsConTarifa, zonaSigesPorSpst };
+    const valor = (t: TablaKm) => kmSortValue(t, sort.key, ctx);
+    return [...base].sort((a, b) => compareSortValues(valor(a), valor(b), sort.direction));
+  }, [entradas, q, sort, mostrarArchivadas, spstsPorId, spstsConTarifa, zonaSigesPorSpst]);
 
   const handleArchivar = async (t: TablaKm) => {
     try {

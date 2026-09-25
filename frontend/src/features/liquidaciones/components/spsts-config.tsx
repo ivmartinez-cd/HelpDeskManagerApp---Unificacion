@@ -5,7 +5,9 @@ import { toast } from "sonner";
 import { BrandButton, BrandFileInput } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Badge } from "@/shared/components/ui/badge";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { boolSortValue, useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Spst } from "../types/liquidaciones";
@@ -14,6 +16,24 @@ import { SpstFormModal } from "./spst-form-modal";
 
 const thCls = "py-3 px-4 font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground text-left";
 const tdCls = "py-3 px-4 font-body text-sm text-foreground";
+
+type SortKey = "pst" | "nombre" | "localidad" | "zona" | "vinculo" | "estado";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "pst", label: "PST" },
+  { key: "nombre", label: "Nombre" },
+  { key: "localidad", label: "Localidad" },
+  { key: "zona", label: "Zona de cobertura" },
+  {
+    key: "vinculo",
+    label: "Vínculo Siges",
+    title: "A diferencia del vínculo Siges del Prestador, este no sincroniza datos — solo saca al SPST de la lista de 'disponibles' para vincular a otro",
+  },
+  { key: "estado", label: "Estado" },
+];
+
+/** Estado: el primer clic pone los activos arriba. */
+const DESC_PRIMERO: readonly SortKey[] = ["estado"];
 
 function CsvImportModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose: () => void; onSuccess: () => void }) {
   const [file, setFile] = useState<File | null>(null);
@@ -82,6 +102,21 @@ export function SpstsConfig() {
 
   const prestadorMap = Object.fromEntries(prestadores.map((p) => [p.id, p]));
   const visible = filtroPst ? spsts.filter((s) => s.prestadorId === filtroPst) : spsts;
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const valorOrden = useCallback(
+    (s: Spst, key: SortKey) => {
+      switch (key) {
+        case "pst": return prestadores.find((p) => p.id === s.prestadorId)?.nombreCorto;
+        case "nombre": return s.nombre;
+        case "localidad": return s.localidad;
+        case "zona": return s.zonaCobertura;
+        case "vinculo": return s.sigesEmpresaId;
+        case "estado": return boolSortValue(s.activo);
+      }
+    },
+    [prestadores],
+  );
+  const filas = useSortedRows(visible, sort, valorOrden);
 
   const handleToggle = async (s: Spst) => {
     try {
@@ -143,17 +178,14 @@ export function SpstsConfig() {
             <table className="w-full">
               <thead>
                 <tr className="bg-muted/40">
-                  <th className={thCls}>PST</th>
-                  <th className={thCls}>Nombre</th>
-                  <th className={thCls}>Localidad</th>
-                  <th className={thCls}>Zona de cobertura</th>
-                  <th className={thCls} title="A diferencia del vínculo Siges del Prestador, este no sincroniza datos — solo saca al SPST de la lista de 'disponibles' para vincular a otro">Vínculo Siges</th>
-                  <th className={thCls}>Estado</th>
+                  {COLUMNAS.map((c) => (
+                    <SortableHeader key={c.key} column={c} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+                  ))}
                   <th className={`${thCls} text-right`}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {visible.map((s) => {
+                {filas.map((s) => {
                   const pst = prestadorMap[s.prestadorId];
                   return (
                     <tr key={s.id} className="border-t border-border transition-colors hover:bg-muted/30">

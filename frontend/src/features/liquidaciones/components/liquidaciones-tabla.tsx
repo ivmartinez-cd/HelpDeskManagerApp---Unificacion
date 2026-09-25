@@ -9,10 +9,14 @@ import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
 import { formatARS, formatFecha } from "../lib/format";
 import { EstadoBadge } from "./estado-badge";
 
-type LiqSortKey = "prestador" | "periodo" | "tipo" | "estado" | "incidentes" | "importe" | "fecha";
+type LiqSortKey =
+  | "archivo" | "prestador" | "periodo" | "tipo" | "estado" | "incidentes" | "importe" | "fecha"
+  | "webAgentes" | "factura";
 const LIQ_SORT_KEYS: readonly LiqSortKey[] = [
-  "prestador", "periodo", "tipo", "estado", "incidentes", "importe", "fecha",
+  "archivo", "prestador", "periodo", "tipo", "estado", "incidentes", "importe", "fecha", "webAgentes", "factura",
 ];
+
+const archivoLabel = (liq: Liquidacion) => liq.nombreArchivo ?? `Liquidación ${liq.periodo}`;
 
 const WEB_AGENTES_BASE = "https://webagentes.canaldirecto.com.ar/liquidations/view";
 
@@ -33,13 +37,14 @@ export function LiquidacionesTabla({
   const { sort, toggleSort } = useTableSort<LiqSortKey>({
     initial: { key: "fecha", direction: "desc" },
     keys: LIQ_SORT_KEYS,
-    descFirstKeys: ["fecha"],
+    descFirstKeys: ["fecha", "incidentes", "importe"],
   });
 
   const sorted = useMemo(() => {
     const getSv = (liq: Liquidacion) => {
       const pst = prestadorMap[liq.prestadorId];
       switch (sort.key) {
+        case "archivo": return archivoLabel(liq);
         case "prestador": return pst ? `${pst.region ?? pst.nombreCorto} — ${pst.nombre}` : "";
         case "periodo": return liq.periodo;
         case "tipo": return liq.tipoLiquidacion;
@@ -47,6 +52,9 @@ export function LiquidacionesTabla({
         case "incidentes": return liq.totalIncidentes;
         case "importe": return liq.totalImporte;
         case "fecha": return liq.fechaImportacion;
+        case "webAgentes": return liq.numeroLiquidacion;
+        // Sin PDF la celda no muestra factura: esas filas van al final.
+        case "factura": return liq.facturaPdfUrl ? liq.numeroFactura ?? "" : null;
       }
     };
     return [...items].sort((a, b) => compareSortValues(getSv(a), getSv(b), sort.direction));
@@ -58,7 +66,7 @@ export function LiquidacionesTabla({
         <table className="w-full">
           <thead>
             <tr className="bg-muted/40">
-              <th className={thCls}>Archivo</th>
+              <SortableHeader column={{ key: "archivo", label: "Archivo" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <SortableHeader column={{ key: "prestador", label: "Prestador" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <SortableHeader column={{ key: "periodo", label: "Período" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <SortableHeader column={{ key: "tipo", label: "Tipo" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
@@ -66,8 +74,8 @@ export function LiquidacionesTabla({
               <SortableHeader column={{ key: "incidentes", label: "Incidentes" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <SortableHeader column={{ key: "importe", label: "Importe" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <SortableHeader column={{ key: "fecha", label: "Fecha" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
-              <th className={thCls}>Web Agentes</th>
-              <th className={thCls}>Factura</th>
+              <SortableHeader column={{ key: "webAgentes", label: "Web Agentes" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+              <SortableHeader column={{ key: "factura", label: "Factura" }} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
               <th className={thCls}></th>
             </tr>
           </thead>
@@ -84,7 +92,7 @@ export function LiquidacionesTabla({
                       href={`/liquidaciones/${liq.id}`}
                       className="font-body text-sm text-brand-orange hover:underline"
                     >
-                      {liq.nombreArchivo ?? `Liquidación ${liq.periodo}`}
+                      {archivoLabel(liq)}
                     </Link>
                   </td>
                   <td className={tdCls}>

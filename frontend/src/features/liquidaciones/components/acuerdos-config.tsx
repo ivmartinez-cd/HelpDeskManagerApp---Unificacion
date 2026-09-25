@@ -5,7 +5,9 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BrandButton, BrandEmptyState } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import { formatARS } from "../lib/format";
@@ -18,6 +20,28 @@ const tdCls = "px-4 py-2 font-body text-sm text-foreground";
 function precioLabel(a: AcuerdoPrecioCliente): string {
   if (a.precioFijo !== null) return `${formatARS(a.precioFijo)} fijo`;
   return `×${a.factor} del tarifario`;
+}
+
+type SortKey = "cliente" | "tipo" | "precio" | "motivo" | "vigencia";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "cliente", label: "Cliente" },
+  { key: "tipo", label: "Tipo" },
+  { key: "precio", label: "Precio acordado" },
+  { key: "motivo", label: "Motivo" },
+  { key: "vigencia", label: "Vigencia" },
+];
+
+function valorOrden(a: AcuerdoPrecioCliente, key: SortKey) {
+  switch (key) {
+    case "cliente": return a.empresaNombre;
+    case "tipo": return a.tipoServicio ?? "Todos";
+    // Precios fijos (por monto) antes que factores del tarifario (por factor):
+    // son unidades distintas y mezclarlas daría un orden sin sentido.
+    case "precio": return a.precioFijo !== null ? `0:${a.precioFijo}` : `1:${a.factor}`;
+    case "motivo": return a.motivo;
+    case "vigencia": return a.vigenciaDesde;
+  }
 }
 
 export function AcuerdosConfig({
@@ -42,6 +66,8 @@ export function AcuerdosConfig({
       : null,
   );
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { sort, toggleSort } = useOptionalTableSort<SortKey>();
+  const filas = useSortedRows(acuerdos, sort, valorOrden);
 
   useEffect(() => {
     void liquidacionesApi.listPrestadores(false)
@@ -106,16 +132,14 @@ export function AcuerdosConfig({
           <table className="w-full">
             <thead className="border-b border-border">
               <tr>
-                <th className={thCls}>Cliente</th>
-                <th className={thCls}>Tipo</th>
-                <th className={thCls}>Precio acordado</th>
-                <th className={thCls}>Motivo</th>
-                <th className={thCls}>Vigencia</th>
+                {COLUMNAS.map((c) => (
+                  <SortableHeader key={c.key} column={c} sort={sort} onToggleSort={toggleSort} thClassName={thCls} />
+                ))}
                 <th className={thCls}></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {acuerdos.map((a) => (
+              {filas.map((a) => (
                 <tr key={a.id}>
                   <td className={`${tdCls} font-semibold`}>{a.empresaNombre}</td>
                   <td className={tdCls}>{a.tipoServicio ?? "Todos"}</td>

@@ -8,6 +8,8 @@ export interface SortableColumn<K extends string> {
   key: K;
   label: string;
   className?: string;
+  /** Tooltip del encabezado. */
+  title?: string;
 }
 
 interface SortableHeaderProps<K extends string> {
@@ -34,6 +36,7 @@ export function SortableHeader<K extends string>({
     <th
       scope="col"
       rowSpan={rowSpan}
+      title={column.title}
       aria-sort={active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}
       className={cn(thClassName, column.className)}
     >
