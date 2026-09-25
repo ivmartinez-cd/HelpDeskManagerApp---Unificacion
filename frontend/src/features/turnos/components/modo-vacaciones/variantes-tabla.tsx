@@ -8,6 +8,31 @@ import {
   formatFecha,
 } from "../../lib/variante-estado";
 import { BrandBadge } from "@/shared/components/ui/brand-form";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
+
+type SortKey = "vigencia" | "motivo" | "franjas" | "advertencias" | "estado";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "vigencia", label: "Vigencia" },
+  { key: "motivo", label: "Motivo" },
+  { key: "franjas", label: "Franjas" },
+  { key: "advertencias", label: "Advertencias" },
+  { key: "estado", label: "Estado" },
+];
+
+const DESC_PRIMERO: readonly SortKey[] = ["vigencia", "franjas", "advertencias"];
+
+function valorOrden(v: GrillaVariante, key: SortKey) {
+  switch (key) {
+    case "vigencia": return v.desde;
+    case "motivo": return v.motivo;
+    case "franjas": return v.slots.length;
+    // Sin advertencias se muestra "—": va al final.
+    case "advertencias": return v.advertencias.length || null;
+    case "estado": return ESTADO_VARIANTE_META[deriveEstadoVariante(v)].label;
+  }
+}
 
 interface VariantesTablaProps {
   rows: GrillaVariante[];
@@ -29,21 +54,27 @@ export function VariantesTabla({
   onEdit,
   onCancel,
 }: VariantesTablaProps) {
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const filas = useSortedRows(rows, sort, valorOrden);
   return (
     <div className="overflow-x-auto rounded-[12px] border border-border bg-card">
       <table className="w-full min-w-[720px] text-left">
         <thead>
           <tr className="border-b border-border font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-            <th className="px-4 py-2.5">Vigencia</th>
-            <th className="px-4 py-2.5">Motivo</th>
-            <th className="px-4 py-2.5">Franjas</th>
-            <th className="px-4 py-2.5">Advertencias</th>
-            <th className="px-4 py-2.5">Estado</th>
+            {COLUMNAS.map((c) => (
+              <SortableHeader
+                key={c.key}
+                column={c}
+                sort={sort}
+                onToggleSort={toggleSort}
+                thClassName="px-4 py-2.5"
+              />
+            ))}
             <th className="px-4 py-2.5" />
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {rows.map((v) => {
+          {filas.map((v) => {
             const estado = deriveEstadoVariante(v);
             const meta = ESTADO_VARIANTE_META[estado];
             const mutable = canMutar && (estado === "vigente" || estado === "programada");

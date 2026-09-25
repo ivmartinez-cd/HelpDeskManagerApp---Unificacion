@@ -15,9 +15,9 @@ import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 
-type CoberturasSortKey = "ausente" | "reemplazante" | "desde" | "estado";
+type CoberturasSortKey = "ausente" | "reemplazante" | "desde" | "alcance" | "motivo" | "estado";
 const COBERTURAS_SORT_KEYS: readonly CoberturasSortKey[] = [
-  "ausente", "reemplazante", "desde", "estado",
+  "ausente", "reemplazante", "desde", "alcance", "motivo", "estado",
 ];
 
 interface CoberturasTablaProps {
@@ -68,6 +68,20 @@ function descripcionFila(fila: FilaCoberturas): string {
   return `intercambio de ${nombreOperadorA(i)} y ${nombreOperadorB(i)}`;
 }
 
+/** Ítems del alcance, o "total" si todas las mitades cubren todo. */
+function alcanceDe(fila: FilaCoberturas): string[] | "total" {
+  const mitades: Cobertura[] =
+    fila.tipo === "cobertura" ? [fila.cobertura] : [fila.intercambio.ida, fila.intercambio.vuelta];
+  if (mitades.every((c) => c.alcanceTotal)) return "total";
+  return mitades.flatMap((c) => (c.alcanceTotal ? [] : c.alcanceItems));
+}
+
+/** "Total" ordena como el alcance más grande. */
+function alcanceSortValue(fila: FilaCoberturas): number {
+  const alcance = alcanceDe(fila);
+  return alcance === "total" ? Number.MAX_SAFE_INTEGER : alcance.length;
+}
+
 function AlcanceCell({
   fila,
   alcanceLabelOf,
@@ -77,10 +91,8 @@ function AlcanceCell({
   alcanceLabelOf: (id: string) => string;
   alcanceUnidad: string;
 }) {
-  const mitades: Cobertura[] =
-    fila.tipo === "cobertura" ? [fila.cobertura] : [fila.intercambio.ida, fila.intercambio.vuelta];
-  if (mitades.every((c) => c.alcanceTotal)) return <>Total</>;
-  const items = mitades.flatMap((c) => (c.alcanceTotal ? [] : c.alcanceItems));
+  const items = alcanceDe(fila);
+  if (items === "total") return <>Total</>;
   return (
     <span title={items.map(alcanceLabelOf).join(", ")}>
       {items.length} {alcanceUnidad}
@@ -128,7 +140,7 @@ export function CoberturasTabla({
   const { sort, toggleSort } = useTableSort<CoberturasSortKey>({
     initial: { key: "desde", direction: "desc" },
     keys: COBERTURAS_SORT_KEYS,
-    descFirstKeys: ["desde"],
+    descFirstKeys: ["desde", "alcance"],
   });
 
   const sorted = useMemo(() => {
@@ -138,6 +150,8 @@ export function CoberturasTabla({
         case "ausente": return c.ausenteNombre ?? c.ausenteId;
         case "reemplazante": return c.reemplazanteNombre ?? c.reemplazanteId;
         case "desde": return c.desde;
+        case "alcance": return alcanceSortValue(fila);
+        case "motivo": return c.motivo;
         case "estado": return estadoFila(fila);
       }
     };
@@ -152,8 +166,8 @@ export function CoberturasTabla({
             <SortableHeader column={{ key: "ausente", label: "Ausente" }} sort={sort} onToggleSort={toggleSort} thClassName="px-4 py-2.5" />
             <SortableHeader column={{ key: "reemplazante", label: "Reemplazante" }} sort={sort} onToggleSort={toggleSort} thClassName="px-4 py-2.5" />
             <SortableHeader column={{ key: "desde", label: "Vigencia" }} sort={sort} onToggleSort={toggleSort} thClassName="px-4 py-2.5" />
-            <th className="px-4 py-2.5">Alcance</th>
-            <th className="px-4 py-2.5">Motivo</th>
+            <SortableHeader column={{ key: "alcance", label: "Alcance" }} sort={sort} onToggleSort={toggleSort} thClassName="px-4 py-2.5" />
+            <SortableHeader column={{ key: "motivo", label: "Motivo" }} sort={sort} onToggleSort={toggleSort} thClassName="px-4 py-2.5" />
             <SortableHeader column={{ key: "estado", label: "Estado" }} sort={sort} onToggleSort={toggleSort} thClassName="px-4 py-2.5" />
             <th className="px-4 py-2.5" />
           </tr>

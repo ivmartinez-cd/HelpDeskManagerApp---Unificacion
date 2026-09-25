@@ -3,6 +3,8 @@
 import { Plus, Trash2, Users } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { Button } from "@/shared/components/ui/button";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import type { Slot } from "../../types/turnos";
 
 const DIAS_SEMANA = [
@@ -14,6 +16,25 @@ const DIAS_SEMANA = [
   "Sábado",
   "Domingo",
 ];
+
+type SortKey = "inicio" | "fin" | "operadores";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "inicio", label: "Hora Inicio" },
+  { key: "fin", label: "Hora Fin" },
+  // Por cantidad de operadores: deja a mano las franjas sin cubrir.
+  { key: "operadores", label: "Operadores Asignados" },
+];
+
+const DESC_PRIMERO: readonly SortKey[] = ["operadores"];
+
+function valorOrden(s: Slot, key: SortKey) {
+  switch (key) {
+    case "inicio": return s.horaInicio;
+    case "fin": return s.horaFin;
+    case "operadores": return s.asignaciones.length;
+  }
+}
 
 interface Props {
   selectedDia: number;
@@ -30,6 +51,8 @@ interface Props {
 export function SlotsTable({
   selectedDia, setSelectedDia, activeSlots, puedeEditar, onAddSlot, onEditSlot, onDeleteSlot,
 }: Props) {
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const filas = useSortedRows(activeSlots, sort, valorOrden);
   return (
     <div className="flex flex-col gap-4">
       {/* Días de la semana */}
@@ -66,15 +89,21 @@ export function SlotsTable({
         <table className="w-full text-left font-body text-xs">
           <thead className="border-b border-border bg-muted/50 font-heading text-muted-foreground">
             <tr>
-              <th className="p-3 font-semibold">Hora Inicio</th>
-              <th className="p-3 font-semibold">Hora Fin</th>
-              <th className="p-3 font-semibold">Operadores Asignados</th>
+              {COLUMNAS.map((c) => (
+                <SortableHeader
+                  key={c.key}
+                  column={c}
+                  sort={sort}
+                  onToggleSort={toggleSort}
+                  thClassName="p-3 font-semibold"
+                />
+              ))}
               <th className="p-3 text-right font-semibold">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {activeSlots.length > 0 ? (
-              activeSlots.map((s) => (
+              filas.map((s) => (
                 <tr key={s.id} className="hover:bg-muted/30">
                   <td className="p-3 font-mono font-medium">{s.horaInicio.slice(0, 5)}</td>
                   <td className="p-3 font-mono font-medium">{s.horaFin.slice(0, 5)}</td>
