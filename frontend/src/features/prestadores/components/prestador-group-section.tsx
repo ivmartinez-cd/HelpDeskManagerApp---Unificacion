@@ -2,10 +2,39 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import type { OperadorGroup } from "../types/prestadores";
+import type { OperadorGroup, Prestador } from "../types/prestadores";
 import { cn } from "@/shared/utils/cn";
 import { BrandBadge, brandButtonClasses } from "@/shared/components/ui/brand-form";
+import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
+import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
+
+type SortKey = "razonSocial" | "parque" | "telefono" | "nombre" | "correo";
+
+const COLUMNAS: SortableColumn<SortKey>[] = [
+  { key: "razonSocial", label: "Razón social" },
+  { key: "parque", label: "Parque de impresoras" },
+  { key: "telefono", label: "Tel. contacto" },
+  { key: "nombre", label: "Nombre" },
+  { key: "correo", label: "Correo" },
+];
+
+/** Parque: el primer clic pone arriba al de más equipos. */
+const DESC_PRIMERO: readonly SortKey[] = ["parque"];
+
+/** Contacto que muestra la fila: el principal, o el primero si no hay. */
+const contactoPrincipal = (p: Prestador) => p.contactos.find((c) => c.isPrincipal) ?? p.contactos[0];
+
+function valorOrden(p: Prestador, key: SortKey) {
+  const principal = contactoPrincipal(p);
+  switch (key) {
+    case "razonSocial": return p.denComercial;
+    case "parque": return p.equipos;
+    case "telefono": return principal?.telefono;
+    case "nombre": return principal?.nombre;
+    case "correo": return principal?.email;
+  }
+}
 
 interface PrestadorGroupSectionProps {
   grupo: OperadorGroup;
@@ -14,6 +43,8 @@ interface PrestadorGroupSectionProps {
 
 export function PrestadorGroupSection({ grupo, onVer }: PrestadorGroupSectionProps) {
   const [expanded, setExpanded] = useState(false);
+  const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
+  const filas = useSortedRows(grupo.prestadores, sort, valorOrden);
   const activos = grupo.prestadores.filter((p) => p.isActive).length;
 
   return (
@@ -45,17 +76,21 @@ export function PrestadorGroupSection({ grupo, onVer }: PrestadorGroupSectionPro
           <table className="w-full min-w-[640px] text-left">
             <thead>
               <tr className="font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-2.5">Razón social</th>
-                <th className="px-4 py-2.5">Parque de impresoras</th>
-                <th className="px-4 py-2.5">Tel. contacto</th>
-                <th className="px-4 py-2.5">Nombre</th>
-                <th className="px-4 py-2.5">Correo</th>
+                {COLUMNAS.map((c) => (
+                  <SortableHeader
+                    key={c.key}
+                    column={c}
+                    sort={sort}
+                    onToggleSort={toggleSort}
+                    thClassName="px-4 py-2.5"
+                  />
+                ))}
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {grupo.prestadores.map((p) => {
-                const principal = p.contactos.find((c) => c.isPrincipal) ?? p.contactos[0];
+              {filas.map((p) => {
+                const principal = contactoPrincipal(p);
                 return (
                   <tr key={p.id} className="font-body text-sm">
                     <td className="px-4 py-2.5">
