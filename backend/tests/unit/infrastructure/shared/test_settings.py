@@ -10,7 +10,11 @@ import pytest
 from pydantic import SecretStr, ValidationError
 from pydantic_settings import BaseSettings
 
-from src.shared.infrastructure.config import settings_groups, settings_groups_operativos
+from src.shared.infrastructure.config import (
+    settings_groups,
+    settings_groups_operativos,
+    settings_groups_reporte_incidentes,
+)
 from src.shared.infrastructure.config.settings import Settings
 
 _MINIMO = {
@@ -102,7 +106,9 @@ def test_config_final_y_campos_planos(monkeypatch: pytest.MonkeyPatch) -> None:
 
     mixins = [
         cls
-        for modulo in (settings_groups, settings_groups_operativos)
+        for modulo in (
+            settings_groups, settings_groups_operativos, settings_groups_reporte_incidentes
+        )
         for cls in vars(modulo).values()
         if isinstance(cls, type) and issubclass(cls, BaseSettings) and cls is not BaseSettings
     ]

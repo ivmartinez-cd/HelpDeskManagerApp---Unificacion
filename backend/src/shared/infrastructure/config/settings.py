@@ -31,6 +31,9 @@ from src.shared.infrastructure.config.settings_groups_operativos import (
     VacacionesSettings,
     WatiSettings,
 )
+from src.shared.infrastructure.config.settings_groups_reporte_incidentes import (
+    ReporteIncidentesSettings,
+)
 
 # settings.py -> config -> infrastructure -> shared -> src -> backend -> repo root.
 _ENV_FILE = Path(__file__).resolve().parents[5] / ".env"
@@ -51,6 +54,7 @@ class Settings(
     LiquidacionesSettings,
     VacacionesSettings,
     DespachadosSettings,
+    ReporteIncidentesSettings,
 ):
     """Config tipada y fail-fast: falta un campo requerido => la app no arranca."""
 
