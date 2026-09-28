@@ -11,9 +11,9 @@ import {
   ClipboardCheck,
   LayoutDashboard,
   PartyPopper,
+  Users,
   ScrollText,
   Settings,
-  Users,
   type LucideIcon,
 } from "lucide-react";
 import { useSession } from "@/services/session-provider";
@@ -28,7 +28,7 @@ import { cn } from "@/shared/utils/cn";
  * Aprobaciones `approve` o `manage`, Reportes/Auditoría/Configuración `manage`;
  * Gestión Humana es visible con `view` (la página muestra su contenido según
  * `manage`, para consultar catálogos). Gestión Humana son 4 accesos directos
- * (Empleados/Sectores/Cargos/Feriados) sobre la misma ruta `/vacaciones/gestion`
+ * (Sectores/Cargos/Feriados; Empleados pasó a Personas, ADR-040) sobre la misma ruta `/vacaciones/gestion`
  * con `?tab=`, como en el handoff (07-Gestion-Humana) — antes era un solo
  * link a "Personal" que siempre abría en Empleados, y Feriados quedaba sin
  * acceso directo. */
@@ -99,12 +99,13 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
     {
       titulo: "Gestión Humana",
       items: [
-        // Empleados vive en Personas (ADR-040): mismo acceso, otra pantalla.
+        // Personas (ADR-040) tiene ruta propia, fuera de /vacaciones.
         {
           href: "/personas",
-          label: "Empleados",
+          label: "Personas",
           icon: Users,
           visible: puedeAbrir("/personas"),
+          active: pathname === "/personas" || pathname.startsWith("/personas/"),
         },
         {
           href: "/vacaciones/gestion",

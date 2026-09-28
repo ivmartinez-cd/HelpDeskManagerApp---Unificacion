@@ -38,8 +38,8 @@ export function Sidebar({
   // de uso diario van primero y en orden alfabético (Contadores, Insumos,
   // Servicio Técnico -grupo virtual-, WhatsApp); el resto (Gestión de
   // Personal, Turnos) queda debajo, sin orden alfabético entre sí; y
-  // Personas (ex Usuarios) siempre al final de todo, sin importar sort_order del
-  // backend.
+  // Personas (ex Usuarios), si se muestra suelta, al final de todo, sin
+  // importar sort_order del backend.
   const DAILY_RANK: Record<string, number> = {
     contadores: 0,
     insumos: 1,
@@ -66,10 +66,14 @@ export function Sidebar({
   // submenú de Servicio Técnico.
   // El módulo admin ya no tiene ítem propio: Usuarios pasó a ser Personas
   // (ADR-040) y su permiso solo gatea la grilla de permisos, que se abre
-  // desde la ficha de cada persona.
+  // desde la ficha de cada persona. Personas vive dentro del submenú de
+  // Gestión de Personal (pedido de Iván, 2026-09-28); solo queda suelta para
+  // quien la tenga sin ese módulo.
+  const personasEnGestion = modules.some((m) => m.key === "vacaciones");
   const topLevelModules = sortedModules.filter(
     (m) =>
       m.key !== "admin" &&
+      (m.key !== "personas" || !personasEnGestion) &&
       m.key !== "prestadores" &&
       m.key !== "sla" &&
       m.key !== "preventivos" &&
@@ -108,6 +112,8 @@ export function Sidebar({
   }
 
   const isActive = (route: string) => pathname === route || pathname.startsWith(`${route}/`);
+  const moduloActivo = (module: { key: string; route: string }) =>
+    isActive(module.route) || (module.key === "vacaciones" && isActive("/personas"));
   const closeMobile = () => setMobileOpen(false);
   const isHome = pathname === "/";
   const toggleSubmenu = (key: string) => (expanded: boolean) =>
@@ -158,7 +164,7 @@ export function Sidebar({
                   key={module.key}
                   module={module}
                   href={hrefDeModulo(module)}
-                  active={isActive(module.route)}
+                  active={moduloActivo(module)}
                   submenuOverride={submenuOverride[module.key]}
                   onToggleSubmenu={toggleSubmenu(module.key)}
                   onNavigate={closeMobile}
@@ -188,7 +194,7 @@ export function Sidebar({
                   key={module.key}
                   module={module}
                   href={hrefDeModulo(module)}
-                  active={isActive(module.route)}
+                  active={moduloActivo(module)}
                   submenuOverride={submenuOverride[module.key]}
                   onToggleSubmenu={toggleSubmenu(module.key)}
                   onNavigate={closeMobile}

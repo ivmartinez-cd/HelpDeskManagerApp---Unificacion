@@ -224,7 +224,11 @@ test.describe("Personas", () => {
     await mockPersonas(page);
     await page.goto("/admin/usuarios");
     await expect(page).toHaveURL(/\/personas$/);
-    await expect(page.getByRole("link", { name: "Personas" }).first()).toBeVisible();
+    // Personas vive en el submenú de Gestión de Personal, que queda abierto.
+    const nav = page.getByRole("navigation");
+    await expect(nav.getByRole("link", { name: "Personas" })).toHaveAttribute("aria-current", "page");
+    await expect(nav.getByRole("link", { name: "Sectores" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Empleados" })).toHaveCount(0);
 
     await page.goto("/vacaciones/gestion?tab=empleados");
     await expect(page).toHaveURL(/\/personas$/);

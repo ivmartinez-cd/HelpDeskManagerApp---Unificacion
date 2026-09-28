@@ -127,10 +127,13 @@ inactiva); dar acceso, editar datos y quitar acceso probados en una transacción
 
 ## Fase 3: qué quedó hecho (2026-09-28)
 
-- **Menú**: "Personas" reemplaza a "Usuarios" al final del menú lateral (el módulo admin ya
-  no tiene ítem; su permiso sigue gateando la grilla de permisos). `/admin` y
-  `/admin/usuarios` redirigen a `/personas`. En Gestión de Personal, el acceso "Empleados"
-  lleva a Personas y la pestaña Empleados ya no existe (`?tab=empleados` redirige).
+- **Menú**: "Personas" es el primer ítem de Gestión Humana, dentro del submenú de Gestión de
+  Personal (2026-09-28, pedido de Iván; al principio reemplazaba a "Usuarios" al final del
+  menú). Solo aparece suelta para quien la tenga sin el módulo de Gestión de Personal. El
+  módulo admin ya no tiene ítem; su permiso sigue gateando la grilla de permisos. `/admin` y
+  `/admin/usuarios` redirigen a `/personas`. La pestaña Empleados de Gestión de Personal ya no
+  existe (`?tab=empleados` redirige) y su acceso en el submenú se sacó (2026-09-28, pedido de
+  Iván: Personas se entra solo desde su ítem del menú).
 - **Listado**: nombre (+mail), sector, cargo, ingreso/antigüedad y disponibles (estas dos solo
   para quien ve vacaciones: se cruzan con el listado de empleados), entra a la app, estado.
   Búsqueda y filtros por sector, acceso y estado. Trae todo en una carga (tope 200) y ordena
