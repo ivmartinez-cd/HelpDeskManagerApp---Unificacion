@@ -33,7 +33,11 @@ from src.modules.insumos.domain.repositories.processed_request_repository import
 from src.modules.insumos.domain.repositories.supply_cache_repository import SupplyCacheRepository
 from src.modules.insumos.domain.repositories.wsayc_gateway import WsAycGateway
 from src.modules.insumos.domain.value_objects.cd_datetime import parse_cd_datetime
-from src.modules.insumos.domain.value_objects.cd_state import ENTREGADO, is_in_transit
+from src.modules.insumos.domain.value_objects.cd_state import (
+    ENTREGADO,
+    INACTIVE_STATES,
+    is_in_transit,
+)
 from src.modules.insumos.domain.value_objects.cd_supply import CachedSupply, SupplyStatusEvent
 from src.modules.insumos.domain.value_objects.insumos_settings import settings_from_raw
 from src.modules.insumos.domain.value_objects.order_settings import CanalDirectoOrderSettings
@@ -114,32 +118,43 @@ class ListPendingOrders:
     async def _refresh_statuses(
         self, order_by_num: dict[int, ProcessedRequest]
     ) -> dict[int, str]:
-        """Estado real en CD, en paralelo y deduplicado. Para los que falló la llamada
-        SOAP en vivo, caer al cache local en vez de excluirlos a ciegas (más vale un
-        dato levemente viejo que ninguno)."""
-        ids = list(order_by_num)
+        """Estado real en CD, en paralelo y deduplicado.
+
+        processed_requests nunca "cierra" un pedido (CREATED es "lo creamos", no su
+        estado en CD), así que order_by_num son TODOS los pedidos creados alguna vez y
+        crece sin techo. Un estado final (Entregado/Anulado/Cancelado) no vuelve atrás:
+        si el cache ya lo tiene, se usa tal cual y no se vuelve a consultar. Consultar
+        todo cada 15 min eran ~905 getSupplyById para mostrar ~57 en tránsito (log del
+        wsAyC, sep-2026). Para los que falla la llamada SOAP en vivo, caer al cache local
+        en vez de excluirlos a ciegas (más vale un dato levemente viejo que ninguno)."""
+        cached = await self._ports.supply_cache.get_statuses_batch(list(order_by_num))
+        status_by_id = {sid: e for sid, e in cached.items() if e in INACTIVE_STATES}
+        to_fetch = [sid for sid in order_by_num if sid not in status_by_id]
+        status_by_id.update(await self._fetch_live_statuses(order_by_num, to_fetch))
+        for sid in to_fetch:
+            if sid not in status_by_id and sid in cached:
+                status_by_id[sid] = cached[sid]
+        return status_by_id
+
+    async def _fetch_live_statuses(
+        self, order_by_num: dict[int, ProcessedRequest], ids: list[int]
+    ) -> dict[int, str]:
+        """getSupplyById de `ids` en paralelo; actualiza el cache con lo que respondió."""
         fresh = await asyncio.gather(*(self._ports.wsayc.fetch_supply_by_id(sid) for sid in ids))
-        status_by_id: dict[int, str] = {}
-        updates: list[CachedSupply] = []
-        for sid, supply in zip(ids, fresh, strict=True):
-            if supply is None:
-                continue
-            status_by_id[sid] = supply.estado
-            updates.append(
-                CachedSupply(
-                    supply_id=sid,
-                    serial=order_by_num[sid].device_serial,
-                    estado=supply.estado,
-                    empresa_id=supply.empresa_id,
-                    fecha=parse_cd_datetime(supply.fecha),
-                )
+        updates = [
+            CachedSupply(
+                supply_id=sid,
+                serial=order_by_num[sid].device_serial,
+                estado=supply.estado,
+                empresa_id=supply.empresa_id,
+                fecha=parse_cd_datetime(supply.fecha),
             )
+            for sid, supply in zip(ids, fresh, strict=True)
+            if supply is not None
+        ]
         if updates:
             await self._ports.supply_cache.upsert(updates)
-        missing = [sid for sid in ids if sid not in status_by_id]
-        if missing:
-            status_by_id.update(await self._ports.supply_cache.get_statuses_batch(missing))
-        return status_by_id
+        return {u.supply_id: u.estado for u in updates}
 
 
 def _orders_by_supply_id(orders: list[ProcessedRequest]) -> dict[int, ProcessedRequest]:

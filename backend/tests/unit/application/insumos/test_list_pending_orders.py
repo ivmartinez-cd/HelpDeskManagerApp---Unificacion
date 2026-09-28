@@ -223,3 +223,60 @@ async def test_dryrun_y_filtro_por_cliente() -> None:
     rows = await world.use_case.execute(customer_id=8, include_delivered=False)
 
     assert [r.hp_request_id for r in rows] == [974003]
+
+
+# --- Carga SOAP: no volver a consultar pedidos ya cerrados en Canal Directo ---
+
+
+def _cache_estado(world: World, supply_id: int, estado: str) -> None:
+    world.cache.entries.append(
+        CachedSupply(supply_id=supply_id, serial="MXBCQ7C03T", estado=estado)
+    )
+
+
+async def test_pedido_cerrado_en_cache_no_se_consulta_por_soap() -> None:
+    """Un estado final no vuelve atrás: si el cache ya lo tiene cerrado, no se pregunta
+    de nuevo a Canal Directo. Antes se consultaban TODOS los pedidos creados alguna vez
+    (~905 en producción, sep-2026) cada 15 min para terminar mostrando ~57."""
+    world = World()
+    for i, estado in enumerate(("Entregado", "Anulado", "Cancelado")):
+        await world.add_order(974001 + i, f"44100{i}-1", estado)
+        _cache_estado(world, 441000 + i, estado)
+
+    rows = await world.use_case.execute(customer_id=None, include_delivered=False)
+
+    assert rows == []
+    assert world.wsayc.fetch_calls == []
+
+
+async def test_solo_se_consultan_los_abiertos_o_sin_cache() -> None:
+    world = World()
+    await world.add_order(974001, "100001-1", "Despachado")  # cerrado en cache
+    await world.add_order(974002, "100002-1", "Despachado")  # en tránsito en cache
+    await world.add_order(974003, "100003-1", "Despachado")  # sin cache (recién creado)
+    _cache_estado(world, 100001, "Entregado")
+    _cache_estado(world, 100002, "Pendiente")
+
+    rows = await world.use_case.execute(customer_id=None, include_delivered=False)
+
+    assert sorted(world.wsayc.fetch_calls) == [100002, 100003]
+    assert {r.hp_request_id for r in rows} == {974002, 974003}
+    assert all(r.supply_status == "Despachado" for r in rows)
+
+
+async def test_include_delivered_usa_el_cache_para_entregado_reciente_sin_soap() -> None:
+    """Los "Entregados de los últimos 7 días" se resuelve con el estado cacheado + el
+    historial de estados, sin volver a consultar el pedido cerrado."""
+    world = World()
+    await world.add_order(974001, "441001-1", None)
+    _cache_estado(world, 441001, "Entregado")
+    world.cache.status_history[441001] = [
+        SupplyStatusEvent(
+            estado="Entregado", first_seen_at=datetime.now(UTC) - timedelta(days=1)
+        ),
+    ]
+
+    rows = await world.use_case.execute(customer_id=None, include_delivered=True)
+
+    assert world.wsayc.fetch_calls == []
+    assert [r.supply_status for r in rows] == ["Entregado"]
