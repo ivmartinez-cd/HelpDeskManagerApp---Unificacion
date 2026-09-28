@@ -90,7 +90,9 @@ test.describe("Insumos › Despachados › Reclamar en OCA", () => {
 
     const modal = page.getByRole("dialog", { name: "Reclamar en OCA" });
     await expect(modal).toBeVisible();
-    await expect.poll(() => mock.reclamosPedidos).toBe(1);
+    // ≥1 y no 1: la suite corre sobre `next dev`, donde StrictMode monta el modal dos
+    // veces y la primera respuesta se descarta; en producción es un solo pedido.
+    await expect.poll(() => mock.reclamosPedidos).toBeGreaterThanOrEqual(1);
     await expect(modal.getByText("No se pudo cargar el formulario de OCA acá.")).toBeVisible({ timeout: 20_000 });
     await expect(modal.getByRole("link", { name: "Abrir el formulario de OCA" })).toHaveAttribute(
       "href",

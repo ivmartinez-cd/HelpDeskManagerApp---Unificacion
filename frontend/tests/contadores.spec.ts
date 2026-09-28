@@ -12,7 +12,7 @@ test.describe("Módulo de Contadores - Interfaz y Herramientas", () => {
     // Calendario ya no es una card del hub: vive en /contadores/calendario
     // (commit f685707, "sacar card Calendario de Rutas del hub").
     await expect(page.getByRole("heading", { name: "Calendario de Rutas" })).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: "Proyección Contadores" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Estimador de contadores" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Procesar DB3" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Estimación en 0" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Suma Fija" })).toBeVisible();
