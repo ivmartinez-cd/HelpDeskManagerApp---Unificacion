@@ -91,7 +91,7 @@ export function useHistorialPendingOrders({
       }
     };
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial, mismo patrón que use-admin-users
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial
     void load(false);
     if (document.visibilityState === "visible") start();
     document.addEventListener("visibilitychange", onVisibilityChange);

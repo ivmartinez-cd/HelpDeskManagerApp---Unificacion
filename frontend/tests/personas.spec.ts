@@ -75,12 +75,13 @@ interface Llamadas {
   patchDatos: unknown[];
   putEmpleado: unknown[];
   acceso: string[];
+  borrados: string[];
 }
 
 /** Mock de /api/personas y de los catálogos de Gestión de Personal. Devuelve
  * lo que la pantalla mandó al backend, para verificarlo. */
 async function mockPersonas(page: Page): Promise<Llamadas> {
-  const llamadas: Llamadas = { patchDatos: [], putEmpleado: [], acceso: [] };
+  const llamadas: Llamadas = { patchDatos: [], putEmpleado: [], acceso: [], borrados: [] };
   const personas = new Map([
     [LAURA_ID, { ...LAURA }],
     [PEDRO_ID, { ...PEDRO }],
@@ -106,6 +107,10 @@ async function mockPersonas(page: Page): Promise<Llamadas> {
     if (route.request().method() === "PUT") {
       llamadas.putEmpleado.push(route.request().postDataJSON());
       return json(route, { id: LAURA_ID });
+    }
+    if (route.request().method() === "DELETE") {
+      llamadas.borrados.push(new URL(route.request().url()).pathname.split("/").pop()!);
+      return route.fulfill({ status: 204 });
     }
     return route.fulfill({
       status: 200,
@@ -178,6 +183,21 @@ test.describe("Personas", () => {
     expect(llamadas.putEmpleado).toEqual([
       expect.objectContaining({ status: "INACTIVE", userId: LAURA_USER_ID, email: "lperez@canal.com" }),
     ]);
+  });
+
+  test("eliminar: solo sin acceso a la app, confirma y vuelve al listado", async ({ page }) => {
+    const llamadas = await mockPersonas(page);
+    await page.goto(`/personas/${LAURA_ID}`);
+    await page.getByRole("button", { name: "Laboral" }).click();
+    await expect(page.getByRole("button", { name: "Eliminar persona" })).toBeDisabled();
+
+    await page.goto(`/personas/${PEDRO_ID}`);
+    await page.getByRole("button", { name: "Laboral" }).click();
+    page.once("dialog", (d) => void d.accept());
+    await page.getByRole("button", { name: "Eliminar persona" }).click();
+
+    await expect(page).toHaveURL(/\/personas$/);
+    expect(llamadas.borrados).toEqual([PEDRO_ID]);
   });
 
   test("acceso: quitar y volver a dar acceso a la app", async ({ page }) => {

@@ -13,9 +13,11 @@ import type {
 import { ApiError } from "@/services/http-client";
 import { useSession } from "@/services/session-provider";
 import { BrandButton, BrandInput, BrandSelect, BrandStatTile } from "@/shared/components/ui/brand-form";
+import { EliminarPersona } from "./eliminar-persona";
 
 interface Props {
   laboral: EmpleadoListItem;
+  entraALaApp: boolean;
   onGuardada: () => void;
 }
 
@@ -28,7 +30,7 @@ interface FormLaboral {
 
 /** Datos laborales: se siguen editando por el ABM de empleados de Gestión de
  * Personal (vacaciones.manage), que recalcula días y audita el cambio. */
-export function LaboralTab({ laboral, onGuardada }: Props) {
+export function LaboralTab({ laboral, entraALaApp, onGuardada }: Props) {
   const { can } = useSession();
   const puedeEditar = can("vacaciones", "manage");
   const [sectores, setSectores] = useState<Sector[]>([]);
@@ -111,6 +113,13 @@ export function LaboralTab({ laboral, onGuardada }: Props) {
             Guardar cambios
           </BrandButton>
         </div>
+      )}
+      {puedeEditar && (
+        <EliminarPersona
+          personaId={laboral.id}
+          nombre={`${laboral.firstName} ${laboral.lastName}`}
+          entraALaApp={entraALaApp}
+        />
       )}
     </div>
   );

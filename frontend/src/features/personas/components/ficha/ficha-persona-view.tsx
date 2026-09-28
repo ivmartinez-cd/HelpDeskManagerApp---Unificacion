@@ -81,7 +81,12 @@ export function FichaPersonaView({ id }: { id: string }) {
             <DatosTab key={JSON.stringify(persona)} persona={persona} onGuardada={(p) => { setPersona(p); recargar(); }} />
           )}
           {pestana === "laboral" && laboral && (
-            <LaboralTab key={JSON.stringify(laboral)} laboral={laboral} onGuardada={recargar} />
+            <LaboralTab
+              key={JSON.stringify(laboral)}
+              laboral={laboral}
+              entraALaApp={persona.entraALaApp}
+              onGuardada={recargar}
+            />
           )}
           {pestana === "acceso" && <AccesoTab persona={persona} onCambio={setPersona} />}
         </>

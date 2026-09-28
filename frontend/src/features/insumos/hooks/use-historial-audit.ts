@@ -123,7 +123,7 @@ export function useHistorialAudit(query: AuditQuery): HistorialAuditState {
   const queryKey = queryKeyOf(query);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial y en cada cambio de filtro, mismo patrón que use-admin-users
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial y en cada cambio de filtro
     void reload();
   }, [queryKey, reload]);
 

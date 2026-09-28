@@ -1,5 +1,8 @@
 import { httpClient } from "@/services/http-client";
 
+/** Lo que queda de Administración > Usuarios tras la unificación en Personas
+ * (ADR-040): la grilla de permisos lee la cuenta y la ficha manda el link de
+ * restablecimiento. Alta, edición y listado de cuentas viven en Personas. */
 export interface AdminUser {
   id: string;
   email: string;
@@ -10,49 +13,8 @@ export interface AdminUser {
   color: string | null;
 }
 
-export interface PaginatedUsers {
-  items: AdminUser[];
-  total: number;
-  page: number;
-  size: number;
-}
-
-export interface CreateUserPayload {
-  email: string;
-  fullName: string;
-}
-
-export interface UpdateUserPayload {
-  fullName?: string;
-  isActive?: boolean;
-  color?: string;
-}
-
-/** Columnas por las que el backend ordena la lista (`sort_by`). */
-export type AdminUserSortKey = "usuario" | "rol" | "estado";
-
 export const adminUsersApi = {
-  list: (params: {
-    page: number;
-    size: number;
-    q?: string;
-    sortBy?: AdminUserSortKey;
-    sortDir?: "asc" | "desc";
-  }) => {
-    const query = new URLSearchParams({
-      page: String(params.page),
-      size: String(params.size),
-    });
-    if (params.q) query.set("q", params.q);
-    if (params.sortBy) query.set("sort_by", params.sortBy);
-    if (params.sortDir) query.set("sort_dir", params.sortDir);
-    return httpClient.get<PaginatedUsers>(`/api/admin/users?${query.toString()}`);
-  },
   get: (id: string) => httpClient.get<AdminUser>(`/api/admin/users/${id}`),
-  create: (payload: CreateUserPayload) =>
-    httpClient.post<AdminUser>("/api/admin/users", payload),
-  update: (id: string, payload: UpdateUserPayload) =>
-    httpClient.patch<AdminUser>(`/api/admin/users/${id}`, payload),
   triggerPasswordReset: (id: string) =>
     httpClient.post<{ message: string }>(`/api/admin/users/${id}/password-reset`),
 };
