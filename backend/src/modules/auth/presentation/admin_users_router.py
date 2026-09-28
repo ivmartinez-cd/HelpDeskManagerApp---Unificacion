@@ -1,22 +1,16 @@
 import uuid
-from typing import Literal
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
-from src.modules.auth.application.use_cases.create_user import CreateUser, CreateUserDependencies
 from src.modules.auth.application.use_cases.request_password_reset import (
     RequestPasswordReset,
     RequestPasswordResetDependencies,
     ResetPurpose,
 )
-from src.modules.auth.application.use_cases.update_user import UpdateUser, UpdateUserDependencies
 from src.modules.auth.domain.errors import AccountDisabledError, UserNotFoundError
-from src.modules.auth.domain.repositories.operador_color_lookup import OperadorColorLookup
-from src.modules.auth.domain.repositories.user_repository import CampoOrdenUsuarios
 from src.modules.auth.domain.well_known_permissions import MANAGE_ADMIN
-from src.modules.auth.infrastructure.argon2_password_hasher import Argon2PasswordHasher
 from src.modules.auth.infrastructure.mail_logo import get_logo_base64
 from src.modules.auth.infrastructure.repositories.sqlalchemy_reset_token_repository import (
     SqlAlchemyResetTokenRepository,
@@ -25,39 +19,15 @@ from src.modules.auth.infrastructure.repositories.sqlalchemy_user_repository imp
     SqlAlchemyUserRepository,
 )
 from src.modules.auth.infrastructure.secure_token_generator import SecureTokenGenerator
-from src.modules.auth.presentation.dependencies.operador_colors import get_operador_color_lookup
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.auth.presentation.password_mail import encolar_mail
-from src.modules.auth.presentation.schemas.admin_user_schemas import (
-    AdminUserResponse,
-    CreateUserRequest,
-    UpdateUserRequest,
-)
+from src.modules.auth.presentation.schemas.admin_user_schemas import AdminUserResponse
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_db
-from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/admin/users", tags=["admin"])
 
 _require_manage_admin = Depends(require_permission(MANAGE_ADMIN))
-_MAX_PAGE_SIZE = 100
-
-
-@router.get("")
-async def list_users(
-    page: int = Query(default=1, ge=1),
-    size: int = Query(default=20, ge=1, le=_MAX_PAGE_SIZE),
-    q: str | None = Query(default=None),
-    sort_by: CampoOrdenUsuarios = Query(default="usuario"),
-    sort_dir: Literal["asc", "desc"] = Query(default="asc"),
-    _: Identity = _require_manage_admin,
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> Page[AdminUserResponse]:
-    users, total = await SqlAlchemyUserRepository(db).list_page(
-        page=page, size=size, query=q, orden=sort_by, descendente=sort_dir == "desc"
-    )
-    items = [AdminUserResponse.from_domain(user) for user in users]
-    return Page(items=items, total=total, page=page, size=size)
 
 
 @router.get("/{user_id}")
@@ -69,43 +39,6 @@ async def get_user(
     user = await SqlAlchemyUserRepository(db).get_by_id(user_id)
     if user is None:
         raise UserNotFoundError()
-    return AdminUserResponse.from_domain(user)
-
-
-@router.post("", status_code=status.HTTP_201_CREATED)
-async def create_user(
-    payload: CreateUserRequest,
-    background_tasks: BackgroundTasks,
-    _: Identity = _require_manage_admin,
-    db: AsyncSession = Depends(get_db, scope="function"),
-    operador_colors: OperadorColorLookup = Depends(get_operador_color_lookup),
-) -> AdminUserResponse:
-    deps = CreateUserDependencies(
-        users=SqlAlchemyUserRepository(db),
-        hasher=Argon2PasswordHasher(),
-        operador_colors=operador_colors,
-    )
-    user = await CreateUser(deps).execute(email=payload.email, full_name=payload.full_name)
-    await _send_password_link(
-        db, background_tasks, user_email=user.email.value, purpose="activation"
-    )
-    return AdminUserResponse.from_domain(user)
-
-
-@router.patch("/{user_id}")
-async def update_user(
-    user_id: uuid.UUID,
-    payload: UpdateUserRequest,
-    _: Identity = _require_manage_admin,
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> AdminUserResponse:
-    deps = UpdateUserDependencies(users=SqlAlchemyUserRepository(db))
-    user = await UpdateUser(deps).execute(
-        user_id=user_id,
-        full_name=payload.full_name,
-        is_active=payload.is_active,
-        color=payload.color,
-    )
     return AdminUserResponse.from_domain(user)
 
 

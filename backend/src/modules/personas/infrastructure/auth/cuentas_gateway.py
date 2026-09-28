@@ -17,13 +17,6 @@ from src.modules.auth.infrastructure.repositories.sqlalchemy_user_repository imp
 from src.modules.personas.domain.entities.persona import DatosPersona
 
 
-class _SinColorDeOperador:
-    """El color lo trae la persona: no se busca el de Gestión al crear la cuenta."""
-
-    async def find_color_by_nombre(self, full_name: str) -> str | None:
-        return None
-
-
 class AuthCuentasGateway:
     def __init__(self, session: AsyncSession) -> None:
         self._users = SqlAlchemyUserRepository(session)
@@ -42,12 +35,10 @@ class AuthCuentasGateway:
         await self._users.save(cuenta)
 
     async def crear(self, datos: DatosPersona) -> uuid.UUID:
-        deps = CreateUserDependencies(
-            users=self._users, hasher=Argon2PasswordHasher(), operador_colors=_SinColorDeOperador()
+        deps = CreateUserDependencies(users=self._users, hasher=Argon2PasswordHasher())
+        cuenta = await CreateUser(deps).execute(
+            email=datos.email, full_name=datos.nombre_completo, color=datos.color
         )
-        cuenta = await CreateUser(deps).execute(email=datos.email, full_name=datos.nombre_completo)
-        cuenta.color = datos.color
-        await self._users.save(cuenta)
         return cuenta.id
 
     async def activar(self, user_id: uuid.UUID) -> None:

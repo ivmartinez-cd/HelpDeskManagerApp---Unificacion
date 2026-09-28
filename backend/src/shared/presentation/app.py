@@ -3,17 +3,10 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.auth.domain.repositories.operador_color_lookup import OperadorColorLookup
-from src.modules.auth.presentation.dependencies.operador_colors import get_operador_color_lookup
 from src.shared.infrastructure.config.settings import Settings, get_settings
-from src.shared.infrastructure.cross_module.auth_operador_color_lookup import (
-    SqlAlchemyOperadorColorLookup,
-)
-from src.shared.infrastructure.database.session import get_db
 from src.shared.infrastructure.logging_config import configure_logging
 from src.shared.presentation.errors.handlers import register_exception_handlers
 from src.shared.presentation.middlewares.request_id import RequestIdMiddleware
@@ -21,15 +14,6 @@ from src.shared.presentation.middlewares.security_headers import SecurityHeaders
 from src.shared.presentation.routers import ROUTERS
 
 logger = logging.getLogger(__name__)
-
-
-async def _provide_operador_color_lookup(
-    db: AsyncSession = Depends(get_db, scope="function"),
-) -> OperadorColorLookup:
-    """Override real de `get_operador_color_lookup` (auth) — este archivo es
-    el único punto del repo con permiso para conocer tanto a auth como a
-    contadores; ver ADR-009."""
-    return SqlAlchemyOperadorColorLookup(db)
 
 
 def _jobs_insumos(settings: Settings) -> list[asyncio.Task[None]]:
@@ -195,7 +179,6 @@ def create_app() -> FastAPI:
         redoc_url=_ruta_docs(settings, "/redoc"),
         openapi_url=_ruta_docs(settings, "/openapi.json"),
     )
-    app.dependency_overrides[get_operador_color_lookup] = _provide_operador_color_lookup
     _registrar_middlewares(app, settings)
     register_exception_handlers(app)
     _registrar_routers(app)

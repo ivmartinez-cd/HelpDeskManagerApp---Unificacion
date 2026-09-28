@@ -22,7 +22,6 @@ from src.modules.auth.domain.errors import (
     UserNotFoundError,
 )
 from tests.unit.application.auth.fakes import (
-    FakeOperadorColorLookup,
     FakePasswordHasher,
     FakeSessionRepository,
     FakeSessionTokenGenerator,
@@ -53,21 +52,15 @@ async def test_revoke_session_con_token_desconocido_es_noop() -> None:
     assert sessions.saved == []
 
 
-def _create_deps(
-    users: FakeUserRepository, colors: dict[str, str] | None = None
-) -> CreateUserDependencies:
-    return CreateUserDependencies(
-        users=users,
-        hasher=FakePasswordHasher(),
-        operador_colors=FakeOperadorColorLookup(colors),
-    )
+def _create_deps(users: FakeUserRepository) -> CreateUserDependencies:
+    return CreateUserDependencies(users=users, hasher=FakePasswordHasher())
 
 
-async def test_create_user_da_de_alta_activo_con_color_de_gestion() -> None:
+async def test_create_user_da_de_alta_activo_con_el_color_recibido() -> None:
     users = FakeUserRepository()
 
-    user = await CreateUser(_create_deps(users, {"Ana Prueba": "#888200"})).execute(
-        email="ana@canaldirecto.com.ar", full_name="Ana Prueba"
+    user = await CreateUser(_create_deps(users)).execute(
+        email="ana@canaldirecto.com.ar", full_name="Ana Prueba", color="#888200"
     )
 
     assert users.rows[user.id] is user
@@ -75,7 +68,7 @@ async def test_create_user_da_de_alta_activo_con_color_de_gestion() -> None:
     assert user.color == "#888200"
 
 
-async def test_create_user_sin_color_en_gestion_queda_sin_color() -> None:
+async def test_create_user_sin_color_queda_sin_color() -> None:
     user = await CreateUser(_create_deps(FakeUserRepository())).execute(
         email="ana@canaldirecto.com.ar", full_name="Ana Prueba"
     )

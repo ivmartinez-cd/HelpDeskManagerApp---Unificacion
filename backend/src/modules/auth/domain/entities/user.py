@@ -18,9 +18,8 @@ class User:
     is_superadmin: bool
     created_at: datetime
     last_login_at: datetime | None = None
-    # Color de identidad del operador tal cual está en Gestión (no una
-    # aproximación): resuelto una vez al dar de alta (ver CreateUser +
-    # OperadorColorLookup) y editable a mano por un admin después.
+    # Color de identidad: lo trae la ficha de la persona al dar acceso y se
+    # edita desde Personas, que lo escribe en ficha y cuenta (ADR-040).
     color: str | None = None
 
     def __eq__(self, other: object) -> bool:

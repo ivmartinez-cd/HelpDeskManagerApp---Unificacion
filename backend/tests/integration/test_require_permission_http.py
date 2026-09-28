@@ -64,7 +64,7 @@ def _sesion_sin_turnos(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
         ("POST", "/api/turnos/casillas"),
         ("GET", "/api/turnos/grilla-variantes"),
         ("POST", "/api/turnos/intercambios"),
-        ("GET", "/api/admin/users"),
+        ("GET", "/api/admin/users/00000000-0000-0000-0000-000000000001"),
     ],
 )
 async def test_sesion_valida_sin_grant_devuelve_403(method: str, path: str) -> None:

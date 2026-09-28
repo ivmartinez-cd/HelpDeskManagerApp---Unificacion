@@ -72,6 +72,10 @@ solo en `infrastructure`/`presentation`; nadie depende de él.
   siguen viviendo solo en `auth`.
 - Negativas: `personas` se rompe si cambia la firma de `CreateUser`, `UpdateUser` o
   `RequestPasswordReset`. Mitigado por mypy y por los tests de `tests/unit/application/personas`
-  y `tests/integration/test_personas_router.py`. Mientras convivan las pantallas viejas
-  (fases 2 y 3 del plan), Usuarios y el ABM de empleados todavía pueden editar nombre y color
-  por separado; se retiran en la fase 4.
+  y `tests/integration/test_personas_router.py`.
+- Fase 4 (2026-09-28): se retiraron la pantalla de Usuarios y la pestaña Empleados, y de
+  `/api/admin/users` el listado, el alta y la edición. Quedan `GET /{id}` (grilla de
+  permisos) y `POST /{id}/password-reset` (ficha, pestaña Acceso). `CreateUser` recibe el color
+  de la ficha en vez de buscarlo en Gestión (ver la nota en ADR-009). El ABM de empleados de
+  `vacaciones` sigue existiendo como API: Personas lo usa para alta, datos laborales y
+  borrado de fichas.

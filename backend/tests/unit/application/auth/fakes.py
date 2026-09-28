@@ -327,11 +327,3 @@ class FakeRouteVisitRepository:
             last[r] = max(last.get(r, d), d)
         ranked = sorted(totals.items(), key=lambda kv: (-kv[1], kv[0]))[:limit]
         return [RouteVisitCount(route=r, visits=c, last_visit=last[r]) for r, c in ranked]
-
-
-class FakeOperadorColorLookup:
-    def __init__(self, colors: dict[str, str] | None = None) -> None:
-        self.colors = colors or {}
-
-    async def find_color_by_nombre(self, nombre: str) -> str | None:
-        return self.colors.get(nombre)

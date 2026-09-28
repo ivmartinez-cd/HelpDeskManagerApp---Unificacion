@@ -1,6 +1,13 @@
 # ADR-009: Inyección cruzada auth → contadores (color de operador) vía `dependency_overrides`
 
-## Estado: Aceptado
+## Estado: Aceptado — su caso concreto se retiró (2026-09-28)
+
+El alta de cuentas desde Administración > Usuarios se eliminó en la fase 4 de la unificación
+Personas (ADR-040): hoy una cuenta nace de una ficha de empleado y el color lo trae la ficha.
+Con eso se borraron el puerto `OperadorColorLookup`, su adaptador en
+`shared/infrastructure/cross_module/` y el override en `app.py`. El **patrón** (puerto en el
+módulo, adaptador y wiring en la raíz de composición vía `dependency_overrides`) sigue vigente
+y lo citan ADR-013 y otros como precedente.
 
 ## Contexto
 

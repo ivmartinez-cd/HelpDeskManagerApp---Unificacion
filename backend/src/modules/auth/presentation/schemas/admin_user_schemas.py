@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.modules.auth.domain.entities.user import User
 
@@ -28,18 +28,3 @@ class AdminUserResponse(BaseModel):
             created_at=user.created_at,
             color=user.color,
         )
-
-
-class CreateUserRequest(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    email: EmailStr
-    full_name: str = Field(alias="fullName", min_length=1)
-
-
-class UpdateUserRequest(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    full_name: str | None = Field(default=None, alias="fullName", min_length=1)
-    is_active: bool | None = Field(default=None, alias="isActive")
-    color: str | None = None

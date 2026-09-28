@@ -1,8 +1,7 @@
 # Plan: unificar Usuarios y Empleados en "Personas"
 
-Estado: **fase 3 terminada** (2026-09-28): pantalla Personas en `/personas`, módulo
-encendido, Usuarios y la pestaña Empleados redirigen ahí. Próximo: fase 4 (retirar lo viejo),
-cuando los compañeros la hayan probado.
+Estado: **terminado** (2026-09-28). Las cuatro fases están hechas: Personas en `/personas`
+reemplazó a Usuarios y a la pestaña Empleados, y lo viejo se retiró (fase 4).
 
 ## Problema
 
@@ -144,10 +143,21 @@ inactiva); dar acceso, editar datos y quitar acceso probados en una transacción
   de restablecimiento).
 - **Alta**: "Nueva persona" crea la ficha (`vacaciones.manage`); el acceso se da después
   desde la ficha. "Vincular con Siges" se mudó a la cabecera de Personas.
-- **Sin "Eliminar"** en la pantalla nueva: una persona que se va se pasa a inactiva. El
-  borrado de fichas quedó solo en el código viejo, que se retira en la fase 4.
+- Sin "Eliminar" en la primera versión; se agregó en la fase 4 (ver abajo).
 - Plantillas de permisos: Team leader suma `personas.view`/`update`; "Team leader +
   Usuarios" suma `personas.manage` (mismo criterio que el backfill).
+
+## Fase 4: qué se retiró (2026-09-28)
+
+- Frontend: la pantalla de Administración > Usuarios (con sus modales de alta y color) y la
+  pestaña Empleados de Gestión Humana (con su modal). Los links viejos siguen redirigiendo
+  a Personas.
+- Backend: de `/api/admin/users` se sacaron listado, alta y edición; quedan ver una cuenta
+  (grilla de permisos) y mandar el link de restablecimiento. También el orden de la lista vieja
+  y la búsqueda del color en Gestión al crear cuentas: ahora el color sale de la ficha.
+- **"Eliminar persona"** pasó a la pestaña Laboral (decisión de Iván): con permiso de
+  gestionar vacaciones y solo si la persona no entra a la app. Pide confirmación porque borra
+  en cascada sus vacaciones, ausencias y ciclos; lo normal sigue siendo pasarla a inactiva.
 
 ## Decisiones tomadas (2026-09-25)
 
