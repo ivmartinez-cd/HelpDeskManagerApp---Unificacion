@@ -47,7 +47,7 @@ export function VarianteDiaTabs({
               }`}
             >
               {dia}
-              {cantidad > 0 && !fueraDelRango && <span className="ml-1 opacity-70">({cantidad})</span>}
+              {cantidad > 0 && !fueraDelRango && <>{" "}<span className="opacity-70">({cantidad})</span></>}
             </button>
           );
         })}

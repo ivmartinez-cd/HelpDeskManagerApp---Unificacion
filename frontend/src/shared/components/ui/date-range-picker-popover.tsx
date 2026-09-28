@@ -22,6 +22,7 @@ export function DateRangePickerPopover({
   ...pickerProps
 }: DateRangePickerPopoverProps) {
   const [open, setOpen] = useState(false);
+  const [abreHaciaDerecha, setAbreHaciaDerecha] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,7 +49,13 @@ export function DateRangePickerPopover({
     <div ref={containerRef} className={cn("relative", className)}>
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => {
+          // Con el trigger en la mitad izquierda de la pantalla, anclar el panel a su borde
+          // derecho lo saca por la izquierda del viewport (p. ej. Análisis de Log HP).
+          const rect = containerRef.current?.getBoundingClientRect();
+          if (rect) setAbreHaciaDerecha(rect.left + rect.width / 2 < window.innerWidth / 2);
+          setOpen((prev) => !prev);
+        }}
         aria-expanded={open}
         className={cn(
           "flex cursor-pointer items-center gap-2 rounded-[8px] border border-border bg-card px-3.5 py-2.5 font-body text-sm transition-colors hover:bg-muted",
@@ -61,7 +68,10 @@ export function DateRangePickerPopover({
       {open && (
         // `w-max`: sin ancho propio, un posicionado absoluto hereda el ancho del trigger y el
         // Patrón 4 (flex-wrap) se apila en una columna angosta.
-        <div className="absolute right-0 z-50 mt-2 w-max max-w-[calc(100vw-2rem)] rounded-[12px] bg-card shadow-[0_20px_60px_rgba(0,0,0,.25)]">
+        <div className={cn(
+          "absolute z-50 mt-2 w-max max-w-[calc(100vw-2rem)] rounded-[12px] bg-card shadow-[0_20px_60px_rgba(0,0,0,.25)]",
+          abreHaciaDerecha ? "left-0" : "right-0",
+        )}>
           <DateRangePicker
             {...pickerProps}
             value={value}
