@@ -1,27 +1,31 @@
 import type { Metadata } from "next";
-import { Outfit, Montserrat, Source_Sans_3 } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 import { ThemeProvider, ThemeScript } from "@/shared/components/theme-provider";
 import { Toaster } from "sonner";
 
-const outfit = Outfit({
+// Fuentes servidas desde el repo (subset latin, versión variable, licencia OFL)
+// en vez de next/font/google: Google a veces devuelve URLs `/l/font?kit=...&...`
+// que Turbopack no sabe resolver y rompe el arranque del frontend.
+const outfit = localFont({
+  src: "./fonts/outfit-latin-variable.woff2",
   variable: "--font-outfit",
-  subsets: ["latin"],
+  weight: "100 900",
 });
 
 // Tipografía de marca Canal Directo (manual de marca), usada hoy en las
 // pantallas de auth — ver globals.css `--font-heading` / `--font-body`.
-const montserrat = Montserrat({
+const montserrat = localFont({
+  src: "./fonts/montserrat-latin-variable.woff2",
   variable: "--font-montserrat",
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
+  weight: "600 800",
 });
 
-const sourceSans = Source_Sans_3({
+const sourceSans = localFont({
+  src: "./fonts/source-sans-3-latin-variable.woff2",
   variable: "--font-source-sans",
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: "400 700",
 });
 
 export const metadata: Metadata = {
