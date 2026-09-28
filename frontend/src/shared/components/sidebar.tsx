@@ -12,6 +12,10 @@ import { ChangePasswordModal } from "@/features/auth/components/change-password-
 import { useSession } from "@/services/session-provider";
 import { canAccessPath } from "@/shared/config/route-permissions";
 
+/** Módulos con ruta propia que se muestran dentro del submenú de Gestión de
+ * Personal (ver VacacionesNavSubmenu); la clave coincide con la ruta raíz. */
+const DENTRO_DE_GESTION_PERSONAL: readonly string[] = ["personas", "turnos"];
+
 export function Sidebar({
   children,
   watiUrl = null,
@@ -66,14 +70,14 @@ export function Sidebar({
   // submenú de Servicio Técnico.
   // El módulo admin ya no tiene ítem propio: Usuarios pasó a ser Personas
   // (ADR-040) y su permiso solo gatea la grilla de permisos, que se abre
-  // desde la ficha de cada persona. Personas vive dentro del submenú de
-  // Gestión de Personal (pedido de Iván, 2026-09-28); solo queda suelta para
-  // quien la tenga sin ese módulo.
-  const personasEnGestion = modules.some((m) => m.key === "vacaciones");
+  // desde la ficha de cada persona. Personas y Turnos viven dentro del
+  // submenú de Gestión de Personal (pedido de Iván, 2026-09-28); solo quedan
+  // sueltos para quien los tenga sin ese módulo.
+  const tieneGestionPersonal = modules.some((m) => m.key === "vacaciones");
   const topLevelModules = sortedModules.filter(
     (m) =>
       m.key !== "admin" &&
-      (m.key !== "personas" || !personasEnGestion) &&
+      (!DENTRO_DE_GESTION_PERSONAL.includes(m.key) || !tieneGestionPersonal) &&
       m.key !== "prestadores" &&
       m.key !== "sla" &&
       m.key !== "preventivos" &&
@@ -113,7 +117,8 @@ export function Sidebar({
 
   const isActive = (route: string) => pathname === route || pathname.startsWith(`${route}/`);
   const moduloActivo = (module: { key: string; route: string }) =>
-    isActive(module.route) || (module.key === "vacaciones" && isActive("/personas"));
+    isActive(module.route) ||
+    (module.key === "vacaciones" && DENTRO_DE_GESTION_PERSONAL.some((k) => isActive(`/${k}`)));
   const closeMobile = () => setMobileOpen(false);
   const isHome = pathname === "/";
   const toggleSubmenu = (key: string) => (expanded: boolean) =>

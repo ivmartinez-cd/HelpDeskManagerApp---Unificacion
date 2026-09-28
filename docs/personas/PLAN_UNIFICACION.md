@@ -129,7 +129,8 @@ inactiva); dar acceso, editar datos y quitar acceso probados en una transacción
 
 - **Menú**: "Personas" es el primer ítem de Gestión Humana, dentro del submenú de Gestión de
   Personal (2026-09-28, pedido de Iván; al principio reemplazaba a "Usuarios" al final del
-  menú). Solo aparece suelta para quien la tenga sin el módulo de Gestión de Personal. El
+  menú). Solo aparece suelta para quien la tenga sin el módulo de Gestión de Personal. Ese
+  mismo día Turnos también pasó a ese submenú (grupo "Turnos"), con el mismo criterio. El
   módulo admin ya no tiene ítem; su permiso sigue gateando la grilla de permisos. `/admin` y
   `/admin/usuarios` redirigen a `/personas`. La pestaña Empleados de Gestión de Personal ya no
   existe (`?tab=empleados` redirige) y su acceso en el submenú se sacó (2026-09-28, pedido de

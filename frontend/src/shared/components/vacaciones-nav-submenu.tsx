@@ -8,6 +8,7 @@ import {
   Building2,
   CalendarCheck2,
   CalendarX2,
+  Clock,
   ClipboardCheck,
   LayoutDashboard,
   PartyPopper,
@@ -50,7 +51,7 @@ interface NavGroupDef {
 export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { can, hasFeature } = useSession();
+  const { can, hasFeature, modules } = useSession();
   const puedeAbrir = (href: string) => canAccessPath(href, { can, hasFeature });
   const enGestion = pathname === "/vacaciones/gestion";
   const tabGestion = enGestion ? (searchParams.get("tab") ?? "sectores") : null;
@@ -93,6 +94,20 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
           label: "Registro de asistencias",
           icon: CalendarX2,
           visible: puedeAbrir("/vacaciones/asistencias"),
+        },
+      ],
+    },
+    {
+      // Turnos es módulo propio (ADR-029) con ruta /turnos; se muestra acá
+      // (pedido de Iván, 2026-09-28). Coberturas se abre desde la grilla.
+      titulo: "Turnos",
+      items: [
+        {
+          href: "/turnos",
+          label: "Turnos",
+          icon: Clock,
+          visible: puedeAbrir("/turnos") && modules.some((m) => m.key === "turnos"),
+          active: pathname === "/turnos" || pathname.startsWith("/turnos/"),
         },
       ],
     },
