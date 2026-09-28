@@ -29,10 +29,6 @@ export function Sidebar({
   // de Gestión de Personal sin acceso al dashboard → Solicitudes.
   const hrefDeModulo = (module: { key: string; route: string }): string => {
     if (module.key === "contadores") return "/contadores/calendario";
-    // El módulo admin ("Usuarios" desde 2026-08-28, antes "Configuración")
-    // solo tiene esa pantalla (Turnos es módulo propio, ADR-029): se entra
-    // directo, sin hub intermedio. `/admin` redirige acá (next.config.ts).
-    if (module.key === "admin") return "/admin/usuarios";
     if (module.key === "vacaciones" && !canAccessPath(module.route, { can, hasFeature })) {
       return "/vacaciones/solicitudes";
     }
@@ -42,7 +38,7 @@ export function Sidebar({
   // de uso diario van primero y en orden alfabético (Contadores, Insumos,
   // Servicio Técnico -grupo virtual-, WhatsApp); el resto (Gestión de
   // Personal, Turnos) queda debajo, sin orden alfabético entre sí; y
-  // Usuarios (módulo admin) siempre al final de todo, sin importar sort_order del
+  // Personas (ex Usuarios) siempre al final de todo, sin importar sort_order del
   // backend.
   const DAILY_RANK: Record<string, number> = {
     contadores: 0,
@@ -51,7 +47,7 @@ export function Sidebar({
     wati: 3,
   };
   const rankOf = (key: string) => {
-    if (key === "admin") return 1000;
+    if (key === "personas") return 1000;
     return DAILY_RANK[key] ?? 100;
   };
   const sortedModules = [...modules].sort((a, b) => rankOf(a.key) - rankOf(b.key));
@@ -68,8 +64,12 @@ export function Sidebar({
   // es ítem propio (con submenú, ver ModuleNavItem) desde 2026-08-28: es
   // facturación mensual, no operación diaria, y ocupaba casi la mitad del
   // submenú de Servicio Técnico.
+  // El módulo admin ya no tiene ítem propio: Usuarios pasó a ser Personas
+  // (ADR-040) y su permiso solo gatea la grilla de permisos, que se abre
+  // desde la ficha de cada persona.
   const topLevelModules = sortedModules.filter(
     (m) =>
+      m.key !== "admin" &&
       m.key !== "prestadores" &&
       m.key !== "sla" &&
       m.key !== "preventivos" &&

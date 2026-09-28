@@ -6,35 +6,26 @@ import { useSession } from "@/services/session-provider";
 import { BrandButton, BrandSkeleton } from "@/shared/components/ui/brand-form";
 import { Plus } from "lucide-react";
 import { gestionApi } from "../api/gestion-api";
-import type {
-  Cargo,
-  EmpleadoListItem,
-  Feriado,
-  Sector,
-  UsuarioOption,
-} from "../types/vacaciones";
+import type { Cargo, Feriado, Sector, UsuarioOption } from "../types/vacaciones";
 import { CargosTab } from "./cargos-tab";
-import { EmpleadosTab } from "./empleados-tab";
 import { FeriadosTab } from "./feriados-tab";
 import { SectoresTab } from "./sectores-tab";
-import { SigesVinculoModal } from "./siges-vinculo-modal";
 
-type Tab = "empleados" | "sectores" | "cargos" | "feriados";
-const TAB_VALUES: readonly Tab[] = ["empleados", "sectores", "cargos", "feriados"];
+// Empleados pasó a la pantalla Personas (ADR-040, fase 3 de la unificación).
+type Tab = "sectores" | "cargos" | "feriados";
+const TAB_VALUES: readonly Tab[] = ["sectores", "cargos", "feriados"];
 
 const TABS: { value: Tab; label: string }[] = [
-  { value: "empleados", label: "Empleados" },
   { value: "sectores", label: "Sectores" },
   { value: "cargos", label: "Cargos" },
   { value: "feriados", label: "Feriados" },
 ];
 
 function tabDesdeQuery(raw: string | null): Tab {
-  return (TAB_VALUES as readonly string[]).includes(raw ?? "") ? (raw as Tab) : "empleados";
+  return (TAB_VALUES as readonly string[]).includes(raw ?? "") ? (raw as Tab) : "sectores";
 }
 
 const NUEVO_LABEL: Record<Tab, string> = {
-  empleados: "Nuevo empleado",
   sectores: "Nuevo sector",
   cargos: "Nuevo cargo",
   feriados: "Nuevo feriado",
@@ -45,6 +36,11 @@ export function GestionView() {
   const puedeGestionar = user.isSuperadmin || can("vacaciones", "manage");
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Links viejos a la pestaña Empleados (favoritos, sidebar cacheado).
+  const vieneDeEmpleados = searchParams.get("tab") === "empleados";
+  useEffect(() => {
+    if (vieneDeEmpleados) router.replace("/personas");
+  }, [vieneDeEmpleados, router]);
   // El tab es derivado de la URL (?tab=…), no estado propio — así el
   // sidebar puede linkear directo a cada pestaña. Antes solo existía
   // "Personal" con Empleados por default, y Sectores/Cargos/Feriados
@@ -52,22 +48,19 @@ export function GestionView() {
   const tab = tabDesdeQuery(searchParams.get("tab"));
   const setTab = useCallback(
     (next: Tab) => {
-      router.replace(next === "empleados" ? "/vacaciones/gestion" : `/vacaciones/gestion?tab=${next}`);
+      router.replace(next === "sectores" ? "/vacaciones/gestion" : `/vacaciones/gestion?tab=${next}`);
     },
     [router],
   );
-  const [empleados, setEmpleados] = useState<EmpleadoListItem[] | null>(null);
   const [sectores, setSectores] = useState<Sector[] | null>(null);
   const [cargos, setCargos] = useState<Cargo[] | null>(null);
   const [feriados, setFeriados] = useState<Feriado[] | null>(null);
   const [usuarios, setUsuarios] = useState<UsuarioOption[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [abrirAlta, setAbrirAlta] = useState(false);
-  const [abrirSigesVinculo, setAbrirSigesVinculo] = useState(false);
 
   const load = useCallback(() => {
     const base = Promise.all([
-      gestionApi.listEmpleados(),
       gestionApi.listSectores(),
       gestionApi.listCargos(),
       gestionApi.listFeriados(),
@@ -76,8 +69,7 @@ export function GestionView() {
       ? Promise.all([base, gestionApi.listUsuarios()])
       : Promise.all([base, Promise.resolve([] as UsuarioOption[])]);
     return conUsuarios
-      .then(([[emps, secs, cars, fers], users]) => {
-        setEmpleados(emps);
+      .then(([[secs, cars, fers], users]) => {
         setSectores(secs);
         setCargos(cars);
         setFeriados(fers);
@@ -94,7 +86,7 @@ export function GestionView() {
     void load();
   }, [load]);
 
-  const cargando = empleados === null && !error;
+  const cargando = sectores === null && !error;
 
   return (
     <div className="flex flex-col gap-6 px-9 py-8">
@@ -104,16 +96,11 @@ export function GestionView() {
             Personal
           </h1>
           <p className="font-body text-sm text-muted-foreground">
-            Empleados, sectores, cargos y feriados
+            Sectores, cargos y feriados
           </p>
         </div>
         {puedeGestionar && (
           <div className="flex items-center gap-2">
-            {tab === "empleados" && (
-              <BrandButton variant="outline" onClick={() => setAbrirSigesVinculo(true)}>
-                Vincular con Siges
-              </BrandButton>
-            )}
             <BrandButton onClick={() => setAbrirAlta(true)}>
               <Plus className="h-4 w-4" />
               {NUEVO_LABEL[tab]}
@@ -158,18 +145,6 @@ export function GestionView() {
 
       {!cargando && !error && (
         <>
-          {tab === "empleados" && (
-            <EmpleadosTab
-              empleados={empleados ?? []}
-              sectores={sectores ?? []}
-              cargos={cargos ?? []}
-              usuarios={usuarios}
-              puedeGestionar={puedeGestionar}
-              abrirAlta={abrirAlta}
-              onCerrarAlta={() => setAbrirAlta(false)}
-              onChanged={() => void load()}
-            />
-          )}
           {tab === "sectores" && (
             <SectoresTab
               sectores={sectores ?? []}
@@ -199,13 +174,6 @@ export function GestionView() {
             />
           )}
         </>
-      )}
-
-      {abrirSigesVinculo && (
-        <SigesVinculoModal
-          onClose={() => setAbrirSigesVinculo(false)}
-          onChanged={() => void load()}
-        />
       )}
     </div>
   );

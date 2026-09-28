@@ -53,7 +53,7 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
   const { can, hasFeature } = useSession();
   const puedeAbrir = (href: string) => canAccessPath(href, { can, hasFeature });
   const enGestion = pathname === "/vacaciones/gestion";
-  const tabGestion = enGestion ? (searchParams.get("tab") ?? "empleados") : null;
+  const tabGestion = enGestion ? (searchParams.get("tab") ?? "sectores") : null;
 
   const grupos: NavGroupDef[] = [
     {
@@ -99,15 +99,15 @@ export function VacacionesNavSubmenu({ onNavigate }: { onNavigate?: () => void }
     {
       titulo: "Gestión Humana",
       items: [
+        // Empleados vive en Personas (ADR-040): mismo acceso, otra pantalla.
         {
-          href: "/vacaciones/gestion",
+          href: "/personas",
           label: "Empleados",
           icon: Users,
-          visible: puedeAbrir("/vacaciones/gestion"),
-          active: tabGestion === "empleados",
+          visible: puedeAbrir("/personas"),
         },
         {
-          href: "/vacaciones/gestion?tab=sectores",
+          href: "/vacaciones/gestion",
           label: "Sectores",
           icon: Building2,
           visible: puedeAbrir("/vacaciones/gestion"),

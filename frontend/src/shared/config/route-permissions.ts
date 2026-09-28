@@ -52,6 +52,9 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   // Módulo admin, ítem "Usuarios" (cuentas + permisos). Turnos ya no vive acá (ADR-029).
   { prefix: "/admin", anyOf: [p("admin", "manage")] },
 
+  // Personas (ADR-040): reemplaza a Usuarios y a la pestaña Empleados.
+  { prefix: "/personas", anyOf: [p("personas", "view")] },
+
   // Turnos: la grilla y sus coberturas se consultan con view; mutar es manage
   // (gateado por botón, no por ruta).
   { prefix: "/turnos", anyOf: [p("turnos", "view")] },

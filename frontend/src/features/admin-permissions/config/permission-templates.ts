@@ -84,6 +84,9 @@ const TEAM_LEADER: readonly (readonly [string, string])[] = [
   ["turnos", "manage"],
   ["vacaciones", "approve"],
   ["vacaciones", "manage"],
+  // Personas: ver y editar datos, como el backfill de quien tenía vacaciones.manage.
+  ["personas", "view"],
+  ["personas", "update"],
   ["wati", "update"],
 ];
 
@@ -127,8 +130,8 @@ export const PERMISSION_TEMPLATES: readonly PermissionTemplate[] = [
     // necesita grants): esto es un TL que además puede gestionar usuarios.
     key: "tl-configuracion",
     label: "Team leader + Usuarios",
-    description: "Team leader + módulo Usuarios (cuentas y permisos). No es superadmin.",
-    grants: [...TEAM_LEADER, ["admin", "manage"]],
+    description: "Team leader + dar y quitar acceso a la app y editar permisos. No es superadmin.",
+    grants: [...TEAM_LEADER, ["admin", "manage"], ["personas", "manage"]],
     features: FUNCIONES_TL,
   },
 ];

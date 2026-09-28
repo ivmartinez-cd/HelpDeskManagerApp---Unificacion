@@ -18,6 +18,7 @@ from src.modules.personas.application.use_cases.consultar_personas import (
     ObtenerPersona,
 )
 from src.modules.personas.application.use_cases.gestionar_acceso import DarAcceso, QuitarAcceso
+from src.modules.personas.domain.entities.persona import Persona
 from src.modules.personas.domain.repositories.persona_repository import (
     CampoOrdenPersonas,
     FiltrosPersonas,
@@ -61,6 +62,10 @@ async def list_personas(
     personas, total = await ListarPersonas(armado.repositorio(db)).execute(
         filtros, orden, page=page, size=size
     )
+    return _pagina(personas, total, page, size)
+
+
+def _pagina(personas: list[Persona], total: int, page: int, size: int) -> Page[PersonaResponse]:
     items = [PersonaResponse.from_entity(p) for p in personas]
     return Page(items=items, total=total, page=page, size=size)
 

@@ -11,6 +11,7 @@ import {
   ReceiptText,
   Settings,
   UserRound,
+  Users,
   type LucideIcon,
   MessageCircle,
 } from "lucide-react";
@@ -31,6 +32,7 @@ const MODULE_ICONS: Record<string, LucideIcon> = {
   "analisis-log-hp": FileSearch,
   wati: MessageCircle,
   admin: Settings,
+  personas: Users,
 };
 
 export function ModuleNavItem({

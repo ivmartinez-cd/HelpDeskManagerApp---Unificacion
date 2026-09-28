@@ -44,9 +44,10 @@ const nextConfig: NextConfig = {
     return [
       { source: "/admin/turnos", destination: "/turnos", permanent: false },
       { source: "/admin/turnos/:path*", destination: "/turnos/:path*", permanent: false },
-      // El hub de Configuración quedó con una sola tarjeta (Usuarios) y se
-      // eliminó (2026-08-28); el sidebar ya apunta directo a /admin/usuarios.
-      { source: "/admin", destination: "/admin/usuarios", permanent: false },
+      // Usuarios pasó a ser Personas (ADR-040, fase 3 de la unificación). La
+      // grilla de permisos (/admin/usuarios/:id/permisos) sigue donde está.
+      { source: "/admin", destination: "/personas", permanent: false },
+      { source: "/admin/usuarios", destination: "/personas", permanent: false },
     ];
   },
   async rewrites() {

@@ -45,11 +45,11 @@ export default function UserPermissionsPage({ params }: PageProps) {
   return (
     <div className="p-6 lg:p-10">
       <Link
-        href="/admin/usuarios"
+        href="/personas"
         className="mb-4 inline-flex items-center gap-1.5 font-body text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
-        Usuarios
+        Personas
       </Link>
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">

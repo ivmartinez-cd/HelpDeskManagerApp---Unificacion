@@ -1,7 +1,8 @@
 # Plan: unificar Usuarios y Empleados en "Personas"
 
-Estado: **fase 2 terminada** (2026-09-25): backend `/api/personas` con permisos propios
-(ADR-040), módulo sembrado apagado hasta que exista la pantalla. Próximo: fase 3 (frontend).
+Estado: **fase 3 terminada** (2026-09-28): pantalla Personas en `/personas`, módulo
+encendido, Usuarios y la pestaña Empleados redirigen ahí. Próximo: fase 4 (retirar lo viejo),
+cuando los compañeros la hayan probado.
 
 ## Problema
 
@@ -125,6 +126,29 @@ Endpoints (`/api/personas`, ADR-040):
 Verificado contra la base de dev: 42 personas (11 entran a la app, 30 activas sin acceso, 1
 inactiva); dar acceso, editar datos y quitar acceso probados en una transacción descartada.
 
+## Fase 3: qué quedó hecho (2026-09-28)
+
+- **Menú**: "Personas" reemplaza a "Usuarios" al final del menú lateral (el módulo admin ya
+  no tiene ítem; su permiso sigue gateando la grilla de permisos). `/admin` y
+  `/admin/usuarios` redirigen a `/personas`. En Gestión de Personal, el acceso "Empleados"
+  lleva a Personas y la pestaña Empleados ya no existe (`?tab=empleados` redirige).
+- **Listado**: nombre (+mail), sector, cargo, ingreso/antigüedad y disponibles (estas dos solo
+  para quien ve vacaciones: se cruzan con el listado de empleados), entra a la app, estado.
+  Búsqueda y filtros por sector, acceso y estado. Trae todo en una carga (tope 200) y ordena
+  y filtra en el navegador, como la vieja pestaña Empleados.
+- **Ficha** `/personas/{id}` con pestañas: **Datos** (nombre, mail, color; `personas.update`;
+  el mail de quien entra a la app solo con `personas.manage`), **Laboral** (ingreso, estado,
+  sector, cargo, saldo y legajo Siges; se ve con `vacaciones.view`, se edita con
+  `vacaciones.manage` por el ABM de empleados) y **Acceso a la app** (solo con
+  `personas.manage`: dar/reactivar/quitar acceso; con `admin.manage` además Permisos y link
+  de restablecimiento).
+- **Alta**: "Nueva persona" crea la ficha (`vacaciones.manage`); el acceso se da después
+  desde la ficha. "Vincular con Siges" se mudó a la cabecera de Personas.
+- **Sin "Eliminar"** en la pantalla nueva: una persona que se va se pasa a inactiva. El
+  borrado de fichas quedó solo en el código viejo, que se retira en la fase 4.
+- Plantillas de permisos: Team leader suma `personas.view`/`update`; "Team leader +
+  Usuarios" suma `personas.manage` (mismo criterio que el backfill).
+
 ## Decisiones tomadas (2026-09-25)
 
 - Marcia Pollero es ex empleada (ficha inactiva). Franco Lombardi es empleado; su mail es
@@ -142,4 +166,5 @@ inactiva); dar acceso, editar datos y quitar acceso probados en una transacción
 
 ## Preguntas abiertas (para Iván)
 
-- **Nombre de la pantalla**: "Personas" o "Equipo". Bloquea la fase 3.
+- Ninguna. Nombre de la pantalla: "Personas" (2026-09-28); ingreso y saldo en el listado y
+  Personas en lugar de Usuarios en el menú (2026-09-28).
