@@ -282,7 +282,9 @@ test.describe("Vacaciones", () => {
     await expect(page.getByText("No hay solicitudes para mostrar")).toBeVisible();
   });
 
-  test("gestión humana: tabs, tabla de empleados e import de feriados", async ({
+  // Empleados pasó a Personas (ADR-040, ver personas.spec.ts): Gestión Humana
+  // abre en Sectores.
+  test("gestión humana: tabs, sectores e import de feriados", async ({
     page,
   }) => {
     await mockVacaciones(page);
@@ -304,8 +306,9 @@ test.describe("Vacaciones", () => {
     });
 
     await page.goto("/vacaciones/gestion");
-    await expect(page.getByText("Laura Pérez")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Nuevo empleado" })).toBeVisible();
+    await expect(page.getByText("Soporte Técnico").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Nuevo sector" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Empleados", exact: true })).toHaveCount(0);
 
     await page.getByRole("button", { name: "Feriados" }).click();
     await expect(page.getByText("Año nuevo")).toBeVisible();

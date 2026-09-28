@@ -115,6 +115,14 @@ const MODULES_MOCK = [
     sortOrder: 45,
     isEnabled: true,
   },
+  {
+    key: "personas",
+    label: "Personas",
+    route: "/personas",
+    icon: "users",
+    sortOrder: 1,
+    isEnabled: true,
+  },
 ];
 
 function handler(req: IncomingMessage, res: ServerResponse) {
