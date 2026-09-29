@@ -386,6 +386,12 @@ SELECT
     CAST(1 AS bit)                     AS EsClaseSintetica
 FROM #ClasesSinteticas CS;
 
+-- ID_Fila: Siges puede partir un mismo (Maq, Clase) en dos filas de FC dentro
+-- del proceso (equipo que cambió de empresa a mitad de período). Los temps
+-- derivados fila a fila se cruzan por ID_Fila; cruzarlos por (Maq, Clase)
+-- multiplicaba 2^n las filas del SELECT final.
+ALTER TABLE #BaseProceso ADD ID_Fila int IDENTITY(1,1) NOT NULL;
+
 CREATE NONCLUSTERED INDEX ix_bp_maq_clase
     ON #BaseProceso (ID_Maquina, ID_ClaseContador);
 
@@ -418,11 +424,12 @@ CREATE NONCLUSTERED INDEX ix_ce_maq_clase_fecha
     INCLUDE (ID_TipoToma, Estado, Contador, Para_Facturar, ID_Empresa, ID_Sucursal);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- PASO 3 — #EquipoMeta: una fila por máquina con sus joins de catálogo.
+-- PASO 3 — #EquipoMeta: una fila por fila de #BaseProceso con sus joins de catálogo.
 --   Ubicación viene del SNAPSHOT (BaseProceso). Empresa actual (M.ID_Empresa)
 --   se resuelve aparte por el badge "Ubic Actual: XXX".
 -- ─────────────────────────────────────────────────────────────────────────────
-SELECT DISTINCT
+SELECT
+    BP.ID_Fila,
     BP.ID_Maquina,
     M.Nro_Serie               AS NroSerie,
     BP.Snap_ID_Empresa        AS ID_Empresa,
@@ -457,7 +464,7 @@ LEFT  JOIN Sector        Sec    WITH (NOLOCK) ON Sec.Id_Empresa    = BP.Snap_ID_
 LEFT  JOIN Empresa       EAct   WITH (NOLOCK) ON EAct.ID_Empresa   = M.ID_Empresa
 LEFT  JOIN Estado_Maquina EstMaq WITH (NOLOCK) ON EstMaq.Id        = M.ID_Estado_Maquina;
 
-CREATE NONCLUSTERED INDEX ix_em_maquina ON #EquipoMeta (ID_Maquina);
+CREATE NONCLUSTERED INDEX ix_em_fila ON #EquipoMeta (ID_Fila);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- PASO 4 — #UltimoReal: último contador "real" por (Maq, Clase).
@@ -484,6 +491,7 @@ CREATE NONCLUSTERED INDEX ix_em_maquina ON #EquipoMeta (ID_Maquina);
 --   Lee de #ContEquipos (memoria, indexada).
 -- ─────────────────────────────────────────────────────────────────────────────
 SELECT
+    BP.ID_Fila,
     BP.ID_Maquina,
     BP.ID_ClaseContador,
     BP.Snap_ID_Empresa     AS Snap_ID_Empresa,   -- empresa del proceso, para guardar el par P/L en la misma empresa
@@ -543,7 +551,7 @@ OUTER APPLY (
     ORDER BY C.FechaTomaContador DESC
 ) URNT;
 
-CREATE NONCLUSTERED INDEX ix_ur ON #UltimoReal (ID_Maquina, ID_ClaseContador);
+CREATE NONCLUSTERED INDEX ix_ur ON #UltimoReal (ID_Fila);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- PASO 5 — #RealAnterior: real previo al UltimoReal (regla de tres P/L).
@@ -559,6 +567,7 @@ CREATE NONCLUSTERED INDEX ix_ur ON #UltimoReal (ID_Maquina, ID_ClaseContador);
 --   Si no existe ninguno → CalculadorContadores cae al fallback parque.
 -- ─────────────────────────────────────────────────────────────────────────────
 SELECT
+    UR.ID_Fila,
     UR.ID_Maquina,
     UR.ID_ClaseContador,
     COALESCE(RA_Pref.Contador,          RA_Fall.Contador)          AS Valor,
@@ -622,7 +631,7 @@ OUTER APPLY (
 ) RA_Fall
 WHERE UR.Fecha IS NOT NULL;
 
-CREATE NONCLUSTERED INDEX ix_ra ON #RealAnterior (ID_Maquina, ID_ClaseContador);
+CREATE NONCLUSTERED INDEX ix_ra ON #RealAnterior (ID_Fila);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- PASO 6 — #T4ST: última lectura T4 (ST). Caso especial en el motor.
@@ -632,6 +641,7 @@ CREATE NONCLUSTERED INDEX ix_ra ON #RealAnterior (ID_Maquina, ID_ClaseContador);
 --   usaba @T4ParaFacturar, el flag a nivel Tipo_Toma, constante para el proceso.)
 -- ─────────────────────────────────────────────────────────────────────────────
 SELECT
+    BP.ID_Fila,
     BP.ID_Maquina,
     BP.ID_ClaseContador,
     T4.Contador            AS Valor,
@@ -653,7 +663,7 @@ OUTER APPLY (
     ORDER BY C.FechaTomaContador DESC
 ) T4;
 
-CREATE NONCLUSTERED INDEX ix_t4 ON #T4ST (ID_Maquina, ID_ClaseContador);
+CREATE NONCLUSTERED INDEX ix_t4 ON #T4ST (ID_Fila);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- PASO 7 — #FCRecientesEnriq: filas de Factura_Contador de procesos cerrados
@@ -1094,6 +1104,7 @@ CREATE NONCLUSTERED INDEX ix_p6 ON #Prom6FC (ID_Maquina, ID_ClaseContador);
 --   Usa la PK clustered de Contadores (rápido por sí solo).
 -- ─────────────────────────────────────────────────────────────────────────────
 SELECT
+    BP.ID_Fila,
     BP.ID_Maquina,
     BP.ID_ClaseContador,
     C.Contador            AS Valor,
@@ -1103,9 +1114,10 @@ INTO #ContadorAnterior
 FROM       #BaseProceso BP
 LEFT  JOIN Contadores  C WITH (NOLOCK) ON C.ID_Contador = BP.ID_ContadorAnterior;
 
-CREATE NONCLUSTERED INDEX ix_ca ON #ContadorAnterior (ID_Maquina, ID_ClaseContador);
+CREATE NONCLUSTERED INDEX ix_ca ON #ContadorAnterior (ID_Fila);
 
 SELECT
+    BP.ID_Fila,
     BP.ID_Maquina,
     BP.ID_ClaseContador,
     C.FechaTomaContador   AS Fecha,
@@ -1114,7 +1126,7 @@ INTO #ContadorActual
 FROM       #BaseProceso BP
 LEFT  JOIN Contadores  C WITH (NOLOCK) ON C.ID_Contador = BP.ID_ContadorActual;
 
-CREATE NONCLUSTERED INDEX ix_cact ON #ContadorActual (ID_Maquina, ID_ClaseContador);
+CREATE NONCLUSTERED INDEX ix_cact ON #ContadorActual (ID_Fila);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- PASO 11 — #HistoricoFC11: top 11 procesos cerrados del propio equipo,
@@ -1252,15 +1264,11 @@ SELECT
     PGL.MediaCruda                                                  AS [72_PGL_MediaCruda],
     UR.UltimoRealNoT4_Fecha                                         AS [73_UltimoRealNoT4_Fecha]
 FROM       #BaseProceso       BP
-INNER JOIN #EquipoMeta        EM  ON EM.ID_Maquina = BP.ID_Maquina
-LEFT  JOIN #ContadorAnterior  CA  ON CA.ID_Maquina       = BP.ID_Maquina
-                                 AND CA.ID_ClaseContador = BP.ID_ClaseContador
-LEFT  JOIN #UltimoReal        UR  ON UR.ID_Maquina       = BP.ID_Maquina
-                                 AND UR.ID_ClaseContador = BP.ID_ClaseContador
-LEFT  JOIN #RealAnterior      RA  ON RA.ID_Maquina       = BP.ID_Maquina
-                                 AND RA.ID_ClaseContador = BP.ID_ClaseContador
-LEFT  JOIN #T4ST              T4  ON T4.ID_Maquina       = BP.ID_Maquina
-                                 AND T4.ID_ClaseContador = BP.ID_ClaseContador
+INNER JOIN #EquipoMeta        EM  ON EM.ID_Fila = BP.ID_Fila
+LEFT  JOIN #ContadorAnterior  CA  ON CA.ID_Fila = BP.ID_Fila
+LEFT  JOIN #UltimoReal        UR  ON UR.ID_Fila = BP.ID_Fila
+LEFT  JOIN #RealAnterior      RA  ON RA.ID_Fila = BP.ID_Fila
+LEFT  JOIN #T4ST              T4  ON T4.ID_Fila = BP.ID_Fila
 LEFT  JOIN #Prom6FC           P6  ON P6.ID_Maquina       = BP.ID_Maquina
                                  AND P6.ID_ClaseContador = BP.ID_ClaseContador
 LEFT  JOIN #ParqueClienteTec  PCT ON PCT.ID_Empresa       = EM.ID_Empresa
@@ -1280,8 +1288,7 @@ LEFT  JOIN #ParqueGlobalModelo PGL ON PGL.ID_ArtGen         = EM.ID_ArtGen
                                  AND PGL.ID_ClaseContador   = BP.ID_ClaseContador
 LEFT  JOIN #HistoricoFC11     HP   ON HP.ID_Maquina         = BP.ID_Maquina
                                   AND HP.ID_ClaseContador   = BP.ID_ClaseContador
-LEFT  JOIN #ContadorActual    CTACT ON CTACT.ID_Maquina       = BP.ID_Maquina
-                                  AND CTACT.ID_ClaseContador = BP.ID_ClaseContador
+LEFT  JOIN #ContadorActual    CTACT ON CTACT.ID_Fila = BP.ID_Fila
 ORDER BY EM.EmpresaDesc, EM.SucursalDesc, EM.NroSerie, BP.ID_ClaseContador;
 
 -- ─────────────────────────────────────────────────────────────────────────────

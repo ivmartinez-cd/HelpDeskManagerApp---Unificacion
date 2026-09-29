@@ -18,10 +18,6 @@ import { n0 } from "./proyeccion-formato";
 import type { GrupoEquipo, ProyeccionSortKey } from "./proyeccion-orden";
 import { ProyeccionSparkline } from "./proyeccion-sparkline";
 
-export function claveFila(fila: FilaProyeccion): string {
-  return `${fila.id_maquina}-${fila.clase}`;
-}
-
 /** Agrupa por máquina conservando el orden de llegada y ordena las clases. */
 export function agruparPorEquipo(filas: FilaProyeccion[]): GrupoEquipo[] {
   const porId = new Map<number, FilaProyeccion[]>();
@@ -65,7 +61,7 @@ export function ProyeccionTabla(props: ProyeccionTablaProps) {
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {grupos.map((g) => g.filas.map((fila, i) => <FilaTabla key={claveFila(fila)} {...props} grupo={g} fila={fila} primera={i === 0} />))}
+          {grupos.map((g) => g.filas.map((fila, i) => <FilaTabla key={`${fila.id_maquina}-${fila.clase}-${i}`} {...props} grupo={g} fila={fila} primera={i === 0} />))}
         </tbody>
       </table>
     </div>
