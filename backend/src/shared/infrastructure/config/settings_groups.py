@@ -99,7 +99,9 @@ class ContadoresSettings(BaseSettings):
     epson_ers_token_file: str = "var/contadores/ers_token.json"
     epson_ers_timeout_seconds: float = 15.0
 
-    gestion_web_base_url: str = "http://gestion.cdsa.com.ar"
+    # Desde 2026-09 Gestión vive detrás del proxy con HTTPS: http://gestion.cdsa.com.ar
+    # devuelve 301 y ese host por HTTPS presenta el certificado *.canaldirecto.com.ar.
+    gestion_web_base_url: str = "https://gestion.canaldirecto.com.ar"
     gestion_web_username: str = ""
     gestion_web_password: SecretStr = SecretStr("")
     gestion_web_timeout_seconds: float = 15.0

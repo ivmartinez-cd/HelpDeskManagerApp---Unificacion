@@ -9,7 +9,7 @@ import httpx
 from src.shared.domain.errors import ExternalServiceError
 from src.shared.infrastructure.config.settings import Settings, get_settings
 
-# gestion.cdsa.com.ar es una app Symfony con form_login estándar, sin WAF ni
+# gestion.canaldirecto.com.ar es una app Symfony con form_login estándar, sin WAF ni
 # anti-bot de por medio (a diferencia de ERS) — confirmado logueándose de
 # verdad: GET /login trae el _csrf_token atado a la sesión anónima, POST
 # /login_check con usuario+contraseña+token autentica esa misma sesión.
@@ -20,7 +20,7 @@ async def refresh_gestion_session(
     session_file_path: str,
     settings: Settings | None = None,
 ) -> dict[str, Any]:
-    """Hace login contra gestion.cdsa.com.ar y guarda el PHPSESSID resultante
+    """Hace login contra gestion.canaldirecto.com.ar y guarda el PHPSESSID resultante
     en `session_file_path`, reemplazando el cookie que antes se pegaba a mano
     en GESTION_WEB_COOKIE cada vez que vencía."""
     cfg = settings or get_settings()
