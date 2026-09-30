@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
@@ -16,6 +16,9 @@ from src.modules.contadores.application.use_cases.get_ftp_client import GetFtpCl
 from src.modules.contadores.application.use_cases.list_ftp_clients import ListFtpClientsUseCase
 from src.modules.contadores.application.use_cases.run_db3_export import RunDb3ExportUseCase
 from src.modules.contadores.application.use_cases.update_ftp_client import UpdateFtpClientUseCase
+from src.modules.contadores.domain.repositories.grupos_economicos_ftp_gateway import (
+    GruposEconomicosFtpGateway,
+)
 from src.modules.contadores.domain.well_known_permissions import EXPORT
 from src.modules.contadores.infrastructure.csv.csv_db3_writer import CsvDb3Writer
 from src.modules.contadores.infrastructure.ftp.ftplib_db3_downloader import FtplibDb3Downloader
@@ -25,19 +28,23 @@ from src.modules.contadores.infrastructure.repositories.sqlalchemy_ftp_client_re
 from src.modules.contadores.infrastructure.sqlite.sqlite3_db3_file_reader import (
     Sqlite3Db3FileReader,
 )
+from src.modules.contadores.presentation.dependencies import get_grupos_economicos_ftp_gateway
 from src.modules.contadores.presentation.schemas.ftp_client_schemas import (
     FtpClientIn,
     FtpClientOut,
+    GrupoEconomicoFtpOut,
     ProcessFtpClientRequest,
     ProcessFtpClientResponse,
 )
 from src.modules.contadores.presentation.upload_storage import output_dir
+from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/contadores/ftp", tags=["contadores-ftp"])
 
 _require_export = Depends(require_permission(EXPORT))
+_grupos = Depends(get_grupos_economicos_ftp_gateway)
 # Ver el mismo comentario en sds_router.py: el frontend carga todo el
 # catálogo en un combobox con búsqueda en vivo, no una tabla paginada — el
 # default grande cubre eso sin dejar de cumplir el contrato de paginación
@@ -58,21 +65,33 @@ async def list_ftp_clients(
     return Page.of([FtpClientOut.from_result(r) for r in results], page=page, size=size)
 
 
+@router.get("/grupos-economicos", response_model=Page[GrupoEconomicoFtpOut])
+async def list_grupos_economicos_ftp(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=1000, ge=1, le=_MAX_PAGE_SIZE),
+    _: Identity = _require_export,
+    grupos: GruposEconomicosFtpGateway = _grupos,
+) -> Page[GrupoEconomicoFtpOut]:
+    """Grupos económicos de Siges con usuario FTP, para el combobox del alta."""
+    items = [
+        GrupoEconomicoFtpOut(id=g.id, descripcion=g.descripcion, usuario=g.usuario)
+        for g in await grupos.listar()
+    ]
+    return Page.of(items, page=page, size=size)
+
+
 @router.post("/clients", response_model=FtpClientOut, status_code=201)
 async def create_ftp_client(
     body: FtpClientIn,
     _: Identity = _require_export,
+    grupos: GruposEconomicosFtpGateway = _grupos,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> FtpClientOut:
-    """Crea un nuevo cliente FTP."""
-    if not body.password:
-        raise HTTPException(
-            status_code=400, detail="La contraseña es obligatoria para crear un cliente FTP."
-        )
-    repo = SqlAlchemyFtpClientRepository(db)
-    request = _to_app_request(body)
-    result = await CreateFtpClientUseCase(repo).execute(request)
-    return FtpClientOut.from_result(result)
+    """Crea un cliente FTP vinculado a un grupo económico de Siges."""
+    caso = CreateFtpClientUseCase(
+        SqlAlchemyFtpClientRepository(db), grupos, get_settings().contadores_ftp_host
+    )
+    return FtpClientOut.from_result(await caso.execute(_to_app_request(body)))
 
 
 @router.get("/clients/{client_id}", response_model=FtpClientOut)
@@ -92,13 +111,12 @@ async def update_ftp_client(
     client_id: uuid.UUID,
     body: FtpClientIn,
     _: Identity = _require_export,
+    grupos: GruposEconomicosFtpGateway = _grupos,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> FtpClientOut:
-    """Actualiza un cliente FTP existente."""
-    repo = SqlAlchemyFtpClientRepository(db)
-    request = _to_app_request(body)
-    result = await UpdateFtpClientUseCase(repo).execute(client_id, request)
-    return FtpClientOut.from_result(result)
+    """Edita nombre/carpeta/patrón o vincula el cliente a un grupo económico."""
+    caso = UpdateFtpClientUseCase(SqlAlchemyFtpClientRepository(db), grupos)
+    return FtpClientOut.from_result(await caso.execute(client_id, _to_app_request(body)))
 
 
 @router.delete("/clients/{client_id}", status_code=204)
@@ -117,6 +135,7 @@ async def process_ftp_client(
     client_id: uuid.UUID,
     body: ProcessFtpClientRequest,
     _: Identity = _require_export,
+    grupos: GruposEconomicosFtpGateway = _grupos,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ProcessFtpClientResponse:
     """Descarga el DB3 más reciente del cliente vía FTP y genera el CSV de exportación.
@@ -133,7 +152,8 @@ async def process_ftp_client(
         output_dir=output_dir(),
         fecha_maxima=body.fecha_maxima,
     )
-    result = await DownloadAndProcessFtpDb3UseCase(repo, downloader, db3_use_case).execute(request)
+    caso = DownloadAndProcessFtpDb3UseCase(repo, downloader, db3_use_case, grupos)
+    result = await caso.execute(request)
     return ProcessFtpClientResponse.from_result(result)
 
 
@@ -145,9 +165,7 @@ async def process_ftp_client(
 def _to_app_request(body: FtpClientIn) -> FtpClientRequest:
     return FtpClientRequest(
         name=body.name,
-        host=body.host,
-        user=body.user,
-        password=body.password,
+        grupo_economico_id=body.grupo_economico_id,
         path=body.path,
         pattern=body.pattern,
     )

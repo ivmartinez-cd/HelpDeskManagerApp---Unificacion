@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import String, text
+from sqlalchemy import Integer, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -17,10 +17,11 @@ class FtpClientModel(Base):
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     host: Mapped[str] = mapped_column(String, nullable=False)
     user: Mapped[str] = mapped_column(String, nullable=False)
-    password: Mapped[str] = mapped_column(String, nullable=False)
+    password: Mapped[str | None] = mapped_column(String, nullable=True)
     path: Mapped[str] = mapped_column(
         String, nullable=False, server_default=text(f"'{DEFAULT_PATH}'")
     )
     pattern: Mapped[str] = mapped_column(
         String, nullable=False, server_default=text(f"'{DEFAULT_PATTERN}'")
     )
+    grupo_economico_id: Mapped[int | None] = mapped_column(Integer, nullable=True)

@@ -8,6 +8,22 @@ class InvalidMeterSourceError(ValidationError):
         super().__init__(f"Fuente de contador inválida: {raw_value!r} (debe ser 'sds' o 'ers')")
 
 
+class GrupoEconomicoSinFtpError(BusinessRuleViolationError):
+    default_code = "GRUPO_ECONOMICO_SIN_FTP"
+
+    def __init__(self, grupo_id: int) -> None:
+        super().__init__(
+            f"El grupo económico {grupo_id} no tiene usuario y contraseña FTP cargados en Siges"
+        )
+
+
+class FtpGrupoEconomicoRequeridoError(ValidationError):
+    default_code = "FTP_GRUPO_ECONOMICO_REQUERIDO"
+
+    def __init__(self) -> None:
+        super().__init__("Elegí el grupo económico de Siges del que salen usuario y contraseña")
+
+
 class FtpClientNotFoundError(NotFoundError):
     default_code = "FTP_CLIENT_NOT_FOUND"
 

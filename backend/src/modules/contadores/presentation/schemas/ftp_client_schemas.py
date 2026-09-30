@@ -10,18 +10,13 @@ from src.modules.contadores.application.dtos.ftp_client_dto import FtpClientResu
 
 
 class FtpClientIn(BaseModel):
-    """Payload para crear o actualizar un cliente FTP.
-
-    `password` es obligatorio al crear (validado en el router, no acá,
-    porque este mismo schema se reusa para el PUT) — al editar, omitirlo
-    conserva la contraseña actual: `FtpClientOut` nunca la devuelve, así que
-    no hay forma de precargarla y reenviarla tal cual."""
+    """Payload para crear o actualizar un cliente FTP. Servidor, usuario y
+    contraseña no se cargan: salen del grupo económico de Siges (obligatorio al
+    crear; al editar, omitirlo conserva el vínculo actual)."""
 
     name: str = Field(..., min_length=1, description="Nombre identificador del cliente")
-    host: str = Field(..., min_length=1, description="Hostname o IP del servidor FTP")
-    user: str = Field(..., min_length=1, description="Usuario FTP")
-    password: str | None = Field(
-        None, min_length=1, description="Contraseña FTP (obligatoria al crear)"
+    grupo_economico_id: int | None = Field(
+        None, ge=1, description="Grupo económico de Siges con usuario y contraseña FTP"
     )
     path: str = Field("/", description="Directorio remoto a navegar (debe comenzar con '/')")
     pattern: str = Field(
@@ -38,6 +33,7 @@ class FtpClientOut(BaseModel):
     user: str
     path: str
     pattern: str
+    grupo_economico_id: int | None
 
     @classmethod
     def from_result(cls, result: FtpClientResult) -> FtpClientOut:
@@ -48,7 +44,16 @@ class FtpClientOut(BaseModel):
             user=result.user,
             path=result.path,
             pattern=result.pattern,
+            grupo_economico_id=result.grupo_economico_id,
         )
+
+
+class GrupoEconomicoFtpOut(BaseModel):
+    """Grupo económico de Siges con FTP, para elegir al crear/vincular (sin contraseña)."""
+
+    id: int
+    descripcion: str
+    usuario: str
 
 
 class ProcessFtpClientRequest(BaseModel):

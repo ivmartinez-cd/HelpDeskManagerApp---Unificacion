@@ -56,6 +56,7 @@ def _to_entity(model: FtpClientModel) -> FtpClient:
         password=model.password,
         path=model.path,
         pattern=model.pattern,
+        grupo_economico_id=model.grupo_economico_id,
     )
 
 
@@ -68,6 +69,7 @@ def _to_new_model(client: FtpClient) -> FtpClientModel:
         password=client.password,
         path=client.path,
         pattern=client.pattern,
+        grupo_economico_id=client.grupo_economico_id,
     )
 
 
@@ -78,3 +80,4 @@ def _apply_changes(model: FtpClientModel, client: FtpClient) -> None:
     model.password = client.password
     model.path = client.path
     model.pattern = client.pattern
+    model.grupo_economico_id = client.grupo_economico_id

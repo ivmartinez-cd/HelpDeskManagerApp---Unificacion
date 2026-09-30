@@ -3,15 +3,12 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True, slots=True)
 class FtpClientRequest:
-    """Input común para crear o actualizar un cliente FTP. `password=None`
-    solo es válido para update (CreateFtpClientUseCase exige que no sea
-    None; el router ya lo valida antes de llegar acá, ver ftp_clients_router).
-    """
+    """Input para crear o actualizar un cliente FTP. Servidor, usuario y contraseña
+    no se cargan a mano: salen del grupo económico de Siges. `grupo_economico_id`
+    es obligatorio al crear; al editar, None conserva el vínculo actual."""
 
     name: str
-    host: str
-    user: str
-    password: str | None
+    grupo_economico_id: int | None
     path: str = "/"
     pattern: str = "PrinterMonitorClient.db3.*"
 
@@ -26,3 +23,4 @@ class FtpClientResult:
     user: str
     path: str
     pattern: str
+    grupo_economico_id: int | None

@@ -70,7 +70,7 @@ def _download(client: FtpClient, *, dest_path: str, timeout: int) -> str:
     con datos válidos."""
     ftp = FTP(client.host, timeout=timeout)
     try:
-        ftp.login(client.user, client.password)
+        ftp.login(client.user, client.password or "")
         ftp.cwd(client.path)
         candidates = _list_remote_files(ftp, client.pattern)
         day_groups = _group_candidates_by_date(candidates)

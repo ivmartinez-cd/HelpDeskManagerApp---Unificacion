@@ -2,13 +2,10 @@
 
 import { useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { toast } from "sonner";
-import {
-  contadoresApi,
-  type CreateFtpClientPayload,
-  type FtpClient,
-  type UpdateFtpClientPayload,
-} from "../api/contadores-api";
+import { contadoresApi, type FtpClient } from "../api/contadores-api";
+import { useGruposEconomicosFtp } from "../hooks/use-grupos-economicos-ftp";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { SearchableSelect } from "@/shared/components/ui/searchable-select";
 
 interface Props {
   isOpen: boolean;
@@ -39,13 +36,20 @@ function Field({ label, id, ...props }: FieldProps) {
   );
 }
 
+function grupoInicial(client: FtpClient | null): string | null {
+  return client?.grupo_economico_id != null
+    ? String(client.grupo_economico_id)
+    : null;
+}
+
 export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
   const [name, setName] = useState(client?.name ?? "");
-  const [host, setHost] = useState(client?.host ?? "");
-  const [user, setUser] = useState(client?.user ?? "");
-  const [password, setPassword] = useState("");
+  const [grupoId, setGrupoId] = useState<string | null>(grupoInicial(client));
+  const { grupos, error: errorGrupos } = useGruposEconomicosFtp(isOpen);
   const [path, setPath] = useState(client?.path || "/");
-  const [pattern, setPattern] = useState(client?.pattern || "PrinterMonitorClient.db3.*");
+  const [pattern, setPattern] = useState(
+    client?.pattern || "PrinterMonitorClient.db3.*",
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,9 +60,7 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
     setPrevIsOpen(isOpen);
     setPrevClient(client);
     setName(client?.name ?? "");
-    setHost(client?.host ?? "");
-    setUser(client?.user ?? "");
-    setPassword("");
+    setGrupoId(grupoInicial(client));
     setPath(client?.path || "/");
     setPattern(client?.pattern || "PrinterMonitorClient.db3.*");
     setError(null);
@@ -70,21 +72,25 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
     setError(null);
 
     try {
+      const payload = {
+        name,
+        grupo_economico_id: grupoId ? Number(grupoId) : null,
+        path,
+        pattern,
+      };
       if (client) {
-        // password vacío = "conservar la actual" (ver UpdateFtpClientPayload).
-        const payload: UpdateFtpClientPayload = { name, host, user, path, pattern };
-        if (password) payload.password = password;
         await contadoresApi.updateFtpClient(client.id, payload);
         toast.success("Cliente FTP actualizado correctamente");
       } else {
-        const payload: CreateFtpClientPayload = { name, host, user, password, path, pattern };
         await contadoresApi.createFtpClient(payload);
         toast.success("Cliente FTP creado correctamente");
       }
       onSuccess();
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error al guardar cliente FTP");
+      setError(
+        err instanceof Error ? err.message : "Error al guardar cliente FTP",
+      );
     } finally {
       setLoading(false);
     }
@@ -96,7 +102,7 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
       onClose={onClose}
       title={client ? "Editar Cliente FTP" : "Nuevo Cliente FTP"}
       widthPx={520}
-      error={error}
+      error={error ?? errorGrupos}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Field
@@ -109,34 +115,22 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
           required
         />
 
-        <Field
-          id="ftp-client-host"
-          label="Servidor (Host / IP)"
-          type="text"
-          value={host}
-          onChange={(e) => setHost(e.target.value)}
-          placeholder="Ej: ftp.cliente.com.ar"
-          required
+        <SearchableSelect
+          label="Grupo económico (Siges)"
+          options={grupos.map((g) => ({
+            id: String(g.id),
+            label: g.descripcion,
+            sublabel: g.usuario,
+          }))}
+          value={grupoId}
+          onChange={setGrupoId}
+          placeholder="Buscá el grupo económico…"
         />
-
-        <div className="grid grid-cols-2 gap-3">
-          <Field
-            id="ftp-client-user"
-            label="Usuario FTP"
-            type="text"
-            value={user}
-            onChange={(e) => setUser(e.target.value)}
-            required
-          />
-          <Field
-            id="ftp-client-password"
-            label={`Contraseña ${client ? "(dejar en blanco para conservar)" : ""}`}
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required={!client}
-          />
-        </div>
+        <p className="font-body text-xs text-muted-foreground">
+          {client && client.grupo_economico_id === null
+            ? `Usa credenciales locales (usuario ${client.user} en ${client.host}), pendiente de revisar. Elegí su grupo para pasar a leerlas de Siges.`
+            : "Usuario y contraseña FTP se leen de Siges al procesar; no se cargan acá."}
+        </p>
 
         <div className="grid grid-cols-2 gap-3">
           <Field
@@ -169,7 +163,7 @@ export function FtpClientModal({ isOpen, client, onClose, onSuccess }: Props) {
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (!client && !grupoId)}
             className="rounded-[8px] bg-brand-orange px-4 py-2 font-body text-sm font-bold text-white transition-colors hover:bg-brand-orange-hover disabled:opacity-50"
           >
             {loading ? "Guardando..." : "Guardar"}

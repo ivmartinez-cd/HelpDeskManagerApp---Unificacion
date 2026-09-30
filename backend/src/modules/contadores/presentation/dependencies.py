@@ -36,6 +36,9 @@ from src.modules.contadores.infrastructure.siges.pyodbc_falta_contador_proceso_g
 from src.modules.contadores.infrastructure.siges.pyodbc_grilla_estimacion_gateway import (
     PyodbcGrillaEstimacionGateway,
 )
+from src.modules.contadores.infrastructure.siges.pyodbc_grupos_economicos_ftp_gateway import (
+    PyodbcGruposEconomicosFtpGateway,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_historial_equipo_gateway import (
     PyodbcHistorialEquipoGateway,
 )
@@ -87,6 +90,11 @@ _ESTADO_PROCESO_ANEXOS_CACHE_TTL_SECONDS = 300.0
 @lru_cache
 def get_operador_catalog_gateway() -> PyodbcOperadorGateway:
     return PyodbcOperadorGateway(require_orion_runner())
+
+
+@lru_cache
+def get_grupos_economicos_ftp_gateway() -> PyodbcGruposEconomicosFtpGateway:
+    return PyodbcGruposEconomicosFtpGateway(require_orion_runner())
 
 
 @lru_cache

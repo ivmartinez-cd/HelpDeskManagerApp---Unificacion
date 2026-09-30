@@ -9,10 +9,16 @@ from pathlib import Path
 from src.modules.contadores.application.dtos.download_ftp_db3_request import DownloadFtpDb3Request
 from src.modules.contadores.application.dtos.download_ftp_db3_result import DownloadFtpDb3Result
 from src.modules.contadores.application.dtos.run_db3_export_request import RunDb3ExportRequest
+from src.modules.contadores.application.use_cases._vinculo_grupo_ftp import (
+    con_credenciales_de_siges,
+)
 from src.modules.contadores.application.use_cases.run_db3_export import RunDb3ExportUseCase
 from src.modules.contadores.domain.errors import FtpClientNotFoundError
 from src.modules.contadores.domain.repositories.ftp_client_repository import FtpClientRepository
 from src.modules.contadores.domain.repositories.ftp_db3_downloader import FtpDb3Downloader
+from src.modules.contadores.domain.repositories.grupos_economicos_ftp_gateway import (
+    GruposEconomicosFtpGateway,
+)
 
 _SAFE_NAME_RE = re.compile(r"[^a-zA-Z0-9._-]")
 
@@ -22,7 +28,8 @@ class DownloadAndProcessFtpDb3UseCase:
     upload manual (reutiliza RunDb3ExportUseCase).
 
     Flujo:
-    1. Obtiene el FtpClient de la DB (404 si no existe).
+    1. Obtiene el FtpClient de la DB (404 si no existe) y, si está vinculado a un
+       grupo económico, su usuario y contraseña de Siges.
     2. Descarga el DB3 a un temporal (si había varios archivos del mismo día,
        ya llega acá fusionado en un único SQLite — ver ftplib_db3_downloader).
     3. Delega el procesamiento a RunDb3ExportUseCase.
@@ -38,8 +45,10 @@ class DownloadAndProcessFtpDb3UseCase:
         repo: FtpClientRepository,
         downloader: FtpDb3Downloader,
         db3_use_case: RunDb3ExportUseCase,
+        grupos: GruposEconomicosFtpGateway,
     ) -> None:
         self._repo = repo
+        self._grupos = grupos
         self._downloader = downloader
         self._db3_use_case = db3_use_case
 
@@ -47,6 +56,7 @@ class DownloadAndProcessFtpDb3UseCase:
         client = await self._repo.get_by_id(uuid.UUID(request.client_id))
         if client is None:
             raise FtpClientNotFoundError()
+        client = await con_credenciales_de_siges(client, self._grupos)
 
         safe_name = _SAFE_NAME_RE.sub("_", client.name)
         fd, dest_path = tempfile.mkstemp(suffix=".db3", prefix=f"{safe_name}_FTP_")

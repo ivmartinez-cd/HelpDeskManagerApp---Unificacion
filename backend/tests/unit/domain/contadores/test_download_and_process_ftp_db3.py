@@ -3,6 +3,7 @@
 Usan un stub de FtpDb3Downloader que escribe un DB3 real en disco — sin
 conexión FTP real ni DB de Postgres.
 """
+
 import os
 import sqlite3
 import uuid
@@ -15,11 +16,12 @@ from src.modules.contadores.application.use_cases.download_and_process_ftp_db3 i
 )
 from src.modules.contadores.application.use_cases.run_db3_export import RunDb3ExportUseCase
 from src.modules.contadores.domain.entities.ftp_client import FtpClient
-from src.modules.contadores.domain.errors import FtpClientNotFoundError
+from src.modules.contadores.domain.errors import FtpClientNotFoundError, GrupoEconomicoSinFtpError
 from src.modules.contadores.infrastructure.csv.csv_db3_writer import CsvDb3Writer
 from src.modules.contadores.infrastructure.sqlite.sqlite3_db3_file_reader import (
     Sqlite3Db3FileReader,
 )
+from tests.unit.domain.contadores.test_ftp_client_use_cases import FakeGrupos
 
 # ---------------------------------------------------------------------------
 # Infraestructura de test
@@ -72,9 +74,7 @@ def _write_minimal_db3(path: str) -> None:
         "CREATE TABLE counters "
         "(serialnumber TEXT, readdate TEXT, readvalue INTEGER, model TEXT, counterclass_id INTEGER)"
     )
-    conn.execute(
-        "INSERT INTO counters VALUES ('SER001','2026-08-05 10:00:00',1000,'ModeloX',10)"
-    )
+    conn.execute("INSERT INTO counters VALUES ('SER001','2026-08-05 10:00:00',1000,'ModeloX',10)")
     conn.commit()
     conn.close()
 
@@ -96,7 +96,7 @@ def _make_use_case(
 ) -> tuple[DownloadAndProcessFtpDb3UseCase, DownloadFtpDb3Request]:
     repo = InMemoryFtpClientRepository([client])
     db3_uc = RunDb3ExportUseCase(Sqlite3Db3FileReader(), CsvDb3Writer())
-    uc = DownloadAndProcessFtpDb3UseCase(repo, stub, db3_uc)
+    uc = DownloadAndProcessFtpDb3UseCase(repo, stub, db3_uc, FakeGrupos())
     req = DownloadFtpDb3Request(client_id=str(client.id), output_dir=output_dir)
     return uc, req
 
@@ -110,7 +110,7 @@ async def test_raises_not_found_when_client_missing(tmp_path) -> None:
     repo = InMemoryFtpClientRepository()
     stub = StubFtpDb3Downloader()
     db3_uc = RunDb3ExportUseCase(Sqlite3Db3FileReader(), CsvDb3Writer())
-    uc = DownloadAndProcessFtpDb3UseCase(repo, stub, db3_uc)
+    uc = DownloadAndProcessFtpDb3UseCase(repo, stub, db3_uc, FakeGrupos())
     req = DownloadFtpDb3Request(client_id=str(uuid.uuid4()), output_dir=str(tmp_path))
 
     with pytest.raises(FtpClientNotFoundError):
@@ -181,3 +181,27 @@ async def test_downloader_receives_correct_client(tmp_path) -> None:
 
     assert len(stub.called_with) == 1
     assert stub.called_with[0]["client"].id == client.id
+
+
+async def test_cliente_vinculado_se_conecta_con_las_credenciales_de_siges(tmp_path) -> None:
+    client = _make_client()
+    client.grupo_economico_id = 7
+    client.password = None
+    stub = StubFtpDb3Downloader()
+    uc, req = _make_use_case(client, stub, str(tmp_path))
+
+    await uc.execute(req)
+
+    usado = stub.called_with[0]["client"]
+    assert (usado.host, usado.user, usado.password) == ("ftp.test.com", "acme", "secreta")
+
+
+async def test_cliente_vinculado_a_grupo_sin_ftp_no_se_conecta(tmp_path) -> None:
+    client = _make_client()
+    client.grupo_economico_id = 999
+    stub = StubFtpDb3Downloader()
+    uc, req = _make_use_case(client, stub, str(tmp_path))
+
+    with pytest.raises(GrupoEconomicoSinFtpError):
+        await uc.execute(req)
+    assert stub.called_with == []

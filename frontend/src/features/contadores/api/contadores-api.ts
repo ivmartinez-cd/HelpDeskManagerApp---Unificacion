@@ -53,31 +53,24 @@ export interface FtpClient {
   user: string;
   path: string;
   pattern: string;
+  /** null = credenciales locales, pendiente de vincular a Siges (ver
+   * `scripts/vincular_ftp_clients_orion.py`). */
+  grupo_economico_id: number | null;
 }
 
-/** `FtpClientIn` en `ftp_client_schemas.py` exige `user`/`password` (ambos
- * requeridos) y usa `path`/`pattern` con default en el backend, no en el
- * cliente — se mandan siempre explícitos acá para no depender del default. */
-export interface CreateFtpClientPayload {
+/** Usuario y contraseña no se cargan: salen del grupo económico de Siges
+ * (obligatorio al crear; al editar, null conserva el vínculo actual). */
+export interface FtpClientPayload {
   name: string;
-  host: string;
-  user: string;
-  password: string;
+  grupo_economico_id: number | null;
   path: string;
   pattern: string;
 }
 
-/** A diferencia de crear, acá `password` es opcional: como `FtpClientOut`
- * (GET) nunca devuelve la contraseña guardada (por seguridad), no hay forma
- * de precargarla y reenviarla tal cual al editar. Omitir el campo le dice
- * al backend "conservá la actual". */
-export interface UpdateFtpClientPayload {
-  name: string;
-  host: string;
-  user: string;
-  password?: string;
-  path: string;
-  pattern: string;
+export interface GrupoEconomicoFtp {
+  id: number;
+  descripcion: string;
+  usuario: string;
 }
 
 export interface ProcessFtpClientResponse {
@@ -153,9 +146,13 @@ export const contadoresApi = {
       .get<Page<FtpClient>>("/api/contadores/ftp/clients")
       .then((page) => page.items),
   getFtpClient: (id: string) => httpClient.get<FtpClient>(`/api/contadores/ftp/clients/${id}`),
-  createFtpClient: (payload: CreateFtpClientPayload) =>
+  listGruposEconomicosFtp: () =>
+    httpClient
+      .get<Page<GrupoEconomicoFtp>>("/api/contadores/ftp/grupos-economicos")
+      .then((page) => page.items),
+  createFtpClient: (payload: FtpClientPayload) =>
     httpClient.post<FtpClient>("/api/contadores/ftp/clients", payload),
-  updateFtpClient: (id: string, payload: UpdateFtpClientPayload) =>
+  updateFtpClient: (id: string, payload: FtpClientPayload) =>
     httpClient.put<FtpClient>(`/api/contadores/ftp/clients/${id}`, payload),
   deleteFtpClient: (id: string) =>
     httpClient.delete<{ message: string }>(`/api/contadores/ftp/clients/${id}`),

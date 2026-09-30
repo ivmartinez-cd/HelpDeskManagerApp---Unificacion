@@ -85,6 +85,9 @@ class ContadoresSettings(BaseSettings):
     """Módulo contadores: SDS Insight API, Epson ERS y Gestión web."""
 
     contadores_output_dir: str = "var/contadores/outputs"
+    # Servidor FTP de la empresa donde los clientes suben sus DB3: Siges guarda
+    # usuario y contraseña por grupo económico, no el host.
+    contadores_ftp_host: str = "www.cdsisa.com.ar"
 
     # Credenciales solo por .env — nunca defaults en código (§8; los valores que
     # vivieron acá hasta 2026-08-16 quedan en el historial git: rotarlos).

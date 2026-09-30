@@ -11,4 +11,5 @@ def to_ftp_client_result(client: FtpClient) -> FtpClientResult:
         user=client.user,
         path=client.path,
         pattern=client.pattern,
+        grupo_economico_id=client.grupo_economico_id,
     )

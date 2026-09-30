@@ -25,8 +25,9 @@ interface Props {
 }
 
 /** Gestión completa (alta/edición/borrado) de clientes FTP — a diferencia de
- * SDS/ERS, estos sí se cargan a mano (ver manage-meter-clients-modal.tsx
- * para el equivalente de solo lectura). El "Procesar DB3" puntual vive en
+ * SDS/ERS, estos sí se dan de alta acá, pero usuario y contraseña salen del
+ * grupo económico de Siges (ver manage-meter-clients-modal.tsx para el
+ * equivalente de solo lectura). El "Procesar DB3" puntual vive en
  * client-picker-process-modal.tsx, no acá. */
 export function ManageFtpClientsModal({ isOpen, onClose }: Props) {
   const { clients, loading, refetch } = useFtpClients();
@@ -107,6 +108,14 @@ export function ManageFtpClientsModal({ isOpen, onClose }: Props) {
                     <tr key={client.id}>
                       <td className="px-3 py-2.5 font-semibold text-foreground">
                         {client.name}
+                        {client.grupo_economico_id === null && (
+                          <span
+                            title="Credenciales locales: vinculalo a su grupo económico de Siges"
+                            className="ml-2 rounded-[4px] bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                          >
+                            Revisar
+                          </span>
+                        )}
                       </td>
                       <td className="px-3 py-2.5 text-muted-foreground">{client.host}</td>
                       <td className="px-3 py-2.5">
