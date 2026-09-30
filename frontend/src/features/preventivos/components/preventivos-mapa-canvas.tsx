@@ -122,6 +122,7 @@ export function PreventivosMapaCanvas({
 
   useEffect(() => {
     return () => {
+      mapRef.current?.stop();
       mapRef.current?.remove();
       mapRef.current = null;
     };
@@ -207,10 +208,13 @@ export function PreventivosMapaCanvas({
       ]);
       if (posiciones.length === 0) return;
       const encuadre = puntosParaEncuadre(posiciones);
+      // Sin animación: si la selección de zonas/estados cambia (o el mapa se
+      // desmonta) a mitad de un zoom animado, Leaflet/markercluster siguen
+      // tocando capas ya removidas y revienta con "reading '_leaflet_pos'".
       if (encuadre.length === 1) {
-        mapa.setView(encuadre[0], 14);
+        mapa.setView(encuadre[0], 14, { animate: false });
       } else {
-        mapa.fitBounds(encuadre, { padding: [32, 32], maxZoom: 15 });
+        mapa.fitBounds(encuadre, { padding: [32, 32], maxZoom: 15, animate: false });
       }
     });
     return () => {
