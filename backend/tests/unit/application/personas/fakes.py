@@ -40,6 +40,7 @@ class Mundo:
             if p.acceso:
                 self.cuentas[p.acceso.user_id] = (p.datos.email, p.acceso.activo, None)
         self.mails: list[str] = []
+        self.privilegiadas: set[uuid.UUID] = set()
 
 
 class FakePersonaRepository:
@@ -83,6 +84,9 @@ class FakeCuentas:
 
     async def email_en_uso(self, email: str, *, excepto: uuid.UUID | None) -> bool:
         return any(e == email and uid != excepto for uid, (e, _, _) in self._mundo.cuentas.items())
+
+    async def es_privilegiada(self, user_id: uuid.UUID) -> bool:
+        return user_id in self._mundo.privilegiadas
 
     async def actualizar_datos(self, user_id: uuid.UUID, datos: DatosPersona) -> None:
         _, activo, _ = self._mundo.cuentas[user_id]

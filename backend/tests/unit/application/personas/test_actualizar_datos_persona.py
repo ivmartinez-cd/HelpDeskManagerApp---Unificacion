@@ -6,12 +6,14 @@ import uuid
 import pytest
 
 from src.modules.personas.application.use_cases.actualizar_datos_persona import (
+    ActorPersonas,
     ActualizarDatosDependencies,
     ActualizarDatosPersona,
 )
 from src.modules.personas.domain.entities.persona import DatosPersona, Persona
 from src.modules.personas.domain.errors import (
     CambioDeMailNoPermitidoError,
+    CuentaPrivilegiadaError,
     EmailEnUsoError,
     PersonaNoEncontradaError,
 )
@@ -40,9 +42,10 @@ def _datos(email: str = "ana@canal.com", color: str = "#445566") -> DatosPersona
 
 
 async def _ejecutar(
-    mundo: Mundo, persona: Persona, datos: DatosPersona, *, gestiona: bool
+    mundo: Mundo, persona: Persona, datos: DatosPersona, *, gestiona: bool, superadmin: bool = False
 ) -> Persona:
-    return await _caso(mundo).execute(persona.id, datos, puede_gestionar_acceso=gestiona)
+    actor = ActorPersonas(puede_gestionar_acceso=gestiona, es_superadmin=superadmin)
+    return await _caso(mundo).execute(persona.id, datos, actor=actor)
 
 
 async def test_con_cuenta_escribe_en_ficha_y_cuenta() -> None:
@@ -96,4 +99,33 @@ async def test_mail_de_una_cuenta_ajena_es_conflicto() -> None:
 
 async def test_persona_inexistente() -> None:
     with pytest.raises(PersonaNoEncontradaError):
-        await _caso(Mundo()).execute(uuid.uuid4(), _datos(), puede_gestionar_acceso=True)
+        await _caso(Mundo()).execute(
+            uuid.uuid4(),
+            _datos(),
+            actor=ActorPersonas(puede_gestionar_acceso=True, es_superadmin=True),
+        )
+
+
+async def test_cambiar_mail_de_un_admin_exige_superadmin() -> None:
+    persona = make_persona(acceso=make_acceso())
+    mundo = Mundo(persona)
+    assert persona.acceso is not None
+    mundo.privilegiadas.add(persona.acceso.user_id)
+
+    with pytest.raises(CuentaPrivilegiadaError):
+        await _ejecutar(mundo, persona, _datos(email="atacante@canal.com"), gestiona=True)
+    assert mundo.cuentas[persona.acceso.user_id][0] == "ana@canal.com"
+
+    await _ejecutar(mundo, persona, _datos(email="nuevo@canal.com"), gestiona=True, superadmin=True)
+    assert mundo.cuentas[persona.acceso.user_id][0] == "nuevo@canal.com"
+
+
+async def test_editar_nombre_de_un_admin_sin_tocar_el_mail_no_exige_superadmin() -> None:
+    persona = make_persona(acceso=make_acceso())
+    mundo = Mundo(persona)
+    assert persona.acceso is not None
+    mundo.privilegiadas.add(persona.acceso.user_id)
+
+    resultado = await _ejecutar(mundo, persona, _datos(), gestiona=False)
+
+    assert resultado.datos.first_name == "Ana María"

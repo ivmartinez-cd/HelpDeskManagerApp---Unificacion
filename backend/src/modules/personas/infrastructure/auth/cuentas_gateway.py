@@ -10,7 +10,11 @@ from src.modules.auth.application.use_cases.create_user import CreateUser, Creat
 from src.modules.auth.application.use_cases.update_user import UpdateUser, UpdateUserDependencies
 from src.modules.auth.domain.errors import UserNotFoundError
 from src.modules.auth.domain.value_objects.email import Email
+from src.modules.auth.domain.well_known_permissions import MANAGE_ADMIN
 from src.modules.auth.infrastructure.argon2_password_hasher import Argon2PasswordHasher
+from src.modules.auth.infrastructure.repositories.sqlalchemy_permission_repository import (
+    SqlAlchemyPermissionRepository,
+)
 from src.modules.auth.infrastructure.repositories.sqlalchemy_user_repository import (
     SqlAlchemyUserRepository,
 )
@@ -20,10 +24,19 @@ from src.modules.personas.domain.entities.persona import DatosPersona
 class AuthCuentasGateway:
     def __init__(self, session: AsyncSession) -> None:
         self._users = SqlAlchemyUserRepository(session)
+        self._permisos = SqlAlchemyPermissionRepository(session)
 
     async def email_en_uso(self, email: str, *, excepto: uuid.UUID | None) -> bool:
         cuenta = await self._users.get_by_email(Email(email))
         return cuenta is not None and cuenta.id != excepto
+
+    async def es_privilegiada(self, user_id: uuid.UUID) -> bool:
+        cuenta = await self._users.get_by_id(user_id)
+        if cuenta is None:
+            raise UserNotFoundError()
+        if cuenta.is_superadmin:
+            return True
+        return (await self._permisos.get_for_user(user_id)).allows(MANAGE_ADMIN)
 
     async def actualizar_datos(self, user_id: uuid.UUID, datos: DatosPersona) -> None:
         cuenta = await self._users.get_by_id(user_id)

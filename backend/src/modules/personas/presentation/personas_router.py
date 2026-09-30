@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.auth.application.dtos.results import Identity, PermissionView
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.personas.application.use_cases.actualizar_datos_persona import (
+    ActorPersonas,
     ActualizarDatosPersona,
 )
 from src.modules.personas.application.use_cases.consultar_personas import (
@@ -87,9 +88,13 @@ async def update_datos(
     identity: Identity = _require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PersonaResponse:
-    puede_gestionar = identity.user.is_superadmin or _MANAGE_VIEW in identity.permissions
+    es_superadmin = identity.user.is_superadmin
+    actor = ActorPersonas(
+        puede_gestionar_acceso=es_superadmin or _MANAGE_VIEW in identity.permissions,
+        es_superadmin=es_superadmin,
+    )
     persona = await ActualizarDatosPersona(armado.deps_datos(db, identity.user.id)).execute(
-        persona_id, body.to_datos(), puede_gestionar_acceso=puede_gestionar
+        persona_id, body.to_datos(), actor=actor
     )
     return PersonaResponse.from_entity(persona)
 
@@ -102,14 +107,18 @@ async def dar_acceso(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PersonaResponse:
     deps = armado.deps_acceso(db, identity.user.id, background_tasks)
-    return PersonaResponse.from_entity(await DarAcceso(deps).execute(persona_id))
+    persona = await DarAcceso(deps).execute(
+        persona_id, actor_es_superadmin=identity.user.is_superadmin
+    )
+    return PersonaResponse.from_entity(persona)
 
 
 @router.delete("/{persona_id}/acceso")
 async def quitar_acceso(
     persona_id: uuid.UUID,
-    _: Identity = _require_manage,
+    identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PersonaResponse:
     caso = QuitarAcceso(armado.repositorio(db), armado.cuentas(db))
-    return PersonaResponse.from_entity(await caso.execute(persona_id))
+    persona = await caso.execute(persona_id, actor_es_superadmin=identity.user.is_superadmin)
+    return PersonaResponse.from_entity(persona)

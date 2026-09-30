@@ -45,3 +45,17 @@ class CambioDeMailNoPermitidoError(ApplicationError):
         super().__init__(
             "Cambiar el mail de alguien que entra a la app requiere el permiso de gestionar accesos"
         )
+
+
+class CuentaPrivilegiadaError(ApplicationError):
+    """El mail y el acceso de un superadmin o de quien administra permisos solo los
+    toca un superadmin: cambiarle el mail y pedir el reseteo de contraseña sería
+    quedarse con su cuenta."""
+
+    http_status: ClassVar[int] = 403
+    default_code = "PERSONA_CUENTA_PRIVILEGIADA"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "El mail y el acceso de un administrador solo los puede cambiar un superadmin"
+        )

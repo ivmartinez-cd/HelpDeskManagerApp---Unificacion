@@ -144,3 +144,20 @@ async def test_quitar_y_volver_a_dar_acceso(
 
     assert quitado.status_code == 200 and quitado.json()["entraALaApp"] is False
     assert dado.status_code == 200 and dado.json()["entraALaApp"] is True
+
+
+async def test_mail_y_acceso_de_un_admin_solo_los_toca_un_superadmin(
+    persona: Persona, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def _privilegiada(_self: FakeCuentas, _user_id: uuid.UUID) -> bool:
+        return True
+
+    monkeypatch.setattr(FakeCuentas, "es_privilegiada", _privilegiada)
+    install_session(monkeypatch, _EDITAR, _GESTIONAR)
+    async with client() as c:
+        mail = await c.patch(f"{URL}/{persona.id}/datos", json=_datos("yo@canal.com"))
+        quitado = await c.delete(f"{URL}/{persona.id}/acceso")
+
+    assert mail.status_code == 403
+    assert mail.json()["code"] == "PERSONA_CUENTA_PRIVILEGIADA"
+    assert quitado.status_code == 403
