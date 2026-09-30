@@ -26,7 +26,9 @@ from src.modules.auth.application.use_cases.replace_user_permissions import (
 )
 from src.modules.auth.domain.errors import (
     AdminManageReservedError,
+    AutoconcesionError,
     CannotDemoteSelfError,
+    CuentaPrivilegiadaReservadaError,
     UnknownPermissionError,
     UserNotFoundError,
 )
@@ -262,3 +264,49 @@ async def test_los_catalogos_y_get_user_permissions_delegan_al_repo() -> None:
     assert modules == catalog.entries
     assert actions == catalog.actions
     assert permisos == granted
+
+
+async def test_admin_delegado_no_se_concede_permisos_pero_puede_quitarselos() -> None:
+    permissions = FakePermissionRepository()
+    users, yo = _users_with_target()
+    permissions.by_user[yo] = PermissionSet(granted=frozenset({MANAGE_ADMIN}))
+    caso = ReplaceUserPermissions(
+        _replace_deps(permissions, FakePermissionAuditRepository(), users)
+    )
+
+    with pytest.raises(AutoconcesionError):
+        await caso.execute(
+            target_user_id=yo,
+            desired=PermissionSet(granted=frozenset({MANAGE_ADMIN, _VER_INSUMOS})),
+            actor_user_id=yo,
+        )
+    assert permissions.replaced == []
+
+    permissions.by_user[yo] = PermissionSet(granted=frozenset({MANAGE_ADMIN, _VER_INSUMOS}))
+    await caso.execute(
+        target_user_id=yo,
+        desired=PermissionSet(granted=frozenset({MANAGE_ADMIN})),
+        actor_user_id=yo,
+    )
+    assert permissions.by_user[yo].granted == frozenset({MANAGE_ADMIN})
+
+
+async def test_admin_delegado_no_toca_permisos_de_otro_admin() -> None:
+    permissions = FakePermissionRepository()
+    users, otro_admin = _users_with_target()
+    permissions.by_user[otro_admin] = PermissionSet(granted=frozenset({MANAGE_ADMIN}))
+    desired = PermissionSet(granted=frozenset({MANAGE_ADMIN, _VER_INSUMOS}))
+    caso = ReplaceUserPermissions(
+        _replace_deps(permissions, FakePermissionAuditRepository(), users)
+    )
+
+    with pytest.raises(CuentaPrivilegiadaReservadaError):
+        await caso.execute(target_user_id=otro_admin, desired=desired, actor_user_id=uuid.uuid4())
+
+    await caso.execute(
+        target_user_id=otro_admin,
+        desired=desired,
+        actor_user_id=uuid.uuid4(),
+        actor_is_superadmin=True,
+    )
+    assert permissions.by_user[otro_admin] == desired

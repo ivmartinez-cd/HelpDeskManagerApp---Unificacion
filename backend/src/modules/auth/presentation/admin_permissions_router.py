@@ -175,9 +175,12 @@ async def replace_user_features(
         features=SqlAlchemyFeatureGrantRepository(db),
         catalog=SqlAlchemyFeatureCatalogRepository(db),
         audit=SqlAlchemyPermissionAuditRepository(db),
+        permissions=SqlAlchemyPermissionRepository(db),
     )
     await ReplaceUserFeatures(deps).execute(
-        target_user_id=user_id, desired=payload.to_domain(), actor_user_id=identity.user.id
+        target_user_id=user_id,
+        desired=payload.to_domain(),
+        actor_user_id=identity.user.id,
+        actor_is_superadmin=identity.user.is_superadmin,
     )
-    features = await SqlAlchemyFeatureGrantRepository(db).get_for_user(user_id)
-    return FeaturesResponse.from_domain(features)
+    return FeaturesResponse.from_domain(await deps.features.get_for_user(user_id))

@@ -179,3 +179,27 @@ class ForbiddenError(ApplicationError):
 
     def __init__(self) -> None:
         super().__init__("No tenés permiso para esta acción")
+
+
+class AutoconcesionError(ApplicationError):
+    """Un admin delegado no se agrega permisos ni funciones a sí mismo: los pide a
+    otro. Quitarse los propios sí puede."""
+
+    http_status = 403
+    default_code = "AUTOCONCESION_NO_PERMITIDA"
+
+    def __init__(self) -> None:
+        super().__init__("No podés concederte permisos o funciones a vos mismo")
+
+
+class CuentaPrivilegiadaReservadaError(ApplicationError):
+    """Los permisos y funciones de un superadmin o de otro admin solo los cambia un
+    superadmin: entre admins delegados no se escalan ni se recortan."""
+
+    http_status = 403
+    default_code = "CUENTA_PRIVILEGIADA_RESERVADA"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Los permisos de un superadmin o de otro administrador solo los cambia un superadmin"
+        )

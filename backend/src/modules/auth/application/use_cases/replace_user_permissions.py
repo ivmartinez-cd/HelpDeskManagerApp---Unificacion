@@ -1,6 +1,10 @@
 import uuid
 from dataclasses import dataclass
 
+from src.modules.auth.application.use_cases._privilegios import (
+    EdicionDeAccesos,
+    verificar_edicion_de_accesos,
+)
 from src.modules.auth.domain.errors import (
     AdminManageReservedError,
     CannotDemoteSelfError,
@@ -55,6 +59,8 @@ class ReplaceUserPermissions:
             return
         if MANAGE_ADMIN in added | removed and not actor_is_superadmin:
             raise AdminManageReservedError()
+        edicion = EdicionDeAccesos(actor_user_id, actor_is_superadmin, target_user_id, bool(added))
+        await verificar_edicion_de_accesos(self._deps.users, self._deps.permissions, edicion)
         await self._persist(target_user_id, desired, actor_user_id, added, removed)
 
     async def _persist(

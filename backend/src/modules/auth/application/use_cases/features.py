@@ -4,6 +4,10 @@ reemplazo atómico con auditoría -- espejo de los casos de uso de permisos."""
 import uuid
 from dataclasses import dataclass
 
+from src.modules.auth.application.use_cases._privilegios import (
+    EdicionDeAccesos,
+    verificar_edicion_de_accesos,
+)
 from src.modules.auth.domain.errors import UnknownFeatureError, UserNotFoundError
 from src.modules.auth.domain.repositories.feature_catalog_repository import (
     FeatureCatalogRepository,
@@ -14,9 +18,11 @@ from src.modules.auth.domain.repositories.feature_grant_repository import (
 from src.modules.auth.domain.repositories.permission_audit_repository import (
     PermissionAuditRepository,
 )
+from src.modules.auth.domain.repositories.permission_repository import PermissionRepository
 from src.modules.auth.domain.repositories.user_repository import UserRepository
 from src.modules.auth.domain.value_objects.feature_catalog_entry import FeatureCatalogEntry
 from src.modules.auth.domain.value_objects.feature_set import FeatureSet
+from src.shared.domain.value_objects.feature_key import FeatureKey
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,6 +60,7 @@ class ReplaceUserFeaturesDependencies:
     features: FeatureGrantRepository
     catalog: FeatureCatalogRepository
     audit: PermissionAuditRepository
+    permissions: PermissionRepository
 
 
 class ReplaceUserFeatures:
@@ -64,7 +71,12 @@ class ReplaceUserFeatures:
         self._deps = deps
 
     async def execute(
-        self, *, target_user_id: uuid.UUID, desired: FeatureSet, actor_user_id: uuid.UUID
+        self,
+        *,
+        target_user_id: uuid.UUID,
+        desired: FeatureSet,
+        actor_user_id: uuid.UUID,
+        actor_is_superadmin: bool = False,
     ) -> None:
         if await self._deps.users.get_by_id(target_user_id) is None:
             raise UserNotFoundError()
@@ -74,12 +86,23 @@ class ReplaceUserFeatures:
         removed = current.granted - desired.granted
         if not added and not removed:
             return
+        edicion = EdicionDeAccesos(actor_user_id, actor_is_superadmin, target_user_id, bool(added))
+        await verificar_edicion_de_accesos(self._deps.users, self._deps.permissions, edicion)
+        await self._persist(edicion, desired, added, removed)
+
+    async def _persist(
+        self,
+        edicion: EdicionDeAccesos,
+        desired: FeatureSet,
+        added: frozenset[FeatureKey],
+        removed: frozenset[FeatureKey],
+    ) -> None:
         await self._deps.features.replace_for_user(
-            target_user_id, desired, granted_by=actor_user_id
+            edicion.target_user_id, desired, granted_by=edicion.actor_user_id
         )
         await self._deps.audit.record_feature_diff(
-            actor_user_id=actor_user_id,
-            target_user_id=target_user_id,
+            actor_user_id=edicion.actor_user_id,
+            target_user_id=edicion.target_user_id,
             added=added,
             removed=removed,
         )

@@ -10,13 +10,19 @@ from src.modules.auth.application.use_cases.features import (
     ReplaceUserFeatures,
     ReplaceUserFeaturesDependencies,
 )
-from src.modules.auth.domain.errors import UnknownFeatureError, UserNotFoundError
+from src.modules.auth.domain.errors import (
+    AutoconcesionError,
+    CuentaPrivilegiadaReservadaError,
+    UnknownFeatureError,
+    UserNotFoundError,
+)
 from src.modules.auth.domain.value_objects.feature_set import FeatureSet
 from src.shared.domain.value_objects.feature_key import FeatureKey
 from tests.unit.application.auth.fakes import (
     FakeFeatureCatalogRepository,
     FakeFeatureGrantRepository,
     FakePermissionAuditRepository,
+    FakePermissionRepository,
     FakeUserRepository,
     make_user,
 )
@@ -42,6 +48,7 @@ def _deps(
         features=repo,
         catalog=FakeFeatureCatalogRepository({_COB.value, _ANEXOS.value}),
         audit=audit,
+        permissions=FakePermissionRepository(),
     )
 
 
@@ -119,3 +126,33 @@ async def test_get_de_usuario_inexistente_es_not_found() -> None:
 
     with pytest.raises(UserNotFoundError):
         await GetUserFeatures(deps).execute(uuid.uuid4())
+
+
+async def test_admin_delegado_no_se_concede_funciones_pero_puede_quitarselas() -> None:
+    repo, audit = FakeFeatureGrantRepository(), FakePermissionAuditRepository()
+    users, yo = _users_with_target()
+    caso = ReplaceUserFeatures(_deps(users, repo, audit))
+
+    with pytest.raises(AutoconcesionError):
+        await caso.execute(
+            target_user_id=yo, desired=FeatureSet(frozenset({_COB})), actor_user_id=yo
+        )
+    assert yo not in repo.by_user
+
+    repo.by_user[yo] = FeatureSet(frozenset({_COB}))
+    await caso.execute(target_user_id=yo, desired=FeatureSet(frozenset()), actor_user_id=yo)
+    assert repo.by_user[yo].granted == frozenset()
+
+
+async def test_admin_delegado_no_toca_funciones_de_un_superadmin() -> None:
+    repo, audit = FakeFeatureGrantRepository(), FakePermissionAuditRepository()
+    users = FakeUserRepository()
+    superadmin = make_user(is_superadmin=True)
+    users.rows[superadmin.id] = superadmin
+
+    with pytest.raises(CuentaPrivilegiadaReservadaError):
+        await ReplaceUserFeatures(_deps(users, repo, audit)).execute(
+            target_user_id=superadmin.id,
+            desired=FeatureSet(frozenset({_COB})),
+            actor_user_id=uuid.uuid4(),
+        )
