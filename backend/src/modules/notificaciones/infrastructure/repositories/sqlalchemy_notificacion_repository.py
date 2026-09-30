@@ -1,6 +1,7 @@
 import uuid
+from datetime import datetime
 
-from sqlalchemy import ColumnElement, and_, exists, func, literal, select, true
+from sqlalchemy import ColumnElement, Select, and_, exists, func, literal, select, true
 from sqlalchemy.dialects.postgresql import UUID, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,6 +24,18 @@ def _visible(audiencias: Audiencias) -> ColumnElement[bool]:
 
 def _leida(usuario_id: uuid.UUID) -> ColumnElement[bool]:
     return exists().where(and_(L.notificacion_id == N.id, L.usuario_id == usuario_id))
+
+
+def _pagina(
+    filtro: ColumnElement[bool], leida: ColumnElement[bool], offset: int, limit: int
+) -> Select[tuple[uuid.UUID, str, str, str | None, datetime, bool]]:
+    return (
+        select(N.id, N.titulo, N.cuerpo, N.url, N.creada_en, leida.label("leida"))
+        .where(filtro)
+        .order_by(N.creada_en.desc(), N.id)
+        .offset(offset)
+        .limit(limit)
+    )
 
 
 class SqlAlchemyNotificacionRepository:
@@ -59,14 +72,7 @@ class SqlAlchemyNotificacionRepository:
         if solo_no_leidas:
             filtro = and_(filtro, ~leida)
         total = await self._session.scalar(select(func.count()).select_from(N).where(filtro))
-        stmt = (
-            select(N.id, N.titulo, N.cuerpo, N.url, N.creada_en, leida.label("leida"))
-            .where(filtro)
-            .order_by(N.creada_en.desc(), N.id)
-            .offset(offset)
-            .limit(limit)
-        )
-        filas = await self._session.execute(stmt)
+        filas = await self._session.execute(_pagina(filtro, leida, offset, limit))
         items = [Notificacion(r.id, r.titulo, r.cuerpo, r.url, r.creada_en, r.leida) for r in filas]
         return items, total or 0
 

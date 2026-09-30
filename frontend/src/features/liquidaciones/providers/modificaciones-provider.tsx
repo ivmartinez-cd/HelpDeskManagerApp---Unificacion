@@ -2,7 +2,6 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 import { useSession } from "@/services/session-provider";
-import { useModificacionesAvisos } from "../hooks/use-modificaciones-avisos";
 import { useModificacionesPolling } from "../hooks/use-modificaciones-polling";
 
 interface ModificacionesContextValue {
@@ -17,14 +16,13 @@ const DESHABILITADO: ModificacionesContextValue = { habilitado: false, total: 0 
 const ModificacionesContext = createContext<ModificacionesContextValue>(DESHABILITADO);
 
 /** Un solo poller por pestaña de modificaciones del prestador sin ver (ADR-038):
- * alimenta el badge del ítem "Liquidaciones" del menú y dispara un toast
- * persistente con sonido por liquidación, en cualquier pantalla — vive en el
- * layout de `(app)`, igual que `WatiPendientesProvider`. */
+ * alimenta el badge del ítem "Liquidaciones" del menú, en cualquier pantalla —
+ * vive en el layout de `(app)`. El aviso activo (toast + sonido) ya no sale de
+ * acá: lo publica el backend en la campanita (ADR-041). */
 export function ModificacionesProvider({ children }: { children: ReactNode }) {
   const { modules } = useSession();
   const habilitado = modules.some((m) => m.key === "liquidaciones");
-  const { noVistas, total } = useModificacionesPolling(habilitado);
-  useModificacionesAvisos(noVistas, habilitado);
+  const { total } = useModificacionesPolling(habilitado);
 
   return (
     <ModificacionesContext.Provider value={{ habilitado, total }}>

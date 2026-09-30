@@ -39,7 +39,7 @@ solo en `presentation`; el `domain`/`application` de `sla` no importa `notificac
 - **WebSockets/SSE**: para una app interna alcanza con 30 s de demora.
 - **Preferencias por usuario por tipo de aviso** y **purga de viejas**: cuando haga falta.
 - **Migrar WATI**: su modal escalonado depende del turno y de minutos de espera en vivo, no es
-  un evento que se publica una vez. Liquidaciones e Insumos sí son candidatos a migrar.
+  un evento que se publica una vez. Insumos sí es candidato a migrar.
 - **Notificaciones de Windows desde otras PCs**: el navegador solo las permite en HTTPS o
   `localhost`; por `http://<ip>:3000` el interruptor aparece deshabilitado con el motivo.
 
@@ -49,3 +49,13 @@ solo en `presentation`; el `domain`/`application` de `sla` no importa `notificac
 - En el aviso de visita en sucursal, un par registrado cuenta como avisado por todos los canales:
   si el mail (`MESA_AYUDA_ALERTA_MAIL_TO`) se configura después, no se mandan por mail los pares
   que ya estaban en la campanita.
+
+## Migraciones
+
+- **Modificaciones del prestador (Liquidaciones, ADR-038)** — 2026-09-30. El toast persistente
+  con sonido por liquidación pasa a ser una notificación de la campanita por liquidación y por
+  tanda registrada, para `liquidaciones.view`. La publica un decorador del repositorio de
+  modificaciones (`ModificacionesConAviso`, infrastructure) armado en la reconciliación; el
+  caso de uso no cambia. El "visto" de la liquidación (`vista_en`, badge del menú, "marcar
+  vistas" del detalle) sigue igual y es independiente del leído de la campanita, que es por
+  usuario. Las modificaciones anteriores a la migración no generan aviso: siguen en el badge.

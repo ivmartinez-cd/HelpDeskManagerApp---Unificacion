@@ -5,7 +5,6 @@ import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { modificacionesApi } from "../api/modificaciones-api";
 import type { ModificacionPrestador } from "../types/modificacion";
-import { retirarToastModificacion } from "../utils/toast-modificaciones";
 
 type SortKey = "incidente" | "tipo" | "campo" | "antes" | "despues" | "cuando";
 
@@ -61,7 +60,6 @@ export function ModificacionesPrestadorSeccion({ liquidacionId }: { liquidacionI
     setMarcando(true);
     try {
       await modificacionesApi.marcarVistas(liquidacionId);
-      retirarToastModificacion(`modificaciones:${liquidacionId}`);
       cargar();
     } catch (err) {
       console.error("Error al marcar modificaciones como vistas:", err);

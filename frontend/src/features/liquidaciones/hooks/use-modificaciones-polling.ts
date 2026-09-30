@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { modificacionesApi } from "../api/modificaciones-api";
-import type { ModificacionPrestador } from "../types/modificacion";
 
 export interface ModificacionesPollingState {
-  noVistas: ModificacionPrestador[];
+  /** Modificaciones sin ver de todas las liquidaciones: el badge del menú. */
   total: number;
 }
 
@@ -16,17 +15,16 @@ const REFRESH_MS = 60 * 1000;
  * minuto sin volver a mostrar loading. */
 export function useModificacionesPolling(enabled: boolean): ModificacionesPollingState {
   const [tick, setTick] = useState(0);
-  const [noVistas, setNoVistas] = useState<ModificacionPrestador[]>([]);
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
     modificacionesApi
-      .listNoVistas(1, 200)
+      // Solo interesa `total` (el badge); los avisos van por la campanita.
+      .listNoVistas(1, 1)
       .then((pagina) => {
         if (!alive) return;
-        setNoVistas(pagina.items);
         setTotal(pagina.total);
       })
       .catch((err: unknown) => {
@@ -43,5 +41,5 @@ export function useModificacionesPolling(enabled: boolean): ModificacionesPollin
     return () => clearInterval(id);
   }, [enabled]);
 
-  return { noVistas, total };
+  return { total };
 }

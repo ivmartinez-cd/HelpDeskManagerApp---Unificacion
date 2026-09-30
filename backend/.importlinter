@@ -442,3 +442,12 @@ source_modules =
     src.modules.sla.application
 forbidden_modules =
     src.modules.notificaciones
+
+[importlinter:contract:liquidaciones-domain-app-independent-from-notificaciones]
+name = El domain/application de liquidaciones no depende de notificaciones (se publica desde infrastructure)
+type = forbidden
+source_modules =
+    src.modules.liquidaciones.domain
+    src.modules.liquidaciones.application
+forbidden_modules =
+    src.modules.notificaciones
