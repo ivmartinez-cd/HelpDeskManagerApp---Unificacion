@@ -12,6 +12,7 @@ from src.modules.vacaciones.application.dtos.ausencia_dtos import ListarAusencia
 from src.modules.vacaciones.application.use_cases.adjuntar_certificado_ausencia import (
     AdjuntarCertificadoAusencia,
     AdjuntarCertificadoAusenciaDependencies,
+    ObtenerCertificadoAusencia,
 )
 from src.modules.vacaciones.application.use_cases.decidir_ausencia import (
     DecidirAusencia,
@@ -227,12 +228,16 @@ async def adjuntar_certificado(
 async def obtener_certificado(
     ausencia_id: uuid.UUID,
     _identity: Identity = _require_view,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> FileResponse:
-    ausencia = await SqlAlchemyAusenciaRepository(db).get_by_id(ausencia_id)
-    if ausencia is None or ausencia.certificado_filename is None:
+    caso = ObtenerCertificadoAusencia(
+        SqlAlchemyAusenciaRepository(db), SqlAlchemyEmpleadoRepository(db)
+    )
+    filename = await caso.execute(ausencia_id, actor)
+    if filename is None:
         raise HTTPException(404, "Esta baja no tiene un certificado adjunto")
-    path = certificados_dir() / ausencia.certificado_filename
+    path = certificados_dir() / filename
     if not path.is_file():
         raise HTTPException(404, "El certificado no se encontró en disco")
     return FileResponse(
