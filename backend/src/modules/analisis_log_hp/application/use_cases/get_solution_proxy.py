@@ -9,6 +9,7 @@ from src.modules.analisis_log_hp.domain.repositories.error_code_repository impor
     ErrorCodeRepository,
 )
 from src.modules.analisis_log_hp.domain.repositories.hp_portal_gateway import HpPortalGateway
+from src.modules.analisis_log_hp.domain.services.solution_url import es_solution_url_permitida
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class GetSolutionProxy:
         record = await self._repo.get_by_code(code)
         if not record:
             raise ErrorCodeNotFoundError(code)
-        if not record.solution_url:
+        if not record.solution_url or not es_solution_url_permitida(record.solution_url):
             return record.solution_content
         try:
             return await self._portal.fetch_solution_content(record.solution_url)

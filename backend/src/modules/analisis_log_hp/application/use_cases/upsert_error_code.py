@@ -9,10 +9,12 @@ from __future__ import annotations
 import logging
 
 from src.modules.analisis_log_hp.domain.entities.error_code import ErrorCode
+from src.modules.analisis_log_hp.domain.errors import SolutionUrlNoPermitidaError
 from src.modules.analisis_log_hp.domain.repositories.error_code_repository import (
     ErrorCodeRepository,
 )
 from src.modules.analisis_log_hp.domain.repositories.hp_portal_gateway import HpPortalGateway
+from src.modules.analisis_log_hp.domain.services.solution_url import es_solution_url_permitida
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +34,8 @@ class UpsertErrorCode:
         solution_url: str | None,
     ) -> ErrorCode:
         solution_content: str | None = None
+        if solution_url and not es_solution_url_permitida(solution_url):
+            raise SolutionUrlNoPermitidaError()
         if solution_url:
             try:
                 solution_content = await self._portal.fetch_solution_content(solution_url)

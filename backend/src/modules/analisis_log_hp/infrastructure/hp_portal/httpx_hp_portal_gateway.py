@@ -24,6 +24,7 @@ import httpx
 from lxml import html
 
 from src.modules.analisis_log_hp.domain.repositories.hp_portal_gateway import EventLogsResult
+from src.modules.analisis_log_hp.domain.services.solution_url import es_solution_url_permitida
 from src.modules.analisis_log_hp.infrastructure.hp_portal.html_parser import (
     extract_device_id,
     extract_help_urls,
@@ -207,14 +208,20 @@ class HttpxHpPortalGateway:
         return parse_cache_refresh_form(page_resp.text, origin=_ORIGIN)
 
     async def fetch_solution_content(self, url: str) -> str | None:
+        # Segunda barrera (la primera está en los casos de uso): tampoco se devuelve
+        # lo que venga de una redirección que termine fuera de los hosts de HP.
+        if not es_solution_url_permitida(url):
+            logger.warning("fetch_solution_content: URL fuera de HP: %s", url[:80])
+            return None
         await self._ensure_session()
         try:
             resp = await self._client.get(url)
-            if resp.status_code == 200 and "login" not in str(resp.url).lower():
+            final = str(resp.url)
+            ok = resp.status_code == 200 and "login" not in final.lower()
+            if ok and es_solution_url_permitida(final):
                 return resp.text
             logger.warning(
-                "fetch_solution_content: status=%s url_final=%s",
-                resp.status_code, str(resp.url)[:80],
+                "fetch_solution_content: status=%s url_final=%s", resp.status_code, final[:80]
             )
         except httpx.HTTPError as exc:
             logger.warning("fetch_solution_content: error de red: %s", exc, exc_info=exc)

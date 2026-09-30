@@ -29,7 +29,7 @@ def make_error_code(
     *,
     severity: str | None = "ERROR",
     description: str | None = "Atasco de papel",
-    solution_url: str | None = "http://sds/13.20",
+    solution_url: str | None = "https://api-sds-contentbootstrapper-prod.sds.hp8.us/content/13.20",
     solution_content: str | None = "<p>cache</p>",
 ) -> ErrorCode:
     return ErrorCode(

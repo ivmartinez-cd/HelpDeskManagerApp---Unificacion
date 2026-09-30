@@ -118,6 +118,10 @@ class TestOperacionesYRefresh:
             await gw.refresh_hp_cache("7")
 
 
+_HP_HOST = "api-sds-contentbootstrapper-prod.sds.hp8.us"
+_HP = f"https://{_HP_HOST}"
+
+
 class TestFetchSolutionContent:
     async def test_devuelve_el_html_si_responde_200_fuera_del_login(
         self, monkeypatch: pytest.MonkeyPatch
@@ -128,23 +132,41 @@ class TestFetchSolutionContent:
             return _login_ok(request)
 
         gw, _ = _gateway(monkeypatch, handler)
-        assert await gw.fetch_solution_content("https://hp/solucion") == "<p>solución</p>"
+        assert await gw.fetch_solution_content(f"{_HP}/solucion") == "<p>solución</p>"
 
     async def test_redireccion_al_login_o_error_http_devuelve_none(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         def handler(request: httpx.Request) -> httpx.Response | None:
             if request.url.path == "/privada":
-                return httpx.Response(302, headers={"Location": "https://hp/login?next=1"})
-            if request.url.path == "/login" and request.url.host == "hp":
+                return httpx.Response(302, headers={"Location": f"{_HP}/login?next=1"})
+            if request.url.path == "/login" and request.url.host == _HP_HOST:
                 return httpx.Response(200, text="login")
             if request.url.path == "/rota":
                 return httpx.Response(500)
             return _login_ok(request)
 
         gw, _ = _gateway(monkeypatch, handler)
-        assert await gw.fetch_solution_content("https://hp/privada") is None
-        assert await gw.fetch_solution_content("https://hp/rota") is None
+        assert await gw.fetch_solution_content(f"{_HP}/privada") is None
+        assert await gw.fetch_solution_content(f"{_HP}/rota") is None
+
+    async def test_url_o_redireccion_fuera_de_hp_no_se_devuelve(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        pedidas: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response | None:
+            pedidas.append(str(request.url))
+            if request.url.path == "/salta":
+                return httpx.Response(302, headers={"Location": "http://backend:8012/api/x"})
+            if request.url.host == "backend":
+                return httpx.Response(200, text="secreto interno")
+            return _login_ok(request)
+
+        gw, _ = _gateway(monkeypatch, handler)
+        assert await gw.fetch_solution_content("http://mailpit:8025/api/v1/messages") is None
+        assert not any("mailpit" in u for u in pedidas)
+        assert await gw.fetch_solution_content(f"{_HP}/salta") is None
 
     async def test_error_de_red_devuelve_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def handler(request: httpx.Request) -> httpx.Response | None:
@@ -153,4 +175,4 @@ class TestFetchSolutionContent:
             return _login_ok(request)
 
         gw, _ = _gateway(monkeypatch, handler)
-        assert await gw.fetch_solution_content("https://hp/caida") is None
+        assert await gw.fetch_solution_content(f"{_HP}/caida") is None

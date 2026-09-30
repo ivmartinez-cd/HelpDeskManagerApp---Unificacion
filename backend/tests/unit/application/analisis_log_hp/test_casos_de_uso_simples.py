@@ -28,7 +28,10 @@ from src.modules.analisis_log_hp.application.use_cases.get_solution_proxy import
 from src.modules.analisis_log_hp.application.use_cases.refresh_hp_cache import RefreshHpCache
 from src.modules.analisis_log_hp.application.use_cases.resolve_device import ResolveDevice
 from src.modules.analisis_log_hp.application.use_cases.upsert_error_code import UpsertErrorCode
-from src.modules.analisis_log_hp.domain.errors import ErrorCodeNotFoundError
+from src.modules.analisis_log_hp.domain.errors import (
+    ErrorCodeNotFoundError,
+    SolutionUrlNoPermitidaError,
+)
 from tests.unit.application.analisis_log_hp.fake_gateways import (
     FakeAiGateway,
     FakeHpInsightGateway,
@@ -121,6 +124,9 @@ class TestPortalSimples:
         ]
 
 
+_URL_HP = "https://api-sds-contentbootstrapper-prod.sds.hp8.us/content/13.20"
+
+
 class TestGetSolutionProxy:
     async def test_codigo_inexistente_lanza_not_found(self) -> None:
         with pytest.raises(ErrorCodeNotFoundError):
@@ -136,7 +142,7 @@ class TestGetSolutionProxy:
         repo = FakeErrorCodeRepo([make_error_code("A")])
         portal = FakeHpPortalGateway(solution_content="<p>vivo</p>")
         assert await GetSolutionProxy(repo, portal).execute("A") == "<p>vivo</p>"
-        assert portal.calls == [("fetch_solution_content", "http://sds/13.20")]
+        assert portal.calls == [("fetch_solution_content", "https://api-sds-contentbootstrapper-prod.sds.hp8.us/content/13.20")]
 
     async def test_falla_en_vivo_cae_a_cache(self) -> None:
         repo = FakeErrorCodeRepo([make_error_code("A")])
@@ -144,14 +150,36 @@ class TestGetSolutionProxy:
         assert await GetSolutionProxy(repo, portal).execute("A") == "<p>cache</p>"
 
 
+class TestSolutionUrlFueraDeHp:
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://backend:8012/api",
+            "https://mailpit:8025/api/v1/messages",
+            "http://" + _URL_HP.removeprefix("https://"),
+        ],
+    )
+    async def test_upsert_la_rechaza_sin_pedirla(self, url: str) -> None:
+        repo, portal = FakeErrorCodeRepo(), FakeHpPortalGateway()
+        with pytest.raises(SolutionUrlNoPermitidaError):
+            await UpsertErrorCode(repo, portal).execute("A", None, None, url)
+        assert portal.calls == [] and repo.upserts == []
+
+    async def test_proxy_no_la_pide_y_devuelve_la_cache(self) -> None:
+        repo = FakeErrorCodeRepo([make_error_code("A", solution_url="http://db:5432/")])
+        portal = FakeHpPortalGateway(solution_content="<p>interno</p>")
+        assert await GetSolutionProxy(repo, portal).execute("A") == "<p>cache</p>"
+        assert portal.calls == []
+
+
 class TestUpsertErrorCode:
     async def test_con_url_fetchea_contenido_y_lo_guarda(self) -> None:
         repo = FakeErrorCodeRepo()
         portal = FakeHpPortalGateway(solution_content="<p>vivo</p>")
-        await UpsertErrorCode(repo, portal).execute("A", "ERROR", "desc", "http://u")
+        await UpsertErrorCode(repo, portal).execute("A", "ERROR", "desc", _URL_HP)
         assert repo.upserts == [{
             "code": "A", "severity": "ERROR", "description": "desc",
-            "solution_url": "http://u", "solution_content": "<p>vivo</p>",
+            "solution_url": _URL_HP, "solution_content": "<p>vivo</p>",
         }]
 
     async def test_campos_vacios_se_normalizan_a_none(self) -> None:
@@ -167,6 +195,6 @@ class TestUpsertErrorCode:
     async def test_falla_del_fetch_guarda_sin_contenido(self) -> None:
         repo = FakeErrorCodeRepo()
         portal = FakeHpPortalGateway(solution_error=RuntimeError("timeout"))
-        result = await UpsertErrorCode(repo, portal).execute("A", None, None, "http://u")
+        result = await UpsertErrorCode(repo, portal).execute("A", None, None, _URL_HP)
         assert repo.upserts[0]["solution_content"] is None
         assert result.code == "A"

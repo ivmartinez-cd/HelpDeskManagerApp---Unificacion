@@ -14,6 +14,13 @@ class ErrorCodeNotFoundError(NotFoundError):
         super().__init__(f"Código de error no encontrado: {code!r}")
 
 
+class SolutionUrlNoPermitidaError(ValidationError):
+    default_code: ClassVar[str] = "SOLUTION_URL_NO_PERMITIDA"
+
+    def __init__(self) -> None:
+        super().__init__("El link de solución tiene que ser https y de un sitio de HP")
+
+
 class SavedAnalysisNotFoundError(NotFoundError):
     default_code: ClassVar[str] = "SAVED_ANALYSIS_NOT_FOUND"
 
