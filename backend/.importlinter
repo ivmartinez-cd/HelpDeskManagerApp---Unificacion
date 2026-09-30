@@ -391,3 +391,54 @@ source_modules =
     src.modules.contadores
 forbidden_modules =
     src.modules.personas
+
+[importlinter:contract:notificaciones-domain-no-frameworks]
+name = El dominio de notificaciones no importa frameworks
+type = forbidden
+source_modules =
+    src.modules.notificaciones.domain
+forbidden_modules =
+    fastapi
+    sqlalchemy
+    pydantic
+    alembic
+
+[importlinter:contract:notificaciones-transversal]
+name = Notificaciones es transversal: no depende de ningún módulo de negocio, y de auth solo en presentation (identidad del request)
+type = forbidden
+source_modules =
+    src.modules.notificaciones
+forbidden_modules =
+    src.modules.analisis_log_hp
+    src.modules.bono_tecnicos
+    src.modules.contadores
+    src.modules.insumos
+    src.modules.liquidaciones
+    src.modules.personas
+    src.modules.prestadores
+    src.modules.preventivos
+    src.modules.reporte_incidentes
+    src.modules.sla
+    src.modules.stc
+    src.modules.tareas_varias
+    src.modules.turnos
+    src.modules.vacaciones
+    src.modules.wati
+
+[importlinter:contract:notificaciones-domain-infra-independent-from-auth]
+name = El domain/infrastructure de notificaciones no depende de auth
+type = forbidden
+source_modules =
+    src.modules.notificaciones.domain
+    src.modules.notificaciones.infrastructure
+forbidden_modules =
+    src.modules.auth
+
+[importlinter:contract:sla-domain-app-independent-from-notificaciones]
+name = El domain/application de sla no depende de notificaciones (se publica desde infrastructure)
+type = forbidden
+source_modules =
+    src.modules.sla.domain
+    src.modules.sla.application
+forbidden_modules =
+    src.modules.notificaciones

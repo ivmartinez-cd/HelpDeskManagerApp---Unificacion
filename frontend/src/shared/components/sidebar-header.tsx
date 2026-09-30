@@ -1,11 +1,12 @@
 "use client";
 
-import { Bell, LogOut, Menu } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { ThemeToggle } from "@/shared/components/theme-toggle";
 import type { UserSummary } from "@/features/auth/api/auth-api";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { WatiHeaderLink } from "@/features/wati/components/wati-header-link";
+import { Campanita } from "@/features/notificaciones/components/campanita";
 
 export function SidebarHeader({
   user,
@@ -49,7 +50,7 @@ export function SidebarHeader({
 
       <div className="flex flex-none items-center gap-1 sm:gap-3">
         <WatiHeaderLink url={watiUrl} />
-        <Bell className="hidden h-5 w-5 text-muted-foreground sm:block" aria-hidden="true" />
+        <Campanita />
         <div className="hidden h-[22px] w-px bg-border sm:block" />
         <button
           onClick={onOpenChangePassword}

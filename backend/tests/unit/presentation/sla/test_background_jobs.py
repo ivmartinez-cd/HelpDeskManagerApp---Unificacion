@@ -158,3 +158,22 @@ class TestStart:
         assert len(tasks) == 3
         assert sorted(arrancados) == [("aviso", 15), ("pendientes", 60), ("sla", 240)]
 
+
+class TestNotificadoresVisita:
+    def _canales(self, mail_to: str, monkeypatch: pytest.MonkeyPatch) -> list[str]:
+        monkeypatch.setattr(bj, "get_mailer", lambda: object())
+        serie = bj._notificadores_visita(_FakeSession(), mail_to)  # type: ignore[arg-type]
+        return [type(n).__name__ for n in serie._notificadores]
+
+    def test_sin_destinatarios_de_mail_avisa_igual_en_la_app(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        assert self._canales(" , ", monkeypatch) == ["InAppNotificadorVisitaSucursal"]
+
+    def test_con_destinatarios_avisa_primero_en_la_app_y_despues_por_mail(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        assert self._canales("a@x.com, b@x.com", monkeypatch) == [
+            "InAppNotificadorVisitaSucursal",
+            "EmailNotificadorVisitaSucursal",
+        ]

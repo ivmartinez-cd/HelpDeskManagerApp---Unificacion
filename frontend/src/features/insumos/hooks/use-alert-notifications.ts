@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { ClassifiedAlert } from "./use-request-alerts";
-import type { DesktopNotificationPayload } from "./use-desktop-notifications";
+import type { DesktopNotificationPayload } from "@/shared/hooks/use-desktop-notifications";
 
 /** Traduce las alertas clasificadas de `useRequestAlerts` (dato + severidad)
  * a notificaciones de escritorio (I/O de navegador). Separado a propósito de
@@ -11,6 +11,10 @@ import type { DesktopNotificationPayload } from "./use-desktop-notifications";
  */
 
 const ALERT_TAG = "insumos-alertas";
+
+/** Preferencia "notificaciones de escritorio" de Insumos, independiente de la
+ * de la campanita general. */
+export const INSUMOS_DESKTOP_KEY = "insumos.notificaciones-escritorio";
 
 export function useAlertNotifications(
   alerts: readonly ClassifiedAlert[],

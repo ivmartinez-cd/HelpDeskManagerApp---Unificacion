@@ -6,10 +6,14 @@ Auto-sync (configurable vía settings):
 - pendientes_refresh: cada 60 min (1 h) — backlog de incidentes sin cerrar,
   transversal a períodos; cambia con cada cierre en Gestión, por eso el intervalo
   es más corto.
-- aviso_visita_sucursal: cada 15 min — mail cuando un caso de Mesa de Ayuda
-  tiene una visita de técnico en marcha en la misma sucursal (una vez por par).
-  Solo lee Siges; escribe en `sla_avisos_visita_sucursal` y manda por el SMTP
-  general (Mailpit en dev).
+- aviso_visita_sucursal: cada 15 min — aviso cuando un caso de Mesa de Ayuda
+  tiene una visita de técnico en marcha en la misma sucursal (una vez por par):
+  en la campanita de la app (función `sla-avisos-mesa-ayuda`) y, si
+  `MESA_AYUDA_ALERTA_MAIL_TO` tiene destinatarios, además por mail (SMTP
+  general, Mailpit en dev). Solo lee Siges; escribe en
+  `sla_avisos_visita_sucursal` y `notificaciones`. Un par registrado cuenta
+  como avisado por todos los canales: si el mail se configura después, no se
+  mandan por mail los pares que ya estaban en la campanita.
 
 Sin ORION_HOST configurado, los gateways lanzan ExternalServiceError
 en cada ciclo — se loguea y se reintenta en el próximo intervalo."""
@@ -19,7 +23,12 @@ import logging
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.modules.auth.infrastructure.mailer_factory import get_mailer
+from src.modules.notificaciones.infrastructure.repositories.sqlalchemy_notificacion_repository import (  # noqa: E501
+    SqlAlchemyNotificacionRepository,
+)
 from src.modules.sla.application.use_cases.avisar_visitas_en_sucursal_mda import (
     AvisarVisitasEnSucursalMda,
 )
@@ -27,8 +36,15 @@ from src.modules.sla.application.use_cases.refresh_pendientes_snapshot import (
     RefreshPendientesSnapshot,
 )
 from src.modules.sla.application.use_cases.refresh_sla_snapshot import RefreshSlaSnapshot
+from src.modules.sla.domain.repositories.avisos_visita_sucursal import (
+    NotificadorVisitaSucursal,
+)
 from src.modules.sla.infrastructure.email_aviso_visita_sucursal import (
     EmailNotificadorVisitaSucursal,
+)
+from src.modules.sla.infrastructure.inapp_aviso_visita_sucursal import (
+    InAppNotificadorVisitaSucursal,
+    NotificadoresEnSerie,
 )
 from src.modules.sla.infrastructure.repositories.sqlalchemy_pendientes_snapshot_repository import (
     SqlAlchemyPendientesSnapshotRepository,
@@ -107,19 +123,26 @@ async def _ciclo_pendientes() -> None:
     )
 
 
+def _notificadores_visita(session: AsyncSession, mail_to: str) -> NotificadoresEnSerie:
+    # In-app primero: si el mail falla, la sesión no se confirma y la
+    # notificación tampoco queda; el próximo ciclo reintenta los dos.
+    notificadores: list[NotificadorVisitaSucursal] = [
+        InAppNotificadorVisitaSucursal(SqlAlchemyNotificacionRepository(session))
+    ]
+    destinatarios = [m.strip() for m in mail_to.split(",") if m.strip()]
+    if destinatarios:
+        notificadores.append(EmailNotificadorVisitaSucursal(get_mailer(), destinatarios))
+    return NotificadoresEnSerie(notificadores)
+
+
 async def _ciclo_aviso_visita_sucursal() -> None:
     settings = get_settings()
-    mails = settings.mesa_ayuda_alerta_mail_to.split(",")
-    destinatarios = [m.strip() for m in mails if m.strip()]
-    if not destinatarios:
-        logger.info("aviso_visita_sucursal: omitido (MESA_AYUDA_ALERTA_MAIL_TO vacío)")
-        return
     async with get_sessionmaker()() as session:
         use_case = AvisarVisitasEnSucursalMda(
             get_mesa_ayuda_query_gateway(),
             settings.mesa_ayuda_siges_empresa_id,
             SqlAlchemyRegistroAvisosVisita(session),
-            EmailNotificadorVisitaSucursal(get_mailer(), destinatarios),
+            _notificadores_visita(session, settings.mesa_ayuda_alerta_mail_to),
         )
         avisados = await use_case.execute()
         await session.commit()

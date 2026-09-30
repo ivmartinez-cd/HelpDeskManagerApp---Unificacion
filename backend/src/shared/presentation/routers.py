@@ -87,6 +87,9 @@ from src.modules.liquidaciones.presentation.liquidaciones_router import (
 from src.modules.liquidaciones.presentation.modificaciones_router import (
     router as liquidaciones_modificaciones_router,
 )
+from src.modules.notificaciones.presentation.notificaciones_router import (
+    router as notificaciones_router,
+)
 from src.modules.personas.presentation.personas_router import router as personas_router
 from src.modules.prestadores.presentation.prestadores_router import (
     router as prestadores_router,
@@ -163,6 +166,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     route_visits_router,
     dashboard_prefs_router,
     user_note_router,
+    notificaciones_router,
     contadores_tools_router,
     proyeccion_router,
     ftp_clients_router,

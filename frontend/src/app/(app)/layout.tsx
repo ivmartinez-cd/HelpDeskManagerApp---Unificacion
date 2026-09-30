@@ -6,6 +6,7 @@ import { AccessDeniedToast, RouteGuard } from "@/shared/components/route-guard";
 import { RouteTracker } from "@/shared/components/route-tracker";
 import { Sidebar } from "@/shared/components/sidebar";
 import { ModificacionesProvider } from "@/features/liquidaciones/providers/modificaciones-provider";
+import { NotificacionesProvider } from "@/features/notificaciones/providers/notificaciones-provider";
 import { WatiPendientesProvider } from "@/features/wati/providers/wati-pendientes-provider";
 import { SessionProvider } from "@/services/session-provider";
 
@@ -57,11 +58,15 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             badge del ítem Liquidaciones + toast persistente con sonido, en
             toda la app. */}
         <ModificacionesProvider>
-          <Sidebar watiUrl={WATI_URL}>
-            {/* Guard de ruta por permiso (ADR-029): adentro del Sidebar para que
-                la nav siga visible mientras redirige a Inicio. */}
-            <RouteGuard>{children}</RouteGuard>
-          </Sidebar>
+          {/* Bandeja de notificaciones (campanita del header): un poller por
+              pestaña, toast + sonido + aviso de escritorio para las nuevas. */}
+          <NotificacionesProvider>
+            <Sidebar watiUrl={WATI_URL}>
+              {/* Guard de ruta por permiso (ADR-029): adentro del Sidebar para que
+                  la nav siga visible mientras redirige a Inicio. */}
+              <RouteGuard>{children}</RouteGuard>
+            </Sidebar>
+          </NotificacionesProvider>
         </ModificacionesProvider>
       </WatiPendientesProvider>
     </SessionProvider>

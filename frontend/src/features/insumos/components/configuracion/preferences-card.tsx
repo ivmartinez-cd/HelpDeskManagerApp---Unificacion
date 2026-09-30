@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { Switch } from "@/shared/components/ui/switch";
 import { copiarTexto } from "@/shared/utils/clipboard";
-import { useDesktopNotifications } from "../../hooks/use-desktop-notifications";
-import type { NotificationSupport } from "../../hooks/use-desktop-notifications";
+import { useDesktopNotifications } from "@/shared/hooks/use-desktop-notifications";
+import type { NotificationSupport } from "@/shared/hooks/use-desktop-notifications";
+import { INSUMOS_DESKTOP_KEY } from "../../hooks/use-alert-notifications";
 
 /** Card de "Preferencias del navegador" (Configuración de Insumos): toggle de
  * notificaciones de escritorio para solicitudes nuevas sin cargar. Mismo
@@ -41,7 +42,7 @@ const PERMISSION_CLASS: Record<NotificationSupport, string> = {
 const BROWSER_SETTINGS_URL = "chrome://settings/content/notifications";
 
 export function PreferencesCard() {
-  const desktop = useDesktopNotifications();
+  const desktop = useDesktopNotifications(INSUMOS_DESKTOP_KEY);
   const [testMessage, setTestMessage] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
 

@@ -7,6 +7,9 @@ from src.modules.analisis_log_hp.infrastructure import models as _pi_models  # n
 from src.modules.auth.infrastructure import models as _auth_models  # noqa: F401
 from src.modules.contadores.infrastructure import models as _contadores_models  # noqa: F401
 from src.modules.insumos.infrastructure import models as _insumos_models  # noqa: F401
+from src.modules.notificaciones.infrastructure import (
+    models as _notificaciones_models,  # noqa: F401
+)
 from src.modules.prestadores.infrastructure import models as _prestadores_models  # noqa: F401
 from src.modules.preventivos.infrastructure import models as _preventivos_models  # noqa: F401
 from src.modules.reporte_incidentes.infrastructure import (
