@@ -9,8 +9,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-helpdesk}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME}
       POSTGRES_DB: ${POSTGRES_DB:-helpdesk}
+    # Solo loopback: desde la LAN se entra únicamente por el frontend (:3000). Mailpit
+    # abierto dejaba leer los links de reseteo de contraseña (auditoría 2026-09-30).
     ports:
-      - "${DB_PORT:-5439}:5432"
+      - "127.0.0.1:${DB_PORT:-5439}:5432"
     volumes:
       - helpdesk_db_data:/var/lib/postgresql/data
     healthcheck:
@@ -30,7 +32,7 @@ services:
       # publicado al host (DB_PORT/5439).
       DATABASE_URL: postgresql://${POSTGRES_USER:-helpdesk}:${POSTGRES_PASSWORD:-CHANGE_ME}@db:5432/${POSTGRES_DB:-helpdesk}
     ports:
-      - "8012:8012"
+      - "127.0.0.1:8012:8012"
     volumes:
       - ./backend:/app
       - backend_venv:/app/.venv
@@ -48,8 +50,8 @@ services:
     container_name: helpdesk-mailpit
     restart: unless-stopped
     ports:
-      - "8025:8025"   # UI web + API
-      - "1025:1025"   # SMTP (también accesible desde el host)
+      - "127.0.0.1:8025:8025"   # UI web + API
+      - "127.0.0.1:1025:1025"   # SMTP (también accesible desde el host)
     environment:
       MP_MAX_MESSAGES: 5000
       MP_SMTP_AUTH_ACCEPT_ANY: 1
