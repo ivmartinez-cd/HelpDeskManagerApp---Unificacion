@@ -20,8 +20,10 @@ CampoOrdenEquipos = Literal[
 
 @dataclass(frozen=True, slots=True)
 class ListEquiposPorZonaRequest:
-    zona: str
-    estado: EstadoPreventivo | None = None
+    # Una o más zonas: el parque de cada una se consulta (y cachea) por separado.
+    zonas: tuple[str, ...]
+    # Vacío = todos los estados; si no, el equipo tiene que estar en alguno.
+    estados: tuple[EstadoPreventivo, ...] = ()
     habilitado: bool | None = None
     search: str | None = None
     force_refresh: bool = False

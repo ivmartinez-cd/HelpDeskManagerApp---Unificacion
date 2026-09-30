@@ -58,7 +58,7 @@ async def test_colapsa_varias_maquinas_de_una_sucursal_en_un_punto() -> None:
     ]
     use_case = _use_case(FakePreventivosQueryGateway(equipos))
 
-    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+    result = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",)))
 
     assert len(result.puntos) == 2
     por_sucursal = {p.id_sucursal: p for p in result.puntos}
@@ -78,7 +78,7 @@ async def test_fecha_vencido_min_es_la_mas_atrasada_de_la_sucursal() -> None:
     ]
     use_case = _use_case(FakePreventivosQueryGateway(equipos))
 
-    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+    result = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",)))
 
     # El equipo 1 venció hace_400 + 180 días — la fecha real, no un conteo de
     # días, es lo que ahora expone el punto del mapa (preferido por el
@@ -97,7 +97,7 @@ async def test_distribucion_desglosa_estados_sin_esconder_la_mayoria() -> None:
     ]
     use_case = _use_case(FakePreventivosQueryGateway(equipos))
 
-    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+    result = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",)))
 
     punto = result.puntos[0]
     assert punto.peor_estado == "sin_preventivo"
@@ -121,7 +121,7 @@ async def test_fecha_tentativa_min_es_la_mas_proxima_entre_sin_preventivo() -> N
     ]
     use_case = _use_case(FakePreventivosQueryGateway(equipos))
 
-    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+    result = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",)))
 
     assert result.puntos[0].fecha_tentativa_min == date(2026, 4, 20) + timedelta(days=180)
 
@@ -130,7 +130,7 @@ async def test_fecha_tentativa_min_es_none_sin_instalacion_registrada() -> None:
     equipos = [build_equipo(1, id_sucursal=10, fecha_ultimo_preventivo=None)]
     use_case = _use_case(FakePreventivosQueryGateway(equipos))
 
-    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+    result = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",)))
 
     assert result.puntos[0].fecha_tentativa_min is None
 
@@ -146,7 +146,7 @@ async def test_cant_habilitadas_cuenta_solo_las_habilitaciones_activas() -> None
     repo = FakeHabilitacionRepository([build_habilitacion(1, habilitado_hace_dias=5)])
     use_case = _use_case(FakePreventivosQueryGateway(equipos), repo)
 
-    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+    result = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",)))
 
     assert result.puntos[0].cant_habilitadas == 1
 
@@ -163,7 +163,7 @@ async def test_coordenada_invalida_queda_marcada_no_descartada() -> None:
     ]
     use_case = _use_case(FakePreventivosQueryGateway(equipos))
 
-    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+    result = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",)))
 
     assert len(result.puntos) == 1
     assert result.puntos[0].ubicado is False
@@ -190,7 +190,7 @@ async def test_coordenada_geocodificada_completa_la_sin_ubicar() -> None:
     coordenadas = FakeSucursalCoordenadasRepository([resuelta])
     use_case = _use_case(FakePreventivosQueryGateway(equipos), coordenadas=coordenadas)
 
-    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+    result = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",)))
 
     assert result.puntos[0].ubicado is True
     assert (result.puntos[0].latitud, result.puntos[0].longitud) == (-31.5, -68.5)
@@ -219,7 +219,7 @@ async def test_override_pisa_una_coordenada_de_siges_ya_valida() -> None:
     coordenadas = FakeSucursalCoordenadasRepository([resuelta])
     use_case = _use_case(FakePreventivosQueryGateway(equipos), coordenadas=coordenadas)
 
-    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+    result = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",)))
 
     assert result.puntos[0].ubicado is True
     assert (result.puntos[0].latitud, result.puntos[0].longitud) == (-31.5, -68.5)

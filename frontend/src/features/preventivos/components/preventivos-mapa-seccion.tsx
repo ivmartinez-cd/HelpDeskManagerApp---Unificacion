@@ -14,7 +14,7 @@ import { BrandButton, BrandEmptyState, BrandSkeleton } from "@/shared/components
 import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
 
 interface PreventivosMapaSeccionProps {
-  zona: string;
+  zonas: string[];
   mapa: ReturnType<typeof usePuntosMapa>;
   canUpdate: boolean;
 }
@@ -23,7 +23,7 @@ interface PreventivosMapaSeccionProps {
  * de §4 del archivo padre) — dueño de su propio estado de edición: los
  * modales de corrección de coordenada y carga de preventivo viven acá, no en
  * la vista general. */
-export function PreventivosMapaSeccion({ zona, mapa, canUpdate }: PreventivosMapaSeccionProps) {
+export function PreventivosMapaSeccion({ zonas, mapa, canUpdate }: PreventivosMapaSeccionProps) {
   const [puntoEditando, setPuntoEditando] = useState<PuntoMapaPreventivo | null>(null);
   const [puntoCargando, setPuntoCargando] = useState<PuntoMapaPreventivo | null>(null);
 
@@ -38,7 +38,7 @@ export function PreventivosMapaSeccion({ zona, mapa, canUpdate }: PreventivosMap
         <>
           <SigesLoadingModal
             etapas={[
-              { hasta: 4, texto: `Consultando el parque de la zona ${zona}…` },
+              { hasta: 4, texto: `Consultando el parque de ${zonas.join(", ")}…` },
               { hasta: 12, texto: "Calculando ubicaciones y estados de vencimiento…" },
               { hasta: 20, texto: "Un momento más, ya casi está…" },
               { texto: "La base está lenta hoy — seguimos esperando la respuesta…" },
@@ -54,7 +54,7 @@ export function PreventivosMapaSeccion({ zona, mapa, canUpdate }: PreventivosMap
             <BrandEmptyState
               icon={SearchX}
               title="Sin resultados"
-              description="Ningún equipo de la zona cumple el filtro actual. Probá cambiar el estado o limpiar la búsqueda."
+              description="Ningún equipo de las zonas elegidas cumple el filtro actual. Probá cambiar el estado o limpiar la búsqueda."
             />
           ) : (
             <>

@@ -38,7 +38,7 @@ async def test_zona_excluida_lanza_error_sin_consultar_siges() -> None:
     gateway = FakePreventivosQueryGateway()
 
     with pytest.raises(ZonaInvalidaError):
-        await _use_case(gateway).execute(ListEquiposPorZonaRequest(zona="INTERIOR"))
+        await _use_case(gateway).execute(ListEquiposPorZonaRequest(zonas=("INTERIOR",)))
 
     assert gateway.zonas_consultadas == []
 
@@ -47,7 +47,7 @@ async def test_zona_fuera_del_catalogo_es_not_found_sin_consultar_el_parque() ->
     gateway = FakePreventivosQueryGateway([build_equipo(1, zona="SUR")])
 
     with pytest.raises(ZonaNoEncontradaError):
-        await _use_case(gateway).execute(ListEquiposPorZonaRequest(zona="SURR"))
+        await _use_case(gateway).execute(ListEquiposPorZonaRequest(zonas=("SURR",)))
 
     assert gateway.zonas_consultadas == []
 
@@ -55,7 +55,7 @@ async def test_zona_fuera_del_catalogo_es_not_found_sin_consultar_el_parque() ->
 async def test_zona_del_catalogo_se_acepta_sin_distinguir_mayusculas() -> None:
     gateway = FakePreventivosQueryGateway([build_equipo(1, zona="SUR")])
 
-    await _use_case(gateway).execute(ListEquiposPorZonaRequest(zona=" sur "))
+    await _use_case(gateway).execute(ListEquiposPorZonaRequest(zonas=(" sur ",)))
 
     assert gateway.zonas_consultadas == ["sur"]
 
@@ -73,7 +73,7 @@ async def test_ordena_vencidos_primero_y_mas_atrasado_arriba() -> None:
     ]
     use_case = _use_case(FakePreventivosQueryGateway(equipos))
 
-    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+    result = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",)))
 
     orden = [a.equipo.id_maquina for a in result.equipos]
     assert orden == [4, 2, 3, 1, 5]
@@ -86,6 +86,26 @@ async def test_ordena_vencidos_primero_y_mas_atrasado_arriba() -> None:
     ]
 
 
+async def test_varias_zonas_y_varios_estados_se_combinan() -> None:
+    vencida = date.today() - timedelta(days=400)
+    equipos = [
+        build_equipo(1, zona="SUR", fecha_ultimo_preventivo=vencida),
+        build_equipo(2, zona="OESTE", fecha_ultimo_preventivo=None),
+        build_equipo(3, zona="OESTE", fecha_ultimo_preventivo=date.today()),
+        build_equipo(4, zona="NORTE", fecha_ultimo_preventivo=vencida),
+    ]
+    gateway = FakePreventivosQueryGateway(equipos)
+
+    result = await _use_case(gateway).execute(
+        ListEquiposPorZonaRequest(
+            zonas=("SUR", "OESTE", "SUR"), estados=("vencido", "sin_preventivo")
+        )
+    )
+
+    assert [a.equipo.id_maquina for a in result.equipos] == [1, 2]
+    assert gateway.zonas_consultadas == ["SUR", "OESTE"]
+
+
 async def test_filtra_por_estado_habilitado_y_busqueda() -> None:
     vencida = date.today() - timedelta(days=400)
     equipos = [
@@ -96,9 +116,11 @@ async def test_filtra_por_estado_habilitado_y_busqueda() -> None:
     repo = FakeHabilitacionRepository([build_habilitacion(1)])
     use_case = _use_case(FakePreventivosQueryGateway(equipos), repo)
 
-    por_estado = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR", estado="vencido"))
-    habilitados = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR", habilitado=True))
-    buscados = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR", search="hospital"))
+    por_estado = await use_case.execute(
+        ListEquiposPorZonaRequest(zonas=("SUR",), estados=("vencido",))
+    )
+    habilitados = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",), habilitado=True))
+    buscados = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",), search="hospital"))
 
     # Igual de atrasados -> desempata por cliente alfabético.
     assert [a.equipo.id_maquina for a in por_estado.equipos] == [2, 1]
@@ -115,7 +137,7 @@ async def test_habilitacion_se_limpia_sola_con_preventivo_posterior() -> None:
     repo = FakeHabilitacionRepository([build_habilitacion(1, habilitado_hace_dias=10)])
     use_case = _use_case(FakePreventivosQueryGateway(equipos), repo)
 
-    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+    result = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",)))
 
     assert result.equipos[0].habilitacion is None
     guardada = repo.habilitaciones[0]
@@ -130,7 +152,7 @@ async def test_habilitacion_sin_preventivo_posterior_sigue_activa() -> None:
     repo = FakeHabilitacionRepository([build_habilitacion(1, habilitado_hace_dias=5)])
     use_case = _use_case(FakePreventivosQueryGateway(equipos), repo)
 
-    result = await use_case.execute(ListEquiposPorZonaRequest(zona="SUR"))
+    result = await use_case.execute(ListEquiposPorZonaRequest(zonas=("SUR",)))
 
     assert result.equipos[0].habilitacion is not None
     assert repo.habilitaciones[0].activa is True
@@ -140,7 +162,7 @@ async def _ids(
     use_case: ListEquiposPorZonaUseCase, orden: CampoOrdenEquipos, descendente: bool
 ) -> list[int]:
     result = await use_case.execute(
-        ListEquiposPorZonaRequest(zona="SUR", orden=orden, descendente=descendente)
+        ListEquiposPorZonaRequest(zonas=("SUR",), orden=orden, descendente=descendente)
     )
     return [a.equipo.id_maquina for a in result.equipos]
 

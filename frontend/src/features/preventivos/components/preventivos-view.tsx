@@ -3,6 +3,7 @@
 import { MapPinned, RefreshCw, SearchX, Wrench } from "lucide-react";
 import { POR_PAGINA, usePreventivosView } from "../hooks/use-preventivos-view";
 import { usePuntosMapa } from "../hooks/use-puntos-mapa";
+import { FiltroEstados } from "./filtro-estados";
 import { formatConsultadoEn, numberFormat } from "./preventivos-format";
 import { PreventivosMapaSeccion } from "./preventivos-mapa-seccion";
 import { PreventivosTabla } from "./preventivos-tabla";
@@ -17,14 +18,6 @@ import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
 import { Switch } from "@/shared/components/ui/switch";
 
-const FILTROS_ESTADO = [
-  { value: "", label: "Todos" },
-  { value: "vencido", label: "Vencidos" },
-  { value: "por_vencer", label: "Por vencer" },
-  { value: "al_dia", label: "Al día" },
-  { value: "sin_preventivo", label: "Sin preventivo" },
-];
-
 const FILTROS_VISTA = [
   { value: "tabla", label: "Tabla" },
   { value: "mapa", label: "Mapa" },
@@ -34,8 +27,8 @@ export function PreventivosView() {
   const {
     tieneModulo,
     canUpdate,
+    catalogoZonas,
     zonas,
-    zona,
     rows,
     total,
     consultadoEn,
@@ -43,7 +36,7 @@ export function PreventivosView() {
     refreshing,
     pendingId,
     pagina,
-    estado,
+    estados,
     soloHabilitados,
     busqueda,
     busquedaAplicada,
@@ -55,8 +48,8 @@ export function PreventivosView() {
     cargarZonas,
     handleRefresh,
     handleToggleHabilitacion,
-    handleSelectZona,
-    handleEstadoChange,
+    handleToggleZona,
+    handleEstadosChange,
     handleSoloHabilitadosChange,
     sort,
     ordenarPor,
@@ -64,8 +57,8 @@ export function PreventivosView() {
 
   const mapa = usePuntosMapa({
     activo: vista === "mapa",
-    zona,
-    estado,
+    zonas,
+    estados,
     soloHabilitados,
     busquedaAplicada,
   });
@@ -110,15 +103,15 @@ export function PreventivosView() {
         </div>
       </div>
 
-      {zonas === null && !error && (
+      {catalogoZonas === null && !error && (
         <div className="flex flex-wrap gap-2">
           {Array.from({ length: 10 }, (_, i) => (
             <BrandSkeleton key={i} className="h-8 w-24 rounded-full" />
           ))}
         </div>
       )}
-      {zonas !== null && (
-        <ZonaChips zonas={zonas} seleccionada={zona} onSelect={handleSelectZona} />
+      {catalogoZonas !== null && (
+        <ZonaChips zonas={catalogoZonas} seleccionadas={zonas} onToggle={handleToggleZona} />
       )}
 
       <div className="flex flex-wrap items-center gap-4">
@@ -129,13 +122,7 @@ export function PreventivosView() {
           value={vista}
           onChange={(v) => setVista(v as "tabla" | "mapa")}
         />
-        <SegmentedControl
-          label="Estado"
-          size="sm"
-          options={FILTROS_ESTADO}
-          value={estado}
-          onChange={handleEstadoChange}
-        />
+        <FiltroEstados value={estados} onChange={handleEstadosChange} />
         <label className="flex items-center gap-2 font-body text-xs font-semibold text-muted-foreground">
           <Switch
             checked={soloHabilitados}
@@ -155,7 +142,7 @@ export function PreventivosView() {
         </div>
       </div>
 
-      {zona === null && error && (
+      {zonas.length === 0 && error && (
         <div className="flex items-center justify-between gap-4 rounded-[12px] border border-destructive/20 bg-destructive/10 px-5 py-4">
           <p className="font-body text-sm text-foreground">{error}</p>
           <BrandButton variant="outline" size="sm" onClick={cargarZonas}>
@@ -164,19 +151,19 @@ export function PreventivosView() {
         </div>
       )}
 
-      {zona === null && !error && (
+      {zonas.length === 0 && !error && (
         <BrandEmptyState
           icon={MapPinned}
-          title="Elegí una zona"
-          description="Elegí una zona arriba para ver su parque de equipos, en el mapa o en la tabla."
+          title="Elegí una o más zonas"
+          description="Marcá una o varias zonas arriba para ver su parque de equipos, en el mapa o en la tabla."
         />
       )}
 
-      {zona !== null && vista === "tabla" && rows === null && !error && (
+      {zonas.length > 0 && vista === "tabla" && rows === null && !error && (
         <>
           <SigesLoadingModal
             etapas={[
-              { hasta: 4, texto: `Consultando el parque de la zona ${zona}…` },
+              { hasta: 4, texto: `Consultando el parque de ${zonas.join(", ")}…` },
               { hasta: 12, texto: "Calculando últimos preventivos y vencimientos…" },
               { hasta: 20, texto: "Un momento más, ya casi está…" },
               { texto: "La base está lenta hoy — seguimos esperando la respuesta…" },
@@ -191,7 +178,7 @@ export function PreventivosView() {
         </>
       )}
 
-      {zona !== null && vista === "tabla" && error && (
+      {zonas.length > 0 && vista === "tabla" && error && (
         <div className="flex items-center justify-between gap-4 rounded-[12px] border border-destructive/20 bg-destructive/10 px-5 py-4">
           <p className="font-body text-sm text-foreground">{error}</p>
           <BrandButton variant="outline" size="sm" onClick={() => void load()}>
@@ -200,13 +187,13 @@ export function PreventivosView() {
         </div>
       )}
 
-      {zona !== null && vista === "tabla" && rows !== null && !error && (
+      {zonas.length > 0 && vista === "tabla" && rows !== null && !error && (
         <>
           {rows.length === 0 ? (
             <BrandEmptyState
               icon={SearchX}
               title="Sin resultados"
-              description="Ningún equipo de la zona cumple el filtro actual. Probá cambiar el estado o limpiar la búsqueda."
+              description="Ningún equipo de las zonas elegidas cumple el filtro actual. Probá cambiar el estado o limpiar la búsqueda."
             />
           ) : (
             <PreventivosTabla
@@ -257,8 +244,8 @@ export function PreventivosView() {
         </>
       )}
 
-      {zona !== null && vista === "mapa" && (
-        <PreventivosMapaSeccion zona={zona} mapa={mapa} canUpdate={canUpdate} />
+      {zonas.length > 0 && vista === "mapa" && (
+        <PreventivosMapaSeccion zonas={zonas} mapa={mapa} canUpdate={canUpdate} />
       )}
     </div>
   );

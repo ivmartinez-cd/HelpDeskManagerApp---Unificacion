@@ -87,6 +87,9 @@ router = APIRouter(prefix="/api/preventivos", tags=["preventivos"])
 _require_view = Depends(require_permission(VIEW))
 _require_update = Depends(require_permission(UPDATE))
 _MAX_PAGE_SIZE = 500
+# Multi-selección: `?zona=SUR&zona=OESTE&estado=vencido&estado=por_vencer`.
+_ZONAS_QUERY = Query(min_length=1, max_length=50)
+_ESTADOS_QUERY = Query(default_factory=list, description="Vacío = todos")
 
 
 def _build_equipos_use_case(db: AsyncSession) -> ListEquiposPorZonaUseCase:
@@ -108,9 +111,7 @@ def _build_puntos_mapa_use_case(db: AsyncSession) -> ListPuntosMapaUseCase:
     )
 
 
-def _puntos_mapa_response(
-    result: ListPuntosMapaResult, *, page: int, size: int
-) -> PuntosMapaPage:
+def _puntos_mapa_response(result: ListPuntosMapaResult, *, page: int, size: int) -> PuntosMapaPage:
     schemas = [PuntoMapaSchema.from_domain(p) for p in result.puntos]
     base = Page.of(schemas, page=page, size=size)
     return PuntosMapaPage(
@@ -140,8 +141,8 @@ async def list_zonas(
 
 @router.get("/equipos", response_model=EquiposPreventivosPage)
 async def list_equipos(
-    zona: str = Query(min_length=1, max_length=20),
-    estado: EstadoPreventivo | None = Query(default=None),
+    zona: list[str] = _ZONAS_QUERY,
+    estado: list[EstadoPreventivo] = _ESTADOS_QUERY,
     habilitado: bool | None = Query(default=None),
     q: str | None = Query(default=None, max_length=120),
     page: int = Query(default=1, ge=1),
@@ -157,8 +158,8 @@ async def list_equipos(
     use_case = _build_equipos_use_case(db)
     result = await use_case.execute(
         ListEquiposPorZonaRequest(
-            zona=zona,
-            estado=estado,
+            zonas=tuple(zona),
+            estados=tuple(estado),
             habilitado=habilitado,
             search=q,
             force_refresh=refresh,
@@ -179,8 +180,8 @@ async def list_equipos(
 
 @router.get("/mapa", response_model=PuntosMapaPage)
 async def list_puntos_mapa(
-    zona: str = Query(min_length=1, max_length=20),
-    estado: EstadoPreventivo | None = Query(default=None),
+    zona: list[str] = _ZONAS_QUERY,
+    estado: list[EstadoPreventivo] = _ESTADOS_QUERY,
     habilitado: bool | None = Query(default=None),
     q: str | None = Query(default=None, max_length=120),
     page: int = Query(default=1, ge=1),
@@ -192,7 +193,11 @@ async def list_puntos_mapa(
     use_case = _build_puntos_mapa_use_case(db)
     result = await use_case.execute(
         ListEquiposPorZonaRequest(
-            zona=zona, estado=estado, habilitado=habilitado, search=q, force_refresh=refresh
+            zonas=tuple(zona),
+            estados=tuple(estado),
+            habilitado=habilitado,
+            search=q,
+            force_refresh=refresh,
         )
     )
     return _puntos_mapa_response(result, page=page, size=size)
@@ -253,9 +258,7 @@ async def deshabilitar_equipo(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.put(
-    "/sucursales/{siges_sucursal_id}/coordenadas", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.put("/sucursales/{siges_sucursal_id}/coordenadas", status_code=status.HTTP_204_NO_CONTENT)
 async def corregir_coordenada_sucursal(
     siges_sucursal_id: int,
     body: CorregirCoordenadaBody,

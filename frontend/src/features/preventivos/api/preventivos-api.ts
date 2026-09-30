@@ -14,6 +14,11 @@ import type {
 // una sola página al tamaño máximo alcanza, sin necesidad de paginar la UI.
 const _MAX_PUNTOS_MAPA = 500;
 
+/** Multi-selección como parámetros repetidos: `zona=SUR&zona=OESTE`. */
+function appendTodos(searchParams: URLSearchParams, key: string, values?: string[]) {
+  for (const value of values ?? []) searchParams.append(key, value);
+}
+
 export const preventivosApi = {
   /** Catálogo de zonas locales (DISTINCT real de Siges menos exclusiones);
    * son ~14, se piden en una sola página y se desenvuelve `.items`. */
@@ -24,11 +29,11 @@ export const preventivosApi = {
 
   listEquipos: (params: ListEquiposParams) => {
     const searchParams = new URLSearchParams({
-      zona: params.zona,
       page: String(params.page ?? 1),
       size: String(params.size ?? 50),
     });
-    if (params.estado) searchParams.set("estado", params.estado);
+    appendTodos(searchParams, "zona", params.zonas);
+    appendTodos(searchParams, "estado", params.estados);
     if (params.habilitado !== undefined) {
       searchParams.set("habilitado", String(params.habilitado));
     }
@@ -44,11 +49,9 @@ export const preventivosApi = {
   },
 
   listPuntosMapa: (params: ListPuntosMapaParams) => {
-    const searchParams = new URLSearchParams({
-      zona: params.zona,
-      size: String(_MAX_PUNTOS_MAPA),
-    });
-    if (params.estado) searchParams.set("estado", params.estado);
+    const searchParams = new URLSearchParams({ size: String(_MAX_PUNTOS_MAPA) });
+    appendTodos(searchParams, "zona", params.zonas);
+    appendTodos(searchParams, "estado", params.estados);
     if (params.habilitado !== undefined) {
       searchParams.set("habilitado", String(params.habilitado));
     }

@@ -21,8 +21,8 @@ export function usePreventivosView() {
   const tieneModulo = modules.some((m) => m.key === "preventivos");
   const canUpdate = user.isSuperadmin || can("preventivos", "update");
 
-  const [zonas, setZonas] = useState<ZonaParque[] | null>(null);
-  const [zona, setZona] = useState<string | null>(null);
+  const [catalogoZonas, setCatalogoZonas] = useState<ZonaParque[] | null>(null);
+  const [zonas, setZonasSeleccionadas] = useState<string[]>([]);
   const [rows, setRows] = useState<EquipoPreventivo[] | null>(null);
   const [total, setTotal] = useState(0);
   const [consultadoEn, setConsultadoEn] = useState<string | null>(null);
@@ -30,7 +30,8 @@ export function usePreventivosView() {
   const [refreshing, setRefreshing] = useState(false);
   const [pendingId, setPendingId] = useState<number | null>(null);
   const [pagina, setPagina] = useState(1);
-  const [estado, setEstado] = useState("");
+  // Vacío = todos los estados.
+  const [estados, setEstados] = useState<EstadoPreventivo[]>([]);
   const [soloHabilitados, setSoloHabilitados] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [busquedaAplicada, setBusquedaAplicada] = useState("");
@@ -49,12 +50,12 @@ export function usePreventivosView() {
   }, [busqueda]);
 
   // Catálogo de zonas una sola vez; arranca sin ninguna zona marcada — el
-  // usuario elige desde el mapa/chips, no se asume la primera de la lista.
+  // usuario elige una o varias desde los chips, no se asume la primera.
   useEffect(() => {
     if (!tieneModulo) return;
     preventivosApi
       .listZonas()
-      .then((lista) => setZonas(lista))
+      .then((lista) => setCatalogoZonas(lista))
       .catch((err: unknown) => {
         console.error("Error al cargar zonas de preventivos:", err);
         setError("No se pudo consultar el catálogo de zonas. Reintentá.");
@@ -65,7 +66,7 @@ export function usePreventivosView() {
     setError(null);
     preventivosApi
       .listZonas()
-      .then((lista) => setZonas(lista))
+      .then((lista) => setCatalogoZonas(lista))
       .catch((err: unknown) => {
         console.error("Error al cargar zonas de preventivos:", err);
         setError("No se pudo consultar el catálogo de zonas. Reintentá.");
@@ -74,11 +75,11 @@ export function usePreventivosView() {
 
   const load = useCallback(
     (refresh = false) => {
-      if (!zona) return Promise.resolve();
+      if (zonas.length === 0) return Promise.resolve();
       return preventivosApi
         .listEquipos({
-          zona,
-          estado: (estado || undefined) as EstadoPreventivo | undefined,
+          zonas,
+          estados,
           habilitado: soloHabilitados ? true : undefined,
           q: busquedaAplicada || undefined,
           page: pagina,
@@ -98,7 +99,7 @@ export function usePreventivosView() {
           setError("No se pudo consultar el parque. Reintentá.");
         });
     },
-    [zona, estado, soloHabilitados, busquedaAplicada, pagina, sort],
+    [zonas, estados, soloHabilitados, busquedaAplicada, pagina, sort],
   );
 
   useEffect(() => {
@@ -146,18 +147,20 @@ export function usePreventivosView() {
       .finally(() => setPendingId(null));
   };
 
-  const handleSelectZona = (z: string) => {
-    if (z === zona) return;
-    setZona(z);
+  /** Clic en un chip de zona: la agrega o la saca de la selección. */
+  const handleToggleZona = (z: string) => {
+    setZonasSeleccionadas((actuales) =>
+      actuales.includes(z) ? actuales.filter((x) => x !== z) : [...actuales, z],
+    );
     setPagina(1);
     // La zona nueva puede tener la caché fría en el backend (2-7 s):
     // vaciar la tabla dispara skeletons + modal en vez de dejar la
-    // zona anterior congelada sin feedback.
+    // selección anterior congelada sin feedback.
     setRows(null);
   };
 
-  const handleEstadoChange = (v: string) => {
-    setEstado(v);
+  const handleEstadosChange = (v: EstadoPreventivo[]) => {
+    setEstados(v);
     setPagina(1);
   };
 
@@ -174,8 +177,8 @@ export function usePreventivosView() {
   return {
     tieneModulo,
     canUpdate,
+    catalogoZonas,
     zonas,
-    zona,
     rows,
     total,
     consultadoEn,
@@ -183,7 +186,7 @@ export function usePreventivosView() {
     refreshing,
     pendingId,
     pagina,
-    estado,
+    estados,
     soloHabilitados,
     busqueda,
     busquedaAplicada,
@@ -195,8 +198,8 @@ export function usePreventivosView() {
     cargarZonas,
     handleRefresh,
     handleToggleHabilitacion,
-    handleSelectZona,
-    handleEstadoChange,
+    handleToggleZona,
+    handleEstadosChange,
     handleSoloHabilitadosChange,
     sort,
     ordenarPor,

@@ -8,8 +8,8 @@ import { numberFormat } from "../components/preventivos-format";
 
 interface UsePuntosMapaParams {
   activo: boolean;
-  zona: string | null;
-  estado: string;
+  zonas: string[];
+  estados: EstadoPreventivo[];
   soloHabilitados: boolean;
   busquedaAplicada: string;
 }
@@ -19,39 +19,40 @@ interface UsePuntosMapaParams {
  * extra por Siges cuando el usuario nunca la abre. */
 export function usePuntosMapa({
   activo,
-  zona,
-  estado,
+  zonas,
+  estados,
   soloHabilitados,
   busquedaAplicada,
 }: UsePuntosMapaParams) {
+  const claveZonas = zonas.join(",");
   const [puntos, setPuntos] = useState<PuntoMapaPreventivo[] | null>(null);
   const [sinUbicar, setSinUbicar] = useState(0);
   const [consultadoEn, setConsultadoEn] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [geocodificando, setGeocodificando] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
-  const [zonaAnterior, setZonaAnterior] = useState(zona);
+  const [zonasAnteriores, setZonasAnteriores] = useState(claveZonas);
 
-  // Al cambiar de zona se limpian los puntos ANTES de re-consultar: sin esto
+  // Al cambiar la selección de zonas se limpian los puntos ANTES de re-consultar: sin esto
   // quedan visibles los pines de la zona anterior mientras llega la nueva
   // (la caché puede estar fría, ~5-10s) sin ningún indicio de carga. Ajuste
   // de estado durante el render (no en un efecto) — patrón recomendado para
   // resetear estado derivado de un cambio de prop, sin el flash de un commit
   // extra ni el lint de setState síncrono en efectos.
-  if (zona !== zonaAnterior) {
-    setZonaAnterior(zona);
+  if (claveZonas !== zonasAnteriores) {
+    setZonasAnteriores(claveZonas);
     setPuntos(null);
     setConsultadoEn(null);
     setError(null);
   }
 
   useEffect(() => {
-    if (!activo || !zona) return;
+    if (!activo || !claveZonas) return;
     let cancelado = false;
     preventivosApi
       .listPuntosMapa({
-        zona,
-        estado: (estado || undefined) as EstadoPreventivo | undefined,
+        zonas: claveZonas.split(","),
+        estados,
         habilitado: soloHabilitados ? true : undefined,
         q: busquedaAplicada || undefined,
       })
@@ -70,7 +71,7 @@ export function usePuntosMapa({
     return () => {
       cancelado = true;
     };
-  }, [activo, zona, estado, soloHabilitados, busquedaAplicada, refreshToken]);
+  }, [activo, claveZonas, estados, soloHabilitados, busquedaAplicada, refreshToken]);
 
   const refrescar = () => setRefreshToken((t) => t + 1);
 

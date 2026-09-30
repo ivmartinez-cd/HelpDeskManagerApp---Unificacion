@@ -6,24 +6,23 @@ import { numberFormat } from "./preventivos-format";
 
 export function ZonaChips({
   zonas,
-  seleccionada,
-  onSelect,
+  seleccionadas,
+  onToggle,
 }: {
   zonas: ZonaParque[];
-  seleccionada: string | null;
-  onSelect: (zona: string) => void;
+  seleccionadas: string[];
+  onToggle: (zona: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2" role="tablist" aria-label="Zona de distribución">
+    <div className="flex flex-wrap gap-2" role="group" aria-label="Zonas de distribución">
       {zonas.map((z) => {
-        const activa = z.zona === seleccionada;
+        const activa = seleccionadas.includes(z.zona);
         return (
           <button
             key={z.zona}
             type="button"
-            role="tab"
-            aria-selected={activa}
-            onClick={() => onSelect(z.zona)}
+            aria-pressed={activa}
+            onClick={() => onToggle(z.zona)}
             className={cn(
               "rounded-full border px-3.5 py-1.5 font-body text-xs font-bold transition-colors",
               activa

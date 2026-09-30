@@ -59,8 +59,9 @@ export type PreventivoSortKey =
   | "habilitado";
 
 export interface ListEquiposParams {
-  zona: string;
-  estado?: EstadoPreventivo;
+  zonas: string[];
+  /** Vacío = todos los estados. */
+  estados?: EstadoPreventivo[];
   habilitado?: boolean;
   q?: string;
   page?: number;
@@ -109,8 +110,8 @@ export interface PuntosMapaPage extends Page<PuntoMapaPreventivo> {
 }
 
 export interface ListPuntosMapaParams {
-  zona: string;
-  estado?: EstadoPreventivo;
+  zonas: string[];
+  estados?: EstadoPreventivo[];
   habilitado?: boolean;
   q?: string;
   refresh?: boolean;

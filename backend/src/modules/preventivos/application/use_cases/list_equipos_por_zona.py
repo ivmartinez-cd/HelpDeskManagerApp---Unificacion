@@ -1,4 +1,4 @@
-"""Caso de uso central de la pantalla: parque de una zona con vencimiento
+"""Caso de uso central de la pantalla: parque de una o más zonas con vencimiento
 calculado y habilitaciones locales cruzadas. Acá también vive la limpieza
 automática de la decisión c del ADR del módulo: una habilitación activa cuyo
 equipo ya tiene un preventivo cerrado en la fecha de habilitación o después
@@ -50,22 +50,28 @@ class ListEquiposPorZonaUseCase:
         self._deps = deps
 
     async def execute(self, request: ListEquiposPorZonaRequest) -> ListEquiposResult:
-        zona = request.zona.strip()
-        if zona_excluida(zona, self._deps.zonas_excluidas):
-            raise ZonaInvalidaError(zona)
-        await self._exigir_zona_conocida(zona)
-        snapshot = await self._deps.gateway.list_equipos_por_zona(
-            zona, force_refresh=request.force_refresh
-        )
-        habilitaciones = await self._habilitaciones_vigentes(snapshot.equipos)
+        zonas = list(dict.fromkeys(z.strip() for z in request.zonas))
+        for zona in zonas:
+            if zona_excluida(zona, self._deps.zonas_excluidas):
+                raise ZonaInvalidaError(zona)
+            await self._exigir_zona_conocida(zona)
+        snapshots = [
+            await self._deps.gateway.list_equipos_por_zona(
+                zona, force_refresh=request.force_refresh
+            )
+            for zona in zonas
+        ]
+        equipos = tuple(e for s in snapshots for e in s.equipos)
+        habilitaciones = await self._habilitaciones_vigentes(equipos)
         hoy = datetime.now(_TZ_LOCAL).date()
         anotados = [
-            _anotar(equipo, habilitaciones.get(equipo.id_maquina), hoy)
-            for equipo in snapshot.equipos
+            _anotar(equipo, habilitaciones.get(equipo.id_maquina), hoy) for equipo in equipos
         ]
         filtrados = [a for a in anotados if _pasa_filtros(a, request)]
         ordenados = ordenar_equipos(filtrados, request.orden, request.descendente)
-        return ListEquiposResult(equipos=ordenados, consultado_en=snapshot.consultado_en)
+        # El sello más viejo: es el que dice qué tan frescos son los datos.
+        consultado_en = min(s.consultado_en for s in snapshots)
+        return ListEquiposResult(equipos=ordenados, consultado_en=consultado_en)
 
     async def _exigir_zona_conocida(self, zona: str) -> None:
         """El catálogo de zonas está cacheado en el gateway (30 min); una zona
@@ -134,7 +140,7 @@ def _anotar(
 
 
 def _pasa_filtros(anotado: EquipoPreventivoAnotado, request: ListEquiposPorZonaRequest) -> bool:
-    if request.estado is not None and anotado.estado != request.estado:
+    if request.estados and anotado.estado not in request.estados:
         return False
     if request.habilitado is not None and (
         (anotado.habilitacion is not None) != request.habilitado
