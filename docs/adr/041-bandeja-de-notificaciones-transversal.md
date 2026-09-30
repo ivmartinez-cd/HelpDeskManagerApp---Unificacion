@@ -39,7 +39,7 @@ solo en `presentation`; el `domain`/`application` de `sla` no importa `notificac
 - **WebSockets/SSE**: para una app interna alcanza con 30 s de demora.
 - **Preferencias por usuario por tipo de aviso** y **purga de viejas**: cuando haga falta.
 - **Migrar WATI**: su modal escalonado depende del turno y de minutos de espera en vivo, no es
-  un evento que se publica una vez. Insumos sí es candidato a migrar.
+  un evento que se publica una vez.
 - **Notificaciones de Windows desde otras PCs**: el navegador solo las permite en HTTPS o
   `localhost`; por `http://<ip>:3000` el interruptor aparece deshabilitado con el motivo.
 
@@ -59,3 +59,13 @@ solo en `presentation`; el `domain`/`application` de `sla` no importa `notificac
   caso de uso no cambia. El "visto" de la liquidación (`vista_en`, badge del menú, "marcar
   vistas" del detalle) sigue igual y es independiente del leído de la campanita, que es por
   usuario. Las modificaciones anteriores a la migración no generan aviso: siguen en el badge.
+- **Alertas de solicitudes sin cargar (Insumos)** — 2026-09-30. Antes el dashboard de Insumos
+  armaba en el navegador una notificación de escritorio para cada alerta escalada, solo para
+  quien tuviera la pantalla abierta y el aviso prendido. Ahora `RequestAlertsConAviso`
+  (decorador de `RequestAlertRepository`, infrastructure) publica en la campanita una
+  notificación por alerta cada vez que escala, para `insumos.view`; cubre los dos caminos que
+  escalan (`ListAlerts` al pollear la pantalla y el job `SyncPendingAlerts`). La preferencia de
+  notificaciones de escritorio queda una sola (la de la campanita, que respeta la vieja de
+  Insumos si estaba prendida); la card "Preferencias del navegador" de Insumos solo muestra el
+  estado, prueba y diagnostica. Con el job de Insumos apagado (dev, mientras el legacy siga
+  productivo), las alertas solo escalan cuando alguien tiene abierta la pantalla de Insumos.

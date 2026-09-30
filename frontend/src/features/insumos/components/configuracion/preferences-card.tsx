@@ -1,21 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Switch } from "@/shared/components/ui/switch";
 import { copiarTexto } from "@/shared/utils/clipboard";
 import { useDesktopNotifications } from "@/shared/hooks/use-desktop-notifications";
 import type { NotificationSupport } from "@/shared/hooks/use-desktop-notifications";
-import { INSUMOS_DESKTOP_KEY } from "../../hooks/use-alert-notifications";
 
-/** Card de "Preferencias del navegador" (Configuración de Insumos): toggle de
- * notificaciones de escritorio para solicitudes nuevas sin cargar. Mismo
- * chrome que `ConfigSectionCard` pero SIN acordeón — un solo control no
- * necesita colapsar — y por eso vive en su propio archivo en vez de sumarse a
- * `CONFIG_SECTIONS` (esas 6 secciones son un espejo estricto de los 17 campos
- * de `ConfigResponse`, atados a `isDirty`/`toPayload`/"Guardar cambios").
- *
- * La preferencia se guarda sola en `localStorage`, no depende del footer de
- * Guardar cambios de la pantalla — de ahí el sub-label fijo.
+/** Card de "Preferencias del navegador" (Configuración de Insumos): estado y
+ * prueba de las notificaciones de escritorio, con la guía para cuando Windows
+ * no las muestra. Ya no las prende ni apaga: las alertas de solicitudes sin
+ * cargar van a la campanita (ADR-041) y la preferencia se maneja desde su
+ * panel — un solo interruptor, no dos que se contradigan. Mismo chrome que
+ * `ConfigSectionCard` pero SIN acordeón, por eso vive en su propio archivo en
+ * vez de sumarse a `CONFIG_SECTIONS` (esas secciones son un espejo estricto de
+ * los campos de `ConfigResponse`, atados a `isDirty`/"Guardar cambios").
  */
 
 const WARNING_TEXT: Partial<Record<string, string>> = {
@@ -42,13 +39,12 @@ const PERMISSION_CLASS: Record<NotificationSupport, string> = {
 const BROWSER_SETTINGS_URL = "chrome://settings/content/notifications";
 
 export function PreferencesCard() {
-  const desktop = useDesktopNotifications(INSUMOS_DESKTOP_KEY);
+  const desktop = useDesktopNotifications();
   const [testMessage, setTestMessage] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
 
   if (!desktop.mounted) return null;
 
-  const disabled = desktop.support === "unsupported" || desktop.support === "denied";
   const warning = WARNING_TEXT[desktop.support];
 
   async function handleTest() {
@@ -81,21 +77,18 @@ export function PreferencesCard() {
       </div>
 
       <div className="flex flex-col gap-3 border-t border-border px-5 py-5">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <span className="font-body text-sm font-semibold text-foreground">
-              Notificaciones de escritorio
-            </span>
-            <span className="font-body text-[13px] leading-relaxed text-muted-foreground">
-              Avisa en este navegador cuando aparecen solicitudes de insumos nuevas sin cargar.
-            </span>
-          </div>
-          <Switch
-            checked={desktop.enabled}
-            onCheckedChange={(value) => void desktop.setEnabled(value)}
-            disabled={disabled}
-            label="Notificaciones de escritorio"
-          />
+        <div className="flex flex-col gap-1">
+          <span className="font-body text-sm font-semibold text-foreground">
+            Notificaciones de escritorio
+          </span>
+          <span className="font-body text-[13px] leading-relaxed text-muted-foreground">
+            Las solicitudes de insumos sin cargar que superan el tiempo de espera llegan a la
+            campanita del encabezado. Para que además aparezcan como notificación de Windows,
+            prendelo desde el panel de la campanita; acá podés probar que el navegador las
+            muestre.{" "}
+            Estado actual:{" "}
+            <strong>{desktop.enabled ? "prendidas" : "apagadas"}</strong>.
+          </span>
         </div>
 
         {warning && (
@@ -103,10 +96,6 @@ export function PreferencesCard() {
             {warning}
           </p>
         )}
-
-        <p className="font-body text-xs text-muted-foreground">
-          Preferencia de este navegador. Se guarda sola, no depende de «Guardar cambios».
-        </p>
 
         <div className="mt-1 flex flex-col gap-3 border-t border-border pt-4">
           <div className="flex flex-wrap items-center gap-4">

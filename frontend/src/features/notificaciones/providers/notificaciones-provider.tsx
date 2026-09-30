@@ -10,10 +10,6 @@ import { notificacionesApi, type Notificacion } from "../api/notificaciones-api"
 import { useAvisosNuevos } from "../hooks/use-avisos-nuevos";
 import { useNoLeidasPolling } from "../hooks/use-no-leidas-polling";
 
-/** Preferencia de notificaciones de escritorio de la campanita, separada de
- * la de Insumos. */
-const DESKTOP_KEY = "app.notificaciones-escritorio";
-
 interface NotificacionesContextValue {
   /** No leídas del usuario: el badge de la campanita. */
   total: number;
@@ -36,7 +32,7 @@ export function NotificacionesProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { noLeidas, total, cargado, refetch } = useNoLeidasPolling();
   const navegar = useCallback((url: string) => router.push(url), [router]);
-  const escritorio = useDesktopNotifications(DESKTOP_KEY, navegar);
+  const escritorio = useDesktopNotifications(navegar);
 
   const abrir = useCallback(
     (n: Notificacion) => {

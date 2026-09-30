@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { AlertTriangle, Check, RefreshCw } from "lucide-react";
 import { useSession } from "@/services/session-provider";
 import { cn } from "@/shared/utils/cn";
@@ -9,8 +8,6 @@ import { useDashboardData } from "../../hooks/use-dashboard-data";
 import { useCountdownClock } from "../../hooks/use-countdown-clock";
 import { useOrderActions } from "../../hooks/use-order-actions";
 import { useRequestAlerts } from "../../hooks/use-request-alerts";
-import { useDesktopNotifications } from "@/shared/hooks/use-desktop-notifications";
-import { INSUMOS_DESKTOP_KEY, useAlertNotifications } from "../../hooks/use-alert-notifications";
 import type { RequestRow } from "../../types";
 import { formatArgTime } from "../../utils/format";
 import { AlertsSection } from "./alerts-section";
@@ -49,12 +46,9 @@ export function InsumosDashboard({ deepLinkCustomerId }: InsumosDashboardProps) 
   const canMutate = user.isSuperadmin || can("insumos", "create");
   const canAckAlerts = user.isSuperadmin || can("insumos", "update");
 
-  const router = useRouter();
   const data = useDashboardData();
   const actions = useOrderActions(data);
   const alerts = useRequestAlerts();
-  const desktop = useDesktopNotifications(INSUMOS_DESKTOP_KEY, (url) => router.push(url));
-  useAlertNotifications(alerts.alerts, desktop.notify);
   const [detailRow, setDetailRow] = useState<RequestRow | null>(null);
 
   // Un solo intervalo de 1s para toda la tabla, y solo mientras haya alguna

@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /** Adapter único sobre la Web Notifications API del navegador — ningún otro
- * archivo de la app debe tocar `Notification` directamente. Lo usan Insumos y
- * la campanita de notificaciones, cada uno con su propia preferencia
- * (`storageKey`) para prenderlo o apagarlo por separado.
+ * archivo de la app debe tocar `Notification` directamente. Una sola
+ * preferencia por navegador: la de la campanita (ADR-041), que se prende desde
+ * su panel; la card de Insumos solo la diagnostica.
  *
  * La app puede servirse por HTTP plano en producción (sin TLS visible en
  * `docker-compose.yml`, `session_cookie_secure: bool = False` en el backend).
@@ -44,25 +44,31 @@ function detectSupport(): NotificationSupport {
   return Notification.permission;
 }
 
-function readStoredPreference(storageKey: string): boolean {
+const STORAGE_KEY = "app.notificaciones-escritorio";
+/** Preferencia de cuando Insumos avisaba por su cuenta: si alguien la tenía
+ * prendida y todavía no tocó la nueva, se respeta. */
+const LEGACY_INSUMOS_KEY = "insumos.notificaciones-escritorio";
+
+function readStoredPreference(): boolean {
   // Storage bloqueado o corrupto: default `false`, no explota.
   try {
-    return window.localStorage.getItem(storageKey) === "true";
+    const guardada =
+      window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_INSUMOS_KEY);
+    return guardada === "true";
   } catch {
     return false;
   }
 }
 
-function persistPreference(storageKey: string, value: boolean): void {
+function persistPreference(value: boolean): void {
   try {
-    window.localStorage.setItem(storageKey, String(value));
+    window.localStorage.setItem(STORAGE_KEY, String(value));
   } catch {
     // Storage lleno o deshabilitado: la preferencia igual se aplica en memoria.
   }
 }
 
 export function useDesktopNotifications(
-  storageKey: string,
   onActivate?: (url: string) => void,
 ): DesktopNotificationsState {
   const [mounted, setMounted] = useState(false);
@@ -83,14 +89,14 @@ export function useDesktopNotifications(
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial, mismo patrón que theme-toggle
     setSupport(detectSupport());
-    setEnabledState(readStoredPreference(storageKey));
+    setEnabledState(readStoredPreference());
     setMounted(true);
-  }, [storageKey]);
+  }, []);
 
   const setEnabled = useCallback(async (value: boolean) => {
     if (!value) {
       setEnabledState(false);
-      persistPreference(storageKey, false);
+      persistPreference(false);
       return;
     }
     let currentSupport = detectSupport();
@@ -103,8 +109,8 @@ export function useDesktopNotifications(
     }
     const granted = currentSupport === "granted";
     setEnabledState(granted);
-    persistPreference(storageKey, granted);
-  }, [storageKey]);
+    persistPreference(granted);
+  }, []);
 
   const sendTestNotification = useCallback(async (): Promise<string> => {
     if (detectSupport() === "unsupported") {
