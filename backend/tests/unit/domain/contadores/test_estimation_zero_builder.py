@@ -27,15 +27,14 @@ def test_mono_and_color_rows_go_to_different_wide_columns() -> None:
     assert by_serie["SER100"].clase_10 == "10" and by_serie["SER100"].contador_10 == 1500
 
 
-def test_color_only_serie_stays_in_clase_20_sin_shift() -> None:
-    # A diferencia de db3_export_builder, acá NO se desplaza a CLASE_10:
-    # counters_tools.py (fuente real) deja el contador en CLASE_20/CONTADOR_20.
+def test_color_only_serie_moves_to_first_column() -> None:
+    # Color sumado (solo clase 20): primera columna, igual que SDS y DB3.
     source = [FaltaContadorSourceRow("FALTA CONTADOR Color", "SER101", 300, "Color")]
 
     row = build_estimation_zero_rows(source, "07/08/2026")[0]
 
-    assert row.clase_10 == "" and row.contador_10 == 0
-    assert row.clase_20 == "20" and row.contador_20 == 300
+    assert row.clase_10 == "20" and row.contador_10 == 300
+    assert row.clase_20 == "" and row.contador_20 == 0
 
 
 def test_tipo_match_is_case_insensitive_substring() -> None:

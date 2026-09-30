@@ -33,12 +33,14 @@ def build_estimation_zero_rows(
 
 
 def _build_row(serie: str, acc: _Accumulator, fecha_nueva: str) -> EstimationZeroRow:
-    # A diferencia de db3_export_builder, acá NO se desplaza una serie
-    # solo-color a CLASE_10/CONTADOR_10: `counters_tools.py` (fuente legal
-    # de Estimación en 0, no `csv_en0.py`) deja ese caso con CLASE_10 vacía
-    # y el contador en CLASE_20/CONTADOR_20 — confirmado en
-    # docs/contadores/CONTADORES_CARACTERIZACION.md como comportamiento
-    # correcto, no un bug a corregir.
+    # Serie solo-color (color sumado, solo clase 20): va a la primera columna,
+    # como la descarga SDS y el export DB3 — SiGes toma el contador principal
+    # de CLASE_10/CONTADOR_10. Decisión de Iván 2026-09-30; antes se copiaba
+    # tal cual `counters_tools.py`, que la dejaba en la segunda columna.
+    if not acc.clase_10 and acc.clase_20:
+        return EstimationZeroRow(
+            serie, fecha_nueva, _TIPO_SALIDA, acc.clase_20, acc.contador_20, "", 0
+        )
     return EstimationZeroRow(
         serie=serie,
         fecha=fecha_nueva,

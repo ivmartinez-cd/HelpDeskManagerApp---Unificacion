@@ -160,6 +160,10 @@ reimplementación, es una decisión consciente, no un accidente.
   en vivo (Color queda en CLASE_20, no se mueve a CLASE_10) es el comportamiento correcto de la
   función real, no una desviación. Al portar, usar `counters_tools.py` como referencia, no
   `csv_en0.py`.
+- **Cambio (2026-09-30, pedido de Iván): ahora sí hay shift.** Una serie solo-color (color
+  sumado, solo clase 20) sale en la primera columna (`CLASE_10=20`, `CONTADOR_10=<valor>`,
+  segunda columna vacía), igual que la descarga SDS con suma color y el export DB3. Se aparta
+  a propósito de `counters_tools.py`.
 - Filtra filas cuyo `Tipo` **contiene** el substring "FALTA CONTADOR" (case-insensitive) —
   más permisivo que una lista cerrada de valores exactos.
 
