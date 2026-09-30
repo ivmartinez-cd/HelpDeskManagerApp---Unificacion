@@ -27,4 +27,6 @@ def map_row(row: Any) -> IncidenteDerivado:
         tecnico=_texto(row.Tecnico),
         id_tecnico=_entero(row.IdTecnico),
         dias_desde_ingreso=_entero(row.DiasDesdeIngreso),
+        mda_id_incidente=int(row.MdaId) if row.MdaId is not None else None,
+        casos_mda_en_sucursal=_entero(row.MdaCantidad),
     )

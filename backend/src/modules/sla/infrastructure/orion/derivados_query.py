@@ -38,9 +38,14 @@ El rango de fechas (`desde`/`hasta`, inclusive) lo deriva el caso de uso del
 período mensual AAAAMM elegido en la pantalla — no hay corte histórico fijo
 acá, se navega mes a mes.
 
+`OUTER APPLY CMDA` = caso abierto de Mesa de Ayuda en la misma sucursal (ver
+`sucursal_query.py`); su `?` (ID de MDA) va ANTES que `desde`/`hasta`.
+
 SQL 100% parametrizado con `?`, sin interpolación (ARCHITECTURE_GUIDE §8)."""
 
-INCIDENTES_DERIVADOS_SQL = """
+from src.modules.sla.infrastructure.orion.sucursal_query import CASO_MDA_EN_SUCURSAL_APPLY
+
+INCIDENTES_DERIVADOS_SQL = f"""
 SELECT
 I.ID_Incidente,
 I.Fecha_Ingreso,
@@ -52,7 +57,9 @@ M.Nro_Serie,
 AG.Descripcion AS Modelo,
 E1.Den_Comercial AS Tecnico,
 E1.ID_Empresa AS IdTecnico,
-DATEDIFF(day, I.Fecha_Ingreso, GETDATE()) AS DiasDesdeIngreso
+DATEDIFF(day, I.Fecha_Ingreso, GETDATE()) AS DiasDesdeIngreso,
+CMDA.MdaId,
+CMDA.MdaCantidad
 FROM dbo.Incidente I
 INNER JOIN dbo.Estado_Incidente EI ON I.ID_Estado_Incidente = EI.Id
 INNER JOIN dbo.Tipo_Incidente TI ON I.ID_Tipo_Incidente = TI.Id
@@ -62,6 +69,7 @@ INNER JOIN dbo.ArtGen AG ON A.Id_ArtGen = AG.Id_ArtGen
 INNER JOIN dbo.Sucursal S ON S.Id_Sucursal = I.ID_Sucursal
 INNER JOIN dbo.Empresa E ON I.ID_Empresa = E.ID_Empresa
 INNER JOIN dbo.Empresa E1 ON I.ID_Tecnico = E1.ID_Empresa
+{CASO_MDA_EN_SUCURSAL_APPLY}
 WHERE I.ID_Tipo_Incidente IN (101, 108)
 AND I.ID_Estado_Incidente = 200
 AND I.Fecha_Ingreso >= ?

@@ -38,6 +38,7 @@ async def test_listado_paginado_mas_viejos_primero() -> None:
     assert set(body["items"][0]) == {
         "id_incidente", "fecha_ingreso", "tipo", "estado", "cliente", "sucursal",
         "nro_serie", "modelo", "operador_login", "operador", "dias_transcurridos", "demorado",
+        "visita_id_incidente", "visita_tecnico", "visita_estado", "visitas_en_sucursal",
     }
 
 

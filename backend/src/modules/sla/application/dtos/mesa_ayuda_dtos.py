@@ -16,3 +16,7 @@ class IncidenteMesaAyudaDTO:
     operador: str
     dias_transcurridos: int
     demorado: bool
+    visita_id_incidente: int | None = None
+    visita_tecnico: str | None = None
+    visita_estado: str | None = None
+    visitas_en_sucursal: int = 0

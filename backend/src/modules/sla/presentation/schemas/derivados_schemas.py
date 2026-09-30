@@ -19,3 +19,5 @@ class IncidenteDerivadoSchema(BaseModel):
     operador: str | None
     dias_desde_ingreso: int
     demorado: bool
+    mda_id_incidente: int | None
+    casos_mda_en_sucursal: int

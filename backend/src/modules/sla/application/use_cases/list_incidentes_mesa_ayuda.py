@@ -17,6 +17,10 @@ def _to_dto(inc: IncidenteMesaAyuda) -> IncidenteMesaAyudaDTO:
         operador=inc.operador,
         dias_transcurridos=inc.dias_transcurridos,
         demorado=inc.demorado,
+        visita_id_incidente=inc.visita_id_incidente,
+        visita_tecnico=inc.visita_tecnico,
+        visita_estado=inc.visita_estado,
+        visitas_en_sucursal=inc.visitas_en_sucursal,
     )
 
 

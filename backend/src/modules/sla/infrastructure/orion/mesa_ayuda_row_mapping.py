@@ -14,6 +14,10 @@ def _entero(value: Any) -> int:
     return int(value) if value is not None else 0
 
 
+def _entero_o_none(value: Any) -> int | None:
+    return int(value) if value is not None else None
+
+
 def _operador(row: Any, login: str) -> str:
     nombre = f"{_texto(row.OperadorNombre)} {_texto(row.OperadorApellido)}".strip()
     return nombre or login
@@ -33,4 +37,8 @@ def map_row(row: Any) -> IncidenteMesaAyuda:
         operador_login=login,
         operador=_operador(row, login),
         dias_transcurridos=_entero(row.DiasTranscurridos),
+        visita_id_incidente=_entero_o_none(row.VisitaId),
+        visita_tecnico=_texto(row.VisitaTecnico) or None,
+        visita_estado=_texto(row.VisitaEstado) or None,
+        visitas_en_sucursal=_entero(row.VisitaCantidad),
     )

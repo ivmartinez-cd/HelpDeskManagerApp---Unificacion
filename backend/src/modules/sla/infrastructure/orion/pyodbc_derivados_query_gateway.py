@@ -7,15 +7,16 @@ from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
 
 
 class PyodbcDerivadosQueryGateway:
-    def __init__(self, runner: OrionQueryRunner) -> None:
+    def __init__(self, runner: OrionQueryRunner, id_mesa_ayuda: int) -> None:
         self._runner = runner
+        self._id_mesa_ayuda = id_mesa_ayuda
 
     async def find_incidentes_derivados(
         self, desde: date, hasta: date
     ) -> list[IncidenteDerivado]:
         rows = await self._runner.fetch_all(
             INCIDENTES_DERIVADOS_SQL,
-            (desde, hasta),
+            (self._id_mesa_ayuda, desde, hasta),
             gateway="derivados",
             log_message="Falló la consulta de incidentes Derivados contra Siges/ORION",
             log_extra={"desde": str(desde), "hasta": str(hasta)},

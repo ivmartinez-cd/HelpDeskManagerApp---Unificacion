@@ -20,6 +20,8 @@ def _to_dto(inc: IncidenteDerivado, operador: str | None) -> IncidenteDerivadoDT
         operador=operador,
         dias_desde_ingreso=inc.dias_desde_ingreso,
         demorado=inc.demorado,
+        mda_id_incidente=inc.mda_id_incidente,
+        casos_mda_en_sucursal=inc.casos_mda_en_sucursal,
     )
 
 

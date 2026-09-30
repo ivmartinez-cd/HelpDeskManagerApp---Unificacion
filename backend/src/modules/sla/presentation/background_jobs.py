@@ -6,6 +6,10 @@ Auto-sync (configurable vía settings):
 - pendientes_refresh: cada 60 min (1 h) — backlog de incidentes sin cerrar,
   transversal a períodos; cambia con cada cierre en Gestión, por eso el intervalo
   es más corto.
+- aviso_visita_sucursal: cada 15 min — mail cuando un caso de Mesa de Ayuda
+  tiene una visita de técnico en marcha en la misma sucursal (una vez por par).
+  Solo lee Siges; escribe en `sla_avisos_visita_sucursal` y manda por el SMTP
+  general (Mailpit en dev).
 
 Sin ORION_HOST configurado, los gateways lanzan ExternalServiceError
 en cada ciclo — se loguea y se reintenta en el próximo intervalo."""
@@ -15,20 +19,31 @@ import logging
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 
+from src.modules.auth.infrastructure.mailer_factory import get_mailer
+from src.modules.sla.application.use_cases.avisar_visitas_en_sucursal_mda import (
+    AvisarVisitasEnSucursalMda,
+)
 from src.modules.sla.application.use_cases.refresh_pendientes_snapshot import (
     RefreshPendientesSnapshot,
 )
 from src.modules.sla.application.use_cases.refresh_sla_snapshot import RefreshSlaSnapshot
+from src.modules.sla.infrastructure.email_aviso_visita_sucursal import (
+    EmailNotificadorVisitaSucursal,
+)
 from src.modules.sla.infrastructure.repositories.sqlalchemy_pendientes_snapshot_repository import (
     SqlAlchemyPendientesSnapshotRepository,
 )
 from src.modules.sla.infrastructure.repositories.sqlalchemy_prestador_lookup import (
     SqlAlchemyPrestadorLookup,
 )
+from src.modules.sla.infrastructure.repositories.sqlalchemy_registro_avisos_visita import (
+    SqlAlchemyRegistroAvisosVisita,
+)
 from src.modules.sla.infrastructure.repositories.sqlalchemy_sla_snapshot_repository import (
     SqlAlchemySlaSnapshotRepository,
 )
 from src.modules.sla.presentation.dependencies import (
+    get_mesa_ayuda_query_gateway,
     get_pendientes_query_gateway,
     get_sla_query_gateway,
 )
@@ -92,6 +107,25 @@ async def _ciclo_pendientes() -> None:
     )
 
 
+async def _ciclo_aviso_visita_sucursal() -> None:
+    settings = get_settings()
+    mails = settings.mesa_ayuda_alerta_mail_to.split(",")
+    destinatarios = [m.strip() for m in mails if m.strip()]
+    if not destinatarios:
+        logger.info("aviso_visita_sucursal: omitido (MESA_AYUDA_ALERTA_MAIL_TO vacío)")
+        return
+    async with get_sessionmaker()() as session:
+        use_case = AvisarVisitasEnSucursalMda(
+            get_mesa_ayuda_query_gateway(),
+            settings.mesa_ayuda_siges_empresa_id,
+            SqlAlchemyRegistroAvisosVisita(session),
+            EmailNotificadorVisitaSucursal(get_mailer(), destinatarios),
+        )
+        avisados = await use_case.execute()
+        await session.commit()
+    logger.info("aviso_visita_sucursal: OK — avisados=%d", avisados)
+
+
 async def background_sla_refresh_task(interval_minutes: int) -> None:
     await _loop("sla_refresh", _ciclo_sla, interval_minutes)
 
@@ -100,11 +134,18 @@ async def background_pendientes_refresh_task(interval_minutes: int) -> None:
     await _loop("pendientes_refresh", _ciclo_pendientes, interval_minutes)
 
 
+async def background_aviso_visita_sucursal_task(interval_minutes: int) -> None:
+    await _loop("aviso_visita_sucursal", _ciclo_aviso_visita_sucursal, interval_minutes)
+
+
 def start_sla_background_jobs(interval_minutes: int) -> list[asyncio.Task[None]]:
     settings = get_settings()
     return [
         asyncio.create_task(background_sla_refresh_task(interval_minutes)),
         asyncio.create_task(
             background_pendientes_refresh_task(settings.pendientes_refresh_interval_minutes)
+        ),
+        asyncio.create_task(
+            background_aviso_visita_sucursal_task(settings.mesa_ayuda_alerta_interval_minutes)
         ),
     ]

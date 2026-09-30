@@ -39,6 +39,7 @@ CampoOrdenDerivados = Literal[
     "nro_serie",
     "fecha_ingreso",
     "dias_desde_ingreso",
+    "mda_id_incidente",
 ]
 
 

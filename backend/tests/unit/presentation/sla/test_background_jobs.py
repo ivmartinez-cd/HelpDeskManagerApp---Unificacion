@@ -127,7 +127,7 @@ class TestCicloPendientes:
 
 class TestStart:
     @pytest.mark.asyncio
-    async def test_crea_los_dos_tasks_con_sus_intervalos(
+    async def test_crea_los_tres_tasks_con_sus_intervalos(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         arrancados: list[tuple[str, int]] = []
@@ -139,13 +139,22 @@ class TestStart:
             arrancados.append(("pendientes", interval_minutes))
 
         monkeypatch.setattr(bj, "background_sla_refresh_task", sla)
+        async def aviso(interval_minutes: int) -> None:
+            arrancados.append(("aviso", interval_minutes))
+
         monkeypatch.setattr(bj, "background_pendientes_refresh_task", pendientes)
+        monkeypatch.setattr(bj, "background_aviso_visita_sucursal_task", aviso)
         monkeypatch.setattr(
-            bj, "get_settings", lambda: SimpleNamespace(pendientes_refresh_interval_minutes=60)
+            bj,
+            "get_settings",
+            lambda: SimpleNamespace(
+                pendientes_refresh_interval_minutes=60, mesa_ayuda_alerta_interval_minutes=15
+            ),
         )
 
         tasks = bj.start_sla_background_jobs(interval_minutes=240)
         for t in tasks:
             await t
-        assert len(tasks) == 2
-        assert sorted(arrancados) == [("pendientes", 60), ("sla", 240)]
+        assert len(tasks) == 3
+        assert sorted(arrancados) == [("aviso", 15), ("pendientes", 60), ("sla", 240)]
+

@@ -50,6 +50,11 @@ class SlaSettings(BaseSettings):
     # ID_Empresa de 'CD - Mesa de Ayuda' en dbo.Empresa — juega el rol de
     # técnico (Incidente.ID_Tecnico) para sus incidentes. Confirmado 2026-08-25.
     mesa_ayuda_siges_empresa_id: int = 428
+    # Aviso por mail de casos de MDA con una visita de técnico en marcha en la
+    # misma sucursal. Destinatarios separados por coma; vacío = el job no
+    # manda nada (loguea y sigue). Sale por el SMTP general (Mailpit en dev).
+    mesa_ayuda_alerta_mail_to: str = ""
+    mesa_ayuda_alerta_interval_minutes: int = 15
     # Cadencia del job de fondo que refresca la copia local de eventos del
     # Calendario de Planificación. Full replace de ±90 días (~20 s); Gestión no
     # expone diff, así que cada ciclo rehace el rango entero. El botón

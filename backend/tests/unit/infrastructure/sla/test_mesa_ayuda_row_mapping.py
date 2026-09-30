@@ -19,6 +19,10 @@ def _row(**overrides: Any) -> SimpleNamespace:
         "OperadorNombre": "Victor",
         "OperadorApellido": "Paez",
         "DiasTranscurridos": 7,
+        "VisitaId": None,
+        "VisitaTecnico": None,
+        "VisitaEstado": None,
+        "VisitaCantidad": None,
     }
     base.update(overrides)
     return SimpleNamespace(**base)
@@ -67,3 +71,22 @@ def test_recorta_espacios_de_los_char_fijos() -> None:
 def test_demorado_mas_de_siete_dias() -> None:
     assert not map_row(_row(DiasTranscurridos=7)).demorado
     assert map_row(_row(DiasTranscurridos=8)).demorado
+
+
+def test_visita_en_la_sucursal() -> None:
+    fila = _row(
+        VisitaId=848086, VisitaTecnico="PST Rosario", VisitaEstado="Derivado", VisitaCantidad=2
+    )
+    incidente = map_row(fila)
+
+    assert incidente.visita_id_incidente == 848086
+    assert incidente.visita_tecnico == "PST Rosario"
+    assert incidente.visitas_en_sucursal == 2
+
+
+def test_sin_visita_en_la_sucursal() -> None:
+    incidente = map_row(_row())
+
+    assert incidente.visita_id_incidente is None
+    assert incidente.visita_tecnico is None
+    assert incidente.visitas_en_sucursal == 0

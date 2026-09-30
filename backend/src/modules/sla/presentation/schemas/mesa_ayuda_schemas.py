@@ -18,3 +18,7 @@ class IncidenteMesaAyudaSchema(BaseModel):
     operador: str
     dias_transcurridos: int
     demorado: bool
+    visita_id_incidente: int | None
+    visita_tecnico: str | None
+    visita_estado: str | None
+    visitas_en_sucursal: int

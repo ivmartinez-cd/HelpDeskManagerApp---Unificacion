@@ -64,7 +64,9 @@ def get_mesa_ayuda_query_gateway() -> PyodbcMesaAyudaQueryGateway:
 
 @lru_cache
 def get_derivados_query_gateway() -> PyodbcDerivadosQueryGateway:
-    return PyodbcDerivadosQueryGateway(require_orion_runner())
+    return PyodbcDerivadosQueryGateway(
+        require_orion_runner(), get_settings().mesa_ayuda_siges_empresa_id
+    )
 
 
 def build_refresh_sla_snapshot(session: AsyncSession) -> RefreshSlaSnapshot:

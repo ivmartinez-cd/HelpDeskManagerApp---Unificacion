@@ -41,7 +41,7 @@ async def test_listado_filtra_a_mis_pst_del_interior_mas_viejos_primero() -> Non
     assert set(body["items"][0]) == {
         "id_incidente", "fecha_ingreso", "tipo", "estado", "cliente", "sucursal",
         "nro_serie", "modelo", "tecnico", "id_tecnico", "operador", "dias_desde_ingreso",
-        "demorado",
+        "demorado", "mda_id_incidente", "casos_mda_en_sucursal",
     }
 
 

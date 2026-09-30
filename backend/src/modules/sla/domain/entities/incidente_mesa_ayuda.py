@@ -23,6 +23,12 @@ class IncidenteMesaAyuda:
     operador_login: str
     operador: str
     dias_transcurridos: int
+    # Visita de técnico más reciente en la misma sucursal (None = no hay) y
+    # cuántas hay en total — ver sla/infrastructure/orion/sucursal_query.py.
+    visita_id_incidente: int | None = None
+    visita_tecnico: str | None = None
+    visita_estado: str | None = None
+    visitas_en_sucursal: int = 0
 
     @property
     def demorado(self) -> bool:

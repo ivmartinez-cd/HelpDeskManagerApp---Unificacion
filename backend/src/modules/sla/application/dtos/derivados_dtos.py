@@ -17,3 +17,5 @@ class IncidenteDerivadoDTO:
     operador: str | None
     dias_desde_ingreso: int
     demorado: bool
+    mda_id_incidente: int | None = None
+    casos_mda_en_sucursal: int = 0

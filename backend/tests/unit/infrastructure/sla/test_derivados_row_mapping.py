@@ -18,6 +18,8 @@ def _row(**overrides: Any) -> SimpleNamespace:
         "Tecnico": "PST del Interior SA",
         "IdTecnico": 11,
         "DiasDesdeIngreso": 7,
+        "MdaId": None,
+        "MdaCantidad": None,
     }
     base.update(overrides)
     return SimpleNamespace(**base)

@@ -17,9 +17,17 @@ Verificado contra datos reales (2026-08-25): 43 filas sin cerrar para
 ID_Empresa=428, mismo conteo con los INNER JOIN de Maquina/Articulo/ArtGen/
 Sucursal/Empresa que con el `Incidente` solo — no pierden filas.
 
+`OUTER APPLY VIS` = la visita de técnico más reciente en la misma sucursal
+(ver `sucursal_query.py`), más cuántas hay. Caso real que lo motivó
+(2026-09-30): MDA consultando un caso de una sucursal lejana mientras otro
+caso de esa sucursal ya estaba derivado a un PST — el técnico viaja sin
+enterarse del caso de MDA.
+
 SQL 100% parametrizado con `?`, sin interpolación (ARCHITECTURE_GUIDE §8)."""
 
-INCIDENTES_MESA_AYUDA_SQL = """
+from src.modules.sla.infrastructure.orion.sucursal_query import VISITA_EN_SUCURSAL_APPLY
+
+INCIDENTES_MESA_AYUDA_SQL = f"""
 SELECT
 I.ID_Incidente,
 I.Fecha_Ingreso,
@@ -32,7 +40,11 @@ AG.Descripcion AS Modelo,
 I.Usuario_Mod AS OperadorLogin,
 UW.nombre AS OperadorNombre,
 UW.apellido AS OperadorApellido,
-DATEDIFF(day, I.Fecha_Ingreso, GETDATE()) AS DiasTranscurridos
+DATEDIFF(day, I.Fecha_Ingreso, GETDATE()) AS DiasTranscurridos,
+VIS.VisitaId,
+VIS.VisitaTecnico,
+VIS.VisitaEstado,
+VIS.VisitaCantidad
 FROM dbo.Incidente I
 INNER JOIN dbo.Estado_Incidente EI ON I.ID_Estado_Incidente = EI.Id
 INNER JOIN dbo.Tipo_Incidente TI ON I.ID_Tipo_Incidente = TI.Id
@@ -42,6 +54,7 @@ INNER JOIN dbo.ArtGen AG ON A.Id_ArtGen = AG.Id_ArtGen
 INNER JOIN dbo.Sucursal S ON S.Id_Sucursal = I.ID_Sucursal
 INNER JOIN dbo.Empresa E ON I.ID_Empresa = E.ID_Empresa
 LEFT JOIN dbo.UsuariosWeb UW ON UW.login = I.Usuario_Mod
+{VISITA_EN_SUCURSAL_APPLY}
 WHERE I.ID_Tecnico = ?
 AND I.ID_Estado_Incidente NOT IN (600, 700, 710, 900)
 ORDER BY I.Fecha_Ingreso ASC
