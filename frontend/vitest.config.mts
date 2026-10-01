@@ -9,6 +9,9 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // Los usuarios están en Argentina y varias funciones usan la fecha local:
+    // los tests corren con esa zona aunque el contenedor esté en UTC.
+    env: { TZ: "America/Argentina/Buenos_Aires" },
     include: ["src/**/*.test.ts"],
   },
 });
