@@ -5,15 +5,16 @@ ADR-017 (backend) y ADR-020 (frontend) aceptaron como deuda documentada lo que
 excedía los límites en su momento y dejaron el límite vigente para código nuevo.
 Este script hace cumplir esa segunda parte: mide con AST (backend) y `wc -l`
 (frontend), compara contra `scripts/sizes-baseline.json` y falla con cualquier
-caso que no esté en el inventario. Corre en `make check` (y por lo tanto en el
+caso que no esté en el inventario. Las funciones se miden por su cuerpo (sin firma
+ni docstring) y fallan recién por encima de 25 líneas (ADR-042). Corre en `make check` (y por lo tanto en el
 pre-push). Sin dependencias fuera de la stdlib.
 
 Uso:
     python3 scripts/check_sizes.py              # árbol de trabajo (lo que tenés editado)
     python3 scripts/check_sizes.py --committed  # HEAD: lo que se va a pushear (make check / pre-push)
     python3 scripts/check_sizes.py --staged     # solo los archivos staged, con su contenido del index (pre-commit)
-    python3 scripts/check_sizes.py --update     # regenera el inventario desde el árbol de
-                                                # trabajo (decisión consciente: acompañar con ADR)
+    python3 scripts/check_sizes.py --update     # regenera el inventario desde HEAD (no del
+                                                # árbol, que mezcla WIP ajeno; acompañar con ADR)
 
 Con varias sesiones sobre el mismo checkout, el árbol de trabajo mezcla WIP ajeno: por eso
 los hooks miden lo commiteado/staged y no lo que haya editado en disco.
@@ -32,6 +33,24 @@ import tempfile
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASELINE = os.path.join(REPO, "scripts", "sizes-baseline.json")
 MAX_FUNC, MAX_CLASS, MAX_FILE = 20, 200, 300
+# ADR-042: la guía dice 20, pero el gate mide el cuerpo (sin firma ni docstring:
+# los endpoints FastAPI declaran sus Depends/Query en la firma) y tolera hasta 25
+# antes de fallar. Partir una función por 2-3 líneas no baja complejidad.
+TOLERANCIA_FUNC = 5
+
+
+def _cuerpo(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
+    """Líneas del cuerpo, desde la primera sentencia después del docstring."""
+    body = node.body
+    primero = body[0]
+    es_docstring = (
+        isinstance(primero, ast.Expr)
+        and isinstance(primero.value, ast.Constant)
+        and isinstance(primero.value.value, str)
+    )
+    if es_docstring and len(body) > 1:
+        primero = body[1]
+    return node.end_lineno - primero.lineno + 1
 
 
 def _backend(ROOT: str) -> list[str]:
@@ -54,9 +73,9 @@ def _backend(ROOT: str) -> list[str]:
                 continue
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    span = node.end_lineno - node.lineno + 1
-                    if span > MAX_FUNC:
-                        out.append(f"func {rel}::{node.name} ({span})")
+                    cuerpo = _cuerpo(node)
+                    if cuerpo > MAX_FUNC + TOLERANCIA_FUNC:
+                        out.append(f"func {rel}::{node.name} ({cuerpo})")
                 elif isinstance(node, ast.ClassDef):
                     span = node.end_lineno - node.lineno + 1
                     if span > MAX_CLASS:
@@ -126,14 +145,16 @@ def main() -> int:
                 print("✔ §4 tamaños: nada staged que medir")
                 return 0
             return _verificar(_medir(tmp), f"{modo} " if modo == "--staged" else "")
-    actual = _medir(REPO)
     if modo == "--update":
-        json.dump({"limits": {"func": MAX_FUNC, "class": MAX_CLASS, "file": MAX_FILE},
-                   "entries": actual}, open(BASELINE, "w", encoding="utf-8"),
+        with tempfile.TemporaryDirectory() as tmp:
+            _snapshot_head(tmp)
+            actual = _medir(tmp)
+        limites = {"func_cuerpo": MAX_FUNC + TOLERANCIA_FUNC, "class": MAX_CLASS, "file": MAX_FILE}
+        json.dump({"limits": limites, "entries": actual}, open(BASELINE, "w", encoding="utf-8"),
                   indent=1, ensure_ascii=False)
-        print(f"inventario actualizado: {len(actual)} entradas → {BASELINE}")
+        print(f"inventario actualizado desde HEAD: {len(actual)} entradas → {BASELINE}")
         return 0
-    return _verificar(actual, "")
+    return _verificar(_medir(REPO), "")
 
 
 def _verificar(actual: list[str], etiqueta: str) -> int:
@@ -144,8 +165,8 @@ def _verificar(actual: list[str], etiqueta: str) -> int:
         print(f"ℹ {len(resueltos)} entradas del inventario ya no exceden el límite "
               f"(se pueden sacar con --update).")
     if nuevos:
-        print(f"✘ §4: {len(nuevos)} caso(s) nuevo(s) por encima del límite "
-              f"(función >{MAX_FUNC}, clase >{MAX_CLASS}, archivo >{MAX_FILE}):")
+        print(f"✘ §4: {len(nuevos)} caso(s) nuevo(s) por encima del límite (cuerpo de "
+              f"función >{MAX_FUNC + TOLERANCIA_FUNC}, clase >{MAX_CLASS}, archivo >{MAX_FILE}):")
         for e in nuevos:
             print(f"   {e}")
         print("   Dividir antes de commitear; el inventario congelado solo cubre la deuda "

@@ -223,7 +223,9 @@ de render, y medirlo así da cientos de "violaciones" sin valor): el límite que
 del archivo (300) más la regla de responsabilidad única — un componente no mezcla fetch,
 estado y layout; cuando pasa, se extraen hooks y sub-componentes. Los casos que excedían
 los límites al congelarse la deuda están en `scripts/sizes-baseline.json` (ADR-017/020) y
-`make check` corre `scripts/check_sizes.py`, que falla con cualquier caso nuevo.
+`make check` corre `scripts/check_sizes.py`, que falla con cualquier caso nuevo. Desde
+ADR-042 las funciones se miden por su cuerpo (sin firma ni docstring) y el gate falla
+recién por encima de 25 líneas: 20 sigue siendo la referencia al escribir.
 
 ### Patrones Prohibidos
 
