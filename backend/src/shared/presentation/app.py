@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.shared.infrastructure.config.settings import Settings, get_settings
 from src.shared.infrastructure.logging_config import configure_logging
 from src.shared.presentation.errors.handlers import register_exception_handlers
+from src.shared.presentation.middlewares.csrf import CsrfMiddleware
 from src.shared.presentation.middlewares.request_id import RequestIdMiddleware
 from src.shared.presentation.middlewares.security_headers import SecurityHeadersMiddleware
 from src.shared.presentation.routers import ROUTERS
@@ -143,13 +144,19 @@ def _origenes_cors(settings: Settings) -> list[str]:
 def _registrar_middlewares(app: FastAPI, settings: Settings) -> None:
     """CORS primero y RequestId después: el último agregado queda más afuera
     en la pila de Starlette (RequestId envuelve a CORS). SecurityHeaders va
-    entre medio: agrega headers a toda respuesta, incluidas las de error."""
+    entre medio: agrega headers a toda respuesta, incluidas las de error (y el
+    403 de CSRF, que va adentro suyo)."""
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_origenes_cors(settings),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+    )
+    app.add_middleware(
+        CsrfMiddleware,
+        session_cookie=settings.session_cookie_name,
+        csrf_cookie=settings.csrf_cookie_name,
     )
     # HSTS solo tiene sentido si la sesión ya viaja por TLS (cookie Secure).
     app.add_middleware(SecurityHeadersMiddleware, hsts=settings.session_cookie_secure)

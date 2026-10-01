@@ -32,9 +32,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  // El backend todavía no exige CSRF (llega en una etapa posterior), pero
-  // mandar el header ya mismo no rompe nada y evita tocar este cliente de
-  // nuevo cuando el backend empiece a validarlo.
+  // Double-submit CSRF: el backend rechaza (403 CSRF_INVALIDO) toda mutación
+  // con sesión cuyo header no coincida con la cookie (CsrfMiddleware).
   if (method !== "GET" && method !== "HEAD") {
     const csrfToken = readCookie(CSRF_COOKIE_NAME);
     if (csrfToken) headers.set(CSRF_HEADER_NAME, csrfToken);
