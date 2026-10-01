@@ -21,7 +21,7 @@ from src.modules.contadores.infrastructure.csv.csv_db3_writer import CsvDb3Write
 from src.modules.contadores.infrastructure.sqlite.sqlite3_db3_file_reader import (
     Sqlite3Db3FileReader,
 )
-from tests.unit.domain.contadores.test_ftp_client_use_cases import FakeGrupos
+from tests.unit.application.contadores.test_ftp_client_use_cases import FakeGrupos
 
 # ---------------------------------------------------------------------------
 # Infraestructura de test
