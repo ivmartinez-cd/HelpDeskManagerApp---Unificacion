@@ -6,9 +6,13 @@ from src.modules.tareas_varias.application.dtos.solicitud_tv_dto import (
     SolicitudTvDTO,
 )
 from src.modules.tareas_varias.application.mappers import solicitud_tv_a_dto
+from src.modules.tareas_varias.application.use_cases._autoaprobacion import verificar_no_es_propia
 from src.modules.tareas_varias.domain.entities.solicitud_tv import EstadoSolicitudTv, SolicitudTv
 from src.modules.tareas_varias.domain.repositories.solicitud_tv_repository import (
     SolicitudTvRepository,
+)
+from src.modules.tareas_varias.domain.repositories.tecnico_identity_gateway import (
+    TecnicoIdentityGateway,
 )
 
 
@@ -19,10 +23,14 @@ class CrearSolicitudTvAdmin:
     un solo insert que ya queda en estado APROBADA e impacta el Puntaje del
     período al instante."""
 
-    def __init__(self, repo: SolicitudTvRepository) -> None:
+    def __init__(self, repo: SolicitudTvRepository, identidades: TecnicoIdentityGateway) -> None:
         self._repo = repo
+        self._identidades = identidades
 
     async def execute(self, request: CrearSolicitudTvAdminRequest) -> SolicitudTvDTO:
+        await verificar_no_es_propia(
+            self._identidades, request.resuelta_por_user_id, request.id_tecnico
+        )
         ahora = datetime.now(UTC)
         solicitud = SolicitudTv(
             id=uuid.uuid4(),

@@ -39,6 +39,7 @@ class CrearSolicitudTvAdminRequest:
     sucursal: str
     tarea_realizada: str
     resuelta_por_email: str
+    resuelta_por_user_id: uuid.UUID
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +61,7 @@ class DecidirSolicitudTvRequest:
     solicitud_id: uuid.UUID
     decision: str  # "APROBADA" | "RECHAZADA"
     resuelta_por_email: str
+    resuelta_por_user_id: uuid.UUID
     motivo: str | None = None
 
 

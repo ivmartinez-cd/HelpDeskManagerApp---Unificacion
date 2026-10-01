@@ -1,7 +1,7 @@
 import uuid
 from typing import ClassVar
 
-from src.shared.domain.errors import NotFoundError, ValidationError
+from src.shared.domain.errors import ApplicationError, NotFoundError, ValidationError
 
 
 class PeriodoInvalidoError(ValidationError):
@@ -46,3 +46,14 @@ class TecnicoNoVinculadoError(NotFoundError):
             f"Tu usuario ({user_id}) no está vinculado a un técnico de Siges — "
             "pedí que te vinculen desde Gestión de Personal."
         )
+
+
+class AutoaprobacionTvError(ApplicationError):
+    """Un supervisor que también es técnico no aprueba ni carga aprobadas sus
+    propias tareas: suman a su bono (auditoría de seguridad 2026-09-30)."""
+
+    http_status: ClassVar[int] = 403
+    default_code: ClassVar[str] = "AUTOAPROBACION_TV"
+
+    def __init__(self) -> None:
+        super().__init__("No podés aprobar tus propias Tareas Varias: las aprueba otro supervisor")

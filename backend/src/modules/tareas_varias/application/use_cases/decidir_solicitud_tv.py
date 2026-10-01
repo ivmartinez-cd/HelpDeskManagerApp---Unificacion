@@ -5,10 +5,14 @@ from src.modules.tareas_varias.application.dtos.solicitud_tv_dto import (
     SolicitudTvDTO,
 )
 from src.modules.tareas_varias.application.mappers import solicitud_tv_a_dto
+from src.modules.tareas_varias.application.use_cases._autoaprobacion import verificar_no_es_propia
 from src.modules.tareas_varias.domain.entities.solicitud_tv import EstadoSolicitudTv
 from src.modules.tareas_varias.domain.errors import SolicitudTvNoEncontradaError
 from src.modules.tareas_varias.domain.repositories.solicitud_tv_repository import (
     SolicitudTvRepository,
+)
+from src.modules.tareas_varias.domain.repositories.tecnico_identity_gateway import (
+    TecnicoIdentityGateway,
 )
 
 
@@ -18,13 +22,17 @@ class DecidirSolicitudTv:
     corregir un rechazo por error) — el Puntaje siempre recalcula en vivo
     contra el estado más reciente, así que no hay riesgo de doble conteo."""
 
-    def __init__(self, repo: SolicitudTvRepository) -> None:
+    def __init__(self, repo: SolicitudTvRepository, identidades: TecnicoIdentityGateway) -> None:
         self._repo = repo
+        self._identidades = identidades
 
     async def execute(self, request: DecidirSolicitudTvRequest) -> SolicitudTvDTO:
         solicitud = await self._repo.get_by_id(request.solicitud_id)
         if solicitud is None:
             raise SolicitudTvNoEncontradaError(request.solicitud_id)
+        await verificar_no_es_propia(
+            self._identidades, request.resuelta_por_user_id, solicitud.id_tecnico
+        )
 
         ahora = datetime.now(UTC)
         if request.decision == EstadoSolicitudTv.APROBADA.value:

@@ -1,4 +1,7 @@
+import uuid
 from datetime import date
+
+import pytest
 
 from src.modules.tareas_varias.application.dtos.solicitud_tv_dto import (
     CrearSolicitudTvAdminRequest,
@@ -7,7 +10,14 @@ from src.modules.tareas_varias.application.use_cases.crear_solicitud_tv_admin im
     CrearSolicitudTvAdmin,
 )
 from src.modules.tareas_varias.domain.entities.solicitud_tv import EstadoSolicitudTv
-from tests.unit.application.tareas_varias.fakes import FakeSolicitudTvRepository
+from src.modules.tareas_varias.domain.errors import AutoaprobacionTvError
+from src.modules.tareas_varias.domain.repositories.tecnico_identity_gateway import (
+    TecnicoVinculado,
+)
+from tests.unit.application.tareas_varias.fakes import (
+    FakeSolicitudTvRepository,
+    FakeTecnicoIdentityGateway,
+)
 
 
 def _request(**overrides: object) -> CrearSolicitudTvAdminRequest:
@@ -19,6 +29,7 @@ def _request(**overrides: object) -> CrearSolicitudTvAdminRequest:
         "sucursal": "Dock Sur",
         "tarea_realizada": "Se buscan toner en Drago y se llevan a Exolgan.",
         "resuelta_por_email": "supervisor@canaldirecto.com.ar",
+        "resuelta_por_user_id": uuid.uuid4(),
     }
     base.update(overrides)
     return CrearSolicitudTvAdminRequest(**base)  # type: ignore[arg-type]
@@ -26,7 +37,7 @@ def _request(**overrides: object) -> CrearSolicitudTvAdminRequest:
 
 async def test_crea_la_solicitud_ya_aprobada() -> None:
     repo = FakeSolicitudTvRepository()
-    use_case = CrearSolicitudTvAdmin(repo)
+    use_case = CrearSolicitudTvAdmin(repo, FakeTecnicoIdentityGateway())
 
     dto = await use_case.execute(_request())
 
@@ -38,7 +49,7 @@ async def test_crea_la_solicitud_ya_aprobada() -> None:
 
 async def test_hace_un_solo_insert_sin_pasar_por_save() -> None:
     repo = FakeSolicitudTvRepository()
-    use_case = CrearSolicitudTvAdmin(repo)
+    use_case = CrearSolicitudTvAdmin(repo, FakeTecnicoIdentityGateway())
 
     dto = await use_case.execute(_request())
 
@@ -49,7 +60,7 @@ async def test_hace_un_solo_insert_sin_pasar_por_save() -> None:
 
 async def test_queda_guardada_para_el_tecnico_pedido() -> None:
     repo = FakeSolicitudTvRepository()
-    use_case = CrearSolicitudTvAdmin(repo)
+    use_case = CrearSolicitudTvAdmin(repo, FakeTecnicoIdentityGateway())
 
     dto = await use_case.execute(_request(id_tecnico=2020, tecnico="CD - Otro Tecnico"))
 
@@ -57,3 +68,14 @@ async def test_queda_guardada_para_el_tecnico_pedido() -> None:
     assert guardada is not None
     assert guardada.id_tecnico == 2020
     assert guardada.tecnico == "CD - Otro Tecnico"
+
+
+async def test_el_supervisor_no_se_carga_tareas_aprobadas_a_si_mismo() -> None:
+    repo = FakeSolicitudTvRepository()
+    yo = uuid.uuid4()
+    identidades = FakeTecnicoIdentityGateway({yo: TecnicoVinculado(1314, "CD - Yo")})
+
+    with pytest.raises(AutoaprobacionTvError):
+        await CrearSolicitudTvAdmin(repo, identidades).execute(
+            _request(resuelta_por_user_id=yo)
+        )

@@ -40,7 +40,9 @@ def build_crear_solicitud_tv_propia(session: AsyncSession) -> CrearSolicitudTvPr
 
 
 def build_crear_solicitud_tv_admin(session: AsyncSession) -> CrearSolicitudTvAdmin:
-    return CrearSolicitudTvAdmin(SqlAlchemySolicitudTvRepository(session))
+    return CrearSolicitudTvAdmin(
+        SqlAlchemySolicitudTvRepository(session), SqlAlchemyTecnicoIdentityGateway(session)
+    )
 
 
 def build_listar_solicitudes_tv(session: AsyncSession) -> ListarSolicitudesTv:
@@ -54,4 +56,6 @@ def build_listar_solicitudes_tv_propias(session: AsyncSession) -> ListarSolicitu
 
 
 def build_decidir_solicitud_tv(session: AsyncSession) -> DecidirSolicitudTv:
-    return DecidirSolicitudTv(SqlAlchemySolicitudTvRepository(session))
+    return DecidirSolicitudTv(
+        SqlAlchemySolicitudTvRepository(session), SqlAlchemyTecnicoIdentityGateway(session)
+    )

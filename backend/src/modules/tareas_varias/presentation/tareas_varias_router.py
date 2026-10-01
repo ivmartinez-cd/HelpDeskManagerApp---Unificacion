@@ -83,6 +83,7 @@ async def crear_solicitud_tv_admin(
         sucursal=body.sucursal,
         tarea_realizada=body.tarea_realizada,
         resuelta_por_email=identity.user.email,
+        resuelta_por_user_id=identity.user.id,
     )
     dto = await build_crear_solicitud_tv_admin(db).execute(request)
     return SolicitudTvSchema.model_validate(dto)
@@ -142,6 +143,7 @@ async def decidir_solicitud_tv(
             decision=body.decision,
             motivo=body.motivo,
             resuelta_por_email=identity.user.email,
+            resuelta_por_user_id=identity.user.id,
         )
     )
     return SolicitudTvSchema.model_validate(dto)
