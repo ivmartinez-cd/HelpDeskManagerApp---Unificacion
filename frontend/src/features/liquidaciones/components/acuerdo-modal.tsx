@@ -6,6 +6,7 @@ import { BrandButton, BrandInput, BrandSelect } from "@/shared/components/ui/bra
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { AcuerdoPrecioCliente, PrestadorLiquidacion } from "../types/liquidaciones";
+import { todayInArg } from "@/shared/utils/date-arg";
 
 const TIPOS = [
   "correctivo", "preventivo", "instalacion_desinstalacion",
@@ -25,7 +26,7 @@ type Modo = "factor" | "fijo";
 function acuerdoAForm(
   a: AcuerdoPrecioCliente | null, defaultPrestadorId: string, plantilla: PlantillaAcuerdo | null,
 ) {
-  const hoy = new Date().toISOString().split("T")[0];
+  const hoy = todayInArg();
   if (!a) {
     return {
       prestadorId: defaultPrestadorId,

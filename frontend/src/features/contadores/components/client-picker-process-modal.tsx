@@ -11,6 +11,7 @@ import { ClientSelect } from "./client-select";
 import { ManageMeterClientsModal } from "./manage-meter-clients-modal";
 import { ManageFtpClientsModal } from "./manage-ftp-clients-modal";
 import { FtpClientModal } from "./ftp-client-modal";
+import { todayInArg } from "@/shared/utils/date-arg";
 
 export type { PickerClientType } from "./client-picker-config";
 
@@ -30,7 +31,7 @@ export function ClientPickerProcessModal({ isOpen, type, onClose }: Props) {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [loadingClients, setLoadingClients] = useState(true);
   const [selectedId, setSelectedId] = useState("");
-  const [fechaMaxima, setFechaMaxima] = useState(new Date().toISOString().split("T")[0]);
+  const [fechaMaxima, setFechaMaxima] = useState(todayInArg());
   const { saving: submitting, error, setError, submit } = useModalSubmit();
   const [generatedCsv, setGeneratedCsv] = useState<string | null>(null);
   const [generatedDb3, setGeneratedDb3] = useState<string | null>(null);

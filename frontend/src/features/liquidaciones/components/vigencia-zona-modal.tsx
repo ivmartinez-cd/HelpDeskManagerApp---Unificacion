@@ -6,6 +6,7 @@ import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import { labelTipo, type VigenciaZona } from "../lib/tarifarios-matriz";
+import { todayInArg } from "@/shared/utils/date-arg";
 
 /** Nueva vigencia de una zona completa (todos los tipos de servicio de una
  * vez), como una fila de `dbo.CostoServicio`. Precarga los valores de la
@@ -23,7 +24,7 @@ export function VigenciaZonaModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
-  const hoy = new Date().toISOString().split("T")[0];
+  const hoy = todayInArg();
   const [costos, setCostos] = useState<Record<string, string>>(() =>
     Object.fromEntries(tipos.map((t) => [t, base?.porTipo[t] ? String(base.porTipo[t].costoServicio) : ""])),
   );

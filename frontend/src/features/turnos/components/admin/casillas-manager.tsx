@@ -14,6 +14,7 @@ import { CasillaFormModal } from "./casilla-form-modal";
 import { CasillaPlantillaBanner } from "./casilla-plantilla-banner";
 import { SlotFormModal } from "./slot-form-modal";
 import { SlotsTable } from "./slots-table";
+import { todayInArg } from "@/shared/utils/date-arg";
 
 export function CasillasManager() {
   // turnos.view abre la grilla; toda mutación (casillas, franjas, asignaciones)
@@ -109,7 +110,7 @@ export function CasillasManager() {
       }
 
       if (slotId) {
-        const todayStr = new Date().toISOString().slice(0, 10);
+        const todayStr = todayInArg();
         await turnosApi.replaceAssignments(slotId, selectedUserIds, todayStr);
       }
 

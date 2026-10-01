@@ -9,6 +9,7 @@ import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
 import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
+import { todayInArg } from "@/shared/utils/date-arg";
 
 const ESTADO_BADGE: Record<EstadoSolicitudTv, BadgeVariant> = {
   PENDIENTE: "warning",
@@ -31,7 +32,7 @@ const DESC_PRIMERO: readonly SortKey[] = ["fecha"];
 const valorOrden = (s: SolicitudTv, key: SortKey) => s[key];
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return todayInArg();
 }
 
 export function MisTareasVarias() {

@@ -1,4 +1,5 @@
 import type { Tarifario } from "../types/liquidaciones";
+import { todayInArg } from "@/shared/utils/date-arg";
 
 // Modelo de la matriz de tarifarios "como Siges" (decisión de Iván,
 // 2026-09-07): una fila por zona tarifaria (SPST o genérica) con una columna
@@ -73,7 +74,7 @@ function vigenteHoy(vigencias: VigenciaZona[], hoy: string): VigenciaZona | null
 }
 
 export function agruparPorZona(tarifarios: Tarifario[]): ZonaTarifas[] {
-  const hoy = new Date().toISOString().split("T")[0];
+  const hoy = todayInArg();
   const porZona = new Map<string, Map<string, Tarifario[]>>();
   for (const t of tarifarios) {
     const zona = porZona.get(t.spstId ?? "") ?? new Map<string, Tarifario[]>();

@@ -15,6 +15,7 @@ import {
 import { SearchableSelect } from "@/shared/components/ui/searchable-select";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import { SigesLoadingModal } from "@/shared/components/ui/siges-loading-modal";
+import { todayInArg } from "@/shared/utils/date-arg";
 
 type Modo = "proceso" | "csv";
 
@@ -29,7 +30,7 @@ export function En0Tool() {
   const { grupos, procesosVisibles } = useGruposYProcesos(idGrupo);
   const [nroProceso, setNroProceso] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
+  const [fecha, setFecha] = useState(todayInArg());
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<EstimationZeroResponse | null>(null);
 

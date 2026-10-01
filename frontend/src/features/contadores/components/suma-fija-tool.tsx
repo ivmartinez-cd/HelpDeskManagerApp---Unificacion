@@ -11,10 +11,11 @@ import {
   BrandResultPanel,
   brandButtonClasses,
 } from "@/shared/components/ui/brand-form";
+import { todayInArg } from "@/shared/utils/date-arg";
 
 export function SumaFijaTool() {
   const [files, setFiles] = useState<FileList | null>(null);
-  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
+  const [fecha, setFecha] = useState(todayInArg());
   const [hojas, setHojas] = useState<number | "">(500);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<FixedSumResponse | null>(null);

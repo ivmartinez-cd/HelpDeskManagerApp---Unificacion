@@ -6,11 +6,12 @@ import type { OperadorOption, Prestador } from "../types/prestadores";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { BrandButton, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
 import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
+import { todayInArg } from "@/shared/utils/date-arg";
 
 const SIN_ASIGNAR = "__sin_asignar__";
 
 function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  return todayInArg();
 }
 
 interface AssignOperadorModalProps {

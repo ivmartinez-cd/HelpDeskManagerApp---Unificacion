@@ -7,6 +7,7 @@ import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import type { PrestadorLiquidacion, Tarifario } from "../types/liquidaciones";
 import { SpstZonaSelect } from "./spst-zona-select";
+import { todayInArg } from "@/shared/utils/date-arg";
 
 const TIPOS = [
   "correctivo", "preventivo", "instalacion_desinstalacion",
@@ -24,7 +25,7 @@ export interface PlantillaTarifa {
 
 function tarifaAForm(t: Tarifario | null, defaultPrestadorId: string, plantilla: PlantillaTarifa | null) {
   if (!t) {
-    const hoy = new Date().toISOString().split("T")[0];
+    const hoy = todayInArg();
     return {
       prestadorId: defaultPrestadorId,
       tipoServicio: plantilla?.tipoServicio ?? "",

@@ -5,9 +5,10 @@ import type { CrearSolicitudTvAdminBody } from "../types/tareas-varias";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
 import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
+import { todayInArg } from "@/shared/utils/date-arg";
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return todayInArg();
 }
 
 interface SolicitudTvAdminModalProps {
