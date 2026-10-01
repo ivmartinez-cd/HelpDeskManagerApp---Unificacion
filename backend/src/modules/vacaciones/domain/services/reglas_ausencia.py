@@ -1,6 +1,7 @@
 """Reglas de acceso y conteo de las bajas (paridad absence.controller legacy):
-el jefe/admin registra para cualquier lista de empleados (el legacy no
-chequeaba sector en el alta masiva), el empleado solo para sí (pedir para
+el admin registra para cualquier lista de empleados y el jefe solo para los de
+su sector (el legacy no chequeaba sector en el alta masiva; se cerró en la
+auditoría de seguridad 2026-09-30), el empleado solo para sí (pedir para
 otro es 403, no se reescribe en silencio como hacía el legacy); editar/eliminar
 es del dueño o del admin (el jefe NO edita bajas ajenas), y un no-admin solo
 toca bajas PENDING y nunca cambia el estado.
@@ -10,6 +11,7 @@ import uuid
 from datetime import date, time
 
 from src.modules.vacaciones.domain.entities.ausencia import Ausencia, TipoAusencia
+from src.modules.vacaciones.domain.entities.empleado import Empleado
 from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud
 from src.modules.vacaciones.domain.errors import (
     OperacionNoPermitidaError,
@@ -47,6 +49,19 @@ def resolver_empleados_destino(
     if not destinos:
         raise ValidationError("No se ha indicado ningún empleado")
     return destinos
+
+
+def verificar_destinos_del_sector(actor: ActorVacaciones, empleados: list[Empleado]) -> None:
+    """El jefe carga bajas ya aprobadas: solo a gente de su sector (y a sí mismo)."""
+    if not actor.es_jefe_de_sector:
+        return
+    ajenos = [
+        e
+        for e in empleados
+        if e.department_id != actor.sector_gestionado_id and e.id != actor.empleado_id
+    ]
+    if ajenos:
+        raise OperacionNoPermitidaError("Solo podés registrar novedades para gente de tu sector")
 
 
 def verificar_puede_modificar_ausencia(

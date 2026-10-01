@@ -42,6 +42,7 @@ from src.modules.vacaciones.domain.services.reglas_ausencia import (
     estado_inicial,
     resolver_empleados_destino,
     validar_horario,
+    verificar_destinos_del_sector,
     verificar_puede_cambiar_estado,
     verificar_puede_modificar_ausencia,
 )
@@ -98,6 +99,7 @@ class CrearAusencias:
         empleados = await self._deps.empleados.get_by_ids(destinos)
         if len(empleados) != len(set(destinos)):
             raise NotFoundError("Uno o más empleados no fueron encontrados")
+        verificar_destinos_del_sector(actor, list(empleados.values()))
         dias = dias_de_baja(command.tipo, command.start_date, command.end_date)
         if dias <= 0:
             raise ValidationError("El rango de fechas no es válido")

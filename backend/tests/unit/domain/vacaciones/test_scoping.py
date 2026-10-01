@@ -55,9 +55,11 @@ class TestVerificarPuedeDecidir:
     def _ajena(self) -> DatosSolicitudAjena:
         return DatosSolicitudAjena(empleado_id=OTRO_EMPLEADO, department_id=SECTOR)
 
-    def test_admin_decide_todo_incluso_lo_propio(self) -> None:
+    def test_admin_decide_lo_ajeno_pero_no_lo_propio(self) -> None:
+        verificar_puede_decidir(make_actor(es_admin=True, empleado_id=EMPLEADO), self._ajena())
         actor = make_actor(es_admin=True, empleado_id=OTRO_EMPLEADO)
-        verificar_puede_decidir(actor, self._ajena())
+        with pytest.raises(OperacionNoPermitidaError, match="propia"):
+            verificar_puede_decidir(actor, self._ajena())
 
     def test_jefe_no_decide_fuera_de_su_sector(self) -> None:
         actor = make_actor(sector_gestionado_id=OTRO_SECTOR)

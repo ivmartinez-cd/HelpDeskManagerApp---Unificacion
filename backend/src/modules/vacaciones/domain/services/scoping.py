@@ -58,6 +58,10 @@ def verificar_puede_ver_solicitud(actor: ActorVacaciones, datos: DatosSolicitudA
 
 
 def verificar_puede_decidir(actor: ActorVacaciones, datos: DatosSolicitudAjena) -> None:
+    # Nadie decide lo propio, tampoco el admin (auditoría de seguridad 2026-09-30):
+    # la aprueba otro admin o su jefe. Aprobador sin sector = global, a propósito.
+    if actor.empleado_id == datos.empleado_id:
+        raise OperacionNoPermitidaError("No puedes aprobar tu propia solicitud")
     if actor.es_admin:
         return
     if (
@@ -65,8 +69,6 @@ def verificar_puede_decidir(actor: ActorVacaciones, datos: DatosSolicitudAjena) 
         and datos.department_id != actor.sector_gestionado_id
     ):
         raise OperacionNoPermitidaError("Solo puedes aprobar solicitudes de tu sector")
-    if actor.empleado_id == datos.empleado_id:
-        raise OperacionNoPermitidaError("No puedes aprobar tu propia solicitud")
 
 
 def verificar_puede_ver_solapamientos(

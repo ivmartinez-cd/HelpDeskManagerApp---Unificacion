@@ -14,10 +14,11 @@ from src.modules.vacaciones.domain.errors import (
 from src.modules.vacaciones.domain.services.reglas_ausencia import (
     dias_de_baja,
     resolver_empleados_destino,
+    verificar_destinos_del_sector,
     verificar_puede_cambiar_estado,
     verificar_puede_modificar_ausencia,
 )
-from tests.unit.domain.vacaciones.factories import make_actor
+from tests.unit.domain.vacaciones.factories import make_actor, make_empleado
 
 
 def make_ausencia(**overrides: object) -> Ausencia:
@@ -70,7 +71,7 @@ class TestResolverEmpleadosDestino:
         actor = make_actor(es_admin=True)
         assert resolver_empleados_destino(actor, ids) == ids
 
-    def test_jefe_usa_lista_dada_sin_chequeo_de_sector(self) -> None:
+    def test_jefe_usa_lista_dada_el_sector_se_verifica_aparte(self) -> None:
         ids = [uuid.uuid4()]
         actor = make_actor(sector_gestionado_id=uuid.uuid4())
         assert resolver_empleados_destino(actor, ids) == ids
@@ -94,6 +95,20 @@ class TestResolverEmpleadosDestino:
     def test_sin_destino_lanza(self) -> None:
         with pytest.raises(Exception, match="No se ha indicado"):
             resolver_empleados_destino(make_actor(), [])
+
+
+class TestVerificarDestinosDelSector:
+    def test_jefe_solo_carga_a_gente_de_su_sector_o_a_si_mismo(self) -> None:
+        sector = uuid.uuid4()
+        yo = make_empleado(department_id=uuid.uuid4())
+        actor = make_actor(sector_gestionado_id=sector, empleado_id=yo.id)
+        verificar_destinos_del_sector(actor, [make_empleado(department_id=sector), yo])
+        with pytest.raises(OperacionNoPermitidaError):
+            verificar_destinos_del_sector(actor, [make_empleado(department_id=uuid.uuid4())])
+
+    def test_admin_carga_a_cualquiera(self) -> None:
+        otro = make_empleado(department_id=uuid.uuid4())
+        verificar_destinos_del_sector(make_actor(es_admin=True), [otro])
 
 
 class TestVerificarPuedeModificar:
