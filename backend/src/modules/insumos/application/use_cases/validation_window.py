@@ -154,17 +154,7 @@ class ValidationWindow:
             "pedido"
         )
         detail = await self._delete_in_insight(row.hp_request_id, detail)
-        await self._ports.audit.record(
-            AuditRecord(
-                event=EVENT_AUTO_DISMISSED,
-                hp_request_id=row.hp_request_id,
-                customer_id=row.customer_id,
-                device_serial=row.device_serial,
-                sku=row.sku,
-                device_id=row.device_id,
-                detail=detail,
-            )
-        )
+        await self._ports.audit.record(_dismissed_record(row, detail))
         logger.info(
             "request_validation: solicitud %s descartada (falsa alarma, %s → %s%%)",
             row.hp_request_id,
@@ -192,3 +182,15 @@ class ValidationWindow:
             )
             return detail + " (no se pudo eliminar la solicitud en HP SDS, revisar manualmente)"
         return detail
+
+
+def _dismissed_record(row: PendingValidationWork, detail: str) -> AuditRecord:
+    return AuditRecord(
+        event=EVENT_AUTO_DISMISSED,
+        hp_request_id=row.hp_request_id,
+        customer_id=row.customer_id,
+        device_serial=row.device_serial,
+        sku=row.sku,
+        device_id=row.device_id,
+        detail=detail,
+    )

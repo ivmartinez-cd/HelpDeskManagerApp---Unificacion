@@ -206,20 +206,9 @@ class CorregirPin:
         self._ports = ports
 
     async def execute(self, prestador_id: UUID, siges_sucursal_id: int) -> None:
-        prestador = await validar_prestador_vinculado_siges(self._ports.prestadores, prestador_id)
-        sucursales = await self._ports.siges.list_sucursales_de_prestador(
-            prestador.siges_empresa_id  # type: ignore[arg-type]
+        sucursal, direccion, candidato = await self._geocode_de_sucursal(
+            prestador_id, siges_sucursal_id
         )
-        sucursal = next((s for s in sucursales if s.siges_sucursal_id == siges_sucursal_id), None)
-        if sucursal is None:
-            raise ValidationError(f"Sucursal {siges_sucursal_id} no encontrada")
-        direccion = armar_direccion(sucursal.domicilio, sucursal.localidad, sucursal.provincia)
-        if direccion is None:
-            raise ValidationError("La sucursal no tiene dirección para geocodificar")
-        candidatos = await self._ports.geocode_cache.get(direccion)
-        if not candidatos:
-            raise ValidationError("Ejecutá 'Auditar con Google' primero para obtener el geocode")
-        candidato = candidatos[0]
         await self._ports.sucursal_coords.upsert_pendiente(
             prestador_id=prestador_id,
             siges_sucursal_id=sucursal.siges_sucursal_id,
@@ -241,3 +230,22 @@ class CorregirPin:
             longitud=candidato.longitud,
             coords_origen=PROCEDENCIA_GEOCODE,
         )
+
+    async def _geocode_de_sucursal(
+        self, prestador_id: UUID, siges_sucursal_id: int
+    ) -> tuple[SigesSucursalCliente, str, GeocodeCandidato]:
+        """Sucursal de Siges, su dirección armada y el geocode ya cacheado."""
+        prestador = await validar_prestador_vinculado_siges(self._ports.prestadores, prestador_id)
+        sucursales = await self._ports.siges.list_sucursales_de_prestador(
+            prestador.siges_empresa_id  # type: ignore[arg-type]
+        )
+        sucursal = next((s for s in sucursales if s.siges_sucursal_id == siges_sucursal_id), None)
+        if sucursal is None:
+            raise ValidationError(f"Sucursal {siges_sucursal_id} no encontrada")
+        direccion = armar_direccion(sucursal.domicilio, sucursal.localidad, sucursal.provincia)
+        if direccion is None:
+            raise ValidationError("La sucursal no tiene dirección para geocodificar")
+        candidatos = await self._ports.geocode_cache.get(direccion)
+        if not candidatos:
+            raise ValidationError("Ejecutá 'Auditar con Google' primero para obtener el geocode")
+        return sucursal, direccion, candidatos[0]

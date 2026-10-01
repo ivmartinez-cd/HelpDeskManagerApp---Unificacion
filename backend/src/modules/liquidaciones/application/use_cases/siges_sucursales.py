@@ -27,6 +27,7 @@ from src.modules.liquidaciones.domain.repositories.prestador_repository import (
 )
 from src.modules.liquidaciones.domain.repositories.siges_catalogo_gateway import (
     SigesCatalogoGateway,
+    SigesSucursalCliente,
     SigesSucursalPropia,
 )
 from src.modules.liquidaciones.domain.repositories.tabla_km_repository import TablaKmRepository
@@ -73,15 +74,7 @@ class BuscarSucursalesSiges:
         if prestador.siges_empresa_id is None:
             raise PrestadorSinVinculoSigesError(prestador_id)
 
-        cargadas = {
-            (normalizar_nombre(fila.empresa_nombre), normalizar_nombre(fila.sucursal_nombre))
-            for fila in await self._ports.tabla_km.list_by_prestador(prestador_id)
-        }
-        activos_raw = await self._ports.incidentes.empresas_con_actividad_reciente(
-            prestador_id, desde_periodo_hace_meses(24)
-        )
-        activos_norm = {normalizar_nombre(n) for n in activos_raw}
-
+        cargadas, activos_norm = await self._cargadas_y_activas(prestador_id)
         filtro = normalizar_nombre(q)
         resultados = []
         for sucursal in await self._ports.siges.list_sucursales_de_prestador(
@@ -92,16 +85,34 @@ class BuscarSucursalesSiges:
             if filtro and filtro not in empresa and filtro not in nombre:
                 continue
             actividad_reciente = es_empresa_activa(sucursal.empresa_nombre, activos_norm)
-            resultados.append(
-                SucursalSigesDTO(
-                    siges_sucursal_id=sucursal.siges_sucursal_id,
-                    empresa_nombre=sucursal.empresa_nombre,
-                    sucursal_nombre=sucursal.sucursal_nombre,
-                    domicilio=sucursal.domicilio,
-                    localidad=sucursal.localidad,
-                    provincia=sucursal.provincia,
-                    ya_cargada=(empresa, nombre) in cargadas,
-                    actividad_reciente=actividad_reciente,
-                )
-            )
+            resultados.append(_a_dto(sucursal, (empresa, nombre) in cargadas, actividad_reciente))
         return resultados
+
+    async def _cargadas_y_activas(
+        self, prestador_id: UUID
+    ) -> tuple[set[tuple[str, str]], set[str]]:
+        """Pares empresa/sucursal ya en Tabla KM y empresas con actividad en 24 meses
+        (ambos normalizados)."""
+        cargadas = {
+            (normalizar_nombre(fila.empresa_nombre), normalizar_nombre(fila.sucursal_nombre))
+            for fila in await self._ports.tabla_km.list_by_prestador(prestador_id)
+        }
+        activos_raw = await self._ports.incidentes.empresas_con_actividad_reciente(
+            prestador_id, desde_periodo_hace_meses(24)
+        )
+        return cargadas, {normalizar_nombre(n) for n in activos_raw}
+
+
+def _a_dto(
+    sucursal: SigesSucursalCliente, ya_cargada: bool, actividad_reciente: bool
+) -> SucursalSigesDTO:
+    return SucursalSigesDTO(
+        siges_sucursal_id=sucursal.siges_sucursal_id,
+        empresa_nombre=sucursal.empresa_nombre,
+        sucursal_nombre=sucursal.sucursal_nombre,
+        domicilio=sucursal.domicilio,
+        localidad=sucursal.localidad,
+        provincia=sucursal.provincia,
+        ya_cargada=ya_cargada,
+        actividad_reciente=actividad_reciente,
+    )

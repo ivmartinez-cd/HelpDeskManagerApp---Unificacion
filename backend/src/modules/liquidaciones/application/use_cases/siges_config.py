@@ -135,6 +135,25 @@ class VincularSpstSiges:
         return actualizado
 
 
+def _clasificar_por_vinculo(
+    prestadores: list[Prestador], por_id: dict[int, SigesEmpresaInfo]
+) -> tuple[list[str], list[str], list[tuple[Prestador, SigesEmpresaInfo]]]:
+    """Separa (sin_vinculo, vinculo_roto, vinculados con su empresa de Siges)."""
+    sin_vinculo: list[str] = []
+    vinculo_roto: list[str] = []
+    vinculados: list[tuple[Prestador, SigesEmpresaInfo]] = []
+    for prestador in prestadores:
+        if prestador.siges_empresa_id is None:
+            sin_vinculo.append(prestador.nombre_corto)
+            continue
+        info = por_id.get(prestador.siges_empresa_id)
+        if info is None:
+            vinculo_roto.append(prestador.nombre_corto)
+            continue
+        vinculados.append((prestador, info))
+    return sin_vinculo, vinculo_roto, vinculados
+
+
 class SyncConfigDesdeSiges:
     """Sincroniza los campos espejo de los prestadores vinculados (los SPST no
     tienen campos espejo — su vínculo alimenta los datasets siguientes del
@@ -150,17 +169,10 @@ class SyncConfigDesdeSiges:
         cambios: list[SyncCambio] = []
         nombres_distintos: list[SyncDiferenciaNombre] = []
         sin_cambios = 0
-        sin_vinculo: list[str] = []
-        vinculo_roto: list[str] = []
-
-        for prestador in await self._ports.prestadores.list_all():
-            if prestador.siges_empresa_id is None:
-                sin_vinculo.append(prestador.nombre_corto)
-                continue
-            info = por_id.get(prestador.siges_empresa_id)
-            if info is None:
-                vinculo_roto.append(prestador.nombre_corto)
-                continue
+        sin_vinculo, vinculo_roto, vinculados = _clasificar_por_vinculo(
+            await self._ports.prestadores.list_all(), por_id
+        )
+        for prestador, info in vinculados:
             if not await self._sync_prestador(prestador, info, cambios, dry_run=dry_run):
                 sin_cambios += 1
             self._comparar_nombre(prestador, info, nombres_distintos)

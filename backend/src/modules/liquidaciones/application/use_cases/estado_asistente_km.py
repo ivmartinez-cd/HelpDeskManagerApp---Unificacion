@@ -17,6 +17,7 @@ from src.modules.liquidaciones.application.use_cases._distancias_comunes import 
 )
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.sucursal_coordenadas import SucursalCoordenadas
+from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.errors import PrestadorNoEncontradoError
 from src.modules.liquidaciones.domain.repositories.incidente_repository import IncidenteRepository
 from src.modules.liquidaciones.domain.repositories.prestador_repository import PrestadorRepository
@@ -93,14 +94,13 @@ class DiagnosticarAsistenteKm:
             raise PrestadorNoEncontradoError(prestador_id)
         if prestador.siges_empresa_id is None:
             return EstadoAsistenteKm(vinculado_siges=False, tope_por_corrida=self._tope)
+        return await self._diagnosticar(prestador, prestador_id)
 
+    async def _diagnosticar(self, prestador: Prestador, prestador_id: UUID) -> EstadoAsistenteKm:
         base_ok, base_coords_ok = await self._estado_base(prestador)
         filas = await self._ports.tabla_km.list_by_prestador(prestador_id)
         cargadas = {_clave(f.empresa_nombre, f.sucursal_nombre) for f in filas}
-        resoluciones = {
-            r.siges_sucursal_id: r
-            for r in await self._ports.sucursal_coords.list_by_prestador(prestador_id)
-        }
+        resoluciones = await self._resoluciones(prestador_id)
         contadores = await self._recorrer_sucursales(prestador, cargadas, resoluciones)
         return EstadoAsistenteKm(
             vinculado_siges=True,
@@ -113,21 +113,19 @@ class DiagnosticarAsistenteKm:
             sin_coordenadas=contadores.sin_coordenadas,
             ambiguas_pendientes=await self._contar_ambiguas(resoluciones),
             filas_sin_km=sum(1 for f in filas if f.kms_recorrido <= 0),
-            # Una fila con siges_sucursal_id ya no cuenta como "no encontrada"
-            # aunque su nombre no matchee textualmente (N0): el vínculo N1/N2/
-            # manual del matching de sucursales es más fuerte que el nombre.
-            no_encontradas_en_siges=sum(
-                1
-                for f in filas
-                if f.siges_sucursal_id is None
-                and _clave(f.empresa_nombre, f.sucursal_nombre) not in contadores.claves_siges
-            ),
+            no_encontradas_en_siges=_no_encontradas(filas, contadores.claves_siges),
             pines_sospechosos_cacheados=contadores.pines_cacheados,
             estimacion_geocodificar=contadores.estim_geocodificar,
             estimacion_distancias=2 * contadores.destinos_ubicables,
             estimacion_auditar_pines=contadores.estim_auditar,
             tope_por_corrida=self._tope,
         )
+
+    async def _resoluciones(self, prestador_id: UUID) -> dict[int, SucursalCoordenadas]:
+        return {
+            r.siges_sucursal_id: r
+            for r in await self._ports.sucursal_coords.list_by_prestador(prestador_id)
+        }
 
     async def _estado_base(self, prestador: Prestador) -> tuple[bool, bool]:
         if prestador.siges_base_sucursal_id is None:
@@ -214,3 +212,15 @@ class DiagnosticarAsistenteKm:
 
 def _clave(empresa: str, sucursal: str) -> tuple[str, str]:
     return (normalizar_nombre(empresa), normalizar_nombre(sucursal))
+
+
+def _no_encontradas(filas: list[TablaKm], claves_siges: set[tuple[str, str]]) -> int:
+    # Una fila con siges_sucursal_id ya no cuenta como "no encontrada"
+    # aunque su nombre no matchee textualmente (N0): el vínculo N1/N2/
+    # manual del matching de sucursales es más fuerte que el nombre.
+    return sum(
+        1
+        for f in filas
+        if f.siges_sucursal_id is None
+        and _clave(f.empresa_nombre, f.sucursal_nombre) not in claves_siges
+    )

@@ -5,6 +5,7 @@ from src.modules.prestadores.domain.entities.prestador import Prestador
 from src.modules.prestadores.domain.repositories.prestador_repository import PrestadorRepository
 from src.modules.prestadores.domain.repositories.siges_prestador_gateway import (
     SigesPrestadorGateway,
+    SigesPrestadorInfo,
 )
 
 
@@ -44,25 +45,34 @@ class SyncPrestadoresDesdeSiges:
             if info is None:
                 continue
             equipos = equipos_por_id.get(prestador.siges_empresa_id, 0)
-            if (
-                info.den_comercial == prestador.den_comercial
-                and info.razon_social == prestador.razon_social
-                and info.cuit == prestador.cuit
-                and equipos == prestador.equipos
-            ):
+            if _sin_cambios(prestador, info, equipos):
                 sin_cambios += 1
                 continue
-            actualizado = Prestador(
-                id=prestador.id,
-                siges_empresa_id=prestador.siges_empresa_id,
-                den_comercial=info.den_comercial,
-                razon_social=info.razon_social,
-                cuit=info.cuit,
-                equipos=equipos,
-                operador_id=prestador.operador_id,
-                is_active=prestador.is_active,
-            )
+            actualizado = _actualizado(prestador, info, equipos)
             await self._deps.prestadores.save(actualizado)
             actualizados.append(actualizado.den_comercial)
 
         return SyncResultDTO(actualizados=actualizados, sin_cambios=sin_cambios)
+
+
+def _sin_cambios(prestador: Prestador, info: SigesPrestadorInfo, equipos: int) -> bool:
+    return (
+        info.den_comercial == prestador.den_comercial
+        and info.razon_social == prestador.razon_social
+        and info.cuit == prestador.cuit
+        and equipos == prestador.equipos
+    )
+
+
+def _actualizado(prestador: Prestador, info: SigesPrestadorInfo, equipos: int) -> Prestador:
+    """Copia de `prestador` con los campos espejo de Siges."""
+    return Prestador(
+        id=prestador.id,
+        siges_empresa_id=prestador.siges_empresa_id,
+        den_comercial=info.den_comercial,
+        razon_social=info.razon_social,
+        cuit=info.cuit,
+        equipos=equipos,
+        operador_id=prestador.operador_id,
+        is_active=prestador.is_active,
+    )

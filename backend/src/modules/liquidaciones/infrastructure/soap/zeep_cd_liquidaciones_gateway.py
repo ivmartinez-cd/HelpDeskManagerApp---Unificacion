@@ -145,37 +145,48 @@ def _parse_liquidaciones(raw: str, empresa_cd_id: int) -> list[CdLiquidacion]:
     items = json.loads(raw) if raw else []
     result = []
     for item in items:
-        liq = item.get("Liquidation", item)
-        liq_id_raw = liq.get("id")
-        if not liq_id_raw:
-            logger.warning(
-                "getTopLiquidations(empresa=%d): item sin 'id', descartado: %s",
-                empresa_cd_id,
-                item,
-            )
-            continue
-        liq_id = int(liq_id_raw)
-        fecha = _parse_fecha_liquidacion(liq.get("Fecha", ""))
-        if fecha is None:
-            logger.warning(
-                "getTopLiquidations(empresa=%d): item %s con Fecha ilegible %r, descartado",
-                empresa_cd_id,
-                liq_id_raw,
-                liq.get("Fecha"),
-            )
-            continue
-        result.append(
-            CdLiquidacion(
-                id=liq_id,
-                prestador_cd_id=empresa_cd_id,
-                numero_liquidacion=numero_liquidacion(liq_id),
-                fecha_liquidacion=fecha,
-                estado=liq.get("Estado", ""),
-                cant_incidentes=int(liq.get("CantIncidentes", 0) or 0),
-                estado_id=_safe_int(liq.get("estado_id")),
-            )
-        )
+        liq = _parse_liquidacion_item(item, empresa_cd_id)
+        if liq is not None:
+            result.append(liq)
     return result
+
+
+def _parse_liquidacion_item(item: dict[str, Any], empresa_cd_id: int) -> CdLiquidacion | None:
+    """None (con warning) si al item le falta `id` o su `Fecha` es ilegible."""
+    liq = item.get("Liquidation", item)
+    liq_id_raw = liq.get("id")
+    if not liq_id_raw:
+        logger.warning(
+            "getTopLiquidations(empresa=%d): item sin 'id', descartado: %s",
+            empresa_cd_id,
+            item,
+        )
+        return None
+    liq_id = int(liq_id_raw)
+    fecha = _parse_fecha_liquidacion(liq.get("Fecha", ""))
+    if fecha is None:
+        logger.warning(
+            "getTopLiquidations(empresa=%d): item %s con Fecha ilegible %r, descartado",
+            empresa_cd_id,
+            liq_id_raw,
+            liq.get("Fecha"),
+        )
+        return None
+    return _a_cd_liquidacion(liq, liq_id, empresa_cd_id, fecha)
+
+
+def _a_cd_liquidacion(
+    liq: dict[str, Any], liq_id: int, empresa_cd_id: int, fecha: date
+) -> CdLiquidacion:
+    return CdLiquidacion(
+        id=liq_id,
+        prestador_cd_id=empresa_cd_id,
+        numero_liquidacion=numero_liquidacion(liq_id),
+        fecha_liquidacion=fecha,
+        estado=liq.get("Estado", ""),
+        cant_incidentes=int(liq.get("CantIncidentes", 0) or 0),
+        estado_id=_safe_int(liq.get("estado_id")),
+    )
 
 
 def _parse_incidentes(raw: str) -> list[CdIncidenteRow]:

@@ -130,7 +130,13 @@ def supply_matches_request(
     color_verdict = _match_by_description_color(candidate, req_sku, req_desc)
     if color_verdict is not None:
         return color_verdict
+    return _fallback_match(candidate, req_sku, req_desc, for_ui_display)
 
+
+def _fallback_match(
+    candidate: CachedSupply, req_sku: str, req_desc: str, for_ui_display: bool
+) -> bool:
+    """Último recurso cuando ni el pedido propio, ni el SKU, ni el color decidieron."""
     sup_sku = candidate.sku.strip().upper()
     if for_ui_display and sup_sku and req_sku and sup_sku != req_sku:
         return False

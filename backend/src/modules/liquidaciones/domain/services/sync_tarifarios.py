@@ -120,6 +120,27 @@ def _comparar(existente: Tarifario, candidata: TarifaCandidata) -> list[Conflict
     return conflictos
 
 
+def _clasificar_candidatas(
+    candidatas: list[TarifaCandidata],
+    por_clave: Mapping[tuple[str, uuid.UUID | None, date], Tarifario],
+    a_crear: list[TarifaCandidata],
+    conflictos: list[ConflictoTarifa],
+) -> int:
+    """Reparte las candidatas en `a_crear`/`conflictos`; devuelve cuántas
+    coinciden con la vigencia local (sin cambios)."""
+    sin_cambios = 0
+    for candidata in candidatas:
+        clave = (candidata.tipo_servicio, candidata.spst_id, candidata.vigencia_desde)
+        existente = por_clave.get(clave)
+        if existente is None:
+            a_crear.append(candidata)
+            continue
+        diferencias = _comparar(existente, candidata)
+        conflictos.extend(diferencias)
+        sin_cambios += 0 if diferencias else 1
+    return sin_cambios
+
+
 def planificar_sync_tarifarios(
     existentes: list[Tarifario],
     costos: list[SigesCostoServicio],
@@ -138,15 +159,9 @@ def planificar_sync_tarifarios(
         if estado == "sin_mapear":
             sin_mapear[costo.descripcion] += 1
             continue
-        for candidata in _candidatas(costo, spst_id):
-            clave = (candidata.tipo_servicio, candidata.spst_id, candidata.vigencia_desde)
-            existente = por_clave.get(clave)
-            if existente is None:
-                a_crear.append(candidata)
-                continue
-            diferencias = _comparar(existente, candidata)
-            conflictos.extend(diferencias)
-            sin_cambios += 0 if diferencias else 1
+        sin_cambios += _clasificar_candidatas(
+            _candidatas(costo, spst_id), por_clave, a_crear, conflictos
+        )
 
     return PlanSyncTarifarios(
         a_crear=a_crear,

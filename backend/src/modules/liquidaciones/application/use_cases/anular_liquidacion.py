@@ -54,15 +54,22 @@ class AnularLiquidacion:
 
         deleted = await self._ports.liquidaciones.delete(liquidacion_id)
         if not deleted:
-            logger.critical(
-                "anular_liquidacion: SOAP OK pero fallo al eliminar registro local. "
-                "liquidacion_id=%s numero=%s ayc_id=%d",
-                liquidacion_id,
-                liq.numero_liquidacion,
-                ayc_id,
-            )
-            raise LiquidacionAyCOperationError(
-                "La anulación se ejecutó en wsAyC pero el registro local no se pudo "
-                "eliminar. Recargá el listado — si la liquidación sigue visible, "
-                "contactar soporte."
-            )
+            raise _registro_local_no_eliminado(liquidacion_id, liq.numero_liquidacion, ayc_id)
+
+
+def _registro_local_no_eliminado(
+    liquidacion_id: UUID, numero: str, ayc_id: int
+) -> LiquidacionAyCOperationError:
+    """Loguea la inconsistencia (SOAP OK, DB no) y devuelve el error para el usuario."""
+    logger.critical(
+        "anular_liquidacion: SOAP OK pero fallo al eliminar registro local. "
+        "liquidacion_id=%s numero=%s ayc_id=%d",
+        liquidacion_id,
+        numero,
+        ayc_id,
+    )
+    return LiquidacionAyCOperationError(
+        "La anulación se ejecutó en wsAyC pero el registro local no se pudo "
+        "eliminar. Recargá el listado — si la liquidación sigue visible, "
+        "contactar soporte."
+    )

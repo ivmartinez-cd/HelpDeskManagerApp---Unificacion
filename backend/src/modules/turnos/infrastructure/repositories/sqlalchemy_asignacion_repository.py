@@ -47,20 +47,7 @@ class SqlAlchemyAsignacionRepository:
     async def replace_for_slot(
         self, slot_id: uuid.UUID, effective_date: date, asignaciones: list[Asignacion]
     ) -> None:
-        close_at = effective_date - _ONE_DAY
-        stmt = select(TurnoAsignacionModel).where(
-            TurnoAsignacionModel.slot_id == slot_id,
-            TurnoAsignacionModel.vigente_hasta.is_(None),
-        )
-        open_rows = (await self._session.execute(stmt)).scalars().all()
-        for row in open_rows:
-            if row.vigente_desde > close_at:
-                # Cerrarla dejaría vigente_hasta < vigente_desde (nunca llegó a cubrir
-                # un día completo) -- no tiene valor histórico, se borra en vez de
-                # dejar un intervalo inválido.
-                await self._session.delete(row)
-            else:
-                row.vigente_hasta = close_at
+        await self._cerrar_abiertas(slot_id, effective_date - _ONE_DAY)
         # Flush explícito: si un mismo operador se reasigna el mismo día, la fila
         # vieja se borra y la nueva se inserta con el mismo (slot_id, user_id) --
         # sin este flush, el unit-of-work de SQLAlchemy puede emitir el INSERT
@@ -77,6 +64,22 @@ class SqlAlchemyAsignacionRepository:
             )
             self._session.add(model)
         await self._session.flush()
+
+    async def _cerrar_abiertas(self, slot_id: uuid.UUID, close_at: date) -> None:
+        """Cierra en `close_at` las asignaciones abiertas del slot."""
+        stmt = select(TurnoAsignacionModel).where(
+            TurnoAsignacionModel.slot_id == slot_id,
+            TurnoAsignacionModel.vigente_hasta.is_(None),
+        )
+        open_rows = (await self._session.execute(stmt)).scalars().all()
+        for row in open_rows:
+            if row.vigente_desde > close_at:
+                # Cerrarla dejaría vigente_hasta < vigente_desde (nunca llegó a cubrir
+                # un día completo) -- no tiene valor histórico, se borra en vez de
+                # dejar un intervalo inválido.
+                await self._session.delete(row)
+            else:
+                row.vigente_hasta = close_at
 
     async def delete_by_slot(self, slot_id: uuid.UUID) -> None:
         await self._session.execute(

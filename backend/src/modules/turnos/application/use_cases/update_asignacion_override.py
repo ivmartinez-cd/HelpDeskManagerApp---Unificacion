@@ -7,7 +7,7 @@ from src.modules.turnos.application.dtos.turno_dtos import (
     UpdateAsignacionOverrideCommand,
 )
 from src.modules.turnos.application.use_cases.asignacion_override_dto_builder import (
-    build_asignacion_override_dto,
+    build_asignacion_override_dto_con_usuarios,
 )
 from src.modules.turnos.domain.errors import (
     AsignacionOverrideNotFoundError,
@@ -40,13 +40,7 @@ class UpdateAsignacionOverride:
         self._deps = deps
 
     async def execute(self, command: UpdateAsignacionOverrideCommand) -> AsignacionOverrideDTO:
-        existing = await self._deps.overrides.get_by_id(command.override_id)
-        if existing is None:
-            raise AsignacionOverrideNotFoundError()
-        if existing.estado != "ACTIVA":
-            raise OverrideNoEditableError()
-        if existing.intercambio_id is not None:
-            raise OverrideEsIntercambioError()
+        existing = await self._cargar_editable(command.override_id)
         _validar_campos(command)
 
         alcance: Literal["TOTAL"] | frozenset[uuid.UUID] = (
@@ -67,9 +61,18 @@ class UpdateAsignacionOverride:
         )
         await self._deps.overrides.update(override)
 
-        involucrados = {command.operador_ausente_id, command.operador_reemplazante_id}
-        users = await self._deps.users.get_users_by_ids(list(involucrados))
-        return build_asignacion_override_dto(override, users)
+        return await build_asignacion_override_dto_con_usuarios(override, self._deps.users)
+
+    async def _cargar_editable(self, override_id: uuid.UUID) -> TurnoAsignacionOverride:
+        """Solo se editan coberturas ACTIVAS que no salen de un intercambio."""
+        existing = await self._deps.overrides.get_by_id(override_id)
+        if existing is None:
+            raise AsignacionOverrideNotFoundError()
+        if existing.estado != "ACTIVA":
+            raise OverrideNoEditableError()
+        if existing.intercambio_id is not None:
+            raise OverrideEsIntercambioError()
+        return existing
 
     async def _validar_solapamiento(
         self,

@@ -74,6 +74,21 @@ def parse_log_text(payload: str) -> ParserReport:
 
 
 def _parse_line(line: str, is_candidate_header: bool) -> LogEvent | None:
+    parts = _split_columns(line)
+    if is_candidate_header and _looks_like_header(parts):
+        raise ValueError("Header row skipped")
+    return LogEvent(
+        type=_normalize_type(parts[0]),
+        code=parts[1],
+        timestamp=_parse_timestamp(parts[2]),
+        counter=_parse_counter(parts[3]),
+        firmware=parts[4] or None,
+        help_reference=parts[5] or None,
+    )
+
+
+def _split_columns(line: str) -> list[str]:
+    """6 columnas tab-separated (la 6ª opcional); si no, fallback por espacios."""
     raw_parts = [s.strip() for s in line.split("\t")]
     parts = [p for p in raw_parts if p] if len(raw_parts) > 1 else raw_parts
     if len(parts) == 5:
@@ -91,16 +106,7 @@ def _parse_line(line: str, is_candidate_header: bool) -> LogEvent | None:
             raise ValueError(
                 "Se esperaban 6 columnas tab-separated o 6+ tokens separados por espacio"
             )
-    if is_candidate_header and _looks_like_header(parts):
-        raise ValueError("Header row skipped")
-    return LogEvent(
-        type=_normalize_type(parts[0]),
-        code=parts[1],
-        timestamp=_parse_timestamp(parts[2]),
-        counter=_parse_counter(parts[3]),
-        firmware=parts[4] or None,
-        help_reference=parts[5] or None,
-    )
+    return parts
 
 
 def _parse_timestamp(value: str) -> datetime:

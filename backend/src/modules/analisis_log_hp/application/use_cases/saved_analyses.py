@@ -29,6 +29,7 @@ from src.modules.analisis_log_hp.domain.repositories.telemetry_repository import
     TelemetryRepository,
 )
 from src.modules.analisis_log_hp.domain.services.compare_service import (
+    calculate_trend,
     compute_diff,
     diff_two_snapshots,
 )
@@ -203,30 +204,28 @@ class CompareAnalysisWithLog:
         current_by_code: dict[str, Any] = {inc.code: inc for inc in current_incidents}
         diff = compute_diff(snap.incidents, current_by_code)
         diff["diferencia_dias"] = diferencia_dias
-
-        from src.modules.analisis_log_hp.domain.services.compare_service import calculate_trend
-
         diff["tendencia"] = calculate_trend(snap.incidents, current_by_code, diff)
 
         return CompareResult(
             saved=snap,
             diff=diff,
-            current_incidents=[
-                {
-                    "code": inc.code,
-                    "classification": inc.classification,
-                    "severity": inc.severity,
-                    "occurrences": inc.occurrences,
-                    "start_time": inc.start_time.isoformat(),
-                    "end_time": inc.end_time.isoformat(),
-                    "counter_range": list(inc.counter_range),
-                    "sds_link": inc.sds_link,
-                }
-                for inc in current_incidents
-            ],
+            current_incidents=[_incident_to_dict(inc) for inc in current_incidents],
             current_global_severity=current_global_severity,
             current_events_count=current_events_count,
         )
+
+
+def _incident_to_dict(inc: Incident) -> dict[str, Any]:
+    return {
+        "code": inc.code,
+        "classification": inc.classification,
+        "severity": inc.severity,
+        "occurrences": inc.occurrences,
+        "start_time": inc.start_time.isoformat(),
+        "end_time": inc.end_time.isoformat(),
+        "counter_range": list(inc.counter_range),
+        "sds_link": inc.sds_link,
+    }
 
 
 class CompareSnapshots:
@@ -269,26 +268,19 @@ class GetAnalysisHealth:
             raise NotFoundError("Análisis guardado no encontrado")
 
         if not snap.equipment_identifier:
-            return HealthResult(
-                health=DeviceHealth(
-                    "GREEN",
-                    "Sin equipo asociado",
-                    "El análisis no tiene identificador de equipo.",
-                    "Sin acciones requeridas.",
-                ),
-                events_count=0,
+            return _sin_telemetria(
+                "Sin equipo asociado", "El análisis no tiene identificador de equipo."
             )
         clean = extract_serial_number(snap.equipment_identifier)
         if not clean:
-            return HealthResult(
-                health=DeviceHealth(
-                    "GREEN",
-                    "Sin serial",
-                    "No se pudo extraer el serial.",
-                    "Sin acciones requeridas.",
-                ),
-                events_count=0,
-            )
+            return _sin_telemetria("Sin serial", "No se pudo extraer el serial.")
         events = await self._telemetry.get_events_by_serial(clean)
         health = evaluate_device_health(events)  # type: ignore[arg-type]
         return HealthResult(health=health, events_count=len(events))
+
+
+def _sin_telemetria(label: str, reason: str) -> HealthResult:
+    return HealthResult(
+        health=DeviceHealth("GREEN", label, reason, "Sin acciones requeridas."),
+        events_count=0,
+    )

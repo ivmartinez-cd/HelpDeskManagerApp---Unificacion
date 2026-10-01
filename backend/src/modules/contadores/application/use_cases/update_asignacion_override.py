@@ -61,17 +61,7 @@ class UpdateAsignacionOverride:
         )
         await self._validar_solapamiento(request, alcance)
 
-        override = AsignacionOverride(
-            id=existing.id,
-            operador_ausente_id=request.operador_ausente_id,
-            operador_reemplazante_id=request.operador_reemplazante_id,
-            desde=request.vigente_desde,
-            hasta=request.vigente_hasta,
-            alcance=alcance,
-            estado="ACTIVA",
-            motivo=request.motivo,
-            created_by_user_id=existing.created_by_user_id,
-        )
+        override = _construir_override(existing, request, alcance)
         await self._deps.overrides.update(override)
         return build_asignacion_override_dto(override, operadores)
 
@@ -96,3 +86,22 @@ def _validar_campos(request: UpdateAsignacionOverrideRequest) -> None:
         raise InvalidOverrideRangeError()
     if request.operador_ausente_id == request.operador_reemplazante_id:
         raise OverrideMismoOperadorError()
+
+
+def _construir_override(
+    existing: AsignacionOverride,
+    request: UpdateAsignacionOverrideRequest,
+    alcance: Literal["TOTAL"] | frozenset[str],
+) -> AsignacionOverride:
+    """Mismo `id` y autor que el override existente; el resto sale del request."""
+    return AsignacionOverride(
+        id=existing.id,
+        operador_ausente_id=request.operador_ausente_id,
+        operador_reemplazante_id=request.operador_reemplazante_id,
+        desde=request.vigente_desde,
+        hasta=request.vigente_hasta,
+        alcance=alcance,
+        estado="ACTIVA",
+        motivo=request.motivo,
+        created_by_user_id=existing.created_by_user_id,
+    )

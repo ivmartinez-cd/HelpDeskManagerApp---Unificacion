@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
 from sqlalchemy import CursorResult, func, select, update
+from sqlalchemy.dialects.postgresql import Insert
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -66,22 +67,7 @@ class SqlAlchemyRequestValidationRepository:
         """UPSERT idéntico al legacy: si la fila ya existe, solo completa swap_note/
         diagnosis_* (y swap_checked) sin reiniciar el reloj ni pisar el status, y solo
         si todavía no se había diagnosticado."""
-        now = datetime.now(UTC)
-        stmt = pg_insert(RequestValidationModel).values(
-            hp_request_id=data.hp_request_id,
-            customer_id=data.customer_id,
-            device_id=data.device_id,
-            device_serial=data.device_serial,
-            sku=data.sku,
-            initial_percent_left=data.initial_percent_left,
-            detected_at=now,
-            deadline_at=now + timedelta(minutes=data.deadline_minutes),
-            status=VALIDATION_PENDING,
-            swap_note=data.swap_note,
-            swap_checked=True,
-            diagnosis_headline=data.diagnosis_headline,
-            diagnosis_detail=data.diagnosis_detail,
-        )
+        stmt = _insert_validation(data)
         stmt = stmt.on_conflict_do_update(
             index_elements=[RequestValidationModel.hp_request_id],
             set_={
@@ -113,6 +99,25 @@ class SqlAlchemyRequestValidationRepository:
         )
         rows = (await self._session.execute(stmt)).all()
         return [_to_work(model, due) for model, due in rows]
+
+
+def _insert_validation(data: ValidationStart) -> Insert:
+    now = datetime.now(UTC)
+    return pg_insert(RequestValidationModel).values(
+        hp_request_id=data.hp_request_id,
+        customer_id=data.customer_id,
+        device_id=data.device_id,
+        device_serial=data.device_serial,
+        sku=data.sku,
+        initial_percent_left=data.initial_percent_left,
+        detected_at=now,
+        deadline_at=now + timedelta(minutes=data.deadline_minutes),
+        status=VALIDATION_PENDING,
+        swap_note=data.swap_note,
+        swap_checked=True,
+        diagnosis_headline=data.diagnosis_headline,
+        diagnosis_detail=data.diagnosis_detail,
+    )
 
 
 def _to_pending(row: RequestValidationModel) -> PendingValidation:

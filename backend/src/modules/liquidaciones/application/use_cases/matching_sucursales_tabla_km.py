@@ -107,20 +107,21 @@ class AutoVincularMatchesN1TablaKm:
             if top.nivel != "N1":
                 continue
             fila, siges = por_fila[fila_id], por_id[top.siges_sucursal_id]
-            await self._ports.tabla_km.update_domicilio(
-                fila.id,
-                domicilio_cliente=siges.domicilio,
-                localidad_cliente=siges.localidad,
-                provincia_cliente=siges.provincia,
-                siges_sucursal_id=siges.siges_sucursal_id,
-                id_costo_servicios=siges.id_costo_servicios,
-            )
-            detalle.append(
-                VinculoN1Aplicado(
-                    fila.id, fila.empresa_nombre, fila.sucursal_nombre, siges.siges_sucursal_id
-                )
-            )
+            detalle.append(await self._vincular(fila, siges))
         return ResultadoAutoVinculoN1(len(detalle), 0, detalle)
+
+    async def _vincular(self, fila: TablaKm, siges: SigesSucursalCliente) -> VinculoN1Aplicado:
+        await self._ports.tabla_km.update_domicilio(
+            fila.id,
+            domicilio_cliente=siges.domicilio,
+            localidad_cliente=siges.localidad,
+            provincia_cliente=siges.provincia,
+            siges_sucursal_id=siges.siges_sucursal_id,
+            id_costo_servicios=siges.id_costo_servicios,
+        )
+        return VinculoN1Aplicado(
+            fila.id, fila.empresa_nombre, fila.sucursal_nombre, siges.siges_sucursal_id
+        )
 
 
 @dataclass(frozen=True)

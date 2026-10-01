@@ -77,11 +77,17 @@ async def resolve_device_from_match(
             device_id,
         )
         return failure("No se pudo determinar el número de serie del equipo desde Insight.")
+    return _resolved_request(command, matched, device, device_serial)
+
+
+def _resolved_request(
+    command: LoadOrderCommand, matched: JsonDict, device: JsonDict, device_serial: str
+) -> ResolvedRequest:
     consumable = matched.get("consumable") or {}
     reorder_part = consumable.get("reorderPart") or {}
     return ResolvedRequest(
         hp_request_id=command.hp_request_id,
-        device_id=device_id,
+        device_id=int(matched["deviceId"]),
         device_serial=device_serial,
         store_name=str((device.get("extendedFields") or {}).get("zone") or ""),
         sku=str(consumable.get("sku") or ""),

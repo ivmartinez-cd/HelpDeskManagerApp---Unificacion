@@ -94,6 +94,25 @@ class ReconcileOrder:
 
     async def _resolve(self, command: ReconcileCommand) -> _Resolved | ReconcileResult:
         """Mismo criterio que /load: nunca confiar en el body para serie/sku."""
+        matched = await self._matched_request(command)
+        if isinstance(matched, ReconcileResult):
+            return matched
+        device_id = int(matched["deviceId"])
+        device = await self._ports.insight.get_device_by_id(device_id)
+        device_serial = str(device.get("serialNumber") or "")
+        if not device_serial:
+            return ReconcileResult(
+                ok=False,
+                error="No se pudo determinar el número de serie del equipo desde Insight.",
+            )
+        return _Resolved(
+            device_id=device_id,
+            device_serial=device_serial,
+            consumable=matched.get("consumable") or {},
+            requested=matched.get("requested"),
+        )
+
+    async def _matched_request(self, command: ReconcileCommand) -> JsonDict | ReconcileResult:
         try:
             requests = await self._ports.insight.get_consumable_requests(
                 command.customer_id, workflow_status="OUTSTANDING"
@@ -115,20 +134,7 @@ class ReconcileOrder:
                 error="La solicitud ya no está pendiente en Insight para este cliente — "
                 "si el pedido se creó igual, revisalo manualmente en Canal Directo.",
             )
-        device_id = int(matched["deviceId"])
-        device = await self._ports.insight.get_device_by_id(device_id)
-        device_serial = str(device.get("serialNumber") or "")
-        if not device_serial:
-            return ReconcileResult(
-                ok=False,
-                error="No se pudo determinar el número de serie del equipo desde Insight.",
-            )
-        return _Resolved(
-            device_id=device_id,
-            device_serial=device_serial,
-            consumable=matched.get("consumable") or {},
-            requested=matched.get("requested"),
-        )
+        return matched
 
     async def _link(self, command: ReconcileCommand, resolved: _Resolved) -> ReconcileResult:
         existing = await self._ports.processed.get(command.hp_request_id)
@@ -157,42 +163,12 @@ class ReconcileOrder:
     async def _record_link(
         self, command: ReconcileCommand, resolved: _Resolved, order_id: str
     ) -> None:
-        consumable = resolved.consumable
-        percent_left = consumable.get("percentLeft")
+        percent_left = resolved.consumable.get("percentLeft")
         initial_percent = round(percent_left) if percent_left is not None else None
         await self._ports.processed.mark_processed(
-            ProcessedRequest(
-                hp_request_id=command.hp_request_id,
-                device_id=resolved.device_id,
-                device_serial=resolved.device_serial,
-                customer_id=command.customer_id,
-                sku=str(consumable.get("sku") or ""),
-                internal_order_id=order_id,
-                description=str(consumable.get("description") or ""),
-                initial_percent_left=initial_percent,
-                initial_days_left=consumable.get("daysLeft"),
-                initial_pages_left=consumable.get("pagesLeft"),
-            )
+            _linked_processed(command, resolved, order_id, initial_percent)
         )
-        await self._ports.audit.record(
-            AuditRecord(
-                event=EVENT_CREATED,
-                hp_request_id=command.hp_request_id,
-                customer_id=command.customer_id,
-                customer_name=command.customer_name or None,
-                device_serial=resolved.device_serial,
-                sku=str(consumable.get("sku") or ""),
-                internal_order_id=order_id,
-                detail="Vinculado manualmente desde Historial — la verificación automática "
-                "había fallado.",
-                hp_request_time=parse_insight_utc(resolved.requested),
-                description=str(consumable.get("description") or ""),
-                device_id=resolved.device_id,
-                initial_percent_left=initial_percent,
-                initial_days_left=consumable.get("daysLeft"),
-                initial_pages_left=consumable.get("pagesLeft"),
-            )
-        )
+        await self._ports.audit.record(_linked_audit(command, resolved, order_id, initial_percent))
 
     async def _mark_insight_actioned(self, hp_request_id: int, order_id: str) -> None:
         if not self._config.insight_mark_actioned:
@@ -222,3 +198,43 @@ class ReconcileOrder:
         if not order_id or order_id.startswith(_DRYRUN_PREFIX):
             return None
         return f"{self._config.order_settings.portal_base_url}/supplies/view/{order_id}"
+
+
+def _linked_processed(
+    command: ReconcileCommand, resolved: _Resolved, order_id: str, initial_percent: int | None
+) -> ProcessedRequest:
+    consumable = resolved.consumable
+    return ProcessedRequest(
+        hp_request_id=command.hp_request_id,
+        device_id=resolved.device_id,
+        device_serial=resolved.device_serial,
+        customer_id=command.customer_id,
+        sku=str(consumable.get("sku") or ""),
+        internal_order_id=order_id,
+        description=str(consumable.get("description") or ""),
+        initial_percent_left=initial_percent,
+        initial_days_left=consumable.get("daysLeft"),
+        initial_pages_left=consumable.get("pagesLeft"),
+    )
+
+
+def _linked_audit(
+    command: ReconcileCommand, resolved: _Resolved, order_id: str, initial_percent: int | None
+) -> AuditRecord:
+    consumable = resolved.consumable
+    return AuditRecord(
+        event=EVENT_CREATED,
+        hp_request_id=command.hp_request_id,
+        customer_id=command.customer_id,
+        customer_name=command.customer_name or None,
+        device_serial=resolved.device_serial,
+        sku=str(consumable.get("sku") or ""),
+        internal_order_id=order_id,
+        detail="Vinculado manualmente desde Historial — la verificación automática había fallado.",
+        hp_request_time=parse_insight_utc(resolved.requested),
+        description=str(consumable.get("description") or ""),
+        device_id=resolved.device_id,
+        initial_percent_left=initial_percent,
+        initial_days_left=consumable.get("daysLeft"),
+        initial_pages_left=consumable.get("pagesLeft"),
+    )

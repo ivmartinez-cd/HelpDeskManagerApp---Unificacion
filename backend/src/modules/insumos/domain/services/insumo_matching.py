@@ -104,7 +104,11 @@ def select_insumo_id(options: InsumoOptions, query: InsumoQuery) -> str:
         _log_selection(query, only_option, "única opción disponible")
         return only_option
 
-    raise InsumoAmbiguoError(
+    raise _sin_match_unico_error(options, query)
+
+
+def _sin_match_unico_error(options: InsumoOptions, query: InsumoQuery) -> InsumoAmbiguoError:
+    return InsumoAmbiguoError(
         f"Familia '{query.familia_name}' (serie {query.device_serial}) tiene múltiples "
         f"insumos y no se pudo determinar cuál usar automáticamente "
         f"(SKU='{query.requested_sku}', desc='{query.description}').",
@@ -142,14 +146,7 @@ def _match_by_type_and_color(options: InsumoOptions, query: InsumoQuery) -> str 
     candidates = _filter_by_type(options, type_keywords)
 
     if type_keywords is not None and not candidates:
-        raise InsumoNoConfiguradoError(
-            f"Familia '{query.familia_name}' (serie {query.device_serial}) no tiene "
-            f"ningún insumo de tipo {_TYPE_LABELS[id(type_keywords)]} configurado en "
-            f"Canal Directo (SKU='{query.requested_sku}', desc='{query.description}'). "
-            "Falta cargar ese insumo en el catálogo de la familia en Canal Directo — no "
-            "es un problema de matching.",
-            options=_insumo_options(options),
-        )
+        raise _tipo_no_configurado_error(options, query, type_keywords)
 
     if len(candidates) == 1:
         chosen = next(iter(candidates))
@@ -163,13 +160,32 @@ def _match_by_type_and_color(options: InsumoOptions, query: InsumoQuery) -> str 
         )
         return color_matches[0]
     if len(color_matches) > 1:
-        raise InsumoAmbiguoError(
-            f"Familia '{query.familia_name}' (serie {query.device_serial}) tiene múltiples "
-            f"insumos candidatos para el mismo color (SKU='{query.requested_sku}', "
-            f"desc='{query.description}').",
-            options=_insumo_options(options, color_matches),
-        )
+        raise _color_ambiguo_error(options, query, color_matches)
     return None
+
+
+def _tipo_no_configurado_error(
+    options: InsumoOptions, query: InsumoQuery, type_keywords: tuple[str, ...]
+) -> InsumoNoConfiguradoError:
+    return InsumoNoConfiguradoError(
+        f"Familia '{query.familia_name}' (serie {query.device_serial}) no tiene "
+        f"ningún insumo de tipo {_TYPE_LABELS[id(type_keywords)]} configurado en "
+        f"Canal Directo (SKU='{query.requested_sku}', desc='{query.description}'). "
+        "Falta cargar ese insumo en el catálogo de la familia en Canal Directo — no "
+        "es un problema de matching.",
+        options=_insumo_options(options),
+    )
+
+
+def _color_ambiguo_error(
+    options: InsumoOptions, query: InsumoQuery, color_matches: list[str]
+) -> InsumoAmbiguoError:
+    return InsumoAmbiguoError(
+        f"Familia '{query.familia_name}' (serie {query.device_serial}) tiene múltiples "
+        f"insumos candidatos para el mismo color (SKU='{query.requested_sku}', "
+        f"desc='{query.description}').",
+        options=_insumo_options(options, color_matches),
+    )
 
 
 def _filter_by_type(

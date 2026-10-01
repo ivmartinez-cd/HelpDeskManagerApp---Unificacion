@@ -17,7 +17,8 @@ from src.modules.vacaciones.application.use_cases.saldos_service import (
     SaldosService,
 )
 from src.modules.vacaciones.domain.entities.empleado import Empleado, EstadoEmpleado
-from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud
+from src.modules.vacaciones.domain.entities.sector import Sector
+from src.modules.vacaciones.domain.entities.solicitud import EstadoSolicitud, Solicitud
 from src.modules.vacaciones.domain.repositories.catalogos_repositories import (
     SectorRepository,
 )
@@ -99,24 +100,11 @@ class DashboardResumen:
             list({s.empleado_id for s in cubren_hoy})
         )
         sectores = {s.id: s for s in await self._deps.sectores.list_all()}
-        resultado = []
-        for s in cubren_hoy:
-            empleado = empleados.get(s.empleado_id)
-            if empleado is None:
-                continue
-            sector = sectores.get(empleado.department_id)
-            resultado.append(
-                EnVacacionesDTO(
-                    solicitud_id=s.id,
-                    empleado_nombre=empleado.nombre_completo,
-                    empleado_color=empleado.color,
-                    sector_nombre=sector.name if sector else "",
-                    sector_color=sector.color if sector else "#3b82f6",
-                    start_date=s.start_date,
-                    end_date=s.end_date,
-                )
-            )
-        return resultado
+        return [
+            _en_vacaciones_dto(s, empleado, sectores.get(empleado.department_id))
+            for s in cubren_hoy
+            if (empleado := empleados.get(s.empleado_id)) is not None
+        ]
 
     async def _dias_propios(
         self, actor: ActorVacaciones
@@ -147,3 +135,17 @@ class DashboardResumen:
         total = sum(s.annual + s.carry_over for s in saldos.values())
         disponible = sum(s.available for s in saldos.values())
         return total, disponible
+
+
+def _en_vacaciones_dto(
+    solicitud: Solicitud, empleado: Empleado, sector: Sector | None
+) -> EnVacacionesDTO:
+    return EnVacacionesDTO(
+        solicitud_id=solicitud.id,
+        empleado_nombre=empleado.nombre_completo,
+        empleado_color=empleado.color,
+        sector_nombre=sector.name if sector else "",
+        sector_color=sector.color if sector else "#3b82f6",
+        start_date=solicitud.start_date,
+        end_date=solicitud.end_date,
+    )

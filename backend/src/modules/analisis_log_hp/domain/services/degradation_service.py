@@ -163,16 +163,7 @@ def _rule_recurrence(
         by_code.setdefault(e.code, []).append(e)
 
     for code, group in by_code.items():
-        recent = [
-            e
-            for e in group
-            if (now_aware - _aware(e.event_time)).days <= RECURRENCE_DAYS
-            or (
-                e.counter > 0
-                and latest_counter > 0
-                and (latest_counter - e.counter) <= RECURRENCE_PAGES
-            )
-        ]
+        recent = [e for e in group if _is_recent(e, latest_counter, now_aware)]
         total = sum(max(1, e.occurrences) for e in recent)
         if total > RECURRENCE_THRESHOLD:
             return DeviceHealth(
@@ -184,6 +175,13 @@ def _rule_recurrence(
                 triggered_rule="recurrence",
             )
     return None
+
+
+def _is_recent(e: _TelemetryEvent, latest_counter: int, now_aware: datetime) -> bool:
+    """Dentro de la ventana de días o de páginas (esta solo con counter > 0)."""
+    return (now_aware - _aware(e.event_time)).days <= RECURRENCE_DAYS or (
+        e.counter > 0 and latest_counter > 0 and (latest_counter - e.counter) <= RECURRENCE_PAGES
+    )
 
 
 def _rule_stable(

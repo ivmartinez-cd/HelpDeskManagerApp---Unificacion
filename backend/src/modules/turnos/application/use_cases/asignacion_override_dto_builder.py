@@ -4,7 +4,7 @@ from src.modules.turnos.application.dtos.turno_dtos import AsignacionOverrideDTO
 from src.modules.turnos.domain.repositories.asignacion_override_repository import (
     TurnoAsignacionOverride,
 )
-from src.modules.turnos.domain.repositories.user_provider import UserInfo
+from src.modules.turnos.domain.repositories.user_provider import UserInfo, UserProvider
 
 
 def build_asignacion_override_dto(
@@ -29,4 +29,14 @@ def build_asignacion_override_dto(
         estado=override.estado,
         motivo=override.motivo,
         intercambio_id=override.intercambio_id,
+    )
+
+
+async def build_asignacion_override_dto_con_usuarios(
+    override: TurnoAsignacionOverride, users: UserProvider
+) -> AsignacionOverrideDTO:
+    """Resuelve los nombres de ausente y reemplazante y arma el DTO."""
+    involucrados = {override.operador_ausente_id, override.operador_reemplazante_id}
+    return build_asignacion_override_dto(
+        override, await users.get_users_by_ids(list(involucrados))
     )

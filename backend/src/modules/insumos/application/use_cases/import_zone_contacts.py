@@ -4,6 +4,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 
+from src.modules.insumos.domain.repositories.insight_gateway import JsonDict
 from src.modules.insumos.domain.repositories.zone_contact_repository import ZoneContactRepository
 from src.modules.insumos.domain.services.sds_contact_parser import parse_sds_contact_comment
 from src.modules.insumos.domain.services.zone_contact_import import (
@@ -98,20 +99,25 @@ class GetSdsContacts:
             raise ExternalServiceError(
                 "No se pudieron obtener los equipos desde Insight"
             ) from exc
-        seen: set[tuple] = set()  # type: ignore[type-arg]
-        rows: list[SdsContactRow] = []
-        for d in devices:
-            ef = d.get("extendedFields") or {}
-            zone = (ef.get("zone") or "").strip()
-            parsed = parse_sds_contact_comment(zone, ef.get("comment"))
-            if parsed is None:
-                continue
-            key = (parsed.zone, parsed.contacto, parsed.email, parsed.sucursal)
-            if key not in seen:
-                seen.add(key)
-                rows.append(parsed)
-        rows.sort(key=lambda r: (r.zone, r.contacto))
-        return rows
+        return _sds_contacts_of(devices)
+
+
+def _sds_contacts_of(devices: list[JsonDict]) -> list[SdsContactRow]:
+    """Contactos parseados de los comentarios, sin duplicados y ordenados por zona."""
+    seen: set[tuple] = set()  # type: ignore[type-arg]
+    rows: list[SdsContactRow] = []
+    for d in devices:
+        ef = d.get("extendedFields") or {}
+        zone = (ef.get("zone") or "").strip()
+        parsed = parse_sds_contact_comment(zone, ef.get("comment"))
+        if parsed is None:
+            continue
+        key = (parsed.zone, parsed.contacto, parsed.email, parsed.sucursal)
+        if key not in seen:
+            seen.add(key)
+            rows.append(parsed)
+    rows.sort(key=lambda r: (r.zone, r.contacto))
+    return rows
 
 
 class GetCustomerZones:
@@ -140,14 +146,19 @@ class GetCustomerZones:
             raise ExternalServiceError(
                 "No se pudieron obtener zonas desde Insight"
             ) from exc
-        zones: set[str] = set()
-        for d in devices:
-            if isinstance(d, BaseException):
-                continue
-            zone = (d.get("extendedFields") or {}).get("zone", "")
-            if zone:
-                zones.add(zone)
-        return sorted(zones)
+        return _zones_of(devices)
+
+
+def _zones_of(devices: list[JsonDict | BaseException]) -> list[str]:
+    """Zonas distintas de los equipos obtenidos (ignora los que fallaron)."""
+    zones: set[str] = set()
+    for d in devices:
+        if isinstance(d, BaseException):
+            continue
+        zone = (d.get("extendedFields") or {}).get("zone", "")
+        if zone:
+            zones.add(zone)
+    return sorted(zones)
 
 
 class ImportContactsFromSupply:

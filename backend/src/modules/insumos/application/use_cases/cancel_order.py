@@ -66,6 +66,23 @@ class CancelOrder:
     ) -> CancelResult:
         is_incident = await self._is_incident(supply_id)
         kind = "incidente" if is_incident else "pedido"
+        failed = await self._void(supply_id, is_incident, kind)
+        if failed is not None:
+            return failed
+        # Reconsultar para confirmar: void* responde "true" incondicionalmente.
+        item = await (
+            self._ports.wsayc.fetch_incident_by_id(supply_id)
+            if is_incident
+            else self._ports.wsayc.fetch_supply_by_id(supply_id)
+        )
+        estado = item.estado if item else None
+        if item is None or estado not in cd_state.RELEASE_STATES:
+            return _not_confirmed(kind, supply_id, estado)
+        await self._release(hp_request_id, processed, supply_id, item, is_incident)
+        return CancelResult(ok=True, supply_status=estado)
+
+    async def _void(self, supply_id: int, is_incident: bool, kind: str) -> CancelResult | None:
+        """Anula en CD; devuelve el resultado de error si falló, None si respondió OK."""
         try:
             voided = await (
                 self._ports.wsayc.void_incident(supply_id)
@@ -80,27 +97,7 @@ class CancelOrder:
                 ok=False,
                 error=f"No se pudo anular el {kind} en Canal Directo. Intentá de nuevo.",
             )
-        # Reconsultar para confirmar: void* responde "true" incondicionalmente.
-        item = await (
-            self._ports.wsayc.fetch_incident_by_id(supply_id)
-            if is_incident
-            else self._ports.wsayc.fetch_supply_by_id(supply_id)
-        )
-        estado = item.estado if item else None
-        if item is None or estado not in cd_state.RELEASE_STATES:
-            logger.error(
-                "cancel_order: void %s (%d) no confirmó la anulación (estado actual: %s)",
-                kind,
-                supply_id,
-                estado,
-            )
-            return CancelResult(
-                ok=False,
-                error=f"Canal Directo no confirmó la anulación (estado actual: "
-                f"{estado or 'desconocido'}). Verificá manualmente en el portal.",
-            )
-        await self._release(hp_request_id, processed, supply_id, item, is_incident)
-        return CancelResult(ok=True, supply_status=estado)
+        return None
 
     async def _is_incident(self, supply_id: int) -> bool:
         """El ID puede ser de un supply o de un incidente de ST (kit de mantenimiento)
@@ -119,28 +116,46 @@ class CancelOrder:
         if not is_incident:
             # Reflejar el estado nuevo en el cache al instante — sin esto el bloqueo 2
             # de /load seguiría viendo el pedido como activo hasta el próximo scan.
-            await self._ports.supply_cache.upsert(
-                [
-                    CachedSupply(
-                        supply_id=supply_id,
-                        serial=serial_from_supply_fields(item.nro_serie_solicitud, item.nro_serie),
-                        estado=item.estado,
-                        empresa_id=item.empresa_id,
-                        fecha=parse_cd_datetime(item.fecha),
-                    )
-                ]
-            )
+            await self._ports.supply_cache.upsert([_cached_supply(supply_id, item)])
         await self._ports.processed.mark_cancelled(hp_request_id)
         kind = "incidente" if is_incident else "supply"
-        await self._ports.audit.record(
-            AuditRecord(
-                event=EVENT_CANCELLED,
-                hp_request_id=hp_request_id,
-                customer_id=processed.customer_id,
-                device_serial=processed.device_serial,
-                sku=processed.sku,
-                internal_order_id=processed.internal_order_id,
-                detail=f"Anulado manualmente desde la app ({kind} {supply_id})",
-                description=processed.description,
-            )
-        )
+        await self._ports.audit.record(_cancelled_record(hp_request_id, processed, kind, supply_id))
+
+
+def _not_confirmed(kind: str, supply_id: int, estado: str | None) -> CancelResult:
+    logger.error(
+        "cancel_order: void %s (%d) no confirmó la anulación (estado actual: %s)",
+        kind,
+        supply_id,
+        estado,
+    )
+    return CancelResult(
+        ok=False,
+        error=f"Canal Directo no confirmó la anulación (estado actual: "
+        f"{estado or 'desconocido'}). Verificá manualmente en el portal.",
+    )
+
+
+def _cached_supply(supply_id: int, item: CdSupply) -> CachedSupply:
+    return CachedSupply(
+        supply_id=supply_id,
+        serial=serial_from_supply_fields(item.nro_serie_solicitud, item.nro_serie),
+        estado=item.estado,
+        empresa_id=item.empresa_id,
+        fecha=parse_cd_datetime(item.fecha),
+    )
+
+
+def _cancelled_record(
+    hp_request_id: int, processed: ProcessedRequest, kind: str, supply_id: int
+) -> AuditRecord:
+    return AuditRecord(
+        event=EVENT_CANCELLED,
+        hp_request_id=hp_request_id,
+        customer_id=processed.customer_id,
+        device_serial=processed.device_serial,
+        sku=processed.sku,
+        internal_order_id=processed.internal_order_id,
+        detail=f"Anulado manualmente desde la app ({kind} {supply_id})",
+        description=processed.description,
+    )

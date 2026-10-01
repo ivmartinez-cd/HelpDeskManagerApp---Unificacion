@@ -15,7 +15,7 @@ from src.modules.vacaciones.application.use_cases.saldos_service import (
     SaldosService,
 )
 from src.modules.vacaciones.domain.entities.ciclo import Ciclo
-from src.modules.vacaciones.domain.entities.empleado import EstadoEmpleado
+from src.modules.vacaciones.domain.entities.empleado import Empleado, EstadoEmpleado
 from src.modules.vacaciones.domain.errors import (
     EmpleadoNoEncontradoError,
     OperacionNoPermitidaError,
@@ -35,6 +35,7 @@ from src.modules.vacaciones.domain.services.antiguedad import (
     referencia_para_anio,
 )
 from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
+from src.modules.vacaciones.domain.value_objects.config_vacaciones import ConfigVacaciones
 from src.modules.vacaciones.domain.value_objects.saldo import Saldo
 
 
@@ -94,32 +95,40 @@ class AbrirCiclosProximoAnio:
         opened = 0
         skipped = 0
         for empleado in activos:
-            annual = dias_por_antiguedad(
-                empleado.hire_date, referencia_para_anio(next_year), config.seniority_tiers
-            )
-            existente = await self._deps.ciclos.get(empleado.id, next_year)
-            if existente is not None and existente.is_open:
-                skipped += 1
-                continue
-            if existente is None:
-                await self._deps.ciclos.add(
-                    Ciclo(
-                        id=uuid.uuid4(),
-                        empleado_id=empleado.id,
-                        year=next_year,
-                        annual_days=annual,
-                        carry_over=0,
-                        is_open=True,
-                        opened_at=datetime.now(UTC),
-                    )
-                )
+            if await self._abrir_ciclo(empleado, next_year, config):
+                opened += 1
             else:
-                existente.annual_days = annual
-                existente.is_open = True
-                existente.opened_at = datetime.now(UTC)
-                await self._deps.ciclos.save(existente)
-            opened += 1
+                skipped += 1
         return AbrirCiclosResultDTO(opened=opened, skipped=skipped)
+
+    async def _abrir_ciclo(
+        self, empleado: Empleado, next_year: int, config: ConfigVacaciones
+    ) -> bool:
+        """Crea o reabre el ciclo del año; False si ya estaba abierto."""
+        annual = dias_por_antiguedad(
+            empleado.hire_date, referencia_para_anio(next_year), config.seniority_tiers
+        )
+        existente = await self._deps.ciclos.get(empleado.id, next_year)
+        if existente is not None and existente.is_open:
+            return False
+        if existente is None:
+            await self._deps.ciclos.add(
+                Ciclo(
+                    id=uuid.uuid4(),
+                    empleado_id=empleado.id,
+                    year=next_year,
+                    annual_days=annual,
+                    carry_over=0,
+                    is_open=True,
+                    opened_at=datetime.now(UTC),
+                )
+            )
+        else:
+            existente.annual_days = annual
+            existente.is_open = True
+            existente.opened_at = datetime.now(UTC)
+            await self._deps.ciclos.save(existente)
+        return True
 
 
 class ObtenerSaldoEmpleado:

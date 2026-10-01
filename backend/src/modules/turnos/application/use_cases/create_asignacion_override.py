@@ -7,7 +7,7 @@ from src.modules.turnos.application.dtos.turno_dtos import (
     CreateAsignacionOverrideCommand,
 )
 from src.modules.turnos.application.use_cases.asignacion_override_dto_builder import (
-    build_asignacion_override_dto,
+    build_asignacion_override_dto_con_usuarios,
 )
 from src.modules.turnos.application.use_cases.usuarios_support import validar_usuarios_existen
 from src.modules.turnos.domain.errors import (
@@ -62,9 +62,7 @@ class CreateAsignacionOverride:
         )
         await self._deps.overrides.create(override)
 
-        involucrados = {command.operador_ausente_id, command.operador_reemplazante_id}
-        users = await self._deps.users.get_users_by_ids(list(involucrados))
-        return build_asignacion_override_dto(override, users)
+        return await build_asignacion_override_dto_con_usuarios(override, self._deps.users)
 
     async def _validar_campos(self, command: CreateAsignacionOverrideCommand) -> None:
         if command.desde > command.hasta:

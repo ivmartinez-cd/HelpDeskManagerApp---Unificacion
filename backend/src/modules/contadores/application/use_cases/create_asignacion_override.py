@@ -60,16 +60,23 @@ class CreateAsignacionOverride:
         if hay_solapamiento(request.vigente_desde, request.vigente_hasta, alcance, existentes):
             raise OverlappingOverrideError()
 
-        override = AsignacionOverride(
-            id=uuid.uuid4(),
-            operador_ausente_id=request.operador_ausente_id,
-            operador_reemplazante_id=request.operador_reemplazante_id,
-            desde=request.vigente_desde,
-            hasta=request.vigente_hasta,
-            alcance=alcance,
-            estado="ACTIVA",
-            motivo=request.motivo,
-            created_by_user_id=request.created_by_user_id,
-        )
+        override = _construir_override(request, alcance)
         await self._deps.overrides.create(override)
         return build_asignacion_override_dto(override, operadores)
+
+
+def _construir_override(
+    request: CreateAsignacionOverrideRequest,
+    alcance: Literal["TOTAL"] | frozenset[str],
+) -> AsignacionOverride:
+    return AsignacionOverride(
+        id=uuid.uuid4(),
+        operador_ausente_id=request.operador_ausente_id,
+        operador_reemplazante_id=request.operador_reemplazante_id,
+        desde=request.vigente_desde,
+        hasta=request.vigente_hasta,
+        alcance=alcance,
+        estado="ACTIVA",
+        motivo=request.motivo,
+        created_by_user_id=request.created_by_user_id,
+    )

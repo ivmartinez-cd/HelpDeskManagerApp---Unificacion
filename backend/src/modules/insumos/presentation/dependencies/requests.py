@@ -62,6 +62,7 @@ from src.modules.insumos.domain.services.order_creation import CanalDirectoOrder
 from src.modules.insumos.domain.services.supply_lookup import CanalDirectoSupplyLookup
 from src.modules.insumos.domain.services.supply_request_matching import SupplyMatchResolver
 from src.modules.insumos.domain.services.validation_diagnosis import ValidationDiagnosis
+from src.modules.insumos.infrastructure.insight.httpx_insight_gateway import HttpxInsightGateway
 from src.modules.insumos.infrastructure.repositories.sqlalchemy_customer_config_repository import (  # noqa: E501
     SqlAlchemyCustomerConfigRepository,
 )
@@ -92,6 +93,7 @@ from src.modules.insumos.infrastructure.repositories.sqlalchemy_supply_cache_rep
 from src.modules.insumos.infrastructure.repositories.sqlalchemy_zone_contact_repository import (
     SqlAlchemyZoneContactRepository,
 )
+from src.modules.insumos.infrastructure.soap.zeep_wsayc_gateway import ZeepWsAycGateway
 from src.modules.insumos.presentation.wiring import (
     get_client_order_notifier,
     get_insight_gateway,
@@ -104,17 +106,7 @@ from src.shared.infrastructure.config.settings import get_settings
 
 def build_get_dashboard(session: AsyncSession) -> GetDashboard:
     supply_cache = SqlAlchemySupplyCacheRepository(session)
-    ports = GetDashboardPorts(
-        insight=get_insight_gateway(),
-        wsayc=get_wsayc_gateway(),
-        processed=SqlAlchemyProcessedRequestRepository(session),
-        supply_cache=supply_cache,
-        customers=SqlAlchemyCustomerConfigRepository(session),
-        settings=SqlAlchemyInsumosSettingsRepository(session),
-        audit=SqlAlchemyOrderAuditRepository(session),
-        dismissed=SqlAlchemyDismissedSupplyRepository(session),
-    )
-    return GetDashboard(ports)
+    return GetDashboard(_dashboard_ports(session, get_wsayc_gateway(), supply_cache))
 
 
 def build_list_requests(session: AsyncSession) -> ListRequests:
@@ -122,7 +114,26 @@ def build_list_requests(session: AsyncSession) -> ListRequests:
     wsayc = get_wsayc_gateway()
     supply_cache = SqlAlchemySupplyCacheRepository(session)
     cd_settings = order_settings(settings)
-    dashboard_ports = GetDashboardPorts(
+    dashboard_ports = _dashboard_ports(session, wsayc, supply_cache)
+    insight = get_insight_gateway()
+    validations = SqlAlchemyRequestValidationRepository(session)
+    ports = ListRequestsPorts(
+        dashboard=dashboard_ports,
+        validations=validations,
+        supply_lookup=CanalDirectoSupplyLookup(wsayc, supply_cache, cd_settings),
+        validation_window=_validation_window(session, insight, wsayc, validations),
+        zone_contacts=SqlAlchemyZoneContactRepository(session),
+    )
+    config = ListRequestsConfig(
+        order_settings=cd_settings, insight_base_url=settings.insight_base_url
+    )
+    return ListRequests(ports, config)
+
+
+def _dashboard_ports(
+    session: AsyncSession, wsayc: ZeepWsAycGateway, supply_cache: SqlAlchemySupplyCacheRepository
+) -> GetDashboardPorts:
+    return GetDashboardPorts(
         insight=get_insight_gateway(),
         wsayc=wsayc,
         processed=SqlAlchemyProcessedRequestRepository(session),
@@ -132,26 +143,22 @@ def build_list_requests(session: AsyncSession) -> ListRequests:
         audit=SqlAlchemyOrderAuditRepository(session),
         dismissed=SqlAlchemyDismissedSupplyRepository(session),
     )
-    insight = get_insight_gateway()
-    validations = SqlAlchemyRequestValidationRepository(session)
-    ports = ListRequestsPorts(
-        dashboard=dashboard_ports,
-        validations=validations,
-        supply_lookup=CanalDirectoSupplyLookup(wsayc, supply_cache, cd_settings),
-        validation_window=ValidationWindow(
-            ValidationWindowPorts(
-                insight=insight,
-                validations=validations,
-                audit=SqlAlchemyOrderAuditRepository(session),
-                diagnosis=ValidationDiagnosis(insight, wsayc),
-            )
-        ),
-        zone_contacts=SqlAlchemyZoneContactRepository(session),
+
+
+def _validation_window(
+    session: AsyncSession,
+    insight: HttpxInsightGateway,
+    wsayc: ZeepWsAycGateway,
+    validations: SqlAlchemyRequestValidationRepository,
+) -> ValidationWindow:
+    return ValidationWindow(
+        ValidationWindowPorts(
+            insight=insight,
+            validations=validations,
+            audit=SqlAlchemyOrderAuditRepository(session),
+            diagnosis=ValidationDiagnosis(insight, wsayc),
+        )
     )
-    config = ListRequestsConfig(
-        order_settings=cd_settings, insight_base_url=settings.insight_base_url
-    )
-    return ListRequests(ports, config)
 
 
 def build_load_order(session: AsyncSession) -> LoadOrder:

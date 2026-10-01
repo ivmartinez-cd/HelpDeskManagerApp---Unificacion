@@ -19,6 +19,7 @@ from src.modules.analisis_log_hp.application.use_cases.saved_analyses import (
     ListSavedAnalyses,
     UpdateSavedAnalysis,
 )
+from src.modules.analisis_log_hp.domain.entities.incident import Incident
 from src.modules.analisis_log_hp.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.analisis_log_hp.presentation.dependencies import (
     get_error_code_repo,
@@ -65,6 +66,25 @@ def _saved_to_detail(s: Any) -> SavedAnalysisDetailResponse:
     )
 
 
+def _to_incidents(body: CreateSavedAnalysisRequest) -> list[Incident]:
+    return [
+        Incident(
+            id=i.id,
+            code=i.code,
+            classification=i.classification,
+            severity=i.severity,
+            severity_weight=i.severity_weight,
+            occurrences=i.occurrences,
+            start_time=i.start_time,
+            end_time=i.end_time,
+            counter_range=(i.counter_range[0], i.counter_range[1]),
+            sds_link=i.sds_link,
+            code_description=i.code_description,
+        )
+        for i in body.incidents
+    ]
+
+
 @router.get("", response_model=Page[SavedAnalysisResponse])
 async def list_saved_analyses(
     page: int = Query(default=1, ge=1),
@@ -88,25 +108,7 @@ async def create_saved_analysis(
     _: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SavedAnalysisDetailResponse:
-
-    from src.modules.analisis_log_hp.domain.entities.incident import Incident
-
-    incidents = [
-        Incident(
-            id=i.id,
-            code=i.code,
-            classification=i.classification,
-            severity=i.severity,
-            severity_weight=i.severity_weight,
-            occurrences=i.occurrences,
-            start_time=i.start_time,
-            end_time=i.end_time,
-            counter_range=(i.counter_range[0], i.counter_range[1]),
-            sds_link=i.sds_link,
-            code_description=i.code_description,
-        )
-        for i in body.incidents
-    ]
+    incidents = _to_incidents(body)
     uc = CreateSavedAnalysis(get_saved_analysis_repo(db), get_telemetry_repo(db))
     saved = await uc.execute(
         body.name,
@@ -135,24 +137,7 @@ async def update_saved_analysis(
     _: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> SavedAnalysisDetailResponse:
-    from src.modules.analisis_log_hp.domain.entities.incident import Incident
-
-    incidents = [
-        Incident(
-            id=i.id,
-            code=i.code,
-            classification=i.classification,
-            severity=i.severity,
-            severity_weight=i.severity_weight,
-            occurrences=i.occurrences,
-            start_time=i.start_time,
-            end_time=i.end_time,
-            counter_range=(i.counter_range[0], i.counter_range[1]),
-            sds_link=i.sds_link,
-            code_description=i.code_description,
-        )
-        for i in body.incidents
-    ]
+    incidents = _to_incidents(body)
     uc = UpdateSavedAnalysis(get_saved_analysis_repo(db), get_telemetry_repo(db))
     saved = await uc.execute(
         id,

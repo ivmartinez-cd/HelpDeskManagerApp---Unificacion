@@ -16,6 +16,7 @@ from src.modules.liquidaciones.domain.entities.calculo_km_preview import (
     ACCION_ACTUALIZAR,
     PreviewFila,
 )
+from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.errors import PreviewNoEncontradoError
 from src.modules.liquidaciones.domain.services.vincular_tabla_km_spst import (
     proponer_vinculos_spst,
@@ -85,23 +86,28 @@ class AplicarCalcularDistancias:
             provincia=fila.provincia,
         )
         if fila.accion == ACCION_ACTUALIZAR and fila.tabla_km_id is not None:
-            actualizada = await self._ports.tabla_km.update_distancias(
-                fila.tabla_km_id,
-                kms_ida=fila.kms_ida,
-                kms_vuelta=fila.kms_vuelta,
-                kms_recorrido=fila.kms_total,
-                aplica_viatico=fila.aplica_viatico,
-                kms_a_facturar=fila.kms_a_facturar,
-                url_maps=url,
-                latitud_destino=fila.latitud_destino,
-                longitud_destino=fila.longitud_destino,
-                coords_origen=fila.coords_origen,
-                siges_sucursal_id=fila.siges_sucursal_id,
-                id_costo_servicios=fila.id_costo_servicios,
-            )
+            actualizada = await self._actualizar_fila(fila.tabla_km_id, fila, url)
             return (0, 1) if actualizada else (0, 0)
         await self._crear_fila(prestador_id, fila, url)
         return 1, 0
+
+    async def _actualizar_fila(
+        self, tabla_km_id: UUID, fila: PreviewFila, url: str
+    ) -> TablaKm | None:
+        return await self._ports.tabla_km.update_distancias(
+            tabla_km_id,
+            kms_ida=fila.kms_ida,
+            kms_vuelta=fila.kms_vuelta,
+            kms_recorrido=fila.kms_total,
+            aplica_viatico=fila.aplica_viatico,
+            kms_a_facturar=fila.kms_a_facturar,
+            url_maps=url,
+            latitud_destino=fila.latitud_destino,
+            longitud_destino=fila.longitud_destino,
+            coords_origen=fila.coords_origen,
+            siges_sucursal_id=fila.siges_sucursal_id,
+            id_costo_servicios=fila.id_costo_servicios,
+        )
 
     async def _crear_fila(self, prestador_id: UUID, fila: PreviewFila, url: str) -> None:
         await self._ports.tabla_km.create(

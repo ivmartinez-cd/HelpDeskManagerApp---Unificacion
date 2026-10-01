@@ -3,12 +3,16 @@ sector; admin: todo — mismos alcances que las solicitudes) y enriquecimiento
 batch de empleado + sector.
 """
 
+import uuid
 from dataclasses import dataclass
 
 from src.modules.vacaciones.application.dtos.ausencia_dtos import (
     AusenciaDTO,
     ListarAusenciasQuery,
 )
+from src.modules.vacaciones.domain.entities.ausencia import Ausencia
+from src.modules.vacaciones.domain.entities.empleado import Empleado
+from src.modules.vacaciones.domain.entities.sector import Sector
 from src.modules.vacaciones.domain.repositories.ausencia_repository import (
     AusenciaRepository,
     FiltrosAusencias,
@@ -53,17 +57,17 @@ class ListarAusencias:
             list({a.empleado_id for a in ausencias})
         )
         sectores = {s.id: s for s in await self._deps.sectores.list_all()}
-        dtos = []
-        for ausencia in ausencias:
-            empleado = empleados.get(ausencia.empleado_id)
-            sector = sectores.get(empleado.department_id) if empleado else None
-            dtos.append(
-                AusenciaDTO(
-                    ausencia=ausencia,
-                    empleado_nombre=empleado.nombre_completo if empleado else "",
-                    empleado_color=empleado.color if empleado else _COLOR_DEFAULT,
-                    sector_nombre=sector.name if sector else "",
-                    sector_color=sector.color if sector else _COLOR_DEFAULT,
-                )
-            )
-        return dtos
+        return [_a_dto(a, empleados.get(a.empleado_id), sectores) for a in ausencias]
+
+
+def _a_dto(
+    ausencia: Ausencia, empleado: Empleado | None, sectores: dict[uuid.UUID, Sector]
+) -> AusenciaDTO:
+    sector = sectores.get(empleado.department_id) if empleado else None
+    return AusenciaDTO(
+        ausencia=ausencia,
+        empleado_nombre=empleado.nombre_completo if empleado else "",
+        empleado_color=empleado.color if empleado else _COLOR_DEFAULT,
+        sector_nombre=sector.name if sector else "",
+        sector_color=sector.color if sector else _COLOR_DEFAULT,
+    )

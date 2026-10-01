@@ -41,21 +41,7 @@ async def _login(base_url: str, username: str, password: str, timeout: float) ->
     url = base_url.rstrip("/")
     try:
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
-            login_page = await client.get(f"{url}/login")
-            match = _CSRF_TOKEN_RE.search(login_page.text)
-            if not match:
-                raise ExternalServiceError(
-                    "No se encontró el _csrf_token en /login de Gestión "
-                    "(¿cambió el formulario?)."
-                )
-            resp = await client.post(
-                f"{url}/login_check",
-                data={
-                    "_username": username,
-                    "_password": password,
-                    "_csrf_token": match.group(1),
-                },
-            )
+            resp = await _post_login(client, url, username, password)
             session_id = client.cookies.get("PHPSESSID")
     except ExternalServiceError:
         raise
@@ -67,6 +53,27 @@ async def _login(base_url: str, username: str, password: str, timeout: float) ->
             f"Fallo el login de Gestión ({resp.status_code}). Verificá usuario y contraseña."
         )
     return session_id
+
+
+async def _post_login(
+    client: httpx.AsyncClient, url: str, username: str, password: str
+) -> httpx.Response:
+    """GET /login para obtener el _csrf_token de la sesión anónima y POST
+    /login_check con las credenciales sobre esa misma sesión."""
+    login_page = await client.get(f"{url}/login")
+    match = _CSRF_TOKEN_RE.search(login_page.text)
+    if not match:
+        raise ExternalServiceError(
+            "No se encontró el _csrf_token en /login de Gestión (¿cambió el formulario?)."
+        )
+    return await client.post(
+        f"{url}/login_check",
+        data={
+            "_username": username,
+            "_password": password,
+            "_csrf_token": match.group(1),
+        },
+    )
 
 
 def _persist_session(session_file_path: str, session_id: str, username: str) -> dict[str, Any]:

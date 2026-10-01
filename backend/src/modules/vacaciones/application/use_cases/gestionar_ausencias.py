@@ -108,31 +108,40 @@ class CrearAusencias:
             await _validar_solape(
                 self._deps, empleado_id, command.tipo, command.start_date, command.end_date
             )
-        creadas = []
-        for empleado_id in destinos:
-            ausencia = Ausencia(
-                id=uuid.uuid4(),
-                empleado_id=empleado_id,
-                start_date=command.start_date,
-                end_date=command.end_date,
-                days_count=dias,
-                half_day=command.half_day,
-                tipo=command.tipo,
-                reason=command.reason,
-                status=estado_inicial(actor),
-                created_at=datetime.now(UTC),
-                hora_desde=command.hora_desde,
-                hora_hasta=command.hora_hasta,
+        return [
+            await self._crear(
+                empleado_id, command, dias, actor, empleados[empleado_id].nombre_completo
             )
-            await self._deps.ausencias.add(ausencia)
-            await self._deps.auditoria.registrar(
-                ACCION_CREATE,
-                ENTIDAD_AUSENCIA,
-                str(ausencia.id),
-                _metadata(ausencia, empleados[empleado_id].nombre_completo),
-            )
-            creadas.append(ausencia)
-        return creadas
+            for empleado_id in destinos
+        ]
+
+    async def _crear(
+        self,
+        empleado_id: uuid.UUID,
+        command: CrearAusenciaCommand,
+        dias: int,
+        actor: ActorVacaciones,
+        empleado_nombre: str,
+    ) -> Ausencia:
+        ausencia = Ausencia(
+            id=uuid.uuid4(),
+            empleado_id=empleado_id,
+            start_date=command.start_date,
+            end_date=command.end_date,
+            days_count=dias,
+            half_day=command.half_day,
+            tipo=command.tipo,
+            reason=command.reason,
+            status=estado_inicial(actor),
+            created_at=datetime.now(UTC),
+            hora_desde=command.hora_desde,
+            hora_hasta=command.hora_hasta,
+        )
+        await self._deps.ausencias.add(ausencia)
+        await self._deps.auditoria.registrar(
+            ACCION_CREATE, ENTIDAD_AUSENCIA, str(ausencia.id), _metadata(ausencia, empleado_nombre)
+        )
+        return ausencia
 
 
 class EditarAusencia:
@@ -152,6 +161,14 @@ class EditarAusencia:
         if dias <= 0:
             raise ValidationError("El rango de fechas no es válido")
         validar_horario(command.tipo, command.hora_desde, command.hora_hasta)
+        await self._validar_agenda(ausencia, command)
+        _aplicar_edicion(ausencia, command, dias)
+        await self._deps.ausencias.save(ausencia)
+        await self._registrar(ausencia)
+        return ausencia
+
+    async def _validar_agenda(self, ausencia: Ausencia, command: EditarAusenciaCommand) -> None:
+        """Solo revalida solapes si cambian tipo o fechas."""
         cambia_agenda = (
             command.tipo is not ausencia.tipo
             or command.start_date != ausencia.start_date
@@ -166,18 +183,6 @@ class EditarAusencia:
                 command.end_date,
                 excluir_ausencia_id=ausencia.id,
             )
-        ausencia.start_date = command.start_date
-        ausencia.end_date = command.end_date
-        ausencia.days_count = dias
-        ausencia.half_day = command.half_day
-        ausencia.tipo = command.tipo
-        ausencia.reason = command.reason
-        ausencia.status = command.status or ausencia.status
-        ausencia.hora_desde = command.hora_desde
-        ausencia.hora_hasta = command.hora_hasta
-        await self._deps.ausencias.save(ausencia)
-        await self._registrar(ausencia)
-        return ausencia
 
     async def _registrar(self, ausencia: Ausencia) -> None:
         empleado = await self._deps.empleados.get_by_id(ausencia.empleado_id)
@@ -186,6 +191,18 @@ class EditarAusencia:
         await self._deps.auditoria.registrar(
             ACCION_UPDATE, ENTIDAD_AUSENCIA, str(ausencia.id), metadata
         )
+
+
+def _aplicar_edicion(ausencia: Ausencia, command: EditarAusenciaCommand, dias: int) -> None:
+    ausencia.start_date = command.start_date
+    ausencia.end_date = command.end_date
+    ausencia.days_count = dias
+    ausencia.half_day = command.half_day
+    ausencia.tipo = command.tipo
+    ausencia.reason = command.reason
+    ausencia.status = command.status or ausencia.status
+    ausencia.hora_desde = command.hora_desde
+    ausencia.hora_hasta = command.hora_hasta
 
 
 class EliminarAusencia:

@@ -20,19 +20,7 @@ class SqlAlchemyDcaMonitorRepository:
     async def upsert(self, entries: Sequence[DcaMonitorStatus]) -> None:
         if not entries:
             return
-        stmt = insert(DcaMonitorModel).values(
-            [
-                {
-                    "customer_id": e.customer_id,
-                    "monitor_name": e.monitor_name,
-                    "online": e.online,
-                    "status": e.status,
-                    "last_contact": e.last_contact,
-                    "checked_at": e.checked_at,
-                }
-                for e in entries
-            ]
-        )
+        stmt = insert(DcaMonitorModel).values([_values(e) for e in entries])
         await self._session.execute(
             stmt.on_conflict_do_update(
                 index_elements=["customer_id", "monitor_name"],
@@ -74,3 +62,14 @@ class SqlAlchemyDcaMonitorRepository:
             .distinct()
         )
         return set((await self._session.execute(stmt)).scalars().all())
+
+
+def _values(e: DcaMonitorStatus) -> dict[str, object]:
+    return {
+        "customer_id": e.customer_id,
+        "monitor_name": e.monitor_name,
+        "online": e.online,
+        "status": e.status,
+        "last_contact": e.last_contact,
+        "checked_at": e.checked_at,
+    }

@@ -52,14 +52,7 @@ class VincularTablaKmSpst:
             if p.spst_id is not None and (incluir_provincia or p.criterio != CRITERIO_PROVINCIA)
         ]
 
-        vinculadas = 0
-        if not dry_run:
-            for propuesta in con_propuesta:
-                await self._ports.tabla_km.update_vinculo_spst(
-                    propuesta.tabla_km_id, spst_id=propuesta.spst_id
-                )
-                vinculadas += 1
-
+        vinculadas = 0 if dry_run else await self._aplicar(con_propuesta)
         return ResultadoVinculoTablaKmSpst(
             dry_run=dry_run,
             total_sin_vincular=len(propuestas),
@@ -69,3 +62,10 @@ class VincularTablaKmSpst:
             ejemplos=propuestas[:_MAX_EJEMPLOS],
             por_provincia=len(por_provincia),
         )
+
+    async def _aplicar(self, con_propuesta: list[PropuestaVinculoSpst]) -> int:
+        for propuesta in con_propuesta:
+            await self._ports.tabla_km.update_vinculo_spst(
+                propuesta.tabla_km_id, spst_id=propuesta.spst_id
+            )
+        return len(con_propuesta)

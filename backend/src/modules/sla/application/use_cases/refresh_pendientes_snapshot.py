@@ -18,11 +18,24 @@ def _build_snapshot(
     pst_to_operador: dict[int, str],
     updated_at: datetime,
 ) -> PendientesSnapshot:
+    por_prestador = _por_prestador(incidentes, pst_to_operador)
+    return PendientesSnapshot(
+        total=len(incidentes),
+        incidentes=incidentes,
+        por_prestador=por_prestador,
+        por_operador=_por_operador(por_prestador),
+        updated_at=updated_at,
+    )
+
+
+def _por_prestador(
+    incidentes: list[IncidenteSinCerrar], pst_to_operador: dict[int, str]
+) -> list[PrestadorPendientes]:
     agrupados: dict[int, list[IncidenteSinCerrar]] = {}
     for inc in incidentes:
         agrupados.setdefault(inc.id_tecnico, []).append(inc)
 
-    por_prestador = sorted(
+    return sorted(
         [
             PrestadorPendientes(
                 id_tecnico=id_tecnico,
@@ -36,23 +49,17 @@ def _build_snapshot(
         key=lambda p: p.tecnico,
     )
 
+
+def _por_operador(por_prestador: list[PrestadorPendientes]) -> list[OperadorPendientes]:
     conteo_operador: dict[str, int] = {}
     for p in por_prestador:
         if p.operador_nombre:
             prev = conteo_operador.get(p.operador_nombre, 0)
             conteo_operador[p.operador_nombre] = prev + p.cantidad
 
-    por_operador = sorted(
+    return sorted(
         [OperadorPendientes(operador_nombre=n, cantidad=c) for n, c in conteo_operador.items()],
         key=lambda o: o.operador_nombre,
-    )
-
-    return PendientesSnapshot(
-        total=len(incidentes),
-        incidentes=incidentes,
-        por_prestador=por_prestador,
-        por_operador=por_operador,
-        updated_at=updated_at,
     )
 
 

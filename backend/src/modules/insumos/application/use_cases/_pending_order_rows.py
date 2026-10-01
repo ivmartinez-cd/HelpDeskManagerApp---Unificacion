@@ -118,20 +118,15 @@ class PendingOrderRowBuilder:
         settings: InsumosSettings,
         backfill: list[ProcessedInitialSnapshot],
     ) -> PendingOrderRow:
-        consumable = (current or {}).get("consumable") or {}
-        current_days_left = consumable.get("daysLeft")
-        status_key = status_label = None
-        if current_days_left is not None:
-            status_key, status_label = status_for_days_left(int(current_days_left), settings)
+        consumable, status = _current_telemetry(current, settings)
         initial = _initial_snapshot(record, current, backfill)
-        device = devices.get(record.device_id or 0, {})
         return PendingOrderRow(
             hp_request_id=record.hp_request_id,
             customer_id=record.customer_id or 0,
             customer_name=names.get(record.customer_id or 0),
             device_id=record.device_id or 0,
             serial=record.device_serial,
-            store=str((device.get("extendedFields") or {}).get("zone") or ""),
+            store=_store_of(devices.get(record.device_id or 0, {})),
             sku=record.sku,
             description=record.description,
             order_id=record.internal_order_id,
@@ -142,12 +137,28 @@ class PendingOrderRowBuilder:
             initial_days_left=initial[1],
             initial_pages_left=initial[2],
             current_percent_left=consumable.get("percentLeft"),
-            current_days_left=current_days_left,
+            current_days_left=consumable.get("daysLeft"),
             current_pages_left=consumable.get("pagesLeft"),
-            status_key=status_key,
-            status_label=status_label,
+            status_key=status[0],
+            status_label=status[1],
             status_history=history,
         )
+
+
+def _current_telemetry(
+    current: JsonDict | None, settings: InsumosSettings
+) -> tuple[JsonDict, tuple[str | None, str | None]]:
+    """Consumible de la lectura actual de Insight y su estado (key, etiqueta) según
+    daysLeft — (None, None) si Insight no informa días restantes."""
+    consumable = (current or {}).get("consumable") or {}
+    current_days_left = consumable.get("daysLeft")
+    if current_days_left is None:
+        return consumable, (None, None)
+    return consumable, status_for_days_left(int(current_days_left), settings)
+
+
+def _store_of(device: JsonDict) -> str:
+    return str((device.get("extendedFields") or {}).get("zone") or "")
 
 
 def _initial_snapshot(

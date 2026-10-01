@@ -110,12 +110,7 @@ class SqlAlchemyAsignacionOverrideRepository:
         row = (await self._session.execute(stmt)).scalar_one_or_none()
         if row is None:
             return
-        row.operador_ausente_id = override.operador_ausente_id
-        row.operador_reemplazante_id = override.operador_reemplazante_id
-        row.desde = override.desde
-        row.hasta = override.hasta
-        row.alcance_total = override.alcance == "TOTAL"
-        row.motivo = override.motivo
+        _copiar_campos(override, row)
         # Dos flushes: delete-orphan borra las hijas viejas antes de insertar
         # las nuevas -- pueden compartir PK (p. ej. si solo cambian las
         # fechas) y en un único flush el INSERT se ejecuta antes que el
@@ -137,6 +132,16 @@ class SqlAlchemyAsignacionOverrideRepository:
         if row is not None:
             row.estado = "CANCELADA"
             await self._session.flush()
+
+
+def _copiar_campos(override: TurnoAsignacionOverride, row: TurnoAsignacionOverrideModel) -> None:
+    """Campos editables; los slots los maneja `update` aparte."""
+    row.operador_ausente_id = override.operador_ausente_id
+    row.operador_reemplazante_id = override.operador_reemplazante_id
+    row.desde = override.desde
+    row.hasta = override.hasta
+    row.alcance_total = override.alcance == "TOTAL"
+    row.motivo = override.motivo
 
 
 def _to_entity(model: TurnoAsignacionOverrideModel) -> TurnoAsignacionOverride:

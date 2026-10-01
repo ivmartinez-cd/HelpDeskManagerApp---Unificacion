@@ -54,22 +54,36 @@ class CreateAsignacionOverride:
         alcance: Literal["TOTAL"] | frozenset[uuid.UUID] = (
             "TOTAL" if command.prestador_ids is None else frozenset(command.prestador_ids)
         )
+        await self._validar_solapamiento(command, alcance)
+
+        override = _nuevo_override(command, alcance)
+        await self._deps.overrides.create(override)
+        return build_asignacion_override_dto(override, users)
+
+    async def _validar_solapamiento(
+        self,
+        command: CreateAsignacionOverrideCommand,
+        alcance: Literal["TOTAL"] | frozenset[uuid.UUID],
+    ) -> None:
         existentes = await self._deps.overrides.list_activos_por_ausente(
             command.operador_ausente_id
         )
         if hay_solapamiento(command.desde, command.hasta, alcance, existentes):
             raise OverlappingOverrideError()
 
-        override = AsignacionOverride(
-            id=uuid.uuid4(),
-            operador_ausente_id=command.operador_ausente_id,
-            operador_reemplazante_id=command.operador_reemplazante_id,
-            desde=command.desde,
-            hasta=command.hasta,
-            alcance=alcance,
-            estado="ACTIVA",
-            motivo=command.motivo,
-            created_by_user_id=command.created_by_user_id,
-        )
-        await self._deps.overrides.create(override)
-        return build_asignacion_override_dto(override, users)
+
+def _nuevo_override(
+    command: CreateAsignacionOverrideCommand,
+    alcance: Literal["TOTAL"] | frozenset[uuid.UUID],
+) -> AsignacionOverride:
+    return AsignacionOverride(
+        id=uuid.uuid4(),
+        operador_ausente_id=command.operador_ausente_id,
+        operador_reemplazante_id=command.operador_reemplazante_id,
+        desde=command.desde,
+        hasta=command.hasta,
+        alcance=alcance,
+        estado="ACTIVA",
+        motivo=command.motivo,
+        created_by_user_id=command.created_by_user_id,
+    )

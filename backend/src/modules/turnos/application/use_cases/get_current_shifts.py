@@ -8,6 +8,7 @@ from src.modules.turnos.application.dtos.grilla_variante_dtos import (
 )
 from src.modules.turnos.application.dtos.turno_dtos import OperatorShiftView, ResolvedShiftDTO
 from src.modules.turnos.application.fecha_local import ahora_local
+from src.modules.turnos.domain.entities.asignacion import Asignacion
 from src.modules.turnos.domain.entities.grilla_variante import GrillaVariante
 from src.modules.turnos.domain.repositories.asignacion_override_repository import (
     AsignacionOverrideRepository,
@@ -22,7 +23,7 @@ from src.modules.turnos.domain.repositories.grilla_variante_repository import (
     GrillaVarianteRepository,
 )
 from src.modules.turnos.domain.repositories.slot_repository import SlotRepository
-from src.modules.turnos.domain.repositories.user_provider import UserProvider
+from src.modules.turnos.domain.repositories.user_provider import UserInfo, UserProvider
 from src.modules.turnos.domain.services.turno_resolver import ResolvedSlotShift, TurnoResolver
 
 
@@ -58,11 +59,9 @@ class GetCurrentShifts:
         asignaciones = await self._deps.asignaciones.list_active_on_date(target_date)
         variante = await self._deps.variantes.find_vigente(target_date)
 
-        if variante is not None:
-            ausente_ids = list({u for s in variante.slots for u in s.user_ids})
-        else:
-            ausente_ids = list({a.user_id for a in asignaciones})
-        overrides_por_ausente = await self._deps.overrides.list_activos_por_ausentes(ausente_ids)
+        overrides_por_ausente = await self._deps.overrides.list_activos_por_ausentes(
+            _ausente_ids(variante, asignaciones)
+        )
 
         resolved = self._resolver.resolve_shifts(
             casillas=casillas,
@@ -110,15 +109,7 @@ class GetCurrentShifts:
                 is_current=shift.is_current,
                 is_next=shift.is_next,
                 operadores=[
-                    OperatorShiftView(
-                        user_id=u_id,
-                        user_name=user_info_map[u_id].full_name
-                        if u_id in user_info_map
-                        else "Desconocido",
-                        color=user_info_map[u_id].color if u_id in user_info_map else None,
-                        nota=notas.get(u_id),
-                    )
-                    for u_id in shift.user_ids
+                    _operador_view(u_id, user_info_map, notas) for u_id in shift.user_ids
                 ],
             )
             for shift in resolved
@@ -130,4 +121,25 @@ def _variante_activa(variante: GrillaVariante | None) -> VarianteActivaDTO | Non
         return None
     return VarianteActivaDTO(
         id=variante.id, motivo=variante.motivo, desde=variante.desde, hasta=variante.hasta
+    )
+
+
+def _ausente_ids(
+    variante: GrillaVariante | None, asignaciones: list[Asignacion]
+) -> list[uuid.UUID]:
+    """Operadores cuyas coberturas pueden aplicar hoy: los de la variante
+    vigente si la hay, si no los de la grilla titular."""
+    if variante is not None:
+        return list({u for s in variante.slots for u in s.user_ids})
+    return list({a.user_id for a in asignaciones})
+
+
+def _operador_view(
+    u_id: uuid.UUID, user_info_map: dict[uuid.UUID, UserInfo], notas: dict[uuid.UUID, str]
+) -> OperatorShiftView:
+    return OperatorShiftView(
+        user_id=u_id,
+        user_name=user_info_map[u_id].full_name if u_id in user_info_map else "Desconocido",
+        color=user_info_map[u_id].color if u_id in user_info_map else None,
+        nota=notas.get(u_id),
     )

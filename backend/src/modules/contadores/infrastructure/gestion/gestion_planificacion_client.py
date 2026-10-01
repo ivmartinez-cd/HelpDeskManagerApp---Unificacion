@@ -169,14 +169,8 @@ class GestionPlanificacionClient(CalendarPort):
         return events
 
     def _to_event(self, item: dict[str, Any], operador_id: str | None) -> CalendarEvent:
-        raw_id = item.get("id")
-        if isinstance(raw_id, list):
-            event_id = str(raw_id[0]) if raw_id else ""
-        else:
-            event_id = str(raw_id) if raw_id is not None else ""
-
         return CalendarEvent(
-            id=event_id,
+            id=_event_id(item.get("id")),
             title=item.get("title", ""),
             start=item.get("start", ""),
             # Los eventos de facturación traen su operador (username) en la
@@ -185,20 +179,32 @@ class GestionPlanificacionClient(CalendarPort):
             all_day=item.get("allDay", True),
             background_color=item.get("backgroundColor"),
             border_color=item.get("borderColor"),
-            type=item.get("type"),
-            tittle_tooltip=item.get("tittle_tooltip"),
-            content_tooltip=item.get("content_tooltip"),
             string_tipo_evento=item.get("stringTipoEvento"),
-            cliente=item.get("cliente"),
-            vendedor=item.get("vendedor"),
-            fecha_entrega=item.get("fecha_entrega"),
-            fecha_entrega_deseada=item.get("fecha_entrega_deseada"),
-            sucursal_entrega=item.get("sucursal_entrega"),
-            sucursal_instalacion=item.get("sucursal_instalacion"),
-            sucursal_despacho=item.get("sucursal_despacho"),
-            contacto_entrega=item.get("contacto_entrega"),
-            contacto_instalacion=item.get("contacto_instalacion"),
-            bultos=item.get("bultos"),
-            costo_seguro=item.get("costo_seguro"),
-            costo_recambio=item.get("costo_recambio"),
+            **{campo: item.get(campo) for campo in _CAMPOS_MISMO_NOMBRE},
         )
+
+
+# Campos de CalendarEvent que en la respuesta de Gestión vienen con la misma clave.
+_CAMPOS_MISMO_NOMBRE = (
+    "type",
+    "tittle_tooltip",
+    "content_tooltip",
+    "cliente",
+    "vendedor",
+    "fecha_entrega",
+    "fecha_entrega_deseada",
+    "sucursal_entrega",
+    "sucursal_instalacion",
+    "sucursal_despacho",
+    "contacto_entrega",
+    "contacto_instalacion",
+    "bultos",
+    "costo_seguro",
+    "costo_recambio",
+)
+
+
+def _event_id(raw_id: Any) -> str:
+    if isinstance(raw_id, list):
+        return str(raw_id[0]) if raw_id else ""
+    return str(raw_id) if raw_id is not None else ""

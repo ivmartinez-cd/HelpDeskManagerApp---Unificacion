@@ -69,15 +69,8 @@ def detect_mass_outages(
     fleet_sizes={}: fleet == 0 saltea el chequeo de %. División float para que 5/48 = 10.41%
     pase el umbral de min_percent=10 (el legacy usaba /, no //).
     """
-    groups: dict[tuple[int, str], list[OfflineDevice]] = defaultdict(list)
-    for d in devices:
-        if not d.last_contact:
-            continue
-        day = outage_day(d.last_contact)
-        groups[(d.customer_id, day)].append(d)
-
     outages = []
-    for (customer_id, day), group_devices in groups.items():
+    for (customer_id, day), group_devices in _group_by_customer_day(devices).items():
         fleet = fleet_sizes.get(customer_id, 0)
         count = len(group_devices)
         if count < min_devices:
@@ -98,6 +91,18 @@ def detect_mass_outages(
         )
     outages.sort(key=lambda o: len(o.device_ids), reverse=True)
     return outages
+
+
+def _group_by_customer_day(
+    devices: list[OfflineDevice],
+) -> dict[tuple[int, str], list[OfflineDevice]]:
+    groups: dict[tuple[int, str], list[OfflineDevice]] = defaultdict(list)
+    for d in devices:
+        if not d.last_contact:
+            continue
+        day = outage_day(d.last_contact)
+        groups[(d.customer_id, day)].append(d)
+    return groups
 
 
 def detect_outages(

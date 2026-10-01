@@ -27,6 +27,7 @@ from src.modules.insumos.application.use_cases._dashboard_customer_fetch import 
     fetch_customer,
 )
 from src.modules.insumos.application.use_cases._dashboard_release import ReleaseReconciler
+from src.modules.insumos.domain.entities.customer_config import CustomerConfig
 from src.modules.insumos.domain.repositories.customer_config_repository import (
     CustomerConfigRepository,
 )
@@ -73,16 +74,7 @@ class GetDashboard:
     async def execute(self, refresh_minutes: int) -> DashboardResult:
         settings = settings_from_raw(await self._ports.settings.get_all())
         customers = await self._ports.customers.list_enabled()
-        fetches: list[CustomerFetch] = list(
-            await asyncio.gather(
-                *(
-                    fetch_customer(
-                        self._ports.insight, self._ports.processed, c.customer_id, c.name
-                    )
-                    for c in customers
-                )
-            )
-        )
+        fetches = await self._fetch_all(customers)
         released = await ReleaseReconciler(
             self._ports.wsayc, self._ports.processed, self._ports.supply_cache, self._ports.audit
         ).execute(fetches)
@@ -99,6 +91,18 @@ class GetDashboard:
                 warning=settings.threshold_warning,
             ),
             refresh_minutes=refresh_minutes,
+        )
+
+    async def _fetch_all(self, customers: list[CustomerConfig]) -> list[CustomerFetch]:
+        return list(
+            await asyncio.gather(
+                *(
+                    fetch_customer(
+                        self._ports.insight, self._ports.processed, c.customer_id, c.name
+                    )
+                    for c in customers
+                )
+            )
         )
 
     async def _summarize(

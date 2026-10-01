@@ -59,18 +59,7 @@ class SqlAlchemyErrorCodeRepository:
         returning_stmt = stmt.on_conflict_do_update(
             index_elements=["code"],
             set_={
-                "severity": func.coalesce(
-                    func.nullif(stmt.excluded.severity, ""), ErrorCodeModel.severity
-                ),
-                "description": func.coalesce(
-                    func.nullif(stmt.excluded.description, ""), ErrorCodeModel.description
-                ),
-                "solution_url": func.coalesce(
-                    func.nullif(stmt.excluded.solution_url, ""), ErrorCodeModel.solution_url
-                ),
-                "solution_content": func.coalesce(
-                    func.nullif(stmt.excluded.solution_content, ""), ErrorCodeModel.solution_content
-                ),
+                **{campo: _vacio_no_pisa(stmt, campo) for campo in _CAMPOS_UPSERT},
                 "updated_at": func.now(),
             },
         ).returning(ErrorCodeModel)
@@ -110,6 +99,14 @@ class SqlAlchemyErrorCodeRepository:
         if count:
             await self._session.flush()
         return count
+
+
+_CAMPOS_UPSERT = ("severity", "description", "solution_url", "solution_content")
+
+
+def _vacio_no_pisa(stmt: Insert, campo: str) -> Any:
+    """COALESCE(NULLIF(excluded.campo, ''), existente)."""
+    return func.coalesce(func.nullif(stmt.excluded[campo], ""), getattr(ErrorCodeModel, campo))
 
 
 def _solution_url_upsert_stmt(code: str, url: str | None, desc: str | None) -> Insert:

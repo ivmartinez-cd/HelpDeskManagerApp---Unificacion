@@ -57,17 +57,24 @@ class AprobarLiquidacion:
 
         updated = await self._ports.liquidaciones.update_estado(liquidacion_id, ESTADO_APROBADA)
         if updated is None:
-            logger.critical(
-                "aprobar_liquidacion: SOAP OK pero fallo al actualizar estado local. "
-                "liquidacion_id=%s numero=%s ayc_id=%d",
-                liquidacion_id,
-                liq.numero_liquidacion,
-                ayc_id,
-            )
-            raise LiquidacionAyCOperationError(
-                "La aprobación se ejecutó en wsAyC pero el estado local no se pudo "
-                "actualizar. Recargá la liquidación — si el estado no cambió, "
-                "contactar soporte."
-            )
+            raise _estado_local_no_actualizado(liquidacion_id, liq.numero_liquidacion, ayc_id)
         await self._ports.notificador.notificar_aprobacion(updated)
         return updated
+
+
+def _estado_local_no_actualizado(
+    liquidacion_id: UUID, numero: str, ayc_id: int
+) -> LiquidacionAyCOperationError:
+    """Loguea la inconsistencia (SOAP OK, DB no) y devuelve el error para el usuario."""
+    logger.critical(
+        "aprobar_liquidacion: SOAP OK pero fallo al actualizar estado local. "
+        "liquidacion_id=%s numero=%s ayc_id=%d",
+        liquidacion_id,
+        numero,
+        ayc_id,
+    )
+    return LiquidacionAyCOperationError(
+        "La aprobación se ejecutó en wsAyC pero el estado local no se pudo "
+        "actualizar. Recargá la liquidación — si el estado no cambió, "
+        "contactar soporte."
+    )

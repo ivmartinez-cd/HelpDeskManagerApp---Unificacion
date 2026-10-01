@@ -12,6 +12,8 @@ from src.modules.liquidaciones.application.dtos.siges_config import (
 )
 from src.modules.liquidaciones.application.dtos.siges_sucursales import SucursalSigesDTO
 from src.modules.liquidaciones.application.dtos.siges_tarifarios import (
+    ConflictoTarifario,
+    GrupoTarifasCreadas,
     SyncTarifariosResultado,
     ZonasSigesResultado,
 )
@@ -223,6 +225,15 @@ class GrupoTarifasCreadasOut(BaseModel):
     spst_nombre: str | None = Field(serialization_alias="spstNombre")
     cantidad: int
 
+    @classmethod
+    def from_dto(cls, g: GrupoTarifasCreadas) -> GrupoTarifasCreadasOut:
+        return cls(
+            prestador=g.prestador,
+            tipo_servicio=g.tipo_servicio,
+            spst_nombre=g.spst_nombre,
+            cantidad=g.cantidad,
+        )
+
 
 class ConflictoTarifarioOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
@@ -233,6 +244,18 @@ class ConflictoTarifarioOut(BaseModel):
     campo: str
     valor_local: float = Field(serialization_alias="valorLocal")
     valor_siges: float = Field(serialization_alias="valorSiges")
+
+    @classmethod
+    def from_dto(cls, c: ConflictoTarifario) -> ConflictoTarifarioOut:
+        return cls(
+            prestador=c.prestador,
+            tipo_servicio=c.tipo_servicio,
+            spst_nombre=c.spst_nombre,
+            vigencia_desde=c.vigencia_desde.isoformat(),
+            campo=c.campo,
+            valor_local=c.valor_local,
+            valor_siges=c.valor_siges,
+        )
 
 
 class ZonaSinMapearOut(BaseModel):
@@ -258,27 +281,8 @@ class SyncTarifariosOut(BaseModel):
         return cls(
             dry_run=dto.dry_run,
             creados=dto.creados,
-            grupos_creados=[
-                GrupoTarifasCreadasOut(
-                    prestador=g.prestador,
-                    tipo_servicio=g.tipo_servicio,
-                    spst_nombre=g.spst_nombre,
-                    cantidad=g.cantidad,
-                )
-                for g in dto.grupos_creados
-            ],
-            conflictos=[
-                ConflictoTarifarioOut(
-                    prestador=c.prestador,
-                    tipo_servicio=c.tipo_servicio,
-                    spst_nombre=c.spst_nombre,
-                    vigencia_desde=c.vigencia_desde.isoformat(),
-                    campo=c.campo,
-                    valor_local=c.valor_local,
-                    valor_siges=c.valor_siges,
-                )
-                for c in dto.conflictos
-            ],
+            grupos_creados=[GrupoTarifasCreadasOut.from_dto(g) for g in dto.grupos_creados],
+            conflictos=[ConflictoTarifarioOut.from_dto(c) for c in dto.conflictos],
             sin_cambios=dto.sin_cambios,
             zonas_sin_mapear=[
                 ZonaSinMapearOut(

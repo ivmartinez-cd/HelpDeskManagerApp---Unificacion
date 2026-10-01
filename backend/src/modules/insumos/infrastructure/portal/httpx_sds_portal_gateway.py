@@ -110,9 +110,8 @@ class HttpxSdsPortalGateway:
         except ValueError as exc:
             raise ExternalServiceError(str(exc)) from exc
 
-    async def delete_device(self, device_id: int) -> None:
+    async def _delete_csrf_token(self, device_id: int) -> str:
         await self._ensure_login()
-
         csrf_token, session_expired = await self._fetch_csrf_token(device_id)
         if csrf_token is None and session_expired:
             # Un solo re-login ante sesión vencida confirmada — no más (incidente 2026-07-30).
@@ -123,6 +122,10 @@ class HttpxSdsPortalGateway:
                 f"No se pudo obtener el CSRF del formulario de baja del equipo {device_id} "
                 "(¿el equipo ya no admite baja, o cambió la estructura del PortalWeb?)"
             )
+        return csrf_token
+
+    async def delete_device(self, device_id: int) -> None:
+        csrf_token = await self._delete_csrf_token(device_id)
 
         # NUNCA reintentar este POST — es una baja real e irreversible.
         resp = await self._client.post(

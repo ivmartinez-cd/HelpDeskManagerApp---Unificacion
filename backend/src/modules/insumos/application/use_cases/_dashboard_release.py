@@ -68,21 +68,7 @@ class ReleaseReconciler:
         statuses = await self._supply_cache.get_statuses_batch(supply_ids)
         today_ids = await self._processed.get_today_processed_ids(list(req_to_supply))
         recent = await self._supply_cache.get_recently_cached_ids(supply_ids, _SOAP_TTL_SECONDS)
-        # Se re-verifica en vivo lo que no está en cache, más los pedidos de HOY cuyo
-        # estado cacheado no es terminal y ya venció el TTL (los recién creados cambian
-        # rápido de estado; el resto se actualiza con el scan periódico).
-        to_check = list(
-            dict.fromkeys(
-                sid
-                for rid, sid in req_to_supply.items()
-                if sid not in statuses
-                or (
-                    rid in today_ids
-                    and statuses.get(sid) not in cd_state.RELEASE_STATES
-                    and sid not in recent
-                )
-            )
-        )
+        to_check = _ids_to_check(req_to_supply, statuses, today_ids, recent)
         if to_check:
             request_by_supply = {sid: rid for rid, sid in req_to_supply.items()}
             results = await asyncio.gather(
@@ -136,6 +122,29 @@ class ReleaseReconciler:
         snapshot = next((s for s in fetch.data.requests if s.hp_request_id == req_id), None)
         detail = f"supply {supply_id} {estado}"
         await self._audit.record(_released_record(req_id, fetch.data, detail, processed, snapshot))
+
+
+def _ids_to_check(
+    req_to_supply: dict[int, int],
+    statuses: dict[int, str],
+    today_ids: set[int],
+    recent: set[int],
+) -> list[int]:
+    """Se re-verifica en vivo lo que no está en cache, más los pedidos de HOY cuyo
+    estado cacheado no es terminal y ya venció el TTL (los recién creados cambian
+    rápido de estado; el resto se actualiza con el scan periódico)."""
+    return list(
+        dict.fromkeys(
+            sid
+            for rid, sid in req_to_supply.items()
+            if sid not in statuses
+            or (
+                rid in today_ids
+                and statuses.get(sid) not in cd_state.RELEASE_STATES
+                and sid not in recent
+            )
+        )
+    )
 
 
 def _released_record(

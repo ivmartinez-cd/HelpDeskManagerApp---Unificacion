@@ -71,9 +71,7 @@ class ListPrestadoresAgrupados:
         efectivo_por_prestador = await self._resolver_efectivos(prestadores, fecha)
         equipos_en_vivo = await self._equipos_en_vivo(prestadores)
 
-        operador_ids = {p.operador_id for p in prestadores if p.operador_id is not None}
-        operador_ids |= {v for v in efectivo_por_prestador.values() if v is not None}
-        users = await self._deps.users.get_users_by_ids(list(operador_ids))
+        users = await self._users_involucrados(prestadores, efectivo_por_prestador)
 
         dtos = [
             build_prestador_dto(
@@ -85,14 +83,17 @@ class ListPrestadoresAgrupados:
             for p in prestadores
         ]
 
-        activos = [p for p in prestadores if p.is_active]
-        return PrestadoresResumenDTO(
-            total_prestadores=len(prestadores),
-            total_activos=len(activos),
-            operadores_con_pst=len({p.operador_id for p in activos if p.operador_id is not None}),
-            sin_asignar=len([p for p in activos if p.operador_id is None]),
-            grupos=_agrupar(dtos, efectivo_por_prestador, users),
-        )
+        return _resumen(prestadores, _agrupar(dtos, efectivo_por_prestador, users))
+
+    async def _users_involucrados(
+        self,
+        prestadores: list[Prestador],
+        efectivo_por_prestador: dict[uuid.UUID, uuid.UUID | None],
+    ) -> dict[uuid.UUID, UserInfo]:
+        """Operadores titulares y efectivos (reemplazantes), en una sola consulta."""
+        operador_ids = {p.operador_id for p in prestadores if p.operador_id is not None}
+        operador_ids |= {v for v in efectivo_por_prestador.values() if v is not None}
+        return await self._deps.users.get_users_by_ids(list(operador_ids))
 
     async def _equipos_en_vivo(self, prestadores: list[Prestador]) -> dict[int, int]:
         """Parque de equipos actual desde Siges, por `siges_empresa_id`. Un PST
@@ -133,6 +134,17 @@ class ListPrestadoresAgrupados:
         }
 
 
+def _resumen(prestadores: list[Prestador], grupos: list[OperadorGroupDTO]) -> PrestadoresResumenDTO:
+    activos = [p for p in prestadores if p.is_active]
+    return PrestadoresResumenDTO(
+        total_prestadores=len(prestadores),
+        total_activos=len(activos),
+        operadores_con_pst=len({p.operador_id for p in activos if p.operador_id is not None}),
+        sin_asignar=len([p for p in activos if p.operador_id is None]),
+        grupos=grupos,
+    )
+
+
 def _agrupar(
     dtos: list[PrestadorDTO],
     efectivo_por_prestador: dict[uuid.UUID, uuid.UUID | None],
@@ -143,12 +155,7 @@ def _agrupar(
         grouped.setdefault(efectivo_por_prestador[dto.id], []).append(dto)
 
     grupos = [
-        OperadorGroupDTO(
-            operador_id=operador_id,
-            operador_nombre=users[operador_id].full_name if operador_id in users else None,
-            operador_color=users[operador_id].color if operador_id in users else None,
-            prestadores=sorted(items, key=lambda d: d.den_comercial),
-        )
+        _grupo(operador_id, items, users)
         for operador_id, items in grouped.items()
         if operador_id is not None
     ]
@@ -156,12 +163,19 @@ def _agrupar(
 
     sin_asignar_items = grouped.get(None, [])
     if sin_asignar_items:
-        grupos.append(
-            OperadorGroupDTO(
-                operador_id=None,
-                operador_nombre=None,
-                operador_color=None,
-                prestadores=sorted(sin_asignar_items, key=lambda d: d.den_comercial),
-            )
-        )
+        # `None` nunca está en `users`: nombre y color quedan en None.
+        grupos.append(_grupo(None, sin_asignar_items, users))
     return grupos
+
+
+def _grupo(
+    operador_id: uuid.UUID | None,
+    items: list[PrestadorDTO],
+    users: dict[uuid.UUID, UserInfo],
+) -> OperadorGroupDTO:
+    return OperadorGroupDTO(
+        operador_id=operador_id,
+        operador_nombre=users[operador_id].full_name if operador_id in users else None,
+        operador_color=users[operador_id].color if operador_id in users else None,
+        prestadores=sorted(items, key=lambda d: d.den_comercial),
+    )

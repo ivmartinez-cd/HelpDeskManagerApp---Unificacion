@@ -249,25 +249,8 @@ class SincronizarLiquidaciones:
         """Crea la liquidación con sus incidentes. False (sin crear) si el detalle
         SOAP falló o no devolvió la misma cantidad de incidentes que el listado
         declaraba (vacío total o parcial — ambos indican una respuesta incompleta)."""
-        try:
-            filas_cd = await self._ports.cd_gateway.get_incidentes(cd_liq.id)
-        except ExternalServiceError:
-            logger.warning(
-                "sync CD: detalle SOAP falló para %s (%s) — no se crea, se reintenta "
-                "en el próximo sync",
-                cd_liq.numero_liquidacion,
-                prestador.nombre_corto,
-            )
-            return False
-        if len(filas_cd) != cd_liq.cant_incidentes:
-            logger.warning(
-                "sync CD: liquidación %s (%s) declara %d incidentes pero el detalle "
-                "trajo %d — no se crea, se reintenta en el próximo sync",
-                cd_liq.numero_liquidacion,
-                prestador.nombre_corto,
-                cd_liq.cant_incidentes,
-                len(filas_cd),
-            )
+        filas_cd = await self._detalle_completo(cd_liq, prestador)
+        if filas_cd is None:
             return False
         incidentes = [a_importado(r) for r in filas_cd]
         periodo = extraer_periodo("", incidentes) or periodo_desde_fecha(cd_liq)
@@ -284,3 +267,28 @@ class SincronizarLiquidaciones:
         await self._ports.incidentes.bulk_create(liq.id, incidentes)
         await self._ports.reanalizar.execute(liq.id)
         return True
+
+    async def _detalle_completo(
+        self, cd_liq: CdLiquidacion, prestador: Prestador
+    ) -> list[CdIncidenteRow] | None:
+        try:
+            filas_cd = await self._ports.cd_gateway.get_incidentes(cd_liq.id)
+        except ExternalServiceError:
+            logger.warning(
+                "sync CD: detalle SOAP falló para %s (%s) — no se crea, se reintenta "
+                "en el próximo sync",
+                cd_liq.numero_liquidacion,
+                prestador.nombre_corto,
+            )
+            return None
+        if len(filas_cd) != cd_liq.cant_incidentes:
+            logger.warning(
+                "sync CD: liquidación %s (%s) declara %d incidentes pero el detalle "
+                "trajo %d — no se crea, se reintenta en el próximo sync",
+                cd_liq.numero_liquidacion,
+                prestador.nombre_corto,
+                cd_liq.cant_incidentes,
+                len(filas_cd),
+            )
+            return None
+        return filas_cd

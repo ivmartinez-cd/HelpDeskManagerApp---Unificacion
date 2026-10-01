@@ -19,7 +19,7 @@ from src.modules.insumos.domain.entities.request_alert import AlertPendingEntry
 from src.modules.insumos.domain.repositories.customer_config_repository import (
     CustomerConfigRepository,
 )
-from src.modules.insumos.domain.repositories.insight_gateway import InsightGateway
+from src.modules.insumos.domain.repositories.insight_gateway import InsightGateway, JsonDict
 from src.modules.insumos.domain.repositories.insumos_settings_repository import (
     InsumosSettingsRepository,
 )
@@ -85,19 +85,26 @@ class SyncPendingAlerts:
             return []
         processed = await self._ports.processed.get_processed_ids(request_ids)
         return [
-            AlertPendingEntry(
-                hp_request_id=int(req["id"]),
-                customer_id=customer_id,
-                customer_name=customer_name,
-                device_serial="",
-                sku=str((req.get("consumable") or {}).get("sku") or ""),
-                description=str((req.get("consumable") or {}).get("description") or ""),
-                requested_at=parse_insight_utc(req.get("requested")),
-            )
+            _to_entry(req, customer_id, customer_name)
             for req in requests
-            if not is_stale_replaced(
-                req.get("requested"),
-                (req.get("consumable") or {}).get("replacedDate"),
-            )
-            and int(req["id"]) not in processed
+            if not _is_stale(req) and int(req["id"]) not in processed
         ]
+
+
+def _is_stale(req: JsonDict) -> bool:
+    return is_stale_replaced(
+        req.get("requested"),
+        (req.get("consumable") or {}).get("replacedDate"),
+    )
+
+
+def _to_entry(req: JsonDict, customer_id: int, customer_name: str) -> AlertPendingEntry:
+    return AlertPendingEntry(
+        hp_request_id=int(req["id"]),
+        customer_id=customer_id,
+        customer_name=customer_name,
+        device_serial="",
+        sku=str((req.get("consumable") or {}).get("sku") or ""),
+        description=str((req.get("consumable") or {}).get("description") or ""),
+        requested_at=parse_insight_utc(req.get("requested")),
+    )

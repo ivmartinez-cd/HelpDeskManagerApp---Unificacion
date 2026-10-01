@@ -78,28 +78,25 @@ def _aplicar_filtros(
     if filtros.accion is not None:
         stmt = stmt.where(VacacionesAuditLogModel.accion == filtros.accion)
     if filtros.desde is not None:
-        stmt = stmt.where(
-            VacacionesAuditLogModel.created_at >= filtros.desde
-        )
+        stmt = stmt.where(VacacionesAuditLogModel.created_at >= filtros.desde)
     if filtros.hasta is not None:
         # `hasta` es inclusivo a nivel día (la columna es timestamptz).
         limite = filtros.hasta + timedelta(days=1)
-        stmt = stmt.where(
-            VacacionesAuditLogModel.created_at < limite
-        )
+        stmt = stmt.where(VacacionesAuditLogModel.created_at < limite)
     if filtros.search:
-        patron = f"%{filtros.search}%"
-        emails = (
-            select(AppUser.id).where(AppUser.email.ilike(patron)).scalar_subquery()
-        )
-        stmt = stmt.where(
-            or_(
-                VacacionesAuditLogModel.accion.ilike(patron),
-                VacacionesAuditLogModel.entidad.ilike(patron),
-                VacacionesAuditLogModel.user_id.in_(emails),
-            )
-        )
+        stmt = stmt.where(_condicion_busqueda(filtros.search))
     return stmt
+
+
+def _condicion_busqueda(search: str) -> ColumnElement[bool]:
+    """Texto libre sobre acción, entidad o email del usuario actuante."""
+    patron = f"%{search}%"
+    emails = select(AppUser.id).where(AppUser.email.ilike(patron)).scalar_subquery()
+    return or_(
+        VacacionesAuditLogModel.accion.ilike(patron),
+        VacacionesAuditLogModel.entidad.ilike(patron),
+        VacacionesAuditLogModel.user_id.in_(emails),
+    )
 
 
 # Etiquetas que muestra la pantalla (`frontend/.../vacaciones/lib/auditoria.ts`):

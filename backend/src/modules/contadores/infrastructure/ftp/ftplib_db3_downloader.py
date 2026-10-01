@@ -149,23 +149,7 @@ def _retrieve(ftp: FTP, remote_name: str, local_path: str) -> None:
 def _download_and_merge(ftp: FTP, remote_files: list[str], dest_path: str) -> str:
     """Descarga múltiples archivos y los fusiona en un único SQLite."""
     tmp_dir = tempfile.mkdtemp()
-    local_paths: list[str] = []
-
-    for remote in remote_files:
-        local = os.path.join(tmp_dir, os.path.basename(remote))
-        try:
-            _retrieve(ftp, remote, local)
-            if is_sqlite3_valid(local):
-                local_paths.append(local)
-            else:
-                _safe_remove(local)
-        except Exception as exc:
-            logger.warning(
-                "No se pudo descargar/validar un archivo DB3 del FTP, se descarta y sigue",
-                extra={"remote_file": remote},
-                exc_info=exc,
-            )
-            _safe_remove(local)
+    local_paths = _retrieve_valid_files(ftp, remote_files, tmp_dir)
 
     try:
         if not local_paths:
@@ -182,6 +166,28 @@ def _download_and_merge(ftp: FTP, remote_files: list[str], dest_path: str) -> st
             os.rmdir(tmp_dir)
 
     return dest_path
+
+
+def _retrieve_valid_files(ftp: FTP, remote_files: list[str], tmp_dir: str) -> list[str]:
+    """Descarga cada archivo a tmp_dir y devuelve solo los SQLite3 válidos;
+    los inválidos o que fallan al bajar se descartan y se sigue con el resto."""
+    local_paths: list[str] = []
+    for remote in remote_files:
+        local = os.path.join(tmp_dir, os.path.basename(remote))
+        try:
+            _retrieve(ftp, remote, local)
+            if is_sqlite3_valid(local):
+                local_paths.append(local)
+            else:
+                _safe_remove(local)
+        except Exception as exc:
+            logger.warning(
+                "No se pudo descargar/validar un archivo DB3 del FTP, se descarta y sigue",
+                extra={"remote_file": remote},
+                exc_info=exc,
+            )
+            _safe_remove(local)
+    return local_paths
 
 
 def _safe_remove(path: str) -> None:

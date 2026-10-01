@@ -50,6 +50,23 @@ class DismissRequest:
         has_pending_supply = command.supply_id is not None and not command.supply_id.startswith(
             _DRYRUN_PREFIX
         )
+        failed = await self._dismiss_in_insight(command, has_pending_supply)
+        if failed is not None:
+            return failed
+        await self._ports.audit.record(_dismissed_record(command))
+        # Liberar el registro local si existiese — la solicitud ya no existe en
+        # Insight, no debe quedar contando como "cargada".
+        existing = await self._ports.processed.get(command.hp_request_id)
+        if existing is not None and existing.status != STATUS_CANCELLED:
+            await self._ports.processed.mark_cancelled(command.hp_request_id)
+        if has_pending_supply:
+            await self._mark_dismissed_supply(command)
+        return DismissResult(ok=True)
+
+    async def _dismiss_in_insight(
+        self, command: DismissCommand, has_pending_supply: bool
+    ) -> DismissResult | None:
+        """IGNORE/DELETE en HP SDS; devuelve el resultado de error si falló."""
         try:
             await self._ports.insight.update_consumable_request(
                 request_id=command.hp_request_id,
@@ -66,25 +83,7 @@ class DismissRequest:
                 ok=False,
                 error="No se pudo descartar la solicitud en HP SDS. Intentá de nuevo.",
             )
-        await self._ports.audit.record(
-            AuditRecord(
-                event=EVENT_DISMISSED,
-                hp_request_id=command.hp_request_id,
-                customer_id=command.customer_id,
-                customer_name=command.customer_name or None,
-                device_serial=command.device_serial,
-                sku=command.sku,
-                detail="Solicitud descartada manualmente en HP SDS",
-            )
-        )
-        # Liberar el registro local si existiese — la solicitud ya no existe en
-        # Insight, no debe quedar contando como "cargada".
-        existing = await self._ports.processed.get(command.hp_request_id)
-        if existing is not None and existing.status != STATUS_CANCELLED:
-            await self._ports.processed.mark_cancelled(command.hp_request_id)
-        if has_pending_supply:
-            await self._mark_dismissed_supply(command)
-        return DismissResult(ok=True)
+        return None
 
     async def _mark_dismissed_supply(self, command: DismissCommand) -> None:
         assert command.supply_id is not None
@@ -98,6 +97,18 @@ class DismissRequest:
         await self._ports.dismissed.mark_dismissed(
             supply_num_id, command.device_serial, hp_request_id=command.hp_request_id
         )
+
+
+def _dismissed_record(command: DismissCommand) -> AuditRecord:
+    return AuditRecord(
+        event=EVENT_DISMISSED,
+        hp_request_id=command.hp_request_id,
+        customer_id=command.customer_id,
+        customer_name=command.customer_name or None,
+        device_serial=command.device_serial,
+        sku=command.sku,
+        detail="Solicitud descartada manualmente en HP SDS",
+    )
 
 
 def _comment(command: DismissCommand, has_pending_supply: bool) -> str:

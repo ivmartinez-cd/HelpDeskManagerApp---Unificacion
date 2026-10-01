@@ -8,6 +8,7 @@ valor nuevo no es vacío (el scan trae menos datos que la creación y no debe bo
 from collections.abc import Sequence
 
 from sqlalchemy import case, func, select, text
+from sqlalchemy.dialects.postgresql import Insert
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,40 +33,8 @@ class SqlAlchemySupplyCacheRepository:
     async def upsert(self, entries: Sequence[CachedSupply]) -> None:
         if not entries:
             return
-        stmt = pg_insert(SupplySerialCacheModel).values(
-            [
-                {
-                    "supply_id": e.supply_id,
-                    "serial": e.serial,
-                    "estado": e.estado,
-                    "empresa_id": e.empresa_id,
-                    "fecha": e.fecha,
-                    "sku": e.sku,
-                    "description": e.description,
-                }
-                for e in entries
-            ]
-        )
-        stmt = stmt.on_conflict_do_update(
-            index_elements=["supply_id"],
-            set_={
-                "serial": stmt.excluded.serial,
-                "estado": stmt.excluded.estado,
-                "fecha": stmt.excluded.fecha,
-                "empresa_id": func.coalesce(
-                    func.nullif(stmt.excluded.empresa_id, ""), SupplySerialCacheModel.empresa_id
-                ),
-                "sku": case(
-                    (stmt.excluded.sku != "", stmt.excluded.sku),
-                    else_=SupplySerialCacheModel.sku,
-                ),
-                "description": case(
-                    (stmt.excluded.description != "", stmt.excluded.description),
-                    else_=SupplySerialCacheModel.description,
-                ),
-                "cached_at": func.now(),
-            },
-        )
+        stmt = pg_insert(SupplySerialCacheModel).values([_cache_row(e) for e in entries])
+        stmt = stmt.on_conflict_do_update(index_elements=["supply_id"], set_=_upsert_set(stmt))
         await self._session.execute(stmt)
         await self._record_status_history(entries)
         await self._session.flush()
@@ -186,3 +155,37 @@ def _to_entity(row: SupplySerialCacheModel) -> CachedSupply:
         sku=row.sku or "",
         description=row.description or "",
     )
+
+
+def _cache_row(e: CachedSupply) -> dict[str, object]:
+    return {
+        "supply_id": e.supply_id,
+        "serial": e.serial,
+        "estado": e.estado,
+        "empresa_id": e.empresa_id,
+        "fecha": e.fecha,
+        "sku": e.sku,
+        "description": e.description,
+    }
+
+
+def _upsert_set(stmt: Insert) -> dict[str, object]:
+    """serial/estado/fecha se pisan siempre; empresa_id/sku/description solo si el
+    valor nuevo no es vacío."""
+    return {
+        "serial": stmt.excluded.serial,
+        "estado": stmt.excluded.estado,
+        "fecha": stmt.excluded.fecha,
+        "empresa_id": func.coalesce(
+            func.nullif(stmt.excluded.empresa_id, ""), SupplySerialCacheModel.empresa_id
+        ),
+        "sku": case(
+            (stmt.excluded.sku != "", stmt.excluded.sku),
+            else_=SupplySerialCacheModel.sku,
+        ),
+        "description": case(
+            (stmt.excluded.description != "", stmt.excluded.description),
+            else_=SupplySerialCacheModel.description,
+        ),
+        "cached_at": func.now(),
+    }

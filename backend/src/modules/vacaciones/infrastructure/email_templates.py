@@ -24,36 +24,50 @@ def _fecha_ar(d: date) -> str:
     return f"{d.day:02d}/{d.month:02d}/{d.year % 100:02d}"
 
 
+def _layout_html(cuerpo: str) -> str:
+    """Contenedor común del legacy: `cuerpo` va entre la apertura y el pie."""
+    return f"""
+  <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:auto">
+{cuerpo}
+    <hr style="border:none;border-top:1px solid #e5e7eb"/>
+    <p style="color:#6b7280;font-size:12px">Canal Directo — Vacaciones</p>
+  </div>"""
+
+
 def email_decision(notif: DecisionNotif) -> EmailContent:
     estado = "APROBADA" if notif.aprobada else "RECHAZADA"
-    color = "#10b981" if notif.aprobada else "#ef4444"
     inicio, fin = _fecha_ar(notif.start_date), _fecha_ar(notif.end_date)
+    return EmailContent(
+        subject=f"Solicitud de vacaciones {estado} — Canal Directo",
+        text=_texto_decision(notif, estado, inicio, fin),
+        html=_html_decision(notif, estado, inicio, fin),
+    )
+
+
+def _html_decision(notif: DecisionNotif, estado: str, inicio: str, fin: str) -> str:
+    color = "#10b981" if notif.aprobada else "#ef4444"
     comentario_html = (
         f"<p><em>Comentario del administrador:</em> {escape(notif.comment)}</p>"
         if notif.comment
         else ""
     )
-    comentario_texto = (
-        f"Comentario del administrador: {notif.comment}\n" if notif.comment else ""
-    )
-    html = f"""
-  <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:auto">
+    return _layout_html(f"""\
     <h2 style="color:{color}">Tu solicitud de vacaciones ha sido {estado}</h2>
     <p>Hola {escape(notif.empleado_nombre)},</p>
     <p>Tu solicitud de vacaciones del <strong>{inicio}</strong> al <strong>{fin}</strong>
        ha sido <strong style="color:{color}">{estado.lower()}</strong>.</p>
-    {comentario_html}
-    <hr style="border:none;border-top:1px solid #e5e7eb"/>
-    <p style="color:#6b7280;font-size:12px">Canal Directo — Vacaciones</p>
-  </div>"""
-    text = (
+    {comentario_html}""")
+
+
+def _texto_decision(notif: DecisionNotif, estado: str, inicio: str, fin: str) -> str:
+    comentario_texto = (
+        f"Comentario del administrador: {notif.comment}\n" if notif.comment else ""
+    )
+    return (
         f"Hola {notif.empleado_nombre},\n\n"
         f"Tu solicitud de vacaciones del {inicio} al {fin} ha sido {estado.lower()}.\n"
         f"{comentario_texto}\n"
         "Canal Directo — Vacaciones"
-    )
-    return EmailContent(
-        subject=f"Solicitud de vacaciones {estado} — Canal Directo", text=text, html=html
     )
 
 
@@ -66,8 +80,17 @@ _ESTILO_BOTON = (
 def email_nueva_solicitud(notif: NuevaSolicitudNotif, frontend_url: str) -> EmailContent:
     inicio, fin = _fecha_ar(notif.start_date), _fecha_ar(notif.end_date)
     link = f"{frontend_url.rstrip('/')}/vacaciones/aprobaciones"
-    html = f"""
-  <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:auto">
+    return EmailContent(
+        subject=f"Nueva solicitud de vacaciones — {notif.empleado_nombre} — Canal Directo",
+        text=_texto_nueva_solicitud(notif, inicio, fin, link),
+        html=_html_nueva_solicitud(notif, inicio, fin, link),
+    )
+
+
+def _html_nueva_solicitud(
+    notif: NuevaSolicitudNotif, inicio: str, fin: str, link: str
+) -> str:
+    return _layout_html(f"""\
     <h2 style="color:#2563eb">Nueva solicitud de vacaciones recibida</h2>
     <p>Hola,</p>
     <p>El empleado <strong>{escape(notif.empleado_nombre)}</strong> del sector
@@ -82,23 +105,20 @@ def email_nueva_solicitud(notif: NuevaSolicitudNotif, frontend_url: str) -> Emai
     </table>
     <div style="margin:24px 0">
       <a href="{link}" style="{_ESTILO_BOTON}">Revisar solicitud en el sistema</a>
-    </div>
-    <hr style="border:none;border-top:1px solid #e5e7eb"/>
-    <p style="color:#6b7280;font-size:12px">Canal Directo — Vacaciones</p>
-  </div>"""
+    </div>""")
+
+
+def _texto_nueva_solicitud(
+    notif: NuevaSolicitudNotif, inicio: str, fin: str, link: str
+) -> str:
     motivo_texto = f"Motivo: {notif.reason}\n" if notif.reason else ""
-    text = (
+    return (
         f"El empleado {notif.empleado_nombre} del sector {notif.sector_nombre} "
         "ha registrado una nueva solicitud de vacaciones.\n\n"
         f"Desde: {inicio}\nHasta: {fin}\nDías solicitados: {notif.dias}\n"
         f"Año correspondiente: {notif.target_year}\n{motivo_texto}\n"
         f"Revisar solicitud en el sistema: {link}\n\n"
         "Canal Directo — Vacaciones"
-    )
-    return EmailContent(
-        subject=f"Nueva solicitud de vacaciones — {notif.empleado_nombre} — Canal Directo",
-        text=text,
-        html=html,
     )
 
 

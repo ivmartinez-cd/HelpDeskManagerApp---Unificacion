@@ -6,6 +6,7 @@ from src.modules.sla.application.dtos.pendientes_dtos import (
 from src.modules.sla.application.use_cases.refresh_pendientes_snapshot import (
     RefreshPendientesSnapshot,
 )
+from src.modules.sla.domain.entities.pendientes_snapshot import PrestadorPendientes
 from src.modules.sla.domain.repositories.pendientes_snapshot_repository import (
     PendientesSnapshotRepository,
 )
@@ -30,26 +31,30 @@ class GetPendientesResumen:
             filtro = set(siges_ids_filtro)
             por_prestador = [p for p in por_prestador if p.id_tecnico in filtro]
         total = sum(p.cantidad for p in por_prestador)
-        conteo_op: dict[str, int] = {}
-        for p in por_prestador:
-            if p.operador_nombre:
-                conteo_op[p.operador_nombre] = conteo_op.get(p.operador_nombre, 0) + p.cantidad
-        por_operador = sorted(
-            [OperadorPendientesDTO(operador_nombre=n, cantidad=c) for n, c in conteo_op.items()],
-            key=lambda o: o.operador_nombre,
-        )
         return PendientesResumenResult(
             total=total,
-            por_prestador=[
-                PrestadorPendientesDTO(
-                    id_tecnico=p.id_tecnico,
-                    tecnico=p.tecnico,
-                    cantidad=p.cantidad,
-                    ids_incidente=p.ids_incidente,
-                    operador_nombre=p.operador_nombre,
-                )
-                for p in por_prestador
-            ],
-            por_operador=por_operador,
+            por_prestador=[_prestador_dto(p) for p in por_prestador],
+            por_operador=_por_operador(por_prestador),
             updated_at=snapshot.updated_at,
         )
+
+
+def _por_operador(por_prestador: list[PrestadorPendientes]) -> list[OperadorPendientesDTO]:
+    conteo_op: dict[str, int] = {}
+    for p in por_prestador:
+        if p.operador_nombre:
+            conteo_op[p.operador_nombre] = conteo_op.get(p.operador_nombre, 0) + p.cantidad
+    return sorted(
+        [OperadorPendientesDTO(operador_nombre=n, cantidad=c) for n, c in conteo_op.items()],
+        key=lambda o: o.operador_nombre,
+    )
+
+
+def _prestador_dto(p: PrestadorPendientes) -> PrestadorPendientesDTO:
+    return PrestadorPendientesDTO(
+        id_tecnico=p.id_tecnico,
+        tecnico=p.tecnico,
+        cantidad=p.cantidad,
+        ids_incidente=p.ids_incidente,
+        operador_nombre=p.operador_nombre,
+    )

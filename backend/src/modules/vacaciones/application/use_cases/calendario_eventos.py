@@ -16,6 +16,7 @@ from src.modules.vacaciones.application.use_cases.saldos_service import (
     SaldosService,
 )
 from src.modules.vacaciones.domain.entities.empleado import Empleado
+from src.modules.vacaciones.domain.entities.sector import Sector
 from src.modules.vacaciones.domain.entities.solicitud import Solicitud
 from src.modules.vacaciones.domain.repositories.catalogos_repositories import (
     SectorRepository,
@@ -65,35 +66,13 @@ class CalendarioEventos:
         empleados = await self._deps.empleados.get_by_ids(list({s.empleado_id for s in visibles}))
         sectores = {s.id: s for s in await self._deps.sectores.list_all()}
         restantes = await self._restantes(visibles, empleados)
-        eventos = []
-        for s in visibles:
-            empleado = empleados.get(s.empleado_id)
-            if empleado is None:
-                continue
-            sector = sectores.get(empleado.department_id)
-            sector_nombre = sector.name if sector else ""
-            restante = restantes.get(s.id, 0)
-            eventos.append(
-                EventoCalendarioDTO(
-                    id=str(s.id),
-                    titulo=(
-                        f"{empleado.nombre_completo} - {sector_nombre} "
-                        f"({s.days_requested} d, {restante} rest.)"
-                    ),
-                    start=s.start_date,
-                    end_exclusivo=s.end_date + timedelta(days=1),
-                    tipo="vacation",
-                    color=empleado.color,
-                    border_color=sector.color if sector else None,
-                    status=s.status.value,
-                    empleado=empleado.nombre_completo,
-                    sector=sector_nombre,
-                    dias=s.days_requested,
-                    restantes=restante,
-                    reason=s.reason,
-                )
+        return [
+            _evento_vacacion(
+                s, empleado, sectores.get(empleado.department_id), restantes.get(s.id, 0)
             )
-        return eventos
+            for s in visibles
+            if (empleado := empleados.get(s.empleado_id)) is not None
+        ]
 
     async def _restantes(
         self, visibles: list[Solicitud], empleados: dict[uuid.UUID, Empleado]
@@ -162,3 +141,27 @@ class CalendarioEventos:
             )
             for f in feriados
         ]
+
+
+def _evento_vacacion(
+    s: Solicitud, empleado: Empleado, sector: Sector | None, restante: int
+) -> EventoCalendarioDTO:
+    sector_nombre = sector.name if sector else ""
+    return EventoCalendarioDTO(
+        id=str(s.id),
+        titulo=(
+            f"{empleado.nombre_completo} - {sector_nombre} "
+            f"({s.days_requested} d, {restante} rest.)"
+        ),
+        start=s.start_date,
+        end_exclusivo=s.end_date + timedelta(days=1),
+        tipo="vacation",
+        color=empleado.color,
+        border_color=sector.color if sector else None,
+        status=s.status.value,
+        empleado=empleado.nombre_completo,
+        sector=sector_nombre,
+        dias=s.days_requested,
+        restantes=restante,
+        reason=s.reason,
+    )

@@ -9,10 +9,12 @@ from pathlib import Path
 from src.modules.contadores.application.dtos.download_ftp_db3_request import DownloadFtpDb3Request
 from src.modules.contadores.application.dtos.download_ftp_db3_result import DownloadFtpDb3Result
 from src.modules.contadores.application.dtos.run_db3_export_request import RunDb3ExportRequest
+from src.modules.contadores.application.dtos.run_db3_export_result import RunDb3ExportResult
 from src.modules.contadores.application.use_cases._vinculo_grupo_ftp import (
     con_credenciales_de_siges,
 )
 from src.modules.contadores.application.use_cases.run_db3_export import RunDb3ExportUseCase
+from src.modules.contadores.domain.entities.ftp_client import FtpClient
 from src.modules.contadores.domain.errors import FtpClientNotFoundError
 from src.modules.contadores.domain.repositories.ftp_client_repository import FtpClientRepository
 from src.modules.contadores.domain.repositories.ftp_db3_downloader import FtpDb3Downloader
@@ -63,25 +65,9 @@ class DownloadAndProcessFtpDb3UseCase:
         os.close(fd)
 
         try:
-            remote_filename = os.path.basename(
-                self._downloader.download(
-                    client,
-                    dest_path=dest_path,
-                    timeout=request.timeout,
-                )
+            remote_filename, export_result, db3_path = self._descargar_y_exportar(
+                client, safe_name, dest_path, request
             )
-
-            export_request = RunDb3ExportRequest(
-                file_paths=[dest_path],
-                base_name=f"{safe_name}_FTP",
-                output_dir=request.output_dir,
-                fecha_maxima=request.fecha_maxima,
-            )
-            export_result = self._db3_use_case.execute(export_request)
-
-            Path(request.output_dir).mkdir(parents=True, exist_ok=True)
-            db3_path = str(Path(request.output_dir) / f"{safe_name}_FTP.db3")
-            shutil.move(dest_path, db3_path)
         finally:
             with contextlib.suppress(OSError):
                 os.remove(dest_path)
@@ -94,3 +80,33 @@ class DownloadAndProcessFtpDb3UseCase:
             row_count=export_result.row_count,
             warnings=export_result.warnings,
         )
+
+    def _descargar_y_exportar(
+        self,
+        client: FtpClient,
+        safe_name: str,
+        dest_path: str,
+        request: DownloadFtpDb3Request,
+    ) -> tuple[str, RunDb3ExportResult, str]:
+        """Pasos 2 a 4: descarga, procesa y mueve el DB3 a `output_dir`.
+        Devuelve (nombre remoto, resultado del export, ruta final del DB3)."""
+        remote_filename = os.path.basename(
+            self._downloader.download(
+                client,
+                dest_path=dest_path,
+                timeout=request.timeout,
+            )
+        )
+
+        export_request = RunDb3ExportRequest(
+            file_paths=[dest_path],
+            base_name=f"{safe_name}_FTP",
+            output_dir=request.output_dir,
+            fecha_maxima=request.fecha_maxima,
+        )
+        export_result = self._db3_use_case.execute(export_request)
+
+        Path(request.output_dir).mkdir(parents=True, exist_ok=True)
+        db3_path = str(Path(request.output_dir) / f"{safe_name}_FTP.db3")
+        shutil.move(dest_path, db3_path)
+        return remote_filename, export_result, db3_path

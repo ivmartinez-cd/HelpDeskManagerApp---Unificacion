@@ -79,6 +79,11 @@ def merge_db3_files(local_files: list[str], merged_path: str) -> str:
     Path(merged_path).parent.mkdir(parents=True, exist_ok=True)
 
     schema_rows = _read_schema(base_db)
+    _write_merged(merged_path, schema_rows, local_files)
+    return merged_path
+
+
+def _write_merged(merged_path: str, schema_rows: list[sqlite3.Row], local_files: list[str]) -> None:
     merged_con = sqlite3.connect(merged_path)
     merged_con.row_factory = sqlite3.Row
 
@@ -96,8 +101,6 @@ def merge_db3_files(local_files: list[str], merged_path: str) -> str:
         raise
     finally:
         merged_con.close()
-
-    return merged_path
 
 
 def _read_schema(db_path: str) -> list[sqlite3.Row]:

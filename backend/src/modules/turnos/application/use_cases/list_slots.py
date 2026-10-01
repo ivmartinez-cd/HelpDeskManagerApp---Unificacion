@@ -4,9 +4,11 @@ from datetime import date
 
 from src.modules.turnos.application.dtos.turno_dtos import AsignacionDTO, SlotDTO
 from src.modules.turnos.application.fecha_local import hoy_local
+from src.modules.turnos.domain.entities.asignacion import Asignacion
+from src.modules.turnos.domain.entities.slot import Slot
 from src.modules.turnos.domain.repositories.asignacion_repository import AsignacionRepository
 from src.modules.turnos.domain.repositories.slot_repository import SlotRepository
-from src.modules.turnos.domain.repositories.user_provider import UserProvider
+from src.modules.turnos.domain.repositories.user_provider import UserInfo, UserProvider
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,28 +43,32 @@ class ListSlots:
         user_info_map = await self._deps.users.get_users_by_ids(list(all_user_ids))
 
         return [
-            SlotDTO(
-                id=slot.id,
-                casilla_id=slot.casilla_id,
-                hora_inicio=slot.hora_inicio,
-                hora_fin=slot.hora_fin,
-                dia_semana=slot.dia_semana,
-                sort_order=slot.sort_order,
-                asignaciones=[
-                    AsignacionDTO(
-                        id=a.id,
-                        slot_id=a.slot_id,
-                        user_id=a.user_id,
-                        user_name=(
-                            user_info_map[a.user_id].full_name
-                            if a.user_id in user_info_map
-                            else None
-                        ),
-                        vigente_desde=a.vigente_desde,
-                        vigente_hasta=a.vigente_hasta,
-                    )
-                    for a in asignaciones_by_slot.get(slot.id, [])
-                ],
-            )
+            _slot_dto(slot, asignaciones_by_slot.get(slot.id, []), user_info_map)
             for slot in slots
         ]
+
+
+def _slot_dto(
+    slot: Slot, asignaciones: list[Asignacion], user_info_map: dict[uuid.UUID, UserInfo]
+) -> SlotDTO:
+    return SlotDTO(
+        id=slot.id,
+        casilla_id=slot.casilla_id,
+        hora_inicio=slot.hora_inicio,
+        hora_fin=slot.hora_fin,
+        dia_semana=slot.dia_semana,
+        sort_order=slot.sort_order,
+        asignaciones=[
+            AsignacionDTO(
+                id=a.id,
+                slot_id=a.slot_id,
+                user_id=a.user_id,
+                user_name=(
+                    user_info_map[a.user_id].full_name if a.user_id in user_info_map else None
+                ),
+                vigente_desde=a.vigente_desde,
+                vigente_hasta=a.vigente_hasta,
+            )
+            for a in asignaciones
+        ],
+    )

@@ -113,6 +113,13 @@ def _resolve_fecha_csv(
 
 def _build_row(details: dict[str, Any], fecha_csv: str, suma_color: bool) -> dict[str, Any]:
     serial = str(details.get("serial_number", ""))
+    total_pages, color_pages = _page_counts(details)
+    base_row = {"SERIE": serial, "FECHA": fecha_csv, "TIPO": 17, "MOTIVO": "", "OBSERVACION": ""}
+    return {**base_row, **_counter_columns(total_pages, color_pages, suma_color)}
+
+
+def _page_counts(details: dict[str, Any]) -> tuple[int, int]:
+    """Devuelve (páginas_totales, páginas_color) desde UsageInfo de ERS."""
     info = details.get("device_info_json", {})
     usage = info.get("UsageInfo", {})
 
@@ -126,22 +133,16 @@ def _build_row(details: dict[str, Any], fecha_csv: str, suma_color: bool) -> dic
     if total_pages == 0:
         tp_mono = int(marker.get("TP") or 0)
         total_pages = tp_mono + color_pages
+    return total_pages, color_pages
 
+
+def _counter_columns(total_pages: int, color_pages: int, suma_color: bool) -> dict[str, Any]:
     is_color = color_pages > 0
-    base_row = {"SERIE": serial, "FECHA": fecha_csv, "TIPO": 17, "MOTIVO": "", "OBSERVACION": ""}
-
     if not is_color:
-        return {
-            **base_row,
-            "CLASE_10": 10,
-            "CONTADOR_10": total_pages,
-            "CLASE_20": "",
-            "CONTADOR_20": 0,
-        }
+        return {"CLASE_10": 10, "CONTADOR_10": total_pages, "CLASE_20": "", "CONTADOR_20": 0}
 
     if suma_color:
         return {
-            **base_row,
             "CLASE_10": 20,
             "CONTADOR_10": total_pages,
             "CLASE_20": "",
@@ -151,7 +152,6 @@ def _build_row(details: dict[str, Any], fecha_csv: str, suma_color: bool) -> dic
 
     mono_calc = max(0, total_pages - color_pages)
     return {
-        **base_row,
         "CLASE_10": 10,
         "CONTADOR_10": mono_calc,
         "CLASE_20": 20,
