@@ -1,4 +1,4 @@
-"""Compartido por los endpoints de `proyeccion_candidatos_router.py`: decide si
+"""Compartido por las acciones del operador: decide si
 una acción es sobre un equipo real de Siges (trae la selección completa y la
 clase es numérica) o sobre uno de ejemplo, contra qué calcula (la grilla ya
 cargada del proceso o los datos de ejemplo) y dónde se guarda su decisión."""
@@ -6,37 +6,25 @@ cargada del proceso o los datos de ejemplo) y dónde se guarda su decisión."""
 from datetime import date, datetime
 from typing import Protocol
 
-from fastapi import HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.modules.auth.application.dtos.results import Identity
 from src.modules.contadores.application.dtos.decision_operador_dto import ClaveDecisionDto
 from src.modules.contadores.application.dtos.solicitud_recalculo_siges_dto import (
     SolicitudRecalculoSigesDto,
-)
-from src.modules.contadores.application.use_cases._construir_entrada_siges import (
-    ConstructorEntradaSiges,
 )
 from src.modules.contadores.application.use_cases.get_candidatos_equipo import (
     buscar_equipo_y_clase,
     entrada_ejemplo,
 )
-from src.modules.contadores.domain.ports.decisiones_operador_port import DecisionesOperadorPort
+from src.modules.contadores.application.use_cases.proyeccion_operador.contexto_ejemplo import (
+    contexto_ejemplo,
+)
+from src.modules.contadores.application.use_cases.proyeccion_operador.dependencias import (
+    DependenciasProyeccion,
+)
+from src.modules.contadores.domain.errors import AccionProyeccionInvalidaError
 from src.modules.contadores.domain.value_objects.estimacion.estimacion_input import EstimacionInput
 from src.modules.contadores.infrastructure.ejemplo.datos_ejemplo_proyeccion import (
     NRO_PROCESO_EJEMPLO,
 )
-from src.modules.contadores.infrastructure.ejemplo.decisiones_operador_store import (
-    get_decisiones_operador_store,
-)
-from src.modules.contadores.infrastructure.repositories.sqlalchemy_decisiones_operador_repository import (  # noqa: E501
-    SqlAlchemyDecisionesOperadorRepository,
-)
-from src.modules.contadores.infrastructure.repositories.sqlalchemy_recesos_repository import (
-    SqlAlchemyRecesosRepository,
-)
-from src.modules.contadores.presentation._proyeccion_contexto_ejemplo import contexto_ejemplo
-from src.modules.contadores.presentation.dependencies import get_grilla_estimacion_gateway
 
 _SELECCION_INCOMPLETA = (
     "Para un proceso real hacen falta grupo económico, anexo, fecha objetivo y clase numérica"
@@ -71,7 +59,7 @@ def solicitud_real_de(
         return None
     fecha = seleccion.fecha_objetivo
     if not clase.isdigit() or grupo is None or anexo is None or fecha is None:
-        raise HTTPException(status_code=422, detail=_SELECCION_INCOMPLETA)
+        raise AccionProyeccionInvalidaError(_SELECCION_INCOMPLETA)
     return SolicitudRecalculoSigesDto(
         nro_proceso=nro,
         id_grupo_economico=grupo,
@@ -79,13 +67,6 @@ def solicitud_real_de(
         fecha_objetivo=fecha,
         operador=operador,
     )
-
-
-def operador_de(identity: Identity) -> str:
-    """Cada operador trabaja sobre SU última carga de la grilla (en v1.7, la
-    lista en memoria de su circuito): es la clave con que el gateway la
-    recuerda."""
-    return str(identity.user.id)
 
 
 def clave_decision_de(id_maquina: int, clase: str, nro_proceso: int | None) -> ClaveDecisionDto:
@@ -96,23 +77,15 @@ def clave_decision_de(id_maquina: int, clase: str, nro_proceso: int | None) -> C
         return ClaveDecisionDto(nro_proceso, id_maquina, clase)
     equipo, _ = buscar_equipo_y_clase(id_maquina, clase)
     if equipo is None:
-        raise HTTPException(422, detail="nro_proceso es requerido para un equipo real")
+        raise AccionProyeccionInvalidaError("nro_proceso es requerido para un equipo real")
     return ClaveDecisionDto(NRO_PROCESO_EJEMPLO, id_maquina, clase)
-
-
-def decisiones_de(nro_proceso: int | None, db: AsyncSession) -> DecisionesOperadorPort:
-    """Proceso real → Postgres; modo ejemplo (sin `nro_proceso`) → store en
-    memoria, como sus recesos."""
-    if nro_proceso is None:
-        return get_decisiones_operador_store()
-    return SqlAlchemyDecisionesOperadorRepository(db)
 
 
 async def entrada_de(
     id_maquina: int,
     clase: str,
     seleccion: SeleccionProceso,
-    db: AsyncSession,
+    deps: DependenciasProyeccion,
     operador: str | None = None,
 ) -> EstimacionInput | None:
     """La fila (equipo, clase) del proceso tal como la calcula el tablero:
@@ -122,8 +95,5 @@ async def entrada_de(
     solicitud = solicitud_real_de(seleccion, clase, operador)
     if solicitud is None:
         return entrada_ejemplo(id_maquina, clase, await contexto_ejemplo(seleccion.fecha_objetivo))
-    constructor = ConstructorEntradaSiges(
-        get_grilla_estimacion_gateway(), SqlAlchemyRecesosRepository(db)
-    )
-    construida = await constructor.construir(id_maquina, clase, solicitud)
+    construida = await deps.constructor_siges().construir(id_maquina, clase, solicitud)
     return construida[0] if construida is not None else None

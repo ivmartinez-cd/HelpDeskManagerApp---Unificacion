@@ -1,6 +1,6 @@
 """P/L manual del panel de candidatos (`RecalcularConPL` del legacy) sobre la
 fila de un proceso, real o de ejemplo — quien llama arma el `EstimacionInput`
-(`_proyeccion_solicitud_real.entrada_de`)."""
+(`proyeccion_operador/solicitud_real.entrada_de`)."""
 
 from src.modules.contadores.application.dtos.decision_operador_dto import (
     LecturaElegidaDto,

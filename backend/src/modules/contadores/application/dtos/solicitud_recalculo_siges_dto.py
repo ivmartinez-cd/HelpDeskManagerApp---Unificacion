@@ -6,7 +6,7 @@ from datetime import date
 class SolicitudRecalculoSigesDto:
     """Lo que el frontend ya tiene tras elegir Grupo económico → Proceso —
     identifica qué grilla cacheada reusar (agrupado, ARCHITECTURE_GUIDE.md
-    §4). La arma `presentation/_proyeccion_solicitud_real.py` para el panel
+    §4). La arma `application/use_cases/proyeccion_operador/solicitud_real.py` para el panel
     de candidatos y las acciones del operador (vista previa, forzar, aceptar,
     marcar pendiente), que resuelven la fila con `ConstructorEntradaSiges`."""
 

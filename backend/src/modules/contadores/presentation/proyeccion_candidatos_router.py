@@ -13,9 +13,9 @@ que `PanelCandidatos` + `GrillaEstimacion` del legacy:
 que guarde una observación suelta.
 
 Todas operan sobre la fila efectiva que muestra la grilla
-(`_proyeccion_fila_vigente.py`, incluido el corte `descartar_hasta` de
+(`proyeccion_operador/fila_vigente.py`, incluido el corte `descartar_hasta` de
 "Descartar y empezar limpio"). La lógica de cada acción (decisión del
-proceso + auditoría) vive en `_proyeccion_acciones.py`."""
+proceso + auditoría) vive en `application/use_cases/proyeccion_operador/acciones.py`."""
 
 from dataclasses import replace
 
@@ -35,27 +35,33 @@ from src.modules.contadores.application.use_cases.get_candidatos_equipo import (
 from src.modules.contadores.application.use_cases.get_candidatos_equipo_siges import (
     GetCandidatosEquipoSigesUseCase,
 )
+from src.modules.contadores.application.use_cases.proyeccion_operador import acciones
+from src.modules.contadores.application.use_cases.proyeccion_operador.acciones import FilaAccion
+from src.modules.contadores.application.use_cases.proyeccion_operador.contexto_ejemplo import (
+    contexto_ejemplo,
+)
+from src.modules.contadores.application.use_cases.proyeccion_operador.fila_vigente import (
+    FilaVigente,
+    fila_vigente,
+    par_de_siges,
+)
+from src.modules.contadores.application.use_cases.proyeccion_operador.solicitud_real import (
+    solicitud_real_de,
+)
 from src.modules.contadores.application.use_cases.recalcular_candidato import recalcular_pl
 from src.modules.contadores.domain.well_known_features import PROYECCION_OPERAR
 from src.modules.contadores.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_recesos_repository import (
     SqlAlchemyRecesosRepository,
 )
-from src.modules.contadores.presentation import _proyeccion_acciones as acciones
-from src.modules.contadores.presentation._proyeccion_acciones import FilaAccion
-from src.modules.contadores.presentation._proyeccion_contexto_ejemplo import contexto_ejemplo
-from src.modules.contadores.presentation._proyeccion_fila_vigente import (
-    FilaVigente,
-    fila_vigente,
-    par_de_siges,
-)
-from src.modules.contadores.presentation._proyeccion_solicitud_real import (
-    operador_de,
-    solicitud_real_de,
-)
 from src.modules.contadores.presentation.dependencies import (
     get_candidatos_equipo_gateway,
     get_grilla_estimacion_gateway,
+)
+from src.modules.contadores.presentation.proyeccion_dependencias import (
+    dependencias_proyeccion,
+    operador_de,
+    operador_proyeccion,
 )
 from src.modules.contadores.presentation.schemas.proyeccion_candidatos_schemas import (
     CandidatosEquipoSchema,
@@ -93,7 +99,8 @@ async def get_candidatos(
     dto = await _resolver_dto_candidatos(id_maquina, clase, seleccion, db, operador)
     if dto is None:
         raise HTTPException(status_code=404, detail="Equipo o clase no encontrado")
-    vigente = await fila_vigente(id_maquina, clase, seleccion, db, operador)
+    deps = dependencias_proyeccion(db)
+    vigente = await fila_vigente(id_maquina, clase, seleccion, deps, operador)
     return CandidatosEquipoSchema.from_dto(
         _con_boxplot_vigente(dto, vigente), _metodos_disponibles(vigente)
     )
@@ -148,10 +155,11 @@ async def recalcular_candidato(
 ) -> RecalcularCandidatoResponseSchema:
     """Vista previa (`PanelCandidatos.RecomputarPreview`): no guarda ni audita.
     En el modo real la P/L se relee de Siges por `ID_Contador`."""
-    par = await par_de_siges(body.par(), body)
+    deps = dependencias_proyeccion(db)
+    par = await par_de_siges(body.par(), body, deps)
     acciones.validar_lecturas_usables(par)
     fila = FilaAccion(par.id_maquina, par.clase, body, operador_de(identity))
-    entrada = await acciones.entrada_o_404(fila, db)
+    entrada = await acciones.entrada_o_404(fila, deps)
     resultado = recalcular_pl(par, entrada)
     if resultado is None:
         raise HTTPException(status_code=422, detail=acciones.PL_INVALIDA)
@@ -165,7 +173,8 @@ async def forzar_metodo_candidato(
     """Se aplica al toque, como los botones "Usar …" del legacy. 422 si el
     legacy no ofrece ese botón para la fila (sin par válido, cascada sin
     datos, o la fila ya sale de ese método)."""
-    resultado = await acciones.forzar(request, identity, db)
+    deps = dependencias_proyeccion(db)
+    resultado = await acciones.forzar(request, operador_proyeccion(identity), deps)
     return RecalcularCandidatoResponseSchema.from_resultado(resultado)
 
 
@@ -180,7 +189,8 @@ async def marcar_pendiente(
     """Graba la observación escrita junto con la acción (`HandleMarcarPendiente`)."""
     body = body or AccionDecisionBody()
     fila = FilaAccion(id_maquina, clase, body, operador_de(identity))
-    await acciones.marcar_pendiente(fila, body, identity, db)
+    operador = operador_proyeccion(identity)
+    await acciones.marcar_pendiente(fila, body.nota_limpia(), operador, dependencias_proyeccion(db))
 
 
 @router.post("/candidatos/{id_maquina}/{clase}/aceptar", status_code=204)
@@ -195,10 +205,11 @@ async def aceptar(
     "Aceptar sugerencia" (ignora `nota`, ver `aceptar_sugerencia`)."""
     body = body or AceptarDecisionBody()
     fila = FilaAccion(id_maquina, clase, body, operador_de(identity))
+    operador, deps = operador_proyeccion(identity), dependencias_proyeccion(db)
     if body.partida is None and body.llegada is None:
-        await acciones.aceptar_sugerencia(fila, identity, db)
+        await acciones.aceptar_sugerencia(fila, operador, deps)
         return
     if body.partida is None or body.llegada is None:
         raise HTTPException(status_code=422, detail="Falta la Partida o la Llegada")
     par = ParPartidaLlegadaDto(id_maquina, clase, body.partida.a_dto(), body.llegada.a_dto())
-    await acciones.aceptar_pl(fila, par, body, identity, db)
+    await acciones.aceptar_pl(fila, par, body.nota_limpia(), operador, deps)

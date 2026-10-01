@@ -2,18 +2,14 @@
 handlers de `GrillaEstimacion` del legacy (`HandleAceptarSugerencia`,
 `HandleMarcarPendiente`, `HandleUsarCascada`/`HandleUsarEntreReales`,
 `HandleAceptarPL`). Cada una opera sobre la fila efectiva que la grilla
-muestra (`_proyeccion_fila_vigente.py`), guarda la decisión DEL PROCESO (se
+muestra (`fila_vigente.py`), guarda la decisión DEL PROCESO (se
 restaura al volver a cargar el tablero, releyendo P/L y métodos con los
 datos del día) y deja su entrada en la auditoría. La observación escrita va
 solo a la auditoría, como el legacy. Los endpoints viven en
-`proyeccion_candidatos_router.py`."""
+`presentation/proyeccion_candidatos_router.py`, que pasa la nota del operador ya limpia."""
 
 from dataclasses import dataclass, replace
 
-from fastapi import HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.modules.auth.application.dtos.results import Identity
 from src.modules.contadores.application.dtos.decision_operador_dto import (
     AccionDecision,
     ClaveDecisionDto,
@@ -29,40 +25,42 @@ from src.modules.contadores.application.use_cases._resolver_resultado_final impo
     resultado_pendiente_por_operador,
 )
 from src.modules.contadores.application.use_cases.forzar_metodo_candidato import forzar_metodo
+from src.modules.contadores.application.use_cases.proyeccion_operador.auditoria import (
+    RegistroAccion,
+    detalle_pl,
+    registrar_accion,
+)
+from src.modules.contadores.application.use_cases.proyeccion_operador.dependencias import (
+    DependenciasProyeccion,
+    OperadorProyeccion,
+)
+from src.modules.contadores.application.use_cases.proyeccion_operador.fila_vigente import (
+    FilaVigente,
+    fila_vigente,
+    par_de_siges,
+)
+from src.modules.contadores.application.use_cases.proyeccion_operador.solicitud_real import (
+    SeleccionProceso,
+    clave_decision_de,
+    entrada_de,
+)
 from src.modules.contadores.application.use_cases.recalcular_candidato import (
     lecturas_usables,
     pl_aceptable,
     recalcular_pl,
 )
+from src.modules.contadores.domain.errors import (
+    AccionProyeccionInvalidaError,
+    FilaProyeccionInexistenteError,
+)
 from src.modules.contadores.domain.value_objects.estimacion.estimacion_input import EstimacionInput
 from src.modules.contadores.domain.value_objects.estimacion.estimacion_resultado import (
     EstimacionResultado,
-)
-from src.modules.contadores.presentation._proyeccion_auditoria import (
-    RegistroAccion,
-    detalle_pl,
-    registrar_accion,
-)
-from src.modules.contadores.presentation._proyeccion_fila_vigente import (
-    FilaVigente,
-    fila_vigente,
-    par_de_siges,
-)
-from src.modules.contadores.presentation._proyeccion_solicitud_real import (
-    SeleccionProceso,
-    clave_decision_de,
-    decisiones_de,
-    entrada_de,
-    operador_de,
-)
-from src.modules.contadores.presentation.schemas.proyeccion_decisiones_schemas import (
-    AccionDecisionBody,
 )
 
 PL_INVALIDA = "Pareja Partida/Llegada inválida (separación < 15 días o L < P)"
 PL_NO_USABLE = "La Partida y la Llegada tienen que ser lecturas elegibles (no estimados T14/T19)"
 _PL_NO_ACEPTABLE = "Para aceptar la P/L hacen falta 15 días o más y la Llegada mayor que la Partida"
-_FILA_INEXISTENTE = "Equipo o clase no encontrado en el proceso"
 _SIN_SUGERENCIA = "La fila no tiene una sugerencia para aceptar"
 _ACCION_FORZADA: dict[MetodoForzado, AccionDecision] = {
     "cascada_parque": "ForzarCascada",
@@ -79,7 +77,7 @@ _OBSERVACION_FORZADA: dict[MetodoForzado, str] = {
 @dataclass(frozen=True, slots=True)
 class FilaAccion:
     """La fila sobre la que actúa el operador y la selección del proceso.
-    `operador` elige la grilla que cargó ese usuario (`operador_de`)."""
+    `operador` elige la grilla que cargó ese usuario (su user id)."""
 
     id_maquina: int
     clase: str
@@ -91,102 +89,105 @@ class FilaAccion:
         return clave_decision_de(self.id_maquina, self.clase, self.seleccion.nro_proceso)
 
 
-async def entrada_o_404(fila: FilaAccion, db: AsyncSession) -> EstimacionInput:
-    entrada = await entrada_de(fila.id_maquina, fila.clase, fila.seleccion, db, fila.operador)
+async def entrada_o_404(fila: FilaAccion, deps: DependenciasProyeccion) -> EstimacionInput:
+    entrada = await entrada_de(fila.id_maquina, fila.clase, fila.seleccion, deps, fila.operador)
     if entrada is None:
-        raise HTTPException(status_code=404, detail=_FILA_INEXISTENTE)
+        raise FilaProyeccionInexistenteError()
     return entrada
 
 
-async def vigente_o_404(fila: FilaAccion, db: AsyncSession) -> FilaVigente:
+async def vigente_o_404(fila: FilaAccion, deps: DependenciasProyeccion) -> FilaVigente:
     """`_panelEquipo = EquipoEfectivo(e)`: sin la fila no hay panel ni
     acción (el legacy siempre actúa sobre una fila de la grilla cargada)."""
-    vigente = await fila_vigente(fila.id_maquina, fila.clase, fila.seleccion, db, fila.operador)
+    vigente = await fila_vigente(fila.id_maquina, fila.clase, fila.seleccion, deps, fila.operador)
     if vigente is None:
-        raise HTTPException(status_code=404, detail=_FILA_INEXISTENTE)
+        raise FilaProyeccionInexistenteError()
     return vigente
 
 
-async def aceptar_sugerencia(fila: FilaAccion, identity: Identity, db: AsyncSession) -> None:
+async def aceptar_sugerencia(
+    fila: FilaAccion, operador: OperadorProyeccion, deps: DependenciasProyeccion
+) -> None:
     """`HandleAceptarSugerencia`: audita lo que la fila mostraba, con
     `Observacion = null` (el texto escrito en el panel se descarta, igual
     que en v1.7, y no llega a la OBSERVACION del CSV). Una decisión anterior
     deja de restaurarse. `PanelCandidatos` solo ofrece el botón si la fila
     tiene valor propuesto: sin él, 422."""
-    vigente = await vigente_o_404(fila, db)
+    vigente = await vigente_o_404(fila, deps)
     if vigente.resultado.estim_propuesto is None:
-        raise HTTPException(status_code=422, detail=_SIN_SUGERENCIA)
+        raise AccionProyeccionInvalidaError(_SIN_SUGERENCIA)
     decision = DecisionOperadorDto("AceptarSugerencia")
-    await decisiones_de(fila.seleccion.nro_proceso, db).guardar(fila.clave, decision)
-    await registrar_accion(db, identity, _registro(fila, "AceptarSugerencia", None, vigente))
+    await deps.decisiones(fila.seleccion.nro_proceso).guardar(fila.clave, decision)
+    registro = _registro(fila, "AceptarSugerencia", None, vigente)
+    await registrar_accion(deps.estim_log, operador, registro)
 
 
 async def marcar_pendiente(
-    fila: FilaAccion, body: AccionDecisionBody, identity: Identity, db: AsyncSession
+    fila: FilaAccion, nota: str | None, operador: OperadorProyeccion, deps: DependenciasProyeccion
 ) -> None:
     """`HandleMarcarPendiente`: la fila en blanco y en rojo; se audita como
     no aceptada, con el propuesto igual al anterior y la observación."""
-    vigente = await vigente_o_404(fila, db)
-    await decisiones_de(fila.seleccion.nro_proceso, db).guardar(
+    vigente = await vigente_o_404(fila, deps)
+    await deps.decisiones(fila.seleccion.nro_proceso).guardar(
         fila.clave, DecisionOperadorDto("MarcarPendiente")
     )
     pendiente = FilaVigente(vigente.entrada, resultado_pendiente_por_operador(vigente.resultado))
-    registro = _registro(fila, "MarcarPendiente", body.nota_limpia(), pendiente)
+    registro = _registro(fila, "MarcarPendiente", nota, pendiente)
     no_aceptado = replace(registro, aceptado=False, contador_propuesto=registro.contador_anterior)
-    await registrar_accion(db, identity, no_aceptado)
+    await registrar_accion(deps.estim_log, operador, no_aceptado)
 
 
 async def forzar(
-    request: ForzarMetodoRequest, identity: Identity, db: AsyncSession
+    request: ForzarMetodoRequest, operador: OperadorProyeccion, deps: DependenciasProyeccion
 ) -> EstimacionResultado:
     """Botones "Usar T19 (cascada)" / "Usar entre reales": se aplica al toque y se
     guarda el MÉTODO (no el valor). 422 si el legacy no ofrece ese botón para
     la fila efectiva."""
-    fila = FilaAccion(request.id_maquina, request.clase, request, operador_de(identity))
-    vigente = await vigente_o_404(fila, db)
+    fila = FilaAccion(request.id_maquina, request.clase, request, str(operador.user_id))
+    vigente = await vigente_o_404(fila, deps)
     forzado = forzar_metodo(request.metodo, vigente.entrada, vigente.resultado)
     if forzado is None:
-        raise HTTPException(status_code=422, detail="Ese método no está disponible para esta fila")
+        raise AccionProyeccionInvalidaError("Ese método no está disponible para esta fila")
     accion = _ACCION_FORZADA[request.metodo]
-    await decisiones_de(request.nro_proceso, db).guardar(fila.clave, DecisionOperadorDto(accion))
+    await deps.decisiones(request.nro_proceso).guardar(fila.clave, DecisionOperadorDto(accion))
     observacion = _OBSERVACION_FORZADA[request.metodo]
     registro = _registro(fila, accion, observacion, FilaVigente(vigente.entrada, forzado))
-    await registrar_accion(db, identity, registro)
+    await registrar_accion(deps.estim_log, operador, registro)
     return forzado
 
 
 async def aceptar_pl(
     fila: FilaAccion,
     par: ParPartidaLlegadaDto,
-    body: AccionDecisionBody,
-    identity: Identity,
-    db: AsyncSession,
+    nota: str | None,
+    operador: OperadorProyeccion,
+    deps: DependenciasProyeccion,
 ) -> None:
     """`HandleAceptarPL`: guarda la pareja (con sus `ID_Contador`, releída de
     Siges en el modo real) y audita la observación escrita; el valor se
     recalcula en cada carga del tablero."""
-    par = await par_de_siges(par, fila.seleccion)
+    par = await par_de_siges(par, fila.seleccion, deps)
     _validar_pl_aceptable(par)
-    entrada = await entrada_o_404(fila, db)
+    entrada = await entrada_o_404(fila, deps)
     resultado = recalcular_pl(par, entrada)
     if resultado is None:
-        raise HTTPException(status_code=422, detail=PL_INVALIDA)
+        raise AccionProyeccionInvalidaError(PL_INVALIDA)
     decision = DecisionOperadorDto("PL_Manual", par.partida, par.llegada)
-    await decisiones_de(fila.seleccion.nro_proceso, db).guardar(fila.clave, decision)
-    registro = _registro(fila, "PL_Manual", body.nota_limpia(), FilaVigente(entrada, resultado))
-    await registrar_accion(db, identity, replace(registro, detalle=detalle_pl(par)))
+    await deps.decisiones(fila.seleccion.nro_proceso).guardar(fila.clave, decision)
+    registro = _registro(fila, "PL_Manual", nota, FilaVigente(entrada, resultado))
+    await registrar_accion(deps.estim_log, operador, replace(registro, detalle=detalle_pl(par)))
 
 
 def validar_lecturas_usables(par: ParPartidaLlegadaDto) -> None:
     if not lecturas_usables(par):
-        raise HTTPException(status_code=422, detail=PL_NO_USABLE)
+        raise AccionProyeccionInvalidaError(PL_NO_USABLE)
 
 
 def _validar_pl_aceptable(par: ParPartidaLlegadaDto) -> None:
     """Lo que `PanelCandidatos` exige para habilitar "Aceptar P/L manual"."""
     validar_lecturas_usables(par)
     if not pl_aceptable(par.partida, par.llegada):
-        raise HTTPException(status_code=422, detail=_PL_NO_ACEPTABLE)
+        raise AccionProyeccionInvalidaError(_PL_NO_ACEPTABLE)
 
 
 def _registro(

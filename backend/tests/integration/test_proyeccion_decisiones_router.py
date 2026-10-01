@@ -12,20 +12,26 @@ from typing import Any
 
 import pytest
 
-import src.modules.contadores.presentation._proyeccion_acciones as acciones_module
-import src.modules.contadores.presentation._proyeccion_fila_vigente as vigente_module
+import src.modules.contadores.application.use_cases.proyeccion_operador.acciones as acciones_module
+import src.modules.contadores.application.use_cases.proyeccion_operador.fila_vigente as vigente_module  # noqa: E501
+import src.modules.contadores.presentation.proyeccion_candidatos_router as candidatos_router
 from src.modules.contadores.application.dtos.decision_operador_dto import (
     ClaveDecisionDto,
     DecisionOperadorDto,
     LecturaElegidaDto,
 )
 from src.modules.contadores.application.use_cases.get_candidatos_equipo import entrada_ejemplo
-from src.modules.contadores.domain.value_objects.estimacion.estimacion_input import EstimacionInput
-from src.modules.contadores.presentation._proyeccion_auditoria import (
+from src.modules.contadores.application.use_cases.proyeccion_operador.auditoria import (
     RegistroAccion,
     campos_resultado,
 )
-from src.modules.contadores.presentation._proyeccion_contexto_ejemplo import contexto_ejemplo
+from src.modules.contadores.application.use_cases.proyeccion_operador.contexto_ejemplo import (
+    contexto_ejemplo,
+)
+from src.modules.contadores.application.use_cases.proyeccion_operador.dependencias import (
+    DependenciasProyeccion,
+)
+from src.modules.contadores.domain.value_objects.estimacion.estimacion_input import EstimacionInput
 from tests.integration.router_testing import client, install_session, uninstall_session
 
 _BASE = "/api/contadores/proyeccion/candidatos"
@@ -81,26 +87,27 @@ class _Entorno:
 def entorno(monkeypatch: pytest.MonkeyPatch) -> Iterator[_Entorno]:
     e = _Entorno()
 
-    def _decisiones_de(nro_proceso: int | None, _db: Any) -> _DecisionesFake:
-        e.nros_proceso.append(nro_proceso)
-        return e.decisiones
+    class _Deps(DependenciasProyeccion):
+        def decisiones(self, nro_proceso: int | None) -> Any:
+            e.nros_proceso.append(nro_proceso)
+            return e.decisiones
 
-    async def _registrar(_db: Any, _identity: Any, registro: RegistroAccion) -> None:
+    async def _registrar(_estim_log: Any, _operador: Any, registro: RegistroAccion) -> None:
         e.auditoria.append(registro)
 
     async def _entrada_de(
-        id_maquina: int, clase: str, _seleccion: Any, _db: Any, _operador: str | None = None
+        id_maquina: int, clase: str, _seleccion: Any, _deps: Any, _operador: str | None = None
     ) -> EstimacionInput | None:
         return entrada_ejemplo(id_maquina, clase, await contexto_ejemplo(None))
 
     async def _releer_siges(_id_maquina: int, _clase: str) -> dict[int, LecturaElegidaDto]:
         return dict(_LECTURAS_SIGES)
 
+    deps = _Deps(e.decisiones, e.decisiones, lambda: None, _releer_siges, None)  # type: ignore[arg-type]
+    monkeypatch.setattr(candidatos_router, "dependencias_proyeccion", lambda _db: deps)
     for module in (vigente_module, acciones_module):
-        monkeypatch.setattr(module, "decisiones_de", _decisiones_de)
         monkeypatch.setattr(module, "entrada_de", _entrada_de)
     monkeypatch.setattr(acciones_module, "registrar_accion", _registrar)
-    monkeypatch.setattr(vigente_module, "_releer", lambda: _releer_siges)
     install_session(monkeypatch, superadmin=True)
     yield e
     uninstall_session()

@@ -39,6 +39,9 @@ from src.modules.contadores.application.use_cases.list_grupos_economicos_estimac
 from src.modules.contadores.application.use_cases.list_procesos_por_grupo_estimacion import (
     ListProcesosPorGrupoEstimacionUseCase,
 )
+from src.modules.contadores.application.use_cases.proyeccion_operador.contexto_ejemplo import (
+    contexto_ejemplo,
+)
 from src.modules.contadores.domain.services.estimacion.codificacion_cp1252 import (
     codificar_cp1252,
 )
@@ -59,8 +62,6 @@ from src.modules.contadores.infrastructure.repositories.sqlalchemy_estim_log_rep
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_recesos_repository import (
     SqlAlchemyRecesosRepository,
 )
-from src.modules.contadores.presentation._proyeccion_contexto_ejemplo import contexto_ejemplo
-from src.modules.contadores.presentation._proyeccion_solicitud_real import operador_de
 from src.modules.contadores.presentation.dependencies import (
     get_candidatos_equipo_gateway,
     get_grilla_estimacion_gateway,
@@ -69,6 +70,7 @@ from src.modules.contadores.presentation.dependencies import (
 from src.modules.contadores.presentation.proyeccion_candidatos_router import (
     router as candidatos_router,
 )
+from src.modules.contadores.presentation.proyeccion_dependencias import operador_de
 from src.modules.contadores.presentation.proyeccion_historial_router import (
     router as historial_router,
 )

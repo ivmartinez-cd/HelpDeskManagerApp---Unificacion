@@ -1,4 +1,11 @@
-from src.shared.domain.errors import BusinessRuleViolationError, NotFoundError, ValidationError
+from typing import ClassVar
+
+from src.shared.domain.errors import (
+    ApplicationError,
+    BusinessRuleViolationError,
+    NotFoundError,
+    ValidationError,
+)
 
 
 class InvalidMeterSourceError(ValidationError):
@@ -168,3 +175,18 @@ class RecesoRangoInvalidoError(ValidationError):
 
     def __init__(self) -> None:
         super().__init__("El receso debe terminar el mismo día que empieza o después")
+
+
+class FilaProyeccionInexistenteError(NotFoundError):
+    default_code = "FILA_PROYECCION_INEXISTENTE"
+
+    def __init__(self) -> None:
+        super().__init__("Equipo o clase no encontrado en el proceso")
+
+
+class AccionProyeccionInvalidaError(ApplicationError):
+    """La acción del operador no aplica a esa fila o a esa selección (422, como
+    respondía el router antes de moverse a application)."""
+
+    http_status: ClassVar[int] = 422
+    default_code = "ACCION_PROYECCION_INVALIDA"

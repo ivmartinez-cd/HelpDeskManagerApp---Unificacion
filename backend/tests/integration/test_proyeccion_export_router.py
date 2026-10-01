@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-import src.modules.contadores.presentation._proyeccion_fila_vigente as vigente_module
+import src.modules.contadores.presentation.proyeccion_dependencias as dependencias_module
 import src.modules.contadores.presentation.proyeccion_router as router_module
 from src.modules.auth.presentation.dependencies.identity import get_current_identity
 from src.modules.contadores.application.dtos.decision_operador_dto import (
@@ -62,7 +62,7 @@ def export(monkeypatch: pytest.MonkeyPatch) -> Iterator[_ExportFake]:
 def decisiones(monkeypatch: pytest.MonkeyPatch) -> Iterator[DecisionesOperadorStore]:
     store = DecisionesOperadorStore()
     monkeypatch.setattr(router_module, "get_decisiones_operador_store", lambda: store)
-    monkeypatch.setattr(vigente_module, "decisiones_de", lambda _nro, _db: store)
+    monkeypatch.setattr(dependencias_module, "get_decisiones_operador_store", lambda: store)
     install_session(monkeypatch, superadmin=True)
     yield store
     uninstall_session()

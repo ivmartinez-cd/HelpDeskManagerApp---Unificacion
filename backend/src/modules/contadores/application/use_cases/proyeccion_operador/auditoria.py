@@ -15,9 +15,6 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.modules.auth.application.dtos.results import Identity
 from src.modules.contadores.application.dtos.decision_operador_dto import (
     LecturaElegidaDto,
     ParPartidaLlegadaDto,
@@ -25,12 +22,12 @@ from src.modules.contadores.application.dtos.decision_operador_dto import (
 from src.modules.contadores.application.use_cases._resolver_resultado_final import (
     es_fuente_pendiente,
 )
-from src.modules.contadores.domain.ports.estim_log_port import EntradaEstimLog
+from src.modules.contadores.application.use_cases.proyeccion_operador.dependencias import (
+    OperadorProyeccion,
+)
+from src.modules.contadores.domain.ports.estim_log_port import EntradaEstimLog, EstimLogPort
 from src.modules.contadores.domain.value_objects.estimacion.estimacion_resultado import (
     EstimacionResultado,
-)
-from src.modules.contadores.infrastructure.repositories.sqlalchemy_estim_log_repository import (
-    SqlAlchemyEstimLogRepository,
 )
 
 # `TipoToma.Estimado`: lo que el legacy audita cuando la fila no sugiere tipo.
@@ -61,10 +58,12 @@ class RegistroAccion:
     detalle: dict[str, Any] = field(default_factory=dict)
 
 
-async def registrar_accion(db: AsyncSession, identity: Identity, registro: RegistroAccion) -> None:
+async def registrar_accion(
+    estim_log: EstimLogPort, operador: OperadorProyeccion, registro: RegistroAccion
+) -> None:
     entrada = EntradaEstimLog(
-        operador_user_id=identity.user.id,
-        operador_email=identity.user.email,
+        operador_user_id=operador.user_id,
+        operador_email=operador.email,
         id_maquina=registro.id_maquina,
         clase=registro.clase,
         accion=registro.accion,
@@ -73,7 +72,7 @@ async def registrar_accion(db: AsyncSession, identity: Identity, registro: Regis
         observacion=registro.observacion,
         **campos_resultado(registro),
     )
-    await SqlAlchemyEstimLogRepository(db).registrar(entrada)
+    await estim_log.registrar(entrada)
 
 
 def detalle_pl(par: ParPartidaLlegadaDto) -> dict[str, Any]:

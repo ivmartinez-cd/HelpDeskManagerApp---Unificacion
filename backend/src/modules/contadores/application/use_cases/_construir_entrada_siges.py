@@ -1,5 +1,5 @@
 """Compartido por el panel de candidatos y las acciones del operador
-(`presentation/_proyeccion_solicitud_real.entrada_de`, que alimenta
+(`proyeccion_operador/solicitud_real.entrada_de`, que alimenta
 `recalcular_pl` / `forzar_metodo`): resuelven el mismo `EstimacionInput`
 real (filtrar la última grilla cargada por equipo/clase, agrupar, armar
 contexto y recesos) antes de aplicar su override manual puntual.
