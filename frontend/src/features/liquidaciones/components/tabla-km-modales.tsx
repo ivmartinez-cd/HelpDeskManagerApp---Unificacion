@@ -15,6 +15,7 @@ import { resumenImportCsv } from "../lib/format";
 import type { PrestadorLiquidacion, TablaKm } from "../types/liquidaciones";
 import { SpstZonaSelect } from "./spst-zona-select";
 import { BuscarLugarModal } from "./tabla-km-lugar-modal";
+import { esUrlWeb } from "@/shared/utils/es-url-web";
 
 // Prefill del alta asistida desde Siges (ADR-014 DS3) — solo datos descriptivos,
 // el km queda vacío a propósito: es dato manual del acuerdo comercial.
@@ -154,7 +155,7 @@ export function EntradaModal({
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <span className="font-body text-[11px] font-bold uppercase tracking-wide text-muted-foreground">URL Maps</span>
-            {form.urlMaps && (
+            {esUrlWeb(form.urlMaps) && (
               <a href={form.urlMaps} target="_blank" rel="noopener noreferrer" className="font-body text-[11px] font-bold uppercase tracking-wide text-brand-orange hover:underline">
                 Abrir en Maps →
               </a>

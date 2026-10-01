@@ -78,7 +78,8 @@ async def run_db3_export(
 def _db3_base_name(files: list[UploadFile]) -> str:
     if len(files) > 1:
         return f"Consolidado_{len(files)}_archivos"
-    name = files[0].filename or "db3"
+    # Solo el nombre: el base_name termina en un path de salida.
+    name = Path(files[0].filename or "db3").name
     return name.replace(".db3", "")
 
 

@@ -213,14 +213,17 @@ async def adjuntar_certificado(
     actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, uuid.UUID]:
-    """Adjuntar/reemplazar el certificado (orden médica, etc.) de una baja
-    ya cargada, ej. Baja por enfermedad."""
+    """Adjuntar/reemplazar el certificado (orden médica, etc.) de una baja ya cargada."""
     filename = await save_certificado(file)
     deps = AdjuntarCertificadoAusenciaDependencies(
         ausencias=SqlAlchemyAusenciaRepository(db),
         auditoria=SqlAlchemyRegistradorAuditoria(db, actor.user_id),
     )
-    ausencia = await AdjuntarCertificadoAusencia(deps).execute(ausencia_id, filename, actor)
+    try:
+        ausencia = await AdjuntarCertificadoAusencia(deps).execute(ausencia_id, filename, actor)
+    except Exception:  # rechazado (sin permiso, baja inexistente…): no dejar huérfano
+        (certificados_dir() / filename).unlink(missing_ok=True)
+        raise
     return {"id": ausencia.id}
 
 

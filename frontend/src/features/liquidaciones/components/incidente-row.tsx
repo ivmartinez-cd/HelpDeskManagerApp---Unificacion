@@ -11,6 +11,7 @@ import { peorTonoActivo } from "../lib/alerta-estados";
 import { formatFechaDia } from "../lib/format";
 import { AlertaSubRow } from "./alerta-sub-row";
 import { EstadoValidacionBadge, TipoBadge } from "./incidente-badges";
+import { esUrlWeb } from "@/shared/utils/es-url-web";
 
 const CODIGO_ALT010 = "ALT010";
 const CODIGO_ALT005 = "ALT005";
@@ -158,7 +159,7 @@ export function IncidenteRow({
                 <Route size={12} className="flex-shrink-0 text-brand-orange" />
               </span>
             )}
-            {incidente.urlMaps && (
+            {esUrlWeb(incidente.urlMaps) && (
               <a
                 href={incidente.urlMaps}
                 target="_blank"
