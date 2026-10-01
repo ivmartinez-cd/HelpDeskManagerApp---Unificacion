@@ -1,6 +1,7 @@
 """Fakes en memoria de los puertos de auth, para tests de application puros
 (sin DB ni argon2 real) — mismo patrón que tests/unit/domain/prestadores/fakes.py."""
 
+import asyncio
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
@@ -186,12 +187,20 @@ class FakeLoginAttemptRepository:
     records: list[tuple[str, str | None, bool]] = field(default_factory=list)
     queried_emails: list[str] = field(default_factory=list)
 
-    async def record(self, *, email: str, ip: str | None, succeeded: bool) -> None:
+    async def record(self, *, email: str, ip: str | None, succeeded: bool) -> int:
         self.records.append((email, ip, succeeded))
+        return len(self.records) - 1
+
+    async def mark_succeeded(self, attempt_id: int) -> None:
+        email, ip, _ = self.records[attempt_id]
+        self.records[attempt_id] = (email, ip, True)
 
     async def count_recent_failures(self, *, email: str, since: datetime) -> int:
         self.queried_emails.append(email)
         recorded = sum(1 for e, _, ok in self.records if e == email and not ok)
+        # Como la DB real: lee y recién después cede el turno, así los logins en
+        # paralelo se intercalan con la lectura ya hecha.
+        await asyncio.sleep(0)
         return self.recent_failures + recorded
 
 

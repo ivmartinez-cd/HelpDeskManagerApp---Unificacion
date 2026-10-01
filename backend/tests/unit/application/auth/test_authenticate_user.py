@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 from src.modules.auth.application.dtos.commands import LoginCommand
@@ -123,8 +125,9 @@ async def test_rate_limit_bloquea_antes_de_verificar_credenciales() -> None:
     with pytest.raises(TooManyAttemptsError):
         await AuthenticateUser(_deps(users, attempts=attempts)).execute(_command())
 
-    # Bloqueado por rate limit: ni siquiera se registra un intento nuevo.
-    assert attempts.records == []
+    # Bloqueado por rate limit: el intento queda grabado como fallido (se graba
+    # antes de contar, para que los logins en paralelo se vean entre sí).
+    assert attempts.records == [("ana@canaldirecto.com.ar", "10.0.0.1", False)]
 
 
 async def test_rate_limit_cuenta_igual_aunque_cambien_las_mayusculas_del_email() -> None:
@@ -141,4 +144,23 @@ async def test_rate_limit_cuenta_igual_aunque_cambien_las_mayusculas_del_email()
 
     # El guard y el registro consultan el mismo email normalizado.
     assert attempts.queried_emails == ["ana@canaldirecto.com.ar"] * 2
-    assert attempts.records == [("ana@canaldirecto.com.ar", "10.0.0.1", False)]
+    assert attempts.records == [("ana@canaldirecto.com.ar", "10.0.0.1", False)] * 2
+
+
+async def test_logins_en_paralelo_no_superan_el_limite_de_intentos() -> None:
+    users = FakeUserRepository()
+    user = make_user()
+    users.rows[user.id] = user
+    attempts = FakeLoginAttemptRepository(recent_failures=3)
+    use_case = AuthenticateUser(_deps(users, attempts=attempts))
+
+    resultados = await asyncio.gather(
+        *(use_case.execute(_command(password="Otra1!aa")) for _ in range(10)),
+        return_exceptions=True,
+    )
+
+    # 3 fallos previos + tope de 5: a lo sumo 2 llegan a verificar la contraseña
+    # (contando antes de grabar, los 10 leían 3 fallos y verificaban todos).
+    verificados = sum(isinstance(r, InvalidCredentialsError) for r in resultados)
+    bloqueados = sum(isinstance(r, TooManyAttemptsError) for r in resultados)
+    assert verificados <= 2 and verificados + bloqueados == 10

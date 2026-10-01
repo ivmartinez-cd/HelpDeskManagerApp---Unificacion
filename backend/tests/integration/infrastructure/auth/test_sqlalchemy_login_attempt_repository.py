@@ -30,3 +30,13 @@ async def test_does_not_count_failures_before_the_since_cutoff(db_session: Async
     )
 
     assert count == 0
+
+
+async def test_mark_succeeded_saca_el_intento_de_los_fallos(db_session: AsyncSession) -> None:
+    repo = SqlAlchemyLoginAttemptRepository(db_session)
+    attempt_id = await repo.record(email="a@example.com", ip=None, succeeded=False)
+
+    await repo.mark_succeeded(attempt_id)
+
+    since = _NOW - timedelta(hours=1)
+    assert await repo.count_recent_failures(email="a@example.com", since=since) == 0

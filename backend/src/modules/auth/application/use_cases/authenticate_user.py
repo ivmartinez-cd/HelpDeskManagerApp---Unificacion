@@ -48,8 +48,16 @@ class AuthenticateUser:
         # El mismo email normalizado que graba `record()`: si el guard usara el
         # crudo, cambiar mayúsculas reiniciaría el contador de lockout.
         email = Email(command.email)
+        # El intento se graba como fallido ANTES de contar y de verificar: con
+        # N logins en paralelo cada uno ve a los demás, así que pasan a lo sumo
+        # _MAX_FAILED_ATTEMPTS (contar primero y grabar después dejaba que N
+        # requests simultáneos leyeran todos 0 fallos). Si resulta exitoso, se
+        # corrige. record() comitea: sobrevive al 401/403/429 que siga.
+        attempt_id = await self._deps.login_attempts.record(
+            email=email.value, ip=command.ip, succeeded=False
+        )
         await self._guard_rate_limit(email)
-        user = await self._verify_credentials(email, command)
+        user = await self._verify_credentials(email, command, attempt_id)
         session, token = await self._open_session(user.id, command)
         permissions = await self._deps.permissions.get_for_user(user.id)
         features = await self._deps.features.get_for_user(user.id)
@@ -61,21 +69,20 @@ class AuthenticateUser:
         failures = await self._deps.login_attempts.count_recent_failures(
             email=email.value, since=since
         )
-        if failures >= _MAX_FAILED_ATTEMPTS:
+        if failures > _MAX_FAILED_ATTEMPTS:
             retry_after = int(_LOCKOUT_WINDOW.total_seconds())
             raise TooManyAttemptsError(retry_after_seconds=retry_after)
 
-    async def _verify_credentials(self, email: Email, command: LoginCommand) -> User:
+    async def _verify_credentials(
+        self, email: Email, command: LoginCommand, attempt_id: int
+    ) -> User:
         user = await self._deps.users.get_by_email(email)
         # Sin usuario se verifica igual contra un hash dummy: mismo costo de
         # argon2 en ambas ramas (anti-enumeración por timing).
         stored = user.password_hash if user is not None else self._deps.hasher.dummy_hash()
         password_ok = self._deps.hasher.verify(command.password, stored) and user is not None
-        # record() comitea internamente (auditoría): sobrevive al 401/403
-        # que puede levantarse dos líneas más abajo.
-        await self._deps.login_attempts.record(
-            email=email.value, ip=command.ip, succeeded=bool(password_ok)
-        )
+        if password_ok:
+            await self._deps.login_attempts.mark_succeeded(attempt_id)
         if not password_ok or user is None:
             raise InvalidCredentialsError()
         if not user.is_active:
