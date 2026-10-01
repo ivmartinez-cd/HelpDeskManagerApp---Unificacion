@@ -176,7 +176,10 @@ bash scripts/wsl/reiniciar.sh backend          # tras editar backend/
 - Cualquier comando `docker …` / `docker compose …` se corre directo en la terminal, parado en
   el repo.
 - **Acceso desde otras máquinas de la LAN** (para que un compañero pruebe la app): esta PC es
-  `192.168.178.39`, así que la URL es `http://192.168.178.39:3000`. Cada IP nueva desde la que
+  `192.168.178.8` (Wi-Fi, al 2026-10-01; antes fue `.39` — la da el DHCP y puede cambiar:
+  confirmarla con `ip -4 -o addr show wlp0s20f3`), así que la URL es
+  `http://192.168.178.8:3000`. Desde la LAN solo se entra al frontend: DB, backend y Mailpit
+  escuchan en `127.0.0.1` (commit `8687ee14`, auditoría de seguridad). Cada IP nueva desde la que
   se entre hay que agregarla en **dos** lugares, o la app falla de formas confusas:
   `allowedDevOrigins` en `frontend/next.config.ts` (si falta, la página carga pero React nunca
   hidrata: el login no responde y no hay error visible) y `_ORIGENES_DEV` en
