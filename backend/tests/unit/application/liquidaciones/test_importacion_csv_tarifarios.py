@@ -1,19 +1,18 @@
-"""Tests del import CSV de tarifarios (`_liq_csv_upsert_tarifarios.import_tarifarios`)
+"""Tests del import CSV de tarifarios (`importacion_csv.tarifarios.import_tarifarios`)
 — upsert por (prestador, tipo_servicio, spst_id, vigencia_desde): reimportar el
 mismo CSV no debe duplicar filas. La columna `SPST` resuelve por nombre dentro
 del prestador (vacía = tarifa genérica)."""
 
-import io
 from datetime import date
-
-from fastapi import UploadFile
 
 from src.modules.liquidaciones.application.use_cases.config_tarifarios import (
     ConfigTarifariosPorts,
     CreateTarifario,
     UpdateTarifario,
 )
-from src.modules.liquidaciones.presentation._liq_csv_upsert_tarifarios import import_tarifarios
+from src.modules.liquidaciones.application.use_cases.importacion_csv.tarifarios import (
+    import_tarifarios,
+)
 from tests.unit.domain.liquidaciones.fakes import FakePrestadorRepository, FakeSpstRepository
 from tests.unit.domain.liquidaciones.fakes_config import FakeConfigTarifarioRepository
 
@@ -21,8 +20,8 @@ _HEADER = "PST_CLAVE,TIPO_SERVICIO,SPST,COSTO_SERVICIO,COSTO_KM,VIGENCIA_DESDE,V
 _VACIO = {"creados": 0, "actualizados": 0, "sinCambios": 0, "descartadas": 0}
 
 
-def _archivo(contenido: str) -> UploadFile:
-    return UploadFile(file=io.BytesIO(contenido.encode("utf-8")), filename="tarifarios.csv")
+def _archivo(contenido: str) -> bytes:
+    return contenido.encode("utf-8")
 
 
 async def _importar(

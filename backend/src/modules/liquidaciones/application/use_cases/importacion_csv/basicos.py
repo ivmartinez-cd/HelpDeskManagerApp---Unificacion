@@ -1,13 +1,14 @@
-"""Imports CSV de Prestadores/SPSTs (los de Tarifarios/Tabla KM, que a
-diferencia de estos hacen upsert, viven en `_liq_csv_upsert.py`; los exports en
-`_liq_csv_export.py` — todo separado para respetar el límite §4 de 300 líneas).
+"""Imports CSV de Prestadores/SPSTs y helpers comunes (los de Tarifarios/Tabla KM,
+que a diferencia de estos hacen upsert, viven en `tarifarios.py`/`tabla_km.py`; los
+exports en `presentation/_liq_csv_export.py`). Movido de presentation a application
+por ADR-044: es lógica de negocio (parseo, duplicados, matching de prestador).
 
 Convención de columnas:
   prestadores   → CLAVE, NOMBRE, CUIT, REGION
   spsts         → PST_CLAVE, NOMBRE, DOMICILIO, LOCALIDAD, PROVINCIA, ZONA
   tarifarios    → PST_CLAVE, TIPO_SERVICIO, SPST, COSTO_SERVICIO, COSTO_KM,
                   VIGENCIA_DESDE, VIGENCIA_HASTA (SPST = nombre, vacío =
-                  tarifa genérica; ver `_liq_csv_upsert_tarifarios.py`)
+                  tarifa genérica; ver `tarifarios.py`)
   tabla_km      → PST_CLAVE, EMPRESA, SUCURSAL, DOMICILIO, LOCALIDAD,
                   PROVINCIA, KMS_RECORRIDO, KMS_A_FACTURAR, UMBRAL_VIATICO,
                   APLICA_VIATICO, URL_MAPS, OBSERVACIONES
@@ -20,20 +21,12 @@ import io
 import logging
 from datetime import date
 
-from fastapi import UploadFile
-
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.repositories.prestador_repository import (
     PrestadorRepository,
 )
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (
-    SqlAlchemyPrestadorRepository,
-)
-from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repository import (
-    SqlAlchemySpstRepository,
-)
+from src.modules.liquidaciones.domain.repositories.spst_repository import SpstRepository
 from src.shared.infrastructure.celdas import desescapar_celda
-from src.shared.presentation.uploads import leer_upload
 
 logger = logging.getLogger(__name__)
 
@@ -73,9 +66,9 @@ async def _resolver_prestador(
 
 
 async def import_prestadores(
-    file: UploadFile, repo: SqlAlchemyPrestadorRepository
+    contenido: bytes, repo: PrestadorRepository
 ) -> dict[str, int]:
-    rows = _read_csv(await leer_upload(file))
+    rows = _read_csv(contenido)
     created = 0
     for row in rows:
         clave = _celda(row, "CLAVE").upper()
@@ -96,11 +89,11 @@ async def import_prestadores(
 
 
 async def import_spsts(
-    file: UploadFile,
-    repo: SqlAlchemySpstRepository,
-    prestador_repo: SqlAlchemyPrestadorRepository,
+    contenido: bytes,
+    repo: SpstRepository,
+    prestador_repo: PrestadorRepository,
 ) -> dict[str, int]:
-    rows = _read_csv(await leer_upload(file))
+    rows = _read_csv(contenido)
     created = 0
     for row in rows:
         if await _importar_spst(row, repo, prestador_repo):
@@ -110,8 +103,8 @@ async def import_spsts(
 
 async def _importar_spst(
     row: dict[str, str],
-    repo: SqlAlchemySpstRepository,
-    prestador_repo: SqlAlchemyPrestadorRepository,
+    repo: SpstRepository,
+    prestador_repo: PrestadorRepository,
 ) -> bool:
     nombre = _celda(row, "NOMBRE")
     if not nombre:

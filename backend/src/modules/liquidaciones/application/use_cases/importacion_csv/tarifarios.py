@@ -1,7 +1,7 @@
-"""Import CSV de Tarifarios — a diferencia de Prestadores/SPSTs (`_liq_csv.py`),
+"""Import CSV de Tarifarios — a diferencia de Prestadores/SPSTs (`basicos.py`),
 hace upsert: reimportar el mismo CSV (el flujo obvio para corregir un error:
 exportar, editar, volver a cargar) antes duplicaba cada fila en vez de
-actualizarla. El de Tabla KM vive en `_liq_csv_upsert_tabla_km.py` — separados
+actualizarla. El de Tabla KM vive en `tabla_km.py` — separados
 para respetar el límite §4 de 300 líneas (y las funciones cortas, de 20).
 
 La columna `ZONA` del CSV legacy pasó a `SPST` (nombre del SPST del mismo
@@ -14,11 +14,15 @@ from dataclasses import dataclass, field
 from datetime import date
 from uuid import UUID
 
-from fastapi import UploadFile
-
 from src.modules.liquidaciones.application.use_cases.config_tarifarios import (
     CreateTarifario,
     UpdateTarifario,
+)
+from src.modules.liquidaciones.application.use_cases.importacion_csv.basicos import (
+    _celda,
+    _parse_date,
+    _read_csv,
+    _resolver_prestador,
 )
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
@@ -29,13 +33,6 @@ from src.modules.liquidaciones.domain.repositories.spst_repository import SpstRe
 from src.modules.liquidaciones.domain.repositories.tarifario_repository import (
     TarifarioRepository,
 )
-from src.modules.liquidaciones.presentation._liq_csv import (
-    _celda,
-    _parse_date,
-    _read_csv,
-    _resolver_prestador,
-)
-from src.shared.presentation.uploads import leer_upload
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +70,7 @@ def _clave(f: _FilaTarifario) -> _Clave:
 
 
 async def import_tarifarios(
-    file: UploadFile,
+    contenido: bytes,
     crear_tarifario: CreateTarifario,
     actualizar_tarifario: UpdateTarifario,
     prestador_repo: PrestadorRepository,
@@ -84,7 +81,7 @@ async def import_tarifarios(
     la clave real de una vigencia (`_recadenado.py`). Igual costo/vigencia_hasta
     ya cargado = sin cambios; distinto = actualiza esa vigencia in-place (no
     crea una nueva); ausente = alta normal (recadenada, como el manual)."""
-    rows = _read_csv(await leer_upload(file))
+    rows = _read_csv(contenido)
     ctx = _Contexto(
         crear_tarifario, actualizar_tarifario, prestador_repo, tarifario_repo, spst_repo
     )

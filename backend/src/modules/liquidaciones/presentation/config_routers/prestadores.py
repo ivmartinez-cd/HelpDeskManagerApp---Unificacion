@@ -7,10 +7,10 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
+from src.modules.liquidaciones.application.use_cases.importacion_csv import basicos as importacion
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
-from src.modules.liquidaciones.presentation import _liq_csv as csv_helpers
 from src.modules.liquidaciones.presentation import _liq_csv_export as csv_export
 from src.modules.liquidaciones.presentation.config_routers._deps import (
     require_export,
@@ -136,7 +136,8 @@ async def import_prestadores_csv(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, int]:
-    return await csv_helpers.import_prestadores(file, SqlAlchemyPrestadorRepository(db))
+    contenido = await leer_upload(file)
+    return await importacion.import_prestadores(contenido, SqlAlchemyPrestadorRepository(db))
 
 
 @router.post(

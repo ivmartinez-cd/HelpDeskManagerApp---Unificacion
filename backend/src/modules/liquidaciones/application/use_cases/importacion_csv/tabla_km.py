@@ -1,7 +1,7 @@
-"""Import CSV de Tabla KM — a diferencia de Prestadores/SPSTs (`_liq_csv.py`),
+"""Import CSV de Tabla KM — a diferencia de Prestadores/SPSTs (`basicos.py`),
 hace upsert: reimportar el mismo CSV (el flujo obvio para corregir un error:
 exportar, editar, volver a cargar) antes duplicaba cada fila en vez de
-actualizarla. El de Tarifarios vive en `_liq_csv_upsert_tarifarios.py` —
+actualizarla. El de Tarifarios vive en `tarifarios.py` —
 separados para respetar el límite §4 de 300 líneas (y las funciones cortas,
 de 20)."""
 
@@ -11,12 +11,15 @@ import logging
 from dataclasses import dataclass
 from uuid import UUID
 
-from fastapi import UploadFile
-
 from src.modules.liquidaciones.application.use_cases.config_tabla_km import (
     CreateTablaKm,
     TablaKmDatos,
     UpdateTablaKm,
+)
+from src.modules.liquidaciones.application.use_cases.importacion_csv.basicos import (
+    _celda,
+    _read_csv,
+    _resolver_prestador,
 )
 from src.modules.liquidaciones.domain.entities.tabla_km import UMBRAL_VIATICO_DEFAULT, TablaKm
 from src.modules.liquidaciones.domain.repositories.prestador_repository import (
@@ -26,12 +29,6 @@ from src.modules.liquidaciones.domain.repositories.tabla_km_repository import Ta
 from src.modules.liquidaciones.domain.services.motor_reglas._resolucion import (
     clave_empresa_sucursal,
 )
-from src.modules.liquidaciones.presentation._liq_csv import (
-    _celda,
-    _read_csv,
-    _resolver_prestador,
-)
-from src.shared.presentation.uploads import leer_upload
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +56,7 @@ def _clave(f: _FilaTablaKm) -> _Clave:
 
 
 async def import_tabla_km(
-    file: UploadFile,
+    contenido: bytes,
     crear: CreateTablaKm,
     actualizar: UpdateTablaKm,
     prestador_repo: PrestadorRepository,
@@ -68,7 +65,7 @@ async def import_tabla_km(
     """Upsert por (prestador, empresa, sucursal), mismo criterio de matching que
     el motor de reglas. El 2do elemento: prestadores con filas NUEVAS — el
     caller corre "Vincular SPST" sobre cada uno (el CSV no trae SPST)."""
-    rows = _read_csv(await leer_upload(file))
+    rows = _read_csv(contenido)
     contadores = {"creados": 0, "actualizados": 0, "sinCambios": 0, "descartadas": 0}
     indices: dict[UUID, dict[_Clave, TablaKm]] = {}
     tocados: set[UUID] = set()

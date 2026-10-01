@@ -1,19 +1,16 @@
-"""Tests del import CSV de Tabla KM (`_liq_csv_upsert_tabla_km.import_tabla_km`)
+"""Tests del import CSV de Tabla KM (`importacion_csv.tabla_km.import_tabla_km`)
 — upsert por (prestador, empresa, sucursal): reimportar el mismo CSV no debe
 duplicar filas, y un SPST ya vinculado a mano sobrevive al reimport (el CSV no
 trae columna de SPST)."""
 
-import io
 import uuid
-
-from fastapi import UploadFile
 
 from src.modules.liquidaciones.application.use_cases.config_tabla_km import (
     ConfigTablaKmPorts,
     CreateTablaKm,
     UpdateTablaKm,
 )
-from src.modules.liquidaciones.presentation._liq_csv_upsert_tabla_km import import_tabla_km
+from src.modules.liquidaciones.application.use_cases.importacion_csv.tabla_km import import_tabla_km
 from tests.unit.domain.liquidaciones.fakes import FakePrestadorRepository
 from tests.unit.domain.liquidaciones.fakes_config import FakeConfigTablaKmRepository
 
@@ -24,8 +21,8 @@ _HEADER = (
 _VACIO = {"creados": 0, "actualizados": 0, "sinCambios": 0, "descartadas": 0}
 
 
-def _archivo(contenido: str) -> UploadFile:
-    return UploadFile(file=io.BytesIO(contenido.encode("utf-8")), filename="tabla_km.csv")
+def _archivo(contenido: str) -> bytes:
+    return contenido.encode("utf-8")
 
 
 async def _importar(csv_text: str, prestadores: FakePrestadorRepository, tabla_km):

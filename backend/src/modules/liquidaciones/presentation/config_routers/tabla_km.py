@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.liquidaciones.application.use_cases.config_tabla_km import TablaKmDatos
+from src.modules.liquidaciones.application.use_cases.importacion_csv import tabla_km as importacion
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_repository import (  # noqa: E501
     SqlAlchemyPrestadorRepository,
 )
@@ -15,9 +16,6 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_tabla_km_r
     SqlAlchemyTablaKmRepository,
 )
 from src.modules.liquidaciones.presentation import _liq_csv_export as csv_export
-from src.modules.liquidaciones.presentation import (
-    _liq_csv_upsert_tabla_km as csv_helpers,
-)
 from src.modules.liquidaciones.presentation.config_routers._deps import (
     CATALOGO_SIZE,
     require_export,
@@ -48,6 +46,7 @@ from src.modules.liquidaciones.presentation.schemas.tabla_km_schemas import (
 )
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
+from src.shared.presentation.uploads import leer_upload
 
 router = APIRouter()
 
@@ -211,8 +210,8 @@ async def import_tabla_km_csv(
     sin zona/tarifa hasta que alguien corriera "Vincular SPST" a mano. Se corre
     acá mismo, por cada prestador que recibió filas nuevas, mismo criterio
     "solo cuando hay un único candidato" que el botón manual."""
-    resultado, prestadores_tocados = await csv_helpers.import_tabla_km(
-        file,
+    resultado, prestadores_tocados = await importacion.import_tabla_km(
+        await leer_upload(file),
         build_create_tabla_km(db),
         build_update_tabla_km(db),
         SqlAlchemyPrestadorRepository(db),
