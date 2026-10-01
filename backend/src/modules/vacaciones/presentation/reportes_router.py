@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
@@ -10,6 +10,10 @@ from src.modules.vacaciones.application.use_cases.reporte_vacaciones import (
     ReporteVacacionesDependencies,
 )
 from src.modules.vacaciones.domain.well_known_features import REPORTES
+from src.modules.vacaciones.infrastructure.exports.reporte_vacaciones_archivos import (
+    reporte_excel,
+    reporte_pdf,
+)
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_cargo_repository import (
     SqlAlchemyCargoRepository,
 )
@@ -29,7 +33,6 @@ from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_solicitud_rep
     SqlAlchemySolicitudRepository,
 )
 from src.modules.vacaciones.infrastructure.system_clock import SystemClock
-from src.modules.vacaciones.presentation._reportes_export import export_excel, export_pdf
 from src.modules.vacaciones.presentation.schemas.reporte_schemas import (
     ReporteVacacionesResponse,
 )
@@ -37,6 +40,12 @@ from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.database.session import get_db
 
 router = APIRouter(prefix="/api/vacaciones/reportes", tags=["vacaciones"])
+_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+def _adjunto(contenido: bytes, media_type: str, filename: str) -> Response:
+    disposicion = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    return Response(contenido, media_type=media_type, headers=disposicion)
 
 # Función concedible por usuario (ADR-032): antes vacaciones.manage.
 _require_manage = Depends(require_feature(REPORTES))
@@ -67,13 +76,14 @@ async def get_reporte(
 async def get_reporte_excel(
     _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
-) -> StreamingResponse:
-    return export_excel(await _generar(db))
+) -> Response:
+    return _adjunto(reporte_excel(await _generar(db)), _XLSX, "reporte-vacaciones.xlsx")
 
 
 @router.get("/pdf")
 async def get_reporte_pdf(
     _identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
-) -> StreamingResponse:
-    return export_pdf(await _generar(db), timezone=get_settings().app_timezone)
+) -> Response:
+    contenido = reporte_pdf(await _generar(db), timezone=get_settings().app_timezone)
+    return _adjunto(contenido, "application/pdf", "reporte-vacaciones.pdf")

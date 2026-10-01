@@ -13,7 +13,7 @@ from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
-from src.shared.presentation.celdas import CsvWriterSeguro
+from src.shared.infrastructure.celdas import CsvWriterSeguro
 
 _BOM = "﻿"
 _CSV_MEDIA = "text/csv; charset=utf-8-sig"

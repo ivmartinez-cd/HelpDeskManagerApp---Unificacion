@@ -1,4 +1,5 @@
-"""Exportadores Excel/PDF del reporte de vacaciones.
+"""Archivos Excel/PDF del reporte de vacaciones (fpdf/openpyxl aislados en
+infrastructure, §5 y ADR-044; el router solo arma la respuesta HTTP).
 
 Paridad con `report.controller.ts` legacy: mismos nombres de archivo, mismas
 hojas/columnas del Excel y mismo layout de texto del PDF (título + fecha de
@@ -10,27 +11,16 @@ import io
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from fastapi.responses import StreamingResponse
 from fpdf import FPDF
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.worksheet.worksheet import Worksheet
 
 from src.modules.vacaciones.application.dtos.reporte_dtos import ReporteVacacionesDTO
-from src.shared.presentation.celdas import fila_segura
-
-_XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+from src.shared.infrastructure.celdas import fila_segura
 
 
-def _attachment(buf: io.BytesIO, media_type: str, filename: str) -> StreamingResponse:
-    return StreamingResponse(
-        buf,
-        media_type=media_type,
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
-
-
-def export_excel(reporte: ReporteVacacionesDTO) -> StreamingResponse:
+def reporte_excel(reporte: ReporteVacacionesDTO) -> bytes:
     wb = Workbook()
     hoja_empleados = wb.active
     assert hoja_empleados is not None  # openpyxl siempre crea la hoja inicial
@@ -38,8 +28,7 @@ def export_excel(reporte: ReporteVacacionesDTO) -> StreamingResponse:
     _hoja_sectores(wb.create_sheet("Por sector"), reporte)
     buf = io.BytesIO()
     wb.save(buf)
-    buf.seek(0)
-    return _attachment(buf, _XLSX_MEDIA_TYPE, "reporte-vacaciones.xlsx")
+    return buf.getvalue()
 
 
 def _hoja_empleados(ws: Worksheet, reporte: ReporteVacacionesDTO) -> None:
@@ -80,7 +69,7 @@ def _encabezado(ws: Worksheet, headers: list[tuple[str, int]]) -> None:
         cell.font = Font(bold=True)
 
 
-def export_pdf(reporte: ReporteVacacionesDTO, *, timezone: str) -> StreamingResponse:
+def reporte_pdf(reporte: ReporteVacacionesDTO, *, timezone: str) -> bytes:
     pdf = FPDF(format="A4")
     pdf.set_margins(14, 14)
     pdf.set_auto_page_break(auto=True, margin=14)
@@ -105,8 +94,7 @@ def export_pdf(reporte: ReporteVacacionesDTO, *, timezone: str) -> StreamingResp
             for f in reporte.por_sector
         ],
     )
-    buf = io.BytesIO(bytes(pdf.output()))
-    return _attachment(buf, "application/pdf", "reporte-vacaciones.pdf")
+    return bytes(pdf.output())
 
 
 def _pdf_titulo(pdf: FPDF, timezone: str) -> None:

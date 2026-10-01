@@ -32,7 +32,7 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repository import (
     SqlAlchemySpstRepository,
 )
-from src.shared.presentation.celdas import desescapar_celda
+from src.shared.infrastructure.celdas import desescapar_celda
 from src.shared.presentation.uploads import leer_upload
 
 logger = logging.getLogger(__name__)

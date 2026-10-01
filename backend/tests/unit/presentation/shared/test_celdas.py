@@ -4,7 +4,7 @@ import io
 
 import pytest
 
-from src.shared.presentation.celdas import CsvWriterSeguro, celda_segura, desescapar_celda
+from src.shared.infrastructure.celdas import CsvWriterSeguro, celda_segura, desescapar_celda
 
 
 @pytest.mark.parametrize("texto", ["=HYPERLINK(\"x\")", "+1+1", "-2+3", "@SUM(A1)", "\tx"])
