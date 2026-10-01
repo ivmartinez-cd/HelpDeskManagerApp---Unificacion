@@ -22,6 +22,7 @@ from src.modules.liquidaciones.domain.services.importacion_maestro.constructor i
 from src.modules.liquidaciones.domain.value_objects.prestador_maestro_importado import (
     ResultadoImportacionMaestro,
 )
+from src.shared.infrastructure.xlsx_guard import verificar_xlsx_acotado
 
 
 class PandasPrestadorMaestroFileParser:
@@ -30,6 +31,7 @@ class PandasPrestadorMaestroFileParser:
         return armar_resultado_importacion_maestro(hojas, nombre_archivo, date.today())
 
     def _leer_hojas(self, contenido: bytes) -> dict[str, list[list[Any]]]:
+        verificar_xlsx_acotado(contenido)
         try:
             libro = pd.read_excel(BytesIO(contenido), sheet_name=None, header=None)
         except Exception as exc:

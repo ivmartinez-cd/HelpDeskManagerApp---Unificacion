@@ -35,6 +35,7 @@ from src.modules.liquidaciones.presentation._liq_csv import (
     _read_csv,
     _resolver_prestador,
 )
+from src.shared.presentation.uploads import leer_upload
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ async def import_tarifarios(
     la clave real de una vigencia (`_recadenado.py`). Igual costo/vigencia_hasta
     ya cargado = sin cambios; distinto = actualiza esa vigencia in-place (no
     crea una nueva); ausente = alta normal (recadenada, como el manual)."""
-    rows = _read_csv(await file.read())
+    rows = _read_csv(await leer_upload(file))
     ctx = _Contexto(
         crear_tarifario, actualizar_tarifario, prestador_repo, tarifario_repo, spst_repo
     )

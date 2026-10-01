@@ -14,6 +14,7 @@ from pathlib import Path
 from fastapi import UploadFile
 
 from src.shared.infrastructure.config.settings import get_settings
+from src.shared.presentation.uploads import leer_upload
 
 
 def cpmd_dir() -> Path:
@@ -25,5 +26,5 @@ def cpmd_dir() -> Path:
 async def save_cpmd_pdf(file: UploadFile) -> str:
     """Guarda el PDF con un nombre único y devuelve el nombre de archivo (no el path)."""
     filename = f"{uuid.uuid4().hex}.pdf"
-    (cpmd_dir() / filename).write_bytes(await file.read())
+    (cpmd_dir() / filename).write_bytes(await leer_upload(file))
     return filename

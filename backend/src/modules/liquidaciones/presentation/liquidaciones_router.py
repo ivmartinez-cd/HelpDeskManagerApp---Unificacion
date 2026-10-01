@@ -58,6 +58,7 @@ from src.modules.liquidaciones.presentation.schemas.reanalizar_liquidacion_schem
 )
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
+from src.shared.presentation.uploads import leer_upload
 
 router = APIRouter(prefix="/api/liquidaciones", tags=["liquidaciones"])
 
@@ -140,7 +141,7 @@ async def importar_liquidacion(
     _: Identity = _require_create,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ImportarLiquidacionOut:
-    contenido = await file.read()
+    contenido = await leer_upload(file)
     resultado = await build_importar_liquidacion(db).execute(
         prestador_id=prestador_id, contenido=contenido, nombre_archivo=file.filename or ""
     )

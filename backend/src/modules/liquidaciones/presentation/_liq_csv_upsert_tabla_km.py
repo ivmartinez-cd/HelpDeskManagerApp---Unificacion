@@ -31,6 +31,7 @@ from src.modules.liquidaciones.presentation._liq_csv import (
     _read_csv,
     _resolver_prestador,
 )
+from src.shared.presentation.uploads import leer_upload
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ async def import_tabla_km(
     """Upsert por (prestador, empresa, sucursal), mismo criterio de matching que
     el motor de reglas. El 2do elemento: prestadores con filas NUEVAS — el
     caller corre "Vincular SPST" sobre cada uno (el CSV no trae SPST)."""
-    rows = _read_csv(await file.read())
+    rows = _read_csv(await leer_upload(file))
     contadores = {"creados": 0, "actualizados": 0, "sinCambios": 0, "descartadas": 0}
     indices: dict[UUID, dict[_Clave, TablaKm]] = {}
     tocados: set[UUID] = set()

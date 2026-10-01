@@ -32,6 +32,7 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repository import (
     SqlAlchemySpstRepository,
 )
+from src.shared.presentation.uploads import leer_upload
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ async def _resolver_prestador(
 async def import_prestadores(
     file: UploadFile, repo: SqlAlchemyPrestadorRepository
 ) -> dict[str, int]:
-    rows = _read_csv(await file.read())
+    rows = _read_csv(await leer_upload(file))
     created = 0
     for row in rows:
         clave = _celda(row, "CLAVE").upper()
@@ -98,7 +99,7 @@ async def import_spsts(
     repo: SqlAlchemySpstRepository,
     prestador_repo: SqlAlchemyPrestadorRepository,
 ) -> dict[str, int]:
-    rows = _read_csv(await file.read())
+    rows = _read_csv(await leer_upload(file))
     created = 0
     for row in rows:
         if await _importar_spst(row, repo, prestador_repo):

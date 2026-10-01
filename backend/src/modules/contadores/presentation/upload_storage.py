@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import UploadFile
 
 from src.shared.infrastructure.config.settings import get_settings
+from src.shared.presentation.uploads import leer_upload
 
 
 async def save_upload(file: UploadFile) -> Path:
@@ -15,7 +16,7 @@ async def save_upload(file: UploadFile) -> Path:
     upload_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     destination = upload_dir / f"{stamp}_{uuid.uuid4().hex[:8]}_{file.filename}"
-    destination.write_bytes(await file.read())
+    destination.write_bytes(await leer_upload(file))
     return destination
 
 

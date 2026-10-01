@@ -34,6 +34,7 @@ from src.modules.liquidaciones.presentation.schemas.importar_prestador_maestro_s
     ImportarPrestadorMaestroOut,
 )
 from src.shared.infrastructure.database.session import get_db
+from src.shared.presentation.uploads import leer_upload
 
 router = APIRouter()
 
@@ -146,7 +147,7 @@ async def importar_excel_maestro(
     _: Identity = require_update,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ImportarPrestadorMaestroOut:
-    contenido = await file.read()
+    contenido = await leer_upload(file)
     resultado = await build_importar_prestador_maestro(db).execute(
         contenido=contenido, nombre_archivo=file.filename or ""
     )

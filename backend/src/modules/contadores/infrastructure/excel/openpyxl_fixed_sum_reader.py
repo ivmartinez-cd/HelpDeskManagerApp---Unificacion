@@ -2,6 +2,7 @@ from openpyxl import load_workbook
 
 from src.modules.contadores.domain.errors import InvalidCounterWorkbookError, MissingColumnError
 from src.modules.contadores.domain.value_objects.fixed_sum_source_row import FixedSumSourceRow
+from src.shared.infrastructure.xlsx_guard import verificar_xlsx_acotado
 
 _SERIE_ALIASES = ("SERIE", "Nro Serie")
 
@@ -23,6 +24,7 @@ class OpenpyxlFixedSumReader:
 
 def _load_rows(file_path: str) -> list[tuple[object, ...]]:
     try:
+        verificar_xlsx_acotado(file_path)
         wb = load_workbook(file_path, read_only=True, data_only=True)
     except Exception as exc:
         raise InvalidCounterWorkbookError(f"No se pudo abrir el archivo Excel: {exc}") from exc

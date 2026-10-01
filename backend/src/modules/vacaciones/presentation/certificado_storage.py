@@ -15,6 +15,7 @@ from fastapi import UploadFile
 
 from src.shared.domain.errors import ValidationError
 from src.shared.infrastructure.config.settings import get_settings
+from src.shared.presentation.uploads import leer_upload
 
 _EXTENSIONES_PERMITIDAS = {
     "application/pdf": ".pdf",
@@ -36,5 +37,5 @@ async def save_certificado(file: UploadFile) -> str:
     if extension is None:
         raise ValidationError("El certificado debe ser un PDF, JPG o PNG")
     filename = f"{uuid.uuid4().hex}{extension}"
-    (certificados_dir() / filename).write_bytes(await file.read())
+    (certificados_dir() / filename).write_bytes(await leer_upload(file))
     return filename
