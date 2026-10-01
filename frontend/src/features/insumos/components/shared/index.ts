@@ -9,5 +9,5 @@ export { DateRangePickerPopover } from "@/shared/components/ui/date-range-picker
 export { SortableHeader, type SortableColumn } from "./sortable-header";
 export { StatusBadge, toneForStatusKey, type StatusTone } from "./status-badge";
 export { TonerBar, tonerLevelColor, type TonerBarSize } from "./toner-bar";
-export { type TrendAnnotation, type TrendPeriodOption } from "./trend-chart";
-export { TrendChart } from "./trend-chart-lazy";
+export { type TrendAnnotation, type TrendPeriodOption } from "@/shared/components/charts/trend-chart";
+export { TrendChart } from "@/shared/components/charts/trend-chart-lazy";

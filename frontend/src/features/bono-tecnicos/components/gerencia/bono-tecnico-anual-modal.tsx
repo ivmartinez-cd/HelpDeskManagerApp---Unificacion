@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendChart } from "@/features/insumos/components/shared";
+import { TrendChart } from "@/shared/components/charts/trend-chart-lazy";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import type { EvolucionEquipo, EvolucionTecnico } from "../../types/bono-tecnicos";

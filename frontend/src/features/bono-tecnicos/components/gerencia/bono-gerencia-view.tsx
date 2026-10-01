@@ -5,7 +5,7 @@ import { BonoRankingTable, type BonoRankingSortKey } from "./bono-ranking-table"
 import { BonoTecnicoAnualModal } from "./bono-tecnico-anual-modal";
 import { useBonoEvolucionAnual } from "../../hooks/use-bono-evolucion-anual";
 import type { EvolucionTecnico } from "../../types/bono-tecnicos";
-import { TrendChart } from "@/features/insumos/components/shared";
+import { TrendChart } from "@/shared/components/charts/trend-chart-lazy";
 import { BrandSelect } from "@/shared/components/ui/brand-form";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import { Spinner } from "@/shared/components/ui/spinner";
