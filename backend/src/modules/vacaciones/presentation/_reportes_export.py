@@ -17,6 +17,7 @@ from openpyxl.styles import Font
 from openpyxl.worksheet.worksheet import Worksheet
 
 from src.modules.vacaciones.application.dtos.reporte_dtos import ReporteVacacionesDTO
+from src.shared.presentation.celdas import fila_segura
 
 _XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
@@ -54,9 +55,8 @@ def _hoja_empleados(ws: Worksheet, reporte: ReporteVacacionesDTO) -> None:
     ]
     _encabezado(ws, headers)
     for f in reporte.por_empleado:
-        ws.append(
-            [f.nombre, f.sector_nombre, f.cargo_nombre, f.annual, f.used, f.pending, f.available]
-        )
+        fila = [f.nombre, f.sector_nombre, f.cargo_nombre, f.annual, f.used, f.pending]
+        ws.append(fila_segura([*fila, f.available]))
 
 
 def _hoja_sectores(ws: Worksheet, reporte: ReporteVacacionesDTO) -> None:
@@ -69,7 +69,7 @@ def _hoja_sectores(ws: Worksheet, reporte: ReporteVacacionesDTO) -> None:
     ]
     _encabezado(ws, headers)
     for f in reporte.por_sector:
-        ws.append([f.nombre, f.empleados, f.annual, f.used, f.available])
+        ws.append(fila_segura([f.nombre, f.empleados, f.annual, f.used, f.available]))
 
 
 def _encabezado(ws: Worksheet, headers: list[tuple[str, int]]) -> None:

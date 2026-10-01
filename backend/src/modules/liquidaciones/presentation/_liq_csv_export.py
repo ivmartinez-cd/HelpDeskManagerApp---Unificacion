@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import csv
 import io
 
 from fastapi.responses import StreamingResponse
@@ -14,6 +13,7 @@ from src.modules.liquidaciones.domain.entities.prestador import Prestador
 from src.modules.liquidaciones.domain.entities.spst import Spst
 from src.modules.liquidaciones.domain.entities.tabla_km import TablaKm
 from src.modules.liquidaciones.domain.entities.tarifario import Tarifario
+from src.shared.presentation.celdas import CsvWriterSeguro
 
 _BOM = "﻿"
 _CSV_MEDIA = "text/csv; charset=utf-8-sig"
@@ -30,7 +30,7 @@ def _csv_response(buf: io.StringIO, filename: str) -> StreamingResponse:
 def export_prestadores(rows: list[Prestador]) -> StreamingResponse:
     buf = io.StringIO()
     buf.write(_BOM)
-    w = csv.writer(buf)
+    w = CsvWriterSeguro(buf)
     w.writerow(["CLAVE", "NOMBRE", "CUIT", "REGION", "ACTIVO"])
     for p in rows:
         activo = "SI" if p.activo else "NO"
@@ -42,7 +42,7 @@ def export_prestadores(rows: list[Prestador]) -> StreamingResponse:
 def export_spsts(rows: list[Spst], prestador_map: dict[str, str]) -> StreamingResponse:
     buf = io.StringIO()
     buf.write(_BOM)
-    w = csv.writer(buf)
+    w = CsvWriterSeguro(buf)
     w.writerow(["PST_CLAVE", "NOMBRE", "DOMICILIO", "LOCALIDAD", "PROVINCIA", "ZONA", "ACTIVO"])
     for s in rows:
         clave = prestador_map.get(str(s.prestador_id), "")
@@ -62,7 +62,7 @@ def export_tarifarios(
     criterio que `PST_CLAVE`); vacía = tarifa genérica (`spst_id=None`)."""
     buf = io.StringIO()
     buf.write(_BOM)
-    w = csv.writer(buf)
+    w = CsvWriterSeguro(buf)
     w.writerow([
         "PST_CLAVE", "TIPO_SERVICIO", "SPST", "COSTO_SERVICIO",
         "COSTO_KM", "VIGENCIA_DESDE", "VIGENCIA_HASTA",
@@ -90,7 +90,7 @@ def _fila_tarifario(
 def export_tabla_km(rows: list[TablaKm], prestador_map: dict[str, str]) -> StreamingResponse:
     buf = io.StringIO()
     buf.write(_BOM)
-    w = csv.writer(buf)
+    w = CsvWriterSeguro(buf)
     w.writerow([
         "PST_CLAVE", "EMPRESA", "SUCURSAL", "DOMICILIO", "LOCALIDAD", "PROVINCIA",
         "KMS_RECORRIDO", "KMS_A_FACTURAR", "UMBRAL_VIATICO", "APLICA_VIATICO",
@@ -117,7 +117,7 @@ def export_worklist_geovalidacion(
     Id_Sucursal + pin actual + pin sugerido (cuando hay uno)."""
     buf = io.StringIO()
     buf.write(_BOM)
-    w = csv.writer(buf)
+    w = CsvWriterSeguro(buf)
     w.writerow([
         "ID_SUCURSAL", "EMPRESA", "SUCURSAL", "DOMICILIO", "TIER", "EVIDENCIA",
         "LATITUD_ACTUAL", "LONGITUD_ACTUAL", "LATITUD_SUGERIDA", "LONGITUD_SUGERIDA",

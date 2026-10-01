@@ -32,6 +32,7 @@ from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_prestador_
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_spst_repository import (
     SqlAlchemySpstRepository,
 )
+from src.shared.presentation.celdas import desescapar_celda
 from src.shared.presentation.uploads import leer_upload
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ def _read_csv(file_bytes: bytes) -> list[dict[str, str]]:
 
 
 def _celda(row: dict[str, str], columna: str) -> str:
-    return (row.get(columna) or "").strip()
+    return desescapar_celda((row.get(columna) or "").strip())
 
 
 def _parse_date(val: str) -> date | None:
