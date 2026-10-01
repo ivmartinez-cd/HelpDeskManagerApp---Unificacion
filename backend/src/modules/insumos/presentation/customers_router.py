@@ -46,7 +46,6 @@ from src.modules.insumos.presentation.schemas.customer_schemas import (
     ZoneContactPreviewRowOut,
 )
 from src.modules.insumos.presentation.wiring import get_insight_gateway
-from src.shared.domain.errors import ExternalServiceError
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
@@ -193,10 +192,7 @@ async def get_customer_sds_contacts(
     size: int = Query(default=_CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
 ) -> Page[SdsContactOut]:
-    try:
-        rows = await build_get_sds_contacts().execute(customer_id)
-    except ExternalServiceError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    rows = await build_get_sds_contacts().execute(customer_id)
     return Page.of([SdsContactOut.from_domain(r) for r in rows], page=page, size=size)
 
 
@@ -207,10 +203,7 @@ async def get_customer_zones(
     size: int = Query(default=_CATALOGO_SIZE, ge=1, le=1000),
     _: Identity = _require_view,
 ) -> Page[str]:
-    try:
-        zones = await build_get_customer_zones().execute(customer_id)
-    except ExternalServiceError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    zones = await build_get_customer_zones().execute(customer_id)
     return Page.of(zones, page=page, size=size)
 
 

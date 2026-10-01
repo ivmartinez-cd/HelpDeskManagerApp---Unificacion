@@ -15,6 +15,6 @@ class PyodbcMesaAyudaQueryGateway:
             gateway="mesa-ayuda",
             log_message="Falló la consulta de incidentes de Mesa de Ayuda contra Siges/ORION",
             log_extra={"id_tecnico": id_tecnico},
-            error_message="No se pudo consultar la base Siges (ORION): {exc}",
+            error_message="No se pudo consultar la base Siges (ORION)",
         )
         return [map_row(row) for row in rows]

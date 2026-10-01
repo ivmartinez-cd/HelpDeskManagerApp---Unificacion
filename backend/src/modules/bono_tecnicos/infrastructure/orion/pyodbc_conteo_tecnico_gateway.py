@@ -53,7 +53,7 @@ class PyodbcConteoTecnicoGateway:
             gateway="bono_tecnicos",
             log_message="Fallo la consulta de conteos de bono de técnicos contra Siges/ORION",
             log_extra={"periodo": periodo.value},
-            error_message="No se pudo consultar la base Siges (ORION): {exc}",
+            error_message="No se pudo consultar la base Siges (ORION)",
         )
         return pivot_conteos([map_row(row) for row in rows], periodo.value)
 
@@ -80,7 +80,7 @@ class PyodbcConteoTecnicoGateway:
                 "Fallo la consulta anual de conteos de bono de técnicos contra Siges/ORION"
             ),
             log_extra={"anio": anio},
-            error_message="No se pudo consultar la base Siges (ORION): {exc}",
+            error_message="No se pudo consultar la base Siges (ORION)",
             # Barre los 12 meses del año en un solo round trip: más pesada
             # que la consulta mensual, timeout más holgado.
             timeout_override=90.0,
@@ -95,7 +95,7 @@ class PyodbcConteoTecnicoGateway:
             gateway="bono_tecnicos",
             log_message="Fallo la consulta de incidentes de bono de técnicos contra Siges/ORION",
             log_extra={"periodo": periodo.value, "id_tecnico": id_tecnico},
-            error_message="No se pudo consultar la base Siges (ORION): {exc}",
+            error_message="No se pudo consultar la base Siges (ORION)",
         )
         return [map_incidente_row(row) for row in rows]
 

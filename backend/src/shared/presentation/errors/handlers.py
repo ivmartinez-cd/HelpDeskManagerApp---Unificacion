@@ -29,9 +29,12 @@ def _request_id(request: Request) -> str | None:
 
 
 async def _handle_app_error(request: Request, exc: AppError) -> JSONResponse:
+    # 5xx (servicio externo caído, etc.): el detalle crudo de la causa (URLs, rutas,
+    # texto de httpx/zeep) va al log con el traceback encadenado, nunca al cliente.
     logger.warning(
         "Handled application error",
         extra={"request_id": _request_id(request), "code": exc.code},
+        exc_info=exc if exc.http_status >= 500 else None,
     )
     content = _envelope(exc.message, exc.code, exc.details)
     return JSONResponse(status_code=exc.http_status, content=content, headers=exc.headers)

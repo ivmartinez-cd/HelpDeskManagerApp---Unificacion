@@ -67,7 +67,7 @@ class HttpxWatiGateway:
             try:
                 resp = await self._client.get(self._base + path, params=params)
             except httpx.HTTPError as exc:
-                raise ExternalServiceError(f"WATI no responde: {exc}") from exc
+                raise ExternalServiceError("WATI no responde") from exc
             self._last_call = time.monotonic()
         if resp.status_code != 200:
             raise ExternalServiceError(

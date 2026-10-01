@@ -73,7 +73,7 @@ async def _request_access_token(username: str, password: str) -> str:
             )
     except Exception as exc:
         raise ExternalServiceError(
-            f"No se pudo conectar al servicio de autenticación de ERS: {exc}"
+            "No se pudo conectar al servicio de autenticación de ERS"
         ) from exc
     if resp.status_code != 200:
         raise ExternalServiceError(

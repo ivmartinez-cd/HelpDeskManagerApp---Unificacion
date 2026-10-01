@@ -58,7 +58,7 @@ class HttpxInsightGateway:
         try:
             resp = await self._client.post(f"{self._base_url}/login", headers=headers)
         except httpx.HTTPError as exc:
-            raise ExternalServiceError(f"Error al autenticar en Insight API: {exc}") from exc
+            raise ExternalServiceError("Error al autenticar en Insight API") from exc
         if resp.status_code >= 400:
             raise ExternalServiceError(
                 f"Login de Insight API devolvió {resp.status_code}: {resp.text[:500]}"
@@ -92,7 +92,7 @@ class HttpxInsightGateway:
                 method, f"{self._base_url}{path}", headers=headers, params=params, json=json_body
             )
         except httpx.HTTPError as exc:
-            raise ExternalServiceError(f"Error de red contra Insight API en {path}: {exc}") from exc
+            raise ExternalServiceError(f"Error de red contra Insight API en {path}") from exc
 
     def _raise_for_status(self, resp: httpx.Response, path: str) -> None:
         if resp.status_code >= 400:

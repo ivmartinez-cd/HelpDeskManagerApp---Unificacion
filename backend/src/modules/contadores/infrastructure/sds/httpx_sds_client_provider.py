@@ -38,7 +38,7 @@ class HttpxSdsClientProvider:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.get(url, headers=headers)
         except Exception as exc:
-            raise ExternalServiceError(f"Error al conectar con la API de SDS: {exc}") from exc
+            raise ExternalServiceError("Error al conectar con la API de SDS") from exc
 
         if response.status_code != 200:
             raise ExternalServiceError(
@@ -82,7 +82,7 @@ class HttpxSdsClientProvider:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(url, headers=headers)
         except Exception as exc:
-            raise ExternalServiceError(f"Error al autenticar en SDS: {exc}") from exc
+            raise ExternalServiceError("Error al autenticar en SDS") from exc
 
         if response.status_code == 200:
             return _extract_login_token(response)
@@ -116,7 +116,7 @@ class HttpxSdsClientProvider:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.get(url, headers=headers, params=params)
         except Exception as exc:
-            raise ExternalServiceError(f"Error al obtener contadores SDS: {exc}") from exc
+            raise ExternalServiceError("Error al obtener contadores SDS") from exc
 
         if response.status_code == 200:
             return cast(list[dict[str, Any]], response.json())

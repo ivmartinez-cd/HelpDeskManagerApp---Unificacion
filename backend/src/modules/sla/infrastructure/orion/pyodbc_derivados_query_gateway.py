@@ -20,6 +20,6 @@ class PyodbcDerivadosQueryGateway:
             gateway="derivados",
             log_message="Falló la consulta de incidentes Derivados contra Siges/ORION",
             log_extra={"desde": str(desde), "hasta": str(hasta)},
-            error_message="No se pudo consultar la base Siges (ORION): {exc}",
+            error_message="No se pudo consultar la base Siges (ORION)",
         )
         return [map_row(row) for row in rows]

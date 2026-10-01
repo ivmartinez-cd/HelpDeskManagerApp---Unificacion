@@ -128,7 +128,7 @@ class HttpxErsClientProvider:
                 session = self._build_session(await self._ensure_token(force_refresh=True))
                 resp = await self._get(url, session)
         except Exception as exc:
-            raise ExternalServiceError(f"{error_prefix}: {exc}") from exc
+            raise ExternalServiceError(error_prefix) from exc
 
         if resp.status_code != 200:
             prefix = http_error_prefix or error_prefix

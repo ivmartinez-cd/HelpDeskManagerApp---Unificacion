@@ -31,6 +31,6 @@ class PyodbcSlaQueryGateway:
             gateway="sla",
             log_message="Fallo la consulta de SLA contra Siges/ORION",
             log_extra={"periodo": periodo.value},
-            error_message="No se pudo consultar la base Siges (ORION): {exc}",
+            error_message="No se pudo consultar la base Siges (ORION)",
         )
         return [map_row(row) for row in rows]

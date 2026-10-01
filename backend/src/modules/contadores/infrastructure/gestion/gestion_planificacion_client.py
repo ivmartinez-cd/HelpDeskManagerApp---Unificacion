@@ -60,7 +60,7 @@ class GestionPlanificacionClient(CalendarPort):
         try:
             data = list(response.json())
         except Exception as exc:
-            raise ExternalServiceError(f"Respuesta inválida de gestión: {exc}") from exc
+            raise ExternalServiceError("Respuesta inválida de gestión") from exc
         return self._parse_events(data, operador_id, solo_facturacion)
 
     def _build_params(
@@ -128,7 +128,7 @@ class GestionPlanificacionClient(CalendarPort):
                 return response
             except Exception as exc:
                 raise ExternalServiceError(
-                    f"Error al consultar el servicio de gestión: {exc}"
+                    "Error al consultar el servicio de gestión"
                 ) from exc
 
     async def _request(
@@ -148,7 +148,7 @@ class GestionPlanificacionClient(CalendarPort):
             return await client.get(f"{self._base_url}{path}", params=params, headers=headers)
         except Exception as exc:
             raise ExternalServiceError(
-                f"Error al consultar el servicio de gestión: {exc}"
+                "Error al consultar el servicio de gestión"
             ) from exc
 
     def _parse_events(

@@ -60,7 +60,7 @@ async def _login(base_url: str, username: str, password: str, timeout: float) ->
     except ExternalServiceError:
         raise
     except Exception as exc:
-        raise ExternalServiceError(f"No se pudo conectar al login de Gestión: {exc}") from exc
+        raise ExternalServiceError("No se pudo conectar al login de Gestión") from exc
 
     if resp.status_code not in (301, 302, 303) or not session_id:
         raise ExternalServiceError(

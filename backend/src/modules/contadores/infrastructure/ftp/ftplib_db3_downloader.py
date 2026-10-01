@@ -56,7 +56,7 @@ class FtplibDb3Downloader:
             raise
         except (error_perm, error_temp, error_proto, error_reply, OSError) as exc:
             raise ExternalServiceError(
-                f"Error al conectar/descargar FTP para '{client.name}': {exc}"
+                f"Error al conectar/descargar FTP para '{client.name}'"
             ) from exc
 
 
