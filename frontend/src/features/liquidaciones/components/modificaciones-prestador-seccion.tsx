@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { modificacionesApi } from "../api/modificaciones-api";
+import { useModificacionesLiquidacion } from "../hooks/use-modificaciones-liquidacion";
 import type { ModificacionPrestador } from "../types/modificacion";
 
 type SortKey = "incidente" | "tipo" | "campo" | "antes" | "despues" | "cuando";
@@ -28,31 +29,13 @@ function formatFecha(iso: string): string {
  * pueden recalcular (el valor anterior se pierde en cuanto se aplica el
  * diff), por eso viven acá aparte de la tabla de incidentes/alertas. */
 export function ModificacionesPrestadorSeccion({ liquidacionId }: { liquidacionId: string }) {
-  const [items, setItems] = useState<ModificacionPrestador[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { items, loading, refetch: cargar } = useModificacionesLiquidacion(liquidacionId);
   const [marcando, setMarcando] = useState(false);
   const { sort, toggleSort } = useTableSort<SortKey>({
     initial: { key: "cuando", direction: "desc" },
     keys: SORT_KEYS,
     descFirstKeys: ["cuando"],
   });
-
-  // No pisa `loading` de nuevo en un refetch (tras "Marcar como vistas") para
-  // no parpadear — mismo patrón que `useWatiPendientesPolling`: arranca en
-  // `true` y solo se apaga una vez, en el primer `finally`.
-  const cargar = useCallback(() => {
-    modificacionesApi
-      .listByLiquidacion(liquidacionId, 1, 500)
-      .then((pagina) => setItems(pagina.items))
-      .catch((err: unknown) => {
-        console.error("Error al cargar modificaciones del prestador:", err);
-      })
-      .finally(() => setLoading(false));
-  }, [liquidacionId]);
-
-  useEffect(() => {
-    cargar();
-  }, [cargar]);
 
   const sinVer = items.filter((m) => m.vistaEn === null).length;
 

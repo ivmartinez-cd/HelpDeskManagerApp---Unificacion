@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { gestionApi } from "@/features/vacaciones/api/gestion-api";
 import { COLORES_IDENTIDAD, hoyIso } from "@/features/vacaciones/lib/fechas";
-import type { Cargo, EmpleadoPayload, Sector } from "@/features/vacaciones/types/vacaciones";
+import type { EmpleadoPayload } from "@/features/vacaciones/types/vacaciones";
 import { ApiError } from "@/services/http-client";
 import { BrandButton, BrandInput, BrandSelect } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { useSectoresYCargos } from "../hooks/use-sectores-y-cargos";
 import { SelectorColor } from "./selector-color";
 
 interface Props {
@@ -17,8 +18,6 @@ interface Props {
 /** Alta de persona = alta de su ficha de empleado (toda persona tiene ficha,
  * ADR-040). El acceso a la app se da después, desde la ficha. */
 export function NuevaPersonaModal({ onClose, onCreada }: Props) {
-  const [sectores, setSectores] = useState<Sector[]>([]);
-  const [cargos, setCargos] = useState<Cargo[]>([]);
   const [form, setForm] = useState<EmpleadoPayload>({
     firstName: "", lastName: "", email: "", hireDate: hoyIso(), departmentId: "", cargoId: "",
     color: COLORES_IDENTIDAD[0], status: "ACTIVE", userId: null,
@@ -26,15 +25,11 @@ export function NuevaPersonaModal({ onClose, onCreada }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    Promise.all([gestionApi.listSectores(), gestionApi.listCargos()])
-      .then(([secs, cars]) => {
-        setSectores(secs);
-        setCargos(cars);
-        setForm((f) => ({ ...f, departmentId: secs[0]?.id ?? "", cargoId: cars[0]?.id ?? "" }));
-      })
-      .catch(() => setError("No se pudieron cargar sectores y cargos."));
-  }, []);
+  const { sectores, cargos } = useSectoresYCargos({
+    alCargar: (secs, cars) =>
+      setForm((f) => ({ ...f, departmentId: secs[0]?.id ?? "", cargoId: cars[0]?.id ?? "" })),
+    alFallar: () => setError("No se pudieron cargar sectores y cargos."),
+  });
 
   const set = <K extends keyof EmpleadoPayload>(key: K, value: EmpleadoPayload[K]) =>
     setForm((f) => ({ ...f, [key]: value }));

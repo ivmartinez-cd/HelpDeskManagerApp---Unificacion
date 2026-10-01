@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { BrandInput } from "@/shared/components/ui/brand-form";
 import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "@/features/liquidaciones/api/liquidaciones-api";
-import type { PrestadorLiquidacion, SigesEmpresa, SucursalPropia } from "@/features/liquidaciones/types/liquidaciones";
+import { useSigesDisponibles } from "@/features/liquidaciones/hooks/use-siges-disponibles";
+import { useSucursalesPropias } from "@/features/liquidaciones/hooks/use-sucursales-propias";
+import type { PrestadorLiquidacion, SigesEmpresa } from "@/features/liquidaciones/types/liquidaciones";
 import { PasoAcciones } from "./alta-prestador-wizard-ui";
 
 function coincide(e: SigesEmpresa, q: string): boolean {
@@ -28,18 +30,11 @@ export function PasoSiges({
   onVinculado: (empresa: SigesEmpresa) => void;
   onSaltear: () => void;
 }) {
-  const [disponibles, setDisponibles] = useState<SigesEmpresa[] | null>(null);
+  const { disponibles, error: loadError } = useSigesDisponibles();
   const [q, setQ] = useState("");
   const [seleccionada, setSeleccionada] = useState<SigesEmpresa | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    liquidacionesApi
-      .getSigesPropuestas()
-      .then((r) => setDisponibles(r.disponibles))
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Error al cargar Siges"));
-  }, []);
 
   const confirmar = async () => {
     if (!seleccionada) return;
@@ -95,7 +90,7 @@ export function PasoSiges({
           </div>
         </>
       )}
-      {error && <p className="font-body text-sm text-destructive">{error}</p>}
+      {(loadError ?? error) && <p className="font-body text-sm text-destructive">{loadError ?? error}</p>}
       <PasoAcciones
         onSaltear={onSaltear}
         primario={confirmar}
@@ -118,18 +113,10 @@ export function PasoBase({
   onVinculado: () => void;
   onSaltear: () => void;
 }) {
-  const [sucursales, setSucursales] = useState<SucursalPropia[] | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!sigesVinculado) return;
-    liquidacionesApi
-      .listSucursalesPropiasPrestatdor(prestador.id)
-      .then(setSucursales)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Error al cargar sucursales"));
-  }, [prestador.id, sigesVinculado]);
+  const { sucursales } = useSucursalesPropias(prestador.id, setError, sigesVinculado);
 
   if (!sigesVinculado) {
     return (

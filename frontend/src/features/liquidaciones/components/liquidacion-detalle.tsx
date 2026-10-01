@@ -1,21 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { ApiError } from "@/services/http-client";
 import { liquidacionesApi } from "../api/liquidaciones-api";
+import { useEvolucionIncidentes, useLiquidacionDetalle } from "../hooks/use-liquidacion-detalle";
 import { MonedaProvider } from "../hooks/moneda-context";
 import { SeleccionAlertasProvider } from "../hooks/seleccion-alertas-context";
-import type {
-  Alerta,
-  EstadoLiquidacion,
-  EvolucionIncidentesItem,
-  LiquidacionDetalle,
-  PrestadorLiquidacion,
-} from "../types/liquidaciones";
+import type { Alerta, EstadoLiquidacion } from "../types/liquidaciones";
 import { AbonoBanner } from "./abono-banner";
 import { AlertasLoteBar } from "./alertas-lote-bar";
 import { EvolucionIncidentesChart } from "./evolucion-incidentes-chart";
@@ -29,63 +24,11 @@ import { ModificacionesPrestadorSeccion } from "./modificaciones-prestador-secci
 
 export function LiquidacionDetalleView({ id }: { id: string }) {
   const router = useRouter();
-  const [detalle, setDetalle] = useState<LiquidacionDetalle | null>(null);
-  const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const { detalle, setDetalle, prestadores, loading, notFound, refetch: load } = useLiquidacionDetalle(id);
   const [reanalizing, setReanalizing] = useState(false);
   const [updatingEstado, setUpdatingEstado] = useState(false);
   const [soloConAlertas, setSoloConAlertas] = useState(false);
-  const [evolucion, setEvolucion] = useState<EvolucionIncidentesItem[] | null>(null);
-
-  const load = useCallback(
-    () =>
-      Promise.all([liquidacionesApi.get(id), liquidacionesApi.listPrestadores(false)])
-        .then(([det, prest]) => {
-          setDetalle(det);
-          setPrestadores(prest);
-        })
-        .catch((err: unknown) => {
-          if (err instanceof ApiError && err.status === 404) setNotFound(true);
-          else throw err;
-        })
-        .finally(() => setLoading(false)),
-    [id],
-  );
-
-  useEffect(() => { void load(); }, [load]);
-
-  // Histórico del prestador (todas sus liquidaciones, no solo esta) para el
-  // gráfico de evolución — no bloquea el render del detalle si falla, y no se
-  // re-pide en cada refresh silencioso (solo cambia si cambia de prestador).
-  const prestadorId = detalle?.liquidacion.prestadorId;
-  useEffect(() => {
-    if (!prestadorId) return;
-    let cancelado = false;
-    liquidacionesApi
-      .getEvolucionIncidentes(prestadorId)
-      .then((items) => { if (!cancelado) setEvolucion(items); })
-      .catch((err: unknown) => {
-        console.error("No se pudo cargar la evolución de incidentes del prestador", err);
-        if (!cancelado) setEvolucion([]);
-      });
-    return () => { cancelado = true; };
-  }, [prestadorId]);
-
-  // Refresh silencioso al abrir el detalle: reconcilia esta liquidación contra
-  // AyC (estado, costos/km de incidentes) una sola vez por visita a la página.
-  // Best-effort — un fallo acá nunca debe impedir ver el detalle ya cargado.
-  const reconciliadoRef = useRef(false);
-  useEffect(() => {
-    if (!detalle || reconciliadoRef.current) return;
-    reconciliadoRef.current = true;
-    const { numeroLiquidacion, estado } = detalle.liquidacion;
-    if (!numeroLiquidacion || estado === "aprobada" || estado === "cerrada") return;
-    void liquidacionesApi
-      .reconciliar(id)
-      .catch(() => {})
-      .then(() => load());
-  }, [detalle, id, load]);
+  const evolucion = useEvolucionIncidentes(detalle?.liquidacion.prestadorId);
 
   const handleReanalizar = async () => {
     setReanalizing(true);

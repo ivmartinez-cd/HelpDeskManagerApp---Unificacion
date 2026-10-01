@@ -1,9 +1,8 @@
 "use client";
 
 import { Loader2, Search } from "lucide-react";
-import { useEffect, useState } from "react";
-import { analisisLogHpApi } from "../api/analisis-log-hp-api";
-import type { ClientDevice, FleetClient } from "../types/analisis-log-hp";
+import { useState } from "react";
+import { useClientesFlota, useEquiposCliente } from "../hooks/use-clientes-flota";
 
 interface Props {
   loading: boolean;
@@ -12,33 +11,13 @@ interface Props {
 
 /** Búsqueda por cliente: cliente → equipo del cliente → dispara el mismo análisis por serie. */
 export function ClientSearchMode({ loading, onAnalyze }: Props) {
-  const [clients, setClients] = useState<FleetClient[] | null>(null);
-  const [clientsError, setClientsError] = useState<string | null>(null);
+  const { clients, error: clientsError } = useClientesFlota();
   const [selectedClient, setSelectedClient] = useState("");
-  const [devices, setDevices] = useState<ClientDevice[] | null>(null);
+  const { devices, loading: devicesLoading } = useEquiposCliente(selectedClient);
   const [selectedSerial, setSelectedSerial] = useState("");
-  const devicesLoading = Boolean(selectedClient) && devices === null;
-
-  useEffect(() => {
-    let cancelled = false;
-    analisisLogHpApi.listClients()
-      .then((data) => { if (!cancelled) setClients(data); })
-      .catch(() => { if (!cancelled) setClientsError("No se pudo cargar la lista de clientes."); });
-    return () => { cancelled = true; };
-  }, []);
-
-  useEffect(() => {
-    if (!selectedClient) return;
-    let cancelled = false;
-    analisisLogHpApi.getClientDevices(Number(selectedClient))
-      .then((data) => { if (!cancelled) setDevices(data); })
-      .catch(() => { if (!cancelled) setDevices([]); });
-    return () => { cancelled = true; };
-  }, [selectedClient]);
 
   function handleClientChange(value: string) {
     setSelectedClient(value);
-    setDevices(null);
     setSelectedSerial("");
   }
 

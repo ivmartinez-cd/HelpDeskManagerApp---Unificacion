@@ -1,17 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { KpiGrid, KpiTile } from "@/shared/components/ui/kpi-tile";
 import { toast } from "sonner";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type {
-  FacturadoPorPeriodoItem,
-  Liquidacion,
-  PrestadorLiquidacion,
-  RankingPrestador,
-} from "../types/liquidaciones";
+import { useLiquidacionesDashboard } from "../hooks/use-liquidaciones-dashboard";
 import { formatARS } from "../lib/format";
 import { FacturadoEvolucionChart } from "./facturado-evolucion-chart";
 import { LiquidacionesImportModal } from "./liquidaciones-import-modal";
@@ -20,38 +15,9 @@ import { RankingPrestadoresTabla } from "./ranking-prestadores-tabla";
 export function LiquidacionesDashboard() {
   const { can } = useSession();
   const puedeCrear = can("liquidaciones", "create");
-  const [liquidaciones, setLiquidaciones] = useState<Liquidacion[]>([]);
-  const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
-  const [facturadoPorPeriodo, setFacturadoPorPeriodo] = useState<FacturadoPorPeriodoItem[]>([]);
-  const [ranking, setRanking] = useState<RankingPrestador[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { liquidaciones, prestadores, facturadoPorPeriodo, ranking, loading, refetch: load } = useLiquidacionesDashboard();
   const [importOpen, setImportOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
-
-  // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
-  // listAll() usa fetchCatalogoCompleto para evitar el truncamiento silencioso.
-  // `prestadores` solo alimenta el select del modal de importación — el
-  // ranking/gráfico ya vienen agregados por nombre desde el backend.
-  const load = useCallback(async () => {
-    try {
-      const [liqs, prest, facturado, top] = await Promise.all([
-        liquidacionesApi.listAll(),
-        liquidacionesApi.listPrestadores(),
-        liquidacionesApi.getFacturadoPorPeriodo(),
-        liquidacionesApi.getRankingPrestadores(),
-      ]);
-      setLiquidaciones(liqs);
-      setPrestadores(prest);
-      setFacturadoPorPeriodo(facturado);
-      setRanking(top);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
 
   const pendientes = liquidaciones.filter(
     (l) =>

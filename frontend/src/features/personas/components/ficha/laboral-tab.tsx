@@ -1,18 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { gestionApi } from "@/features/vacaciones/api/gestion-api";
 import { formatAntiguedad } from "@/features/vacaciones/lib/fechas";
-import type {
-  Cargo,
-  EmpleadoListItem,
-  EstadoEmpleado,
-  Sector,
-} from "@/features/vacaciones/types/vacaciones";
+import type { EmpleadoListItem, EstadoEmpleado } from "@/features/vacaciones/types/vacaciones";
 import { ApiError } from "@/services/http-client";
 import { useSession } from "@/services/session-provider";
 import { BrandButton, BrandInput, BrandSelect, BrandStatTile } from "@/shared/components/ui/brand-form";
+import { useSectoresYCargos } from "../../hooks/use-sectores-y-cargos";
 import { EliminarPersona } from "./eliminar-persona";
 
 interface Props {
@@ -33,8 +29,9 @@ interface FormLaboral {
 export function LaboralTab({ laboral, entraALaApp, onGuardada }: Props) {
   const { can } = useSession();
   const puedeEditar = can("vacaciones", "manage");
-  const [sectores, setSectores] = useState<Sector[]>([]);
-  const [cargos, setCargos] = useState<Cargo[]>([]);
+  const { sectores, cargos } = useSectoresYCargos({
+    alFallar: () => toast.error("No se pudieron cargar sectores y cargos."),
+  });
   const [form, setForm] = useState<FormLaboral>({
     hireDate: laboral.hireDate,
     status: laboral.status,
@@ -43,15 +40,6 @@ export function LaboralTab({ laboral, entraALaApp, onGuardada }: Props) {
   });
   const [busy, setBusy] = useState(false);
   const cambios = (Object.keys(form) as (keyof FormLaboral)[]).some((k) => form[k] !== laboral[k]);
-
-  useEffect(() => {
-    Promise.all([gestionApi.listSectores(), gestionApi.listCargos()])
-      .then(([secs, cars]) => {
-        setSectores(secs);
-        setCargos(cars);
-      })
-      .catch(() => toast.error("No se pudieron cargar sectores y cargos."));
-  }, []);
 
   const set = <K extends keyof FormLaboral>(key: K, value: FormLaboral[K]) =>
     setForm((f) => ({ ...f, [key]: value }));

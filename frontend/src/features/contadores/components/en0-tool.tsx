@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Download, FileSpreadsheet } from "lucide-react";
 import { contadoresApi, type EstimationZeroResponse } from "../api/contadores-api";
-import { proyeccionApi } from "../api/proyeccion-api";
-import type { GrupoEconomicoOption, ProcesoOption } from "../types/proyeccion";
+import { useGruposYProcesos } from "../hooks/use-grupos-y-procesos";
 import {
   BrandButton,
   BrandFileInput,
@@ -26,25 +25,14 @@ const MODOS = [
 
 export function En0Tool() {
   const [modo, setModo] = useState<Modo>("proceso");
-  const [grupos, setGrupos] = useState<GrupoEconomicoOption[]>([]);
-  const [procesos, setProcesos] = useState<ProcesoOption[]>([]);
   const [idGrupo, setIdGrupo] = useState<string | null>(null);
+  const { grupos, procesosVisibles } = useGruposYProcesos(idGrupo);
   const [nroProceso, setNroProceso] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<EstimationZeroResponse | null>(null);
 
-  useEffect(() => {
-    void proyeccionApi.listGruposEconomicos().then(setGrupos);
-  }, []);
-
-  useEffect(() => {
-    if (idGrupo == null) return;
-    void proyeccionApi.listProcesos(Number(idGrupo)).then(setProcesos);
-  }, [idGrupo]);
-
-  const procesosVisibles = idGrupo == null ? [] : procesos;
   const nroProcesoValido = procesosVisibles.some((p) => String(p.nro_proceso) === nroProceso)
     ? nroProceso
     : null;

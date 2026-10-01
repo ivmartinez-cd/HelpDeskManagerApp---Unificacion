@@ -1,9 +1,9 @@
 "use client";
 
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useState } from "react";
 import type { AnalysisResult, Severity } from "../types/analisis-log-hp";
-import { analisisLogHpApi } from "../api/analisis-log-hp-api";
+import { useConsumibles } from "../hooks/use-consumibles";
 import { SEV_COLOR, filterIncidentsBySeverity } from "../utils/analysis-utils";
 import { EventsTable, IncidentsTable } from "./analysis-tablas";
 import { CdsIncidentsPanel } from "./cds-incidents-panel";
@@ -47,19 +47,8 @@ function Section({ title, color, count, children }: SectionProps) {
 }
 
 function ConsumablesPanel({ deviceId }: { deviceId: string }) {
-  const [result, setResult] = useState<{ deviceId: string; data: Record<string, unknown>[] } | null>(null);
   const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!loaded) return;
-    let cancelled = false;
-    analisisLogHpApi.getConsumables(Number(deviceId))
-      .then((data) => { if (!cancelled) setResult({ deviceId, data }); })
-      .catch(() => { if (!cancelled) setResult({ deviceId, data: [] }); });
-    return () => { cancelled = true; };
-  }, [deviceId, loaded]);
-
-  const data = result?.deviceId === deviceId ? result.data : null;
+  const data = useConsumibles(deviceId, loaded);
   if (!loaded) return (
     <button
       type="button"

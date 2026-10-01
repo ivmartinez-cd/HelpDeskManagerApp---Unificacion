@@ -1,8 +1,8 @@
 "use client";
 
 import { Download, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
+import { useCertificadoBlob } from "../hooks/use-certificado-blob";
 
 interface Props {
   url: string;
@@ -19,32 +19,7 @@ const EXTENSION_POR_TIPO: Record<string, string> = {
  * descarga: trae el blob autenticado (el `<img>`/`<iframe>` no manda cookies
  * por sí solos) y lo muestra según su content-type real, no la extensión. */
 export function CertificadoPreviewModal({ url, onClose }: Props) {
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
-  const [contentType, setContentType] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let objectUrl: string | null = null;
-    let cancelled = false;
-    fetch(url, { credentials: "include" })
-      .then((res) => {
-        if (!res.ok) throw new Error("No se pudo cargar el certificado");
-        setContentType(res.headers.get("content-type"));
-        return res.blob();
-      })
-      .then((blob) => {
-        if (cancelled) return;
-        objectUrl = URL.createObjectURL(blob);
-        setBlobUrl(objectUrl);
-      })
-      .catch(() => {
-        if (!cancelled) setError("No se pudo cargar el certificado.");
-      });
-    return () => {
-      cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [url]);
+  const { blobUrl, contentType, error } = useCertificadoBlob(url);
 
   const extension = contentType ? (EXTENSION_POR_TIPO[contentType] ?? "") : "";
 

@@ -7,8 +7,7 @@ import { useSession } from "@/services/session-provider";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { BrandButton, BrandSkeleton } from "@/shared/components/ui/brand-form";
 import { copiarTexto } from "@/shared/utils/clipboard";
-import { despachadosApi } from "../../api/despachados-api";
-import { mensajeDeError } from "../../hooks/use-despachados-listado";
+import { useReclamoOca } from "../../hooks/use-reclamo-oca";
 import type { ReclamoOca } from "../../types/despachados";
 import { esperarFormularioOca, montarFormularioOca, OCA_FORM, valoresFormulario } from "./oca-reclamo-form";
 
@@ -33,29 +32,11 @@ export function ReclamarOcaModal({ guia, onClose }: Props) {
 
 function Contenido({ guia, onClose }: { guia: string; onClose: Props["onClose"] }) {
   const operador = useSession().user.fullName;
-  const [reclamo, setReclamo] = useState<ReclamoOca | null>(null);
-  const [estado, setEstado] = useState<Estado>("cargando");
-  const [error, setError] = useState<string | null>(null);
+  const { reclamo, error, loading } = useReclamoOca(guia);
+  // Estado del formulario embebido, una vez que llegó el reclamo.
+  const [estadoForm, setEstado] = useState<Exclude<Estado, "cargando">>("formulario");
+  const estado: Estado = loading ? "cargando" : error ? "respaldo" : estadoForm;
   const contenedor = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let vigente = true;
-    despachadosApi.getReclamoOca(guia).then(
-      (r) => {
-        if (!vigente) return;
-        setReclamo(r);
-        setEstado("formulario");
-      },
-      (err) => {
-        if (!vigente) return;
-        setError(mensajeDeError(err, "No se pudieron preparar los datos del reclamo"));
-        setEstado("respaldo");
-      },
-    );
-    return () => {
-      vigente = false;
-    };
-  }, [guia]);
 
   useEffect(() => {
     const nodo = contenedor.current;

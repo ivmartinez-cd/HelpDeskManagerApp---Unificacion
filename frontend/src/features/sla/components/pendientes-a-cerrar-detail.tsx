@@ -1,25 +1,25 @@
 "use client";
 
 import { ClipboardList, Copy, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { pendientesApi } from "../api/pendientes-api";
+import {
+  MIS_PST,
+  PENDIENTES_PAGE_SIZE as PAGE_SIZE,
+  TODOS,
+  scopeToOperadorId,
+  usePendientesACerrar,
+} from "../hooks/use-pendientes-a-cerrar";
 import { formatearPendientesACerrarWhatsapp } from "../lib/formato-whatsapp";
 import type { IncidenteSinCerrar } from "../types/pendientes";
-import { prestadoresApi } from "@/features/prestadores/api/prestadores-api";
-import type { OperadorOption } from "@/features/prestadores/types/prestadores";
 import { useSession } from "@/services/session-provider";
 import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
 import { PaginationBar } from "@/shared/components/ui/pagination-bar";
 import { StatsTable, type StatsColumn } from "@/shared/components/ui/stats-table";
-import { statsSortField, useStatsServerSort } from "@/shared/components/ui/stats-table-sort";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { copiarTexto } from "@/shared/utils/clipboard";
 import { incidentUrl } from "@/shared/utils/incident-link";
-
-const MIS_PST = "__mis_pst__";
-const TODOS = "__todos__";
-const PAGE_SIZE = 100;
 
 function formatFecha(iso: string | null): string {
   if (!iso) return "—";
@@ -95,73 +95,24 @@ const columns: StatsColumn<IncidenteSinCerrar>[] = [
 export function PendientesACerrarDetail() {
   const { user, can } = useSession();
   const canUpdate = user.isSuperadmin || can("sla", "update");
-  const canVerOperadores = user.isSuperadmin || can("prestadores", "view");
-
-  const [scope, setScope] = useState<string>(MIS_PST);
-  const [operadores, setOperadores] = useState<OperadorOption[]>([]);
-  const [incidentes, setIncidentes] = useState<IncidenteSinCerrar[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const {
+    canVerOperadores, scope, setScope, operadores, incidentes, total, page, setPage,
+    sort, onToggleSort, sortBy, sortDir, loading, error, setError, setResultado,
+  } = usePendientesACerrar(columns);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  // Pagina en el servidor: el backend ordena todos los pendientes.
-  const { sort, onToggleSort } = useStatsServerSort(columns, () => setPage(1));
-  const sortBy = statsSortField(columns, sort.key);
-  const sortDir = sort.direction;
-
-  const [prevScope, setPrevScope] = useState(scope);
-  if (scope !== prevScope) {
-    setPrevScope(scope);
-    setLoading(true);
-    setError(null);
-    setIncidentes([]);
-    setPage(1);
-  }
-
-  useEffect(() => {
-    if (!canVerOperadores) return;
-    prestadoresApi.listOperadores().then(setOperadores).catch(() => setOperadores([]));
-  }, [canVerOperadores]);
-
-  useEffect(() => {
-    let active = true;
-    const operadorId = scope === TODOS ? undefined : scope === MIS_PST ? undefined : scope;
-    pendientesApi
-      .listPendientes({ operadorId, page, size: PAGE_SIZE, sortBy, sortDir })
-      .then((res) => {
-        if (!active) return;
-        setIncidentes(res.items);
-        setTotal(res.total);
-      })
-      .catch((err: unknown) => {
-        if (!active) return;
-        console.error("Error al cargar pendientes a cerrar:", err);
-        setError(
-          err instanceof Error ? err.message : "No se pudieron cargar los pendientes a cerrar.",
-        );
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [scope, page, sortBy, sortDir]);
 
   const handleRefresh = () => {
     setRefreshing(true);
     setError(null);
-    const operadorId = scope === TODOS ? undefined : scope === MIS_PST ? undefined : scope;
+    const operadorId = scopeToOperadorId(scope);
     pendientesApi
       .refresh()
       .then(() =>
         pendientesApi.listPendientes({ operadorId, page, size: PAGE_SIZE, sortBy, sortDir }),
       )
       .then((res) => {
-        setIncidentes(res.items);
-        setTotal(res.total);
+        setResultado(res);
         setUpdatedAt(new Date().toISOString());
       })
       .catch((err: unknown) => {

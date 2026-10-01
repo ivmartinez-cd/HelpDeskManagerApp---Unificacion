@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
@@ -8,7 +8,8 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useModalSubmit } from "@/shared/hooks/use-modal-submit";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { PrestadorLiquidacion, Spst, SucursalPropia } from "../types/liquidaciones";
+import { useSucursalesPropias } from "../hooks/use-sucursales-propias";
+import type { PrestadorLiquidacion, Spst } from "../types/liquidaciones";
 
 export function SpstBaseSucursalModal({
   spst,
@@ -21,19 +22,10 @@ export function SpstBaseSucursalModal({
   onClose: () => void;
   onChanged: () => void;
 }) {
-  const [sucursales, setSucursales] = useState<SucursalPropia[] | null>(null);
-  const [loadingList, setLoadingList] = useState(true);
   const [selectedId, setSelectedId] = useState<number | null>(spst.sigesBaseSucursalId);
   const { saving, error, setError, submit } = useModalSubmit();
 
-  useEffect(() => {
-    liquidacionesApi
-      .listSucursalesPropiasPrestatdor(prestador.id)
-      .then(setSucursales)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Error al cargar sucursales"))
-      .finally(() => setLoadingList(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prestador.id]);
+  const { sucursales, loading: loadingList } = useSucursalesPropias(prestador.id, setError);
 
   const handleGuardar = () => {
     void submit(async () => {

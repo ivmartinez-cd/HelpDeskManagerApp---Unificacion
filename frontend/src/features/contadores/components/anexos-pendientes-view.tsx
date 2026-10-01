@@ -1,15 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Copy, Printer, RefreshCw, SearchX } from "lucide-react";
 import { toast } from "sonner";
-import { contadoresApi } from "../api/contadores-api";
+import { useAnexosPendientes } from "../hooks/use-anexos-pendientes";
 import { formatearAnexosPendientesWhatsapp } from "../lib/formato-whatsapp-anexos";
-import type {
-  AnexoPendiente,
-  AnexosPendientesResumen,
-  EstadoAnexoPendiente,
-} from "../types/anexos-pendientes";
 import { AnexosPendientesPrintSheet } from "./anexos-pendientes-print-sheet";
 import { AnexosPendientesTabla, formatPeriodo } from "./anexos-pendientes-tabla";
 import {
@@ -57,40 +52,10 @@ function formatConsultadoEn(iso: string): string {
 }
 
 export function AnexosPendientesView() {
-  const [rows, setRows] = useState<AnexoPendiente[] | null>(null);
-  const [resumen, setResumen] = useState<AnexosPendientesResumen | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [estado, setEstado] = useState("todos");
   const [busqueda, setBusqueda] = useState("");
-  const [busquedaAplicada, setBusquedaAplicada] = useState("");
-
-  // La búsqueda espera 350ms de inactividad antes de pegarle al backend.
-  useEffect(() => {
-    const timer = setTimeout(() => setBusquedaAplicada(busqueda.trim()), 350);
-    return () => clearTimeout(timer);
-  }, [busqueda]);
-
-  const load = useCallback(
-    (refresh = false) => {
-      const lista = contadoresApi
-        .listAnexosPendientes({
-          estado: estado === "todos" ? undefined : (estado as EstadoAnexoPendiente),
-          search: busquedaAplicada || undefined,
-          refresh,
-        })
-        .then((items) => {
-          setRows(items);
-          setError(null);
-        });
-      const kpis = contadoresApi.getAnexosPendientesResumen().then(setResumen);
-      return Promise.all([lista, kpis]).catch((err: unknown) => {
-        console.error("Error al cargar anexos sin facturar:", err);
-        setError("No se pudo consultar. Reintentá en unos segundos.");
-      });
-    },
-    [estado, busquedaAplicada],
-  );
+  const { rows, resumen, error, load } = useAnexosPendientes(estado, busqueda);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -108,10 +73,6 @@ export function AnexosPendientesView() {
       toast.error("No se pudo copiar. Probá de nuevo o copiá manualmente.");
     }
   };
-
-  useEffect(() => {
-    void load();
-  }, [load]);
 
   return (
     <div className="flex flex-col gap-6 px-9 py-8">

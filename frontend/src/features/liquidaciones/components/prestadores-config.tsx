@@ -1,14 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { BrandButton, BrandFileInput } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useSession } from "@/services/session-provider";
-import { prestadoresApi } from "@/features/prestadores/api/prestadores-api";
 import { AltaPrestadorWizard } from "./alta-prestador/alta-prestador-wizard";
 import { liquidacionesApi } from "../api/liquidaciones-api";
+import { useAltasSla } from "../hooks/use-altas-sla";
+import { usePrestadoresLiquidacion } from "../hooks/use-prestadores-liquidacion";
 import type { PrestadorLiquidacion } from "../types/liquidaciones";
 import { PrestadorBaseSucursalModal } from "./prestador-base-sucursal-modal";
 import { PrestadorCdModal } from "./prestador-cd-modal";
@@ -68,8 +69,7 @@ export function PrestadoresConfig() {
   const { can } = useSession();
   const puedeEditar = can("liquidaciones", "update");
   const puedeExportar = can("liquidaciones", "export");
-  const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { prestadores, loading, refetch: load } = usePrestadoresLiquidacion();
   const [formPrestador, setFormPrestador] = useState<PrestadorLiquidacion | undefined>(undefined);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
@@ -86,37 +86,7 @@ export function PrestadoresConfig() {
   // `prestadores` — permiso distinto al de este módulo): en ese caso no se
   // ofrece el botón, para no arriesgar una alta SLA duplicada por un dato que
   // no se pudo verificar.
-  const [sigesConAltaSla, setSigesConAltaSla] = useState<Set<number> | null>(null);
-
-  // Sin setLoading(true) sincrónico — ver nota en liquidaciones-lista.tsx.
-  const load = useCallback(async () => {
-    try {
-      setPrestadores(await liquidacionesApi.listPrestadores(false));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Promise-chain en vez de async/await: react-hooks/set-state-in-effect solo
-  // acepta setState en callbacks .then/.catch (ver nota en siges-sync-modal.tsx).
-  const loadAltasSla = useCallback(
-    () =>
-      prestadoresApi
-        .getResumen()
-        .then((resumen) => {
-          const ids = resumen.grupos.flatMap((g) => g.prestadores.map((p) => p.sigesEmpresaId));
-          setSigesConAltaSla(new Set(ids));
-        })
-        .catch((err: unknown) => {
-          // Sin permiso sobre `prestadores`, u otro error — se oculta el botón
-          // "Completar alta SLA" en vez de arriesgar una alta duplicada.
-          console.error("No se pudo consultar el módulo SLA:", err);
-        }),
-    [],
-  );
-
-  useEffect(() => { void load(); }, [load]);
-  useEffect(() => { void loadAltasSla(); }, [loadAltasSla]);
+  const { sigesConAltaSla, refetch: loadAltasSla } = useAltasSla();
 
   const handleToggle = async (p: PrestadorLiquidacion) => {
     try {

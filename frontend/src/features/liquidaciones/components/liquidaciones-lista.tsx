@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 import { toast } from "sonner";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { Liquidacion, PrestadorLiquidacion } from "../types/liquidaciones";
+import { PAGE_SIZE, useLiquidacionesLista } from "../hooks/use-liquidaciones-lista";
 import { LiquidacionesImportModal } from "./liquidaciones-import-modal";
 import { LiquidacionesTabla } from "./liquidaciones-tabla";
 
@@ -20,58 +20,25 @@ const ESTADOS: { value: string; label: string }[] = [
   { value: "cerrada", label: "Cerrada" },
 ];
 
-const PAGE_SIZE = 50;
-
 export function LiquidacionesLista() {
   // Importar = liquidaciones.create; DELETE /{id} (baja local) = update (ADR-029).
   const { can } = useSession();
   const puedeImportar = can("liquidaciones", "create");
   const puedeEliminar = can("liquidaciones", "delete");
-  const [liquidaciones, setLiquidaciones] = useState<Liquidacion[]>([]);
-  const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
-  const [periodos, setPeriodos] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroPrestador, setFiltroPrestador] = useState("");
   const [filtroPeriodo, setFiltroPeriodo] = useState("");
   const [filtroAnio, setFiltroAnio] = useState("");
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [importOpen, setImportOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteInProgress, setDeleteInProgress] = useState(false);
-
-  // Sin setLoading(true) sincrónico — ver nota en liquidaciones-dashboard.tsx.
-  const loadLiquidaciones = useCallback(
-    async (p: number) => {
-      try {
-        const res = await liquidacionesApi.list({
-          prestadorId: filtroPrestador || undefined,
-          estado: filtroEstado || undefined,
-          periodo: filtroPeriodo || undefined,
-          anio: filtroAnio ? Number(filtroAnio) : undefined,
-          page: p,
-          size: PAGE_SIZE,
-        });
-        setLiquidaciones(res.items);
-        setTotal(res.total);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [filtroPrestador, filtroEstado, filtroPeriodo, filtroAnio],
-  );
-
-  useEffect(() => {
-    void Promise.all([
-      liquidacionesApi.listPrestadores().then(setPrestadores),
-      liquidacionesApi.listPeriodos().then(setPeriodos),
-    ]);
-  }, []);
-
-  useEffect(() => {
-    void loadLiquidaciones(1);
-  }, [loadLiquidaciones]);
+  const { liquidaciones, prestadores, periodos, loading, total, refetch: loadLiquidaciones } = useLiquidacionesLista({
+    prestador: filtroPrestador,
+    estado: filtroEstado,
+    periodo: filtroPeriodo,
+    anio: filtroAnio,
+  });
 
   const handleConfirmDelete = async () => {
     if (!deletingId) return;

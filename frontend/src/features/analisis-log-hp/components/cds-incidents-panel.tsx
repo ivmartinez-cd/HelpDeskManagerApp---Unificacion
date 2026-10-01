@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
 import { cdDateSortValue, useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
-import { analisisLogHpApi } from "../api/analisis-log-hp-api";
+import { useIncidentesCds } from "../hooks/use-incidentes-cds";
 import type { CdsIncident } from "../types/analisis-log-hp";
 import { formatIncidentNumber } from "../utils/check-digit";
 
@@ -116,17 +116,8 @@ function IncidentsTable({ incidents }: { incidents: CdsIncident[] }) {
 }
 
 export function CdsIncidentsPanel({ serial }: { serial: string }) {
-  const [incidents, setIncidents] = useState<CdsIncident[] | null>(null);
   const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!loaded) return;
-    let cancelled = false;
-    analisisLogHpApi.getCdsIncidents(serial)
-      .then((data) => { if (!cancelled) setIncidents(data); })
-      .catch(() => { if (!cancelled) setIncidents([]); });
-    return () => { cancelled = true; };
-  }, [serial, loaded]);
+  const incidents = useIncidentesCds(serial, loaded);
 
   if (!loaded) {
     return (

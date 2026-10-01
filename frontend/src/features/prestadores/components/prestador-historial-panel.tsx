@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { prestadoresApi } from "../api/prestadores-api";
-import type { AsignacionHistorial } from "../types/prestadores";
+import { usePrestadorHistorial } from "../hooks/use-prestador-historial";
 import { BrandSkeleton } from "@/shared/components/ui/brand-form";
 
 function formatFecha(iso: string): string {
@@ -20,25 +18,7 @@ function formatFecha(iso: string): string {
 /** Historial de reasignación de operador de un PST — se carga a demanda
  * cuando se abre el detalle, no en el listado agrupado (no hace falta ahí). */
 export function PrestadorHistorialPanel({ prestadorId }: { prestadorId: string }) {
-  const [historial, setHistorial] = useState<AsignacionHistorial[] | null>(null);
-
-  // Ajustar estado durante el render (no en el efecto) al cambiar de PST —
-  // mismo patrón que sla-detail.tsx/ftp-client-modal.tsx.
-  const [prevPrestadorId, setPrevPrestadorId] = useState(prestadorId);
-  if (prestadorId !== prevPrestadorId) {
-    setPrevPrestadorId(prestadorId);
-    setHistorial(null);
-  }
-
-  useEffect(() => {
-    let active = true;
-    prestadoresApi.listHistorial(prestadorId).then((items) => {
-      if (active) setHistorial(items);
-    });
-    return () => {
-      active = false;
-    };
-  }, [prestadorId]);
+  const historial = usePrestadorHistorial(prestadorId);
 
   if (historial === null) {
     return (

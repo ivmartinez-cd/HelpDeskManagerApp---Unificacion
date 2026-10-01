@@ -1,17 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { BrandButton, BrandSelect } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type {
-  Spst,
-  SyncTarifariosResult,
-  ZonaSigesEstado,
-  ZonasSiges,
-} from "../types/liquidaciones";
+import { useSigesTarifariosPreview } from "../hooks/use-siges-previews";
+import type { Spst, SyncTarifariosResult, ZonaSigesEstado } from "../types/liquidaciones";
 
 const seccionCls = "font-heading text-xs font-bold uppercase tracking-[.06em] text-muted-foreground";
 const filaCls = "flex items-end justify-between gap-3 border-t border-border py-2 first:border-t-0";
@@ -145,33 +141,8 @@ export function SigesTarifariosModal({
   onClose: () => void;
   onChanged: () => void;
 }) {
-  const [zonas, setZonas] = useState<ZonasSiges | null>(null);
-  const [spsts, setSpsts] = useState<Spst[]>([]);
-  const [resultado, setResultado] = useState<SyncTarifariosResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { zonas, spsts, resultado, setResultado, error, refetch: load } = useSigesTarifariosPreview(prestadorId);
   const [syncing, setSyncing] = useState(false);
-
-  // Promise-chain: ver nota en siges-sync-modal.tsx (regla set-state-in-effect).
-  const load = useCallback(
-    () =>
-      Promise.all([
-        liquidacionesApi.getSigesZonas(prestadorId),
-        liquidacionesApi.syncTarifariosSiges(true, prestadorId),
-        liquidacionesApi.listSpsts({ prestadorId }),
-      ])
-        .then(([z, dry, s]) => {
-          setZonas(z);
-          setResultado(dry);
-          setSpsts(s);
-          setError(null);
-        })
-        .catch((err: unknown) => {
-          setError(err instanceof Error ? err.message : "Error al consultar");
-        }),
-    [prestadorId],
-  );
-
-  useEffect(() => { void load(); }, [load]);
 
   const handleAplicar = async () => {
     setSyncing(true);

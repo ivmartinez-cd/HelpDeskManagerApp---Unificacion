@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { ResultadoVinculoTablaKmSpst } from "../types/liquidaciones";
+import { useVinculoSpstPreview } from "../hooks/use-siges-previews";
 
 const seccionCls = "font-heading text-xs font-bold uppercase tracking-[.06em] text-muted-foreground";
 
@@ -17,26 +17,13 @@ export function VincularSpstModal({
 }: {
   prestadorId: string; onClose: () => void; onVinculado: () => void;
 }) {
-  const [resultado, setResultado] = useState<ResultadoVinculoTablaKmSpst | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [aplicando, setAplicando] = useState(false);
   // Las propuestas por provincia son un proxy más débil que la localidad (la
   // provincia no siempre coincide con la zona tarifaria): se aplican solo si
   // la TL lo tilda para este prestador.
   const [incluirProvincia, setIncluirProvincia] = useState(false);
 
-  const load = useCallback(
-    () =>
-      liquidacionesApi
-        .vincularSpstTablaKm(prestadorId, true, incluirProvincia)
-        .then((r) => { setResultado(r); setError(null); })
-        .catch((err: unknown) => {
-          setError(err instanceof Error ? err.message : "Error al calcular vínculos");
-        }),
-    [prestadorId, incluirProvincia],
-  );
-
-  useEffect(() => { void load(); }, [load]);
+  const { resultado, setResultado, error } = useVinculoSpstPreview(prestadorId, incluirProvincia);
 
   const handleAplicar = async () => {
     setAplicando(true);

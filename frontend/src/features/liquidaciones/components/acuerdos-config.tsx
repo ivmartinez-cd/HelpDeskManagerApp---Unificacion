@@ -1,7 +1,7 @@
 "use client";
 
 import { Handshake } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { BrandButton, BrandEmptyState } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
@@ -10,8 +10,10 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
+import { useListaPorPrestador } from "../hooks/use-lista-por-prestador";
+import { usePrestadoresLiquidacion } from "../hooks/use-prestadores-liquidacion";
 import { formatARS } from "../lib/format";
-import type { AcuerdoPrecioCliente, PrestadorLiquidacion } from "../types/liquidaciones";
+import type { AcuerdoPrecioCliente } from "../types/liquidaciones";
 import { AcuerdoModal, type PlantillaAcuerdo } from "./acuerdo-modal";
 
 const thCls = "px-4 py-2 text-left font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground";
@@ -31,6 +33,8 @@ const COLUMNAS: SortableColumn<SortKey>[] = [
   { key: "motivo", label: "Motivo" },
   { key: "vigencia", label: "Vigencia" },
 ];
+
+const fetchAcuerdos = (prestadorId: string) => liquidacionesApi.listAcuerdos(prestadorId);
 
 function valorOrden(a: AcuerdoPrecioCliente, key: SortKey) {
   switch (key) {
@@ -53,11 +57,9 @@ export function AcuerdosConfig({
 } = {}) {
   const { can } = useSession();
   const puedeEditar = can("liquidaciones", "update");
-  const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
-  const [loadingPrestadores, setLoadingPrestadores] = useState(true);
+  const { prestadores, loading: loadingPrestadores } = usePrestadoresLiquidacion();
   const [filtroPst, setFiltroPst] = useState(() => deepLink?.prestadorId ?? "");
-  const [acuerdos, setAcuerdos] = useState<AcuerdoPrecioCliente[]>([]);
-  const [acuerdosPstId, setAcuerdosPstId] = useState<string | null>(null);
+  const { items: acuerdos, loading, refetch: loadAcuerdos } = useListaPorPrestador(filtroPst, fetchAcuerdos);
   const [modalOpen, setModalOpen] = useState(() => deepLink !== null);
   const [editing, setEditing] = useState<AcuerdoPrecioCliente | null>(null);
   const [plantilla, setPlantilla] = useState<PlantillaAcuerdo | null>(() =>
@@ -68,23 +70,6 @@ export function AcuerdosConfig({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { sort, toggleSort } = useOptionalTableSort<SortKey>();
   const filas = useSortedRows(acuerdos, sort, valorOrden);
-
-  useEffect(() => {
-    void liquidacionesApi.listPrestadores(false)
-      .then(setPrestadores)
-      .finally(() => setLoadingPrestadores(false));
-  }, []);
-
-  const loadAcuerdos = useCallback(async () => {
-    if (!filtroPst) return;
-    try {
-      setAcuerdos(await liquidacionesApi.listAcuerdos(filtroPst));
-    } finally {
-      setAcuerdosPstId(filtroPst);
-    }
-  }, [filtroPst]);
-
-  useEffect(() => { void loadAcuerdos(); }, [loadAcuerdos]);
 
   const handleDelete = async () => {
     if (!deletingId) return;
@@ -100,7 +85,6 @@ export function AcuerdosConfig({
 
   const abrirModal = (a: AcuerdoPrecioCliente | null) => { setEditing(a); setPlantilla(null); setModalOpen(true); };
   const pstSeleccionado = prestadores.find((p) => p.id === filtroPst) ?? null;
-  const loading = filtroPst !== "" && filtroPst !== acuerdosPstId;
   const selectCls = "rounded-[8px] border border-border bg-card px-3 py-2 font-body text-sm text-foreground outline-none focus:border-brand-orange/70";
 
   return (

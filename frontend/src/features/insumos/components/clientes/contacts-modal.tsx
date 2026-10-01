@@ -1,17 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ChevronLeft, MapPin, Plus, Ticket, Users } from "lucide-react";
 import { toast } from "sonner";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { BrandButton, BrandEmptyState, BrandSkeleton, brandButtonClasses } from "@/shared/components/ui/brand-form";
 import { insumosApi } from "../../api/insumos-api";
-import type { CustomerRow, SdsContactRow, ZoneContactRow } from "../../types";
+import { useZoneContacts } from "../../hooks/use-zone-contacts";
+import type { CustomerRow, ZoneContactRow } from "../../types";
 import { ConfirmationModal } from "../shared";
 import { ContactForm, EMPTY_CONTACT } from "./contact-form";
 import { ContactsImportModal } from "./contacts-import-modal";
 import { ImportFromSupplyModal } from "./import-from-supply-modal";
-import { SDS_PILOT_IDS, SdsContactsSection } from "./sds-contacts-section";
+import { SdsContactsSection } from "./sds-contacts-section";
 import { ZoneContactCard } from "./zone-contact-card";
 
 type View = "list" | "add" | "edit";
@@ -35,10 +36,6 @@ interface ContactsModalProps {
  * Permite crear, editar y eliminar zonas. Para el cliente piloto (8255) muestra
  * además los contactos detectados en el PortalWeb SDS (solo lectura). */
 export function ContactsModal({ customer, onClose, onContactsChanged, canUpdate }: ContactsModalProps) {
-  const [contacts, setContacts] = useState<ZoneContactRow[]>([]);
-  const [sdsContacts, setSdsContacts] = useState<SdsContactRow[]>([]);
-  const [loadingContacts, setLoadingContacts] = useState(false);
-  const [contactsError, setContactsError] = useState<string | null>(null);
   const [view, setView] = useState<View>("list");
   const [editingRow, setEditingRow] = useState<ZoneContactRow | null>(null);
   const [saving, setSaving] = useState(false);
@@ -51,39 +48,19 @@ export function ContactsModal({ customer, onClose, onContactsChanged, canUpdate 
   const customerId = customer?.customer_id ?? null;
   const isOpen = customer !== null;
 
-  const loadContacts = useCallback(async (id: number) => {
-    // Resetear el estado antes de cargar (se ejecuta dentro de useCallback, no
-    // directamente en el body del effect — mismo patrón que use-new-devices.ts).
-    setContacts([]);
-    setSdsContacts([]);
+  const resetView = useCallback(() => {
     setView("list");
     setEditingRow(null);
     setSaveError(null);
-    setLoadingContacts(true);
-    setContactsError(null);
-    try {
-      const data = await insumosApi.getContacts(id);
-      setContacts(data);
-      if (SDS_PILOT_IDS.has(id)) {
-        try {
-          const sds = await insumosApi.getSdsContacts(id);
-          setSdsContacts(sds);
-        } catch {
-          setSdsContacts([]);
-        }
-      }
-    } catch (err: unknown) {
-      setContactsError(errorMsg(err, "No se pudieron cargar los contactos."));
-    } finally {
-      setLoadingContacts(false);
-    }
   }, []);
-
-  useEffect(() => {
-    if (!customerId) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadContacts(customerId);
-  }, [customerId, loadContacts]);
+  const {
+    contacts,
+    setContacts,
+    sdsContacts,
+    loading: loadingContacts,
+    error: contactsError,
+    reload: loadContacts,
+  } = useZoneContacts(customerId, resetView);
 
   const handleSave = useCallback(
     async (row: ZoneContactRow) => {
@@ -107,7 +84,7 @@ export function ContactsModal({ customer, onClose, onContactsChanged, canUpdate 
         setSaving(false);
       }
     },
-    [customerId, view, onContactsChanged],
+    [customerId, view, onContactsChanged, setContacts],
   );
 
   const handleDelete = useCallback(async () => {
@@ -125,7 +102,7 @@ export function ContactsModal({ customer, onClose, onContactsChanged, canUpdate 
     } finally {
       setDeleting(false);
     }
-  }, [customerId, confirmDeleteZone, contacts, onContactsChanged]);
+  }, [customerId, confirmDeleteZone, contacts, onContactsChanged, setContacts]);
 
   // Mismo patrón inmutable que `handleSave`: el backend devuelve el
   // `ZoneContactOut` exacto que escribió, así que no hace falta refetch acá.
@@ -138,7 +115,7 @@ export function ContactsModal({ customer, onClose, onContactsChanged, canUpdate 
       });
       onContactsChanged(customerId, true);
     },
-    [customerId, onContactsChanged],
+    [customerId, onContactsChanged, setContacts],
   );
 
   // El apply masivo re-resuelve del lado del servidor: acá SIEMPRE refetch,

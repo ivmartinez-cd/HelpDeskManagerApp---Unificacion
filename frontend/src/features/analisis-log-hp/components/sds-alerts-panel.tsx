@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
 import { isoSortValue, useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
-import { analisisLogHpApi } from "../api/analisis-log-hp-api";
+import { useAlertasSds } from "../hooks/use-alertas-sds";
 
 type Alert = Record<string, unknown>;
 
@@ -116,21 +116,8 @@ function AlertsTable({ alerts, emptyText }: { alerts: Alert[]; emptyText: string
 
 export function SdsAlertsPanel({ deviceId }: { deviceId: string }) {
   const [tab, setTab] = useState<"current" | "history">("current");
-  const [current, setCurrent] = useState<Alert[] | null>(null);
-  const [history, setHistory] = useState<Alert[] | null>(null);
   const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!loaded) return;
-    let cancelled = false;
-    Promise.all([
-      analisisLogHpApi.getAlerts(Number(deviceId), true),
-      analisisLogHpApi.getAlerts(Number(deviceId), false),
-    ])
-      .then(([c, h]) => { if (!cancelled) { setCurrent(c); setHistory(h); } })
-      .catch(() => { if (!cancelled) { setCurrent([]); setHistory([]); } });
-    return () => { cancelled = true; };
-  }, [deviceId, loaded]);
+  const { current, history } = useAlertasSds(deviceId, loaded);
 
   if (!loaded) {
     return (

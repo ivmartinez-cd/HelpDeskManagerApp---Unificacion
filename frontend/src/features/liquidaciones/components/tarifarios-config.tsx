@@ -1,25 +1,25 @@
 "use client";
 
 import { Briefcase } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { BrandButton, BrandEmptyState } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type {
-  PrestadorLiquidacion,
-  Spst,
-  Tarifario,
-  ZonaSigesEstado,
-} from "../types/liquidaciones";
+import { useListaPorPrestador } from "../hooks/use-lista-por-prestador";
+import { usePrestadoresLiquidacion } from "../hooks/use-prestadores-liquidacion";
+import { useZonasTarifario } from "../hooks/use-zonas-tarifario";
+import type { Tarifario } from "../types/liquidaciones";
 import { agruparPorZona, tiposPresentes, type VigenciaZona, type ZonaTarifas } from "../lib/tarifarios-matriz";
 import { SigesTarifariosModal } from "./siges-tarifarios-modal";
 import { type PlantillaTarifa, TarifaModal } from "./tarifa-modal";
 import { CsvImportModal } from "./tarifarios-csv-import-modal";
 import { TarifariosMatriz } from "./tarifarios-matriz";
 import { VigenciaZonaModal } from "./vigencia-zona-modal";
+
+const fetchTarifarios = (prestadorId: string) => liquidacionesApi.listTarifarios(prestadorId);
 
 export function TarifariosConfig({
   deepLinkFaltante = null,
@@ -33,14 +33,7 @@ export function TarifariosConfig({
   const { can } = useSession();
   const puedeEditar = can("liquidaciones", "update");
   const puedeExportar = can("liquidaciones", "export");
-  const [tarifarios, setTarifarios] = useState<Tarifario[]>([]);
-  // Prestador al que corresponden los `tarifarios` ya cargados — si no coincide con
-  // `filtroPst` es que hay un fetch en vuelo para la nueva selección (deriva el
-  // spinner sin setState sincrónico en el effect, prohibido por
-  // react-hooks/set-state-in-effect).
-  const [tarifariosPstId, setTarifariosPstId] = useState<string | null>(null);
-  const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
-  const [loadingPrestadores, setLoadingPrestadores] = useState(true);
+  const { prestadores, loading: loadingPrestadores } = usePrestadoresLiquidacion();
   const [filtroPst, setFiltroPst] = useState(() => deepLinkFaltante?.prestadorId ?? "");
   // Lazy initializer (no effect) para no disparar setState sincrónico al
   // montar — mismo criterio que el deep-link de Tabla KM.
@@ -62,60 +55,13 @@ export function TarifariosConfig({
   // borra una fila en Siges.
   const [deletingVigencia, setDeletingVigencia] = useState<VigenciaZona | null>(null);
   const [vigenciaZona, setVigenciaZona] = useState<ZonaTarifas | null>(null);
-  const [spsts, setSpsts] = useState<Spst[]>([]);
-  const [zonasSiges, setZonasSiges] = useState<ZonaSigesEstado[]>([]);
 
-  useEffect(() => {
-    void liquidacionesApi.listPrestadores(false)
-      .then(setPrestadores)
-      .finally(() => setLoadingPrestadores(false));
-  }, []);
-
-  // SPST del prestador seleccionado — solo para resolver el nombre de la zona
-  // cuando no tiene mapeo a Siges; la tarifa en sí guarda el spstId crudo.
-  useEffect(() => {
-    let cancelado = false;
-    const cargar = filtroPst
-      ? liquidacionesApi.listSpsts({ prestadorId: filtroPst })
-      : Promise.resolve([]);
-    void cargar.then((data) => { if (!cancelado) setSpsts(data); });
-    return () => { cancelado = true; };
-  }, [filtroPst]);
-  const spstsPorId = useMemo(() => new Map(spsts.map((s) => [s.id, s])), [spsts]);
-
-  // Zonas de Siges mapeadas a cada SPST (o a la genérica, spstId null): el
-  // tarifario se muestra con el nombre de zona tal cual está en Siges, que es
-  // lo que la TL compara (pedido de Iván, 2026-09-07). Sin vínculo a Siges no
-  // hay zonas y cada grupo cae al nombre del SPST.
-  useEffect(() => {
-    let cancelado = false;
-    const cargar = filtroPst
-      ? liquidacionesApi.getSigesZonas(filtroPst).then((r) => r.zonas)
-      : Promise.resolve([]);
-    void cargar
-      .catch(() => [] as ZonaSigesEstado[])
-      .then((data) => { if (!cancelado) setZonasSiges(data); });
-    return () => { cancelado = true; };
-  }, [filtroPst]);
-  const zonaSigesPorSpst = useMemo(
-    () => new Map(zonasSiges.filter((z) => z.mapeada).map((z) => [z.spstId ?? "", z.descripcionSiges])),
-    [zonasSiges],
-  );
+  const { spstsPorId, zonaSigesPorSpst } = useZonasTarifario(filtroPst);
 
   // Trae solo las tarifas del prestador seleccionado — traer el catálogo completo
   // (4832 filas) truncaba a las 500 que trae el backend por default, ver
   // LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md.
-  const loadTarifarios = useCallback(async () => {
-    if (!filtroPst) return;
-    try {
-      const data = await liquidacionesApi.listTarifarios(filtroPst);
-      setTarifarios(data);
-    } finally {
-      setTarifariosPstId(filtroPst);
-    }
-  }, [filtroPst]);
-
-  useEffect(() => { void loadTarifarios(); }, [loadTarifarios]);
+  const { items: tarifarios, loading: loadingTarifarios, refetch: loadTarifarios } = useListaPorPrestador(filtroPst, fetchTarifarios);
 
   const handleDelete = async () => {
     if (!deletingVigencia) return;
@@ -146,7 +92,6 @@ export function TarifariosConfig({
     (spstId ? spstsPorId.get(spstId)?.nombre ?? "SPST eliminado" : "Tarifa genérica");
 
   const pstSeleccionado = prestadores.find((p) => p.id === filtroPst) ?? null;
-  const loadingTarifarios = filtroPst !== "" && filtroPst !== tarifariosPstId;
   const tipos = tiposPresentes(tarifarios);
   // Mismo orden que Siges: por descripción de zona.
   const zonas = agruparPorZona(tarifarios).sort((a, b) =>

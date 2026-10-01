@@ -1,7 +1,7 @@
 "use client";
 
 import { Map } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BrandButton, BrandEmptyState } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
@@ -9,13 +9,17 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { useSession } from "@/services/session-provider";
 import { liquidacionesApi } from "../api/liquidaciones-api";
+import { useListaPorPrestador } from "../hooks/use-lista-por-prestador";
+import { usePrestadoresLiquidacion } from "../hooks/use-prestadores-liquidacion";
 import { useSpstsZonas } from "../hooks/use-spsts-zonas";
-import type { PrestadorLiquidacion, SucursalSiges, TablaKm } from "../types/liquidaciones";
+import type { SucursalSiges, TablaKm } from "../types/liquidaciones";
 import { CsvImportModal, EntradaModal, type PlantillaEntrada } from "./tabla-km-modales";
 import { KM_SORT_KEYS, kmSortValue, type KmSortKey, TablaKmTable } from "./tabla-km-table";
 import { SigesTablaKmModal } from "./siges-tabla-km-modal";
 import { TablaKmWizard } from "./tabla-km-wizard";
 import { VincularSpstModal } from "./vincular-spst-modal";
+
+const fetchEntradas = (prestadorId: string) => liquidacionesApi.listTablaKm({ prestadorId });
 
 export function TablaKmConfig({
   deepLinkFaltante = null,
@@ -32,17 +36,10 @@ export function TablaKmConfig({
   const { can } = useSession();
   const puedeEditar = can("liquidaciones", "update");
   const puedeExportar = can("liquidaciones", "export");
-  const [entradas, setEntradas] = useState<TablaKm[]>([]);
   // Las filas sin actividad en liquidaciones recientes vienen archivadas
   // (migración c3e8f1a9d2b4 + botón por fila): ocultas por default.
   const [mostrarArchivadas, setMostrarArchivadas] = useState(false);
-  // Prestador al que corresponden las `entradas` ya cargadas — si no coincide con
-  // `filtroPst` es que hay un fetch en vuelo para la nueva selección (deriva el
-  // spinner sin setState sincrónico en el effect, prohibido por
-  // react-hooks/set-state-in-effect).
-  const [entradasPstId, setEntradasPstId] = useState<string | null>(null);
-  const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
-  const [loadingPrestadores, setLoadingPrestadores] = useState(true);
+  const { prestadores, loading: loadingPrestadores } = usePrestadoresLiquidacion();
   const [filtroPst, setFiltroPst] = useState(
     () => deepLinkFaltante?.prestadorId ?? deepLinkBuscar?.prestadorId ?? "",
   );
@@ -74,26 +71,10 @@ export function TablaKmConfig({
     keys: KM_SORT_KEYS,
   });
 
-  useEffect(() => {
-    void liquidacionesApi.listPrestadores(false)
-      .then(setPrestadores)
-      .finally(() => setLoadingPrestadores(false));
-  }, []);
-
   // Trae solo las entradas del prestador seleccionado — traer el catálogo completo
   // (1633 filas) truncaba a las 500 que trae el backend por default, ver
   // LIQUIDACION_PRESTADORES_MIGRACION_ESTADO.md.
-  const loadEntradas = useCallback(async () => {
-    if (!filtroPst) return;
-    try {
-      const data = await liquidacionesApi.listTablaKm({ prestadorId: filtroPst });
-      setEntradas(data);
-    } finally {
-      setEntradasPstId(filtroPst);
-    }
-  }, [filtroPst]);
-
-  useEffect(() => { void loadEntradas(); }, [loadEntradas]);
+  const { items: entradas, loading: loadingEntradas, refetch: loadEntradas } = useListaPorPrestador(filtroPst, fetchEntradas);
 
   // SPST → zona de Siges → tarifa de cada fila, visible en la propia tabla en
   // vez de obligar a saltar a SPSTs/Tarifarios para adivinarla.
@@ -130,7 +111,6 @@ export function TablaKmConfig({
   };
 
   const pstSeleccionado = prestadores.find((p) => p.id === filtroPst) ?? null;
-  const loadingEntradas = filtroPst !== "" && filtroPst !== entradasPstId;
   const q = busqueda.toLowerCase();
   const archivadas = entradas.filter((e) => e.archivada).length;
   const filtered = useMemo(() => {

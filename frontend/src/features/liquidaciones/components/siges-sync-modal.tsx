@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
-import type { PropuestasVinculo, SyncSigesResult } from "../types/liquidaciones";
+import { useSigesSyncPreview } from "../hooks/use-siges-previews";
+import type { SyncSigesResult } from "../types/liquidaciones";
 
 const seccionCls = "font-heading text-xs font-bold uppercase tracking-[.06em] text-muted-foreground";
 const filaCls = "flex items-center justify-between gap-3 border-t border-border py-2 first:border-t-0";
@@ -57,32 +58,8 @@ export function SigesSyncModal({
   onClose: () => void;
   onChanged: () => void;
 }) {
-  const [propuestas, setPropuestas] = useState<PropuestasVinculo | null>(null);
-  const [resultado, setResultado] = useState<SyncSigesResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { propuestas, setPropuestas, resultado, setResultado, error, setError, refetch: load } = useSigesSyncPreview();
   const [syncing, setSyncing] = useState(false);
-
-  // Al abrir: propuestas de vínculo + dry-run en paralelo. El componente se
-  // monta solo con el modal abierto (ver prestadores-config), así que el load
-  // corre una vez por apertura; estado de carga derivado (propuestas === null).
-  // Promise-chain en vez de async/await: react-hooks/set-state-in-effect solo
-  // acepta setState en callbacks .then/.catch (mismo patrón que el load de
-  // prestadores en tarifarios-config).
-  const load = useCallback(
-    () =>
-      Promise.all([liquidacionesApi.getSigesPropuestas(), liquidacionesApi.syncSiges(true)])
-        .then(([props, dry]) => {
-          setPropuestas(props);
-          setResultado(dry);
-          setError(null);
-        })
-        .catch((err: unknown) => {
-          setError(err instanceof Error ? err.message : "Error al consultar");
-        }),
-    [],
-  );
-
-  useEffect(() => { void load(); }, [load]);
 
   const handleClose = () => {
     setPropuestas(null);

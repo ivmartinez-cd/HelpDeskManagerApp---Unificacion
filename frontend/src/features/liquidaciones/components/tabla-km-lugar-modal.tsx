@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { BrandButton, BrandInput } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
+import { useCandidatosLugar } from "../hooks/use-candidatos-lugar";
 import type { GeocodeCandidato, TablaKm } from "../types/liquidaciones";
 
 /** Lista de candidatos de geocode con elección explícita + coords manuales.
@@ -109,15 +110,7 @@ export function BuscarLugarModal({
   onClose: () => void;
   onResuelto: (actualizada: TablaKm) => void;
 }) {
-  const [candidatos, setCandidatos] = useState<GeocodeCandidato[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    liquidacionesApi
-      .buscarLugarFila(fila.id)
-      .then((r) => setCandidatos(r.candidatos))
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Error al buscar lugar"));
-  }, [fila.id]);
+  const { candidatos, error } = useCandidatosLugar(fila.id);
 
   const handleElegir = async (body: {
     candidatoIdx?: number;

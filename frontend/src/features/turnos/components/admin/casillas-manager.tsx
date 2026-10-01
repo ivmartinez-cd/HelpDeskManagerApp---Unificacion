@@ -3,9 +3,10 @@
 import { CalendarClock, Edit2, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { turnosApi } from "../../api/turnos-api";
-import type { Casilla, Slot, UserOption } from "../../types/turnos";
+import { useCasillasData } from "../../hooks/use-casillas-data";
+import type { Casilla, Slot } from "../../types/turnos";
 import { Button } from "@/shared/components/ui/button";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useSession } from "@/services/session-provider";
@@ -20,12 +21,14 @@ export function CasillasManager() {
   const router = useRouter();
   const { can } = useSession();
   const puedeEditar = can("turnos", "manage");
-  const [casillas, setCasillas] = useState<Casilla[]>([]);
-  const [slots, setSlots] = useState<Slot[]>([]);
-  const [users, setUsers] = useState<UserOption[]>([]);
   const [selectedCasillaId, setSelectedCasillaId] = useState<string | null>(null);
   const [selectedDia, setSelectedDia] = useState<number>(0); // 0=Lunes
-  const [loading, setLoading] = useState(true);
+  // Forma funcional: si ya hay una casilla seleccionada, la conserva;
+  // si no, auto-selecciona la primera. No cierra sobre selectedCasillaId.
+  const seleccionarPrimera = useCallback((cList: Casilla[]) => {
+    setSelectedCasillaId((prev) => prev ?? (cList[0]?.id ?? null));
+  }, []);
+  const { casillas, slots, users, loading, refetch: loadData } = useCasillasData(seleccionarPrimera);
 
   // Modal Casilla
   const [casillaModalOpen, setCasillaModalOpen] = useState(false);
@@ -38,32 +41,6 @@ export function CasillasManager() {
   const [horaInicio, setHoraInicio] = useState("08:00");
   const [horaFin, setHoraFin] = useState("11:00");
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [cList, sList, uList] = await Promise.all([
-        turnosApi.listCasillas(),
-        turnosApi.listSlots(),
-        turnosApi.listAssignableUsers(),
-      ]);
-      setCasillas(cList);
-      setSlots(sList);
-      setUsers(uList);
-      // Forma funcional: si ya hay una casilla seleccionada, la conserva;
-      // si no, auto-selecciona la primera. No cierra sobre selectedCasillaId.
-      setSelectedCasillaId((prev) => prev ?? (cList[0]?.id ?? null));
-    } catch (err) {
-      console.error("Error al cargar datos de turnos:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadData();
-  }, [loadData]);
 
   const handleSaveCasilla = async (e: React.FormEvent) => {
     e.preventDefault();

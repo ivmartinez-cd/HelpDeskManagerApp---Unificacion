@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { BarChart3, FileSpreadsheet, FileText } from "lucide-react";
 import {
   BrandButton,
@@ -8,33 +8,16 @@ import {
   BrandSkeleton,
 } from "@/shared/components/ui/brand-form";
 import { reportesApi } from "../api/reportes-api";
-import type { FilaEmpleadoReporte, ReporteVacaciones } from "../types/vacaciones";
+import { useReporteVacaciones } from "../hooks/use-reporte-vacaciones";
+import type { FilaEmpleadoReporte } from "../types/vacaciones";
 import { ReportesAuditoriaTabs } from "./reportes-auditoria-tabs";
 import { GraficoSectores } from "./reportes-grafico-sectores";
 import { TablaEmpleados, TablaSectores } from "./reportes-tablas";
 
 export function ReportesView() {
-  const [data, setData] = useState<ReporteVacaciones | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error, setError, refetch: load } = useReporteVacaciones();
   const [descargando, setDescargando] = useState<"excel" | "pdf" | null>(null);
   const [filtro, setFiltro] = useState("");
-
-  const load = useCallback(() => {
-    reportesApi
-      .getReporte()
-      .then((r) => {
-        setData(r);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        console.error("Error al cargar el reporte:", err);
-        setError("No se pudo cargar el reporte de vacaciones.");
-      });
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const empleadosFiltrados = useMemo<FilaEmpleadoReporte[]>(() => {
     if (data === null) return [];

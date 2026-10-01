@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/shared/components/ui/badge";
 import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
@@ -9,6 +9,7 @@ import { Tooltip } from "@/shared/components/ui/tooltip";
 import { boolSortValue, useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { cn } from "@/shared/utils/cn";
 import { liquidacionesApi } from "../api/liquidaciones-api";
+import { useReglasAlerta } from "../hooks/use-reglas-alerta";
 import type { ReglaAlerta } from "../types/liquidaciones";
 
 const thCls =
@@ -67,21 +68,10 @@ function ToggleSwitch({ checked, onToggle, disabled }: {
 }
 
 export function ReglasConfig() {
-  const [reglas, setReglas] = useState<ReglaAlerta[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { reglas, loading, refetch: load } = useReglasAlerta();
   const [togglingCodigo, setTogglingCodigo] = useState<string | null>(null);
   const { sort, toggleSort } = useOptionalTableSort(DESC_PRIMERO);
   const filas = useSortedRows(reglas, sort, valorOrden);
-
-  const load = useCallback(async () => {
-    try {
-      setReglas(await liquidacionesApi.listReglasAlerta());
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { void load(); }, [load]);
 
   const handleToggle = async (regla: ReglaAlerta) => {
     setTogglingCodigo(regla.codigo);
