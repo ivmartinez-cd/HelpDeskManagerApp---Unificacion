@@ -39,9 +39,11 @@ class ResetPassword:
             raise TokenInvalidError()
         if not user.is_active:
             raise AccountDisabledError()
+        if not await self._deps.reset_tokens.mark_used(token_hash, at=now):
+            raise TokenAlreadyUsedError()
         user.password_hash = self._deps.hasher.hash(RawPassword(new_password))
         await self._deps.users.save(user)
-        await self._deps.reset_tokens.mark_used(token_hash, at=now)
+        await self._deps.reset_tokens.mark_all_used_for_user(user.id, at=now)
         # Un password nuevo invalida CUALQUIER sesión abierta con el viejo —
         # a diferencia de change-password, acá no hay "sesión actual" que
         # conservar (este flujo no requiere estar logueado).

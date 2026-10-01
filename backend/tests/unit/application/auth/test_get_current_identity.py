@@ -93,3 +93,17 @@ async def test_usuario_desactivado_no_autentica_aunque_la_sesion_siga_viva() -> 
 
     with pytest.raises(NotAuthenticatedError):
         await GetCurrentIdentity(_deps(users, sessions)).execute("tok")
+
+
+async def test_el_vencimiento_deslizante_no_pasa_de_7_dias_desde_el_login() -> None:
+    users = FakeUserRepository()
+    user = make_user()
+    users.rows[user.id] = user
+    sessions = FakeSessionRepository()
+    session = make_session(user_id=user.id, last_seen_delta=timedelta(hours=2))
+    session.issued_at -= timedelta(days=6)
+    sessions.rows[session.id] = session
+
+    await GetCurrentIdentity(_deps(users, sessions)).execute("tok")
+
+    assert session.expires_at == session.issued_at + timedelta(days=7)

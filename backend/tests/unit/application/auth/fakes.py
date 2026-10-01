@@ -3,7 +3,7 @@
 
 import asyncio
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, timedelta
 
 from src.modules.auth.domain.entities.password_reset_token import PasswordResetToken
@@ -218,13 +218,25 @@ class FakeResetTokenRepository:
         return sum(1 for uid, at in self.created if uid == user_id and at >= since)
 
     async def get_by_token_hash(self, token_hash: bytes) -> PasswordResetToken | None:
-        return self.rows.get(token_hash)
-
-    async def mark_used(self, token_hash: bytes, *, at: datetime) -> None:
-        self.marked_used.append(token_hash)
+        # Como la DB real: devuelve una foto de la fila y cede el turno, así dos
+        # resets en paralelo leen los dos el token todavía sin usar.
         record = self.rows.get(token_hash)
-        if record is not None:
-            record.used_at = at
+        foto = replace(record) if record is not None else None
+        await asyncio.sleep(0)
+        return foto
+
+    async def mark_used(self, token_hash: bytes, *, at: datetime) -> bool:
+        record = self.rows.get(token_hash)
+        if record is None or record.used_at is not None:
+            return False
+        self.marked_used.append(token_hash)
+        record.used_at = at
+        return True
+
+    async def mark_all_used_for_user(self, user_id: uuid.UUID, *, at: datetime) -> None:
+        for record in self.rows.values():
+            if record.user_id == user_id and record.used_at is None:
+                record.used_at = at
 
 
 DUMMY_HASH = PasswordHash(value="hash:__dummy__")

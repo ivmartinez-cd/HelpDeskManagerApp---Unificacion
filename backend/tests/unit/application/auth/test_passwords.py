@@ -1,6 +1,8 @@
 """ChangePassword y ResetPassword: rotación de hash + revocación de sesiones."""
 
+import asyncio
 import uuid
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -198,3 +200,39 @@ async def test_reset_password_usuario_inexistente_es_token_invalido() -> None:
         await ResetPassword(
             _reset_deps(FakeUserRepository(), tokens_repo, FakeSessionRepository())
         ).execute(raw_token="tok", new_password="Nueva1!a")
+
+
+async def test_reset_password_dos_veces_en_paralelo_solo_pasa_una() -> None:
+    users = FakeUserRepository()
+    user = make_user()
+    users.rows[user.id] = user
+    tokens_repo = FakeResetTokenRepository()
+    record = _reset_token(user.id)
+    tokens_repo.rows[record.token_hash] = record
+    caso = ResetPassword(_reset_deps(users, tokens_repo, FakeSessionRepository()))
+
+    resultados = await asyncio.gather(
+        caso.execute(raw_token="tok", new_password="Nueva1!a"),
+        caso.execute(raw_token="tok", new_password="Otra22!b"),
+        return_exceptions=True,
+    )
+
+    assert sum(isinstance(r, TokenAlreadyUsedError) for r in resultados) == 1
+    assert user.password_hash.value == "hash:Nueva1!a"
+
+
+async def test_reset_password_quema_los_otros_links_pendientes() -> None:
+    users = FakeUserRepository()
+    user = make_user()
+    users.rows[user.id] = user
+    tokens_repo = FakeResetTokenRepository()
+    record = _reset_token(user.id)
+    otro = replace(_reset_token(user.id), id=uuid.uuid4(), token_hash=b"h:otro")
+    tokens_repo.rows[record.token_hash] = record
+    tokens_repo.rows[otro.token_hash] = otro
+
+    await ResetPassword(_reset_deps(users, tokens_repo, FakeSessionRepository())).execute(
+        raw_token="tok", new_password="Nueva1!a"
+    )
+
+    assert otro.used_at is not None

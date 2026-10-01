@@ -16,6 +16,10 @@ from src.modules.auth.domain.services.session_token_generator import SessionToke
 
 _TOUCH_THRESHOLD = timedelta(hours=1)
 _SESSION_TTL = timedelta(days=7)
+# Tope absoluto desde el login, igual al max-age de la cookie (cookies.py): el
+# navegador la borra a los 7 días, pero una cookie robada se podía seguir usando
+# para siempre porque cada uso corría el vencimiento (auditoría 2026-09-30).
+_VIDA_MAXIMA = timedelta(days=7)
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,5 +58,5 @@ class GetCurrentIdentity:
         if now - session.last_seen_at < _TOUCH_THRESHOLD:
             return
         session.last_seen_at = now
-        session.expires_at = now + _SESSION_TTL
+        session.expires_at = min(now + _SESSION_TTL, session.issued_at + _VIDA_MAXIMA)
         await self._deps.sessions.save(session)

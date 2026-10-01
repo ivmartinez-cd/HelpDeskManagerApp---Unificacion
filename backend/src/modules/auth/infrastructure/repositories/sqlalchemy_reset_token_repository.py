@@ -28,8 +28,22 @@ class SqlAlchemyResetTokenRepository:
         model = (await self._session.execute(stmt)).scalar_one_or_none()
         return _to_entity(model) if model else None
 
-    async def mark_used(self, token_hash: bytes, *, at: datetime) -> None:
-        stmt = update(ORMToken).where(ORMToken.token_hash == token_hash).values(used_at=at)
+    async def mark_used(self, token_hash: bytes, *, at: datetime) -> bool:
+        stmt = (
+            update(ORMToken)
+            .where(ORMToken.token_hash == token_hash, ORMToken.used_at.is_(None))
+            .values(used_at=at)
+        )
+        result = await self._session.execute(stmt)
+        await self._session.flush()
+        return bool(result.rowcount)  # type: ignore[attr-defined]
+
+    async def mark_all_used_for_user(self, user_id: uuid.UUID, *, at: datetime) -> None:
+        stmt = (
+            update(ORMToken)
+            .where(ORMToken.user_id == user_id, ORMToken.used_at.is_(None))
+            .values(used_at=at)
+        )
         await self._session.execute(stmt)
         await self._session.flush()
 
