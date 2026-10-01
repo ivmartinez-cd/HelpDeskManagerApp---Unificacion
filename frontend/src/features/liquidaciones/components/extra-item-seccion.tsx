@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "@/services/session-provider";
 import { toast } from "sonner";
 import { liquidacionesApi } from "../api/liquidaciones-api";
 import { useMoneda } from "../hooks/moneda-context";
@@ -17,6 +18,7 @@ export function ExtraItemSeccion({
   onUpdated: (updated: Liquidacion) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const puedeEditar = useSession().can("liquidaciones", "update");
   const [concepto, setConcepto] = useState(liquidacion.conceptoExtra ?? "");
   const [monto, setMonto] = useState(liquidacion.montoExtra?.toString() ?? "");
   const [saving, setSaving] = useState(false);
@@ -51,7 +53,7 @@ export function ExtraItemSeccion({
         <span className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
           Ítem extra
         </span>
-        {!editing && (
+        {!editing && puedeEditar && (
           <button
             onClick={() => setEditing(true)}
             className="flex items-center gap-1.5 rounded-[8px] border border-brand-orange/40 px-3 py-1.5 font-body text-xs font-semibold text-brand-orange transition-colors hover:bg-brand-orange/10"

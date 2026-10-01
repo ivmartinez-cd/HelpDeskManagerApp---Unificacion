@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "@/services/session-provider";
 import { toast } from "sonner";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
@@ -47,8 +48,9 @@ export function AlertasLoteBar({
   const [accion, setAccion] = useState<Accion | null>(null);
   const [justificacion, setJustificacion] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const puedeEditar = useSession().can("liquidaciones", "update");
 
-  if (!seleccion || seleccion.alertasSeleccionadas.length === 0) return null;
+  if (!puedeEditar || !seleccion || seleccion.alertasSeleccionadas.length === 0) return null;
   const { seleccionados, alertasSeleccionadas, limpiar } = seleccion;
   const nAlertas = alertasSeleccionadas.length;
 

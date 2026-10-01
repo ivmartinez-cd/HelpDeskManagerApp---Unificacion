@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronRight, ExternalLink, History, Route } from "lucide-react";
+import { useSession } from "@/services/session-provider";
 import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
 import { incidentUrl } from "@/shared/utils/incident-link";
@@ -58,6 +59,7 @@ export function IncidenteRow({
   // con alertas abiertas; el resto deja el hueco para alinear la columna.
   const { formatMonto } = useMoneda();
   const seleccion = useSeleccionAlertas();
+  const puedeEditar = useSession().can("liquidaciones", "update");
   const seleccionable = seleccion?.esSeleccionable(incidente.id) ?? false;
   const serieDuplicada = alertasInc.find((a) => a.tipoAlerta === CODIGO_ALT010);
   const diff =
@@ -91,6 +93,7 @@ export function IncidenteRow({
         <td className={tdCls}>
           <div className="flex items-center gap-1.5">
             {seleccion &&
+              puedeEditar &&
               (seleccionable ? (
                 <input
                   type="checkbox"

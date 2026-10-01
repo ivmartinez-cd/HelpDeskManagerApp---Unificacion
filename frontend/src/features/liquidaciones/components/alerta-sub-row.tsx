@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "@/services/session-provider";
 import { Route } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
@@ -83,6 +84,7 @@ export function AlertaSubRow({
 }) {
   const { formatMonto } = useMoneda();
   const [gestionando, setGestionando] = useState(false);
+  const puedeEditar = useSession().can("liquidaciones", "update");
   const tdCls = "py-2 px-4 font-body text-sm";
   const tono = ESTADO_ALERTA_TONO[alerta.estado] ?? ESTADO_ALERTA_TONO.pendiente;
   const Icon = tono.icon;
@@ -146,13 +148,15 @@ export function AlertaSubRow({
               {faltante.label}
             </Link>
           )}
-          <button
-            type="button"
-            onClick={() => setGestionando(true)}
-            className="font-semibold text-brand-orange hover:underline"
-          >
-            Gestionar
-          </button>
+          {puedeEditar && (
+            <button
+              type="button"
+              onClick={() => setGestionando(true)}
+              className="font-semibold text-brand-orange hover:underline"
+            >
+              Gestionar
+            </button>
+          )}
         </span>
       </td>
       {gestionando && (

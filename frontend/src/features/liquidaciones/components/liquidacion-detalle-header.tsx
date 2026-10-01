@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, Calendar, DollarSign, ExternalLink, Receipt } from "lucide-react";
+import { useSession } from "@/services/session-provider";
 import { SegmentedControl } from "@/shared/components/ui/segmented-control";
 import type {
   EstadoLiquidacion,
@@ -40,6 +41,7 @@ export function LiquidacionDetalleHeader({
   onAnulado: () => void;
 }) {
   const { moneda, setMoneda, cotizacion, formatMonto } = useMoneda();
+  const puedeEditar = useSession().can("liquidaciones", "update");
   return (
     <div className="rounded-[12px] border border-border bg-card p-5">
       {/* Row 1: título + estado badge | reanalizar */}
@@ -50,13 +52,15 @@ export function LiquidacionDetalleHeader({
           </h1>
           <EstadoBadge estado={liquidacion.estado} />
         </div>
-        <button
-          onClick={onReanalizar}
-          disabled={reanalizing}
-          className="flex-shrink-0 rounded-[8px] bg-brand-orange px-4 py-2.5 font-body text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {reanalizing ? "Reanalizando..." : "↻ Reanalizar"}
-        </button>
+        {puedeEditar && (
+          <button
+            onClick={onReanalizar}
+            disabled={reanalizing}
+            className="flex-shrink-0 rounded-[8px] bg-brand-orange px-4 py-2.5 font-body text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {reanalizing ? "Reanalizando..." : "↻ Reanalizar"}
+          </button>
+        )}
       </div>
 
       {/* Row 2: breadcrumbs */}
@@ -142,7 +146,7 @@ export function LiquidacionDetalleHeader({
           )}
         </div>
         <div className="flex flex-col items-end gap-2">
-          {!liquidacion.numeroLiquidacion && (
+          {!liquidacion.numeroLiquidacion && puedeEditar && (
             <div className="flex items-center gap-2">
               <span
                 className="font-body text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground"
