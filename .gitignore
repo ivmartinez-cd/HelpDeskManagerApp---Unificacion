@@ -51,3 +51,7 @@ restore.sh
 
 # Backups locales de .git
 .git.bak-*/
+
+# Temporales de vim (un .env.swp guarda los secretos del .env)
+*.swp
+*.swo
