@@ -16,7 +16,7 @@ import { prestadoresApi } from "@/features/prestadores/api/prestadores-api";
 import { asistenciasApi } from "@/features/vacaciones/api/asistencias-api";
 import { solicitudesApi } from "@/features/vacaciones/api/solicitudes-api";
 import { hoyIso } from "@/features/vacaciones/lib/fechas";
-import type { Ausencia, Solicitud } from "@/features/vacaciones/types/vacaciones";
+import type { Ausencia, ProximosEquipo } from "@/features/vacaciones/types/vacaciones";
 import type { PrestadoresResumen } from "@/features/prestadores/types/prestadores";
 import { pendientesApi } from "@/features/sla/api/pendientes-api";
 import type { PendientesResumen } from "@/features/sla/types/pendientes";
@@ -27,7 +27,7 @@ import type { DashboardResponse } from "@/features/insumos/types/dashboard";
 import { liquidacionesApi } from "@/features/liquidaciones/api/liquidaciones-api";
 import { turnosApi } from "@/features/turnos/api/turnos-api";
 import type { CurrentShifts } from "@/features/turnos/types/turnos";
-import { periodoOffset } from "../utils/inicio-format";
+import { periodoOffset } from "@/shared/utils/formato-dashboard";
 
 export interface Remote<T> {
   data: T | null;
@@ -257,12 +257,6 @@ const PROXIMOS_EQUIPO_DIAS = 21;
 function addDiasIso(iso: string, n: number): string {
   const [y, m, d] = iso.split("-").map(Number);
   return formatDateLocal(new Date(y, m - 1, d + n));
-}
-
-export interface ProximosEquipo {
-  vacaciones: Solicitud[];
-  homeOffice: Ausencia[];
-  bajas: Ausencia[];
 }
 
 // /ausencias filtra por start_date (no por solapamiento, a diferencia de

@@ -4,8 +4,8 @@ import { StickyNote } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { notaApi } from "../api/nota-api";
-import { DashboardCard } from "./dashboard-card";
-import { Freshness } from "./dashboard-card-bits";
+import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
+import { Freshness } from "@/shared/components/dashboard/dashboard-card-bits";
 
 /** Debounce del autosave: se guarda la nota completa tras una pausa de
  * escritura o al perder el foco — nunca por tecla (bloat MVCC en Postgres,

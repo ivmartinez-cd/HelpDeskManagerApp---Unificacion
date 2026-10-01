@@ -3,7 +3,7 @@
 import { Fragment } from "react";
 import type { CalendarEvent, Operador } from "@/features/contadores/types/calendario";
 import { operadorEfectivo } from "@/features/contadores/utils/calendario-format";
-import { FALLBACK_COLOR, heatCellStyle } from "../utils/inicio-format";
+import { FALLBACK_COLOR, heatCellStyle } from "@/shared/utils/formato-dashboard";
 
 const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 

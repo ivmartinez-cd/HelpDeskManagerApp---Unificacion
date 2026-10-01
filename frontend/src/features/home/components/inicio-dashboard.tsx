@@ -16,8 +16,8 @@ import {
 import { buildKpiTiles } from "../config/kpi-tiles";
 import { useDashboardData } from "../hooks/use-dashboard-data";
 import { useDashboardPrefs } from "../hooks/use-dashboard-prefs";
-import { useNow } from "../hooks/use-now";
-import { fechaLarga, textoHace } from "../utils/inicio-format";
+import { useNow } from "@/shared/hooks/use-now";
+import { fechaLarga, textoHace } from "@/shared/utils/formato-dashboard";
 import { AccesosDirectos } from "./accesos-directos";
 import { CardSlot } from "./card-slot";
 import { DashboardGrid } from "./dashboard-grid";

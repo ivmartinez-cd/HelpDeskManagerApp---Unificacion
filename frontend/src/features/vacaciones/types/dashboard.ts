@@ -1,5 +1,6 @@
+import type { Ausencia } from "./ausencias";
 import type { Saldo } from "./empleados";
-import type { EstadoSolicitud } from "./solicitudes";
+import type { EstadoSolicitud, Solicitud } from "./solicitudes";
 
 export interface DiasResumen {
   year: number;
@@ -41,4 +42,11 @@ export interface EventoCalendario {
   dias: number | null;
   restantes: number | null;
   reason: string | null;
+}
+
+/** Próximos días del equipo para la card "Equipo" de Inicio (`useProximosEquipo`). */
+export interface ProximosEquipo {
+  vacaciones: Solicitud[];
+  homeOffice: Ausencia[];
+  bajas: Ausencia[];
 }

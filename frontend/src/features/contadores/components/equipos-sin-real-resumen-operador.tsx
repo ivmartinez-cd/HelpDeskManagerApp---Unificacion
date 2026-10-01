@@ -1,5 +1,5 @@
-import { BarRow } from "@/features/home/components/dashboard-card-bits";
-import { FALLBACK_COLOR, fmtInt, fmtPct } from "@/features/home/utils/inicio-format";
+import { BarRow } from "@/shared/components/dashboard/dashboard-card-bits";
+import { FALLBACK_COLOR, fmtInt, fmtPct } from "@/shared/utils/formato-dashboard";
 import type { OperadorSinReal } from "../types/equipos-sin-real";
 
 /** Nombre literal del bucket armado en el backend

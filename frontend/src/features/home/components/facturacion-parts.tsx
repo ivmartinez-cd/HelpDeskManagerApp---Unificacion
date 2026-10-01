@@ -16,7 +16,7 @@ import {
   textoAtraso,
 } from "@/features/contadores/utils/calendario-format";
 import { cn } from "@/shared/utils/cn";
-import { AGING_BUCKETS, agingDotColor, fmtInt } from "../utils/inicio-format";
+import { AGING_BUCKETS, agingDotColor, fmtInt } from "@/shared/utils/formato-dashboard";
 
 export const DIA_CIERRE = 20;
 

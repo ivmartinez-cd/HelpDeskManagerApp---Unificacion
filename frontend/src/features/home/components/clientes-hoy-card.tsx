@@ -5,9 +5,9 @@ import { CoberturaEventoTooltip } from "@/features/contadores/components/cobertu
 import type { CalendarEvent, Operador } from "@/features/contadores/types/calendario";
 import { cleanTitle, operadorEfectivo } from "@/features/contadores/utils/calendario-format";
 import { Tooltip } from "@/shared/components/ui/tooltip";
-import { FALLBACK_COLOR, accentText, tint } from "../utils/inicio-format";
-import { DashboardCard } from "./dashboard-card";
-import { CardEmpty, CardLink, CountBadge, Freshness } from "./dashboard-card-bits";
+import { FALLBACK_COLOR, accentText, tint } from "@/shared/utils/formato-dashboard";
+import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
+import { CardEmpty, CardLink, CountBadge, Freshness } from "@/shared/components/dashboard/dashboard-card-bits";
 
 // Umbral para considerar el sync viejo y avisar: el sync es manual y la
 // planificación vale lo que valga la última sincronización.

@@ -9,8 +9,8 @@ import { TurnosTimeline, ejeHorario, type TimelineShift } from "@/features/turno
 import { formatDiaMes } from "@/features/turnos/lib/variante-estado";
 import type { ResolvedShift, VarianteActiva } from "@/features/turnos/types/turnos";
 import { cn } from "@/shared/utils/cn";
-import { useNow } from "../hooks/use-now";
-import { DashboardCard } from "./dashboard-card";
+import { useNow } from "@/shared/hooks/use-now";
+import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
 import { MiTurnoBanner } from "./mi-turno-banner";
 
 export function TurnosTimelineCard({

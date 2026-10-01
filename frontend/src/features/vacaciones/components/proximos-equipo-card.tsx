@@ -1,9 +1,9 @@
 "use client";
 
 import { CalendarDays } from "lucide-react";
-import { DashboardCard } from "@/features/home/components/dashboard-card";
-import { CardEmpty, CardLink, CountBadge } from "@/features/home/components/dashboard-card-bits";
-import type { ProximosEquipo } from "@/features/home/hooks/use-inicio-data";
+import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
+import { CardEmpty, CardLink, CountBadge } from "@/shared/components/dashboard/dashboard-card-bits";
+import type { ProximosEquipo } from "../types/vacaciones";
 import { formatRango, iniciales } from "../lib/fechas";
 import type { Ausencia } from "../types/vacaciones";
 

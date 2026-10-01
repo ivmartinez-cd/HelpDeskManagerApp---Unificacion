@@ -2,10 +2,10 @@
 
 import { Printer } from "lucide-react";
 import type { PrestadoresResumen } from "@/features/prestadores/types/prestadores";
-import { fmtInt, fmtPct } from "../utils/inicio-format";
+import { fmtInt, fmtPct } from "@/shared/utils/formato-dashboard";
 import { agruparParque } from "../utils/parque";
-import { DashboardCard } from "./dashboard-card";
-import { BarRow, CardEmpty, CardLink } from "./dashboard-card-bits";
+import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
+import { BarRow, CardEmpty, CardLink } from "@/shared/components/dashboard/dashboard-card-bits";
 
 /** Parque de impresoras por operador (feature prestadores-card-parque):
  * barras ordenadas en vez de la dona anterior. Vive en "Seguimiento": es un

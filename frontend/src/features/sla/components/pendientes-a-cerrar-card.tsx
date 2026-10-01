@@ -3,13 +3,13 @@
 import { ChevronDown, ChevronRight, ClipboardList } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { PendientesResumen, PrestadorPendientes } from "../types/pendientes";
-import { DashboardCard } from "@/features/home/components/dashboard-card";
+import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
 import {
   CardEmpty,
   CardLink,
   CountBadge,
   Freshness,
-} from "@/features/home/components/dashboard-card-bits";
+} from "@/shared/components/dashboard/dashboard-card-bits";
 
 /** El resumen lo recalcula un job del backend; más de un día sin actualizar
  * es señal de job caído, no de "no hubo cambios". */

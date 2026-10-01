@@ -7,9 +7,9 @@ import { liquidacionesApi } from "@/features/liquidaciones/api/liquidaciones-api
 import { cn } from "@/shared/utils/cn";
 import type { LiquidacionesPendientes } from "../hooks/use-inicio-data";
 import { BRAND_ORANGE } from "../utils/chart-theme";
-import { fmtInt } from "../utils/inicio-format";
-import { DashboardCard } from "./dashboard-card";
-import { BarRow, CardEmpty, CardLink, CountBadge } from "./dashboard-card-bits";
+import { fmtInt } from "@/shared/utils/formato-dashboard";
+import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
+import { BarRow, CardEmpty, CardLink, CountBadge } from "@/shared/components/dashboard/dashboard-card-bits";
 
 function resumenSync(res: Awaited<ReturnType<typeof liquidacionesApi.sincronizar>>): string {
   const revisadas =

@@ -19,9 +19,9 @@ import { useTheme } from "@/shared/components/theme-provider";
 import { cn } from "@/shared/utils/cn";
 import type { SlaHistoria } from "../hooks/use-inicio-data";
 import { chartTheme } from "../utils/chart-theme";
-import { fmtInt, fmtPct, periodoLabel } from "../utils/inicio-format";
-import { DashboardCard } from "./dashboard-card";
-import { CardEmpty, CardLink, MiniStat } from "./dashboard-card-bits";
+import { fmtInt, fmtPct, periodoLabel } from "@/shared/utils/formato-dashboard";
+import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
+import { CardEmpty, CardLink, MiniStat } from "@/shared/components/dashboard/dashboard-card-bits";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 

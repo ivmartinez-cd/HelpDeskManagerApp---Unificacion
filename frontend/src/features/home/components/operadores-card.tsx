@@ -9,9 +9,9 @@ import type {
   ResumenClientesOperador,
 } from "@/features/contadores/types/calendario";
 import { useSession } from "@/services/session-provider";
-import { FALLBACK_COLOR, fmtInt, fmtPct } from "../utils/inicio-format";
-import { DashboardCard } from "./dashboard-card";
-import { BarRow, CardEmpty, CardLink } from "./dashboard-card-bits";
+import { FALLBACK_COLOR, fmtInt, fmtPct } from "@/shared/utils/formato-dashboard";
+import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
+import { BarRow, CardEmpty, CardLink } from "@/shared/components/dashboard/dashboard-card-bits";
 import { HeatmapSemana } from "./heatmap-semana";
 
 /** "Operadores" — fusión de "Contadores por operador" (antes dona) y

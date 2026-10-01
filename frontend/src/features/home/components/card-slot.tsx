@@ -7,7 +7,7 @@ import { WatiPendientesCard } from "@/features/wati/components/wati-pendientes-c
 import type { CardId, ModuleAccess } from "../config/dashboard-registry";
 import type { DashboardData } from "../hooks/use-dashboard-data";
 import { ClientesHoyCard } from "./clientes-hoy-card";
-import { DashboardCardSkeleton } from "./dashboard-card-skeleton";
+import { DashboardCardSkeleton } from "@/shared/components/dashboard/dashboard-card-skeleton";
 import { FacturacionSinCerrarCard } from "./facturacion-sin-cerrar-card";
 import { InsumosSinCargarCard } from "./insumos-sin-cargar-card";
 import { LiquidacionesPendientesCard } from "./liquidaciones-pendientes-card";

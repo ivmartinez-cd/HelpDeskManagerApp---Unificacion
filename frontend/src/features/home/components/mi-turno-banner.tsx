@@ -3,7 +3,7 @@
 import { CalendarClock } from "lucide-react";
 import { useSession } from "@/services/session-provider";
 import type { ResolvedShift } from "@/features/turnos/types/turnos";
-import { useNow } from "../hooks/use-now";
+import { useNow } from "@/shared/hooks/use-now";
 
 function nowHHMMSS(now: Date): string {
   const hh = String(now.getHours()).padStart(2, "0");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { FALLBACK_COLOR, accentText, tint } from "@/features/home/utils/inicio-format";
+import { FALLBACK_COLOR, accentText, tint } from "@/shared/utils/formato-dashboard";
 import type { OperatorShift } from "../types/turnos";
 
 /** Franja a dibujar: lo mínimo común entre `ResolvedShift` (/current) y una

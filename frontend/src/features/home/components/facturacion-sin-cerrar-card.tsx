@@ -7,9 +7,9 @@ import type {
   Operador,
 } from "@/features/contadores/types/calendario";
 import { cn } from "@/shared/utils/cn";
-import { fmtInt } from "../utils/inicio-format";
-import { DashboardCard } from "./dashboard-card";
-import { CardLink, CountBadge } from "./dashboard-card-bits";
+import { fmtInt } from "@/shared/utils/formato-dashboard";
+import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
+import { CardLink, CountBadge } from "@/shared/components/dashboard/dashboard-card-bits";
 import {
   ArrastreBlock,
   BucketsAntiguedad,

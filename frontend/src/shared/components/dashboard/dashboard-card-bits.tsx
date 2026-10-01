@@ -4,8 +4,8 @@ import { Inbox, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/shared/utils/cn";
-import { useNow } from "../hooks/use-now";
-import { minutosDesde, textoHace } from "../utils/inicio-format";
+import { useNow } from "@/shared/hooks/use-now";
+import { minutosDesde, textoHace } from "@/shared/utils/formato-dashboard";
 
 /** Link de pie de card ("Ver detalle →"): texto naranja, sin botón. El
  * botón primario queda reservado a la única acción que sí hay que hacer ahora. */

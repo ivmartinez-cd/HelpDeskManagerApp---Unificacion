@@ -2,13 +2,13 @@
 
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
-import { DashboardCard } from "@/features/home/components/dashboard-card";
+import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
 import {
   CardEmpty,
   CardLink,
   CountBadge,
   Freshness,
-} from "@/features/home/components/dashboard-card-bits";
+} from "@/shared/components/dashboard/dashboard-card-bits";
 import { brandButtonClasses } from "@/shared/components/ui/brand-form";
 import { cn } from "@/shared/utils/cn";
 import type { ConversacionPendiente, WatiPendientesResumen } from "../types/wati";

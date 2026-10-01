@@ -15,9 +15,9 @@ import { Line } from "react-chartjs-2";
 import { useTheme } from "@/shared/components/theme-provider";
 import type { MiBonoHistoria } from "../hooks/use-inicio-data";
 import { chartTheme } from "../utils/chart-theme";
-import { periodoLabel } from "../utils/inicio-format";
-import { CardEmpty, CardLink, MiniStat } from "./dashboard-card-bits";
-import { DashboardCard } from "./dashboard-card";
+import { periodoLabel } from "@/shared/utils/formato-dashboard";
+import { CardEmpty, CardLink, MiniStat } from "@/shared/components/dashboard/dashboard-card-bits";
+import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 

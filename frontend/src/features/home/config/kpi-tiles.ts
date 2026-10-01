@@ -1,6 +1,6 @@
 import { nivelEspera, textoEspera } from "@/features/wati/utils/espera";
 import type { DashboardData } from "../hooks/use-dashboard-data";
-import { fmtInt, fmtPct } from "../utils/inicio-format";
+import { fmtInt, fmtPct } from "@/shared/utils/formato-dashboard";
 import type { ModuleAccess } from "./dashboard-registry";
 
 export type KpiTone = "neutral" | "ok" | "warn" | "bad";

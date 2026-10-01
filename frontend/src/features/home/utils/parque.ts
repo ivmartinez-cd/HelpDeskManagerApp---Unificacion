@@ -1,5 +1,5 @@
 import type { PrestadoresResumen } from "@/features/prestadores/types/prestadores";
-import { FALLBACK_COLOR } from "./inicio-format";
+import { FALLBACK_COLOR } from "@/shared/utils/formato-dashboard";
 
 export interface ParqueFila {
   id: string;
