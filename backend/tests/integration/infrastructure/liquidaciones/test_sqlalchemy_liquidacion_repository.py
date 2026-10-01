@@ -230,3 +230,17 @@ async def test_list_periodos_returns_distinct_sorted(
     assert "2026-02" in periodos
     assert periodos.count("2026-01") == 1
     assert periodos.index("2026-02") < periodos.index("2026-01")
+
+
+async def test_numeros_por_ids_trae_varios_en_una_consulta(
+    db_session: AsyncSession, prestador_id: uuid.UUID
+) -> None:
+    a = await _create_liquidacion(db_session, prestador_id, numero_liquidacion="7-1")
+    b = await _create_liquidacion(db_session, prestador_id, numero_liquidacion="7-2")
+    inexistente = uuid.uuid4()
+
+    numeros = await SqlAlchemyLiquidacionRepository(db_session).numeros_por_ids(
+        {a.id, b.id, inexistente}
+    )
+
+    assert numeros == {a.id: "7-1", b.id: "7-2"}

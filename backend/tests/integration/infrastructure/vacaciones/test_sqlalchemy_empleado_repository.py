@@ -82,3 +82,18 @@ async def test_delete_cascadea_ciclos_y_solicitudes(
 
     assert await ciclos.get(empleado.id, 2026) is None
     assert await solicitudes.get_by_id(solicitud_id) is None
+
+
+@pytest.mark.asyncio
+async def test_count_activos_por_departamentos_agrupa_en_una_consulta(
+    db_session: AsyncSession, sector_id: uuid.UUID, cargo_id: uuid.UUID
+) -> None:
+    repo = SqlAlchemyEmpleadoRepository(db_session)
+    await repo.add(make_empleado_entity(sector_id, cargo_id))
+    await repo.add(make_empleado_entity(sector_id, cargo_id))
+    await repo.add(make_empleado_entity(sector_id, cargo_id, status=EstadoEmpleado.INACTIVE))
+
+    conteo = await repo.count_activos_por_departamentos()
+
+    assert conteo[sector_id] == 2
+    assert conteo[sector_id] == await repo.count_activos_por_departamento(sector_id)

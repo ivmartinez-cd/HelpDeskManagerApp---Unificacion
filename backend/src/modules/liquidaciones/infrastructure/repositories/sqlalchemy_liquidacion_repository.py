@@ -23,6 +23,14 @@ class SqlAlchemyLiquidacionRepository:
         row = await self._session.get(LiquidacionModel, liquidacion_id)
         return _to_entity(row) if row else None
 
+
+    async def numeros_por_ids(self, liquidacion_ids: set[UUID]) -> dict[UUID, str | None]:
+        if not liquidacion_ids:
+            return {}
+        stmt = select(LiquidacionModel.id, LiquidacionModel.numero_liquidacion).where(
+            LiquidacionModel.id.in_(liquidacion_ids)
+        )
+        return {row.id: row.numero_liquidacion for row in await self._session.execute(stmt)}
     async def list_filtered(
         self,
         prestador_id: UUID | None = None,

@@ -91,9 +91,4 @@ async def _a_schema(
 async def _numeros_liquidacion(
     db: AsyncSession, liquidacion_ids: set[UUID]
 ) -> dict[UUID, str | None]:
-    liquidaciones = SqlAlchemyLiquidacionRepository(db)
-    resultado: dict[UUID, str | None] = {}
-    for liquidacion_id in liquidacion_ids:
-        liq = await liquidaciones.get_by_id(liquidacion_id)
-        resultado[liquidacion_id] = liq.numero_liquidacion if liq else None
-    return resultado
+    return await SqlAlchemyLiquidacionRepository(db).numeros_por_ids(liquidacion_ids)

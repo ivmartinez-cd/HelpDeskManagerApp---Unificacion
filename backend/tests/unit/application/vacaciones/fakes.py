@@ -68,6 +68,13 @@ class FakeEmpleadoRepo:
             if e.department_id == department_id and e.esta_activo
         )
 
+    async def count_activos_por_departamentos(self) -> dict[uuid.UUID, int]:
+        conteo: dict[uuid.UUID, int] = {}
+        for e in self._items.values():
+            if e.esta_activo and e.department_id is not None:
+                conteo[e.department_id] = conteo.get(e.department_id, 0) + 1
+        return conteo
+
     async def add(self, empleado: Empleado) -> None:
         self._items[empleado.id] = empleado
 

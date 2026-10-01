@@ -54,8 +54,13 @@ class SqlAlchemyAlertaRepository:
         await self._session.flush()
         self._session.add_all(_a_vinculos(modelos, alertas))
         await self._session.flush()
-        for modelo in modelos:
-            await self._session.refresh(modelo)
+        # Un solo SELECT para traer los server_default, no un refresh por alerta.
+        stmt = (
+            select(AlertaModel)
+            .where(AlertaModel.id.in_([m.id for m in modelos]))
+            .execution_options(populate_existing=True)
+        )
+        await self._session.execute(stmt)
         grupos = {
             m.id: a.generada.grupo_incidente_ids
             for m, a in zip(modelos, alertas, strict=True)

@@ -43,6 +43,7 @@ class ListSectores:
         sectores = await self._deps.sectores.list_all()
         jefes = await self._deps.sector_manager.list_jefes()
         usuarios = await self._deps.users.get_by_ids([j.user_id for j in jefes])
+        activos = await self._deps.empleados.count_activos_por_departamentos()
         dtos = []
         for sector in sectores:
             jefes_sector = [
@@ -50,7 +51,7 @@ class ListSectores:
                 for j in jefes
                 if j.department_id == sector.id and j.user_id in usuarios
             ]
-            count = await self._deps.empleados.count_activos_por_departamento(sector.id)
+            count = activos.get(sector.id, 0)
             dtos.append(SectorDTO(sector=sector, empleados_count=count, jefes=jefes_sector))
         return dtos
 

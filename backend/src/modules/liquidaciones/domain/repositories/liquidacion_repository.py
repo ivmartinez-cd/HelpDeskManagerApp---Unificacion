@@ -9,6 +9,10 @@ from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
 class LiquidacionRepository(Protocol):
     async def get_by_id(self, liquidacion_id: UUID) -> Liquidacion | None: ...
 
+    async def numeros_por_ids(self, liquidacion_ids: set[UUID]) -> dict[UUID, str | None]:
+        """`numero_liquidacion` de varias liquidaciones en una sola consulta."""
+        ...
+
     async def list_filtered(
         self,
         prestador_id: UUID | None = None,

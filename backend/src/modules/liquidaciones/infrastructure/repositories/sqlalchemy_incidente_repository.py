@@ -59,23 +59,29 @@ class SqlAlchemyIncidenteRepository:
         modelos = [_a_model(liquidacion_id, i) for i in incidentes]
         self._session.add_all(modelos)
         await self._session.flush()
-        for modelo in modelos:
-            await self._session.refresh(modelo)
+        # Un solo SELECT para traer los server_default (id, estado…), no un refresh por fila.
+        stmt = (
+            select(IncidenteModel)
+            .where(IncidenteModel.id.in_([m.id for m in modelos]))
+            .execution_options(populate_existing=True)
+        )
+        await self._session.execute(stmt)
         return [_to_entity(m) for m in modelos]
 
     async def apply_evaluacion(self, resultados: Sequence[IncidenteEvaluado]) -> None:
-        for r in resultados:
-            stmt = (
-                update(IncidenteModel)
-                .where(IncidenteModel.id == r.incidente_id)
-                .values(
-                    costo_servicio_esperado=r.costo_servicio_esperado,
-                    cant_km_esperado=r.cant_km_esperado,
-                    costo_km_esperado=r.costo_km_esperado,
-                    estado_validacion=r.estado_validacion,
-                )
-            )
-            await self._session.execute(stmt)
+        # UPDATE por clave primaria en lote (executemany), no uno por incidente.
+        filas = [
+            {
+                "id": r.incidente_id,
+                "costo_servicio_esperado": r.costo_servicio_esperado,
+                "cant_km_esperado": r.cant_km_esperado,
+                "costo_km_esperado": r.costo_km_esperado,
+                "estado_validacion": r.estado_validacion,
+            }
+            for r in resultados
+        ]
+        if filas:
+            await self._session.execute(update(IncidenteModel), filas)
 
     async def empresas_con_actividad_reciente(
         self, prestador_id: UUID, desde_periodo: str
@@ -93,26 +99,9 @@ class SqlAlchemyIncidenteRepository:
         return {r for r in rows if r is not None}
 
     async def update_cobrados(self, cambios: Sequence[IncidenteActualizado]) -> None:
-        for c in cambios:
-            stmt = (
-                update(IncidenteModel)
-                .where(IncidenteModel.id == c.incidente_id)
-                .values(
-                    rubro=c.rubro,
-                    tipo=c.tipo,
-                    empresa_nombre=c.empresa_nombre,
-                    sucursal_nombre=c.sucursal_nombre,
-                    nro_serie=c.nro_serie,
-                    fecha_cierre=c.fecha_cierre,
-                    costo_servicio_cobrado=c.costo_servicio_cobrado,
-                    cant_km_cobrado=c.cant_km_cobrado,
-                    costo_km_cobrado=c.costo_km_cobrado,
-                    total_viaje_cobrado=c.total_viaje_cobrado,
-                    costo_total_cobrado=c.costo_total_cobrado,
-                    pasa_it=c.pasa_it,
-                )
-            )
-            await self._session.execute(stmt)
+        filas = [_cobrados(c) for c in cambios]
+        if filas:
+            await self._session.execute(update(IncidenteModel), filas)
 
     async def delete_by_ids(self, incidente_ids: Sequence[UUID]) -> int:
         from sqlalchemy.engine import CursorResult
@@ -176,3 +165,21 @@ def _to_entity(row: IncidenteModel) -> Incidente:
         costo_km_esperado=row.costo_km_esperado,
         estado_validacion=row.estado_validacion,
     )
+
+
+def _cobrados(c: IncidenteActualizado) -> dict[str, object]:
+    return {
+        "id": c.incidente_id,
+        "rubro": c.rubro,
+        "tipo": c.tipo,
+        "empresa_nombre": c.empresa_nombre,
+        "sucursal_nombre": c.sucursal_nombre,
+        "nro_serie": c.nro_serie,
+        "fecha_cierre": c.fecha_cierre,
+        "costo_servicio_cobrado": c.costo_servicio_cobrado,
+        "cant_km_cobrado": c.cant_km_cobrado,
+        "costo_km_cobrado": c.costo_km_cobrado,
+        "total_viaje_cobrado": c.total_viaje_cobrado,
+        "costo_total_cobrado": c.costo_total_cobrado,
+        "pasa_it": c.pasa_it,
+    }

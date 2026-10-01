@@ -90,6 +90,14 @@ class SqlAlchemyEmpleadoRepository:
         )
         return (await self._session.execute(stmt)).scalar_one()
 
+    async def count_activos_por_departamentos(self) -> dict[uuid.UUID, int]:
+        stmt = (
+            select(VacacionesEmpleadoModel.department_id, func.count())
+            .where(VacacionesEmpleadoModel.status == EstadoEmpleado.ACTIVE.value)
+            .group_by(VacacionesEmpleadoModel.department_id)
+        )
+        return {dep: n for dep, n in (await self._session.execute(stmt)).tuples() if dep}
+
     async def add(self, empleado: Empleado) -> None:
         self._session.add(_to_model(empleado))
         await self._session.flush()
