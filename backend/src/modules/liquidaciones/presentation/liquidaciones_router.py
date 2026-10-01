@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
-from src.modules.liquidaciones.domain.well_known_permissions import CREATE, UPDATE, VIEW
+from src.modules.liquidaciones.domain.well_known_permissions import CREATE, DELETE, UPDATE, VIEW
 from src.modules.liquidaciones.infrastructure.repositories.sqlalchemy_incidente_repository import (
     SqlAlchemyIncidenteRepository,
 )
@@ -65,6 +65,7 @@ router = APIRouter(prefix="/api/liquidaciones", tags=["liquidaciones"])
 _require_view = Depends(require_permission(VIEW))
 _require_update = Depends(require_permission(UPDATE))
 _require_create = Depends(require_permission(CREATE))
+_require_delete = Depends(require_permission(DELETE))
 # Catálogo chico que alimenta combos y el listado completo de config — el
 # contrato sigue paginado con default generoso (mismo criterio que prestadores).
 _CATALOGO_SIZE = 500
@@ -223,7 +224,7 @@ async def update_extra_liquidacion(
 async def delete_liquidacion(
     liquidacion_id: UUID,
     forzar: bool = Query(default=False),
-    _: Identity = _require_update,
+    _: Identity = _require_delete,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
     """Baja local. Para liquidaciones sin `numeroLiquidacion` (CSV sin AyC ID) borra

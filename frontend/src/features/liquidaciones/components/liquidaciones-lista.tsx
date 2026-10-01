@@ -26,7 +26,7 @@ export function LiquidacionesLista() {
   // Importar = liquidaciones.create; DELETE /{id} (baja local) = update (ADR-029).
   const { can } = useSession();
   const puedeImportar = can("liquidaciones", "create");
-  const puedeEliminar = can("liquidaciones", "update");
+  const puedeEliminar = can("liquidaciones", "delete");
   const [liquidaciones, setLiquidaciones] = useState<Liquidacion[]>([]);
   const [prestadores, setPrestadores] = useState<PrestadorLiquidacion[]>([]);
   const [periodos, setPeriodos] = useState<string[]>([]);

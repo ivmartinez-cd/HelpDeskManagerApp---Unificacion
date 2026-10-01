@@ -102,7 +102,7 @@ export function AyCAccionesBar({ liquidacion, onActualizado, onAnulado }: Props)
       (a === "anular" ? can("liquidaciones", "delete") : can("liquidaciones", "approve")) &&
       accionValidaDesdeEstado(a, liquidacion.estado),
   );
-  const puedeBorrarLocal = can("liquidaciones", "update");
+  const puedeBorrarLocal = can("liquidaciones", "delete");
 
   if (!liquidacion.numeroLiquidacion || acciones.length === 0) return null;
 
