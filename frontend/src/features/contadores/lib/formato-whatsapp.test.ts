@@ -14,6 +14,8 @@ describe("detalle de contadores para WhatsApp", () => {
     const lineas = formatearTablaWhatsapp([fila({}), fila({ serie: "S2" })], "Acme SA", "Proceso 123").split("\n");
     expect(lineas[0]).toBe("📋 *Detalle de contadores — Acme SA*");
     expect(lineas[1]).toBe("Proceso 123 · 2 equipos");
+    const uno = formatearTablaWhatsapp([fila({})], "Acme SA", "Proceso 123").split("\n");
+    expect(uno[1]).toBe("Proceso 123 · 1 equipo");
   });
 
   it("agrupa por sucursal en orden alfabético con la cantidad de cada una", () => {

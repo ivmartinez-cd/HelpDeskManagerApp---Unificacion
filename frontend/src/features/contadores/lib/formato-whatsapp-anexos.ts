@@ -51,7 +51,7 @@ export function formatearAnexosPendientesWhatsapp(
 
   return [
     `📋 *Anexos sin facturar — ${periodoLabel}*`,
-    `${filas.length} anexos`,
+    `${filas.length} anexo${filas.length !== 1 ? "s" : ""}`,
     "",
     bloques.join("\n\n\n"),
   ].join("\n");

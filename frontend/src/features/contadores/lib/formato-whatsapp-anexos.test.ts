@@ -13,6 +13,9 @@ describe("anexos sin facturar para WhatsApp", () => {
     const lineas = formatearAnexosPendientesWhatsapp([anexo({}), anexo({ anexo: "AX-2" })], "Agosto 2026").split("\n");
     expect(lineas[0]).toBe("📋 *Anexos sin facturar — Agosto 2026*");
     expect(lineas[1]).toBe("2 anexos");
+    expect(formatearAnexosPendientesWhatsapp([anexo({})], "Agosto 2026").split("\n")[1]).toBe(
+      "1 anexo",
+    );
   });
 
   it("agrupa por grupo de cliente en orden alfabético, con 'Sin grupo' para los que no tienen", () => {

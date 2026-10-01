@@ -55,7 +55,7 @@ export function formatearTablaWhatsapp(
 
   return [
     `📋 *Detalle de contadores — ${cliente}*`,
-    `${alcanceLabel} · ${filas.length} equipos`,
+    `${alcanceLabel} · ${filas.length} equipo${filas.length !== 1 ? "s" : ""}`,
     "",
     bloques.join("\n\n\n"),
   ].join("\n");
