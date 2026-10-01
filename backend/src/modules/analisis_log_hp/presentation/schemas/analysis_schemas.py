@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from src.modules.analisis_log_hp.domain.entities.incident import Incident
 from src.modules.analisis_log_hp.domain.entities.log_event import EnrichedEvent
@@ -99,9 +100,22 @@ class SdsExtractResponse(BaseModel):
     help_urls_updated: int
 
 
+# El modelo lo fija el servidor (antes lo elegía el cliente: cualquiera con permiso
+# de ver podía pedir el más caro a cuenta de la empresa) y el contenido tiene tope:
+# 500 KB de JSON ≈ 125k tokens, más que cualquier log real (auditoría 2026-09-30).
+MODELO_IA = "claude-sonnet-4-6"
+_MAX_PAYLOAD_JSON = 500_000
+
+
 class AiDiagnoseRequest(BaseModel):
     payload: dict[str, Any]
-    model: str = "claude-sonnet-4-6"
+
+    @field_validator("payload")
+    @classmethod
+    def _acotado(cls, valor: dict[str, Any]) -> dict[str, Any]:
+        if len(json.dumps(valor, default=str)) > _MAX_PAYLOAD_JSON:
+            raise ValueError("El contenido a analizar es demasiado grande")
+        return valor
 
 
 class AiDiagnoseResponse(BaseModel):

@@ -17,6 +17,7 @@ from src.modules.analisis_log_hp.presentation.dependencies import (
     get_error_code_repo,
 )
 from src.modules.analisis_log_hp.presentation.schemas.analysis_schemas import (
+    MODELO_IA,
     AiDiagnoseRequest,
     AiDiagnoseResponse,
     AnalysisRequest,
@@ -71,7 +72,7 @@ async def ai_diagnose(
     _: Identity = _require_view,
 ) -> AiDiagnoseResponse:
     uc = DiagnoseAi(get_ai_gateway())
-    result = await uc.execute(body.payload, body.model)
+    result = await uc.execute(body.payload, MODELO_IA)
     return AiDiagnoseResponse(
         diagnosis=result.diagnosis, tokens=result.tokens, cost_usd=result.cost_usd
     )
@@ -83,7 +84,7 @@ async def pdf_summary(
     _: Identity = _require_view,
 ) -> AiDiagnoseResponse:
     uc = GeneratePdfSummary(get_ai_gateway())
-    result = await uc.execute(body.payload, body.model)
+    result = await uc.execute(body.payload, MODELO_IA)
     return AiDiagnoseResponse(
         diagnosis=result.diagnosis, tokens=result.tokens, cost_usd=result.cost_usd
     )
