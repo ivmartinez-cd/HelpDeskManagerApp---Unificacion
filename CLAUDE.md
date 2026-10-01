@@ -99,6 +99,10 @@ en una auditoría aparte. Concretamente:
   contrato siga siendo paginado.
 - **Tamaños máximos (§4)**: archivo ≤300 líneas, clase ≤200, función ≤20. Si un archivo se pasa,
   separar en módulos por responsabilidad en el momento, no siguiendo agregando al mismo archivo.
+  Para funciones, desde ADR-042 (2026-10-01) el gate mide **solo el cuerpo** (sin firma, decoradores
+  ni docstring) y falla recién **por encima de 25 líneas**: 20 sigue siendo la referencia al
+  escribir, 21-25 es margen aceptado. No partir una función por 2-3 líneas solo para pasar el
+  conteo; sí dividirla si mezcla responsabilidades, mida lo que mida.
 - **Verificación antes de dar por terminado un módulo** (no solo al final de todo el proyecto):
   **hoy no hay CI**. GitHub quedó abandonado (2026-09-24) y el Gitea de Canal Directo, que es
   el único remoto vivo, no tiene runner registrado — `.gitea/workflows/ci.yml` es un no-op a
