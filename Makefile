@@ -11,7 +11,7 @@ PGDB     ?= helpdesk
 TEST_DB  := helpdesk-db-test
 NET      := helpdesk-manager_default
 
-.PHONY: help status check check-fast test-module lint-imports ruff mypy test test-integration sizes sizes-wip guards guards-wip audit coverage lint-frontend typecheck-frontend hooks \
+.PHONY: help status check check-fast test-module lint-imports ruff mypy test test-integration sizes sizes-wip guards guards-wip audit coverage test-frontend lint-frontend typecheck-frontend hooks \
         db-backup db-restore restart-backend restart-frontend recreate-backend \
         logs-backend logs-frontend mailpit up ps
 
@@ -37,10 +37,10 @@ status:  ## Estado del entorno (contenedores, jobs, git)
 # módulo. Referencia de costo en la máquina anterior (WSL sobre HDD USB, 2026-09-02):
 # lint-imports 42 s, ruff 5 s, mypy 108 s, pytest unit 101 s, sizes+guards 29 s (≈5 min).
 # Sin re-medir en esta máquina (Ubuntu nativo sobre NVMe). Ningún hook de git lo corre.
-check: lint-imports ruff mypy coverage test-integration sizes guards audit  ## Verificación completa (sin CI, corrésla vos): lint-imports + ruff + mypy + pytest unit con cobertura + integración + gates + audit
+check: lint-imports ruff mypy coverage test-integration sizes guards audit test-frontend  ## Verificación completa (sin CI, corrésla vos): lint-imports + ruff + mypy + pytest unit con cobertura + integración + gates + audit
 	@echo "✔ check completo"
 
-check-fast: lint-imports ruff mypy test sizes guards audit  ## check sin test-integration (ningún hook lo corre)
+check-fast: lint-imports ruff mypy test sizes guards audit test-frontend  ## check sin test-integration (ningún hook lo corre)
 	@echo "✔ check-fast completo"
 
 test-module:  ## pytest unit SOLO del módulo M (make test-module M=contadores)
@@ -84,6 +84,9 @@ coverage:  ## §7: pytest unit con cobertura; falla si domain <90% o application
 audit:  ## §8.6: vulnerabilidades conocidas en dependencias — pip-audit sobre uv.lock + npm audit (sin dev). Necesita red
 	$(EXEC) sh -c 'uv export --frozen --format requirements-txt --no-emit-project > /tmp/requirements-audit.txt && uvx pip-audit -r /tmp/requirements-audit.txt --disable-pip --require-hashes --progress-spinner off'
 	docker exec $(FRONTEND) npm audit --omit=dev
+
+test-frontend:  ## vitest: tests unitarios de la lógica pura del frontend (src/**/*.test.ts, ADR-045)
+	docker exec $(FRONTEND) npm test --silent
 
 lint-frontend:  ## eslint del frontend (dentro del contenedor)
 	docker exec $(FRONTEND) npm run -s lint
