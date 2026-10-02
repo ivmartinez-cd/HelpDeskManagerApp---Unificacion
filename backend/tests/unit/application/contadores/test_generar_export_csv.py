@@ -97,6 +97,11 @@ class FakeCandidatos:
             LecturaCandidataSiges(11, date(2026, 1, 30), 1, 400.0, True),
         ]
 
+    async def fetch_lecturas_de_equipos(
+        self, equipos: list[tuple[int, int]]
+    ) -> dict[tuple[int, int], list[LecturaCandidataSiges]]:
+        return {e: await self.fetch_lecturas(*e) for e in equipos}
+
     async def fetch_metadata_equipo(self, id_maquina: int) -> MetadataEquipoSiges | None:
         return None
 

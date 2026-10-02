@@ -40,6 +40,39 @@ ORDER BY C.FechaTomaContador DESC,
          C.ID_Contador        DESC
 """
 
+# `CANDIDATOS_EQUIPO_SQL` para varios equipos a la vez (relectura de las P/L
+# manuales del tablero): mismas columnas y mismo TOP 24 por equipo/clase.
+# `{maquinas}` son placeholders `?`; la clase se filtra en el gateway.
+CANDIDATOS_EQUIPOS_LOTE_SQL = """
+SELECT ID_Contador, ID_Maquina, ID_ClaseContador, FechaTomaContador, Contador,
+       ID_TipoToma, DescTipoToma, Para_Facturar, ID_Empresa, ID_Sucursal, ID_Anexo
+FROM (
+    SELECT
+        C.ID_Contador,
+        C.ID_Maquina,
+        C.ID_ClaseContador,
+        C.FechaTomaContador,
+        C.Contador,
+        C.ID_TipoToma,
+        TT.Descripcion     AS DescTipoToma,
+        TT.Para_Facturar   AS Para_Facturar,
+        C.ID_Empresa,
+        C.ID_Sucursal,
+        C.ID_Anexo,
+        ROW_NUMBER() OVER (
+            PARTITION BY C.ID_Maquina, C.ID_ClaseContador
+            ORDER BY C.FechaTomaContador DESC, C.ID_Contador DESC
+        ) AS Orden
+    FROM  Contadores  C  WITH (NOLOCK)
+    INNER JOIN Tipo_Toma TT WITH (NOLOCK)
+        ON  TT.id          = C.ID_TipoToma
+    WHERE C.ID_Maquina IN ({maquinas})
+      AND C.Estado      <> 1
+) L
+WHERE L.Orden <= 24
+ORDER BY ID_Maquina, ID_ClaseContador, Orden
+"""
+
 METADATA_EQUIPO_SQL = """
 SELECT
     M.Nro_Serie,

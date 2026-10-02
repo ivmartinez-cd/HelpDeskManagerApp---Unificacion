@@ -100,8 +100,10 @@ def entorno(monkeypatch: pytest.MonkeyPatch) -> Iterator[_Entorno]:
     ) -> EstimacionInput | None:
         return entrada_ejemplo(id_maquina, clase, await contexto_ejemplo(None))
 
-    async def _releer_siges(_id_maquina: int, _clase: str) -> dict[int, LecturaElegidaDto]:
-        return dict(_LECTURAS_SIGES)
+    async def _releer_siges(
+        claves: list[tuple[int, str]],
+    ) -> dict[tuple[int, str], dict[int, LecturaElegidaDto]]:
+        return {c: dict(_LECTURAS_SIGES) for c in claves}
 
     deps = _Deps(e.decisiones, e.decisiones, lambda: None, _releer_siges, None)  # type: ignore[arg-type]
     monkeypatch.setattr(candidatos_router, "dependencias_proyeccion", lambda _db: deps)

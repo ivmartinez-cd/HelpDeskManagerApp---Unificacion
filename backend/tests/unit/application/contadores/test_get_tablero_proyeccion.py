@@ -170,6 +170,9 @@ async def test_descartar_ignora_lo_restaurado_pero_no_lo_decidido_despues() -> N
     assert resultado.restauracion.vigentes_hasta == datetime(2026, 9, 24, 11, 0, tzinfo=UTC)
 
 
+_Releidas = dict[tuple[int, str], dict[int, LecturaElegidaDto]]
+
+
 def _pl_con_ids() -> DecisionOperadorDto:
     return DecisionOperadorDto(
         "PL_Manual",
@@ -179,11 +182,13 @@ def _pl_con_ids() -> DecisionOperadorDto:
 
 
 async def test_pl_manual_se_relee_de_siges_por_id_contador() -> None:
-    async def releer(id_maquina: int, clase: str) -> dict[int, LecturaElegidaDto]:
-        assert (id_maquina, clase) == (6, "10")
+    async def releer(claves: list[tuple[int, str]]) -> _Releidas:
+        assert claves == [(6, "10")]
         return {
-            11: LecturaElegidaDto(date(2026, 1, 31), 40_000, 1, id_contador=11),
-            12: LecturaElegidaDto(date(2026, 3, 2), 46_000, 1, id_contador=12),
+            (6, "10"): {
+                11: LecturaElegidaDto(date(2026, 1, 31), 40_000, 1, id_contador=11),
+                12: LecturaElegidaDto(date(2026, 3, 2), 46_000, 1, id_contador=12),
+            }
         }
 
     resultado = await _tablero({(6, "10"): _pl_con_ids()}, releer=releer)
@@ -195,8 +200,8 @@ async def test_pl_manual_se_relee_de_siges_por_id_contador() -> None:
 
 
 async def test_pl_manual_con_lectura_borrada_en_siges_se_descarta() -> None:
-    async def releer(id_maquina: int, clase: str) -> dict[int, LecturaElegidaDto]:
-        return {11: LecturaElegidaDto(date(2026, 1, 31), 40_000, 1, id_contador=11)}
+    async def releer(claves: list[tuple[int, str]]) -> _Releidas:
+        return {(6, "10"): {11: LecturaElegidaDto(date(2026, 1, 31), 40_000, 1, id_contador=11)}}
 
     resultado = await _tablero({(6, "10"): _pl_con_ids()}, releer=releer)
 
@@ -207,7 +212,7 @@ async def test_pl_manual_con_lectura_borrada_en_siges_se_descarta() -> None:
 async def test_si_falla_la_relectura_se_descarta_esa_pl_y_se_loguea(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    async def releer(id_maquina: int, clase: str) -> dict[int, LecturaElegidaDto]:
+    async def releer(claves: list[tuple[int, str]]) -> _Releidas:
         raise ConnectionError("Siges no responde")
 
     resultado = await _tablero({(6, "10"): _pl_con_ids()}, releer=releer)
@@ -220,7 +225,7 @@ async def test_pl_manual_sin_id_contador_en_modo_real_se_descarta() -> None:
     """`ReconstruirOverrideAsync`: sin `PartidaIdContador`/`LlegadaIdContador`
     no se puede releer la pareja y la decisión no se restaura."""
 
-    async def releer(id_maquina: int, clase: str) -> dict[int, LecturaElegidaDto]:
+    async def releer(claves: list[tuple[int, str]]) -> _Releidas:
         raise AssertionError("sin ids no hay nada que releer")
 
     sin_ids = DecisionOperadorDto(

@@ -74,7 +74,8 @@ async def par_de_siges(
     id_partida, id_llegada = par.partida.id_contador, par.llegada.id_contador
     if id_partida is None or id_llegada is None:
         raise AccionProyeccionInvalidaError(_SIN_ID_CONTADOR)
-    lecturas = await deps.releer_siges(par.id_maquina, par.clase)
+    clave = (par.id_maquina, par.clase)
+    lecturas = (await deps.releer_siges([clave])).get(clave, {})
     partida, llegada = lecturas.get(id_partida), lecturas.get(id_llegada)
     if partida is None or llegada is None:
         raise AccionProyeccionInvalidaError(_LECTURA_INEXISTENTE)

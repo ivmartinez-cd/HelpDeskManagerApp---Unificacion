@@ -95,6 +95,14 @@ class CandidatosEquipoPort(Protocol):
         las marcas de cambio de empresa/sucursal/anexo ya calculadas."""
         ...
 
+    async def fetch_lecturas_de_equipos(
+        self, equipos: list[tuple[int, int]]
+    ) -> dict[tuple[int, int], list[LecturaCandidataSiges]]:
+        """Las mismas 24 lecturas de `fetch_lecturas` para varios
+        (ID_Maquina, ID_ClaseContador) en una sola consulta, sin las marcas de
+        cambio de ubicación. Un equipo sin lecturas no aparece."""
+        ...
+
     async def fetch_metadata_equipo(self, id_maquina: int) -> MetadataEquipoSiges | None:
         """Identidad del equipo (ubicación y modelo actuales) — `None` si el
         `ID_Maquina` no existe en Siges."""

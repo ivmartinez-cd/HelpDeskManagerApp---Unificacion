@@ -36,8 +36,10 @@ from src.modules.contadores.presentation.dependencies import (
 def dependencias_proyeccion(db: AsyncSession) -> DependenciasProyeccion:
     """Lo que necesitan las acciones del operador sobre la Proyección (ADR-044)."""
 
-    async def releer(id_maquina: int, clase: str) -> dict[int, LecturaElegidaDto]:
-        return await releer_lecturas_de_siges(get_candidatos_equipo_gateway())(id_maquina, clase)
+    async def releer(
+        claves: list[tuple[int, str]],
+    ) -> dict[tuple[int, str], dict[int, LecturaElegidaDto]]:
+        return await releer_lecturas_de_siges(get_candidatos_equipo_gateway())(claves)
 
     return DependenciasProyeccion(
         decisiones_reales=SqlAlchemyDecisionesOperadorRepository(db),

@@ -34,7 +34,7 @@ from src.modules.contadores.application.use_cases._releer_pl_manual import (
     ReleerLecturas as ReleerLecturas,
 )
 from src.modules.contadores.application.use_cases._releer_pl_manual import (
-    con_pl_releida,
+    con_pls_releidas,
 )
 from src.modules.contadores.application.use_cases._releer_pl_manual import (
     releer_lecturas_de_siges as releer_lecturas_de_siges,
@@ -111,7 +111,7 @@ class GetTableroProyeccionUseCase:
         releer = self._releer_lecturas
         if releer is None:
             return decisiones
-        return {clave: await con_pl_releida(clave, d, releer) for clave, d in decisiones.items()}
+        return await con_pls_releidas(decisiones, releer)
 
 
 @dataclass(frozen=True, slots=True)

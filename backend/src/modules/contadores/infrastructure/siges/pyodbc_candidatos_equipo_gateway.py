@@ -14,6 +14,7 @@ from src.modules.contadores.domain.ports.candidatos_equipo_port import (
 )
 from src.modules.contadores.infrastructure.siges.candidatos_query import (
     CANDIDATOS_EQUIPO_SQL,
+    CANDIDATOS_EQUIPOS_LOTE_SQL,
     METADATA_EQUIPO_SQL,
 )
 from src.shared.infrastructure.orion.query_runner import OrionQueryRunner
@@ -36,6 +37,28 @@ class PyodbcCandidatosEquipoGateway:
             log_extra={"id_maquina": id_maquina, "id_clase_contador": id_clase_contador},
         )
         return marcar_cambios_de_ubicacion([_lectura_de(r) for r in rows])
+
+    async def fetch_lecturas_de_equipos(
+        self, equipos: list[tuple[int, int]]
+    ) -> dict[tuple[int, int], list[LecturaCandidataSiges]]:
+        # ponytail: un `?` por máquina; SQL Server admite ~2100 parámetros,
+        # partir en tandas si un proceso llega a tener más equipos editados.
+        maquinas = sorted({m for m, _ in equipos})
+        if not maquinas:
+            return {}
+        rows = await self._runner.fetch_all(
+            CANDIDATOS_EQUIPOS_LOTE_SQL.format(maquinas=", ".join("?" * len(maquinas))),
+            maquinas,
+            gateway=_GATEWAY,
+            log_message="Fallo la lista de candidatos de varios equipos contra Siges/ORION",
+            log_extra={"equipos": len(maquinas)},
+        )
+        pedidos = set(equipos)
+        por_equipo: dict[tuple[int, int], list[LecturaCandidataSiges]] = {}
+        for r in rows:
+            if (clave := (int(r[1]), int(r[2]))) in pedidos:
+                por_equipo.setdefault(clave, []).append(_lectura_de(r))
+        return por_equipo
 
     async def fetch_metadata_equipo(self, id_maquina: int) -> MetadataEquipoSiges | None:
         rows = await self._runner.fetch_all(

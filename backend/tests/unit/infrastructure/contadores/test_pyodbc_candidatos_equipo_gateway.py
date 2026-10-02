@@ -7,7 +7,10 @@ from collections.abc import Sequence
 from datetime import date, datetime
 from typing import Any
 
-from src.modules.contadores.infrastructure.siges.candidatos_query import CANDIDATOS_EQUIPO_SQL
+from src.modules.contadores.infrastructure.siges.candidatos_query import (
+    CANDIDATOS_EQUIPO_SQL,
+    CANDIDATOS_EQUIPOS_LOTE_SQL,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_candidatos_equipo_gateway import (
     PyodbcCandidatosEquipoGateway,
 )
@@ -102,3 +105,16 @@ async def test_snapshot_null_no_marca_cambio() -> None:
 
 async def test_sin_lecturas_devuelve_lista_vacia() -> None:
     assert await _lecturas() == []
+
+
+async def test_lote_una_sola_consulta_y_agrupa_por_equipo_y_clase() -> None:
+    otra_clase = (*_fila(3, 5)[:2], 20, *_fila(3, 5)[3:])
+    runner = FakeRunner([_fila(2, 20), _fila(1, 10), otra_clase])
+    gateway = PyodbcCandidatosEquipoGateway(runner)  # type: ignore[arg-type]
+
+    lote = await gateway.fetch_lecturas_de_equipos([(77, 10), (88, 10)])
+
+    assert runner.llamadas == [(CANDIDATOS_EQUIPOS_LOTE_SQL.format(maquinas="?, ?"), (77, 88))]
+    assert [lectura.id_contador for lectura in lote[(77, 10)]] == [2, 1]
+    assert (77, 20) not in lote and (88, 10) not in lote
+    assert await gateway.fetch_lecturas_de_equipos([]) == {}

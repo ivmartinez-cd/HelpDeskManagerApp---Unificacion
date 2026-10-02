@@ -32,7 +32,7 @@ from src.modules.contadores.application.use_cases._mapear_filas_grilla_siges imp
     agrupar_por_equipo,
 )
 from src.modules.contadores.application.use_cases._releer_pl_manual import (
-    con_pl_releida,
+    con_pls_releidas,
     releer_lecturas_de_siges,
 )
 from src.modules.contadores.application.use_cases._resolver_resultado_final import (
@@ -114,7 +114,7 @@ class GenerarExportCsvUseCase:
         vigentes = decisiones_no_descartadas(todas, descartar_hasta)
         if self._releer is None:
             return vigentes
-        return {c: await con_pl_releida(c, d, self._releer) for c, d in vigentes.items()}
+        return await con_pls_releidas(vigentes, self._releer)
 
     async def _auditoria(self, nro_proceso: int) -> dict[int, AuditoriaMaquina]:
         resumen = await self._estim_log.resumen_por_maquina(nro_proceso)
