@@ -7,9 +7,12 @@ reales con exactamente este patrón, ver
 distinguía por el nombre del CSV (`_CC.xls` / `_PRECO.xls`).
 
 Para un abono, las reglas de precio/km por incidente no dicen nada (todo vale
-$1 a propósito): generaban 105 ALT001 por mes que nadie miraba. Se apagan; los
-duplicados (ALT004/ALT010) siguen, porque un incidente repetido sigue siendo un
-error. El monto del abono varía todo el tiempo (decisión del usuario
+$1 a propósito): generaban 105 ALT001 por mes que nadie miraba. Se apagan.
+ALT010 (preventivo + correctivo a la misma serie en el mes) también: el abono
+se factura como una factura genérica de costo fijo, así que esa combinación no
+cobra de más (pedido de Iván, 2026-10-02). ALT004/ALT012 siguen, porque un
+incidente repetido sigue siendo un error de carga. El monto del abono varía
+todo el tiempo (decisión del usuario
 2026-09-05: no se alerta por monto), así que lo único que se controla es que el
 extra esté cargado — eso lo muestra la UI, no el motor.
 
@@ -27,6 +30,7 @@ from src.modules.liquidaciones.domain.entities.regla_alerta import (
     CODIGO_ALT005_RUTA_COMPARTIDA,
     CODIGO_ALT008_TARIFARIO_INEXISTENTE,
     CODIGO_ALT009_PAR_EMPRESA_SUCURSAL,
+    CODIGO_ALT010_SERIE_DUPLICADA,
     CODIGO_ALT011_DOBLE_FACTURACION,
     ReglaAlerta,
 )
@@ -41,6 +45,7 @@ REGLAS_APAGADAS_EN_ABONO = frozenset(
         CODIGO_ALT005_RUTA_COMPARTIDA,
         CODIGO_ALT008_TARIFARIO_INEXISTENTE,
         CODIGO_ALT009_PAR_EMPRESA_SUCURSAL,
+        CODIGO_ALT010_SERIE_DUPLICADA,
         CODIGO_ALT011_DOBLE_FACTURACION,
     }
 )

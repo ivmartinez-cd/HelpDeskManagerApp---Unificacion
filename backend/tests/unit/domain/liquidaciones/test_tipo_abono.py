@@ -39,4 +39,5 @@ class TestReglasAplicables:
         assert "ALT001" not in aplicables
         assert "ALT002" not in aplicables
         assert "ALT008" not in aplicables
-        assert set(aplicables) == {c for c in activas if c in {"ALT004", "ALT010", "ALT012"}}
+        assert "ALT010" not in aplicables
+        assert set(aplicables) == {c for c in activas if c in {"ALT004", "ALT012"}}
