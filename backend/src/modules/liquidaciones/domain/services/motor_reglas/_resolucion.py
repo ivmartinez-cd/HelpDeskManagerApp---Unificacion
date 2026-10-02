@@ -22,7 +22,13 @@ def clave_empresa_sucursal(empresa: str | None, sucursal: str | None) -> tuple[s
 
 
 def indexar_tablas_km(tablas_km: Sequence[TablaKm]) -> dict[tuple[str, str], TablaKm]:
-    return {clave_empresa_sucursal(t.empresa_nombre, t.sucursal_nombre): t for t in tablas_km}
+    """Sin las archivadas: una sucursal puede tener la fila vieja archivada y la
+    vigente con el mismo nombre, y sin orden la que ganaba el índice era al azar."""
+    return {
+        clave_empresa_sucursal(t.empresa_nombre, t.sucursal_nombre): t
+        for t in tablas_km
+        if not t.archivada
+    }
 
 
 def resolver_tabla_km(
