@@ -1,9 +1,11 @@
 """Caso de uso ReanalizarLiquidacion — port de POST /liquidaciones/{id}/reanalize.
 
 Para una liquidación de abono (`TIPO_ABONO`) las reglas de precio/km quedan fuera
-(`reglas_aplicables`): como se pasan al conciliador como "no activas", las alertas
-viejas de esas reglas que la TL ya había trabajado se preservan (misma semántica
-que desactivar la regla), y las pendientes desaparecen.
+(`reglas_aplicables`), pero al conciliador se le pasan como activas: las alertas
+viejas de esas reglas desaparecen aunque la TL ya las haya trabajado. No es como
+desactivar una regla (ahí el triage se preserva): para un abono la regla no
+aplica, y conservar las descartadas las dejaba a la vista (pedido de Iván,
+2026-10-02, por las ALT010 de SAN JUAN).
 
 Re-corre el motor de reglas sobre una liquidación ya importada. El legacy
 (`ejecutar_motor`) solo actualiza `total_alertas` al terminar — `total_incidentes` y
@@ -85,10 +87,9 @@ class ReanalizarLiquidacion:
             raise LiquidacionNoEncontradaError(liquidacion_id)
 
         incidentes = await self._ports.incidentes.list_by_liquidacion(liquidacion_id)
-        reglas_activas = reglas_aplicables(
-            liquidacion.tipo_liquidacion, await self._ports.reglas.list_activas()
-        )
-        resultado = await self._ejecutar_motor(liquidacion.prestador_id, incidentes, reglas_activas)
+        reglas_activas = await self._ports.reglas.list_activas()
+        aplicables = reglas_aplicables(liquidacion.tipo_liquidacion, reglas_activas)
+        resultado = await self._ejecutar_motor(liquidacion.prestador_id, incidentes, aplicables)
         await self._persistir(liquidacion_id, resultado, set(reglas_activas))
 
         return ReanalizarLiquidacionResultado(

@@ -4,6 +4,7 @@ de `tests/unit/domain/liquidaciones/test_motor_reglas.py`; acá solo se verifica
 caso de uso conecta las piezas correctamente."""
 
 import uuid
+from dataclasses import replace
 
 import pytest
 
@@ -196,6 +197,28 @@ async def test_abono_no_genera_alertas_de_precio() -> None:
     resultado = await world.use_case.execute(liquidacion.id)
 
     assert resultado.total_alertas == 0
+
+
+async def test_abono_borra_alertas_trabajadas_de_reglas_que_no_aplican() -> None:
+    """Una alerta descartada de una regla que no corre en abono no queda a la vista
+    (a diferencia de desactivar la regla, que sí preserva el triage)."""
+    world = World()
+    prestador_id = uuid.uuid4()
+    liquidacion = make_liquidacion(prestador_id=prestador_id)
+    world.liquidaciones.rows[liquidacion.id] = liquidacion
+    world.tarifarios.rows = [make_tarifario(prestador_id=prestador_id, costo_servicio=1500.0)]
+    incidente = make_incidente(liquidacion_id=liquidacion.id, costo_servicio_cobrado=1800.0)
+    world.incidentes.rows[incidente.id] = incidente
+    await world.use_case.execute(liquidacion.id)
+    alerta = world.alertas.por_liquidacion[liquidacion.id][0]
+    await world.alertas.update_estado(
+        liquidacion.id, alerta.id, estado="descartada", justificacion="Costo fijo"
+    )
+    world.liquidaciones.rows[liquidacion.id] = replace(liquidacion, tipo_liquidacion="abono")
+
+    await world.use_case.execute(liquidacion.id)
+
+    assert world.alertas.por_liquidacion[liquidacion.id] == []
 
 
 async def test_acuerdo_de_precio_por_cliente_evita_la_alerta() -> None:
