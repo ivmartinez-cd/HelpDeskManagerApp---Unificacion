@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { BrandButton } from "@/shared/components/ui/brand-form";
 import { useSession } from "@/services/session-provider";
 import { useTableroProyeccion } from "../hooks/use-tablero-proyeccion";
@@ -18,6 +19,17 @@ function Alerta({ titulo, detalle, children }: { titulo: string; detalle: string
       <strong>{titulo}</strong>
       <p className="text-muted-foreground">{detalle}</p>
       {children}
+    </div>
+  );
+}
+
+// Relectura tras una acción del operador: en procesos grandes (San Juan,
+// ~800 filas) Siges tarda ~10 s y sin aviso la grilla parecía no actualizarse.
+function AvisoActualizando() {
+  return (
+    <div role="status" className="fixed bottom-6 right-6 z-[110] flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 font-body text-xs font-semibold text-foreground shadow-lg">
+      <Loader2 className="h-4 w-4 animate-spin text-brand-orange" />
+      Actualizando grilla…
     </div>
   );
 }
@@ -74,6 +86,8 @@ export function ProyeccionView() {
       {t.banner && (
         <ProyeccionBannerRestauracion restauracion={t.banner} onDescartar={t.descartarRestauracion} onCerrar={t.ocultarBanner} />
       )}
+
+      {tablero && t.cargando && <AvisoActualizando />}
 
       {tablero ? (
         <ProyeccionGrilla
