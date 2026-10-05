@@ -7,12 +7,16 @@ import { toast } from "sonner";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { ApiError } from "@/services/http-client";
 import { liquidacionesApi } from "../api/liquidaciones-api";
+import { useBitacoraLiquidacion } from "../hooks/use-bitacora-liquidacion";
+import { useModificacionesLiquidacion } from "../hooks/use-modificaciones-liquidacion";
 import { useEvolucionIncidentes, useLiquidacionDetalle } from "../hooks/use-liquidacion-detalle";
 import { MonedaProvider } from "../hooks/moneda-context";
 import { SeleccionAlertasProvider } from "../hooks/seleccion-alertas-context";
 import type { Alerta, EstadoLiquidacion } from "../types/liquidaciones";
 import { AbonoBanner } from "./abono-banner";
 import { AlertasLoteBar } from "./alertas-lote-bar";
+import { BitacoraSeccion } from "./bitacora-seccion";
+import { DetalleTabs, type DetalleTab } from "./detalle-tabs";
 import { EvolucionIncidentesChart } from "./evolucion-incidentes-chart";
 import { ExtraItemSeccion } from "./extra-item-seccion";
 import { IncidentesSeccion } from "./incidentes-seccion";
@@ -28,6 +32,9 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
   const [reanalizing, setReanalizing] = useState(false);
   const [updatingEstado, setUpdatingEstado] = useState(false);
   const [soloConAlertas, setSoloConAlertas] = useState(false);
+  const [tab, setTab] = useState<DetalleTab>("detalle");
+  const bitacora = useBitacoraLiquidacion(id);
+  const modificaciones = useModificacionesLiquidacion(id);
   const evolucion = useEvolucionIncidentes(detalle?.liquidacion.prestadorId);
 
   const handleReanalizar = async () => {
@@ -133,66 +140,89 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
         onAnulado={() => router.push("/liquidaciones/lista")}
       />
 
-      {evolucion && evolucion.length > 0 && (
-        <div className="flex flex-col gap-2 rounded-[12px] border border-border bg-card p-4">
-          <span className="font-heading text-[13px] font-bold text-foreground">
-            Evolución mensual de incidentes por tipo — {pst?.nombreCorto ?? "prestador"} (
-            {new Date().getFullYear()})
-          </span>
-          <EvolucionIncidentesChart items={evolucion} />
-        </div>
+      <DetalleTabs
+        value={tab}
+        onChange={setTab}
+        counts={{
+          detalle: incidentesConAlertaActiva,
+          modificaciones: modificaciones.items.length,
+          bitacora: bitacora.items ? bitacora.items.length : null,
+        }}
+        destacadas={{ modificaciones: modificaciones.items.some((m) => m.vistaEn === null) }}
+      />
+
+      {tab === "detalle" && (
+        <>
+          {/* Banner de alertas */}
+          {incConAlertas > 0 && (
+            <LiquidacionAlertasBanner
+              incConAlertas={incConAlertas}
+              soloConAlertas={soloConAlertas}
+              onSoloConAlertas={setSoloConAlertas}
+            />
+          )}
+
+          <AbonoBanner liquidacion={liquidacion} totalIncidentes={incidentes.length} />
+
+          <LiquidacionConfigBanner alertas={alertas} incidentes={incidentes} />
+
+          <IncidentesSeccion
+            liquidacionId={id}
+            prestadorId={liquidacion.prestadorId}
+            prestadores={prestadores}
+            titulo="Correctivos"
+            accentClass="text-brand-orange"
+            incidentes={correctivos}
+            incidentesById={incidentesById}
+            alertasByInc={alertasByInc}
+            soloConAlertas={soloConAlertas}
+            onAlertaChanged={() => void load()}
+          />
+          {preventivos.length > 0 && (
+            <IncidentesSeccion
+              liquidacionId={id}
+              prestadorId={liquidacion.prestadorId}
+              prestadores={prestadores}
+              titulo="Preventivos"
+              accentClass="text-emerald-500"
+              incidentes={preventivos}
+              incidentesById={incidentesById}
+              alertasByInc={alertasByInc}
+              soloConAlertas={soloConAlertas}
+              onAlertaChanged={() => void load()}
+            />
+          )}
+        </>
       )}
-
-      {/* Banner de alertas */}
-      {incConAlertas > 0 && (
-        <LiquidacionAlertasBanner
-          incConAlertas={incConAlertas}
-          soloConAlertas={soloConAlertas}
-          onSoloConAlertas={setSoloConAlertas}
-        />
-      )}
-
-      <AbonoBanner liquidacion={liquidacion} totalIncidentes={incidentes.length} />
-
-      <LiquidacionConfigBanner alertas={alertas} incidentes={incidentes} />
 
       {/* Historial de cambios que el prestador aplicó sobre esta liquidación
-          (ADR-038) — no son alertas del motor, se ocultan solas si no hay nada. */}
-      <ModificacionesPrestadorSeccion liquidacionId={id} />
-
-      <ExtraItemSeccion
-        liquidacion={liquidacion}
-        onUpdated={(updated) => setDetalle({ ...detalle, liquidacion: updated })}
-      />
-
-      <IncidentesSeccion
-        liquidacionId={id}
-        prestadorId={liquidacion.prestadorId}
-        prestadores={prestadores}
-        titulo="Correctivos"
-        accentClass="text-brand-orange"
-        incidentes={correctivos}
-        incidentesById={incidentesById}
-        alertasByInc={alertasByInc}
-        soloConAlertas={soloConAlertas}
-        onAlertaChanged={() => void load()}
-      />
-      {preventivos.length > 0 && (
-        <IncidentesSeccion
-          liquidacionId={id}
-          prestadorId={liquidacion.prestadorId}
-          prestadores={prestadores}
-          titulo="Preventivos"
-          accentClass="text-emerald-500"
-          incidentes={preventivos}
-          incidentesById={incidentesById}
-          alertasByInc={alertasByInc}
-          soloConAlertas={soloConAlertas}
-          onAlertaChanged={() => void load()}
-        />
+          (ADR-038) — no son alertas del motor. */}
+      {tab === "modificaciones" && (
+        <ModificacionesPrestadorSeccion liquidacionId={id} {...modificaciones} />
       )}
 
-      <ModeloFacturacionSeccion incidentes={incidentes} totalImporte={liquidacion.totalImporte} />
+      {tab === "facturacion" && (
+        <>
+          <ExtraItemSeccion
+            liquidacion={liquidacion}
+            onUpdated={(updated) => setDetalle({ ...detalle, liquidacion: updated })}
+          />
+
+          <ModeloFacturacionSeccion incidentes={incidentes} totalImporte={liquidacion.totalImporte} />
+
+          {evolucion && evolucion.length > 0 && (
+            <div className="flex flex-col gap-2 rounded-[12px] border border-border bg-card p-4">
+              <span className="font-heading text-[13px] font-bold text-foreground">
+                Evolución mensual de incidentes por tipo — {pst?.nombreCorto ?? "prestador"} (
+                {new Date().getFullYear()})
+              </span>
+              <EvolucionIncidentesChart items={evolucion} />
+            </div>
+          )}
+        </>
+      )}
+
+      {tab === "bitacora" && <BitacoraSeccion items={bitacora.items} error={bitacora.error} />}
 
       {/* Gestión de alertas en lote: aparece al tildar incidentes */}
       <AlertasLoteBar liquidacionId={id} onChanged={() => void load()} />

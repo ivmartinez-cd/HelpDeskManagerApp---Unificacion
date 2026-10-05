@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { SortableHeader } from "@/shared/components/ui/sortable-header";
 import { compareSortValues, useTableSort } from "@/shared/hooks/use-table-sort";
 import { modificacionesApi } from "../api/modificaciones-api";
-import { useModificacionesLiquidacion } from "../hooks/use-modificaciones-liquidacion";
 import type { ModificacionPrestador } from "../types/modificacion";
 
 type SortKey = "incidente" | "tipo" | "campo" | "antes" | "despues" | "cuando";
@@ -28,8 +27,17 @@ function formatFecha(iso: string): string {
  * (ADR-038) — no son alertas del motor de reglas: son eventos que ya no se
  * pueden recalcular (el valor anterior se pierde en cuanto se aplica el
  * diff), por eso viven acá aparte de la tabla de incidentes/alertas. */
-export function ModificacionesPrestadorSeccion({ liquidacionId }: { liquidacionId: string }) {
-  const { items, loading, refetch: cargar } = useModificacionesLiquidacion(liquidacionId);
+export function ModificacionesPrestadorSeccion({
+  liquidacionId,
+  items,
+  loading,
+  refetch: cargar,
+}: {
+  liquidacionId: string;
+  items: ModificacionPrestador[];
+  loading: boolean;
+  refetch: () => void;
+}) {
   const [marcando, setMarcando] = useState(false);
   const { sort, toggleSort } = useTableSort<SortKey>({
     initial: { key: "cuando", direction: "desc" },
@@ -68,7 +76,13 @@ export function ModificacionesPrestadorSeccion({ liquidacionId }: { liquidacionI
   }, [items, sort]);
 
   if (loading) return null;
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return (
+      <p className="font-body text-sm text-muted-foreground">
+        El prestador no modificó esta liquidación.
+      </p>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-[12px] border border-border bg-card">

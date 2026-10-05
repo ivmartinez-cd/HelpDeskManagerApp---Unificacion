@@ -75,6 +75,9 @@ from src.modules.insumos.presentation.statistics_router import (
 from src.modules.liquidaciones.presentation.alertas_router import (
     router as liquidaciones_alertas_router,
 )
+from src.modules.liquidaciones.presentation.bitacora_router import (
+    router as liquidaciones_bitacora_router,
+)
 from src.modules.liquidaciones.presentation.config_router import (
     router as liquidaciones_config_router,
 )
@@ -214,6 +217,7 @@ ROUTERS: tuple[APIRouter, ...] = (
     liquidaciones_config_router,
     liquidaciones_alertas_router,
     liquidaciones_modificaciones_router,
+    liquidaciones_bitacora_router,
     liquidaciones_ayc_router,
     liquidaciones_router,
     vacaciones_empleados_router,
