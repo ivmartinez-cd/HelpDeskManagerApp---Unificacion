@@ -80,7 +80,7 @@ def _to_row(row: Any) -> DetalleContadorRow:
         direccion_ip=(row.direccion_ip or "").strip() or None,
         mascara_ip=(row.mascara_ip or "").strip() or None,
         falta_contador=falta_contador,
-        tipo=_tipo(falta_contador, bool(row.es_automatico), nombre_clase),
+        tipo=_tipo(falta_contador, row.tipo_toma, nombre_clase),
         nro_proceso=row.nro_proceso,
         nombre_anexo=row.nombre_anexo.strip(),
         periodo_facturacion=row.periodo_facturacion,
@@ -103,11 +103,8 @@ def _lecturas(row: Any, falta_contador: bool) -> dict[str, Any]:
     }
 
 
-def _tipo(falta_contador: bool, es_automatico: bool, nombre_clase: str | None) -> str | None:
+def _tipo(falta_contador: bool, tipo_toma: str | None, nombre_clase: str | None) -> str | None:
     if falta_contador:
         return f"FALTA CONTADOR {nombre_clase}" if nombre_clase else "FALTA CONTADOR"
-    if es_automatico:
-        return "AUTOMATICO"
-    # Lectura real con delta != 0: el reporte legacy no está investigado
-    # para este caso — no se inventa una etiqueta.
-    return None
+    # Tipo de toma real de la lectura actual en Siges (ver docstring de la query).
+    return (tipo_toma or "").strip() or None

@@ -1,7 +1,7 @@
 """PyodbcDetalleContadorProcesoGateway con un runner fake: una sola consulta
 (cliente derivado de la primera fila), mapeo Mono/Color, `contador_actual`
 en 0 cuando falta el contador (no repite el valor viejo, ver docstring de la
-query), `tipo` combinando "FALTA CONTADOR"/"AUTOMATICO"/`None`, y
+query), `tipo` "FALTA CONTADOR" o el tipo de toma real de Siges, y
 ProcesoNoEncontradoError cuando el proceso no tiene ninguna fila."""
 
 from collections.abc import Sequence
@@ -57,7 +57,7 @@ def _fila(**overrides: Any) -> SimpleNamespace:
         nombre_anexo="Anexo Principal ",
         periodo_facturacion="2026-08",
         falta_contador=1,
-        es_automatico=0,
+        tipo_toma="Automatico",
     )
     base.update(overrides)
     return SimpleNamespace(**base)
@@ -97,7 +97,7 @@ async def test_fetch_lectura_real_respeta_contador_actual_bruto() -> None:
         contador_actual_bruto=497,
         impresiones_reales=80.0,
         falta_contador=0,
-        es_automatico=0,
+        tipo_toma=None,
     )
     runner = FakeRunner({DETALLE_CONTADORES_POR_PROCESO_SQL: [fila_real]})
     gateway = PyodbcDetalleContadorProcesoGateway(runner)  # type: ignore[arg-type]
@@ -110,8 +110,10 @@ async def test_fetch_lectura_real_respeta_contador_actual_bruto() -> None:
     assert fila.tipo is None
 
 
-async def test_fetch_automatico_no_repite_falta_contador() -> None:
-    fila_auto = _fila(falta_contador=0, es_automatico=1, impresiones_reales=0.0)
+async def test_fetch_lectura_real_muestra_su_tipo_de_toma_de_siges() -> None:
+    # Caso real (CNB1N2SYJZ, proceso 99553): Contador Final de un retiro con
+    # impresiones reales en 0 — antes se marcaba "AUTOMATICO" sin mirar el tipo.
+    fila_auto = _fila(falta_contador=0, tipo_toma="Contador Final ", impresiones_reales=0.0)
     runner = FakeRunner({DETALLE_CONTADORES_POR_PROCESO_SQL: [fila_auto]})
     gateway = PyodbcDetalleContadorProcesoGateway(runner)  # type: ignore[arg-type]
 
@@ -119,7 +121,7 @@ async def test_fetch_automatico_no_repite_falta_contador() -> None:
 
     fila = resultado.filas[0]
     assert fila.falta_contador is False
-    assert fila.tipo == "AUTOMATICO"
+    assert fila.tipo == "Contador Final"
     assert fila.contador_actual == 1
 
 

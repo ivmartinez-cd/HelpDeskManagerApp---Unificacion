@@ -31,12 +31,12 @@ reporte compartida por el usuario (serie `CNB1R4C0MV`, ISSN → Nro_Proceso
   no repite el valor viejo, señala "sin lectura nueva" con 0. Se calcula en
   el gateway, no en el SQL (más legible para testear con un runner fake).
 - **`Tipo` combina "FALTA CONTADOR" + la clase** (verificado contra la
-  captura: "FALTA CONTADOR Mono"). El caso "AUTOMATICO" (real con delta 0,
-  `ID_ContadorActual <> ID_ContadorAnterior AND ImpresionesReales = 0`) sale
-  de la investigación documentada en `falta_contador_proceso_query.py`, no
-  de una captura propia — no confirmado con una captura del reporte. El
-  resto de los casos (lectura real con delta != 0) no tiene `Tipo` conocido:
-  se deja en `NULL`, nunca inventado.
+  captura: "FALTA CONTADOR Mono"). Si hay lectura nueva, `Tipo` es el tipo de
+  toma real de esa lectura (`Contadores.ID_TipoToma` → `Tipo_Toma.Descripcion`:
+  "Automatico", "Contador Final", "Estimado", "VPN"...). Antes se marcaba
+  "AUTOMATICO" toda lectura con `ImpresionesReales = 0` sin mirar el tipo
+  (supuesto nunca confirmado): en el proceso 99553 de Aerolíneas eran casi
+  todas "Contador Final" de equipos retirados (reportado por la TL, 2026-10-05).
 
 `ID_ClaseContador IN (10, 20)` (Mono/Color) es el mismo recorte que ya usa
 `FALTA_CONTADOR_POR_PROCESO_SQL` — no hay evidencia de que el reporte legacy
@@ -77,9 +77,7 @@ _SELECT_FILAS = """
     CONVERT(varchar(7), FA.PeriodoDesde, 120) AS periodo_facturacion,
     CASE WHEN FC.ID_ContadorActual = FC.ID_ContadorAnterior THEN 1 ELSE 0 END
         AS falta_contador,
-    CASE WHEN FC.ID_ContadorActual <> FC.ID_ContadorAnterior
-              AND FC.ImpresionesReales = 0
-         THEN 1 ELSE 0 END AS es_automatico
+    TT.Descripcion          AS tipo_toma
 """
 
 _FROM_FILAS = """
@@ -95,6 +93,8 @@ INNER JOIN dbo.ArtGen           AG     WITH (NOLOCK) ON AG.Id_ArtGen     = Art.I
 LEFT  JOIN dbo.Estado_Maquina   EstMaq WITH (NOLOCK) ON EstMaq.Id        = M.ID_Estado_Maquina
 INNER JOIN dbo.Factura_Anexo    FA     WITH (NOLOCK) ON FA.Nro_Proceso   = FC.Nro_Proceso
 INNER JOIN dbo.Anexo            A      WITH (NOLOCK) ON A.ID_Anexo       = FA.ID_Anexo
+LEFT  JOIN dbo.Contadores       CA     WITH (NOLOCK) ON CA.ID_Contador   = FC.ID_ContadorActual
+LEFT  JOIN dbo.Tipo_Toma        TT     WITH (NOLOCK) ON TT.Id            = CA.ID_TipoToma
 """
 
 DETALLE_CONTADORES_POR_PROCESO_SQL = f"""
