@@ -22,13 +22,25 @@ def clave_empresa_sucursal(empresa: str | None, sucursal: str | None) -> tuple[s
 
 
 def indexar_tablas_km(tablas_km: Sequence[TablaKm]) -> dict[tuple[str, str], TablaKm]:
-    """Sin las archivadas: una sucursal puede tener la fila vieja archivada y la
-    vigente con el mismo nombre, y sin orden la que ganaba el índice era al azar."""
+    """La vigente le gana a la archivada: una sucursal puede tener la fila vieja
+    archivada y la vigente con el mismo nombre, y sin orden la que ganaba el índice
+    era al azar. Pero si solo existe la archivada se usa igual: el archivado de
+    2026-09-05 marcó como inactivas sucursales que solo llevaban meses sin servicio,
+    y descartarlas dejaba al incidente sin zona (precio genérico, ALT001 falsa)."""
     return {
         clave_empresa_sucursal(t.empresa_nombre, t.sucursal_nombre): t
-        for t in tablas_km
-        if not t.archivada
+        for t in sorted(tablas_km, key=lambda t: not t.archivada)
     }
+
+
+def tablas_archivadas_en_uso(
+    incidentes: Sequence[Incidente], tablas_km: Sequence[TablaKm]
+) -> list[TablaKm]:
+    """Filas archivadas que resuelven algún incidente (no hay vigente con ese nombre):
+    la sucursal volvió a tener servicio y tienen que desarchivarse."""
+    indice = indexar_tablas_km(tablas_km)
+    en_uso = {t.id: t for i in incidentes if (t := resolver_tabla_km(i, indice))}
+    return [t for t in en_uso.values() if t.archivada]
 
 
 def resolver_tabla_km(

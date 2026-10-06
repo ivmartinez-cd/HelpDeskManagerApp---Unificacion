@@ -55,6 +55,9 @@ from src.modules.liquidaciones.domain.services.conciliar_alertas import (
     AlertaConciliada,
     conciliar_alertas,
 )
+from src.modules.liquidaciones.domain.services.motor_reglas._resolucion import (
+    tablas_archivadas_en_uso,
+)
 from src.modules.liquidaciones.domain.services.motor_reglas.motor import ejecutar_motor_reglas
 from src.modules.liquidaciones.domain.services.tipo_abono import reglas_aplicables
 from src.modules.liquidaciones.domain.services.triage_alertas import recalcular_estado_incidente
@@ -105,6 +108,8 @@ class ReanalizarLiquidacion:
     ) -> ResultadoMotorReglas:
         incidentes_prestador = await self._ports.incidentes.list_by_prestador(prestador_id)
         tablas_km = await self._ports.tablas_km.list_by_prestador(prestador_id)
+        for tabla in tablas_archivadas_en_uso(incidentes, tablas_km):
+            await self._ports.tablas_km.update_archivada(tabla.id, archivada=False)
         tarifarios = await self._ports.tarifarios.list_by_prestador(prestador_id)
         acuerdos = (
             await self._ports.acuerdos.list_by_prestador(prestador_id)
