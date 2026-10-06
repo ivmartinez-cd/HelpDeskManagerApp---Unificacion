@@ -19,7 +19,7 @@ import { BitacoraSeccion } from "./bitacora-seccion";
 import { DetalleTabs, type DetalleTab } from "./detalle-tabs";
 import { EvolucionIncidentesChart } from "./evolucion-incidentes-chart";
 import { ExtraItemSeccion } from "./extra-item-seccion";
-import { IncidentesSeccion } from "./incidentes-seccion";
+import { FiltroFechaCierre, IncidentesSeccion } from "./incidentes-seccion";
 import { LiquidacionAlertasBanner } from "./liquidacion-alertas-banner";
 import { LiquidacionConfigBanner } from "./liquidacion-config-banner";
 import { LiquidacionDetalleHeader } from "./liquidacion-detalle-header";
@@ -32,6 +32,7 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
   const [reanalizing, setReanalizing] = useState(false);
   const [updatingEstado, setUpdatingEstado] = useState(false);
   const [soloConAlertas, setSoloConAlertas] = useState(false);
+  const [filtroFecha, setFiltroFecha] = useState("");
   const [tab, setTab] = useState<DetalleTab>("detalle");
   const bitacora = useBitacoraLiquidacion(id);
   const modificaciones = useModificacionesLiquidacion(id);
@@ -166,6 +167,8 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
 
           <LiquidacionConfigBanner alertas={alertas} incidentes={incidentes} />
 
+          <FiltroFechaCierre incidentes={incidentes} value={filtroFecha} onChange={setFiltroFecha} />
+
           <IncidentesSeccion
             liquidacionId={id}
             prestadorId={liquidacion.prestadorId}
@@ -176,6 +179,7 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
             incidentesById={incidentesById}
             alertasByInc={alertasByInc}
             soloConAlertas={soloConAlertas}
+            filtroFecha={filtroFecha}
             onAlertaChanged={() => void load()}
           />
           {preventivos.length > 0 && (
@@ -189,6 +193,7 @@ export function LiquidacionDetalleView({ id }: { id: string }) {
               incidentesById={incidentesById}
               alertasByInc={alertasByInc}
               soloConAlertas={soloConAlertas}
+              filtroFecha={filtroFecha}
               onAlertaChanged={() => void load()}
             />
           )}

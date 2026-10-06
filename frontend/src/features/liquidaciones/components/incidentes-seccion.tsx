@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { cn } from "@/shared/utils/cn";
 import { useSeleccionAlertas } from "../hooks/seleccion-alertas-context";
 import type { Alerta, Incidente, PrestadorLiquidacion } from "../types/liquidaciones";
@@ -17,6 +17,7 @@ export function IncidentesSeccion({
   incidentesById,
   alertasByInc,
   soloConAlertas,
+  filtroFecha,
   onAlertaChanged,
 }: {
   liquidacionId: string;
@@ -28,18 +29,9 @@ export function IncidentesSeccion({
   incidentesById: Record<string, Incidente>;
   alertasByInc: Record<string, Alerta[]>;
   soloConAlertas?: boolean;
+  filtroFecha: string;
   onAlertaChanged: () => void;
 }) {
-  const [filtroFecha, setFiltroFecha] = useState("");
-
-  const fechas = useMemo(
-    () =>
-      Array.from(
-        new Set(incidentes.map((i) => i.fechaCierre).filter((f): f is string => !!f)),
-      ).sort(),
-    [incidentes],
-  );
-
   const filtrados = useMemo(() => {
     const base = soloConAlertas
       ? incidentes.filter((i) => (alertasByInc[i.id] ?? []).length > 0)
@@ -80,23 +72,6 @@ export function IncidentesSeccion({
             Tildar los {seleccionables.length} con alertas abiertas
           </label>
         )}
-        {fechas.length > 1 && (
-          <label className="flex items-center gap-2 font-body text-xs text-muted-foreground">
-            Filtrar por fecha de cierre:
-            <select
-              value={filtroFecha}
-              onChange={(e) => setFiltroFecha(e.target.value)}
-              className="rounded-[8px] border border-border bg-card px-2 py-1 font-body text-xs text-foreground outline-none focus:border-brand-orange/50"
-            >
-              <option value="">Todas</option>
-              {fechas.map((f) => (
-                <option key={f} value={f}>
-                  {formatFechaDia(f)}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
       </div>
       <IncidentesTabla
         liquidacionId={liquidacionId}
@@ -109,5 +84,42 @@ export function IncidentesSeccion({
         onAlertaChanged={onAlertaChanged}
       />
     </div>
+  );
+}
+
+/** Filtro único por fecha de cierre: aplica a correctivos y preventivos a la vez. */
+export function FiltroFechaCierre({
+  incidentes,
+  value,
+  onChange,
+}: {
+  incidentes: Incidente[];
+  value: string;
+  onChange: (fecha: string) => void;
+}) {
+  const fechas = useMemo(
+    () =>
+      Array.from(
+        new Set(incidentes.map((i) => i.fechaCierre).filter((f): f is string => !!f)),
+      ).sort(),
+    [incidentes],
+  );
+  if (fechas.length <= 1) return null;
+  return (
+    <label className="flex items-center gap-2 self-end font-body text-xs text-muted-foreground">
+      Filtrar por fecha de cierre:
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-[8px] border border-border bg-card px-2 py-1 font-body text-xs text-foreground outline-none focus:border-brand-orange/50"
+      >
+        <option value="">Todas</option>
+        {fechas.map((f) => (
+          <option key={f} value={f}>
+            {formatFechaDia(f)}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
