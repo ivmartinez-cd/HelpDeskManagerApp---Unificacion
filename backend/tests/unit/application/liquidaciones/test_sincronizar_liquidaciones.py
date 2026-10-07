@@ -99,6 +99,9 @@ class FakeCdGateway:
     async def get_detalle(self, liquidacion_ayc_id: int):
         return None
 
+    async def factura_pdf_existe(self, url: str) -> bool:
+        return True
+
 
 class FakeExclusiveLock:
     def __init__(self, acquired: bool = True) -> None:

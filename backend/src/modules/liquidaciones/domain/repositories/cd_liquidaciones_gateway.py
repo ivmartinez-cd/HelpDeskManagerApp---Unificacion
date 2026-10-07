@@ -31,6 +31,11 @@ class CdLiquidacionesGateway(Protocol):
         """
         ...
 
+    async def factura_pdf_existe(self, url: str) -> bool:
+        """True si el PDF de factura de webagentes responde 200. False si no
+        existe o si la consulta falla (se loguea allá)."""
+        ...
+
     async def get_incidentes(self, liquidacion_id: int) -> list[CdIncidenteRow]:
         """Detalle de incidentes de una liquidación por su id numérico.
 

@@ -67,6 +67,9 @@ class FakeCdGateway:
     async def get_detalle(self, liquidacion_ayc_id: int):
         return self.detalle
 
+    async def factura_pdf_existe(self, url: str) -> bool:
+        return True
+
 
 def make_cd_liq(ayc_id: int, *, cant_incidentes: int = 0) -> CdLiquidacion:
     return CdLiquidacion(
@@ -160,7 +163,11 @@ async def test_estado_terminal_actualiza_factura_si_ayc_la_reporta() -> None:
     )
     world.gateway.liquidaciones_por_empresa[CD_ID] = [make_cd_liq(1)]
     world.gateway.detalle = CdLiquidacionDetalle(
-        concepto_extra=None, monto_extra=None, numero_factura="2-1575"
+        concepto_extra=None,
+        monto_extra=None,
+        numero_factura="2-1575",
+        fecha=date(2026, 10, 7),
+        rs_prestador="Prestador SRL",
     )
 
     resultado = await world.use_case.execute(liq.id)

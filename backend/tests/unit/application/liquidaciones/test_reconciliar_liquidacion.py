@@ -14,6 +14,7 @@ from src.modules.liquidaciones.application.use_cases.reanalizar_liquidacion impo
     ReanalizarLiquidacionPorts,
 )
 from src.modules.liquidaciones.domain.entities.liquidacion import ESTADO_APROBADA, ESTADO_CERRADA
+from src.modules.liquidaciones.domain.services.factura_pdf_url import armar_factura_pdf_url
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
     CdLiquidacion,
     CdLiquidacionDetalle,
@@ -73,6 +74,10 @@ def make_remoto(numero_incidente: str, **overrides: object) -> IncidenteImportad
     )
     base.update(overrides)
     return IncidenteImportado(**base)  # type: ignore[arg-type]
+
+
+# Datos que AyC manda junto al número de factura y con los que se arma el link al PDF.
+_CON_PDF: dict = {"fecha": date(2026, 10, 7), "rs_prestador": "Naselli German Pablo"}
 
 
 class World:
@@ -427,7 +432,7 @@ async def test_estado_terminal_igual_trae_factura_y_extra_de_ayc() -> None:
         estado=ESTADO_APROBADA, numero_factura=None, concepto_extra=None, monto_extra=None
     )
     world.cd_gateway.detalles_por_liquidacion[1] = CdLiquidacionDetalle(
-        concepto_extra="Adicional", monto_extra=500.0, numero_factura="2-1575"
+        concepto_extra="Adicional", monto_extra=500.0, numero_factura="2-1575", **_CON_PDF
     )
 
     resultado = await world.use_case.execute(liq, make_cd_liq(1), [])
@@ -639,13 +644,58 @@ async def test_numero_factura_se_trae_desde_ayc() -> None:
     liq = world.con_liquidacion(numero_factura=None)
     remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
     world.cd_gateway.detalles_por_liquidacion[1] = CdLiquidacionDetalle(
-        concepto_extra=None, monto_extra=None, numero_factura="2-1575"
+        concepto_extra=None, monto_extra=None, numero_factura="2-1575", **_CON_PDF
     )
 
     resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
 
     assert resultado.factura_actualizada is True
     assert world.liquidaciones.rows[liq.id].numero_factura == "2-1575"
+
+
+async def test_numero_factura_sin_pdf_en_webagentes_no_se_guarda() -> None:
+    """Caso real 3988-0 (2026-10-07): AyC informaba la factura 1-78 pero el PDF
+    no estaba en webagentes, y HDM avisaba "el prestador cargó la factura".
+    Sin PDF no se guarda nada; la próxima reconciliación vuelve a buscar."""
+    world = World()
+    liq = world.con_liquidacion(numero_factura=None)
+    world.cd_gateway.pdfs_existentes = set()
+    world.cd_gateway.detalles_por_liquidacion[1] = CdLiquidacionDetalle(
+        concepto_extra=None, monto_extra=None, numero_factura="1-78", **_CON_PDF
+    )
+
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.factura_actualizada is False
+    assert world.liquidaciones.rows[liq.id].numero_factura is None
+    assert len(world.cd_gateway.pdfs_consultados) == 15
+
+
+async def test_pdf_subido_dias_antes_de_la_fecha_de_ayc_se_encuentra() -> None:
+    """Caso real 3978-3: el PDF se subió el 01/10 pero `Fecha` de AyC ya era
+    posterior — el link armado con `Fecha` daba 404."""
+    world = World()
+    liq = world.con_liquidacion(numero_factura=None)
+    detalle = CdLiquidacionDetalle(
+        concepto_extra=None, monto_extra=None, numero_factura="1-78", **_CON_PDF
+    )
+    world.cd_gateway.detalles_por_liquidacion[1] = detalle
+    world.cd_gateway.pdfs_existentes = {
+        armar_factura_pdf_url(
+            fecha=date(2026, 10, 1),
+            rs_prestador="Naselli German Pablo",
+            numero_factura="1-78",
+            numero_liquidacion=liq.numero_liquidacion,
+        )
+    }
+
+    remoto = make_remoto("1", costo_servicio_cobrado=1000.0)
+    resultado = await world.use_case.execute(liq, make_cd_liq(1), [remoto])
+
+    assert resultado.factura_actualizada is True
+    url = world.liquidaciones.rows[liq.id].factura_pdf_url
+    assert url is not None and "/20261001_naselli_german_pablo_fc-1-78_" in url
 
 
 async def test_numero_factura_no_se_toca_cuando_ayc_no_la_reporta() -> None:

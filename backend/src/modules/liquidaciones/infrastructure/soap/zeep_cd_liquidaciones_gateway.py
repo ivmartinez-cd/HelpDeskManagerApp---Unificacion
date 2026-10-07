@@ -21,6 +21,7 @@ from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
     CdLiquidacion,
     CdLiquidacionDetalle,
 )
+from src.modules.liquidaciones.infrastructure.soap.factura_pdf_http import head_pdf_existe
 from src.shared.domain.errors import ExternalServiceError
 from src.shared.infrastructure.wsayc.client_provider import (
     WsAycClientProvider,
@@ -88,6 +89,9 @@ class ZeepCdLiquidacionesGateway:
                 exc_info=exc,
             )
             return None
+
+    async def factura_pdf_existe(self, url: str) -> bool:
+        return await head_pdf_existe(url)
 
     async def set_estado(
         self, liquidacion_ayc_id: int, nuevo_estado: str, usuario: str

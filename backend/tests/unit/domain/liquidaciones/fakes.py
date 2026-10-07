@@ -224,6 +224,9 @@ class FakeCdLiquidacionesGateway:
         self.liquidaciones_por_empresa: dict[int, list[CdLiquidacion]] = {}
         self.detalles_por_liquidacion: dict[int, CdLiquidacionDetalle] = {}
         self.detalle_falla: set[int] = set()
+        # None: todo PDF existe. Un set: solo esas URLs responden 200.
+        self.pdfs_existentes: set[str] | None = None
+        self.pdfs_consultados: list[str] = []
 
     async def get_liquidaciones(self, empresa_cd_id: int, top: int = 200) -> list[CdLiquidacion]:
         return self.liquidaciones_por_empresa.get(empresa_cd_id, [])
@@ -241,6 +244,10 @@ class FakeCdLiquidacionesGateway:
             liquidacion_ayc_id,
             CdLiquidacionDetalle(concepto_extra=None, monto_extra=None, numero_factura=None),
         )
+
+    async def factura_pdf_existe(self, url: str) -> bool:
+        self.pdfs_consultados.append(url)
+        return self.pdfs_existentes is None or url in self.pdfs_existentes
 
     async def set_estado(self, liquidacion_ayc_id: int, nuevo_estado: str, usuario: str) -> None:
         if self.set_estado_raises is not None:
