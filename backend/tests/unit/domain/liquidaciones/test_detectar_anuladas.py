@@ -44,14 +44,24 @@ def test_local_con_estado_explicito_anulado_se_detecta() -> None:
     assert resultado == [local]
 
 
-def test_local_mas_nueva_que_el_top_n_no_se_toca() -> None:
-    """Un local con ID > el máximo que devolvió AyC puede estar simplemente
-    fuera del window del `Top=N` — no hay evidencia de que esté anulada."""
-    local_fuera_de_ventana = make_liquidacion(numero_liquidacion=numero_liquidacion(999))
+def test_local_mas_vieja_que_el_top_n_lleno_no_se_toca() -> None:
+    """AyC devuelve las N más nuevas: si el listado llenó el `Top`, un local con
+    ID < el mínimo puede estar fuera del window — no hay evidencia de anulación."""
+    local_fuera_de_ventana = make_liquidacion(numero_liquidacion=numero_liquidacion(1))
 
-    resultado = detectar_anuladas([_cd_liq(1)], [local_fuera_de_ventana])
+    resultado = detectar_anuladas([_cd_liq(5), _cd_liq(4)], [local_fuera_de_ventana], top=2)
 
     assert resultado == []
+
+
+def test_local_mas_nueva_que_todas_las_vigentes_se_detecta() -> None:
+    """Caso 3993-2 (TUCUMAN, 2026-10-07): anulada en AyC con ID mayor a todas las
+    que siguen vigentes — antes quedaba fuera del window y no se borraba nunca."""
+    local = make_liquidacion(numero_liquidacion=numero_liquidacion(3993))
+
+    resultado = detectar_anuladas([_cd_liq(3989), _cd_liq(3988)], [local])
+
+    assert resultado == [local]
 
 
 def test_local_vigente_no_se_toca() -> None:

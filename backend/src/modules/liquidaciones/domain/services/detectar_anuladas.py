@@ -14,11 +14,14 @@ from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import CdLiqu
 _ESTADOS_CD_ANULADOS = frozenset({"anulada", "anulado", "cancelada", "void", "voided"})
 
 
-def detectar_anuladas(liqs: list[CdLiquidacion], locales: list[Liquidacion]) -> list[Liquidacion]:
+def detectar_anuladas(
+    liqs: list[CdLiquidacion], locales: list[Liquidacion], *, top: int = 200
+) -> list[Liquidacion]:
     """Locales que AyC ya no reporta como vigentes — para que el caller las borre.
 
     `[]` si `liqs` está vacío (fallo de red u otro error) — evita eliminar
     falsamente todo el historial local del prestador ante un SOAP vacío.
+    `top` es el `Top` con el que se pidió `liqs` (default del gateway).
     """
     if not liqs:
         return []
@@ -28,10 +31,12 @@ def detectar_anuladas(liqs: list[CdLiquidacion], locales: list[Liquidacion]) -> 
         for cd_liq in liqs
         if cd_liq.estado.lower() not in _ESTADOS_CD_ANULADOS
     }
-    # Límite superior del window: el ID numérico más alto retornado por AyC.
-    # Solo se consideran locales con ID ≤ ese máximo para no tocar liquidaciones
-    # más viejas que el top-N del SOAP (que podrían estar fuera del window).
-    max_cd_id = max(cd_liq.id for cd_liq in liqs)
+    # getTopLiquidations devuelve las N más nuevas (ID desc, verificado contra
+    # wsAyC el 2026-10-07). Si el listado llenó el `Top`, las locales más viejas
+    # que la mínima pueden estar fuera del window: no hay evidencia de anulación.
+    # Antes se acotaba por el máximo, al revés: una anulada más nueva que todas
+    # las vigentes (la 3993-2 de TUCUMAN) no se detectaba nunca.
+    min_cd_id = min(cd_liq.id for cd_liq in liqs) if len(liqs) >= top else 0
 
     anuladas = []
     for liq in locales:
@@ -40,6 +45,6 @@ def detectar_anuladas(liqs: list[CdLiquidacion], locales: list[Liquidacion]) -> 
             local_ayc_id = int(liq.numero_liquidacion.split("-")[0])
         except (ValueError, IndexError):
             continue
-        if local_ayc_id <= max_cd_id and liq.numero_liquidacion not in cd_vigentes:
+        if local_ayc_id >= min_cd_id and liq.numero_liquidacion not in cd_vigentes:
             anuladas.append(liq)
     return anuladas
