@@ -44,8 +44,8 @@ export function ProyeccionSelectores(props: ProyeccionSelectoresProps) {
             disabled={!idGrupo}
             options={procesosVisibles.map((p) => ({
               id: String(p.nro_proceso),
-              label: `${p.periodo_facturacion} – ${p.nombre_anexo} – Proc. ${p.nro_proceso}`,
-              sublabel: `cierre ${fechaLarga(p.periodo_hasta)}`,
+              label: `${p.periodo_facturacion} – ${p.nombre_anexo}`,
+              sublabel: `Proc. ${p.nro_proceso} · cierre ${fechaLarga(p.periodo_hasta)}`,
             }))}
             value={idProcesoValido}
             onChange={(id) => props.onChangeProceso(id, procesosVisibles.find((p) => String(p.nro_proceso) === id))}
