@@ -304,24 +304,6 @@ async def test_anuladas_se_reportan_en_el_resultado() -> None:
     assert len(numeros) == 1
 
 
-async def test_permitir_eliminar_anuladas_false_nunca_borra() -> None:
-    """El job de fondo llama con `permitir_eliminar_anuladas=False` — ni siquiera
-    corre `_detectar_y_eliminar_anuladas`, aunque AyC ya no reporte la liquidación."""
-    world = World()
-    prestador = world.con_prestador_vinculado()
-    await world.liquidaciones.create(
-        prestador_id=prestador.id, numero_liquidacion="3894-2", periodo="2026-07",
-        tipo_liquidacion="regular", nombre_archivo=None, total_incidentes=1, total_importe=1.0,
-    )
-    # AyC ya no reporta 3894 — con permitir_eliminar_anuladas=True esto la borraría.
-    world.gateway.liquidaciones_por_empresa[1310] = [make_cd_liquidacion(3900, cant_incidentes=0)]
-
-    resultado = await world.use_case.execute(permitir_eliminar_anuladas=False)
-
-    assert resultado.anuladas == 0
-    numeros = await world.liquidaciones.list_numeros_liquidacion()
-    assert "3894-2" in numeros
-
 
 async def test_liquidacion_nueva_nace_abierta_y_vinculada_al_prestador() -> None:
     world = World()

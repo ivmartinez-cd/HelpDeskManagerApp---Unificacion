@@ -1,11 +1,10 @@
 """Jobs de fondo del módulo liquidaciones:
 
 - liquidaciones_reconciliar: cada 120 min (2 h, configurable) — mismo caso de
-  uso que el botón "Sincronizar CD" (`SincronizarLiquidaciones`), pero con
-  `permitir_eliminar_anuladas=False`: nunca borra liquidaciones. La detección
-  de anuladas queda exclusiva del botón/endpoint manual, donde hay un usuario
-  mirando — un ciclo automático de madrugada no es el lugar para una operación
-  irreversible que se lleva incidentes/alertas por CASCADE.
+  uso que el botón "Sincronizar CD" (`SincronizarLiquidaciones`), incluida la
+  baja de las liquidaciones que el prestador anuló en AyC (se llevan sus
+  incidentes/alertas por CASCADE). Hasta el 2026-10-07 el job no borraba y eso
+  quedaba solo para el botón; Iván decidió que una anulada desaparezca sola.
 - liquidaciones_sync_tarifarios: cada 1440 min (1 día, configurable) — mismo
   caso de uso que el botón "Sincronizar desde Siges" de Tarifarios en modo
   aplicar (`SyncTarifariosDesdeSiges`): crea solo las vigencias que faltan,
@@ -58,7 +57,7 @@ async def _ciclo_reconciliar() -> None:
     factory = get_sessionmaker()
     async with factory() as session:
         use_case = build_sincronizar_liquidaciones(session)
-        resultado = await use_case.execute(permitir_eliminar_anuladas=False)
+        resultado = await use_case.execute()
         await session.commit()
     logger.info(
         "liquidaciones_reconciliar: OK — creadas=%d reconciliadas=%d "

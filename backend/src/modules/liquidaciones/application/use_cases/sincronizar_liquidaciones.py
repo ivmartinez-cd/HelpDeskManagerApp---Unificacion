@@ -106,14 +106,11 @@ class SincronizarLiquidaciones:
     def __init__(self, ports: SincronizarLiquidacionesPorts) -> None:
         self._ports = ports
 
-    async def execute(
-        self, prestador_id: UUID | None = None, *, permitir_eliminar_anuladas: bool = True
-    ) -> SincronizarLiquidacionesResultado:
+    async def execute(self, prestador_id: UUID | None = None) -> SincronizarLiquidacionesResultado:
         """`prestador_id` acota el sync a un solo prestador (debe estar vinculado);
-        con None sincroniza todos los vinculados. `permitir_eliminar_anuladas=False`
-        salta `_detectar_y_eliminar_anuladas` entero — la usa el job de fondo
-        (`presentation/background_jobs.py`), que nunca borra sin que alguien esté
-        mirando; el botón/endpoint manual la deja en `True`.
+        con None sincroniza todos los vinculados. El botón y el job de fondo borran
+        por igual las anuladas en AyC (decisión de Iván 2026-10-07: si el prestador
+        la anuló, tiene que desaparecer de HDM sin esperar a que alguien sincronice).
 
         Serializado con un advisory lock (`sync_lock`): sin él, dos corridas
         concurrentes (dos pestañas contra el botón, o el botón contra el job de
@@ -124,18 +121,14 @@ class SincronizarLiquidaciones:
         async with self._ports.sync_lock.hold() as acquired:
             if not acquired:
                 raise SincronizacionEnProgresoError()
-            return await self._run(prestador_id, permitir_eliminar_anuladas)
+            return await self._run(prestador_id)
 
-    async def _run(
-        self, prestador_id: UUID | None, permitir_eliminar_anuladas: bool
-    ) -> SincronizarLiquidacionesResultado:
+    async def _run(self, prestador_id: UUID | None) -> SincronizarLiquidacionesResultado:
         prestadores_cd, sin_prestador = await self._prestadores_a_sincronizar(prestador_id)
         existentes = await self._ports.liquidaciones.list_numeros_liquidacion()
         totales = Contadores()
         for prestador in prestadores_cd:
-            parciales = await self._sincronizar_prestador(
-                prestador, existentes, permitir_eliminar_anuladas=permitir_eliminar_anuladas
-            )
+            parciales = await self._sincronizar_prestador(prestador, existentes)
             log_parciales(prestador, parciales)
             totales.sumar(parciales)
         return totales.a_resultado(sin_prestador=sin_prestador)
@@ -153,7 +146,7 @@ class SincronizarLiquidaciones:
         return prestadores_cd, sin_prestador
 
     async def _sincronizar_prestador(
-        self, prestador: Prestador, existentes: set[str], *, permitir_eliminar_anuladas: bool
+        self, prestador: Prestador, existentes: set[str]
     ) -> Contadores:
         contadores = Contadores()
         liqs, pendientes, por_numero = await self._listados_remoto_y_local(prestador)
@@ -166,10 +159,9 @@ class SincronizarLiquidaciones:
                 contadores.creadas += 1
             else:
                 contadores.fallidas += 1
-        if permitir_eliminar_anuladas:
-            contadores.anuladas = await self._detectar_y_eliminar_anuladas(
-                liqs, prestador, pendientes
-            )
+        contadores.anuladas = await self._detectar_y_eliminar_anuladas(
+            liqs, prestador, pendientes
+        )
         return contadores
 
     async def _listados_remoto_y_local(

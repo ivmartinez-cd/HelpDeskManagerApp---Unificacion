@@ -117,6 +117,11 @@ aplicar nada:
   — **nunca borra**. La detección de anuladas (que sí borra liquidaciones
   enteras, ver §5) queda exclusiva del botón/endpoint manual, con un usuario
   mirando. Corre bajo `DISABLE_BACKGROUND_JOBS` como todos los jobs del repo.
+  **Enmienda 2026-10-07 (decisión de Iván)**: el job también borra las anuladas
+  — el parámetro `permitir_eliminar_anuladas` se eliminó y job y botón hacen lo
+  mismo. Disparador: la 3993-2 (TUCUMAN) anulada por el prestador seguía
+  visible en HDM. El guard contra SOAP vacío de `detectar_anuladas` sigue
+  siendo la red ante un listado caído.
 
 ### 5. Regularización: `_detectar_y_eliminar_anuladas` nunca tuvo ADR propio
 

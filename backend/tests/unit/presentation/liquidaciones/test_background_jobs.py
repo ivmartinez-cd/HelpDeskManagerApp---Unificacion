@@ -1,6 +1,6 @@
 """Glue de los jobs de fondo de liquidaciones: el loop nunca muere por un ciclo
 fallido, respeta el intervalo, el ciclo de reconciliación compone
-`SincronizarLiquidaciones` con `permitir_eliminar_anuladas=False` y commitea, y
+`SincronizarLiquidaciones` (botón y job hacen lo mismo) y commitea, y
 el de tarifarios aplica el sync de Siges y reanaliza solo si creó algo. Todo
 mockeado — acá no se toca wsAyC, Siges, la DB ni nada real."""
 
@@ -73,7 +73,7 @@ class TestLoop:
 
 class TestCicloReconciliar:
     @pytest.mark.asyncio
-    async def test_compone_ejecuta_sin_borrar_anuladas_y_commitea(
+    async def test_compone_ejecuta_y_commitea(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         session = _FakeSession()
@@ -96,7 +96,7 @@ class TestCicloReconciliar:
 
         await bj._ciclo_reconciliar()
 
-        assert llamadas == [{"permitir_eliminar_anuladas": False}]
+        assert llamadas == [{}]
         assert session.commits == 1
 
 
