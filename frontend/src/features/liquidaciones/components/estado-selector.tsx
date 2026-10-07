@@ -5,8 +5,9 @@ import { BrandButton } from "@/shared/components/ui/brand-form";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
 import type { EstadoLiquidacion } from "../types/liquidaciones";
 
+// Los 5 estados de Web Agentes/AyC. `abierta` no existe allá: es solo el estado
+// con que nace la liquidación en HDM hasta la primera reconciliación, no se elige.
 export const ESTADOS: EstadoLiquidacion[] = [
-  "abierta",
   "preliquidada",
   "recibida",
   "observada",
@@ -51,7 +52,7 @@ export function EstadoSelector({ estado, disabled, onCambiar }: {
         onChange={(e) => elegir(e.target.value as EstadoLiquidacion)}
         className="rounded-[8px] border border-border bg-card px-2 py-1 font-body text-xs text-foreground outline-none focus:border-brand-orange/50 disabled:opacity-50"
       >
-        {ESTADOS.map((e) => (
+        {(ESTADOS.includes(estado) ? ESTADOS : [estado, ...ESTADOS]).map((e) => (
           <option key={e} value={e}>{ESTADO_LABELS[e]}</option>
         ))}
       </select>

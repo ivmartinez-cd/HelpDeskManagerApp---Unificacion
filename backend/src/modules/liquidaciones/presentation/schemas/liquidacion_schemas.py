@@ -11,9 +11,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from src.modules.liquidaciones.domain.entities.liquidacion import Liquidacion
 from src.modules.liquidaciones.domain.entities.prestador import Prestador
 
-ESTADOS_VALIDOS = Literal[
-    "abierta", "preliquidada", "recibida", "observada", "aprobada", "cerrada"
-]
+# Los 5 estados de Web Agentes/AyC. `abierta` es solo el estado inicial local
+# (antes de la primera reconciliación): no se puede elegir a mano.
+ESTADOS_VALIDOS = Literal["preliquidada", "recibida", "observada", "aprobada", "cerrada"]
 
 
 class PrestadorPendienteOut(BaseModel):

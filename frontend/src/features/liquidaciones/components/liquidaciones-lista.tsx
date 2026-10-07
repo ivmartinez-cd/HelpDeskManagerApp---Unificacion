@@ -12,7 +12,6 @@ import { LiquidacionesTabla } from "./liquidaciones-tabla";
 
 const ESTADOS: { value: string; label: string }[] = [
   { value: "", label: "-- Todos --" },
-  { value: "abierta", label: "Abierta" },
   { value: "preliquidada", label: "Preliquidada" },
   { value: "recibida", label: "Recibida" },
   { value: "observada", label: "Observada" },
