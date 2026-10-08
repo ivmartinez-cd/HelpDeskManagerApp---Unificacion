@@ -51,8 +51,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <AccessDeniedToast />
       </Suspense>
       {/* Poller único de chats de WhatsApp pendientes + avisos por umbral al
-          operador de ST (modal bloqueante, ADR-036), en toda la app (badge
-          del header, banner de Inicio, card, /wati). */}
+          operador de ST (modal bloqueante, ADR-036), en toda la app (banner
+          de Inicio, card, /wati). */}
       <WatiPendientesProvider watiUrl={WATI_URL}>
         {/* Poller único de modificaciones del prestador sin ver (ADR-038):
             badge del ítem Liquidaciones + toast persistente con sonido, en
@@ -61,7 +61,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           {/* Bandeja de notificaciones (campanita del header): un poller por
               pestaña, toast + sonido + aviso de escritorio para las nuevas. */}
           <NotificacionesProvider>
-            <Sidebar watiUrl={WATI_URL}>
+            <Sidebar>
               {/* Guard de ruta por permiso (ADR-029): adentro del Sidebar para que
                   la nav siga visible mientras redirige a Inicio. */}
               <RouteGuard>{children}</RouteGuard>

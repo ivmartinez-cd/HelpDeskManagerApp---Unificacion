@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "reportes-app": {
+      "command": "uv",
+      "args": ["run", "--quiet", "--script", "scripts/mcp/reportes_app_mcp.py"]
+    }
+  }
+}

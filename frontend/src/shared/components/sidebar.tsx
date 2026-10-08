@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home } from "lucide-react";
+import { Home, MessageSquareWarning } from "lucide-react";
 import { ModuleNavItem } from "@/shared/components/module-nav-item";
 import { ServicioTecnicoNavItem } from "@/shared/components/servicio-tecnico-nav-item";
 import { SidebarHeader } from "@/shared/components/sidebar-header";
@@ -18,13 +18,8 @@ const DENTRO_DE_GESTION_PERSONAL: readonly string[] = ["personas", "turnos"];
 
 export function Sidebar({
   children,
-  watiUrl = null,
 }: {
   children: ReactNode;
-  /** URL del tenant de WATI, leída server-side en `app/(app)/layout.tsx`
-   * (`WATI_URL`, no `NEXT_PUBLIC_*` -- ver docstring de `WatiHeaderLink`).
-   * `null` = sin configurar, el ícono no se muestra. */
-  watiUrl?: string | null;
 }) {
   const { user, modules, can, hasFeature } = useSession();
   // Destino del ítem de nivel superior de cada módulo: la raíz del módulo, salvo
@@ -128,7 +123,6 @@ export function Sidebar({
     <div className="flex h-screen w-full flex-col">
       <SidebarHeader
         user={user}
-        watiUrl={watiUrl}
         onOpenMobile={() => setMobileOpen(true)}
         onOpenChangePassword={() => setChangePasswordOpen(true)}
       />
@@ -205,6 +199,25 @@ export function Sidebar({
                   onNavigate={closeMobile}
                 />
               ))}
+
+            {/* Panel de reportes (botón "Reportar" del header): solo superadmin,
+                que es quien aprueba las propuestas de Claude. */}
+            {user.isSuperadmin && (
+              <Link
+                href="/admin/reportes"
+                onClick={closeMobile}
+                aria-current={isActive("/admin/reportes") ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 font-body text-sm no-underline transition-colors",
+                  isActive("/admin/reportes")
+                    ? "bg-brand-orange/[0.12] font-semibold text-brand-orange"
+                    : "text-muted-foreground hover:bg-muted",
+                )}
+              >
+                <MessageSquareWarning className="h-4 w-4 flex-none" aria-hidden="true" />
+                Reportes de la app
+              </Link>
+            )}
           </nav>
 
           <div className="mt-auto border-t border-border px-3 pb-1 pt-3">

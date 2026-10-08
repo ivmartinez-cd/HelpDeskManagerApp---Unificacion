@@ -5,17 +5,15 @@ import { ThemeToggle } from "@/shared/components/theme-toggle";
 import type { UserSummary } from "@/features/auth/api/auth-api";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
-import { WatiHeaderLink } from "@/features/wati/components/wati-header-link";
 import { Campanita } from "@/features/notificaciones/components/campanita";
+import { ReportarBoton } from "@/features/reportes-app/components/reportar-boton";
 
 export function SidebarHeader({
   user,
-  watiUrl,
   onOpenMobile,
   onOpenChangePassword,
 }: {
   user: UserSummary;
-  watiUrl: string | null;
   onOpenMobile: () => void;
   onOpenChangePassword: () => void;
 }) {
@@ -49,7 +47,7 @@ export function SidebarHeader({
       </div>
 
       <div className="flex flex-none items-center gap-1 sm:gap-3">
-        <WatiHeaderLink url={watiUrl} />
+        <ReportarBoton />
         <Campanita />
         <div className="hidden h-[22px] w-px bg-border sm:block" />
         <button
