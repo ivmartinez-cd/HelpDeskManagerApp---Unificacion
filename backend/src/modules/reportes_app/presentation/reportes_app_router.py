@@ -3,7 +3,8 @@
 - Alta: botón "Reportar" del header, cualquier usuario logueado.
 - Panel (`/admin/reportes`), solo superadmin: ver lo que llegó con la propuesta
   que dejó Claude por el servidor MCP (`scripts/mcp/reportes_app_mcp.py`) y
-  aprobarla, pedir cambios o descartarla.
+  aprobarla, pedir cambios o descartarla; y, ya resuelto, pedir que se integre
+  su rama (la mergea `scripts/integrar_reportes.py` en el host, no la app).
 
 Repo directo, sin use case (ADR-044): inserción, lecturas y una escritura de la
 decisión que elige el usuario, sin reglas ni efectos."""
@@ -22,14 +23,16 @@ from src.modules.reportes_app.infrastructure.repositories.sqlalchemy_reporte_app
 )
 from src.modules.reportes_app.presentation.foto_storage import FOTOS_DIR, guardar_foto
 from src.modules.reportes_app.presentation.schemas import DecisionIn, ReporteOut
-from src.shared.domain.errors import NotFoundError, ValidationError
+from src.shared.domain.errors import BusinessRuleViolationError, NotFoundError, ValidationError
 from src.shared.infrastructure.database.session import get_db
 from src.shared.presentation.schemas.pagination import Page
 
 router = APIRouter(prefix="/api/reportes-app", tags=["reportes-app"])
 
 _ESTADO_POR_DECISION = {"aprobar": "aprobado", "pedir_cambios": "nuevo", "descartar": "descartado"}
-EstadoFiltro = Literal["nuevo", "propuesto", "aprobado", "en_curso", "resuelto", "descartado"]
+EstadoFiltro = Literal[
+    "nuevo", "propuesto", "aprobado", "en_curso", "resuelto", "descartado", "integrar", "integrado"
+]
 
 
 async def _superadmin(identity: Identity = Depends(get_current_identity)) -> Identity:
@@ -103,3 +106,14 @@ async def decidir_reporte(
     estado = _ESTADO_POR_DECISION[body.decision]
     if not await SqlAlchemyReporteAppRepository(db).decidir(reporte_id, estado, respuesta):
         raise NotFoundError("No existe el reporte")
+
+
+@router.post("/{reporte_id}/integrar", status_code=status.HTTP_204_NO_CONTENT)
+async def pedir_integracion(
+    reporte_id: uuid.UUID,
+    _identity: Identity = Depends(_superadmin),
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> None:
+    """Solo deja el pedido: el merge lo hace el script del host, que es quien ve el repo."""
+    if not await SqlAlchemyReporteAppRepository(db).pedir_integracion(reporte_id):
+        raise BusinessRuleViolationError("Solo se integra un reporte resuelto con rama")

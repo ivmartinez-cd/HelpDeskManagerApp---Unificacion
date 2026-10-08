@@ -15,6 +15,8 @@ const FILTROS = [
   { value: "aprobado", label: "Aprobados" },
   { value: "en_curso", label: ETIQUETA_ESTADO.en_curso },
   { value: "resuelto", label: "Resueltos" },
+  { value: "integrar", label: ETIQUETA_ESTADO.integrar },
+  { value: "integrado", label: "Integrados" },
   { value: "descartado", label: "Descartados" },
   { value: "todos", label: "Todos" },
 ];

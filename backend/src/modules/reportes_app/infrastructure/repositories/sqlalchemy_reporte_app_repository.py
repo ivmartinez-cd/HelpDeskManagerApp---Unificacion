@@ -21,6 +21,7 @@ class ReporteVista:
     tiene_foto: bool
     nota: str | None
     respuesta: str | None
+    rama: str | None
     usuario: str | None
     creado_en: datetime
     actualizado_en: datetime | None
@@ -73,6 +74,15 @@ class SqlAlchemyReporteAppRepository:
         )
         return bool(getattr(resultado, "rowcount", 0))
 
+    async def pedir_integracion(self, reporte_id: uuid.UUID) -> bool:
+        """Solo un `resuelto` con rama. False si no aplica (o no existe)."""
+        resultado = await self._session.execute(
+            update(R)
+            .where(R.id == reporte_id, R.estado == "resuelto", R.rama.is_not(None))
+            .values(estado="integrar", actualizado_en=func.now())
+        )
+        return bool(getattr(resultado, "rowcount", 0))
+
 
 def _vista(r: R, usuario: str | None) -> ReporteVista:
     return ReporteVista(
@@ -84,6 +94,7 @@ def _vista(r: R, usuario: str | None) -> ReporteVista:
         tiene_foto=r.foto is not None,
         nota=r.nota,
         respuesta=r.respuesta,
+        rama=r.rama,
         usuario=usuario,
         creado_en=r.creado_en,
         actualizado_en=r.actualizado_en,

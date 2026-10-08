@@ -13,13 +13,16 @@ class ReporteAppModel(Base):
     Circuito: `nuevo` -> Claude deja diagnóstico y propuesta en `nota` por el
     servidor MCP (`scripts/mcp/reportes_app_mcp.py`) -> `propuesto` -> el
     superadmin aprueba, pide cambios (vuelve a `nuevo`) o descarta desde el
-    panel, con `respuesta` -> Claude trabaja solo los `aprobado`."""
+    panel, con `respuesta` -> Claude trabaja solo los `aprobado` y los deja
+    `resuelto` con su `rama` -> el superadmin pide integrarla (`integrar`) y el
+    script del host `scripts/integrar_reportes.py` la mergea (`integrado`)."""
 
     __tablename__ = "reportes_app"
     __table_args__ = (
         CheckConstraint("tipo IN ('error', 'mejora')", name="ck_reportes_app_tipo"),
         CheckConstraint(
-            "estado IN ('nuevo', 'propuesto', 'aprobado', 'en_curso', 'resuelto', 'descartado')",
+            "estado IN ('nuevo', 'propuesto', 'aprobado', 'en_curso', 'resuelto', 'descartado',"
+            " 'integrar', 'integrado')",
             name="ck_reportes_app_estado",
         ),
     )
@@ -38,6 +41,7 @@ class ReporteAppModel(Base):
     estado: Mapped[str] = mapped_column(String, nullable=False, server_default="nuevo")
     nota: Mapped[str | None] = mapped_column(Text)
     respuesta: Mapped[str | None] = mapped_column(Text)
+    rama: Mapped[str | None] = mapped_column(String)
     creado_en: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("now()")
     )

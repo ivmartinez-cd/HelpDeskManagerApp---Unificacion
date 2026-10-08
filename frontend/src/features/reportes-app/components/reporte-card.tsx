@@ -22,6 +22,8 @@ export const ETIQUETA_ESTADO: Record<EstadoReporte, string> = {
   en_curso: "En curso",
   resuelto: "Resuelto",
   descartado: "Descartado",
+  integrar: "Integrando",
+  integrado: "Integrado",
 };
 
 const VARIANTE_ESTADO = {
@@ -31,6 +33,8 @@ const VARIANTE_ESTADO = {
   en_curso: "info",
   resuelto: "success",
   descartado: "neutral",
+  integrar: "info",
+  integrado: "success",
 } as const;
 
 const fecha = (iso: string) =>
@@ -118,6 +122,45 @@ function Decidir({
   );
 }
 
+function Integrar({
+  reporte,
+  onHecho,
+}: {
+  reporte: Reporte;
+  onHecho: () => void;
+}) {
+  const [enviando, setEnviando] = useState(false);
+
+  const integrar = async () => {
+    setEnviando(true);
+    try {
+      await reportesAppApi.integrar(reporte.id);
+      toast.success(
+        "Pedido de integración enviado: en un minuto queda en develop",
+      );
+      onHecho();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "No se pudo pedir la integración",
+      );
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+      <span className="font-body text-xs text-muted-foreground">
+        Rama{" "}
+        <code className="font-semibold text-foreground">{reporte.rama}</code>
+      </span>
+      <BrandButton loading={enviando} onClick={integrar}>
+        Integrar
+      </BrandButton>
+    </div>
+  );
+}
+
 export function ReporteCard({
   reporte,
   onDecidido,
@@ -176,6 +219,9 @@ export function ReporteCard({
       </div>
       {reporte.estado === "propuesto" && (
         <Decidir reporte={reporte} onDecidido={onDecidido} />
+      )}
+      {reporte.estado === "resuelto" && reporte.rama && (
+        <Integrar reporte={reporte} onHecho={onDecidido} />
       )}
     </article>
   );

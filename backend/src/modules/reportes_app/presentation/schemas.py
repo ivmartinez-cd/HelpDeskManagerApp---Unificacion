@@ -18,6 +18,7 @@ class ReporteOut(BaseModel):
     tiene_foto: bool
     nota: str | None
     respuesta: str | None
+    rama: str | None
     usuario: str | None
     creado_en: datetime
     actualizado_en: datetime | None

@@ -3,7 +3,14 @@ import type { Page } from "@/shared/types/pagination";
 
 export type TipoReporte = "error" | "mejora";
 export type EstadoReporte =
-  "nuevo" | "propuesto" | "aprobado" | "en_curso" | "resuelto" | "descartado";
+  | "nuevo"
+  | "propuesto"
+  | "aprobado"
+  | "en_curso"
+  | "resuelto"
+  | "descartado"
+  | "integrar"
+  | "integrado";
 export type Decision = "aprobar" | "pedir_cambios" | "descartar";
 
 /** Un reporte tal como llegó, más la propuesta de Claude (`nota`) y el
@@ -17,6 +24,8 @@ export interface Reporte {
   tiene_foto: boolean;
   nota: string | null;
   respuesta: string | null;
+  /** Rama que dejó Claude al resolver; con ella se puede pedir integrarla. */
+  rama: string | null;
   usuario: string | null;
   creado_en: string;
   actualizado_en: string | null;
@@ -46,4 +55,6 @@ export const reportesAppApi = {
   fotoUrl: (id: string) => `${BASE}/${id}/foto`,
   decidir: (id: string, decision: Decision, respuesta: string | null) =>
     httpClient.post<void>(`${BASE}/${id}/decision`, { decision, respuesta }),
+  /** Solo deja el pedido: la mergea a develop un script del host (cada 1 min). */
+  integrar: (id: string) => httpClient.post<void>(`${BASE}/${id}/integrar`),
 };
