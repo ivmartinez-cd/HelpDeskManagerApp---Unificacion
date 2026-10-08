@@ -199,31 +199,31 @@ export function Sidebar({
                   onNavigate={closeMobile}
                 />
               ))}
+          </nav>
 
+          <div className="mt-auto flex items-center justify-between gap-2 border-t border-border px-3 pb-1 pt-3">
+            <span className="font-body text-[11px] text-muted-foreground">
+              Portal interno · Canal Directo
+            </span>
             {/* Panel de reportes (botón "Reportar" del header): solo superadmin,
                 que es quien aprueba las propuestas de Claude. */}
             {user.isSuperadmin && (
               <Link
                 href="/admin/reportes"
                 onClick={closeMobile}
+                title="Reportes de la app"
+                aria-label="Reportes de la app"
                 aria-current={isActive("/admin/reportes") ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 font-body text-sm no-underline transition-colors",
+                  "flex-none rounded-[6px] p-1 transition-colors",
                   isActive("/admin/reportes")
-                    ? "bg-brand-orange/[0.12] font-semibold text-brand-orange"
+                    ? "text-brand-orange"
                     : "text-muted-foreground hover:bg-muted",
                 )}
               >
-                <MessageSquareWarning className="h-4 w-4 flex-none" aria-hidden="true" />
-                Reportes de la app
+                <MessageSquareWarning className="h-3.5 w-3.5" aria-hidden="true" />
               </Link>
             )}
-          </nav>
-
-          <div className="mt-auto border-t border-border px-3 pb-1 pt-3">
-            <span className="font-body text-[11px] text-muted-foreground">
-              Portal interno · Canal Directo
-            </span>
           </div>
         </aside>
 
