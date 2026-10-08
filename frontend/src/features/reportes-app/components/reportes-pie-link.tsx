@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { MessageSquareWarning } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import { useReportesPendientes } from "../hooks/use-reportes-pendientes";
+import { useReportesNovedades } from "../hooks/use-reportes-pendientes";
 
 /** Ícono del pie del menú lateral hacia el panel de reportes (solo superadmin).
- * Se pinta de naranja con un puntito cuando hay reportes esperando su OK o
- * su Integrar: es el único aviso del circuito, no usa la campanita. */
+ * Se pinta de naranja con un puntito cuando hubo novedades desde su última
+ * visita al panel: es el único aviso del circuito, no usa la campanita. */
 export function ReportesPieLink({
   active,
   onNavigate,
@@ -15,13 +15,11 @@ export function ReportesPieLink({
   active: boolean;
   onNavigate: () => void;
 }) {
-  const { propuestos, resueltos } = useReportesPendientes();
-  const partes = [
-    propuestos > 0 && `${propuestos} esperan tu OK`,
-    resueltos > 0 && `${resueltos} para integrar`,
-  ].filter(Boolean);
-  const hayPendientes = partes.length > 0;
-  const titulo = ["Reportes de la app", ...partes].join(" · ");
+  const novedades = useReportesNovedades(active);
+  const hayPendientes = novedades > 0;
+  const titulo = hayPendientes
+    ? `Reportes de la app · ${novedades} ${novedades === 1 ? "novedad" : "novedades"}`
+    : "Reportes de la app";
 
   return (
     <Link
