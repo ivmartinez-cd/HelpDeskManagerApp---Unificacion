@@ -12,7 +12,7 @@ Registrado en `.mcp.json`; a mano: `uv run --script scripts/mcp/reportes_app_mcp
 
 from typing import Any, Literal
 
-from _hdm_db import RAIZ, avisar_superadmin, conectar
+from _hdm_db import RAIZ, conectar
 from mcp.server.fastmcp import FastMCP, Image
 
 FOTOS_DIR = RAIZ / "backend/var/reportes_app/fotos"
@@ -90,17 +90,6 @@ _TRANSICIONES = {
     "en_curso": ["aprobado", "en_curso"],
     "resuelto": ["aprobado", "en_curso"],
 }
-# Estados que le avisan a Iván por la campanita: los dos en que espera algo de él.
-_AVISOS = {
-    "propuesto": (
-        "Propuesta para revisar",
-        "Claude dejó una propuesta para un reporte de {tipo}: falta tu OK.",
-    ),
-    "resuelto": (
-        "Reporte resuelto",
-        "Claude terminó un reporte de {tipo}: revisá la nota y tocá Integrar.",
-    ),
-}
 
 
 @mcp.tool()
@@ -113,11 +102,11 @@ def actualizar_reporte(
     """Avanza un reporte y reemplaza la nota que Iván ve en el panel.
 
     - `propuesto` (desde `nuevo`): nota = diagnóstico + qué se propone hacer
-      (o proponer descartarlo y por qué). Le llega un aviso a la campanita.
+      (o proponer descartarlo y por qué).
       También desde `en_curso`, si lo aprobado no se pudo hacer: explicar por qué.
     - `en_curso` (solo si Iván lo aprobó): se toma el reporte para trabajarlo.
     - `resuelto`: nota = qué se hizo, commit y qué probar; `rama` = nombre exacto
-      de la rama a integrar (obligatorio: sin rama, Iván no puede integrarla). Avisa."""
+      de la rama a integrar (obligatorio: sin rama, Iván no puede integrarla)."""
     if estado == "resuelto" and not rama:
         raise ValueError("Para resolver hace falta `rama`: la que Iván va a integrar")
     with conectar() as con:
@@ -135,9 +124,6 @@ def actualizar_reporte(
             if actual is None:
                 raise ValueError(f"No existe el reporte {id}")
             raise ValueError(f"No se puede pasar de '{actual['estado']}' a '{estado}'")
-        if estado in _AVISOS:
-            titulo, cuerpo = _AVISOS[estado]
-            avisar_superadmin(con, estado, id, titulo, cuerpo.format(tipo=fila["tipo"]))
     return fila
 
 

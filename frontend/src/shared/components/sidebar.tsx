@@ -3,11 +3,12 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, MessageSquareWarning } from "lucide-react";
+import { Home } from "lucide-react";
 import { ModuleNavItem } from "@/shared/components/module-nav-item";
 import { ServicioTecnicoNavItem } from "@/shared/components/servicio-tecnico-nav-item";
 import { SidebarHeader } from "@/shared/components/sidebar-header";
 import { cn } from "@/shared/utils/cn";
+import { ReportesPieLink } from "@/features/reportes-app/components/reportes-pie-link";
 import { ChangePasswordModal } from "@/features/auth/components/change-password-modal";
 import { useSession } from "@/services/session-provider";
 import { canAccessPath } from "@/shared/config/route-permissions";
@@ -208,21 +209,10 @@ export function Sidebar({
             {/* Panel de reportes (botón "Reportar" del header): solo superadmin,
                 que es quien aprueba las propuestas de Claude. */}
             {user.isSuperadmin && (
-              <Link
-                href="/admin/reportes"
-                onClick={closeMobile}
-                title="Reportes de la app"
-                aria-label="Reportes de la app"
-                aria-current={isActive("/admin/reportes") ? "page" : undefined}
-                className={cn(
-                  "flex-none rounded-[6px] p-1 transition-colors",
-                  isActive("/admin/reportes")
-                    ? "text-brand-orange"
-                    : "text-muted-foreground hover:bg-muted",
-                )}
-              >
-                <MessageSquareWarning className="h-3.5 w-3.5" aria-hidden="true" />
-              </Link>
+              <ReportesPieLink
+                active={isActive("/admin/reportes")}
+                onNavigate={closeMobile}
+              />
             )}
           </div>
         </aside>

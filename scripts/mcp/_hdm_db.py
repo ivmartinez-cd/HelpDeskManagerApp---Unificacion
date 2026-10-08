@@ -2,7 +2,6 @@
 (`reportes_app_mcp.py`) y el integrador de ramas (`integrar_reportes.py`): puerto
 publicado en 127.0.0.1 y credenciales del `.env` de la raíz del repo."""
 
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -31,18 +30,4 @@ def conectar() -> Conexion:
         password=env["POSTGRES_PASSWORD"],
         dbname=env.get("POSTGRES_DB", "helpdesk"),
         row_factory=dict_row,
-    )
-
-
-def avisar_superadmin(
-    con: Conexion, motivo: str, id: str, titulo: str, cuerpo: str
-) -> None:
-    """Campanita: la audiencia `superadmin` no la tiene ningún usuario común, así
-    que solo la ven los superadmin. La clave lleva la hora para que cada vuelta
-    (p. ej. una nueva propuesta tras pedir cambios) vuelva a avisar."""
-    con.execute(
-        """INSERT INTO notificaciones (clave, audiencia, titulo, cuerpo, url)
-           VALUES (%s, 'superadmin', %s, %s, '/admin/reportes')
-           ON CONFLICT (clave) DO NOTHING""",
-        (f"reportes-app.{motivo}:{id}:{datetime.now(UTC).isoformat()}", titulo, cuerpo),
     )

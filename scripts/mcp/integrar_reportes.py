@@ -9,7 +9,8 @@ flock para no pisarse (ver la entrada en `crontab -l`). No es Claude: solo git.
 Solo mergea si entra limpio: el checkout principal en develop, la rama con un
 nombre válido, y ninguno de los archivos que toca con cambios sin commitear de
 otra sesión. Si algo falla, aborta el merge, devuelve el reporte a `resuelto`
-con el motivo en la nota y avisa. Nunca pushea ni reinicia nada.
+con el motivo en la nota (el ícono del pie del menú lo marca). Nunca pushea
+ni reinicia nada.
 """
 
 import re
@@ -17,7 +18,7 @@ import subprocess
 from datetime import UTC, datetime
 from typing import Any
 
-from _hdm_db import RAIZ, Conexion, avisar_superadmin, conectar
+from _hdm_db import RAIZ, Conexion, conectar
 
 # La rama viene de la DB: validarla antes de pasársela a git.
 _RAMA_VALIDA = re.compile(r"^reporte-[0-9a-f]{8}(-[a-z0-9]+)*$")
@@ -96,16 +97,12 @@ def _limpiar(rama: str) -> str | None:
     return None
 
 
-def _cerrar(
-    con: Conexion, r: dict[str, Any], estado: str, agregado: str, aviso: str
-) -> None:
+def _cerrar(con: Conexion, r: dict[str, Any], estado: str, agregado: str) -> None:
     con.execute(
         """UPDATE reportes_app SET estado = %s, nota = COALESCE(nota, '') || %s,
            actualizado_en = now() WHERE id = %s""",
         (estado, f"\n\n{agregado}", r["id"]),
     )
-    titulo = "Reporte integrado" if estado == "integrado" else "No se pudo integrar"
-    avisar_superadmin(con, estado, r["id"], titulo, aviso)
     print(
         f"{_ahora():%Y-%m-%d %H:%M} {r['rama']}: {estado} — {agregado}",
         flush=True,
@@ -122,7 +119,7 @@ def _procesar(con: Conexion, r: dict[str, Any]) -> None:
             _mergear(rama)
     except NoIntegrable as exc:
         motivo = f"No se pudo integrar ({hora}): {exc}"
-        _cerrar(con, r, "resuelto", motivo, f"La rama {rama} no se integró: {exc}")
+        _cerrar(con, r, "resuelto", motivo)
         return
     reiniciar = any(a.startswith("backend/") for a in archivos)
     pasos = (
@@ -133,9 +130,7 @@ def _procesar(con: Conexion, r: dict[str, Any]) -> None:
     problema = _limpiar(rama)
     limpieza = f" No se pudo borrar el worktree/rama: {problema}" if problema else ""
     agregado = f"Integrada en develop ({hora}), sin pushear. {pasos}{limpieza}"
-    _cerrar(
-        con, r, "integrado", agregado, f"La rama {rama} ya está en develop. {pasos}"
-    )
+    _cerrar(con, r, "integrado", agregado)
 
 
 def main() -> None:
