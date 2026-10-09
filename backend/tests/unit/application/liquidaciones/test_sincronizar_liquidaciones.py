@@ -308,18 +308,34 @@ async def test_anuladas_se_reportan_en_el_resultado() -> None:
 
 
 
-async def test_liquidacion_nueva_nace_abierta_y_vinculada_al_prestador() -> None:
+async def test_liquidacion_nueva_nace_con_el_estado_de_ayc_y_vinculada_al_prestador() -> None:
+    """`abierta` no existe en Web Agentes: la liquidación nace con el estado que
+    informa AyC, no espera a la sincronización siguiente."""
     world = World()
     prestador = world.con_prestador_vinculado()
-    world.gateway.liquidaciones_por_empresa[1310] = [make_cd_liquidacion(3894)]
+    cd_liq = dataclasses.replace(make_cd_liquidacion(3894), estado="Preliquidada")
+    world.gateway.liquidaciones_por_empresa[1310] = [cd_liq]
+    world.gateway.incidentes_por_liq = {3894: [make_cd_incidente()]}
+
+    await world.use_case.execute()
+
+    liq = next(iter(world.liquidaciones.rows.values()))
+    assert liq.estado == "preliquidada"
+    assert liq.prestador_id == prestador.id
+    assert liq.numero_liquidacion == "3894-2"
+
+
+async def test_liquidacion_nueva_con_estado_ayc_desconocido_queda_abierta() -> None:
+    world = World()
+    world.con_prestador_vinculado()
+    cd_liq = dataclasses.replace(make_cd_liquidacion(3894), estado="Rara")
+    world.gateway.liquidaciones_por_empresa[1310] = [cd_liq]
     world.gateway.incidentes_por_liq = {3894: [make_cd_incidente()]}
 
     await world.use_case.execute()
 
     liq = next(iter(world.liquidaciones.rows.values()))
     assert liq.estado == "abierta"
-    assert liq.prestador_id == prestador.id
-    assert liq.numero_liquidacion == "3894-2"
 
 
 async def test_liquidacion_cerrada_no_pide_detalle_ni_se_reconcilia() -> None:

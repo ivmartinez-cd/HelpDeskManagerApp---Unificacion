@@ -69,6 +69,7 @@ from src.modules.liquidaciones.domain.repositories.prestador_repository import (
     PrestadorRepository,
 )
 from src.modules.liquidaciones.domain.services.detectar_anuladas import detectar_anuladas
+from src.modules.liquidaciones.domain.services.estados_ayc import estado_local_desde_ayc
 from src.modules.liquidaciones.domain.services.importacion.metadata import extraer_periodo
 from src.modules.liquidaciones.domain.services.tipo_abono import tipo_segun_incidentes
 from src.modules.liquidaciones.domain.value_objects.cd_liquidacion import (
@@ -256,9 +257,22 @@ class SincronizarLiquidaciones:
             total_incidentes=len(incidentes),
             total_importe=total,
         )
+        await self._aplicar_estado_ayc(liq.id, cd_liq)
         await self._ports.incidentes.bulk_create(liq.id, incidentes)
         await self._ports.reanalizar.execute(liq.id)
         return True
+
+    async def _aplicar_estado_ayc(self, liquidacion_id: UUID, cd_liq: CdLiquidacion) -> None:
+        """Nace con el estado de AyC: `abierta` no existe en Web Agentes. Si AyC
+        manda uno desconocido, queda `abierta` como respaldo y se avisa en el log."""
+        estado = estado_local_desde_ayc(estado_id=cd_liq.estado_id, nombre=cd_liq.estado)
+        if estado is None:
+            logger.warning(
+                "sync CD: estado AyC desconocido %r (id %s) en %s — queda abierta",
+                cd_liq.estado, cd_liq.estado_id, cd_liq.numero_liquidacion,
+            )
+            return
+        await self._ports.liquidaciones.update_estado(liquidacion_id, estado)
 
     async def _detalle_completo(
         self, cd_liq: CdLiquidacion, prestador: Prestador
