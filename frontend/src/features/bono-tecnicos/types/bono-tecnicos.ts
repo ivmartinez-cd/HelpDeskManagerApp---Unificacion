@@ -62,6 +62,9 @@ export interface IncidenteBono {
   cliente: string;
   sucursal: string;
   nro_serie: string;
+  /** Fecha/hora de cierre en Siges (hora local argentina, sin huso) — es la
+   * que define en qué mes cuenta el incidente para el bono. */
+  fecha_cierre: string | null;
 }
 
 /** Orden y etiqueta de cada categoría — mismo orden que el `ORDER BY` de

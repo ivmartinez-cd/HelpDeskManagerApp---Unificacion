@@ -2,7 +2,9 @@
 JOIN base y mismo mapeo `ID_Tipo_Incidente` -> categoría que
 `query.py` (ver ese módulo, incluido el fix 2026-08-25 de `Fecha_Cierre` en
 vez de `IncidenteTiempo.FechaOperativo`), filtrada por `E1.ID_Empresa` en vez
-de agrupada por técnico: es la pantalla de detalle, uno a la vez."""
+de agrupada por técnico: es la pantalla de detalle, uno a la vez. La usan el
+modal de gerencia y "Mis incidentes" del propio técnico (`FechaCierre` es
+para esta última: el técnico ve cuándo se le computó cada uno)."""
 
 INCIDENTES_TECNICO_SQL = """
 SELECT
@@ -16,7 +18,8 @@ SELECT
     END AS Categoria,
     E.Den_Comercial AS Cliente,
     S.Descripcion AS Sucursal,
-    M.Nro_Serie AS NroSerie
+    M.Nro_Serie AS NroSerie,
+    I.Fecha_Cierre AS FechaCierre
 FROM dbo.Incidente I
 INNER JOIN dbo.Estado_Incidente EI ON I.ID_Estado_Incidente = EI.Id
 INNER JOIN dbo.Tipo_Incidente TI ON I.ID_Tipo_Incidente = TI.Id

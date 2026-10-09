@@ -68,6 +68,7 @@ export function ServicioTecnicoNavItem({
     [hasSla, "/sla"],
     [hasPreventivos, "/preventivos"],
     [hasBonoTecnicos, "/bono-tecnicos"],
+    [hasBonoTecnicos, "/bono-tecnicos/mis-incidentes"],
     [hasTareasVarias, "/tareas-varias"],
     [hasAnalisisLogHp, "/analisis-log-hp"],
     [hasReporteIncidentes, "/reporte-incidentes"],

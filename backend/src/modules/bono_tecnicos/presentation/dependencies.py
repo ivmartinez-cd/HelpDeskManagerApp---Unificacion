@@ -15,6 +15,7 @@ from src.modules.bono_tecnicos.application.use_cases.get_incidentes_tecnico impo
     GetIncidentesTecnico,
 )
 from src.modules.bono_tecnicos.application.use_cases.get_mi_resumen_bono import GetMiResumenBono
+from src.modules.bono_tecnicos.application.use_cases.get_mis_incidentes import GetMisIncidentes
 from src.modules.bono_tecnicos.application.use_cases.get_puntajes_periodo import (
     GetPuntajesPeriodo,
 )
@@ -75,6 +76,12 @@ def build_get_mi_resumen_bono(session: AsyncSession) -> GetMiResumenBono:
         SqlAlchemyTecnicoIdentityGateway(session),
         build_get_puntajes_periodo(session),
         SqlAlchemyTareasVariasGateway(session),
+    )
+
+
+def build_get_mis_incidentes(session: AsyncSession) -> GetMisIncidentes:
+    return GetMisIncidentes(
+        SqlAlchemyTecnicoIdentityGateway(session), build_get_incidentes_tecnico()
     )
 
 

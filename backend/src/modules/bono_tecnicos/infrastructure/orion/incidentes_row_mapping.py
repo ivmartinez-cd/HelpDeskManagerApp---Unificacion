@@ -3,6 +3,7 @@
 Acceso por nombre de columna (pyodbc.Row lo expone como atributo), no por
 índice posicional — mismo criterio que `row_mapping.py`."""
 
+from datetime import datetime
 from typing import Any
 
 from src.modules.bono_tecnicos.domain.entities.incidente_bono import IncidenteBono
@@ -19,4 +20,5 @@ def map_row(row: Any) -> IncidenteBono:
         cliente=_texto(row.Cliente),
         sucursal=_texto(row.Sucursal),
         nro_serie=_texto(row.NroSerie),
+        fecha_cierre=row.FechaCierre if isinstance(row.FechaCierre, datetime) else None,
     )

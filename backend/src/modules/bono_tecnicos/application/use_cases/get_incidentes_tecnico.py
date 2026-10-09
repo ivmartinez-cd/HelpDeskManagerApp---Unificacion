@@ -26,6 +26,7 @@ class GetIncidentesTecnico:
                 cliente=i.cliente,
                 sucursal=i.sucursal,
                 nro_serie=i.nro_serie,
+                fecha_cierre=i.fecha_cierre,
             )
             for i in incidentes
         ]

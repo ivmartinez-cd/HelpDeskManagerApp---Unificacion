@@ -10,6 +10,7 @@ import {
   FileQuestion,
   FileSearch,
   FileBarChart,
+  ListChecks,
   Gauge,
   Headset,
   UserRoundCheck,
@@ -81,7 +82,11 @@ function buildSections({
       ? [{ href: "/preventivos", label: "Preventivos por zona", exact: false, icon: CalendarClock }]
       : []),
     ...(hasBonoTecnicos
-      ? [{ href: "/bono-tecnicos", label: "Bono Técnicos", exact: false, icon: Award }]
+      ? [
+          { href: "/bono-tecnicos/mis-incidentes", label: "Mis incidentes", exact: false, icon: ListChecks },
+          // exact: con prefijo, también se marcaba activo en Mis incidentes.
+          { href: "/bono-tecnicos", label: "Bono Técnicos", exact: true, icon: Award },
+        ]
       : []),
     ...(hasTareasVarias
       ? [{ href: "/tareas-varias", label: "Tareas Varias", exact: false, icon: ClipboardCheck }]
@@ -154,7 +159,8 @@ export function ServicioTecnicoNavSubmenu({
   // una acción específica — acá especialmente importante: "Bono Técnicos"
   // pide `view` (pantalla de gerencia) y "Tareas Varias" pide `create` o
   // `approve` (ADR de separación de Tareas Varias), un técnico de calle solo
-  // ve el segundo.
+  // ve el segundo. "Mis incidentes" pide `create` (lo propio): el técnico lo
+  // ve; gerencia, solo si además tiene esa acción.
   const sections = buildSections({
     hasPrestadores,
     hasSla,

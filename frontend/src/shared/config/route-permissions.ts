@@ -104,6 +104,9 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   // Pantalla de primer nivel, fuera del árbol /sla, pero del mismo módulo.
   { prefix: "/incidentes-sin-consultar", anyOf: [p("sla", "view")] },
   { prefix: "/preventivos", anyOf: [p("preventivos", "view")] },
+  // Incidentes propios del técnico: la misma acción que "Mi bono" (`create`,
+  // autoservicio), no `view` (gerencia). Va antes de la regla general.
+  { prefix: "/bono-tecnicos/mis-incidentes", anyOf: [p("bono-tecnicos", "create")] },
   { prefix: "/bono-tecnicos", anyOf: [p("bono-tecnicos", "view")] },
   // Cargar/ver las TV propias ("create") o la cola de aprobación ("approve")
   // — separado de bono-tecnicos desde el split de Tareas Varias.

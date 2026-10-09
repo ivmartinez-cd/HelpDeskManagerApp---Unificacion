@@ -27,6 +27,13 @@ describe("canAccessPath", () => {
     expect(canAccessPath("/tareas-varias", checks(["wati.view"]))).toBe(false);
   });
 
+  it("Mis incidentes se abre con la acción del técnico, sin la pantalla de gerencia", () => {
+    const tecnico = checks(["bono-tecnicos.create"]);
+    expect(canAccessPath("/bono-tecnicos/mis-incidentes", tecnico)).toBe(true);
+    expect(canAccessPath("/bono-tecnicos", tecnico)).toBe(false);
+    expect(canAccessPath("/bono-tecnicos/mis-incidentes", checks(["bono-tecnicos.view"]))).toBe(false);
+  });
+
   it("ignora la query string y deja pasar lo que no está mapeado", () => {
     expect(canAccessPath("/wati?x=1", checks(["wati.view"]))).toBe(true);
     expect(canAccessPath("/", checks([]))).toBe(true);

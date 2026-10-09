@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 
 @dataclass(frozen=True, slots=True)
@@ -12,3 +13,4 @@ class IncidenteBono:
     cliente: str
     sucursal: str
     nro_serie: str
+    fecha_cierre: datetime | None = None

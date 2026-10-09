@@ -1,3 +1,4 @@
+from datetime import datetime
 from types import SimpleNamespace
 from typing import Any
 
@@ -11,6 +12,7 @@ def _row(**overrides: Any) -> SimpleNamespace:
         "Cliente": "Aerolineas Argentinas",
         "Sucursal": "EZE - Hangares",
         "NroSerie": "ZDBXBJCH1000C2D",
+        "FechaCierre": datetime(2026, 10, 7, 15, 42),
     }
     base.update(overrides)
     return SimpleNamespace(**base)
@@ -24,14 +26,16 @@ def test_mapea_una_fila() -> None:
     assert incidente.cliente == "Aerolineas Argentinas"
     assert incidente.sucursal == "EZE - Hangares"
     assert incidente.nro_serie == "ZDBXBJCH1000C2D"
+    assert incidente.fecha_cierre == datetime(2026, 10, 7, 15, 42)
 
 
 def test_campos_null_no_rompen_el_mapeo() -> None:
-    incidente = map_row(_row(Cliente=None, Sucursal=None, NroSerie=None))
+    incidente = map_row(_row(Cliente=None, Sucursal=None, NroSerie=None, FechaCierre=None))
 
     assert incidente.cliente == ""
     assert incidente.sucursal == ""
     assert incidente.nro_serie == ""
+    assert incidente.fecha_cierre is None
 
 
 def test_recorta_espacios_de_los_char_fijos() -> None:

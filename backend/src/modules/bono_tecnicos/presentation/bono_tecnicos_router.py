@@ -8,6 +8,7 @@ from src.modules.auth.presentation.dependencies.identity import get_current_iden
 from src.modules.auth.presentation.dependencies.permissions import require_permission
 from src.modules.bono_tecnicos.application.dtos.incidente_bono_dto import (
     GetIncidentesTecnicoRequest,
+    GetMisIncidentesRequest,
 )
 from src.modules.bono_tecnicos.application.dtos.puntaje_tecnico_dto import (
     GetMiResumenBonoRequest,
@@ -18,6 +19,7 @@ from src.modules.bono_tecnicos.domain.well_known_permissions import CREATE, UPDA
 from src.modules.bono_tecnicos.presentation.dependencies import (
     build_get_incidentes_tecnico,
     build_get_mi_resumen_bono,
+    build_get_mis_incidentes,
     build_get_puntajes_periodo,
     build_get_vinculo_siges,
     build_guardar_bono_input,
@@ -131,3 +133,24 @@ async def get_mi_resumen(
         GetMiResumenBonoRequest(user_id=identity.user.id, periodo=periodo_efectivo)
     )
     return MiResumenBonoSchema.model_validate(dto)
+
+
+@router.get("/mis-incidentes", response_model=Page[IncidenteBonoSchema])
+async def get_mis_incidentes(
+    periodo: int | None = Query(default=None, ge=200001, le=210012),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=200, ge=1, le=200),
+    identity: Identity = _require_create,
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> Page[IncidenteBonoSchema]:
+    """Incidentes del técnico autenticado en un período (default el mes en
+    curso) — mismo detalle que `/{periodo}/{id_tecnico}/incidentes`, con el
+    técnico resuelto desde el propio usuario. Para "Mis incidentes" de
+    Servicio Técnico. 404 si el usuario no está vinculado a un técnico de
+    Siges (`TecnicoNoVinculadoError`). En vivo contra ORION, sin cache."""
+    periodo_efectivo = periodo or int(date.today().strftime("%Y%m"))
+    dtos = await build_get_mis_incidentes(db).execute(
+        GetMisIncidentesRequest(user_id=identity.user.id, periodo=periodo_efectivo)
+    )
+    items = [IncidenteBonoSchema.model_validate(d) for d in dtos]
+    return Page.of(items, page=page, size=size)

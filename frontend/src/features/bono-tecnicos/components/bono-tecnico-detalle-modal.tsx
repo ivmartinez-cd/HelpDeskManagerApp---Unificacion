@@ -1,71 +1,10 @@
 "use client";
 
+import { IncidentesCategoriaSection } from "./incidentes-categoria-section";
 import { useBonoTecnicoDetalle } from "../hooks/use-bono-tecnico-detalle";
-import { CATEGORIAS, type IncidenteBono } from "../types/bono-tecnicos";
+import { CATEGORIAS } from "../types/bono-tecnicos";
 import { BrandModal } from "@/shared/components/ui/brand-modal";
-import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
-import { useOptionalTableSort, useSortedRows } from "@/shared/hooks/use-optional-table-sort";
 import { Spinner } from "@/shared/components/ui/spinner";
-
-type SortKey = "id_incidente" | "cliente" | "sucursal" | "nro_serie";
-
-const COLUMNAS: SortableColumn<SortKey>[] = [
-  { key: "id_incidente", label: "ID" },
-  { key: "cliente", label: "Cliente" },
-  { key: "sucursal", label: "Sucursal" },
-  { key: "nro_serie", label: "Nro. Serie" },
-];
-
-const valorOrden = (i: IncidenteBono, key: SortKey) => i[key];
-
-function IncidentesSection({
-  label,
-  incidentes,
-}: {
-  label: string;
-  incidentes: IncidenteBono[];
-}) {
-  const { sort, toggleSort } = useOptionalTableSort<SortKey>();
-  const filas = useSortedRows(incidentes, sort, valorOrden);
-  return (
-    <section className="flex flex-col gap-2">
-      <h3 className="font-body text-[11px] font-bold uppercase tracking-[.05em] text-muted-foreground">
-        {label} ({incidentes.length})
-      </h3>
-      {incidentes.length === 0 ? (
-        <p className="font-body text-xs text-muted-foreground">Sin incidentes en el período.</p>
-      ) : (
-        <div className="overflow-x-auto thin-scrollbar rounded-[8px] border border-border">
-          <table className="w-full border-collapse font-body text-xs">
-            <thead>
-              <tr className="border-b border-border text-left text-muted-foreground">
-                {COLUMNAS.map((c) => (
-                  <SortableHeader
-                    key={c.key}
-                    column={c}
-                    sort={sort}
-                    onToggleSort={toggleSort}
-                    thClassName="whitespace-nowrap px-3 py-1.5 font-semibold"
-                  />
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filas.map((i) => (
-                <tr key={i.id_incidente} className="border-b border-border/50 last:border-b-0">
-                  <td className="whitespace-nowrap px-3 py-1.5 tabular-nums">{i.id_incidente}</td>
-                  <td className="px-3 py-1.5">{i.cliente}</td>
-                  <td className="px-3 py-1.5">{i.sucursal}</td>
-                  <td className="px-3 py-1.5">{i.nro_serie}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-  );
-}
 
 export function BonoTecnicoDetalleModal({
   tecnico,
@@ -90,7 +29,11 @@ export function BonoTecnicoDetalleModal({
       ) : (
         <div className="flex max-h-[70vh] flex-col gap-5 overflow-y-auto thin-scrollbar pr-1">
           {CATEGORIAS.map((c) => (
-            <IncidentesSection key={c.key} label={c.label} incidentes={porCategoria(c.key)} />
+            <IncidentesCategoriaSection
+              key={c.key}
+              label={c.label}
+              incidentes={porCategoria(c.key)}
+            />
           ))}
         </div>
       )}

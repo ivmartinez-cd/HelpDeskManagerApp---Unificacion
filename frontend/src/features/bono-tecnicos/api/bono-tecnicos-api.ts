@@ -26,6 +26,13 @@ export const bonoTecnicosApi = {
       )
       .then((p) => p.items),
 
+  /** Incidentes del técnico autenticado en un período (`AAAAMM`) — 404 sin
+   * vínculo Empleado↔Siges, igual que `getMiResumen`. */
+  getMisIncidentes: (periodo: string) =>
+    httpClient
+      .get<Page<IncidenteBono>>(`/api/bono-tecnicos/mis-incidentes?periodo=${periodo}&size=200`)
+      .then((p) => p.items),
+
   /** Puntaje/conteos/TV del técnico autenticado — sin `periodo`, el mes en
    * curso (backend). Las solicitudes de TV en sí (cargar/aprobar) son del
    * módulo `tareas-varias`, ver `tareas-varias-api.ts`. */

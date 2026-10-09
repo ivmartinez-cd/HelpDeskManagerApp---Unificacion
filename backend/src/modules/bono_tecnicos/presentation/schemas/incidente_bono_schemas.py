@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -9,3 +11,4 @@ class IncidenteBonoSchema(BaseModel):
     cliente: str
     sucursal: str
     nro_serie: str
+    fecha_cierre: datetime | None
