@@ -14,7 +14,7 @@ from src.modules.auth.infrastructure.models.permission_models import (
     PermissionGrant,
     UserModuleScope,
 )
-from src.modules.auth.infrastructure.models.user_model import AppUser
+from src.modules.auth.infrastructure.models.user_model import AppUser, Department
 from src.modules.vacaciones.domain.repositories.auditoria import (
     FiltrosAuditoria,
     OrdenAuditoria,
@@ -214,6 +214,12 @@ async def test_destinatarios_une_jefes_del_sector_y_admins_sin_duplicar_ni_inact
     jefe_otro_sector = await _user(db_session, "Jefe Otro")
     superadmin = await _user(db_session, "Super Admin", superadmin=True)
     superadmin_inactivo = await _user(db_session, "Super Inactivo", activo=False, superadmin=True)
+    admin_de_otro_sector = await _user(db_session, "Admin Otro Sector")
+    otro_sector = Department(
+        id=uuid.uuid4(), name=f"Otro {uuid.uuid4().hex[:8]}", is_active=True, color="#000000"
+    )
+    db_session.add(otro_sector)
+    await db_session.flush()
     db_session.add_all(
         [
             UserModuleScope(
@@ -230,6 +236,15 @@ async def test_destinatarios_une_jefes_del_sector_y_admins_sin_duplicar_ni_inact
             ),
             PermissionGrant(user_id=admin.id, module_key="vacaciones", action_key="manage"),
             PermissionGrant(user_id=ambos.id, module_key="vacaciones", action_key="manage"),
+            # Admin con sector (jefe con `manage`): no recibe avisos de otros sectores.
+            UserModuleScope(
+                user_id=admin_de_otro_sector.id,
+                module_key="vacaciones",
+                scope_department_id=otro_sector.id,
+            ),
+            PermissionGrant(
+                user_id=admin_de_otro_sector.id, module_key="vacaciones", action_key="manage"
+            ),
         ]
     )
     await db_session.flush()
@@ -239,3 +254,4 @@ async def test_destinatarios_une_jefes_del_sector_y_admins_sin_duplicar_ni_inact
     assert len(emails) == 4  # deduplicado: "ambos" aparece una sola vez
     assert set(emails) == {jefe.email, ambos.email, admin.email, superadmin.email}
     assert superadmin_inactivo.email not in emails
+    assert admin_de_otro_sector.email not in emails

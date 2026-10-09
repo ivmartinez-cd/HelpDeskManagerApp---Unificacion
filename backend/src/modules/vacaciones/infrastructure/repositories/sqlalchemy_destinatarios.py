@@ -7,7 +7,7 @@ noción de cuenta inactiva)."""
 
 import uuid
 
-from sqlalchemy import Select, or_, select
+from sqlalchemy import Select, and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.infrastructure.models.permission_models import (
@@ -40,12 +40,21 @@ class SqlAlchemyDestinatariosNuevaSolicitud:
 
 
 def _consulta_admins() -> Select[tuple[str]]:
-    """Admins de Gestión de Personal: superadmins o cuentas con grant `manage`."""
+    """Admins generales de Gestión de Personal: superadmins o cuentas con grant
+    `manage` SIN sector asignado. Un admin con sector solo administra el suyo
+    (2026-10-09) y ya recibe esos avisos como jefe: no le llegan los de otros."""
     con_grant_manage = select(PermissionGrant.user_id).where(
         PermissionGrant.module_key == _MODULE_KEY,
         PermissionGrant.action_key == _ADMIN_ACTION_KEY,
     )
+    con_sector = select(UserModuleScope.user_id).where(
+        UserModuleScope.module_key == _MODULE_KEY,
+        UserModuleScope.scope_department_id.is_not(None),
+    )
     return select(AppUser.email).where(
-        or_(AppUser.is_superadmin.is_(True), AppUser.id.in_(con_grant_manage)),
+        or_(
+            AppUser.is_superadmin.is_(True),
+            and_(AppUser.id.in_(con_grant_manage), AppUser.id.not_in(con_sector)),
+        ),
         AppUser.is_active.is_(True),
     )
