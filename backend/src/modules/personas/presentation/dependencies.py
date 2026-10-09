@@ -16,10 +16,18 @@ from src.modules.personas.infrastructure.auth.cuentas_gateway import AuthCuentas
 from src.modules.personas.infrastructure.sqlalchemy_persona_repository import (
     SqlAlchemyPersonaRepository,
 )
+from src.modules.personas.infrastructure.vacaciones.sector_del_jefe import (
+    sector_del_jefe as _sector_del_jefe,
+)
 from src.modules.personas.infrastructure.vacaciones.sqlalchemy_fichas_gateway import (
     SqlAlchemyFichasGateway,
 )
 from src.modules.personas.presentation.aviso_activacion import MailAvisoActivacion
+
+
+async def sector_del_jefe(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID | None:
+    """Sector al que queda acotado el usuario (None = ve a todos)."""
+    return await _sector_del_jefe(db, user_id)
 
 
 def repositorio(db: AsyncSession) -> PersonaRepository:

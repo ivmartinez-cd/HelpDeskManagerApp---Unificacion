@@ -61,6 +61,8 @@ from src.modules.vacaciones.domain.repositories.solicitud_repository import (
     SolicitudRepository,
 )
 from src.modules.vacaciones.domain.services.scoping import (
+    DatosSolicitudAjena,
+    verificar_administra,
     verificar_puede_modificar_solicitud,
 )
 from src.modules.vacaciones.domain.services.validador_solicitud import (
@@ -141,6 +143,8 @@ class CrearSolicitud:
         empleado = await self._deps.empleados.get_by_id(empleado_id)
         if empleado is None:
             raise EmpleadoNoEncontradoError(empleado_id)
+        if empleado.id != actor.empleado_id:
+            verificar_administra(actor, empleado.department_id)
         return empleado
 
     async def _validar_creacion(self, datos: DatosSolicitud, actor: ActorVacaciones) -> None:
@@ -196,10 +200,12 @@ class EditarSolicitud:
         solicitud = await self._deps.solicitudes.get_by_id(solicitud_id)
         if solicitud is None:
             raise SolicitudNoEncontradaError(solicitud_id)
-        verificar_puede_modificar_solicitud(actor, solicitud.empleado_id)
         empleado = await self._deps.empleados.get_by_id(solicitud.empleado_id)
         if empleado is None:
             raise EmpleadoNoEncontradoError(solicitud.empleado_id)
+        verificar_puede_modificar_solicitud(
+            actor, DatosSolicitudAjena(empleado.id, empleado.department_id)
+        )
         return solicitud, empleado
 
     async def _validar_edicion(
@@ -239,10 +245,15 @@ class EliminarSolicitud:
         solicitud = await self._deps.solicitudes.get_by_id(solicitud_id)
         if solicitud is None:
             raise SolicitudNoEncontradaError(solicitud_id)
-        verificar_puede_modificar_solicitud(actor, solicitud.empleado_id)
+        empleado = await self._deps.empleados.get_by_id(solicitud.empleado_id)
+        verificar_puede_modificar_solicitud(
+            actor,
+            DatosSolicitudAjena(
+                solicitud.empleado_id, empleado.department_id if empleado else None
+            ),
+        )
         if not actor.es_admin and solicitud.status is not EstadoSolicitud.PENDING:
             raise SoloPendientesEditablesError("cancelar")
-        empleado = await self._deps.empleados.get_by_id(solicitud.empleado_id)
         await self._deps.solicitudes.delete(solicitud_id)
         await self._deps.auditoria.registrar(
             ACCION_DELETE,

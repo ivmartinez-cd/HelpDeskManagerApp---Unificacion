@@ -15,6 +15,7 @@ from src.modules.vacaciones.domain.repositories.auditoria import (
     FiltrosAuditoria,
     OrdenAuditoria,
 )
+from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 from src.modules.vacaciones.domain.well_known_features import AUDITORIA
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_auditoria import (
     SqlAlchemyAuditoriaRepository,
@@ -22,6 +23,7 @@ from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_auditoria imp
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_user_directory import (
     SqlAlchemyUserDirectory,
 )
+from src.modules.vacaciones.presentation.dependencies.actor import get_actor_vacaciones
 from src.modules.vacaciones.presentation.schemas.auditoria_schemas import (
     RegistroAuditoriaResponse,
 )
@@ -47,6 +49,7 @@ async def list_auditoria(
     sort_by: CampoOrdenAuditoria = Query(default="fecha"),
     sort_dir: Literal["asc", "desc"] = Query(default="desc"),
     _identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[RegistroAuditoriaResponse]:
     deps = ListarAuditoriaDependencies(
@@ -57,6 +60,8 @@ async def list_auditoria(
         search=search, entidad=entidad, accion=accion, desde=desde, hasta=hasta
     )
     orden = OrdenAuditoria(campo=sort_by, descendente=sort_dir == "desc")
-    dtos, total = await ListarAuditoria(deps).execute(filtros, page=page, size=size, orden=orden)
+    dtos, total = await ListarAuditoria(deps).execute(
+        filtros, actor=actor, page=page, size=size, orden=orden
+    )
     items = [RegistroAuditoriaResponse.from_dto(d) for d in dtos]
     return Page(items=items, total=total, page=page, size=size)

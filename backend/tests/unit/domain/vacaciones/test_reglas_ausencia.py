@@ -114,29 +114,52 @@ class TestVerificarDestinosDelSector:
 class TestVerificarPuedeModificar:
     def test_admin_modifica_cualquiera(self) -> None:
         actor = make_actor(es_admin=True)
-        verificar_puede_modificar_ausencia(actor, make_ausencia(), accion="editar")
+        verificar_puede_modificar_ausencia(
+            actor, make_ausencia(), accion="editar", department_id=uuid.uuid4()
+        )
+
+    def test_admin_de_sector_solo_modifica_las_de_su_sector(self) -> None:
+        sector = uuid.uuid4()
+        actor = make_actor(es_admin=True, sector_gestionado_id=sector)
+        verificar_puede_modificar_ausencia(
+            actor, make_ausencia(), accion="editar", department_id=sector
+        )
+        with pytest.raises(OperacionNoPermitidaError):
+            verificar_puede_modificar_ausencia(
+                actor, make_ausencia(), accion="editar", department_id=uuid.uuid4()
+            )
 
     def test_dueno_solo_pendientes(self) -> None:
         empleado_id = uuid.uuid4()
         actor = make_actor(empleado_id=empleado_id)
         pendiente = make_ausencia(empleado_id=empleado_id, status=EstadoSolicitud.PENDING)
-        verificar_puede_modificar_ausencia(actor, pendiente, accion="editar")
+        verificar_puede_modificar_ausencia(actor, pendiente, accion="editar", department_id=None)
         aprobada = make_ausencia(empleado_id=empleado_id)
         with pytest.raises(SoloAusenciasPendientesError):
-            verificar_puede_modificar_ausencia(actor, aprobada, accion="editar")
+            verificar_puede_modificar_ausencia(actor, aprobada, accion="editar", department_id=None)
 
     def test_jefe_no_modifica_ajenas(self) -> None:
         # Paridad legacy: el jefe crea bajas pero NO edita/borra las ajenas.
-        actor = make_actor(sector_gestionado_id=uuid.uuid4())
+        sector = uuid.uuid4()
+        actor = make_actor(sector_gestionado_id=sector)
         with pytest.raises(OperacionNoPermitidaError):
-            verificar_puede_modificar_ausencia(actor, make_ausencia(), accion="editar")
+            verificar_puede_modificar_ausencia(
+                actor, make_ausencia(), accion="editar", department_id=sector
+            )
 
 
 class TestVerificarPuedeCambiarEstado:
     def test_solo_admin(self) -> None:
-        verificar_puede_cambiar_estado(make_actor(es_admin=True))
+        verificar_puede_cambiar_estado(make_actor(es_admin=True), uuid.uuid4())
         with pytest.raises(OperacionNoPermitidaError):
-            verificar_puede_cambiar_estado(make_actor(empleado_id=uuid.uuid4()))
+            verificar_puede_cambiar_estado(make_actor(empleado_id=uuid.uuid4()), None)
+
+    def test_admin_de_sector_solo_en_su_sector(self) -> None:
+        sector = uuid.uuid4()
+        actor = make_actor(es_admin=True, sector_gestionado_id=sector)
+        verificar_puede_cambiar_estado(actor, sector)
+        with pytest.raises(OperacionNoPermitidaError):
+            verificar_puede_cambiar_estado(actor, uuid.uuid4())
 
 
 # --- Solicitudes de home office / cambio de horario (2026-08-21) ---------------

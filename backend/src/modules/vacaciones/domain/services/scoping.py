@@ -1,7 +1,8 @@
 """Alcance de datos por actor, server-side (paridad con los filtros por rol
-del legacy). El vocabulario: admin (`manage`) ve todo; jefe de sector ve su
-sector; empleado ve lo propio. El calendario es la excepción legacy: el
-empleado ve el calendario COMPLETO (solo el jefe lo ve acotado a su sector).
+del legacy). El vocabulario: admin global (`manage` sin sector) ve todo; jefe
+de sector (con o sin `manage`) ve su sector; empleado ve lo propio. El
+calendario es la excepción legacy: el empleado ve el calendario COMPLETO (solo
+el jefe lo ve acotado a su sector).
 """
 
 import uuid
@@ -24,7 +25,7 @@ _GLOBAL = FiltroAlcance(department_id=None, empleado_id=None, sin_acceso=False)
 
 
 def alcance_para_listado(actor: ActorVacaciones) -> FiltroAlcance:
-    if actor.es_admin:
+    if actor.es_admin_global:
         return _GLOBAL
     if actor.sector_gestionado_id is not None:
         return FiltroAlcance(
@@ -46,11 +47,11 @@ def alcance_para_calendario(actor: ActorVacaciones) -> FiltroAlcance:
 @dataclass(frozen=True, slots=True)
 class DatosSolicitudAjena:
     empleado_id: uuid.UUID
-    department_id: uuid.UUID
+    department_id: uuid.UUID | None
 
 
 def verificar_puede_ver_solicitud(actor: ActorVacaciones, datos: DatosSolicitudAjena) -> None:
-    if actor.es_admin or actor.empleado_id == datos.empleado_id:
+    if actor.es_admin_global or actor.empleado_id == datos.empleado_id:
         return
     if actor.sector_gestionado_id == datos.department_id:
         return
@@ -62,7 +63,7 @@ def verificar_puede_decidir(actor: ActorVacaciones, datos: DatosSolicitudAjena) 
     # la aprueba otro admin o su jefe. Aprobador sin sector = global, a propósito.
     if actor.empleado_id == datos.empleado_id:
         raise OperacionNoPermitidaError("No puedes aprobar tu propia solicitud")
-    if actor.es_admin:
+    if actor.es_admin_global:
         return
     if (
         actor.sector_gestionado_id is not None
@@ -74,7 +75,7 @@ def verificar_puede_decidir(actor: ActorVacaciones, datos: DatosSolicitudAjena) 
 def verificar_puede_ver_solapamientos(
     actor: ActorVacaciones, datos: DatosSolicitudAjena
 ) -> None:
-    if actor.es_admin:
+    if actor.es_admin_global:
         return
     if (
         actor.sector_gestionado_id is not None
@@ -84,10 +85,24 @@ def verificar_puede_ver_solapamientos(
 
 
 def verificar_puede_modificar_solicitud(
-    actor: ActorVacaciones, empleado_id_solicitud: uuid.UUID
+    actor: ActorVacaciones, datos: DatosSolicitudAjena
 ) -> None:
-    """Editar/eliminar: dueño o admin (paridad legacy — el jefe NO edita
-    solicitudes ajenas, solo las decide)."""
-    if actor.es_admin or actor.empleado_id == empleado_id_solicitud:
+    """Editar/eliminar: dueño o admin de ese sector (paridad legacy — el jefe
+    sin `manage` NO edita solicitudes ajenas, solo las decide)."""
+    if actor.empleado_id == datos.empleado_id or actor.administra(datos.department_id):
         return
     raise OperacionNoPermitidaError("No tenés permiso para modificar esta solicitud")
+
+
+def verificar_administra(actor: ActorVacaciones, department_id: uuid.UUID | None) -> None:
+    """Acciones de `manage` sobre una persona: solo si es de su sector (o es
+    admin global)."""
+    if not actor.administra(department_id):
+        raise OperacionNoPermitidaError("Solo podés gestionar gente de tu sector")
+
+
+def verificar_admin_global(actor: ActorVacaciones) -> None:
+    """Acciones que afectan a toda la empresa (sectores y sus jefes): un admin
+    con sector asignado podría, si no, nombrarse jefe de otro sector."""
+    if not actor.es_admin_global:
+        raise OperacionNoPermitidaError("Solo un administrador general puede hacer esto")

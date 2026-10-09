@@ -3,6 +3,7 @@ opcional a la app. Los datos laborales se siguen editando por
 `/api/vacaciones/empleados`; acá van nombre/mail/color y el acceso."""
 
 import uuid
+from dataclasses import replace
 from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query
@@ -14,6 +15,7 @@ from src.modules.personas.application.use_cases.actualizar_datos_persona import 
     ActorPersonas,
     ActualizarDatosPersona,
 )
+from src.modules.personas.application.use_cases.alcance_sector import PersonasDelSector
 from src.modules.personas.application.use_cases.consultar_personas import (
     ListarPersonas,
     ObtenerPersona,
@@ -24,6 +26,7 @@ from src.modules.personas.domain.repositories.persona_repository import (
     CampoOrdenPersonas,
     FiltrosPersonas,
     OrdenPersonas,
+    PersonaRepository,
 )
 from src.modules.personas.domain.well_known_permissions import MANAGE, UPDATE, VIEW
 from src.modules.personas.presentation import dependencies as armado
@@ -43,6 +46,17 @@ _MANAGE_VIEW = PermissionView(module=MANAGE.module.value, action=MANAGE.action.v
 _MAX_PAGE_SIZE = 200
 
 
+async def _sector(db: AsyncSession, identity: Identity) -> uuid.UUID | None:
+    """Sector al que queda acotado (jefe de sector); el superadmin ve a todos."""
+    if identity.user.is_superadmin:
+        return None
+    return await armado.sector_del_jefe(db, identity.user.id)
+
+
+async def _repositorio(db: AsyncSession, identity: Identity) -> PersonaRepository:
+    return PersonasDelSector(armado.repositorio(db), await _sector(db, identity))
+
+
 @router.get("")
 async def list_personas(
     page: int = Query(default=1, ge=1),
@@ -53,14 +67,14 @@ async def list_personas(
     entra_a_la_app: bool | None = Query(default=None, alias="entraALaApp"),
     sort_by: CampoOrdenPersonas = Query(default="nombre", alias="sortBy"),
     sort_dir: Literal["asc", "desc"] = Query(default="asc", alias="sortDir"),
-    _: Identity = _require_view,
+    identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[PersonaResponse]:
     filtros = FiltrosPersonas(
         busqueda=q, sector_id=sector_id, activa=activa, entra_a_la_app=entra_a_la_app
     )
     orden = OrdenPersonas(campo=sort_by, descendente=sort_dir == "desc")
-    personas, total = await ListarPersonas(armado.repositorio(db)).execute(
+    personas, total = await ListarPersonas(await _repositorio(db, identity)).execute(
         filtros, orden, page=page, size=size
     )
     return _pagina(personas, total, page, size)
@@ -74,10 +88,10 @@ def _pagina(personas: list[Persona], total: int, page: int, size: int) -> Page[P
 @router.get("/{persona_id}")
 async def get_persona(
     persona_id: uuid.UUID,
-    _: Identity = _require_view,
+    identity: Identity = _require_view,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PersonaResponse:
-    persona = await ObtenerPersona(armado.repositorio(db)).execute(persona_id)
+    persona = await ObtenerPersona(await _repositorio(db, identity)).execute(persona_id)
     return PersonaResponse.from_entity(persona)
 
 
@@ -93,9 +107,9 @@ async def update_datos(
         puede_gestionar_acceso=es_superadmin or _MANAGE_VIEW in identity.permissions,
         es_superadmin=es_superadmin,
     )
-    persona = await ActualizarDatosPersona(armado.deps_datos(db, identity.user.id)).execute(
-        persona_id, body.to_datos(), actor=actor
-    )
+    deps = armado.deps_datos(db, identity.user.id)
+    deps = replace(deps, personas=PersonasDelSector(deps.personas, await _sector(db, identity)))
+    persona = await ActualizarDatosPersona(deps).execute(persona_id, body.to_datos(), actor=actor)
     return PersonaResponse.from_entity(persona)
 
 
@@ -107,6 +121,7 @@ async def dar_acceso(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PersonaResponse:
     deps = armado.deps_acceso(db, identity.user.id, background_tasks)
+    deps = replace(deps, personas=PersonasDelSector(deps.personas, await _sector(db, identity)))
     persona = await DarAcceso(deps).execute(
         persona_id, actor_es_superadmin=identity.user.is_superadmin
     )
@@ -119,6 +134,6 @@ async def quitar_acceso(
     identity: Identity = _require_manage,
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PersonaResponse:
-    caso = QuitarAcceso(armado.repositorio(db), armado.cuentas(db))
+    caso = QuitarAcceso(await _repositorio(db, identity), armado.cuentas(db))
     persona = await caso.execute(persona_id, actor_es_superadmin=identity.user.is_superadmin)
     return PersonaResponse.from_entity(persona)

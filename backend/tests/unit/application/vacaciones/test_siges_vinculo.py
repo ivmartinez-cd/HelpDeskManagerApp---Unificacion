@@ -13,7 +13,9 @@ from src.modules.vacaciones.domain.errors import (
 )
 from src.modules.vacaciones.domain.services.vinculacion_siges import SigesTecnicoInfo
 from tests.unit.application.vacaciones.fakes import FakeEmpleadoRepo
-from tests.unit.domain.vacaciones.factories import make_empleado
+from tests.unit.domain.vacaciones.factories import make_actor, make_empleado
+
+ADMIN = make_actor(es_admin=True)
 
 
 class FakeSigesTecnicoGateway:
@@ -33,7 +35,7 @@ async def test_propone_vinculo_para_empleado_sin_vincular() -> None:
         ),
     )
 
-    resultado = await ProponerVinculosSigesEmpleados(ports).execute()
+    resultado = await ProponerVinculosSigesEmpleados(ports).execute(ADMIN)
 
     assert len(resultado.propuestas) == 1
     propuesta = resultado.propuestas[0]
@@ -53,7 +55,7 @@ async def test_no_propone_para_empleado_ya_vinculado() -> None:
         ),
     )
 
-    resultado = await ProponerVinculosSigesEmpleados(ports).execute()
+    resultado = await ProponerVinculosSigesEmpleados(ports).execute(ADMIN)
 
     assert resultado.propuestas == []
     assert resultado.disponibles == []
@@ -67,7 +69,7 @@ async def test_tecnico_sin_match_queda_como_disponible() -> None:
         ),
     )
 
-    resultado = await ProponerVinculosSigesEmpleados(ports).execute()
+    resultado = await ProponerVinculosSigesEmpleados(ports).execute(ADMIN)
 
     assert resultado.propuestas == []
     assert len(resultado.disponibles) == 1
@@ -80,7 +82,9 @@ async def test_vincular_empleado_siges_guarda_el_vinculo() -> None:
         empleados=FakeEmpleadoRepo([empleado]), siges=FakeSigesTecnicoGateway()
     )
 
-    actualizado = await VincularEmpleadoSiges(ports).execute(empleado.id, siges_empresa_id=1314)
+    actualizado = await VincularEmpleadoSiges(ports).execute(
+        empleado.id, siges_empresa_id=1314, actor=ADMIN
+    )
 
     assert actualizado.siges_empresa_id == 1314
 
@@ -89,7 +93,7 @@ async def test_vincular_empleado_inexistente_lanza_error() -> None:
     ports = SigesVinculoPorts(empleados=FakeEmpleadoRepo([]), siges=FakeSigesTecnicoGateway())
 
     with pytest.raises(EmpleadoNoEncontradoError):
-        await VincularEmpleadoSiges(ports).execute(uuid.uuid4(), siges_empresa_id=1314)
+        await VincularEmpleadoSiges(ports).execute(uuid.uuid4(), siges_empresa_id=1314, actor=ADMIN)
 
 
 async def test_vincular_a_tecnico_ya_usado_por_otro_empleado_lanza_error() -> None:
@@ -101,4 +105,6 @@ async def test_vincular_a_tecnico_ya_usado_por_otro_empleado_lanza_error() -> No
     )
 
     with pytest.raises(SigesVinculoDuplicadoError):
-        await VincularEmpleadoSiges(ports).execute(sin_vincular.id, siges_empresa_id=1314)
+        await VincularEmpleadoSiges(ports).execute(
+            sin_vincular.id, siges_empresa_id=1314, actor=ADMIN
+        )

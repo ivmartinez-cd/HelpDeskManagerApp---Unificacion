@@ -79,6 +79,10 @@ visible para el usuario. Lo que cambia es:
    mail, color) y `personas.manage` (dar/quitar acceso). Backfill desde `vacaciones.manage` /
    `admin.manage`. Cambiar el mail de quien entra a la app exige `manage`. Los datos
    laborales se siguen editando con `vacaciones.manage` por `/api/vacaciones/empleados`.
+   **Alcance por sector (2026-10-09)**: quien tiene sector asignado como jefe en Gestión de
+   Personal (`user_module_scope` de vacaciones) solo ve y edita personas de su sector en
+   listado, ficha, datos y acceso, tenga o no `manage`; las de otro sector responden 404.
+   El superadmin ve a todos (`PersonasDelSector` en `application/use_cases/alcance_sector.py`).
 
 ## Limpieza de datos (antes de la migración)
 

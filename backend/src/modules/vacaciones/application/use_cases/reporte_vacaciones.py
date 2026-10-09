@@ -34,6 +34,7 @@ from src.modules.vacaciones.domain.repositories.empleado_repository import (
 from src.modules.vacaciones.domain.repositories.solicitud_repository import (
     SolicitudRepository,
 )
+from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 from src.modules.vacaciones.domain.value_objects.saldo import Saldo
 
 
@@ -63,12 +64,19 @@ class ReporteVacaciones:
     def __init__(self, deps: ReporteVacacionesDependencies) -> None:
         self._deps = deps
 
-    async def execute(self) -> ReporteVacacionesDTO:
+    async def execute(self, actor: ActorVacaciones) -> ReporteVacacionesDTO:
+        """El admin con sector asignado solo ve su sector."""
         year = self._deps.clock.hoy().year
-        empleados = await self._deps.empleados.list_filtrados(FiltrosEmpleados())
+        sector = actor.sector_gestionado_id
+        empleados = await self._deps.empleados.list_filtrados(
+            FiltrosEmpleados(department_id=sector)
+        )
         empleados.sort(key=lambda e: (e.first_name.casefold(), e.last_name.casefold()))
         saldos = await self._deps.saldos().saldos_batch(empleados, year)
-        sectores = sorted(await self._deps.sectores.list_all(), key=lambda s: s.name)
+        sectores = sorted(
+            (s for s in await self._deps.sectores.list_all() if sector in (None, s.id)),
+            key=lambda s: s.name,
+        )
         cargos = {c.id: c.name for c in await self._deps.cargos.list_all()}
         return ReporteVacacionesDTO(
             year=year,

@@ -18,10 +18,12 @@ from src.modules.vacaciones.domain.repositories.empleado_repository import (
     FiltrosEmpleados,
 )
 from src.modules.vacaciones.domain.repositories.siges_tecnico_gateway import SigesTecnicoGateway
+from src.modules.vacaciones.domain.services.scoping import verificar_administra
 from src.modules.vacaciones.domain.services.vinculacion_siges import (
     SigesTecnicoInfo,
     proponer_vinculos,
 )
+from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 
 
 @dataclass(frozen=True)
@@ -34,12 +36,18 @@ class ProponerVinculosSigesEmpleados:
     def __init__(self, ports: SigesVinculoPorts) -> None:
         self._ports = ports
 
-    async def execute(self) -> PropuestasVinculoEmpleadoResultado:
+    async def execute(self, actor: ActorVacaciones) -> PropuestasVinculoEmpleadoResultado:
+        """Los vinculados salen de TODOS los empleados (un técnico ya tomado en
+        otro sector no se propone); los sin vínculo, solo de los que administra."""
         tecnicos = await self._ports.siges.list_tecnicos_activos()
         empleados = await self._ports.empleados.list_filtrados(FiltrosEmpleados())
         vinculados = {e.siges_empresa_id for e in empleados if e.siges_empresa_id is not None}
         candidatos = [t for t in tecnicos if t.siges_empresa_id not in vinculados]
-        sin_vinculo = [e for e in empleados if e.siges_empresa_id is None]
+        sin_vinculo = [
+            e
+            for e in empleados
+            if e.siges_empresa_id is None and actor.administra(e.department_id)
+        ]
 
         propuestas = _construir_propuestas(sin_vinculo, candidatos)
         disponibles = _construir_disponibles(candidatos, propuestas)
@@ -51,8 +59,12 @@ class VincularEmpleadoSiges:
         self._ports = ports
 
     async def execute(
-        self, empleado_id: uuid.UUID, *, siges_empresa_id: int | None
+        self, empleado_id: uuid.UUID, *, siges_empresa_id: int | None, actor: ActorVacaciones
     ) -> Empleado:
+        empleado = await self._ports.empleados.get_by_id(empleado_id)
+        if empleado is None:
+            raise EmpleadoNoEncontradoError(empleado_id)
+        verificar_administra(actor, empleado.department_id)
         actualizado = await self._ports.empleados.vincular_siges(
             empleado_id, siges_empresa_id=siges_empresa_id
         )

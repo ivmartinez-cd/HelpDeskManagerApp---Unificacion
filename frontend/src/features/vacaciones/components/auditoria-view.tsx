@@ -2,6 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { ChevronRight, ScrollText, Search } from "lucide-react";
+import { ApiError } from "@/services/http-client";
 import { BrandButton, BrandEmptyState, BrandSkeleton } from "@/shared/components/ui/brand-form";
 import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
 import { type SortState, useTableSort } from "@/shared/hooks/use-table-sort";
@@ -62,7 +63,12 @@ export function AuditoriaView() {
       })
       .catch((err: unknown) => {
         console.error("Error al cargar la auditoría:", err);
-        setError("No se pudo cargar el registro de auditoría.");
+        // 403 = admin con sector asignado: el backend explica por qué.
+        setError(
+          err instanceof ApiError && err.status === 403
+            ? err.message
+            : "No se pudo cargar el registro de auditoría.",
+        );
       });
   }, []);
 

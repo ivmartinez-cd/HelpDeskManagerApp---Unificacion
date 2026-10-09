@@ -154,9 +154,10 @@ class EditarAusencia:
         ausencia = await self._deps.ausencias.get_by_id(ausencia_id)
         if ausencia is None:
             raise AusenciaNoEncontradaError(ausencia_id)
-        verificar_puede_modificar_ausencia(actor, ausencia, accion="editar")
+        sector = await _sector_de(self._deps, ausencia.empleado_id)
+        verificar_puede_modificar_ausencia(actor, ausencia, accion="editar", department_id=sector)
         if command.status is not None:
-            verificar_puede_cambiar_estado(actor)
+            verificar_puede_cambiar_estado(actor, sector)
         dias = dias_de_baja(command.tipo, command.start_date, command.end_date)
         if dias <= 0:
             raise ValidationError("El rango de fechas no es válido")
@@ -193,6 +194,11 @@ class EditarAusencia:
         )
 
 
+async def _sector_de(deps: AusenciasDependencies, empleado_id: uuid.UUID) -> uuid.UUID | None:
+    empleado = await deps.empleados.get_by_id(empleado_id)
+    return empleado.department_id if empleado else None
+
+
 def _aplicar_edicion(ausencia: Ausencia, command: EditarAusenciaCommand, dias: int) -> None:
     ausencia.start_date = command.start_date
     ausencia.end_date = command.end_date
@@ -213,8 +219,13 @@ class EliminarAusencia:
         ausencia = await self._deps.ausencias.get_by_id(ausencia_id)
         if ausencia is None:
             raise AusenciaNoEncontradaError(ausencia_id)
-        verificar_puede_modificar_ausencia(actor, ausencia, accion="cancelar")
         empleado = await self._deps.empleados.get_by_id(ausencia.empleado_id)
+        verificar_puede_modificar_ausencia(
+            actor,
+            ausencia,
+            accion="cancelar",
+            department_id=empleado.department_id if empleado else None,
+        )
         await self._deps.ausencias.delete(ausencia_id)
         await self._deps.auditoria.registrar(
             ACCION_DELETE,

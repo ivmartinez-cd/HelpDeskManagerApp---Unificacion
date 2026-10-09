@@ -26,6 +26,8 @@ from tests.unit.application.vacaciones.fakes import (
 )
 from tests.unit.domain.vacaciones.factories import make_actor, make_config, make_empleado
 
+ADMIN = make_actor(es_admin=True)
+
 _HOY = date(2026, 8, 14)
 
 
@@ -56,7 +58,7 @@ async def test_listar_ciclos_resuelve_el_nombre_del_empleado() -> None:
     ciclos = FakeCicloRepo([_ciclo(empleado.id, 2026), _ciclo(uuid.uuid4(), 2026)])
     deps = _deps(FakeEmpleadoRepo([empleado]), ciclos)
 
-    listado = await ListarCiclos(deps).execute(2026)
+    listado = await ListarCiclos(deps).execute(2026, ADMIN)
 
     nombres = {d.empleado_nombre for d in listado}
     assert empleado.nombre_completo in nombres
@@ -73,7 +75,7 @@ async def test_abrir_ciclos_crea_saltea_abiertos_y_reabre_cerrados() -> None:
     )
     deps = _deps(FakeEmpleadoRepo([sin_ciclo, ya_abierto, cerrado, inactivo]), ciclos)
 
-    resultado = await AbrirCiclosProximoAnio(deps).execute()
+    resultado = await AbrirCiclosProximoAnio(deps).execute(ADMIN)
 
     assert (resultado.opened, resultado.skipped) == (2, 1)
     nuevo = await ciclos.get(sin_ciclo.id, 2027)

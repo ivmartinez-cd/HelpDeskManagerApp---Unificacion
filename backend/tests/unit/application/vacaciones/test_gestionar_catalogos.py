@@ -62,7 +62,9 @@ from tests.unit.application.vacaciones.fakes import (
     FakeSectorRepo,
     FakeUserDirectory,
 )
-from tests.unit.domain.vacaciones.factories import make_empleado
+from tests.unit.domain.vacaciones.factories import make_actor, make_empleado
+
+ADMIN = make_actor(es_admin=True)
 
 # ------------------------------------------------------------------- cargos
 
@@ -151,30 +153,30 @@ async def test_sectores_abm_reasigna_jefe_y_valida() -> None:
 
     jefe_1, jefe_2 = uuid.uuid4(), uuid.uuid4()
     nuevo = await CreateSector(deps).execute(
-        SectorCommand(name="Depósito", color="#fff", jefe_user_id=jefe_1)
+        SectorCommand(name="Depósito", color="#fff", jefe_user_id=jefe_1), ADMIN
     )
     assert await manager.get_sector_de_usuario(jefe_1) == nuevo.id
 
     await UpdateSector(deps).execute(
-        nuevo.id, SectorCommand(name="Depósito Norte", color="#000", jefe_user_id=jefe_2)
+        nuevo.id, SectorCommand(name="Depósito Norte", color="#000", jefe_user_id=jefe_2), ADMIN
     )
     assert await manager.get_sector_de_usuario(jefe_1) is None
     assert await manager.get_sector_de_usuario(jefe_2) == nuevo.id
 
     with pytest.raises(NombreDuplicadoError):
         await CreateSector(deps).execute(
-            SectorCommand(name="Depósito Norte", color="#fff", jefe_user_id=None)
+            SectorCommand(name="Depósito Norte", color="#fff", jefe_user_id=None), ADMIN
         )
     with pytest.raises(NombreDuplicadoError):
         await UpdateSector(deps).execute(
-            sector.id, SectorCommand(name="Depósito Norte", color="#fff", jefe_user_id=None)
+            sector.id, SectorCommand(name="Depósito Norte", color="#fff", jefe_user_id=None), ADMIN
         )
     with pytest.raises(NotFoundError):
         await UpdateSector(deps).execute(
-            uuid.uuid4(), SectorCommand(name="X", color="#fff", jefe_user_id=None)
+            uuid.uuid4(), SectorCommand(name="X", color="#fff", jefe_user_id=None), ADMIN
         )
 
-    await DeleteSector(deps).execute(nuevo.id)
+    await DeleteSector(deps).execute(nuevo.id, ADMIN)
     assert await manager.get_sector_de_usuario(jefe_2) is None
 
 
@@ -187,9 +189,9 @@ async def test_sector_con_empleados_activos_no_se_borra() -> None:
         users=FakeUserDirectory(),
     )
     with pytest.raises(SectorConEmpleadosError):
-        await DeleteSector(deps).execute(sector.id)
+        await DeleteSector(deps).execute(sector.id, ADMIN)
     with pytest.raises(NotFoundError):
-        await DeleteSector(deps).execute(uuid.uuid4())
+        await DeleteSector(deps).execute(uuid.uuid4(), ADMIN)
 
 
 # ------------------------------------------------------------------ feriados
@@ -266,21 +268,21 @@ async def test_exclusiones_crear_listar_y_eliminar() -> None:
         exclusiones=repo, empleados=FakeEmpleadoRepo([ana, beto])
     )
 
-    exclusion = await CrearExclusion(deps).execute(beto.id, ana.id)  # se normaliza a<b
+    exclusion = await CrearExclusion(deps).execute(beto.id, ana.id, ADMIN)  # se normaliza a<b
     assert exclusion.empleado_a_id < exclusion.empleado_b_id
 
-    listado = await ListarExclusiones(deps).execute()
+    listado = await ListarExclusiones(deps).execute(ADMIN)
     assert {listado[0].empleado_a_nombre, listado[0].empleado_b_nombre} == {"Ana A", "Beto B"}
 
     with pytest.raises(ValidationError):
-        await CrearExclusion(deps).execute(ana.id, ana.id)
+        await CrearExclusion(deps).execute(ana.id, ana.id, ADMIN)
     with pytest.raises(NombreDuplicadoError):
-        await CrearExclusion(deps).execute(ana.id, beto.id)
+        await CrearExclusion(deps).execute(ana.id, beto.id, ADMIN)
 
-    await EliminarExclusion(deps).execute(exclusion.id)
+    await EliminarExclusion(deps).execute(exclusion.id, ADMIN)
     assert repo.items == []
     with pytest.raises(NotFoundError):
-        await EliminarExclusion(deps).execute(exclusion.id)
+        await EliminarExclusion(deps).execute(exclusion.id, ADMIN)
 
 
 async def test_exclusiones_con_empleado_borrado_muestra_nombre_vacio() -> None:
@@ -293,6 +295,6 @@ async def test_exclusiones_con_empleado_borrado_muestra_nombre_vacio() -> None:
         empleados=FakeEmpleadoRepo([ana]),
     )
 
-    listado = await ListarExclusiones(deps).execute()
+    listado = await ListarExclusiones(deps).execute(ADMIN)
 
     assert "" in {listado[0].empleado_a_nombre, listado[0].empleado_b_nombre}

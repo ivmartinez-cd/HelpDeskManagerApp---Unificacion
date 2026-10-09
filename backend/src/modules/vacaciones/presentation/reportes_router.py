@@ -9,6 +9,7 @@ from src.modules.vacaciones.application.use_cases.reporte_vacaciones import (
     ReporteVacaciones,
     ReporteVacacionesDependencies,
 )
+from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 from src.modules.vacaciones.domain.well_known_features import REPORTES
 from src.modules.vacaciones.infrastructure.exports.reporte_vacaciones_archivos import (
     reporte_excel,
@@ -33,6 +34,7 @@ from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_solicitud_rep
     SqlAlchemySolicitudRepository,
 )
 from src.modules.vacaciones.infrastructure.system_clock import SystemClock
+from src.modules.vacaciones.presentation.dependencies.actor import get_actor_vacaciones
 from src.modules.vacaciones.presentation.schemas.reporte_schemas import (
     ReporteVacacionesResponse,
 )
@@ -51,7 +53,7 @@ def _adjunto(contenido: bytes, media_type: str, filename: str) -> Response:
 _require_manage = Depends(require_feature(REPORTES))
 
 
-async def _generar(db: AsyncSession) -> ReporteVacacionesDTO:
+async def _generar(db: AsyncSession, actor: ActorVacaciones) -> ReporteVacacionesDTO:
     deps = ReporteVacacionesDependencies(
         empleados=SqlAlchemyEmpleadoRepository(db),
         sectores=SqlAlchemySectorRepository(db),
@@ -61,29 +63,32 @@ async def _generar(db: AsyncSession) -> ReporteVacacionesDTO:
         config=SqlAlchemyConfigRepository(db),
         clock=SystemClock(),
     )
-    return await ReporteVacaciones(deps).execute()
+    return await ReporteVacaciones(deps).execute(actor)
 
 
 @router.get("")
 async def get_reporte(
     _identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ReporteVacacionesResponse:
-    return ReporteVacacionesResponse.from_dto(await _generar(db))
+    return ReporteVacacionesResponse.from_dto(await _generar(db, actor))
 
 
 @router.get("/excel")
 async def get_reporte_excel(
     _identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Response:
-    return _adjunto(reporte_excel(await _generar(db)), _XLSX, "reporte-vacaciones.xlsx")
+    return _adjunto(reporte_excel(await _generar(db, actor)), _XLSX, "reporte-vacaciones.xlsx")
 
 
 @router.get("/pdf")
 async def get_reporte_pdf(
     _identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Response:
-    contenido = reporte_pdf(await _generar(db), timezone=get_settings().app_timezone)
+    contenido = reporte_pdf(await _generar(db, actor), timezone=get_settings().app_timezone)
     return _adjunto(contenido, "application/pdf", "reporte-vacaciones.pdf")

@@ -47,7 +47,10 @@ from src.modules.vacaciones.domain.services.antiguedad import (
     dias_por_antiguedad,
     referencia_para_anio,
 )
-from src.modules.vacaciones.domain.services.scoping import alcance_para_listado
+from src.modules.vacaciones.domain.services.scoping import (
+    alcance_para_listado,
+    verificar_administra,
+)
 from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 from src.modules.vacaciones.domain.value_objects.saldo import Saldo
 from src.shared.domain.errors import NotFoundError
@@ -166,7 +169,8 @@ class CreateEmpleado:
     def __init__(self, deps: GestionEmpleadosDependencies) -> None:
         self._deps = deps
 
-    async def execute(self, command: EmpleadoCommand) -> Empleado:
+    async def execute(self, command: EmpleadoCommand, actor: ActorVacaciones) -> Empleado:
+        verificar_administra(actor, command.department_id)
         await _validar_referencias(self._deps, command)
         if await self._deps.empleados.get_by_email(command.email) is not None:
             raise NombreDuplicadoError("email", command.email)
@@ -190,10 +194,14 @@ class UpdateEmpleado:
     def __init__(self, deps: GestionEmpleadosDependencies) -> None:
         self._deps = deps
 
-    async def execute(self, empleado_id: uuid.UUID, command: EmpleadoCommand) -> Empleado:
+    async def execute(
+        self, empleado_id: uuid.UUID, command: EmpleadoCommand, actor: ActorVacaciones
+    ) -> Empleado:
         actual = await self._deps.empleados.get_by_id(empleado_id)
         if actual is None:
             raise EmpleadoNoEncontradoError(empleado_id)
+        verificar_administra(actor, actual.department_id)  # no toca gente ajena
+        verificar_administra(actor, command.department_id)  # ni la pasa a otro sector
         await _validar_referencias(self._deps, command)
         command = await _autovincular_cuenta(self._deps, command, empleado_id)
         await self._validar_unicos(actual, command)
@@ -238,10 +246,11 @@ class DeleteEmpleado:
     def __init__(self, deps: GestionEmpleadosDependencies) -> None:
         self._deps = deps
 
-    async def execute(self, empleado_id: uuid.UUID) -> None:
+    async def execute(self, empleado_id: uuid.UUID, actor: ActorVacaciones) -> None:
         empleado = await self._deps.empleados.get_by_id(empleado_id)
         if empleado is None:
             raise EmpleadoNoEncontradoError(empleado_id)
+        verificar_administra(actor, empleado.department_id)
         await self._deps.empleados.delete(empleado_id)
         await self._deps.auditoria.registrar(
             ACCION_DELETE,

@@ -91,18 +91,20 @@ async def list_ciclos(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=500),
     _identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[CicloResponse]:
-    dtos = await ListarCiclos(_ciclos_deps(db)).execute(year)
+    dtos = await ListarCiclos(_ciclos_deps(db)).execute(year, actor)
     return Page.of([CicloResponse.from_dto(d) for d in dtos], page=page, size=size)
 
 
 @router.post("/ciclos/abrir-proximo")
 async def abrir_ciclos_proximo(
     _identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> AbrirCiclosResponse:
-    resultado = await AbrirCiclosProximoAnio(_ciclos_deps(db)).execute()
+    resultado = await AbrirCiclosProximoAnio(_ciclos_deps(db)).execute(actor)
     return AbrirCiclosResponse.from_dto(resultado)
 
 
@@ -147,9 +149,10 @@ async def list_exclusiones(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=500),
     _identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[ExclusionResponse]:
-    dtos = await ListarExclusiones(_exclusiones_deps(db)).execute()
+    dtos = await ListarExclusiones(_exclusiones_deps(db)).execute(actor)
     return Page.of([ExclusionResponse.from_dto(d) for d in dtos], page=page, size=size)
 
 
@@ -157,10 +160,11 @@ async def list_exclusiones(
 async def crear_exclusion(
     body: ExclusionRequest,
     _identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, uuid.UUID]:
     exclusion = await CrearExclusion(_exclusiones_deps(db)).execute(
-        body.empleado_a_id, body.empleado_b_id
+        body.empleado_a_id, body.empleado_b_id, actor
     )
     return {"id": exclusion.id}
 
@@ -169,6 +173,7 @@ async def crear_exclusion(
 async def eliminar_exclusion(
     exclusion_id: uuid.UUID,
     _identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
-    await EliminarExclusion(_exclusiones_deps(db)).execute(exclusion_id)
+    await EliminarExclusion(_exclusiones_deps(db)).execute(exclusion_id, actor)

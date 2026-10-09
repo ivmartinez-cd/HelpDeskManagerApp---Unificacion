@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.auth.application.dtos.results import Identity
 from src.modules.auth.presentation.dependencies.permissions import require_permission
+from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 from src.modules.vacaciones.domain.well_known_permissions import MANAGE
+from src.modules.vacaciones.presentation.dependencies.actor import get_actor_vacaciones
 from src.modules.vacaciones.presentation.dependencies.siges import (
     build_proponer_vinculos_siges,
     build_vincular_empleado_siges,
@@ -25,11 +27,12 @@ _require_manage = Depends(require_permission(MANAGE))
 @router.get("/siges/propuestas", response_model=PropuestasVinculoResponse)
 async def get_propuestas_siges(
     _: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> PropuestasVinculoResponse:
     """Propuestas de vínculo Empleado↔técnico de Siges por matching de
     nombre — la confirmación de cada una es manual (ver PUT siges-vinculo)."""
-    resultado = await build_proponer_vinculos_siges(db).execute()
+    resultado = await build_proponer_vinculos_siges(db).execute(actor)
     return PropuestasVinculoResponse.from_resultado(resultado)
 
 
@@ -38,11 +41,12 @@ async def vincular_empleado_siges(
     empleado_id: uuid.UUID,
     body: VincularSigesIn,
     _: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> EmpleadoResponse:
     """Confirma (o quita, con `sigesEmpresaId: null`) el vínculo de un
     empleado con su técnico de Siges."""
     empleado = await build_vincular_empleado_siges(db).execute(
-        empleado_id, siges_empresa_id=body.siges_empresa_id
+        empleado_id, siges_empresa_id=body.siges_empresa_id, actor=actor
     )
     return EmpleadoResponse.from_entity(empleado)

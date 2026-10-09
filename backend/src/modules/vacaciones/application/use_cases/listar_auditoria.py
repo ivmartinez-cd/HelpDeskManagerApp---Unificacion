@@ -4,6 +4,7 @@ resuelto en batch (los registros guardan solo el user_id)."""
 from dataclasses import dataclass
 
 from src.modules.vacaciones.domain.entities.registro_auditoria import RegistroAuditoria
+from src.modules.vacaciones.domain.errors import OperacionNoPermitidaError
 from src.modules.vacaciones.domain.repositories.auditoria import (
     ORDEN_POR_DEFECTO,
     AuditoriaRepository,
@@ -11,6 +12,7 @@ from src.modules.vacaciones.domain.repositories.auditoria import (
     OrdenAuditoria,
 )
 from src.modules.vacaciones.domain.repositories.user_directory import UserDirectory
+from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,10 +35,15 @@ class ListarAuditoria:
         self,
         filtros: FiltrosAuditoria,
         *,
+        actor: ActorVacaciones,
         page: int,
         size: int,
         orden: OrdenAuditoria = ORDEN_POR_DEFECTO,
     ) -> tuple[list[RegistroAuditoriaDTO], int]:
+        # El log mezcla todos los sectores y no se puede acotar por persona:
+        # el admin con sector asignado no lo ve.
+        if not actor.es_admin_global:
+            raise OperacionNoPermitidaError("La auditoría es solo para administradores generales")
         registros, total = await self._deps.auditoria.list_pagina(
             filtros, offset=(page - 1) * size, limit=size, orden=orden
         )

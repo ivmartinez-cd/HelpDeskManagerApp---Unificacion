@@ -35,6 +35,11 @@ _GESTIONAR = ("personas", "manage")
 def persona(monkeypatch: pytest.MonkeyPatch) -> Iterator[Persona]:
     persona = make_persona(acceso=make_acceso())
     mundo = Mundo(persona)
+
+    async def _sin_sector(_db: object, _user_id: uuid.UUID) -> uuid.UUID | None:
+        return None
+
+    monkeypatch.setattr(armado, "sector_del_jefe", _sin_sector)
     monkeypatch.setattr(armado, "repositorio", lambda _db: FakePersonaRepository(mundo))
     monkeypatch.setattr(armado, "cuentas", lambda _db: FakeCuentas(mundo))
     monkeypatch.setattr(
@@ -161,3 +166,19 @@ async def test_mail_y_acceso_de_un_admin_solo_los_toca_un_superadmin(
     assert mail.status_code == 403
     assert mail.json()["code"] == "PERSONA_CUENTA_PRIVILEGIADA"
     assert quitado.status_code == 403
+
+
+async def test_jefe_de_otro_sector_no_ve_ni_edita_a_la_persona(
+    persona: Persona, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def _otro_sector(_db: object, _user_id: uuid.UUID) -> uuid.UUID | None:
+        return uuid.uuid4()
+
+    monkeypatch.setattr(armado, "sector_del_jefe", _otro_sector)
+    install_session(monkeypatch, _VER, _EDITAR, _GESTIONAR)
+    async with client() as c:
+        assert (await c.get(URL)).json()["items"] == []
+        assert (await c.get(f"{URL}/{persona.id}")).status_code == 404
+        patch = await c.patch(f"{URL}/{persona.id}/datos", json=_datos("otro@canal.com"))
+        assert patch.status_code == 404
+        assert (await c.delete(f"{URL}/{persona.id}/acceso")).status_code == 404

@@ -99,9 +99,10 @@ async def list_empleados(
 async def create_empleado(
     body: EmpleadoRequest,
     identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> EmpleadoResponse:
-    empleado = await CreateEmpleado(_deps(db, identity)).execute(body.to_command())
+    empleado = await CreateEmpleado(_deps(db, identity)).execute(body.to_command(), actor)
     return EmpleadoResponse.from_entity(empleado)
 
 
@@ -110,10 +111,11 @@ async def update_empleado(
     empleado_id: uuid.UUID,
     body: EmpleadoRequest,
     identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> EmpleadoResponse:
     empleado = await UpdateEmpleado(_deps(db, identity)).execute(
-        empleado_id, body.to_command()
+        empleado_id, body.to_command(), actor
     )
     return EmpleadoResponse.from_entity(empleado)
 
@@ -122,6 +124,7 @@ async def update_empleado(
 async def delete_empleado(
     empleado_id: uuid.UUID,
     identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
-    await DeleteEmpleado(_deps(db, identity)).execute(empleado_id)
+    await DeleteEmpleado(_deps(db, identity)).execute(empleado_id, actor)

@@ -19,6 +19,8 @@ from src.modules.vacaciones.application.use_cases.gestionar_sectores import (
     ListSectores,
     UpdateSector,
 )
+from src.modules.vacaciones.application.use_cases.listar_usuarios import ListarUsuariosVisibles
+from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 from src.modules.vacaciones.domain.well_known_permissions import MANAGE, VIEW
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_auditoria import (
     SqlAlchemyRegistradorAuditoria,
@@ -38,6 +40,7 @@ from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_sector_reposi
 from src.modules.vacaciones.infrastructure.repositories.sqlalchemy_user_directory import (
     SqlAlchemyUserDirectory,
 )
+from src.modules.vacaciones.presentation.dependencies.actor import get_actor_vacaciones
 from src.modules.vacaciones.presentation.schemas.catalogo_schemas import (
     CargoRequest,
     CargoResponse,
@@ -95,9 +98,10 @@ async def list_sectores(
 async def create_sector(
     body: SectorRequest,
     identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, uuid.UUID]:
-    sector = await CreateSector(_sector_deps(db, identity)).execute(body.to_command())
+    sector = await CreateSector(_sector_deps(db, identity)).execute(body.to_command(), actor)
     return {"id": sector.id}
 
 
@@ -106,10 +110,11 @@ async def update_sector(
     sector_id: uuid.UUID,
     body: SectorRequest,
     identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> dict[str, uuid.UUID]:
     sector = await UpdateSector(_sector_deps(db, identity)).execute(
-        sector_id, body.to_command()
+        sector_id, body.to_command(), actor
     )
     return {"id": sector.id}
 
@@ -118,9 +123,10 @@ async def update_sector(
 async def delete_sector(
     sector_id: uuid.UUID,
     identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> None:
-    await DeleteSector(_sector_deps(db, identity)).execute(sector_id)
+    await DeleteSector(_sector_deps(db, identity)).execute(sector_id, actor)
 
 
 @router.get("/usuarios")
@@ -128,11 +134,14 @@ async def list_usuarios(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=_DEFAULT_SIZE, ge=1, le=500),
     _identity: Identity = _require_manage,
+    actor: ActorVacaciones = Depends(get_actor_vacaciones),
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> Page[JefeSectorResponse]:
     """Cuentas activas de la plataforma para los selects de jefe de sector y
     vínculo empleado↔usuario (solo Gestión Humana)."""
-    usuarios = await SqlAlchemyUserDirectory(db).list_activos()
+    usuarios = await ListarUsuariosVisibles(
+        SqlAlchemyUserDirectory(db), SqlAlchemyEmpleadoRepository(db)
+    ).execute(actor)
     return Page.of(
         [JefeSectorResponse.from_info(u) for u in usuarios], page=page, size=size
     )

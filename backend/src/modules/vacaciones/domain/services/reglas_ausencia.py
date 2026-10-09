@@ -65,17 +65,24 @@ def verificar_destinos_del_sector(actor: ActorVacaciones, empleados: list[Emplea
 
 
 def verificar_puede_modificar_ausencia(
-    actor: ActorVacaciones, ausencia: Ausencia, *, accion: str
+    actor: ActorVacaciones,
+    ausencia: Ausencia,
+    *,
+    accion: str,
+    department_id: uuid.UUID | None,
 ) -> None:
-    es_dueno = actor.empleado_id == ausencia.empleado_id
-    if not actor.es_admin and not es_dueno:
+    """Dueño o admin del sector de la persona (`department_id`)."""
+    es_admin = actor.administra(department_id)
+    if not es_admin and actor.empleado_id != ausencia.empleado_id:
         raise OperacionNoPermitidaError("No tenés permiso para modificar esta baja")
-    if not actor.es_admin and ausencia.status is not EstadoSolicitud.PENDING:
+    if not es_admin and ausencia.status is not EstadoSolicitud.PENDING:
         raise SoloAusenciasPendientesError(accion)
 
 
-def verificar_puede_cambiar_estado(actor: ActorVacaciones) -> None:
-    if not actor.es_admin:
+def verificar_puede_cambiar_estado(
+    actor: ActorVacaciones, department_id: uuid.UUID | None
+) -> None:
+    if not actor.administra(department_id):
         raise OperacionNoPermitidaError("Sólo un administrador puede cambiar el estado")
 
 

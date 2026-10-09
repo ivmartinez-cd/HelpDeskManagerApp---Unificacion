@@ -23,6 +23,8 @@ from src.modules.vacaciones.domain.repositories.sector_manager_repository import
     SectorManagerRepository,
 )
 from src.modules.vacaciones.domain.repositories.user_directory import UserDirectory
+from src.modules.vacaciones.domain.services.scoping import verificar_admin_global
+from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 from src.shared.domain.errors import NotFoundError
 
 
@@ -60,7 +62,8 @@ class CreateSector:
     def __init__(self, deps: GestionSectoresDependencies) -> None:
         self._deps = deps
 
-    async def execute(self, command: SectorCommand) -> Sector:
+    async def execute(self, command: SectorCommand, actor: ActorVacaciones) -> Sector:
+        verificar_admin_global(actor)
         if await self._deps.sectores.get_by_name(command.name) is not None:
             raise NombreDuplicadoError("nombre", command.name)
         sector = Sector(
@@ -79,7 +82,10 @@ class UpdateSector:
     def __init__(self, deps: GestionSectoresDependencies) -> None:
         self._deps = deps
 
-    async def execute(self, sector_id: uuid.UUID, command: SectorCommand) -> Sector:
+    async def execute(
+        self, sector_id: uuid.UUID, command: SectorCommand, actor: ActorVacaciones
+    ) -> Sector:
+        verificar_admin_global(actor)
         sector = await self._deps.sectores.get_by_id(sector_id)
         if sector is None:
             raise NotFoundError(f"Sector {sector_id} no encontrado")
@@ -113,7 +119,8 @@ class DeleteSector:
     def __init__(self, deps: GestionSectoresDependencies) -> None:
         self._deps = deps
 
-    async def execute(self, sector_id: uuid.UUID) -> None:
+    async def execute(self, sector_id: uuid.UUID, actor: ActorVacaciones) -> None:
+        verificar_admin_global(actor)
         sector = await self._deps.sectores.get_by_id(sector_id)
         if sector is None:
             raise NotFoundError(f"Sector {sector_id} no encontrado")

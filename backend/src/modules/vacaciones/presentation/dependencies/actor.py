@@ -24,8 +24,13 @@ async def get_actor_vacaciones(
     db: AsyncSession = Depends(get_db, scope="function"),
 ) -> ActorVacaciones:
     es_admin = identity.user.is_superadmin or _MANAGE in identity.permissions
-    sector = await SqlAlchemySectorManagerRepository(db).get_sector_de_usuario(
-        identity.user.id
+    # El superadmin ve todo aunque tenga un sector cargado por error.
+    sector = (
+        None
+        if identity.user.is_superadmin
+        else await SqlAlchemySectorManagerRepository(db).get_sector_de_usuario(
+            identity.user.id
+        )
     )
     empleado = await SqlAlchemyEmpleadoRepository(db).get_by_user_id(identity.user.id)
     return ActorVacaciones(

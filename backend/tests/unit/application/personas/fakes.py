@@ -50,7 +50,9 @@ class FakePersonaRepository:
     async def list_page(
         self, filtros: FiltrosPersonas, orden: OrdenPersonas, *, page: int, size: int
     ) -> tuple[list[Persona], int]:
-        todas = list(self._mundo.personas.values())
+        todas = [
+            p for p in self._mundo.personas.values() if filtros.sector_id in (None, p.sector_id)
+        ]
         return todas[(page - 1) * size : page * size], len(todas)
 
     async def get(self, persona_id: uuid.UUID) -> Persona | None:

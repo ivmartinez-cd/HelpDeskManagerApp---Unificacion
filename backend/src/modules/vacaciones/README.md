@@ -97,6 +97,14 @@ del ABM pasó de "Gestión Humana" a **"Personal"**. Solo cambió el `label`: la
   (solicitudes propias), `approve` (decidir; con fila en scope ⇒ solo su sector y nunca la
   propia), `manage` (admin RRHH + bypass). `update` quedó sembrada sin uso en E1. El "rol"
   efectivo es el VO `ActorVacaciones` que arma `presentation/dependencies/actor.py`.
+  **Cambio 2026-10-09 (decisión de Iván)**: el sector manda sobre `manage`. Un usuario con
+  `manage` y sector asignado (`user_module_scope`) es **admin de sector**: administra a la gente
+  de su sector (ABM, solicitudes a nombre de otro, bajas, ciclos, exclusiones, Siges, reporte)
+  y no ve a nadie de otro sector. Admin general = `manage` sin sector, o superadmin (que llega
+  sin sector aunque tenga una fila). Lo que afecta a toda la empresa (crear/editar/borrar
+  sectores y sus jefes, auditoría) queda solo para el admin general. Catálogos compartidos
+  (cargos, feriados, config) no cambiaron. Regla en `ActorVacaciones.es_admin_global` /
+  `administra(sector)` y `domain/services/scoping.py`.
 - **D5** Config singleton sembrada con los defaults de producción del legacy (7 tiers del
   default de Prisma). Solo GET en E1.
 - **D6** Carry-over **iterativo** desde `ANIO_BASE_CARRY_OVER=2026` (equivalente exacto a la

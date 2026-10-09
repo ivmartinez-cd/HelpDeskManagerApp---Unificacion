@@ -33,6 +33,7 @@ from src.modules.vacaciones.domain.value_objects.actor import ActorVacaciones
 @dataclass(frozen=True, slots=True)
 class AdjuntarCertificadoAusenciaDependencies:
     ausencias: AusenciaRepository
+    empleados: EmpleadoRepository
     auditoria: RegistradorAuditoria = RegistradorAuditoriaNulo()
 
 
@@ -46,7 +47,13 @@ class AdjuntarCertificadoAusencia:
         ausencia = await self._deps.ausencias.get_by_id(ausencia_id)
         if ausencia is None:
             raise AusenciaNoEncontradaError(ausencia_id)
-        verificar_puede_modificar_ausencia(actor, ausencia, accion="adjuntar el certificado de")
+        empleado = await self._deps.empleados.get_by_id(ausencia.empleado_id)
+        verificar_puede_modificar_ausencia(
+            actor,
+            ausencia,
+            accion="adjuntar el certificado de",
+            department_id=empleado.department_id if empleado else None,
+        )
         ausencia.certificado_filename = filename
         await self._deps.ausencias.save(ausencia)
         await self._deps.auditoria.registrar(

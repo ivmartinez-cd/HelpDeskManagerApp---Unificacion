@@ -63,9 +63,16 @@ class ListarCiclos:
     def __init__(self, deps: CiclosDependencies) -> None:
         self._deps = deps
 
-    async def execute(self, year: int) -> list[CicloDTO]:
+    async def execute(self, year: int, actor: ActorVacaciones) -> list[CicloDTO]:
         ciclos = await self._deps.ciclos.list_por_year(year)
         empleados = await self._deps.empleados.get_by_ids([c.empleado_id for c in ciclos])
+        if not actor.es_admin_global:
+            ciclos = [
+                c
+                for c in ciclos
+                if c.empleado_id in empleados
+                and actor.administra(empleados[c.empleado_id].department_id)
+            ]
         return [
             CicloDTO(
                 ciclo=c,
@@ -86,11 +93,14 @@ class AbrirCiclosProximoAnio:
     def __init__(self, deps: CiclosDependencies) -> None:
         self._deps = deps
 
-    async def execute(self) -> AbrirCiclosResultDTO:
+    async def execute(self, actor: ActorVacaciones) -> AbrirCiclosResultDTO:
+        """El admin con sector asignado abre solo los de su sector."""
         next_year = self._deps.clock.hoy().year + 1
         config = await self._deps.config.get()
         activos = await self._deps.empleados.list_filtrados(
-            FiltrosEmpleados(status=EstadoEmpleado.ACTIVE)
+            FiltrosEmpleados(
+                status=EstadoEmpleado.ACTIVE, department_id=actor.sector_gestionado_id
+            )
         )
         opened = 0
         skipped = 0
@@ -146,6 +156,6 @@ class ObtenerSaldoEmpleado:
             raise EmpleadoNoEncontradoError(empleado_id)
         es_propio = actor.empleado_id == empleado_id
         es_su_sector = actor.sector_gestionado_id == empleado.department_id
-        if not (actor.es_admin or es_propio or es_su_sector):
+        if not (actor.es_admin_global or es_propio or es_su_sector):
             raise OperacionNoPermitidaError("No tenés acceso al saldo de este empleado")
         return await self._deps.saldos().saldo_de(empleado, year)

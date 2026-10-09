@@ -217,6 +217,7 @@ async def adjuntar_certificado(
     filename = await save_certificado(file)
     deps = AdjuntarCertificadoAusenciaDependencies(
         ausencias=SqlAlchemyAusenciaRepository(db),
+        empleados=SqlAlchemyEmpleadoRepository(db),
         auditoria=SqlAlchemyRegistradorAuditoria(db, actor.user_id),
     )
     try:

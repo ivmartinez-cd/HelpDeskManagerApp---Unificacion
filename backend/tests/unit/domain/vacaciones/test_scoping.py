@@ -9,6 +9,8 @@ from src.modules.vacaciones.domain.services.scoping import (
     DatosSolicitudAjena,
     alcance_para_calendario,
     alcance_para_listado,
+    verificar_admin_global,
+    verificar_administra,
     verificar_puede_decidir,
     verificar_puede_modificar_solicitud,
     verificar_puede_ver_solicitud,
@@ -100,10 +102,61 @@ class TestVerificarPuedeVer:
 
 class TestVerificarPuedeModificar:
     def test_duenio_y_admin_pueden(self) -> None:
-        verificar_puede_modificar_solicitud(make_actor(empleado_id=EMPLEADO), EMPLEADO)
-        verificar_puede_modificar_solicitud(make_actor(es_admin=True), EMPLEADO)
+        datos = DatosSolicitudAjena(empleado_id=EMPLEADO, department_id=SECTOR)
+        verificar_puede_modificar_solicitud(make_actor(empleado_id=EMPLEADO), datos)
+        verificar_puede_modificar_solicitud(make_actor(es_admin=True), datos)
 
     def test_el_jefe_no_modifica_solicitudes_ajenas(self) -> None:
         actor = make_actor(sector_gestionado_id=SECTOR)
+        datos = DatosSolicitudAjena(empleado_id=EMPLEADO, department_id=SECTOR)
         with pytest.raises(OperacionNoPermitidaError):
-            verificar_puede_modificar_solicitud(actor, EMPLEADO)
+            verificar_puede_modificar_solicitud(actor, datos)
+
+    def test_admin_de_sector_modifica_solo_las_de_su_sector(self) -> None:
+        actor = make_actor(es_admin=True, sector_gestionado_id=SECTOR)
+        verificar_puede_modificar_solicitud(
+            actor, DatosSolicitudAjena(empleado_id=EMPLEADO, department_id=SECTOR)
+        )
+        with pytest.raises(OperacionNoPermitidaError):
+            verificar_puede_modificar_solicitud(
+                actor, DatosSolicitudAjena(empleado_id=EMPLEADO, department_id=uuid.uuid4())
+            )
+
+
+class TestAdminDeSector:
+    """Admin (`manage`) con sector asignado: administra su sector y no ve
+    gente de otros (caso jefe de Taller y Stock, 2026-10-09)."""
+
+    def test_el_sector_manda_sobre_manage(self) -> None:
+        actor = make_actor(es_admin=True, sector_gestionado_id=SECTOR)
+        assert actor.es_admin_global is False
+        assert actor.es_jefe_de_sector is True
+        assert alcance_para_listado(actor).department_id == SECTOR
+        assert alcance_para_calendario(actor).department_id == SECTOR
+
+    def test_administra_solo_su_sector(self) -> None:
+        actor = make_actor(es_admin=True, sector_gestionado_id=SECTOR)
+        assert actor.administra(SECTOR) is True
+        assert actor.administra(OTRO_SECTOR) is False
+        assert make_actor(es_admin=True).administra(OTRO_SECTOR) is True
+        assert make_actor(sector_gestionado_id=SECTOR).administra(SECTOR) is False
+
+    def test_no_ve_ni_decide_solicitudes_de_otro_sector(self) -> None:
+        actor = make_actor(es_admin=True, sector_gestionado_id=SECTOR)
+        ajena = DatosSolicitudAjena(empleado_id=OTRO_EMPLEADO, department_id=OTRO_SECTOR)
+        with pytest.raises(OperacionNoPermitidaError):
+            verificar_puede_ver_solicitud(actor, ajena)
+        with pytest.raises(OperacionNoPermitidaError):
+            verificar_puede_decidir(actor, ajena)
+        propia_del_sector = DatosSolicitudAjena(empleado_id=EMPLEADO, department_id=SECTOR)
+        verificar_puede_ver_solicitud(actor, propia_del_sector)
+        verificar_puede_decidir(actor, propia_del_sector)
+
+    def test_acciones_globales_solo_admin_general(self) -> None:
+        verificar_admin_global(make_actor(es_admin=True))
+        with pytest.raises(OperacionNoPermitidaError):
+            verificar_admin_global(make_actor(es_admin=True, sector_gestionado_id=SECTOR))
+        with pytest.raises(OperacionNoPermitidaError):
+            verificar_administra(
+                make_actor(es_admin=True, sector_gestionado_id=SECTOR), OTRO_SECTOR
+            )

@@ -14,6 +14,11 @@ class ActorVacaciones:
     - `sector_gestionado_id`: sector asignado en `user_module_scope` para el
       módulo (rol MANAGER del legacy). None = sin alcance sectorial.
     - `empleado_id`: empleado vinculado a la cuenta (para "lo propio").
+
+    El sector manda sobre `manage` (decisión de Iván, 2026-10-09): un admin con
+    sector asignado administra SOLO su sector y no ve gente de otros. Admin de
+    toda la empresa es `es_admin_global` (manage sin sector, o superadmin, que
+    llega sin sector desde presentation).
     """
 
     user_id: UUID
@@ -22,5 +27,16 @@ class ActorVacaciones:
     empleado_id: UUID | None
 
     @property
+    def es_admin_global(self) -> bool:
+        return self.es_admin and self.sector_gestionado_id is None
+
+    @property
     def es_jefe_de_sector(self) -> bool:
-        return not self.es_admin and self.sector_gestionado_id is not None
+        """Acotado a un sector, tenga o no `manage`."""
+        return self.sector_gestionado_id is not None
+
+    def administra(self, department_id: UUID | None) -> bool:
+        """Tiene privilegios de admin sobre gente de ese sector."""
+        if not self.es_admin:
+            return False
+        return self.es_admin_global or department_id == self.sector_gestionado_id

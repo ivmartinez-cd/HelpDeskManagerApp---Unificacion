@@ -25,10 +25,13 @@ from tests.unit.application.vacaciones.fakes import (
     FixedClock,
 )
 from tests.unit.domain.vacaciones.factories import (
+    make_actor,
     make_config,
     make_empleado,
     make_solicitud,
 )
+
+ADMIN = make_actor(es_admin=True)
 
 HOY = date(2026, 8, 13)
 
@@ -90,7 +93,7 @@ class Harness:
 @pytest.mark.asyncio
 async def test_por_empleado_ordena_por_nombre_e_incluye_inactivos() -> None:
     h = Harness()
-    reporte = await ReporteVacaciones(h.deps).execute()
+    reporte = await ReporteVacaciones(h.deps).execute(ADMIN)
     assert reporte.year == 2026
     assert [f.nombre for f in reporte.por_empleado] == [
         "Ana Martínez",
@@ -107,7 +110,7 @@ async def test_por_empleado_ordena_por_nombre_e_incluye_inactivos() -> None:
 @pytest.mark.asyncio
 async def test_por_sector_agrega_saldos_y_ordena_por_nombre() -> None:
     h = Harness()
-    reporte = await ReporteVacaciones(h.deps).execute()
+    reporte = await ReporteVacaciones(h.deps).execute(ADMIN)
     assert [f.nombre for f in reporte.por_sector] == ["Administración", "Soporte Técnico"]
     admin = reporte.por_sector[0]
     assert admin.color == "#d97706"
@@ -120,3 +123,14 @@ async def test_por_sector_agrega_saldos_y_ordena_por_nombre() -> None:
         0,
         16,
     )
+
+
+@pytest.mark.asyncio
+async def test_admin_de_sector_solo_ve_su_sector() -> None:
+    h = Harness()
+    jefe = make_actor(es_admin=True, sector_gestionado_id=h.sector_b.id)
+
+    reporte = await ReporteVacaciones(h.deps).execute(jefe)
+
+    assert [f.nombre for f in reporte.por_empleado] == ["Carla Rodríguez"]
+    assert [f.nombre for f in reporte.por_sector] == ["Soporte Técnico"]
