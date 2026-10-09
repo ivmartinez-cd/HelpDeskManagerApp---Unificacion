@@ -138,9 +138,8 @@ test.describe("Personas", () => {
     await expect(page.getByText("Pedro Acosta")).toBeVisible();
     await expect(page.getByRole("columnheader", { name: /Disponibles/ })).toBeVisible();
     await expect(page.getByText("15/03/2019").first()).toBeVisible();
-    // El total son los días por antigüedad; el ajuste de la carga inicial va aparte.
+    // El total son los días por antigüedad, sin el ajuste de la carga inicial.
     await expect(page.getByText("/35").first()).toBeVisible();
-    await expect(page.getByText("ajuste inicial −14").first()).toBeVisible();
 
     // Orden: nombre ascendente por default (Laura antes que Pedro); al invertir, al revés.
     const nombres = page.locator("tbody tr td:first-child a span span:first-child");

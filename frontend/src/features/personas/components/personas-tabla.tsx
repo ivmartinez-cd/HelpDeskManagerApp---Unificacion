@@ -5,7 +5,7 @@ import { BrandBadge } from "@/shared/components/ui/brand-form";
 import { SortableHeader, type SortableColumn } from "@/shared/components/ui/sortable-header";
 import type { SortState } from "@/shared/hooks/use-table-sort";
 import { formatAntiguedad, formatFecha, iniciales } from "@/features/vacaciones/lib/fechas";
-import { AYUDA_AJUSTE_INICIAL, diasDelCiclo, textoAjusteInicial } from "@/features/vacaciones/lib/saldo";
+import { diasDelCiclo } from "@/features/vacaciones/lib/saldo";
 import { nombrePersona } from "../api/personas-api";
 import type { FilaPersona, PersonaSortKey } from "../hooks/use-personas";
 
@@ -105,7 +105,6 @@ function CeldasLaborales({ fila }: { fila: FilaPersona }) {
       </>
     );
   }
-  const ajuste = textoAjusteInicial(l.saldo);
   return (
     <>
       <td className="px-4 py-3">
@@ -115,11 +114,6 @@ function CeldasLaborales({ fila }: { fila: FilaPersona }) {
       <td className="px-4 py-3">
         <span className="font-heading font-bold text-brand-orange">{l.saldo.available}</span>
         <span className="text-muted-foreground">/{diasDelCiclo(l.saldo)}</span>
-        {ajuste && (
-          <div className="text-xs text-muted-foreground" title={AYUDA_AJUSTE_INICIAL}>
-            {ajuste}
-          </div>
-        )}
       </td>
     </>
   );

@@ -6,7 +6,7 @@ import { BrandButton, BrandSkeleton, BrandStatTile } from "@/shared/components/u
 import { solicitudesApi } from "../api/solicitudes-api";
 import { labelMes, rangoDeGrilla } from "../lib/calendario";
 import { formatRango, hoyIso, iniciales } from "../lib/fechas";
-import { conAjusteInicial, diasDelCiclo } from "../lib/saldo";
+import { diasDelCiclo } from "../lib/saldo";
 import type { DashboardResumen, EventoCalendario } from "../types/vacaciones";
 import { VacacionesMonthGrid } from "./vacaciones-month-grid";
 import { VacacionesSemanaProxima } from "./vacaciones-semana-proxima";
@@ -103,7 +103,7 @@ export function DashboardView() {
               )}
               hint={
                 dias
-                  ? conAjusteInicial(`de ${diasDelCiclo(dias)} totales del ciclo`, dias)
+                  ? `de ${diasDelCiclo(dias)} totales del ciclo`
                   : resumen.diasTotalesEquipo !== null
                     ? `de ${resumen.diasTotalesEquipo} totales del equipo`
                     : "Sin empleado vinculado"

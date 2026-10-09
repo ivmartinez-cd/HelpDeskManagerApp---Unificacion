@@ -139,8 +139,8 @@ La migración separa ese dato: `annual_days` = días por antigüedad y
 `vacaciones_ciclo.ajuste_inicial` = anotado − regla (negativo = ya tomados, positivo =
 arrastre previo). `available = annual + carry_over + ajuste_inicial − used − pending`, así que
 el disponible no cambió. El ajuste lo escribe solo la migración; recalcular `annual_days` (cambio
-de fecha de ingreso, abrir próximo año) no lo toca. La UI muestra "14/35" y debajo "ajuste
-inicial −14". Excepción: el ingreso del año que tenía el máximo por el bug de arriba se corrigió
+de fecha de ingreso, abrir próximo año) no lo toca. La UI muestra "14/35" sin texto aparte
+para el ajuste (decisión de Iván, 2026-10-09). Excepción: el ingreso del año que tenía el máximo por el bug de arriba se corrigió
 al primer tier, sin ajuste.
 
 ## Migración de datos reales (pendiente — corre en la PC del trabajo)
