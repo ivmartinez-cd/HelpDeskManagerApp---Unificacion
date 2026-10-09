@@ -132,6 +132,26 @@ async def test_refresh_gestion_session_login_rechazado(
         await refresh_gestion_session(str(tmp_path / "g.json"), settings=make_settings())
 
 
+async def test_refresh_gestion_session_credenciales_rechazadas_redirigen_al_login(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # Symfony rechaza con 302 de vuelta a /login (y una sesión anónima nueva).
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/login":
+            return httpx.Response(200, text=_LOGIN_HTML)
+        return httpx.Response(
+            302,
+            headers={
+                "location": "http://gestion.canaldirecto.com.ar/login",
+                "set-cookie": "PHPSESSID=anonima; Path=/",
+            },
+        )
+
+    _patch_transport(monkeypatch, handler)
+    with pytest.raises(ExternalServiceError, match="rechazó el usuario o la contraseña"):
+        await refresh_gestion_session(str(tmp_path / "g.json"), settings=make_settings())
+
+
 async def test_refresh_gestion_session_error_de_conexion_se_envuelve(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

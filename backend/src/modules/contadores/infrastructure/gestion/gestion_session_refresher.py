@@ -3,6 +3,7 @@ import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 
@@ -51,6 +52,14 @@ async def _login(base_url: str, username: str, password: str, timeout: float) ->
     if resp.status_code not in (301, 302, 303) or not session_id:
         raise ExternalServiceError(
             f"Fallo el login de Gestión ({resp.status_code}). Verificá usuario y contraseña."
+        )
+    # Symfony también redirige cuando rechaza las credenciales: de vuelta a
+    # /login. Sin este chequeo, una contraseña vencida pasaba como login OK y
+    # el error aparecía después como un genérico "Error al consultar".
+    if urlparse(resp.headers.get("location", "")).path.rstrip("/").endswith("/login"):
+        raise ExternalServiceError(
+            "Gestión rechazó el usuario o la contraseña "
+            "(GESTION_WEB_USERNAME/GESTION_WEB_PASSWORD): ¿cambió la contraseña?"
         )
     return session_id
 
