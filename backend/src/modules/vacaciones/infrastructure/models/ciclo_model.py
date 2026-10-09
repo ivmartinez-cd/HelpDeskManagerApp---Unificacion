@@ -12,6 +12,7 @@ class VacacionesCicloModel(Base):
     """Ciclo anual de vacaciones por empleado. `carry_over` se persiste con
     write-behind al calcular saldos (paridad con el legacy); `is_open` se
     materializa lazy cuando la política de apertura lo habilita (D7).
+    `ajuste_inicial` lo escribe solo la migración de la carga inicial (ver README).
     """
 
     __tablename__ = "vacaciones_ciclo"
@@ -31,6 +32,9 @@ class VacacionesCicloModel(Base):
     year: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     annual_days: Mapped[int] = mapped_column(Integer, nullable=False)
     carry_over: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    ajuste_inicial: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
     is_open: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
     opened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(

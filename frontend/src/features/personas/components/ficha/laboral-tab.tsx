@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { gestionApi } from "@/features/vacaciones/api/gestion-api";
 import { formatAntiguedad } from "@/features/vacaciones/lib/fechas";
+import { conAjusteInicial, diasDelCiclo } from "@/features/vacaciones/lib/saldo";
 import type { EmpleadoListItem, EstadoEmpleado } from "@/features/vacaciones/types/vacaciones";
 import { ApiError } from "@/services/http-client";
 import { useSession } from "@/services/session-provider";
@@ -63,7 +64,7 @@ export function LaboralTab({ laboral, entraALaApp, onGuardada }: Props) {
   return (
     <div className="flex max-w-[560px] flex-col gap-5">
       <div className="grid grid-cols-3 gap-3">
-        <BrandStatTile label="Disponibles" value={s.available} tone="highlight" hint={`de ${s.annual + s.carryOver} este año`} />
+        <BrandStatTile label="Disponibles" value={s.available} tone="highlight" hint={conAjusteInicial(`de ${diasDelCiclo(s)} este año`, s)} />
         <BrandStatTile label="Días anuales" value={laboral.diasAnuales} hint={formatAntiguedad(laboral.antiguedadAnios)} />
         <BrandStatTile label="Legajo Siges" value={laboral.sigesEmpresaId ?? "—"} hint={laboral.sigesEmpresaId ? "Vinculado" : "Sin vincular"} />
       </div>

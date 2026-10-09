@@ -23,6 +23,7 @@ class SaldoResponse(BaseModel):
     pending: int
     available: int
     cycle_open: bool = Field(serialization_alias="cycleOpen")
+    ajuste_inicial: int = Field(serialization_alias="ajusteInicial")
 
     @classmethod
     def from_saldo(cls, saldo: Saldo) -> "SaldoResponse":
@@ -33,6 +34,7 @@ class SaldoResponse(BaseModel):
             pending=saldo.pending,
             available=saldo.available,
             cycle_open=saldo.cycle_open,
+            ajuste_inicial=saldo.ajuste_inicial,
         )
 
 
@@ -147,6 +149,7 @@ class CicloResponse(BaseModel):
     year: int
     annual_days: int = Field(serialization_alias="annualDays")
     carry_over: int = Field(serialization_alias="carryOver")
+    ajuste_inicial: int = Field(serialization_alias="ajusteInicial")
     is_open: bool = Field(serialization_alias="isOpen")
 
     @classmethod
@@ -158,6 +161,7 @@ class CicloResponse(BaseModel):
             year=dto.ciclo.year,
             annual_days=dto.ciclo.annual_days,
             carry_over=dto.ciclo.carry_over,
+            ajuste_inicial=dto.ciclo.ajuste_inicial,
             is_open=dto.ciclo.is_open,
         )
 

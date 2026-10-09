@@ -26,7 +26,7 @@ const EMPLEADO = {
   antiguedadAnios: 7.41,
   // El listado trae los saldos del ciclo en curso y el siguiente (contrato
   // real de GET /empleados); sin esto la tabla rompe al leer saldo.available.
-  saldo: { annual: 21, carryOver: 0, used: 7, pending: 0, available: 14, cycleOpen: true },
+  saldo: { annual: 21, carryOver: 0, used: 7, pending: 0, available: 14, cycleOpen: true, ajusteInicial: 0 },
   saldoSiguiente: null,
 };
 
@@ -266,6 +266,7 @@ test.describe("Vacaciones", () => {
           pending: 7,
           available: 14,
           cycleOpen: true,
+          ajusteInicial: 0,
         }),
       }),
     );

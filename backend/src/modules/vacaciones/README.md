@@ -126,6 +126,22 @@ del ABM pasó de "Gestión Humana" a **"Personal"**. Solo cambió el `label`: la
   agenda); el admin sigue cargando histórico. El legacy solo rechazaba el año pasado.
 - **Desvío consciente (2026-09-05)**: un empleado sin `manage` ni sector que manda
   `empleadoIds` con ids ajenos recibe 403 (el legacy reescribía en silencio al propio).
+- **Desvío consciente (2026-10-09)**: quien ingresó después del 1/1 del año del ciclo
+  (antigüedad negativa) recibe el **primer** tier. El legacy no encontraba tier y caía al
+  último: cada ingreso nuevo arrancaba con el máximo (35 días).
+
+## Ajuste de carga inicial (2026-10-09, migración `95bb632db2d0`)
+
+Los ciclos 2026 vinieron de la planilla de RRHH importada al legacy, que guardaba en
+`annual_days` el **saldo anotado** (días por antigüedad − tomados antes del sistema +
+arrastre de 2025), no los días que corresponden: la UI mostraba "14/21" a quien le tocan 35.
+La migración separa ese dato: `annual_days` = días por antigüedad y
+`vacaciones_ciclo.ajuste_inicial` = anotado − regla (negativo = ya tomados, positivo =
+arrastre previo). `available = annual + carry_over + ajuste_inicial − used − pending`, así que
+el disponible no cambió. El ajuste lo escribe solo la migración; recalcular `annual_days` (cambio
+de fecha de ingreso, abrir próximo año) no lo toca. La UI muestra "14/35" y debajo "ajuste
+inicial −14". Excepción: el ingreso del año que tenía el máximo por el bug de arriba se corrigió
+al primer tier, sin ajuste.
 
 ## Migración de datos reales (pendiente — corre en la PC del trabajo)
 

@@ -35,7 +35,8 @@ const PEDRO: Persona = {
   acceso: null,
 };
 
-const SALDO = { annual: 21, carryOver: 0, used: 7, pending: 0, available: 14, cycleOpen: true };
+// Caso de la carga inicial: 35 por antigüedad, 14 tomados antes del sistema, 7 aprobados.
+const SALDO = { annual: 35, carryOver: 0, used: 7, pending: 0, available: 14, cycleOpen: true, ajusteInicial: -14 };
 
 function empleado(p: Persona, userId: string | null) {
   return {
@@ -137,6 +138,9 @@ test.describe("Personas", () => {
     await expect(page.getByText("Pedro Acosta")).toBeVisible();
     await expect(page.getByRole("columnheader", { name: /Disponibles/ })).toBeVisible();
     await expect(page.getByText("15/03/2019").first()).toBeVisible();
+    // El total son los días por antigüedad; el ajuste de la carga inicial va aparte.
+    await expect(page.getByText("/35").first()).toBeVisible();
+    await expect(page.getByText("ajuste inicial −14").first()).toBeVisible();
 
     // Orden: nombre ascendente por default (Laura antes que Pedro); al invertir, al revés.
     const nombres = page.locator("tbody tr td:first-child a span span:first-child");

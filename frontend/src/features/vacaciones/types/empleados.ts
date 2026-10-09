@@ -7,6 +7,9 @@ export interface Saldo {
   pending: number;
   available: number;
   cycleOpen: boolean;
+  /** Diferencia anotada en la carga inicial (planilla de RRHH) respecto de los
+   * días por antigüedad; ya está descontada/sumada en `available`. */
+  ajusteInicial: number;
 }
 
 export interface Empleado {

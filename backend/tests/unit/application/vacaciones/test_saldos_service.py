@@ -103,3 +103,26 @@ async def test_upgrade_lazy_de_apertura() -> None:
     assert saldo.cycle_open is True
     assert cerrado.is_open is True
     assert cerrado.opened_at is not None
+
+
+@pytest.mark.asyncio
+async def test_ajuste_inicial_del_ciclo_viaja_en_el_saldo() -> None:
+    empleado = make_empleado(hire_date=date(2005, 4, 25))
+    ciclo = Ciclo(
+        id=uuid.uuid4(),
+        empleado_id=empleado.id,
+        year=2026,
+        annual_days=35,
+        carry_over=0,
+        is_open=True,
+        opened_at=None,
+        ajuste_inicial=-14,
+    )
+    service = _service(FakeEmpleadoRepo([empleado]), FakeCicloRepo([ciclo]), FakeSolicitudRepo())
+
+    saldo = await service.saldo_de(empleado, 2026)
+
+    assert saldo.annual == 35
+    assert saldo.ajuste_inicial == -14
+    assert saldo.available == 21
+    assert saldo.total == 21

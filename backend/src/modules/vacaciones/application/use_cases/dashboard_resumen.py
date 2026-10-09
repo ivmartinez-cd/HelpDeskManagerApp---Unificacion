@@ -132,7 +132,7 @@ class DashboardResumen:
             return None, None
         hoy = self._deps.clock.hoy()
         saldos = await self._deps.saldos().saldos_batch(activos, hoy.year)
-        total = sum(s.annual + s.carry_over for s in saldos.values())
+        total = sum(s.total for s in saldos.values())
         disponible = sum(s.available for s in saldos.values())
         return total, disponible
 

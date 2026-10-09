@@ -62,6 +62,21 @@ class TestCalcularCadenaSaldos:
         )
         assert saldos[2026].available == 0
 
+    def test_ajuste_inicial_suma_al_disponible_y_al_arrastre(self) -> None:
+        # Caso Fer: 35 por antigüedad, 14 tomados antes del sistema, 7 aprobados.
+        saldos = calcular_cadena_saldos(
+            2027,
+            {2026: 35, 2027: 35},
+            {2026: ConsumoAnual(used=7, pending=0)},
+            REGLAS_DEFAULT,
+            {2026: -14},
+        )
+        assert saldos[2026].annual == 35
+        assert saldos[2026].ajuste_inicial == -14
+        assert saldos[2026].available == 14
+        assert saldos[2027].carry_over == 14
+        assert saldos[2027].ajuste_inicial == 0
+
     def test_anio_anterior_a_la_base_es_un_solo_anio_sin_carry(self) -> None:
         saldos = calcular_cadena_saldos(2025, {2025: 14}, {}, REGLAS_DEFAULT)
         assert list(saldos) == [2025]

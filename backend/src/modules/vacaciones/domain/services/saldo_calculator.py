@@ -29,6 +29,7 @@ class SaldoAnual:
     used: int
     pending: int
     available: int
+    ajuste_inicial: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,30 +43,43 @@ def calcular_cadena_saldos(
     annual_days_por_anio: Mapping[int, int],
     consumo_por_anio: Mapping[int, ConsumoAnual],
     reglas: ReglasCarryOver,
+    ajustes_por_anio: Mapping[int, int] | None = None,
 ) -> dict[int, SaldoAnual]:
     """Saldos desde el año base hasta `target_year` inclusive.
 
     `annual_days_por_anio` debe cubrir todos los años del rango (los provee el
-    use case a partir de los ciclos ya asegurados).
+    use case a partir de los ciclos ya asegurados). `ajustes_por_anio` es el
+    ajuste de carga inicial de cada ciclo (default 0): suma al disponible y,
+    por lo tanto, al arrastre del año siguiente.
     """
+    ajustes = ajustes_por_anio or {}
     inicio = min(ANIO_BASE_CARRY_OVER, target_year)
     saldos: dict[int, SaldoAnual] = {}
     carry_in = 0
     for year in range(inicio, target_year + 1):
-        annual = annual_days_por_anio[year]
-        consumo = consumo_por_anio.get(year, ConsumoAnual(used=0, pending=0))
-        carry = carry_in if reglas.allow_carry_over else 0
-        available = annual + carry - consumo.used - consumo.pending
-        saldos[year] = SaldoAnual(
-            year=year,
-            annual=annual,
-            carry_over=carry,
-            used=consumo.used,
-            pending=consumo.pending,
-            available=available,
+        saldos[year] = _saldo_del_anio(
+            year,
+            annual_days_por_anio[year],
+            carry_in if reglas.allow_carry_over else 0,
+            consumo_por_anio.get(year, ConsumoAnual(used=0, pending=0)),
+            ajustes.get(year, 0),
         )
-        carry_in = _carry_out(available, reglas)
+        carry_in = _carry_out(saldos[year].available, reglas)
     return saldos
+
+
+def _saldo_del_anio(
+    year: int, annual: int, carry: int, consumo: ConsumoAnual, ajuste: int
+) -> SaldoAnual:
+    return SaldoAnual(
+        year=year,
+        annual=annual,
+        carry_over=carry,
+        used=consumo.used,
+        pending=consumo.pending,
+        available=annual + carry + ajuste - consumo.used - consumo.pending,
+        ajuste_inicial=ajuste,
+    )
 
 
 def _carry_out(available: int, reglas: ReglasCarryOver) -> int:

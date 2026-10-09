@@ -77,7 +77,7 @@ class CalendarioEventos:
     async def _restantes(
         self, visibles: list[Solicitud], empleados: dict[uuid.UUID, Empleado]
     ) -> dict[uuid.UUID, int]:
-        """Para cada solicitud visible: annual+carry del año imputado menos lo
+        """Para cada solicitud visible: total del año imputado menos lo
         consumido por las solicitudes activas anteriores (inclusive) de ese
         empleado/año, en orden de inicio — paridad con el runningAvailable."""
         objetivos = {(s.empleado_id, s.anio_imputado) for s in visibles}
@@ -89,7 +89,7 @@ class CalendarioEventos:
         for s in visibles:
             clave = (s.empleado_id, s.anio_imputado)
             saldo = saldos.get(clave)
-            running = (saldo.annual + saldo.carry_over) if saldo else 0
+            running = saldo.total if saldo else 0
             for otra in todas:
                 if otra.empleado_id != s.empleado_id or otra.anio_imputado != s.anio_imputado:
                     continue

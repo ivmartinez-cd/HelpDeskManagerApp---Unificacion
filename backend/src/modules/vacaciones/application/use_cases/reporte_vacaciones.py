@@ -2,8 +2,8 @@
 
 Paridad: incluye TODOS los empleados (también inactivos), ordena empleados por
 nombre y sectores por nombre, y usa el saldo del año en curso. `annual` es el
-del ciclo (sin carry); `available` sí refleja el carry-over, igual que el
-`getEmployeeBalance` legacy.
+del ciclo por antigüedad (sin carry ni ajuste inicial); `available` sí refleja
+el carry-over y el ajuste inicial, igual que el `getEmployeeBalance` legacy.
 """
 
 import uuid

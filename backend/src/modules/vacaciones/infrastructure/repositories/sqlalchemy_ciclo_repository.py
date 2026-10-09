@@ -16,6 +16,7 @@ def _to_entity(row: VacacionesCicloModel) -> Ciclo:
         carry_over=row.carry_over,
         is_open=row.is_open,
         opened_at=row.opened_at,
+        ajuste_inicial=row.ajuste_inicial,
     )
 
 
@@ -64,6 +65,7 @@ class SqlAlchemyCicloRepository:
                 carry_over=ciclo.carry_over,
                 is_open=ciclo.is_open,
                 opened_at=ciclo.opened_at,
+                ajuste_inicial=ciclo.ajuste_inicial,
             )
         )
         await self._session.flush()

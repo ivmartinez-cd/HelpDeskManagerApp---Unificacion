@@ -78,20 +78,19 @@ class SaldosService:
         ciclos: list[Ciclo],
         activas: list[Solicitud],
     ) -> Saldo:
-        por_anio = {c.year: c for c in ciclos}
-        inicio = min(ANIO_BASE_CARRY_OVER, target_year)
-        for year in range(inicio, target_year + 1):
-            if year not in por_anio:
-                por_anio[year] = await self._crear_ciclo(empleado, year, config)
-            else:
-                await self._abrir_si_corresponde(por_anio[year], config)
-        consumo = _consumo_por_anio(activas)
+        por_anio = await self._asegurar_ciclos(empleado, target_year, config, ciclos)
+        anios = range(min(ANIO_BASE_CARRY_OVER, target_year), target_year + 1)
         reglas = ReglasCarryOver(
             allow_carry_over=config.allow_carry_over,
             max_carry_over_days=config.max_carry_over_days,
         )
-        annual = {y: por_anio[y].annual_days for y in range(inicio, target_year + 1)}
-        cadena = calcular_cadena_saldos(target_year, annual, consumo, reglas)
+        cadena = calcular_cadena_saldos(
+            target_year,
+            {y: por_anio[y].annual_days for y in anios},
+            _consumo_por_anio(activas),
+            reglas,
+            {y: por_anio[y].ajuste_inicial for y in anios},
+        )
         await self._persistir_carry(por_anio, cadena)
         objetivo = cadena[target_year]
         return Saldo(
@@ -101,7 +100,23 @@ class SaldosService:
             pending=objetivo.pending,
             available=objetivo.available,
             cycle_open=por_anio[target_year].is_open,
+            ajuste_inicial=objetivo.ajuste_inicial,
         )
+
+    async def _asegurar_ciclos(
+        self,
+        empleado: Empleado,
+        target_year: int,
+        config: ConfigVacaciones,
+        ciclos: list[Ciclo],
+    ) -> dict[int, Ciclo]:
+        por_anio = {c.year: c for c in ciclos}
+        for year in range(min(ANIO_BASE_CARRY_OVER, target_year), target_year + 1):
+            if year not in por_anio:
+                por_anio[year] = await self._crear_ciclo(empleado, year, config)
+            else:
+                await self._abrir_si_corresponde(por_anio[year], config)
+        return por_anio
 
     async def _crear_ciclo(
         self, empleado: Empleado, year: int, config: ConfigVacaciones
