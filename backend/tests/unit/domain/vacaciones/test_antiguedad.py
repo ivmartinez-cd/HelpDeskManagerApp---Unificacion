@@ -28,6 +28,11 @@ class TestDiasPorAntiguedad:
         # 2020-12-31 → 1827 días = 5.001 años (pasa a 21)
         assert dias_por_antiguedad(date(2020, 12, 31), REF_2026, TIERS_LEGACY) == 21
 
+    def test_ingreso_posterior_a_la_referencia_da_el_primer_tier(self) -> None:
+        # Ingreso en el año del ciclo: antigüedad negativa al 1/1 (el legacy
+        # devolvía el último tier, 35 días).
+        assert dias_por_antiguedad(date(2026, 3, 9), REF_2026, TIERS_LEGACY) == 7
+
     def test_supera_el_ultimo_tier_devuelve_el_ultimo(self) -> None:
         assert dias_por_antiguedad(date(1920, 1, 1), REF_2026, TIERS_LEGACY) == 35
 

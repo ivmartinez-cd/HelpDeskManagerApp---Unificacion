@@ -3,6 +3,10 @@
 La antigüedad se proyecta a una fecha de referencia (el 1/1 del año del ciclo)
 con el divisor 365.25 del legacy; los tiers son `min` inclusive / `max`
 exclusivo y si la antigüedad supera el último tier se devuelve el último.
+
+Quien ingresó después de la fecha de referencia (antigüedad negativa, el
+ingreso del año en curso) cae en el primer tier. El legacy lo dejaba caer al
+último y le asignaba el máximo de días a cada ingreso nuevo.
 """
 
 from collections.abc import Sequence
@@ -22,6 +26,8 @@ def dias_por_antiguedad(
     anios = (referencia - hire_date).days / _DIAS_POR_ANIO
     lista = tiers if tiers else DEFAULT_TIERS
     ordenados = sorted(lista, key=lambda t: t.min_years)
+    if anios < ordenados[0].min_years:
+        return ordenados[0].days
     for tier in ordenados:
         if tier.min_years <= anios < tier.max_years:
             return tier.days
