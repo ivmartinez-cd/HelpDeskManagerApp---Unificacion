@@ -52,8 +52,11 @@ if [ "$SVC" = "backend" ]; then
   esperar_200 "http://127.0.0.1:8012/docs"
   echo "== DISABLE_INSUMOS_BACKGROUND_JOBS en el contenedor: $(docker exec helpdesk-manager-backend printenv DISABLE_INSUMOS_BACKGROUND_JOBS || echo '(no definida)')"
   log="$(docker logs --since 10m helpdesk-manager-backend 2>&1)"
-  if printf '%s' "$log" | grep -q 'background_jobs: .* iniciados' \
-     && ! printf '%s' "$log" | grep -q 'background_jobs: insumos omitido'; then
+  # Here-string y no `printf | grep -q`: con pipefail, grep -q corta en el primer
+  # match, printf muere por SIGPIPE (141) y el chequeo da al azar falsos avisos
+  # (o se come uno verdadero) según el tamaño del log.
+  if grep -q 'background_jobs: .* iniciados' <<<"$log" \
+     && ! grep -q 'background_jobs: insumos omitido' <<<"$log"; then
     echo "ATENCIÓN: el log muestra jobs iniciados SIN la línea 'insumos omitido' — el poller de insumos está corriendo. Revisar .env y recrear el contenedor." >&2
   fi
 else
