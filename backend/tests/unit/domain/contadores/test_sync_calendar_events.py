@@ -52,9 +52,7 @@ async def test_sync_hace_un_solo_pedido_y_agrupa_por_operador_del_evento() -> No
         start_date="2026-08-01", end_date="2026-08-31"
     )
 
-    port.get_events.assert_awaited_once_with(
-        start_date="2026-08-01", end_date="2026-08-31", solo_facturacion=True
-    )
+    port.get_events.assert_awaited_once_with(start_date="2026-08-01", end_date="2026-08-31")
     catalog.find_by_logins.assert_awaited_once_with(["mjvela", "vipaez"])
     assert result.operadores_count == 2
     assert result.events_count == 4

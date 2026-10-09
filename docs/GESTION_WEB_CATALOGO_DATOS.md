@@ -8,7 +8,7 @@ Relevado el 2026-08-15. Todo acceso fue de solo lectura con el usuario `imartine
 
 App Symfony (PHP 8.3 / Apache) con Bootstrap 3 + jQuery. No tiene API REST pública — todo es
 server-side rendered HTML con algunos endpoints AJAX/JSON para los formularios. El backend ya la
-accede vía scraping de sesión (módulo `sla`/planificación, `gestion_session_refresher.py`).
+accedía vía scraping de sesión (`gestion_session_refresher.py`, eliminado el 2026-10-09: el calendario ahora lee la base `Gestion` de ORION, ADR-047).
 
 **Dato clave**: gestion.cdsa.com.ar es una UI directa sobre la base de datos Siges/ORION.
 El conteo de sucursales activas es idéntico en ambas fuentes (12.455), y una fila real
@@ -218,8 +218,9 @@ Estos datos solo viven en la app web y no tienen equivalente confirmado en Siges
   `dbo.Ruta` no existe en Siges (tabla no encontrada).
 - **Órdenes de trabajo / Producciones**: 9 registros activos — dominio operativo interno,
   no investigado en Siges.
-- **Planificación de eventos** (Calendario `/planificacion/ver`): ya documentado como
-  "solo Gestión" en ADR-012 — no existe en Siges.
+- **Planificación de eventos** (Calendario `/planificacion/ver`): no existe en `SiGes`, pero sí
+  en la base **`Gestion`** del mismo ORION (`dbo.calendario_evento` + `dbo.usuario`), legible
+  con la misma cuenta. Desde 2026-10-09 el calendario lee de ahí (ADR-047).
 
 ---
 

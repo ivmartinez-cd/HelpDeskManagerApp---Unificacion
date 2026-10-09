@@ -33,6 +33,9 @@ from src.modules.contadores.infrastructure.siges.pyodbc_estado_proceso_anexos_ga
 from src.modules.contadores.infrastructure.siges.pyodbc_falta_contador_proceso_gateway import (
     PyodbcFaltaContadorProcesoGateway,
 )
+from src.modules.contadores.infrastructure.siges.pyodbc_gestion_calendario_gateway import (
+    PyodbcGestionCalendarioGateway,
+)
 from src.modules.contadores.infrastructure.siges.pyodbc_grilla_estimacion_gateway import (
     PyodbcGrillaEstimacionGateway,
 )
@@ -90,6 +93,12 @@ _ESTADO_PROCESO_ANEXOS_CACHE_TTL_SECONDS = 300.0
 @lru_cache
 def get_operador_catalog_gateway() -> PyodbcOperadorGateway:
     return PyodbcOperadorGateway(require_orion_runner())
+
+
+@lru_cache
+def get_gestion_calendario_gateway() -> PyodbcGestionCalendarioGateway:
+    """Eventos de facturación desde la base de Gestión en ORION (ADR-047)."""
+    return PyodbcGestionCalendarioGateway(require_orion_runner())
 
 
 @lru_cache

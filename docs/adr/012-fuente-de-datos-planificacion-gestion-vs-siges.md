@@ -1,6 +1,6 @@
 # ADR-012: SigesReadOnly reemplaza el catálogo de operadores; el scraping de eventos se mantiene
 
-## Estado: Aceptado
+## Estado: Aceptado — la parte de eventos (scraping de `ajax-by-rango`) quedó reemplazada por ADR-047 (2026-10-09)
 
 ## Contexto
 

@@ -1,4 +1,4 @@
-"""Sync del calendario contra Gestión: estado y disparo manual.
+"""Sync del calendario contra la base de Gestión (ADR-047): estado y disparo manual.
 
 El auto-sync automático corre cada 120 min (2 h) vía background_jobs.py de este
 módulo. Este router solo expone el estado y el disparo manual (botón "Sincronizar")."""
@@ -12,19 +12,18 @@ from src.modules.auth.application.dtos.results import Identity
 from src.modules.contadores.application.use_cases.sync_calendar_events import (
     SyncCalendarEventsUseCase,
 )
-from src.modules.contadores.infrastructure.gestion.gestion_planificacion_client import (
-    GestionPlanificacionClient,
-)
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_calendario_repository import (
     SqlAlchemyCalendarEventRepository,
 )
 from src.modules.contadores.presentation.calendario_routers._deps import (
     DEFAULT_SYNC_WINDOW_DAYS,
-    SYNC_TIMEOUT_SECONDS,
     require_manage,
     require_view,
 )
-from src.modules.contadores.presentation.dependencies import get_operador_catalog_gateway
+from src.modules.contadores.presentation.dependencies import (
+    get_gestion_calendario_gateway,
+    get_operador_catalog_gateway,
+)
 from src.modules.contadores.presentation.schemas.calendario_schemas import (
     SyncCalendarioResponse,
     SyncStatusResponse,
@@ -56,8 +55,8 @@ async def sync_calendario(
     end_date = (today + window).isoformat()
 
     repo = SqlAlchemyCalendarEventRepository(db)
-    gestion = GestionPlanificacionClient(timeout=SYNC_TIMEOUT_SECONDS)
-    operador_catalog = get_operador_catalog_gateway()
-    use_case = SyncCalendarEventsUseCase(gestion, operador_catalog, repo)
+    use_case = SyncCalendarEventsUseCase(
+        get_gestion_calendario_gateway(), get_operador_catalog_gateway(), repo
+    )
     result = await use_case.execute(start_date=start_date, end_date=end_date)
     return SyncCalendarioResponse.model_validate(result)

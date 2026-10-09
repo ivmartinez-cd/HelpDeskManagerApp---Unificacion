@@ -3,7 +3,9 @@ from dataclasses import dataclass
 
 @dataclass(slots=True)
 class CalendarEvent:
-    """Representa un evento de planificación recuperado de la Web de Gestión."""
+    """Evento de facturación del calendario de planificación de Gestión. Los
+    campos de entregas/sucursales/bultos quedan de cuando se leía la web y
+    vienen siempre vacíos en facturación (ADR-047)."""
 
     id: str
     title: str

@@ -10,8 +10,8 @@ from src.shared.infrastructure.database.base import Base
 
 class CalendarEventModel(Base):
     """Copia local de un evento de facturación de Gestión. `operador_id` es
-    el username que Gestión estampa en el campo `operador` del propio evento
-    (ver GestionPlanificacionClient / SyncCalendarEventsUseCase).
+    el username del operador de facturación del evento (ver
+    PyodbcGestionCalendarioGateway / SyncCalendarEventsUseCase, ADR-047).
     `event_date` es `start` truncado a fecha, para poder filtrar por rango
     sin parsear el string en cada consulta."""
 

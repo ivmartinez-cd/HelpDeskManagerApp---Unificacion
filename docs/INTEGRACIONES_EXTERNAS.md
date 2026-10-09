@@ -37,6 +37,7 @@ mapeo de filas, y delegan la plomería en el runner.
 | sla | `orion/pyodbc_sla_query_gateway.py` | `SlaQueryGateway` | `get_sla_query_gateway` (`lru_cache`) | `GET /api/sla/resumen`, `GET /api/sla/incidentes-vencidos`, `POST /api/sla/actualizar` (refresh on-demand del snapshot), job `sla/presentation/background_jobs.py` (refresco periódico) | 30 s | fail-fast 502 ("falta ORION_HOST"); el job loguea y no arranca |
 | prestadores | `siges/pyodbc_prestador_gateway.py` | `SigesPrestadorGateway` | `get_prestador_siges_gateway` (`lru_cache`) y `_or_none` | `GET /api/prestadores` (listado, `_or_none`: degrada al último parque persistido), sync de parque (estricta) | 30 s | listado degrada con warning; sync fail-fast 502 |
 | contadores | `siges/pyodbc_operador_gateway.py` | `OperadorCatalogPort` | `get_operador_catalog_gateway` (`lru_cache`) | `GET /api/contadores/calendario/operadores` (catálogo, ADR-012) | 30 s | fail-fast 502 |
+| contadores | `siges/pyodbc_gestion_calendario_gateway.py` | `CalendarPort` | `get_gestion_calendario_gateway` (`lru_cache`) | job `calendario_refresh` y `POST /api/contadores/calendario/sync` (eventos de facturación desde la base **`Gestion`** de ORION por nombre de tres partes, ADR-047) | 30 s | el job loguea y reintenta; el sync manual responde 502 |
 | contadores | `siges/pyodbc_parque_cliente_gateway.py` | `ParqueClientePort` | `get_parque_cliente_gateway` (`lru_cache`) y `_or_none` | card de Inicio `resumen-clientes` (`_or_none`: va sin impresoras), búsqueda de empresas del modal (estricta) | 30 s | card degrada con warning; búsqueda fail-fast 502 |
 | contadores | `siges/pyodbc_equipos_sin_real_gateway.py` | `EquiposSinRealPort` | `get_equipos_sin_real_gateway` (`lru_cache`) | `GET /api/contadores/equipos-sin-real` (+`/resumen`) | **120 s** propio (vía `timeout_override`; la consulta recorre Contadores completo, ~10 s) + **caché TTL 600 s** en memoria con `asyncio.Lock` (un solo refresh en vuelo) | fail-fast 502 |
 | liquidaciones | `siges/pyodbc_siges_catalogo_gateway.py` | `SigesCatalogoGateway` | `_gateway()` en `dependencies/siges.py` (`lru_cache`) | vínculos/sync de config (ADR-014): proponer/vincular PST y SPST, sync config, tarifarios (estado zonas, mapear, sync), búsqueda de sucursales | 30 s | fail-fast 502 |
@@ -111,11 +112,11 @@ fresco por request en producción).
   re-login), `ers_device_telemetry.py`. Timeout: `epson_ers_timeout_seconds` (default 15 s;
   el refresher usa 30 s).
 
-## 7. Gestión web (scraping gestion.cdsa.com.ar, httpx)
+## 7. Gestión web — ya no se usa (2026-10-09)
 
-- Módulo: contadores. Adapters: `gestion/gestion_session_refresher.py` (login),
-  `gestion_planificacion_client.py`. Timeout: `gestion_web_timeout_seconds` (default 15 s).
-  Fuente de planificación del calendario (ADR-012).
+- El calendario de contadores dejó de scrapear `gestion.cdsa.com.ar`: lee la base `Gestion`
+  de ORION con `siges/pyodbc_gestion_calendario_gateway.py` (ver la tabla de ORION arriba y
+  ADR-047). No quedan credenciales ni sesión de la web en el backend.
 
 ## 8. FTP (descarga de .db3 de contadores, ftplib)
 

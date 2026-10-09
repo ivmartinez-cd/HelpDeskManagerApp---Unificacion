@@ -18,10 +18,10 @@ logger = logging.getLogger(__name__)
 
 class SyncCalendarEventsUseCase:
     """Reconstruye la copia local de eventos de facturación con UN solo pedido
-    sin filtro de operador: ajax-by-rango ya trae el username del operador en
-    cada evento de facturación (campo `operador`), así que pedir el rango una
-    vez por operador —como se hacía antes— multiplicaba por ~50 los requests
-    a Gestión y moría por timeout. El username es la identidad local del
+    sin filtro de operador: cada evento ya trae el username de su operador
+    (hoy leído de la base de Gestión, ADR-047; antes de ajax-by-rango, donde
+    pedir el rango por operador multiplicaba los requests y moría por
+    timeout). El username es la identidad local del
     operador; su nombre real se resuelve contra Siges/UsuariosWeb
     (OperadorCatalogPort, ver ADR-012). El color, en cambio, sale del color
     dominante de los propios eventos del operador: `UsuariosWeb.color` está
@@ -44,9 +44,7 @@ class SyncCalendarEventsUseCase:
         self._repository = repository
 
     async def execute(self, *, start_date: str, end_date: str) -> SyncCalendarEventsResult:
-        fetched = await self._calendar_port.get_events(
-            start_date=start_date, end_date=end_date, solo_facturacion=True
-        )
+        fetched = await self._calendar_port.get_events(start_date=start_date, end_date=end_date)
         events = _drop_events_sin_operador(fetched)
         por_operador = _group_by_operador(events)
         identidades = await self._operador_catalog.find_by_logins(sorted(por_operador))

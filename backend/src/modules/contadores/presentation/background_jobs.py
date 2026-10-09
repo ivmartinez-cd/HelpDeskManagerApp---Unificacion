@@ -2,11 +2,12 @@
 
 Auto-sync (configurable vía settings):
 - calendario_refresh: cada 120 min (2 h) — full replace de la ventana ±90 días
-  contra Gestión Web. Gestión no expone un endpoint diff, así que cada ciclo
-  rehace el rango entero. El botón "Sincronizar" fuerza un ciclo inmediato aparte.
+  leyendo la base de Gestión en ORION (ADR-047; antes, scraping de la web).
+  Cada ciclo rehace el rango entero. El botón "Sincronizar" fuerza un ciclo
+  inmediato aparte.
 
-Sin credenciales de Gestión configuradas, el ciclo falla con ExternalServiceError
-— se loguea y se reintenta en el próximo intervalo."""
+Sin ORION configurado, el ciclo falla con ExternalServiceError — se loguea y
+se reintenta en el próximo intervalo."""
 
 import asyncio
 import logging
@@ -16,17 +17,16 @@ from datetime import UTC, datetime, timedelta
 from src.modules.contadores.application.use_cases.sync_calendar_events import (
     SyncCalendarEventsUseCase,
 )
-from src.modules.contadores.infrastructure.gestion.gestion_planificacion_client import (
-    GestionPlanificacionClient,
-)
 from src.modules.contadores.infrastructure.repositories.sqlalchemy_calendario_repository import (
     SqlAlchemyCalendarEventRepository,
 )
 from src.modules.contadores.presentation.calendario_routers._deps import (
     DEFAULT_SYNC_WINDOW_DAYS,
-    SYNC_TIMEOUT_SECONDS,
 )
-from src.modules.contadores.presentation.dependencies import get_operador_catalog_gateway
+from src.modules.contadores.presentation.dependencies import (
+    get_gestion_calendario_gateway,
+    get_operador_catalog_gateway,
+)
 from src.shared.infrastructure.database.session import get_sessionmaker
 
 logger = logging.getLogger(__name__)
@@ -55,9 +55,9 @@ async def _ciclo_calendario() -> None:
     factory = get_sessionmaker()
     async with factory() as session:
         repo = SqlAlchemyCalendarEventRepository(session)
-        gestion = GestionPlanificacionClient(timeout=SYNC_TIMEOUT_SECONDS)
-        operador_catalog = get_operador_catalog_gateway()
-        use_case = SyncCalendarEventsUseCase(gestion, operador_catalog, repo)
+        use_case = SyncCalendarEventsUseCase(
+            get_gestion_calendario_gateway(), get_operador_catalog_gateway(), repo
+        )
         result = await use_case.execute(start_date=start_date, end_date=end_date)
         await session.commit()
     logger.info(
