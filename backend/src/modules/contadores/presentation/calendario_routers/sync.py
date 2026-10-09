@@ -1,6 +1,6 @@
 """Sync del calendario contra la base de Gestión (ADR-047): estado y disparo manual.
 
-El auto-sync automático corre cada 120 min (2 h) vía background_jobs.py de este
+El auto-sync automático corre cada 15 min vía background_jobs.py de este
 módulo. Este router solo expone el estado y el disparo manual (botón "Sincronizar")."""
 
 from datetime import UTC, datetime, timedelta

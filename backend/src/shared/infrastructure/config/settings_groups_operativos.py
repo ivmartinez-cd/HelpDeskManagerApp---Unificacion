@@ -56,10 +56,12 @@ class SlaSettings(BaseSettings):
     mesa_ayuda_alerta_mail_to: str = ""
     mesa_ayuda_alerta_interval_minutes: int = 15
     # Cadencia del job de fondo que refresca la copia local de eventos del
-    # Calendario de Planificación. Full replace de ±90 días (~20 s); Gestión no
-    # expone diff, así que cada ciclo rehace el rango entero. El botón
+    # Calendario de Planificación. Full replace de ±90 días con una consulta a
+    # la base de Gestión en ORION (~2 s, ADR-047). 15 min (antes 120, cuando se
+    # scrapeaba la web y tardaba ~20 s): un cliente marcado como realizado en
+    # Gestión sale del calendario y de pendientes casi enseguida. El botón
     # "Sincronizar" fuerza un ciclo inmediato aparte.
-    calendario_refresh_interval_minutes: int = 120
+    calendario_refresh_interval_minutes: int = 15
 
 
 class PreventivosSettings(BaseSettings):

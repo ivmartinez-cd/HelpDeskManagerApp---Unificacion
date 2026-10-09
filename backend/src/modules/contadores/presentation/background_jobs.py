@@ -1,7 +1,7 @@
 """Job de fondo del módulo contadores:
 
 Auto-sync (configurable vía settings):
-- calendario_refresh: cada 120 min (2 h) — full replace de la ventana ±90 días
+- calendario_refresh: cada 15 min (configurable) — full replace de la ventana ±90 días
   leyendo la base de Gestión en ORION (ADR-047; antes, scraping de la web).
   Cada ciclo rehace el rango entero. El botón "Sincronizar" fuerza un ciclo
   inmediato aparte.
